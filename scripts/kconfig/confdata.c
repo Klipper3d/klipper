@@ -543,6 +543,8 @@ header_print_symbol(FILE *fp, struct symbol *sym, const char *value, void *arg)
 
 		switch (*value) {
 		case 'n':
+			fprintf(fp, "#define %s%s%s 0\n",
+			    CONFIG_, sym->name, suffix);
 			break;
 		case 'm':
 			suffix = "_MODULE";
@@ -558,6 +560,8 @@ header_print_symbol(FILE *fp, struct symbol *sym, const char *value, void *arg)
 
 		if (value[0] != '0' || (value[1] != 'x' && value[1] != 'X'))
 			prefix = "0x";
+		if (!value[0])
+			prefix = "0";
 		fprintf(fp, "#define %s%s %s%s\n",
 		    CONFIG_, sym->name, prefix, value);
 		break;
@@ -983,8 +987,12 @@ int conf_write_autoconf(void)
 
 	for_all_symbols(i, sym) {
 		sym_calc_value(sym);
-		if (!(sym->flags & SYMBOL_WRITE) || !sym->name)
+		if (!sym->name)
 			continue;
+		if (!(sym->flags & SYMBOL_WRITE)) {
+			conf_write_symbol(out_h, sym, &header_printer_cb, NULL);
+			continue;
+		}
 
 		/* write symbol to auto.conf, tristate and header files */
 		conf_write_symbol(out, sym, &kconfig_printer_cb, (void *)1);
