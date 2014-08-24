@@ -1,0 +1,41 @@
+# Kconfig settings for AVR processors
+
+if MACH_AVR
+
+config BOARD_DIRECTORY
+    string
+    default "avr"
+
+choice
+    prompt "Processor model"
+    config MACH_atmega168
+        bool "atmega168"
+    config MACH_atmega644p
+        bool "atmega644p"
+    config MACH_atmega2560
+        bool "atmega2560"
+endchoice
+
+config AVR_MCU
+    string
+    default "atmega168" if MACH_atmega168
+    default "atmega644p" if MACH_atmega644p
+    default "atmega2560" if MACH_atmega2560
+
+choice
+    prompt "Processor speed"
+    config AVR_FREQ_8000000
+        bool "8Mhz"
+    config AVR_FREQ_16000000
+        bool "16Mhz"
+    config AVR_FREQ_20000000
+        bool "20Mhz"
+endchoice
+
+config AVR_FREQ
+    int
+    default 8000000 if AVR_FREQ_8000000
+    default 16000000 if AVR_FREQ_16000000
+    default 20000000 if AVR_FREQ_20000000
+
+endif

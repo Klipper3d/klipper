@@ -1,0 +1,10 @@
+# Kconfig settings for compiling and running the firmware on the host
+# processor for simulation purposes.
+
+if MACH_SIMU
+
+config BOARD_DIRECTORY
+    string
+    default "simulator"
+
+endif

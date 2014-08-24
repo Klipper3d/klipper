@@ -1,0 +1,31 @@
+# Main Kconfig settings
+
+mainmenu "Klipper Firmware Configuration"
+
+menu "Micro-controller type"
+
+choice
+    prompt "Architecture"
+    config MACH_AVR
+        bool "Atmega AVR"
+    config MACH_SIMU
+        bool "Host simulator"
+endchoice
+
+source "src/avr/Kconfig"
+source "src/simulator/Kconfig"
+
+endmenu
+
+config AVR_WATCHDOG
+    depends on MACH_AVR
+    bool "Support for automated reset on watchdog timeout" if MACH_AVR
+    default y
+config AVR_SERIAL
+    depends on MACH_AVR
+    bool "Support for main console on atmega serial port" if MACH_AVR
+    default y
+config SERIAL_BAUD
+    depends on AVR_SERIAL
+    int "Baud rate for serial port"
+    default 115200
