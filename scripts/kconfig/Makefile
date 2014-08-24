@@ -33,8 +33,9 @@ oldconfig: $(obj)/conf
 	$< --$@ $(Kconfig)
 
 silentoldconfig: $(obj)/conf
+	@echo "  Build Kconfig config file"
 	$(Q)mkdir -p include/config include/generated
-	$< --$@ $(Kconfig)
+	$(Q)$< --$@ $(Kconfig)
 
 localyesconfig localmodconfig: $(obj)/streamline_config.pl $(obj)/conf
 	$(Q)mkdir -p include/config include/generated
@@ -94,12 +95,8 @@ savedefconfig: $(obj)/conf
 	$< --$@=defconfig $(Kconfig)
 
 defconfig: $(obj)/conf
-ifeq ($(KBUILD_DEFCONFIG),)
-	$< --defconfig $(Kconfig)
-else
-	@echo "*** Default configuration is based on '$(KBUILD_DEFCONFIG)'"
-	$(Q)$< --defconfig=arch/$(SRCARCH)/configs/$(KBUILD_DEFCONFIG) $(Kconfig)
-endif
+	@echo "  Build default config"
+	$(Q)$< --defconfig=/dev/null $(Kconfig)
 
 %_defconfig: $(obj)/conf
 	$(Q)$< --defconfig=arch/$(SRCARCH)/configs/$@ $(Kconfig)
@@ -319,3 +316,16 @@ $(obj)/%.moc: $(src)/%.h $(obj)/.tmp_qtcheck
 $(obj)/gconf.glade.h: $(obj)/gconf.glade
 	$(Q)intltool-extract --type=gettext/glade --srcdir=$(srctree) \
 	$(obj)/gconf.glade
+
+VPATH := $(srctree)
+
+$(obj)/%:: $(src)/%_shipped
+	$(Q)cat $< > $@
+
+host-cobjs      := $(sort $(foreach m,$(hostprogs-y),$($(m)-objs)))
+host-cobjs      := $(addprefix $(obj)/,$(host-cobjs))
+hostprogs-y     := $(addprefix $(obj)/,$(hostprogs-y))
+$(host-cobjs) : $(obj)/%.o : $(src)/%.c
+	$(Q)$(HOSTCC) -I$(obj) -I$(srctree)/$(src) $(HOSTCFLAGS) $(HOSTCFLAGS_$(@F)) $(HOST_EXTRACFLAGS) -c -o $@ $<
+$(hostprogs-y) : $(obj)/% : $(host-cobjs)
+	$(Q)$(HOSTCC) $(HOSTLDFLAGS) -o $@ $(addprefix $(obj)/,$($(@F)-objs)) $(HOST_LOADLIBES) $(HOSTLOADLIBES_$(@F))
