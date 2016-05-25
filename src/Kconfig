@@ -1,0 +1,20 @@
+# Main Kconfig settings
+
+mainmenu "Klipper Firmware Configuration"
+
+choice
+    prompt "Micro-controller Architecture"
+    config MACH_AVR
+        bool "Atmega AVR"
+    config MACH_SIMU
+        bool "Host simulator"
+endchoice
+
+source "src/avr/Kconfig"
+source "src/simulator/Kconfig"
+
+config INLINE_STEPPER_HACK
+    # Enables gcc to inline stepper_event() into the main timer irq handler
+    bool
+    default y if MACH_AVR
+    default n
