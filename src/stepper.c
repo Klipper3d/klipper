@@ -164,23 +164,17 @@ stepper_get_position(struct stepper *s)
     return position;
 }
 
-// Reset the internal state of a 'struct stepper'
-static void
-stepper_reset(struct stepper *s)
-{
-    s->position = stepper_get_position(s);
-    s->count = 0;
-    s->flags &= SF_INVERT_STEP;
-    gpio_out_write(s->dir_pin, 0);
-}
-
 // Stop all moves for a given stepper (used in end stop homing).  IRQs
 // must be off.
 void
 stepper_stop(struct stepper *s)
 {
     sched_del_timer(&s->time);
-    stepper_reset(s);
+    s->position = stepper_get_position(s);
+    s->count = 0;
+    s->flags &= SF_INVERT_STEP;
+    gpio_out_write(s->dir_pin, 0);
+    gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP ? 1 : 0);
     while (s->first) {
         struct move *next = s->first->next;
         move_free(s->first);
@@ -194,9 +188,8 @@ stepper_shutdown(void)
     uint8_t i;
     struct stepper *s;
     foreach_oid(i, s, command_config_stepper) {
-        stepper_reset(s);
         s->first = NULL;
-        gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP ? 1 : 0);
+        stepper_stop(s);
     }
 }
 DECL_SHUTDOWN(stepper_shutdown);
