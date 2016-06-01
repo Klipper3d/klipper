@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-uint32_t timer_from_ms(uint32_t ms);
+uint32_t timer_from_us(uint32_t us);
 void timer_periodic(void);
 uint32_t timer_read_time(void);
 uint8_t timer_set_next(uint32_t next);

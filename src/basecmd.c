@@ -205,7 +205,7 @@ stats_task(void)
     sumsq = nextsumsq;
 
     static uint32_t prev;
-    if (sched_is_before(cur, prev + sched_from_ms(5000)))
+    if (sched_is_before(cur, prev + sched_from_us(5000000)))
         return;
     sendf("stats count=%u sum=%u sumsq=%u", count, cur - prev, sumsq);
     prev = cur;

@@ -9,9 +9,9 @@
 #include <stddef.h> // NULL
 #include "autoconf.h" // CONFIG_*
 #include "board/irq.h" // irq_save
-#include "board/timer.h" // timer_from_ms
+#include "board/timer.h" // timer_from_us
 #include "command.h" // shutdown
-#include "sched.h" // sched_from_ms
+#include "sched.h" // sched_from_us
 #include "stepper.h" // stepper_event
 
 
@@ -30,7 +30,7 @@ ms_event(struct timer *t)
 {
     millis++;
     timer_periodic();
-    t->waketime += sched_from_ms(1);
+    t->waketime += sched_from_us(1000);
     return SF_RESCHEDULE;
 }
 
@@ -52,11 +52,11 @@ sched_check_periodic(uint16_t time, uint16_t *pnext)
     return 1;
 }
 
-// Return the number of clock ticks for a given number of milliseconds
+// Return the number of clock ticks for a given number of microseconds
 uint32_t
-sched_from_ms(uint32_t ms)
+sched_from_us(uint32_t us)
 {
-    return timer_from_ms(ms);
+    return timer_from_us(us);
 }
 
 // Return the current time (in clock ticks)

@@ -17,7 +17,7 @@ uint8_t Interrupt_off;
  ****************************************************************/
 
 uint32_t
-timer_from_ms(uint32_t ms)
+timer_from_us(uint32_t us)
 {
     return 0; // XXX
 }

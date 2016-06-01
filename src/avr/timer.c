@@ -8,18 +8,18 @@
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_kick
-#include "timer.h" // timer_from_ms
+#include "timer.h" // timer_from_us
 
 
 /****************************************************************
  * Low level timer code
  ****************************************************************/
 
-// Return the number of clock ticks for a given number of milliseconds
+// Return the number of clock ticks for a given number of microseconds
 uint32_t
-timer_from_ms(uint32_t ms)
+timer_from_us(uint32_t us)
 {
-    return ms * (F_CPU / 1000);
+    return us * (F_CPU / 1000000);
 }
 
 static inline uint16_t
@@ -156,7 +156,7 @@ timer_try_set_next(uint32_t target)
     // Too many repeat timers from a single interrupt - force a pause
     timer_repeat = TIMER_MAX_NEXT_REPEAT;
     next = now + TIMER_DEFER_REPEAT_TICKS;
-    if (diff < (int16_t)(-timer_from_ms(1)))
+    if (diff < (int16_t)(-timer_from_us(1000)))
         goto fail;
 
 done:
