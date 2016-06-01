@@ -69,7 +69,10 @@ static uint32_t timer_last;
 static __always_inline uint32_t
 calc_time(uint32_t last, uint16_t cur)
 {
-    union u32_u16_u calc;
+    union u32_u16_u {
+        struct { uint16_t lo, hi; };
+        uint32_t val;
+    } calc;
     calc.val = last;
     if (cur < calc.lo)
         calc.hi++;

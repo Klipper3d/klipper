@@ -39,11 +39,6 @@
             (((x) + ((__divisor) / 2)) / (__divisor));  \
         })
 
-union u32_u16_u {
-    struct { uint16_t lo, hi; };
-    uint32_t val;
-};
-
 static inline void writel(void *addr, uint32_t val) {
     *(volatile uint32_t *)addr = val;
 }
