@@ -56,23 +56,23 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #if CONFIG_MACH_atmega168
     { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('D', 6), GP_8BIT         },
     { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('D', 5), GP_8BIT         },
-//    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 1), 0               },
-//    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 2), 0               },
+    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 1), 0               },
+    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 2), 0               },
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('B', 3), GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('D', 3), GP_8BIT|GP_AFMT },
 #elif CONFIG_MACH_atmega644p
     { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('B', 3), GP_8BIT         },
     { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('B', 4), GP_8BIT         },
-//    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('D', 5), 0               },
-//    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('D', 4), 0               },
+    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('D', 5), 0               },
+    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('D', 4), 0               },
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('D', 7), GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('D', 6), GP_8BIT|GP_AFMT },
 #elif CONFIG_MACH_at90usb1286
     { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('B', 7), GP_8BIT         },
     { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('D', 0), GP_8BIT         },
-//    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 5), 0               },
-//    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 6), 0               },
-//    { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, GPIO('B', 7), 0               },
+    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 5), 0               },
+    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 6), 0               },
+    { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, GPIO('B', 7), 0               },
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('B', 4), GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('D', 1), GP_8BIT|GP_AFMT },
     { &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, GPIO('C', 6), 0               },
@@ -81,9 +81,9 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
     { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('B', 7), GP_8BIT         },
     { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('G', 5), GP_8BIT         },
-//    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 5), 0               },
-//    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 6), 0               },
-//    { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, GPIO('B', 7), 0               },
+    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 5), 0               },
+    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 6), 0               },
+    { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, GPIO('B', 7), 0               },
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('B', 4), GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('H', 6), GP_8BIT|GP_AFMT },
     { &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, GPIO('E', 3), 0               },
@@ -237,6 +237,8 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
         uint8_t bit = GPIO2BIT(pin);
         struct gpio_pwm g = (struct gpio_pwm) {
             (void*)READP(p->ocr), flags & GP_8BIT };
+        if (rega == &TCCR1A)
+            shutdown("Can not user timer1 for PWM; timer1 is used for timers");
 
         // Setup PWM timer
         uint8_t flag = irq_save();
