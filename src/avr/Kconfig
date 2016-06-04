@@ -12,6 +12,8 @@ choice
         bool "atmega168"
     config MACH_atmega644p
         bool "atmega644p"
+    config MACH_at90usb1286
+        bool "at90usb1286"
     config MACH_atmega1280
         bool "atmega1280"
     config MACH_atmega2560
@@ -22,6 +24,7 @@ config MCU
     string
     default "atmega168" if MACH_atmega168
     default "atmega644p" if MACH_atmega644p
+    default "at90usb1286" if MACH_at90usb1286
     default "atmega1280" if MACH_atmega1280
     default "atmega2560" if MACH_atmega2560
 
@@ -49,7 +52,12 @@ config AVR_STACK_SIZE
 config AVR_WATCHDOG
     bool "Support for automated reset on watchdog timeout"
     default y
+config AVR_USBSERIAL
+    bool
+    depends on MACH_at90usb1286
+    default y
 config AVR_SERIAL
+    depends on !AVR_USBSERIAL
     bool
     default y
 config SERIAL_BAUD

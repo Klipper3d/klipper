@@ -26,7 +26,7 @@ PYTHON=python
 
 # Source files
 src-y=sched.c command.c stepper.c basecmd.c gpiocmds.c spicmds.c endstop.c
-DIRS=src src/avr src/simulator
+DIRS=src src/avr src/simulator lib/pjrc_usb_serial
 
 # Default compiler flags
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \

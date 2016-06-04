@@ -29,7 +29,10 @@ static volatile uint8_t * const digital_regs[] PROGMEM = {
 #endif
     &PINB, &PINC, &PIND,
 #ifdef PINE
-    &PINE, &PINF, &PING, &PINH, NULL, &PINJ, &PINK, &PINL
+    &PINE, &PINF,
+#endif
+#ifdef PING
+    &PING, &PINH, NULL, &PINJ, &PINK, &PINL
 #endif
 };
 
@@ -64,6 +67,17 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 //    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('D', 4), 0               },
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('D', 7), GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('D', 6), GP_8BIT|GP_AFMT },
+#elif CONFIG_MACH_at90usb1286
+    { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('B', 7), GP_8BIT         },
+    { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('D', 0), GP_8BIT         },
+//    { &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, GPIO('B', 5), 0               },
+//    { &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, GPIO('B', 6), 0               },
+//    { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, GPIO('B', 7), 0               },
+    { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GPIO('B', 4), GP_8BIT|GP_AFMT },
+    { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GPIO('D', 1), GP_8BIT|GP_AFMT },
+    { &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, GPIO('C', 6), 0               },
+    { &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, GPIO('C', 5), 0               },
+    { &OCR3C, &TCCR3A, &TCCR3B, 1<<COM3C1, GPIO('C', 4), 0               },
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
     { &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GPIO('B', 7), GP_8BIT         },
     { &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GPIO('G', 5), GP_8BIT         },
@@ -95,6 +109,9 @@ static const struct gpio_adc_info adc_pins[] PROGMEM = {
 #elif CONFIG_MACH_atmega644p
     { GPIO('A', 0) }, { GPIO('A', 1) }, { GPIO('A', 2) }, { GPIO('A', 3) },
     { GPIO('A', 4) }, { GPIO('A', 5) }, { GPIO('A', 6) }, { GPIO('A', 7) },
+#elif CONFIG_MACH_at90usb1286
+    { GPIO('F', 0) }, { GPIO('F', 1) }, { GPIO('F', 2) }, { GPIO('F', 3) },
+    { GPIO('F', 4) }, { GPIO('F', 5) }, { GPIO('F', 6) }, { GPIO('F', 7) },
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
     { GPIO('F', 0) }, { GPIO('F', 1) }, { GPIO('F', 2) }, { GPIO('F', 3) },
     { GPIO('F', 4) }, { GPIO('F', 5) }, { GPIO('F', 6) }, { GPIO('F', 7) },
@@ -107,7 +124,7 @@ static const struct gpio_adc_info adc_pins[] PROGMEM = {
 static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5), MOSI = GPIO('B', 3);
 #elif CONFIG_MACH_atmega644p
 static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7), MOSI = GPIO('B', 5);
-#elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
 static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1), MOSI = GPIO('B', 2);
 #endif
 

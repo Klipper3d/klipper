@@ -21,6 +21,7 @@ PINS_atmega1280 = avr_pins(12)
 
 MCU_PINS = {
     "atmega168": PINS_atmega164, "atmega644p": PINS_atmega164,
+    "at90usb1286": avr_pins(5),
     "atmega1280": PINS_atmega1280, "atmega2560": PINS_atmega1280,
 }
 
