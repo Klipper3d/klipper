@@ -98,25 +98,21 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #endif
 };
 
-struct gpio_adc_info {
-    uint8_t pin;
-};
-
-static const struct gpio_adc_info adc_pins[] PROGMEM = {
+static const uint8_t adc_pins[] PROGMEM = {
 #if CONFIG_MACH_atmega168
-    { GPIO('C', 0) }, { GPIO('C', 1) }, { GPIO('C', 2) }, { GPIO('C', 3) },
-    { GPIO('C', 4) }, { GPIO('C', 5) }, { GPIO('E', 0) }, { GPIO('E', 1) },
+    GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 0), GPIO('E', 1),
 #elif CONFIG_MACH_atmega644p
-    { GPIO('A', 0) }, { GPIO('A', 1) }, { GPIO('A', 2) }, { GPIO('A', 3) },
-    { GPIO('A', 4) }, { GPIO('A', 5) }, { GPIO('A', 6) }, { GPIO('A', 7) },
+    GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
+    GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
 #elif CONFIG_MACH_at90usb1286
-    { GPIO('F', 0) }, { GPIO('F', 1) }, { GPIO('F', 2) }, { GPIO('F', 3) },
-    { GPIO('F', 4) }, { GPIO('F', 5) }, { GPIO('F', 6) }, { GPIO('F', 7) },
+    GPIO('F', 0), GPIO('F', 1), GPIO('F', 2), GPIO('F', 3),
+    GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
-    { GPIO('F', 0) }, { GPIO('F', 1) }, { GPIO('F', 2) }, { GPIO('F', 3) },
-    { GPIO('F', 4) }, { GPIO('F', 5) }, { GPIO('F', 6) }, { GPIO('F', 7) },
-    { GPIO('K', 0) }, { GPIO('K', 1) }, { GPIO('K', 2) }, { GPIO('K', 3) },
-    { GPIO('K', 4) }, { GPIO('K', 5) }, { GPIO('K', 6) }, { GPIO('K', 7) },
+    GPIO('F', 0), GPIO('F', 1), GPIO('F', 2), GPIO('F', 3),
+    GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
+    GPIO('K', 0), GPIO('K', 1), GPIO('K', 2), GPIO('K', 3),
+    GPIO('K', 4), GPIO('K', 5), GPIO('K', 6), GPIO('K', 7),
 #endif
 };
 
@@ -264,8 +260,7 @@ gpio_adc_setup(uint8_t pin)
 {
     uint8_t chan;
     for (chan=0; chan<ARRAY_SIZE(adc_pins); chan++) {
-        const struct gpio_adc_info *a = &adc_pins[chan];
-        if (READP(a->pin) != pin)
+        if (READP(adc_pins[chan]) != pin)
             continue;
 
         // Enable ADC
