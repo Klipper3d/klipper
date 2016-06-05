@@ -7,9 +7,9 @@
 #include <avr/interrupt.h> // USART0_RX_vect
 #include <string.h> // memmove
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
+#include "board/misc.h" // console_get_input
 #include "sched.h" // DECL_INIT
 #include "irq.h" // irq_save
-#include "misc.h" // console_get_input
 
 #define SERIAL_BUFFER_SIZE 96
 static char receive_buf[SERIAL_BUFFER_SIZE];

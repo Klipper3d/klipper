@@ -26,13 +26,13 @@ PYTHON=python
 
 # Source files
 src-y=sched.c command.c stepper.c basecmd.c gpiocmds.c spicmds.c endstop.c
-DIRS=src src/avr src/simulator lib/pjrc_usb_serial
+DIRS=src src/avr src/simulator src/generic lib/pjrc_usb_serial
 
 # Default compiler flags
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS-y := -I$(OUT) -Isrc -Os -MD -g \
+CFLAGS-y := -I$(OUT) -Isrc -I$(OUT)board-generic/ -Os -MD -g \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections
 CFLAGS-y += -flto -fwhole-program
@@ -72,6 +72,8 @@ $(OUT)board-link: $(KCONFIG_CONFIG)
 	@echo "  Creating symbolic link $(OUT)board"
 	$(Q)touch $@
 	$(Q)ln -Tsf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)mkdir -p $(OUT)board-generic
+	$(Q)ln -Tsf $(PWD)/src/generic $(OUT)board-generic/board
 
 $(OUT)declfunc.lds: src/declfunc.lds.S
 	@echo "  Precompiling $@"

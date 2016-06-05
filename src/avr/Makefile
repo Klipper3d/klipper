@@ -7,7 +7,7 @@ CFLAGS-y += -mmcu=$(CONFIG_MCU) -DF_CPU=$(CONFIG_CLOCK_FREQ)
 LDFLAGS-y += -Wl,--relax
 
 # Add avr source files
-src-y += avr/main.c avr/timer.c avr/gpio.c avr/alloc.c
+src-y += avr/main.c avr/timer.c avr/gpio.c avr/misc.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
 src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c ../lib/pjrc_usb_serial/usb_serial.c
 src-$(CONFIG_AVR_SERIAL) += avr/serial.c

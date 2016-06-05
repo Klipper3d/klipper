@@ -10,7 +10,7 @@
 #include <stdlib.h> // strtod
 #include <string.h> // strcasecmp
 #include "board/irq.h" // irq_disable
-#include "board/misc.h" // HAVE_OPTIMIZED_CRC
+#include "board/misc.h" // crc16_ccitt
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
 #include "sched.h" // DECL_TASK
@@ -34,23 +34,6 @@ static uint8_t next_sequence = MESSAGE_DEST;
 /****************************************************************
  * Binary message parsing
  ****************************************************************/
-
-// Implement the standard crc "ccitt" algorithm on the given buffer
-static uint16_t
-crc16_ccitt(char *buf, uint8_t len)
-{
-    if (HAVE_OPTIMIZED_CRC)
-        return _crc16_ccitt(buf, len);
-    uint16_t crc = 0xffff;
-    while (len--) {
-        uint8_t data = *buf++;
-        data ^= crc & 0xff;
-        data ^= data << 4;
-        crc = ((((uint16_t)data << 8) | (crc >> 8)) ^ (uint8_t)(data >> 4)
-               ^ ((uint16_t)data << 3));
-    }
-    return crc;
-}
 
 // Encode an integer as a variable length quantity (vlq)
 static char *
