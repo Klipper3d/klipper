@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <avr/interrupt.h> // TCNT1
+#include "autoconf.h" // CONFIG_AVR_CLKPR
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_kick
@@ -49,6 +50,14 @@ ISR(TIMER1_COMPA_vect)
 static void
 timer_init(void)
 {
+    if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
+        // Program the clock prescaler
+        uint8_t flag = irq_save();
+        CLKPR = 0x80;
+        CLKPR = CONFIG_AVR_CLKPR;
+        irq_restore(flag);
+    }
+
     // no outputs
     TCCR1A = 0;
     // Normal Mode

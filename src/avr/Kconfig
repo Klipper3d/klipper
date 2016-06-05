@@ -44,6 +44,20 @@ config CLOCK_FREQ
     default 16000000 if AVR_FREQ_16000000
     default 20000000 if AVR_FREQ_20000000
 
+config CLEAR_PRESCALER
+    bool "Manually clear the CPU prescaler field at startup"
+    default n
+    help
+         Some AVR chips ship with a "clock prescaler" that causes the
+         chip to run at 1/8th speed. Enable this setting to clear the
+         prescaler field at startup which will cause the chip to run
+         without a clock divisor.
+
+config AVR_CLKPR
+    int
+    default 0 if CLEAR_PRESCALER
+    default -1
+
 config AVR_STACK_SIZE
     int
     default 256 if MACH_atmega2560
