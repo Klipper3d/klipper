@@ -6,10 +6,10 @@
 
 #include <avr/interrupt.h> // TCNT1
 #include "autoconf.h" // CONFIG_AVR_CLKPR
+#include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_kick
-#include "timer.h" // timer_from_us
 
 
 /****************************************************************
