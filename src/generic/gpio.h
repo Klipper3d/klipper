@@ -1,5 +1,5 @@
-#ifndef __SIMU_GPIO_H
-#define __SIMU_GPIO_H
+#ifndef __GENERIC_GPIO_H
+#define __GENERIC_GPIO_H
 
 #include <stdint.h>
 

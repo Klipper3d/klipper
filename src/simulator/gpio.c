@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "gpio.h" // gpio_out_write
+#include "board/gpio.h" // gpio_out_write
 
 struct gpio_out gpio_out_setup(uint8_t pin, uint8_t val) {
     return (struct gpio_out){.pin=pin};
