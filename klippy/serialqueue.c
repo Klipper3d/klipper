@@ -60,6 +60,30 @@ report_errno(char *where, int rc)
     fprintf(stderr, "Got error %d in %s: (%d)%s\n", rc, where, e, strerror(e));
 }
 
+// Return a hex character for a given number
+#define GETHEX(x) ((x) < 10 ? '0' + (x) : 'e' + (x) - 10)
+
+// Translate a binary string into an ASCII string with escape sequences
+char *
+dump_string(char *outbuf, int outbuf_size, uint8_t *inbuf, int inbuf_size)
+{
+    char *outend = &outbuf[outbuf_size-5], *o = outbuf;
+    uint8_t *inend = &inbuf[inbuf_size], *p = inbuf;
+    while (p < inend && o < outend) {
+        uint8_t c = *p++;
+        if (c > 31 && c < 127 && c != '\\') {
+            *o++ = c;
+            continue;
+        }
+        *o++ = '\\';
+        *o++ = 'x';
+        *o++ = GETHEX(c >> 4);
+        *o++ = GETHEX(c & 0x0f);
+    }
+    *o = '\0';
+    return outbuf;
+}
+
 
 /****************************************************************
  * Poll reactor
