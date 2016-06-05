@@ -7,9 +7,41 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "board/misc.h" // timer_from_us
+#include "board/irq.h" // irq_disable
 #include "sched.h" // sched_main
 
+
+/****************************************************************
+ * Interrupts
+ ****************************************************************/
+
 uint8_t Interrupt_off;
+
+void irq_disable(void)
+{
+    Interrupt_off = 1;
+    barrier();
+}
+
+void irq_enable(void)
+{
+    barrier();
+    Interrupt_off = 0;
+}
+
+uint8_t irq_save(void)
+{
+    uint8_t flag = Interrupt_off;
+    irq_disable();
+    return flag;
+}
+
+void irq_restore(uint8_t flag)
+{
+    barrier();
+    Interrupt_off = flag;
+}
 
 
 /****************************************************************

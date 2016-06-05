@@ -1,7 +1,7 @@
-#ifndef __SIMU_PGM_H
-#define __SIMU_PGM_H
+#ifndef __GENERIC_PGM_H
+#define __GENERIC_PGM_H
 // This header provides wrappers for the AVR specific "PROGMEM"
-// declarations.
+// declarations on non-avr platforms.
 
 #define PROGMEM
 #define PSTR(S) S
