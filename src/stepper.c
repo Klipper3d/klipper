@@ -32,7 +32,7 @@ struct stepper {
 };
 
 enum { MF_DIR=1 };
-enum { SF_LAST_DIR=1, SF_NEXT_DIR=2, SF_INVERT_STEP=4 };
+enum { SF_LAST_DIR=1, SF_NEXT_DIR=2, SF_INVERT_STEP=4, SF_HAVE_ADD=8 };
 
 // Setup a stepper for the next move in its queue
 static uint8_t
@@ -46,10 +46,10 @@ stepper_load_next(struct stepper *s)
         return SF_DONE;
     }
 
-    s->interval = m->interval;
-    s->time.waketime += s->interval;
+    s->time.waketime += m->interval;
     s->add = m->add;
-    s->interval += s->add;
+    s->interval = m->interval + m->add;
+    s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
     s->count = m->count;
     if (m->flags & MF_DIR) {
         s->position = -s->position + s->count;
@@ -73,8 +73,9 @@ stepper_event(struct timer *t)
     if (likely(count)) {
         s->count = count;
         s->time.waketime += s->interval;
-        s->interval += s->add;
         gpio_out_toggle(s->step_pin);
+        if (s->flags & SF_HAVE_ADD)
+            s->interval += s->add;
         return SF_RESCHEDULE;
     }
     uint8_t ret = stepper_load_next(s);
@@ -104,19 +105,19 @@ command_queue_step(uint32_t *args)
 {
     struct stepper *s = lookup_oid(args[0], command_config_stepper);
     struct move *m = move_alloc();
-    m->flags = 0;
-    if (!!(s->flags & SF_LAST_DIR) != !!(s->flags & SF_NEXT_DIR)) {
-        s->flags ^= SF_LAST_DIR;
-        m->flags |= MF_DIR;
-    }
     m->interval = args[1];
     m->count = args[2];
     if (!m->count)
         shutdown("Invalid count parameter");
     m->add = args[3];
     m->next = NULL;
+    m->flags = 0;
 
     uint8_t flag = irq_save();
+    if (!!(s->flags & SF_LAST_DIR) != !!(s->flags & SF_NEXT_DIR)) {
+        s->flags ^= SF_LAST_DIR;
+        m->flags |= MF_DIR;
+    }
     if (s->count) {
         if (s->first)
             *s->plast = m;
@@ -138,7 +139,10 @@ void
 command_set_next_step_dir(uint32_t *args)
 {
     struct stepper *s = lookup_oid(args[0], command_config_stepper);
-    s->flags = (s->flags & ~SF_NEXT_DIR) | (args[1] ? SF_NEXT_DIR : 0);
+    uint8_t nextdir = args[1] ? SF_NEXT_DIR : 0;
+    irq_disable();
+    s->flags = (s->flags & ~SF_NEXT_DIR) | nextdir;
+    irq_enable();
 }
 DECL_COMMAND(command_set_next_step_dir, "set_next_step_dir oid=%c dir=%c");
 
