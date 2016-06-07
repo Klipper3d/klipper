@@ -77,33 +77,27 @@ sched_is_before(uint32_t time1, uint32_t time2)
 
 static struct timer *timer_list = &ms_timer;
 
-// Add a timer to timer list.
-static __always_inline void
-add_timer(struct timer *add)
-{
-    struct timer **timep = &timer_list, *t = timer_list;
-    while (t && !sched_is_before(add->waketime, t->waketime)) {
-        timep = &t->next;
-        t = t->next;
-    }
-    add->next = t;
-    *timep = add;
-}
-
 // Schedule a function call at a supplied time.
 void
 sched_timer(struct timer *add)
 {
+    uint32_t waketime = add->waketime;
     uint8_t flag = irq_save();
-    add_timer(add);
-
-    // Reschedule timer if necessary.
-    if (timer_list == add) {
-        uint8_t ret = timer_set_next(add->waketime);
+    if (sched_is_before(waketime, timer_list->waketime)) {
+        // This timer is the next - insert at front of list and reschedule
+        add->next = timer_list;
+        timer_list = add;
+        uint8_t ret = timer_set_next(waketime);
         if (ret)
             shutdown("Timer too close");
+    } else {
+        // Find position in list and insert
+        struct timer *pos = timer_list;
+        while (pos->next && !sched_is_before(waketime, pos->next->waketime))
+            pos = pos->next;
+        add->next = pos->next;
+        pos->next = add;
     }
-
     irq_restore(flag);
 }
 
@@ -112,28 +106,45 @@ void
 sched_del_timer(struct timer *del)
 {
     uint8_t flag = irq_save();
-
     if (timer_list == del) {
+        // Deleting the next active timer - delete and reschedule
         timer_list = del->next;
         timer_set_next(timer_list->waketime);
-        irq_restore(flag);
-        return;
-    }
-
-    // Find and remove from timer list.
-    struct timer *prev = timer_list;
-    for (;;) {
-        struct timer *t = prev->next;
-        if (!t)
-            break;
-        if (t == del) {
-            prev->next = del->next;
-            break;
+    } else {
+        // Find and remove from timer list (if present)
+        struct timer *pos;
+        for (pos = timer_list; pos->next; pos = pos->next) {
+            if (pos->next == del) {
+                pos->next = del->next;
+                break;
+            }
         }
-        prev = t;
     }
-
     irq_restore(flag);
+}
+
+// Move a rescheduled timer to its new location in the list.  Returns
+// the next timer to run.
+static struct timer *
+reschedule_timer(struct timer *t)
+{
+    struct timer *pos = t->next;
+    uint32_t minwaketime = t->waketime + 1;
+    if (!pos || !sched_is_before(pos->waketime, minwaketime))
+        // Timer is still the first - no insertion needed
+        return t;
+
+    // Find new timer position and update list
+    timer_list = pos;
+    while (pos->next && sched_is_before(pos->next->waketime, minwaketime))
+        pos = pos->next;
+    t->next = pos->next;
+    pos->next = t;
+
+    if (CONFIG_MACH_AVR)
+        // micro optimization for AVR - reduces register pressure
+        barrier();
+    return timer_list;
 }
 
 // Invoke timers - called from board timer irq code.
@@ -150,10 +161,10 @@ sched_timer_kick(void)
             res = t->func(t);
 
         // Update timer_list (rescheduling current timer if necessary)
-        timer_list = t->next;
-        if (likely(res))
-            add_timer(t);
-        t = timer_list;
+        if (unlikely(res == SF_DONE))
+            t = timer_list = t->next;
+        else
+            t = reschedule_timer(t);
 
         // Schedule next timer event (or run next timer if it's ready)
         res = timer_try_set_next(t->waketime);
