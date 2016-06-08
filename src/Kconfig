@@ -21,6 +21,9 @@ config HAVE_GPIO_ADC
 config HAVE_GPIO_SPI
     bool
     default n
+config HAVE_GPIO_HARD_PWM
+    bool
+    default n
 
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler

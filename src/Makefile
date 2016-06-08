@@ -3,3 +3,4 @@
 src-y += sched.c command.c stepper.c basecmd.c gpiocmds.c endstop.c
 src-$(CONFIG_HAVE_GPIO_ADC) += adccmds.c
 src-$(CONFIG_HAVE_GPIO_SPI) += spicmds.c
+src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
