@@ -26,7 +26,7 @@ PYTHON=python
 
 # Source files
 src-y=sched.c command.c stepper.c basecmd.c gpiocmds.c spicmds.c endstop.c
-DIRS=src src/avr src/simulator src/generic lib/pjrc_usb_serial
+dirs-y=src
 
 # Default compiler flags
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
@@ -70,6 +70,7 @@ $(OUT)%.o: %.c $(OUT)autoconf.h $(OUT)board-link
 
 $(OUT)board-link: $(KCONFIG_CONFIG)
 	@echo "  Creating symbolic link $(OUT)board"
+	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
 	$(Q)touch $@
 	$(Q)ln -Tsf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
@@ -98,7 +99,6 @@ $(OUT)klipper.elf: $(OUT)klipper.o $(OUT)compile_time_request.o
 define do-kconfig
 $(Q)mkdir -p $(OUT)/scripts/kconfig/lxdialog
 $(Q)mkdir -p $(OUT)/include/config
-$(Q)mkdir -p $(addprefix $(OUT), $(DIRS))
 $(Q)$(MAKE) -C $(OUT) -f $(CURDIR)/scripts/kconfig/Makefile srctree=$(CURDIR) src=scripts/kconfig obj=scripts/kconfig Q=$(Q) Kconfig=$(CURDIR)/src/Kconfig $1
 endef
 
@@ -122,4 +122,4 @@ clean:
 distclean: clean
 	$(Q)rm -f .config .config.old
 
--include $(patsubst %,$(OUT)%/*.d,$(DIRS))
+-include $(patsubst %,$(OUT)%/*.d,$(dirs-y))

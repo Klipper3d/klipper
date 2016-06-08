@@ -3,6 +3,8 @@
 # Use the avr toolchain
 CROSS_PREFIX=avr-
 
+dirs-y += src/avr lib/pjrc_usb_serial
+
 CFLAGS-y += -mmcu=$(CONFIG_MCU) -DF_CPU=$(CONFIG_CLOCK_FREQ)
 LDFLAGS-y += -Wl,--relax
 
