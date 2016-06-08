@@ -15,8 +15,12 @@
 #define __noreturn __attribute__((noreturn))
 
 #define PACKED __attribute__((packed))
+#ifndef __aligned
 #define __aligned(x) __attribute__((aligned(x)))
+#endif
+#ifndef __section
 #define __section(S) __attribute__((section(S)))
+#endif
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
