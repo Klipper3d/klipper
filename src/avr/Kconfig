@@ -6,6 +6,7 @@ config AVR_SELECT
     bool
     default y
     select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
 
 config BOARD_DIRECTORY
     string
