@@ -25,8 +25,8 @@ CPP=cpp
 PYTHON=python
 
 # Source files
-src-y=sched.c command.c stepper.c basecmd.c gpiocmds.c spicmds.c endstop.c
-dirs-y=src
+src-y =
+dirs-y = src
 
 # Default compiler flags
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
@@ -58,6 +58,7 @@ MAKEFLAGS += --no-print-directory
 endif
 
 # Include board specific makefile
+include src/Makefile
 -include src/$(patsubst "%",%,$(CONFIG_BOARD_DIRECTORY))/Makefile
 
 ################ Common build rules

@@ -2,6 +2,11 @@
 
 if MACH_AVR
 
+config AVR_SELECT
+    bool
+    default y
+    select HAVE_GPIO_ADC
+
 config BOARD_DIRECTORY
     string
     default "avr"
