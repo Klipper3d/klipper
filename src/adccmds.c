@@ -6,7 +6,7 @@
 
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // struct gpio_adc
-#include "board/irq.h" // irq_save
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
 
@@ -90,15 +90,15 @@ analog_in_task(void)
     foreach_oid(oid, a, command_config_analog_in) {
         if (a->state != a->sample_count)
             continue;
-        uint8_t flag = irq_save();
+        irq_disable();
         if (a->state != a->sample_count) {
-            irq_restore(flag);
+            irq_enable();
             continue;
         }
         uint16_t value = a->value;
         uint32_t next_begin_time = a->next_begin_time;
         a->state++;
-        irq_restore(flag);
+        irq_enable();
         sendf("analog_in_state oid=%c next_clock=%u value=%hu"
               , oid, next_begin_time, value);
     }

@@ -8,7 +8,7 @@
 #include "autoconf.h" // CONFIG_*
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // gpio_out_write
-#include "board/irq.h" // irq_save
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "stepper.h" // command_config_stepper
@@ -113,7 +113,7 @@ command_queue_step(uint32_t *args)
     m->next = NULL;
     m->flags = 0;
 
-    uint8_t flag = irq_save();
+    irq_disable();
     if (!!(s->flags & SF_LAST_DIR) != !!(s->flags & SF_NEXT_DIR)) {
         s->flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
@@ -129,7 +129,7 @@ command_queue_step(uint32_t *args)
         stepper_load_next(s);
         sched_timer(&s->time);
     }
-    irq_restore(flag);
+    irq_enable();
 }
 DECL_COMMAND(command_queue_step,
              "queue_step oid=%c interval=%u count=%hu add=%hi");

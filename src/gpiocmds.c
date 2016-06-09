@@ -6,7 +6,7 @@
 
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // struct gpio_out
-#include "board/irq.h" // irq_save
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_timer
 
@@ -188,7 +188,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
         if (s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;
     }
-    uint8_t flag = irq_save();
+    irq_disable();
     if (s->flags & SPF_CHECK_END && sched_is_before(s->end_time, time))
         shutdown("next soft pwm extends existing pwm");
     s->end_time = time;
@@ -204,7 +204,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
         s->timer.func = soft_pwm_load_event;
         sched_timer(&s->timer);
     }
-    irq_restore(flag);
+    irq_enable();
 }
 DECL_COMMAND(command_schedule_soft_pwm_out,
              "schedule_soft_pwm_out oid=%c clock=%u value=%c");

@@ -7,7 +7,7 @@
 #include <stddef.h> // offsetof
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // struct gpio
-#include "board/irq.h" // irq_save
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "stepper.h" // stepper_stop
@@ -73,11 +73,11 @@ DECL_COMMAND(command_end_stop_home,
 static void
 end_stop_report(uint8_t oid, struct end_stop *e)
 {
-    uint8_t flag = irq_save();
+    irq_disable();
     uint32_t position = stepper_get_position(e->stepper);
     uint8_t eflags = e->flags;
     e->flags &= ~ESF_REPORT;
-    irq_restore(flag);
+    irq_enable();
 
     sendf("end_stop_state oid=%c homing=%c pin=%c pos=%i"
           , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin)
