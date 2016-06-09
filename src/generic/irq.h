@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 
+typedef unsigned long irqstatus_t;
+
 void irq_disable(void);
 void irq_enable(void);
-uint8_t irq_save(void);
-void irq_restore(uint8_t flag);
+irqstatus_t irq_save(void);
+void irq_restore(irqstatus_t flag);
 
 #endif // irq.h

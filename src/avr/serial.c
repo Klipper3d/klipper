@@ -89,7 +89,7 @@ console_pop_input(uint8_t len)
                     , needcopy - copied);
             copied = needcopy;
         }
-        uint8_t flag = irq_save();
+        irqstatus_t flag = irq_save();
         if (rpos != readb(&receive_pos)) {
             // Raced with irq handler - retry
             irq_restore(flag);

@@ -15,13 +15,15 @@ static inline void irq_enable(void) {
     sei();
 }
 
-static inline uint8_t irq_save(void) {
+typedef uint8_t irqstatus_t;
+
+static inline irqstatus_t irq_save(void) {
     uint8_t flag = SREG;
     irq_disable();
     return flag;
 }
 
-static inline void irq_restore(uint8_t flag) {
+static inline void irq_restore(irqstatus_t flag) {
     barrier();
     SREG = flag;
 }

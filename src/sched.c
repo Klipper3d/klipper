@@ -43,7 +43,7 @@ uint8_t
 sched_check_periodic(uint16_t time, uint16_t *pnext)
 {
     uint16_t next = *pnext, cur;
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     cur = millis;
     irq_restore(flag);
     if ((int16_t)(cur - next) < 0)
@@ -82,7 +82,7 @@ void
 sched_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     if (sched_is_before(waketime, timer_list->waketime)) {
         // This timer is the next - insert at front of list and reschedule
         add->next = timer_list;
@@ -105,7 +105,7 @@ sched_timer(struct timer *add)
 void
 sched_del_timer(struct timer *del)
 {
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     if (timer_list == del) {
         // Deleting the next active timer - delete and reschedule
         timer_list = del->next;

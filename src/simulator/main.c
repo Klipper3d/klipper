@@ -16,28 +16,32 @@
  * Interrupts
  ****************************************************************/
 
-uint8_t Interrupt_off;
+irqstatus_t Interrupt_off;
 
-void irq_disable(void)
+void
+irq_disable(void)
 {
     Interrupt_off = 1;
     barrier();
 }
 
-void irq_enable(void)
+void
+irq_enable(void)
 {
     barrier();
     Interrupt_off = 0;
 }
 
-uint8_t irq_save(void)
+irqstatus_t
+irq_save(void)
 {
-    uint8_t flag = Interrupt_off;
+    irqstatus_t flag = Interrupt_off;
     irq_disable();
     return flag;
 }
 
-void irq_restore(uint8_t flag)
+void
+irq_restore(irqstatus_t flag)
 {
     barrier();
     Interrupt_off = flag;

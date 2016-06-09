@@ -52,7 +52,7 @@ timer_init(void)
 {
     if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
         // Program the clock prescaler
-        uint8_t flag = irq_save();
+        irqstatus_t flag = irq_save();
         CLKPR = 0x80;
         CLKPR = CONFIG_AVR_CLKPR;
         irq_restore(flag);
@@ -100,7 +100,7 @@ timer_periodic(void)
 uint32_t
 timer_read_time(void)
 {
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     uint16_t cur = timer_get();
     uint32_t last = timer_last;
     irq_restore(flag);

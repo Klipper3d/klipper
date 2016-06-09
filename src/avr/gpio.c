@@ -143,7 +143,7 @@ gpio_out_setup(uint8_t pin, uint8_t val)
     if (! regs)
         goto fail;
     uint8_t bit = GPIO2BIT(pin);
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     regs->out = val ? (regs->out | bit) : (regs->out & ~bit);
     regs->mode |= bit;
     irq_restore(flag);
@@ -160,7 +160,7 @@ void gpio_out_toggle(struct gpio_out g)
 void
 gpio_out_write(struct gpio_out g, uint8_t val)
 {
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
     irq_restore(flag);
 }
@@ -174,7 +174,7 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     if (! regs)
         goto fail;
     uint8_t bit = GPIO2BIT(pin);
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     regs->out = pull_up > 0 ? (regs->out | bit) : (regs->out & ~bit);
     regs->mode &= ~bit;
     irq_restore(flag);
@@ -196,7 +196,7 @@ gpio_pwm_write(struct gpio_pwm g, uint8_t val)
     if (g.size8) {
         *(volatile uint8_t*)g.reg = val;
     } else {
-        uint8_t flag = irq_save();
+        irqstatus_t flag = irq_save();
         *(volatile uint16_t*)g.reg = val;
         irq_restore(flag);
     }
@@ -210,7 +210,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
         if (READP(pwm_pins[chan]) != pin)
             continue;
         const struct gpio_pwm_info *p = &pwm_regs[chan];
-        uint8_t flags = READP(p->flags), cs;
+        irqstatus_t flags = READP(p->flags), cs;
         if (flags & GP_AFMT) {
             switch (cycle_time) {
             case 0        ...    8*510L - 1: cs = 1; break;
@@ -240,7 +240,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
             shutdown("Can not user timer1 for PWM; timer1 is used for timers");
 
         // Setup PWM timer
-        uint8_t flag = irq_save();
+        irqstatus_t flag = irq_save();
         uint8_t old_cs = *regb & 0x07;
         if (old_cs && old_cs != cs)
             shutdown("PWM already programmed at different speed");

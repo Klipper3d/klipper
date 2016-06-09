@@ -30,7 +30,7 @@ move_free(struct move *m)
 struct move *
 move_alloc(void)
 {
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     struct move *m = move_free_list;
     if (!m)
         shutdown("Move queue empty");
@@ -231,7 +231,7 @@ void
 command_debug_read16(uint32_t *args)
 {
     uint16_t *ptr = (void*)(size_t)args[0];
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     uint16_t v = *ptr;
     irq_restore(flag);
     sendf("debug_result val=%hu", v);
@@ -251,7 +251,7 @@ void
 command_debug_write16(uint32_t *args)
 {
     uint16_t *ptr = (void*)(size_t)args[0];
-    uint8_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     *ptr = args[1];
     irq_restore(flag);
 }
