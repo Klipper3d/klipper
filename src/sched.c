@@ -234,7 +234,7 @@ run_shutdown(void)
 
 // Shutdown the machine if not already in the process of shutting down
 void
-sched_try_shutdown(uint16_t reason)
+sched_try_shutdown(unsigned int reason)
 {
     if (shutdown_status != 2)
         sched_shutdown(reason);
@@ -244,7 +244,7 @@ static jmp_buf shutdown_jmp;
 
 // Force the machine to immediately run the shutdown handlers
 void
-sched_shutdown(uint16_t reason)
+sched_shutdown(unsigned int reason)
 {
     irq_disable();
     shutdown_reason = reason;
