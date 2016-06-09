@@ -22,13 +22,13 @@ struct digital_out_s {
     uint8_t value, default_value;
 };
 
-static uint8_t
+static uint_fast8_t
 digital_end_event(struct timer *timer)
 {
     shutdown("Missed scheduling of next pin event");
 }
 
-static uint8_t
+static uint_fast8_t
 digital_out_event(struct timer *timer)
 {
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
@@ -103,10 +103,10 @@ enum {
     SPF_NEXT_ON=1<<4, SPF_NEXT_TOGGLING=1<<5, SPF_NEXT_CHECK_END=1<<6,
 };
 
-static uint8_t soft_pwm_load_event(struct timer *timer);
+static uint_fast8_t soft_pwm_load_event(struct timer *timer);
 
 // Normal pulse change event
-static uint8_t
+static uint_fast8_t
 soft_pwm_toggle_event(struct timer *timer)
 {
     struct soft_pwm_s *s = container_of(timer, struct soft_pwm_s, timer);
@@ -127,7 +127,7 @@ soft_pwm_toggle_event(struct timer *timer)
 }
 
 // Load next pwm settings
-static uint8_t
+static uint_fast8_t
 soft_pwm_load_event(struct timer *timer)
 {
     struct soft_pwm_s *s = container_of(timer, struct soft_pwm_s, timer);

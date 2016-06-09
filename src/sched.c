@@ -25,7 +25,7 @@ static uint16_t millis;
 // also simplifies the timer code by ensuring there is always at least
 // one timer on the timer list and that there is always a timer not
 // more than 1 ms in the future.
-static uint8_t
+static uint_fast8_t
 ms_event(struct timer *t)
 {
     millis++;
@@ -154,7 +154,7 @@ sched_timer_kick(void)
     struct timer *t = timer_list;
     for (;;) {
         // Invoke timer callback
-        uint8_t res;
+        uint_fast8_t res;
         if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func))
             res = stepper_event(t);
         else

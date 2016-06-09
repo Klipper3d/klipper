@@ -5,7 +5,7 @@
 
 enum { STEPPER_POSITION_BIAS=0x40000000 };
 
-uint8_t stepper_event(struct timer *t);
+uint_fast8_t stepper_event(struct timer *t);
 void command_config_stepper(uint32_t *args);
 struct stepper;
 uint32_t stepper_get_position(struct stepper *s);

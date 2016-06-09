@@ -15,7 +15,7 @@
 // Timer structure for scheduling timed events (see sched_timer() )
 struct timer {
     struct timer *next;
-    uint8_t (*func)(struct timer*);
+    uint_fast8_t (*func)(struct timer*);
     uint32_t waketime;
 };
 

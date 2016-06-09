@@ -156,7 +156,7 @@ DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 
 static struct timer group_timer;
 
-static uint8_t
+static uint_fast8_t
 group_end_event(struct timer *timer)
 {
     shutdown("Missed scheduling of next event");

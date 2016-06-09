@@ -35,7 +35,7 @@ enum { MF_DIR=1 };
 enum { SF_LAST_DIR=1, SF_NEXT_DIR=2, SF_INVERT_STEP=4, SF_HAVE_ADD=8 };
 
 // Setup a stepper for the next move in its queue
-static uint8_t
+static uint_fast8_t
 stepper_load_next(struct stepper *s)
 {
     struct move *m = s->first;
@@ -64,7 +64,7 @@ stepper_load_next(struct stepper *s)
 }
 
 // Timer callback - step the given stepper.
-uint8_t
+uint_fast8_t
 stepper_event(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
@@ -78,7 +78,7 @@ stepper_event(struct timer *t)
             s->interval += s->add;
         return SF_RESCHEDULE;
     }
-    uint8_t ret = stepper_load_next(s);
+    uint_fast8_t ret = stepper_load_next(s);
     gpio_out_toggle(s->step_pin);
     return ret;
 }

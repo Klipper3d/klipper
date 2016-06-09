@@ -23,7 +23,7 @@ struct end_stop {
 enum { ESF_HOMING=1, ESF_REPORT=2 };
 
 // Timer callback for an end stop
-static uint8_t
+static uint_fast8_t
 end_stop_event(struct timer *t)
 {
     struct end_stop *e = container_of(t, struct end_stop, time);
