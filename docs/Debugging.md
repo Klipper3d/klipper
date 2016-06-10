@@ -33,12 +33,11 @@ make menuconfig
 ```
 
 and compile the firmware for an AVR atmega644p, disable the AVR
-watchdog timer, set the MCU frequency to 20000000, and set the serial
-baud rate to 115200. Then one can compile Klipper (run `make`) and
-then start the simulation with:
+watchdog timer, and set the MCU frequency to 20000000. Then one can
+compile Klipper (run `make`) and then start the simulation with:
 
 ```
-PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 115200 out/klipper.elf
+PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf
 ```
 
 It may be necessary to create a python virtual environment to run
@@ -66,7 +65,7 @@ the directions above, but run avrsim.py with a command-line like the
 following:
 
 ```
-PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 115200 out/klipper.elf -t PORTA.PORT,PORTC.PORT
+PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf -t PORTA.PORT,PORTC.PORT
 ```
 
 The above would create a file **avrsim.vcd** with information on each
@@ -86,5 +85,5 @@ commands (functions marked with the DECL_COMMAND() macro in the
 Klipper source code). To do so, run:
 
 ```
-~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial 115200
+~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial 250000
 ```
