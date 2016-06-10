@@ -5,7 +5,7 @@ CROSS_PREFIX=avr-
 
 dirs-y += src/avr lib/pjrc_usb_serial
 
-CFLAGS-y += -mmcu=$(CONFIG_MCU) -DF_CPU=$(CONFIG_CLOCK_FREQ)
+CFLAGS-y += -Os -mmcu=$(CONFIG_MCU) -DF_CPU=$(CONFIG_CLOCK_FREQ)
 LDFLAGS-y += -Wl,--relax
 
 # Add avr source files
