@@ -42,7 +42,7 @@ struct callback_handler {
 };
 #define _DECL_CALLBACK(NAME, FUNC)                                      \
     const struct callback_handler _DECL_ ## NAME ## _ ## FUNC __visible \
-    __section(".progmem.data." __stringify(NAME) ) = { .func = FUNC }
+    __section(".rodata." __stringify(NAME) ) = { .func = FUNC }
 
 #define foreachdecl(ITER, NAME)                                 \
     extern typeof(*ITER) NAME ## _start[], NAME ## _end[];      \

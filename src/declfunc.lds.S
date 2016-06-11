@@ -1,13 +1,21 @@
 // Linker script that defines symbols around sections.  The DECL_X()
 // macros need this linker script to place _start and _end symbols
 // around the list of declared items.
+#include "autoconf.h" // CONFIG_MACH_AVR
+#include "compiler.h" // __PASTE
+
+#if CONFIG_MACH_AVR
+#define DECL_SECTION .progmem.data.
+#else
+#define DECL_SECTION .rodata.
+#endif
 
 #define DECLWRAPPER(NAME)                       \
-    .progmem.data. ## NAME : SUBALIGN(1) {      \
+    __PASTE(DECL_SECTION, NAME) : SUBALIGN(1) { \
         NAME ## _start = . ;                    \
-        *( .progmem.data. ## NAME ##.pre* )     \
-        *( .progmem.data. ## NAME ##* )         \
-        *( .progmem.data. ## NAME ##.post* )    \
+        *( .rodata. ## NAME ##.pre* )           \
+        *( .rodata. ## NAME ##* )               \
+        *( .rodata. ## NAME ##.post* )          \
         NAME ## _end = . ;                      \
     }
 
@@ -22,5 +30,8 @@ SECTIONS
     }
     .compile_time_request.parsers 0 (INFO) : {
         *( .compile_time_request.parsers )
+    }
+    .compile_time_request (INFO) : {
+        *( .compile_time_request )
     }
 }
