@@ -63,6 +63,13 @@ ISR(USART0_UDRE_vect)
         UDR0 = transmit_buf[transmit_pos++];
 }
 
+// Enable tx interrupts
+static void
+enable_tx_irq(void)
+{
+    UCSR0B |= 1<<UDRIE0;
+}
+
 
 /****************************************************************
  * Console access functions
@@ -124,7 +131,7 @@ console_get_output(uint8_t len)
     writeb(&transmit_pos, 0);
     barrier();
     writeb(&transmit_max, tmax);
-    UCSR0B |= 1<<UDRIE0;
+    enable_tx_irq();
     return &transmit_buf[tmax];
 }
 
@@ -133,6 +140,5 @@ void
 console_push_output(uint8_t len)
 {
     writeb(&transmit_max, readb(&transmit_max) + len);
-    // enable TX interrupt
-    UCSR0B |= 1<<UDRIE0;
+    enable_tx_irq();
 }
