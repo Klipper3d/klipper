@@ -273,7 +273,7 @@ def stk500v2_leave(ser):
     logging.debug("Starting stk500v2 leave programmer sequence")
     origbaud = ser.baudrate
     # Request a dummy speed first as this seems to help reset the port
-    ser.baudrate = 1200
+    ser.baudrate = 2400
     ser.read(1)
     # Send stk500v2 leave programmer sequence
     ser.baudrate = 115200
