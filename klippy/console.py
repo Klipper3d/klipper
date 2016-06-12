@@ -19,16 +19,26 @@ class KeyboardReader:
         self.pins = None
         self.data = ""
         self.reactor.register_fd(self.fd, self.process_kbd)
-        self.local_commands = { "PINS": self.set_pin_map }
+        self.local_commands = { "PINS": self.set_pin_map, "SET": self.set_var }
         self.eval_globals = {}
     def update_evals(self, eventtime):
         f = self.ser.msgparser.config.get('CLOCK_FREQ', 1)
-        c = (eventtime - self.ser.last_ack_time) * f + self.ser.last_ack_clock
+        c = self.ser.get_clock(eventtime)
         self.eval_globals['freq'] = f
         self.eval_globals['clock'] = int(c)
     def set_pin_map(self, parts):
         mcu = self.ser.msgparser.config['MCU']
         self.pins = pins.map_pins(parts[1], mcu)
+    def set_var(self, parts):
+        val = parts[2]
+        try:
+            val = int(val)
+        except ValueError:
+            try:
+                val = float(val)
+            except ValueError:
+                pass
+        self.eval_globals[parts[1]] = val
     def lookup_pin(self, value):
         if self.pins is None:
             self.pins = pins.mcu_to_pins(self.ser.msgparser.config['MCU'])
