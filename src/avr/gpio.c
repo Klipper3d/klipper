@@ -137,7 +137,7 @@ static const uint8_t ADMUX_DEFAULT = 0x40;
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)
 {
-    if (GPIO2PORT(pin) > ARRAY_SIZE(digital_regs))
+    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     struct gpio_digital_regs *regs = GPIO2REGS(pin);
     if (! regs)
@@ -168,7 +168,7 @@ gpio_out_write(struct gpio_out g, uint8_t val)
 struct gpio_in
 gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
-    if (GPIO2PORT(pin) > ARRAY_SIZE(digital_regs))
+    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     struct gpio_digital_regs *regs = GPIO2REGS(pin);
     if (! regs)
