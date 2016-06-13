@@ -22,7 +22,13 @@ struct stepper {
     struct timer time;
     uint32_t interval;
     int16_t add;
+#if CONFIG_NO_UNSTEP_DELAY
     uint16_t count;
+#define next_step_time time.waketime
+#else
+    uint32_t count;
+    uint32_t next_step_time;
+#endif
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move *first, **plast;
@@ -36,7 +42,7 @@ enum { SF_LAST_DIR=1, SF_NEXT_DIR=2, SF_INVERT_STEP=4, SF_HAVE_ADD=8 };
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
-stepper_load_next(struct stepper *s)
+stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     struct move *m = s->first;
     if (!m) {
@@ -46,16 +52,32 @@ stepper_load_next(struct stepper *s)
         return SF_DONE;
     }
 
-    s->time.waketime += m->interval;
+    s->next_step_time += m->interval;
     s->add = m->add;
     s->interval = m->interval + m->add;
-    s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
-    s->count = m->count;
+    if (CONFIG_NO_UNSTEP_DELAY) {
+        // On slow mcus see if the add can be optimized away
+        s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
+        s->count = m->count;
+    } else {
+        // On faster mcus, it is necessary to schedule unstep events
+        // and so there are twice as many events.  Also check that the
+        // next step event isn't too close to the last unstep.
+        if (unlikely(sched_is_before(s->next_step_time, min_next_time))) {
+            if ((int32_t)(s->next_step_time - min_next_time)
+                < (int32_t)(-sched_from_us(1000)))
+                shutdown("stepper too far in past");
+            s->time.waketime = min_next_time;
+        } else {
+            s->time.waketime = s->next_step_time;
+        }
+        s->count = m->count * 2;
+    }
     if (m->flags & MF_DIR) {
-        s->position = -s->position + s->count;
+        s->position = -s->position + m->count;
         gpio_out_toggle(s->dir_pin);
     } else {
-        s->position += s->count;
+        s->position += m->count;
     }
 
     s->first = m->next;
@@ -63,24 +85,51 @@ stepper_load_next(struct stepper *s)
     return SF_RESCHEDULE;
 }
 
+#define UNSTEP_TIME sched_from_us(1)
+
 // Timer callback - step the given stepper.
 uint_fast8_t
 stepper_event(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
-    gpio_out_toggle(s->step_pin);
-    uint16_t count = s->count - 1;
-    if (likely(count)) {
-        s->count = count;
-        s->time.waketime += s->interval;
+    if (CONFIG_NO_UNSTEP_DELAY) {
+        // On slower mcus it is possible to simply step and unstep in
+        // the same timer event.
         gpio_out_toggle(s->step_pin);
-        if (s->flags & SF_HAVE_ADD)
-            s->interval += s->add;
+        uint16_t count = s->count - 1;
+        if (likely(count)) {
+            s->count = count;
+            s->time.waketime += s->interval;
+            gpio_out_toggle(s->step_pin);
+            if (s->flags & SF_HAVE_ADD)
+                s->interval += s->add;
+            return SF_RESCHEDULE;
+        }
+        uint_fast8_t ret = stepper_load_next(s, 0);
+        gpio_out_toggle(s->step_pin);
+        return ret;
+    }
+
+    // On faster mcus, it is necessary to schedule the unstep event
+    uint32_t min_next_time = sched_read_time() + UNSTEP_TIME;
+    gpio_out_toggle(s->step_pin);
+    s->count--;
+    if (likely(s->count & 1))
+        // Schedule unstep event
+        goto reschedule_min;
+    if (likely(s->count)) {
+        s->next_step_time += s->interval;
+        s->interval += s->add;
+        if (unlikely(sched_is_before(s->next_step_time, min_next_time)))
+            // The next step event is too close - push it back
+            goto reschedule_min;
+        s->time.waketime = s->next_step_time;
         return SF_RESCHEDULE;
     }
-    uint_fast8_t ret = stepper_load_next(s);
-    gpio_out_toggle(s->step_pin);
-    return ret;
+    return stepper_load_next(s, min_next_time);
+reschedule_min:
+    s->time.waketime = min_next_time;
+    return SF_RESCHEDULE;
 }
 
 void
@@ -126,7 +175,7 @@ command_queue_step(uint32_t *args)
         s->plast = &m->next;
     } else {
         s->first = m;
-        stepper_load_next(s);
+        stepper_load_next(s, s->next_step_time + m->interval);
         sched_timer(&s->time);
     }
     irq_enable();
@@ -154,7 +203,7 @@ command_reset_step_clock(uint32_t *args)
     uint32_t waketime = args[1];
     if (s->count)
         shutdown("Can't reset time when stepper active");
-    s->time.waketime = waketime;
+    s->next_step_time = waketime;
 }
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
 
@@ -162,7 +211,11 @@ DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
 uint32_t
 stepper_get_position(struct stepper *s)
 {
-    uint32_t position = s->position - s->count;
+    uint32_t position = s->position;
+    if (CONFIG_NO_UNSTEP_DELAY)
+        position -= s->count;
+    else
+        position -= s->count / 2;
     if (position & 0x80000000)
         return -position;
     return position;

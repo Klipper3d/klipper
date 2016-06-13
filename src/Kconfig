@@ -25,6 +25,13 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 
+config NO_UNSTEP_DELAY
+    # Slow micro-controllers do not require a delay before returning a
+    # stepper step pin to its default level.  A board can enable this
+    # option to optimize the stepper_event() handler in this case.
+    bool
+    default n
+
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
     bool
