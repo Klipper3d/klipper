@@ -23,7 +23,9 @@ following commands:
 
 ```
 sudo apt-get update
-sudo apt-get install avrdude gcc-avr binutils-avr avr-libc libncurses-dev
+sudo apt-get install libncurses-dev
+sudo apt-get install avrdude gcc-avr binutils-avr avr-libc # AVR toolchain
+sudo apt-get install bossa-cli libnewlib-arm-none-eabi # ARM toolchain
 ```
 
 The host software (Klippy) requires a one-time setup - run as the
@@ -60,8 +62,8 @@ make
 Ignore any warnings you may see about "misspelled signal handler" (it
 is due to a bug fixed in gcc v4.8.3).
 
-Installing Klipper on a micro-controller
-----------------------------------------
+Installing Klipper on an AVR micro-controller
+---------------------------------------------
 
 The avrdude package can be used to install the micro-controller code
 on an AVR ATmega chip. The exact syntax of the avrdude command is
@@ -70,6 +72,19 @@ command for atmega2560 chips:
 
 ```
 example-only$ avrdude -C/etc/avrdude.conf -v -patmega2560 -cwiring -P/dev/ttyACM0 -b115200 -D -Uflash:w:/home/pi/klipper/out/klipper.elf.hex:i
+```
+
+Installing Klipper on an Arduino Due
+------------------------------------
+
+Klipper currently uses the Arduino Due USB programming port (it will
+not work when connected to the application USB port). The programming
+port is the USB port closest to the power supply. To flash Klipper to
+the Due connect it to the host machine and run:
+
+```
+stty -F /dev/ttyACM0 1200
+bossac -i -p ttyACM0 -R -e -w -v -b ~/klipper/out/klipper.bin
 ```
 
 Setting up the printer configuration
