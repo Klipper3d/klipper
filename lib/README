@@ -2,5 +2,11 @@ This directory contains external library code.
 
 The pjrc_usb_serial directory contains code from:
   http://www.pjrc.com/teensy/usb_serial.html
-it has been modified to compile on recent versions of gcc. See
-usb_serial.patch for the modifications.
+version 1.7 (extracted on 20160605). It has been modified to compile
+on recent versions of gcc. See usb_serial.patch for the modifications.
+
+The cmsis-sam3x8e directory contains code from the Arduino project:
+  https://www.arduino.cc/
+version 1.5.1 (extracted on 20160608).  It has been modified to
+compile with gcc's LTO feature. See cmsis-sam3x8e.patch for the
+modifications.
