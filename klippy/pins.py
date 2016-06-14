@@ -6,23 +6,24 @@
 
 import re
 
-def avr_pins(port_count):
+def port_pins(port_count, bit_count=8):
     pins = {}
     for port in range(port_count):
         portchr = chr(65 + port)
         if portchr == 'I':
             continue
-        for portbit in range(8):
-            pins['P%c%d' % (portchr, portbit)] = port * 8 + portbit
+        for portbit in range(bit_count):
+            pins['P%c%d' % (portchr, portbit)] = port * bit_count + portbit
     return pins
 
-PINS_atmega164 = avr_pins(4)
-PINS_atmega1280 = avr_pins(12)
+PINS_atmega164 = port_pins(4)
+PINS_atmega1280 = port_pins(12)
 
 MCU_PINS = {
     "atmega168": PINS_atmega164, "atmega644p": PINS_atmega164,
-    "at90usb1286": avr_pins(5),
+    "at90usb1286": port_pins(5),
     "atmega1280": PINS_atmega1280, "atmega2560": PINS_atmega1280,
+    "sam3x8e": port_pins(4, 32)
 }
 
 def mcu_to_pins(mcu):

@@ -6,11 +6,14 @@ choice
     prompt "Micro-controller Architecture"
     config MACH_AVR
         bool "Atmega AVR"
+    config MACH_SAM3X8E
+        bool "SAM3x8e (Arduino Due)"
     config MACH_SIMU
         bool "Host simulator"
 endchoice
 
 source "src/avr/Kconfig"
+source "src/sam3x8e/Kconfig"
 source "src/simulator/Kconfig"
 
 # The HAVE_GPIO_x options allow boards to disable support for some
@@ -35,5 +38,4 @@ config NO_UNSTEP_DELAY
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
     bool
-    default y if MACH_AVR
-    default n
+    default y
