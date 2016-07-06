@@ -13,48 +13,30 @@ import lookahead, stepper, homing
 StepList = (0, 1, 2, 3)
 
 class Move:
-    def __init__(self, kin, relsteps, speed):
+    def __init__(self, kin, pos, move_d, axes_d, speed, accel):
         self.kin = kin
-        self.relsteps = relsteps
-        self.junction_max = self.junction_start_max = self.junction_delta = 0.
-        # Calculate requested distance to travel (in mm)
-        steppers = self.kin.steppers
-        absrelsteps = [abs(relsteps[i]) for i in StepList]
-        stepper_d = [absrelsteps[i] * steppers[i].step_dist
-                     for i in StepList]
-        self.move_d = math.sqrt(sum([d*d for d in stepper_d[:3]]))
-        if not self.move_d:
-            self.move_d = stepper_d[3]
-            if not self.move_d:
-                return
-        # Limit velocity to max for each stepper
-        velocity_factor = min([steppers[i].max_step_velocity / absrelsteps[i]
-                               for i in StepList if absrelsteps[i]])
-        move_v = min(speed, velocity_factor * self.move_d)
-        self.junction_max = move_v**2
-        # Find max acceleration factor
-        accel_factor = min([steppers[i].max_step_accel / absrelsteps[i]
-                            for i in StepList if absrelsteps[i]])
-        accel = min(self.kin.max_accel, accel_factor * self.move_d)
-        self.junction_delta = 2.0 * self.move_d * accel
+        self.pos = tuple(pos)
+        self.axes_d = axes_d
+        self.move_d = move_d
+        self.junction_max = speed**2
+        self.junction_delta = 2.0 * move_d * accel
+        self.junction_start_max = 0.
     def calc_junction(self, prev_move):
         # Find max start junction velocity using approximated
         # centripetal velocity as described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
-        if not prev_move.move_d or self.relsteps[2] or prev_move.relsteps[2]:
+        if not prev_move.move_d:
             return
-        steppers = self.kin.steppers
-        junction_cos_theta = -sum([
-            self.relsteps[i] * prev_move.relsteps[i] * steppers[i].step_dist**2
-            for i in range(2)]) / (self.move_d * prev_move.move_d)
+        junction_cos_theta = -((self.axes_d[0] * prev_move.axes_d[0]
+                                + self.axes_d[1] * prev_move.axes_d[1])
+                               / (self.move_d * prev_move.move_d))
         if junction_cos_theta > 0.999999:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta));
         R = self.kin.junction_deviation * sin_theta_d2 / (1.0 - sin_theta_d2)
-        accel = self.junction_delta / (2.0 * self.move_d)
         self.junction_start_max = min(
-            accel * R, self.junction_max, prev_move.junction_max)
+            R * self.kin.max_xy_accel, self.junction_max, prev_move.junction_max)
     def process(self, junction_start, junction_end):
         # Determine accel, cruise, and decel portions of the move
         junction_cruise = self.junction_max
@@ -84,9 +66,12 @@ class Move:
         # Calculate step times for the move
         next_move_time = self.kin.get_next_move_time()
         for i in StepList:
-            steps = self.relsteps[i]
+            new_step_pos = int(self.pos[i]*self.kin.steppers[i].inv_step_dist
+                               + 0.5)
+            steps = new_step_pos - self.kin.stepper_pos[i]
             if not steps:
                 continue
+            self.kin.stepper_pos[i] = new_step_pos
             sdir = 0
             if steps < 0:
                 sdir = 1
@@ -133,13 +118,15 @@ class CartKinematics:
         steppers = ['stepper_x', 'stepper_y', 'stepper_z', 'stepper_e']
         self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
                          for n in steppers]
-        self.max_accel = min(s.max_step_accel*s.step_dist
-                             for s in self.steppers[:2]) # XXX
-        dummy_move = Move(self, [0]*len(self.steppers), 0.)
-        dummy_move.junction_max = 0.
+        self.max_xy_speed = min(s.max_step_velocity*s.step_dist
+                                for s in self.steppers[:2])
+        self.max_xy_accel = min(s.max_step_accel*s.step_dist
+                                for s in self.steppers[:2])
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
+        dummy_move = Move(self, [0.]*4, 0., [0.]*4, 0., 0.)
         self.move_queue = lookahead.MoveQueue(dummy_move)
-        self.pos = [0, 0, 0, 0]
+        self.commanded_pos = [0., 0., 0., 0.]
+        self.stepper_pos = [0, 0, 0, 0]
         # Print time tracking
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
         self.buffer_time_low = config.getfloat('buffer_time_low', 0.150)
@@ -214,24 +201,50 @@ class CartKinematics:
             self.print_time, buffer_time, self.print_time_stall)
     # Movement commands
     def get_position(self):
-        return [self.pos[i] * self.steppers[i].step_dist
-                for i in StepList]
+        return list(self.commanded_pos)
     def set_position(self, newpos):
-        self.pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
-                    for i in StepList]
+        self.move_queue.flush()
+        self.commanded_pos[:] = newpos
+        self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
+                            for i in StepList]
+    def _move_with_z(self, newpos, axes_d, speed):
+        self.move_queue.flush()
+        # Limit velocity to max for each stepper
+        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        velocity_factor = min(
+            [self.steppers[i].max_step_velocity
+             * self.steppers[i].step_dist / abs(axes_d[i])
+             for i in StepList if axes_d[i]])
+        speed = min(speed, self.max_xy_speed, velocity_factor * move_d)
+        # Find max acceleration factor
+        accel_factor = min(
+            [self.steppers[i].max_step_accel
+             * self.steppers[i].step_dist / abs(axes_d[i])
+             for i in StepList if axes_d[i]])
+        accel = min(self.max_xy_accel, accel_factor * move_d)
+        move = Move(self, newpos, move_d, axes_d, speed, accel)
+        move.process(0., 0.)
+    def _move_only_e(self, newpos, axes_d, speed):
+        self.move_queue.flush()
+        s = self.steppers[3]
+        speed = min(speed, self.max_xy_speed, s.max_step_velocity * s.step_dist)
+        accel = min(self.max_xy_accel, s.max_step_accel * s.step_dist)
+        move = Move(self, newpos, abs(axes_d[3]), axes_d, speed, accel)
+        move.process(0., 0.)
     def move(self, newpos, speed, sloppy=False):
-        # Round to closest step position
-        newpos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
-                  for i in StepList]
-        relsteps = [newpos[i] - self.pos[i] for i in StepList]
-        self.pos = newpos
-        if relsteps == [0]*len(newpos):
-            # no move
+        axes_d = [newpos[i] - self.commanded_pos[i] for i in StepList]
+        self.commanded_pos[:] = newpos
+        if axes_d[2]:
+            self._move_with_z(newpos, axes_d, speed)
             return
-        #logging.debug("; dist %s @ %d\n" % (
-        #    [newpos[i]*self.steppers[i].step_dist for i in StepList], speed))
-        # Create move and queue it
-        move = Move(self, relsteps, speed)
+        move_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
+        if not move_d:
+            if axes_d[3]:
+                self._move_only_e(newpos, axes_d, speed)
+            return
+        # Common xy move - create move and queue it
+        speed = min(speed, self.max_xy_speed)
+        move = Move(self, newpos, move_d, axes_d, speed, self.max_xy_accel)
         move.calc_junction(self.move_queue.prev_move())
         self.move_queue.add_move(move)
     def home(self, axis):
