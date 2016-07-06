@@ -174,11 +174,15 @@ compress_bisect_add(struct stepcompress *sc)
 
         // Check if a greater or lesser add could extend the sequence
         int32_t maxreach = add*addfactor + maxinterval*(count+1);
-        if (maxreach < point.minp)
+        if (maxreach < point.minp) {
+            minadd = add;
             origmaxinterval = maxinterval;
-        else
+        } else {
+            maxadd = add;
             origmininterval = mininterval;
+        }
 
+        // See if next point would further limit the add range
         if ((minadd+1)*addfactor + origmaxinterval*(count+1) < point.minp)
             minadd = idiv_up(point.minp - origmaxinterval*(count+1)
                              , addfactor) - 1;
