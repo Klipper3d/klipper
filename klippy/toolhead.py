@@ -4,12 +4,13 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, time
-import lookahead, cartesian
+import cartesian
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _t is time (in seconds), _r is ratio (scalar between
 #   0.0 and 1.0)
 
+# Class to track each move request
 class Move:
     def __init__(self, toolhead, pos, move_d, axes_d, speed, accel):
         self.toolhead = toolhead
@@ -49,11 +50,12 @@ class Move:
             cruise_r = 0.
             junction_cruise = junction_start + accel_r*self.junction_delta
         self.accel_r, self.cruise_r, self.decel_r = accel_r, cruise_r, decel_r
-        # Determine the move velocities and time spent in each portion
+        # Determine move velocities
         start_v = math.sqrt(junction_start)
         cruise_v = math.sqrt(junction_cruise)
         end_v = math.sqrt(junction_end)
         self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
+        # Determine time spent in each portion of move
         accel_t = 2.0 * self.move_d * accel_r / (start_v + cruise_v)
         cruise_t = self.move_d * cruise_r / cruise_v
         decel_t = 2.0 * self.move_d * decel_r / (end_v + cruise_v)
@@ -63,8 +65,56 @@ class Move:
         self.toolhead.kin.move(next_move_time, self)
         self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
 
+# Class to track a list of pending move requests and to facilitate
+# "look-ahead" across moves to reduce acceleration between moves.
+class MoveQueue:
+    def __init__(self, dummy_move):
+        self.dummy_move = dummy_move
+        self.queue = []
+        self.prev_junction_max = 0.
+        self.junction_flush = 0.
+    def prev_move(self):
+        if self.queue:
+            return self.queue[-1]
+        return self.dummy_move
+    def flush(self, lazy=False):
+        next_junction_max = 0.
+        can_flush = not lazy
+        flush_count = len(self.queue)
+        junction_end = [None] * flush_count
+        for i in range(len(self.queue)-1, -1, -1):
+            move = self.queue[i]
+            junction_end[i] = next_junction_max
+            if not can_flush:
+                flush_count -= 1
+            next_junction_max = next_junction_max + move.junction_delta
+            if next_junction_max >= move.junction_start_max:
+                next_junction_max = move.junction_start_max
+                can_flush = True
+        prev_junction_max = self.prev_junction_max
+        for i in range(flush_count):
+            move = self.queue[i]
+            next_junction_max = min(prev_junction_max + move.junction_delta
+                                    , junction_end[i])
+            move.process(prev_junction_max, next_junction_max)
+            prev_junction_max = next_junction_max
+        del self.queue[:flush_count]
+        self.prev_junction_max = prev_junction_max
+        self.junction_flush = 0.
+        if self.queue:
+            self.junction_flush = self.queue[-1].junction_max
+    def add_move(self, move):
+        self.queue.append(move)
+        if len(self.queue) == 1:
+            self.junction_flush = move.junction_max
+            return
+        self.junction_flush -= move.junction_delta
+        if self.junction_flush <= 0.:
+            self.flush(lazy=True)
+
 STALL_TIME = 0.100
 
+# Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
@@ -73,7 +123,7 @@ class ToolHead:
         self.max_xy_speed, self.max_xy_accel = self.kin.get_max_xy_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         dummy_move = Move(self, [0.]*4, 0., [0.]*4, 0., 0.)
-        self.move_queue = lookahead.MoveQueue(dummy_move)
+        self.move_queue = MoveQueue(dummy_move)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
