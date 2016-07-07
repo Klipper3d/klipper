@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
-import gcode, cartesian, util, mcu, fan, heater, reactor
+import gcode, toolhead, util, mcu, fan, heater, reactor
 
 class ConfigWrapper:
     def __init__(self, printer, section):
@@ -58,7 +58,7 @@ class Printer:
         if self.fileconfig.has_section('heater_bed'):
             self.objects['heater_bed'] = heater.PrinterHeater(
                 self, ConfigWrapper(self, 'heater_bed'))
-        self.objects['toolhead'] = cartesian.ToolHead(
+        self.objects['toolhead'] = toolhead.ToolHead(
             self, self._pconfig)
 
     def stats(self, eventtime):
