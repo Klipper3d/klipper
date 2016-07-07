@@ -25,7 +25,7 @@ class GCodeParser:
         self.gcode_handlers = {}
         self.is_shutdown = False
         self.need_ack = False
-        self.kin = self.heater_nozzle = self.heater_bed = self.fan = None
+        self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
         self.movemult = 1.0
         self.speed = 1.0
         self.absolutecoord = self.absoluteextrude = True
@@ -34,7 +34,7 @@ class GCodeParser:
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def build_config(self):
-        self.kin = self.printer.objects['kinematics']
+        self.toolhead = self.printer.objects['toolhead']
         self.heater_nozzle = self.printer.objects.get('heater_nozzle')
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
@@ -62,7 +62,7 @@ class GCodeParser:
         self.reactor.run()
     def finish(self):
         self.reactor.end()
-        self.kin.motor_off()
+        self.toolhead.motor_off()
         logging.debug('Completed translation by klippy')
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
@@ -103,8 +103,8 @@ class GCodeParser:
             # Check if machine can process next command or must stall input
             if self.busy_state is not None:
                 break
-            if self.kin.check_busy(eventtime):
-                self.set_busy(self.kin)
+            if self.toolhead.check_busy(eventtime):
+                self.set_busy(self.toolhead)
                 break
             self.ack()
         del self.input_commands[:i+1]
@@ -142,7 +142,7 @@ class GCodeParser:
     def busy_handler(self, eventtime):
         busy = self.busy_state.check_busy(eventtime)
         if busy:
-            self.kin.reset_motor_off_time(eventtime)
+            self.toolhead.reset_motor_off_time(eventtime)
             return eventtime + self.RETRY_TIME
         self.busy_state = None
         self.ack()
@@ -179,7 +179,7 @@ class GCodeParser:
             return
         self.set_busy(temp_busy_handler_wrapper())
     def set_temp(self, heater, params, wait=False):
-        print_time = self.kin.get_last_move_time()
+        print_time = self.toolhead.get_last_move_time()
         temp = float(params.get('S', '0'))
         heater.set_temp(print_time, temp)
         if wait:
@@ -209,14 +209,14 @@ class GCodeParser:
                     self.last_position[p] = v + self.base_position[p]
         if 'F' in params:
             self.speed = float(params['F']) / 60.
-        self.kin.move(self.last_position, self.speed, sloppy)
+        self.toolhead.move(self.last_position, self.speed, sloppy)
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
             delay = float(params['S'])
         else:
             delay = float(params.get('P', '0')) / 1000.
-        self.kin.dwell(delay)
+        self.toolhead.dwell(delay)
     def cmd_G20(self, params):
         # Set units to inches
         self.movemult = 25.4
@@ -231,9 +231,9 @@ class GCodeParser:
                 axis.append(self.axis2pos[a])
         if not axis:
             axis = [0, 1, 2]
-        busy_handler = self.kin.home(axis)
+        busy_handler = self.toolhead.home(axis)
         def axis_update(axis):
-            newpos = self.kin.get_position()
+            newpos = self.toolhead.get_position()
             for a in axis:
                 self.last_position[a] = newpos[a]
                 self.base_position[a] = -self.homing_add[a]
@@ -262,10 +262,10 @@ class GCodeParser:
         self.absoluteextrude = False
     def cmd_M18(self, params):
         # Turn off motors
-        self.kin.motor_off()
+        self.toolhead.motor_off()
     def cmd_M84(self, params):
         # Stop idle hold
-        self.kin.motor_off()
+        self.toolhead.motor_off()
     def cmd_M105(self, params):
         # Get Extruder Temperature
         self.ack(self.get_temp())
@@ -280,7 +280,7 @@ class GCodeParser:
         pass
     def cmd_M114(self, params):
         # Get Current Position
-        kinpos = self.kin.get_position()
+        kinpos = self.toolhead.get_position()
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f Count X:%.3f Y:%.3f Z:%.3f" % (
             self.last_position[0], self.last_position[1],
             self.last_position[2], self.last_position[3],
@@ -293,11 +293,11 @@ class GCodeParser:
         self.set_temp(self.heater_bed, params, wait=True)
     def cmd_M106(self, params):
         # Set fan speed
-        print_time = self.kin.get_last_move_time()
+        print_time = self.toolhead.get_last_move_time()
         self.fan.set_speed(print_time, float(params.get('S', '255')) / 255.)
     def cmd_M107(self, params):
         # Turn fan off
-        print_time = self.kin.get_last_move_time()
+        print_time = self.toolhead.get_last_move_time()
         self.fan.set_speed(print_time, 0)
     def cmd_M206(self, params):
         # Set home offset

@@ -7,8 +7,8 @@
 import logging
 
 class Homing:
-    def __init__(self, kin, steppers):
-        self.kin = kin
+    def __init__(self, toolhead, steppers):
+        self.toolhead = toolhead
         self.steppers = steppers
 
         self.states = []
@@ -48,27 +48,27 @@ class Homing:
 
     def do_move(self, axis_pos, speed):
         # Issue a move command to axis_pos
-        newpos = self.kin.get_position()
+        newpos = self.toolhead.get_position()
         for axis, pos in axis_pos.items():
             newpos[axis] = pos
-        self.kin.move(newpos, speed)
+        self.toolhead.move(newpos, speed)
         return False
     def do_home(self, axis_pos, speed):
         # Alter kinematics class to think printer is at axis_pos
-        newpos = self.kin.get_position()
+        newpos = self.toolhead.get_position()
         forcepos = list(newpos)
         for axis, pos in axis_pos.items():
             newpos[axis] = self.steppers[axis].position_endstop
             forcepos[axis] = pos
-        self.kin.set_position(forcepos)
+        self.toolhead.set_position(forcepos)
         # Start homing and issue move
-        print_time = self.kin.get_last_move_time()
+        print_time = self.toolhead.get_last_move_time()
         for axis in axis_pos:
             hz = speed * self.steppers[axis].inv_step_dist
             es = self.steppers[axis].enable_endstop_checking(print_time, hz)
             self.endstops.append(es)
-        self.kin.move(newpos, speed)
-        self.kin.reset_print_time()
+        self.toolhead.move(newpos, speed)
+        self.toolhead.reset_print_time()
         for es in self.endstops:
             es.home_finalize()
         return False

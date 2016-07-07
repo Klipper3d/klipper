@@ -58,13 +58,13 @@ class Printer:
         if self.fileconfig.has_section('heater_bed'):
             self.objects['heater_bed'] = heater.PrinterHeater(
                 self, ConfigWrapper(self, 'heater_bed'))
-        self.objects['kinematics'] = cartesian.CartKinematics(
+        self.objects['toolhead'] = cartesian.ToolHead(
             self, self._pconfig)
 
     def stats(self, eventtime):
         out = []
         out.append(self.gcode.stats(eventtime))
-        out.append(self.objects['kinematics'].stats(eventtime))
+        out.append(self.objects['toolhead'].stats(eventtime))
         out.append(self.mcu.stats(eventtime))
         logging.info("Stats %.0f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.

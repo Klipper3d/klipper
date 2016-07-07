@@ -13,8 +13,8 @@ import lookahead, stepper, homing
 StepList = (0, 1, 2, 3)
 
 class Move:
-    def __init__(self, kin, pos, move_d, axes_d, speed, accel):
-        self.kin = kin
+    def __init__(self, toolhead, pos, move_d, axes_d, speed, accel):
+        self.toolhead = toolhead
         self.pos = tuple(pos)
         self.axes_d = axes_d
         self.move_d = move_d
@@ -34,9 +34,9 @@ class Move:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta));
-        R = self.kin.junction_deviation * sin_theta_d2 / (1.0 - sin_theta_d2)
-        self.junction_start_max = min(
-            R * self.kin.max_xy_accel, self.junction_max, prev_move.junction_max)
+        R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
+        self.junction_start_max = min(R * self.toolhead.max_xy_accel,
+                                      self.junction_max, prev_move.junction_max)
     def process(self, junction_start, junction_end):
         # Determine accel, cruise, and decel portions of the move
         junction_cruise = self.junction_max
@@ -64,19 +64,19 @@ class Move:
         #    , next_move_time, accel_r, cruise_r))
 
         # Calculate step times for the move
-        next_move_time = self.kin.get_next_move_time()
+        next_move_time = self.toolhead.get_next_move_time()
         for i in StepList:
-            new_step_pos = int(self.pos[i]*self.kin.steppers[i].inv_step_dist
-                               + 0.5)
-            steps = new_step_pos - self.kin.stepper_pos[i]
+            new_step_pos = int(
+                self.pos[i]*self.toolhead.steppers[i].inv_step_dist + 0.5)
+            steps = new_step_pos - self.toolhead.stepper_pos[i]
             if not steps:
                 continue
-            self.kin.stepper_pos[i] = new_step_pos
+            self.toolhead.stepper_pos[i] = new_step_pos
             sdir = 0
             if steps < 0:
                 sdir = 1
                 steps = -steps
-            clock_offset, clock_freq, so = self.kin.steppers[i].prep_move(
+            clock_offset, clock_freq, so = self.toolhead.steppers[i].prep_move(
                 sdir, next_move_time)
 
             step_dist = self.move_d / steps
@@ -107,11 +107,11 @@ class Move:
             so.step_sqrt(
                 decel_steps, step_offset, clock_offset + decel_clock_offset
                 , decel_sqrt_offset, -accel_multiplier)
-        self.kin.update_move_time(accel_t + cruise_t + decel_t)
+        self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
 
 STALL_TIME = 0.100
 
-class CartKinematics:
+class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
