@@ -21,25 +21,19 @@ class CartKinematics:
         self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
                             for i in StepList]
     def get_max_xy_speed(self):
-        max_xy_speed = min(s.max_step_velocity*s.step_dist
-                           for s in self.steppers[:2])
-        max_xy_accel = min(s.max_step_accel*s.step_dist
-                           for s in self.steppers[:2])
+        max_xy_speed = min(s.max_velocity for s in self.steppers[:2])
+        max_xy_accel = min(s.max_accel for s in self.steppers[:2])
         return max_xy_speed, max_xy_accel
     def get_max_speed(self, axes_d, move_d):
         # Calculate max speed and accel for a given move
-        velocity_factor = min(
-            [self.steppers[i].max_step_velocity
-             * self.steppers[i].step_dist / abs(axes_d[i])
-             for i in StepList if axes_d[i]])
-        accel_factor = min(
-            [self.steppers[i].max_step_accel
-             * self.steppers[i].step_dist / abs(axes_d[i])
-             for i in StepList if axes_d[i]])
+        velocity_factor = min([self.steppers[i].max_velocity / abs(axes_d[i])
+                               for i in StepList if axes_d[i]])
+        accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
+                            for i in StepList if axes_d[i]])
         return velocity_factor * move_d, accel_factor * move_d
     def get_max_e_speed(self):
         s = self.steppers[3]
-        return s.max_step_velocity*s.step_dist, s.max_step_accel*s.step_dist
+        return s.max_velocity, s.max_accel
     def home(self, toolhead, axis):
         # Each axis is homed independently and in order
         homing_state = homing.Homing(toolhead, self.steppers) # XXX
