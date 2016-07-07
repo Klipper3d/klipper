@@ -25,8 +25,6 @@ class Move:
         # Find max start junction velocity using approximated
         # centripetal velocity as described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
-        if not prev_move.move_d:
-            return
         junction_cos_theta = -((self.axes_d[0] * prev_move.axes_d[0]
                                 + self.axes_d[1] * prev_move.axes_d[1])
                                / (self.move_d * prev_move.move_d))
@@ -68,15 +66,10 @@ class Move:
 # Class to track a list of pending move requests and to facilitate
 # "look-ahead" across moves to reduce acceleration between moves.
 class MoveQueue:
-    def __init__(self, dummy_move):
-        self.dummy_move = dummy_move
+    def __init__(self):
         self.queue = []
         self.prev_junction_max = 0.
         self.junction_flush = 0.
-    def prev_move(self):
-        if self.queue:
-            return self.queue[-1]
-        return self.dummy_move
     def flush(self, lazy=False):
         next_junction_max = 0.
         can_flush = not lazy
@@ -108,6 +101,7 @@ class MoveQueue:
         if len(self.queue) == 1:
             self.junction_flush = move.junction_max
             return
+        move.calc_junction(self.queue[-2])
         self.junction_flush -= move.junction_delta
         if self.junction_flush <= 0.:
             self.flush(lazy=True)
@@ -122,8 +116,7 @@ class ToolHead:
         self.kin = cartesian.CartKinematics(printer, config)
         self.max_xy_speed, self.max_xy_accel = self.kin.get_max_xy_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
-        dummy_move = Move(self, [0.]*4, 0., [0.]*4, 0., 0.)
-        self.move_queue = MoveQueue(dummy_move)
+        self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
@@ -235,7 +228,6 @@ class ToolHead:
         # Common xy move - create move and queue it
         speed = min(speed, self.max_xy_speed)
         move = Move(self, newpos, move_d, axes_d, speed, self.max_xy_accel)
-        move.calc_junction(self.move_queue.prev_move())
         self.move_queue.add_move(move)
     def home(self, axis):
         return self.kin.home(self, axis)
