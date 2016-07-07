@@ -12,12 +12,99 @@ import lookahead, stepper, homing
 
 StepList = (0, 1, 2, 3)
 
+class CartKinematics:
+    def __init__(self, printer, config):
+        steppers = ['stepper_x', 'stepper_y', 'stepper_z', 'stepper_e']
+        self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
+                         for n in steppers]
+        self.stepper_pos = [0, 0, 0, 0]
+    def build_config(self):
+        for stepper in self.steppers:
+            stepper.build_config()
+    def set_position(self, newpos):
+        self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
+                            for i in StepList]
+    def get_max_xy_speed(self):
+        max_xy_speed = min(s.max_step_velocity*s.step_dist
+                           for s in self.steppers[:2])
+        max_xy_accel = min(s.max_step_accel*s.step_dist
+                           for s in self.steppers[:2])
+        return max_xy_speed, max_xy_accel
+    def get_max_speed(self, axes_d, move_d):
+        # Calculate max speed and accel for a given move
+        velocity_factor = min(
+            [self.steppers[i].max_step_velocity
+             * self.steppers[i].step_dist / abs(axes_d[i])
+             for i in StepList if axes_d[i]])
+        accel_factor = min(
+            [self.steppers[i].max_step_accel
+             * self.steppers[i].step_dist / abs(axes_d[i])
+             for i in StepList if axes_d[i]])
+        return velocity_factor * move_d, accel_factor * move_d
+    def get_max_e_speed(self):
+        s = self.steppers[3]
+        return s.max_step_velocity*s.step_dist, s.max_step_accel*s.step_dist
+    def home(self, toolhead, axis):
+        # Each axis is homed independently and in order
+        homing_state = homing.Homing(toolhead, self.steppers) # XXX
+        for a in axis:
+            homing_state.plan_home(a)
+        return homing_state
+    def motor_off(self, move_time):
+        for stepper in self.steppers:
+            stepper.motor_enable(move_time, 0)
+    def move(self, move_time, move):
+        inv_accel = 1. / move.accel
+        inv_cruise_v = 1. / move.cruise_v
+        for i in StepList:
+            new_step_pos = int(move.pos[i]*self.steppers[i].inv_step_dist + 0.5)
+            steps = new_step_pos - self.stepper_pos[i]
+            if not steps:
+                continue
+            self.stepper_pos[i] = new_step_pos
+            sdir = 0
+            if steps < 0:
+                sdir = 1
+                steps = -steps
+            clock_offset, clock_freq, so = self.steppers[i].prep_move(
+                sdir, move_time)
+
+            step_dist = move.move_d / steps
+            step_offset = 0.5
+
+            # Acceleration steps
+            #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
+            accel_clock_offset = move.start_v * inv_accel * clock_freq
+            accel_sqrt_offset = accel_clock_offset**2
+            accel_multiplier = 2.0 * step_dist * inv_accel * clock_freq**2
+            accel_steps = move.accel_r * steps
+            step_offset = so.step_sqrt(
+                accel_steps, step_offset, clock_offset - accel_clock_offset
+                , accel_sqrt_offset, accel_multiplier)
+            clock_offset += move.accel_t * clock_freq
+            # Cruising steps
+            #t = pos/cruise_v
+            cruise_multiplier = step_dist * inv_cruise_v * clock_freq
+            cruise_steps = move.cruise_r * steps
+            step_offset = so.step_factor(
+                cruise_steps, step_offset, clock_offset, cruise_multiplier)
+            clock_offset += move.cruise_t * clock_freq
+            # Deceleration steps
+            #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
+            decel_clock_offset = move.cruise_v * inv_accel * clock_freq
+            decel_sqrt_offset = decel_clock_offset**2
+            decel_steps = move.decel_r * steps
+            so.step_sqrt(
+                decel_steps, step_offset, clock_offset + decel_clock_offset
+                , decel_sqrt_offset, -accel_multiplier)
+
 class Move:
     def __init__(self, toolhead, pos, move_d, axes_d, speed, accel):
         self.toolhead = toolhead
         self.pos = tuple(pos)
-        self.axes_d = axes_d
         self.move_d = move_d
+        self.axes_d = axes_d
+        self.accel = accel
         self.junction_max = speed**2
         self.junction_delta = 2.0 * move_d * accel
         self.junction_start_max = 0.
@@ -35,8 +122,8 @@ class Move:
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta));
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
-        self.junction_start_max = min(R * self.toolhead.max_xy_accel,
-                                      self.junction_max, prev_move.junction_max)
+        self.junction_start_max = min(
+            R * self.accel, self.junction_max, prev_move.junction_max)
     def process(self, junction_start, junction_end):
         # Determine accel, cruise, and decel portions of the move
         junction_cruise = self.junction_max
@@ -49,64 +136,19 @@ class Move:
             decel_r = 1.0 - accel_r
             cruise_r = 0.
             junction_cruise = junction_start + accel_r*self.junction_delta
+        self.accel_r, self.cruise_r, self.decel_r = accel_r, cruise_r, decel_r
         # Determine the move velocities and time spent in each portion
         start_v = math.sqrt(junction_start)
         cruise_v = math.sqrt(junction_cruise)
         end_v = math.sqrt(junction_end)
-        inv_cruise_v = 1. / cruise_v
-        inv_accel = 2.0 * self.move_d * inv_junction_delta
-        accel_t = 2.0 * self.move_d * accel_r / (start_v+cruise_v)
-        cruise_t = self.move_d * cruise_r * inv_cruise_v
-        decel_t = 2.0 * self.move_d * decel_r / (end_v+cruise_v)
-
-        #logging.debug("Move: %s v=%.2f/%.2f/%.2f mt=%.3f st=%.3f %.3f %.3f" % (
-        #    self.relsteps, start_v, cruise_v, end_v, move_t
-        #    , next_move_time, accel_r, cruise_r))
-
-        # Calculate step times for the move
+        self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
+        accel_t = 2.0 * self.move_d * accel_r / (start_v + cruise_v)
+        cruise_t = self.move_d * cruise_r / cruise_v
+        decel_t = 2.0 * self.move_d * decel_r / (end_v + cruise_v)
+        self.accel_t, self.cruise_t, self.decel_t = accel_t, cruise_t, decel_t
+        # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
-        for i in StepList:
-            new_step_pos = int(
-                self.pos[i]*self.toolhead.steppers[i].inv_step_dist + 0.5)
-            steps = new_step_pos - self.toolhead.stepper_pos[i]
-            if not steps:
-                continue
-            self.toolhead.stepper_pos[i] = new_step_pos
-            sdir = 0
-            if steps < 0:
-                sdir = 1
-                steps = -steps
-            clock_offset, clock_freq, so = self.toolhead.steppers[i].prep_move(
-                sdir, next_move_time)
-
-            step_dist = self.move_d / steps
-            step_offset = 0.5
-
-            # Acceleration steps
-            #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_clock_offset = start_v * inv_accel * clock_freq
-            accel_sqrt_offset = accel_clock_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel * clock_freq**2
-            accel_steps = accel_r * steps
-            step_offset = so.step_sqrt(
-                accel_steps, step_offset, clock_offset - accel_clock_offset
-                , accel_sqrt_offset, accel_multiplier)
-            clock_offset += accel_t * clock_freq
-            # Cruising steps
-            #t = pos/cruise_v
-            cruise_multiplier = step_dist * inv_cruise_v * clock_freq
-            cruise_steps = cruise_r * steps
-            step_offset = so.step_factor(
-                cruise_steps, step_offset, clock_offset, cruise_multiplier)
-            clock_offset += cruise_t * clock_freq
-            # Deceleration steps
-            #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
-            decel_clock_offset = cruise_v * inv_accel * clock_freq
-            decel_sqrt_offset = decel_clock_offset**2
-            decel_steps = decel_r * steps
-            so.step_sqrt(
-                decel_steps, step_offset, clock_offset + decel_clock_offset
-                , decel_sqrt_offset, -accel_multiplier)
+        self.toolhead.kin.move(next_move_time, self)
         self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
 
 STALL_TIME = 0.100
@@ -115,18 +157,12 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
-        steppers = ['stepper_x', 'stepper_y', 'stepper_z', 'stepper_e']
-        self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
-                         for n in steppers]
-        self.max_xy_speed = min(s.max_step_velocity*s.step_dist
-                                for s in self.steppers[:2])
-        self.max_xy_accel = min(s.max_step_accel*s.step_dist
-                                for s in self.steppers[:2])
+        self.kin = CartKinematics(printer, config)
+        self.max_xy_speed, self.max_xy_accel = self.kin.get_max_xy_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         dummy_move = Move(self, [0.]*4, 0., [0.]*4, 0., 0.)
         self.move_queue = lookahead.MoveQueue(dummy_move)
         self.commanded_pos = [0., 0., 0., 0.]
-        self.stepper_pos = [0, 0, 0, 0]
         # Print time tracking
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
         self.buffer_time_low = config.getfloat('buffer_time_low', 0.150)
@@ -137,8 +173,7 @@ class ToolHead:
         self.motor_off_time = self.reactor.NEVER
         self.flush_timer = self.reactor.register_timer(self.flush_handler)
     def build_config(self):
-        for stepper in self.steppers:
-            stepper.build_config()
+        self.kin.build_config()
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -205,30 +240,22 @@ class ToolHead:
     def set_position(self, newpos):
         self.move_queue.flush()
         self.commanded_pos[:] = newpos
-        self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
-                            for i in StepList]
+        self.kin.set_position(newpos)
     def _move_with_z(self, newpos, axes_d, speed):
         self.move_queue.flush()
-        # Limit velocity to max for each stepper
         move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-        velocity_factor = min(
-            [self.steppers[i].max_step_velocity
-             * self.steppers[i].step_dist / abs(axes_d[i])
-             for i in StepList if axes_d[i]])
-        speed = min(speed, self.max_xy_speed, velocity_factor * move_d)
-        # Find max acceleration factor
-        accel_factor = min(
-            [self.steppers[i].max_step_accel
-             * self.steppers[i].step_dist / abs(axes_d[i])
-             for i in StepList if axes_d[i]])
-        accel = min(self.max_xy_accel, accel_factor * move_d)
+        # Limit velocity and accel to max for each stepper
+        kin_speed, kin_accel = self.kin.get_max_speed(axes_d, move_d)
+        speed = min(speed, self.max_xy_speed, kin_speed)
+        accel = min(self.max_xy_accel, kin_accel)
+        # Generate and execute move
         move = Move(self, newpos, move_d, axes_d, speed, accel)
         move.process(0., 0.)
     def _move_only_e(self, newpos, axes_d, speed):
         self.move_queue.flush()
-        s = self.steppers[3]
-        speed = min(speed, self.max_xy_speed, s.max_step_velocity * s.step_dist)
-        accel = min(self.max_xy_accel, s.max_step_accel * s.step_dist)
+        kin_speed, kin_accel = self.kin.get_max_e_speed()
+        speed = min(speed, self.max_xy_speed, kin_speed)
+        accel = min(self.max_xy_accel, kin_accel)
         move = Move(self, newpos, abs(axes_d[3]), axes_d, speed, accel)
         move.process(0., 0.)
     def move(self, newpos, speed, sloppy=False):
@@ -248,18 +275,13 @@ class ToolHead:
         move.calc_junction(self.move_queue.prev_move())
         self.move_queue.add_move(move)
     def home(self, axis):
-        # Each axis is homed independently and in order
-        homing_state = homing.Homing(self, self.steppers)
-        for a in axis:
-            homing_state.plan_home(a)
-        return homing_state
+        return self.kin.home(self, axis)
     def dwell(self, delay):
         self.get_last_move_time()
         self.update_move_time(delay)
     def motor_off(self):
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()
-        for stepper in self.steppers:
-            stepper.motor_enable(last_move_time, 0)
+        self.kin.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
