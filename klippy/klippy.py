@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
-import gcode, toolhead, util, mcu, fan, heater, reactor
+import gcode, toolhead, util, mcu, fan, heater, extruder, reactor
 
 class ConfigWrapper:
     def __init__(self, printer, section):
@@ -52,9 +52,9 @@ class Printer:
         if self.fileconfig.has_section('fan'):
             self.objects['fan'] = fan.PrinterFan(
                 self, ConfigWrapper(self, 'fan'))
-        if self.fileconfig.has_section('heater_nozzle'):
-            self.objects['heater_nozzle'] = heater.PrinterHeater(
-                self, ConfigWrapper(self, 'heater_nozzle'))
+        if self.fileconfig.has_section('extruder'):
+            self.objects['extruder'] = extruder.PrinterExtruder(
+                self, ConfigWrapper(self, 'extruder'))
         if self.fileconfig.has_section('heater_bed'):
             self.objects['heater_bed'] = heater.PrinterHeater(
                 self, ConfigWrapper(self, 'heater_bed'))

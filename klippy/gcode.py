@@ -35,7 +35,10 @@ class GCodeParser:
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def build_config(self):
         self.toolhead = self.printer.objects['toolhead']
-        self.heater_nozzle = self.printer.objects.get('heater_nozzle')
+        self.heater_nozzle = None
+        extruder = self.printer.objects.get('extruder')
+        if extruder:
+            self.heater_nozzle = extruder.heater
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
         self.build_handlers()

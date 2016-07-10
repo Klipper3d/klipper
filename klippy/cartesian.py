@@ -6,14 +6,14 @@
 import logging
 import stepper, homing
 
-StepList = (0, 1, 2, 3)
+StepList = (0, 1, 2)
 
 class CartKinematics:
     def __init__(self, printer, config):
-        steppers = ['stepper_x', 'stepper_y', 'stepper_z', 'stepper_e']
+        steppers = ['stepper_x', 'stepper_y', 'stepper_z']
         self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
                          for n in steppers]
-        self.stepper_pos = [0, 0, 0, 0]
+        self.stepper_pos = [0, 0, 0]
     def build_config(self):
         for stepper in self.steppers:
             stepper.build_config()
@@ -31,9 +31,6 @@ class CartKinematics:
         accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
                             for i in StepList if axes_d[i]])
         return velocity_factor * move_d, accel_factor * move_d
-    def get_max_e_speed(self):
-        s = self.steppers[3]
-        return s.max_velocity, s.max_accel
     def home(self, toolhead, axis):
         # Each axis is homed independently and in order
         homing_state = homing.Homing(toolhead, self.steppers) # XXX

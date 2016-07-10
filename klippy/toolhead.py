@@ -61,6 +61,8 @@ class Move:
         # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
         self.toolhead.kin.move(next_move_time, self)
+        if self.axes_d[3]:
+            self.toolhead.extruder.move(next_move_time, self)
         self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
 
 # Class to track a list of pending move requests and to facilitate
@@ -113,6 +115,7 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
+        self.extruder = printer.objects.get('extruder')
         self.kin = cartesian.CartKinematics(printer, config)
         self.max_xy_speed, self.max_xy_accel = self.kin.get_max_xy_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
@@ -208,7 +211,7 @@ class ToolHead:
         move.process(0., 0.)
     def _move_only_e(self, newpos, axes_d, speed):
         self.move_queue.flush()
-        kin_speed, kin_accel = self.kin.get_max_e_speed()
+        kin_speed, kin_accel = self.extruder.get_max_speed()
         speed = min(speed, self.max_xy_speed, kin_speed)
         accel = min(self.max_xy_accel, kin_accel)
         move = Move(self, newpos, abs(axes_d[3]), axes_d, speed, accel)
@@ -238,5 +241,6 @@ class ToolHead:
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()
         self.kin.motor_off(last_move_time)
+        self.extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
