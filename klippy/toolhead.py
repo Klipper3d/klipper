@@ -18,6 +18,9 @@ class Move:
         self.move_d = move_d
         self.axes_d = axes_d
         self.accel = accel
+        # Junction speeds are velocities squared.  The junction_delta
+        # is the maximum amount of this squared-velocity that can
+        # change in this move.
         self.junction_max = speed**2
         self.junction_delta = 2.0 * move_d * accel
         self.junction_start_max = 0.
@@ -36,7 +39,7 @@ class Move:
         self.junction_start_max = min(
             R * self.accel, self.junction_max, prev_move.junction_max)
     def process(self, junction_start, junction_end):
-        # Determine accel, cruise, and decel portions of the move
+        # Determine accel, cruise, and decel portions of the move distance
         junction_cruise = self.junction_max
         inv_junction_delta = 1. / self.junction_delta
         accel_r = (junction_cruise-junction_start) * inv_junction_delta
@@ -53,10 +56,11 @@ class Move:
         cruise_v = math.sqrt(junction_cruise)
         end_v = math.sqrt(junction_end)
         self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
-        # Determine time spent in each portion of move
-        accel_t = 2.0 * self.move_d * accel_r / (start_v + cruise_v)
-        cruise_t = self.move_d * cruise_r / cruise_v
-        decel_t = 2.0 * self.move_d * decel_r / (end_v + cruise_v)
+        # Determine time spent in each portion of move (time is the
+        # distance divided by average velocity)
+        accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
+        cruise_t = cruise_r * self.move_d / cruise_v
+        decel_t = decel_r * self.move_d / ((end_v + cruise_v) * 0.5)
         self.accel_t, self.cruise_t, self.decel_t = accel_t, cruise_t, decel_t
         # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
@@ -73,10 +77,13 @@ class MoveQueue:
         self.prev_junction_max = 0.
         self.junction_flush = 0.
     def flush(self, lazy=False):
-        next_junction_max = 0.
         can_flush = not lazy
         flush_count = len(self.queue)
         junction_end = [None] * flush_count
+        # Traverse queue from last to first move and determine maximum
+        # junction speed assuming the robot comes to a complete stop
+        # after the last move.
+        next_junction_max = 0.
         for i in range(len(self.queue)-1, -1, -1):
             move = self.queue[i]
             junction_end[i] = next_junction_max
@@ -86,6 +93,7 @@ class MoveQueue:
             if next_junction_max >= move.junction_start_max:
                 next_junction_max = move.junction_start_max
                 can_flush = True
+        # Generate step times for all moves ready to be flushed
         prev_junction_max = self.prev_junction_max
         for i in range(flush_count):
             move = self.queue[i]
@@ -93,6 +101,7 @@ class MoveQueue:
                                     , junction_end[i])
             move.process(prev_junction_max, next_junction_max)
             prev_junction_max = next_junction_max
+        # Remove processed moves from the queue
         del self.queue[:flush_count]
         self.prev_junction_max = prev_junction_max
         self.junction_flush = 0.
@@ -106,6 +115,9 @@ class MoveQueue:
         move.calc_junction(self.queue[-2])
         self.junction_flush -= move.junction_delta
         if self.junction_flush <= 0.:
+            # There are enough queued moves to return to zero velocity
+            # from the first move's maximum possible velocity, so at
+            # least one move can be flushed.
             self.flush(lazy=True)
 
 STALL_TIME = 0.100
