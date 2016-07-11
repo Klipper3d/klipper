@@ -9,7 +9,7 @@ import serial
 import msgproto, chelper
 
 class SerialReader:
-    BITS_PER_BYTE = 10
+    BITS_PER_BYTE = 10.
     def __init__(self, reactor, serialport, baud):
         self.reactor = reactor
         self.serialport = serialport
@@ -60,22 +60,17 @@ class SerialReader:
         logging.info("Starting serial connect")
         self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
         stk500v2_leave(self.ser)
-        baud_adjust = float(self.BITS_PER_BYTE) / self.baud
-        self.serialqueue = self.ffi_lib.serialqueue_alloc(
-            self.ser.fileno(), baud_adjust, 0)
+        self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0)
         SerialBootStrap(self)
         self.background_thread = threading.Thread(target=self._bg_thread)
         self.background_thread.start()
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
-        baud_adjust = 0.
         est_clock = 1000000000000.
         if pace:
-            baud_adjust = float(self.BITS_PER_BYTE) / self.baud
             est_clock = self.msgparser.config['CLOCK_FREQ']
-        self.serialqueue = self.ffi_lib.serialqueue_alloc(
-            self.ser.fileno(), baud_adjust, 1)
+        self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1)
         self.est_clock = est_clock
         self.last_ack_time = time.time()
         self.last_ack_clock = 0
@@ -241,6 +236,11 @@ class SerialBootStrap:
         logging.info("MCU version: %s" % (self.serial.msgparser.version,))
         self.serial.unregister_callback('identify_response')
         self.serial.register_callback(self.serial.handle_unknown, '#unknown')
+        mcu_baud = float(self.serial.msgparser.config.get('SERIAL_BAUD', 0.))
+        if mcu_baud:
+            baud_adjust = self.serial.BITS_PER_BYTE / mcu_baud
+            self.serial.ffi_lib.serialqueue_set_baud_adjust(
+                self.serial.serialqueue, baud_adjust)
         get_status = self.serial.msgparser.lookup_command('get_status')
         self.serial.status_cmd = get_status.encode()
         with self.serial.lock:

@@ -770,11 +770,10 @@ background_thread(void *data)
 
 // Create a new 'struct serialqueue' object
 struct serialqueue *
-serialqueue_alloc(int serial_fd, double baud_adjust, int write_only)
+serialqueue_alloc(int serial_fd, int write_only)
 {
     struct serialqueue *sq = malloc(sizeof(*sq));
     memset(sq, 0, sizeof(*sq));
-    sq->baud_adjust = baud_adjust;
 
     // Reactor setup
     sq->serial_fd = serial_fd;
@@ -958,6 +957,14 @@ serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
 
 exit:
     pqm->len = -1;
+    pthread_mutex_unlock(&sq->lock);
+}
+
+void
+serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
+{
+    pthread_mutex_lock(&sq->lock);
+    sq->baud_adjust = baud_adjust;
     pthread_mutex_unlock(&sq->lock);
 }
 

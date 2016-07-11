@@ -153,7 +153,7 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
     data['static_strings'] = static_strings
-    configlist = ['MCU', 'CLOCK_FREQ']
+    configlist = ['MCU', 'CLOCK_FREQ', 'SERIAL_BAUD']
     data['config'] = dict((i, config['CONFIG_'+i]) for i in configlist
                           if 'CONFIG_'+i in config)
     data['version'] = version

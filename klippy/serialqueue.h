@@ -43,8 +43,7 @@ struct pull_queue_message {
 };
 
 struct serialqueue;
-struct serialqueue *serialqueue_alloc(int serial_fd, double baud_adjust
-                                      , int write_only);
+struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
 void serialqueue_exit(struct serialqueue *sq);
 struct command_queue *serialqueue_alloc_commandqueue(void);
 void serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
@@ -56,6 +55,7 @@ void serialqueue_encode_and_send(struct serialqueue *sq, struct command_queue *c
                                  , uint32_t *data, int len
                                  , uint64_t min_clock, uint64_t req_clock);
 void serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm);
+void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
 void serialqueue_set_clock_est(struct serialqueue *sq, double est_clock
                                , double last_ack_time, uint64_t last_ack_clock);
 void serialqueue_flush_ready(struct serialqueue *sq);
