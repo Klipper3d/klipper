@@ -87,7 +87,7 @@ $(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)declfunc.lds
 
 $(OUT)compile_time_request.o: $(OUT)klipper.o ./scripts/buildcommands.py
 	@echo "  Building $@"
-	$(Q)$(OBJCOPY) --dump-section '.compile_time_request'=$(OUT)klipper.o.compile_time_request $<
+	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $< $(OUT)klipper.o.compile_time_request
 	$(Q)$(PYTHON) ./scripts/buildcommands.py $(OUT)klipper.o.compile_time_request $(OUT)autoconf.h $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 

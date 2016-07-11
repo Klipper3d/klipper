@@ -31,7 +31,4 @@ SECTIONS
     .compile_time_request.parsers 0 (INFO) : {
         *( .compile_time_request.parsers )
     }
-    .compile_time_request (INFO) : {
-        *( .compile_time_request )
-    }
 }
