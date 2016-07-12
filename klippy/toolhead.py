@@ -6,6 +6,8 @@
 import math, logging, time
 import cartesian
 
+EXTRUDE_DIFF_IGNORE = 1.02
+
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _t is time (in seconds), _r is ratio (scalar between
 #   0.0 and 1.0)
@@ -18,6 +20,7 @@ class Move:
         self.move_d = move_d
         self.axes_d = axes_d
         self.accel = accel
+        self.extrude_r = axes_d[3] / move_d
         # Junction speeds are velocities squared.  The junction_delta
         # is the maximum amount of this squared-velocity that can
         # change in this move.
@@ -25,8 +28,14 @@ class Move:
         self.junction_delta = 2.0 * move_d * accel
         self.junction_start_max = 0.
     def calc_junction(self, prev_move):
-        # Find max start junction velocity using approximated
-        # centripetal velocity as described at:
+        # Find max junction_start_velocity between two moves
+        if (self.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
+            or prev_move.extrude_r > self.extrude_r * EXTRUDE_DIFF_IGNORE):
+            # Extrude ratio between moves is too different
+            return
+        self.extrude_r = prev_move.extrude_r
+        # Find max velocity using approximated centripetal velocity as
+        # described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
         junction_cos_theta = -((self.axes_d[0] * prev_move.axes_d[0]
                                 + self.axes_d[1] * prev_move.axes_d[1])
@@ -34,7 +43,7 @@ class Move:
         if junction_cos_theta > 0.999999:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
-        sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta));
+        sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
         self.junction_start_max = min(
             R * self.accel, self.junction_max, prev_move.junction_max)
