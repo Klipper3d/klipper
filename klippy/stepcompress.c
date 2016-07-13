@@ -280,6 +280,11 @@ stepcompress_push_factor(struct stepcompress *sc
     double ceil_steps = ceil(steps - step_offset);
     double next_step_offset = ceil_steps - (steps - step_offset);
     int count = ceil_steps;
+    if (count < 0 || count > 1000000) {
+        fprintf(stderr, "ERROR: push_factor invalid count %d %f %f %f %f\n"
+                , sc->oid, steps, step_offset, clock_offset, factor);
+        return next_step_offset;
+    }
     check_expand(sc, count);
 
     // Calculate each step time
@@ -304,6 +309,12 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     double ceil_steps = ceil(steps - step_offset);
     double next_step_offset = ceil_steps - (steps - step_offset);
     int count = ceil_steps;
+    if (count < 0 || count > 1000000) {
+        fprintf(stderr, "ERROR: push_sqrt invalid count %d %f %f %f %f %f\n"
+                , sc->oid, steps, step_offset, clock_offset, sqrt_offset
+                , factor);
+        return next_step_offset;
+    }
     check_expand(sc, count);
 
     // Calculate each step time
@@ -320,7 +331,7 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
             *qn++ = clock_offset - sqrt(pos*factor);
             pos += 1.0;
         }
-    sc->queue_next = end;
+    sc->queue_next = qn;
     return next_step_offset;
 }
 
@@ -405,7 +416,7 @@ struct steppersync {
     int num_move_clocks;
 };
 
-// Allocate a new 'stepperysync' object
+// Allocate a new 'steppersync' object
 struct steppersync *
 steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
                   , int sc_num, int move_num)
