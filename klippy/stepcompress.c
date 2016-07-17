@@ -59,11 +59,11 @@ clean_queue(struct stepcompress *sc)
 static void
 expand_queue(struct stepcompress *sc, int count)
 {
-    if (sc->queue + count <= sc->queue_end) {
+    int alloc = sc->queue_end - sc->queue;
+    if (count + sc->queue_next - sc->queue_pos <= alloc) {
         clean_queue(sc);
         return;
     }
-    int alloc = sc->queue_end - sc->queue;
     int pos = sc->queue_pos - sc->queue;
     int next = sc->queue_next - sc->queue;
     if (!alloc)
