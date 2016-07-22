@@ -15,6 +15,8 @@ class CartKinematics:
                          for n in steppers]
         self.stepper_pos = [0, 0, 0]
     def build_config(self):
+        for stepper in self.steppers[:2]:
+            stepper.set_max_jerk(0.005 * stepper.max_accel) # XXX
         for stepper in self.steppers:
             stepper.build_config()
     def set_position(self, newpos):

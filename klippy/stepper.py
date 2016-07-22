@@ -15,6 +15,7 @@ class PrinterStepper:
         self.inv_step_dist = 1. / self.step_dist
         self.max_velocity = config.getfloat('max_velocity')
         self.max_accel = config.getfloat('max_accel')
+        self.max_jerk = 0.
 
         self.homing_speed = config.getfloat('homing_speed', 5.0)
         self.homing_positive_dir = config.getboolean(
@@ -26,6 +27,8 @@ class PrinterStepper:
 
         self.clock_ticks = None
         self.need_motor_enable = True
+    def set_max_jerk(self, max_jerk):
+        self.max_jerk = max_jerk
     def build_config(self):
         self.clock_ticks = self.printer.mcu.get_mcu_freq()
         max_error = self.config.getfloat('max_error', 0.000050)
@@ -33,9 +36,10 @@ class PrinterStepper:
 
         step_pin = self.config.get('step_pin')
         dir_pin = self.config.get('dir_pin')
-        jc = 0.005 # XXX
+        jc = self.max_jerk / self.max_accel
         inv_max_step_accel = self.step_dist / self.max_accel
-        min_stop_interval = int((math.sqrt(inv_max_step_accel + jc**2) - jc)
+        min_stop_interval = int((math.sqrt(3.*inv_max_step_accel + jc**2)
+                                 - math.sqrt(inv_max_step_accel + jc**2))
                                 * self.clock_ticks) - max_error
         min_stop_interval = max(0, min_stop_interval)
         mcu = self.printer.mcu

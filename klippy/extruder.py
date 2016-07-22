@@ -14,6 +14,7 @@ class PrinterExtruder:
         self.stepper_pos = 0
     def build_config(self):
         self.heater.build_config()
+        self.stepper.set_max_jerk(9999999.9)
         self.stepper.build_config()
     def get_max_speed(self):
         return self.stepper.max_velocity, self.stepper.max_accel
