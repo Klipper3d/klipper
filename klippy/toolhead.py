@@ -253,8 +253,8 @@ class ToolHead:
         speed = min(speed, self.max_xy_speed)
         move = Move(self, newpos, move_d, axes_d, speed, self.max_xy_accel)
         self.move_queue.add_move(move)
-    def home(self, axis):
-        return self.kin.home(self, axis)
+    def home(self, axes):
+        return self.kin.home(self, axes)
     def dwell(self, delay):
         self.get_last_move_time()
         self.update_move_time(delay)

@@ -33,11 +33,34 @@ class CartKinematics:
         accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
                             for i in StepList if axes_d[i]])
         return velocity_factor * move_d, accel_factor * move_d
-    def home(self, toolhead, axis):
+    def home(self, toolhead, axes):
         # Each axis is homed independently and in order
-        homing_state = homing.Homing(toolhead, self.steppers) # XXX
-        for a in axis:
-            homing_state.plan_home(a)
+        homing_state = homing.Homing(toolhead, axes)
+        for axis in axes:
+            s = self.steppers[axis]
+            # Determine moves
+            if s.homing_positive_dir:
+                pos = s.position_endstop + 1.5*(
+                    s.position_min - s.position_endstop)
+                rpos = s.position_endstop - s.homing_retract_dist
+                r2pos = rpos - s.homing_retract_dist
+            else:
+                pos = s.position_endstop + 1.5*(
+                    s.position_max - s.position_endstop)
+                rpos = s.position_endstop + s.homing_retract_dist
+                r2pos = rpos + s.homing_retract_dist
+            # Initial homing
+            homepos = [None, None, None, None]
+            homepos[axis] = s.position_endstop
+            coord = [None, None, None, None]
+            coord[axis] = pos
+            homing_state.plan_home(list(coord), homepos, [s], s.homing_speed)
+            # Retract
+            coord[axis] = rpos
+            homing_state.plan_move(list(coord), s.homing_speed)
+            # Home again
+            coord[axis] = r2pos
+            homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)
         return homing_state
     def motor_off(self, move_time):
         for stepper in self.steppers:

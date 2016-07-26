@@ -227,19 +227,19 @@ class GCodeParser:
         pass
     def cmd_G28(self, params):
         # Move to origin
-        axis = []
-        for a in 'XYZ':
-            if a in params:
-                axis.append(self.axis2pos[a])
-        if not axis:
-            axis = [0, 1, 2]
-        busy_handler = self.toolhead.home(axis)
-        def axis_update(axis):
+        axes = []
+        for axis in 'XYZ':
+            if axis in params:
+                axes.append(self.axis2pos[axis])
+        if not axes:
+            axes = [0, 1, 2]
+        busy_handler = self.toolhead.home(axes)
+        def axes_update(axes):
             newpos = self.toolhead.get_position()
-            for a in axis:
-                self.last_position[a] = newpos[a]
-                self.base_position[a] = -self.homing_add[a]
-        busy_handler.plan_axis_update(axis_update)
+            for axis in axes:
+                self.last_position[axis] = newpos[axis]
+                self.base_position[axis] = -self.homing_add[axis]
+        busy_handler.plan_axes_update(axes_update)
         self.set_busy(busy_handler)
     def cmd_G90(self, params):
         # Use absolute coordinates

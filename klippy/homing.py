@@ -7,36 +7,19 @@
 import logging
 
 class Homing:
-    def __init__(self, toolhead, steppers):
+    def __init__(self, toolhead, changed_axes):
         self.toolhead = toolhead
-        self.steppers = steppers
+        self.changed_axes = changed_axes
 
         self.states = []
         self.endstops = []
-        self.changed_axis = []
-    def plan_home(self, axis, precise=False):
-        s = self.steppers[axis]
-        state = self.states
-        self.changed_axis.append(axis)
-        speed = s.homing_speed
-        if s.homing_positive_dir:
-            pos = s.position_endstop + 1.5*(s.position_min - s.position_endstop)
-            rpos = s.position_endstop - s.homing_retract_dist
-            r2pos = rpos - s.homing_retract_dist
-        else:
-            pos = s.position_endstop + 1.5*(s.position_max - s.position_endstop)
-            rpos = s.position_endstop + s.homing_retract_dist
-            r2pos = rpos + s.homing_retract_dist
-        # Initial homing
-        state.append((self.do_home, ({axis: pos}, speed)))
-        state.append((self.do_wait_endstop, ({axis: 1},)))
-        # Retract
-        state.append((self.do_move, ({axis: rpos}, speed)))
-        # Home again
-        state.append((self.do_home, ({axis: r2pos}, speed/2.0)))
-        state.append((self.do_wait_endstop, ({axis: 1},)))
-    def plan_axis_update(self, callback):
-        self.states.append((callback, (self.changed_axis,)))
+    def plan_home(self, forcepos, movepos, steppers, speed):
+        self.states.append((self.do_home, (forcepos, movepos, steppers, speed)))
+        self.states.append((self.do_wait_endstop, ()))
+    def plan_move(self, newpos, speed):
+        self.states.append((self.do_move, (newpos, speed)))
+    def plan_axes_update(self, callback):
+        self.states.append((callback, (self.changed_axes,)))
     def check_busy(self, eventtime):
         while self.states:
             first = self.states[0]
@@ -46,34 +29,34 @@ class Homing:
             self.states.pop(0)
         return False
 
-    def do_move(self, axis_pos, speed):
-        # Issue a move command to axis_pos
-        newpos = self.toolhead.get_position()
-        for axis, pos in axis_pos.items():
-            newpos[axis] = pos
-        self.toolhead.move(newpos, speed)
+    def fill_coord(self, coord):
+        # Fill in any None entries in 'coord' with current toolhead position
+        thcoord = self.toolhead.get_position()
+        coord = list(coord)
+        for i in range(len(coord)):
+            if coord[i] is None:
+                coord[i] = thcoord[i]
+        return coord
+    def do_move(self, newpos, speed):
+        # Issue a move command
+        self.toolhead.move(self.fill_coord(newpos), speed)
         return False
-    def do_home(self, axis_pos, speed):
-        # Alter kinematics class to think printer is at axis_pos
-        newpos = self.toolhead.get_position()
-        forcepos = list(newpos)
-        for axis, pos in axis_pos.items():
-            newpos[axis] = self.steppers[axis].position_endstop
-            forcepos[axis] = pos
-        self.toolhead.set_position(forcepos)
+    def do_home(self, forcepos, movepos, steppers, speed):
+        # Alter kinematics class to think printer is at forcepos
+        self.toolhead.set_position(self.fill_coord(forcepos))
         # Start homing and issue move
         print_time = self.toolhead.get_last_move_time()
-        for axis in axis_pos:
-            hz = speed * self.steppers[axis].inv_step_dist
-            es = self.steppers[axis].enable_endstop_checking(print_time, hz)
+        for s in steppers:
+            hz = speed * s.inv_step_dist
+            es = s.enable_endstop_checking(print_time, hz)
             self.endstops.append(es)
-        self.toolhead.move(newpos, speed)
+        self.toolhead.move(self.fill_coord(movepos), speed)
         self.toolhead.reset_print_time()
         for es in self.endstops:
             es.home_finalize()
         return False
-    def do_wait_endstop(self, axis_wait):
-        # Check if axis_wait endstops have triggered
+    def do_wait_endstop(self):
+        # Check if endstops have triggered
         for es in self.endstops:
             if es.is_homing():
                 return True
