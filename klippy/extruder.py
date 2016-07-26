@@ -50,16 +50,19 @@ class PrinterExtruder:
                 decel_v -= extra_decel_v
                 end_v -= extra_decel_v
                 if decel_v <= 0.:
+                    # The entire decel phase is replaced with retraction
                     retract_t = decel_t
                     retract_d = -(end_v + decel_v) * 0.5 * decel_t
                     retract_v = -decel_v
                     decel_t = decel_d = 0.
                 elif end_v < 0.:
+                    # Split decel phase into decel and retraction
                     retract_t = -end_v * inv_accel
                     retract_d = -end_v * 0.5 * retract_t
                     decel_t -= retract_t
                     decel_d = decel_v * 0.5 * decel_t
                 else:
+                    # There is still only a decel phase (no retraction)
                     decel_d -= extra_decel_d
 
         # Determine regular steps
