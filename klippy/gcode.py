@@ -26,7 +26,6 @@ class GCodeParser:
         self.is_shutdown = False
         self.need_ack = False
         self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
-        self.movemult = 1.0
         self.speed = 1.0
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
@@ -222,10 +221,10 @@ class GCodeParser:
         self.toolhead.dwell(delay)
     def cmd_G20(self, params):
         # Set units to inches
-        self.movemult = 25.4
+        self.respond('Error: Machine does not support G20 (inches) command')
     def cmd_G21(self, params):
         # Set units to millimeters
-        self.movemult = 1.0
+        pass
     def cmd_G28(self, params):
         # Move to origin
         axis = []
