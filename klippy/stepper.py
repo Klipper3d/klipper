@@ -21,6 +21,23 @@ class PrinterStepper:
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', False)
         self.homing_retract_dist = config.getfloat('homing_retract_dist', 5.)
+        self.homing_stepper_phases = config.getint('homing_stepper_phases')
+        self.homing_endstop_phase = config.getint('homing_endstop_phase')
+        endstop_accuracy = config.getfloat('homing_endstop_accuracy')
+        self.homing_endstop_accuracy = None
+        if self.homing_stepper_phases:
+            if endstop_accuracy is None:
+                self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
+            elif self.homing_endstop_phase is not None:
+                self.homing_endstop_accuracy = int(math.ceil(
+                    endstop_accuracy * self.inv_step_dist / 2.))
+            else:
+                self.homing_endstop_accuracy = int(math.ceil(
+                    endstop_accuracy * self.inv_step_dist))
+            if self.homing_endstop_accuracy >= self.homing_stepper_phases/2:
+                logging.info("Endstop for %s is not accurate enough for stepper"
+                             " phase adjustment" % (self.config.section,))
+                self.homing_stepper_phases = None
         self.position_min = config.getfloat('position_min', 0.)
         self.position_endstop = config.getfloat('position_endstop')
         self.position_max = config.getfloat('position_max')
@@ -68,3 +85,21 @@ class PrinterStepper:
         move_clock = int(self.mcu_endstop.get_print_clock(move_time))
         self.mcu_endstop.home(move_clock, int(self.clock_ticks / hz))
         return self.mcu_endstop
+    def get_homed_position(self):
+        if not self.homing_stepper_phases:
+            return self.position_endstop
+        pos = self.mcu_endstop.get_last_position()
+        pos %= self.homing_stepper_phases
+        if self.homing_endstop_phase is None:
+            logging.info("Setting %s endstop phase to %d" % (
+                self.config.section, pos))
+            self.homing_endstop_phase = pos
+            return self.position_endstop
+        delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
+        if delta >= self.homing_stepper_phases - self.homing_endstop_accuracy:
+            delta -= self.homing_stepper_phases
+        elif delta > self.homing_endstop_accuracy:
+            logging.error("Endstop %s incorrect phase (got %d vs %d)" % (
+                self.config.section, pos, self.homing_endstop_phase))
+            return self.position_endstop
+        return self.position_endstop + delta * self.step_dist

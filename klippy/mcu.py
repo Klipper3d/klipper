@@ -40,6 +40,8 @@ class MCU_stepper:
             max_error, self._step_cmd.msgid, self._oid)
     def get_oid(self):
         return self._oid
+    def get_invert_dir(self):
+        return self._invert_dir
     def note_stepper_stop(self):
         self._sdir = -1
         self._last_move_clock = -2**29
@@ -88,6 +90,7 @@ class MCU_endstop:
                          , self._oid)
         self._query_cmd = mcu.lookup_command("end_stop_query oid=%c")
         self._homing = False
+        self._last_position = 0
         self._next_query_clock = 0
         mcu_freq = self._mcu.get_mcu_freq()
         self._retry_query_ticks = mcu_freq * self.RETRY_QUERY
@@ -104,6 +107,7 @@ class MCU_endstop:
         self._stepper.note_stepper_stop()
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s" % (params,))
+        self._last_position = params['pos']
         self._homing = params['homing'] != 0
     def is_homing(self):
         if not self._homing:
@@ -116,6 +120,10 @@ class MCU_endstop:
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return self._homing
+    def get_last_position(self):
+        if self._stepper.get_invert_dir():
+            return -self._last_position
+        return self._last_position
     def get_print_clock(self, print_time):
         return self._mcu.get_print_clock(print_time)
 

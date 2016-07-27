@@ -33,6 +33,8 @@ class CartKinematics:
         accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
                             for i in StepList if axes_d[i]])
         return velocity_factor * move_d, accel_factor * move_d
+    def get_homed_position(self):
+        return [s.get_homed_position() for s in self.steppers]
     def home(self, toolhead, axes):
         # Each axis is homed independently and in order
         homing_state = homing.Homing(toolhead, axes)
