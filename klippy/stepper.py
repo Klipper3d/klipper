@@ -42,23 +42,18 @@ class PrinterStepper:
         self.position_endstop = config.getfloat('position_endstop')
         self.position_max = config.getfloat('position_max')
 
-        self.clock_ticks = None
         self.need_motor_enable = True
     def set_max_jerk(self, max_jerk):
         self.max_jerk = max_jerk
     def build_config(self):
-        self.clock_ticks = self.printer.mcu.get_mcu_freq()
         max_error = self.config.getfloat('max_error', 0.000050)
-        max_error = int(max_error * self.clock_ticks)
-
         step_pin = self.config.get('step_pin')
         dir_pin = self.config.get('dir_pin')
         jc = self.max_jerk / self.max_accel
         inv_max_step_accel = self.step_dist / self.max_accel
-        min_stop_interval = int((math.sqrt(3.*inv_max_step_accel + jc**2)
-                                 - math.sqrt(inv_max_step_accel + jc**2))
-                                * self.clock_ticks) - max_error
-        min_stop_interval = max(0, min_stop_interval)
+        min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
+                             - math.sqrt(inv_max_step_accel + jc**2)) - max_error
+        min_stop_interval = max(0., min_stop_interval)
         mcu = self.printer.mcu
         self.mcu_stepper = mcu.create_stepper(
             step_pin, dir_pin, min_stop_interval, max_error)
@@ -71,19 +66,19 @@ class PrinterStepper:
     def motor_enable(self, move_time, enable=0):
         if (self.mcu_enable is not None
             and self.mcu_enable.get_last_setting() != enable):
-            mc = int(self.mcu_enable.get_print_clock(move_time))
-            self.mcu_enable.set_digital(mc + 1, enable)
+            mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
+            self.mcu_enable.set_digital(mcu_time, enable)
         self.need_motor_enable = True
-    def prep_move(self, sdir, move_time):
-        move_clock = self.mcu_stepper.get_print_clock(move_time)
-        self.mcu_stepper.set_next_step_dir(sdir, int(move_clock))
+    def prep_move(self, move_time, sdir):
+        mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
+        self.mcu_stepper.set_next_step_dir(mcu_time, sdir)
         if self.need_motor_enable:
             self.motor_enable(move_time, 1)
             self.need_motor_enable = False
-        return (move_clock, self.clock_ticks, self.mcu_stepper)
-    def enable_endstop_checking(self, move_time, hz):
-        move_clock = int(self.mcu_endstop.get_print_clock(move_time))
-        self.mcu_endstop.home(move_clock, int(self.clock_ticks / hz))
+        return (mcu_time, self.mcu_stepper)
+    def enable_endstop_checking(self, move_time, step_time):
+        mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
+        self.mcu_endstop.home(mcu_time, step_time)
         return self.mcu_endstop
     def get_homed_position(self):
         if not self.homing_stepper_phases:

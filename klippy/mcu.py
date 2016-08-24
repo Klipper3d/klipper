@@ -24,6 +24,9 @@ class MCU_stepper:
         dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
         self._sdir = -1
         self._last_move_clock = -2**29
+        self._mcu_freq = mcu.get_mcu_freq()
+        min_stop_interval = int(min_stop_interval * self._mcu_freq)
+        max_error = int(max_error * self._mcu_freq)
         mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
             " min_stop_interval=%d invert_step=%d" % (
@@ -38,6 +41,7 @@ class MCU_stepper:
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._stepqueue = self.ffi_lib.stepcompress_alloc(
             max_error, self._step_cmd.msgid, self._oid)
+        self.print_to_mcu_time = mcu.print_to_mcu_time
     def get_oid(self):
         return self._oid
     def get_invert_dir(self):
@@ -45,32 +49,35 @@ class MCU_stepper:
     def note_stepper_stop(self):
         self._sdir = -1
         self._last_move_clock = -2**29
-    def reset_step_clock(self, clock):
+    def _reset_step_clock(self, clock):
         self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
         data = (self._reset_cmd.msgid, self._oid, clock & 0xffffffff)
         self.ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-    def set_next_step_dir(self, sdir, clock):
+    def set_next_step_dir(self, mcu_time, sdir):
+        clock = int(mcu_time * self._mcu_freq)
         if clock - self._last_move_clock >= 2**29:
-            self.reset_step_clock(clock)
+            self._reset_step_clock(clock)
         self._last_move_clock = clock
         if self._sdir == sdir:
             return
         self._sdir = sdir
         data = (self._dir_cmd.msgid, self._oid, sdir ^ self._invert_dir)
         self.ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-    def step(self, steptime):
-        self.ffi_lib.stepcompress_push(self._stepqueue, steptime)
-    def step_sqrt(self, steps, step_offset, clock_offset, sqrt_offset, factor):
+    def step(self, mcu_time):
+        clock = mcu_time * self._mcu_freq
+        self.ffi_lib.stepcompress_push(self._stepqueue, clock)
+    def step_sqrt(self, mcu_time, steps, step_offset, sqrt_offset, factor):
+        clock = mcu_time * self._mcu_freq
+        mcu_freq2 = self._mcu_freq**2
         return self.ffi_lib.stepcompress_push_sqrt(
-            self._stepqueue, steps, step_offset, clock_offset
-            , sqrt_offset, factor)
-    def step_factor(self, steps, step_offset, clock_offset, factor):
+            self._stepqueue, steps, step_offset, clock
+            , sqrt_offset * mcu_freq2, factor * mcu_freq2)
+    def step_factor(self, mcu_time, steps, step_offset, factor):
+        clock = mcu_time * self._mcu_freq
         return self.ffi_lib.stepcompress_push_factor(
-            self._stepqueue, steps, step_offset, clock_offset, factor)
+            self._stepqueue, steps, step_offset, clock, factor * self._mcu_freq)
     def get_errors(self):
         return self.ffi_lib.stepcompress_get_errors(self._stepqueue)
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
 
 class MCU_endstop:
     RETRY_QUERY = 1.000
@@ -92,9 +99,12 @@ class MCU_endstop:
         self._homing = False
         self._last_position = 0
         self._next_query_clock = 0
-        mcu_freq = self._mcu.get_mcu_freq()
-        self._retry_query_ticks = mcu_freq * self.RETRY_QUERY
-    def home(self, clock, rest_ticks):
+        self._mcu_freq = mcu.get_mcu_freq()
+        self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
+        self.print_to_mcu_time = mcu.print_to_mcu_time
+    def home(self, mcu_time, rest_time):
+        clock = int(mcu_time * self._mcu_freq)
+        rest_ticks = int(rest_time * self._mcu_freq)
         self._homing = True
         self._next_query_clock = clock + self._retry_query_ticks
         msg = self._home_cmd.encode(
@@ -124,8 +134,6 @@ class MCU_endstop:
         if self._stepper.get_invert_dir():
             return -self._last_position
         return self._last_position
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
 
 class MCU_digital_out:
     def __init__(self, mcu, pin, max_duration):
@@ -141,7 +149,9 @@ class MCU_digital_out:
             " max_duration=%d" % (self._oid, pin, self._invert, max_duration))
         self._set_cmd = mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c")
-    def set_digital(self, clock, value):
+        self.print_to_mcu_time = mcu.print_to_mcu_time
+    def set_digital(self, mcu_time, value):
+        clock = int(mcu_time * self._mcu_freq)
         msg = self._set_cmd.encode(self._oid, clock, value ^ self._invert)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
@@ -150,13 +160,10 @@ class MCU_digital_out:
     def get_last_setting(self):
         return self._last_value
     def set_pwm(self, mcu_time, value):
-        clock = int(mcu_time * self._mcu_freq)
         dval = 0
         if value > 127:
             dval = 1
-        self.set_digital(clock, dval)
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
+        self.set_digital(mcu_time, dval)
 
 class MCU_pwm:
     def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=True):
@@ -253,7 +260,7 @@ class MCU:
         self._steppers = []
         self._steppersync = None
         # Print time to clock epoch calculations
-        self._print_start_clock = 0.
+        self._print_start_clock = 0
         self._clock_freq = 0.
         # Stats
         self._mcu_tick_avg = 0.
@@ -420,8 +427,6 @@ class MCU:
         return last_move_end - (float(clock_diff) / self._clock_freq)
     def print_to_mcu_time(self, print_time):
         return print_time + self._print_start_clock / self._clock_freq
-    def get_print_clock(self, print_time):
-        return print_time * self._clock_freq + self._print_start_clock
     def get_mcu_freq(self):
         return self._clock_freq
     def get_last_clock(self):
@@ -430,8 +435,8 @@ class MCU:
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
         self.serial.send(cmd, minclock, reqclock, cq=cq)
     def flush_moves(self, print_time):
-        move_clock = int(self.get_print_clock(print_time))
-        self.ffi_lib.steppersync_flush(self._steppersync, move_clock)
+        clock = int(print_time * self._clock_freq) + self._print_start_clock
+        self.ffi_lib.steppersync_flush(self._steppersync, clock)
 
 
 ######################################################################
@@ -456,10 +461,10 @@ class Dummy_MCU_stepper:
             self._stepid, dirstr, countstr, addstr, interval))
     def set_next_step_dir(self, dir):
         self._sdir = dir
-    def reset_step_clock(self, clock):
+    def _reset_step_clock(self, clock):
         self._mcu.outfile.write("G6S%dT%d\n" % (self._stepid, clock))
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
+    def print_to_mcu_time(self, print_time):
+        return self._mcu.print_to_mcu_time(print_time)
 
 class Dummy_MCU_obj:
     def __init__(self, mcu):
@@ -480,14 +485,12 @@ class Dummy_MCU_obj:
         pass
     def print_to_mcu_time(self, print_time):
         return self._mcu.print_to_mcu_time(print_time)
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
 
 class DummyMCU:
     def __init__(self, outfile):
         self.outfile = outfile
         self._stepid = -1
-        self._print_start_clock = 0.
+        self._print_start_clock = 0
         self._clock_freq = 16000000.
         logging.debug('Translated by klippy')
     def connect(self):
@@ -515,8 +518,6 @@ class DummyMCU:
         return 0.250
     def print_to_mcu_time(self, print_time):
         return print_time + self._print_start_clock / self._clock_freq
-    def get_print_clock(self, print_time):
-        return print_time * self._clock_freq + self._print_start_clock
     def get_mcu_freq(self):
         return self._clock_freq
     def flush_moves(self, print_time):

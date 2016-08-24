@@ -77,8 +77,7 @@ class PrinterExtruder:
             if steps < 0:
                 sdir = 1
                 steps = -steps
-            clock_offset, clock_freq, so = self.stepper.prep_move(
-                sdir, move_time)
+            mcu_time, so = self.stepper.prep_move(move_time, sdir)
 
             step_dist = forward_d / steps
             inv_step_dist = 1. / step_dist
@@ -86,28 +85,28 @@ class PrinterExtruder:
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_clock_offset = start_v * inv_accel * clock_freq
-            accel_sqrt_offset = accel_clock_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel * clock_freq**2
+            accel_time_offset = start_v * inv_accel
+            accel_sqrt_offset = accel_time_offset**2
+            accel_multiplier = 2.0 * step_dist * inv_accel
             accel_steps = accel_d * inv_step_dist
             step_offset = so.step_sqrt(
-                accel_steps, step_offset, clock_offset - accel_clock_offset
+                mcu_time - accel_time_offset, accel_steps, step_offset
                 , accel_sqrt_offset, accel_multiplier)
-            clock_offset += accel_t * clock_freq
+            mcu_time += accel_t
             # Cruising steps
             #t = pos/cruise_v
-            cruise_multiplier = step_dist * clock_freq / cruise_v
+            cruise_multiplier = step_dist / cruise_v
             cruise_steps = cruise_d * inv_step_dist
             step_offset = so.step_factor(
-                cruise_steps, step_offset, clock_offset, cruise_multiplier)
-            clock_offset += cruise_t * clock_freq
+                mcu_time, cruise_steps, step_offset, cruise_multiplier)
+            mcu_time += cruise_t
             # Deceleration steps
             #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
-            decel_clock_offset = decel_v * inv_accel * clock_freq
-            decel_sqrt_offset = decel_clock_offset**2
+            decel_time_offset = decel_v * inv_accel
+            decel_sqrt_offset = decel_time_offset**2
             decel_steps = decel_d * inv_step_dist
             so.step_sqrt(
-                decel_steps, step_offset, clock_offset + decel_clock_offset
+                mcu_time + decel_time_offset, decel_steps, step_offset
                 , decel_sqrt_offset, -accel_multiplier)
 
         # Determine retract steps
@@ -116,15 +115,15 @@ class PrinterExtruder:
         steps = self.stepper_pos - new_step_pos
         if steps:
             self.stepper_pos = new_step_pos
-            clock_offset, clock_freq, so = self.stepper.prep_move(
-                1, move_time+accel_t+cruise_t+decel_t)
+            mcu_time, so = self.stepper.prep_move(
+                move_time+accel_t+cruise_t+decel_t, 1)
 
             step_dist = retract_d / steps
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_clock_offset = retract_v * inv_accel * clock_freq
-            accel_sqrt_offset = accel_clock_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel * clock_freq**2
-            so.step_sqrt(steps, 0.5, clock_offset - accel_clock_offset
+            accel_time_offset = retract_v * inv_accel
+            accel_sqrt_offset = accel_time_offset**2
+            accel_multiplier = 2.0 * step_dist * inv_accel
+            so.step_sqrt(mcu_time - accel_time_offset, steps, 0.5
                          , accel_sqrt_offset, accel_multiplier)

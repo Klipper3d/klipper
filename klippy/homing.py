@@ -47,8 +47,7 @@ class Homing:
         # Start homing and issue move
         print_time = self.toolhead.get_last_move_time()
         for s in steppers:
-            hz = speed * s.inv_step_dist
-            es = s.enable_endstop_checking(print_time, hz)
+            es = s.enable_endstop_checking(print_time, s.step_dist / speed)
             self.endstops.append(es)
         self.toolhead.move(self.fill_coord(movepos), speed)
         self.toolhead.reset_print_time()
