@@ -134,6 +134,7 @@ class MCU_digital_out:
         pin, pullup, self._invert = parse_pin_extras(pin)
         self._last_clock = 0
         self._last_value = None
+        self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
         mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s default_value=%d"
@@ -148,7 +149,8 @@ class MCU_digital_out:
         self._last_value = value
     def get_last_setting(self):
         return self._last_value
-    def set_pwm(self, clock, value):
+    def set_pwm(self, mcu_time, value):
+        clock = int(mcu_time * self._mcu_freq)
         dval = 0
         if value > 127:
             dval = 1
@@ -161,6 +163,7 @@ class MCU_pwm:
         self._mcu = mcu
         self._oid = mcu.create_oid()
         self._last_clock = 0
+        self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
         if hard_pwm:
             mcu.add_config_cmd(
@@ -175,13 +178,13 @@ class MCU_pwm:
                     self._oid, pin, cycle_ticks, max_duration))
             self._set_cmd = mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%c")
-    def set_pwm(self, clock, value):
+        self.print_to_mcu_time = mcu.print_to_mcu_time
+    def set_pwm(self, mcu_time, value):
+        clock = int(mcu_time * self._mcu_freq)
         msg = self._set_cmd.encode(self._oid, clock, value)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
         self._last_clock = clock
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
 
 class MCU_adc:
     ADC_MAX = 1024 # 10bit adc
@@ -193,10 +196,9 @@ class MCU_adc:
         self._sample_ticks = 0
         self._sample_count = 1
         self._report_clock = 0
-        self._last_value = 0
-        self._last_read_clock = 0
         self._callback = None
-        self._max_adc_inv = 0.
+        self._inv_max_adc = 0.
+        self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
         mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (self._oid, pin))
         mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
@@ -204,36 +206,33 @@ class MCU_adc:
         self._query_cmd = mcu.lookup_command(
             "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u min_value=%hu max_value=%hu")
-    def set_minmax(self, sample_ticks, sample_count, minval=None, maxval=None):
+    def set_minmax(self, sample_time, sample_count, minval=None, maxval=None):
+        self._sample_ticks = int(sample_time * self._mcu_freq)
+        self._sample_count = sample_count
         if minval is None:
             minval = 0
         if maxval is None:
             maxval = 0xffff
-        self._sample_ticks = sample_ticks
-        self._sample_count = sample_count
         max_adc = sample_count * self.ADC_MAX
         self._min_sample = int(minval * max_adc)
         self._max_sample = min(0xffff, int(math.ceil(maxval * max_adc)))
-        self._max_adc_inv = 1.0 / max_adc
-    def query_analog_in(self, report_clock):
-        self._report_clock = report_clock
-        mcu_freq = self._mcu.get_mcu_freq()
+        self._inv_max_adc = 1.0 / max_adc
+    def query_analog_in(self, report_time):
+        self._report_clock = int(report_time * self._mcu_freq)
         cur_clock = self._mcu.get_last_clock()
-        clock = cur_clock + int(mcu_freq * (1.0 + self._oid * 0.01)) # XXX
+        clock = cur_clock + int(self._mcu_freq * (1.0 + self._oid * 0.01)) # XXX
         msg = self._query_cmd.encode(
             self._oid, clock, self._sample_ticks, self._sample_count
-            , report_clock, self._min_sample, self._max_sample)
+            , self._report_clock, self._min_sample, self._max_sample)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
     def _handle_analog_in_state(self, params):
-        self._last_value = params['value'] * self._max_adc_inv
+        last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.serial.translate_clock(params['next_clock'])
-        self._last_read_clock = next_clock - self._report_clock
+        last_read_time = (next_clock - self._report_clock) / self._mcu_freq
         if self._callback is not None:
-            self._callback(self._last_read_clock, self._last_value)
+            self._callback(last_read_time, last_value)
     def set_adc_callback(self, cb):
         self._callback = cb
-    def get_print_clock(self, print_time):
-        return self._mcu.get_print_clock(print_time)
 
 class MCU:
     def __init__(self, printer, config):
@@ -419,6 +418,8 @@ class MCU:
     def get_print_buffer_time(self, eventtime, last_move_end):
         clock_diff = self.serial.get_clock(eventtime) - self._print_start_clock
         return last_move_end - (float(clock_diff) / self._clock_freq)
+    def print_to_mcu_time(self, print_time):
+        return print_time + self._print_start_clock / self._clock_freq
     def get_print_clock(self, print_time):
         return print_time * self._clock_freq + self._print_start_clock
     def get_mcu_freq(self):
@@ -469,14 +470,16 @@ class Dummy_MCU_obj:
         return False
     def home_finalize(self):
         pass
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, mcu_time, value):
         pass
-    def set_minmax(self, sample_ticks, sample_count, minval=None, maxval=None):
+    def set_minmax(self, sample_time, sample_count, minval=None, maxval=None):
         pass
-    def query_analog_in(self, report_clock):
+    def query_analog_in(self, report_time):
         pass
     def set_adc_callback(self, cb):
         pass
+    def print_to_mcu_time(self, print_time):
+        return self._mcu.print_to_mcu_time(print_time)
     def get_print_clock(self, print_time):
         return self._mcu.get_print_clock(print_time)
 
@@ -510,6 +513,8 @@ class DummyMCU:
         pass
     def get_print_buffer_time(self, eventtime, last_move_end):
         return 0.250
+    def print_to_mcu_time(self, print_time):
+        return print_time + self._print_start_clock / self._clock_freq
     def get_print_clock(self, print_time):
         return print_time * self._clock_freq + self._print_start_clock
     def get_mcu_freq(self):

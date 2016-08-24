@@ -11,29 +11,25 @@ class PrinterFan:
         self.printer = printer
         self.config = config
         self.mcu_fan = None
-        self.last_fan_clock = self.last_fan_value = 0
-        self.min_fan_clock = 0
-        self.kick_start_clock = 0
+        self.last_fan_value = 0
+        self.last_fan_time = 0.
+        self.kick_start_time = config.getfloat('kick_start_time', 0.1)
     def build_config(self):
         pin = self.config.get('pin')
         hard_pwm = self.config.getint('hard_pwm', 128)
-        mcu_freq = self.printer.mcu.get_mcu_freq()
-        self.min_fan_clock = int(FAN_MIN_TIME * mcu_freq)
-        kst = self.config.getfloat('kick_start_time', 0.1)
-        self.kick_start_clock = int(kst * mcu_freq)
         self.mcu_fan = self.printer.mcu.create_pwm(pin, hard_pwm, 0)
     # External commands
     def set_speed(self, print_time, value):
         value = max(0, min(255, int(value*255. + 0.5)))
         if value == self.last_fan_value:
             return
-        pc = int(self.mcu_fan.get_print_clock(print_time))
-        pc = max(self.last_fan_clock + self.min_fan_clock, pc)
+        mcu_time = self.mcu_fan.print_to_mcu_time(print_time)
+        mcu_time = max(self.last_fan_time + FAN_MIN_TIME, mcu_time)
         if (value and value < 255
-            and not self.last_fan_value and self.kick_start_clock):
+            and not self.last_fan_value and self.kick_start_time):
             # Run fan at full speed for specified kick_start_time
-            self.mcu_fan.set_pwm(pc, 255)
-            pc += self.kick_start_clock
-        self.mcu_fan.set_pwm(pc, value)
-        self.last_fan_clock = pc
+            self.mcu_fan.set_pwm(mcu_time, 255)
+            mcu_time += self.kick_start_time
+        self.mcu_fan.set_pwm(mcu_time, value)
+        self.last_fan_time = mcu_time
         self.last_fan_value = value

@@ -28,15 +28,12 @@ class PrinterHeater:
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.lock = threading.Lock()
         self.last_temp = 0.
-        self.last_temp_clock = 0
+        self.last_temp_time = 0.
         self.target_temp = 0.
-        self.report_clock = 0
         self.control = None
         # pwm caching
-        self.next_pwm_clock = 0
+        self.next_pwm_time = 0.
         self.last_pwm_value = 0
-        self.resend_clock = 0
-        self.pwm_offset_clock = 0
     def build_config(self):
         heater_pin = self.config.get('heater_pin')
         thermistor_pin = self.config.get('thermistor_pin')
@@ -44,35 +41,28 @@ class PrinterHeater:
         self.mcu_adc = self.printer.mcu.create_adc(thermistor_pin)
         min_adc = self.calc_adc(self.config.getfloat('max_temp'))
         max_adc = self.calc_adc(self.config.getfloat('min_temp'))
-        freq = self.printer.mcu.get_mcu_freq()
-        sample_clock = int(SAMPLE_TIME*freq)
         self.mcu_adc.set_minmax(
-            sample_clock, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
+            SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
         self.mcu_adc.set_adc_callback(self.adc_callback)
-        self.report_clock = int(REPORT_TIME*freq)
         control_algo = self.config.get('control', 'watermark')
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         self.control = algos[control_algo](self, self.config)
-        self.next_pwm_clock = 0
-        self.last_pwm_value = 0
-        self.resend_clock = int(MAX_HEAT_TIME * freq * 3. / 4.)
-        self.pwm_offset_clock = sample_clock*SAMPLE_COUNT + self.report_clock
     def run(self):
-        self.mcu_adc.query_analog_in(self.report_clock)
-    def set_pwm(self, read_clock, value):
+        self.mcu_adc.query_analog_in(REPORT_TIME)
+    def set_pwm(self, read_time, value):
         if value:
             if self.target_temp <= 0.:
                 return
-            if (read_clock < self.next_pwm_clock
+            if (read_time < self.next_pwm_time
                 and abs(value - self.last_pwm_value) < 15):
                 return
         elif not self.last_pwm_value:
             return
-        pwm_clock = read_clock + self.pwm_offset_clock
-        self.next_pwm_clock = pwm_clock + self.resend_clock
+        pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
+        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        logging.debug("pwm=%d@%d (%d)" % (value, read_clock, pwm_clock))
-        self.mcu_pwm.set_pwm(pwm_clock, value)
+        logging.debug("pwm=%d@%.3f (%.3f)" % (value, read_time, pwm_time))
+        self.mcu_pwm.set_pwm(pwm_time, value)
     # Temperature calculation
     def calc_temp(self, adc):
         r = self.pullup_r * adc / (1.0 - adc)
@@ -90,14 +80,13 @@ class PrinterHeater:
         x = math.sqrt(math.pow(c2 / (3.*c3), 3.) + math.pow(y, 2.))
         r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
         return r / (self.pullup_r + r)
-    def adc_callback(self, read_clock, read_value):
+    def adc_callback(self, read_time, read_value):
         temp = self.calc_temp(float(read_value))
         with self.lock:
             self.last_temp = temp
-            self.last_temp_clock = read_clock
-            self.control.adc_callback(read_clock, temp)
-        #logging.debug("temp: %d(%d) %f = %f" % (
-        #    read_clock, read_clock & 0xffffffff, read_value, temp))
+            self.last_temp_time = read_time
+            self.control.adc_callback(read_time, temp)
+        #logging.debug("temp: %.3f %f = %f" % (read_time, read_value, temp))
     # External commands
     def set_temp(self, print_time, degrees):
         with self.lock:
@@ -122,15 +111,15 @@ class ControlBangBang:
         self.heater = heater
         self.max_delta = config.getfloat('max_delta', 2.0)
         self.heating = False
-    def adc_callback(self, read_clock, temp):
+    def adc_callback(self, read_time, temp):
         if self.heating and temp >= self.heater.target_temp+self.max_delta:
             self.heating = False
         elif not self.heating and temp <= self.heater.target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_clock, PWM_MAX)
+            self.heater.set_pwm(read_time, PWM_MAX)
         else:
-            self.heater.set_pwm(read_clock, 0)
+            self.heater.set_pwm(read_time, 0)
     def check_busy(self, eventtime):
         return self.heater.last_temp < self.heater.target_temp-self.max_delta
 
@@ -149,12 +138,11 @@ class ControlPID:
         imax = config.getint('pid_integral_max', PWM_MAX)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
-        self.prev_temp_clock = 0
+        self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
-        self.inv_mcu_freq = 1. / self.heater.printer.mcu.get_mcu_freq()
-    def adc_callback(self, read_clock, temp):
-        time_diff = (read_clock - self.prev_temp_clock) * self.inv_mcu_freq
+    def adc_callback(self, read_time, temp):
+        time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
         if time_diff >= self.min_deriv_time:
@@ -168,13 +156,13 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = int(self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv)
-        #logging.debug("pid: %f@%d -> diff=%f deriv=%f err=%f integ=%f co=%d" % (
-        #    temp, read_clock, temp_diff, temp_deriv, temp_err, temp_integ, co))
+        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d" % (
+        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co))
         bounded_co = max(0, min(PWM_MAX, co))
-        self.heater.set_pwm(read_clock, bounded_co)
+        self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
-        self.prev_temp_clock = read_clock
+        self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
@@ -197,8 +185,8 @@ class ControlAutoTune:
         self.heating = False
         self.peaks = []
         self.peak = 0.
-        self.peak_clock = 0
-    def adc_callback(self, read_clock, temp):
+        self.peak_time = 0.
+    def adc_callback(self, read_time, temp):
         if self.heating and temp >= self.target_temp:
             self.heating = False
             self.check_peaks()
@@ -206,17 +194,17 @@ class ControlAutoTune:
             self.heating = True
             self.check_peaks()
         if self.heating:
-            self.heater.set_pwm(read_clock, PWM_MAX)
+            self.heater.set_pwm(read_time, PWM_MAX)
             if temp < self.peak:
                 self.peak = temp
-                self.peak_clock = read_clock
+                self.peak_time = read_time
         else:
-            self.heater.set_pwm(read_clock, 0)
+            self.heater.set_pwm(read_time, 0)
             if temp > self.peak:
                 self.peak = temp
-                self.peak_clock = read_clock
+                self.peak_time = read_time
     def check_peaks(self):
-        self.peaks.append((self.peak, self.peak_clock))
+        self.peaks.append((self.peak, self.peak_time))
         if self.heating:
             self.peak = 9999999.
         else:
@@ -224,18 +212,18 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         temp_diff = self.peaks[-1][0] - self.peaks[-2][0]
-        clock_diff = self.peaks[-1][1] - self.peaks[-3][1]
+        time_diff = self.peaks[-1][1] - self.peaks[-3][1]
         pwm_diff = PWM_MAX - 0
         Ku = 4. * (2. * pwm_diff) / (abs(temp_diff) * math.pi)
-        Tu = clock_diff / self.heater.printer.mcu.get_mcu_freq()
+        Tu = time_diff
 
         Kp = 0.6 * Ku
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%d/%d Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f" % (
-            temp_diff, clock_diff, pwm_diff, Ku, Tu, Kp, Ki, Kd))
+        logging.info("Autotune: raw=%f/%d Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f" % (
+            temp_diff, pwm_diff, Ku, Tu, Kp, Ki, Kd))
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True
@@ -255,29 +243,29 @@ class ControlBumpTest:
         self.temp_samples = {}
         self.pwm_samples = {}
         self.state = 0
-    def set_pwm(self, read_clock, value):
-        self.pwm_samples[read_clock + 2*self.heater.report_clock] = value
-        self.heater.set_pwm(read_clock, value)
-    def adc_callback(self, read_clock, temp):
-        self.temp_samples[read_clock] = temp
+    def set_pwm(self, read_time, value):
+        self.pwm_samples[read_time + 2*REPORT_TIME] = value
+        self.heater.set_pwm(read_time, value)
+    def adc_callback(self, read_time, temp):
+        self.temp_samples[read_time] = temp
         if not self.state:
-            self.set_pwm(read_clock, 0)
+            self.set_pwm(read_time, 0)
             if len(self.temp_samples) >= 20:
                 self.state += 1
         elif self.state == 1:
             if temp < self.target_temp:
-                self.set_pwm(read_clock, PWM_MAX)
+                self.set_pwm(read_time, PWM_MAX)
                 return
-            self.set_pwm(read_clock, 0)
+            self.set_pwm(read_time, 0)
             self.state += 1
         elif self.state == 2:
-            self.set_pwm(read_clock, 0)
+            self.set_pwm(read_time, 0)
             if temp <= (self.target_temp + AMBIENT_TEMP) / 2.:
                 self.dump_stats()
                 self.state += 1
     def dump_stats(self):
-        out = ["%d %.1f %d" % (clock, temp, self.pwm_samples.get(clock, -1))
-               for clock, temp in sorted(self.temp_samples.items())]
+        out = ["%.3f %.1f %d" % (time, temp, self.pwm_samples.get(time, -1.))
+               for time, temp in sorted(self.temp_samples.items())]
         f = open("/tmp/heattest.txt", "wb")
         f.write('\n'.join(out))
         f.close()
