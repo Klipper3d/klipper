@@ -260,7 +260,7 @@ class MCU:
         self._steppers = []
         self._steppersync = None
         # Print time to clock epoch calculations
-        self._print_start_clock = 0
+        self._print_start_time = 0.
         self._clock_freq = 0.
         # Stats
         self._mcu_tick_avg = 0.
@@ -421,12 +421,14 @@ class MCU:
         return MCU_adc(self, pin)
     # Clock syncing
     def set_print_start_time(self, eventtime):
-        self._print_start_clock = self.serial.get_clock(eventtime)
-    def get_print_buffer_time(self, eventtime, last_move_end):
-        clock_diff = self.serial.get_clock(eventtime) - self._print_start_clock
-        return last_move_end - (float(clock_diff) / self._clock_freq)
+        est_mcu_time = self.serial.get_clock(eventtime) / self._clock_freq
+        self._print_start_time = est_mcu_time
+    def get_print_buffer_time(self, eventtime, print_time):
+        mcu_time = print_time + self._print_start_time
+        est_mcu_time = self.serial.get_clock(eventtime) / self._clock_freq
+        return mcu_time - est_mcu_time
     def print_to_mcu_time(self, print_time):
-        return print_time + self._print_start_clock / self._clock_freq
+        return print_time + self._print_start_time
     def get_mcu_freq(self):
         return self._clock_freq
     def get_last_clock(self):
@@ -435,7 +437,8 @@ class MCU:
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
         self.serial.send(cmd, minclock, reqclock, cq=cq)
     def flush_moves(self, print_time):
-        clock = int(print_time * self._clock_freq) + self._print_start_clock
+        mcu_time = print_time + self._print_start_time
+        clock = int(mcu_time * self._clock_freq)
         self.ffi_lib.steppersync_flush(self._steppersync, clock)
 
 
@@ -490,7 +493,7 @@ class DummyMCU:
     def __init__(self, outfile):
         self.outfile = outfile
         self._stepid = -1
-        self._print_start_clock = 0
+        self._print_start_time = 0.
         self._clock_freq = 16000000.
         logging.debug('Translated by klippy')
     def connect(self):
@@ -517,7 +520,7 @@ class DummyMCU:
     def get_print_buffer_time(self, eventtime, last_move_end):
         return 0.250
     def print_to_mcu_time(self, print_time):
-        return print_time + self._print_start_clock / self._clock_freq
+        return print_time + self._print_start_time
     def get_mcu_freq(self):
         return self._clock_freq
     def flush_moves(self, print_time):
