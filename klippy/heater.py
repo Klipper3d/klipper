@@ -19,7 +19,7 @@ REPORT_TIME = 0.300
 KELVIN_TO_CELCIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
-PWM_MAX = 255
+PID_PARAM_BASE = 255.
 
 class error(Exception):
     pass
@@ -35,6 +35,7 @@ class PrinterHeater:
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
         self.min_temp = self.config.getfloat('min_temp')
         self.max_temp = self.config.getfloat('max_temp')
+        self.max_power = max(0., min(1., self.config.getfloat('max_power', 1.)))
         self.can_extrude = (self.min_extrude_temp <= 0.)
         self.lock = threading.Lock()
         self.last_temp = 0.
@@ -49,7 +50,7 @@ class PrinterHeater:
         algo = self.config.getchoice('control', algos)
         heater_pin = self.config.get('heater_pin')
         thermistor_pin = self.config.get('thermistor_pin')
-        if algo is ControlBangBang:
+        if algo is ControlBangBang and self.max_power == 1.:
             self.mcu_pwm = self.printer.mcu.create_digital_out(
                 heater_pin, MAX_HEAT_TIME)
         else:
@@ -69,7 +70,7 @@ class PrinterHeater:
             if self.target_temp <= 0.:
                 return
             if (read_time < self.next_pwm_time
-                and abs(value - self.last_pwm_value) < 15):
+                and abs(value - self.last_pwm_value) < 0.05):
                 return
         elif not self.last_pwm_value and (
                 self.target_temp <= 0. or read_time < self.next_pwm_time):
@@ -77,7 +78,7 @@ class PrinterHeater:
         pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        logging.debug("%s: pwm=%d@%.3f (from %.3f@%.3f [%.3f])" % (
+        logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])" % (
             self.config.section, value, pwm_time,
             self.last_temp, self.last_temp_time, self.target_temp))
         self.mcu_pwm.set_pwm(pwm_time, value)
@@ -139,9 +140,9 @@ class ControlBangBang:
         elif not self.heating and temp <= self.heater.target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, PWM_MAX)
+            self.heater.set_pwm(read_time, self.heater.max_power)
         else:
-            self.heater.set_pwm(read_time, 0)
+            self.heater.set_pwm(read_time, 0.)
     def check_busy(self, eventtime):
         return self.heater.last_temp < self.heater.target_temp-self.max_delta
 
@@ -153,11 +154,11 @@ class ControlBangBang:
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
-        self.Kp = config.getfloat('pid_Kp')
-        self.Ki = config.getfloat('pid_Ki')
-        self.Kd = config.getfloat('pid_Kd')
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2.)
-        imax = config.getint('pid_integral_max', PWM_MAX)
+        imax = config.getfloat('pid_integral_max', heater.max_power)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
@@ -177,10 +178,10 @@ class ControlPID:
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = int(self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv)
+        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d" % (
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co))
-        bounded_co = max(0, min(PWM_MAX, co))
+        bounded_co = max(0., min(self.heater.max_power, co))
         self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
@@ -216,12 +217,12 @@ class ControlAutoTune:
             self.heating = True
             self.check_peaks()
         if self.heating:
-            self.heater.set_pwm(read_time, PWM_MAX)
+            self.heater.set_pwm(read_time, self.heater.max_power)
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
         else:
-            self.heater.set_pwm(read_time, 0)
+            self.heater.set_pwm(read_time, 0.)
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
@@ -235,8 +236,8 @@ class ControlAutoTune:
             return
         temp_diff = self.peaks[-1][0] - self.peaks[-2][0]
         time_diff = self.peaks[-1][1] - self.peaks[-3][1]
-        pwm_diff = PWM_MAX - 0
-        Ku = 4. * (2. * pwm_diff) / (abs(temp_diff) * math.pi)
+        max_power = self.heater.max_power
+        Ku = 4. * (2. * max_power) / (abs(temp_diff) * math.pi)
         Tu = time_diff
 
         Kp = 0.6 * Ku
@@ -244,8 +245,9 @@ class ControlAutoTune:
         Td = 0.125 * Tu
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%d Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f" % (
-            temp_diff, pwm_diff, Ku, Tu, Kp, Ki, Kd))
+        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f" % (
+            temp_diff, max_power, Ku, Tu,
+            Kp * PID_PARAM_BASE, Ki * PID_PARAM_BASE, Kd * PID_PARAM_BASE))
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True
@@ -271,17 +273,17 @@ class ControlBumpTest:
     def adc_callback(self, read_time, temp):
         self.temp_samples[read_time] = temp
         if not self.state:
-            self.set_pwm(read_time, 0)
+            self.set_pwm(read_time, 0.)
             if len(self.temp_samples) >= 20:
                 self.state += 1
         elif self.state == 1:
             if temp < self.target_temp:
-                self.set_pwm(read_time, PWM_MAX)
+                self.set_pwm(read_time, self.heater.max_power)
                 return
-            self.set_pwm(read_time, 0)
+            self.set_pwm(read_time, 0.)
             self.state += 1
         elif self.state == 2:
-            self.set_pwm(read_time, 0)
+            self.set_pwm(read_time, 0.)
             if temp <= (self.target_temp + AMBIENT_TEMP) / 2.:
                 self.dump_stats()
                 self.state += 1

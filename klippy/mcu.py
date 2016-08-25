@@ -245,11 +245,12 @@ class MCU_digital_out:
         return self._last_value
     def set_pwm(self, mcu_time, value):
         dval = 0
-        if value > 127:
+        if value >= 0.5:
             dval = 1
         self.set_digital(mcu_time, dval)
 
 class MCU_pwm:
+    PWM_MAX = 255.
     def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=True):
         self._mcu = mcu
         self._oid = mcu.create_oid()
@@ -272,6 +273,7 @@ class MCU_pwm:
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def set_pwm(self, mcu_time, value):
         clock = int(mcu_time * self._mcu_freq)
+        value = int(value * self.PWM_MAX + 0.5)
         msg = self._set_cmd.encode(self._oid, clock, value)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
