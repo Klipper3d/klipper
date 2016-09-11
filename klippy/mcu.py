@@ -304,9 +304,11 @@ class MCU:
         self.output_file_mode = True
         self.serial.connect_file(debugoutput, dictionary)
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
-        def dummy_build_config():
+        def dummy_send_config():
+            for c in self._config_cmds:
+                self.send(self.create_command(c))
             self._init_steppersync(500)
-        self.build_config = dummy_build_config
+        self._send_config = dummy_send_config
         if not pace:
             def dummy_set_print_start_time(eventtime):
                 pass
