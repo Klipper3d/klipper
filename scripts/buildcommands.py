@@ -173,7 +173,7 @@ const uint8_t command_identify_data[] PROGMEM = {%s
 // Identify size = %d (%d uncompressed)
 const uint32_t command_identify_size PROGMEM = ARRAY_SIZE(command_identify_data);
 """
-    return fmt % (''.join(out), len(zdata), len(data))
+    return data, fmt % (''.join(out), len(zdata), len(data))
 
 
 ######################################################################
@@ -227,6 +227,8 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-e", "--extra", dest="extra", default="",
                     help="extra version string to append to version")
+    opts.add_option("-d", dest="write_dictionary",
+                    help="file to write mcu protocol dictionary")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="enable debug messages")
 
@@ -302,12 +304,18 @@ def main():
     sys.stdout.write("Version: %s\n" % (version,))
     responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
                  if msgname not in commands]
-    icode = build_identify(cmd_by_id, msg_to_id, responses, static_strings
-                           , config, version)
+    datadict, icode = build_identify(cmd_by_id, msg_to_id, responses
+                                     , static_strings, config, version)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + paramcode + parsercode + cmdcode + icode)
     f.close()
+
+    # Write data dictionary
+    if options.write_dictionary:
+        f = open(options.write_dictionary, 'wb')
+        f.write(datadict)
+        f.close()
 
 if __name__ == '__main__':
     main()
