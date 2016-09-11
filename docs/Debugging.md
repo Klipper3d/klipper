@@ -1,5 +1,47 @@
 The Klippy host code has some tools to help in debugging the firmware.
 
+Translating gcode files to firmware commands
+============================================
+
+The Klippy host code can run in a batch mode to produce the low-level
+firmware commands associated with a gcode file. Inspecting these
+low-level firmware commands is useful when trying to understand the
+actions of the low-level hardware. It can also be useful to compare
+the difference in firmware commands after a code change.
+
+To run Klippy in this batch mode, there is a one time step necessary
+to generate the firmware "data dictionary". This is done by compiling
+the firmware code to obtain the **out/klipper.dict** file:
+
+```
+make menuconfig
+make
+```
+
+Once the above is done it is possible to run Klipper in batch mode
+(see [installation](Installation.md) for the steps necessary to build
+the python virtual environment and a printer.cfg file):
+
+```
+~/klippy-env/bin/python ./klippy/klippy.py ~/printer.cfg -i test.gcode -o test.serial -v -d out/klipper.dict
+```
+
+The above will produce a file **test.serial** with the binary serial
+output. This output can be translated to readable text with:
+
+```
+~/klippy-env/bin/python ./klippy/parsedump.py out/klipper.dict test.serial > test.txt
+```
+
+The resulting file **test.txt** contains a human readable list of
+firmware commands.
+
+The batch mode disables certain response / request commands in order
+to function. As a result, there will be some differences between
+actual firmware commands and the above output. The generated data is
+useful for testing and inspection; it is not useful for sending to a
+real micro-controller.
+
 Testing with simulavr
 =====================
 
