@@ -81,7 +81,7 @@ class PrinterHeater:
         r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
         return r / (self.pullup_r + r)
     def adc_callback(self, read_time, read_value):
-        temp = self.calc_temp(float(read_value))
+        temp = self.calc_temp(read_value)
         with self.lock:
             self.last_temp = temp
             self.last_temp_time = read_time
