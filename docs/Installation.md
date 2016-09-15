@@ -115,7 +115,9 @@ Under "Serial Connection" in "Additional serial ports" add
 "/tmp/printer". Then click "Save".
 
 Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer".
+"Serial Port" setting to "/tmp/printer". Change the Baudrate field to
+250000 (this buad rate field is not related to the firmware baudrate
+and may be safely left at 250000).
 
 Under the "Features" tab, unselect "Enable SD support". Then click
 "Save".
