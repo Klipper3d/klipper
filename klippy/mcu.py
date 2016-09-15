@@ -69,6 +69,19 @@ class MCU_stepper:
         clock = mcu_time * self._mcu_freq
         return self.ffi_lib.stepcompress_push_factor(
             self._stepqueue, steps, step_offset, clock, factor * self._mcu_freq)
+    def step_delta_const(self, mcu_time, dist, step_dist, start_pos
+                         , closest_height2, height, movez_r, inv_velocity):
+        clock = mcu_time * self._mcu_freq
+        return self.ffi_lib.stepcompress_push_delta_const(
+            self._stepqueue, clock, dist, step_dist, start_pos
+            , closest_height2, height, movez_r, inv_velocity * self._mcu_freq)
+    def step_delta_accel(self, mcu_time, dist, step_dist, start_pos
+                         , closest_height2, height, movez_r, accel_multiplier):
+        clock = mcu_time * self._mcu_freq
+        mcu_freq2 = self._mcu_freq**2
+        return self.ffi_lib.stepcompress_push_delta_accel(
+            self._stepqueue, clock, dist, step_dist, start_pos
+            , closest_height2, height, movez_r, accel_multiplier * mcu_freq2)
     def get_errors(self):
         return self.ffi_lib.stepcompress_get_errors(self._stepqueue)
 

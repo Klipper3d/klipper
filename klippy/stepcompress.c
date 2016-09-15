@@ -428,6 +428,79 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     return sdir ? count : -count;
 }
 
+// Schedule 'count' number of steps using the delta kinematic const speed
+int32_t
+stepcompress_push_delta_const(
+    struct stepcompress *sc, double clock_offset, double dist, double step_dist
+    , double start_pos, double closest_height2, double height, double movez_r
+    , double inv_velocity)
+{
+    // Calculate number of steps to take
+    double zdist = dist * movez_r;
+    int count = (safe_sqrt(closest_height2 - dist*dist + zdist*zdist)
+                 - height - zdist) / step_dist + .5;
+    if (count <= 0 || count > 1000000) {
+        if (count)
+            fprintf(stderr, "ERROR: push_delta_const invalid count"
+                    " %d %d %f %f %f %f %f %f %f %f\n"
+                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
+                    , closest_height2, height, movez_r, inv_velocity);
+        return 0;
+    }
+    check_expand(sc, step_dist > 0., count);
+
+    // Calculate each step time
+    uint64_t *qn = sc->queue_next, *end = &qn[count];
+    clock_offset += 0.5;
+    height += .5 * step_dist;
+    while (qn < end) {
+        double zh = height*movez_r;
+        double v = safe_sqrt(closest_height2 - height*height + zh*zh);
+        double pos = start_pos + zh + (step_dist > 0. ? -v : v);
+        *qn++ = clock_offset + pos * inv_velocity;
+        height += step_dist;
+    }
+    sc->queue_next = qn;
+    return step_dist > 0. ? count : -count;
+}
+
+// Schedule 'count' number of steps using delta kinematic acceleration
+int32_t
+stepcompress_push_delta_accel(
+    struct stepcompress *sc, double clock_offset, double dist, double step_dist
+    , double start_pos, double closest_height2, double height, double movez_r
+    , double accel_multiplier)
+{
+    // Calculate number of steps to take
+    double zdist = dist * movez_r;
+    int count = (safe_sqrt(closest_height2 - dist*dist + zdist*zdist)
+                 - height - zdist) / step_dist + .5;
+    if (count <= 0 || count > 1000000) {
+        if (count)
+            fprintf(stderr, "ERROR: push_delta_accel invalid count"
+                    " %d %d %f %f %f %f %f %f %f %f\n"
+                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
+                    , closest_height2, height, movez_r, accel_multiplier);
+        return 0;
+    }
+    check_expand(sc, step_dist > 0., count);
+
+    // Calculate each step time
+    uint64_t *qn = sc->queue_next, *end = &qn[count];
+    clock_offset += 0.5;
+    height += .5 * step_dist;
+    while (qn < end) {
+        double zh = height*movez_r;
+        double v = safe_sqrt(closest_height2 - height*height + zh*zh);
+        double pos = start_pos + zh + (step_dist > 0. ? -v : v);
+        v = safe_sqrt(pos * accel_multiplier);
+        *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
+        height += step_dist;
+    }
+    sc->queue_next = qn;
+    return step_dist > 0. ? count : -count;
+}
+
 // Reset the internal state of the stepcompress object
 void
 stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)

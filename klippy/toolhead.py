@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, time
-import cartesian
+import cartesian, delta
 
 EXTRUDE_DIFF_IGNORE = 1.02
 
@@ -159,7 +159,10 @@ class ToolHead:
         self.printer = printer
         self.reactor = printer.reactor
         self.extruder = printer.objects.get('extruder')
-        self.kin = cartesian.CartKinematics(printer, config)
+        kintypes = {'cartesian': cartesian.CartKinematics,
+                    'delta': delta.DeltaKinematics}
+        kin = config.get('kinematics', 'cartesian')
+        self.kin = kintypes[kin](printer, config)
         self.max_speed, self.max_accel = self.kin.get_max_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         self.move_queue = MoveQueue()

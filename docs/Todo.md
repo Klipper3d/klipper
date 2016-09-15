@@ -126,7 +126,7 @@ Hardware features
  * Smoothieboard / NXP LPC1769 (ARM cortex-M3)
  * Unix based scheduling; Unix based real-time scheduling
 
-* Support for additional kinematics: delta, scara, corexy, etc.
+* Support for additional kinematics: scara, corexy, etc.
 
 * Support shared motor enable GPIO lines.
 
