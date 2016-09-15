@@ -42,8 +42,8 @@ class CartKinematics:
             s = self.steppers[axis]
             # Determine moves
             if s.homing_positive_dir:
-                pos = s.position_endstop + 1.5*(
-                    s.position_min - s.position_endstop)
+                pos = s.position_endstop - 1.5*(
+                    s.position_endstop - s.position_min)
                 rpos = s.position_endstop - s.homing_retract_dist
                 r2pos = rpos - s.homing_retract_dist
             else:
