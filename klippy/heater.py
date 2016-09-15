@@ -8,7 +8,9 @@ import math, logging, threading
 # Mapping from name to Steinhart-Hart coefficients
 Thermistors = {
     "EPCOS 100K B57560G104F": (
-        0.000722136308968056, 0.000216766566488498, 8.92935804531095e-08)
+        0.000722136308968056, 0.000216766566488498, 8.92935804531095e-08),
+    "ATC Semitec 104GT-2": (
+        0.000809651054275124, 0.000211636030735685,  7.07420883993973e-08),
 }
 
 SAMPLE_TIME = 0.001
