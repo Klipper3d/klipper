@@ -37,8 +37,9 @@ struct stepper {
     uint8_t flags : 8;
 };
 
-enum { MF_DIR=1 };
-enum { SF_LAST_DIR=1, SF_NEXT_DIR=2, SF_INVERT_STEP=4, SF_HAVE_ADD=8 };
+enum { MF_DIR=1<<0 };
+enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
+       SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
@@ -46,7 +47,8 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     struct move *m = s->first;
     if (!m) {
-        if (s->interval - s->add < s->min_stop_interval)
+        if (s->interval - s->add < s->min_stop_interval
+            && !(s->flags & SF_NO_NEXT_CHECK))
             shutdown("No next step");
         s->count = 0;
         return SF_DONE;
@@ -163,10 +165,16 @@ command_queue_step(uint32_t *args)
     m->flags = 0;
 
     irq_disable();
-    if (!!(s->flags & SF_LAST_DIR) != !!(s->flags & SF_NEXT_DIR)) {
-        s->flags ^= SF_LAST_DIR;
+    uint8_t flags = s->flags;
+    if (!!(flags & SF_LAST_DIR) != !!(flags & SF_NEXT_DIR)) {
+        flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
     }
+    flags &= ~SF_NO_NEXT_CHECK;
+    if (m->count == 1 && (m->flags || flags & SF_LAST_RESET))
+        // count=1 moves after a reset or dir change can have small intervals
+        flags |= SF_NO_NEXT_CHECK;
+    s->flags = flags & ~SF_LAST_RESET;
     if (s->count) {
         if (s->first)
             *s->plast = m;
@@ -201,9 +209,12 @@ command_reset_step_clock(uint32_t *args)
 {
     struct stepper *s = lookup_oid(args[0], command_config_stepper);
     uint32_t waketime = args[1];
+    irq_disable();
     if (s->count)
         shutdown("Can't reset time when stepper active");
     s->next_step_time = waketime;
+    s->flags |= SF_LAST_RESET;
+    irq_enable();
 }
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
 
