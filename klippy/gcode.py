@@ -101,7 +101,8 @@ class GCodeParser:
                 handler(params)
             except:
                 logging.exception("Exception in command handler")
-                self.respond('echo:Internal error on command:"%s"' % (cmd,))
+                self.toolhead.force_shutdown()
+                self.respond('Error: Internal error on command:"%s"' % (cmd,))
             # Check if machine can process next command or must stall input
             if self.busy_state is not None:
                 break
@@ -142,7 +143,13 @@ class GCodeParser:
         self.busy_state = busy_handler
         self.reactor.update_timer(self.busy_timer, self.reactor.NOW)
     def busy_handler(self, eventtime):
-        busy = self.busy_state.check_busy(eventtime)
+        try:
+            busy = self.busy_state.check_busy(eventtime)
+        except:
+            logging.exception("Exception in busy handler")
+            self.toolhead.force_shutdown()
+            self.respond('Error: Internal error in busy handler')
+            busy = False
         if busy:
             self.toolhead.reset_motor_off_time(eventtime)
             return eventtime + self.RETRY_TIME

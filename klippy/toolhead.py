@@ -85,6 +85,9 @@ class MoveQueue:
         self.queue = []
         self.prev_junction_max = 0.
         self.junction_flush = 0.
+    def reset(self):
+        del self.queue[:]
+        self.prev_junction_max = self.junction_flush = 0.
     def flush(self, lazy=False):
         can_flush = not lazy
         flush_count = len(self.queue)
@@ -186,26 +189,30 @@ class ToolHead:
             eventtime, self.print_time)
         return buffer_time > self.buffer_time_high
     def flush_handler(self, eventtime):
-        if not self.print_time:
-            self.move_queue.flush()
+        try:
             if not self.print_time:
-                if eventtime >= self.motor_off_time:
-                    self.motor_off()
-                    self.reset_print_time()
-                    self.motor_off_time = self.reactor.NEVER
-                return self.motor_off_time
-        print_time = self.print_time
-        buffer_time = self.printer.mcu.get_print_buffer_time(
-            eventtime, print_time)
-        if buffer_time > self.buffer_time_low:
-            return eventtime + buffer_time - self.buffer_time_low
-        self.move_queue.flush()
-        if print_time != self.print_time:
-            self.print_time_stall += 1
-            self.dwell(self.buffer_time_low + STALL_TIME)
-            return self.reactor.NOW
-        self.reset_print_time()
-        return self.motor_off_time
+                self.move_queue.flush()
+                if not self.print_time:
+                    if eventtime >= self.motor_off_time:
+                        self.motor_off()
+                        self.reset_print_time()
+                        self.motor_off_time = self.reactor.NEVER
+                    return self.motor_off_time
+            print_time = self.print_time
+            buffer_time = self.printer.mcu.get_print_buffer_time(
+                eventtime, print_time)
+            if buffer_time > self.buffer_time_low:
+                return eventtime + buffer_time - self.buffer_time_low
+            self.move_queue.flush()
+            if print_time != self.print_time:
+                self.print_time_stall += 1
+                self.dwell(self.buffer_time_low + STALL_TIME)
+                return self.reactor.NOW
+            self.reset_print_time()
+            return self.motor_off_time
+        except:
+            logging.exception("Exception in flush_handler")
+            self.force_shutdown()
     def stats(self, eventtime):
         buffer_time = 0.
         if self.print_time:
@@ -273,3 +280,6 @@ class ToolHead:
         self.extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
+    def force_shutdown(self):
+        self.printer.mcu.force_shutdown()
+        self.move_queue.reset()

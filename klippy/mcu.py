@@ -252,6 +252,7 @@ class MCU:
         self.is_shutdown = False
         self.output_file_mode = False
         # Config building
+        self._emergency_stop_cmd = None
         self._num_oids = 0
         self._config_cmds = []
         self._config_crc = None
@@ -328,6 +329,8 @@ class MCU:
         if err:
             stats += " step_errors=%d" % (err,)
         return stats
+    def force_shutdown(self):
+        self.send(self._emergency_stop_cmd.encode())
     # Configuration phase
     def _add_custom(self):
         data = self._config.get('custom', '')
@@ -340,6 +343,7 @@ class MCU:
                 continue
             self.add_config_cmd(line)
     def build_config(self):
+        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         # Build config commands
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
@@ -504,6 +508,8 @@ class DummyMCU:
         pass
     def stats(self, eventtime):
         return ""
+    def force_shutdown(self):
+        pass
     def build_config(self):
         pass
     def create_stepper(self, step_pin, dir_pin, min_stop_interval, max_error):
