@@ -44,7 +44,7 @@ class GCodeParser:
     def build_handlers(self):
         shutdown_handlers = ['M105', 'M110', 'M114']
         handlers = ['G0', 'G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M84', 'M110', 'M114', 'M206']
+                    'M18', 'M82', 'M83', 'M84', 'M110', 'M114', 'M119', 'M206']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M105', 'M109', 'M303'])
         if self.heater_bed is not None:
@@ -294,6 +294,20 @@ class GCodeParser:
             self.last_position[0], self.last_position[1],
             self.last_position[2], self.last_position[3],
             kinpos[0], kinpos[1], kinpos[2]))
+    def cmd_M119(self, params):
+        # Get Endstop Status
+        if self.inputfile:
+            return
+        # Wrapper class for check_busy() that responds with final status
+        class endstop_handler_wrapper:
+            gcode = self
+            state = self.toolhead.query_endstops()
+            def check_busy(self, eventtime):
+                busy = self.state.check_busy(eventtime)
+                if not busy:
+                    self.gcode.respond(self.state.get_msg())
+                return busy
+        self.set_busy(endstop_handler_wrapper())
     def cmd_M140(self, params):
         # Set Bed Temperature
         self.set_temp(self.heater_bed, params)

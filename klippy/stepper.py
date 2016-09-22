@@ -80,6 +80,11 @@ class PrinterStepper:
         mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
         self.mcu_endstop.home(mcu_time, step_time)
         return self.mcu_endstop
+    def query_endstop(self):
+        if self.mcu_endstop is None:
+            return None
+        self.mcu_endstop.query_endstop()
+        return self.mcu_endstop
     def get_homed_position(self):
         if not self.homing_stepper_phases:
             return self.position_endstop

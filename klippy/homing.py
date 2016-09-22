@@ -11,6 +11,7 @@ class Homing:
         self.toolhead = toolhead
         self.changed_axes = changed_axes
 
+        self.eventtime = 0.
         self.states = []
         self.endstops = []
     def plan_home(self, forcepos, movepos, steppers, speed):
@@ -21,6 +22,7 @@ class Homing:
     def plan_axes_update(self, callback):
         self.states.append((callback, (self.changed_axes,)))
     def check_busy(self, eventtime):
+        self.eventtime = eventtime
         while self.states:
             first = self.states[0]
             ret = first[0](*first[1])
@@ -57,8 +59,34 @@ class Homing:
     def do_wait_endstop(self):
         # Check if endstops have triggered
         for es in self.endstops:
-            if es.is_homing():
+            if es.check_busy(self.eventtime):
                 return True
         # Finished
         del self.endstops[:]
         return False
+
+class QueryEndstops:
+    def __init__(self, names, steppers):
+        self.endstops = []
+        self.busy = []
+        for name, stepper in zip(names, steppers):
+            es = stepper.query_endstop()
+            if es is None:
+                continue
+            self.endstops.append((name, es))
+            self.busy.append(es)
+    def check_busy(self, eventtime):
+        while self.busy:
+            busy = self.busy[0].check_busy(eventtime)
+            if busy:
+                return True
+            self.busy.pop(0)
+        return False
+    def get_msg(self):
+        msgs = []
+        for name, es in self.endstops:
+            msg = "open"
+            if es.get_last_triggered():
+                msg = "TRIGGERED"
+            msgs.append("%s:%s" % (name, msg))
+        return " ".join(msgs)

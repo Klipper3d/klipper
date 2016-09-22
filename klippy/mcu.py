@@ -97,16 +97,15 @@ class MCU_endstop:
                          , self._oid)
         self._query_cmd = mcu.lookup_command("end_stop_query oid=%c")
         self._homing = False
-        self._last_position = 0
-        self._next_query_clock = 0
+        self._min_query_time = self._last_query_time = 0.
+        self._last_state = {}
         self._mcu_freq = mcu.get_mcu_freq()
-        self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def home(self, mcu_time, rest_time):
         clock = int(mcu_time * self._mcu_freq)
         rest_ticks = int(rest_time * self._mcu_freq)
         self._homing = True
-        self._next_query_clock = clock + self._retry_query_ticks
+        self._min_query_time = self._last_query_time = time.time()
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
@@ -117,23 +116,30 @@ class MCU_endstop:
         self._stepper.note_stepper_stop()
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s" % (params,))
-        self._last_position = params['pos']
-        self._homing = params['homing'] != 0
-    def is_homing(self):
-        if not self._homing:
-            return self._homing
+        self._last_state = params
+    def check_busy(self, eventtime):
+        # Check if need to send an end_stop_query command
         if self._mcu.output_file_mode:
             return False
-        last_clock = self._mcu.get_last_clock()
-        if last_clock >= self._next_query_clock:
-            self._next_query_clock = last_clock + self._retry_query_ticks
+        if self._last_state.get('#sent_time', -1.) >= self._min_query_time:
+            if not self._homing or not self._last_state.get('homing', 0):
+                return False
+        if self._last_query_time + self.RETRY_QUERY <= eventtime:
+            self._last_query_time = eventtime
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
-        return self._homing
+        return True
     def get_last_position(self):
+        pos = self._last_state.get('pos', 0)
         if self._stepper.get_invert_dir():
-            return -self._last_position
-        return self._last_position
+            return -pos
+        return pos
+    def query_endstop(self):
+        self._homing = False
+        self._min_query_time = time.time()
+        self._last_query_time = 0.
+    def get_last_triggered(self):
+        return self._last_state.get('pin', self._invert) ^ self._invert
 
 class MCU_digital_out:
     def __init__(self, mcu, pin, max_duration):

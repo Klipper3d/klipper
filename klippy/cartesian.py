@@ -67,6 +67,8 @@ class CartKinematics:
     def motor_off(self, move_time):
         for stepper in self.steppers:
             stepper.motor_enable(move_time, 0)
+    def query_endstops(self, move_time):
+        return homing.QueryEndstops(["x", "y", "z"], self.steppers)
     def move(self, move_time, move):
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v

@@ -280,6 +280,9 @@ class ToolHead:
         self.extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
+    def query_endstops(self):
+        last_move_time = self.get_last_move_time()
+        return self.kin.query_endstops(last_move_time)
     def force_shutdown(self):
         self.printer.mcu.force_shutdown()
         self.move_queue.reset()
