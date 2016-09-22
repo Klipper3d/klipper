@@ -140,13 +140,13 @@ compress_bisect_add(struct stepcompress *sc)
     if (last > sc->queue_pos + 65535)
         last = sc->queue_pos + 65535;
     struct points point = minmax_point(sc, sc->queue_pos);
-    int32_t origmininterval = point.minp, origmaxinterval = point.maxp;
-    int32_t add = 0, minadd=-0x8001, maxadd=0x8000;
-    int32_t bestadd=0, bestcount=0, bestinterval=0;
+    int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
+    int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
+    int32_t bestinterval = 0, bestcount = 0, bestadd = 0, bestreach = 0;
 
     for (;;) {
         // Find longest valid sequence with the given 'add'
-        int32_t mininterval = origmininterval, maxinterval = origmaxinterval;
+        int32_t mininterval = outer_mininterval, maxinterval = outer_maxinterval;
         int32_t count = 1, addfactor = 0;
         for (;;) {
             if (sc->queue_pos + count >= last)
@@ -166,29 +166,25 @@ compress_bisect_add(struct stepcompress *sc)
             mininterval = nextmininterval;
             maxinterval = nextmaxinterval;
         }
-        if (count > bestcount || (count == bestcount && add > bestadd)) {
+
+        // Check if this is the best sequence found so far
+        int32_t reach = add*(addfactor-count) + maxinterval*count;
+        if (reach > bestreach) {
+            bestinterval = maxinterval;
             bestcount = count;
             bestadd = add;
-            bestinterval = maxinterval;
+            bestreach = reach;
         }
 
         // Check if a greater or lesser add could extend the sequence
-        int32_t maxreach = add*addfactor + maxinterval*(count+1);
-        if (maxreach < point.minp) {
+        int32_t nextreach = add*addfactor + maxinterval*(count+1);
+        if (nextreach < point.minp) {
             minadd = add;
-            origmaxinterval = maxinterval;
+            outer_maxinterval = maxinterval;
         } else {
             maxadd = add;
-            origmininterval = mininterval;
+            outer_mininterval = mininterval;
         }
-
-        // See if next point would further limit the add range
-        if ((minadd+1)*addfactor + origmaxinterval*(count+1) < point.minp)
-            minadd = idiv_up(point.minp - origmaxinterval*(count+1)
-                             , addfactor) - 1;
-        if ((maxadd-1)*addfactor + origmininterval*(count+1) > point.maxp)
-            maxadd = idiv_down(point.maxp - origmininterval*(count+1)
-                               , addfactor) + 1;
 
         // The maximum valid deviation between two quadratic sequences
         // can be calculated and used to further limit the add range.
@@ -200,13 +196,19 @@ compress_bisect_add(struct stepcompress *sc)
                 maxadd = add + errdelta;
         }
 
+        // See if next point would further limit the add range
+        if ((minadd+1)*addfactor + outer_maxinterval*(count+1) < point.minp)
+            minadd = idiv_up(point.minp - outer_maxinterval*(count+1)
+                             , addfactor) - 1;
+        if ((maxadd-1)*addfactor + outer_mininterval*(count+1) > point.maxp)
+            maxadd = idiv_down(point.maxp - outer_mininterval*(count+1)
+                               , addfactor) + 1;
+
         // Bisect valid add range and try again with new 'add'
-        add = (maxadd + minadd) / 2;
+        add = (minadd + maxadd) / 2;
         if (add <= minadd || add >= maxadd)
             break;
     }
-    if (bestcount < 2)
-        bestadd = 0;
     return (struct step_move){ bestinterval, bestcount, bestadd };
 }
 
