@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging
+import os, re, logging, collections
 
 # Parse out incoming GCode and find and translate head movements
 class GCodeParser:
@@ -18,6 +18,7 @@ class GCodeParser:
         self.input_commands = [""]
         self.need_register_fd = False
         self.bytes_read = 0
+        self.input_log = collections.deque([], 50)
         # Busy handling
         self.busy_timer = self.reactor.register_timer(self.busy_handler)
         self.busy_state = None
@@ -71,6 +72,9 @@ class GCodeParser:
     def shutdown(self):
         self.is_shutdown = True
         self.build_handlers()
+        logging.info("Dumping gcode input %d blocks" % (len(self.input_log),))
+        for eventtime, data in self.input_log:
+            logging.info("Read %f: %s" % (eventtime, repr(data)))
     # Parse input into commands
     args_r = re.compile('([a-zA-Z*])')
     def process_commands(self, eventtime):
@@ -117,6 +121,7 @@ class GCodeParser:
             self.need_register_fd = True
             return
         data = os.read(self.fd, 4096)
+        self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
         lines[0] = self.input_commands[0] + lines[0]
