@@ -8,9 +8,8 @@ import stepper, heater
 
 class PrinterExtruder:
     def __init__(self, printer, config):
-        cfg = config.getsection('extruder')
-        self.heater = heater.PrinterHeater(printer, cfg)
-        self.stepper = stepper.PrinterStepper(printer, cfg)
+        self.heater = heater.PrinterHeater(printer, config)
+        self.stepper = stepper.PrinterStepper(printer, config)
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
         self.stepper_pos = 0
         self.extrude_pos = 0.
