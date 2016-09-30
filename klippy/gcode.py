@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
+import homing
 
 # Parse out incoming GCode and find and translate head movements
 class GCodeParser:
@@ -223,7 +224,10 @@ class GCodeParser:
                     self.last_position[p] = v + self.base_position[p]
         if 'F' in params:
             self.speed = float(params['F']) / 60.
-        self.toolhead.move(self.last_position, self.speed, sloppy)
+        try:
+            self.toolhead.move(self.last_position, self.speed, sloppy)
+        except homing.EndstopError, e:
+            self.respond("Error: %s" % (e,))
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:

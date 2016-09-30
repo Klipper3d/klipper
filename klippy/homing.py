@@ -90,3 +90,11 @@ class QueryEndstops:
                 msg = "TRIGGERED"
             msgs.append("%s:%s" % (name, msg))
         return " ".join(msgs)
+
+class EndstopError(Exception):
+    def __init__(self, pos, msg="Move out of range"):
+        self.pos = pos
+        self.msg = msg
+    def __str__(self):
+        return "%s: %.3f %.3f %.3f [%.3f]" % (
+            self.msg, self.pos[0], self.pos[1], self.pos[2], self.pos[3])

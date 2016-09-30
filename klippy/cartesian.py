@@ -13,6 +13,7 @@ class CartKinematics:
         steppers = ['stepper_x', 'stepper_y', 'stepper_z']
         self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
                          for n in steppers]
+        self.limits = [(1.0, -1.0)] * 3
         self.stepper_pos = [0, 0, 0]
     def build_config(self):
         for stepper in self.steppers[:2]:
@@ -33,6 +34,7 @@ class CartKinematics:
         homing_state = homing.Homing(toolhead, axes)
         for axis in axes:
             s = self.steppers[axis]
+            self.limits[axis] = (s.position_min, s.position_max)
             # Determine moves
             if s.homing_positive_dir:
                 pos = s.position_endstop - 1.5*(
@@ -58,15 +60,30 @@ class CartKinematics:
             homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)
         return homing_state
     def motor_off(self, move_time):
+        self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
             stepper.motor_enable(move_time, 0)
     def query_endstops(self, move_time):
         return homing.QueryEndstops(["x", "y", "z"], self.steppers)
+    def check_endstops(self, move):
+        for i in StepList:
+            if (move.axes_d[i]
+                and (move.pos[i] < self.limits[i][0]
+                     or move.pos[i] > self.limits[i][1])):
+                if self.limits[i][0] > self.limits[i][1]:
+                    raise homing.EndstopError(move.pos, "Must home axis first")
+                raise homing.EndstopError(move.pos)
     def check_move(self, move):
+        limits = self.limits
+        xpos, ypos = move.pos[:2]
+        if (xpos < limits[0][0] or xpos > limits[0][1]
+            or ypos < limits[1][0] or ypos > limits[1][1]):
+            self.check_endstops(move)
         if not move.axes_d[2]:
             # Normal XY move - use defaults
             return
         # Move with Z - update velocity and accel for slower Z axis
+        self.check_endstops(move)
         axes_d = move.axes_d
         move_d = move.move_d
         velocity_factor = min([self.steppers[i].max_velocity / abs(axes_d[i])
