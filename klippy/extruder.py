@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, heater
+import stepper, heater, homing
 
 class PrinterExtruder:
     def __init__(self, printer, config):
@@ -20,6 +20,8 @@ class PrinterExtruder:
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
     def check_move(self, move):
+        if not self.heater.can_extrude:
+            raise homing.EndstopError(move.pos, "Extrude below minimum temp")
         if (not move.do_calc_junction
             and not move.axes_d[0] and not move.axes_d[1]
             and not move.axes_d[2]):
