@@ -22,17 +22,10 @@ class CartKinematics:
     def set_position(self, newpos):
         self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
                             for i in StepList]
-    def get_max_xy_speed(self):
+    def get_max_speed(self):
         max_xy_speed = min(s.max_velocity for s in self.steppers[:2])
         max_xy_accel = min(s.max_accel for s in self.steppers[:2])
         return max_xy_speed, max_xy_accel
-    def get_max_speed(self, axes_d, move_d):
-        # Calculate max speed and accel for a given move
-        velocity_factor = min([self.steppers[i].max_velocity / abs(axes_d[i])
-                               for i in StepList if axes_d[i]])
-        accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
-                            for i in StepList if axes_d[i]])
-        return velocity_factor * move_d, accel_factor * move_d
     def get_homed_position(self):
         return [s.get_homed_position() for s in self.steppers]
     def home(self, toolhead, axes):
@@ -69,6 +62,18 @@ class CartKinematics:
             stepper.motor_enable(move_time, 0)
     def query_endstops(self, move_time):
         return homing.QueryEndstops(["x", "y", "z"], self.steppers)
+    def check_move(self, move):
+        if not move.axes_d[2]:
+            # Normal XY move - use defaults
+            return
+        # Move with Z - update velocity and accel for slower Z axis
+        axes_d = move.axes_d
+        move_d = move.move_d
+        velocity_factor = min([self.steppers[i].max_velocity / abs(axes_d[i])
+                               for i in StepList if axes_d[i]])
+        accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
+                            for i in StepList if axes_d[i]])
+        move.limit_speed(velocity_factor * move_d, accel_factor * move_d)
     def move(self, move_time, move):
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v

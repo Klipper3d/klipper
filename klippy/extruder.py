@@ -18,10 +18,14 @@ class PrinterExtruder:
         self.heater.build_config()
         self.stepper.set_max_jerk(9999999.9)
         self.stepper.build_config()
-    def get_max_speed(self):
-        return self.stepper.max_velocity, self.stepper.max_accel
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
+    def check_move(self, move):
+        if (not move.do_calc_junction
+            and not move.axes_d[0] and not move.axes_d[1]
+            and not move.axes_d[2]):
+            # Extrude only move - limit accel and velocity
+            move.limit_speed(self.stepper.max_velocity, self.stepper.max_accel)
     def move(self, move_time, move):
         move_d = move.move_d
         inv_accel = 1. / move.accel

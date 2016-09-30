@@ -14,12 +14,23 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 # Class to track each move request
 class Move:
-    def __init__(self, toolhead, pos, move_d, axes_d, speed, accel):
+    def __init__(self, toolhead, pos, axes_d, speed, accel):
         self.toolhead = toolhead
         self.pos = tuple(pos)
-        self.move_d = move_d
         self.axes_d = axes_d
         self.accel = accel
+        self.do_calc_junction = True
+        if axes_d[2]:
+            # Move with Z
+            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+            self.do_calc_junction = False
+        else:
+            move_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
+            if not move_d:
+                # Extrude only move
+                move_d = abs(axes_d[3])
+                self.do_calc_junction = False
+        self.move_d = move_d
         self.extrude_r = axes_d[3] / move_d
         # Junction speeds are velocities squared.  The junction_delta
         # is the maximum amount of this squared-velocity that can
@@ -27,7 +38,13 @@ class Move:
         self.junction_max = speed**2
         self.junction_delta = 2.0 * move_d * accel
         self.junction_start_max = 0.
+    def limit_speed(self, speed, accel):
+        self.junction_max = min(self.junction_max, speed**2)
+        self.accel = min(self.accel, accel)
+        self.junction_delta = 2.0 * self.move_d * self.accel
     def calc_junction(self, prev_move):
+        if not self.do_calc_junction or not prev_move.do_calc_junction:
+            return
         # Find max junction_start_velocity between two moves
         if (self.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
             or prev_move.extrude_r > self.extrude_r * EXTRUDE_DIFF_IGNORE):
@@ -141,7 +158,7 @@ class ToolHead:
         self.reactor = printer.reactor
         self.extruder = printer.objects.get('extruder')
         self.kin = cartesian.CartKinematics(printer, config)
-        self.max_xy_speed, self.max_xy_accel = self.kin.get_max_xy_speed()
+        self.max_speed, self.max_accel = self.kin.get_max_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
@@ -227,38 +244,18 @@ class ToolHead:
         self.move_queue.flush()
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
-    def _move_with_z(self, newpos, axes_d, speed):
-        self.move_queue.flush()
-        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-        # Limit velocity and accel to max for each stepper
-        kin_speed, kin_accel = self.kin.get_max_speed(axes_d, move_d)
-        speed = min(speed, self.max_xy_speed, kin_speed)
-        accel = min(self.max_xy_accel, kin_accel)
-        # Generate and execute move
-        move = Move(self, newpos, move_d, axes_d, speed, accel)
-        move.process(0., 0.)
-    def _move_only_e(self, newpos, axes_d, speed):
-        self.move_queue.flush()
-        kin_speed, kin_accel = self.extruder.get_max_speed()
-        speed = min(speed, self.max_xy_speed, kin_speed)
-        accel = min(self.max_xy_accel, kin_accel)
-        move = Move(self, newpos, abs(axes_d[3]), axes_d, speed, accel)
-        move.process(0., 0.)
     def move(self, newpos, speed, sloppy=False):
         axes_d = [newpos[i] - self.commanded_pos[i]
                   for i in (0, 1, 2, 3)]
+        if axes_d == [0., 0., 0., 0.]:
+            # No move
+            return
+        speed = min(speed, self.max_speed)
+        move = Move(self, newpos, axes_d, speed, self.max_accel)
+        self.kin.check_move(move)
+        if axes_d[3]:
+            self.extruder.check_move(move)
         self.commanded_pos[:] = newpos
-        if axes_d[2]:
-            self._move_with_z(newpos, axes_d, speed)
-            return
-        move_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
-        if not move_d:
-            if axes_d[3]:
-                self._move_only_e(newpos, axes_d, speed)
-            return
-        # Common xy move - create move and queue it
-        speed = min(speed, self.max_xy_speed)
-        move = Move(self, newpos, move_d, axes_d, speed, self.max_xy_accel)
         self.move_queue.add_move(move)
     def home(self, axes):
         homing = self.kin.home(self, axes)
