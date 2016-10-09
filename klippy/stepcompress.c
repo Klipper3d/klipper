@@ -142,7 +142,7 @@ compress_bisect_add(struct stepcompress *sc)
     struct points point = minmax_point(sc, sc->queue_pos);
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
     int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
-    int32_t bestinterval = 0, bestcount = 0, bestadd = 0, bestreach = 0;
+    int32_t bestinterval = 0, bestcount = 1, bestadd = 0, bestreach = INT32_MIN;
 
     for (;;) {
         // Find longest valid sequence with the given 'add'
