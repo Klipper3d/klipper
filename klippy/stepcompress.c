@@ -249,6 +249,17 @@ check_line(struct stepcompress *sc, struct step_move move)
  * Step compress interface
  ****************************************************************/
 
+// Wrapper around sqrt() to handle small negative numbers
+static inline double
+safe_sqrt(double v)
+{
+    if (v < 0. && v > -0.001)
+        // Due to floating point truncation, it's possible to get a
+        // small negative number - treat it as zero.
+        return 0.;
+    return sqrt(v);
+}
+
 // Allocate a new 'stepcompress' object
 struct stepcompress *
 stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid, uint32_t oid)
@@ -325,12 +336,12 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     double pos = step_offset + sqrt_offset/factor;
     if (factor >= 0.0)
         while (qn < end) {
-            *qn++ = clock_offset + sqrt(pos*factor);
+            *qn++ = clock_offset + safe_sqrt(pos*factor);
             pos += 1.0;
         }
     else
         while (qn < end) {
-            *qn++ = clock_offset - sqrt(pos*factor);
+            *qn++ = clock_offset - safe_sqrt(pos*factor);
             pos += 1.0;
         }
     sc->queue_next = qn;
