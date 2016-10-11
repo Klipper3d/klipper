@@ -97,15 +97,18 @@ class MCU_endstop:
                          , self._oid)
         self._query_cmd = mcu.lookup_command("end_stop_query oid=%c")
         self._homing = False
-        self._min_query_time = self._last_query_time = 0.
-        self._last_state = {}
+        self._min_query_time = 0.
+        self._next_query_clock = 0
         self._mcu_freq = mcu.get_mcu_freq()
+        self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
+        self._last_state = {}
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def home(self, mcu_time, rest_time):
         clock = int(mcu_time * self._mcu_freq)
         rest_ticks = int(rest_time * self._mcu_freq)
         self._homing = True
-        self._min_query_time = self._last_query_time = time.time()
+        self._min_query_time = time.time()
+        self._next_query_clock = clock + self._retry_query_ticks
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
@@ -124,8 +127,9 @@ class MCU_endstop:
         if self._last_state.get('#sent_time', -1.) >= self._min_query_time:
             if not self._homing or not self._last_state.get('homing', 0):
                 return False
-        if self._last_query_time + self.RETRY_QUERY <= eventtime:
-            self._last_query_time = eventtime
+        last_clock = self._mcu.get_last_clock()
+        if last_clock >= self._next_query_clock:
+            self._next_query_clock = last_clock + self._retry_query_ticks
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return True
@@ -137,7 +141,7 @@ class MCU_endstop:
     def query_endstop(self):
         self._homing = False
         self._min_query_time = time.time()
-        self._last_query_time = 0.
+        self._next_query_clock = 0
     def get_last_triggered(self):
         return self._last_state.get('pin', self._invert) ^ self._invert
 
