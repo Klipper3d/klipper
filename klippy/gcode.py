@@ -228,6 +228,7 @@ class GCodeParser:
             self.toolhead.move(self.last_position, self.speed, sloppy)
         except homing.EndstopError, e:
             self.respond("Error: %s" % (e,))
+            self.last_position = self.toolhead.get_position()
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
