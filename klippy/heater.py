@@ -29,7 +29,7 @@ class PrinterHeater:
         self.thermistor_c = Thermistors.get(config.get('thermistor_type'))
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
-        self.can_extrude = False
+        self.can_extrude = self.min_extrude_temp <= 0.
         self.lock = threading.Lock()
         self.last_temp = 0.
         self.last_temp_time = 0.
