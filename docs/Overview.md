@@ -6,3 +6,5 @@ structure and layout of the Klipper code.
 
 See [debugging](Debugging.md) for developer information on how to test
 and debug Klipper.
+
+See [todo](Todo.md) for information on possible future code features.
