@@ -85,21 +85,21 @@ class PrinterStepper:
             return None
         self.mcu_endstop.query_endstop()
         return self.mcu_endstop
-    def get_homed_position(self):
+    def get_homed_offset(self):
         if not self.homing_stepper_phases:
-            return self.position_endstop
+            return 0
         pos = self.mcu_endstop.get_last_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
             logging.info("Setting %s endstop phase to %d" % (
                 self.config.section, pos))
             self.homing_endstop_phase = pos
-            return self.position_endstop
+            return 0
         delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
         if delta >= self.homing_stepper_phases - self.homing_endstop_accuracy:
             delta -= self.homing_stepper_phases
         elif delta > self.homing_endstop_accuracy:
             logging.error("Endstop %s incorrect phase (got %d vs %d)" % (
                 self.config.section, pos, self.homing_endstop_phase))
-            return self.position_endstop
-        return self.position_endstop + delta * self.step_dist
+            return 0
+        return delta
