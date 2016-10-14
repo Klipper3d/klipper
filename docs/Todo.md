@@ -17,45 +17,57 @@ Host user interaction
    highlight an error (one has to look in the terminal tab to find the
    error) and errors written to the log can be non-obvious to a user.
 
+ * Implement timeouts on homing. The host currently waits forever if
+   an endstop is not hit during a homing operation.
+
+* Improve startup:
+
+ * Provide startup scripts so that Klippy can startup at system
+   bootup.
+
+ * Possibly rework the startup order of Klippy communication with
+   octoprint and the mcu. Currently Klippy only starts communication
+   with Octoprint after it connects with the firmware. However, this
+   limits the ability for Klippy to communicate connection errors to
+   the user. It also makes it difficult for Klippy to reconnect to the
+   firmware and/or restart the firmware if it needs to.
+
+ * Support clearing MCU shutdown events from the host without having
+   to restart the firmware.
+
+ * Allow loading of a new config without having to restart the mcu.
+
+* Improve gcode interface:
+
+ * Support ASCII based commands in addition to common gcode
+   commands. It would be useful to support high-level commands such as
+   "query_endstops", "pid_autotune", and "help" instead of having to
+   invent cryptic gcode commands (eg, "M119" and "M303").
+
+ * Provide a better way to handle print nozzle z offsets. The M206
+   command is cryptic to use and it is too easy to set the value
+   incorrectly or to forget to set it.
+
+ * Provide a way to temporarily disable endstop checks so that a user
+   can issue commands that potentially move the head past
+   position_min/position_max.
+
+* Improve logging:
+
  * Route errors from the host C code to the main log file.
 
-* Support clearing MCU shutdown events from the host without having to
-  restart the firmware.
+ * Automatically roll Klippy log files. The default log file should
+   have the current date in the log file name.
 
-* Provide startup scripts so that Klippy can startup at system bootup.
+ * Report the Klippy git version in log file. Log the contents of the
+   config file at startup.
 
-* Support ASCII based commands in addition to common gcode
-  commands. It would be useful to support high-level commands such as
-  "query_endstops", "pid_autotune", and "help" instead of having to
-  invent cryptic gcode commands (eg, "M119" and "M303").
+ * Possibly collate and report the statistics messages in the log in a
+   more friendly way.
 
-* Provide a better way to handle print nozzle z offsets. The M206
-  command is cryptic to use and it is too easy to set the value
-  incorrectly or to forget to set it.
-
-* Provide a way to temporarily disable endstop checks so that a user
-  can issue commands that potentially move the head past
-  position_min/position_max.
-
-* Implement timeouts on homing. The host currently waits forever if
-  an endstop is not hit during a homing operation.
-
-* Allow loading of a new config without having to restart the mcu.
-
-* Possibly rework the startup order of Klippy communication with
-  octoprint and the mcu. Currently Klippy only starts communication
-  with Octoprint after it connects with the firmware. However, this
-  limits the ability for Klippy to communicate connection errors to
-  the user. It also makes it difficult for Klippy to reconnect to the
-  firmware and/or restart the firmware if it needs to.
-
-* Automatically roll Klippy log files. The default log file should
-  have the current date in the log file name.
-
-* Report the Klippy git version in log file.
-
-* Possibly collate and report the statistics messages in the log in a
-  more friendly way.
+* Possibly support a mechanism for the host to limit maximum velocity
+  so that the mcu is never requested to step at a higher rate than it
+  can support.
 
 Safety features
 ===============
@@ -76,6 +88,8 @@ Safety features
 * Support validating that heaters are heating at expected rates. This
   can be useful to detect a sensor failure (eg, thermistor short) that
   could otherwise cause the PID to command excessive heating.
+
+* Verify the endstop is no longer triggered after retraction.
 
 * Possibly implement host based checking on the ratio between extrude
   amount and head movement.
@@ -99,8 +113,6 @@ Documentation
 
 * Document the kinematic formulas in Klippy. Document how acceleration
   and jerk limits are enforced.
-
-* Document the host/firmware communication protocol.
 
 * Document how one can tune the pressure advance setting.
 
