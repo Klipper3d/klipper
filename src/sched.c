@@ -136,14 +136,18 @@ reschedule_timer(struct timer *t)
 
     // Find new timer position and update list
     timer_list = pos;
-    while (pos->next && sched_is_before(pos->next->waketime, minwaketime))
+    struct timer *prev;
+    for (;;) {
+        prev = pos;
+        if (CONFIG_MACH_AVR)
+            // micro optimization for AVR - reduces register pressure
+            asm("" : "+r"(prev) : : "memory");
         pos = pos->next;
-    t->next = pos->next;
-    pos->next = t;
-
-    if (CONFIG_MACH_AVR)
-        // micro optimization for AVR - reduces register pressure
-        barrier();
+        if (!pos || !sched_is_before(pos->waketime, minwaketime))
+            break;
+    }
+    t->next = pos;
+    prev->next = t;
     return timer_list;
 }
 
