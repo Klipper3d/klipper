@@ -42,6 +42,14 @@ timer_set_clear(uint16_t next)
     TIFR1 = 1<<OCF1A;
 }
 
+static inline void
+timer_repeat_set(uint16_t next)
+{
+    // Timer1B is used to limit the number of timers run from a timer1A irq
+    OCR1B = next;
+    TIFR1 = 1<<OCF1B;
+}
+
 ISR(TIMER1_COMPA_vect)
 {
     sched_timer_kick();
@@ -128,9 +136,8 @@ timer_set_next(uint32_t next)
     return 1;
 }
 
-static uint8_t timer_repeat;
-#define TIMER_MAX_REPEAT 40
-#define TIMER_MAX_NEXT_REPEAT 15
+#define TIMER_IDLE_REPEAT_TICKS 8000
+#define TIMER_REPEAT_TICKS 3000
 
 #define TIMER_MIN_TRY_TICKS 60 // 40 ticks to exit irq; 20 ticks of progress
 #define TIMER_DEFER_REPEAT_TICKS 200
@@ -147,11 +154,12 @@ timer_try_set_next(uint32_t target)
         goto done;
 
     // Next timer is in the past or near future - can't reschedule to it
-    uint8_t tr = timer_repeat-1;
-    if (likely(tr)) {
+    if (!(TIFR1 & (1<<OCF1B))) {
+        // Can run more timers from this irq; briefly allow irqs
         irq_enable();
-        timer_repeat = tr;
+        asm("nop");
         irq_disable();
+
         while (diff >= 0) {
             // Next timer is in the near future - wait for time to occur
             now = timer_get();
@@ -161,12 +169,12 @@ timer_try_set_next(uint32_t target)
         }
         return 0;
     }
-
-    // Too many repeat timers from a single interrupt - force a pause
-    timer_repeat = TIMER_MAX_NEXT_REPEAT;
-    next = now + TIMER_DEFER_REPEAT_TICKS;
     if (diff < (int16_t)(-timer_from_us(1000)))
         goto fail;
+
+    // Too many repeat timers - force a pause so tasks aren't starved
+    timer_repeat_set(now + TIMER_REPEAT_TICKS);
+    next = now + TIMER_DEFER_REPEAT_TICKS;
 
 done:
     timer_set(next);
@@ -175,9 +183,13 @@ fail:
     shutdown("Rescheduled timer in the past");
 }
 
+// Periodic background task that temporarily boosts priority of
+// timers.  This helps prioritize timers when tasks are idling.
 static void
 timer_task(void)
 {
-    timer_repeat = TIMER_MAX_REPEAT;
+    irq_disable();
+    timer_repeat_set(timer_get() + TIMER_IDLE_REPEAT_TICKS);
+    irq_enable();
 }
 DECL_TASK(timer_task);
