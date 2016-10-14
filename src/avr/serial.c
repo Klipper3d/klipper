@@ -12,10 +12,9 @@
 #include "sched.h" // DECL_INIT
 #include "irq.h" // irq_save
 
-#define SERIAL_BUFFER_SIZE 96
-static char receive_buf[SERIAL_BUFFER_SIZE];
+static char receive_buf[192];
 static uint8_t receive_pos;
-static char transmit_buf[SERIAL_BUFFER_SIZE];
+static char transmit_buf[96];
 static uint8_t transmit_pos, transmit_max;
 
 
