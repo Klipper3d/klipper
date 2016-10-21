@@ -123,4 +123,4 @@ clean:
 distclean: clean
 	$(Q)rm -f .config .config.old
 
--include $(patsubst %,$(OUT)%/*.d,$(dirs-y))
+-include $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
