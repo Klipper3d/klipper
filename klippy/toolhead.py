@@ -14,12 +14,13 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 # Class to track each move request
 class Move:
-    def __init__(self, toolhead, pos, axes_d, speed, accel):
+    def __init__(self, toolhead, start_pos, end_pos, speed, accel):
         self.toolhead = toolhead
-        self.pos = tuple(pos)
-        self.axes_d = axes_d
+        self.start_pos = tuple(start_pos)
+        self.end_pos = tuple(end_pos)
         self.accel = accel
         self.do_calc_junction = True
+        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
         if axes_d[2]:
             # Move with Z
             move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
@@ -29,6 +30,10 @@ class Move:
             if not move_d:
                 # Extrude only move
                 move_d = abs(axes_d[3])
+                if not move_d:
+                    # No move
+                    self.move_d = 0.
+                    return
                 self.do_calc_junction = False
         self.move_d = move_d
         self.extrude_r = axes_d[3] / move_d
@@ -245,15 +250,12 @@ class ToolHead:
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
     def move(self, newpos, speed, sloppy=False):
-        axes_d = [newpos[i] - self.commanded_pos[i]
-                  for i in (0, 1, 2, 3)]
-        if axes_d == [0., 0., 0., 0.]:
-            # No move
-            return
         speed = min(speed, self.max_speed)
-        move = Move(self, newpos, axes_d, speed, self.max_accel)
+        move = Move(self, self.commanded_pos, newpos, speed, self.max_accel)
+        if not move.move_d:
+            return
         self.kin.check_move(move)
-        if axes_d[3]:
+        if move.axes_d[3]:
             self.extruder.check_move(move)
         self.commanded_pos[:] = newpos
         self.move_queue.add_move(move)

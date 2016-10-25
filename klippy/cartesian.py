@@ -67,16 +67,17 @@ class CartKinematics:
     def query_endstops(self, move_time):
         return homing.QueryEndstops(["x", "y", "z"], self.steppers)
     def check_endstops(self, move):
+        end_pos = move.end_pos
         for i in StepList:
             if (move.axes_d[i]
-                and (move.pos[i] < self.limits[i][0]
-                     or move.pos[i] > self.limits[i][1])):
+                and (end_pos[i] < self.limits[i][0]
+                     or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise homing.EndstopError(move.pos, "Must home axis first")
-                raise homing.EndstopError(move.pos)
+                    raise homing.EndstopError(end_pos, "Must home axis first")
+                raise homing.EndstopError(end_pos)
     def check_move(self, move):
         limits = self.limits
-        xpos, ypos = move.pos[:2]
+        xpos, ypos = move.end_pos[:2]
         if (xpos < limits[0][0] or xpos > limits[0][1]
             or ypos < limits[1][0] or ypos > limits[1][1]):
             self.check_endstops(move)
@@ -96,7 +97,8 @@ class CartKinematics:
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v
         for i in StepList:
-            new_step_pos = int(move.pos[i]*self.steppers[i].inv_step_dist + 0.5)
+            new_step_pos = int(
+                move.end_pos[i]*self.steppers[i].inv_step_dist + 0.5)
             steps = new_step_pos - self.stepper_pos[i]
             if not steps:
                 continue
