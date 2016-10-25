@@ -84,24 +84,24 @@ class PrinterExtruder:
                 steps = -steps
             mcu_time, so = self.stepper.prep_move(move_time, sdir)
 
-            step_dist = forward_d / steps
-            inv_step_dist = 1. / step_dist
+            move_step_d = forward_d / steps
+            inv_move_step_d = 1. / move_step_d
             step_offset = 0.5
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
             accel_time_offset = start_v * inv_accel
             accel_sqrt_offset = accel_time_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel
-            accel_steps = accel_d * inv_step_dist
+            accel_multiplier = 2.0 * move_step_d * inv_accel
+            accel_steps = accel_d * inv_move_step_d
             step_offset = so.step_sqrt(
                 mcu_time - accel_time_offset, accel_steps, step_offset
                 , accel_sqrt_offset, accel_multiplier)
             mcu_time += accel_t
             # Cruising steps
             #t = pos/cruise_v
-            cruise_multiplier = step_dist / cruise_v
-            cruise_steps = cruise_d * inv_step_dist
+            cruise_multiplier = move_step_d / cruise_v
+            cruise_steps = cruise_d * inv_move_step_d
             step_offset = so.step_factor(
                 mcu_time, cruise_steps, step_offset, cruise_multiplier)
             mcu_time += cruise_t
@@ -109,7 +109,7 @@ class PrinterExtruder:
             #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
             decel_time_offset = decel_v * inv_accel
             decel_sqrt_offset = decel_time_offset**2
-            decel_steps = decel_d * inv_step_dist
+            decel_steps = decel_d * inv_move_step_d
             so.step_sqrt(
                 mcu_time + decel_time_offset, decel_steps, step_offset
                 , decel_sqrt_offset, -accel_multiplier)
@@ -123,12 +123,12 @@ class PrinterExtruder:
             mcu_time, so = self.stepper.prep_move(
                 move_time+accel_t+cruise_t+decel_t, 1)
 
-            step_dist = retract_d / steps
+            move_step_d = retract_d / steps
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
             accel_time_offset = retract_v * inv_accel
             accel_sqrt_offset = accel_time_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel
+            accel_multiplier = 2.0 * move_step_d * inv_accel
             so.step_sqrt(mcu_time - accel_time_offset, steps, 0.5
                          , accel_sqrt_offset, accel_multiplier)

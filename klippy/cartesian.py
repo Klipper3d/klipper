@@ -109,14 +109,14 @@ class CartKinematics:
                 steps = -steps
             mcu_time, so = self.steppers[i].prep_move(move_time, sdir)
 
-            step_dist = move.move_d / steps
+            move_step_d = move.move_d / steps
             step_offset = 0.5
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
             accel_time_offset = move.start_v * inv_accel
             accel_sqrt_offset = accel_time_offset**2
-            accel_multiplier = 2.0 * step_dist * inv_accel
+            accel_multiplier = 2.0 * move_step_d * inv_accel
             accel_steps = move.accel_r * steps
             step_offset = so.step_sqrt(
                 mcu_time - accel_time_offset, accel_steps, step_offset
@@ -124,7 +124,7 @@ class CartKinematics:
             mcu_time += move.accel_t
             # Cruising steps
             #t = pos/cruise_v
-            cruise_multiplier = step_dist * inv_cruise_v
+            cruise_multiplier = move_step_d * inv_cruise_v
             cruise_steps = move.cruise_r * steps
             step_offset = so.step_factor(
                 mcu_time, cruise_steps, step_offset, cruise_multiplier)
