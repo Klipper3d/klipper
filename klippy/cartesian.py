@@ -97,20 +97,22 @@ class CartKinematics:
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v
         for i in StepList:
-            new_step_pos = int(
-                move.end_pos[i]*self.steppers[i].inv_step_dist + 0.5)
-            steps = new_step_pos - self.stepper_pos[i]
-            if not steps:
+            inv_step_dist = self.steppers[i].inv_step_dist
+            new_step_pos = int(move.end_pos[i]*inv_step_dist + 0.5)
+            step_pos = self.stepper_pos[i]
+            if new_step_pos == step_pos:
                 continue
             self.stepper_pos[i] = new_step_pos
+            steps = move.axes_d[i] * inv_step_dist
+            step_offset = step_pos - move.start_pos[i] * inv_step_dist + 0.5
             sdir = 0
             if steps < 0:
                 sdir = 1
                 steps = -steps
+                step_offset = 1. - step_offset
             mcu_time, so = self.steppers[i].prep_move(move_time, sdir)
 
             move_step_d = move.move_d / steps
-            step_offset = 0.5
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
