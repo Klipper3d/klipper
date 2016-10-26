@@ -73,20 +73,23 @@ class PrinterExtruder:
         # Determine regular steps
         extrude_r = move.axes_d[3] / move_d
         forward_d = accel_d + cruise_d + decel_d
-        self.extrude_pos += forward_d * extrude_r
-        new_step_pos = int(self.extrude_pos*self.stepper.inv_step_dist + 0.5)
-        steps = new_step_pos - self.stepper_pos
-        if steps:
+        start_pos = self.extrude_pos
+        end_pos = start_pos + forward_d * extrude_r
+        inv_step_dist = self.stepper.inv_step_dist
+        new_step_pos = int(end_pos*inv_step_dist + 0.5)
+        if new_step_pos != self.stepper_pos:
+            steps = forward_d * extrude_r * inv_step_dist
+            step_offset = self.stepper_pos - start_pos * inv_step_dist + 0.5
             self.stepper_pos = new_step_pos
             sdir = 0
             if steps < 0:
                 sdir = 1
                 steps = -steps
+                step_offset = 1. - step_offset
             mcu_time, so = self.stepper.prep_move(move_time, sdir)
 
             move_step_d = forward_d / steps
             inv_move_step_d = 1. / move_step_d
-            step_offset = 0.5
 
             # Acceleration steps
             #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
@@ -115,10 +118,12 @@ class PrinterExtruder:
                 , decel_sqrt_offset, -accel_multiplier)
 
         # Determine retract steps
-        self.extrude_pos -= retract_d * extrude_r
-        new_step_pos = int(self.extrude_pos*self.stepper.inv_step_dist + 0.5)
-        steps = self.stepper_pos - new_step_pos
-        if steps:
+        start_pos = end_pos
+        end_pos -= retract_d * extrude_r
+        new_step_pos = int(end_pos*inv_step_dist + 0.5)
+        if new_step_pos != self.stepper_pos:
+            steps = retract_d * extrude_r * inv_step_dist
+            step_offset = start_pos * inv_step_dist - self.stepper_pos + 0.5
             self.stepper_pos = new_step_pos
             mcu_time, so = self.stepper.prep_move(
                 move_time+accel_t+cruise_t+decel_t, 1)
@@ -130,5 +135,6 @@ class PrinterExtruder:
             accel_time_offset = retract_v * inv_accel
             accel_sqrt_offset = accel_time_offset**2
             accel_multiplier = 2.0 * move_step_d * inv_accel
-            so.step_sqrt(mcu_time - accel_time_offset, steps, 0.5
+            so.step_sqrt(mcu_time - accel_time_offset, steps, step_offset
                          , accel_sqrt_offset, accel_multiplier)
+        self.extrude_pos = end_pos
