@@ -89,12 +89,12 @@ timer_set_next(uint32_t next)
     return 1;
 }
 
-static uint32_t timer_repeat;
-#define TIMER_MAX_REPEAT 400
-#define TIMER_MAX_NEXT_REPEAT 150
+static uint32_t timer_repeat_until;
+#define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
+#define TIMER_REPEAT_TICKS timer_from_us(100)
 
 #define TIMER_MIN_TRY_TICKS timer_from_us(1)
-#define TIMER_DEFER_REPEAT_TICKS timer_from_us(2)
+#define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
 // Similar to timer_set_next(), but wait for the given time if it is
 // in the near future.
@@ -108,10 +108,9 @@ timer_try_set_next(uint32_t next)
         goto done;
 
     // Next timer is in the past or near future - can't reschedule to it
-    uint32_t tr = timer_repeat-1;
-    if (likely(tr)) {
+    if (likely(sched_is_before(now, timer_repeat_until))) {
+        // Can run more timers from this irq; briefly allow irqs
         irq_enable();
-        timer_repeat = tr;
         while (diff >= 0) {
             // Next timer is in the near future - wait for time to occur
             now = timer_read_time();
@@ -120,12 +119,12 @@ timer_try_set_next(uint32_t next)
         irq_disable();
         return 0;
     }
-
-    // Too many repeat timers from a single interrupt - force a pause
-    timer_repeat = TIMER_MAX_NEXT_REPEAT;
-    next = now + TIMER_DEFER_REPEAT_TICKS;
     if (diff < (int32_t)(-timer_from_us(1000)))
         goto fail;
+
+    // Too many repeat timers from a single interrupt - force a pause
+    timer_repeat_until = now + TIMER_REPEAT_TICKS;
+    next = now + TIMER_DEFER_REPEAT_TICKS;
 
 done:
     timer_set(next);
@@ -134,9 +133,13 @@ fail:
     shutdown("Rescheduled timer in the past");
 }
 
+// Periodic background task that temporarily boosts priority of
+// timers.  This helps prioritize timers when tasks are idling.
 static void
 timer_task(void)
 {
-    timer_repeat = TIMER_MAX_REPEAT;
+    irq_disable();
+    timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;
+    irq_enable();
 }
 DECL_TASK(timer_task);
