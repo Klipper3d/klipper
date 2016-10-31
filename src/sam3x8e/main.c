@@ -43,8 +43,7 @@ clear_active_irq(void)
         // Shutdown did not occur in an irq - nothing to do.
         return;
     // Clear active irq status
-    psr &= ~0x1ff;
-    psr |= 1<<24; // T-bit
+    psr = 1<<24; // T-bit
     uint32_t temp;
     asm volatile(
         "  push { %1 }\n"
@@ -53,7 +52,7 @@ clear_active_irq(void)
         "  push { r0, r1, r2, r3, r12, lr }\n"
         "  bx %2\n"
         "1:\n"
-        : "=&r"(temp) : "r"(psr), "r"(0xfffffff9));
+        : "=&r"(temp) : "r"(psr), "r"(0xfffffff9) : "cc");
 }
 DECL_SHUTDOWN(clear_active_irq);
 
