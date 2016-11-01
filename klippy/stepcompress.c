@@ -27,9 +27,9 @@
 
 struct stepcompress {
     // Buffer management
-    uint32_t *queue, *queue_end, *queue_pos, *queue_next;
+    uint64_t *queue, *queue_end, *queue_pos, *queue_next;
     // Internal tracking
-    uint32_t relclock, max_error;
+    uint32_t max_error;
     // Error checking
     uint32_t errors;
     // Message generation
@@ -47,12 +47,10 @@ struct stepcompress {
 static void
 clean_queue(struct stepcompress *sc)
 {
-    uint32_t *src = sc->queue_pos, *dest = sc->queue;
-    while (src < sc->queue_next)
-        *dest++ = *src++ - sc->relclock;
+    int in_use = sc->queue_next - sc->queue_pos;
+    memmove(sc->queue, sc->queue_pos, in_use * sizeof(*sc->queue));
     sc->queue_pos = sc->queue;
-    sc->queue_next = dest;
-    sc->relclock = 0;
+    sc->queue_next = sc->queue + in_use;
 }
 
 // Expand the internal queue of step times
@@ -110,10 +108,10 @@ struct points {
 // Given a requested step time, return the minimum and maximum
 // acceptable times
 static struct points
-minmax_point(struct stepcompress *sc, uint32_t *pos)
+minmax_point(struct stepcompress *sc, uint64_t *pos)
 {
-    uint32_t prevpoint = pos > sc->queue_pos ? *(pos-1) - sc->relclock : 0;
-    uint32_t point = *pos - sc->relclock;
+    uint32_t prevpoint = pos > sc->queue_pos ? *(pos-1) - sc->last_step_clock : 0;
+    uint32_t point = *pos - sc->last_step_clock;
     uint32_t max_error = (point - prevpoint) / 2;
     if (max_error > sc->max_error)
         max_error = sc->max_error;
@@ -136,7 +134,7 @@ struct step_move {
 static struct step_move
 compress_bisect_add(struct stepcompress *sc)
 {
-    uint32_t *last = sc->queue_next;
+    uint64_t *last = sc->queue_next;
     if (last > sc->queue_pos + 65535)
         last = sc->queue_pos + 65535;
     struct points point = minmax_point(sc, sc->queue_pos);
@@ -278,7 +276,7 @@ void
 stepcompress_push(struct stepcompress *sc, double step_clock)
 {
     check_expand(sc, 1);
-    step_clock += 0.5 + sc->relclock - sc->last_step_clock;
+    step_clock += 0.5;
     *sc->queue_next++ = step_clock;
 }
 
@@ -301,8 +299,8 @@ stepcompress_push_factor(struct stepcompress *sc
     check_expand(sc, count);
 
     // Calculate each step time
-    uint32_t *qn = sc->queue_next, *end = &qn[count];
-    clock_offset += 0.5 + sc->relclock - sc->last_step_clock;
+    uint64_t *qn = sc->queue_next, *end = &qn[count];
+    clock_offset += 0.5;
     double pos = step_offset;
     while (qn < end) {
         *qn++ = clock_offset + pos*factor;
@@ -331,8 +329,8 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     check_expand(sc, count);
 
     // Calculate each step time
-    uint32_t *qn = sc->queue_next, *end = &qn[count];
-    clock_offset += 0.5 + sc->relclock - sc->last_step_clock;
+    uint64_t *qn = sc->queue_next, *end = &qn[count];
+    clock_offset += 0.5;
     double pos = step_offset + sqrt_offset/factor;
     if (factor >= 0.0)
         while (qn < end) {
@@ -370,11 +368,9 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
         sc->last_step_clock += ticks;
         if (sc->queue_pos + move.count >= sc->queue_next) {
             sc->queue_pos = sc->queue_next = sc->queue;
-            sc->relclock = 0;
             break;
         }
         sc->queue_pos += move.count;
-        sc->relclock += ticks;
     }
 }
 
