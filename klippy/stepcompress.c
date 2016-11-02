@@ -134,21 +134,23 @@ struct step_move {
 static struct step_move
 compress_bisect_add(struct stepcompress *sc)
 {
-    uint64_t *last = sc->queue_next;
-    if (last > sc->queue_pos + 65535)
-        last = sc->queue_pos + 65535;
     struct points point = minmax_point(sc, sc->queue_pos);
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
     int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
     int32_t bestinterval = 0, bestcount = 1, bestadd = 0, bestreach = INT32_MIN;
+    int32_t checked_count = 0;
 
     for (;;) {
         // Find longest valid sequence with the given 'add'
         int32_t mininterval = outer_mininterval, maxinterval = outer_maxinterval;
         int32_t count = 1, addfactor = 0;
         for (;;) {
-            if (sc->queue_pos + count >= last)
-                return (struct step_move){ maxinterval, count, add };
+            if (count > checked_count) {
+                if (&sc->queue_pos[count] >= sc->queue_next || count >= 65535
+                    || sc->queue_pos[count] >= sc->last_step_clock + (3<<28))
+                    return (struct step_move){ maxinterval, count, add };
+                checked_count++;
+            }
             point = minmax_point(sc, sc->queue_pos + count);
             addfactor += count;
             int32_t c = add*addfactor;
@@ -221,23 +223,37 @@ check_line(struct stepcompress *sc, struct step_move move)
 {
     if (!CHECK_LINES)
         return;
+    if (move.count == 1) {
+        if (move.interval != (uint32_t)(*sc->queue_pos - sc->last_step_clock)
+            || *sc->queue_pos < sc->last_step_clock) {
+            fprintf(stderr, "ERROR: Count 1 point out of range: %d %d %d\n"
+                    , move.interval, move.count, move.add);
+            sc->errors++;
+        }
+        return;
+    }
     int err = 0;
     if (!move.count || !move.interval || move.interval >= 0x80000000) {
         fprintf(stderr, "ERROR: Point out of range: %d %d %d\n"
                 , move.interval, move.count, move.add);
         err++;
     }
-    uint32_t interval = move.interval, p = interval;
+    uint32_t interval = move.interval, p = 0;
     uint16_t i;
     for (i=0; i<move.count; i++) {
         struct points point = minmax_point(sc, sc->queue_pos + i);
+        p += interval;
         if (p < point.minp || p > point.maxp) {
             fprintf(stderr, "ERROR: Point %d of %d: %d not in %d:%d\n"
                     , i+1, move.count, p, point.minp, point.maxp);
             err++;
         }
+        if (interval >= 0x80000000) {
+            fprintf(stderr, "ERROR: Point %d of %d: interval overflow %d\n"
+                    , i+1, move.count, interval);
+            err++;
+        }
         interval += move.add;
-        p += interval;
     }
     sc->errors += err;
 }
@@ -361,11 +377,16 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
         };
         struct queue_message *qm = message_alloc_and_encode(msg, 5);
         qm->min_clock = qm->req_clock = sc->last_step_clock;
+        if (move.count == 1 && sc->last_step_clock + (1<<27) < *sc->queue_pos) {
+            // Be careful with 32bit overflow
+            sc->last_step_clock = qm->req_clock = *sc->queue_pos;
+        } else {
+            uint32_t addfactor = move.count*(move.count-1)/2;
+            uint32_t ticks = move.add*addfactor + move.interval*move.count;
+            sc->last_step_clock += ticks;
+        }
         list_add_tail(&qm->node, &sc->msg_queue);
 
-        uint32_t addfactor = move.count*(move.count-1)/2;
-        uint32_t ticks = move.add*addfactor + move.interval*move.count;
-        sc->last_step_clock += ticks;
         if (sc->queue_pos + move.count >= sc->queue_next) {
             sc->queue_pos = sc->queue_next = sc->queue;
             break;
