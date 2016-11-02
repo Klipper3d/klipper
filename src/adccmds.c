@@ -22,8 +22,9 @@ static uint8_t
 analog_in_event(struct timer *timer)
 {
     struct analog_in *a = container_of(timer, struct analog_in, timer);
-    if (gpio_adc_sample(a->pin)) {
-        a->timer.waketime += gpio_adc_sample_time();
+    uint32_t sample_delay = gpio_adc_sample(a->pin);
+    if (sample_delay) {
+        a->timer.waketime += sample_delay;
         return SF_RESCHEDULE;
     }
     uint16_t value = gpio_adc_read(a->pin);
@@ -62,7 +63,7 @@ command_query_analog_in(uint32_t *args)
 {
     struct analog_in *a = lookup_oid(args[0], command_config_analog_in);
     sched_del_timer(&a->timer);
-    gpio_adc_clear_sample(a->pin);
+    gpio_adc_cancel_sample(a->pin);
     a->next_begin_time = args[1];
     a->timer.waketime = a->next_begin_time;
     a->sample_time = args[2];
@@ -111,7 +112,7 @@ analog_in_shutdown(void)
     uint8_t i;
     struct analog_in *a;
     foreach_oid(i, a, command_config_analog_in) {
-        gpio_adc_clear_sample(a->pin);
+        gpio_adc_cancel_sample(a->pin);
     }
 }
 DECL_SHUTDOWN(analog_in_shutdown);

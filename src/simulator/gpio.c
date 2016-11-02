@@ -27,16 +27,13 @@ void gpio_pwm_write(struct gpio_pwm g, uint8_t val) {
 struct gpio_adc gpio_adc_setup(uint8_t pin) {
     return (struct gpio_adc){.pin=pin};
 }
-uint32_t gpio_adc_sample_time(void) {
+uint32_t gpio_adc_sample(struct gpio_adc g) {
     return 0;
-}
-uint8_t gpio_adc_sample(struct gpio_adc g) {
-    return 0;
-}
-void gpio_adc_clear_sample(struct gpio_adc g) {
 }
 uint16_t gpio_adc_read(struct gpio_adc g) {
     return 0;
+}
+void gpio_adc_cancel_sample(struct gpio_adc g) {
 }
 
 void spi_config(void) {

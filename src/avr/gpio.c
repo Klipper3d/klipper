@@ -282,27 +282,24 @@ gpio_adc_setup(uint8_t pin)
     shutdown("Not a valid ADC pin");
 }
 
-uint32_t
-gpio_adc_sample_time(void)
-{
-    return (13 + 1) * 128 + 200;
-}
-
 enum { ADC_DUMMY=0xff };
 static uint8_t last_analog_read = ADC_DUMMY;
 
-uint8_t
+// Try to sample a value. Returns zero if sample ready, otherwise
+// returns the number of clock ticks the caller should wait before
+// retrying this function.
+uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
     if (ADCSRA & (1<<ADSC))
         // Busy
-        return 1;
+        goto need_delay;
     if (last_analog_read == g.chan)
         // Sample now ready
         return 0;
     if (last_analog_read != ADC_DUMMY)
         // Sample on another channel in progress
-        return 1;
+        goto need_delay;
     last_analog_read = g.chan;
 
 #if defined(ADCSRB) && defined(MUX5)
@@ -315,21 +312,24 @@ gpio_adc_sample(struct gpio_adc g)
 
     // start the conversion
     ADCSRA |= 1<<ADSC;
-    return 1;
+need_delay:
+    return (13 + 1) * 128 + 200;
 }
 
-void
-gpio_adc_clear_sample(struct gpio_adc g)
-{
-    if (last_analog_read == g.chan)
-        last_analog_read = ADC_DUMMY;
-}
-
+// Read a value; use only after gpio_adc_sample() returns zero
 uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     last_analog_read = ADC_DUMMY;
     return ADC;
+}
+
+// Cancel a sample that may have been started with gpio_adc_sample()
+void
+gpio_adc_cancel_sample(struct gpio_adc g)
+{
+    if (last_analog_read == g.chan)
+        last_analog_read = ADC_DUMMY;
 }
 
 

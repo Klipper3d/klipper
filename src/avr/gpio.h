@@ -2,7 +2,6 @@
 #define __AVR_GPIO_H
 
 #include <stdint.h>
-#include "compiler.h" // __always_inline
 
 struct gpio_out {
     struct gpio_digital_regs *regs;
@@ -31,10 +30,9 @@ struct gpio_adc {
     uint8_t chan;
 };
 struct gpio_adc gpio_adc_setup(uint8_t pin);
-uint32_t gpio_adc_sample_time(void);
-uint8_t gpio_adc_sample(struct gpio_adc g);
-void gpio_adc_clear_sample(struct gpio_adc g);
+uint32_t gpio_adc_sample(struct gpio_adc g);
 uint16_t gpio_adc_read(struct gpio_adc g);
+void gpio_adc_cancel_sample(struct gpio_adc g);
 
 void spi_config(void);
 void spi_transfer(char *data, uint8_t len);
