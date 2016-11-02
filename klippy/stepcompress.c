@@ -360,7 +360,7 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
             sc->queue_step_msgid, sc->oid, move.interval, move.count, move.add
         };
         struct queue_message *qm = message_alloc_and_encode(msg, 5);
-        qm->req_clock = sc->last_step_clock;
+        qm->min_clock = qm->req_clock = sc->last_step_clock;
         list_add_tail(&qm->node, &sc->msg_queue);
 
         uint32_t addfactor = move.count*(move.count-1)/2;
@@ -389,7 +389,6 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     stepcompress_flush(sc, UINT64_MAX);
 
     struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->min_clock = -1;
     qm->req_clock = sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
 }
@@ -483,7 +482,6 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
     // Order commands by the reqclock of each pending command
     struct list_head msgs;
     list_init(&msgs);
-    uint64_t min_clock = ss->move_clocks[0];
     for (;;) {
         // Find message with lowest reqclock
         uint64_t req_clock = MAX_CLOCK;
@@ -499,17 +497,17 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
                 }
             }
         }
-        if (!qm || (!qm->min_clock && req_clock > move_clock))
+        if (!qm || (qm->min_clock && req_clock > move_clock))
             break;
 
-        // Set the min_clock for this command
-        if (!qm->min_clock) {
-            qm->min_clock = min_clock;
-            heap_replace(ss, req_clock);
-            min_clock = ss->move_clocks[0];
-        } else {
-            qm->min_clock = min_clock;
-        }
+        uint64_t next_avail = ss->move_clocks[0];
+        if (qm->min_clock)
+            // The qm->min_clock field is overloaded to indicate that
+            // the command uses the 'move queue' and to store the time
+            // that move queue item becomes available.
+            heap_replace(ss, qm->min_clock);
+        // Reset the min_clock to its normal meaning (minimum transmit time)
+        qm->min_clock = next_avail;
 
         // Batch this command
         list_del(&qm->node);
