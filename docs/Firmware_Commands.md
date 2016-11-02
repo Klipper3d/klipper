@@ -239,9 +239,9 @@ Stepper commands
   queue. There may be hundreds of these sequences queued during normal
   operation. New sequence are appended to the end of the queue and as
   each sequence completes its 'count' number of steps it is popped
-  from the front of the queue. There may be tens of thousands of steps
-  queued in the firmware and every step will have a reliable and
-  predictable schedule time.
+  from the front of the queue. This system allows the firmware to
+  queue potentially hundreds of thousands of steps - all with reliable
+  and predictable schedule times.
 
 * set_next_step_dir oid=%c dir=%c : This command specifies the value
   of the dir_pin that the next queue_step command will use.
@@ -264,3 +264,15 @@ Stepper commands
   series of queue_step commands to the stepper to move it towards the
   endstop. Once the stepper hits the endstop, the trigger will be
   detected, the movement halted, and the host notified.
+
+### Move queue
+
+Each queue_step command utilizes an entry in the firmware "move
+queue". The firmware allocates this queue when it receives the
+"finalize_config" command, and it reports the number of available
+queue entries in "config" response messages.
+
+It is the responsibility of the host to ensure that there is available
+space in the queue before sending a queue_step command. The host does
+this by calculating when each queue_step command completes and
+scheduling new queue_step commands accordingly.
