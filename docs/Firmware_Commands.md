@@ -249,9 +249,7 @@ Stepper commands
 * reset_step_clock oid=%c clock=%u : Normally, step timing is relative
   to the last step for a given stepper. This command resets the clock
   so that the next step is relative to the supplied 'clock' time. The
-  host usually only sends this command at the start of a print or
-  after a long idle period for the stepper (for example a Z stepper
-  move after printing an extensive layer).
+  host usually only sends this command at the start of a print.
 
 * end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c : This
   command is used during stepper "homing" operations. To use this
