@@ -68,7 +68,8 @@ class Move:
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
         self.junction_start_max = min(
-            R * self.accel, self.junction_max, prev_move.junction_max)
+            R * self.accel, self.junction_max, prev_move.junction_max
+            , prev_move.junction_start_max + prev_move.junction_delta)
     def process(self, junction_start, junction_end):
         # Determine accel, cruise, and decel portions of the move distance
         junction_cruise = self.junction_max
@@ -111,34 +112,30 @@ class MoveQueue:
         del self.queue[:]
         self.prev_junction_max = self.junction_flush = 0.
     def flush(self, lazy=False):
-        can_flush = not lazy
         flush_count = len(self.queue)
         junction_end = [None] * flush_count
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
         next_junction_max = 0.
-        for i in range(len(self.queue)-1, -1, -1):
+        for i in range(flush_count-1, -1, -1):
             move = self.queue[i]
             junction_end[i] = next_junction_max
-            if not can_flush:
-                flush_count -= 1
             next_junction_max = next_junction_max + move.junction_delta
             if next_junction_max >= move.junction_start_max:
                 next_junction_max = move.junction_start_max
-                can_flush = True
+                if lazy:
+                    flush_count = i
+                    lazy = False
         # Generate step times for all moves ready to be flushed
         prev_junction_max = self.prev_junction_max
         for i in range(flush_count):
             move = self.queue[i]
-            next_junction_max = min(prev_junction_max + move.junction_delta
-                                    , junction_end[i])
-            move.process(prev_junction_max, next_junction_max)
-            prev_junction_max = next_junction_max
+            move.process(prev_junction_max, junction_end[i])
+            prev_junction_max = junction_end[i]
+        self.prev_junction_max = prev_junction_max
         # Remove processed moves from the queue
         del self.queue[:flush_count]
-        self.prev_junction_max = prev_junction_max
-        self.junction_flush = 0.
         if self.queue:
             self.junction_flush = self.queue[-1].junction_max
     def add_move(self, move):
