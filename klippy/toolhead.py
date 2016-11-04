@@ -70,10 +70,9 @@ class Move:
         self.junction_start_max = min(
             R * self.accel, self.junction_max, prev_move.junction_max
             , prev_move.junction_start_max + prev_move.junction_delta)
-    def process(self, junction_start, junction_end):
+    def process(self, junction_start, junction_cruise, junction_end
+                , cornering_min, cornering_max):
         # Determine accel, cruise, and decel portions of the move distance
-        junction_cruise = min((junction_start + junction_end
-                               + self.junction_delta) * .5, self.junction_max)
         inv_junction_delta = 1. / self.junction_delta
         accel_r = (junction_cruise-junction_start) * inv_junction_delta
         decel_r = (junction_cruise-junction_end) * inv_junction_delta
@@ -84,6 +83,8 @@ class Move:
         cruise_v = math.sqrt(junction_cruise)
         end_v = math.sqrt(junction_end)
         self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
+        self.corner_min = math.sqrt(cornering_min)
+        self.corner_max = math.sqrt(cornering_max)
         # Determine time spent in each portion of move (time is the
         # distance divided by average velocity)
         accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
@@ -102,42 +103,45 @@ class Move:
 class MoveQueue:
     def __init__(self):
         self.queue = []
-        self.prev_junction_max = 0.
         self.junction_flush = 0.
     def reset(self):
         del self.queue[:]
-        self.prev_junction_max = self.junction_flush = 0.
     def flush(self, lazy=False):
         flush_count = len(self.queue)
-        junction_end = [None] * flush_count
+        move_info = [None] * flush_count
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        next_junction_max = 0.
+        next_junction_end = cornering_min = cornering_max = 0.
         for i in range(flush_count-1, -1, -1):
             move = self.queue[i]
-            junction_end[i] = next_junction_max
-            next_junction_max = next_junction_max + move.junction_delta
-            if next_junction_max >= move.junction_start_max:
-                next_junction_max = move.junction_start_max
-                if lazy:
-                    flush_count = i
-                    lazy = False
+            reachable_start = next_junction_end + move.junction_delta
+            junction_start = min(move.junction_start_max, reachable_start)
+            junction_cruise = min((junction_start + reachable_start) * .5
+                                  , move.junction_max)
+            move_info[i] = (junction_start, junction_cruise, next_junction_end
+                            , cornering_min, cornering_max)
+            if reachable_start > junction_start:
+                cornering_min = junction_start
+                if junction_start + move.junction_delta > next_junction_end:
+                    cornering_max = junction_cruise
+                    if lazy:
+                        flush_count = i
+                        lazy = False
+            next_junction_end = junction_start
+        if lazy:
+            flush_count = 0
         # Generate step times for all moves ready to be flushed
-        prev_junction_max = self.prev_junction_max
         for i in range(flush_count):
-            move = self.queue[i]
-            move.process(prev_junction_max, junction_end[i])
-            prev_junction_max = junction_end[i]
-        self.prev_junction_max = prev_junction_max
+            self.queue[i].process(*move_info[i])
         # Remove processed moves from the queue
         del self.queue[:flush_count]
         if self.queue:
-            self.junction_flush = self.queue[-1].junction_max
+            self.junction_flush = 2. * self.queue[-1].junction_max
     def add_move(self, move):
         self.queue.append(move)
         if len(self.queue) == 1:
-            self.junction_flush = move.junction_max
+            self.junction_flush = 2. * move.junction_max
             return
         move.calc_junction(self.queue[-2])
         self.junction_flush -= move.junction_delta
