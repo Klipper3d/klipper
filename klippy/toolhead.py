@@ -72,16 +72,12 @@ class Move:
             , prev_move.junction_start_max + prev_move.junction_delta)
     def process(self, junction_start, junction_end):
         # Determine accel, cruise, and decel portions of the move distance
-        junction_cruise = self.junction_max
+        junction_cruise = min((junction_start + junction_end
+                               + self.junction_delta) * .5, self.junction_max)
         inv_junction_delta = 1. / self.junction_delta
         accel_r = (junction_cruise-junction_start) * inv_junction_delta
         decel_r = (junction_cruise-junction_end) * inv_junction_delta
         cruise_r = 1. - accel_r - decel_r
-        if cruise_r < 0.:
-            accel_r += 0.5 * cruise_r
-            decel_r = 1.0 - accel_r
-            cruise_r = 0.
-            junction_cruise = junction_start + accel_r*self.junction_delta
         self.accel_r, self.cruise_r, self.decel_r = accel_r, cruise_r, decel_r
         # Determine move velocities
         start_v = math.sqrt(junction_start)
