@@ -28,20 +28,23 @@ class PrinterExtruder:
             # Extrude only move - limit accel and velocity
             move.limit_speed(self.stepper.max_velocity, self.stepper.max_accel)
     def move(self, move_time, move):
-        move_d = move.move_d
-        inv_accel = 1. / move.accel
+        axis_d = move.axes_d[3]
+        extrude_r = axis_d / move.move_d
+        inv_accel = 1. / (move.accel * extrude_r)
 
-        start_v, cruise_v, end_v = move.start_v, move.cruise_v, move.end_v
+        start_v = move.start_v * extrude_r
+        cruise_v = move.cruise_v * extrude_r
+        end_v = move.end_v * extrude_r
         accel_t, cruise_t, decel_t = move.accel_t, move.cruise_t, move.decel_t
-        accel_d = move.accel_r * move_d
-        cruise_d = move.cruise_r * move_d
-        decel_d = move.decel_r * move_d
+        accel_d = move.accel_r * axis_d
+        cruise_d = move.cruise_r * axis_d
+        decel_d = move.decel_r * axis_d
 
         retract_t = retract_d = retract_v = 0.
         decel_v = cruise_v
 
         # Update for pressure advance
-        if (move.axes_d[3] >= 0. and (move.axes_d[0] or move.axes_d[1])
+        if (axis_d >= 0. and (move.axes_d[0] or move.axes_d[1])
             and self.pressure_advance):
             # Increase accel_d and start_v when accelerating
             extra_accel_d = (cruise_v - start_v) * self.pressure_advance
@@ -71,14 +74,13 @@ class PrinterExtruder:
                     decel_d -= extra_decel_d
 
         # Determine regular steps
-        extrude_r = move.axes_d[3] / move_d
         forward_d = accel_d + cruise_d + decel_d
         start_pos = self.extrude_pos
-        end_pos = start_pos + forward_d * extrude_r
+        end_pos = start_pos + forward_d
         inv_step_dist = self.stepper.inv_step_dist
         new_step_pos = int(end_pos*inv_step_dist + 0.5)
         if new_step_pos != self.stepper_pos:
-            steps = forward_d * extrude_r * inv_step_dist
+            steps = forward_d * inv_step_dist
             step_offset = self.stepper_pos - start_pos * inv_step_dist + 0.5
             self.stepper_pos = new_step_pos
             sdir = 0
@@ -119,10 +121,10 @@ class PrinterExtruder:
 
         # Determine retract steps
         start_pos = end_pos
-        end_pos -= retract_d * extrude_r
+        end_pos -= retract_d
         new_step_pos = int(end_pos*inv_step_dist + 0.5)
         if new_step_pos != self.stepper_pos:
-            steps = retract_d * extrude_r * inv_step_dist
+            steps = retract_d * inv_step_dist
             step_offset = start_pos * inv_step_dist - self.stepper_pos + 0.5
             self.stepper_pos = new_step_pos
             mcu_time, so = self.stepper.prep_move(
