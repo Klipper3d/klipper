@@ -150,13 +150,6 @@ Hardware features
 Misc features
 =============
 
-* The "pressure advance" algorithm does improve extruder
-  functionality. However, it's interaction with lookahead is not ideal
-  as it can cause rapid jerks of the filament when the head speed
-  changes briefly during cornering. Ideally, pressure advance would
-  interact better with lookahead to avoid advance during transient
-  speed changes.
-
 * Possibly use cubic functions instead of quadratic functions in step
   compression code.
 

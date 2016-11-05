@@ -59,8 +59,15 @@ class PrinterExtruder:
                     prev_pressure_d += extra_accel_d
             # Update decel and retract parameters when decelerating
             if decel_t:
-                npd = move.end_v * move_extrude_r * self.pressure_advance
-                extra_decel_d = prev_pressure_d - npd
+                if move.corner_min:
+                    npd = move.corner_max*move_extrude_r * self.pressure_advance
+                    extra_decel_d = prev_pressure_d - npd
+                    if move.end_v > move.corner_min:
+                        extra_decel_d *= ((move.cruise_v - move.end_v)
+                                          / (move.cruise_v - move.corner_min))
+                else:
+                    npd = move.end_v * move_extrude_r * self.pressure_advance
+                    extra_decel_d = prev_pressure_d - npd
                 if extra_decel_d > 0.:
                     extra_decel_v = extra_decel_d / decel_t
                     decel_v -= extra_decel_v
