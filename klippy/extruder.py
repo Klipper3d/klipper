@@ -44,38 +44,45 @@ class PrinterExtruder:
         decel_v = cruise_v
 
         # Update for pressure advance
+        start_pos = self.extrude_pos
         if (axis_d >= 0. and (move.axes_d[0] or move.axes_d[1])
             and self.pressure_advance):
             # Increase accel_d and start_v when accelerating
-            extra_accel_d = (cruise_v - start_v) * self.pressure_advance
-            accel_d += extra_accel_d
+            move_extrude_r = move.extrude_r
+            prev_pressure_d = start_pos - move.start_pos[3]
             if accel_t:
-                start_v += extra_accel_d / accel_t
+                npd = move.cruise_v * move_extrude_r * self.pressure_advance
+                extra_accel_d = npd - prev_pressure_d
+                if extra_accel_d > 0.:
+                    accel_d += extra_accel_d
+                    start_v += extra_accel_d / accel_t
+                    prev_pressure_d += extra_accel_d
             # Update decel and retract parameters when decelerating
             if decel_t:
-                extra_decel_d = (cruise_v - end_v) * self.pressure_advance
-                extra_decel_v = extra_decel_d / decel_t
-                decel_v -= extra_decel_v
-                end_v -= extra_decel_v
-                if decel_v <= 0.:
-                    # The entire decel phase is replaced with retraction
-                    retract_t = decel_t
-                    retract_d = -(end_v + decel_v) * 0.5 * decel_t
-                    retract_v = -decel_v
-                    decel_t = decel_d = 0.
-                elif end_v < 0.:
-                    # Split decel phase into decel and retraction
-                    retract_t = -end_v * inv_accel
-                    retract_d = -end_v * 0.5 * retract_t
-                    decel_t -= retract_t
-                    decel_d = decel_v * 0.5 * decel_t
-                else:
-                    # There is still only a decel phase (no retraction)
-                    decel_d -= extra_decel_d
+                npd = move.end_v * move_extrude_r * self.pressure_advance
+                extra_decel_d = prev_pressure_d - npd
+                if extra_decel_d > 0.:
+                    extra_decel_v = extra_decel_d / decel_t
+                    decel_v -= extra_decel_v
+                    end_v -= extra_decel_v
+                    if decel_v <= 0.:
+                        # The entire decel phase is replaced with retraction
+                        retract_t = decel_t
+                        retract_d = -(end_v + decel_v) * 0.5 * decel_t
+                        retract_v = -decel_v
+                        decel_t = decel_d = 0.
+                    elif end_v < 0.:
+                        # Split decel phase into decel and retraction
+                        retract_t = -end_v * inv_accel
+                        retract_d = -end_v * 0.5 * retract_t
+                        decel_t -= retract_t
+                        decel_d = decel_v * 0.5 * decel_t
+                    else:
+                        # There is still only a decel phase (no retraction)
+                        decel_d -= extra_decel_d
 
         # Determine regular steps
         forward_d = accel_d + cruise_d + decel_d
-        start_pos = self.extrude_pos
         end_pos = start_pos + forward_d
         inv_step_dist = self.stepper.inv_step_dist
         new_step_pos = int(end_pos*inv_step_dist + 0.5)
