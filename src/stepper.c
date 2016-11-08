@@ -144,7 +144,7 @@ command_config_stepper(uint32_t *args)
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP ? 1 : 0);
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->min_stop_interval = args[3];
-    s->position = STEPPER_POSITION_BIAS;
+    s->position = -STEPPER_POSITION_BIAS;
 }
 DECL_COMMAND(command_config_stepper,
              "config_stepper oid=%c step_pin=%c dir_pin=%c"
@@ -238,7 +238,7 @@ void
 stepper_stop(struct stepper *s)
 {
     sched_del_timer(&s->time);
-    s->position = stepper_get_position(s);
+    s->position = -stepper_get_position(s);
     s->count = 0;
     s->flags &= SF_INVERT_STEP;
     gpio_out_write(s->dir_pin, 0);

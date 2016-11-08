@@ -105,9 +105,9 @@ class CartKinematics:
             self.stepper_pos[i] = new_step_pos
             steps = move.axes_d[i] * inv_step_dist
             step_offset = step_pos - move.start_pos[i] * inv_step_dist + 0.5
-            sdir = 0
+            sdir = 1
             if steps < 0:
-                sdir = 1
+                sdir = 0
                 steps = -steps
                 step_offset = 1. - step_offset
             mcu_time, so = self.steppers[i].prep_move(move_time, sdir)

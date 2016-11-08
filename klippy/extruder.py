@@ -97,9 +97,9 @@ class PrinterExtruder:
             steps = forward_d * inv_step_dist
             step_offset = self.stepper_pos - start_pos * inv_step_dist + 0.5
             self.stepper_pos = new_step_pos
-            sdir = 0
+            sdir = 1
             if steps < 0:
-                sdir = 1
+                sdir = 0
                 steps = -steps
                 step_offset = 1. - step_offset
             mcu_time, so = self.stepper.prep_move(move_time, sdir)
@@ -142,7 +142,7 @@ class PrinterExtruder:
             step_offset = start_pos * inv_step_dist - self.stepper_pos + 0.5
             self.stepper_pos = new_step_pos
             mcu_time, so = self.stepper.prep_move(
-                move_time+accel_t+cruise_t+decel_t, 1)
+                move_time+accel_t+cruise_t+decel_t, 0)
 
             move_step_d = retract_d / steps
 
