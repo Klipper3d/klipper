@@ -9,10 +9,10 @@ import serialhdl, pins, chelper
 def parse_pin_extras(pin, can_pullup=False):
     pullup = invert = 0
     if can_pullup and pin.startswith('^'):
-        pullup = invert = 1
+        pullup = 1
         pin = pin[1:].strip()
     if pin.startswith('!'):
-        invert = invert ^ 1
+        invert = 1
         pin = pin[1:].strip()
     return pin, pullup, invert
 
