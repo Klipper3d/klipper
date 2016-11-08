@@ -29,7 +29,7 @@ class PrinterHeater:
         self.thermistor_c = Thermistors.get(config.get('thermistor_type'))
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
-        self.can_extrude = self.min_extrude_temp <= 0.
+        self.can_extrude = (self.min_extrude_temp <= 0.)
         self.lock = threading.Lock()
         self.last_temp = 0.
         self.last_temp_time = 0.
@@ -91,16 +91,13 @@ class PrinterHeater:
         with self.lock:
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.can_extrude = (self.last_temp >= self.min_extrude_temp
-                                and self.target_temp >= self.min_extrude_temp)
+            self.can_extrude = (temp >= self.min_extrude_temp)
             self.control.adc_callback(read_time, temp)
         #logging.debug("temp: %.3f %f = %f" % (read_time, read_value, temp))
     # External commands
     def set_temp(self, print_time, degrees):
         with self.lock:
             self.target_temp = degrees
-            if self.target_temp < self.min_extrude_temp:
-                self.can_extrude = False
     def get_temp(self):
         with self.lock:
             return self.last_temp, self.target_temp
