@@ -69,9 +69,9 @@ class PrinterStepper:
             mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
             self.mcu_enable.set_digital(mcu_time, enable)
         self.need_motor_enable = True
-    def prep_move(self, move_time, sdir):
+    def prep_move(self, move_time):
         mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
-        self.mcu_stepper.set_next_step_dir(mcu_time, sdir)
+        self.mcu_stepper.check_reset(mcu_time)
         if self.need_motor_enable:
             self.motor_enable(move_time, 1)
             self.need_motor_enable = False

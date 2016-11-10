@@ -35,7 +35,8 @@ struct stepcompress {
     // Message generation
     uint64_t last_step_clock;
     struct list_head msg_queue;
-    uint32_t queue_step_msgid, oid;
+    uint32_t queue_step_msgid, set_next_step_dir_msgid, oid;
+    int sdir, invert_sdir;
 };
 
 
@@ -268,14 +269,19 @@ safe_sqrt(double v)
 
 // Allocate a new 'stepcompress' object
 struct stepcompress *
-stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid, uint32_t oid)
+stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
+                   , uint32_t set_next_step_dir_msgid, uint32_t invert_sdir
+                   , uint32_t oid)
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
     sc->max_error = max_error;
     list_init(&sc->msg_queue);
     sc->queue_step_msgid = queue_step_msgid;
+    sc->set_next_step_dir_msgid = set_next_step_dir_msgid;
     sc->oid = oid;
+    sc->sdir = -1;
+    sc->invert_sdir = !!invert_sdir;
     return sc;
 }
 
@@ -312,75 +318,102 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
     }
 }
 
+// Send the set_next_step_dir command
+static void
+set_next_step_dir(struct stepcompress *sc, int sdir)
+{
+    sc->sdir = sdir;
+    stepcompress_flush(sc, UINT64_MAX);
+    uint32_t msg[3] = {
+        sc->set_next_step_dir_msgid, sc->oid, sdir ^ sc->invert_sdir
+    };
+    struct queue_message *qm = message_alloc_and_encode(msg, 3);
+    qm->req_clock = sc->last_step_clock;
+    list_add_tail(&qm->node, &sc->msg_queue);
+}
+
 // Check if the internal queue needs to be expanded, and expand if so
 static inline void
-check_expand(struct stepcompress *sc, int count)
+check_expand(struct stepcompress *sc, int sdir, int count)
 {
+    if (sdir != sc->sdir)
+        set_next_step_dir(sc, sdir);
     if (sc->queue_next + count > sc->queue_end)
         expand_queue(sc, count);
 }
 
 // Schedule a step event at the specified step_clock time
 void
-stepcompress_push(struct stepcompress *sc, double step_clock)
+stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
 {
-    check_expand(sc, 1);
+    sdir = !!sdir;
+    check_expand(sc, sdir, 1);
     step_clock += 0.5;
     *sc->queue_next++ = step_clock;
 }
 
 // Schedule 'steps' number of steps with a constant time between steps
 // using the formula: step_clock = clock_offset + step_num*factor
-double
+int32_t
 stepcompress_push_factor(struct stepcompress *sc
                          , double steps, double step_offset
                          , double clock_offset, double factor)
 {
     // Calculate number of steps to take
-    double ceil_steps = ceil(steps - step_offset);
-    double next_step_offset = ceil_steps - (steps - step_offset);
-    int count = ceil_steps;
-    if (count < 0 || count > 1000000) {
-        fprintf(stderr, "ERROR: push_factor invalid count %d %f %f %f %f\n"
-                , sc->oid, steps, step_offset, clock_offset, factor);
-        return next_step_offset;
+    int sdir = 1;
+    if (steps < 0) {
+        sdir = 0;
+        steps = -steps;
+        step_offset = -step_offset;
     }
-    check_expand(sc, count);
+    int count = steps + .5 - step_offset;
+    if (count <= 0 || count > 1000000) {
+        if (count && steps)
+            fprintf(stderr, "ERROR: push_factor invalid count %d %f %f %f %f\n"
+                    , sc->oid, steps, step_offset, clock_offset, factor);
+        return 0;
+    }
+    check_expand(sc, sdir, count);
 
     // Calculate each step time
     uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
-    double pos = step_offset;
+    double pos = step_offset + .5;
     while (qn < end) {
         *qn++ = clock_offset + pos*factor;
         pos += 1.0;
     }
     sc->queue_next = qn;
-    return next_step_offset;
+    return sdir ? count : -count;
 }
 
 // Schedule 'steps' number of steps using the formula:
 //  step_clock = clock_offset + sqrt(step_num*factor + sqrt_offset)
-double
+int32_t
 stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
                        , double clock_offset, double sqrt_offset, double factor)
 {
     // Calculate number of steps to take
-    double ceil_steps = ceil(steps - step_offset);
-    double next_step_offset = ceil_steps - (steps - step_offset);
-    int count = ceil_steps;
-    if (count < 0 || count > 1000000) {
-        fprintf(stderr, "ERROR: push_sqrt invalid count %d %f %f %f %f %f\n"
-                , sc->oid, steps, step_offset, clock_offset, sqrt_offset
-                , factor);
-        return next_step_offset;
+    int sdir = 1;
+    if (steps < 0) {
+        sdir = 0;
+        steps = -steps;
+        step_offset = -step_offset;
     }
-    check_expand(sc, count);
+    int count = steps + .5 - step_offset;
+    if (count <= 0 || count > 1000000) {
+        if (count && steps)
+            fprintf(stderr, "ERROR: push_sqrt invalid count %d %f %f %f %f %f\n"
+                    , sc->oid, steps, step_offset, clock_offset, sqrt_offset
+                    , factor);
+        return 0;
+    }
+    check_expand(sc, sdir, count);
 
     // Calculate each step time
     uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
-    double pos = step_offset + sqrt_offset/factor;
+    double pos = step_offset + .5 + sqrt_offset/factor;
     if (factor >= 0.0)
         while (qn < end) {
             *qn++ = clock_offset + safe_sqrt(pos*factor);
@@ -392,7 +425,7 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
             pos += 1.0;
         }
     sc->queue_next = qn;
-    return next_step_offset;
+    return sdir ? count : -count;
 }
 
 // Reset the internal state of the stepcompress object
@@ -401,6 +434,7 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 {
     stepcompress_flush(sc, UINT64_MAX);
     sc->last_step_clock = last_step_clock;
+    sc->sdir = -1;
 }
 
 // Queue an mcu command to go out in order with stepper commands

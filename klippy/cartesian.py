@@ -97,45 +97,47 @@ class CartKinematics:
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v
         for i in StepList:
-            inv_step_dist = self.steppers[i].inv_step_dist
-            new_step_pos = int(move.end_pos[i]*inv_step_dist + 0.5)
-            step_pos = self.stepper_pos[i]
-            if new_step_pos == step_pos:
+            if not move.axes_d[i]:
                 continue
-            self.stepper_pos[i] = new_step_pos
+            mcu_time, so = self.steppers[i].prep_move(move_time)
+            inv_step_dist = self.steppers[i].inv_step_dist
             steps = move.axes_d[i] * inv_step_dist
-            step_offset = step_pos - move.start_pos[i] * inv_step_dist + 0.5
-            sdir = 1
-            if steps < 0:
-                sdir = 0
-                steps = -steps
-                step_offset = 1. - step_offset
-            mcu_time, so = self.steppers[i].prep_move(move_time, sdir)
+            move_step_d = move.move_d / abs(steps)
 
-            move_step_d = move.move_d / steps
+            step_pos = self.stepper_pos[i]
+            step_offset = step_pos - move.start_pos[i] * inv_step_dist
 
             # Acceleration steps
-            #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_time_offset = move.start_v * inv_accel
-            accel_sqrt_offset = accel_time_offset**2
             accel_multiplier = 2.0 * move_step_d * inv_accel
-            accel_steps = move.accel_r * steps
-            step_offset = so.step_sqrt(
-                mcu_time - accel_time_offset, accel_steps, step_offset
-                , accel_sqrt_offset, accel_multiplier)
-            mcu_time += move.accel_t
+            if move.accel_r:
+                #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
+                accel_time_offset = move.start_v * inv_accel
+                accel_sqrt_offset = accel_time_offset**2
+                accel_steps = move.accel_r * steps
+                count = so.step_sqrt(
+                    mcu_time - accel_time_offset, accel_steps, step_offset
+                    , accel_sqrt_offset, accel_multiplier)
+                step_pos += count
+                step_offset += count - accel_steps
+                mcu_time += move.accel_t
             # Cruising steps
-            #t = pos/cruise_v
-            cruise_multiplier = move_step_d * inv_cruise_v
-            cruise_steps = move.cruise_r * steps
-            step_offset = so.step_factor(
-                mcu_time, cruise_steps, step_offset, cruise_multiplier)
-            mcu_time += move.cruise_t
+            if move.cruise_r:
+                #t = pos/cruise_v
+                cruise_multiplier = move_step_d * inv_cruise_v
+                cruise_steps = move.cruise_r * steps
+                count = so.step_factor(
+                    mcu_time, cruise_steps, step_offset, cruise_multiplier)
+                step_pos += count
+                step_offset += count - cruise_steps
+                mcu_time += move.cruise_t
             # Deceleration steps
-            #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
-            decel_time_offset = move.cruise_v * inv_accel
-            decel_sqrt_offset = decel_time_offset**2
-            decel_steps = move.decel_r * steps
-            so.step_sqrt(
-                mcu_time + decel_time_offset, decel_steps, step_offset
-                , decel_sqrt_offset, -accel_multiplier)
+            if move.decel_r:
+                #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
+                decel_time_offset = move.cruise_v * inv_accel
+                decel_sqrt_offset = decel_time_offset**2
+                decel_steps = move.decel_r * steps
+                count = so.step_sqrt(
+                    mcu_time + decel_time_offset, decel_steps, step_offset
+                    , decel_sqrt_offset, -accel_multiplier)
+                step_pos += count
+            self.stepper_pos[i] = step_pos

@@ -22,7 +22,7 @@ class MCU_stepper:
         self._oid = mcu.create_oid()
         step_pin, pullup, invert_step = parse_pin_extras(step_pin)
         dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
-        self._sdir = -1
+        self._need_reset = True
         self._mcu_freq = mcu.get_mcu_freq()
         min_stop_interval = int(min_stop_interval * self._mcu_freq)
         max_error = int(max_error * self._mcu_freq)
@@ -39,30 +39,26 @@ class MCU_stepper:
             "reset_step_clock oid=%c clock=%u")
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._stepqueue = self.ffi_lib.stepcompress_alloc(
-            max_error, self._step_cmd.msgid, self._oid)
+            max_error, self._step_cmd.msgid
+            , self._dir_cmd.msgid, self._invert_dir, self._oid)
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def get_oid(self):
         return self._oid
     def get_invert_dir(self):
         return self._invert_dir
     def note_stepper_stop(self):
-        self._sdir = -1
-    def _reset_step_clock(self, clock):
+        self._need_reset = True
+    def check_reset(self, mcu_time):
+        if not self._need_reset:
+            return
+        self._need_reset = False
+        clock = int(mcu_time * self._mcu_freq)
         self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
         data = (self._reset_cmd.msgid, self._oid, clock & 0xffffffff)
         self.ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-    def set_next_step_dir(self, mcu_time, sdir):
-        if self._sdir == sdir:
-            return
-        if self._sdir == -1:
-            clock = int(mcu_time * self._mcu_freq)
-            self._reset_step_clock(clock)
-        self._sdir = sdir
-        data = (self._dir_cmd.msgid, self._oid, sdir ^ self._invert_dir)
-        self.ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-    def step(self, mcu_time):
+    def step(self, mcu_time, sdir):
         clock = mcu_time * self._mcu_freq
-        self.ffi_lib.stepcompress_push(self._stepqueue, clock)
+        self.ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
     def step_sqrt(self, mcu_time, steps, step_offset, sqrt_offset, factor):
         clock = mcu_time * self._mcu_freq
         mcu_freq2 = self._mcu_freq**2
@@ -477,7 +473,7 @@ class Dummy_MCU_stepper:
             self._stepid, dirstr, countstr, addstr, interval))
     def set_next_step_dir(self, dir):
         self._sdir = dir
-    def _reset_step_clock(self, clock):
+    def check_reset(self, clock):
         self._mcu.outfile.write("G6S%dT%d\n" % (self._stepid, clock))
     def print_to_mcu_time(self, print_time):
         return self._mcu.print_to_mcu_time(print_time)

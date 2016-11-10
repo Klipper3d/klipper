@@ -13,12 +13,14 @@ OTHER_FILES = ['list.h', 'serialqueue.h']
 
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t max_error
-        , uint32_t queue_step_msgid, uint32_t oid);
-    void stepcompress_push(struct stepcompress *sc, double step_clock);
-    double stepcompress_push_factor(struct stepcompress *sc
+        , uint32_t queue_step_msgid, uint32_t set_next_step_dir_msgid
+        , uint32_t invert_sdir, uint32_t oid);
+    void stepcompress_push(struct stepcompress *sc, double step_clock
+        , int32_t sdir);
+    int32_t stepcompress_push_factor(struct stepcompress *sc
         , double steps, double step_offset
         , double clock_offset, double factor);
-    double stepcompress_push_sqrt(struct stepcompress *sc
+    int32_t stepcompress_push_sqrt(struct stepcompress *sc
         , double steps, double step_offset
         , double clock_offset, double sqrt_offset, double factor);
     void stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
