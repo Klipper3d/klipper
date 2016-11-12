@@ -98,9 +98,11 @@ printer object calls, which frequently translate the actions to
 commands to be executed on the micro-controller (as declared via the
 DECL_COMMAND macro in the micro-controller code).
 
-There are three threads in the Klippy host code. The main thread
+There are four threads in the Klippy host code. The main thread
 handles incoming gcode commands. A second thread (which resides
 entirely in the **klippy/serialqueue.c** C code) handles low-level IO
 with the serial port. The third thread is used to process response
 messages from the micro-controller in the Python code (see
-**klippy/serialhdl.py**).
+**klippy/serialhdl.py**). The fourth thread writes debug messages to
+the log (see **klippy/queuelogger.py**) so that the other threads
+never block on log writes.

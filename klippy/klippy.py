@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
-import gcode, toolhead, util, mcu, fan, heater, extruder, reactor
+import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
 
 class ConfigWrapper:
     def __init__(self, printer, section):
@@ -132,7 +132,7 @@ def main():
         opts.error("Incorrect number of arguments")
     conffile = args[0]
 
-    debuginput = debugoutput = None
+    debuginput = debugoutput = bglogger = None
 
     debuglevel = logging.INFO
     if options.verbose:
@@ -142,8 +142,7 @@ def main():
     if options.outputfile:
         debugoutput = open(options.outputfile, 'wb')
     if options.logfile:
-        logoutput = open(options.logfile, 'wb')
-        logging.basicConfig(stream=logoutput, level=debuglevel)
+        bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
@@ -158,6 +157,9 @@ def main():
     if options.write_dictionary:
         store_dictionary(options.write_dictionary, printer)
     printer.run()
+
+    if bglogger is not None:
+        bglogger.stop()
 
 if __name__ == '__main__':
     main()
