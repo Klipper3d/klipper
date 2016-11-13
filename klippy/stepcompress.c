@@ -74,14 +74,6 @@ expand_queue(struct stepcompress *sc, int count)
     sc->queue_next = sc->queue + next;
 }
 
-// Check if the internal queue needs to be expanded, and expand if so
-static inline void
-check_expand(struct stepcompress *sc, int count)
-{
-    if (sc->queue_next + count > sc->queue_end)
-        expand_queue(sc, count);
-}
-
 
 /****************************************************************
  * Step compression
@@ -287,6 +279,47 @@ stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid, uint32_t oid)
     return sc;
 }
 
+// Convert previously scheduled steps into commands for the mcu
+static void
+stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
+{
+    if (sc->queue_pos >= sc->queue_next)
+        return;
+    while (move_clock > sc->last_step_clock) {
+        struct step_move move = compress_bisect_add(sc);
+        check_line(sc, move);
+
+        uint32_t msg[5] = {
+            sc->queue_step_msgid, sc->oid, move.interval, move.count, move.add
+        };
+        struct queue_message *qm = message_alloc_and_encode(msg, 5);
+        qm->min_clock = qm->req_clock = sc->last_step_clock;
+        if (move.count == 1 && sc->last_step_clock + (1<<27) < *sc->queue_pos) {
+            // Be careful with 32bit overflow
+            sc->last_step_clock = qm->req_clock = *sc->queue_pos;
+        } else {
+            uint32_t addfactor = move.count*(move.count-1)/2;
+            uint32_t ticks = move.add*addfactor + move.interval*move.count;
+            sc->last_step_clock += ticks;
+        }
+        list_add_tail(&qm->node, &sc->msg_queue);
+
+        if (sc->queue_pos + move.count >= sc->queue_next) {
+            sc->queue_pos = sc->queue_next = sc->queue;
+            break;
+        }
+        sc->queue_pos += move.count;
+    }
+}
+
+// Check if the internal queue needs to be expanded, and expand if so
+static inline void
+check_expand(struct stepcompress *sc, int count)
+{
+    if (sc->queue_next + count > sc->queue_end)
+        expand_queue(sc, count);
+}
+
 // Schedule a step event at the specified step_clock time
 void
 stepcompress_push(struct stepcompress *sc, double step_clock)
@@ -360,39 +393,6 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
         }
     sc->queue_next = qn;
     return next_step_offset;
-}
-
-// Convert previously scheduled steps into commands for the mcu
-static void
-stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
-{
-    if (sc->queue_pos >= sc->queue_next)
-        return;
-    while (move_clock > sc->last_step_clock) {
-        struct step_move move = compress_bisect_add(sc);
-        check_line(sc, move);
-
-        uint32_t msg[5] = {
-            sc->queue_step_msgid, sc->oid, move.interval, move.count, move.add
-        };
-        struct queue_message *qm = message_alloc_and_encode(msg, 5);
-        qm->min_clock = qm->req_clock = sc->last_step_clock;
-        if (move.count == 1 && sc->last_step_clock + (1<<27) < *sc->queue_pos) {
-            // Be careful with 32bit overflow
-            sc->last_step_clock = qm->req_clock = *sc->queue_pos;
-        } else {
-            uint32_t addfactor = move.count*(move.count-1)/2;
-            uint32_t ticks = move.add*addfactor + move.interval*move.count;
-            sc->last_step_clock += ticks;
-        }
-        list_add_tail(&qm->node, &sc->msg_queue);
-
-        if (sc->queue_pos + move.count >= sc->queue_next) {
-            sc->queue_pos = sc->queue_next = sc->queue;
-            break;
-        }
-        sc->queue_pos += move.count;
-    }
 }
 
 // Reset the internal state of the stepcompress object
