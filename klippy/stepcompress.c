@@ -419,16 +419,11 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
     double pos = step_offset + .5 + sqrt_offset/factor;
-    if (factor >= 0.0)
-        while (qn < end) {
-            *qn++ = clock_offset + safe_sqrt(pos*factor);
-            pos += 1.0;
-        }
-    else
-        while (qn < end) {
-            *qn++ = clock_offset - safe_sqrt(pos*factor);
-            pos += 1.0;
-        }
+    while (qn < end) {
+        double v = safe_sqrt(pos*factor);
+        *qn++ = clock_offset + (factor >= 0. ? v : -v);
+        pos += 1.0;
+    }
     sc->queue_next = qn;
     return sdir ? count : -count;
 }
