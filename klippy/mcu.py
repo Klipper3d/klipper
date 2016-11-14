@@ -22,7 +22,6 @@ class MCU_stepper:
         self._oid = mcu.create_oid()
         step_pin, pullup, invert_step = parse_pin_extras(step_pin)
         dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
-        self._need_reset = True
         self._mcu_freq = mcu.get_mcu_freq()
         min_stop_interval = int(min_stop_interval * self._mcu_freq)
         max_error = int(max_error * self._mcu_freq)
@@ -47,11 +46,8 @@ class MCU_stepper:
     def get_invert_dir(self):
         return self._invert_dir
     def note_stepper_stop(self):
-        self._need_reset = True
-    def check_reset(self, mcu_time):
-        if not self._need_reset:
-            return
-        self._need_reset = False
+        self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
+    def reset_step_clock(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
         self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
         data = (self._reset_cmd.msgid, self._oid, clock & 0xffffffff)
@@ -486,7 +482,7 @@ class Dummy_MCU_stepper:
             self._stepid, dirstr, countstr, addstr, interval))
     def set_next_step_dir(self, dir):
         self._sdir = dir
-    def check_reset(self, clock):
+    def reset_step_clock(self, clock):
         self._mcu.outfile.write("G6S%dT%d\n" % (self._stepid, clock))
     def print_to_mcu_time(self, print_time):
         return self._mcu.print_to_mcu_time(print_time)

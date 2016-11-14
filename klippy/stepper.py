@@ -71,8 +71,8 @@ class PrinterStepper:
         self.need_motor_enable = True
     def prep_move(self, move_time):
         mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
-        self.mcu_stepper.check_reset(mcu_time)
         if self.need_motor_enable:
+            self.mcu_stepper.reset_step_clock(mcu_time)
             self.motor_enable(move_time, 1)
             self.need_motor_enable = False
         return (mcu_time, self.mcu_stepper)

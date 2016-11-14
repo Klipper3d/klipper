@@ -238,6 +238,7 @@ void
 stepper_stop(struct stepper *s)
 {
     sched_del_timer(&s->time);
+    s->next_step_time = 0;
     s->position = -stepper_get_position(s);
     s->count = 0;
     s->flags &= SF_INVERT_STEP;
