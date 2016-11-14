@@ -64,18 +64,14 @@ class PrinterStepper:
         if endstop_pin is not None:
             self.mcu_endstop = mcu.create_endstop(endstop_pin, self.mcu_stepper)
     def motor_enable(self, move_time, enable=0):
+        if enable and self.need_motor_enable:
+            mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
+            self.mcu_stepper.reset_step_clock(mcu_time)
         if (self.mcu_enable is not None
             and self.mcu_enable.get_last_setting() != enable):
             mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
             self.mcu_enable.set_digital(mcu_time, enable)
-        self.need_motor_enable = True
-    def prep_move(self, move_time):
-        mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
-        if self.need_motor_enable:
-            self.mcu_stepper.reset_step_clock(mcu_time)
-            self.motor_enable(move_time, 1)
-            self.need_motor_enable = False
-        return (mcu_time, self.mcu_stepper)
+        self.need_motor_enable = not enable
     def enable_endstop_checking(self, move_time, step_time):
         mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
         self.mcu_endstop.home(mcu_time, step_time)
@@ -86,7 +82,7 @@ class PrinterStepper:
         self.mcu_endstop.query_endstop()
         return self.mcu_endstop
     def get_homed_offset(self):
-        if not self.homing_stepper_phases:
+        if not self.homing_stepper_phases or self.need_motor_enable:
             return 0
         pos = self.mcu_endstop.get_last_position()
         pos %= self.homing_stepper_phases
