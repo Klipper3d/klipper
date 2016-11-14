@@ -256,15 +256,20 @@ check_line(struct stepcompress *sc, struct step_move move)
  * Step compress interface
  ****************************************************************/
 
+#define likely(x)       __builtin_expect(!!(x), 1)
+
 // Wrapper around sqrt() to handle small negative numbers
-static inline double
-safe_sqrt(double v)
+static double
+_safe_sqrt(double v)
 {
-    if (v < 0. && v > -0.001)
+    if (v > -0.001)
         // Due to floating point truncation, it's possible to get a
         // small negative number - treat it as zero.
         return 0.;
     return sqrt(v);
+}
+static inline double safe_sqrt(double v) {
+    return likely(v >= 0.) ? sqrt(v) : _safe_sqrt(v);
 }
 
 // Allocate a new 'stepcompress' object
