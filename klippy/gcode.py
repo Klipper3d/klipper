@@ -15,14 +15,13 @@ class GCodeParser:
         self.is_fileinput = is_fileinput
         # Input handling
         self.reactor = printer.reactor
+        self.is_processing_data = False
         self.fd_handle = None
         if not is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.input_commands = [""]
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
-        # Busy handling
-        self.busy_timer = self.reactor.register_timer(self.busy_handler)
         self.busy_state = None
         # Command handling
         self.gcode_handlers = {}
@@ -117,14 +116,14 @@ class GCodeParser:
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
             # Check if machine can process next command or must stall input
             if self.busy_state is not None:
-                break
+                self.busy_handler(eventtime)
             if self.is_printer_ready and self.toolhead.check_busy(eventtime):
                 self.set_busy(self.toolhead)
-                break
+                self.busy_handler(eventtime)
             self.ack()
         del self.input_commands[:i+1]
     def process_data(self, eventtime):
-        if self.busy_state is not None:
+        if self.is_processing_data:
             self.reactor.unregister_fd(self.fd_handle)
             self.fd_handle = None
             return
@@ -134,7 +133,11 @@ class GCodeParser:
         lines = data.split('\n')
         lines[0] = self.input_commands[0] + lines[0]
         self.input_commands = lines
+        self.is_processing_data = True
         self.process_commands(eventtime)
+        self.is_processing_data = False
+        if self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         if not data and self.is_fileinput:
             self.motor_heater_off()
             self.printer.request_exit_eof()
@@ -160,29 +163,23 @@ class GCodeParser:
     # Busy handling
     def set_busy(self, busy_handler):
         self.busy_state = busy_handler
-        self.reactor.update_timer(self.busy_timer, self.reactor.NOW)
     def busy_handler(self, eventtime):
-        try:
-            busy = self.busy_state.check_busy(eventtime)
-        except homing.EndstopError, e:
-            self.respond_error(str(e))
-            busy = False
-        except:
-            logging.exception("Exception in busy handler")
-            self.toolhead.force_shutdown()
-            self.respond_error('Internal error in busy handler')
-            busy = False
-        if busy:
+        while 1:
+            try:
+                busy = self.busy_state.check_busy(eventtime)
+            except homing.EndstopError, e:
+                self.respond_error(str(e))
+                busy = False
+            except:
+                logging.exception("Exception in busy handler")
+                self.toolhead.force_shutdown()
+                self.respond_error('Internal error in busy handler')
+                busy = False
+            if not busy:
+                break
             self.toolhead.reset_motor_off_time(eventtime)
-            return eventtime + self.RETRY_TIME
+            eventtime = self.reactor.pause(eventtime + self.RETRY_TIME)
         self.busy_state = None
-        self.ack()
-        self.process_commands(eventtime)
-        if self.busy_state is not None:
-            return self.reactor.NOW
-        if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        return self.reactor.NEVER
     # Temperature wrappers
     def get_temp(self):
         if not self.is_printer_ready:
