@@ -79,10 +79,6 @@ class Printer:
         self.build_config()
         self.stats_timer = self.reactor.register_timer(
             self.stats, self.reactor.NOW)
-    def connect_debug(self, debugoutput):
-        self.mcu = mcu.DummyMCU(debugoutput)
-        self.mcu.connect()
-        self.build_config()
     def connect_file(self, output, dictionary):
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         self.mcu.connect_file(output, dictionary)
