@@ -34,7 +34,7 @@ regular "pi" user:
 
 ```
 virtualenv ~/klippy-env
-~/klippy-env/bin/pip install cffi==1.6.0 pyserial==2.7
+~/klippy-env/bin/pip install cffi==1.6.0 pyserial==2.7 greenlet==0.4.10
 ```
 
 Building Klipper

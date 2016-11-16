@@ -3,8 +3,8 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
 import select, time, math
+import greenlet
 
 class ReactorTimer:
     def __init__(self, callback, waketime):
@@ -18,6 +18,11 @@ class ReactorFileHandler:
     def fileno(self):
         return self.fd
 
+class ReactorGreenlet(greenlet.greenlet):
+    def __init__(self, run):
+        greenlet.greenlet.__init__(self, run=run)
+        self.timer = None
+
 class SelectReactor:
     NOW = 0.
     NEVER = 9999999999999999.
@@ -25,7 +30,9 @@ class SelectReactor:
         self._fds = []
         self._timers = []
         self._next_timer = self.NEVER
-        self._process = True
+        self._process = False
+        self._g_dispatch = None
+        self._greenlets = []
     # Timers
     def _note_time(self, t):
         nexttime = t.waketime
@@ -49,13 +56,36 @@ class SelectReactor:
         if eventtime < self._next_timer:
             return min(1., max(.001, self._next_timer - eventtime))
         self._next_timer = self.NEVER
+        g_dispatch = self._g_dispatch
         for t in self._timers:
             if eventtime >= t.waketime:
+                t.waketime = self.NEVER
                 t.waketime = t.callback(eventtime)
+                if g_dispatch is not self._g_dispatch:
+                    self._end_greenlet(g_dispatch)
+                    return 0.
             self._note_time(t)
         if eventtime >= self._next_timer:
             return 0.
         return min(1., max(.001, self._next_timer - time.time()))
+    # Greenlets
+    def pause(self, waketime):
+        g = greenlet.getcurrent()
+        if g is not self._g_dispatch:
+            return self._g_dispatch.switch(waketime)
+        if self._greenlets:
+            g_next = self._greenlets.pop()
+        else:
+            g_next = ReactorGreenlet(run=self._dispatch_loop)
+        g_next.parent = g.parent
+        g.timer = self.register_timer(g.switch, waketime)
+        return g_next.switch()
+    def _end_greenlet(self, g_old):
+        self._greenlets.append(g_old)
+        self.unregister_timer(g_old.timer)
+        g_old.timer = None
+        self._g_dispatch.switch(self.NEVER)
+        self._g_dispatch = g_old
     # File descriptors
     def register_fd(self, fd, callback):
         handler = ReactorFileHandler(fd, callback)
@@ -64,8 +94,9 @@ class SelectReactor:
     def unregister_fd(self, handler):
         self._fds.pop(self._fds.index(handler))
     # Main loop
-    def run(self):
+    def _dispatch_loop(self):
         self._process = True
+        self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = time.time()
         while self._process:
             timeout = self._check_timers(eventtime)
@@ -73,6 +104,13 @@ class SelectReactor:
             eventtime = time.time()
             for fd in res[0]:
                 fd.callback(eventtime)
+                if g_dispatch is not self._g_dispatch:
+                    self._end_greenlet(g_dispatch)
+                    break
+        self._g_dispatch = None
+    def run(self):
+        g_next = ReactorGreenlet(run=self._dispatch_loop)
+        g_next.switch()
     def end(self):
         self._process = False
 
@@ -95,8 +133,9 @@ class PollReactor(SelectReactor):
         del fds[handler.fd]
         self._fds = fds
     # Main loop
-    def run(self):
+    def _dispatch_loop(self):
         self._process = True
+        self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = time.time()
         while self._process:
             timeout = int(math.ceil(self._check_timers(eventtime) * 1000.))
@@ -104,6 +143,10 @@ class PollReactor(SelectReactor):
             eventtime = time.time()
             for fd, event in res:
                 self._fds[fd](eventtime)
+                if g_dispatch is not self._g_dispatch:
+                    self._end_greenlet(g_dispatch)
+                    break
+        self._g_dispatch = None
 
 class EPollReactor(SelectReactor):
     def __init__(self):
@@ -124,8 +167,9 @@ class EPollReactor(SelectReactor):
         del fds[handler.fd]
         self._fds = fds
     # Main loop
-    def run(self):
+    def _dispatch_loop(self):
         self._process = True
+        self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = time.time()
         while self._process:
             timeout = self._check_timers(eventtime)
@@ -133,6 +177,10 @@ class EPollReactor(SelectReactor):
             eventtime = time.time()
             for fd, event in res:
                 self._fds[fd](eventtime)
+                if g_dispatch is not self._g_dispatch:
+                    self._end_greenlet(g_dispatch)
+                    break
+        self._g_dispatch = None
 
 # Use the poll based reactor if it is available
 try:
