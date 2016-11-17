@@ -9,7 +9,7 @@ import stepper, heater, homing
 class PrinterExtruder:
     def __init__(self, printer, config):
         self.heater = heater.PrinterHeater(printer, config)
-        self.stepper = stepper.PrinterStepper(printer, config)
+        self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
         self.need_motor_enable = True
         self.stepper_pos = 0

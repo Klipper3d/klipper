@@ -140,10 +140,11 @@ class MCU_endstop:
         if self._stepper.get_invert_dir():
             return -pos
         return pos
-    def query_endstop(self):
+    def query_endstop(self, mcu_time):
+        clock = int(mcu_time * self._mcu_freq)
         self._homing = False
         self._min_query_time = time.time()
-        self._next_query_clock = 0
+        self._next_query_clock = clock
     def get_last_triggered(self):
         return self._last_state.get('pin', self._invert) ^ self._invert
 

@@ -65,31 +65,36 @@ class Homing:
         del self.endstops[:]
         return False
 
+# Helper code for querying and reporting the status of the endstops
 class QueryEndstops:
-    def __init__(self, names, steppers):
+    def __init__(self, print_time, respond_cb):
+        self.print_time = print_time
+        self.respond_cb = respond_cb
         self.endstops = []
         self.busy = []
-        for name, stepper in zip(names, steppers):
-            es = stepper.query_endstop()
+    def set_steppers(self, steppers):
+        for stepper in steppers:
+            es = stepper.query_endstop(self.print_time)
             if es is None:
                 continue
-            self.endstops.append((name, es))
+            self.endstops.append((stepper.name, es))
             self.busy.append(es)
     def check_busy(self, eventtime):
+        # Check if all endstop queries have been received
         while self.busy:
             busy = self.busy[0].check_busy(eventtime)
             if busy:
                 return True
             self.busy.pop(0)
-        return False
-    def get_msg(self):
+        # All responses received - report status
         msgs = []
         for name, es in self.endstops:
             msg = "open"
             if es.get_last_triggered():
                 msg = "TRIGGERED"
             msgs.append("%s:%s" % (name, msg))
-        return " ".join(msgs)
+        self.respond_cb(" ".join(msgs))
+        return False
 
 class EndstopError(Exception):
     def __init__(self, pos, msg="Move out of range"):

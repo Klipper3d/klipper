@@ -6,9 +6,10 @@
 import math, logging
 
 class PrinterStepper:
-    def __init__(self, printer, config):
+    def __init__(self, printer, config, name):
         self.printer = printer
         self.config = config
+        self.name = name
         self.mcu_stepper = self.mcu_enable = self.mcu_endstop = None
 
         self.step_dist = config.getfloat('step_distance')
@@ -76,10 +77,11 @@ class PrinterStepper:
         mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
         self.mcu_endstop.home(mcu_time, step_time)
         return self.mcu_endstop
-    def query_endstop(self):
+    def query_endstop(self, print_time):
         if self.mcu_endstop is None:
             return None
-        self.mcu_endstop.query_endstop()
+        mcu_time = self.mcu_endstop.print_to_mcu_time(print_time)
+        self.mcu_endstop.query_endstop(mcu_time)
         return self.mcu_endstop
     def get_homed_offset(self):
         if not self.homing_stepper_phases or self.need_motor_enable:

@@ -10,9 +10,9 @@ StepList = (0, 1, 2)
 
 class CartKinematics:
     def __init__(self, printer, config):
-        steppers = ['stepper_x', 'stepper_y', 'stepper_z']
-        self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
-                         for n in steppers]
+        self.steppers = [stepper.PrinterStepper(
+            printer, config.getsection('stepper_' + n), n)
+                         for n in ['x', 'y', 'z']]
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
         self.stepper_pos = [0, 0, 0]
@@ -73,8 +73,8 @@ class CartKinematics:
                 self.steppers[i].motor_enable(move_time, 1)
             need_motor_enable |= self.steppers[i].need_motor_enable
         self.need_motor_enable = need_motor_enable
-    def query_endstops(self, move_time):
-        return homing.QueryEndstops(["x", "y", "z"], self.steppers)
+    def query_endstops(self, query_state):
+        query_state.set_steppers(self.steppers)
     def check_endstops(self, move):
         end_pos = move.end_pos
         for i in StepList:

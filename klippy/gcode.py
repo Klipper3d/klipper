@@ -308,16 +308,10 @@ class GCodeParser:
         # Get Endstop Status
         if self.inputfile:
             return
-        # Wrapper class for check_busy() that responds with final status
-        class endstop_handler_wrapper:
-            gcode = self
-            state = self.toolhead.query_endstops()
-            def check_busy(self, eventtime):
-                busy = self.state.check_busy(eventtime)
-                if not busy:
-                    self.gcode.respond(self.state.get_msg())
-                return busy
-        self.set_busy(endstop_handler_wrapper())
+        print_time = self.toolhead.get_last_move_time()
+        query_state = homing.QueryEndstops(print_time, self.respond)
+        self.toolhead.query_endstops(query_state)
+        self.set_busy(query_state)
     def cmd_M140(self, params):
         # Set Bed Temperature
         self.set_temp(self.heater_bed, params)

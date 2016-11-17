@@ -10,9 +10,9 @@ StepList = (0, 1, 2)
 
 class DeltaKinematics:
     def __init__(self, printer, config):
-        steppers = ['stepper_a', 'stepper_b', 'stepper_c']
-        self.steppers = [stepper.PrinterStepper(printer, config.getsection(n))
-                         for n in steppers]
+        self.steppers = [stepper.PrinterStepper(
+            printer, config.getsection('stepper_' + n), n)
+                         for n in ['a', 'b', 'c']]
         self.need_motor_enable = True
         radius = config.getfloat('delta_radius')
         arm_length = config.getfloat('delta_arm_length')
@@ -111,8 +111,8 @@ class DeltaKinematics:
         for i in StepList:
             self.steppers[i].motor_enable(move_time, 1)
         self.need_motor_enable = False
-    def query_endstops(self, move_time):
-        return homing.QueryEndstops(["a", "b", "c"], self.steppers)
+    def query_endstops(self, query_state):
+        query_state.set_steppers(self.steppers)
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0]**2 + end_pos[1]**2
