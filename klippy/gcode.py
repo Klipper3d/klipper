@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections
+import os, re, logging, collections, time
 import homing
 
 # Parse out incoming GCode and find and translate head movements
@@ -194,19 +194,13 @@ class GCodeParser:
             out.append("B:%.1f /%.1f" % (cur, target))
         return " ".join(out)
     def bg_temp(self, heater):
-        # Wrapper class for check_busy() that periodically prints current temp
-        class temp_busy_handler_wrapper:
-            gcode = self
-            last_temp_time = 0.
-            cur_heater = heater
-            def check_busy(self, eventtime):
-                if eventtime > self.last_temp_time + 1.0:
-                    self.gcode.respond(self.gcode.get_temp())
-                    self.last_temp_time = eventtime
-                return self.cur_heater.check_busy(eventtime)
         if self.is_fileinput:
             return
-        self.set_busy(temp_busy_handler_wrapper())
+        eventtime = time.time()
+        while self.is_printer_ready and heater.check_busy(eventtime):
+            self.toolhead.reset_motor_off_time(eventtime)
+            self.respond(self.get_temp())
+            eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, heater, params, wait=False):
         print_time = self.toolhead.get_last_move_time()
         temp = float(params.get('S', '0'))
