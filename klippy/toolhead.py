@@ -259,16 +259,15 @@ class ToolHead:
             self.extruder.check_move(move)
         self.commanded_pos[:] = newpos
         self.move_queue.add_move(move)
-    def home(self, axes):
-        homing = self.kin.home(self, axes)
-        def axes_update(axes):
+    def home(self, homing_state):
+        self.kin.home(homing_state)
+        def axes_update(homing_state):
             pos = self.get_position()
             homepos = self.kin.get_homed_position()
-            for axis in axes:
+            for axis in homing_state.get_axes():
                 pos[axis] = homepos[axis]
             self.set_position(pos)
-        homing.plan_axes_update(axes_update)
-        return homing
+        homing_state.plan_axes_update(axes_update)
     def dwell(self, delay):
         self.get_last_move_time()
         self.update_move_time(delay)

@@ -250,14 +250,15 @@ class GCodeParser:
                 axes.append(self.axis2pos[axis])
         if not axes:
             axes = [0, 1, 2]
-        busy_handler = self.toolhead.home(axes)
-        def axes_update(axes):
+        homing_state = homing.Homing(self.toolhead, axes)
+        self.toolhead.home(homing_state)
+        def axes_update(homing_state):
             newpos = self.toolhead.get_position()
-            for axis in axes:
+            for axis in homing_state.get_axes():
                 self.last_position[axis] = newpos[axis]
                 self.base_position[axis] = -self.homing_add[axis]
-        busy_handler.plan_axes_update(axes_update)
-        self.set_busy(busy_handler)
+        homing_state.plan_axes_update(axes_update)
+        self.set_busy(homing_state)
     def cmd_G90(self, params):
         # Use absolute coordinates
         self.absolutecoord = True

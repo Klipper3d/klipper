@@ -83,9 +83,9 @@ class DeltaKinematics:
                * self.steppers[i].step_dist
                for i in StepList]
         return self.actuator_to_cartesian(pos)
-    def home(self, toolhead, axes):
+    def home(self, homing_state):
         # All axes are homed simultaneously
-        homing_state = homing.Homing(toolhead, [0, 1, 2])
+        homing_state.set_axes([0, 1, 2])
         s = self.steppers[0] # Assume homing parameters same for all steppers
         self.limit_xy2 = self.max_xy2
         # Initial homing
@@ -101,7 +101,6 @@ class DeltaKinematics:
         coord[2] -= s.homing_retract_dist
         homing_state.plan_home(list(coord), homepos, self.steppers
                                , s.homing_speed/2.0)
-        return homing_state
     def motor_off(self, move_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:

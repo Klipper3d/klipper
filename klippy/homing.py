@@ -14,13 +14,17 @@ class Homing:
         self.eventtime = 0.
         self.states = []
         self.endstops = []
+    def set_axes(self, axes):
+        self.changed_axes = axes
+    def get_axes(self):
+        return self.changed_axes
     def plan_home(self, forcepos, movepos, steppers, speed):
         self.states.append((self.do_home, (forcepos, movepos, steppers, speed)))
         self.states.append((self.do_wait_endstop, ()))
     def plan_move(self, newpos, speed):
         self.states.append((self.do_move, (newpos, speed)))
     def plan_axes_update(self, callback):
-        self.states.append((callback, (self.changed_axes,)))
+        self.states.append((callback, (self,)))
     def check_busy(self, eventtime):
         self.eventtime = eventtime
         while self.states:

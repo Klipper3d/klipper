@@ -31,10 +31,9 @@ class CartKinematics:
     def get_homed_position(self):
         return [s.position_endstop + s.get_homed_offset()*s.step_dist
                 for s in self.steppers]
-    def home(self, toolhead, axes):
+    def home(self, homing_state):
         # Each axis is homed independently and in order
-        homing_state = homing.Homing(toolhead, axes)
-        for axis in axes:
+        for axis in homing_state.get_axes():
             s = self.steppers[axis]
             self.limits[axis] = (s.position_min, s.position_max)
             # Determine moves
@@ -60,7 +59,6 @@ class CartKinematics:
             # Home again
             coord[axis] = r2pos
             homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)
-        return homing_state
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
