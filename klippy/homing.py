@@ -3,8 +3,8 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
 import logging
+import mcu
 
 class Homing:
     def __init__(self, toolhead, changed_axes):
@@ -31,7 +31,11 @@ class Homing:
         self.eventtime = eventtime
         while self.states:
             first = self.states[0]
-            ret = first[0](*first[1])
+            try:
+                ret = first[0](*first[1])
+            except EndstopError, e:
+                self.toolhead.motor_off()
+                raise
             if ret:
                 return True
             self.states.pop(0)
@@ -55,17 +59,22 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         for s in steppers:
             es = s.enable_endstop_checking(print_time, s.step_dist / speed)
-            self.endstops.append(es)
+            self.endstops.append((s.name, es))
         self.toolhead.move(self.fill_coord(movepos), speed)
+        move_end_print_time = self.toolhead.get_last_move_time()
         self.toolhead.reset_print_time()
-        for es in self.endstops:
-            es.home_finalize()
+        for name, es in self.endstops:
+            es.home_finalize(es.print_to_mcu_time(move_end_print_time))
         return False
     def do_wait_endstop(self):
         # Check if endstops have triggered
-        for es in self.endstops:
-            if es.check_busy(self.eventtime):
-                return True
+        for name, es in self.endstops:
+            try:
+                if es.check_busy(self.eventtime):
+                    return True
+            except mcu.MCUError, e:
+                raise EndstopError("Failed to home stepper %s: %s" % (
+                    name, str(e)))
         # Finished
         del self.endstops[:]
         return False
@@ -85,13 +94,16 @@ class QueryEndstops:
             if es is None:
                 continue
             self.endstops.append((stepper.name, es))
-            self.busy.append(es)
+            self.busy.append((stepper.name, es))
     def check_busy(self, eventtime):
         # Check if all endstop queries have been received
         while self.busy:
-            busy = self.busy[0].check_busy(eventtime)
-            if busy:
-                return True
+            try:
+                if self.busy[0][1].check_busy(eventtime):
+                    return True
+            except mcu.MCUError, e:
+                raise EndstopError("Failed to query endstop %s: %s" % (
+                    self.busy[0][0], str(e)))
             self.busy.pop(0)
         # All responses received - report status
         msgs = []

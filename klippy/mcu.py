@@ -6,6 +6,12 @@
 import sys, zlib, logging, time, math
 import serialhdl, pins, chelper
 
+class MCUError(Exception):
+    def __init__(self, msg="MCU Error"):
+        self._msg = msg
+    def __str__(self):
+        return self._msg
+
 def parse_pin_extras(pin, can_pullup=False):
     pullup = invert = 0
     if can_pullup and pin.startswith('^'):
@@ -100,7 +106,7 @@ class MCU_endstop:
         self._query_cmd = mcu.lookup_command("end_stop_query oid=%c")
         self._homing = False
         self._min_query_time = 0.
-        self._next_query_clock = 0
+        self._next_query_clock = self._home_timeout_clock = 0
         self._mcu_freq = mcu.get_mcu_freq()
         self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
         self._last_state = {}
@@ -114,11 +120,12 @@ class MCU_endstop:
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
-    def home_finalize(self):
+    def home_finalize(self, mcu_time):
         # XXX - this flushes the serial port of messages ready to be
         # sent, but doesn't flush messages if they had an unmet minclock
         self._mcu.serial.send_flush()
         self._stepper.note_stepper_stop()
+        self._home_timeout_clock = int(mcu_time * self._mcu_freq)
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s" % (params,))
         self._last_state = params
@@ -126,9 +133,18 @@ class MCU_endstop:
         # Check if need to send an end_stop_query command
         if self._mcu.output_file_mode:
             return False
-        if self._last_state.get('#sent_time', -1.) >= self._min_query_time:
+        last_sent_time = self._last_state.get('#sent_time', -1.)
+        if last_sent_time >= self._min_query_time:
             if not self._homing or not self._last_state.get('homing', 0):
                 return False
+            if (self._mcu.serial.get_clock(last_sent_time)
+                > self._home_timeout_clock):
+                # Timeout - disable endstop checking
+                msg = self._home_cmd.encode(self._oid, 0, 0, 0)
+                self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
+                raise MCUError("Timeout during endstop homing")
+        if self._mcu.is_shutdown:
+            raise MCUError("MCU is shutdown")
         last_clock = self._mcu.get_last_clock()
         if last_clock >= self._next_query_clock:
             self._next_query_clock = last_clock + self._retry_query_ticks

@@ -17,9 +17,6 @@ Host user interaction
    highlight an error (one has to look in the terminal tab to find the
    error) and errors written to the log can be non-obvious to a user.
 
- * Implement timeouts on homing. The host currently waits forever if
-   an endstop is not hit during a homing operation.
-
 * Improve startup:
 
  * Provide startup scripts so that Klippy can startup at system

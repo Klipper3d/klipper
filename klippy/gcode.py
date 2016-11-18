@@ -151,6 +151,9 @@ class GCodeParser:
     def busy_handler(self, eventtime):
         try:
             busy = self.busy_state.check_busy(eventtime)
+        except homing.EndstopError, e:
+            self.respond("Error: %s" % (e,))
+            busy = False
         except:
             logging.exception("Exception in busy handler")
             self.toolhead.force_shutdown()
