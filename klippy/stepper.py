@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
+import homing
 
 class PrinterStepper:
     def __init__(self, printer, config, name):
@@ -97,7 +98,7 @@ class PrinterStepper:
         if delta >= self.homing_stepper_phases - self.homing_endstop_accuracy:
             delta -= self.homing_stepper_phases
         elif delta > self.homing_endstop_accuracy:
-            logging.error("Endstop %s incorrect phase (got %d vs %d)" % (
-                self.config.section, pos, self.homing_endstop_phase))
-            return 0
+            raise homing.EndstopError(
+                "Endstop %s incorrect phase (got %d vs %d)" % (
+                    self.name, pos, self.homing_endstop_phase))
         return delta
