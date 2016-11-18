@@ -84,8 +84,9 @@ class CartKinematics:
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise homing.EndstopError(end_pos, "Must home axis first")
-                raise homing.EndstopError(end_pos)
+                    raise homing.EndstopMoveError(
+                        end_pos, "Must home axis first")
+                raise homing.EndstopMoveError(end_pos)
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]

@@ -104,9 +104,11 @@ class QueryEndstops:
         return False
 
 class EndstopError(Exception):
-    def __init__(self, pos, msg="Move out of range"):
-        self.pos = pos
-        self.msg = msg
+    def __init__(self, msg="Endstop error"):
+        self._msg = msg
     def __str__(self):
-        return "%s: %.3f %.3f %.3f [%.3f]" % (
-            self.msg, self.pos[0], self.pos[1], self.pos[2], self.pos[3])
+        return self._msg
+
+def EndstopMoveError(pos, msg="Move out of range"):
+    return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
+            msg, pos[0], pos[1], pos[2], pos[3]))

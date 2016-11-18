@@ -118,11 +118,11 @@ class DeltaKinematics:
         xy2 = end_pos[0]**2 + end_pos[1]**2
         if xy2 > self.limit_xy2 or end_pos[2] < 0.:
             if self.limit_xy2 < 0.:
-                raise homing.EndstopError(end_pos, "Must home first")
-            raise homing.EndstopError(end_pos)
+                raise homing.EndstopMoveError(end_pos, "Must home first")
+            raise homing.EndstopMoveError(end_pos)
         if end_pos[2] > self.limit_z:
             if end_pos[2] > self.max_z or xy2 > (self.max_z - end_pos[2])**2:
-                raise homing.EndstopError(end_pos)
+                raise homing.EndstopMoveError(end_pos)
     def move_z(self, move_time, move):
         if not move.axes_d[2]:
             return
