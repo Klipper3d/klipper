@@ -78,7 +78,7 @@ class DeltaKinematics:
         return matrix_sub(circumcenter, matrix_mul(normal, dist))
     def set_position(self, newpos):
         self.stepper_pos = self.cartesian_to_actuator(newpos)
-    def get_homed_position(self):
+    def get_homed_position(self, homing_state):
         pos = [(self.stepper_pos[i] + self.steppers[i].get_homed_offset())
                * self.steppers[i].step_dist
                for i in StepList]
@@ -101,6 +101,7 @@ class DeltaKinematics:
         coord[2] -= s.homing_retract_dist
         homing_state.plan_home(list(coord), homepos, self.steppers
                                , s.homing_speed/2.0)
+        homing_state.plan_calc_position(self.get_homed_position)
     def motor_off(self, move_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:

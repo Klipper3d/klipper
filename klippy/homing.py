@@ -23,6 +23,8 @@ class Homing:
         self.states.append((self.do_wait_endstop, ()))
     def plan_move(self, newpos, speed):
         self.states.append((self.do_move, (newpos, speed)))
+    def plan_calc_position(self, callback):
+        self.states.append((self.do_calc_position, (callback,)))
     def plan_axes_update(self, callback):
         self.states.append((callback, (self,)))
     def check_busy(self, eventtime):
@@ -37,12 +39,11 @@ class Homing:
 
     def fill_coord(self, coord):
         # Fill in any None entries in 'coord' with current toolhead position
-        thcoord = self.toolhead.get_position()
-        coord = list(coord)
+        thcoord = list(self.toolhead.get_position())
         for i in range(len(coord)):
-            if coord[i] is None:
-                coord[i] = thcoord[i]
-        return coord
+            if coord[i] is not None:
+                thcoord[i] = coord[i]
+        return thcoord
     def do_move(self, newpos, speed):
         # Issue a move command
         self.toolhead.move(self.fill_coord(newpos), speed)
@@ -68,6 +69,8 @@ class Homing:
         # Finished
         del self.endstops[:]
         return False
+    def do_calc_position(self, callback):
+        self.toolhead.set_position(self.fill_coord(callback(self)))
 
 # Helper code for querying and reporting the status of the endstops
 class QueryEndstops:

@@ -28,9 +28,12 @@ class CartKinematics:
         max_xy_speed = min(s.max_velocity for s in self.steppers[:2])
         max_xy_accel = min(s.max_accel for s in self.steppers[:2])
         return max_xy_speed, max_xy_accel
-    def get_homed_position(self):
-        return [s.position_endstop + s.get_homed_offset()*s.step_dist
-                for s in self.steppers]
+    def get_homed_position(self, homing_state):
+        pos = [None]*3
+        for axis in homing_state.get_axes():
+            s = self.steppers[axis]
+            pos[axis] = s.position_endstop + s.get_homed_offset()*s.step_dist
+        return pos
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
@@ -59,6 +62,7 @@ class CartKinematics:
             # Home again
             coord[axis] = r2pos
             homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)
+        homing_state.plan_calc_position(self.get_homed_position)
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
