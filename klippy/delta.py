@@ -96,7 +96,7 @@ class DeltaKinematics:
                                , s.homing_speed)
         # Retract
         coord[2] = homepos[2] - s.homing_retract_dist
-        homing_state.plan_move(list(coord), s.homing_speed)
+        homing_state.plan_retract(list(coord), self.steppers, s.homing_speed)
         # Home again
         coord[2] -= s.homing_retract_dist
         homing_state.plan_home(list(coord), homepos, self.steppers

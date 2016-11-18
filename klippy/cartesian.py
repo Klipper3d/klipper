@@ -58,7 +58,7 @@ class CartKinematics:
             homing_state.plan_home(list(coord), homepos, [s], s.homing_speed)
             # Retract
             coord[axis] = rpos
-            homing_state.plan_move(list(coord), s.homing_speed)
+            homing_state.plan_retract(list(coord), [s], s.homing_speed)
             # Home again
             coord[axis] = r2pos
             homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)

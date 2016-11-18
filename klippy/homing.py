@@ -21,8 +21,9 @@ class Homing:
     def plan_home(self, forcepos, movepos, steppers, speed):
         self.states.append((self.do_home, (forcepos, movepos, steppers, speed)))
         self.states.append((self.do_wait_endstop, ()))
-    def plan_move(self, newpos, speed):
-        self.states.append((self.do_move, (newpos, speed)))
+    def plan_retract(self, newpos, steppers, speed):
+        self.states.append((self.do_retract, (newpos, steppers, speed)))
+        self.states.append((self.do_verify_retract, ()))
     def plan_calc_position(self, callback):
         self.states.append((self.do_calc_position, (callback,)))
     def plan_axes_update(self, callback):
@@ -48,9 +49,14 @@ class Homing:
             if coord[i] is not None:
                 thcoord[i] = coord[i]
         return thcoord
-    def do_move(self, newpos, speed):
+    def do_retract(self, newpos, steppers, speed):
         # Issue a move command
         self.toolhead.move(self.fill_coord(newpos), speed)
+        # Query endstops
+        print_time = self.toolhead.get_last_move_time()
+        for s in steppers:
+            es = s.query_endstop(print_time)
+            self.endstops.append((s.name, es))
         return False
     def do_home(self, forcepos, movepos, steppers, speed):
         # Alter kinematics class to think printer is at forcepos
@@ -68,15 +74,29 @@ class Homing:
         return False
     def do_wait_endstop(self):
         # Check if endstops have triggered
-        for name, es in self.endstops:
+        while self.endstops:
+            name, es = self.endstops[0]
             try:
                 if es.check_busy(self.eventtime):
                     return True
             except mcu.MCUError, e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
                     name, str(e)))
-        # Finished
-        del self.endstops[:]
+            self.endstops.pop(0)
+        return False
+    def do_verify_retract(self):
+        while self.endstops:
+            name, es = self.endstops[0]
+            try:
+                if es.check_busy(self.eventtime):
+                    return True
+            except mcu.MCUError, e:
+                raise EndstopError("Failed to retract stepper %s: %s" % (
+                    name, str(e)))
+            if es.get_last_triggered():
+                raise EndstopError("Endstop %s still triggered after retract" % (
+                    name,))
+            self.endstops.pop(0)
         return False
     def do_calc_position(self, callback):
         self.toolhead.set_position(self.fill_coord(callback(self)))
