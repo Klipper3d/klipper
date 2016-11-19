@@ -31,6 +31,7 @@ class MCU_stepper:
         self._mcu_freq = mcu.get_mcu_freq()
         min_stop_interval = int(min_stop_interval * self._mcu_freq)
         max_error = int(max_error * self._mcu_freq)
+        self.commanded_position = 0
         mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
             " min_stop_interval=%d invert_step=%d" % (
@@ -51,6 +52,8 @@ class MCU_stepper:
         return self._oid
     def get_invert_dir(self):
         return self._invert_dir
+    def set_position(self, pos):
+        self.commanded_position = pos
     def note_stepper_stop(self):
         self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
     def reset_step_clock(self, mcu_time):
@@ -61,29 +64,41 @@ class MCU_stepper:
     def step(self, mcu_time, sdir):
         clock = mcu_time * self._mcu_freq
         self.ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
+        if sdir:
+            self.commanded_position += 1
+        else:
+            self.commanded_position -= 1
     def step_sqrt(self, mcu_time, steps, step_offset, sqrt_offset, factor):
         clock = mcu_time * self._mcu_freq
         mcu_freq2 = self._mcu_freq**2
-        return self.ffi_lib.stepcompress_push_sqrt(
+        count = self.ffi_lib.stepcompress_push_sqrt(
             self._stepqueue, steps, step_offset, clock
             , sqrt_offset * mcu_freq2, factor * mcu_freq2)
+        self.commanded_position += count
+        return count
     def step_factor(self, mcu_time, steps, step_offset, factor):
         clock = mcu_time * self._mcu_freq
-        return self.ffi_lib.stepcompress_push_factor(
+        count = self.ffi_lib.stepcompress_push_factor(
             self._stepqueue, steps, step_offset, clock, factor * self._mcu_freq)
+        self.commanded_position += count
+        return count
     def step_delta_const(self, mcu_time, dist, step_dist, start_pos
                          , closest_height2, height, movez_r, inv_velocity):
         clock = mcu_time * self._mcu_freq
-        return self.ffi_lib.stepcompress_push_delta_const(
+        count = self.ffi_lib.stepcompress_push_delta_const(
             self._stepqueue, clock, dist, step_dist, start_pos
             , closest_height2, height, movez_r, inv_velocity * self._mcu_freq)
+        self.commanded_position += count
+        return count
     def step_delta_accel(self, mcu_time, dist, step_dist, start_pos
                          , closest_height2, height, movez_r, accel_multiplier):
         clock = mcu_time * self._mcu_freq
         mcu_freq2 = self._mcu_freq**2
-        return self.ffi_lib.stepcompress_push_delta_accel(
+        count = self.ffi_lib.stepcompress_push_delta_accel(
             self._stepqueue, clock, dist, step_dist, start_pos
             , closest_height2, height, movez_r, accel_multiplier * mcu_freq2)
+        self.commanded_position += count
+        return count
     def get_errors(self):
         return self.ffi_lib.stepcompress_get_errors(self._stepqueue)
 

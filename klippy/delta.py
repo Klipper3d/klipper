@@ -28,7 +28,7 @@ class DeltaKinematics:
             (cos(210.)*radius, sin(210.)*radius),
             (cos(330.)*radius, sin(330.)*radius),
             (cos(90.)*radius, sin(90.)*radius)]
-        self.stepper_pos = self.cartesian_to_actuator([0., 0., 0.])
+        self.set_position([0., 0., 0.])
     def build_config(self):
         for stepper in self.steppers:
             stepper.set_max_jerk(0.005 * stepper.max_accel) # XXX
@@ -77,11 +77,13 @@ class DeltaKinematics:
 
         return matrix_sub(circumcenter, matrix_mul(normal, dist))
     def set_position(self, newpos):
-        self.stepper_pos = self.cartesian_to_actuator(newpos)
+        pos = self.cartesian_to_actuator(newpos)
+        for i in StepList:
+            self.steppers[i].mcu_stepper.set_position(pos[i])
     def get_homed_position(self, homing_state):
-        pos = [(self.stepper_pos[i] + self.steppers[i].get_homed_offset())
-               * self.steppers[i].step_dist
-               for i in StepList]
+        pos = [(s.mcu_stepper.commanded_position + s.get_homed_offset())
+               * s.step_dist
+               for s in self.steppers]
         return self.actuator_to_cartesian(pos)
     def home(self, homing_state):
         # All axes are homed simultaneously
@@ -138,12 +140,11 @@ class DeltaKinematics:
 
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+            step_pos = mcu_stepper.commanded_position
             inv_step_dist = self.steppers[i].inv_step_dist
+            step_offset = step_pos - height * inv_step_dist
             step_dist = self.steppers[i].step_dist
             steps = move.axes_d[2] * inv_step_dist
-
-            step_pos = self.stepper_pos[i]
-            step_offset = step_pos - height * inv_step_dist
 
             # Acceleration steps
             accel_multiplier = 2.0 * step_dist * inv_accel
@@ -155,7 +156,6 @@ class DeltaKinematics:
                 count = mcu_stepper.step_sqrt(
                     mcu_time - accel_time_offset, accel_steps, step_offset
                     , accel_sqrt_offset, accel_multiplier)
-                step_pos += count
                 step_offset += count - accel_steps
                 mcu_time += move.accel_t
             # Cruising steps
@@ -165,7 +165,6 @@ class DeltaKinematics:
                 cruise_steps = move.cruise_r * steps
                 count = mcu_stepper.step_factor(
                     mcu_time, cruise_steps, step_offset, cruise_multiplier)
-                step_pos += count
                 step_offset += count - cruise_steps
                 mcu_time += move.cruise_t
             # Deceleration steps
@@ -177,8 +176,6 @@ class DeltaKinematics:
                 count = mcu_stepper.step_sqrt(
                     mcu_time + decel_time_offset, decel_steps, step_offset
                     , decel_sqrt_offset, -accel_multiplier)
-                step_pos += count
-            self.stepper_pos[i] = step_pos
     def move(self, move_time, move):
         axes_d = move.axes_d
         if not axes_d[0] and not axes_d[1]:
@@ -250,54 +247,47 @@ class DeltaKinematics:
                 decel_down_d = move_d
 
             # Generate steps
-            inv_step_dist = self.steppers[i].inv_step_dist
-            step_dist = self.steppers[i].step_dist
-            step_pos = self.stepper_pos[i]
-            height = step_pos*step_dist - closestz
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+            step_pos = mcu_stepper.commanded_position
+            inv_step_dist = self.steppers[i].inv_step_dist
+            step_dist = self.steppers[i].step_dist
+            height = step_pos*step_dist - closestz
             if accel_up_d > 0.:
                 count = mcu_stepper.step_delta_accel(
                     mcu_time - accel_time_offset, closest_d - accel_up_d,
                     step_dist, closest_d + accel_offset,
                     closest_height2, height, movez_r, accel_multiplier)
-                step_pos += count
                 height += count * step_dist
             if cruise_up_d > 0.:
                 count = mcu_stepper.step_delta_const(
                     mcu_time + accel_t, closest_d - cruise_up_d,
                     step_dist, closest_d - accel_d,
                     closest_height2, height, movez_r, inv_cruise_v)
-                step_pos += count
                 height += count * step_dist
             if decel_up_d > 0.:
                 count = mcu_stepper.step_delta_accel(
                     mcu_time + decel_time_offset, closest_d - decel_up_d,
                     step_dist, closest_d - decel_offset,
                     closest_height2, height, movez_r, -accel_multiplier)
-                step_pos += count
                 height += count * step_dist
             if accel_down_d > 0.:
                 count = mcu_stepper.step_delta_accel(
                     mcu_time - accel_time_offset, closest_d - accel_down_d,
                     -step_dist, closest_d + accel_offset,
                     closest_height2, height, movez_r, accel_multiplier)
-                step_pos += count
                 height += count * step_dist
             if cruise_down_d > 0.:
                 count = mcu_stepper.step_delta_const(
                     mcu_time + accel_t, closest_d - cruise_down_d,
                     -step_dist, closest_d - accel_d,
                     closest_height2, height, movez_r, inv_cruise_v)
-                step_pos += count
                 height += count * step_dist
             if decel_down_d > 0.:
                 count = mcu_stepper.step_delta_accel(
                     mcu_time + decel_time_offset, closest_d - decel_down_d,
                     -step_dist, closest_d - decel_offset,
                     closest_height2, height, movez_r, -accel_multiplier)
-                step_pos += count
-            self.stepper_pos[i] = step_pos
 
 
 ######################################################################

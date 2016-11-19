@@ -12,7 +12,6 @@ class PrinterExtruder:
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
         self.need_motor_enable = True
-        self.stepper_pos = 0
         self.extrude_pos = 0.
     def build_config(self):
         self.heater.build_config()
@@ -95,12 +94,12 @@ class PrinterExtruder:
                         decel_d -= extra_decel_d
 
         # Prepare for steps
-        stepper_pos = self.stepper_pos
         inv_step_dist = self.stepper.inv_step_dist
         step_dist = self.stepper.step_dist
         mcu_stepper = self.stepper.mcu_stepper
         mcu_time = mcu_stepper.print_to_mcu_time(move_time)
-        step_offset = stepper_pos - start_pos * inv_step_dist
+        step_pos = mcu_stepper.commanded_position
+        step_offset = step_pos - start_pos * inv_step_dist
 
         # Acceleration steps
         accel_multiplier = 2.0 * step_dist * inv_accel
@@ -112,7 +111,6 @@ class PrinterExtruder:
             count = mcu_stepper.step_sqrt(
                 mcu_time - accel_time_offset, accel_steps, step_offset
                 , accel_sqrt_offset, accel_multiplier)
-            stepper_pos += count
             step_offset += count - accel_steps
             mcu_time += accel_t
         # Cruising steps
@@ -122,7 +120,6 @@ class PrinterExtruder:
             cruise_steps = cruise_d * inv_step_dist
             count = mcu_stepper.step_factor(
                 mcu_time, cruise_steps, step_offset, cruise_multiplier)
-            stepper_pos += count
             step_offset += count - cruise_steps
             mcu_time += cruise_t
         # Deceleration steps
@@ -134,7 +131,6 @@ class PrinterExtruder:
             count = mcu_stepper.step_sqrt(
                 mcu_time + decel_time_offset, decel_steps, step_offset
                 , decel_sqrt_offset, -accel_multiplier)
-            stepper_pos += count
             step_offset += count - decel_steps
             mcu_time += decel_t
         # Retraction steps
@@ -146,7 +142,5 @@ class PrinterExtruder:
             count = mcu_stepper.step_sqrt(
                 mcu_time - accel_time_offset, accel_steps, step_offset
                 , accel_sqrt_offset, accel_multiplier)
-            stepper_pos += count
 
-        self.stepper_pos = stepper_pos
         self.extrude_pos = start_pos + accel_d + cruise_d + decel_d - retract_d

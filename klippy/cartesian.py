@@ -15,15 +15,15 @@ class CartKinematics:
                          for n in ['x', 'y', 'z']]
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
-        self.stepper_pos = [0, 0, 0]
     def build_config(self):
         for stepper in self.steppers[:2]:
             stepper.set_max_jerk(0.005 * stepper.max_accel) # XXX
         for stepper in self.steppers:
             stepper.build_config()
     def set_position(self, newpos):
-        self.stepper_pos = [int(newpos[i]*self.steppers[i].inv_step_dist + 0.5)
-                            for i in StepList]
+        for i in StepList:
+            s = self.steppers[i]
+            s.mcu_stepper.set_position(int(newpos[i]*s.inv_step_dist + 0.5))
     def get_max_speed(self):
         max_xy_speed = min(s.max_velocity for s in self.steppers[:2])
         max_xy_accel = min(s.max_accel for s in self.steppers[:2])
@@ -115,12 +115,11 @@ class CartKinematics:
                 continue
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+            step_pos = mcu_stepper.commanded_position
             inv_step_dist = self.steppers[i].inv_step_dist
+            step_offset = step_pos - move.start_pos[i] * inv_step_dist
             steps = move.axes_d[i] * inv_step_dist
             move_step_d = move.move_d / abs(steps)
-
-            step_pos = self.stepper_pos[i]
-            step_offset = step_pos - move.start_pos[i] * inv_step_dist
 
             # Acceleration steps
             accel_multiplier = 2.0 * move_step_d * inv_accel
@@ -132,7 +131,6 @@ class CartKinematics:
                 count = mcu_stepper.step_sqrt(
                     mcu_time - accel_time_offset, accel_steps, step_offset
                     , accel_sqrt_offset, accel_multiplier)
-                step_pos += count
                 step_offset += count - accel_steps
                 mcu_time += move.accel_t
             # Cruising steps
@@ -142,7 +140,6 @@ class CartKinematics:
                 cruise_steps = move.cruise_r * steps
                 count = mcu_stepper.step_factor(
                     mcu_time, cruise_steps, step_offset, cruise_multiplier)
-                step_pos += count
                 step_offset += count - cruise_steps
                 mcu_time += move.cruise_t
             # Deceleration steps
@@ -154,5 +151,3 @@ class CartKinematics:
                 count = mcu_stepper.step_sqrt(
                     mcu_time + decel_time_offset, decel_steps, step_offset
                     , decel_sqrt_offset, -accel_multiplier)
-                step_pos += count
-            self.stepper_pos[i] = step_pos
