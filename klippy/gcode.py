@@ -9,10 +9,10 @@ import homing
 # Parse out incoming GCode and find and translate head movements
 class GCodeParser:
     RETRY_TIME = 0.100
-    def __init__(self, printer, fd, inputfile=False):
+    def __init__(self, printer, fd, is_fileinput=False):
         self.printer = printer
         self.fd = fd
-        self.inputfile = inputfile
+        self.is_fileinput = is_fileinput
         # Input handling
         self.reactor = printer.reactor
         self.fd_handle = None
@@ -123,11 +123,11 @@ class GCodeParser:
         lines[0] = self.input_commands[0] + lines[0]
         self.input_commands = lines
         self.process_commands(eventtime)
-        if not data and self.inputfile:
+        if not data and self.is_fileinput:
             self.finish()
     # Response handling
     def ack(self, msg=None):
-        if not self.need_ack or self.inputfile:
+        if not self.need_ack or self.is_fileinput:
             return
         if msg:
             os.write(self.fd, "ok %s\n" % (msg,))
@@ -136,7 +136,7 @@ class GCodeParser:
         self.need_ack = False
     def respond(self, msg):
         logging.debug(msg)
-        if self.inputfile:
+        if self.is_fileinput:
             return
         os.write(self.fd, msg+"\n")
     # Busy handling
@@ -188,7 +188,7 @@ class GCodeParser:
                     self.gcode.respond(self.gcode.get_temp())
                     self.last_temp_time = eventtime
                 return self.cur_heater.check_busy(eventtime)
-        if self.inputfile:
+        if self.is_fileinput:
             return
         self.set_busy(temp_busy_handler_wrapper())
     def set_temp(self, heater, params, wait=False):
@@ -249,7 +249,7 @@ class GCodeParser:
         if not axes:
             axes = [0, 1, 2]
         homing_state = homing.Homing(self.toolhead, axes)
-        if self.inputfile:
+        if self.is_fileinput:
             homing_state.set_no_verify_retract()
         self.toolhead.home(homing_state)
         def axes_update(homing_state):
@@ -307,7 +307,7 @@ class GCodeParser:
             kinpos[0], kinpos[1], kinpos[2]))
     def cmd_M119(self, params):
         # Get Endstop Status
-        if self.inputfile:
+        if self.is_fileinput:
             return
         print_time = self.toolhead.get_last_move_time()
         query_state = homing.QueryEndstops(print_time, self.respond)

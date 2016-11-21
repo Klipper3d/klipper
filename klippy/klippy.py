@@ -31,20 +31,12 @@ class ConfigWrapper:
         return ConfigWrapper(self.printer, section)
 
 class Printer:
-    def __init__(self, conffile, debuginput=None):
+    def __init__(self, conffile, input_fd, is_fileinput=False):
         self.fileconfig = ConfigParser.RawConfigParser()
         self.fileconfig.read(conffile)
         self.reactor = reactor.Reactor()
 
-        self._pconfig = ConfigWrapper(self, 'printer')
-        ptty = self._pconfig.get('pseudo_tty', '/tmp/printer')
-        if debuginput is None:
-            pseudo_tty = util.create_pty(ptty)
-        else:
-            pseudo_tty = debuginput.fileno()
-
-        self.gcode = gcode.GCodeParser(
-            self, pseudo_tty, inputfile=debuginput is not None)
+        self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         self.stats_timer = self.reactor.register_timer(
             self.stats, self.reactor.NOW)
@@ -63,7 +55,7 @@ class Printer:
             self.objects['heater_bed'] = heater.PrinterHeater(
                 self, ConfigWrapper(self, 'heater_bed'))
         self.objects['toolhead'] = toolhead.ToolHead(
-            self, self._pconfig)
+            self, ConfigWrapper(self, 'printer'))
     def set_fileoutput(self, debugoutput, dictionary):
         self.debugoutput = debugoutput
         self.dictionary = dictionary
@@ -115,6 +107,8 @@ def main():
                     help="write output to file instead of to serial port")
     opts.add_option("-i", "--debuginput", dest="inputfile",
                     help="read commands from file instead of from tty port")
+    opts.add_option("-I", "--input-tty", dest="inputtty", default='/tmp/printer',
+                    help="input tty name (default is /tmp/printer)")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
@@ -126,13 +120,16 @@ def main():
         opts.error("Incorrect number of arguments")
     conffile = args[0]
 
-    debuginput = debugoutput = bglogger = None
+    input_fd = debuginput = debugoutput = bglogger = None
 
     debuglevel = logging.INFO
     if options.verbose:
         debuglevel = logging.DEBUG
     if options.inputfile:
         debuginput = open(options.inputfile, 'rb')
+        input_fd = debuginput.fileno()
+    else:
+        input_fd = util.create_pty(options.inputtty)
     if options.outputfile:
         debugoutput = open(options.outputfile, 'wb')
     if options.logfile:
@@ -142,7 +139,7 @@ def main():
     logging.info("Starting Klippy...")
 
     # Start firmware
-    printer = Printer(conffile, debuginput=debuginput)
+    printer = Printer(conffile, input_fd, is_fileinput=debuginput is not None)
     if debugoutput:
         proto_dict = read_dictionary(options.read_dictionary)
         printer.set_fileoutput(debugoutput, proto_dict)
