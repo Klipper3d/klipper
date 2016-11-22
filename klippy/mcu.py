@@ -262,6 +262,7 @@ class MCU_adc:
         self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
         mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (self._oid, pin))
+        mcu.add_init_callback(self._init_callback)
         mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
                          , self._oid)
         self._query_cmd = mcu.lookup_command(
@@ -278,8 +279,7 @@ class MCU_adc:
         self._min_sample = int(minval * max_adc)
         self._max_sample = min(0xffff, int(math.ceil(maxval * max_adc)))
         self._inv_max_adc = 1.0 / max_adc
-    def query_analog_in(self, report_time):
-        self._report_clock = int(report_time * self._mcu_freq)
+    def _init_callback(self):
         cur_clock = self._mcu.get_last_clock()
         clock = cur_clock + int(self._mcu_freq * (1.0 + self._oid * 0.01)) # XXX
         msg = self._query_cmd.encode(
@@ -292,8 +292,9 @@ class MCU_adc:
         last_read_time = (next_clock - self._report_clock) / self._mcu_freq
         if self._callback is not None:
             self._callback(last_read_time, last_value)
-    def set_adc_callback(self, cb):
-        self._callback = cb
+    def set_adc_callback(self, report_time, callback):
+        self._report_clock = int(report_time * self._mcu_freq)
+        self._callback = callback
 
 class MCU:
     def __init__(self, printer, config):
@@ -310,6 +311,7 @@ class MCU:
         self._num_oids = 0
         self._config_cmds = []
         self._config_crc = None
+        self._init_callbacks = []
         # Move command queuing
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._steppers = []
@@ -363,6 +365,8 @@ class MCU:
             for c in self._config_cmds:
                 self.send(self.create_command(c))
             self._init_steppersync(500)
+            for cb in self._init_callbacks:
+                cb()
         self._send_config = dummy_send_config
         if not pace:
             def dummy_set_print_start_time(eventtime):
@@ -444,6 +448,8 @@ class MCU:
             break
         logging.info("Configured")
         self._init_steppersync(config_params['move_count'])
+        for cb in self._init_callbacks:
+            cb()
     # Config creation helpers
     def create_oid(self):
         oid = self._num_oids
@@ -451,6 +457,8 @@ class MCU:
         return oid
     def add_config_cmd(self, cmd):
         self._config_cmds.append(cmd)
+    def add_init_callback(self, callback):
+        self._init_callbacks.append(callback)
     def register_msg(self, cb, msg, oid=None):
         self.serial.register_callback(cb, msg, oid)
     def register_stepper(self, stepper):

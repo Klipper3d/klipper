@@ -47,14 +47,12 @@ class PrinterHeater:
         max_adc = self.calc_adc(self.config.getfloat('min_temp'))
         self.mcu_adc.set_minmax(
             SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
-        self.mcu_adc.set_adc_callback(self.adc_callback)
+        self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
         control_algo = self.config.get('control', 'watermark')
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         self.control = algos[control_algo](self, self.config)
         if self.printer.mcu.output_file_mode:
             self.can_extrude = True
-    def run(self):
-        self.mcu_adc.query_analog_in(REPORT_TIME)
     def set_pwm(self, read_time, value):
         if value:
             if self.target_temp <= 0.:

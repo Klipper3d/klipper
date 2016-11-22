@@ -58,10 +58,6 @@ class GCodeParser:
         self.gcode_handlers = dict((h, getattr(self, 'cmd_'+h))
                                    for h in handlers)
     def run(self):
-        if self.heater_nozzle is not None:
-            self.heater_nozzle.run()
-        if self.heater_bed is not None:
-            self.heater_bed.run()
         self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.reactor.run()
     def finish(self):
