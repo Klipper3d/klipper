@@ -32,19 +32,31 @@ class ConfigWrapper:
 
 class Printer:
     def __init__(self, conffile, input_fd, is_fileinput=False):
-        self.fileconfig = ConfigParser.RawConfigParser()
-        self.fileconfig.read(conffile)
+        self.conffile = conffile
         self.reactor = reactor.Reactor()
-
         self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
-        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
-        self.stats_timer = self.reactor.register_timer(
-            self.stats, self.reactor.NOW)
+        self.stats_timer = self.reactor.register_timer(self.stats)
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
         self.debugoutput = self.dictionary = None
-
+        self.fileconfig = None
+        self.mcu = None
         self.objects = {}
+    def set_fileoutput(self, debugoutput, dictionary):
+        self.debugoutput = debugoutput
+        self.dictionary = dictionary
+    def stats(self, eventtime):
+        out = []
+        out.append(self.gcode.stats(eventtime))
+        toolhead = self.objects.get('toolhead')
+        out.append(toolhead.stats(eventtime))
+        out.append(self.mcu.stats(eventtime))
+        logging.info("Stats %.0f: %s" % (eventtime, ' '.join(out)))
+        return eventtime + 1.
+    def load_config(self):
+        self.fileconfig = ConfigParser.RawConfigParser()
+        self.fileconfig.read(self.conffile)
+        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.fileconfig.has_section('fan'):
             self.objects['fan'] = fan.PrinterFan(
                 self, ConfigWrapper(self, 'fan'))
@@ -56,24 +68,16 @@ class Printer:
                 self, ConfigWrapper(self, 'heater_bed'))
         self.objects['toolhead'] = toolhead.ToolHead(
             self, ConfigWrapper(self, 'printer'))
-    def set_fileoutput(self, debugoutput, dictionary):
-        self.debugoutput = debugoutput
-        self.dictionary = dictionary
-    def stats(self, eventtime):
-        out = []
-        out.append(self.gcode.stats(eventtime))
-        out.append(self.objects['toolhead'].stats(eventtime))
-        out.append(self.mcu.stats(eventtime))
-        logging.info("Stats %.0f: %s" % (eventtime, ' '.join(out)))
-        return eventtime + 1.
     def build_config(self):
         for oname in sorted(self.objects.keys()):
             self.objects[oname].build_config()
         self.gcode.build_config()
         self.mcu.build_config()
     def connect(self, eventtime):
-        if self.debugoutput is not None:
-            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
+        self.load_config()
+        if self.debugoutput is None:
+            self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
+        else:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
         self.mcu.connect()
         self.build_config()
