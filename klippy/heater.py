@@ -51,7 +51,7 @@ class PrinterHeater:
         control_algo = self.config.get('control', 'watermark')
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         self.control = algos[control_algo](self, self.config)
-        if self.printer.mcu.output_file_mode:
+        if self.printer.mcu.is_fileoutput():
             self.can_extrude = True
     def set_pwm(self, read_time, value):
         if value:

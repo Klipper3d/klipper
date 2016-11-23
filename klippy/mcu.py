@@ -149,7 +149,7 @@ class MCU_endstop:
         self._last_state = params
     def check_busy(self, eventtime):
         # Check if need to send an end_stop_query command
-        if self._mcu.output_file_mode:
+        if self._mcu.is_fileoutput():
             return False
         last_sent_time = self._last_state.get('#sent_time', -1.)
         if last_sent_time >= self._min_query_time:
@@ -302,7 +302,7 @@ class MCU:
         serialport = config.get('serial', '/dev/ttyS0')
         self.serial = serialhdl.SerialReader(printer.reactor, serialport, baud)
         self.is_shutdown = False
-        self.output_file_mode = False
+        self._is_fileoutput = False
         # Config building
         self._emergency_stop_cmd = None
         self._num_oids = 0
@@ -355,7 +355,7 @@ class MCU:
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
     def connect_file(self, debugoutput, dictionary, pace=False):
-        self.output_file_mode = True
+        self._is_fileoutput = True
         self.serial.connect_file(debugoutput, dictionary)
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
         def dummy_send_config():
@@ -386,6 +386,8 @@ class MCU:
         return stats
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
+    def is_fileoutput(self):
+        return self._is_fileoutput
     # Configuration phase
     def _add_custom(self):
         data = self._config.get('custom', '')
