@@ -81,7 +81,7 @@ class Printer:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
         self.mcu.connect()
         self.build_config()
-        self.gcode.run()
+        self.gcode.set_printer_ready(True)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def run(self):
@@ -90,8 +90,8 @@ class Printer:
         self.stats(time.time())
         self.mcu.disconnect()
         self.stats(time.time())
-    def shutdown(self):
-        self.gcode.shutdown()
+    def note_shutdown(self):
+        self.gcode.set_printer_ready(False)
 
 
 ######################################################################

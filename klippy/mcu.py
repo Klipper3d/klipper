@@ -336,7 +336,7 @@ class MCU:
         self.is_shutdown = True
         logging.info("%s: %s" % (params['#name'], params['#msg']))
         self.serial.dump_debug()
-        self._printer.shutdown()
+        self._printer.note_shutdown()
     # Connection phase
     def connect(self):
         if not self._is_fileoutput:

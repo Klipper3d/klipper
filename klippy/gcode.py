@@ -16,8 +16,9 @@ class GCodeParser:
         # Input handling
         self.reactor = printer.reactor
         self.fd_handle = None
+        if not is_fileinput:
+            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.input_commands = [""]
-        self.need_register_fd = False
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Busy handling
@@ -25,7 +26,7 @@ class GCodeParser:
         self.busy_state = None
         # Command handling
         self.gcode_handlers = {}
-        self.is_shutdown = False
+        self.is_printer_ready = False
         self.need_ack = False
         self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
         self.speed = 1.0
@@ -34,6 +35,7 @@ class GCodeParser:
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
+        self.build_handlers()
     def build_config(self):
         self.toolhead = self.printer.objects['toolhead']
         self.heater_nozzle = None
@@ -42,35 +44,40 @@ class GCodeParser:
             self.heater_nozzle = extruder.heater
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
-        self.build_handlers()
     def build_handlers(self):
         shutdown_handlers = ['M105', 'M110', 'M114']
         handlers = ['G0', 'G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M84', 'M110', 'M114', 'M119', 'M206']
+                    'M18', 'M82', 'M83', 'M84',
+                    'M105', 'M110', 'M114', 'M119', 'M206']
         if self.heater_nozzle is not None:
-            handlers.extend(['M104', 'M105', 'M109', 'M303'])
+            handlers.extend(['M104', 'M109', 'M303'])
         if self.heater_bed is not None:
             handlers.extend(['M140', 'M190'])
         if self.fan is not None:
             handlers.extend(['M106', 'M107'])
-        if self.is_shutdown:
+        if not self.is_printer_ready:
             handlers = [h for h in handlers if h in shutdown_handlers]
         self.gcode_handlers = dict((h, getattr(self, 'cmd_'+h))
                                    for h in handlers)
-    def run(self):
-        self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def finish(self):
         self.reactor.end()
         self.toolhead.motor_off()
         logging.debug('Completed translation by klippy')
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
-    def shutdown(self):
-        self.is_shutdown = True
+    def set_printer_ready(self, is_ready):
+        if self.is_printer_ready == is_ready:
+            return
+        self.is_printer_ready = is_ready
         self.build_handlers()
-        logging.info("Dumping gcode input %d blocks" % (len(self.input_log),))
-        for eventtime, data in self.input_log:
-            logging.info("Read %f: %s" % (eventtime, repr(data)))
+        if is_ready and self.is_fileinput and self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+        if not is_ready:
+            logging.info("Dumping gcode input %d blocks" % (
+                len(self.input_log),))
+            # XXX - read from self.input_log is not thread safe
+            for eventtime, data in self.input_log:
+                logging.info("Read %f: %s" % (eventtime, repr(data)))
     # Parse input into commands
     args_r = re.compile('([a-zA-Z*])')
     def process_commands(self, eventtime):
@@ -106,7 +113,7 @@ class GCodeParser:
             # Check if machine can process next command or must stall input
             if self.busy_state is not None:
                 break
-            if self.toolhead.check_busy(eventtime):
+            if self.is_printer_ready and self.toolhead.check_busy(eventtime):
                 self.set_busy(self.toolhead)
                 break
             self.ack()
@@ -114,7 +121,7 @@ class GCodeParser:
     def process_data(self, eventtime):
         if self.busy_state is not None:
             self.reactor.unregister_fd(self.fd_handle)
-            self.need_register_fd = True
+            self.fd_handle = None
             return
         data = os.read(self.fd, 4096)
         self.input_log.append((eventtime, data))
@@ -162,12 +169,13 @@ class GCodeParser:
         self.process_commands(eventtime)
         if self.busy_state is not None:
             return self.reactor.NOW
-        if self.need_register_fd:
-            self.need_register_fd = False
+        if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         return self.reactor.NEVER
     # Temperature wrappers
     def get_temp(self):
+        if not self.is_printer_ready:
+            return "T:0"
         # T:XXX /YYY B:XXX /YYY
         out = []
         if self.heater_nozzle:
@@ -199,8 +207,8 @@ class GCodeParser:
             self.bg_temp(heater)
     # Individual command handlers
     def cmd_default(self, params):
-        if self.is_shutdown:
-            self.respond('Error: Machine is shutdown')
+        if not self.is_printer_ready:
+            self.respond('Error: Printer is not ready')
             return
         cmd = params.get('#command')
         if not cmd:
@@ -300,6 +308,9 @@ class GCodeParser:
         pass
     def cmd_M114(self, params):
         # Get Current Position
+        if self.toolhead is None:
+            self.cmd_default(params)
+            return
         kinpos = self.toolhead.get_position()
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f Count X:%.3f Y:%.3f Z:%.3f" % (
             self.last_position[0], self.last_position[1],
