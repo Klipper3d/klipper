@@ -34,7 +34,7 @@ class SerialReader:
             self._status_event, self.reactor.NOW)
         self.status_cmd = None
         handlers = {
-            '#unknown': self.handle_unknown, '#state': self.handle_state,
+            '#unknown': self.handle_unknown,
             '#output': self.handle_output, 'status': self.handle_status,
             'shutdown': self.handle_output, 'is_shutdown': self.handle_output
         }
@@ -57,13 +57,30 @@ class SerialReader:
             except:
                 logging.exception("Exception in serial callback")
     def connect(self):
+        # Initial connection
         logging.info("Starting serial connect")
         self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
         stk500v2_leave(self.ser, self.reactor)
         self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0)
-        SerialBootStrap(self)
         self.background_thread = threading.Thread(target=self._bg_thread)
         self.background_thread.start()
+        # Obtain and load the data dictionary from the firmware
+        sbs = SerialBootStrap(self)
+        identify_data = sbs.get_identify_data()
+        msgparser = msgproto.MessageParser()
+        msgparser.process_identify(identify_data)
+        self.msgparser = msgparser
+        self.register_callback(self.handle_unknown, '#unknown')
+        logging.info("Loaded %d commands (%s)" % (
+            len(msgparser.messages_by_id), msgparser.version))
+        # Setup for runtime
+        mcu_baud = float(msgparser.config.get('SERIAL_BAUD', 0.))
+        if mcu_baud:
+            baud_adjust = self.BITS_PER_BYTE / mcu_baud
+            self.ffi_lib.serialqueue_set_baud_adjust(
+                self.serialqueue, baud_adjust)
+        get_status = msgparser.lookup_command('get_status')
+        self.status_cmd = get_status.encode()
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
@@ -184,13 +201,6 @@ class SerialReader:
             params['#msgid'], repr(params['#msg'])))
     def handle_output(self, params):
         logging.info("%s: %s" % (params['#name'], params['#msg']))
-    def handle_state(self, params):
-        state = params['#state']
-        if state  == 'connected':
-            logging.info("Loaded %d commands (%s)" % (
-                len(self.msgparser.messages_by_id), self.msgparser.version))
-        else:
-            logging.info("State: %s" % (state,))
     def handle_default(self, params):
         logging.warn("got %s" % (params,))
 
@@ -230,36 +240,25 @@ class SerialBootStrap:
         self.serial.register_callback(self.handle_unknown, '#unknown')
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
-    def finalize(self):
-        self.is_done = True
-        self.serial.msgparser.process_identify(self.identify_data)
-        logging.info("MCU version: %s" % (self.serial.msgparser.version,))
+    def get_identify_data(self):
+        eventtime = time.time()
+        while not self.is_done:
+            eventtime = self.serial.reactor.pause(eventtime + 0.05)
         self.serial.unregister_callback('identify_response')
-        self.serial.register_callback(self.serial.handle_unknown, '#unknown')
-        mcu_baud = float(self.serial.msgparser.config.get('SERIAL_BAUD', 0.))
-        if mcu_baud:
-            baud_adjust = self.serial.BITS_PER_BYTE / mcu_baud
-            self.serial.ffi_lib.serialqueue_set_baud_adjust(
-                self.serial.serialqueue, baud_adjust)
-        get_status = self.serial.msgparser.lookup_command('get_status')
-        self.serial.status_cmd = get_status.encode()
-        with self.serial.lock:
-            hdl = self.serial.handlers['#state', None]
-        statemsg = {'#name': '#state', '#state': 'connected'}
-        hdl(statemsg)
+        self.serial.reactor.unregister_timer(self.send_timer)
+        return self.identify_data
     def handle_identify(self, params):
         if self.is_done or params['offset'] != len(self.identify_data):
             return
         msgdata = params['data']
         if not msgdata:
-            self.finalize()
+            self.is_done = True
             return
         self.identify_data += msgdata
         imsg = self.identify_cmd.encode(len(self.identify_data), 40)
         self.serial.send(imsg)
     def send_event(self, eventtime):
         if self.is_done:
-            self.serial.reactor.unregister_timer(self.send_timer)
             return self.serial.reactor.NEVER
         imsg = self.identify_cmd.encode(len(self.identify_data), 40)
         self.serial.send(imsg)

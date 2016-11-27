@@ -342,15 +342,8 @@ class MCU:
         self._steppersync = self.ffi_lib.steppersync_alloc(
             self.serial.serialqueue, stepqueues, len(stepqueues), count)
     def connect(self):
-        state_params = {}
-        def handle_serial_state(params):
-            state_params.update(params)
-        self.serial.register_callback(handle_serial_state, '#state')
-        self.serial.connect()
-        while state_params.get('#state') != 'connected':
-            self._printer.reactor.pause(time.time() + 0.05)
-        self.serial.unregister_callback('#state')
-        logging.info("serial connected")
+        if not self._is_fileoutput:
+            self.serial.connect()
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
@@ -358,7 +351,6 @@ class MCU:
     def connect_file(self, debugoutput, dictionary, pace=False):
         self._is_fileoutput = True
         self.serial.connect_file(debugoutput, dictionary)
-        self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
         def dummy_send_config():
             for c in self._config_cmds:
                 self.send(self.create_command(c))

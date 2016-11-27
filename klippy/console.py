@@ -18,9 +18,14 @@ class KeyboardReader:
         util.set_nonblock(self.fd)
         self.pins = None
         self.data = ""
-        self.reactor.register_fd(self.fd, self.process_kbd)
+        reactor.register_fd(self.fd, self.process_kbd)
+        self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
         self.local_commands = { "PINS": self.set_pin_map, "SET": self.set_var }
         self.eval_globals = {}
+    def connect(self, eventtime):
+        self.ser.connect()
+        self.reactor.unregister_timer(self.connect_timer)
+        return self.reactor.NEVER
     def update_evals(self, eventtime):
         f = self.ser.msgparser.config.get('CLOCK_FREQ', 1)
         c = self.ser.get_clock(eventtime)
@@ -101,7 +106,6 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     r = reactor.Reactor()
     ser = serialhdl.SerialReader(r, serialport, baud)
-    ser.connect()
     kbd = KeyboardReader(ser, r)
     try:
         r.run()

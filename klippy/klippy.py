@@ -85,9 +85,6 @@ class Printer:
     def connect_file(self, output, dictionary):
         self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         self.mcu.connect_file(output, dictionary)
-        self.build_config()
-        self.gcode.run()
-        self.reactor.unregister_timer(self.connect_timer)
     def run(self):
         self.reactor.run()
         # If gcode exits, then exit the MCU
