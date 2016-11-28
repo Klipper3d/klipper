@@ -103,11 +103,6 @@ def read_dictionary(filename):
     dfile.close()
     return dictionary
 
-def store_dictionary(filename, printer):
-    f = open(filename, 'wb')
-    f.write(printer.mcu.serial.msgparser.raw_identify_data)
-    f.close()
-
 def main():
     usage = "%prog [options] <config file>"
     opts = optparse.OptionParser(usage)
@@ -121,8 +116,6 @@ def main():
                     help="enable debug messages")
     opts.add_option("-d", dest="read_dictionary",
                     help="file to read for mcu protocol dictionary")
-    opts.add_option("-D", dest="write_dictionary",
-                    help="file to write mcu protocol dictionary")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
@@ -150,8 +143,6 @@ def main():
         printer.connect_file(debugoutput, proto_dict)
     else:
         printer.connect()
-    if options.write_dictionary:
-        store_dictionary(options.write_dictionary, printer)
     printer.run()
 
     if bglogger is not None:
