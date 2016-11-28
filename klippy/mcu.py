@@ -342,12 +342,13 @@ class MCU:
         self._steppersync = self.ffi_lib.steppersync_alloc(
             self.serial.serialqueue, stepqueues, len(stepqueues), count)
     def connect(self):
+        state_params = {}
         def handle_serial_state(params):
-            if params['#state'] == 'connected':
-                self._printer.reactor.end()
+            state_params.update(params)
         self.serial.register_callback(handle_serial_state, '#state')
         self.serial.connect()
-        self._printer.reactor.run()
+        while state_params.get('#state') != 'connected':
+            self._printer.reactor.pause(time.time() + 0.05)
         self.serial.unregister_callback('#state')
         logging.info("serial connected")
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
@@ -427,14 +428,15 @@ class MCU:
         sent_config = False
         def handle_get_config(params):
             config_params.update(params)
-            done = not sent_config or params['is_config']
-            if done:
-                self._printer.reactor.end()
-            return done
+            return True
         while 1:
             self.serial.send_with_response(msg, handle_get_config, 'config')
-            self._printer.reactor.run()
-            if not config_params['is_config']:
+            while 1:
+                is_config = config_params.get('is_config')
+                if is_config is not None and (not sent_config or is_config):
+                    break
+                self._printer.reactor.pause(time.time() + 0.05)
+            if not is_config:
                 # Send config commands
                 for c in self._config_cmds:
                     self.send(self.create_command(c))

@@ -59,7 +59,6 @@ class GCodeParser:
                                    for h in handlers)
     def run(self):
         self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        self.reactor.run()
     def finish(self):
         self.reactor.end()
         self.toolhead.motor_off()

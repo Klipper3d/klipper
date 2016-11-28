@@ -59,7 +59,7 @@ class SerialReader:
     def connect(self):
         logging.info("Starting serial connect")
         self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
-        stk500v2_leave(self.ser)
+        stk500v2_leave(self.ser, self.reactor)
         self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0)
         SerialBootStrap(self)
         self.background_thread = threading.Thread(target=self._bg_thread)
@@ -269,7 +269,7 @@ class SerialBootStrap:
             params['#msgid'], len(params['#msg'])))
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
-def stk500v2_leave(ser):
+def stk500v2_leave(ser, reactor):
     logging.debug("Starting stk500v2 leave programmer sequence")
     origbaud = ser.baudrate
     # Request a dummy speed first as this seems to help reset the port
@@ -277,10 +277,10 @@ def stk500v2_leave(ser):
     ser.read(1)
     # Send stk500v2 leave programmer sequence
     ser.baudrate = 115200
-    time.sleep(0.100)
+    reactor.pause(time.time() + 0.100)
     ser.read(4096)
     ser.write('\x1b\x01\x00\x01\x0e\x11\x04')
-    time.sleep(0.050)
+    reactor.pause(time.time() + 0.050)
     res = ser.read(4096)
     logging.debug("Got %s from stk500v2" % (repr(res),))
     ser.baudrate = origbaud

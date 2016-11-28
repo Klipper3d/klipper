@@ -45,8 +45,11 @@ class Printer:
 
         self.gcode = gcode.GCodeParser(
             self, pseudo_tty, inputfile=debuginput is not None)
-        self.mcu = None
-        self.stat_timer = None
+        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
+        self.stats_timer = self.reactor.register_timer(
+            self.stats, self.reactor.NOW)
+        self.connect_timer = self.reactor.register_timer(
+            self.connect, self.reactor.NOW)
 
         self.objects = {}
         if self.fileconfig.has_section('fan'):
@@ -73,18 +76,20 @@ class Printer:
             self.objects[oname].build_config()
         self.gcode.build_config()
         self.mcu.build_config()
-    def connect(self):
-        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
+    def connect(self, eventtime):
         self.mcu.connect()
         self.build_config()
-        self.stats_timer = self.reactor.register_timer(
-            self.stats, self.reactor.NOW)
+        self.gcode.run()
+        self.reactor.unregister_timer(self.connect_timer)
+        return self.reactor.NEVER
     def connect_file(self, output, dictionary):
-        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
+        self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         self.mcu.connect_file(output, dictionary)
         self.build_config()
-    def run(self):
         self.gcode.run()
+        self.reactor.unregister_timer(self.connect_timer)
+    def run(self):
+        self.reactor.run()
         # If gcode exits, then exit the MCU
         self.stats(time.time())
         self.mcu.disconnect()
@@ -141,8 +146,6 @@ def main():
     if debugoutput:
         proto_dict = read_dictionary(options.read_dictionary)
         printer.connect_file(debugoutput, proto_dict)
-    else:
-        printer.connect()
     printer.run()
 
     if bglogger is not None:
