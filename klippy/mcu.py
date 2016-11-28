@@ -337,10 +337,6 @@ class MCU:
         self.serial.dump_debug()
         self._printer.shutdown()
     # Connection phase
-    def _init_steppersync(self, count):
-        stepqueues = tuple(s._stepqueue for s in self._steppers)
-        self._steppersync = self.ffi_lib.steppersync_alloc(
-            self.serial.serialqueue, stepqueues, len(stepqueues), count)
     def connect(self):
         if not self._is_fileoutput:
             self.serial.connect()
@@ -351,13 +347,6 @@ class MCU:
     def connect_file(self, debugoutput, dictionary, pace=False):
         self._is_fileoutput = True
         self.serial.connect_file(debugoutput, dictionary)
-        def dummy_send_config():
-            for c in self._config_cmds:
-                self.send(self.create_command(c))
-            self._init_steppersync(500)
-            for cb in self._init_callbacks:
-                cb()
-        self._send_config = dummy_send_config
         if not pace:
             def dummy_set_print_start_time(eventtime):
                 pass
@@ -416,31 +405,25 @@ class MCU:
         self._send_config()
     def _send_config(self):
         msg = self.create_command("get_config")
-        config_params = {}
-        sent_config = False
-        def handle_get_config(params):
-            config_params.update(params)
-            return True
-        while 1:
-            self.serial.send_with_response(msg, handle_get_config, 'config')
-            while 1:
-                is_config = config_params.get('is_config')
-                if is_config is not None and (not sent_config or is_config):
-                    break
-                self._printer.reactor.pause(time.time() + 0.05)
-            if not is_config:
-                # Send config commands
-                for c in self._config_cmds:
-                    self.send(self.create_command(c))
-                config_params.clear()
-                sent_config = True
-                continue
-            if self._config_crc != config_params['crc']:
-                logging.error("Printer CRC does not match config")
-                sys.exit(1)
-            break
+        if self._is_fileoutput:
+            config_params = {
+                'is_config': 0, 'move_count': 500, 'crc': self._config_crc}
+        else:
+            config_params = self.serial.send_with_response(msg, 'config')
+        if not config_params['is_config']:
+            # Send config commands
+            for c in self._config_cmds:
+                self.send(self.create_command(c))
+            if not self._is_fileoutput:
+                config_params = self.serial.send_with_response(msg, 'config')
+        if self._config_crc != config_params['crc']:
+            logging.error("Printer CRC does not match config")
+            sys.exit(1)
         logging.info("Configured")
-        self._init_steppersync(config_params['move_count'])
+        stepqueues = tuple(s._stepqueue for s in self._steppers)
+        self._steppersync = self.ffi_lib.steppersync_alloc(
+            self.serial.serialqueue, stepqueues, len(stepqueues),
+            config_params['move_count'])
         for cb in self._init_callbacks:
             cb()
     # Config creation helpers

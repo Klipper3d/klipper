@@ -146,8 +146,9 @@ class SerialReader:
     def encode_and_send(self, data, minclock, reqclock, cq):
         self.ffi_lib.serialqueue_encode_and_send(
             self.serialqueue, cq, data, len(data), minclock, reqclock)
-    def send_with_response(self, cmd, callback, name):
-        SerialRetryCommand(self, cmd, callback, name)
+    def send_with_response(self, cmd, name):
+        src = SerialRetryCommand(self, cmd, name)
+        return src.get_response()
     def send_flush(self):
         self.ffi_lib.serialqueue_flush_ready(self.serialqueue)
     def alloc_command_queue(self):
@@ -207,25 +208,31 @@ class SerialReader:
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:
     RETRY_TIME = 0.500
-    def __init__(self, serial, cmd, callback, name):
+    def __init__(self, serial, cmd, name):
         self.serial = serial
         self.cmd = cmd
-        self.callback = callback
         self.name = name
+        self.response = None
+        self.min_query_time = time.time()
         self.serial.register_callback(self.handle_callback, self.name)
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
     def send_event(self, eventtime):
-        if self.callback is None:
-            self.serial.reactor.unregister_timer(self.send_timer)
+        if self.response is not None:
             return self.serial.reactor.NEVER
         self.serial.send(self.cmd)
         return eventtime + self.RETRY_TIME
     def handle_callback(self, params):
-        done = self.callback(params)
-        if done:
-            self.serial.unregister_callback(self.name)
-            self.callback = None
+        last_sent_time = params['#sent_time']
+        if last_sent_time >= self.min_query_time:
+            self.response = params
+    def get_response(self):
+        eventtime = time.time()
+        while self.response is None:
+            eventtime = self.serial.reactor.pause(eventtime + 0.05)
+        self.serial.unregister_callback(self.name)
+        self.serial.reactor.unregister_timer(self.send_timer)
+        return self.response
 
 # Code to start communication and download message type dictionary
 class SerialBootStrap:
