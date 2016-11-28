@@ -32,6 +32,7 @@ class MCU_stepper:
         min_stop_interval = int(min_stop_interval * self._mcu_freq)
         max_error = int(max_error * self._mcu_freq)
         self.commanded_position = 0
+        self._mcu_position_offset = 0
         mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
             " min_stop_interval=%d invert_step=%d" % (
@@ -53,7 +54,12 @@ class MCU_stepper:
     def get_invert_dir(self):
         return self._invert_dir
     def set_position(self, pos):
+        self._mcu_position_offset += self.commanded_position - pos
         self.commanded_position = pos
+    def set_mcu_position(self, pos):
+        self._mcu_position_offset = pos - self.commanded_position
+    def get_mcu_position(self):
+        return self.commanded_position + self._mcu_position_offset
     def note_stepper_stop(self):
         self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
     def reset_step_clock(self, mcu_time):
@@ -150,7 +156,11 @@ class MCU_endstop:
             return False
         last_sent_time = self._last_state.get('#sent_time', -1.)
         if last_sent_time >= self._min_query_time:
-            if not self._homing or not self._last_state.get('homing', 0):
+            if not self._homing:
+                return False
+            if not self._last_state.get('homing', 0):
+                self._stepper.set_mcu_position(self.get_last_position())
+                self._homing = False
                 return False
             if (self._mcu.serial.get_clock(last_sent_time)
                 > self._home_timeout_clock):
