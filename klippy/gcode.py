@@ -254,6 +254,8 @@ class GCodeParser:
         if not axes:
             axes = [0, 1, 2]
         homing_state = homing.Homing(self.toolhead, axes)
+        if self.inputfile:
+            homing_state.set_no_verify_retract()
         self.toolhead.home(homing_state)
         def axes_update(homing_state):
             newpos = self.toolhead.get_position()

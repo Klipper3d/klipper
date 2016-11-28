@@ -61,7 +61,8 @@ class CartKinematics:
             homing_state.plan_retract(list(coord), [s], s.homing_speed)
             # Home again
             coord[axis] = r2pos
-            homing_state.plan_home(list(coord), homepos, [s], s.homing_speed/2.0)
+            homing_state.plan_second_home(
+                list(coord), homepos, [s], s.homing_speed/2.0)
         homing_state.plan_calc_position(self.get_homed_position)
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3

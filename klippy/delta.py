@@ -101,8 +101,8 @@ class DeltaKinematics:
         homing_state.plan_retract(list(coord), self.steppers, s.homing_speed)
         # Home again
         coord[2] -= s.homing_retract_dist
-        homing_state.plan_home(list(coord), homepos, self.steppers
-                               , s.homing_speed/2.0)
+        homing_state.plan_second_home(list(coord), homepos, self.steppers
+                                      , s.homing_speed/2.0)
         homing_state.plan_calc_position(self.get_homed_position)
     def motor_off(self, move_time):
         self.limit_xy2 = -1.

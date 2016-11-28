@@ -10,20 +10,25 @@ class Homing:
     def __init__(self, toolhead, changed_axes):
         self.toolhead = toolhead
         self.changed_axes = changed_axes
+        self.verify_retract = True
 
         self.eventtime = 0.
         self.states = []
         self.endstops = []
+    def set_no_verify_retract(self):
+        self.verify_retract = False
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):
         return self.changed_axes
     def plan_home(self, forcepos, movepos, steppers, speed):
         self.states.append((self.do_home, (forcepos, movepos, steppers, speed)))
-        self.states.append((self.do_wait_endstop, ()))
+        self.states.append((self.do_wait_endstop, (False,)))
+    def plan_second_home(self, forcepos, movepos, steppers, speed):
+        self.states.append((self.do_home, (forcepos, movepos, steppers, speed)))
+        self.states.append((self.do_wait_endstop, (self.verify_retract,)))
     def plan_retract(self, newpos, steppers, speed):
         self.states.append((self.do_retract, (newpos, steppers, speed)))
-        self.states.append((self.do_verify_retract, ()))
     def plan_calc_position(self, callback):
         self.states.append((self.do_calc_position, (callback,)))
     def plan_axes_update(self, callback):
@@ -50,13 +55,7 @@ class Homing:
                 thcoord[i] = coord[i]
         return thcoord
     def do_retract(self, newpos, steppers, speed):
-        # Issue a move command
         self.toolhead.move(self.fill_coord(newpos), speed)
-        # Query endstops
-        print_time = self.toolhead.get_last_move_time()
-        for s in steppers:
-            es = s.query_endstop(print_time)
-            self.endstops.append((s.name, es))
         return False
     def do_home(self, forcepos, movepos, steppers, speed):
         # Alter kinematics class to think printer is at forcepos
@@ -65,37 +64,27 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         for s in steppers:
             es = s.enable_endstop_checking(print_time, s.step_dist / speed)
-            self.endstops.append((s.name, es))
+            self.endstops.append((s, es, s.mcu_stepper.get_mcu_position()))
         self.toolhead.move(self.fill_coord(movepos), speed)
         move_end_print_time = self.toolhead.get_last_move_time()
         self.toolhead.reset_print_time()
-        for name, es in self.endstops:
+        for s, es, last_pos in self.endstops:
             es.home_finalize(es.print_to_mcu_time(move_end_print_time))
         return False
-    def do_wait_endstop(self):
+    def do_wait_endstop(self, verify_retract):
         # Check if endstops have triggered
         while self.endstops:
-            name, es = self.endstops[0]
+            stepper, es, last_pos = self.endstops[0]
             try:
                 if es.check_busy(self.eventtime):
                     return True
             except mcu.MCUError, e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
-                    name, str(e)))
-            self.endstops.pop(0)
-        return False
-    def do_verify_retract(self):
-        while self.endstops:
-            name, es = self.endstops[0]
-            try:
-                if es.check_busy(self.eventtime):
-                    return True
-            except mcu.MCUError, e:
-                raise EndstopError("Failed to retract stepper %s: %s" % (
-                    name, str(e)))
-            if es.get_last_triggered():
+                    stepper.name, str(e)))
+            post_home_pos = stepper.mcu_stepper.get_mcu_position()
+            if verify_retract and last_pos == post_home_pos:
                 raise EndstopError("Endstop %s still triggered after retract" % (
-                    name,))
+                    stepper.name,))
             self.endstops.pop(0)
         return False
     def do_calc_position(self, callback):
