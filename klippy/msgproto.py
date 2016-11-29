@@ -24,10 +24,7 @@ MESSAGE_DEST = 0x10
 MESSAGE_SYNC = '\x7E'
 
 class error(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
+    pass
 
 def crc16_ccitt(buf):
     crc = 0xffff

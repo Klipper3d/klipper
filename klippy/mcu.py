@@ -6,11 +6,8 @@
 import sys, zlib, logging, time, math
 import serialhdl, pins, chelper
 
-class MCUError(Exception):
-    def __init__(self, msg="MCU Error"):
-        self._msg = msg
-    def __str__(self):
-        return self._msg
+class error(Exception):
+    pass
 
 def parse_pin_extras(pin, can_pullup=False):
     pullup = invert = 0
@@ -167,9 +164,9 @@ class MCU_endstop:
                 # Timeout - disable endstop checking
                 msg = self._home_cmd.encode(self._oid, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
-                raise MCUError("Timeout during endstop homing")
+                raise error("Timeout during endstop homing")
         if self._mcu.is_shutdown:
-            raise MCUError("MCU is shutdown")
+            raise error("MCU is shutdown")
         last_clock = self._mcu.get_last_clock()
         if last_clock >= self._next_query_clock:
             self._next_query_clock = last_clock + self._retry_query_ticks

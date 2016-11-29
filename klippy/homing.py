@@ -78,7 +78,7 @@ class Homing:
             try:
                 if es.check_busy(self.eventtime):
                     return True
-            except mcu.MCUError, e:
+            except mcu.error, e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
                     stepper.name, str(e)))
             post_home_pos = stepper.mcu_stepper.get_mcu_position()
@@ -110,7 +110,7 @@ class QueryEndstops:
             try:
                 if self.busy[0][1].check_busy(eventtime):
                     return True
-            except mcu.MCUError, e:
+            except mcu.error, e:
                 raise EndstopError("Failed to query endstop %s: %s" % (
                     self.busy[0][0], str(e)))
             self.busy.pop(0)
@@ -125,10 +125,7 @@ class QueryEndstops:
         return False
 
 class EndstopError(Exception):
-    def __init__(self, msg="Endstop error"):
-        self._msg = msg
-    def __str__(self):
-        return self._msg
+    pass
 
 def EndstopMoveError(pos, msg="Move out of range"):
     return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
