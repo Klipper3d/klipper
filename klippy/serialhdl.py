@@ -59,14 +59,29 @@ class SerialReader:
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
-        self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
-        stk500v2_leave(self.ser, self.reactor)
-        self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0)
-        self.background_thread = threading.Thread(target=self._bg_thread)
-        self.background_thread.start()
-        # Obtain and load the data dictionary from the firmware
-        sbs = SerialBootStrap(self)
-        identify_data = sbs.get_identify_data()
+        while 1:
+            starttime = time.time()
+            try:
+                self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
+            except OSError, e:
+                logging.warn("Unable to open port: %s" % (e,))
+                self.reactor.pause(starttime + 5.)
+                continue
+            stk500v2_leave(self.ser, self.reactor)
+            self.serialqueue = self.ffi_lib.serialqueue_alloc(
+                self.ser.fileno(), 0)
+            self.background_thread = threading.Thread(target=self._bg_thread)
+            self.background_thread.start()
+            # Obtain and load the data dictionary from the firmware
+            sbs = SerialBootStrap(self)
+            identify_data = sbs.get_identify_data(starttime + 5.)
+            if identify_data is None:
+                logging.warn("Timeout on serial connect")
+                self.disconnect()
+                self.ser.close()
+                self.ser = None
+                continue
+            break
         msgparser = msgproto.MessageParser()
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
@@ -250,12 +265,14 @@ class SerialBootStrap:
         self.serial.register_callback(self.handle_unknown, '#unknown')
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
-    def get_identify_data(self):
+    def get_identify_data(self, timeout):
         eventtime = time.time()
-        while not self.is_done:
+        while not self.is_done and eventtime <= timeout:
             eventtime = self.serial.reactor.pause(eventtime + 0.05)
         self.serial.unregister_callback('identify_response')
         self.serial.reactor.unregister_timer(self.send_timer)
+        if not self.is_done:
+            return None
         return self.identify_data
     def handle_identify(self, params):
         if self.is_done or params['offset'] != len(self.identify_data):
