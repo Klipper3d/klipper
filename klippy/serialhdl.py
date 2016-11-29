@@ -95,12 +95,15 @@ class SerialReader:
             self.serialqueue, self.est_clock, self.last_ack_time
             , self.last_ack_clock)
     def disconnect(self):
+        if self.serialqueue is None:
+            return
         self.send_flush()
         time.sleep(0.010)
-        if self.ffi_lib is not None:
-            self.ffi_lib.serialqueue_exit(self.serialqueue)
+        self.ffi_lib.serialqueue_exit(self.serialqueue)
         if self.background_thread is not None:
             self.background_thread.join()
+        self.ffi_lib.serialqueue_free(self.serialqueue)
+        self.background_thread = self.serialqueue = None
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
