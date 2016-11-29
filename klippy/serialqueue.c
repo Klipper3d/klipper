@@ -1034,10 +1034,10 @@ serialqueue_extract_old(struct serialqueue *sq, int sentq
 
     // Walk the debug list
     int pos = 0;
-    while (!list_empty(&current) && pos < max) {
+    while (!list_empty(&current)) {
         struct queue_message *qm = list_first_entry(
             &current, struct queue_message, node);
-        if (qm->len) {
+        if (qm->len && pos < max) {
             struct pull_queue_message *pqm = q++;
             pos++;
             memcpy(pqm->msg, qm->msg, qm->len);
