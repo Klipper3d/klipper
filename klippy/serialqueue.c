@@ -448,6 +448,15 @@ check_wake_receive(struct serialqueue *sq)
     }
 }
 
+// Write to the internal pipe to wake the background thread if in poll
+static void
+kick_bg_thread(struct serialqueue *sq)
+{
+    int ret = write(sq->pipe_fds[1], ".", 1);
+    if (ret < 0)
+        report_errno("pipe write", ret);
+}
+
 // Update internal state when the receive sequence increases
 static void
 update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
@@ -832,6 +841,7 @@ void
 serialqueue_exit(struct serialqueue *sq)
 {
     pollreactor_do_exit(&sq->pr);
+    kick_bg_thread(sq);
     int ret = pthread_join(sq->tid, NULL);
     if (ret)
         report_errno("pthread_join", ret);
@@ -846,15 +856,6 @@ serialqueue_alloc_commandqueue(void)
     list_init(&cq->ready_queue);
     list_init(&cq->stalled_queue);
     return cq;
-}
-
-// Write to the internal pipe to wake the background thread if in poll
-static void
-kick_bg_thread(struct serialqueue *sq)
-{
-    int ret = write(sq->pipe_fds[1], ".", 1);
-    if (ret < 0)
-        report_errno("pipe write", ret);
 }
 
 // Add a batch of messages to the given command_queue
