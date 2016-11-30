@@ -82,7 +82,10 @@ class Printer:
         return eventtime + 1.
     def load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
-        self.fileconfig.read(self.conffile)
+        res = self.fileconfig.read(self.conffile)
+        if not res:
+            raise ConfigParser.Error("Unable to open config file %s" % (
+                self.conffile,))
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.fileconfig.has_section('fan'):
             self.objects['fan'] = fan.PrinterFan(
@@ -111,6 +114,10 @@ class Printer:
             self.build_config()
             self.gcode.set_printer_ready(True)
             self.state_message = "Running"
+        except ConfigParser.Error, e:
+            logging.exception("Config error")
+            self.state_message = "%s%s" % (str(e), message_restart)
+            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         except mcu.error, e:
             logging.exception("MCU error during connect")
             self.state_message = "%s%s" % (str(e), message_mcu_connect_error)
