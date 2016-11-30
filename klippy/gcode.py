@@ -109,7 +109,7 @@ class GCodeParser:
             except:
                 logging.exception("Exception in command handler")
                 self.toolhead.force_shutdown()
-                self.respond('Error: Internal error on command:"%s"' % (cmd,))
+                self.respond_error('Internal error on command:"%s"' % (cmd,))
             # Check if machine can process next command or must stall input
             if self.busy_state is not None:
                 break
@@ -146,6 +146,11 @@ class GCodeParser:
         if self.is_fileinput:
             return
         os.write(self.fd, msg+"\n")
+    def respond_error(self, msg):
+        lines = msg.strip().split('\n')
+        for line in lines[:-1]:
+            self.respond('// %s' % (line.strip(),))
+        self.respond('!! %s' % (lines[-1].strip(),))
     # Busy handling
     def set_busy(self, busy_handler):
         self.busy_state = busy_handler
@@ -154,12 +159,12 @@ class GCodeParser:
         try:
             busy = self.busy_state.check_busy(eventtime)
         except homing.EndstopError, e:
-            self.respond("Error: %s" % (e,))
+            self.respond_error(str(e))
             busy = False
         except:
             logging.exception("Exception in busy handler")
             self.toolhead.force_shutdown()
-            self.respond('Error: Internal error in busy handler')
+            self.respond_error('Internal error in busy handler')
             busy = False
         if busy:
             self.toolhead.reset_motor_off_time(eventtime)
@@ -208,7 +213,7 @@ class GCodeParser:
     # Individual command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
-            self.respond('Error: Printer is not ready')
+            self.respond_error(self.printer.get_state_message())
             return
         cmd = params.get('#command')
         if not cmd:
@@ -233,7 +238,7 @@ class GCodeParser:
         try:
             self.toolhead.move(self.last_position, self.speed, sloppy)
         except homing.EndstopError, e:
-            self.respond("Error: %s" % (e,))
+            self.respond_error(str(e))
             self.last_position = self.toolhead.get_position()
     def cmd_G4(self, params):
         # Dwell
@@ -244,7 +249,7 @@ class GCodeParser:
         self.toolhead.dwell(delay)
     def cmd_G20(self, params):
         # Set units to inches
-        self.respond('Error: Machine does not support G20 (inches) command')
+        self.respond_error('Machine does not support G20 (inches) command')
     def cmd_G21(self, params):
         # Set units to millimeters
         pass

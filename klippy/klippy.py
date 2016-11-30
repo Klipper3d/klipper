@@ -7,6 +7,32 @@
 import sys, optparse, ConfigParser, logging, time, threading
 import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
 
+message_startup = """
+The klippy host software is attempting to connect.  Please
+retry in a few moments.
+Printer is not ready
+"""
+
+message_restart = """
+This is an unrecoverable error.  Please correct the
+underlying issue and then manually restart the klippy host
+software.
+Printer is halted
+"""
+
+message_mcu_connect_error = """
+This is an unrecoverable error.  Please manually restart
+both the firmware and the host software.
+Error configuring printer
+"""
+
+message_shutdown = """
+This is an unrecoverable error.  Please correct the
+underlying issue and then manually restart both the
+firmware and the host software.
+Printer is shutdown
+"""
+
 class ConfigWrapper:
     def __init__(self, printer, section):
         self.printer = printer
@@ -38,6 +64,7 @@ class Printer:
         self.stats_timer = self.reactor.register_timer(self.stats)
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
+        self.state_message = message_startup
         self.debugoutput = self.dictionary = None
         self.fileconfig = None
         self.mcu = None
@@ -74,23 +101,42 @@ class Printer:
         self.gcode.build_config()
         self.mcu.build_config()
     def connect(self, eventtime):
-        self.load_config()
-        if self.debugoutput is None:
-            self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
-        else:
-            self.mcu.connect_file(self.debugoutput, self.dictionary)
-        self.mcu.connect()
-        self.build_config()
-        self.gcode.set_printer_ready(True)
+        try:
+            self.load_config()
+            if self.debugoutput is None:
+                self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
+            else:
+                self.mcu.connect_file(self.debugoutput, self.dictionary)
+            self.mcu.connect()
+            self.build_config()
+            self.gcode.set_printer_ready(True)
+            self.state_message = "Running"
+        except mcu.error, e:
+            logging.exception("MCU error during connect")
+            self.state_message = "%s%s" % (str(e), message_mcu_connect_error)
+            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
+        except:
+            logging.exception("Unhandled exception during connect")
+            self.state_message = "Internal error during connect.%s" % (
+                message_restart)
+            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def run(self):
-        self.reactor.run()
+        try:
+            self.reactor.run()
+        except:
+            logging.exception("Unhandled exception during run")
+            return
         # If gcode exits, then exit the MCU
         self.stats(time.time())
         self.mcu.disconnect()
         self.stats(time.time())
-    def note_shutdown(self):
+    def get_state_message(self):
+        return self.state_message
+    def note_shutdown(self, msg):
+        self.state_message = "Firmware shutdown: %s%s" % (
+            msg, message_shutdown)
         self.gcode.set_printer_ready(False)
 
 

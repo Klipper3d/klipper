@@ -336,7 +336,7 @@ class MCU:
         self.is_shutdown = True
         logging.info("%s: %s" % (params['#name'], params['#msg']))
         self.serial.dump_debug()
-        self._printer.note_shutdown()
+        self._printer.note_shutdown(params['#msg'])
     # Connection phase
     def connect(self):
         if not self._is_fileoutput:
@@ -421,8 +421,7 @@ class MCU:
             if not self._is_fileoutput:
                 config_params = self.serial.send_with_response(msg, 'config')
         if self._config_crc != config_params['crc']:
-            logging.error("Printer CRC does not match config")
-            sys.exit(1)
+            raise error("Printer CRC does not match config")
         logging.info("Configured")
         stepqueues = tuple(s._stepqueue for s in self._steppers)
         self._steppersync = self.ffi_lib.steppersync_alloc(
