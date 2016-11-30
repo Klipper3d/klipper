@@ -35,25 +35,32 @@ Printer is shutdown
 
 class ConfigWrapper:
     error = ConfigParser.Error
+    class sentinel:
+        pass
     def __init__(self, printer, section):
         self.printer = printer
         self.section = section
-    def get(self, option, default=None):
-        if not self.printer.fileconfig.has_option(self.section, option):
+    def get_wrapper(self, parser, option, default):
+        if (default is not self.sentinel
+            and not self.printer.fileconfig.has_option(self.section, option)):
             return default
-        return self.printer.fileconfig.get(self.section, option)
-    def getint(self, option, default=None):
-        if not self.printer.fileconfig.has_option(self.section, option):
-            return default
-        return self.printer.fileconfig.getint(self.section, option)
-    def getfloat(self, option, default=None):
-        if not self.printer.fileconfig.has_option(self.section, option):
-            return default
-        return self.printer.fileconfig.getfloat(self.section, option)
-    def getboolean(self, option, default=None):
-        if not self.printer.fileconfig.has_option(self.section, option):
-            return default
-        return self.printer.fileconfig.getboolean(self.section, option)
+        try:
+            return parser(self.section, option)
+        except self.error, e:
+            raise
+        except:
+            raise self.error("Unable to parse option '%s' in section '%s'" % (
+                option, self.section))
+    def get(self, option, default=sentinel):
+        return self.get_wrapper(self.printer.fileconfig.get, option, default)
+    def getint(self, option, default=sentinel):
+        return self.get_wrapper(self.printer.fileconfig.getint, option, default)
+    def getfloat(self, option, default=sentinel):
+        return self.get_wrapper(
+            self.printer.fileconfig.getfloat, option, default)
+    def getboolean(self, option, default=sentinel):
+        return self.get_wrapper(
+            self.printer.fileconfig.getboolean, option, default)
     def getsection(self, section):
         return ConfigWrapper(self.printer, section)
 

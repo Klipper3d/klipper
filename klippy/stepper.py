@@ -23,9 +23,9 @@ class PrinterStepper:
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', False)
         self.homing_retract_dist = config.getfloat('homing_retract_dist', 5.)
-        self.homing_stepper_phases = config.getint('homing_stepper_phases')
-        self.homing_endstop_phase = config.getint('homing_endstop_phase')
-        endstop_accuracy = config.getfloat('homing_endstop_accuracy')
+        self.homing_stepper_phases = config.getint('homing_stepper_phases', None)
+        self.homing_endstop_phase = config.getint('homing_endstop_phase', None)
+        endstop_accuracy = config.getfloat('homing_endstop_accuracy', None)
         self.homing_endstop_accuracy = None
         if self.homing_stepper_phases:
             if endstop_accuracy is None:
@@ -40,9 +40,11 @@ class PrinterStepper:
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment" % (self.config.section,))
                 self.homing_stepper_phases = None
-        self.position_min = config.getfloat('position_min', 0.)
-        self.position_endstop = config.getfloat('position_endstop')
-        self.position_max = config.getfloat('position_max')
+        self.position_min = self.position_endstop = self.position_max = None
+        if config.get('endstop_pin', None) is not None:
+            self.position_min = config.getfloat('position_min', 0.)
+            self.position_endstop = config.getfloat('position_endstop')
+            self.position_max = config.getfloat('position_max', 0.)
 
         self.need_motor_enable = True
     def set_max_jerk(self, max_jerk):
@@ -59,10 +61,10 @@ class PrinterStepper:
         mcu = self.printer.mcu
         self.mcu_stepper = mcu.create_stepper(
             step_pin, dir_pin, min_stop_interval, max_error)
-        enable_pin = self.config.get('enable_pin')
+        enable_pin = self.config.get('enable_pin', None)
         if enable_pin is not None:
             self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
-        endstop_pin = self.config.get('endstop_pin')
+        endstop_pin = self.config.get('endstop_pin', None)
         if endstop_pin is not None:
             self.mcu_endstop = mcu.create_endstop(endstop_pin, self.mcu_stepper)
     def motor_enable(self, move_time, enable=0):

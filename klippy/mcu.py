@@ -394,7 +394,7 @@ class MCU:
 
         # Resolve pin names
         mcu = self.serial.msgparser.config['MCU']
-        pin_map = self._config.get('pin_map')
+        pin_map = self._config.get('pin_map', None)
         if pin_map is None:
             pnames = pins.mcu_to_pins(mcu)
         else:
