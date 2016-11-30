@@ -4,18 +4,10 @@ features still to be implemented.  In no particular order:
 Host user interaction
 =====================
 
-* Improve error reporting:
-
- * Improve error checks on config file values. If a parameter is
-   incorrect or missing a more friendly error message should be
-   presented to the user.
-
- * Warn on any unused config settings (to catch spelling errors or
-   fields defined in an incorrect section).
-
- * Find a better way to report errors. Octoprint sometimes doesn't
-   highlight an error (one has to look in the terminal tab to find the
-   error) and errors written to the log can be non-obvious to a user.
+* See if there is a better way to report errors. Octoprint sometimes
+  doesn't highlight an error (one has to look in the terminal tab to
+  find the error) and errors written to the log can be non-obvious to
+  a user.
 
 * Improve startup:
 

@@ -44,6 +44,8 @@ class ConfigWrapper:
         if (default is not self.sentinel
             and not self.printer.fileconfig.has_option(self.section, option)):
             return default
+        self.printer.all_config_options[
+            (self.section.lower(), option.lower())] = 1
         try:
             return parser(self.section, option)
         except self.error, e:
@@ -79,6 +81,7 @@ class Printer:
         self.stats_timer = self.reactor.register_timer(self.stats)
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
+        self.all_config_options = {}
         self.state_message = message_startup
         self.debugoutput = self.dictionary = None
         self.fileconfig = None
@@ -118,6 +121,19 @@ class Printer:
             self.objects[oname].build_config()
         self.gcode.build_config()
         self.mcu.build_config()
+    def validate_config(self):
+        valid_sections = dict([(s, 1) for s, o in self.all_config_options])
+        for section in self.fileconfig.sections():
+            section = section.lower()
+            if section not in valid_sections:
+                raise ConfigParser.Error("Unknown config file section '%s'" % (
+                    section,))
+            for option in self.fileconfig.options(section):
+                option = option.lower()
+                if (section, option) not in self.all_config_options:
+                    raise ConfigParser.Error(
+                        "Unknown option '%s' in section '%s'" % (
+                            option, section))
     def connect(self, eventtime):
         try:
             self.load_config()
@@ -127,6 +143,7 @@ class Printer:
                 self.mcu.connect_file(self.debugoutput, self.dictionary)
             self.mcu.connect()
             self.build_config()
+            self.validate_config()
             self.gcode.set_printer_ready(True)
             self.state_message = "Running"
         except ConfigParser.Error, e:
