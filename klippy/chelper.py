@@ -7,9 +7,9 @@ import os, logging
 import cffi
 
 COMPILE_CMD = "gcc -Wall -g -O -shared -fPIC -o %s %s"
-SOURCE_FILES = ['stepcompress.c', 'serialqueue.c']
+SOURCE_FILES = ['stepcompress.c', 'serialqueue.c', 'pyhelper.c']
 DEST_LIB = "c_helper.so"
-OTHER_FILES = ['list.h', 'serialqueue.h']
+OTHER_FILES = ['list.h', 'serialqueue.h', 'pyhelper.h']
 
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t max_error
