@@ -34,6 +34,7 @@ Printer is shutdown
 """
 
 class ConfigWrapper:
+    error = ConfigParser.Error
     def __init__(self, printer, section):
         self.printer = printer
         self.section = section

@@ -399,8 +399,14 @@ class MCU:
             pnames = pins.mcu_to_pins(mcu)
         else:
             pnames = pins.map_pins(pin_map, mcu)
-        self._config_cmds = [pins.update_command(c, pnames)
-                             for c in self._config_cmds]
+        updated_cmds = []
+        for cmd in self._config_cmds:
+            try:
+                updated_cmds.append(pins.update_command(cmd, pnames))
+            except:
+                raise self._config.error("Unable to translate pin name: %s" % (
+                    cmd,))
+        self._config_cmds = updated_cmds
 
         # Calculate config CRC
         self._config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
