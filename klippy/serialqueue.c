@@ -300,7 +300,7 @@ message_alloc_and_encode(uint32_t *data, int len)
     return qm;
 
 fail:
-    fprintf(stderr, "Encode error\n");
+    errorf("Encode error");
     qm->len = 0;
     return qm;
 }
@@ -856,7 +856,7 @@ serialqueue_free_commandqueue(struct command_queue *cq)
     if (!cq)
         return;
     if (!list_empty(&cq->ready_queue) || !list_empty(&cq->stalled_queue)) {
-        fprintf(stderr, "Memory leak! Can't free non-empty commandqueue\n");
+        errorf("Memory leak! Can't free non-empty commandqueue");
         return;
     }
     free(cq);

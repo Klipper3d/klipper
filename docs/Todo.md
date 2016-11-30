@@ -51,8 +51,6 @@ Host user interaction
 
 * Improve logging:
 
- * Route errors from the host C code to the main log file.
-
  * Automatically roll Klippy log files. The default log file should
    have the current date in the log file name.
 

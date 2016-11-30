@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <errno.h> // errno
+#include <stdarg.h> // va_start
 #include <stdint.h> // uint8_t
 #include <stdio.h> // fprintf
 #include <string.h> // strerror
@@ -29,12 +30,39 @@ fill_time(double time)
     return (struct timespec) {t, (time - t)*1000000000. };
 }
 
+static void
+default_logger(const char *msg)
+{
+    fprintf(stderr, "%s\n", msg);
+}
+
+static void (*python_logging_callback)(const char *msg) = default_logger;
+
+void
+set_python_logging_callback(void (*func)(const char *))
+{
+    python_logging_callback = func;
+}
+
+// Log an error message
+void
+errorf(const char *fmt, ...)
+{
+    char buf[512];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    buf[sizeof(buf)-1] = '\0';
+    python_logging_callback(buf);
+}
+
 // Report 'errno' in a message written to stderr
 void
 report_errno(char *where, int rc)
 {
     int e = errno;
-    fprintf(stderr, "Got error %d in %s: (%d)%s\n", rc, where, e, strerror(e));
+    errorf("Got error %d in %s: (%d)%s", rc, where, e, strerror(e));
 }
 
 // Return a hex character for a given number

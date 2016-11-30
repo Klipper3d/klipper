@@ -71,6 +71,10 @@ defs_serialqueue = """
         , struct pull_queue_message *q, int max);
 """
 
+defs_pyhelper = """
+    void set_python_logging_callback(void (*func)(const char *));
+"""
+
 # Return the list of file modification times
 def get_mtimes(srcdir, filelist):
     out = []
@@ -95,15 +99,23 @@ def check_build_code(srcdir):
 
 FFI_main = None
 FFI_lib = None
+pyhelper_logging_callback = None
 
 # Return the Foreign Function Interface api to the caller
 def get_ffi():
-    global FFI_main, FFI_lib
+    global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
         check_build_code(srcdir)
         FFI_main = cffi.FFI()
         FFI_main.cdef(defs_stepcompress)
         FFI_main.cdef(defs_serialqueue)
+        FFI_main.cdef(defs_pyhelper)
         FFI_lib = FFI_main.dlopen(os.path.join(srcdir, DEST_LIB))
+        # Setup error logging
+        def logging_callback(msg):
+            logging.error(FFI_main.string(msg))
+        pyhelper_logging_callback = FFI_main.callback(
+            "void(const char *)", logging_callback)
+        FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib

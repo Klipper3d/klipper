@@ -17,9 +17,9 @@
 #include <math.h> // sqrt
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint32_t
-#include <stdio.h> // fprintf
 #include <stdlib.h> // malloc
 #include <string.h> // memset
+#include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
 
 #define CHECK_LINES 1
@@ -219,16 +219,16 @@ check_line(struct stepcompress *sc, struct step_move move)
     if (move.count == 1) {
         if (move.interval != (uint32_t)(*sc->queue_pos - sc->last_step_clock)
             || *sc->queue_pos < sc->last_step_clock) {
-            fprintf(stderr, "ERROR: Count 1 point out of range: %d %d %d\n"
-                    , move.interval, move.count, move.add);
+            errorf("Count 1 point out of range: %d %d %d"
+                   , move.interval, move.count, move.add);
             sc->errors++;
         }
         return;
     }
     int err = 0;
     if (!move.count || !move.interval || move.interval >= 0x80000000) {
-        fprintf(stderr, "ERROR: Point out of range: %d %d %d\n"
-                , move.interval, move.count, move.add);
+        errorf("Point out of range: %d %d %d"
+               , move.interval, move.count, move.add);
         err++;
     }
     uint32_t interval = move.interval, p = 0;
@@ -237,13 +237,13 @@ check_line(struct stepcompress *sc, struct step_move move)
         struct points point = minmax_point(sc, sc->queue_pos + i);
         p += interval;
         if (p < point.minp || p > point.maxp) {
-            fprintf(stderr, "ERROR: Point %d of %d: %d not in %d:%d\n"
-                    , i+1, move.count, p, point.minp, point.maxp);
+            errorf("Point %d of %d: %d not in %d:%d"
+                   , i+1, move.count, p, point.minp, point.maxp);
             err++;
         }
         if (interval >= 0x80000000) {
-            fprintf(stderr, "ERROR: Point %d of %d: interval overflow %d\n"
-                    , i+1, move.count, interval);
+            errorf("Point %d of %d: interval overflow %d"
+                   , i+1, move.count, interval);
             err++;
         }
         interval += move.add;
@@ -385,8 +385,8 @@ stepcompress_push_factor(struct stepcompress *sc
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 1000000) {
         if (count && steps)
-            fprintf(stderr, "ERROR: push_factor invalid count %d %f %f %f %f\n"
-                    , sc->oid, steps, step_offset, clock_offset, factor);
+            errorf("push_factor invalid count %d %f %f %f %f"
+                   , sc->oid, steps, step_offset, clock_offset, factor);
         return 0;
     }
     check_expand(sc, sdir, count);
@@ -419,9 +419,9 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 1000000) {
         if (count && steps)
-            fprintf(stderr, "ERROR: push_sqrt invalid count %d %f %f %f %f %f\n"
-                    , sc->oid, steps, step_offset, clock_offset, sqrt_offset
-                    , factor);
+            errorf("push_sqrt invalid count %d %f %f %f %f %f"
+                   , sc->oid, steps, step_offset, clock_offset, sqrt_offset
+                   , factor);
         return 0;
     }
     check_expand(sc, sdir, count);
@@ -452,10 +452,9 @@ stepcompress_push_delta_const(
                  - height - zdist) / step_dist + .5;
     if (count <= 0 || count > 1000000) {
         if (count)
-            fprintf(stderr, "ERROR: push_delta_const invalid count"
-                    " %d %d %f %f %f %f %f %f %f %f\n"
-                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
-                    , closest_height2, height, movez_r, inv_velocity);
+            errorf("push_delta_const invalid count %d %d %f %f %f %f %f %f %f %f"
+                   , sc->oid, count, clock_offset, dist, step_dist, start_pos
+                   , closest_height2, height, movez_r, inv_velocity);
         return 0;
     }
     check_expand(sc, step_dist > 0., count);
@@ -488,10 +487,9 @@ stepcompress_push_delta_accel(
                  - height - zdist) / step_dist + .5;
     if (count <= 0 || count > 1000000) {
         if (count)
-            fprintf(stderr, "ERROR: push_delta_accel invalid count"
-                    " %d %d %f %f %f %f %f %f %f %f\n"
-                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
-                    , closest_height2, height, movez_r, accel_multiplier);
+            errorf("push_delta_accel invalid count %d %d %f %f %f %f %f %f %f %f"
+                   , sc->oid, count, clock_offset, dist, step_dist, start_pos
+                   , closest_height2, height, movez_r, accel_multiplier);
         return 0;
     }
     check_expand(sc, step_dist > 0., count);

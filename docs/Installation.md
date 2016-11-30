@@ -129,7 +129,7 @@ The host software is executed by running the following as the regular
 "pi" user:
 
 ```
-~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log < /dev/null > /tmp/klippy-errors.log 2>&1 &
+~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log < /dev/null > /dev/null 2>&1 &
 ```
 
 Once Klippy is running, use a web-browser and navigate to the
