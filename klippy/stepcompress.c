@@ -290,6 +290,17 @@ stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
     return sc;
 }
 
+// Free memory associated with a 'stepcompress' object
+void
+stepcompress_free(struct stepcompress *sc)
+{
+    if (!sc)
+        return;
+    free(sc->queue);
+    message_queue_free(&sc->msg_queue);
+    free(sc);
+}
+
 // Convert previously scheduled steps into commands for the mcu
 static void
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
@@ -571,6 +582,18 @@ steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
     ss->num_move_clocks = move_num;
 
     return ss;
+}
+
+// Free memory associated with a 'steppersync' object
+void
+steppersync_free(struct steppersync *ss)
+{
+    if (!ss)
+        return;
+    free(ss->sc_list);
+    free(ss->move_clocks);
+    serialqueue_free_commandqueue(ss->cq);
+    free(ss);
 }
 
 // Implement a binary heap algorithm to track when the next available

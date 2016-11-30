@@ -112,8 +112,6 @@ class SerialReader:
     def disconnect(self):
         if self.serialqueue is None:
             return
-        self.send_flush()
-        time.sleep(0.010)
         self.ffi_lib.serialqueue_exit(self.serialqueue)
         if self.background_thread is not None:
             self.background_thread.join()
@@ -170,7 +168,8 @@ class SerialReader:
     def send_flush(self):
         self.ffi_lib.serialqueue_flush_ready(self.serialqueue)
     def alloc_command_queue(self):
-        return self.ffi_lib.serialqueue_alloc_commandqueue()
+        return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
+                                self.ffi_lib.serialqueue_free_commandqueue)
     # Dumping debug lists
     def dump_debug(self):
         sdata = self.ffi_main.new('struct pull_queue_message[1024]')
@@ -222,6 +221,8 @@ class SerialReader:
         logging.info("%s: %s" % (params['#name'], params['#msg']))
     def handle_default(self, params):
         logging.warn("got %s" % (params,))
+    def __del__(self):
+        self.disconnect()
 
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:

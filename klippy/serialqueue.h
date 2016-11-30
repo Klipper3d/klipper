@@ -35,6 +35,7 @@ struct queue_message {
 };
 
 struct queue_message *message_alloc_and_encode(uint32_t *data, int len);
+void message_queue_free(struct list_head *root);
 
 struct pull_queue_message {
     uint8_t msg[MESSAGE_MAX];
@@ -47,6 +48,7 @@ struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
 void serialqueue_exit(struct serialqueue *sq);
 void serialqueue_free(struct serialqueue *sq);
 struct command_queue *serialqueue_alloc_commandqueue(void);
+void serialqueue_free_commandqueue(struct command_queue *cq);
 void serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
                             , struct list_head *msgs);
 void serialqueue_send(struct serialqueue *sq, struct command_queue *cq

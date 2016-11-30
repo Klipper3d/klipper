@@ -130,6 +130,18 @@ pollreactor_setup(struct pollreactor *pr, int num_fds, int num_timers
         pr->timers[i].waketime = PR_NEVER;
 }
 
+// Free resources associated with a 'struct pollreactor' object
+static void
+pollreactor_free(struct pollreactor *pr)
+{
+    free(pr->fds);
+    pr->fds = NULL;
+    free(pr->fd_callbacks);
+    pr->fd_callbacks = NULL;
+    free(pr->timers);
+    pr->timers = NULL;
+}
+
 // Add a callback for when a file descriptor (fd) becomes readable
 static void
 pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback)
@@ -358,6 +370,18 @@ message_free(struct queue_message *qm)
     free(qm);
 }
 
+// Free all the messages on a queue
+void
+message_queue_free(struct list_head *root)
+{
+    while (!list_empty(root)) {
+        struct queue_message *qm = list_first_entry(
+            root, struct queue_message, node);
+        list_del(&qm->node);
+        message_free(qm);
+    }
+}
+
 
 /****************************************************************
  * Serialqueue interface
@@ -436,18 +460,6 @@ debug_queue_add(struct list_head *root, struct queue_message *qm)
         root, struct queue_message, node);
     list_del(&old->node);
     message_free(old);
-}
-
-// Free all the messages on a queue
-static void
-queue_free(struct list_head *root)
-{
-    while (!list_empty(root)) {
-        struct queue_message *qm = list_first_entry(
-            root, struct queue_message, node);
-        list_del(&qm->node);
-        message_free(qm);
-    }
 }
 
 // Wake up the receiver thread if it is waiting
@@ -863,21 +875,24 @@ serialqueue_exit(struct serialqueue *sq)
 void
 serialqueue_free(struct serialqueue *sq)
 {
+    if (!sq)
+        return;
     if (!pollreactor_is_exit(&sq->pr))
         serialqueue_exit(sq);
     pthread_mutex_lock(&sq->lock);
-    queue_free(&sq->sent_queue);
-    queue_free(&sq->receive_queue);
-    queue_free(&sq->old_sent);
-    queue_free(&sq->old_receive);
+    message_queue_free(&sq->sent_queue);
+    message_queue_free(&sq->receive_queue);
+    message_queue_free(&sq->old_sent);
+    message_queue_free(&sq->old_receive);
     while (!list_empty(&sq->pending_queues)) {
         struct command_queue *cq = list_first_entry(
             &sq->pending_queues, struct command_queue, node);
         list_del(&cq->node);
-        queue_free(&cq->ready_queue);
-        queue_free(&cq->stalled_queue);
+        message_queue_free(&cq->ready_queue);
+        message_queue_free(&cq->stalled_queue);
     }
     pthread_mutex_unlock(&sq->lock);
+    pollreactor_free(&sq->pr);
     free(sq);
 }
 
@@ -890,6 +905,19 @@ serialqueue_alloc_commandqueue(void)
     list_init(&cq->ready_queue);
     list_init(&cq->stalled_queue);
     return cq;
+}
+
+// Free a 'struct command_queue'
+void
+serialqueue_free_commandqueue(struct command_queue *cq)
+{
+    if (!cq)
+        return;
+    if (!list_empty(&cq->ready_queue) || !list_empty(&cq->stalled_queue)) {
+        fprintf(stderr, "Memory leak! Can't free non-empty commandqueue\n");
+        return;
+    }
+    free(cq);
 }
 
 // Add a batch of messages to the given command_queue

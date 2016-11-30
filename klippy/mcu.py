@@ -42,9 +42,10 @@ class MCU_stepper:
         self._reset_cmd = mcu.lookup_command(
             "reset_step_clock oid=%c clock=%u")
         ffi_main, self.ffi_lib = chelper.get_ffi()
-        self._stepqueue = self.ffi_lib.stepcompress_alloc(
+        self._stepqueue = ffi_main.gc(self.ffi_lib.stepcompress_alloc(
             max_error, self._step_cmd.msgid
-            , self._dir_cmd.msgid, self._invert_dir, self._oid)
+            , self._dir_cmd.msgid, self._invert_dir, self._oid),
+                                      self.ffi_lib.stepcompress_free)
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def get_oid(self):
         return self._oid
@@ -356,6 +357,9 @@ class MCU:
             self.get_print_buffer_time = dummy_get_print_buffer_time
     def disconnect(self):
         self.serial.disconnect()
+        if self._steppersync is not None:
+            self.ffi_lib.steppersync_free(self._steppersync)
+            self._steppersync = None
     def stats(self, eventtime):
         stats = self.serial.stats(eventtime)
         stats += " mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
@@ -484,3 +488,5 @@ class MCU:
         mcu_time = print_time + self._print_start_time
         clock = int(mcu_time * self._mcu_freq)
         self.ffi_lib.steppersync_flush(self._steppersync, clock)
+    def __del__(self):
+        self.disconnect()
