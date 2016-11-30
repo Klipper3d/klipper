@@ -50,6 +50,7 @@ class Printer:
             self.stats, self.reactor.NOW)
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
+        self.debugoutput = self.dictionary = None
 
         self.objects = {}
         if self.fileconfig.has_section('fan'):
@@ -63,7 +64,9 @@ class Printer:
                 self, ConfigWrapper(self, 'heater_bed'))
         self.objects['toolhead'] = toolhead.ToolHead(
             self, self._pconfig)
-
+    def set_fileoutput(self, debugoutput, dictionary):
+        self.debugoutput = debugoutput
+        self.dictionary = dictionary
     def stats(self, eventtime):
         out = []
         out.append(self.gcode.stats(eventtime))
@@ -77,14 +80,14 @@ class Printer:
         self.gcode.build_config()
         self.mcu.build_config()
     def connect(self, eventtime):
+        if self.debugoutput is not None:
+            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
+            self.mcu.connect_file(self.debugoutput, self.dictionary)
         self.mcu.connect()
         self.build_config()
         self.gcode.run()
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
-    def connect_file(self, output, dictionary):
-        self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
-        self.mcu.connect_file(output, dictionary)
     def run(self):
         self.reactor.run()
         # If gcode exits, then exit the MCU
@@ -142,7 +145,7 @@ def main():
     printer = Printer(conffile, debuginput=debuginput)
     if debugoutput:
         proto_dict = read_dictionary(options.read_dictionary)
-        printer.connect_file(debugoutput, proto_dict)
+        printer.set_fileoutput(debugoutput, proto_dict)
     printer.run()
 
     if bglogger is not None:
