@@ -26,7 +26,7 @@ class PrinterHeater:
         self.printer = printer
         self.config = config
         self.mcu_pwm = self.mcu_adc = None
-        self.thermistor_c = Thermistors.get(config.get('thermistor_type'))
+        self.thermistor_c = config.getchoice('thermistor_type', Thermistors)
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
         self.can_extrude = (self.min_extrude_temp <= 0.)
@@ -48,9 +48,8 @@ class PrinterHeater:
         self.mcu_adc.set_minmax(
             SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
         self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
-        control_algo = self.config.get('control', 'watermark')
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
-        self.control = algos[control_algo](self, self.config)
+        self.control = self.config.getchoice('control', algos)(self, self.config)
         if self.printer.mcu.is_fileoutput():
             self.can_extrude = True
     def set_pwm(self, read_time, value):

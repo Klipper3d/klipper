@@ -61,6 +61,13 @@ class ConfigWrapper:
     def getboolean(self, option, default=sentinel):
         return self.get_wrapper(
             self.printer.fileconfig.getboolean, option, default)
+    def getchoice(self, option, choices, default=sentinel):
+        c = self.get(option, default)
+        if c not in choices:
+            raise self.error(
+                "Option '%s' in section '%s' is not a valid choice" % (
+                    option, self.section))
+        return choices[c]
     def getsection(self, section):
         return ConfigWrapper(self.printer, section)
 

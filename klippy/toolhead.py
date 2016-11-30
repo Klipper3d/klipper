@@ -161,8 +161,7 @@ class ToolHead:
         self.extruder = printer.objects.get('extruder')
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'delta': delta.DeltaKinematics}
-        kin = config.get('kinematics', 'cartesian')
-        self.kin = kintypes[kin](printer, config)
+        self.kin = config.getchoice('kinematics', kintypes)(printer, config)
         self.max_speed, self.max_accel = self.kin.get_max_speed()
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         self.move_queue = MoveQueue()
