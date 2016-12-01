@@ -28,11 +28,6 @@ Host user interaction
 
 * Improve gcode interface:
 
- * Support ASCII based commands in addition to common gcode
-   commands. It would be useful to support high-level commands such as
-   "query_endstops", "pid_autotune", and "help" instead of having to
-   invent cryptic gcode commands (eg, "M119" and "M303").
-
  * Provide a better way to handle print nozzle z offsets. The M206
    command is cryptic to use and it is too easy to set the value
    incorrectly or to forget to set it.

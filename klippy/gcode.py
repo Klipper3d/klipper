@@ -45,20 +45,23 @@ class GCodeParser:
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
     def build_handlers(self):
-        shutdown_handlers = ['M105', 'M110', 'M114']
-        handlers = ['G0', 'G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M84',
-                    'M105', 'M110', 'M114', 'M119', 'M206']
+        handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
+                    'M18', 'M82', 'M83', 'M105', 'M110', 'M114', 'M206',
+                    'HELP', 'QUERY_ENDSTOPS']
         if self.heater_nozzle is not None:
-            handlers.extend(['M104', 'M109', 'M303'])
+            handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
             handlers.extend(['M140', 'M190'])
         if self.fan is not None:
             handlers.extend(['M106', 'M107'])
         if not self.is_printer_ready:
-            handlers = [h for h in handlers if h in shutdown_handlers]
+            handlers = [h for h in handlers
+                        if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
         self.gcode_handlers = dict((h, getattr(self, 'cmd_'+h))
                                    for h in handlers)
+        for h, f in self.gcode_handlers.items():
+            aliases = getattr(self, 'cmd_'+h+'_aliases', [])
+            self.gcode_handlers.update(dict([(a, f) for a in aliases]))
     def finish(self):
         self.reactor.end()
         self.toolhead.motor_off()
@@ -85,7 +88,7 @@ class GCodeParser:
         for eventtime, data in self.input_log:
             logging.info("Read %f: %s" % (eventtime, repr(data)))
     # Parse input into commands
-    args_r = re.compile('([a-zA-Z*])')
+    args_r = re.compile('([a-zA-Z_]+|[a-zA-Z*])')
     def process_commands(self, eventtime):
         i = -1
         for i in range(len(self.input_commands)-1):
@@ -106,7 +109,7 @@ class GCodeParser:
             if not parts:
                 self.cmd_default(params)
                 continue
-            params['#command'] = cmd = parts[0] + parts[1].strip()
+            params['#command'] = cmd = parts[0].upper() + parts[1].strip()
             # Invoke handler for command
             self.need_ack = True
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
@@ -226,9 +229,8 @@ class GCodeParser:
             logging.debug(params['#original'])
             return
         self.respond('echo:Unknown command:"%s"' % (cmd,))
-    def cmd_G0(self, params):
-        self.cmd_G1(params, sloppy=True)
-    def cmd_G1(self, params, sloppy=False):
+    cmd_G1_aliases = ['G0']
+    def cmd_G1(self, params):
         # Move
         for a, p in self.axis2pos.items():
             if a in params:
@@ -242,7 +244,7 @@ class GCodeParser:
         if 'F' in params:
             self.speed = float(params['F']) / 60.
         try:
-            self.toolhead.move(self.last_position, self.speed, sloppy)
+            self.toolhead.move(self.last_position, self.speed)
         except homing.EndstopError, e:
             self.respond_error(str(e))
             self.last_position = self.toolhead.get_position()
@@ -299,12 +301,11 @@ class GCodeParser:
     def cmd_M83(self, params):
         # Use relative distances for extrusion
         self.absoluteextrude = False
+    cmd_M18_aliases = ["M84"]
     def cmd_M18(self, params):
         # Turn off motors
         self.toolhead.motor_off()
-    def cmd_M84(self, params):
-        # Stop idle hold
-        self.toolhead.motor_off()
+    cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
         self.ack(self.get_temp())
@@ -314,9 +315,11 @@ class GCodeParser:
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.set_temp(self.heater_nozzle, params, wait=True)
+    cmd_M110_when_not_ready = True
     def cmd_M110(self, params):
         # Set Current Line Number
         pass
+    cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position
         if self.toolhead is None:
@@ -327,14 +330,6 @@ class GCodeParser:
             self.last_position[0], self.last_position[1],
             self.last_position[2], self.last_position[3],
             kinpos[0], kinpos[1], kinpos[2]))
-    def cmd_M119(self, params):
-        # Get Endstop Status
-        if self.is_fileinput:
-            return
-        print_time = self.toolhead.get_last_move_time()
-        query_state = homing.QueryEndstops(print_time, self.respond)
-        self.toolhead.query_endstops(query_state)
-        self.set_busy(query_state)
     def cmd_M140(self, params):
         # Set Bed Temperature
         self.set_temp(self.heater_bed, params)
@@ -356,10 +351,29 @@ class GCodeParser:
                 v = float(params[a])
                 self.base_position[p] += self.homing_add[p] - v
                 self.homing_add[p] = v
-    def cmd_M303(self, params):
+    cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
+    cmd_QUERY_ENDSTOPS_aliases = ["M119"]
+    def cmd_QUERY_ENDSTOPS(self, params):
+        # Get Endstop Status
+        if self.is_fileinput:
+            return
+        print_time = self.toolhead.get_last_move_time()
+        query_state = homing.QueryEndstops(print_time, self.respond)
+        self.toolhead.query_endstops(query_state)
+        self.set_busy(query_state)
+    cmd_PID_TUNE_help = "Run PID Tuning"
+    cmd_PID_TUNE_aliases = ["M303"]
+    def cmd_PID_TUNE(self, params):
         # Run PID tuning
         heater = int(params.get('E', '0'))
         heater = {0: self.heater_nozzle, -1: self.heater_bed}[heater]
         temp = float(params.get('S', '60'))
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
+    def cmd_HELP(self, params):
+        cmdhelp = ["// Available extended commands:"]
+        for cmd in self.gcode_handlers:
+            desc = getattr(self, 'cmd_'+cmd+'_help', None)
+            if desc is not None:
+                cmdhelp.append("%-10s: %s" % (cmd, desc))
+        self.respond("\n// ".join(cmdhelp))

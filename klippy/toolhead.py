@@ -248,7 +248,7 @@ class ToolHead:
         self.move_queue.flush()
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
-    def move(self, newpos, speed, sloppy=False):
+    def move(self, newpos, speed):
         speed = min(speed, self.max_speed)
         move = Move(self, self.commanded_pos, newpos, speed, self.max_accel)
         if not move.move_d:
