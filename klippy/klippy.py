@@ -26,9 +26,9 @@ Error configuring printer
 """
 
 message_shutdown = """
-This is an unrecoverable error.  Please correct the
-underlying issue and then manually restart both the
-firmware and the host software.
+Once the underlying issue is corrected, the "CLEAR_SHUTDOWN"
+command can be used to clear the firmware flag and restart
+the host software.
 Printer is shutdown
 """
 

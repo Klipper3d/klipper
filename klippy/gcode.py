@@ -47,7 +47,7 @@ class GCodeParser:
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
                     'M18', 'M82', 'M83', 'M105', 'M110', 'M114', 'M206',
-                    'HELP', 'QUERY_ENDSTOPS', 'RESTART']
+                    'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
@@ -367,6 +367,14 @@ class GCodeParser:
         temp = float(params.get('S', '60'))
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
+    cmd_CLEAR_SHUTDOWN_when_not_ready = True
+    cmd_CLEAR_SHUTDOWN_help = "Clear firmware shutdown and restart"
+    def cmd_CLEAR_SHUTDOWN(self, params):
+        if self.toolhead is None:
+            self.cmd_default(params)
+            return
+        self.printer.mcu.clear_shutdown()
+        self.printer.request_restart()
     cmd_RESTART_when_not_ready = True
     cmd_RESTART_help = "Reload config file and restart host software"
     def cmd_RESTART(self, params):

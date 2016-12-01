@@ -14,16 +14,6 @@ Host user interaction
  * Provide startup scripts so that Klippy can startup at system
    bootup.
 
- * Possibly rework the startup order of Klippy communication with
-   octoprint and the mcu. Currently Klippy only starts communication
-   with Octoprint after it connects with the firmware. However, this
-   limits the ability for Klippy to communicate connection errors to
-   the user. It also makes it difficult for Klippy to reconnect to the
-   firmware and/or restart the firmware if it needs to.
-
- * Support clearing MCU shutdown events from the host without having
-   to restart the firmware.
-
  * Allow loading of a new config without having to restart the mcu.
 
 * Improve gcode interface:

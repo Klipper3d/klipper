@@ -308,7 +308,7 @@ class MCU:
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
         # Config building
-        self._emergency_stop_cmd = None
+        self._emergency_stop_cmd = self._clear_shutdown_cmd = None
         self._num_oids = 0
         self._config_cmds = []
         self._config_crc = None
@@ -348,6 +348,7 @@ class MCU:
                 self._timeout_timer, time.time() + self.COMM_TIMEOUT)
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
+        self._clear_shutdown_cmd = self.lookup_command("clear_shutdown")
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
@@ -387,6 +388,9 @@ class MCU:
         return stats
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
+    def clear_shutdown(self):
+        logging.info("Sending clear_shutdown command")
+        self.send(self._clear_shutdown_cmd.encode())
     def is_fileoutput(self):
         return self._is_fileoutput
     # Configuration phase
