@@ -258,7 +258,7 @@ def main():
             time.sleep(1.)
             logging.info("Restarting printer")
             continue
-        elif res == 'eof_stats':
+        elif res == 'exit_eof':
             printer.disconnect()
         break
 
