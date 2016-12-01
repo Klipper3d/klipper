@@ -14,6 +14,7 @@ class DeltaKinematics:
             printer, config.getsection('stepper_' + n), n)
                          for n in ['a', 'b', 'c']]
         self.need_motor_enable = True
+        self.max_z_velocity = config.getfloat('max_z_velocity', 9999999.9)
         radius = config.getfloat('delta_radius')
         arm_length = config.getfloat('delta_arm_length')
         self.arm_length2 = arm_length**2
@@ -122,6 +123,8 @@ class DeltaKinematics:
         if end_pos[2] > self.limit_z:
             if end_pos[2] > self.max_z or xy2 > (self.max_z - end_pos[2])**2:
                 raise homing.EndstopMoveError(end_pos)
+        if move.axes_d[2]:
+            move.limit_speed(self.max_z_velocity, 9999999.9)
     def move_z(self, move_time, move):
         if not move.axes_d[2]:
             return
