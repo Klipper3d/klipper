@@ -28,12 +28,12 @@ class DeltaKinematics:
             (cos(210.)*radius, sin(210.)*radius),
             (cos(330.)*radius, sin(330.)*radius),
             (cos(90.)*radius, sin(90.)*radius)]
-        self.set_position([0., 0., 0.])
     def build_config(self):
         for stepper in self.steppers:
             stepper.set_max_jerk(0.005 * stepper.max_accel) # XXX
         for stepper in self.steppers:
             stepper.build_config()
+        self.set_position([0., 0., 0.])
     def get_max_speed(self):
         # XXX - this returns conservative values
         max_xy_speed = min(s.max_velocity for s in self.steppers)
