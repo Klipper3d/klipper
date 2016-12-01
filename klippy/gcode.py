@@ -47,7 +47,7 @@ class GCodeParser:
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
                     'M18', 'M82', 'M83', 'M105', 'M110', 'M114', 'M206',
-                    'HELP', 'QUERY_ENDSTOPS']
+                    'HELP', 'QUERY_ENDSTOPS', 'RESTART']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
@@ -62,10 +62,6 @@ class GCodeParser:
         for h, f in self.gcode_handlers.items():
             aliases = getattr(self, 'cmd_'+h+'_aliases', [])
             self.gcode_handlers.update(dict([(a, f) for a in aliases]))
-    def finish(self):
-        self.reactor.end()
-        self.toolhead.motor_off()
-        logging.debug('Completed translation by klippy')
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
     def set_printer_ready(self, is_ready):
@@ -75,7 +71,7 @@ class GCodeParser:
         self.build_handlers()
         if is_ready and self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-    def note_mcu_error(self):
+    def motor_heater_off(self):
         if self.toolhead is not None:
             self.toolhead.motor_off()
         if self.heater_nozzle is not None:
@@ -140,7 +136,8 @@ class GCodeParser:
         self.input_commands = lines
         self.process_commands(eventtime)
         if not data and self.is_fileinput:
-            self.finish()
+            self.motor_heater_off()
+            self.printer.request_exit_eof()
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -370,6 +367,11 @@ class GCodeParser:
         temp = float(params.get('S', '60'))
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
+    cmd_RESTART_when_not_ready = True
+    cmd_RESTART_help = "Reload config file and restart host software"
+    def cmd_RESTART(self, params):
+        self.printer.request_restart()
+    cmd_HELP_when_not_ready = True
     def cmd_HELP(self, params):
         cmdhelp = ["// Available extended commands:"]
         for cmd in self.gcode_handlers:

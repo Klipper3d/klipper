@@ -14,9 +14,8 @@ Printer is not ready
 """
 
 message_restart = """
-This is an unrecoverable error.  Please correct the
-underlying issue and then manually restart the klippy host
-software.
+Once the underlying issue is corrected, use the "RESTART"
+command to reload the config and restart the host software.
 Printer is halted
 """
 
@@ -85,6 +84,7 @@ class Printer:
         self.need_dump_debug = False
         self.state_message = message_startup
         self.debugoutput = self.dictionary = None
+        self.run_result = None
         self.fileconfig = None
         self.mcu = None
         self.objects = {}
@@ -172,10 +172,7 @@ class Printer:
         except:
             logging.exception("Unhandled exception during run")
             return
-        # If gcode exits, then exit the MCU
-        self.stats(time.time())
-        self.mcu.disconnect()
-        self.stats(time.time())
+        return self.run_result
     def get_state_message(self):
         return self.state_message
     def note_shutdown(self, msg):
@@ -187,7 +184,17 @@ class Printer:
     def note_mcu_error(self, msg):
         self.state_message = "%s%s" % (msg, message_restart)
         self.gcode.set_printer_ready(False)
-        self.gcode.note_mcu_error()
+        self.gcode.motor_heater_off()
+    def disconnect(self):
+        if self.mcu is not None:
+            self.stats(time.time())
+            self.mcu.disconnect()
+    def request_restart(self):
+        self.run_result = "restart"
+        self.reactor.end()
+    def request_exit_eof(self):
+        self.run_result = "exit_eof"
+        self.reactor.end()
 
 
 ######################################################################
@@ -239,11 +246,21 @@ def main():
     logging.info("Starting Klippy...")
 
     # Start firmware
-    printer = Printer(conffile, input_fd, is_fileinput=debuginput is not None)
-    if debugoutput:
-        proto_dict = read_dictionary(options.read_dictionary)
-        printer.set_fileoutput(debugoutput, proto_dict)
-    printer.run()
+    while 1:
+        is_fileinput = debuginput is not None
+        printer = Printer(conffile, input_fd, is_fileinput)
+        if debugoutput:
+            proto_dict = read_dictionary(options.read_dictionary)
+            printer.set_fileoutput(debugoutput, proto_dict)
+        res = printer.run()
+        if res == 'restart':
+            printer.disconnect()
+            time.sleep(1.)
+            logging.info("Restarting printer")
+            continue
+        elif res == 'eof_stats':
+            printer.disconnect()
+        break
 
     if bglogger is not None:
         bglogger.stop()
