@@ -36,7 +36,7 @@ class PrinterExtruder:
             self.stepper.motor_enable(move_time, 1)
             self.need_motor_enable = False
         axis_d = move.axes_d[3]
-        extrude_r = axis_d / move.move_d
+        extrude_r = abs(axis_d) / move.move_d
         inv_accel = 1. / (move.accel * extrude_r)
 
         start_v = move.start_v * extrude_r
