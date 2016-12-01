@@ -99,8 +99,10 @@ class Printer:
         out = []
         out.append(self.gcode.stats(eventtime))
         toolhead = self.objects.get('toolhead')
-        out.append(toolhead.stats(eventtime))
-        out.append(self.mcu.stats(eventtime))
+        if toolhead is not None:
+            out.append(toolhead.stats(eventtime))
+        if self.mcu is not None:
+            out.append(self.mcu.stats(eventtime))
         logging.info("Stats %.0f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.
     def load_config(self):
@@ -186,9 +188,12 @@ class Printer:
         self.gcode.set_printer_ready(False)
         self.gcode.motor_heater_off()
     def disconnect(self):
-        if self.mcu is not None:
-            self.stats(time.time())
-            self.mcu.disconnect()
+        try:
+            if self.mcu is not None:
+                self.stats(time.time())
+                self.mcu.disconnect()
+        except:
+            logging.exception("Unhandled exception during disconnect")
     def request_restart(self):
         self.run_result = "restart"
         self.reactor.end()
