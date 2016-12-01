@@ -162,7 +162,8 @@ class ToolHead:
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
-        self.max_speed, self.max_accel = self.kin.get_max_speed()
+        self.max_speed = config.getfloat('max_velocity')
+        self.max_accel = config.getfloat('max_accel')
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
@@ -176,6 +177,7 @@ class ToolHead:
         self.motor_off_time = self.reactor.NEVER
         self.flush_timer = self.reactor.register_timer(self.flush_handler)
     def build_config(self):
+        self.kin.set_max_jerk(0.005 * self.max_accel, self.max_accel) # XXX
         self.kin.build_config()
     # Print time tracking
     def update_move_time(self, movetime):

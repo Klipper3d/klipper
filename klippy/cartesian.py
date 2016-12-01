@@ -13,21 +13,21 @@ class CartKinematics:
         self.steppers = [stepper.PrinterStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['x', 'y', 'z']]
+        self.max_z_velocity = config.getfloat('max_z_velocity', 9999999.9)
+        self.max_z_accel = config.getfloat('max_z_accel', 9999999.9)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
+    def set_max_jerk(self, max_xy_halt_velocity, max_accel):
+        self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
+        self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
+        self.steppers[2].set_max_jerk(0., self.max_z_accel)
     def build_config(self):
-        for stepper in self.steppers[:2]:
-            stepper.set_max_jerk(0.005 * stepper.max_accel) # XXX
         for stepper in self.steppers:
             stepper.build_config()
     def set_position(self, newpos):
         for i in StepList:
             s = self.steppers[i]
             s.mcu_stepper.set_position(int(newpos[i]*s.inv_step_dist + 0.5))
-    def get_max_speed(self):
-        max_xy_speed = min(s.max_velocity for s in self.steppers[:2])
-        max_xy_accel = min(s.max_accel for s in self.steppers[:2])
-        return max_xy_speed, max_xy_accel
     def get_homed_position(self, homing_state):
         pos = [None]*3
         for axis in homing_state.get_axes():
@@ -99,13 +99,9 @@ class CartKinematics:
             return
         # Move with Z - update velocity and accel for slower Z axis
         self.check_endstops(move)
-        axes_d = move.axes_d
-        move_d = move.move_d
-        velocity_factor = min([self.steppers[i].max_velocity / abs(axes_d[i])
-                               for i in StepList if axes_d[i]])
-        accel_factor = min([self.steppers[i].max_accel / abs(axes_d[i])
-                            for i in StepList if axes_d[i]])
-        move.limit_speed(velocity_factor * move_d, accel_factor * move_d)
+        z_ratio = move.move_d / abs(move.axes_d[2])
+        move.limit_speed(
+            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def move(self, move_time, move):
         if self.need_motor_enable:
             self.check_motor_enable(move_time, move)

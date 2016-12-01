@@ -11,11 +11,13 @@ class PrinterExtruder:
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
+        self.max_e_velocity = config.getfloat('max_velocity')
+        self.max_e_accel = config.getfloat('max_accel')
         self.need_motor_enable = True
         self.extrude_pos = 0.
     def build_config(self):
         self.heater.build_config()
-        self.stepper.set_max_jerk(9999999.9)
+        self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.stepper.build_config()
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
@@ -28,7 +30,7 @@ class PrinterExtruder:
             and not move.axes_d[0] and not move.axes_d[1]
             and not move.axes_d[2]):
             # Extrude only move - limit accel and velocity
-            move.limit_speed(self.stepper.max_velocity, self.stepper.max_accel)
+            move.limit_speed(self.max_e_velocity, self.max_e_accel)
     def move(self, move_time, move):
         if self.need_motor_enable:
             self.stepper.motor_enable(move_time, 1)
