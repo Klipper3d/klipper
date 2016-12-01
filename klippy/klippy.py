@@ -82,6 +82,7 @@ class Printer:
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
         self.all_config_options = {}
+        self.need_dump_debug = False
         self.state_message = message_startup
         self.debugoutput = self.dictionary = None
         self.fileconfig = None
@@ -91,6 +92,10 @@ class Printer:
         self.debugoutput = debugoutput
         self.dictionary = dictionary
     def stats(self, eventtime):
+        if self.need_dump_debug:
+            # Call dump_debug here so it is executed in the main thread
+            self.gcode.dump_debug()
+            self.need_dump_debug = False
         out = []
         out.append(self.gcode.stats(eventtime))
         toolhead = self.objects.get('toolhead')
@@ -174,6 +179,8 @@ class Printer:
     def get_state_message(self):
         return self.state_message
     def note_shutdown(self, msg):
+        if self.state_message == 'Running':
+            self.need_dump_debug = True
         self.state_message = "Firmware shutdown: %s%s" % (
             msg, message_shutdown)
         self.gcode.set_printer_ready(False)

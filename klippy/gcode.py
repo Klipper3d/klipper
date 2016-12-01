@@ -72,12 +72,11 @@ class GCodeParser:
         self.build_handlers()
         if is_ready and self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        if not is_ready:
-            logging.info("Dumping gcode input %d blocks" % (
-                len(self.input_log),))
-            # XXX - read from self.input_log is not thread safe
-            for eventtime, data in self.input_log:
-                logging.info("Read %f: %s" % (eventtime, repr(data)))
+    def dump_debug(self):
+        logging.info("Dumping gcode input %d blocks" % (
+            len(self.input_log),))
+        for eventtime, data in self.input_log:
+            logging.info("Read %f: %s" % (eventtime, repr(data)))
     # Parse input into commands
     args_r = re.compile('([a-zA-Z*])')
     def process_commands(self, eventtime):
