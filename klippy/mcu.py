@@ -168,7 +168,7 @@ class MCU_endstop:
                 raise error("Timeout during endstop homing")
         if self._mcu.is_shutdown:
             raise error("MCU is shutdown")
-        last_clock = self._mcu.get_last_clock()
+        last_clock, last_clock_time = self._mcu.get_last_clock()
         if last_clock >= self._next_query_clock:
             self._next_query_clock = last_clock + self._retry_query_ticks
             msg = self._query_cmd.encode(self._oid)
@@ -278,8 +278,8 @@ class MCU_adc:
         self._max_sample = min(0xffff, int(math.ceil(maxval * max_adc)))
         self._inv_max_adc = 1.0 / max_adc
     def _init_callback(self):
-        cur_clock = self._mcu.get_last_clock()
-        clock = cur_clock + int(self._mcu_freq * (1.0 + self._oid * 0.01)) # XXX
+        last_clock, last_clock_time = self._mcu.get_last_clock()
+        clock = last_clock + int(self._mcu_freq * (1.0 + self._oid * 0.01)) # XXX
         msg = self._query_cmd.encode(
             self._oid, clock, self._sample_ticks, self._sample_count
             , self._report_clock, self._min_sample, self._max_sample)
@@ -295,6 +295,7 @@ class MCU_adc:
         self._callback = callback
 
 class MCU:
+    COMM_TIMEOUT = 3.5
     def __init__(self, printer, config):
         self._printer = printer
         self._config = config
@@ -304,6 +305,8 @@ class MCU:
         self.serial = serialhdl.SerialReader(printer.reactor, serialport, baud)
         self.is_shutdown = False
         self._is_fileoutput = False
+        self._timeout_timer = printer.reactor.register_timer(
+            self.timeout_handler)
         # Config building
         self._emergency_stop_cmd = None
         self._num_oids = 0
@@ -341,7 +344,10 @@ class MCU:
     def connect(self):
         if not self._is_fileoutput:
             self.serial.connect()
+            self._printer.reactor.update_timer(
+                self._timeout_timer, time.time() + self.COMM_TIMEOUT)
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
+        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
@@ -355,6 +361,15 @@ class MCU:
                 return 0.250
             self.set_print_start_time = dummy_set_print_start_time
             self.get_print_buffer_time = dummy_get_print_buffer_time
+    def timeout_handler(self, eventtime):
+        last_clock, last_clock_time = self.serial.get_last_clock()
+        timeout = last_clock_time + self.COMM_TIMEOUT
+        if eventtime < timeout:
+            return timeout
+        logging.info("Timeout with firmware (eventtime=%f last_status=%f)" % (
+            eventtime, last_clock_time))
+        self._printer.note_mcu_error("Lost communication with firmware")
+        return self._printer.reactor.NEVER
     def disconnect(self):
         self.serial.disconnect()
         if self._steppersync is not None:
@@ -386,7 +401,6 @@ class MCU:
                 continue
             self.add_config_cmd(line)
     def build_config(self):
-        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         # Build config commands
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (

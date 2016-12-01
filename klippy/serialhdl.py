@@ -152,7 +152,7 @@ class SerialReader:
         return last_ack_clock - clock_diff
     def get_last_clock(self):
         with self.lock:
-            return self.last_ack_clock
+            return self.last_ack_clock, self.last_ack_time
     # Command sending
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
         if cq is None:

@@ -184,6 +184,10 @@ class Printer:
         self.state_message = "Firmware shutdown: %s%s" % (
             msg, message_shutdown)
         self.gcode.set_printer_ready(False)
+    def note_mcu_error(self, msg):
+        self.state_message = "%s%s" % (msg, message_restart)
+        self.gcode.set_printer_ready(False)
+        self.gcode.note_mcu_error()
 
 
 ######################################################################

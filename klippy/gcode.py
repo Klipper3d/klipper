@@ -72,6 +72,13 @@ class GCodeParser:
         self.build_handlers()
         if is_ready and self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+    def note_mcu_error(self):
+        if self.toolhead is not None:
+            self.toolhead.motor_off()
+        if self.heater_nozzle is not None:
+            self.heater_nozzle.set_temp(0., 0.)
+        if self.heater_bed is not None:
+            self.heater_bed.set_temp(0., 0.)
     def dump_debug(self):
         logging.info("Dumping gcode input %d blocks" % (
             len(self.input_log),))
