@@ -1,8 +1,7 @@
 Klipper is currently in an experimental state. These instructions
 assume the software will run on a Raspberry Pi computer in conjunction
-with OctoPrint. Klipper supports only Atmel ATmega based
-micro-controllers and Arduino Due (Atmel SAM3x8e ARM
-micro-controllers) printers at this time.
+with OctoPrint. Klipper supports Atmel ATmega based micro-controllers
+and Arduino Due (Atmel SAM3x8e ARM micro-controllers) printers.
 
 It is recommended that a Raspberry Pi 2 or Raspberry Pi 3 computer be
 used as the host. The software will run on a first generation

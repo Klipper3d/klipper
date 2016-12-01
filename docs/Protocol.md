@@ -28,19 +28,19 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
 
 The above declares a command named "set_digital_out". This allows the
 host to "invoke" this command which would cause the
-command_set_digital_out() C function will be executed in the
+command_set_digital_out() C function to be executed in the
 firmware. The above also indicates that the command takes two integer
 parameters. When the command_set_digital_out() C code is executed, it
 will be passed an array containing these two integers - the first
 corresponding to the 'pin' and the second corresponding to the
 'value'.
 
-In general, the parameters are described with printf() style
-parameters (eg, "%u"). In the above example, "value=" is a parameter
-name and "%c" indicates the parameter is an integer. The parameter
-name is used as documentation. In this example, the "%c" is used as
-documentation to indicate the expected integer is 1 byte in size (the
-declared integer size does not impact the parsing or encoding).
+In general, the parameters are described with printf() style syntax
+(eg, "%u"). In the above example, "value=" is a parameter name and
+"%c" indicates the parameter is an integer. The parameter name is used
+as documentation. In this example, the "%c" is used as documentation
+to indicate the expected integer is 1 byte in size (the declared
+integer size does not impact the parsing or encoding).
 
 At firmware compile time, the build will collect all commands declared
 with DECL_COMMAND(), determine their parameters, and arrange for them

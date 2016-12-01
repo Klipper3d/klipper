@@ -46,12 +46,12 @@ Common startup commands:
 * set_pwm_out pin=%u cycle_ticks=%u value=%c : This command will
   immediately configure the given pin to use hardware based
   pulse-width-modulation (PWM) with the given number of
-  cycle_ticks. The "cycle_ticks" is the amount of time (in MCU clock
-  ticks) in a complete power on and power off cycle. A cycle_ticks
-  value of 1 can be used to request the fastest possible cycle
-  time. The specified "value" is between 0 and 255 with 0 indicating a
-  full off state and 255 indicating a full on state. This command may
-  be useful for enabling CPU and nozzle cooling fans.
+  cycle_ticks. The "cycle_ticks" is the number of MCU clock ticks each
+  power on and power off cycle should last. A cycle_ticks value of 1
+  can be used to request the fastest possible cycle time. The "value"
+  parameter is between 0 and 255 with 0 indicating a full off state
+  and 255 indicating a full on state. This command may be useful for
+  enabling CPU and nozzle cooling fans.
 
 * send_spi_message pin=%u msg=%*s : This command can be used to
   transmit messages to a serial-peripheral-interface (SPI) component
