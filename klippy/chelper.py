@@ -24,14 +24,14 @@ defs_stepcompress = """
     int32_t stepcompress_push_sqrt(struct stepcompress *sc
         , double steps, double step_offset
         , double clock_offset, double sqrt_offset, double factor);
-    int32_t stepcompress_push_delta_const(
-        struct stepcompress *sc, double clock_offset, double dist
-        , double step_dist, double start_pos, double closest_height2
-        , double height, double movez_r, double inv_velocity);
-    int32_t stepcompress_push_delta_accel(
-        struct stepcompress *sc, double clock_offset, double dist
-        , double step_dist, double start_pos, double closest_height2
-        , double height, double movez_r, double accel_multiplier);
+    int32_t stepcompress_push_delta_const(struct stepcompress *sc
+        , double clock_offset, double dist, double start_pos
+        , double inv_velocity, double step_dist, double height
+        , double closestxy_d, double closest_height2, double movez_r);
+    int32_t stepcompress_push_delta_accel(struct stepcompress *sc
+        , double clock_offset, double dist, double start_pos
+        , double accel_multiplier, double step_dist, double height
+        , double closestxy_d, double closest_height2, double movez_r);
     void stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     void stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);

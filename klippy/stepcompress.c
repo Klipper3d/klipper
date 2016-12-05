@@ -442,14 +442,15 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
 // Schedule 'count' number of steps using the delta kinematic const speed
 int32_t
 stepcompress_push_delta_const(
-    struct stepcompress *sc, double clock_offset, double dist, double step_dist
-    , double start_pos, double closest_height2, double height, double movez_r
-    , double inv_velocity)
+    struct stepcompress *sc, double clock_offset, double dist, double start_pos
+    , double inv_velocity, double step_dist
+    , double height, double closestxy_d, double closest_height2, double movez_r)
 {
     // Calculate number of steps to take
-    double zdist = dist * movez_r;
-    int count = (safe_sqrt(closest_height2 - dist*dist + zdist*zdist)
-                 - height - zdist) / step_dist + .5;
+    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
+    double reldist = closestxy_d - movexy_r*dist;
+    double end_height = safe_sqrt(closest_height2 - reldist*reldist);
+    int count = (end_height - height + movez_r*dist) / step_dist + .5;
     if (count <= 0 || count > 1000000) {
         if (count)
             errorf("push_delta_const invalid count %d %d %f %f %f %f %f %f %f %f"
@@ -462,11 +463,12 @@ stepcompress_push_delta_const(
     // Calculate each step time
     uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
+    start_pos += movexy_r*closestxy_d;
     height += .5 * step_dist;
     while (qn < end) {
-        double zh = height*movez_r;
-        double v = safe_sqrt(closest_height2 - height*height + zh*zh);
-        double pos = start_pos + zh + (step_dist > 0. ? -v : v);
+        double relheight = movexy_r*height - movez_r*closestxy_d;
+        double v = safe_sqrt(closest_height2 - relheight*relheight);
+        double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
         *qn++ = clock_offset + pos * inv_velocity;
         height += step_dist;
     }
@@ -477,14 +479,15 @@ stepcompress_push_delta_const(
 // Schedule 'count' number of steps using delta kinematic acceleration
 int32_t
 stepcompress_push_delta_accel(
-    struct stepcompress *sc, double clock_offset, double dist, double step_dist
-    , double start_pos, double closest_height2, double height, double movez_r
-    , double accel_multiplier)
+    struct stepcompress *sc, double clock_offset, double dist, double start_pos
+    , double accel_multiplier, double step_dist
+    , double height, double closestxy_d, double closest_height2, double movez_r)
 {
     // Calculate number of steps to take
-    double zdist = dist * movez_r;
-    int count = (safe_sqrt(closest_height2 - dist*dist + zdist*zdist)
-                 - height - zdist) / step_dist + .5;
+    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
+    double reldist = closestxy_d - movexy_r*dist;
+    double end_height = safe_sqrt(closest_height2 - reldist*reldist);
+    int count = (end_height - height + movez_r*dist) / step_dist + .5;
     if (count <= 0 || count > 1000000) {
         if (count)
             errorf("push_delta_accel invalid count %d %d %f %f %f %f %f %f %f %f"
@@ -497,11 +500,12 @@ stepcompress_push_delta_accel(
     // Calculate each step time
     uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
+    start_pos += movexy_r*closestxy_d;
     height += .5 * step_dist;
     while (qn < end) {
-        double zh = height*movez_r;
-        double v = safe_sqrt(closest_height2 - height*height + zh*zh);
-        double pos = start_pos + zh + (step_dist > 0. ? -v : v);
+        double relheight = movexy_r*height - movez_r*closestxy_d;
+        double v = safe_sqrt(closest_height2 - relheight*relheight);
+        double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
         v = safe_sqrt(pos * accel_multiplier);
         *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
         height += step_dist;

@@ -86,21 +86,25 @@ class MCU_stepper:
             self._stepqueue, steps, step_offset, clock, factor * self._mcu_freq)
         self.commanded_position += count
         return count
-    def step_delta_const(self, mcu_time, dist, step_dist, start_pos
-                         , closest_height2, height, movez_r, inv_velocity):
+    def step_delta_const(self, mcu_time, dist, start_pos
+                         , inv_velocity, step_dist
+                         , height, closestxy_d, closest_height2, movez_r):
         clock = mcu_time * self._mcu_freq
         count = self.ffi_lib.stepcompress_push_delta_const(
-            self._stepqueue, clock, dist, step_dist, start_pos
-            , closest_height2, height, movez_r, inv_velocity * self._mcu_freq)
+            self._stepqueue, clock, dist, start_pos
+            , inv_velocity * self._mcu_freq, step_dist
+            , height, closestxy_d, closest_height2, movez_r)
         self.commanded_position += count
         return count
-    def step_delta_accel(self, mcu_time, dist, step_dist, start_pos
-                         , closest_height2, height, movez_r, accel_multiplier):
+    def step_delta_accel(self, mcu_time, dist, start_pos
+                         , accel_multiplier, step_dist
+                         , height, closestxy_d, closest_height2, movez_r):
         clock = mcu_time * self._mcu_freq
         mcu_freq2 = self._mcu_freq**2
         count = self.ffi_lib.stepcompress_push_delta_accel(
-            self._stepqueue, clock, dist, step_dist, start_pos
-            , closest_height2, height, movez_r, accel_multiplier * mcu_freq2)
+            self._stepqueue, clock, dist, start_pos
+            , accel_multiplier * mcu_freq2, step_dist
+            , height, closestxy_d, closest_height2, movez_r)
         self.commanded_position += count
         return count
     def get_errors(self):
