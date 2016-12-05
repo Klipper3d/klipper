@@ -465,12 +465,31 @@ stepcompress_push_delta_const(
     clock_offset += 0.5;
     start_pos += movexy_r*closestxy_d;
     height += .5 * step_dist;
-    while (qn < end) {
-        double relheight = movexy_r*height - movez_r*closestxy_d;
-        double v = safe_sqrt(closest_height2 - relheight*relheight);
-        double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
-        *qn++ = clock_offset + pos * inv_velocity;
-        height += step_dist;
+    if (!movez_r) {
+        // Optmized case for common XY only moves (no Z movement)
+        while (qn < end) {
+            double v = safe_sqrt(closest_height2 - height*height);
+            double pos = start_pos + (step_dist > 0. ? -v : v);
+            *qn++ = clock_offset + pos * inv_velocity;
+            height += step_dist;
+        }
+    } else if (!movexy_r) {
+        // Optmized case for Z only moves
+        double v = (step_dist > 0. ? -end_height : end_height);
+        while (qn < end) {
+            double pos = start_pos + movez_r*height + v;
+            *qn++ = clock_offset + pos * inv_velocity;
+            height += step_dist;
+        }
+    } else {
+        // General case (handles XY+Z moves)
+        while (qn < end) {
+            double relheight = movexy_r*height - movez_r*closestxy_d;
+            double v = safe_sqrt(closest_height2 - relheight*relheight);
+            double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
+            *qn++ = clock_offset + pos * inv_velocity;
+            height += step_dist;
+        }
     }
     sc->queue_next = qn;
     return step_dist > 0. ? count : -count;
