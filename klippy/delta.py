@@ -91,7 +91,7 @@ class DeltaKinematics:
         # Initial homing
         homepos = [0., 0., s.position_endstop, None]
         coord = list(homepos)
-        coord[2] -= 1.5*(s.position_endstop)
+        coord[2] = -1.5 * math.sqrt(self.arm_length2-self.max_xy2)
         homing_state.plan_home(list(coord), homepos, self.steppers
                                , s.homing_speed)
         # Retract
