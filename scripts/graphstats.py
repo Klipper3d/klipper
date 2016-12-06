@@ -15,11 +15,13 @@ def parse_log(logname):
     out = []
     for line in f:
         parts = line.split()
-        if not parts or parts[0] != 'INFO:root:Stats':
+        if not parts or parts[0] not in ('Stats', 'INFO:root:Stats'):
             #if parts and parts[0] == 'INFO:root:shutdown:':
             #    break
             continue
         keyparts = dict(p.split('=', 1) for p in parts[2:])
+        if keyparts.get('bytes_write', '0') == '0':
+            continue
         keyparts['#sampletime'] = float(parts[1][:-1])
         out.append(keyparts)
     f.close()
@@ -39,6 +41,9 @@ def plot_mcu(data, maxbw, outname):
         if timedelta <= 0.:
             continue
         bw = float(d['bytes_write']) + float(d['bytes_retransmit'])
+        if bw < lastbw:
+            lastbw = bw
+            continue
         load = float(d['mcu_task_avg']) + 3*float(d['mcu_task_stddev'])
         if st - basetime < 15.:
             load = 0.
@@ -60,8 +65,8 @@ def plot_mcu(data, maxbw, outname):
     ax1.set_title("MCU bandwidth and load utilization")
     ax1.set_xlabel('Time (UTC)')
     ax1.set_ylabel('Usage (%)')
-    ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
+    ax1.plot_date(times, loads, 'r', label='MCU load')
     #ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
     ax1.legend()
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
