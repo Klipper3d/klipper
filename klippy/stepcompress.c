@@ -130,7 +130,7 @@ compress_bisect_add(struct stepcompress *sc)
     struct points point = minmax_point(sc, sc->queue_pos);
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
     int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
-    int32_t bestinterval = 0, bestcount = 1, bestadd = 0, bestreach = INT32_MIN;
+    int32_t bestinterval = 0, bestcount = 1, bestadd = 1, bestreach = INT32_MIN;
     int32_t checked_count = 0;
 
     for (;;) {
@@ -162,7 +162,7 @@ compress_bisect_add(struct stepcompress *sc)
 
         // Check if this is the best sequence found so far
         int32_t reach = add*(addfactor-count) + maxinterval*count;
-        if (reach > bestreach) {
+        if (reach > bestreach && (bestadd || count > bestcount + bestcount/16)) {
             bestinterval = maxinterval;
             bestcount = count;
             bestadd = add;
