@@ -28,12 +28,6 @@ class CartKinematics:
         for i in StepList:
             s = self.steppers[i]
             s.mcu_stepper.set_position(int(newpos[i]*s.inv_step_dist + 0.5))
-    def _get_homed_position(self, homing_state):
-        pos = [None]*3
-        for axis in homing_state.get_axes():
-            s = self.steppers[axis]
-            pos[axis] = s.position_endstop + s.get_homed_offset()*s.step_dist
-        return pos
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
@@ -55,15 +49,17 @@ class CartKinematics:
             homepos[axis] = s.position_endstop
             coord = [None, None, None, None]
             coord[axis] = pos
-            homing_state.plan_home(list(coord), homepos, [s], s.homing_speed)
+            homing_state.home(list(coord), homepos, [s], s.homing_speed)
             # Retract
             coord[axis] = rpos
-            homing_state.plan_retract(list(coord), [s], s.homing_speed)
+            homing_state.retract(list(coord), s.homing_speed)
             # Home again
             coord[axis] = r2pos
-            homing_state.plan_second_home(
-                list(coord), homepos, [s], s.homing_speed/2.0)
-        homing_state.plan_calc_position(self._get_homed_position)
+            homing_state.home(
+                list(coord), homepos, [s], s.homing_speed/2.0, second_home=True)
+            # Set final homed position
+            coord[axis] = s.position_endstop + s.get_homed_offset()*s.step_dist
+            homing_state.set_homed_position(coord)
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:

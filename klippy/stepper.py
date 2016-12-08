@@ -75,7 +75,7 @@ class PrinterStepper:
         self.need_motor_enable = not enable
     def enable_endstop_checking(self, move_time, step_time):
         mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
-        self.mcu_endstop.home(mcu_time, step_time)
+        self.mcu_endstop.home_start(mcu_time, step_time)
         return self.mcu_endstop
     def query_endstop(self, print_time):
         mcu_time = self.mcu_endstop.print_to_mcu_time(print_time)
@@ -84,7 +84,7 @@ class PrinterStepper:
     def get_homed_offset(self):
         if not self.homing_stepper_phases or self.need_motor_enable:
             return 0
-        pos = self.mcu_endstop.get_last_position()
+        pos = self.mcu_stepper.get_mcu_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
             logging.info("Setting %s endstop phase to %d" % (

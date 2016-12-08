@@ -78,11 +78,6 @@ class DeltaKinematics:
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
             self.steppers[i].mcu_stepper.set_position(pos[i])
-    def _get_homed_position(self, homing_state):
-        pos = [(s.mcu_stepper.commanded_position + s.get_homed_offset())
-               * s.step_dist
-               for s in self.steppers]
-        return self._actuator_to_cartesian(pos)
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
@@ -92,16 +87,19 @@ class DeltaKinematics:
         homepos = [0., 0., s.position_endstop, None]
         coord = list(homepos)
         coord[2] = -1.5 * math.sqrt(self.arm_length2-self.max_xy2)
-        homing_state.plan_home(list(coord), homepos, self.steppers
-                               , s.homing_speed)
+        homing_state.home(list(coord), homepos, self.steppers, s.homing_speed)
         # Retract
         coord[2] = homepos[2] - s.homing_retract_dist
-        homing_state.plan_retract(list(coord), self.steppers, s.homing_speed)
+        homing_state.retract(list(coord), s.homing_speed)
         # Home again
         coord[2] -= s.homing_retract_dist
-        homing_state.plan_second_home(list(coord), homepos, self.steppers
-                                      , s.homing_speed/2.0)
-        homing_state.plan_calc_position(self._get_homed_position)
+        homing_state.home(list(coord), homepos, self.steppers
+                          , s.homing_speed/2.0, second_home=True)
+        # Set final homed position
+        coord = [(s.mcu_stepper.commanded_position + s.get_homed_offset())
+                 * s.step_dist
+                 for s in self.steppers]
+        homing_state.set_homed_position(self._actuator_to_cartesian(coord))
     def motor_off(self, move_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:

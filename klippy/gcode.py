@@ -260,14 +260,16 @@ class GCodeParser:
         homing_state = homing.Homing(self.toolhead, axes)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
-        self.toolhead.home(homing_state)
-        def axes_update(homing_state):
-            newpos = self.toolhead.get_position()
-            for axis in homing_state.get_axes():
-                self.last_position[axis] = newpos[axis]
-                self.base_position[axis] = -self.homing_add[axis]
-        homing_state.plan_axes_update(axes_update)
-        self.set_busy(homing_state)
+        try:
+            self.toolhead.home(homing_state)
+        except homing.EndstopError, e:
+            self.toolhead.motor_off()
+            self.respond_error(str(e))
+            return
+        newpos = self.toolhead.get_position()
+        for axis in homing_state.get_axes():
+            self.last_position[axis] = newpos[axis]
+            self.base_position[axis] = -self.homing_add[axis]
     def cmd_G90(self, params):
         # Use absolute coordinates
         self.absolutecoord = True

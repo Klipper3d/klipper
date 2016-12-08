@@ -111,6 +111,7 @@ class MCU_stepper:
         return self.ffi_lib.stepcompress_get_errors(self._stepqueue)
 
 class MCU_endstop:
+    error = error
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin, stepper):
         self._mcu = mcu
@@ -134,7 +135,7 @@ class MCU_endstop:
         self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
         self._last_state = {}
         self.print_to_mcu_time = mcu.print_to_mcu_time
-    def home(self, mcu_time, rest_time):
+    def home_start(self, mcu_time, rest_time):
         clock = int(mcu_time * self._mcu_freq)
         rest_ticks = int(rest_time * self._mcu_freq)
         self._homing = True
@@ -149,10 +150,14 @@ class MCU_endstop:
         self._mcu.serial.send_flush()
         self._stepper.note_stepper_stop()
         self._home_timeout_clock = int(mcu_time * self._mcu_freq)
+    def home_wait(self):
+        eventtime = time.time()
+        while self._check_busy(eventtime):
+            eventtime = self._mcu.pause(eventtime + 0.1)
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s" % (params,))
         self._last_state = params
-    def check_busy(self, eventtime):
+    def _check_busy(self, eventtime):
         # Check if need to send an end_stop_query command
         if self._mcu.is_fileoutput():
             return False
@@ -161,7 +166,10 @@ class MCU_endstop:
             if not self._homing:
                 return False
             if not self._last_state.get('homing', 0):
-                self._stepper.set_mcu_position(self.get_last_position())
+                pos = self._last_state.get('pos', 0)
+                if self._stepper.get_invert_dir():
+                    pos = -pos
+                self._stepper.set_mcu_position(pos)
                 self._homing = False
                 return False
             if (self._mcu.serial.get_clock(last_sent_time)
@@ -178,11 +186,6 @@ class MCU_endstop:
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return True
-    def get_last_position(self):
-        pos = self._last_state.get('pos', 0)
-        if self._stepper.get_invert_dir():
-            return -pos
-        return pos
     def query_endstop(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
         self._homing = False
@@ -190,7 +193,7 @@ class MCU_endstop:
         self._next_query_clock = clock
     def query_endstop_wait(self):
         eventtime = time.time()
-        while self.check_busy(eventtime):
+        while self._check_busy(eventtime):
             eventtime = self._mcu.pause(eventtime + 0.1)
         return self._last_state.get('pin', self._invert) ^ self._invert
 
