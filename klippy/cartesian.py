@@ -28,7 +28,7 @@ class CartKinematics:
         for i in StepList:
             s = self.steppers[i]
             s.mcu_stepper.set_position(int(newpos[i]*s.inv_step_dist + 0.5))
-    def get_homed_position(self, homing_state):
+    def _get_homed_position(self, homing_state):
         pos = [None]*3
         for axis in homing_state.get_axes():
             s = self.steppers[axis]
@@ -63,13 +63,13 @@ class CartKinematics:
             coord[axis] = r2pos
             homing_state.plan_second_home(
                 list(coord), homepos, [s], s.homing_speed/2.0)
-        homing_state.plan_calc_position(self.get_homed_position)
+        homing_state.plan_calc_position(self._get_homed_position)
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
             stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True
-    def check_motor_enable(self, move_time, move):
+    def _check_motor_enable(self, move_time, move):
         need_motor_enable = False
         for i in StepList:
             if move.axes_d[i]:
@@ -78,7 +78,7 @@ class CartKinematics:
         self.need_motor_enable = need_motor_enable
     def query_endstops(self, query_state):
         query_state.set_steppers(self.steppers)
-    def check_endstops(self, move):
+    def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in StepList:
             if (move.axes_d[i]
@@ -93,18 +93,18 @@ class CartKinematics:
         xpos, ypos = move.end_pos[:2]
         if (xpos < limits[0][0] or xpos > limits[0][1]
             or ypos < limits[1][0] or ypos > limits[1][1]):
-            self.check_endstops(move)
+            self._check_endstops(move)
         if not move.axes_d[2]:
             # Normal XY move - use defaults
             return
         # Move with Z - update velocity and accel for slower Z axis
-        self.check_endstops(move)
+        self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def move(self, move_time, move):
         if self.need_motor_enable:
-            self.check_motor_enable(move_time, move)
+            self._check_motor_enable(move_time, move)
         inv_accel = 1. / move.accel
         inv_cruise_v = 1. / move.cruise_v
         for i in StepList:
