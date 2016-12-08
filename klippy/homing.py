@@ -90,40 +90,6 @@ class Homing:
     def do_calc_position(self, callback):
         self.toolhead.set_position(self.fill_coord(callback(self)))
 
-# Helper code for querying and reporting the status of the endstops
-class QueryEndstops:
-    def __init__(self, print_time, respond_cb):
-        self.print_time = print_time
-        self.respond_cb = respond_cb
-        self.endstops = []
-        self.busy = []
-    def set_steppers(self, steppers):
-        for stepper in steppers:
-            es = stepper.query_endstop(self.print_time)
-            if es is None:
-                continue
-            self.endstops.append((stepper.name, es))
-            self.busy.append((stepper.name, es))
-    def check_busy(self, eventtime):
-        # Check if all endstop queries have been received
-        while self.busy:
-            try:
-                if self.busy[0][1].check_busy(eventtime):
-                    return True
-            except mcu.error, e:
-                raise EndstopError("Failed to query endstop %s: %s" % (
-                    self.busy[0][0], str(e)))
-            self.busy.pop(0)
-        # All responses received - report status
-        msgs = []
-        for name, es in self.endstops:
-            msg = "open"
-            if es.get_last_triggered():
-                msg = "TRIGGERED"
-            msgs.append("%s:%s" % (name, msg))
-        self.respond_cb(" ".join(msgs))
-        return False
-
 class EndstopError(Exception):
     pass
 

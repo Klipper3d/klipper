@@ -76,8 +76,9 @@ class CartKinematics:
                 self.steppers[i].motor_enable(move_time, 1)
             need_motor_enable |= self.steppers[i].need_motor_enable
         self.need_motor_enable = need_motor_enable
-    def query_endstops(self, query_state):
-        query_state.set_steppers(self.steppers)
+    def query_endstops(self, print_time):
+        endstops = [(s, s.query_endstop(print_time)) for s in self.steppers]
+        return [(s.name, es.query_endstop_wait()) for s, es in endstops]
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in StepList:

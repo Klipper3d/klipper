@@ -78,8 +78,6 @@ class PrinterStepper:
         self.mcu_endstop.home(mcu_time, step_time)
         return self.mcu_endstop
     def query_endstop(self, print_time):
-        if self.mcu_endstop is None:
-            return None
         mcu_time = self.mcu_endstop.print_to_mcu_time(print_time)
         self.mcu_endstop.query_endstop(mcu_time)
         return self.mcu_endstop

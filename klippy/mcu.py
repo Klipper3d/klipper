@@ -188,7 +188,10 @@ class MCU_endstop:
         self._homing = False
         self._min_query_time = time.time()
         self._next_query_clock = clock
-    def get_last_triggered(self):
+    def query_endstop_wait(self):
+        eventtime = time.time()
+        while self.check_busy(eventtime):
+            eventtime = self._mcu.pause(eventtime + 0.1)
         return self._last_state.get('pin', self._invert) ^ self._invert
 
 class MCU_digital_out:
@@ -299,6 +302,7 @@ class MCU_adc:
         self._callback = callback
 
 class MCU:
+    error = error
     COMM_TIMEOUT = 3.5
     def __init__(self, printer, config):
         self._printer = printer
@@ -515,5 +519,7 @@ class MCU:
         mcu_time = print_time + self._print_start_time
         clock = int(mcu_time * self._mcu_freq)
         self.ffi_lib.steppersync_flush(self._steppersync, clock)
+    def pause(self, waketime):
+        return self._printer.reactor.pause(waketime)
     def __del__(self):
         self.disconnect()

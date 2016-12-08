@@ -345,10 +345,13 @@ class GCodeParser:
         # Get Endstop Status
         if self.is_fileinput:
             return
-        print_time = self.toolhead.get_last_move_time()
-        query_state = homing.QueryEndstops(print_time, self.respond)
-        self.toolhead.query_endstops(query_state)
-        self.set_busy(query_state)
+        try:
+            res = self.toolhead.query_endstops()
+        except self.printer.mcu.error, e:
+            self.respond_error(str(e))
+            return
+        self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
+                               for name, t in res]))
     cmd_PID_TUNE_help = "Run PID Tuning"
     cmd_PID_TUNE_aliases = ["M303"]
     def cmd_PID_TUNE(self, params):
