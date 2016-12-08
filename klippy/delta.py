@@ -37,13 +37,13 @@ class DeltaKinematics:
         for stepper in self.steppers:
             stepper.build_config()
         self.set_position([0., 0., 0.])
-    def cartesian_to_actuator(self, coord):
+    def _cartesian_to_actuator(self, coord):
         return [int((math.sqrt(self.arm_length2
                                - (self.towers[i][0] - coord[0])**2
                                - (self.towers[i][1] - coord[1])**2) + coord[2])
                     * self.steppers[i].inv_step_dist + 0.5)
                 for i in StepList]
-    def actuator_to_cartesian(self, pos):
+    def _actuator_to_cartesian(self, pos):
         # Based on code from Smoothieware
         tower1 = list(self.towers[0]) + [pos[0]]
         tower2 = list(self.towers[1]) + [pos[1]]
@@ -75,14 +75,14 @@ class DeltaKinematics:
 
         return matrix_sub(circumcenter, matrix_mul(normal, dist))
     def set_position(self, newpos):
-        pos = self.cartesian_to_actuator(newpos)
+        pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
             self.steppers[i].mcu_stepper.set_position(pos[i])
-    def get_homed_position(self, homing_state):
+    def _get_homed_position(self, homing_state):
         pos = [(s.mcu_stepper.commanded_position + s.get_homed_offset())
                * s.step_dist
                for s in self.steppers]
-        return self.actuator_to_cartesian(pos)
+        return self._actuator_to_cartesian(pos)
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
@@ -101,13 +101,13 @@ class DeltaKinematics:
         coord[2] -= s.homing_retract_dist
         homing_state.plan_second_home(list(coord), homepos, self.steppers
                                       , s.homing_speed/2.0)
-        homing_state.plan_calc_position(self.get_homed_position)
+        homing_state.plan_calc_position(self._get_homed_position)
     def motor_off(self, move_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:
             stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True
-    def check_motor_enable(self, move_time):
+    def _check_motor_enable(self, move_time):
         for i in StepList:
             self.steppers[i].motor_enable(move_time, 1)
         self.need_motor_enable = False
@@ -143,7 +143,7 @@ class DeltaKinematics:
             inv_movexy_d = 1. / movexy_d
 
         if self.need_motor_enable:
-            self.check_motor_enable(move_time)
+            self._check_motor_enable(move_time)
 
         origx, origy, origz = move.start_pos[:3]
 
