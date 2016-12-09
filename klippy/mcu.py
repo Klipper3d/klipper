@@ -506,6 +506,8 @@ class MCU:
         est_mcu_time = self.serial.get_clock(eventtime) / self._mcu_freq
         self._print_start_time = est_mcu_time
     def get_print_buffer_time(self, eventtime, print_time):
+        if self.is_shutdown:
+            return 0.
         mcu_time = print_time + self._print_start_time
         est_mcu_time = self.serial.get_clock(eventtime) / self._mcu_freq
         return mcu_time - est_mcu_time

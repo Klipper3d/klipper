@@ -173,9 +173,10 @@ class ToolHead:
         self.move_flush_time = config.getfloat('move_flush_time', 0.050)
         self.motor_off_delay = config.getfloat('motor_off_time', 60.000)
         self.print_time = 0.
+        self.need_check_stall = -1.
         self.print_time_stall = 0
         self.motor_off_time = self.reactor.NEVER
-        self.flush_timer = self.reactor.register_timer(self.flush_handler)
+        self.flush_timer = self.reactor.register_timer(self._flush_handler)
     def build_config(self):
         self.kin.set_max_jerk(0.005 * self.max_accel, self.max_accel) # XXX
         self.kin.build_config()
@@ -200,18 +201,27 @@ class ToolHead:
         self.move_queue.flush()
         self.printer.mcu.flush_moves(self.print_time)
         self.print_time = 0.
+        self.need_check_stall = -1.
         self.reset_motor_off_time(time.time())
         self.reactor.update_timer(self.flush_timer, self.motor_off_time)
-    def check_busy(self, eventtime):
+    def _check_stall(self):
         if not self.print_time:
             # XXX - find better way to flush initial move_queue items
             if self.move_queue.queue:
-                self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
-            return False
-        buffer_time = self.printer.mcu.get_print_buffer_time(
-            eventtime, self.print_time)
-        return buffer_time > self.buffer_time_high
-    def flush_handler(self, eventtime):
+                self.reactor.update_timer(self.flush_timer, time.time() + 0.100)
+            return
+        eventtime = time.time()
+        while 1:
+            buffer_time = self.printer.mcu.get_print_buffer_time(
+                eventtime, self.print_time)
+            stall_time = buffer_time - self.buffer_time_high
+            if stall_time <= 0.:
+                break
+            eventtime = self.reactor.pause(eventtime + stall_time)
+            if not self.print_time:
+                return
+        self.need_check_stall = self.print_time - stall_time + 0.100
+    def _flush_handler(self, eventtime):
         try:
             if not self.print_time:
                 self.move_queue.flush()
@@ -260,11 +270,14 @@ class ToolHead:
             self.extruder.check_move(move)
         self.commanded_pos[:] = newpos
         self.move_queue.add_move(move)
+        if self.print_time > self.need_check_stall:
+            self._check_stall()
     def home(self, homing_state):
         self.kin.home(homing_state)
     def dwell(self, delay):
         self.get_last_move_time()
         self.update_move_time(delay)
+        self._check_stall()
     def motor_off(self):
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()

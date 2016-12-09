@@ -22,7 +22,6 @@ class GCodeParser:
         self.input_commands = [""]
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
-        self.busy_state = None
         # Command handling
         self.gcode_handlers = {}
         self.is_printer_ready = False
@@ -114,12 +113,6 @@ class GCodeParser:
                 logging.exception("Exception in command handler")
                 self.toolhead.force_shutdown()
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
-            # Check if machine can process next command or must stall input
-            if self.busy_state is not None:
-                self.busy_handler(eventtime)
-            if self.is_printer_ready and self.toolhead.check_busy(eventtime):
-                self.set_busy(self.toolhead)
-                self.busy_handler(eventtime)
             self.ack()
         del self.input_commands[:i+1]
     def process_data(self, eventtime):
@@ -160,26 +153,6 @@ class GCodeParser:
         for line in lines[:-1]:
             self.respond('// %s' % (line.strip(),))
         self.respond('!! %s' % (lines[-1].strip(),))
-    # Busy handling
-    def set_busy(self, busy_handler):
-        self.busy_state = busy_handler
-    def busy_handler(self, eventtime):
-        while 1:
-            try:
-                busy = self.busy_state.check_busy(eventtime)
-            except homing.EndstopError, e:
-                self.respond_error(str(e))
-                busy = False
-            except:
-                logging.exception("Exception in busy handler")
-                self.toolhead.force_shutdown()
-                self.respond_error('Internal error in busy handler')
-                busy = False
-            if not busy:
-                break
-            self.toolhead.reset_motor_off_time(eventtime)
-            eventtime = self.reactor.pause(eventtime + self.RETRY_TIME)
-        self.busy_state = None
     # Temperature wrappers
     def get_temp(self):
         if not self.is_printer_ready:
