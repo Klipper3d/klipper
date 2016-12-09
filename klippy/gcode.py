@@ -44,7 +44,7 @@ class GCodeParser:
         self.fan = self.printer.objects.get('fan')
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M105', 'M110', 'M114', 'M206',
+                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M206',
                     'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
@@ -84,9 +84,8 @@ class GCodeParser:
     # Parse input into commands
     args_r = re.compile('([a-zA-Z_]+|[a-zA-Z*])')
     def process_commands(self, eventtime):
-        i = -1
-        for i in range(len(self.input_commands)-1):
-            line = self.input_commands[i]
+        while len(self.input_commands) > 1:
+            line = self.input_commands.pop(0)
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
             cpos = line.find(';')
@@ -114,18 +113,21 @@ class GCodeParser:
                 self.toolhead.force_shutdown()
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
             self.ack()
-        del self.input_commands[:i+1]
     def process_data(self, eventtime):
-        if self.is_processing_data:
-            self.reactor.unregister_fd(self.fd_handle)
-            self.fd_handle = None
-            return
         data = os.read(self.fd, 4096)
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
-        lines[0] = self.input_commands[0] + lines[0]
-        self.input_commands = lines
+        lines[0] = self.input_commands.pop() + lines[0]
+        self.input_commands.extend(lines)
+        if self.is_processing_data:
+            if len(lines) <= 1:
+                return
+            if not self.is_fileinput and lines[0].strip().upper() == 'M112':
+                self.cmd_M112({})
+            self.reactor.unregister_fd(self.fd_handle)
+            self.fd_handle = None
+            return
         self.is_processing_data = True
         self.process_commands(eventtime)
         self.is_processing_data = False
@@ -282,6 +284,9 @@ class GCodeParser:
     def cmd_M110(self, params):
         # Set Current Line Number
         pass
+    def cmd_M112(self, params):
+        # Emergency Stop
+        self.toolhead.force_shutdown()
     cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position
