@@ -27,7 +27,7 @@ class GCodeParser:
         self.is_printer_ready = False
         self.need_ack = False
         self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
-        self.speed = 1.0
+        self.speed = 25.0
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
