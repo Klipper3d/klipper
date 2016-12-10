@@ -16,6 +16,12 @@ def set_nonblock(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL
                 , fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
+# Clear HUPCL flag
+def clear_hupcl(fd):
+    attrs = termios.tcgetattr(fd)
+    attrs[2] = attrs[2] & ~termios.HUPCL
+    termios.tcsetattr(fd, termios.TCSADRAIN, attrs)
+
 # Support for creating a pseudo-tty for emulating a serial port
 def create_pty(ptyname):
     mfd, sfd = pty.openpty()
