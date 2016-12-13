@@ -226,7 +226,8 @@ check_line(struct stepcompress *sc, struct step_move move)
         return;
     }
     int err = 0;
-    if (!move.count || !move.interval || move.interval >= 0x80000000) {
+    if (!move.count || (!move.interval && !move.add)
+        || move.interval >= 0x80000000) {
         errorf("Point out of range: %d %d %d"
                , move.interval, move.count, move.add);
         err++;
