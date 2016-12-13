@@ -202,7 +202,7 @@ compress_bisect_add(struct stepcompress *sc)
         // Bisect valid add range and try again with new 'add'
         if (minadd > maxadd)
             break;
-        add = (minadd + maxadd) / 2;
+        add = maxadd - (maxadd - minadd) / 4;
     }
     return (struct step_move){ bestinterval, bestcount, bestadd };
 }
