@@ -17,6 +17,7 @@
 #include <math.h> // sqrt
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint32_t
+#include <stdio.h> // fprintf
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "pyhelper.h" // errorf
@@ -100,7 +101,7 @@ struct points {
 
 // Given a requested step time, return the minimum and maximum
 // acceptable times
-static struct points
+static inline struct points
 minmax_point(struct stepcompress *sc, uint64_t *pos)
 {
     uint32_t prevpoint = pos > sc->queue_pos ? *(pos-1) - sc->last_step_clock : 0;
@@ -131,52 +132,53 @@ compress_bisect_add(struct stepcompress *sc)
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
     int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
     int32_t bestinterval = 0, bestcount = 1, bestadd = 1, bestreach = INT32_MIN;
-    int32_t checked_count = 0;
 
     for (;;) {
         // Find longest valid sequence with the given 'add'
-        int32_t mininterval = outer_mininterval, maxinterval = outer_maxinterval;
-        int32_t count = 1, addfactor = 0;
+        struct points nextpoint;
+        int32_t nextmininterval = outer_mininterval;
+        int32_t nextmaxinterval = outer_maxinterval, interval = nextmaxinterval;
+        int32_t nextcount = 1;
         for (;;) {
-            if (count > checked_count) {
-                if (&sc->queue_pos[count] >= sc->queue_next || count >= 65535
-                    || sc->queue_pos[count] >= sc->last_step_clock + (3<<28))
-                    return (struct step_move){ maxinterval, count, add };
-                checked_count++;
+            nextcount++;
+            if (nextcount > bestcount
+                && (&sc->queue_pos[nextcount-1] >= sc->queue_next
+                    || sc->queue_pos[nextcount-1] >= sc->last_step_clock+(3<<28)
+                    || nextcount > 65535)) {
+                int32_t count = nextcount - 1;
+                return (struct step_move){ interval, count, add };
             }
-            point = minmax_point(sc, sc->queue_pos + count);
-            addfactor += count;
-            int32_t c = add*addfactor;
-            int32_t nextmininterval = mininterval;
-            if (c + nextmininterval*(count+1) < point.minp)
-                nextmininterval = DIV_UP(point.minp - c, count+1);
-            int32_t nextmaxinterval = maxinterval;
-            if (c + nextmaxinterval*(count+1) > point.maxp)
-                nextmaxinterval = (point.maxp - c) / (count+1);
+            nextpoint = minmax_point(sc, sc->queue_pos + nextcount - 1);
+            int32_t nextaddfactor = nextcount*(nextcount-1)/2;
+            int32_t c = add*nextaddfactor;
+            if (nextmininterval*nextcount < nextpoint.minp - c)
+                nextmininterval = DIV_UP(nextpoint.minp - c, nextcount);
+            if (nextmaxinterval*nextcount > nextpoint.maxp - c)
+                nextmaxinterval = (nextpoint.maxp - c) / nextcount;
             if (nextmininterval > nextmaxinterval)
                 break;
-            count += 1;
-            mininterval = nextmininterval;
-            maxinterval = nextmaxinterval;
+            interval = nextmaxinterval;
         }
 
         // Check if this is the best sequence found so far
-        int32_t reach = add*(addfactor-count) + maxinterval*count;
+        int32_t count = nextcount - 1, addfactor = count*(count-1)/2;
+        int32_t reach = add*addfactor + interval*count;
         if (reach > bestreach && (bestadd || count > bestcount + bestcount/16)) {
-            bestinterval = maxinterval;
+            bestinterval = interval;
             bestcount = count;
             bestadd = add;
             bestreach = reach;
         }
 
         // Check if a greater or lesser add could extend the sequence
-        int32_t nextreach = add*addfactor + maxinterval*(count+1);
-        if (nextreach < point.minp) {
+        int32_t nextaddfactor = nextcount*(nextcount-1)/2;
+        int32_t nextreach = add*nextaddfactor + interval*nextcount;
+        if (nextreach < nextpoint.minp) {
             minadd = add;
-            outer_maxinterval = maxinterval;
+            outer_maxinterval = nextmaxinterval;
         } else {
             maxadd = add;
-            outer_mininterval = mininterval;
+            outer_mininterval = nextmininterval;
         }
 
         // The maximum valid deviation between two quadratic sequences
@@ -190,12 +192,12 @@ compress_bisect_add(struct stepcompress *sc)
         }
 
         // See if next point would further limit the add range
-        if ((minadd+1)*addfactor + outer_maxinterval*(count+1) < point.minp)
-            minadd = idiv_up(point.minp - outer_maxinterval*(count+1)
-                             , addfactor) - 1;
-        if ((maxadd-1)*addfactor + outer_mininterval*(count+1) > point.maxp)
-            maxadd = idiv_down(point.maxp - outer_mininterval*(count+1)
-                               , addfactor) + 1;
+        int32_t c = outer_maxinterval * nextcount;
+        if ((minadd+1)*nextaddfactor < nextpoint.minp - c)
+            minadd = idiv_up(nextpoint.minp - c, nextaddfactor) - 1;
+        c = outer_mininterval * nextcount;
+        if ((maxadd-1)*nextaddfactor > nextpoint.maxp - c)
+            maxadd = idiv_down(nextpoint.maxp - c, nextaddfactor) + 1;
 
         // Bisect valid add range and try again with new 'add'
         add = (minadd + maxadd) / 2;
