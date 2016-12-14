@@ -115,7 +115,7 @@ minmax_point(struct stepcompress *sc, uint64_t *pos)
 // The maximum add delta between two valid quadratic sequences of the
 // form "add*count*(count-1)/2 + interval*count" is "(6 + 4*sqrt(2)) *
 // maxerror / (count*count)".  The "6 + 4*sqrt(2)" is 11.65685, but
-// using 11 and rounding up when dividing works well in practice.
+// using 11 works well in practice.
 #define QUADRATIC_DEV 11
 
 struct step_move {
@@ -130,7 +130,7 @@ compress_bisect_add(struct stepcompress *sc)
 {
     struct points point = minmax_point(sc, sc->queue_pos);
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
-    int32_t add = 0, minadd = -0x8001, maxadd = 0x8000;
+    int32_t add = 0, minadd = -0x8000, maxadd = 0x7fff;
     int32_t bestinterval = 0, bestcount = 1, bestadd = 1, bestreach = INT32_MIN;
 
     for (;;) {
@@ -174,17 +174,17 @@ compress_bisect_add(struct stepcompress *sc)
         int32_t nextaddfactor = nextcount*(nextcount-1)/2;
         int32_t nextreach = add*nextaddfactor + interval*nextcount;
         if (nextreach < nextpoint.minp) {
-            minadd = add;
+            minadd = add + 1;
             outer_maxinterval = nextmaxinterval;
         } else {
-            maxadd = add;
+            maxadd = add - 1;
             outer_mininterval = nextmininterval;
         }
 
         // The maximum valid deviation between two quadratic sequences
         // can be calculated and used to further limit the add range.
         if (count > 1) {
-            int32_t errdelta = DIV_UP(sc->max_error*QUADRATIC_DEV, count*count);
+            int32_t errdelta = sc->max_error*QUADRATIC_DEV / (count*count);
             if (minadd < add - errdelta)
                 minadd = add - errdelta;
             if (maxadd > add + errdelta)
@@ -193,16 +193,16 @@ compress_bisect_add(struct stepcompress *sc)
 
         // See if next point would further limit the add range
         int32_t c = outer_maxinterval * nextcount;
-        if ((minadd+1)*nextaddfactor < nextpoint.minp - c)
-            minadd = idiv_up(nextpoint.minp - c, nextaddfactor) - 1;
+        if (minadd*nextaddfactor < nextpoint.minp - c)
+            minadd = idiv_up(nextpoint.minp - c, nextaddfactor);
         c = outer_mininterval * nextcount;
-        if ((maxadd-1)*nextaddfactor > nextpoint.maxp - c)
-            maxadd = idiv_down(nextpoint.maxp - c, nextaddfactor) + 1;
+        if (maxadd*nextaddfactor > nextpoint.maxp - c)
+            maxadd = idiv_down(nextpoint.maxp - c, nextaddfactor);
 
         // Bisect valid add range and try again with new 'add'
-        add = (minadd + maxadd) / 2;
-        if (add <= minadd || add >= maxadd)
+        if (minadd > maxadd)
             break;
+        add = (minadd + maxadd) / 2;
     }
     return (struct step_move){ bestinterval, bestcount, bestadd };
 }
