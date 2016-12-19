@@ -132,6 +132,7 @@ compress_bisect_add(struct stepcompress *sc)
     int32_t outer_mininterval = point.minp, outer_maxinterval = point.maxp;
     int32_t add = 0, minadd = -0x8000, maxadd = 0x7fff;
     int32_t bestinterval = 0, bestcount = 1, bestadd = 1, bestreach = INT32_MIN;
+    int32_t zerointerval = 0, zerocount = 0;
 
     for (;;) {
         // Find longest valid sequence with the given 'add'
@@ -163,11 +164,15 @@ compress_bisect_add(struct stepcompress *sc)
         // Check if this is the best sequence found so far
         int32_t count = nextcount - 1, addfactor = count*(count-1)/2;
         int32_t reach = add*addfactor + interval*count;
-        if (reach > bestreach && (bestadd || count > bestcount + bestcount/16)) {
+        if (reach > bestreach) {
             bestinterval = interval;
             bestcount = count;
             bestadd = add;
             bestreach = reach;
+            if (!add) {
+                zerointerval = interval;
+                zerocount = count;
+            }
         }
 
         // Check if a greater or lesser add could extend the sequence
@@ -204,6 +209,9 @@ compress_bisect_add(struct stepcompress *sc)
             break;
         add = maxadd - (maxadd - minadd) / 4;
     }
+    if (zerocount + zerocount/16 >= bestcount)
+        // Prefer add=0 if it's similar to the best found sequence
+        return (struct step_move){ zerointerval, zerocount, 0 };
     return (struct step_move){ bestinterval, bestcount, bestadd };
 }
 
