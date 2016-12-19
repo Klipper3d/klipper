@@ -164,7 +164,8 @@ compress_bisect_add(struct stepcompress *sc)
         // Check if this is the best sequence found so far
         int32_t count = nextcount - 1, addfactor = count*(count-1)/2;
         int32_t reach = add*addfactor + interval*count;
-        if (reach > bestreach) {
+        if (reach > bestreach
+            || (reach == bestreach && interval > bestinterval)) {
             bestinterval = interval;
             bestcount = count;
             bestadd = add;
