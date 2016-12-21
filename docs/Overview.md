@@ -1,5 +1,6 @@
 See [installation](Installation.md) for information on compiling,
-installing, and running Klipper.
+installing, and running Klipper. Read [features](Features.md) for a
+high-level description of useful capabilities.
 
 See [code overview](Code_Overview.md) for developer information on the
 structure and layout of the Klipper code.

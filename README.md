@@ -6,8 +6,11 @@ runs on a host machine. The host software does the work to build a
 schedule of events, while the micro-controller software does the work
 to execute the provided schedule at the specified times.
 
-Please see the [documentation](docs/Overview.md) for more information
-on running and working with Klipper.
+See the [features](docs/Features.md) document to find out why you
+should use Klipper. To begin using Klipper start by
+[installing](docs/Installation.md) it.
+
+There is also [developer documentation](docs/Overview.md) available.
 
 License
 =======
