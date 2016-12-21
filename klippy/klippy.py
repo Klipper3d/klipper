@@ -20,8 +20,9 @@ Printer is halted
 """
 
 message_mcu_connect_error = """
-This is an unrecoverable error.  Please manually restart
-both the firmware and the host software.
+This is an unrecoverable error.  Please manually restart the
+micro-controller and then issue the "RESTART" command to
+restart the host software.
 Error configuring printer
 """
 
