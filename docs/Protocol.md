@@ -1,20 +1,39 @@
-Klipper uses a binary protocol for communication between host and
-firmware. This page provides a high-level description of that
-protocol.
+The Klipper transmission protocol can be thought of, at a high level,
+as a series of command and response strings that are compressed,
+transmitted over a serial line, and then processed at the receiving
+side. An example series of commands in uncompressed human-readable
+format might look like:
+
+```
+set_digital_out pin=86 value=1
+set_digital_out pin=85 value=1
+schedule_digital_out oid=8 clock=4000000 value=0
+queue_step oid=7 interval=7458 count=10 add=331
+queue_step oid=7 interval=11717 count=4 add=1281
+```
+
+See the [firmware commands](Firmware_Commands.md) document for
+information on available commands. See the [debugging](Debugging.md)
+document for information on how to translate a G-Code file into its
+corresponding human-readable firmware commands.
+
+This page provides a high-level description of the Klipper
+transmission protocol itself. It describes how messages are declared,
+encoded in binary format (the "compression" scheme), and transmitted.
 
 The goal of the protocol is to enable an error-free communication
 channel between the host and firmware that is low-latency,
 low-bandwidth, and low-complexity for the firmware.
 
-The protocol acts as a
+Firmware Interface
+==================
+
+The Klipper transmission protocol can be thought of as a
 [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call) mechanism
 between firmware and host. The firmware declares the commands that the
 host may invoke along with the response messages that it can
 generate. The host uses that information to command the firmware to
 perform actions and to interpret the results.
-
-Firmware Interface
-==================
 
 Declaring commands
 ------------------
@@ -36,9 +55,11 @@ corresponding to the 'pin' and the second corresponding to the
 'value'.
 
 In general, the parameters are described with printf() style syntax
-(eg, "%u"). In the above example, "value=" is a parameter name and
-"%c" indicates the parameter is an integer. The parameter name is used
-as documentation. In this example, the "%c" is used as documentation
+(eg, "%u"). The formatting directly corresponds to the human-readable
+view of commands (eg, "set_digital_out pin=86 value=1"). In the above
+example, "value=" is a parameter name and "%c" indicates the parameter
+is an integer. Internally, the parameter name is only used as
+documentation. In this example, the "%c" is also used as documentation
 to indicate the expected integer is 1 byte in size (the declared
 integer size does not impact the parsing or encoding).
 
