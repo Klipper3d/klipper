@@ -12,13 +12,14 @@ Prepping an OS image
 ====================
 
 Start by installing [OctoPi](https://github.com/guysoft/OctoPi) on the
-Raspberry Pi computer. Use version 0.13.0 or later - see the
+Raspberry Pi computer. Use OctoPi v0.13.0 or later - see the
 [octopi releases](https://github.com/guysoft/OctoPi/releases) for
-release information. One should verify that OctoPi boots, that the
-OctoPrint web server works, and that one can ssh to the octopi server
-(ssh pi@octopi -- password is "raspberry") before continuing.
+release information. One should verify that OctoPi boots and that the
+OctoPrint web server works. After connecting to the OctoPrint web
+page, follow the prompt to upgrade OctoPrint to v1.3.0 or later.
 
-After installing OctoPi, ssh into the target machine and run the
+After installing OctoPi and upgrading OctoPrint, ssh into the target
+machine (ssh pi@octopi -- password is "raspberry") and run the
 following commands:
 
 ```
@@ -116,7 +117,8 @@ Under "Serial Connection" in "Additional serial ports" add
 Enter the Settings tab again and under "Serial Connection" change the
 "Serial Port" setting to "/tmp/printer". Change the Baudrate field to
 250000 (this buad rate field is not related to the firmware baudrate
-and may be safely left at 250000).
+and may be safely left at 250000). Unselect the "Not only cancel
+ongoing prints but also disconnect..." checkbox.
 
 Under the "Features" tab, unselect "Enable SD support". Then click
 "Save".
@@ -132,4 +134,21 @@ The host software is executed by running the following as the regular
 ```
 
 Once Klippy is running, use a web-browser and navigate to the
-OctoPrint web site. Click on "Connect" under the "Connection" tab.
+OctoPrint web site. Under the "Connection" tab (on the left of the
+main page) make sure the "Serial Port" is set to "/tmp/printer" and
+click "Connect". (If "/tmp/printer" is not an available selection then
+try reloading the page.)
+
+Once connected, navigate to the "Terminal" tab and type "status"
+(without the quotes) into the command entry box and click "Send". If
+the Klippy config file was successfully read, and the micro-controller
+was successfully found and configured, then this command will report
+that the printer is ready. Klippy reports error messages via this
+terminal tab. The "status" command can be used to re-report error
+messages.
+
+In addition to common g-code commands, Klippy supports a few extended
+commands - "status" is an example of one of these commands. Use the
+"help" command to get a list of other extended commands. In
+particular, note the "restart" command - use this command to reload
+the Klippy config file after any changes.
