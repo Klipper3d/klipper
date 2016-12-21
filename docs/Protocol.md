@@ -130,23 +130,24 @@ Message Block Contents
 
 Each message block sent from host to firmware contains a series of
 zero or more message commands in its contents. Each command starts
-with a Variable Length Quantity (VLQ) encoded command-id followed by
-zero or more VLQ parameters for the given command. So, the contents of
-an example message block might look like:
+with a Variable Length Quantity (VLQ) encoded integer command-id
+followed by zero or more VLQ parameters for the given command. So, the
+contents of an example message block might look like:
 
 ```
 <id_cmd_a><param1><id_cmd_b><param1><param2><id_cmd_c><id_cmd_d>
 ```
 
 In order to encode and parse the message contents, both the host and
-firmware must agree on a "data dictionary". The data dictionary
-associates high-level commands with specific integer command-ids along
-with the number of parameters that the command takes. When processing
-the data, the parser will know to expect a specific number of VLQ
-encoded parameters following a given command. So, in the above
-example, both the host and firmware would know that "id_cmd_a" is
-always followed by exactly one parameter, "id_cmd_b" two parameters,
-and "id_cmd_c" / "id_cmd_d" zero parameters.
+firmware must agree on the number of parameters each command has. So,
+in the above example, both the host and firmware would know that
+"id_cmd_a" is always followed by exactly one parameter, "id_cmd_b" two
+parameters, and "id_cmd_c" / "id_cmd_d" zero parameters. The host and
+firmware share a "data dictionary" that associates high-level commands
+with specific integer command-ids along with the number of parameters
+that the command takes. When processing the data, the parser will know
+to expect a specific number of VLQ encoded parameters following a
+given command.
 
 The message contents for blocks sent from firmware to host follow the
 same format. The identifiers in these messages are "response ids", but
