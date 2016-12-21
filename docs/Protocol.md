@@ -70,9 +70,9 @@ host.
 
 The firmware should only invoke sendf() from command or task handlers,
 and it should not be invoked from interrupts or timers. The firmware
-does not need to issue a sendf() from a command, it is not limited in
-the number of times sendf() may be invoked, and it may invoke sendf()
-at any time from a task handler.
+does not need to issue a sendf() in response to a received command, it
+is not limited in the number of times sendf() may be invoked, and it
+may invoke sendf() at any time from a task handler.
 
 ### Output responses
 
