@@ -153,7 +153,7 @@ class Printer:
             self.build_config()
             self.validate_config()
             self.gcode.set_printer_ready(True)
-            self.state_message = "Running"
+            self.state_message = "Printer is ready"
         except ConfigParser.Error, e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)

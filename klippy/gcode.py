@@ -45,7 +45,8 @@ class GCodeParser:
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
                     'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M206',
-                    'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN']
+                    'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN',
+                    'STATUS']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
@@ -150,10 +151,13 @@ class GCodeParser:
         if self.is_fileinput:
             return
         os.write(self.fd, msg+"\n")
+    def respond_info(self, msg):
+        lines = [l.strip() for l in msg.strip().split('\n')]
+        self.respond("// " + "\n// ".join(lines))
     def respond_error(self, msg):
         lines = msg.strip().split('\n')
-        for line in lines[:-1]:
-            self.respond('// %s' % (line.strip(),))
+        if len(lines) > 1:
+            self.respond_info("\n".join(lines[:-1]))
         self.respond('!! %s' % (lines[-1].strip(),))
     # Temperature wrappers
     def get_temp(self):
@@ -342,7 +346,7 @@ class GCodeParser:
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
     cmd_CLEAR_SHUTDOWN_when_not_ready = True
-    cmd_CLEAR_SHUTDOWN_help = "Clear firmware shutdown and restart"
+    cmd_CLEAR_SHUTDOWN_help = "Clear a firmware shutdown and restart"
     def cmd_CLEAR_SHUTDOWN(self, params):
         if self.toolhead is None:
             self.cmd_default(params)
@@ -353,11 +357,22 @@ class GCodeParser:
     cmd_RESTART_help = "Reload config file and restart host software"
     def cmd_RESTART(self, params):
         self.printer.request_restart()
+    cmd_STATUS_when_not_ready = True
+    cmd_STATUS_help = "Report the printer status"
+    def cmd_STATUS(self, params):
+        msg = self.printer.get_state_message()
+        if self.is_printer_ready:
+            self.respond_info(msg)
+        else:
+            self.respond_error(msg)
     cmd_HELP_when_not_ready = True
     def cmd_HELP(self, params):
-        cmdhelp = ["// Available extended commands:"]
+        cmdhelp = []
+        if not self.is_printer_ready:
+            cmdhelp.append("Printer is not ready - not all commands available.")
+        cmdhelp.append("Available extended commands:")
         for cmd in self.gcode_handlers:
             desc = getattr(self, 'cmd_'+cmd+'_help', None)
             if desc is not None:
                 cmdhelp.append("%-10s: %s" % (cmd, desc))
-        self.respond("\n// ".join(cmdhelp))
+        self.respond_info("\n".join(cmdhelp))
