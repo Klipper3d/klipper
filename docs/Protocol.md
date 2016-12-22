@@ -152,23 +152,34 @@ Message Block Contents
 Each message block sent from host to firmware contains a series of
 zero or more message commands in its contents. Each command starts
 with a Variable Length Quantity (VLQ) encoded integer command-id
-followed by zero or more VLQ parameters for the given command. So, the
-contents of an example message block might look like:
+followed by zero or more VLQ parameters for the given command.
+
+As an example, the following four commands might be placed in a single
+message block:
 
 ```
-<id_cmd_a><param1><id_cmd_b><param1><param2><id_cmd_c><id_cmd_d>
+set_digital_out pin=86 value=1
+set_digital_out pin=85 value=0
+get_config
+get_status
+```
+
+and encoded into the following eight VLQ integers:
+
+```
+<id_set_digital_out><86><1><id_set_digital_out><85><0><id_get_config><id_get_status>
 ```
 
 In order to encode and parse the message contents, both the host and
-firmware must agree on the number of parameters each command has. So,
-in the above example, both the host and firmware would know that
-"id_cmd_a" is always followed by exactly one parameter, "id_cmd_b" two
-parameters, and "id_cmd_c" / "id_cmd_d" zero parameters. The host and
-firmware share a "data dictionary" that associates high-level commands
-with specific integer command-ids along with the number of parameters
-that the command takes. When processing the data, the parser will know
-to expect a specific number of VLQ encoded parameters following a
-given command.
+firmware must agree on the command ids and the number of parameters
+each command has. So, in the above example, both the host and firmware
+would know that "id_set_digital_out" is always followed by two
+parameters, and "id_get_config" and "id_get_status" have zero
+parameters. The host and firmware share a "data dictionary" that maps
+the command descriptions (eg, "set_digital_out pin=%u value=%c") to
+their integer command-ids. When processing the data, the parser will
+know to expect a specific number of VLQ encoded parameters following a
+given command id.
 
 The message contents for blocks sent from firmware to host follow the
 same format. The identifiers in these messages are "response ids", but
@@ -205,9 +216,9 @@ the length as a VLQ encoded integer followed by the contents itself:
 <VLQ encoded length><n-byte contents>
 ```
 
-The data dictionary includes information on each parameter so that
-both the host and firmware know which command parameters use simple
-VLQ encoding and which parameters use string encoding.
+The command descriptions found in the data dictionary allow both the
+host and firmware to know which command parameters use simple VLQ
+encoding and which parameters use string encoding.
 
 Data Dictionary
 ===============
@@ -215,16 +226,14 @@ Data Dictionary
 In order for meaningful communications to be established between
 firmware and host, both sides must agree on a "data dictionary". This
 data dictionary contains the integer identifiers for commands and
-responses along with the number of parameters and the types of
-parameters for each command/response.
+responses along with their descriptions.
 
 At compile time the firmware build uses the contents of DECL_COMMAND()
 and sendf() macros to generate the data dictionary. The build
 automatically assigns unique identifiers to each command and
-response. The data dictionary maps the high-level names (eg,
-"get_status") to the integer command ids. This allows the host and
-firmware to use descriptive ASCII names while still using minimal
-bandwidth.
+response. This system allows both the host and firmware code to
+seamlessly use descriptive human-readable names while still using
+minimal bandwidth.
 
 The host queries the data dictionary when it first connects to the
 firmware. Once the host downloads the data dictionary from the
@@ -267,9 +276,9 @@ from firmware to host. For example, if the firmware were to run:
 shutdown("Unable to handle command");
 ```
 
-The error message can be encoded and sent using a single VLQ. The host
-uses the data dictionary to resolve the VLQ encoded static string id
-to the associated message in the data dictionary.
+The error message would be encoded and sent using a single VLQ. The
+host uses the data dictionary to resolve VLQ encoded static string ids
+to their associated human-readable strings.
 
 Message flow
 ============
