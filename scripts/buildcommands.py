@@ -21,25 +21,6 @@ def error(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(-1)
 
-# Parser for constants in simple C header files.
-def scan_config(file):
-    f = open(file, 'r')
-    opts = {}
-    for l in f.readlines():
-        parts = l.split()
-        if len(parts) != 3:
-            continue
-        if parts[0] != '#define':
-            continue
-        value = parts[2]
-        if value.isdigit() or (value.startswith('0x') and value[2:].isdigit()):
-            value = int(value, 0)
-        elif value.startswith('"'):
-            value = value[1:-1]
-        opts[parts[1]] = value
-    f.close()
-    return opts
-
 
 ######################################################################
 # Command and output parser generation
@@ -145,7 +126,7 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 ######################################################################
 
 def build_identify(cmd_by_id, msg_to_id, responses, static_strings
-                   , config, version):
+                   , constants, version):
     #commands, messages, static_strings
     messages = dict((msgid, msg) for msg, msgid in msg_to_id.items())
     data = {}
@@ -153,9 +134,7 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
     data['static_strings'] = static_strings
-    configlist = ['MCU', 'CLOCK_FREQ', 'SERIAL_BAUD']
-    data['config'] = dict((i, config['CONFIG_'+i]) for i in configlist
-                          if 'CONFIG_'+i in config)
+    data['config'] = constants
     data['version'] = version
 
     # Format compressed info into C code
@@ -223,7 +202,7 @@ def build_version(extra):
 ######################################################################
 
 def main():
-    usage = "%prog [options] <cmd section file> <autoconf.h> <output.c>"
+    usage = "%prog [options] <cmd section file> <output.c>"
     opts = optparse.OptionParser(usage)
     opts.add_option("-e", "--extra", dest="extra", default="",
                     help="extra version string to append to version")
@@ -233,9 +212,9 @@ def main():
                     help="enable debug messages")
 
     options, args = opts.parse_args()
-    if len(args) != 3:
+    if len(args) != 2:
         opts.error("Incorrect arguments")
-    incmdfile, inheader, outcfile = args
+    incmdfile, outcfile = args
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
@@ -245,6 +224,7 @@ def main():
                             for m in msgproto.DefaultMessages.values())
     parsers = []
     static_strings = []
+    constants = {}
     # Parse request file
     f = open(incmdfile, 'rb')
     data = f.read()
@@ -280,6 +260,14 @@ def main():
             parsers.append((None, msg))
         elif cmd == '_DECL_STATIC_STR':
             static_strings.append(req[17:])
+        elif cmd == '_DECL_CONSTANT':
+            name, value = parts[1:]
+            value = value.strip()
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            if name in constants and constants[name] != value:
+                error("Conflicting definition for constant '%s'" % name)
+            constants[name] = value
         else:
             error("Unknown build time command '%s'" % cmd)
     # Create unique ids for each message type
@@ -299,13 +287,12 @@ def main():
     cmdcode = build_commands(cmd_by_id, messages_by_name, all_param_types)
     paramcode = build_param_types(all_param_types)
     # Create identify information
-    config = scan_config(inheader)
     version = build_version(options.extra)
     sys.stdout.write("Version: %s\n" % (version,))
     responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
                  if msgname not in commands]
     datadict, icode = build_identify(cmd_by_id, msg_to_id, responses
-                                     , static_strings, config, version)
+                                     , static_strings, constants, version)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + paramcode + parsercode + cmdcode + icode)

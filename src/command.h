@@ -15,6 +15,10 @@
 // Flags for command handler declarations.
 #define HF_IN_SHUTDOWN   0x01   // Handler can run even when in emergency stop
 
+// Declare a constant exported to the host
+#define DECL_CONSTANT(NAME, VALUE)              \
+    _DECL_CONSTANT(NAME, VALUE)
+
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
     _sendf(_DECL_OUTPUT(FMT) , ##args )
@@ -58,6 +62,11 @@ extern const uint32_t command_identify_size;
         __visible __section(".compile_time_request")                    \
         = "_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG; \
     void __visible FUNC(uint32_t*)
+
+#define _DECL_CONSTANT(NAME, VALUE)             \
+    char __PASTE(_DECLC_ ## NAME ## _, __LINE__) []                     \
+        __visible __section(".compile_time_request")                    \
+        = "_DECL_CONSTANT " __stringify(NAME) " " __stringify(VALUE)
 
 // Create a compile time request and return a unique (incrementing id)
 // for that request.

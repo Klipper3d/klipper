@@ -101,7 +101,7 @@ class SerialReader:
         self.msgparser.process_identify(dictionary, decompress=False)
         est_clock = 1000000000000.
         if pace:
-            est_clock = self.msgparser.config['CLOCK_FREQ']
+            est_clock = float(self.msgparser.config['CLOCK_FREQ'])
         self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1)
         self.est_clock = est_clock
         self.last_ack_time = time.time()

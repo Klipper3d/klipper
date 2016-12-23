@@ -109,6 +109,19 @@ to generate and format arbitrary messages for human consumption. It is
 a wrapper around sendf() and as with sendf() it should not be called
 from interrupts or timers.
 
+Declaring constants
+-------------------
+
+The firmware can also define constants to be exported.  For example,
+the following:
+
+```
+DECL_CONSTANT(SERIAL_BAUD, 250000);
+```
+
+would export a constant named "SERIAL_BAUD" with a value of 250000
+from the firmware to the host.
+
 Low-level message encoding
 ==========================
 
@@ -262,8 +275,8 @@ dictionary. Once all chunks are obtained the host will assemble the
 chunks, uncompress the data, and parse the contents.
 
 In addition to information on the communication protocol, the data
-dictionary also contains firmware version, configuration, and other
-useful information.
+dictionary also contains firmware version, constants (as defined by
+DECL_CONSTANT), and static strings.
 
 Static Strings
 --------------

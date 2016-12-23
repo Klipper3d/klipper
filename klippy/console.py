@@ -27,7 +27,7 @@ class KeyboardReader:
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def update_evals(self, eventtime):
-        f = self.ser.msgparser.config.get('CLOCK_FREQ', 1)
+        f = int(self.ser.msgparser.config.get('CLOCK_FREQ', 1))
         c = self.ser.get_clock(eventtime)
         self.eval_globals['freq'] = f
         self.eval_globals['clock'] = int(c)

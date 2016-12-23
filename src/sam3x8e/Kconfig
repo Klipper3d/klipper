@@ -6,10 +6,6 @@ config BOARD_DIRECTORY
     string
     default "sam3x8e"
 
-config MCU
-    string
-    default "sam3x8e"
-
 config CLOCK_FREQ
     int
     default 42000000 # 84000000/2

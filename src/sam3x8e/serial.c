@@ -9,6 +9,7 @@
 #include "board/gpio.h" // gpio_peripheral
 #include "board/io.h" // readb
 #include "board/misc.h" // console_get_input
+#include "command.h" // DECL_CONSTANT
 #include "sam3x8e.h" // UART
 #include "sched.h" // DECL_INIT
 #include "irq.h" // irq_save
@@ -23,6 +24,8 @@ static uint32_t transmit_pos, transmit_max;
 /****************************************************************
  * Serial hardware
  ****************************************************************/
+
+DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
 
 static void
 serial_init(void)

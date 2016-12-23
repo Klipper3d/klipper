@@ -16,6 +16,9 @@
  * Low level timer code
  ****************************************************************/
 
+DECL_CONSTANT(CLOCK_FREQ, F_CPU);
+DECL_CONSTANT(MCU, CONFIG_MCU);
+
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
 timer_from_us(uint32_t us)
