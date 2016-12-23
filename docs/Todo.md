@@ -89,8 +89,6 @@ Documentation
 Hardware features
 =================
 
-* Support ADC on Arduino Due.
-
 * Port firmware to more architectures:
  * Beagle Bone Black PRU
  * Smoothieboard / NXP LPC1769 (ARM cortex-M3)

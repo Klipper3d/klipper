@@ -18,7 +18,7 @@ struct analog_in {
     uint8_t state, sample_count;
 };
 
-static uint8_t
+static uint_fast8_t
 analog_in_event(struct timer *timer)
 {
     struct analog_in *a = container_of(timer, struct analog_in, timer);
