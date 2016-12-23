@@ -258,6 +258,8 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
 }
 
 
+DECL_CONSTANT(ADC_MAX, 1024);
+
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {

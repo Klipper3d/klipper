@@ -256,7 +256,6 @@ class MCU_pwm:
         self._last_clock = clock
 
 class MCU_adc:
-    ADC_MAX = 1024 # 10bit adc
     def __init__(self, mcu, pin):
         self._mcu = mcu
         self._oid = mcu.create_oid()
@@ -283,7 +282,8 @@ class MCU_adc:
             minval = 0
         if maxval is None:
             maxval = 0xffff
-        max_adc = sample_count * self.ADC_MAX
+        mcu_adc_max = float(self._mcu.serial.msgparser.config["ADC_MAX"])
+        max_adc = sample_count * mcu_adc_max
         self._min_sample = int(minval * max_adc)
         self._max_sample = min(0xffff, int(math.ceil(maxval * max_adc)))
         self._inv_max_adc = 1.0 / max_adc
