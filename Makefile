@@ -35,9 +35,9 @@ cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
 CFLAGS-y := -I$(OUT) -Isrc -I$(OUT)board-generic/ -O2 -MD -g \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections
-CFLAGS-y += -flto -fwhole-program
+CFLAGS-y += -flto -fwhole-program -fno-use-linker-plugin
 
-LDFLAGS-y := -Wl,--gc-sections
+LDFLAGS-y := -Wl,--gc-sections -fno-whole-program
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
