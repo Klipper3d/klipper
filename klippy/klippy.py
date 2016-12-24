@@ -250,6 +250,8 @@ def main():
     else:
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
+    if debugoutput is None:
+        util.report_git_version()
 
     # Start firmware
     while 1:

@@ -3,8 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-import os, pty, fcntl, termios, signal
+import os, pty, fcntl, termios, signal, logging, subprocess, traceback, shlex
 
 # Return the SIGINT interrupt handler back to the OS default
 def fix_sigint():
@@ -36,3 +35,19 @@ def create_pty(ptyname):
     old[3] = old[3] & ~termios.ECHO
     termios.tcsetattr(mfd, termios.TCSADRAIN, old)
     return mfd
+
+def report_git_version():
+    # Obtain version info from "git" program
+    if not os.path.exists('.git'):
+        logging.debug("No '.git' file/directory found")
+        return
+    prog = "git describe --tags --long --dirty"
+    try:
+        process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
+        output = process.communicate()[0]
+        retcode = process.poll()
+    except OSError:
+        logging.debug("Exception on run: %s" % (traceback.format_exc(),))
+        return
+    ver = output.strip()
+    logging.info("Git version: %s" % (repr(ver),))
