@@ -457,11 +457,11 @@ class MCU:
                 config_params = self.serial.send_with_response(msg, 'config')
         if self._config_crc != config_params['crc']:
             raise error("Printer CRC does not match config")
-        logging.info("Configured")
+        move_count = config_params['move_count']
+        logging.info("Configured (%d moves)" % (move_count,))
         stepqueues = tuple(s._stepqueue for s in self._steppers)
         self._steppersync = self.ffi_lib.steppersync_alloc(
-            self.serial.serialqueue, stepqueues, len(stepqueues),
-            config_params['move_count'])
+            self.serial.serialqueue, stepqueues, len(stepqueues), move_count)
         for cb in self._init_callbacks:
             cb()
     # Config creation helpers

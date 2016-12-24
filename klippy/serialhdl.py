@@ -88,6 +88,8 @@ class SerialReader:
         self.register_callback(self.handle_unknown, '#unknown')
         logging.info("Loaded %d commands (%s)" % (
             len(msgparser.messages_by_id), msgparser.version))
+        logging.info("MCU config: %s" % (" ".join(
+            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
         # Setup for runtime
         mcu_baud = float(msgparser.config.get('SERIAL_BAUD', 0.))
         if mcu_baud:
