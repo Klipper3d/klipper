@@ -73,6 +73,14 @@ class ConfigWrapper:
     def getsection(self, section):
         return ConfigWrapper(self.printer, section)
 
+class ConfigLogger():
+    def __init__(self, cfg):
+        logging.info("===== Config file =====")
+        cfg.write(self)
+        logging.info("=======================")
+    def write(self, data):
+        logging.info(data.strip())
+
 class Printer:
     def __init__(self, conffile, input_fd, is_fileinput=False):
         self.conffile = conffile
@@ -112,6 +120,8 @@ class Printer:
         if not res:
             raise ConfigParser.Error("Unable to open config file %s" % (
                 self.conffile,))
+        if self.debugoutput is None:
+            ConfigLogger(self.fileconfig)
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.fileconfig.has_section('fan'):
             self.objects['fan'] = fan.PrinterFan(

@@ -31,9 +31,6 @@ Host user interaction
  * Automatically roll Klippy log files. The default log file should
    have the current date in the log file name.
 
- * Report the Klippy git version in log file. Log the contents of the
-   config file at startup.
-
  * Possibly collate and report the statistics messages in the log in a
    more friendly way.
 
