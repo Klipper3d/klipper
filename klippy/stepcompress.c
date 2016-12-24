@@ -395,7 +395,7 @@ stepcompress_push_factor(struct stepcompress *sc
         step_offset = -step_offset;
     }
     int count = steps + .5 - step_offset;
-    if (count <= 0 || count > 1000000) {
+    if (count <= 0 || count > 10000000) {
         if (count && steps)
             errorf("push_factor invalid count %d %f %f %f %f"
                    , sc->oid, steps, step_offset, clock_offset, factor);
@@ -429,7 +429,7 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
         step_offset = -step_offset;
     }
     int count = steps + .5 - step_offset;
-    if (count <= 0 || count > 1000000) {
+    if (count <= 0 || count > 10000000) {
         if (count && steps)
             errorf("push_sqrt invalid count %d %f %f %f %f %f"
                    , sc->oid, steps, step_offset, clock_offset, sqrt_offset
@@ -463,7 +463,7 @@ stepcompress_push_delta_const(
     double reldist = closestxy_d - movexy_r*dist;
     double end_height = safe_sqrt(closest_height2 - reldist*reldist);
     int count = (end_height - height + movez_r*dist) / step_dist + .5;
-    if (count <= 0 || count > 1000000) {
+    if (count <= 0 || count > 10000000) {
         if (count)
             errorf("push_delta_const invalid count %d %d %f %f %f %f %f %f %f %f"
                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
@@ -519,7 +519,7 @@ stepcompress_push_delta_accel(
     double reldist = closestxy_d - movexy_r*dist;
     double end_height = safe_sqrt(closest_height2 - reldist*reldist);
     int count = (end_height - height + movez_r*dist) / step_dist + .5;
-    if (count <= 0 || count > 1000000) {
+    if (count <= 0 || count > 10000000) {
         if (count)
             errorf("push_delta_accel invalid count %d %d %f %f %f %f %f %f %f %f"
                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
