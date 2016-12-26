@@ -51,7 +51,7 @@ class PrinterStepper:
         self.min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
                                   - math.sqrt(inv_max_step_accel + jc**2))
     def build_config(self):
-        max_error = self.config.getfloat('max_error', 0.000050)
+        max_error = self.config.getfloat('max_error', 0.000025)
         step_pin = self.config.get('step_pin')
         dir_pin = self.config.get('dir_pin')
         min_stop_interval = max(0., self.min_stop_interval - max_error)

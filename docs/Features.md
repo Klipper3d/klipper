@@ -7,12 +7,11 @@ compelling features:
   stepper motor, it compresses those events, transmits them to the
   micro-controller, and then the micro-controller executes each event
   at the requested time.  Each stepper event is scheduled with a
-  precision of no less than 50 micro-seconds. The software does not
-  use kinematic estimations (such as the Bresenham algorithm) -
-  instead it calculates precise step times based on the physics of
-  acceleration and the physics of the machine kinematics. More precise
-  stepper movement translates to quieter and more stable printer
-  operation.
+  precision of 25 micro-seconds or better. The software does not use
+  kinematic estimations (such as the Bresenham algorithm) - instead it
+  calculates precise step times based on the physics of acceleration
+  and the physics of the machine kinematics. More precise stepper
+  movement translates to quieter and more stable printer operation.
 
 * Best in class performance. Klipper is able to achieve high stepping
   rates on both new and old micro-controllers. Even an old 8bit AVR
