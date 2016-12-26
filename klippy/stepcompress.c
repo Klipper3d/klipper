@@ -95,13 +95,6 @@ idiv_down(int32_t n, int32_t d)
     return (n>=0) ? (n/d) : (n - d + 1) / d;
 }
 
-// Calculate the impact of each 'add' for a sequence with 'count' steps
-static inline int32_t
-calc_addfactor(int32_t count)
-{
-    return (uint32_t)count*(count-1)/2;
-}
-
 struct points {
     int32_t minp, maxp;
 };
@@ -157,7 +150,7 @@ compress_bisect_add(struct stepcompress *sc)
                 return (struct step_move){ interval, count, add };
             }
             nextpoint = minmax_point(sc, sc->queue_pos + nextcount - 1);
-            int32_t nextaddfactor = calc_addfactor(nextcount);
+            int32_t nextaddfactor = nextcount*(nextcount-1)/2;
             int32_t c = add*nextaddfactor;
             if (nextmininterval*nextcount < nextpoint.minp - c)
                 nextmininterval = DIV_UP(nextpoint.minp - c, nextcount);
@@ -169,7 +162,7 @@ compress_bisect_add(struct stepcompress *sc)
         }
 
         // Check if this is the best sequence found so far
-        int32_t count = nextcount - 1, addfactor = calc_addfactor(count);
+        int32_t count = nextcount - 1, addfactor = count*(count-1)/2;
         int32_t reach = add*addfactor + interval*count;
         if (reach > bestreach
             || (reach == bestreach && interval > bestinterval)) {
@@ -181,10 +174,13 @@ compress_bisect_add(struct stepcompress *sc)
                 zerointerval = interval;
                 zerocount = count;
             }
+            if (count > 0x200)
+                // No 'add' will improve sequence; avoid integer overflow
+                break;
         }
 
         // Check if a greater or lesser add could extend the sequence
-        int32_t nextaddfactor = calc_addfactor(nextcount);
+        int32_t nextaddfactor = nextcount*(nextcount-1)/2;
         int32_t nextreach = add*nextaddfactor + interval*nextcount;
         if (nextreach < nextpoint.minp) {
             minadd = add + 1;
@@ -339,7 +335,7 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
             // Be careful with 32bit overflow
             sc->last_step_clock = qm->req_clock = *sc->queue_pos;
         } else {
-            int32_t addfactor = calc_addfactor(move.count);
+            int32_t addfactor = move.count*(move.count-1)/2;
             uint32_t ticks = move.add*addfactor + move.interval*move.count;
             sc->last_step_clock += ticks;
         }
