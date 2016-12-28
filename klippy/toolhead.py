@@ -19,7 +19,7 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = accel
-        self.do_calc_junction = True
+        self.do_calc_junction = self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
         if axes_d[2]:
             # Move with Z
@@ -34,7 +34,7 @@ class Move:
                     # No move
                     self.move_d = 0.
                     return
-                self.do_calc_junction = False
+                self.do_calc_junction = self.is_kinematic_move = False
         self.move_d = move_d
         self.extrude_r = axes_d[3] / move_d
         # Junction speeds are velocities squared.  The junction_delta
@@ -93,7 +93,8 @@ class Move:
         self.accel_t, self.cruise_t, self.decel_t = accel_t, cruise_t, decel_t
         # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
-        self.toolhead.kin.move(next_move_time, self)
+        if self.is_kinematic_move:
+            self.toolhead.kin.move(next_move_time, self)
         if self.axes_d[3]:
             self.toolhead.extruder.move(next_move_time, self)
         self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
@@ -265,7 +266,8 @@ class ToolHead:
         move = Move(self, self.commanded_pos, newpos, speed, self.max_accel)
         if not move.move_d:
             return
-        self.kin.check_move(move)
+        if move.is_kinematic_move:
+            self.kin.check_move(move)
         if move.axes_d[3]:
             self.extruder.check_move(move)
         self.commanded_pos[:] = newpos

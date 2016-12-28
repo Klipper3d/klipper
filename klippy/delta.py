@@ -131,8 +131,6 @@ class DeltaKinematics:
         movez_r = 0.
         inv_movexy_d = 1. / movexy_d
         if not axes_d[0] and not axes_d[1]:
-            if not axes_d[2]:
-                return
             movez_r = axes_d[2] * inv_movexy_d
             movexy_d = movexy_r = inv_movexy_d = 0.
         elif axes_d[2]:

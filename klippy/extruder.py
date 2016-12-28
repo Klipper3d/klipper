@@ -26,9 +26,7 @@ class PrinterExtruder:
         if not self.heater.can_extrude:
             raise homing.EndstopMoveError(
                 move.end_pos, "Extrude below minimum temp")
-        if (not move.do_calc_junction
-            and not move.axes_d[0] and not move.axes_d[1]
-            and not move.axes_d[2]):
+        if not move.is_kinematic_move:
             # Extrude only move - limit accel and velocity
             move.limit_speed(self.max_e_velocity, self.max_e_accel)
     def move(self, move_time, move):
