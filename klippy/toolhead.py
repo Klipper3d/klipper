@@ -287,6 +287,11 @@ class ToolHead:
         self.extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
+    def wait_moves(self):
+        self.move_queue.flush()
+        eventtime = time.time()
+        while self.print_time:
+            eventtime = self.reactor.pause(eventtime + 0.100)
     def query_endstops(self):
         last_move_time = self.get_last_move_time()
         return self.kin.query_endstops(last_move_time)

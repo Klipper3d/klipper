@@ -44,7 +44,8 @@ class GCodeParser:
         self.fan = self.printer.objects.get('fan')
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M206',
+                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114',
+                    'M206', 'M400',
                     'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN',
                     'STATUS']
         if self.heater_nozzle is not None:
@@ -323,6 +324,9 @@ class GCodeParser:
                 v = float(params[a])
                 self.base_position[p] += self.homing_add[p] - v
                 self.homing_add[p] = v
+    def cmd_M400(self, params):
+        # Wait for current moves to finish
+        self.toolhead.wait_moves()
     cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
     cmd_QUERY_ENDSTOPS_aliases = ["M119"]
     def cmd_QUERY_ENDSTOPS(self, params):
