@@ -298,3 +298,4 @@ class ToolHead:
     def force_shutdown(self):
         self.printer.mcu.force_shutdown()
         self.move_queue.reset()
+        self.reset_print_time()
