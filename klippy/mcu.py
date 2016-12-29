@@ -521,6 +521,8 @@ class MCU:
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
         self.serial.send(cmd, minclock, reqclock, cq=cq)
     def flush_moves(self, print_time):
+        if self._steppersync is None:
+            return
         mcu_time = print_time + self._print_start_time
         clock = int(mcu_time * self._mcu_freq)
         self.ffi_lib.steppersync_flush(self._steppersync, clock)
