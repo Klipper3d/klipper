@@ -36,11 +36,11 @@ def create_pty(ptyname):
     termios.tcsetattr(mfd, termios.TCSADRAIN, old)
     return mfd
 
-def report_git_version():
+def get_git_version():
     # Obtain version info from "git" program
     if not os.path.exists('.git'):
         logging.debug("No '.git' file/directory found")
-        return
+        return "?"
     prog = "git describe --tags --long --dirty"
     try:
         process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
@@ -48,6 +48,5 @@ def report_git_version():
         retcode = process.poll()
     except OSError:
         logging.debug("Exception on run: %s" % (traceback.format_exc(),))
-        return
-    ver = output.strip()
-    logging.info("Git version: %s" % (repr(ver),))
+        return "?"
+    return output.strip()

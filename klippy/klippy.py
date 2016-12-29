@@ -82,8 +82,9 @@ class ConfigLogger():
         logging.info(data.strip())
 
 class Printer:
-    def __init__(self, conffile, input_fd, is_fileinput=False):
+    def __init__(self, conffile, input_fd, is_fileinput=False, version="?"):
         self.conffile = conffile
+        self.software_version = version
         self.reactor = reactor.Reactor()
         self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
         self.stats_timer = self.reactor.register_timer(self.stats)
@@ -260,13 +261,14 @@ def main():
     else:
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
+    software_version = util.get_git_version()
     if debugoutput is None:
-        util.report_git_version()
+        logging.info("Git version: %s" % (repr(software_version),))
 
     # Start firmware
     while 1:
         is_fileinput = debuginput is not None
-        printer = Printer(conffile, input_fd, is_fileinput)
+        printer = Printer(conffile, input_fd, is_fileinput, software_version)
         if debugoutput:
             proto_dict = read_dictionary(options.read_dictionary)
             printer.set_fileoutput(debugoutput, proto_dict)

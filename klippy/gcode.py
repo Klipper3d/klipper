@@ -44,7 +44,7 @@ class GCodeParser:
         self.fan = self.printer.objects.get('fan')
     def build_handlers(self):
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114',
+                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M115',
                     'M206', 'M400',
                     'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN',
                     'STATUS']
@@ -303,6 +303,12 @@ class GCodeParser:
             self.last_position[0], self.last_position[1],
             self.last_position[2], self.last_position[3],
             kinpos[0], kinpos[1], kinpos[2]))
+    cmd_M115_when_not_ready = True
+    def cmd_M115(self, params):
+        # Get Firmware Version and Capabilities
+        kw = {"FIRMWARE_NAME": "Klipper"
+              , "FIRMWARE_VERSION": self.printer.software_version}
+        self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
     def cmd_M140(self, params):
         # Set Bed Temperature
         self.set_temp(self.heater_bed, params)
