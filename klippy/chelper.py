@@ -33,6 +33,7 @@ defs_stepcompress = """
         , double accel_multiplier, double step_dist, double height
         , double closestxy_d, double closest_height2, double movez_r);
     void stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    void stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
     void stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
     uint32_t stepcompress_get_errors(struct stepcompress *sc);

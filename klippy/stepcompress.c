@@ -34,7 +34,7 @@ struct stepcompress {
     // Error checking
     uint32_t errors;
     // Message generation
-    uint64_t last_step_clock;
+    uint64_t last_step_clock, homing_clock;
     struct list_head msg_queue;
     uint32_t queue_step_msgid, set_next_step_dir_msgid, oid;
     int sdir, invert_sdir;
@@ -339,6 +339,9 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
             uint32_t ticks = move.add*addfactor + move.interval*move.count;
             sc->last_step_clock += ticks;
         }
+        if (sc->homing_clock)
+            // When homing, all steps should be sent prior to homing_clock
+            qm->min_clock = qm->req_clock = sc->homing_clock;
         list_add_tail(&qm->node, &sc->msg_queue);
 
         if (sc->queue_pos + move.count >= sc->queue_next) {
@@ -359,7 +362,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
         sc->set_next_step_dir_msgid, sc->oid, sdir ^ sc->invert_sdir
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 3);
-    qm->req_clock = sc->last_step_clock;
+    qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
 }
 
@@ -557,6 +560,14 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
     sc->sdir = -1;
 }
 
+// Indicate the stepper is in homing mode (or done homing if zero)
+void
+stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
+{
+    stepcompress_flush(sc, UINT64_MAX);
+    sc->homing_clock = homing_clock;
+}
+
 // Queue an mcu command to go out in order with stepper commands
 void
 stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
@@ -564,7 +575,7 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     stepcompress_flush(sc, UINT64_MAX);
 
     struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->req_clock = sc->last_step_clock;
+    qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
 }
 

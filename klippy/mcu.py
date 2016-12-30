@@ -58,7 +58,10 @@ class MCU_stepper:
         self._mcu_position_offset = pos - self.commanded_position
     def get_mcu_position(self):
         return self.commanded_position + self._mcu_position_offset
-    def note_stepper_stop(self):
+    def note_homing_start(self, homing_clock):
+        self.ffi_lib.stepcompress_set_homing(self._stepqueue, homing_clock)
+    def note_homing_finalized(self):
+        self.ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
         self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
     def reset_step_clock(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
@@ -144,11 +147,9 @@ class MCU_endstop:
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
+        self._stepper.note_homing_start(clock)
     def home_finalize(self, mcu_time):
-        # XXX - this flushes the serial port of messages ready to be
-        # sent, but doesn't flush messages if they had an unmet minclock
-        self._mcu.serial.send_flush()
-        self._stepper.note_stepper_stop()
+        self._stepper.note_homing_finalized()
         self._home_timeout_clock = int(mcu_time * self._mcu_freq)
     def home_wait(self):
         eventtime = time.time()
