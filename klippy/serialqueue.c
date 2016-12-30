@@ -356,7 +356,6 @@ struct serialqueue {
     struct list_head pending_queues;
     int ready_bytes, stalled_bytes;
     uint64_t need_kick_clock;
-    int can_delay_writes;
     // Received messages
     struct list_head receive_queue;
     // Debugging
@@ -695,11 +694,9 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for messages to send
     if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
         return PR_NOW;
-    if (! sq->can_delay_writes) {
+    if (! sq->est_clock) {
         if (sq->ready_bytes)
             return PR_NOW;
-        if (sq->est_clock)
-            sq->can_delay_writes = 1;
         sq->need_kick_clock = MAX_CLOCK;
         return PR_NEVER;
     }
@@ -984,16 +981,6 @@ serialqueue_set_clock_est(struct serialqueue *sq, double est_clock
     sq->last_ack_time = last_ack_time;
     sq->last_ack_clock = last_ack_clock;
     pthread_mutex_unlock(&sq->lock);
-}
-
-// Flush all messages in a "ready" state
-void
-serialqueue_flush_ready(struct serialqueue *sq)
-{
-    pthread_mutex_lock(&sq->lock);
-    sq->can_delay_writes = 0;
-    pthread_mutex_unlock(&sq->lock);
-    kick_bg_thread(sq);
 }
 
 // Return a string buffer containing statistics for the serial port

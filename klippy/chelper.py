@@ -66,7 +66,6 @@ defs_serialqueue = """
     void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_clock
         , double last_ack_time, uint64_t last_ack_clock);
-    void serialqueue_flush_ready(struct serialqueue *sq);
     void serialqueue_get_stats(struct serialqueue *sq, char *buf, int len);
     int serialqueue_extract_old(struct serialqueue *sq, int sentq
         , struct pull_queue_message *q, int max);

@@ -167,8 +167,6 @@ class SerialReader:
     def send_with_response(self, cmd, name):
         src = SerialRetryCommand(self, cmd, name)
         return src.get_response()
-    def send_flush(self):
-        self.ffi_lib.serialqueue_flush_ready(self.serialqueue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
