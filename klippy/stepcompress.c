@@ -356,6 +356,8 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 static void
 set_next_step_dir(struct stepcompress *sc, int sdir)
 {
+    if (sc->sdir == sdir)
+        return;
     sc->sdir = sdir;
     stepcompress_flush(sc, UINT64_MAX);
     uint32_t msg[3] = {
@@ -367,23 +369,35 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
 }
 
 // Check if the internal queue needs to be expanded, and expand if so
-static inline void
-check_expand(struct stepcompress *sc, int sdir, int count)
+static void
+_check_expand(struct stepcompress *sc, uint64_t *qn)
 {
-    if (sdir != sc->sdir)
-        set_next_step_dir(sc, sdir);
-    if (sc->queue_next + count > sc->queue_end)
-        expand_queue(sc, count);
+    sc->queue_next = qn;
+    if (qn - sc->queue_pos > 65535 + 2000)
+        // No point in keeping more than 64K steps in memory
+        stepcompress_flush(sc, *(qn - 65535));
+    expand_queue(sc, 1);
+}
+static inline void
+check_expand(struct stepcompress *sc, uint64_t **pqn, uint64_t **pqend)
+{
+    if (likely(*pqn < *pqend))
+        return;
+    _check_expand(sc, *pqn);
+    *pqn = sc->queue_next;
+    *pqend = sc->queue_end;
 }
 
 // Schedule a step event at the specified step_clock time
 void
 stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
 {
-    sdir = !!sdir;
-    check_expand(sc, sdir, 1);
+    set_next_step_dir(sc, !!sdir);
     step_clock += 0.5;
-    *sc->queue_next++ = step_clock;
+    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    check_expand(sc, &qn, &qend);
+    *qn++ = step_clock;
+    sc->queue_next = qn;
 }
 
 // Schedule 'steps' number of steps with a constant time between steps
@@ -407,18 +421,20 @@ stepcompress_push_factor(struct stepcompress *sc
                    , sc->oid, steps, step_offset, clock_offset, factor);
         return 0;
     }
-    check_expand(sc, sdir, count);
+    set_next_step_dir(sc, sdir);
+    int res = sdir ? count : -count;
 
     // Calculate each step time
-    uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
     double pos = step_offset + .5;
-    while (qn < end) {
+    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    while (count--) {
+        check_expand(sc, &qn, &qend);
         *qn++ = clock_offset + pos*factor;
         pos += 1.0;
     }
     sc->queue_next = qn;
-    return sdir ? count : -count;
+    return res;
 }
 
 // Schedule 'steps' number of steps using the formula:
@@ -442,19 +458,21 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
                    , factor);
         return 0;
     }
-    check_expand(sc, sdir, count);
+    set_next_step_dir(sc, sdir);
+    int res = sdir ? count : -count;
 
     // Calculate each step time
-    uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
     double pos = step_offset + .5 + sqrt_offset/factor;
-    while (qn < end) {
+    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    while (count--) {
+        check_expand(sc, &qn, &qend);
         double v = safe_sqrt(pos*factor);
         *qn++ = clock_offset + (factor >= 0. ? v : -v);
         pos += 1.0;
     }
     sc->queue_next = qn;
-    return sdir ? count : -count;
+    return res;
 }
 
 // Schedule 'count' number of steps using the delta kinematic const speed
@@ -476,16 +494,18 @@ stepcompress_push_delta_const(
                    , closest_height2, height, movez_r, inv_velocity);
         return 0;
     }
-    check_expand(sc, step_dist > 0., count);
+    set_next_step_dir(sc, step_dist > 0.);
+    int res = step_dist > 0. ? count : -count;
 
     // Calculate each step time
-    uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
     start_pos += movexy_r*closestxy_d;
     height += .5 * step_dist;
+    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     if (!movez_r) {
         // Optmized case for common XY only moves (no Z movement)
-        while (qn < end) {
+        while (count--) {
+            check_expand(sc, &qn, &qend);
             double v = safe_sqrt(closest_height2 - height*height);
             double pos = start_pos + (step_dist > 0. ? -v : v);
             *qn++ = clock_offset + pos * inv_velocity;
@@ -494,14 +514,16 @@ stepcompress_push_delta_const(
     } else if (!movexy_r) {
         // Optmized case for Z only moves
         double v = (step_dist > 0. ? -end_height : end_height);
-        while (qn < end) {
+        while (count--) {
+            check_expand(sc, &qn, &qend);
             double pos = start_pos + movez_r*height + v;
             *qn++ = clock_offset + pos * inv_velocity;
             height += step_dist;
         }
     } else {
         // General case (handles XY+Z moves)
-        while (qn < end) {
+        while (count--) {
+            check_expand(sc, &qn, &qend);
             double relheight = movexy_r*height - movez_r*closestxy_d;
             double v = safe_sqrt(closest_height2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
@@ -510,7 +532,7 @@ stepcompress_push_delta_const(
         }
     }
     sc->queue_next = qn;
-    return step_dist > 0. ? count : -count;
+    return res;
 }
 
 // Schedule 'count' number of steps using delta kinematic acceleration
@@ -532,14 +554,16 @@ stepcompress_push_delta_accel(
                    , closest_height2, height, movez_r, accel_multiplier);
         return 0;
     }
-    check_expand(sc, step_dist > 0., count);
+    set_next_step_dir(sc, step_dist > 0.);
+    int res = step_dist > 0. ? count : -count;
 
     // Calculate each step time
-    uint64_t *qn = sc->queue_next, *end = &qn[count];
     clock_offset += 0.5;
     start_pos += movexy_r*closestxy_d;
     height += .5 * step_dist;
-    while (qn < end) {
+    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    while (count--) {
+        check_expand(sc, &qn, &qend);
         double relheight = movexy_r*height - movez_r*closestxy_d;
         double v = safe_sqrt(closest_height2 - relheight*relheight);
         double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
@@ -548,7 +572,7 @@ stepcompress_push_delta_accel(
         height += step_dist;
     }
     sc->queue_next = qn;
-    return step_dist > 0. ? count : -count;
+    return res;
 }
 
 // Reset the internal state of the stepcompress object
