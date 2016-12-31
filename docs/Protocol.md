@@ -164,8 +164,9 @@ Message Block Contents
 
 Each message block sent from host to firmware contains a series of
 zero or more message commands in its contents. Each command starts
-with a Variable Length Quantity (VLQ) encoded integer command-id
-followed by zero or more VLQ parameters for the given command.
+with a [Variable Length Quantity](#variable-length-quantities) (VLQ)
+encoded integer command-id followed by zero or more VLQ parameters for
+the given command.
 
 As an example, the following four commands might be placed in a single
 message block:
