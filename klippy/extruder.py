@@ -10,9 +10,11 @@ class PrinterExtruder:
     def __init__(self, printer, config):
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
-        self.pressure_advance = config.getfloat('pressure_advance', 0.)
+        nozzle_diameter = config.getfloat('nozzle_diameter')
+        filament_diameter = config.getfloat('filament_diameter')
         self.max_e_velocity = config.getfloat('max_velocity')
         self.max_e_accel = config.getfloat('max_accel')
+        self.pressure_advance = config.getfloat('pressure_advance', 0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
     def build_config(self):
