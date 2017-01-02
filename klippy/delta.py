@@ -29,8 +29,7 @@ class DeltaKinematics:
             (cos(210.)*radius, sin(210.)*radius),
             (cos(330.)*radius, sin(330.)*radius),
             (cos(90.)*radius, sin(90.)*radius)]
-    def set_max_jerk(self, max_xy_halt_velocity, max_accel):
-        # XXX - this sets conservative values
+    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         for stepper in self.steppers:
             stepper.set_max_jerk(max_xy_halt_velocity, max_accel)
     def build_config(self):

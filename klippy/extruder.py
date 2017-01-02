@@ -8,6 +8,7 @@ import stepper, heater, homing
 
 class PrinterExtruder:
     def __init__(self, printer, config):
+        self.config = config
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
         nozzle_diameter = config.getfloat('nozzle_diameter')
@@ -17,11 +18,15 @@ class PrinterExtruder:
             'max_extrude_cross_section', 4. * nozzle_diameter**2)
         self.max_extrude_ratio = max_cross_section / filament_area
         self.max_e_dist = config.getfloat('max_extrude_only_distance', 50.)
-        self.max_e_velocity = config.getfloat('max_velocity')
-        self.max_e_accel = config.getfloat('max_accel')
+        self.max_e_velocity = self.max_e_accel = None
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
+    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
+        self.max_e_velocity = self.config.getfloat(
+            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio)
+        self.max_e_accel = self.config.getfloat(
+            'max_extrude_only_accel', max_accel * self.max_extrude_ratio)
     def build_config(self):
         self.heater.build_config()
         self.stepper.set_max_jerk(9999999.9, 9999999.9)

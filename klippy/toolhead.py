@@ -179,7 +179,10 @@ class ToolHead:
         self.motor_off_time = self.reactor.NEVER
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
     def build_config(self):
-        self.kin.set_max_jerk(0.005 * self.max_accel, self.max_accel) # XXX
+        xy_halt = 0.005 * self.max_accel # XXX
+        self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
+        if self.extruder is not None:
+            self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
         self.kin.build_config()
     # Print time tracking
     def update_move_time(self, movetime):

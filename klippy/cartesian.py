@@ -17,7 +17,7 @@ class CartKinematics:
         self.max_z_accel = config.getfloat('max_z_accel', 9999999.9)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
-    def set_max_jerk(self, max_xy_halt_velocity, max_accel):
+    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[2].set_max_jerk(0., self.max_z_accel)
