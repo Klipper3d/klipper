@@ -312,7 +312,7 @@ class MCU:
         self._printer = printer
         self._config = config
         # Serial port
-        baud = config.getint('baud', 115200)
+        baud = config.getint('baud', 250000)
         serialport = config.get('serial', '/dev/ttyS0')
         self.serial = serialhdl.SerialReader(printer.reactor, serialport, baud)
         self.is_shutdown = False
