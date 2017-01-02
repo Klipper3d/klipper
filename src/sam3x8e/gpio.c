@@ -134,7 +134,7 @@ gpio_adc_setup(uint8_t pin)
         if (adc_pins[chan] != pin)
             continue;
         // Found PIN
-        if (!(PMC->PMC_PCER1 & (1 << (ID_ADC-32)))) {
+        if (!(PMC->PMC_PCSR1 & (1 << (ID_ADC-32)))) {
             // Setup ADC
             PMC->PMC_PCER1 = 1 << (ID_ADC-32);
             uint32_t prescal = SystemCoreClock / (2 * ADC_FREQ_MAX) - 1;
