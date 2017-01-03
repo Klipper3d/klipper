@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import math, logging
 import stepper, heater, homing
 
 class PrinterExtruder:
@@ -12,6 +12,11 @@ class PrinterExtruder:
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
         nozzle_diameter = config.getfloat('nozzle_diameter')
         filament_diameter = config.getfloat('filament_diameter')
+        filament_area = math.pi * (filament_diameter * .5)**2
+        max_cross_section = config.getfloat(
+            'max_extrude_cross_section', 4. * nozzle_diameter**2)
+        self.max_extrude_ratio = max_cross_section / filament_area
+        self.max_e_dist = config.getfloat('max_extrude_only_distance', 50.)
         self.max_e_velocity = config.getfloat('max_velocity')
         self.max_e_accel = config.getfloat('max_accel')
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
@@ -30,7 +35,14 @@ class PrinterExtruder:
                 move.end_pos, "Extrude below minimum temp")
         if not move.is_kinematic_move:
             # Extrude only move - limit accel and velocity
+            if move.axes_d[3] > self.max_e_dist:
+                raise homing.EndstopMoveError(
+                    move.end_pos, "Extrude only move too long")
             move.limit_speed(self.max_e_velocity, self.max_e_accel)
+        elif move.extrude_r > self.max_extrude_ratio:
+            logging.debug("%s vs %s" % (move.extrude_r, self.max_extrude_ratio))
+            raise homing.EndstopMoveError(
+                move.end_pos, "Move exceeds maximum extrusion cross section")
     def move(self, move_time, move):
         if self.need_motor_enable:
             self.stepper.motor_enable(move_time, 1)

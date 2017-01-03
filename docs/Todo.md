@@ -58,10 +58,6 @@ Safety features
   can be useful to detect a sensor failure (eg, thermistor short) that
   could otherwise cause the PID to command excessive heating.
 
-* Possibly implement host based checking on the ratio between extrude
-  amount and head movement.
- * Enforce acceleration and speed limits on extruder stepper motor.
-
 Testing features
 ================
 
