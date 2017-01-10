@@ -3,7 +3,8 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, pty, fcntl, termios, signal, logging, subprocess, traceback, shlex
+import sys, os, pty, fcntl, termios, signal, logging
+import subprocess, traceback, shlex
 
 # Return the SIGINT interrupt handler back to the OS default
 def fix_sigint():
@@ -38,10 +39,11 @@ def create_pty(ptyname):
 
 def get_git_version():
     # Obtain version info from "git" program
-    if not os.path.exists('.git'):
+    gitdir = os.path.join(sys.path[0], '..', '.git')
+    if not os.path.exists(gitdir):
         logging.debug("No '.git' file/directory found")
         return "?"
-    prog = "git describe --tags --long --dirty"
+    prog = "git --git-dir=%s describe --tags --long --dirty" % (gitdir,)
     try:
         process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
         output = process.communicate()[0]
