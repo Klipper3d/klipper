@@ -64,7 +64,9 @@ class PrinterHeater:
         pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        logging.debug("pwm=%d@%.3f (%.3f)" % (value, read_time, pwm_time))
+        logging.debug("%s: pwm=%d@%.3f (from %.3f@%.3f)" % (
+            self.config.section, value, pwm_time,
+            self.last_temp, self.last_temp_time))
         self.mcu_pwm.set_pwm(pwm_time, value)
     # Temperature calculation
     def calc_temp(self, adc):
