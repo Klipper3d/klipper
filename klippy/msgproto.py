@@ -308,3 +308,15 @@ class MessageParser:
         self.static_strings = data.get('static_strings', [])
         self.config.update(data.get('config', {}))
         self.version = data.get('version', '')
+    def get_constant(self, name):
+        try:
+            return self.config[name]
+        except KeyError:
+            raise error("Firmware constant '%s' not found" % (name,))
+    def get_constant_float(self, name):
+        try:
+            return float(self.config[name])
+        except ValueError:
+            raise error("Firmware constant '%s' not a float" % (name,))
+        except KeyError:
+            raise error("Firmware constant '%s' not found" % (name,))

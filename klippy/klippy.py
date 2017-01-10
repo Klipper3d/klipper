@@ -6,6 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
 import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
+import msgproto
 
 message_startup = """
 The klippy host software is attempting to connect.  Please
@@ -17,6 +18,15 @@ message_restart = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
 Printer is halted
+"""
+
+message_protocol_error = """
+This type of error is frequently caused by running an older
+version of the firmware on the micro-controller (fix by
+recompiling and flashing the firmware).
+Once the underlying issue is corrected, use the "RESTART"
+command to reload the config and restart the host software.
+Protocol error connecting to printer
 """
 
 message_mcu_connect_error = """
@@ -168,6 +178,10 @@ class Printer:
         except ConfigParser.Error, e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
+            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
+        except msgproto.error, e:
+            logging.exception("Protocol error")
+            self.state_message = "%s%s" % (str(e), message_protocol_error)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         except mcu.error, e:
             logging.exception("MCU error during connect")

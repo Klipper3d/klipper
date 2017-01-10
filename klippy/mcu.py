@@ -283,7 +283,7 @@ class MCU_adc:
             minval = 0
         if maxval is None:
             maxval = 0xffff
-        mcu_adc_max = float(self._mcu.serial.msgparser.config["ADC_MAX"])
+        mcu_adc_max = self._mcu.serial.msgparser.get_constant_float("ADC_MAX")
         max_adc = sample_count * mcu_adc_max
         self._min_sample = int(minval * max_adc)
         self._max_sample = min(0xffff, int(math.ceil(maxval * max_adc)))
@@ -357,9 +357,9 @@ class MCU:
             self.serial.connect()
             self._printer.reactor.update_timer(
                 self._timeout_timer, time.time() + self.COMM_TIMEOUT)
-        self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
-        self._stats_sumsq_base = float(
-            self.serial.msgparser.config['STATS_SUMSQ_BASE'])
+        self._mcu_freq = self.serial.msgparser.get_constant_float('CLOCK_FREQ')
+        self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
+            'STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._clear_shutdown_cmd = self.lookup_command("clear_shutdown")
         self.register_msg(self.handle_shutdown, 'shutdown')
@@ -424,7 +424,7 @@ class MCU:
             self._num_oids,))
 
         # Resolve pin names
-        mcu = self.serial.msgparser.config['MCU']
+        mcu = self.serial.msgparser.get_constant('MCU')
         pin_map = self._config.get('pin_map', None)
         if pin_map is None:
             pnames = pins.mcu_to_pins(mcu)
