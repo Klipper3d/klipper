@@ -123,7 +123,7 @@ class Printer:
             out.append(toolhead.stats(eventtime))
         if self.mcu is not None:
             out.append(self.mcu.stats(eventtime))
-        logging.info("Stats %.0f: %s" % (eventtime, ' '.join(out)))
+        logging.info("Stats %.1f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.
     def load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
