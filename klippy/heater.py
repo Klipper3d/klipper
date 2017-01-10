@@ -39,17 +39,23 @@ class PrinterHeater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0
     def build_config(self):
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algo = self.config.getchoice('control', algos)
         heater_pin = self.config.get('heater_pin')
         thermistor_pin = self.config.get('thermistor_pin')
-        self.mcu_pwm = self.printer.mcu.create_pwm(heater_pin, 0, MAX_HEAT_TIME)
+        if algo is ControlBangBang:
+            self.mcu_pwm = self.printer.mcu.create_digital_out(
+                heater_pin, MAX_HEAT_TIME)
+        else:
+            self.mcu_pwm = self.printer.mcu.create_pwm(
+                heater_pin, 0, MAX_HEAT_TIME)
         self.mcu_adc = self.printer.mcu.create_adc(thermistor_pin)
         min_adc = self.calc_adc(self.config.getfloat('max_temp'))
         max_adc = self.calc_adc(self.config.getfloat('min_temp'))
         self.mcu_adc.set_minmax(
             SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
         self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
-        self.control = self.config.getchoice('control', algos)(self, self.config)
+        self.control = algo(self, self.config)
         if self.printer.mcu.is_fileoutput():
             self.can_extrude = True
     def set_pwm(self, read_time, value):
