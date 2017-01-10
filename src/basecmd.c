@@ -191,15 +191,26 @@ command_get_status(uint32_t *args)
 }
 DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
 
+#define SUMSQ_BASE 256
+DECL_CONSTANT(STATS_SUMSQ_BASE, SUMSQ_BASE);
+
 static void
 stats_task(void)
 {
     static uint32_t last, count, sumsq;
     uint32_t cur = sched_read_time();
-    uint32_t diff = (cur - last) >> 8;
+    uint32_t diff = cur - last;
     last = cur;
     count++;
-    uint32_t nextsumsq = sumsq + diff*diff;
+    // Calculate sum of diff^2 - be careful of integer overflow
+    uint32_t nextsumsq;
+    if (diff <= 0xffff) {
+        nextsumsq = sumsq + DIV_ROUND_UP(diff * diff, SUMSQ_BASE);
+    } else if (diff <= 0xfffff) {
+        nextsumsq = sumsq + DIV_ROUND_UP(diff, SUMSQ_BASE) * diff;
+    } else {
+        nextsumsq = 0xffffffff;
+    }
     if (nextsumsq < sumsq)
         nextsumsq = 0xffffffff;
     sumsq = nextsumsq;

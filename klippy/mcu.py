@@ -333,6 +333,7 @@ class MCU:
         self._print_start_time = 0.
         self._mcu_freq = 0.
         # Stats
+        self._stats_sumsq_base = 0.
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
     def handle_mcu_stats(self, params):
@@ -341,10 +342,8 @@ class MCU:
         tick_sum = params['sum']
         c = 1.0 / (count * self._mcu_freq)
         self._mcu_tick_avg = tick_sum * c
-        tick_sumsq = params['sumsq']
-        tick_sumavgsq = ((tick_sum // (256*count)) * count)**2
-        self._mcu_tick_stddev = c * 256. * math.sqrt(
-            count * tick_sumsq - tick_sumavgsq)
+        tick_sumsq = params['sumsq'] * self._stats_sumsq_base
+        self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
     def handle_shutdown(self, params):
         if self.is_shutdown:
             return
@@ -359,6 +358,8 @@ class MCU:
             self._printer.reactor.update_timer(
                 self._timeout_timer, time.time() + self.COMM_TIMEOUT)
         self._mcu_freq = float(self.serial.msgparser.config['CLOCK_FREQ'])
+        self._stats_sumsq_base = float(
+            self.serial.msgparser.config['STATS_SUMSQ_BASE'])
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._clear_shutdown_cmd = self.lookup_command("clear_shutdown")
         self.register_msg(self.handle_shutdown, 'shutdown')
