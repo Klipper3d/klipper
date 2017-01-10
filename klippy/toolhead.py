@@ -71,7 +71,7 @@ class Move:
             R * self.accel, self.junction_max, prev_move.junction_max
             , prev_move.junction_start_max + prev_move.junction_delta)
     def process(self, junction_start, junction_cruise, junction_end
-                , cornering_min, cornering_max):
+                , junction_corner_min, junction_corner_max):
         # Determine accel, cruise, and decel portions of the move distance
         inv_junction_delta = 1. / self.junction_delta
         accel_r = (junction_cruise-junction_start) * inv_junction_delta
@@ -83,8 +83,8 @@ class Move:
         cruise_v = math.sqrt(junction_cruise)
         end_v = math.sqrt(junction_end)
         self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
-        self.corner_min = math.sqrt(cornering_min)
-        self.corner_max = math.sqrt(cornering_max)
+        self.corner_min = math.sqrt(junction_corner_min)
+        self.corner_max = math.sqrt(junction_corner_max)
         # Determine time spent in each portion of move (time is the
         # distance divided by average velocity)
         accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
@@ -113,7 +113,7 @@ class MoveQueue:
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        next_junction_end = cornering_min = cornering_max = 0.
+        next_junction_end = junction_corner_min = junction_corner_max = 0.
         for i in range(flush_count-1, -1, -1):
             move = self.queue[i]
             reachable_start = next_junction_end + move.junction_delta
@@ -121,11 +121,11 @@ class MoveQueue:
             junction_cruise = min((junction_start + reachable_start) * .5
                                   , move.junction_max)
             move_info[i] = (junction_start, junction_cruise, next_junction_end
-                            , cornering_min, cornering_max)
+                            , junction_corner_min, junction_corner_max)
             if reachable_start > junction_start:
-                cornering_min = junction_start
+                junction_corner_min = junction_start
                 if junction_start + move.junction_delta > next_junction_end:
-                    cornering_max = junction_cruise
+                    junction_corner_max = junction_cruise
                     if lazy:
                         flush_count = i
                         lazy = False
