@@ -106,6 +106,7 @@ class SelectReactor:
                 fd.callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
+                    eventtime = time.time()
                     break
         self._g_dispatch = None
     def run(self):
@@ -138,13 +139,14 @@ class PollReactor(SelectReactor):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = time.time()
         while self._process:
-            timeout = int(math.ceil(self._check_timers(eventtime) * 1000.))
-            res = self._poll.poll(timeout)
+            timeout = self._check_timers(eventtime)
+            res = self._poll.poll(int(math.ceil(timeout * 1000.)))
             eventtime = time.time()
             for fd, event in res:
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
+                    eventtime = time.time()
                     break
         self._g_dispatch = None
 
@@ -179,6 +181,7 @@ class EPollReactor(SelectReactor):
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
+                    eventtime = time.time()
                     break
         self._g_dispatch = None
 
