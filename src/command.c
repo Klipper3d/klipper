@@ -114,11 +114,22 @@ error:
 void
 _sendf(uint8_t parserid, ...)
 {
+    static uint8_t in_sendf;
+    irqstatus_t flag = irq_save();
+    if (in_sendf) {
+        // This sendf call was made from an irq handler while the main
+        // code was already in sendf - just drop this sendf request.
+        irq_restore(flag);
+        return;
+    }
+    in_sendf = 1;
+    irq_restore(flag);
+
     const struct command_encoder *cp = &command_encoders[parserid];
     uint8_t max_size = READP(cp->max_size);
     char *buf = console_get_output(max_size + MESSAGE_MIN);
     if (!buf)
-        return;
+        goto done;
     char *p = &buf[MESSAGE_HEADER_SIZE];
     if (max_size) {
         char *maxend = &p[max_size];
@@ -182,6 +193,8 @@ _sendf(uint8_t parserid, ...)
     *p++ = crc;
     *p++ = MESSAGE_SYNC;
     console_push_output(msglen);
+done:
+    in_sendf = 0;
     return;
 error:
     shutdown("Message encode error");

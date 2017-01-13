@@ -105,9 +105,7 @@ output("The value of %u is %s with size %u.", x, buf, buf_len);
 ```
 
 The output() function is similar in usage to printf() - it is intended
-to generate and format arbitrary messages for human consumption. It is
-a wrapper around sendf() and as with sendf() it should not be called
-from interrupts or timers.
+to generate and format arbitrary messages for human consumption.
 
 Declaring constants
 -------------------
