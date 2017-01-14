@@ -14,11 +14,11 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 # Class to track each move request
 class Move:
-    def __init__(self, toolhead, start_pos, end_pos, speed, accel):
+    def __init__(self, toolhead, start_pos, end_pos, speed):
         self.toolhead = toolhead
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
-        self.accel = accel
+        self.accel = toolhead.max_accel
         self.do_calc_junction = self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
         if axes_d[2]:
@@ -41,12 +41,14 @@ class Move:
         # is the maximum amount of this squared-velocity that can
         # change in this move.
         self.junction_max = speed**2
-        self.junction_delta = 2.0 * move_d * accel
+        self.junction_delta = 2.0 * move_d * self.accel
         self.junction_start_max = 0.
     def limit_speed(self, speed, accel):
         self.junction_max = min(self.junction_max, speed**2)
-        self.accel = min(self.accel, accel)
-        self.junction_delta = 2.0 * self.move_d * self.accel
+        if accel < self.accel:
+            self.accel = accel
+            self.junction_delta = 2.0 * self.move_d * self.accel
+            self.do_calc_junction = False
     def calc_junction(self, prev_move):
         if not self.do_calc_junction or not prev_move.do_calc_junction:
             return
@@ -266,7 +268,7 @@ class ToolHead:
         self.kin.set_position(newpos)
     def move(self, newpos, speed):
         speed = min(speed, self.max_speed)
-        move = Move(self, self.commanded_pos, newpos, speed, self.max_accel)
+        move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
         if move.is_kinematic_move:
