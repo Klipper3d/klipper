@@ -120,7 +120,7 @@ char *
 console_get_output(uint8_t len)
 {
     uint32_t tpos = readb(&transmit_pos), tmax = readb(&transmit_max);
-    if (tpos == tmax) {
+    if (tpos >= tmax) {
         tpos = tmax = 0;
         writeb(&transmit_max, 0);
         writeb(&transmit_pos, 0);
