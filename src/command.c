@@ -4,12 +4,9 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <ctype.h> // isspace
 #include <stdarg.h> // va_start
-#include <stdio.h> // vsnprintf
-#include <stdlib.h> // strtod
-#include <string.h> // strcasecmp
-#include "board/irq.h" // irq_disable
+#include <string.h> // memcpy
+#include "board/io.h" // readb
 #include "board/misc.h" // crc16_ccitt
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
@@ -110,20 +107,17 @@ error:
     shutdown("Command parser error");
 }
 
+static uint8_t in_sendf;
+
 // Encode a message and transmit it
 void
 _sendf(uint8_t parserid, ...)
 {
-    static uint8_t in_sendf;
-    irqstatus_t flag = irq_save();
-    if (in_sendf) {
+    if (readb(&in_sendf))
         // This sendf call was made from an irq handler while the main
         // code was already in sendf - just drop this sendf request.
-        irq_restore(flag);
         return;
-    }
-    in_sendf = 1;
-    irq_restore(flag);
+    writeb(&in_sendf, 1);
 
     const struct command_encoder *cp = &command_encoders[parserid];
     uint8_t max_size = READP(cp->max_size);
@@ -194,11 +188,18 @@ _sendf(uint8_t parserid, ...)
     *p++ = MESSAGE_SYNC;
     console_push_output(msglen);
 done:
-    in_sendf = 0;
+    writeb(&in_sendf, 0);
     return;
 error:
     shutdown("Message encode error");
 }
+
+static void
+sendf_shutdown(void)
+{
+    writeb(&in_sendf, 0);
+}
+DECL_SHUTDOWN(sendf_shutdown);
 
 
 /****************************************************************
@@ -306,6 +307,5 @@ command_task(void)
         func(args);
     }
     console_pop_input(msglen);
-    return;
 }
 DECL_TASK(command_task);

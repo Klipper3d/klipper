@@ -146,6 +146,7 @@ console_get_output(uint8_t len)
 void
 console_push_output(uint8_t len)
 {
+    barrier();
     writeb(&transmit_max, readb(&transmit_max) + len);
     enable_tx_irq();
 }
