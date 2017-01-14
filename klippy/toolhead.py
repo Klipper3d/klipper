@@ -120,13 +120,17 @@ class MoveQueue:
                             , move.max_cruise_v2)
             move_info[i] = (start_v2, cruise_v2, next_end_v2
                             , min_corner_v2, max_corner_v2)
+            # Calculate min/max_corner_v2 - the speed the head will
+            # slow to due to junction cornering and the maximum speed
+            # the head will reach immediately afterwards.
             if reachable_start_v2 > start_v2:
                 min_corner_v2 = start_v2
-                if start_v2 + move.delta_v2 > next_end_v2:
-                    max_corner_v2 = cruise_v2
-                    if lazy:
+                if (start_v2 + move.delta_v2 > next_end_v2
+                    or next_end_v2 >= move_info[i+1][1]):
+                    if lazy and max_corner_v2:
                         flush_count = i
                         lazy = False
+                    max_corner_v2 = cruise_v2
             next_end_v2 = start_v2
         if lazy:
             flush_count = 0
