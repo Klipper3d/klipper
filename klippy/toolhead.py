@@ -9,8 +9,8 @@ import cartesian, delta
 EXTRUDE_DIFF_IGNORE = 1.02
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
-#   mm/second), _t is time (in seconds), _r is ratio (scalar between
-#   0.0 and 1.0)
+#   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
+#   seconds), _r is ratio (scalar between 0.0 and 1.0)
 
 # Class to track each move request
 class Move:
@@ -37,22 +37,21 @@ class Move:
                 self.do_calc_junction = self.is_kinematic_move = False
         self.move_d = move_d
         self.extrude_r = axes_d[3] / move_d
-        # Junction speeds are velocities squared.  The junction_delta
-        # is the maximum amount of this squared-velocity that can
-        # change in this move.
-        self.junction_max = speed**2
-        self.junction_delta = 2.0 * move_d * self.accel
-        self.junction_start_max = 0.
+        # Junction speeds are tracked in velocity squared.  The
+        # delta_v2 is the maximum amount of this squared-velocity that
+        # can change in this move.
+        self.max_start_v2 = 0.
+        self.max_cruise_v2 = speed**2
+        self.delta_v2 = 2.0 * move_d * self.accel
     def limit_speed(self, speed, accel):
-        self.junction_max = min(self.junction_max, speed**2)
+        self.max_cruise_v2 = min(self.max_cruise_v2, speed**2)
         if accel < self.accel:
             self.accel = accel
-            self.junction_delta = 2.0 * self.move_d * self.accel
+            self.delta_v2 = 2.0 * self.move_d * self.accel
             self.do_calc_junction = False
     def calc_junction(self, prev_move):
         if not self.do_calc_junction or not prev_move.do_calc_junction:
             return
-        # Find max junction_start_velocity between two moves
         if (self.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
             or prev_move.extrude_r > self.extrude_r * EXTRUDE_DIFF_IGNORE):
             # Extrude ratio between moves is too different
@@ -69,24 +68,21 @@ class Move:
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
-        self.junction_start_max = min(
-            R * self.accel, self.junction_max, prev_move.junction_max
-            , prev_move.junction_start_max + prev_move.junction_delta)
-    def process(self, junction_start, junction_cruise, junction_end
-                , junction_corner_min, junction_corner_max):
+        self.max_start_v2 = min(
+            R * self.accel, self.max_cruise_v2, prev_move.max_cruise_v2
+            , prev_move.max_start_v2 + prev_move.delta_v2)
+    def process(self, start_v2, cruise_v2, end_v2, min_corner_v2, max_corner_v2):
         # Determine accel, cruise, and decel portions of the move distance
-        inv_junction_delta = 1. / self.junction_delta
-        accel_r = (junction_cruise-junction_start) * inv_junction_delta
-        decel_r = (junction_cruise-junction_end) * inv_junction_delta
-        cruise_r = 1. - accel_r - decel_r
-        self.accel_r, self.cruise_r, self.decel_r = accel_r, cruise_r, decel_r
+        inv_delta_v2 = 1. / self.delta_v2
+        self.accel_r = accel_r = (cruise_v2 - start_v2) * inv_delta_v2
+        self.decel_r = decel_r = (cruise_v2 - end_v2) * inv_delta_v2
+        self.cruise_r = cruise_r = 1. - accel_r - decel_r
         # Determine move velocities
-        start_v = math.sqrt(junction_start)
-        cruise_v = math.sqrt(junction_cruise)
-        end_v = math.sqrt(junction_end)
-        self.start_v, self.cruise_v, self.end_v = start_v, cruise_v, end_v
-        self.corner_min = math.sqrt(junction_corner_min)
-        self.corner_max = math.sqrt(junction_corner_max)
+        self.start_v = start_v = math.sqrt(start_v2)
+        self.cruise_v = cruise_v = math.sqrt(cruise_v2)
+        self.end_v = end_v = math.sqrt(end_v2)
+        self.min_corner_v = math.sqrt(min_corner_v2)
+        self.max_corner_v = math.sqrt(max_corner_v2)
         # Determine time spent in each portion of move (time is the
         # distance divided by average velocity)
         accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
@@ -115,23 +111,23 @@ class MoveQueue:
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        next_junction_end = junction_corner_min = junction_corner_max = 0.
+        next_end_v2 = min_corner_v2 = max_corner_v2 = 0.
         for i in range(flush_count-1, -1, -1):
             move = self.queue[i]
-            reachable_start = next_junction_end + move.junction_delta
-            junction_start = min(move.junction_start_max, reachable_start)
-            junction_cruise = min((junction_start + reachable_start) * .5
-                                  , move.junction_max)
-            move_info[i] = (junction_start, junction_cruise, next_junction_end
-                            , junction_corner_min, junction_corner_max)
-            if reachable_start > junction_start:
-                junction_corner_min = junction_start
-                if junction_start + move.junction_delta > next_junction_end:
-                    junction_corner_max = junction_cruise
+            reachable_start_v2 = next_end_v2 + move.delta_v2
+            start_v2 = min(move.max_start_v2, reachable_start_v2)
+            cruise_v2 = min((start_v2 + reachable_start_v2) * .5
+                            , move.max_cruise_v2)
+            move_info[i] = (start_v2, cruise_v2, next_end_v2
+                            , min_corner_v2, max_corner_v2)
+            if reachable_start_v2 > start_v2:
+                min_corner_v2 = start_v2
+                if start_v2 + move.delta_v2 > next_end_v2:
+                    max_corner_v2 = cruise_v2
                     if lazy:
                         flush_count = i
                         lazy = False
-            next_junction_end = junction_start
+            next_end_v2 = start_v2
         if lazy:
             flush_count = 0
         # Generate step times for all moves ready to be flushed
@@ -140,14 +136,14 @@ class MoveQueue:
         # Remove processed moves from the queue
         del self.queue[:flush_count]
         if self.queue:
-            self.junction_flush = 2. * self.queue[-1].junction_max
+            self.junction_flush = 2. * self.queue[-1].max_cruise_v2
     def add_move(self, move):
         self.queue.append(move)
         if len(self.queue) == 1:
-            self.junction_flush = 2. * move.junction_max
+            self.junction_flush = 2. * move.max_cruise_v2
             return
         move.calc_junction(self.queue[-2])
-        self.junction_flush -= move.junction_delta
+        self.junction_flush -= move.delta_v2
         if self.junction_flush <= 0.:
             # There are enough queued moves to return to zero velocity
             # from the first move's maximum possible velocity, so at
