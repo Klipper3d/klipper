@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdlib.h> // malloc
-#include <string.h> // memcpy
+#include <string.h> // memset
 #include "basecmd.h" // lookup_oid
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // alloc_maxsize

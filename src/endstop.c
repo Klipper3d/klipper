@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stddef.h> // offsetof
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // struct gpio
 #include "board/irq.h" // irq_disable

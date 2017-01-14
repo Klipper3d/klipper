@@ -5,8 +5,6 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <setjmp.h> // setjmp
-#include <stdarg.h> // va_list
-#include <stddef.h> // NULL
 #include "autoconf.h" // CONFIG_*
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us

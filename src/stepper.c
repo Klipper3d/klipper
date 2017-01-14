@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stddef.h> // NULL
 #include "autoconf.h" // CONFIG_*
 #include "basecmd.h" // alloc_oid
 #include "board/gpio.h" // gpio_out_write
