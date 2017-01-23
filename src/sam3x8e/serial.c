@@ -131,12 +131,10 @@ console_get_output(uint8_t len)
         return NULL;
     // Disable TX irq and move buffer
     writeb(&transmit_max, 0);
-    barrier();
     tpos = readb(&transmit_pos);
     tmax -= tpos;
     memmove(&transmit_buf[0], &transmit_buf[tpos], tmax);
     writeb(&transmit_pos, 0);
-    barrier();
     writeb(&transmit_max, tmax);
     enable_tx_irq();
     return &transmit_buf[tmax];
@@ -146,7 +144,6 @@ console_get_output(uint8_t len)
 void
 console_push_output(uint8_t len)
 {
-    barrier();
     writeb(&transmit_max, readb(&transmit_max) + len);
     enable_tx_irq();
 }
