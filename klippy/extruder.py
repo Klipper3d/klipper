@@ -6,6 +6,8 @@
 import math, logging
 import stepper, heater, homing
 
+EXTRUDE_DIFF_IGNORE = 1.02
+
 class PrinterExtruder:
     def __init__(self, printer, config):
         self.config = config
@@ -35,6 +37,7 @@ class PrinterExtruder:
         self.stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True
     def check_move(self, move):
+        move.extrude_r = move.axes_d[3] / move.move_d
         if not self.heater.can_extrude:
             raise homing.EndstopMoveError(
                 move.end_pos, "Extrude below minimum temp")
@@ -48,6 +51,39 @@ class PrinterExtruder:
             logging.debug("%s vs %s" % (move.extrude_r, self.max_extrude_ratio))
             raise homing.EndstopMoveError(
                 move.end_pos, "Move exceeds maximum extrusion cross section")
+    def calc_junction(self, prev_move, move):
+        if move.axes_d[3] or prev_move.axes_d[3]:
+            if (not move.axes_d[3] or not prev_move.axes_d[3]
+                or move.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
+                or prev_move.extrude_r > move.extrude_r * EXTRUDE_DIFF_IGNORE):
+                # Extrude ratio between moves is too different
+                return 0.
+            move.extrude_r = prev_move.extrude_r
+        return move.max_cruise_v2
+    def lookahead(self, move_info, orig_flush_count, lazy):
+        if not self.pressure_advance:
+            return orig_flush_count
+        min_corner_v2 = max_corner_v2 = 0.
+        flush_count = len(move_info)
+        for i in range(flush_count-1, -1, -1):
+            move, start_v2, cruise_v2, end_v2 = move_info[i]
+            reachable_start_v2 = end_v2 + move.delta_v2
+            # Calculate min/max_corner_v2 - the speed the head will
+            # slow to due to junction cornering and the maximum speed
+            # the head will reach immediately afterwards.
+            move.extruder_min_corner_v2 = min_corner_v2
+            move.extruder_max_corner_v2 = max_corner_v2
+            if reachable_start_v2 > start_v2:
+                min_corner_v2 = start_v2
+                if (start_v2 + move.delta_v2 > end_v2
+                    or end_v2 >= move_info[i+1][2]):
+                    if lazy and max_corner_v2:
+                        flush_count = i
+                        lazy = False
+                    max_corner_v2 = cruise_v2
+        if lazy:
+            return 0
+        return min(flush_count, orig_flush_count)
     def move(self, move_time, move):
         if self.need_motor_enable:
             self.stepper.motor_enable(move_time, 1)
@@ -83,12 +119,14 @@ class PrinterExtruder:
                     prev_pressure_d += extra_accel_d
             # Update decel and retract parameters when decelerating
             if decel_t:
-                if move.min_corner_v:
-                    npd = move.max_corner_v*move_extrude_r*self.pressure_advance
+                if move.extruder_min_corner_v2:
+                    min_corner_v = math.sqrt(move.extruder_min_corner_v2)
+                    max_corner_v = math.sqrt(move.extruder_max_corner_v2)
+                    npd = max_corner_v*move_extrude_r*self.pressure_advance
                     extra_decel_d = prev_pressure_d - npd
-                    if move.end_v > move.min_corner_v:
+                    if move.end_v > min_corner_v:
                         extra_decel_d *= ((move.cruise_v - move.end_v)
-                                          / (move.cruise_v - move.min_corner_v))
+                                          / (move.cruise_v - min_corner_v))
                 else:
                     npd = move.end_v * move_extrude_r * self.pressure_advance
                     extra_decel_d = prev_pressure_d - npd
@@ -163,3 +201,17 @@ class PrinterExtruder:
                 , accel_sqrt_offset, accel_multiplier)
 
         self.extrude_pos = start_pos + accel_d + cruise_d + decel_d - retract_d
+
+# Dummy extruder class used when a printer has no extruder at all
+class DummyExtruder:
+    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
+        pass
+    def motor_off(self, move_time):
+        pass
+    def check_move(self, move):
+        raise homing.EndstopMoveError(
+            move.end_pos, "Extrude when no extruder present")
+    def calc_junction(self, prev_move, move):
+        return move.max_cruise_v2
+    def lookahead(self, moves, flush_count, lazy):
+        return flush_count

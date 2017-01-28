@@ -4,9 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, time
-import cartesian, delta
-
-EXTRUDE_DIFF_IGNORE = 1.02
+import cartesian, delta, extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -36,7 +34,6 @@ class Move:
                     return
                 self.do_calc_junction = self.is_kinematic_move = False
         self.move_d = move_d
-        self.extrude_r = axes_d[3] / move_d
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
         # can change in this move.
@@ -52,11 +49,8 @@ class Move:
     def calc_junction(self, prev_move):
         if not self.do_calc_junction or not prev_move.do_calc_junction:
             return
-        if (self.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
-            or prev_move.extrude_r > self.extrude_r * EXTRUDE_DIFF_IGNORE):
-            # Extrude ratio between moves is too different
-            return
-        self.extrude_r = prev_move.extrude_r
+        # Allow extruder to calculate its maximum junction
+        extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
         # Find max velocity using approximated centripetal velocity as
         # described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
@@ -70,8 +64,8 @@ class Move:
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
         self.max_start_v2 = min(
             R * self.accel, self.max_cruise_v2, prev_move.max_cruise_v2
-            , prev_move.max_start_v2 + prev_move.delta_v2)
-    def process(self, start_v2, cruise_v2, end_v2, min_corner_v2, max_corner_v2):
+            , extruder_v2, prev_move.max_start_v2 + prev_move.delta_v2)
+    def set_junction(self, start_v2, cruise_v2, end_v2):
         # Determine accel, cruise, and decel portions of the move distance
         inv_delta_v2 = 1. / self.delta_v2
         self.accel_r = accel_r = (cruise_v2 - start_v2) * inv_delta_v2
@@ -81,66 +75,64 @@ class Move:
         self.start_v = start_v = math.sqrt(start_v2)
         self.cruise_v = cruise_v = math.sqrt(cruise_v2)
         self.end_v = end_v = math.sqrt(end_v2)
-        self.min_corner_v = math.sqrt(min_corner_v2)
-        self.max_corner_v = math.sqrt(max_corner_v2)
         # Determine time spent in each portion of move (time is the
         # distance divided by average velocity)
-        accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
-        cruise_t = cruise_r * self.move_d / cruise_v
-        decel_t = decel_r * self.move_d / ((end_v + cruise_v) * 0.5)
-        self.accel_t, self.cruise_t, self.decel_t = accel_t, cruise_t, decel_t
+        self.accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
+        self.cruise_t = cruise_r * self.move_d / cruise_v
+        self.decel_t = decel_r * self.move_d / ((end_v + cruise_v) * 0.5)
+    def move(self):
         # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
         if self.is_kinematic_move:
             self.toolhead.kin.move(next_move_time, self)
         if self.axes_d[3]:
             self.toolhead.extruder.move(next_move_time, self)
-        self.toolhead.update_move_time(accel_t + cruise_t + decel_t)
+        self.toolhead.update_move_time(
+            self.accel_t + self.cruise_t + self.decel_t)
 
 # Class to track a list of pending move requests and to facilitate
 # "look-ahead" across moves to reduce acceleration between moves.
 class MoveQueue:
-    def __init__(self):
+    def __init__(self, extruder_lookahead):
+        self.extruder_lookahead = extruder_lookahead
         self.queue = []
         self.junction_flush = 0.
     def reset(self):
         del self.queue[:]
     def flush(self, lazy=False):
-        flush_count = len(self.queue)
+        update_flush_count = lazy
+        queue = self.queue
+        flush_count = len(queue)
         move_info = [None] * flush_count
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        next_end_v2 = min_corner_v2 = max_corner_v2 = 0.
+        next_end_v2 = 0.
         for i in range(flush_count-1, -1, -1):
-            move = self.queue[i]
+            move = queue[i]
             reachable_start_v2 = next_end_v2 + move.delta_v2
             start_v2 = min(move.max_start_v2, reachable_start_v2)
             cruise_v2 = min((start_v2 + reachable_start_v2) * .5
                             , move.max_cruise_v2)
-            move_info[i] = (start_v2, cruise_v2, next_end_v2
-                            , min_corner_v2, max_corner_v2)
-            # Calculate min/max_corner_v2 - the speed the head will
-            # slow to due to junction cornering and the maximum speed
-            # the head will reach immediately afterwards.
-            if reachable_start_v2 > start_v2:
-                min_corner_v2 = start_v2
-                if (start_v2 + move.delta_v2 > next_end_v2
-                    or next_end_v2 >= move_info[i+1][1]):
-                    if lazy and max_corner_v2:
-                        flush_count = i
-                        lazy = False
-                    max_corner_v2 = cruise_v2
+            move_info[i] = (move, start_v2, cruise_v2, next_end_v2)
+            if update_flush_count and reachable_start_v2 > start_v2:
+                flush_count = i
+                update_flush_count = False
             next_end_v2 = start_v2
-        if lazy:
+        if update_flush_count:
             flush_count = 0
+        # Traverse queue in forward direction propagating final values
+        for move, start_v2, cruise_v2, end_v2 in move_info[:flush_count]:
+            move.set_junction(start_v2, cruise_v2, end_v2)
+        # Allow extruder to do its lookahead
+        flush_count = self.extruder_lookahead(move_info, flush_count, lazy)
         # Generate step times for all moves ready to be flushed
-        for i in range(flush_count):
-            self.queue[i].process(*move_info[i])
+        for move in queue[:flush_count]:
+            move.move()
         # Remove processed moves from the queue
-        del self.queue[:flush_count]
-        if self.queue:
-            self.junction_flush = 2. * self.queue[-1].max_cruise_v2
+        del queue[:flush_count]
+        if queue:
+            self.junction_flush = 2. * queue[-1].max_cruise_v2
     def add_move(self, move):
         self.queue.append(move)
         if len(self.queue) == 1:
@@ -162,13 +154,15 @@ class ToolHead:
         self.printer = printer
         self.reactor = printer.reactor
         self.extruder = printer.objects.get('extruder')
+        if self.extruder is None:
+            self.extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
         self.max_speed = config.getfloat('max_velocity')
         self.max_accel = config.getfloat('max_accel')
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
-        self.move_queue = MoveQueue()
+        self.move_queue = MoveQueue(self.extruder.lookahead)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
@@ -183,8 +177,7 @@ class ToolHead:
     def build_config(self):
         xy_halt = 0.005 * self.max_accel # XXX
         self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
-        if self.extruder is not None:
-            self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
+        self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
         self.kin.build_config()
     # Print time tracking
     def update_move_time(self, movetime):
