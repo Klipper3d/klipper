@@ -125,7 +125,7 @@ class MoveQueue:
         for move, start_v2, cruise_v2, end_v2 in move_info[:flush_count]:
             move.set_junction(start_v2, cruise_v2, end_v2)
         # Allow extruder to do its lookahead
-        flush_count = self.extruder_lookahead(move_info, flush_count, lazy)
+        flush_count = self.extruder_lookahead(queue, flush_count, lazy)
         # Generate step times for all moves ready to be flushed
         for move in queue[:flush_count]:
             move.move()
