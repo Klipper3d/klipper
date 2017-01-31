@@ -30,10 +30,13 @@ class Move:
         self.max_start_v2 = 0.
         self.max_cruise_v2 = speed**2
         self.delta_v2 = 2.0 * move_d * self.accel
+        self.max_smoothed_v2 = 0.
+        self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
     def limit_speed(self, speed, accel):
         self.max_cruise_v2 = min(self.max_cruise_v2, speed**2)
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
+        self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def calc_junction(self, prev_move):
         axes_d = self.axes_d
         prev_axes_d = prev_move.axes_d
@@ -56,6 +59,9 @@ class Move:
         self.max_start_v2 = min(
             R * self.accel, self.max_cruise_v2, prev_move.max_cruise_v2
             , extruder_v2, prev_move.max_start_v2 + prev_move.delta_v2)
+        self.max_smoothed_v2 = min(
+            self.max_start_v2
+            , prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
     def set_junction(self, start_v2, cruise_v2, end_v2):
         # Determine accel, cruise, and decel portions of the move distance
         inv_delta_v2 = 1. / self.delta_v2
@@ -88,10 +94,12 @@ class MoveQueue:
         self.extruder_lookahead = extruder_lookahead
         self.queue = []
         self.leftover = 0
+        self.next_start_v2 = 0.
         self.junction_flush = 0.
     def reset(self):
         del self.queue[:]
         self.leftover = 0
+        self.next_start_v2 = 0.
     def flush(self, lazy=False):
         update_flush_count = lazy
         queue = self.queue
@@ -99,19 +107,41 @@ class MoveQueue:
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        next_end_v2 = 0.
+        delayed = []
+        next_end_v2 = next_smoothed_v2 = peak_cruise_v2 = 0.
         for i in range(flush_count-1, self.leftover-1, -1):
             move = queue[i]
             reachable_start_v2 = next_end_v2 + move.delta_v2
             start_v2 = min(move.max_start_v2, reachable_start_v2)
-            cruise_v2 = min((start_v2 + reachable_start_v2) * .5
-                            , move.max_cruise_v2)
-            if not update_flush_count:
-                move.set_junction(start_v2, cruise_v2, next_end_v2)
-            elif reachable_start_v2 > start_v2:
-                flush_count = i
-                update_flush_count = False
+            reachable_smoothed_v2 = next_smoothed_v2 + move.smooth_delta_v2
+            smoothed_v2 = min(move.max_smoothed_v2, reachable_smoothed_v2)
+            if smoothed_v2 < reachable_smoothed_v2:
+                # It's possible for this move to accelerate
+                if (smoothed_v2 + move.smooth_delta_v2 > next_smoothed_v2
+                    or next_smoothed_v2 >= peak_cruise_v2):
+                    # This move can both accelerate and decelerate
+                    if update_flush_count and peak_cruise_v2:
+                        flush_count = i
+                        update_flush_count = False
+                    peak_cruise_v2 = min(move.max_cruise_v2, (
+                        smoothed_v2 + reachable_smoothed_v2) * .5)
+                    if delayed:
+                        # Propagate peak_cruise_v2 to any delayed moves
+                        for m, ms_v2, me_v2 in delayed:
+                            mc_v2 = min(peak_cruise_v2, ms_v2)
+                            m.set_junction(min(ms_v2, mc_v2), mc_v2
+                                           , min(me_v2, mc_v2))
+                        del delayed[:]
+                cruise_v2 = min((start_v2 + reachable_start_v2) * .5
+                                , move.max_cruise_v2, peak_cruise_v2)
+                if not update_flush_count and i < flush_count:
+                    move.set_junction(min(start_v2, cruise_v2), cruise_v2
+                                      , min(next_end_v2, cruise_v2))
+            elif not update_flush_count:
+                # Delay calculating this move until peak_cruise_v2 is known
+                delayed.append((move, start_v2, next_end_v2))
             next_end_v2 = start_v2
+            next_smoothed_v2 = smoothed_v2
         if update_flush_count:
             flush_count = 0
         # Allow extruder to do its lookahead
@@ -130,7 +160,7 @@ class MoveQueue:
             self.junction_flush = 2. * move.max_cruise_v2
             return
         move.calc_junction(self.queue[-2])
-        self.junction_flush -= move.delta_v2
+        self.junction_flush -= move.smooth_delta_v2
         if self.junction_flush <= 0.:
             # There are enough queued moves to return to zero velocity
             # from the first move's maximum possible velocity, so at
@@ -152,6 +182,8 @@ class ToolHead:
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
         self.max_speed = config.getfloat('max_velocity')
         self.max_accel = config.getfloat('max_accel')
+        self.max_accel_to_decel = config.getfloat('max_accel_to_decel'
+                                                  , self.max_accel * 0.5)
         self.junction_deviation = config.getfloat('junction_deviation', 0.02)
         self.move_queue = MoveQueue(self.extruder.lookahead)
         self.commanded_pos = [0., 0., 0., 0.]
