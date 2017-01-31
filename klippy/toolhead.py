@@ -17,23 +17,13 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
-        self.do_calc_junction = self.is_kinematic_move = True
+        self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
-        if axes_d[2]:
-            # Move with Z
-            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-            self.do_calc_junction = False
-        else:
-            move_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
-            if not move_d:
-                # Extrude only move
-                move_d = abs(axes_d[3])
-                if not move_d:
-                    # No move
-                    self.move_d = 0.
-                    return
-                self.do_calc_junction = self.is_kinematic_move = False
-        self.move_d = move_d
+        self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        if not move_d:
+            # Extrude only move
+            self.move_d = move_d = abs(axes_d[3])
+            self.is_kinematic_move = False
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
         # can change in this move.
@@ -42,20 +32,21 @@ class Move:
         self.delta_v2 = 2.0 * move_d * self.accel
     def limit_speed(self, speed, accel):
         self.max_cruise_v2 = min(self.max_cruise_v2, speed**2)
-        if accel < self.accel:
-            self.accel = accel
-            self.delta_v2 = 2.0 * self.move_d * self.accel
-            self.do_calc_junction = False
+        self.accel = min(self.accel, accel)
+        self.delta_v2 = 2.0 * self.move_d * self.accel
     def calc_junction(self, prev_move):
-        if not self.do_calc_junction or not prev_move.do_calc_junction:
+        axes_d = self.axes_d
+        prev_axes_d = prev_move.axes_d
+        if (axes_d[2] or prev_axes_d[2] or self.accel != prev_move.accel
+            or not self.is_kinematic_move or not prev_move.is_kinematic_move):
             return
         # Allow extruder to calculate its maximum junction
         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
         # Find max velocity using approximated centripetal velocity as
         # described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
-        junction_cos_theta = -((self.axes_d[0] * prev_move.axes_d[0]
-                                + self.axes_d[1] * prev_move.axes_d[1])
+        junction_cos_theta = -((axes_d[0] * prev_axes_d[0]
+                                + axes_d[1] * prev_axes_d[1])
                                / (self.move_d * prev_move.move_d))
         if junction_cos_theta > 0.999999:
             return
