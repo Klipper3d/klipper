@@ -87,41 +87,41 @@ class MoveQueue:
     def __init__(self, extruder_lookahead):
         self.extruder_lookahead = extruder_lookahead
         self.queue = []
+        self.leftover = 0
         self.junction_flush = 0.
     def reset(self):
         del self.queue[:]
+        self.leftover = 0
     def flush(self, lazy=False):
         update_flush_count = lazy
         queue = self.queue
         flush_count = len(queue)
-        move_info = [None] * flush_count
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
         next_end_v2 = 0.
-        for i in range(flush_count-1, -1, -1):
+        for i in range(flush_count-1, self.leftover-1, -1):
             move = queue[i]
             reachable_start_v2 = next_end_v2 + move.delta_v2
             start_v2 = min(move.max_start_v2, reachable_start_v2)
             cruise_v2 = min((start_v2 + reachable_start_v2) * .5
                             , move.max_cruise_v2)
-            move_info[i] = (move, start_v2, cruise_v2, next_end_v2)
-            if update_flush_count and reachable_start_v2 > start_v2:
+            if not update_flush_count:
+                move.set_junction(start_v2, cruise_v2, next_end_v2)
+            elif reachable_start_v2 > start_v2:
                 flush_count = i
                 update_flush_count = False
             next_end_v2 = start_v2
         if update_flush_count:
             flush_count = 0
-        # Traverse queue in forward direction propagating final values
-        for move, start_v2, cruise_v2, end_v2 in move_info[:flush_count]:
-            move.set_junction(start_v2, cruise_v2, end_v2)
         # Allow extruder to do its lookahead
-        flush_count = self.extruder_lookahead(queue, flush_count, lazy)
+        move_count = self.extruder_lookahead(queue, flush_count, lazy)
         # Generate step times for all moves ready to be flushed
-        for move in queue[:flush_count]:
+        for move in queue[:move_count]:
             move.move()
         # Remove processed moves from the queue
-        del queue[:flush_count]
+        self.leftover = flush_count - move_count
+        del queue[:move_count]
         if queue:
             self.junction_flush = 2. * queue[-1].max_cruise_v2
     def add_move(self, move):
