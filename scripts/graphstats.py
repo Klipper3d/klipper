@@ -27,10 +27,32 @@ def parse_log(logname):
     f.close()
     return out
 
+def find_print_restarts(data):
+    last_print_time = 0.
+    print_resets = []
+    for d in data:
+        print_time = float(d.get('print_time', last_print_time))
+        if print_time < last_print_time:
+            print_resets.append(d['#sampletime'])
+            last_print_time = 0.
+        else:
+            last_print_time = print_time
+    sample_resets = {}
+    for d in data:
+        st = d['#sampletime']
+        while print_resets and st > print_resets[0]:
+            print_resets.pop(0)
+        if not print_resets:
+            break
+        if st + 2. * MAXBUFFER > print_resets[0]:
+            sample_resets[st] = 1
+    return sample_resets
+
 def plot_mcu(data, maxbw, outname):
     # Generate data for plot
     basetime = lasttime = data[0]['#sampletime']
     lastbw = float(data[0]['bytes_write']) + float(data[0]['bytes_retransmit'])
+    sample_resets = find_print_restarts(data)
     times = []
     bwdeltas = []
     loads = []
@@ -49,7 +71,7 @@ def plot_mcu(data, maxbw, outname):
             load = 0.
         pt = float(d['print_time'])
         hb = float(d['buffer_time'])
-        if pt <= 2*MAXBUFFER or hb >= MAXBUFFER:
+        if pt <= 2. * MAXBUFFER or hb >= MAXBUFFER or st in sample_resets:
             hb = 0.
         else:
             hb = 100. * (MAXBUFFER - hb) / MAXBUFFER
@@ -67,7 +89,7 @@ def plot_mcu(data, maxbw, outname):
     ax1.set_ylabel('Usage (%)')
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
-    #ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
+    ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
     ax1.legend()
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     #plt.gcf().autofmt_xdate()
