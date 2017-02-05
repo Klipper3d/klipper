@@ -114,6 +114,9 @@ class GCodeParser:
                 logging.exception("Exception in command handler")
                 self.toolhead.force_shutdown()
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
+                if self.is_fileinput:
+                    self.printer.request_exit_eof()
+                    break
             self.ack()
     def process_data(self, eventtime):
         data = os.read(self.fd, 4096)
