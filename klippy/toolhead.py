@@ -191,12 +191,14 @@ class ToolHead:
         self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
         self.buffer_time_low = config.getfloat('buffer_time_low', 0.150)
         self.move_flush_time = config.getfloat('move_flush_time', 0.050)
-        self.motor_off_delay = config.getfloat('motor_off_time', 60.000)
         self.print_time = 0.
         self.need_check_stall = -1.
         self.print_time_stall = 0
-        self.motor_off_time = self.reactor.NEVER
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
+        # Motor off tracking
+        self.motor_off_time = config.getfloat('motor_off_time', 60.000)
+        self.motor_off_timer = self.reactor.register_timer(
+            self._motor_off_handler)
     def build_config(self):
         # Determine the maximum velocity a cartesian axis could have
         # before cornering.  The 8. was determined experimentally.
@@ -215,27 +217,24 @@ class ToolHead:
             curtime = self.reactor.monotonic()
             self.printer.mcu.set_print_start_time(curtime)
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
+            self._reset_motor_off()
         return self.print_time
     def get_last_move_time(self):
         self.move_queue.flush()
         return self.get_next_move_time()
-    def reset_motor_off_time(self, eventtime):
-        self.motor_off_time = eventtime + self.motor_off_delay
     def reset_print_time(self):
         self.move_queue.flush()
         self.printer.mcu.flush_moves(self.print_time)
         self.print_time = 0.
         self.need_check_stall = -1.
-        self.reset_motor_off_time(self.reactor.monotonic())
-        self.reactor.update_timer(self.flush_timer, self.motor_off_time)
+        self._reset_motor_off()
     def _check_stall(self):
-        if not self.print_time:
-            # XXX - find better way to flush initial move_queue items
-            if self.move_queue.queue:
-                self.reactor.update_timer(
-                    self.flush_timer, self.reactor.monotonic() + 0.100)
-            return
         eventtime = self.reactor.monotonic()
+        if not self.print_time:
+            # Building initial queue - make sure to flush on idle input
+            self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
+            return
+        # Check if there are lots of queued moves and stall if so
         while 1:
             buffer_time = self.printer.mcu.get_print_buffer_time(
                 eventtime, self.print_time)
@@ -249,35 +248,42 @@ class ToolHead:
     def _flush_handler(self, eventtime):
         try:
             if not self.print_time:
+                # Input idled before filling lookahead queue - flush it
                 self.move_queue.flush()
                 if not self.print_time:
-                    if eventtime >= self.motor_off_time:
-                        self.motor_off()
-                        self.reset_print_time()
-                        self.motor_off_time = self.reactor.NEVER
-                    return self.motor_off_time
+                    return self.reactor.NEVER
             print_time = self.print_time
             buffer_time = self.printer.mcu.get_print_buffer_time(
                 eventtime, print_time)
             if buffer_time > self.buffer_time_low:
+                # Running normally - reschedule check
                 return eventtime + buffer_time - self.buffer_time_low
+            # Under ran low buffer mark - flush lookahead queue
             self.move_queue.flush()
             if print_time != self.print_time:
                 self.print_time_stall += 1
                 self.dwell(self.buffer_time_low + STALL_TIME)
                 return self.reactor.NOW
             self.reset_print_time()
-            return self.motor_off_time
         except:
             logging.exception("Exception in flush_handler")
             self.force_shutdown()
-    def stats(self, eventtime):
-        buffer_time = 0.
-        if self.print_time:
-            buffer_time = self.printer.mcu.get_print_buffer_time(
-                eventtime, self.print_time)
-        return "print_time=%.3f buffer_time=%.3f print_time_stall=%d" % (
-            self.print_time, buffer_time, self.print_time_stall)
+        return self.reactor.NEVER
+    # Motor off timer
+    def _reset_motor_off(self):
+        if not self.print_time:
+            waketime = self.reactor.monotonic() + self.motor_off_time
+        else:
+            waketime = self.reactor.NEVER
+        self.reactor.update_timer(self.motor_off_timer, waketime)
+    def _motor_off_handler(self, eventtime):
+        try:
+            self.motor_off()
+            self.reset_print_time()
+        except:
+            logging.exception("Exception in motor_off_handler")
+            self.force_shutdown()
+        return self.reactor.NEVER
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
@@ -319,6 +325,14 @@ class ToolHead:
     def query_endstops(self):
         last_move_time = self.get_last_move_time()
         return self.kin.query_endstops(last_move_time)
+    # Misc commands
+    def stats(self, eventtime):
+        buffer_time = 0.
+        if self.print_time:
+            buffer_time = self.printer.mcu.get_print_buffer_time(
+                eventtime, self.print_time)
+        return "print_time=%.3f buffer_time=%.3f print_time_stall=%d" % (
+            self.print_time, buffer_time, self.print_time_stall)
     def force_shutdown(self):
         self.printer.mcu.force_shutdown()
         self.move_queue.reset()

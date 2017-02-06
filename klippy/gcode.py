@@ -181,7 +181,7 @@ class GCodeParser:
             return
         eventtime = self.reactor.monotonic()
         while self.is_printer_ready and heater.check_busy(eventtime):
-            self.toolhead.reset_motor_off_time(eventtime)
+            print_time = self.toolhead.get_last_move_time()
             self.respond(self.get_temp())
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, heater, params, wait=False):
