@@ -16,7 +16,7 @@ defs_stepcompress = """
         , uint32_t queue_step_msgid, uint32_t set_next_step_dir_msgid
         , uint32_t invert_sdir, uint32_t oid);
     void stepcompress_free(struct stepcompress *sc);
-    void stepcompress_push(struct stepcompress *sc, double step_clock
+    int stepcompress_push(struct stepcompress *sc, double step_clock
         , int32_t sdir);
     int32_t stepcompress_push_factor(struct stepcompress *sc
         , double steps, double step_offset
@@ -32,16 +32,14 @@ defs_stepcompress = """
         , double clock_offset, double dist, double start_pos
         , double accel_multiplier, double step_dist, double height
         , double closestxy_d, double closest_height2, double movez_r);
-    void stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
-    void stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
-    void stepcompress_queue_msg(struct stepcompress *sc
-        , uint32_t *data, int len);
-    uint32_t stepcompress_get_errors(struct stepcompress *sc);
+    int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
+    int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
-    void steppersync_flush(struct steppersync *ss, uint64_t move_clock);
+    int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
 """
 
 defs_serialqueue = """

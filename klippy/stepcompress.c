@@ -31,8 +31,6 @@ struct stepcompress {
     uint64_t *queue, *queue_end, *queue_pos, *queue_next;
     // Internal tracking
     uint32_t max_error;
-    // Error checking
-    uint32_t errors;
     // Message generation
     uint64_t last_step_clock, homing_clock;
     struct list_head msg_queue;
@@ -224,27 +222,28 @@ compress_bisect_add(struct stepcompress *sc)
  * Step compress checking
  ****************************************************************/
 
+#define ERROR_RET -989898989
+
 // Verify that a given 'step_move' matches the actual step times
-static void
+static int
 check_line(struct stepcompress *sc, struct step_move move)
 {
     if (!CHECK_LINES)
-        return;
+        return 0;
     if (move.count == 1) {
         if (move.interval != (uint32_t)(*sc->queue_pos - sc->last_step_clock)
             || *sc->queue_pos < sc->last_step_clock) {
             errorf("Count 1 point out of range: %d %d %d"
                    , move.interval, move.count, move.add);
-            sc->errors++;
+            return ERROR_RET;
         }
-        return;
+        return 0;
     }
-    int err = 0;
     if (!move.count || (!move.interval && !move.add)
         || move.interval >= 0x80000000) {
         errorf("Point out of range: %d %d %d"
                , move.interval, move.count, move.add);
-        err++;
+        return ERROR_RET;
     }
     uint32_t interval = move.interval, p = 0;
     uint16_t i;
@@ -254,16 +253,16 @@ check_line(struct stepcompress *sc, struct step_move move)
         if (p < point.minp || p > point.maxp) {
             errorf("Point %d of %d: %d not in %d:%d"
                    , i+1, move.count, p, point.minp, point.maxp);
-            err++;
+            return ERROR_RET;
         }
         if (interval >= 0x80000000) {
             errorf("Point %d of %d: interval overflow %d"
                    , i+1, move.count, interval);
-            err++;
+            return ERROR_RET;
         }
         interval += move.add;
     }
-    sc->errors += err;
+    return 0;
 }
 
 
@@ -317,14 +316,16 @@ stepcompress_free(struct stepcompress *sc)
 }
 
 // Convert previously scheduled steps into commands for the mcu
-static void
+static int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->queue_pos >= sc->queue_next)
-        return;
+        return 0;
     while (move_clock > sc->last_step_clock) {
         struct step_move move = compress_bisect_add(sc);
-        check_line(sc, move);
+        int ret = check_line(sc, move);
+        if (ret)
+            return ret;
 
         uint32_t msg[5] = {
             sc->queue_step_msgid, sc->oid, move.interval, move.count, move.add
@@ -350,54 +351,70 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
         }
         sc->queue_pos += move.count;
     }
+    return 0;
 }
 
 // Send the set_next_step_dir command
-static void
+static int
 set_next_step_dir(struct stepcompress *sc, int sdir)
 {
     if (sc->sdir == sdir)
-        return;
+        return 0;
     sc->sdir = sdir;
-    stepcompress_flush(sc, UINT64_MAX);
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
     uint32_t msg[3] = {
         sc->set_next_step_dir_msgid, sc->oid, sdir ^ sc->invert_sdir
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 3);
     qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
+    return 0;
 }
 
 // Check if the internal queue needs to be expanded, and expand if so
-static void
+static int
 _check_expand(struct stepcompress *sc, uint64_t *qn)
 {
     sc->queue_next = qn;
-    if (qn - sc->queue_pos > 65535 + 2000)
+    if (qn - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
-        stepcompress_flush(sc, *(qn - 65535));
+        int ret = stepcompress_flush(sc, *(qn - 65535));
+        if (ret)
+            return ret;
+    }
     expand_queue(sc, 1);
+    return 0;
 }
-static inline void
+static inline int
 check_expand(struct stepcompress *sc, uint64_t **pqn, uint64_t **pqend)
 {
     if (likely(*pqn < *pqend))
-        return;
-    _check_expand(sc, *pqn);
+        return 0;
+    int ret = _check_expand(sc, *pqn);
+    if (ret)
+        return ret;
     *pqn = sc->queue_next;
     *pqend = sc->queue_end;
+    return 0;
 }
 
 // Schedule a step event at the specified step_clock time
-void
+int
 stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
 {
-    set_next_step_dir(sc, !!sdir);
+    int ret = set_next_step_dir(sc, !!sdir);
+    if (ret)
+        return ret;
     step_clock += 0.5;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    check_expand(sc, &qn, &qend);
+    ret = check_expand(sc, &qn, &qend);
+    if (ret)
+        return ret;
     *qn++ = step_clock;
     sc->queue_next = qn;
+    return 0;
 }
 
 // Schedule 'steps' number of steps with a constant time between steps
@@ -416,12 +433,16 @@ stepcompress_push_factor(struct stepcompress *sc
     }
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 10000000) {
-        if (count && steps)
+        if (count && steps) {
             errorf("push_factor invalid count %d %f %f %f %f"
                    , sc->oid, steps, step_offset, clock_offset, factor);
+            return ERROR_RET;
+        }
         return 0;
     }
-    set_next_step_dir(sc, sdir);
+    int ret = set_next_step_dir(sc, sdir);
+    if (ret)
+        return ret;
     int res = sdir ? count : -count;
 
     // Calculate each step time
@@ -429,7 +450,9 @@ stepcompress_push_factor(struct stepcompress *sc
     double pos = step_offset + .5;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     while (count--) {
-        check_expand(sc, &qn, &qend);
+        int ret = check_expand(sc, &qn, &qend);
+        if (ret)
+            return ret;
         *qn++ = clock_offset + pos*factor;
         pos += 1.0;
     }
@@ -452,13 +475,17 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     }
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 10000000) {
-        if (count && steps)
+        if (count && steps) {
             errorf("push_sqrt invalid count %d %f %f %f %f %f"
                    , sc->oid, steps, step_offset, clock_offset, sqrt_offset
                    , factor);
+            return ERROR_RET;
+        }
         return 0;
     }
-    set_next_step_dir(sc, sdir);
+    int ret = set_next_step_dir(sc, sdir);
+    if (ret)
+        return ret;
     int res = sdir ? count : -count;
 
     // Calculate each step time
@@ -466,7 +493,9 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     double pos = step_offset + .5 + sqrt_offset/factor;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     while (count--) {
-        check_expand(sc, &qn, &qend);
+        int ret = check_expand(sc, &qn, &qend);
+        if (ret)
+            return ret;
         double v = safe_sqrt(pos*factor);
         *qn++ = clock_offset + (factor >= 0. ? v : -v);
         pos += 1.0;
@@ -488,13 +517,17 @@ stepcompress_push_delta_const(
     double end_height = safe_sqrt(closest_height2 - reldist*reldist);
     int count = (end_height - height + movez_r*dist) / step_dist + .5;
     if (count <= 0 || count > 10000000) {
-        if (count)
+        if (count) {
             errorf("push_delta_const invalid count %d %d %f %f %f %f %f %f %f %f"
                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
                    , closest_height2, height, movez_r, inv_velocity);
+            return ERROR_RET;
+        }
         return 0;
     }
-    set_next_step_dir(sc, step_dist > 0.);
+    int ret = set_next_step_dir(sc, step_dist > 0.);
+    if (ret)
+        return ret;
     int res = step_dist > 0. ? count : -count;
 
     // Calculate each step time
@@ -505,7 +538,9 @@ stepcompress_push_delta_const(
     if (!movez_r) {
         // Optmized case for common XY only moves (no Z movement)
         while (count--) {
-            check_expand(sc, &qn, &qend);
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
             double v = safe_sqrt(closest_height2 - height*height);
             double pos = start_pos + (step_dist > 0. ? -v : v);
             *qn++ = clock_offset + pos * inv_velocity;
@@ -515,7 +550,9 @@ stepcompress_push_delta_const(
         // Optmized case for Z only moves
         double v = (step_dist > 0. ? -end_height : end_height);
         while (count--) {
-            check_expand(sc, &qn, &qend);
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
             double pos = start_pos + movez_r*height + v;
             *qn++ = clock_offset + pos * inv_velocity;
             height += step_dist;
@@ -523,7 +560,9 @@ stepcompress_push_delta_const(
     } else {
         // General case (handles XY+Z moves)
         while (count--) {
-            check_expand(sc, &qn, &qend);
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
             double relheight = movexy_r*height - movez_r*closestxy_d;
             double v = safe_sqrt(closest_height2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
@@ -548,13 +587,17 @@ stepcompress_push_delta_accel(
     double end_height = safe_sqrt(closest_height2 - reldist*reldist);
     int count = (end_height - height + movez_r*dist) / step_dist + .5;
     if (count <= 0 || count > 10000000) {
-        if (count)
+        if (count) {
             errorf("push_delta_accel invalid count %d %d %f %f %f %f %f %f %f %f"
                    , sc->oid, count, clock_offset, dist, step_dist, start_pos
                    , closest_height2, height, movez_r, accel_multiplier);
+            return ERROR_RET;
+        }
         return 0;
     }
-    set_next_step_dir(sc, step_dist > 0.);
+    int ret = set_next_step_dir(sc, step_dist > 0.);
+    if (ret)
+        return ret;
     int res = step_dist > 0. ? count : -count;
 
     // Calculate each step time
@@ -563,7 +606,9 @@ stepcompress_push_delta_accel(
     height += .5 * step_dist;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     while (count--) {
-        check_expand(sc, &qn, &qend);
+        int ret = check_expand(sc, &qn, &qend);
+        if (ret)
+            return ret;
         double relheight = movexy_r*height - movez_r*closestxy_d;
         double v = safe_sqrt(closest_height2 - relheight*relheight);
         double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
@@ -576,38 +621,40 @@ stepcompress_push_delta_accel(
 }
 
 // Reset the internal state of the stepcompress object
-void
+int
 stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 {
-    stepcompress_flush(sc, UINT64_MAX);
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
     sc->last_step_clock = last_step_clock;
     sc->sdir = -1;
+    return 0;
 }
 
 // Indicate the stepper is in homing mode (or done homing if zero)
-void
+int
 stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
 {
-    stepcompress_flush(sc, UINT64_MAX);
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
     sc->homing_clock = homing_clock;
+    return 0;
 }
 
 // Queue an mcu command to go out in order with stepper commands
-void
+int
 stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 {
-    stepcompress_flush(sc, UINT64_MAX);
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
 
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
-}
-
-// Return the count of internal errors found
-uint32_t
-stepcompress_get_errors(struct stepcompress *sc)
-{
-    return sc->errors;
+    return 0;
 }
 
 
@@ -693,13 +740,16 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
 }
 
 // Find and transmit any scheduled steps prior to the given 'move_clock'
-void
+int
 steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
     // Flush each stepcompress to the specified move_clock
     int i;
-    for (i=0; i<ss->sc_num; i++)
-        stepcompress_flush(ss->sc_list[i], move_clock);
+    for (i=0; i<ss->sc_num; i++) {
+        int ret = stepcompress_flush(ss->sc_list[i], move_clock);
+        if (ret)
+            return ret;
+    }
 
     // Order commands by the reqclock of each pending command
     struct list_head msgs;
@@ -739,4 +789,5 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
     // Transmit commands
     if (!list_empty(&msgs))
         serialqueue_send_batch(ss->sq, ss->cq, &msgs);
+    return 0;
 }

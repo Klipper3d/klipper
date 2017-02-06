@@ -19,6 +19,8 @@ def parse_pin_extras(pin, can_pullup=False):
         pin = pin[1:].strip()
     return pin, pullup, invert
 
+STEPCOMPRESS_ERROR_RET = -989898989
+
 class MCU_stepper:
     def __init__(self, mcu, step_pin, dir_pin, min_stop_interval, max_error):
         self._mcu = mcu
@@ -59,18 +61,31 @@ class MCU_stepper:
     def get_mcu_position(self):
         return self.commanded_position + self._mcu_position_offset
     def note_homing_start(self, homing_clock):
-        self.ffi_lib.stepcompress_set_homing(self._stepqueue, homing_clock)
+        ret = self.ffi_lib.stepcompress_set_homing(self._stepqueue, homing_clock)
+        if ret:
+            raise error("Internal error in stepcompress")
     def note_homing_finalized(self):
-        self.ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
-        self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
+        ret = self.ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
+        if ret:
+            raise error("Internal error in stepcompress")
+        ret = self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
+        if ret:
+            raise error("Internal error in stepcompress")
     def reset_step_clock(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
-        self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
+        ret = self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
+        if ret:
+            raise error("Internal error in stepcompress")
         data = (self._reset_cmd.msgid, self._oid, clock & 0xffffffff)
-        self.ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
+        ret = self.ffi_lib.stepcompress_queue_msg(
+            self._stepqueue, data, len(data))
+        if ret:
+            raise error("Internal error in stepcompress")
     def step(self, mcu_time, sdir):
         clock = mcu_time * self._mcu_freq
-        self.ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
+        ret = self.ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
+        if ret:
+            raise error("Internal error in stepcompress")
         if sdir:
             self.commanded_position += 1
         else:
@@ -81,12 +96,16 @@ class MCU_stepper:
         count = self.ffi_lib.stepcompress_push_sqrt(
             self._stepqueue, steps, step_offset, clock
             , sqrt_offset * mcu_freq2, factor * mcu_freq2)
+        if count == STEPCOMPRESS_ERROR_RET:
+            raise error("Internal error in stepcompress")
         self.commanded_position += count
         return count
     def step_factor(self, mcu_time, steps, step_offset, factor):
         clock = mcu_time * self._mcu_freq
         count = self.ffi_lib.stepcompress_push_factor(
             self._stepqueue, steps, step_offset, clock, factor * self._mcu_freq)
+        if count == STEPCOMPRESS_ERROR_RET:
+            raise error("Internal error in stepcompress")
         self.commanded_position += count
         return count
     def step_delta_const(self, mcu_time, dist, start_pos
@@ -97,6 +116,8 @@ class MCU_stepper:
             self._stepqueue, clock, dist, start_pos
             , inv_velocity * self._mcu_freq, step_dist
             , height, closestxy_d, closest_height2, movez_r)
+        if count == STEPCOMPRESS_ERROR_RET:
+            raise error("Internal error in stepcompress")
         self.commanded_position += count
         return count
     def step_delta_accel(self, mcu_time, dist, start_pos
@@ -108,10 +129,10 @@ class MCU_stepper:
             self._stepqueue, clock, dist, start_pos
             , accel_multiplier * mcu_freq2, step_dist
             , height, closestxy_d, closest_height2, movez_r)
+        if count == STEPCOMPRESS_ERROR_RET:
+            raise error("Internal error in stepcompress")
         self.commanded_position += count
         return count
-    def get_errors(self):
-        return self.ffi_lib.stepcompress_get_errors(self._stepqueue)
 
 class MCU_endstop:
     error = error
@@ -390,15 +411,9 @@ class MCU:
             self.ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def stats(self, eventtime):
-        stats = self.serial.stats(eventtime)
-        stats += " mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+        return "%s mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+            self.serial.stats(eventtime),
             self._mcu_tick_avg, self._mcu_tick_stddev)
-        err = 0
-        for s in self._steppers:
-            err += s.get_errors()
-        if err:
-            stats += " step_errors=%d" % (err,)
-        return stats
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
     def clear_shutdown(self):
@@ -527,7 +542,9 @@ class MCU:
             return
         mcu_time = print_time + self._print_start_time
         clock = int(mcu_time * self._mcu_freq)
-        self.ffi_lib.steppersync_flush(self._steppersync, clock)
+        ret = self.ffi_lib.steppersync_flush(self._steppersync, clock)
+        if ret:
+            raise error("Internal error in stepcompress")
     def pause(self, waketime):
         return self._printer.reactor.pause(waketime)
     def __del__(self):
