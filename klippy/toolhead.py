@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, time
+import math, logging
 import cartesian, delta, extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
@@ -210,7 +210,7 @@ class ToolHead:
     def get_next_move_time(self):
         if not self.print_time:
             self.print_time = self.buffer_time_low + STALL_TIME
-            curtime = time.time()
+            curtime = self.reactor.monotonic()
             self.printer.mcu.set_print_start_time(curtime)
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         return self.print_time
@@ -224,15 +224,16 @@ class ToolHead:
         self.printer.mcu.flush_moves(self.print_time)
         self.print_time = 0.
         self.need_check_stall = -1.
-        self.reset_motor_off_time(time.time())
+        self.reset_motor_off_time(self.reactor.monotonic())
         self.reactor.update_timer(self.flush_timer, self.motor_off_time)
     def _check_stall(self):
         if not self.print_time:
             # XXX - find better way to flush initial move_queue items
             if self.move_queue.queue:
-                self.reactor.update_timer(self.flush_timer, time.time() + 0.100)
+                self.reactor.update_timer(
+                    self.flush_timer, self.reactor.monotonic() + 0.100)
             return
-        eventtime = time.time()
+        eventtime = self.reactor.monotonic()
         while 1:
             buffer_time = self.printer.mcu.get_print_buffer_time(
                 eventtime, self.print_time)
@@ -310,7 +311,7 @@ class ToolHead:
         logging.debug('; Max time of %f' % (last_move_time,))
     def wait_moves(self):
         self.move_queue.flush()
-        eventtime = time.time()
+        eventtime = self.reactor.monotonic()
         while self.print_time:
             eventtime = self.reactor.pause(eventtime + 0.100)
     def query_endstops(self):

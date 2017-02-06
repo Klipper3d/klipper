@@ -3,8 +3,9 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import select, time, math
+import select, math
 import greenlet
+import chelper
 
 class ReactorTimer:
     def __init__(self, callback, waketime):
@@ -33,6 +34,7 @@ class SelectReactor:
         self._process = False
         self._g_dispatch = None
         self._greenlets = []
+        self.monotonic = chelper.get_ffi()[1].get_monotonic
     # Timers
     def _note_time(self, t):
         nexttime = t.waketime
@@ -67,7 +69,7 @@ class SelectReactor:
             self._note_time(t)
         if eventtime >= self._next_timer:
             return 0.
-        return min(1., max(.001, self._next_timer - time.time()))
+        return min(1., max(.001, self._next_timer - self.monotonic()))
     # Greenlets
     def pause(self, waketime):
         g = greenlet.getcurrent()
@@ -97,16 +99,16 @@ class SelectReactor:
     def _dispatch_loop(self):
         self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
-        eventtime = time.time()
+        eventtime = self.monotonic()
         while self._process:
             timeout = self._check_timers(eventtime)
             res = select.select(self._fds, [], [], timeout)
-            eventtime = time.time()
+            eventtime = self.monotonic()
             for fd in res[0]:
                 fd.callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
-                    eventtime = time.time()
+                    eventtime = self.monotonic()
                     break
         self._g_dispatch = None
     def run(self):
@@ -137,16 +139,16 @@ class PollReactor(SelectReactor):
     def _dispatch_loop(self):
         self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
-        eventtime = time.time()
+        eventtime = self.monotonic()
         while self._process:
             timeout = self._check_timers(eventtime)
             res = self._poll.poll(int(math.ceil(timeout * 1000.)))
-            eventtime = time.time()
+            eventtime = self.monotonic()
             for fd, event in res:
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
-                    eventtime = time.time()
+                    eventtime = self.monotonic()
                     break
         self._g_dispatch = None
 
@@ -172,16 +174,16 @@ class EPollReactor(SelectReactor):
     def _dispatch_loop(self):
         self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
-        eventtime = time.time()
+        eventtime = self.monotonic()
         while self._process:
             timeout = self._check_timers(eventtime)
             res = self._epoll.poll(timeout)
-            eventtime = time.time()
+            eventtime = self.monotonic()
             for fd, event in res:
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
-                    eventtime = time.time()
+                    eventtime = self.monotonic()
                     break
         self._g_dispatch = None
 

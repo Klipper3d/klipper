@@ -195,6 +195,10 @@ class Printer:
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def run(self):
+        systime = time.time()
+        monotime = self.reactor.monotonic()
+        logging.info("Start printer at %s (%.1f %.1f)" % (
+            time.asctime(time.localtime(systime)), systime, monotime))
         try:
             self.reactor.run()
         except:
@@ -216,7 +220,7 @@ class Printer:
     def disconnect(self):
         try:
             if self.mcu is not None:
-                self.stats(time.time())
+                self.stats(self.reactor.monotonic())
                 self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during disconnect")

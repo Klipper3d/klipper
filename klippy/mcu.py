@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, zlib, logging, time, math
+import sys, zlib, logging, math
 import serialhdl, pins, chelper
 
 class error(Exception):
@@ -163,7 +163,7 @@ class MCU_endstop:
         clock = int(mcu_time * self._mcu_freq)
         rest_ticks = int(rest_time * self._mcu_freq)
         self._homing = True
-        self._min_query_time = time.time()
+        self._min_query_time = self._mcu.monotonic()
         self._next_query_clock = clock + self._retry_query_ticks
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
@@ -173,7 +173,7 @@ class MCU_endstop:
         self._stepper.note_homing_finalized()
         self._home_timeout_clock = int(mcu_time * self._mcu_freq)
     def home_wait(self):
-        eventtime = time.time()
+        eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
             eventtime = self._mcu.pause(eventtime + 0.1)
     def _handle_end_stop_state(self, params):
@@ -211,10 +211,10 @@ class MCU_endstop:
     def query_endstop(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
         self._homing = False
-        self._min_query_time = time.time()
+        self._min_query_time = self._mcu.monotonic()
         self._next_query_clock = clock
     def query_endstop_wait(self):
-        eventtime = time.time()
+        eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
             eventtime = self._mcu.pause(eventtime + 0.1)
         return self._last_state.get('pin', self._invert) ^ self._invert
@@ -377,7 +377,7 @@ class MCU:
         if not self._is_fileoutput:
             self.serial.connect()
             self._printer.reactor.update_timer(
-                self._timeout_timer, time.time() + self.COMM_TIMEOUT)
+                self._timeout_timer, self.monotonic() + self.COMM_TIMEOUT)
         self._mcu_freq = self.serial.msgparser.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
             'STATS_SUMSQ_BASE')
@@ -547,5 +547,7 @@ class MCU:
             raise error("Internal error in stepcompress")
     def pause(self, waketime):
         return self._printer.reactor.pause(waketime)
+    def monotonic(self):
+        return self._printer.reactor.monotonic()
     def __del__(self):
         self.disconnect()

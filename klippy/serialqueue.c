@@ -23,7 +23,7 @@
 #include <termios.h> // tcflush
 #include <unistd.h> // pipe
 #include "list.h" // list_add_tail
-#include "pyhelper.h" // get_time
+#include "pyhelper.h" // get_monotonic
 #include "serialqueue.h" // struct queue_message
 
 
@@ -149,11 +149,11 @@ static void
 pollreactor_run(struct pollreactor *pr)
 {
     pr->must_exit = 0;
-    double eventtime = get_time();
+    double eventtime = get_monotonic();
     while (! pr->must_exit) {
         int timeout = pollreactor_check_timers(pr, eventtime);
         int ret = poll(pr->fds, pr->num_fds, timeout);
-        eventtime = get_time();
+        eventtime = get_monotonic();
         if (ret > 0) {
             int i;
             for (i=0; i<pr->num_fds; i++)

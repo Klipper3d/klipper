@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import time, logging, threading
+import logging, threading
 import serial
 
 import msgproto, chelper, util
@@ -60,7 +60,7 @@ class SerialReader:
         # Initial connection
         logging.info("Starting serial connect")
         while 1:
-            starttime = time.time()
+            starttime = self.reactor.monotonic()
             try:
                 self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
             except OSError, e:
@@ -106,7 +106,7 @@ class SerialReader:
             est_clock = float(self.msgparser.config['CLOCK_FREQ'])
         self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1)
         self.est_clock = est_clock
-        self.last_ack_time = time.time()
+        self.last_ack_time = self.reactor.monotonic()
         self.last_ack_clock = 0
         self.ffi_lib.serialqueue_set_clock_est(
             self.serialqueue, self.est_clock, self.last_ack_time
@@ -232,7 +232,7 @@ class SerialRetryCommand:
         self.cmd = cmd
         self.name = name
         self.response = None
-        self.min_query_time = time.time()
+        self.min_query_time = self.serial.reactor.monotonic()
         self.serial.register_callback(self.handle_callback, self.name)
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
@@ -246,7 +246,7 @@ class SerialRetryCommand:
         if last_sent_time >= self.min_query_time:
             self.response = params
     def get_response(self):
-        eventtime = time.time()
+        eventtime = self.serial.reactor.monotonic()
         while self.response is None:
             eventtime = self.serial.reactor.pause(eventtime + 0.05)
         self.serial.unregister_callback(self.name)
@@ -267,7 +267,7 @@ class SerialBootStrap:
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
     def get_identify_data(self, timeout):
-        eventtime = time.time()
+        eventtime = self.serial.reactor.monotonic()
         while not self.is_done and eventtime <= timeout:
             eventtime = self.serial.reactor.pause(eventtime + 0.05)
         self.serial.unregister_callback('identify_response')
@@ -305,10 +305,10 @@ def stk500v2_leave(ser, reactor):
     ser.read(1)
     # Send stk500v2 leave programmer sequence
     ser.baudrate = 115200
-    reactor.pause(time.time() + 0.100)
+    reactor.pause(reactor.monotonic() + 0.100)
     ser.read(4096)
     ser.write('\x1b\x01\x00\x01\x0e\x11\x04')
-    reactor.pause(time.time() + 0.050)
+    reactor.pause(reactor.monotonic() + 0.050)
     res = ser.read(4096)
     logging.debug("Got %s from stk500v2" % (repr(res),))
     ser.baudrate = origbaud

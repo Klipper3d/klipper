@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections, time
+import os, re, logging, collections
 import homing
 
 # Parse out incoming GCode and find and translate head movements
@@ -179,7 +179,7 @@ class GCodeParser:
     def bg_temp(self, heater):
         if self.is_fileinput:
             return
-        eventtime = time.time()
+        eventtime = self.reactor.monotonic()
         while self.is_printer_ready and heater.check_busy(eventtime):
             self.toolhead.reset_motor_off_time(eventtime)
             self.respond(self.get_temp())

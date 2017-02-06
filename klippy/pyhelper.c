@@ -9,17 +9,20 @@
 #include <stdint.h> // uint8_t
 #include <stdio.h> // fprintf
 #include <string.h> // strerror
-#include <sys/time.h> // gettimeofday
 #include <time.h> // struct timespec
-#include "pyhelper.h" // get_time
+#include "pyhelper.h" // get_monotonic
 
-// Return the current system time as a double
+// Return the monotonic system time as a double
 double
-get_time(void)
+get_monotonic(void)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.;
+    struct timespec ts;
+    int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (ret) {
+        report_errno("clock_gettime", ret);
+        return 0.;
+    }
+    return (double)ts.tv_sec + (double)ts.tv_nsec * .000000001;
 }
 
 // Fill a 'struct timespec' with a system time stored in a double
