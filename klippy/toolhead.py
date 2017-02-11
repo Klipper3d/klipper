@@ -107,6 +107,8 @@ class MoveQueue:
         self.leftover = 0
         self.next_start_v2 = 0.
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
+    def set_flush_time(self, flush_time):
+        self.junction_flush = flush_time
     def flush(self, lazy=False):
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
         update_flush_count = lazy
@@ -193,13 +195,17 @@ class ToolHead:
         self.move_queue = MoveQueue(self.extruder.lookahead)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
-        self.buffer_time_high = config.getfloat('buffer_time_high', 5.000)
-        self.buffer_time_low = config.getfloat('buffer_time_low', 0.150)
+        self.buffer_time_high = config.getfloat('buffer_time_high', 2.000)
+        self.buffer_time_low = config.getfloat('buffer_time_low', 1.000)
+        self.buffer_time_start = config.getfloat('buffer_time_start', 0.250)
         self.move_flush_time = config.getfloat('move_flush_time', 0.050)
         self.print_time = 0.
         self.need_check_stall = -1.
-        self.print_time_stall = 0
+        self.print_stall = 0
+        self.synch_print_time = True
+        self.forced_synch = False
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
+        self.move_queue.set_flush_time(self.buffer_time_high)
         # Motor off tracking
         self.motor_off_time = config.getfloat('motor_off_time', 60.000)
         self.motor_off_timer = self.reactor.register_timer(
@@ -217,21 +223,37 @@ class ToolHead:
         flush_to_time = self.print_time - self.move_flush_time
         self.printer.mcu.flush_moves(flush_to_time)
     def get_next_move_time(self):
-        if not self.print_time:
-            self.print_time = self.buffer_time_low + STALL_TIME
+        if self.synch_print_time:
             curtime = self.reactor.monotonic()
-            self.printer.mcu.set_print_start_time(curtime)
+            if self.print_time:
+                buffer_time = self.printer.mcu.get_print_buffer_time(
+                    curtime, self.print_time)
+                self.print_time += max(self.buffer_time_start - buffer_time, 0.)
+                if self.forced_synch:
+                    self.print_stall += 1
+                    self.forced_synch = False
+            else:
+                self.printer.mcu.set_print_start_time(curtime)
+                self.print_time = self.buffer_time_start
+                self._reset_motor_off()
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
-            self._reset_motor_off()
+            self.synch_print_time = False
         return self.print_time
-    def get_last_move_time(self):
+    def _flush_lookahead(self, must_synch=False):
+        synch_print_time = self.synch_print_time
         self.move_queue.flush()
+        if synch_print_time or must_synch:
+            self.synch_print_time = True
+            self.move_queue.set_flush_time(self.buffer_time_high)
+            self.printer.mcu.flush_moves(self.print_time)
+    def get_last_move_time(self):
+        self._flush_lookahead()
         return self.get_next_move_time()
     def reset_print_time(self):
-        self.move_queue.flush()
-        self.printer.mcu.flush_moves(self.print_time)
+        self._flush_lookahead(must_synch=True)
         self.print_time = 0.
         self.need_check_stall = -1.
+        self.forced_synch = False
         self._reset_motor_off()
     def _check_stall(self):
         eventtime = self.reactor.monotonic()
@@ -254,7 +276,7 @@ class ToolHead:
         try:
             if not self.print_time:
                 # Input idled before filling lookahead queue - flush it
-                self.move_queue.flush()
+                self._flush_lookahead()
                 if not self.print_time:
                     return self.reactor.NEVER
             print_time = self.print_time
@@ -264,11 +286,14 @@ class ToolHead:
                 # Running normally - reschedule check
                 return eventtime + buffer_time - self.buffer_time_low
             # Under ran low buffer mark - flush lookahead queue
-            self.move_queue.flush()
+            self._flush_lookahead(must_synch=True)
             if print_time != self.print_time:
-                self.print_time_stall += 1
-                self.dwell(self.buffer_time_low + STALL_TIME)
+                # Flushed something - retry
+                self.forced_synch = True
                 return self.reactor.NOW
+            if buffer_time > 0.:
+                # Wait for buffer to fully empty
+                return eventtime + buffer_time
             self.reset_print_time()
         except:
             logging.exception("Exception in flush_handler")
@@ -293,7 +318,7 @@ class ToolHead:
     def get_position(self):
         return list(self.commanded_pos)
     def set_position(self, newpos):
-        self.move_queue.flush()
+        self._flush_lookahead()
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
     def move(self, newpos, speed):
@@ -323,7 +348,7 @@ class ToolHead:
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
     def wait_moves(self):
-        self.move_queue.flush()
+        self._flush_lookahead()
         eventtime = self.reactor.monotonic()
         while self.print_time:
             eventtime = self.reactor.pause(eventtime + 0.100)
@@ -333,11 +358,14 @@ class ToolHead:
     # Misc commands
     def stats(self, eventtime):
         buffer_time = 0.
-        if self.print_time:
+        print_time = self.print_time
+        if print_time:
             buffer_time = self.printer.mcu.get_print_buffer_time(
-                eventtime, self.print_time)
-        return "print_time=%.3f buffer_time=%.3f print_time_stall=%d" % (
-            self.print_time, buffer_time, self.print_time_stall)
+                eventtime, print_time)
+            if buffer_time < 0.:
+                buffer_time = 0.
+        return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
+            print_time, buffer_time, self.print_stall)
     def force_shutdown(self):
         self.printer.mcu.force_shutdown()
         self.move_queue.reset()

@@ -393,7 +393,7 @@ class MCU:
             def dummy_set_print_start_time(eventtime):
                 pass
             def dummy_get_print_buffer_time(eventtime, last_move_end):
-                return 0.250
+                return 1.250
             self.set_print_start_time = dummy_set_print_start_time
             self.get_print_buffer_time = dummy_get_print_buffer_time
     def timeout_handler(self, eventtime):

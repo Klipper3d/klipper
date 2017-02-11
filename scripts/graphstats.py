@@ -8,7 +8,7 @@ import optparse, datetime
 import matplotlib.pyplot as plt, matplotlib.dates as mdates
 
 MAXBANDWIDTH=25000.
-MAXBUFFER=5.
+MAXBUFFER=2.
 
 def parse_log(logname):
     f = open(logname, 'rb')
@@ -90,7 +90,7 @@ def plot_mcu(data, maxbw, outname):
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
-    ax1.legend()
+    ax1.legend(loc='best')
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     #plt.gcf().autofmt_xdate()
     ax1.grid(True)
