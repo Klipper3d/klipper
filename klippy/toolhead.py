@@ -24,6 +24,7 @@ class Move:
             # Extrude only move
             self.move_d = move_d = abs(axes_d[3])
             self.is_kinematic_move = False
+        self.min_move_t = move_d / speed
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
         # can change in this move.
@@ -33,7 +34,10 @@ class Move:
         self.max_smoothed_v2 = 0.
         self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
     def limit_speed(self, speed, accel):
-        self.max_cruise_v2 = min(self.max_cruise_v2, speed**2)
+        speed2 = speed**2
+        if speed2 < self.max_cruise_v2:
+            self.max_cruise_v2 = speed2
+            self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
@@ -87,6 +91,8 @@ class Move:
         self.toolhead.update_move_time(
             self.accel_t + self.cruise_t + self.decel_t)
 
+LOOKAHEAD_FLUSH_TIME = 0.250
+
 # Class to track a list of pending move requests and to facilitate
 # "look-ahead" across moves to reduce acceleration between moves.
 class MoveQueue:
@@ -95,12 +101,14 @@ class MoveQueue:
         self.queue = []
         self.leftover = 0
         self.next_start_v2 = 0.
-        self.junction_flush = 0.
+        self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def reset(self):
         del self.queue[:]
         self.leftover = 0
         self.next_start_v2 = 0.
+        self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def flush(self, lazy=False):
+        self.junction_flush = LOOKAHEAD_FLUSH_TIME
         update_flush_count = lazy
         queue = self.queue
         flush_count = len(queue)
@@ -143,7 +151,7 @@ class MoveQueue:
             next_end_v2 = start_v2
             next_smoothed_v2 = smoothed_v2
         if update_flush_count:
-            flush_count = 0
+            return
         # Allow extruder to do its lookahead
         move_count = self.extruder_lookahead(queue, flush_count, lazy)
         # Generate step times for all moves ready to be flushed
@@ -152,15 +160,12 @@ class MoveQueue:
         # Remove processed moves from the queue
         self.leftover = flush_count - move_count
         del queue[:move_count]
-        if queue:
-            self.junction_flush = 2. * queue[-1].max_cruise_v2
     def add_move(self, move):
         self.queue.append(move)
         if len(self.queue) == 1:
-            self.junction_flush = 2. * move.max_cruise_v2
             return
         move.calc_junction(self.queue[-2])
-        self.junction_flush -= move.smooth_delta_v2
+        self.junction_flush -= move.min_move_t
         if self.junction_flush <= 0.:
             # There are enough queued moves to return to zero velocity
             # from the first move's maximum possible velocity, so at
