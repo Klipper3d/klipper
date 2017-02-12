@@ -198,7 +198,9 @@ class ToolHead:
         self.motor_off_time = self.reactor.NEVER
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
     def build_config(self):
-        xy_halt = 0.005 * self.max_accel # XXX
+        # Determine the maximum velocity a cartesian axis could have
+        # before cornering.  The 8. was determined experimentally.
+        xy_halt = math.sqrt(8. * self.junction_deviation * self.max_accel)
         self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
         self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
         self.kin.build_config()
