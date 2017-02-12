@@ -72,12 +72,16 @@ class GCodeParser:
         if is_ready and self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def motor_heater_off(self):
-        if self.toolhead is not None:
-            self.toolhead.motor_off()
+        if self.toolhead is None:
+            return
+        self.toolhead.motor_off()
+        print_time = self.toolhead.get_last_move_time()
         if self.heater_nozzle is not None:
-            self.heater_nozzle.set_temp(0., 0.)
+            self.heater_nozzle.set_temp(print_time, 0.)
         if self.heater_bed is not None:
-            self.heater_bed.set_temp(0., 0.)
+            self.heater_bed.set_temp(print_time, 0.)
+        if self.fan is not None:
+            self.fan.set_speed(print_time, 0.)
     def dump_debug(self):
         logging.info("Dumping gcode input %d blocks" % (
             len(self.input_log),))
@@ -325,7 +329,7 @@ class GCodeParser:
     def cmd_M107(self, params):
         # Turn fan off
         print_time = self.toolhead.get_last_move_time()
-        self.fan.set_speed(print_time, 0)
+        self.fan.set_speed(print_time, 0.)
     def cmd_M206(self, params):
         # Set home offset
         for a, p in self.axis2pos.items():
@@ -369,6 +373,11 @@ class GCodeParser:
     cmd_RESTART_when_not_ready = True
     cmd_RESTART_help = "Reload config file and restart host software"
     def cmd_RESTART(self, params):
+        if self.is_printer_ready:
+            self.respond_info("Preparing to restart...")
+            self.motor_heater_off()
+            self.toolhead.dwell(0.500)
+            self.toolhead.wait_moves()
         self.printer.request_restart()
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
