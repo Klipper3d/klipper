@@ -8,6 +8,8 @@ import sys, optparse, ConfigParser, logging, time, threading
 import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
 import msgproto
 
+message_ready = "Printer is ready"
+
 message_startup = """
 The klippy host software is attempting to connect.  Please
 retry in a few moments.
@@ -174,7 +176,7 @@ class Printer:
             self.build_config()
             self.validate_config()
             self.gcode.set_printer_ready(True)
-            self.state_message = "Printer is ready"
+            self.state_message = message_ready
         except ConfigParser.Error, e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
@@ -208,7 +210,7 @@ class Printer:
     def get_state_message(self):
         return self.state_message
     def note_shutdown(self, msg):
-        if self.state_message == 'Running':
+        if self.state_message == message_ready:
             self.need_dump_debug = True
         self.state_message = "Firmware shutdown: %s%s" % (
             msg, message_shutdown)
