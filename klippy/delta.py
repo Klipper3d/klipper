@@ -13,7 +13,7 @@ class DeltaKinematics:
         self.steppers = [stepper.PrinterStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['a', 'b', 'c']]
-        self.need_motor_enable = True
+        self.need_motor_enable = self.need_home = True
         self.max_z_velocity = config.getfloat('max_z_velocity', 9999999.9)
         radius = config.getfloat('delta_radius')
         arm_length = config.getfloat('delta_arm_length')
@@ -77,11 +77,12 @@ class DeltaKinematics:
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
             self.steppers[i].mcu_stepper.set_position(pos[i])
+        self.limit_xy2 = -1.
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
         s = self.steppers[0] # Assume homing parameters same for all steppers
-        self.limit_xy2 = self.max_xy2
+        self.need_home = False
         # Initial homing
         homepos = [0., 0., s.position_endstop, None]
         coord = list(homepos)
@@ -103,7 +104,7 @@ class DeltaKinematics:
         self.limit_xy2 = -1.
         for stepper in self.steppers:
             stepper.motor_enable(move_time, 0)
-        self.need_motor_enable = True
+        self.need_motor_enable = self.need_home = True
     def _check_motor_enable(self, move_time):
         for i in StepList:
             self.steppers[i].motor_enable(move_time, 1)
@@ -114,15 +115,20 @@ class DeltaKinematics:
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0]**2 + end_pos[1]**2
-        if xy2 > self.limit_xy2 or end_pos[2] < 0.:
-            if self.limit_xy2 < 0.:
-                raise homing.EndstopMoveError(end_pos, "Must home first")
-            raise homing.EndstopMoveError(end_pos)
+        if xy2 <= self.limit_xy2 and not move.axes_d[2]:
+            # Normal XY move
+            return
+        if self.need_home:
+            raise homing.EndstopMoveError(end_pos, "Must home first")
+        limit_xy2 = self.max_xy2
         if end_pos[2] > self.limit_z:
-            if end_pos[2] > self.max_z or xy2 > (self.max_z - end_pos[2])**2:
-                raise homing.EndstopMoveError(end_pos)
+            limit_xy2 = min(limit_xy2, (self.max_z - end_pos[2])**2)
+        if xy2 > limit_xy2 or end_pos[2] < 0. or end_pos[2] > self.max_z:
+            raise homing.EndstopMoveError(end_pos)
         if move.axes_d[2]:
-            move.limit_speed(self.max_z_velocity, 9999999.9)
+            move.limit_speed(self.max_z_velocity, move.accel)
+            limit_xy2 = -1.
+        self.limit_xy2 = limit_xy2
     def move(self, move_time, move):
         axes_d = move.axes_d
         move_d = movexy_d = move.move_d
