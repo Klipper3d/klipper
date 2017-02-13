@@ -8,14 +8,18 @@ import stepper, homing
 
 StepList = (0, 1, 2)
 
+# Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
+SLOW_RATIO = 3.
+
 class DeltaKinematics:
     def __init__(self, printer, config):
+        self.config = config
         self.steppers = [stepper.PrinterStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['a', 'b', 'c']]
         self.need_motor_enable = self.need_home = True
-        self.max_z_velocity = config.getfloat('max_z_velocity', 9999999.9)
-        radius = config.getfloat('delta_radius')
+        self.max_velocity = self.max_z_velocity = 0.
+        self.radius = radius = config.getfloat('delta_radius')
         arm_length = config.getfloat('delta_arm_length')
         self.arm_length2 = arm_length**2
         self.max_xy2 = min(radius, arm_length - radius)**2
@@ -23,13 +27,29 @@ class DeltaKinematics:
         tower_height_at_zeros = math.sqrt(self.arm_length2 - radius**2)
         self.max_z = self.steppers[0].position_max
         self.limit_z = self.max_z - (arm_length - tower_height_at_zeros)
+        logging.info(
+            "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
+                self.max_z, self.limit_z))
         sin = lambda angle: math.sin(math.radians(angle))
         cos = lambda angle: math.cos(math.radians(angle))
         self.towers = [
             (cos(210.)*radius, sin(210.)*radius),
             (cos(330.)*radius, sin(330.)*radius),
             (cos(90.)*radius, sin(90.)*radius)]
+        # Find the point where an XY move could result in excessive
+        # tower movement
+        half_min_step_dist = min([s.step_dist for s in self.steppers]) * .5
+        dist = (SLOW_RATIO * math.sqrt(self.arm_length2 / (SLOW_RATIO**2 + 1.)
+                                       - half_min_step_dist**2)
+                + half_min_step_dist)
+        self.slow_xy2 = (dist - radius)**2
+        logging.info(
+            "Delta max build radius %.2fmm (moves slowed past %.2fmm)" % (
+                math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2)))
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
+        self.max_velocity = max_velocity
+        max_z_velocity = self.config.getfloat('max_z_velocity', max_velocity)
+        self.max_z_velocity = min(max_velocity, max_z_velocity)
         for stepper in self.steppers:
             stepper.set_max_jerk(max_xy_halt_velocity, max_accel)
     def build_config(self):
@@ -128,7 +148,21 @@ class DeltaKinematics:
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
-        self.limit_xy2 = limit_xy2
+        # Limit the speed/accel of this move if is is at the extreme
+        # end of the build envelope
+        extreme_xy2 = max(xy2, move.start_pos[0]**2 + move.start_pos[1]**2)
+        if extreme_xy2 > self.slow_xy2:
+            min_step = min([s.step_dist for s in self.steppers])
+            d = math.sqrt(extreme_xy2) + self.radius
+            r = SLOW_RATIO * min_step / (
+                math.sqrt(self.arm_length2 - (d - min_step)**2)
+                - math.sqrt(self.arm_length2 - d**2))
+            max_velocity = self.max_velocity
+            if move.axes_d[2]:
+                max_velocity = self.max_z_velocity
+            move.limit_speed(max_velocity * r, move.accel * r)
+            limit_xy2 = -1.
+        self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def move(self, move_time, move):
         axes_d = move.axes_d
         move_d = movexy_d = move.move_d
