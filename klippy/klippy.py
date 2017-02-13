@@ -284,6 +284,7 @@ def main():
     software_version = util.get_git_version()
     if debugoutput is None:
         logging.info("Git version: %s" % (repr(software_version),))
+        logging.info("CPU: %s" % (util.get_cpu_info(),))
 
     # Start firmware
     while 1:
