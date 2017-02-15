@@ -30,9 +30,10 @@ timer_from_us(uint32_t us)
 void __visible
 TC0_Handler(void)
 {
-    TC0->TC_CHANNEL[0].TC_SR; // clear irq pending
     irq_disable();
-    sched_timer_kick();
+    uint32_t status = TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
+    if (likely(status & TC_SR_CPAS))
+        sched_timer_kick();
     irq_enable();
 }
 
@@ -40,6 +41,13 @@ static void
 timer_set(uint32_t value)
 {
     TC0->TC_CHANNEL[0].TC_RA = value;
+}
+
+static void
+timer_set_clear(uint32_t value)
+{
+    TC0->TC_CHANNEL[0].TC_RA = value;
+    TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
 }
 
 static void
@@ -83,12 +91,16 @@ uint8_t
 timer_set_next(uint32_t next)
 {
     uint32_t cur = timer_read_time();
+    if (sched_is_before(TC0->TC_CHANNEL[0].TC_RA, cur)
+        && !(TC0->TC_CHANNEL[0].TC_SR & TC_SR_CPAS))
+        // Already processing timer irqs
+        try_shutdown("timer_set_next called during timer dispatch");
     uint32_t mintime = cur + TIMER_MIN_TICKS;
     if (sched_is_before(mintime, next)) {
-        timer_set(next);
+        timer_set_clear(next);
         return 0;
     }
-    timer_set(mintime);
+    timer_set_clear(mintime);
     return 1;
 }
 
