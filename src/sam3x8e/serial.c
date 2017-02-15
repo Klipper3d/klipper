@@ -8,11 +8,11 @@
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/gpio.h" // gpio_peripheral
 #include "board/io.h" // readb
+#include "board/irq.h" // irq_save
 #include "board/misc.h" // console_get_input
 #include "command.h" // DECL_CONSTANT
 #include "sam3x8e.h" // UART
 #include "sched.h" // DECL_INIT
-#include "irq.h" // irq_save
 
 #define SERIAL_BUFFER_SIZE 96
 static char receive_buf[SERIAL_BUFFER_SIZE];

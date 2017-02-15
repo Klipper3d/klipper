@@ -15,7 +15,8 @@ LDFLAGS-y += -T lib/cmsis-sam3x8e/source/gcc/sam3x8e_flash.ld
 LDFLAGS-y += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += sam3x8e/main.c sam3x8e/timer.c sam3x8e/gpio.c generic/crc16_ccitt.c
+src-y += sam3x8e/main.c sam3x8e/timer.c sam3x8e/gpio.c
+src-y += generic/crc16_ccitt.c generic/armcm_irq.c
 src-y += ../lib/cmsis-sam3x8e/source/system_sam3xa.c
 src-y += ../lib/cmsis-sam3x8e/source/gcc/startup_sam3xa.c
 src-$(CONFIG_SERIAL) += sam3x8e/serial.c

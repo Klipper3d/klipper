@@ -5,9 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
-#include "irq.h" // irq_disable
 #include "sam3x8e.h" // TC0
 #include "sched.h" // sched_timer_kick
 

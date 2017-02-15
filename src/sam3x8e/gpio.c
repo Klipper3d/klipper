@@ -6,10 +6,10 @@
 
 #include <stdint.h> // uint32_t
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/irq.h" // irq_save
 #include "command.h" // shutdown
 #include "compiler.h" // ARRAY_SIZE
 #include "gpio.h" // gpio_out_setup
-#include "irq.h" // irq_save
 #include "sam3x8e.h" // Pio
 #include "sched.h" // sched_shutdown
 

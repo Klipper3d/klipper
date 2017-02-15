@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "board/misc.h" // console_get_input
+#include "board/misc.h" // alloc_maxsize
 #include "sam3x8e.h" // WDT
 #include "sched.h" // sched_main
 
@@ -27,34 +27,6 @@ watchdog_init(void)
     WDT->WDT_MR = WDT_MR_WDRSTEN | WDT_MR_WDV(timeout) | WDT_MR_WDD(timeout);
 }
 DECL_INIT(watchdog_init);
-
-
-/****************************************************************
- * irq clearing on fault
- ****************************************************************/
-
-// Clear the active irq if a shutdown happened in an irq handler
-static void
-clear_active_irq(void)
-{
-    uint32_t psr;
-    asm volatile("mrs %0, psr" : "=r" (psr));
-    if (!(psr & 0x1ff))
-        // Shutdown did not occur in an irq - nothing to do.
-        return;
-    // Clear active irq status
-    psr = 1<<24; // T-bit
-    uint32_t temp;
-    asm volatile(
-        "  push { %1 }\n"
-        "  adr %0, 1f\n"
-        "  push { %0 }\n"
-        "  push { r0, r1, r2, r3, r12, lr }\n"
-        "  bx %2\n"
-        "1:\n"
-        : "=&r"(temp) : "r"(psr), "r"(0xfffffff9) : "cc");
-}
-DECL_SHUTDOWN(clear_active_irq);
 
 
 /****************************************************************
