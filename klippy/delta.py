@@ -25,7 +25,7 @@ class DeltaKinematics:
         self.max_xy2 = min(radius, arm_length - radius)**2
         self.limit_xy2 = -1.
         tower_height_at_zeros = math.sqrt(self.arm_length2 - radius**2)
-        self.max_z = self.steppers[0].position_max
+        self.max_z = max([s.position_endstop for s in self.steppers])
         self.limit_z = self.max_z - (arm_length - tower_height_at_zeros)
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
@@ -101,10 +101,10 @@ class DeltaKinematics:
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
-        s = self.steppers[0] # Assume homing parameters same for all steppers
+        s = self.steppers[0] # Assume homing speed same for all steppers
         self.need_home = False
         # Initial homing
-        homepos = [0., 0., s.position_endstop, None]
+        homepos = [0., 0., self.max_z, None]
         coord = list(homepos)
         coord[2] = -1.5 * math.sqrt(self.arm_length2-self.max_xy2)
         homing_state.home(list(coord), homepos, self.steppers, s.homing_speed)
