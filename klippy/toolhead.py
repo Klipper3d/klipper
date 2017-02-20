@@ -100,12 +100,10 @@ class MoveQueue:
         self.extruder_lookahead = extruder_lookahead
         self.queue = []
         self.leftover = 0
-        self.next_start_v2 = 0.
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def reset(self):
         del self.queue[:]
         self.leftover = 0
-        self.next_start_v2 = 0.
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def set_flush_time(self, flush_time):
         self.junction_flush = flush_time
@@ -128,8 +126,9 @@ class MoveQueue:
             if smoothed_v2 < reachable_smoothed_v2:
                 # It's possible for this move to accelerate
                 if (smoothed_v2 + move.smooth_delta_v2 > next_smoothed_v2
-                    or next_smoothed_v2 >= peak_cruise_v2):
-                    # This move can both accelerate and decelerate
+                    or delayed):
+                    # This move can decelerate or this is a full accel
+                    # move after a full decel move
                     if update_flush_count and peak_cruise_v2:
                         flush_count = i
                         update_flush_count = False
@@ -137,17 +136,18 @@ class MoveQueue:
                         smoothed_v2 + reachable_smoothed_v2) * .5)
                     if delayed:
                         # Propagate peak_cruise_v2 to any delayed moves
-                        for m, ms_v2, me_v2 in delayed:
-                            mc_v2 = min(peak_cruise_v2, ms_v2)
-                            m.set_junction(min(ms_v2, mc_v2), mc_v2
-                                           , min(me_v2, mc_v2))
+                        if not update_flush_count and i < flush_count:
+                            for m, ms_v2, me_v2 in delayed:
+                                mc_v2 = min(peak_cruise_v2, ms_v2)
+                                m.set_junction(min(ms_v2, mc_v2), mc_v2
+                                               , min(me_v2, mc_v2))
                         del delayed[:]
-                cruise_v2 = min((start_v2 + reachable_start_v2) * .5
-                                , move.max_cruise_v2, peak_cruise_v2)
                 if not update_flush_count and i < flush_count:
+                    cruise_v2 = min((start_v2 + reachable_start_v2) * .5
+                                    , move.max_cruise_v2, peak_cruise_v2)
                     move.set_junction(min(start_v2, cruise_v2), cruise_v2
                                       , min(next_end_v2, cruise_v2))
-            elif not update_flush_count:
+            else:
                 # Delay calculating this move until peak_cruise_v2 is known
                 delayed.append((move, start_v2, next_end_v2))
             next_end_v2 = start_v2
