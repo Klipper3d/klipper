@@ -191,7 +191,11 @@ class GCodeParser:
     def set_temp(self, heater, params, wait=False):
         print_time = self.toolhead.get_last_move_time()
         temp = float(params.get('S', '0'))
-        heater.set_temp(print_time, temp)
+        try:
+            heater.set_temp(print_time, temp)
+        except heater.error, e:
+            self.respond_error(str(e))
+            return
         if wait:
             self.bg_temp(heater)
     # Individual command handlers

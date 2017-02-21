@@ -21,7 +21,11 @@ MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PWM_MAX = 255
 
+class error(Exception):
+    pass
+
 class PrinterHeater:
+    error = error
     def __init__(self, printer, config):
         self.printer = printer
         self.config = config
@@ -29,6 +33,8 @@ class PrinterHeater:
         self.thermistor_c = config.getchoice('thermistor_type', Thermistors)
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
+        self.min_temp = self.config.getfloat('min_temp')
+        self.max_temp = self.config.getfloat('max_temp')
         self.can_extrude = (self.min_extrude_temp <= 0.)
         self.lock = threading.Lock()
         self.last_temp = 0.
@@ -50,8 +56,8 @@ class PrinterHeater:
             self.mcu_pwm = self.printer.mcu.create_pwm(
                 heater_pin, 0, MAX_HEAT_TIME)
         self.mcu_adc = self.printer.mcu.create_adc(thermistor_pin)
-        min_adc = self.calc_adc(self.config.getfloat('max_temp'))
-        max_adc = self.calc_adc(self.config.getfloat('min_temp'))
+        min_adc = self.calc_adc(self.max_temp)
+        max_adc = self.calc_adc(self.min_temp)
         self.mcu_adc.set_minmax(
             SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
         self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
@@ -102,6 +108,9 @@ class PrinterHeater:
         #logging.debug("temp: %.3f %f = %f" % (read_time, read_value, temp))
     # External commands
     def set_temp(self, print_time, degrees):
+        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
+            raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
+                        % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.target_temp = degrees
     def get_temp(self):
