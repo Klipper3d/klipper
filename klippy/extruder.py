@@ -22,6 +22,10 @@ class PrinterExtruder:
         self.max_e_dist = config.getfloat('max_extrude_only_distance', 50.)
         self.max_e_velocity = self.max_e_accel = None
         self.pressure_advance = config.getfloat('pressure_advance', 0.)
+        self.pressure_advance_lookahead_time = 0.
+        if self.pressure_advance:
+            self.pressure_advance_lookahead_time = config.getfloat(
+                'pressure_advance_lookahead_time', 0.010)
         self.need_motor_enable = True
         self.extrude_pos = 0.
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
@@ -62,8 +66,8 @@ class PrinterExtruder:
             move.extrude_r = prev_move.extrude_r
         return move.max_cruise_v2
     def lookahead(self, moves, flush_count, lazy):
-        pressure_advance = self.pressure_advance
-        if not pressure_advance:
+        lookahead_t = self.pressure_advance_lookahead_time
+        if not lookahead_t:
             return flush_count
         # Calculate max_corner_v - the speed the head will accelerate
         # to after cornering.
@@ -73,14 +77,19 @@ class PrinterExtruder:
                 continue
             cruise_v = move.cruise_v
             max_corner_v = 0.
-            sum_t = pressure_advance
+            sum_t = lookahead_t
             for j in range(i+1, flush_count):
                 fmove = moves[j]
                 if not fmove.max_start_v2:
                     break
-                max_corner_v = max(max_corner_v, fmove.cruise_v)
-                if max_corner_v >= cruise_v:
-                    break
+                if fmove.cruise_v > max_corner_v:
+                    if sum_t >= fmove.accel_t:
+                        max_corner_v = fmove.cruise_v
+                    else:
+                        max_corner_v = max(
+                            max_corner_v, fmove.start_v + fmove.accel * sum_t)
+                    if max_corner_v >= cruise_v:
+                        break
                 sum_t -= fmove.accel_t + fmove.cruise_t + fmove.decel_t
                 if sum_t <= 0.:
                     break
