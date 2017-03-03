@@ -83,6 +83,10 @@ class PrinterExtruder:
                 if not fmove.max_start_v2:
                     break
                 if fmove.cruise_v > max_corner_v:
+                    if (not max_corner_v
+                        and not fmove.accel_t and not fmove.cruise_t):
+                        # Start timing after any full decel moves
+                        continue
                     if sum_t >= fmove.accel_t:
                         max_corner_v = fmove.cruise_v
                     else:
