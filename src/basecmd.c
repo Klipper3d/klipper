@@ -191,6 +191,17 @@ command_get_status(uint32_t *args)
 }
 DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
 
+static uint32_t stats_send_time, stats_send_time_high;
+
+void
+command_get_uptime(uint32_t *args)
+{
+    uint32_t cur = sched_read_time();
+    uint32_t high = stats_send_time_high + (cur < stats_send_time);
+    sendf("uptime high=%u clock=%u", high, cur);
+}
+DECL_COMMAND_FLAGS(command_get_uptime, HF_IN_SHUTDOWN, "get_uptime");
+
 #define SUMSQ_BASE 256
 DECL_CONSTANT(STATS_SUMSQ_BASE, SUMSQ_BASE);
 
@@ -215,11 +226,12 @@ stats_task(void)
         nextsumsq = 0xffffffff;
     sumsq = nextsumsq;
 
-    static uint32_t prev;
-    if (sched_is_before(cur, prev + sched_from_us(5000000)))
+    if (sched_is_before(cur, stats_send_time + sched_from_us(5000000)))
         return;
-    sendf("stats count=%u sum=%u sumsq=%u", count, cur - prev, sumsq);
-    prev = cur;
+    sendf("stats count=%u sum=%u sumsq=%u", count, cur - stats_send_time, sumsq);
+    if (cur < stats_send_time)
+        stats_send_time_high++;
+    stats_send_time = cur;
     count = sumsq = 0;
 }
 DECL_TASK(stats_task);

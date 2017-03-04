@@ -30,8 +30,7 @@ class SerialReader:
         self.lock = threading.Lock()
         self.background_thread = None
         # Message handlers
-        self.status_timer = self.reactor.register_timer(
-            self._status_event, self.reactor.NOW)
+        self.status_timer = self.reactor.register_timer(self._status_event)
         self.status_cmd = None
         handlers = {
             '#unknown': self.handle_unknown,
@@ -90,14 +89,21 @@ class SerialReader:
             len(msgparser.messages_by_id), msgparser.version))
         logging.info("MCU config: %s" % (" ".join(
             ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
-        # Setup for runtime
+        # Setup baud adjust
         mcu_baud = float(msgparser.config.get('SERIAL_BAUD', 0.))
         if mcu_baud:
             baud_adjust = self.BITS_PER_BYTE / mcu_baud
             self.ffi_lib.serialqueue_set_baud_adjust(
                 self.serialqueue, baud_adjust)
+        # Load initial last_ack_clock/last_ack_time
+        uptime_msg = msgparser.create_command('get_uptime')
+        params = self.send_with_response(uptime_msg, 'uptime')
+        self.last_ack_clock = (params['high'] << 32) | params['clock']
+        self.last_ack_time = params['#receive_time']
+        # Enable periodic get_status timer
         get_status = msgparser.lookup_command('get_status')
         self.status_cmd = get_status.encode()
+        self.reactor.update_timer(self.status_timer, self.reactor.NOW)
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
@@ -129,8 +135,6 @@ class SerialReader:
             self.est_clock, self.last_ack_time, self.last_ack_clock)
         return sqstats + tstats
     def _status_event(self, eventtime):
-        if self.status_cmd is None:
-            return eventtime + 0.1
         self.send(self.status_cmd)
         return eventtime + 1.0
     # Serial response callbacks
