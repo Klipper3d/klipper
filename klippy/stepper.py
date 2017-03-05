@@ -47,7 +47,8 @@ class PrinterStepper:
         if enable_pin is not None:
             self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
         if endstop_pin is not None:
-            self.mcu_endstop = mcu.create_endstop(endstop_pin, self.mcu_stepper)
+            self.mcu_endstop = mcu.create_endstop(endstop_pin)
+            self.mcu_endstop.add_stepper(self.mcu_stepper)
             self.position_min = config.getfloat('position_min', 0.)
             self.position_endstop = config.getfloat('position_endstop')
             self.position_max = config.getfloat('position_max', 0.)

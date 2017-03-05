@@ -14,12 +14,22 @@
 struct end_stop {
     struct timer time;
     uint32_t rest_time;
-    struct stepper *stepper;
     struct gpio_in pin;
-    uint8_t flags;
+    uint8_t flags, stepper_count;
+    struct stepper *steppers[0];
 };
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_REPORT=1<<2 };
+
+static void noinline
+stop_steppers(struct end_stop *e)
+{
+    e->flags = ESF_REPORT;
+    uint8_t count = e->stepper_count;
+    while (count--)
+        if (e->steppers[count])
+            stepper_stop(e->steppers[count]);
+}
 
 // Timer callback for an end stop
 static uint_fast8_t
@@ -32,23 +42,35 @@ end_stop_event(struct timer *t)
         e->time.waketime += e->rest_time;
         return SF_RESCHEDULE;
     }
-    // Stop stepper
-    e->flags = ESF_REPORT;
-    stepper_stop(e->stepper);
+    stop_steppers(e);
     return SF_DONE;
 }
 
 void
 command_config_end_stop(uint32_t *args)
 {
-    struct end_stop *e = oid_alloc(args[0], command_config_end_stop, sizeof(*e));
-    struct stepper *s = stepper_oid_lookup(args[3]);
+    uint8_t stepper_count = args[3];
+    struct end_stop *e = oid_alloc(
+        args[0], command_config_end_stop
+        , sizeof(*e) + sizeof(e->steppers[0]) * stepper_count);
     e->time.func = end_stop_event;
-    e->stepper = s;
     e->pin = gpio_in_setup(args[1], args[2]);
+    e->stepper_count = stepper_count;
 }
 DECL_COMMAND(command_config_end_stop,
-             "config_end_stop oid=%c pin=%c pull_up=%c stepper_oid=%c");
+             "config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c");
+
+void
+command_end_stop_set_stepper(uint32_t *args)
+{
+    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
+    uint8_t pos = args[1];
+    if (pos >= e->stepper_count)
+        shutdown("Set stepper past maximum stepper count");
+    e->steppers[pos] = stepper_oid_lookup(args[2]);
+}
+DECL_COMMAND(command_end_stop_set_stepper,
+             "end_stop_set_stepper oid=%c pos=%c stepper_oid=%c");
 
 // Home an axis
 void

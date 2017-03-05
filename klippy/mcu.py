@@ -151,10 +151,10 @@ class MCU_stepper:
 class MCU_endstop:
     error = error
     RETRY_QUERY = 1.000
-    def __init__(self, mcu, pin, stepper):
+    def __init__(self, mcu, pin):
         self._mcu = mcu
         self._oid = mcu.create_oid(self)
-        self._stepper = stepper
+        self._steppers = []
         self._pin, self._pullup, self._invert = parse_pin_extras(
             pin, can_pullup=True)
         self._cmd_queue = mcu.alloc_command_queue()
@@ -164,18 +164,27 @@ class MCU_endstop:
         self._next_query_clock = self._home_timeout_clock = 0
         self._retry_query_ticks = 0
         self._last_state = {}
+        mcu.add_init_callback(self._init_callback)
         self.print_to_mcu_time = mcu.print_to_mcu_time
+    def add_stepper(self, stepper):
+        self._steppers.append(stepper)
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         self._mcu.add_config_cmd(
-            "config_end_stop oid=%d pin=%s pull_up=%d stepper_oid=%d" % (
-                self._oid, self._pin, self._pullup, self._stepper.get_oid()))
+            "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
+                self._oid, self._pin, self._pullup, len(self._steppers)))
         self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
         self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
                                , self._oid)
+    def _init_callback(self):
+        set_cmd = self._mcu.lookup_command(
+            "end_stop_set_stepper oid=%c pos=%c stepper_oid=%c")
+        for i, s in enumerate(self._steppers):
+            msg = set_cmd.encode(self._oid, i, s.get_oid())
+            self._mcu.send(msg, cq=self._cmd_queue)
     def home_start(self, mcu_time, rest_time):
         clock = int(mcu_time * self._mcu_freq)
         rest_ticks = int(rest_time * self._mcu_freq)
@@ -185,9 +194,11 @@ class MCU_endstop:
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
-        self._stepper.note_homing_start(clock)
+        for s in self._steppers:
+            s.note_homing_start(clock)
     def home_finalize(self, mcu_time):
-        self._stepper.note_homing_finalized()
+        for s in self._steppers:
+            s.note_homing_finalized()
         self._home_timeout_clock = int(mcu_time * self._mcu_freq)
     def home_wait(self):
         eventtime = self._mcu.monotonic()
@@ -205,7 +216,8 @@ class MCU_endstop:
             if not self._homing:
                 return False
             if not self._last_state.get('homing', 0):
-                self._stepper.note_homing_triggered()
+                for s in self._steppers:
+                    s.note_homing_triggered()
                 self._homing = False
                 return False
             if (self._mcu.serial.get_clock(last_sent_time)
@@ -558,8 +570,8 @@ class MCU:
     # Wrappers for mcu object creation
     def create_stepper(self, step_pin, dir_pin):
         return MCU_stepper(self, step_pin, dir_pin)
-    def create_endstop(self, pin, stepper):
-        return MCU_endstop(self, pin, stepper)
+    def create_endstop(self, pin):
+        return MCU_endstop(self, pin)
     def create_digital_out(self, pin, max_duration=2.):
         return MCU_digital_out(self, pin, max_duration)
     def create_pwm(self, pin, cycle_time, hard_cycle_ticks=0, max_duration=2.):
