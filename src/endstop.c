@@ -16,10 +16,10 @@ struct end_stop {
     uint32_t rest_time;
     struct stepper *stepper;
     struct gpio_in pin;
-    uint8_t pin_value, flags;
+    uint8_t flags;
 };
 
-enum { ESF_HOMING=1, ESF_REPORT=2 };
+enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_REPORT=1<<2 };
 
 // Timer callback for an end stop
 static uint_fast8_t
@@ -27,7 +27,8 @@ end_stop_event(struct timer *t)
 {
     struct end_stop *e = container_of(t, struct end_stop, time);
     uint8_t val = gpio_in_read(e->pin);
-    if (val != e->pin_value) {
+    if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
+        // No match - reschedule for the next attempt
         e->time.waketime += e->rest_time;
         return SF_RESCHEDULE;
     }
@@ -62,8 +63,7 @@ command_end_stop_home(uint32_t *args)
         e->flags = 0;
         return;
     }
-    e->pin_value = args[3];
-    e->flags = ESF_HOMING;
+    e->flags = ESF_HOMING | (args[3] ? ESF_PIN_HIGH : 0);
     sched_timer(&e->time);
 }
 DECL_COMMAND(command_end_stop_home,
