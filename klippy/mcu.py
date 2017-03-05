@@ -43,6 +43,8 @@ class MCU_stepper:
             "set_next_step_dir oid=%c dir=%c")
         self._reset_cmd = mcu.lookup_command(
             "reset_step_clock oid=%c clock=%u")
+        self._get_position_cmd = mcu.lookup_command(
+            "stepper_get_position oid=%c")
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(self.ffi_lib.stepcompress_alloc(
             max_error, self._step_cmd.msgid
@@ -51,13 +53,9 @@ class MCU_stepper:
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def get_oid(self):
         return self._oid
-    def get_invert_dir(self):
-        return self._invert_dir
     def set_position(self, pos):
         self._mcu_position_offset += self.commanded_position - pos
         self.commanded_position = pos
-    def set_mcu_position(self, pos):
-        self._mcu_position_offset = pos - self.commanded_position
     def get_mcu_position(self):
         return self.commanded_position + self._mcu_position_offset
     def note_homing_start(self, homing_clock):
@@ -71,6 +69,14 @@ class MCU_stepper:
         ret = self.ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
+    def note_homing_triggered(self):
+        params = self._mcu.serial.send_with_response(
+            self._get_position_cmd.encode(self._oid),
+            'stepper_position', self._oid)
+        pos = params['pos']
+        if self._invert_dir:
+            pos = -pos
+        self._mcu_position_offset = pos - self.commanded_position
     def reset_step_clock(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
         ret = self.ffi_lib.stepcompress_reset(self._stepqueue, clock)
@@ -188,10 +194,7 @@ class MCU_endstop:
             if not self._homing:
                 return False
             if not self._last_state.get('homing', 0):
-                pos = self._last_state.get('pos', 0)
-                if self._stepper.get_invert_dir():
-                    pos = -pos
-                self._stepper.set_mcu_position(pos)
+                self._stepper.note_homing_triggered()
                 self._homing = False
                 return False
             if (self._mcu.serial.get_clock(last_sent_time)

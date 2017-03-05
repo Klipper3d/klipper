@@ -46,6 +46,8 @@ struct stepper {
     uint8_t flags : 8;
 };
 
+enum { POSITION_BIAS=0x40000000 };
+
 enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
        SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
 
@@ -152,18 +154,25 @@ command_config_stepper(uint32_t *args)
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP ? 1 : 0);
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->min_stop_interval = args[3];
-    s->position = -STEPPER_POSITION_BIAS;
+    s->position = -POSITION_BIAS;
     move_request_size(sizeof(struct stepper_move));
 }
 DECL_COMMAND(command_config_stepper,
              "config_stepper oid=%c step_pin=%c dir_pin=%c"
              " min_stop_interval=%u invert_step=%c");
 
+// Return the 'struct stepper' for a given stepper oid
+struct stepper *
+stepper_oid_lookup(uint8_t oid)
+{
+    return oid_lookup(oid, command_config_stepper);
+}
+
 // Schedule a set of steps with a given timing
 void
 command_queue_step(uint32_t *args)
 {
-    struct stepper *s = oid_lookup(args[0], command_config_stepper);
+    struct stepper *s = stepper_oid_lookup(args[0]);
     struct stepper_move *m = move_alloc();
     m->interval = args[1];
     m->count = args[2];
@@ -204,7 +213,7 @@ DECL_COMMAND(command_queue_step,
 void
 command_set_next_step_dir(uint32_t *args)
 {
-    struct stepper *s = oid_lookup(args[0], command_config_stepper);
+    struct stepper *s = stepper_oid_lookup(args[0]);
     uint8_t nextdir = args[1] ? SF_NEXT_DIR : 0;
     irq_disable();
     s->flags = (s->flags & ~SF_NEXT_DIR) | nextdir;
@@ -216,7 +225,7 @@ DECL_COMMAND(command_set_next_step_dir, "set_next_step_dir oid=%c dir=%c");
 void
 command_reset_step_clock(uint32_t *args)
 {
-    struct stepper *s = oid_lookup(args[0], command_config_stepper);
+    struct stepper *s = stepper_oid_lookup(args[0]);
     uint32_t waketime = args[1];
     irq_disable();
     if (s->count)
@@ -228,7 +237,7 @@ command_reset_step_clock(uint32_t *args)
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
 
 // Return the current stepper position.  Caller must disable irqs.
-uint32_t
+static uint32_t
 stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
@@ -240,6 +249,19 @@ stepper_get_position(struct stepper *s)
         return -position;
     return position;
 }
+
+// Report the current position of the stepper
+void
+command_stepper_get_position(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct stepper *s = stepper_oid_lookup(oid);
+    irq_disable();
+    uint32_t position = stepper_get_position(s);
+    irq_enable();
+    sendf("stepper_position oid=%c pos=%i", oid, position - POSITION_BIAS);
+}
+DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 
 // Stop all moves for a given stepper (used in end stop homing).  IRQs
 // must be off.

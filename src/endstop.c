@@ -42,7 +42,7 @@ void
 command_config_end_stop(uint32_t *args)
 {
     struct end_stop *e = oid_alloc(args[0], command_config_end_stop, sizeof(*e));
-    struct stepper *s = oid_lookup(args[3], command_config_stepper);
+    struct stepper *s = stepper_oid_lookup(args[3]);
     e->time.func = end_stop_event;
     e->stepper = s;
     e->pin = gpio_in_setup(args[1], args[2]);
@@ -73,14 +73,12 @@ static void
 end_stop_report(uint8_t oid, struct end_stop *e)
 {
     irq_disable();
-    uint32_t position = stepper_get_position(e->stepper);
     uint8_t eflags = e->flags;
     e->flags &= ~ESF_REPORT;
     irq_enable();
 
-    sendf("end_stop_state oid=%c homing=%c pin=%c pos=%i"
-          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin)
-          , position - STEPPER_POSITION_BIAS);
+    sendf("end_stop_state oid=%c homing=%c pin=%c"
+          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin));
 }
 
 void

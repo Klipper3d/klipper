@@ -251,6 +251,12 @@ Stepper commands
   so that the next step is relative to the supplied 'clock' time. The
   host usually only sends this command at the start of a print.
 
+* stepper_get_position oid=%c : This command causes the firmware to
+  generate a "stepper_position" response message with the stepper's
+  current position.  The position is the total number of steps
+  generated with dir=1 minus the total number of steps generated with
+  dir=0.
+
 * end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c : This
   command is used during stepper "homing" operations. To use this
   command a 'config_end_stop' command with the same 'oid' parameter

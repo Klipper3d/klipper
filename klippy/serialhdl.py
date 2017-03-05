@@ -171,8 +171,8 @@ class SerialReader:
     def encode_and_send(self, data, minclock, reqclock, cq):
         self.ffi_lib.serialqueue_encode_and_send(
             self.serialqueue, cq, data, len(data), minclock, reqclock)
-    def send_with_response(self, cmd, name):
-        src = SerialRetryCommand(self, cmd, name)
+    def send_with_response(self, cmd, name, oid=None):
+        src = SerialRetryCommand(self, cmd, name, oid)
         return src.get_response()
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
@@ -235,17 +235,18 @@ class SerialReader:
 class SerialRetryCommand:
     TIMEOUT_TIME = 5.0
     RETRY_TIME = 0.500
-    def __init__(self, serial, cmd, name):
+    def __init__(self, serial, cmd, name, oid=None):
         self.serial = serial
         self.cmd = cmd
         self.name = name
+        self.oid = oid
         self.response = None
         self.min_query_time = self.serial.reactor.monotonic()
-        self.serial.register_callback(self.handle_callback, self.name)
+        self.serial.register_callback(self.handle_callback, self.name, self.oid)
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
     def unregister(self):
-        self.serial.unregister_callback(self.name)
+        self.serial.unregister_callback(self.name, self.oid)
         self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
