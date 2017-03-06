@@ -5,8 +5,9 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
 
-# Mapping from name to Steinhart-Hart coefficients
-Thermistors = {
+# Available sensors
+Sensors = {
+    # Common thermistors and their Steinhart-Hart coefficients
     "EPCOS 100K B57560G104F": (
         0.000722136308968056, 0.000216766566488498, 8.92935804531095e-08),
     "ATC Semitec 104GT-2": (
@@ -29,7 +30,7 @@ class PrinterHeater:
     error = error
     def __init__(self, printer, config):
         self.name = config.section
-        self.thermistor_c = config.getchoice('thermistor_type', Thermistors)
+        self.sensor_c = config.getchoice('sensor_type', Sensors)
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
         self.min_temp = config.getfloat('min_temp')
@@ -44,14 +45,14 @@ class PrinterHeater:
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         heater_pin = config.get('heater_pin')
-        thermistor_pin = config.get('thermistor_pin')
+        sensor_pin = config.get('sensor_pin')
         if algo is ControlBangBang and self.max_power == 1.:
             self.mcu_pwm = printer.mcu.create_digital_out(
                 heater_pin, MAX_HEAT_TIME)
         else:
             self.mcu_pwm = printer.mcu.create_pwm(
                 heater_pin, PWM_CYCLE_TIME, 0, MAX_HEAT_TIME)
-        self.mcu_adc = printer.mcu.create_adc(thermistor_pin)
+        self.mcu_adc = printer.mcu.create_adc(sensor_pin)
         adc_range = [self.calc_adc(self.min_temp), self.calc_adc(self.max_temp)]
         self.mcu_adc.set_minmax(SAMPLE_TIME, SAMPLE_COUNT,
                                 minval=min(adc_range), maxval=max(adc_range))
@@ -81,13 +82,13 @@ class PrinterHeater:
     def calc_temp(self, adc):
         r = self.pullup_r * adc / (1.0 - adc)
         ln_r = math.log(r)
-        c1, c2, c3 = self.thermistor_c
+        c1, c2, c3 = self.sensor_c
         temp_inv = c1 + c2*ln_r + c3*math.pow(ln_r, 3)
         return 1.0/temp_inv + KELVIN_TO_CELCIUS
     def calc_adc(self, temp):
         if temp is None:
             return None
-        c1, c2, c3 = self.thermistor_c
+        c1, c2, c3 = self.sensor_c
         temp -= KELVIN_TO_CELCIUS
         temp_inv = 1./temp
         y = (c1 - temp_inv) / (2*c3)
