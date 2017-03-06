@@ -10,7 +10,7 @@ Thermistors = {
     "EPCOS 100K B57560G104F": (
         0.000722136308968056, 0.000216766566488498, 8.92935804531095e-08),
     "ATC Semitec 104GT-2": (
-        0.000809651054275124, 0.000211636030735685,  7.07420883993973e-08),
+        0.000809651054275124, 0.000211636030735685, 7.07420883993973e-08),
 }
 
 SAMPLE_TIME = 0.001
@@ -52,10 +52,9 @@ class PrinterHeater:
             self.mcu_pwm = printer.mcu.create_pwm(
                 heater_pin, PWM_CYCLE_TIME, 0, MAX_HEAT_TIME)
         self.mcu_adc = printer.mcu.create_adc(thermistor_pin)
-        min_adc = self.calc_adc(self.max_temp)
-        max_adc = self.calc_adc(self.min_temp)
-        self.mcu_adc.set_minmax(
-            SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
+        adc_range = [self.calc_adc(self.min_temp), self.calc_adc(self.max_temp)]
+        self.mcu_adc.set_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                minval=min(adc_range), maxval=max(adc_range))
         self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
         self.control = algo(self, config)
         # pwm caching
