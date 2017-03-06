@@ -9,9 +9,13 @@ import math, logging, threading
 Sensors = {
     # Common thermistors and their Steinhart-Hart coefficients
     "EPCOS 100K B57560G104F": (
+        "thermistor",
         0.000722136308968056, 0.000216766566488498, 8.92935804531095e-08),
     "ATC Semitec 104GT-2": (
+        "thermistor",
         0.000809651054275124, 0.000211636030735685, 7.07420883993973e-08),
+    # Linear style conversion chips and their gain/offset
+    "AD595": ("linear", 300.0 / 3.022, 0.),
 }
 
 SAMPLE_TIME = 0.001
@@ -30,8 +34,14 @@ class PrinterHeater:
     error = error
     def __init__(self, printer, config):
         self.name = config.section
-        self.sensor_c = config.getchoice('sensor_type', Sensors)
-        self.pullup_r = config.getfloat('pullup_resistor', 4700.)
+        sensor_params = config.getchoice('sensor_type', Sensors)
+        self.is_linear_sensor = (sensor_params[0] == 'linear')
+        if self.is_linear_sensor:
+            adc_voltage = config.getfloat('adc_voltage', 5.)
+            self.sensor_coef = sensor_params[1] * adc_voltage, sensor_params[2]
+        else:
+            pullup = config.getfloat('pullup_resistor', 4700.)
+            self.sensor_coef = sensor_params[1:] + (pullup,)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
         self.min_temp = config.getfloat('min_temp')
         self.max_temp = config.getfloat('max_temp')
@@ -80,21 +90,27 @@ class PrinterHeater:
         self.mcu_pwm.set_pwm(pwm_time, value)
     # Temperature calculation
     def calc_temp(self, adc):
-        r = self.pullup_r * adc / (1.0 - adc)
+        if self.is_linear_sensor:
+            gain, offset = self.sensor_coef
+            return adc * gain + offset
+        c1, c2, c3, pullup = self.sensor_coef
+        r = pullup * adc / (1.0 - adc)
         ln_r = math.log(r)
-        c1, c2, c3 = self.sensor_c
         temp_inv = c1 + c2*ln_r + c3*math.pow(ln_r, 3)
         return 1.0/temp_inv + KELVIN_TO_CELCIUS
     def calc_adc(self, temp):
         if temp is None:
             return None
-        c1, c2, c3 = self.sensor_c
+        if self.is_linear_sensor:
+            gain, offset = self.sensor_coef
+            return (temp - offset) / gain
+        c1, c2, c3, pullup = self.sensor_coef
         temp -= KELVIN_TO_CELCIUS
         temp_inv = 1./temp
         y = (c1 - temp_inv) / (2*c3)
         x = math.sqrt(math.pow(c2 / (3.*c3), 3.) + math.pow(y, 2.))
         r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
-        return r / (self.pullup_r + r)
+        return r / (pullup + r)
     def adc_callback(self, read_time, read_value):
         temp = self.calc_temp(read_value)
         with self.lock:
