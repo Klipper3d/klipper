@@ -105,7 +105,7 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     irq_restore(flag);
     return (struct gpio_in){ .regs=regs, .bit=bit };
 fail:
-    shutdown("Not an output pin");
+    shutdown("Not an input pin");
 }
 
 uint8_t
