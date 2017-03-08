@@ -17,26 +17,53 @@
  * Move queue
  ****************************************************************/
 
-static struct move *move_list, *move_free_list;
-static uint16_t move_count;
+struct move_freed {
+    struct move_freed *next;
+};
 
-void
-move_free(struct move *m)
+static struct move_freed *move_free_list;
+static void *move_list;
+static uint16_t move_count;
+static uint8_t move_item_size;
+
+// Is the config and move queue finalized?
+static int
+is_finalized(void)
 {
-    m->next = move_free_list;
-    move_free_list = m;
+    return !!move_count;
 }
 
-struct move *
+// Free previously allocated storage from move_alloc(). Caller must
+// disable irqs.
+void
+move_free(void *m)
+{
+    struct move_freed *mf = m;
+    mf->next = move_free_list;
+    move_free_list = mf;
+}
+
+// Allocate runtime storage
+void *
 move_alloc(void)
 {
     irqstatus_t flag = irq_save();
-    struct move *m = move_free_list;
-    if (!m)
+    struct move_freed *mf = move_free_list;
+    if (!mf)
         shutdown("Move queue empty");
-    move_free_list = m->next;
+    move_free_list = mf->next;
     irq_restore(flag);
-    return m;
+    return mf;
+}
+
+// Request minimum size of runtime allocations returned by move_alloc()
+void
+move_request_size(int size)
+{
+    if (size > UINT8_MAX || is_finalized())
+        shutdown("Invalid move request size");
+    if (size > move_item_size)
+        move_item_size = size;
 }
 
 static void
@@ -46,12 +73,27 @@ move_reset(void)
         return;
     // Add everything in move_list to the free list.
     uint32_t i;
-    for (i=0; i<move_count-1; i++)
-        move_list[i].next = &move_list[i+1];
-    move_list[move_count-1].next = NULL;
-    move_free_list = &move_list[0];
+    for (i=0; i<move_count-1; i++) {
+        struct move_freed *mf = move_list + i*move_item_size;
+        mf->next = move_list + (i + 1)*move_item_size;
+    }
+    struct move_freed *mf = move_list + (move_count - 1)*move_item_size;
+    mf->next = NULL;
+    move_free_list = move_list;
 }
 DECL_SHUTDOWN(move_reset);
+
+static void
+move_finalize(void)
+{
+    move_request_size(sizeof(*move_free_list));
+    uint16_t count = alloc_maxsize(move_item_size*1024) / move_item_size;
+    move_list = malloc(count * move_item_size);
+    if (!count || !move_list)
+        shutdown("move queue malloc failed");
+    move_count = count;
+    move_reset();
+}
 
 
 /****************************************************************
@@ -64,8 +106,6 @@ struct oid_s {
 
 static struct oid_s *oids;
 static uint8_t num_oid;
-static uint32_t config_crc;
-static uint8_t config_finalized;
 
 void *
 lookup_oid(uint8_t oid, void *type)
@@ -78,7 +118,7 @@ lookup_oid(uint8_t oid, void *type)
 static void
 assign_oid(uint8_t oid, void *type, void *data)
 {
-    if (oid >= num_oid || oids[oid].type || config_finalized)
+    if (oid >= num_oid || oids[oid].type || is_finalized())
         shutdown("Can't assign oid");
     oids[oid].type = type;
     oids[oid].data = data;
@@ -124,27 +164,28 @@ command_allocate_oids(uint32_t *args)
 }
 DECL_COMMAND(command_allocate_oids, "allocate_oids count=%c");
 
+
+/****************************************************************
+ * Config CRC
+ ****************************************************************/
+
+static uint32_t config_crc;
+
 void
 command_get_config(uint32_t *args)
 {
     sendf("config is_config=%c crc=%u move_count=%hu"
-          , config_finalized, config_crc, move_count);
+          , is_finalized(), config_crc, move_count);
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
 void
 command_finalize_config(uint32_t *args)
 {
-    if (!oids || config_finalized)
+    if (!oids || is_finalized())
         shutdown("Can't finalize");
-    uint16_t count = alloc_maxsize(sizeof(*move_list)*1024) / sizeof(*move_list);
-    move_list = malloc(count * sizeof(*move_list));
-    if (!count || !move_list)
-        shutdown("malloc failed");
-    move_count = count;
-    move_reset();
+    move_finalize();
     config_crc = args[0];
-    config_finalized = 1;
     command_get_config(NULL);
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");

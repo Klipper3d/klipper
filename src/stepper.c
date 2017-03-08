@@ -17,6 +17,16 @@
  * Steppers
  ****************************************************************/
 
+struct stepper_move {
+    uint32_t interval;
+    int16_t add;
+    uint16_t count;
+    struct stepper_move *next;
+    uint8_t flags;
+};
+
+enum { MF_DIR=1<<0 };
+
 struct stepper {
     struct timer time;
     uint32_t interval;
@@ -30,13 +40,12 @@ struct stepper {
 #endif
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
-    struct move *first, **plast;
+    struct stepper_move *first, **plast;
     uint32_t min_stop_interval;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
 
-enum { MF_DIR=1<<0 };
 enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
        SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
 
@@ -44,7 +53,7 @@ enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3
 static uint_fast8_t
 stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
-    struct move *m = s->first;
+    struct stepper_move *m = s->first;
     if (!m) {
         if (s->interval - s->add < s->min_stop_interval
             && !(s->flags & SF_NO_NEXT_CHECK))
@@ -144,6 +153,7 @@ command_config_stepper(uint32_t *args)
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->min_stop_interval = args[3];
     s->position = -STEPPER_POSITION_BIAS;
+    move_request_size(sizeof(struct stepper_move));
 }
 DECL_COMMAND(command_config_stepper,
              "config_stepper oid=%c step_pin=%c dir_pin=%c"
@@ -154,7 +164,7 @@ void
 command_queue_step(uint32_t *args)
 {
     struct stepper *s = lookup_oid(args[0], command_config_stepper);
-    struct move *m = move_alloc();
+    struct stepper_move *m = move_alloc();
     m->interval = args[1];
     m->count = args[2];
     if (!m->count)
@@ -244,7 +254,7 @@ stepper_stop(struct stepper *s)
     gpio_out_write(s->dir_pin, 0);
     gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP ? 1 : 0);
     while (s->first) {
-        struct move *next = s->first->next;
+        struct stepper_move *next = s->first->next;
         move_free(s->first);
         s->first = next;
     }

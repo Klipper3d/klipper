@@ -3,16 +3,9 @@
 
 #include <stdint.h> // uint8_t
 
-struct move {
-    uint32_t interval;
-    int16_t add;
-    uint16_t count;
-    struct move *next;
-    uint8_t flags;
-};
-
-void move_free(struct move *m);
-struct move *move_alloc(void);
+void move_free(void *m);
+void *move_alloc(void);
+void move_request_size(int size);
 void *lookup_oid(uint8_t oid, void *type);
 void *alloc_oid(uint8_t oid, void *type, uint16_t size);
 void *next_oid(uint8_t *i, void *type);
