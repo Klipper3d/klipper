@@ -22,6 +22,7 @@ def main():
             continue
         args = dict([p.split('=', 1) for p in parts[1:]])
         if parts[0] == 'config_stepper':
+            # steppers[oid] = [dir_cmds, dir, queue_cmds, pos steps, neg steps]
             steppers[args['oid']] = [0, 0, 0, 0, 0]
         elif parts[0] == 'set_next_step_dir':
             so = steppers[args['oid']]
