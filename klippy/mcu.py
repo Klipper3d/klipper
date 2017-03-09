@@ -339,6 +339,7 @@ class MCU:
         serialport = config.get('serial', '/dev/ttyS0')
         self.serial = serialhdl.SerialReader(printer.reactor, serialport, baud)
         self.is_shutdown = False
+        self._shutdown_msg = ""
         self._is_fileoutput = False
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
@@ -371,9 +372,10 @@ class MCU:
         if self.is_shutdown:
             return
         self.is_shutdown = True
-        logging.info("%s: %s" % (params['#name'], params['#msg']))
+        self._shutdown_msg = params['#msg']
+        logging.info("%s: %s" % (params['#name'], self._shutdown_msg))
         self.serial.dump_debug()
-        self._printer.note_shutdown(params['#msg'])
+        self._printer.note_shutdown(self._shutdown_msg)
     # Connection phase
     def connect(self):
         if not self._is_fileoutput:
@@ -474,6 +476,11 @@ class MCU:
                 self.send(self.create_command(c))
             if not self._is_fileoutput:
                 config_params = self.serial.send_with_response(msg, 'config')
+                if not config_params['is_config']:
+                    if self.is_shutdown:
+                        raise error("Firmware error during config: %s" % (
+                            self._shutdown_msg,))
+                    raise error("Unable to configure printer")
         if self._config_crc != config_params['crc']:
             raise error("Printer CRC does not match config")
         move_count = config_params['move_count']
