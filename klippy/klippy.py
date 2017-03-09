@@ -32,9 +32,9 @@ Protocol error connecting to printer
 """
 
 message_mcu_connect_error = """
-This is an unrecoverable error.  Please manually restart the
-micro-controller and then issue the "RESTART" command to
-restart the host software.
+Once the underlying issue is corrected, use the
+"FIRMWARE_RESTART" command to reset the firmware, reload the
+config, and restart the host software.
 Error configuring printer
 """
 
@@ -94,8 +94,10 @@ class ConfigLogger():
         logging.info(data.strip())
 
 class Printer:
-    def __init__(self, conffile, input_fd, is_fileinput=False, version="?"):
+    def __init__(self, conffile, input_fd, startup_state
+                 , is_fileinput=False, version="?"):
         self.conffile = conffile
+        self.startup_state = startup_state
         self.software_version = version
         self.reactor = reactor.Reactor()
         self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
@@ -226,11 +228,18 @@ class Printer:
                 self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during disconnect")
-    def request_restart(self):
-        self.run_result = "restart"
-        self.reactor.end()
-    def request_exit_eof(self):
-        self.run_result = "exit_eof"
+    def firmware_restart(self):
+        try:
+            if self.mcu is not None:
+                self.stats(self.reactor.monotonic())
+                self.mcu.disconnect()
+                self.mcu.microcontroller_restart()
+        except:
+            logging.exception("Unhandled exception during firmware_restart")
+    def get_startup_state(self):
+        return self.startup_state
+    def request_exit(self, result="exit"):
+        self.run_result = result
         self.reactor.end()
 
 
@@ -287,15 +296,22 @@ def main():
         logging.info("CPU: %s" % (util.get_cpu_info(),))
 
     # Start firmware
+    res = 'startup'
     while 1:
         is_fileinput = debuginput is not None
-        printer = Printer(conffile, input_fd, is_fileinput, software_version)
+        printer = Printer(
+            conffile, input_fd, res, is_fileinput, software_version)
         if debugoutput:
             proto_dict = read_dictionary(options.read_dictionary)
             printer.set_fileoutput(debugoutput, proto_dict)
         res = printer.run()
         if res == 'restart':
             printer.disconnect()
+            time.sleep(1.)
+            logging.info("Restarting printer")
+            continue
+        elif res == 'firmware_restart':
+            printer.firmware_restart()
             time.sleep(1.)
             logging.info("Restarting printer")
             continue

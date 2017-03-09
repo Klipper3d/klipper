@@ -46,8 +46,8 @@ class GCodeParser:
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
                     'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M115',
                     'M206', 'M400',
-                    'HELP', 'QUERY_ENDSTOPS', 'RESTART', 'CLEAR_SHUTDOWN',
-                    'STATUS']
+                    'HELP', 'QUERY_ENDSTOPS', 'CLEAR_SHUTDOWN',
+                    'RESTART', 'FIRMWARE_RESTART', 'STATUS']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
@@ -119,7 +119,7 @@ class GCodeParser:
                 self.toolhead.force_shutdown()
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
                 if self.is_fileinput:
-                    self.printer.request_exit_eof()
+                    self.printer.request_exit('exit_eof')
                     break
             self.ack()
     def process_data(self, eventtime):
@@ -144,7 +144,7 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         if not data and self.is_fileinput:
             self.motor_heater_off()
-            self.printer.request_exit_eof()
+            self.printer.request_exit('exit_eof')
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -373,16 +373,23 @@ class GCodeParser:
             self.cmd_default(params)
             return
         self.printer.mcu.clear_shutdown()
-        self.printer.request_restart()
-    cmd_RESTART_when_not_ready = True
-    cmd_RESTART_help = "Reload config file and restart host software"
-    def cmd_RESTART(self, params):
+        self.printer.request_exit('restart')
+    def prep_restart(self):
         if self.is_printer_ready:
             self.respond_info("Preparing to restart...")
             self.motor_heater_off()
             self.toolhead.dwell(0.500)
             self.toolhead.wait_moves()
-        self.printer.request_restart()
+    cmd_RESTART_when_not_ready = True
+    cmd_RESTART_help = "Reload config file and restart host software"
+    def cmd_RESTART(self, params):
+        self.prep_restart()
+        self.printer.request_exit('restart')
+    cmd_FIRMWARE_RESTART_when_not_ready = True
+    cmd_FIRMWARE_RESTART_help = "Restart firmware, host, and reload config"
+    def cmd_FIRMWARE_RESTART(self, params):
+        self.prep_restart()
+        self.printer.request_exit('firmware_restart')
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):

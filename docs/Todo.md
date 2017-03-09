@@ -14,8 +14,6 @@ Host user interaction
  * Provide startup scripts so that Klippy can startup at system
    bootup.
 
- * Allow loading of a new config without having to restart the mcu.
-
 * Improve gcode interface:
 
  * Provide a better way to handle print nozzle z offsets. The M206

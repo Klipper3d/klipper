@@ -336,8 +336,9 @@ class MCU:
         self._config = config
         # Serial port
         baud = config.getint('baud', 250000)
-        serialport = config.get('serial', '/dev/ttyS0')
-        self.serial = serialhdl.SerialReader(printer.reactor, serialport, baud)
+        self._serialport = config.get('serial', '/dev/ttyS0')
+        self.serial = serialhdl.SerialReader(
+            printer.reactor, self._serialport, baud)
         self.is_shutdown = False
         self._shutdown_msg = ""
         self._is_fileoutput = False
@@ -423,6 +424,10 @@ class MCU:
     def clear_shutdown(self):
         logging.info("Sending clear_shutdown command")
         self.send(self._clear_shutdown_cmd.encode())
+    def microcontroller_restart(self):
+        logging.info("Attempting a microcontroller reset")
+        self.disconnect()
+        serialhdl.arduino_reset(self._serialport, self._printer.reactor)
     def is_fileoutput(self):
         return self._is_fileoutput
     # Configuration phase
@@ -472,6 +477,7 @@ class MCU:
             config_params = self.serial.send_with_response(msg, 'config')
         if not config_params['is_config']:
             # Send config commands
+            logging.info("Sending printer configuration...")
             for c in self._config_cmds:
                 self.send(self.create_command(c))
             if not self._is_fileoutput:
@@ -482,6 +488,12 @@ class MCU:
                             self._shutdown_msg,))
                     raise error("Unable to configure printer")
         if self._config_crc != config_params['crc']:
+            if self._printer.get_startup_state() != 'firmware_restart':
+                # Attempt a firmware restart to fix the CRC error
+                logging.info(
+                    "Printer CRC mismatch - attempting firmware restart")
+                self._printer.request_exit('firmware_restart')
+                self._printer.reactor.pause(0.100)
             raise error("Printer CRC does not match config")
         move_count = config_params['move_count']
         logging.info("Configured (%d moves)" % (move_count,))
