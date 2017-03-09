@@ -8,6 +8,9 @@ import serial
 
 import msgproto, chelper, util
 
+class error(Exception):
+    pass
+
 class SerialReader:
     BITS_PER_BYTE = 10.
     def __init__(self, reactor, serialport, baud):
@@ -230,6 +233,7 @@ class SerialReader:
 
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:
+    TIMEOUT_TIME = 5.0
     RETRY_TIME = 0.500
     def __init__(self, serial, cmd, name):
         self.serial = serial
@@ -240,6 +244,9 @@ class SerialRetryCommand:
         self.serial.register_callback(self.handle_callback, self.name)
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
+    def unregister(self):
+        self.serial.unregister_callback(self.name)
+        self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
             return self.serial.reactor.NEVER
@@ -253,8 +260,10 @@ class SerialRetryCommand:
         eventtime = self.serial.reactor.monotonic()
         while self.response is None:
             eventtime = self.serial.reactor.pause(eventtime + 0.05)
-        self.serial.unregister_callback(self.name)
-        self.serial.reactor.unregister_timer(self.send_timer)
+            if eventtime > self.min_query_time + self.TIMEOUT_TIME:
+                self.unregister()
+                raise error("Timeout on wait for '%s' response" % (self.name,))
+        self.unregister()
         return self.response
 
 # Code to start communication and download message type dictionary
