@@ -16,6 +16,7 @@ Thermistors = {
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
+PWM_CYCLE_TIME = 0.100
 KELVIN_TO_CELCIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
@@ -55,7 +56,7 @@ class PrinterHeater:
                 heater_pin, MAX_HEAT_TIME)
         else:
             self.mcu_pwm = self.printer.mcu.create_pwm(
-                heater_pin, 0, MAX_HEAT_TIME)
+                heater_pin, PWM_CYCLE_TIME, 0, MAX_HEAT_TIME)
         self.mcu_adc = self.printer.mcu.create_adc(thermistor_pin)
         min_adc = self.calc_adc(self.max_temp)
         max_adc = self.calc_adc(self.min_temp)

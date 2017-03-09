@@ -251,7 +251,7 @@ class MCU_digital_out:
 
 class MCU_pwm:
     PWM_MAX = 255.
-    def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=True):
+    def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=False):
         self._mcu = mcu
         self._oid = mcu.create_oid()
         self._last_clock = 0
@@ -510,14 +510,14 @@ class MCU:
     def create_digital_out(self, pin, max_duration=2.):
         max_duration = int(max_duration * self._mcu_freq)
         return MCU_digital_out(self, pin, max_duration)
-    def create_pwm(self, pin, hard_cycle_ticks, max_duration=2.):
+    def create_pwm(self, pin, cycle_time, hard_cycle_ticks=0, max_duration=2.):
         max_duration = int(max_duration * self._mcu_freq)
         if hard_cycle_ticks:
-            return MCU_pwm(self, pin, hard_cycle_ticks, max_duration)
+            return MCU_pwm(self, pin, hard_cycle_ticks, max_duration, True)
         if hard_cycle_ticks < 0:
             return MCU_digital_out(self, pin, max_duration)
-        cycle_ticks = int(self._mcu_freq / 10.)
-        return MCU_pwm(self, pin, cycle_ticks, max_duration, hard_pwm=False)
+        cycle_ticks = int(cycle_time * self._mcu_freq)
+        return MCU_pwm(self, pin, cycle_ticks, max_duration, False)
     def create_adc(self, pin):
         return MCU_adc(self, pin)
     # Clock syncing
