@@ -328,13 +328,6 @@ DECL_COMMAND_FLAGS(command_debug_write16, HF_IN_SHUTDOWN,
  ****************************************************************/
 
 void
-command_reset(uint32_t *args)
-{
-    // XXX - implement reset
-}
-DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "msg_reset");
-
-void
 command_emergency_stop(uint32_t *args)
 {
     shutdown("command request");
