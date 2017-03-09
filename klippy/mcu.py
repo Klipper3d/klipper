@@ -254,25 +254,29 @@ class MCU_pwm:
     def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=False):
         self._mcu = mcu
         self._oid = mcu.create_oid()
+        pin, pullup, self._invert = parse_pin_extras(pin)
         self._last_clock = 0
         self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
         if hard_pwm:
             mcu.add_config_cmd(
-                "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=0"
-                " max_duration=%d" % (self._oid, pin, cycle_ticks, max_duration))
+                "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=%d"
+                " max_duration=%d" % (
+                    self._oid, pin, cycle_ticks, self._invert, max_duration))
             self._set_cmd = mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%c")
         else:
             mcu.add_config_cmd(
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d"
-                " default_value=0 max_duration=%d" % (
-                    self._oid, pin, cycle_ticks, max_duration))
+                " default_value=%d max_duration=%d" % (
+                    self._oid, pin, cycle_ticks, self._invert, max_duration))
             self._set_cmd = mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%c")
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def set_pwm(self, mcu_time, value):
         clock = int(mcu_time * self._mcu_freq)
+        if self._invert:
+            value = 1. - value
         value = int(value * self.PWM_MAX + 0.5)
         msg = self._set_cmd.encode(self._oid, clock, value)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
