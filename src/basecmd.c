@@ -6,7 +6,7 @@
 
 #include <stdlib.h> // malloc
 #include <string.h> // memset
-#include "basecmd.h" // lookup_oid
+#include "basecmd.h" // oid_lookup
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // alloc_maxsize
 #include "command.h" // DECL_COMMAND
@@ -105,43 +105,43 @@ struct oid_s {
 };
 
 static struct oid_s *oids;
-static uint8_t num_oid;
+static uint8_t oid_count;
 
 void *
-lookup_oid(uint8_t oid, void *type)
+oid_lookup(uint8_t oid, void *type)
 {
-    if (oid >= num_oid || type != oids[oid].type)
+    if (oid >= oid_count || type != oids[oid].type)
         shutdown("Invalid oid type");
     return oids[oid].data;
 }
 
 static void
-assign_oid(uint8_t oid, void *type, void *data)
+oid_assign(uint8_t oid, void *type, void *data)
 {
-    if (oid >= num_oid || oids[oid].type || is_finalized())
+    if (oid >= oid_count || oids[oid].type || is_finalized())
         shutdown("Can't assign oid");
     oids[oid].type = type;
     oids[oid].data = data;
 }
 
 void *
-alloc_oid(uint8_t oid, void *type, uint16_t size)
+oid_alloc(uint8_t oid, void *type, uint16_t size)
 {
     void *data = malloc(size);
     if (!data)
         shutdown("malloc failed");
     memset(data, 0, size);
-    assign_oid(oid, type, data);
+    oid_assign(oid, type, data);
     return data;
 }
 
 void *
-next_oid(uint8_t *i, void *type)
+oid_next(uint8_t *i, void *type)
 {
     uint8_t oid = *i;
     for (;;) {
         oid++;
-        if (oid >= num_oid)
+        if (oid >= oid_count)
             return NULL;
         if (oids[oid].type == type) {
             *i = oid;
@@ -160,7 +160,7 @@ command_allocate_oids(uint32_t *args)
     if (!oids)
         shutdown("malloc failed");
     memset(oids, 0, sizeof(oids[0]) * count);
-    num_oid = count;
+    oid_count = count;
 }
 DECL_COMMAND(command_allocate_oids, "allocate_oids count=%c");
 

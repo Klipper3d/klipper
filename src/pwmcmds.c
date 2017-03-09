@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "basecmd.h" // alloc_oid
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_pwm
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_timer
@@ -37,7 +37,7 @@ pwm_event(struct timer *timer)
 void
 command_config_pwm_out(uint32_t *args)
 {
-    struct pwm_out_s *p = alloc_oid(args[0], command_config_pwm_out, sizeof(*p));
+    struct pwm_out_s *p = oid_alloc(args[0], command_config_pwm_out, sizeof(*p));
     p->default_value = args[3];
     p->pin = gpio_pwm_setup(args[1], args[2], p->default_value);
     p->max_duration = args[4];
@@ -49,7 +49,7 @@ DECL_COMMAND(command_config_pwm_out,
 void
 command_schedule_pwm_out(uint32_t *args)
 {
-    struct pwm_out_s *p = lookup_oid(args[0], command_config_pwm_out);
+    struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
     sched_del_timer(&p->timer);
     p->timer.func = pwm_event;
     p->timer.waketime = args[1];

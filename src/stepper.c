@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_*
-#include "basecmd.h" // alloc_oid
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
@@ -145,7 +145,7 @@ reschedule_min:
 void
 command_config_stepper(uint32_t *args)
 {
-    struct stepper *s = alloc_oid(args[0], command_config_stepper, sizeof(*s));
+    struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
     s->flags = args[4] ? SF_INVERT_STEP : 0;
@@ -163,7 +163,7 @@ DECL_COMMAND(command_config_stepper,
 void
 command_queue_step(uint32_t *args)
 {
-    struct stepper *s = lookup_oid(args[0], command_config_stepper);
+    struct stepper *s = oid_lookup(args[0], command_config_stepper);
     struct stepper_move *m = move_alloc();
     m->interval = args[1];
     m->count = args[2];
@@ -204,7 +204,7 @@ DECL_COMMAND(command_queue_step,
 void
 command_set_next_step_dir(uint32_t *args)
 {
-    struct stepper *s = lookup_oid(args[0], command_config_stepper);
+    struct stepper *s = oid_lookup(args[0], command_config_stepper);
     uint8_t nextdir = args[1] ? SF_NEXT_DIR : 0;
     irq_disable();
     s->flags = (s->flags & ~SF_NEXT_DIR) | nextdir;
@@ -216,7 +216,7 @@ DECL_COMMAND(command_set_next_step_dir, "set_next_step_dir oid=%c dir=%c");
 void
 command_reset_step_clock(uint32_t *args)
 {
-    struct stepper *s = lookup_oid(args[0], command_config_stepper);
+    struct stepper *s = oid_lookup(args[0], command_config_stepper);
     uint32_t waketime = args[1];
     irq_disable();
     if (s->count)

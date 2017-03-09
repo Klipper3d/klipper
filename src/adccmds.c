@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "basecmd.h" // alloc_oid
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_adc
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
@@ -50,7 +50,7 @@ analog_in_event(struct timer *timer)
 void
 command_config_analog_in(uint32_t *args)
 {
-    struct analog_in *a = alloc_oid(
+    struct analog_in *a = oid_alloc(
         args[0], command_config_analog_in, sizeof(*a));
     a->timer.func = analog_in_event;
     a->pin = gpio_adc_setup(args[1]);
@@ -61,7 +61,7 @@ DECL_COMMAND(command_config_analog_in, "config_analog_in oid=%c pin=%u");
 void
 command_query_analog_in(uint32_t *args)
 {
-    struct analog_in *a = lookup_oid(args[0], command_config_analog_in);
+    struct analog_in *a = oid_lookup(args[0], command_config_analog_in);
     sched_del_timer(&a->timer);
     gpio_adc_cancel_sample(a->pin);
     a->next_begin_time = args[1];

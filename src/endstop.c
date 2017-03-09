@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "basecmd.h" // alloc_oid
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
@@ -40,8 +40,8 @@ end_stop_event(struct timer *t)
 void
 command_config_end_stop(uint32_t *args)
 {
-    struct end_stop *e = alloc_oid(args[0], command_config_end_stop, sizeof(*e));
-    struct stepper *s = lookup_oid(args[3], command_config_stepper);
+    struct end_stop *e = oid_alloc(args[0], command_config_end_stop, sizeof(*e));
+    struct stepper *s = oid_lookup(args[3], command_config_stepper);
     e->time.func = end_stop_event;
     e->stepper = s;
     e->pin = gpio_in_setup(args[1], args[2]);
@@ -53,7 +53,7 @@ DECL_COMMAND(command_config_end_stop,
 void
 command_end_stop_home(uint32_t *args)
 {
-    struct end_stop *e = lookup_oid(args[0], command_config_end_stop);
+    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
     sched_del_timer(&e->time);
     e->time.waketime = args[1];
     e->rest_time = args[2];
@@ -87,7 +87,7 @@ void
 command_end_stop_query(uint32_t *args)
 {
     uint8_t oid = args[0];
-    struct end_stop *e = lookup_oid(oid, command_config_end_stop);
+    struct end_stop *e = oid_lookup(oid, command_config_end_stop);
     end_stop_report(oid, e);
 }
 DECL_COMMAND(command_end_stop_query, "end_stop_query oid=%c");

@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "basecmd.h" // alloc_oid
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_out
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
@@ -43,7 +43,7 @@ digital_out_event(struct timer *timer)
 void
 command_config_digital_out(uint32_t *args)
 {
-    struct digital_out_s *d = alloc_oid(args[0], command_config_digital_out
+    struct digital_out_s *d = oid_alloc(args[0], command_config_digital_out
                                         , sizeof(*d));
     d->default_value = args[2];
     d->pin = gpio_out_setup(args[1], d->default_value);
@@ -56,7 +56,7 @@ DECL_COMMAND(command_config_digital_out,
 void
 command_schedule_digital_out(uint32_t *args)
 {
-    struct digital_out_s *d = lookup_oid(args[0], command_config_digital_out);
+    struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
     sched_del_timer(&d->timer);
     d->timer.func = digital_out_event;
     d->timer.waketime = args[1];
@@ -155,7 +155,7 @@ soft_pwm_load_event(struct timer *timer)
 void
 command_config_soft_pwm_out(uint32_t *args)
 {
-    struct soft_pwm_s *s = alloc_oid(args[0], command_config_soft_pwm_out
+    struct soft_pwm_s *s = oid_alloc(args[0], command_config_soft_pwm_out
                                      , sizeof(*s));
     s->cycle_time = args[2];
     s->pulse_time = s->cycle_time / 255;
@@ -171,7 +171,7 @@ DECL_COMMAND(command_config_soft_pwm_out,
 void
 command_schedule_soft_pwm_out(uint32_t *args)
 {
-    struct soft_pwm_s *s = lookup_oid(args[0], command_config_soft_pwm_out);
+    struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
     uint32_t time = args[1];
     uint8_t value = args[2];
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
