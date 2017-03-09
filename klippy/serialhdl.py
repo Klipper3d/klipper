@@ -80,8 +80,6 @@ class SerialReader:
             if identify_data is None:
                 logging.warn("Timeout on serial connect")
                 self.disconnect()
-                self.ser.close()
-                self.ser = None
                 continue
             break
         msgparser = msgproto.MessageParser()
@@ -121,13 +119,15 @@ class SerialReader:
             self.serialqueue, self.est_clock, self.last_ack_time
             , self.last_ack_clock)
     def disconnect(self):
-        if self.serialqueue is None:
-            return
-        self.ffi_lib.serialqueue_exit(self.serialqueue)
-        if self.background_thread is not None:
-            self.background_thread.join()
-        self.ffi_lib.serialqueue_free(self.serialqueue)
-        self.background_thread = self.serialqueue = None
+        if self.serialqueue is not None:
+            self.ffi_lib.serialqueue_exit(self.serialqueue)
+            if self.background_thread is not None:
+                self.background_thread.join()
+            self.ffi_lib.serialqueue_free(self.serialqueue)
+            self.background_thread = self.serialqueue = None
+        if self.ser is not None:
+            self.ser.close()
+            self.ser = None
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
