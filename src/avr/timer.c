@@ -83,20 +83,29 @@ DECL_INIT(timer_init);
  * 32bit timer wrappers
  ****************************************************************/
 
-static uint32_t timer_last;
+static uint16_t timer_high;
 
-// Return the 32bit current time given the 16bit current time.
-static __always_inline uint32_t
-calc_time(uint32_t last, uint16_t cur)
+// Return the current time (in absolute clock ticks).
+uint32_t
+timer_read_time(void)
 {
     union u32_u16_u {
         struct { uint16_t lo, hi; };
         uint32_t val;
     } calc;
-    calc.val = last;
-    if (cur < calc.lo)
+    irqstatus_t flag = irq_save();
+    calc.val = timer_get();
+    calc.hi = timer_high;
+    if (!(TIFR1 & (1<<TOV1))) {
+        irq_restore(flag);
+        return calc.val;
+    }
+    // Hardware timer has overflowed - update overflow counter
+    TIFR1 = 1<<TOV1;
+    timer_high = calc.hi + 1;
+    irq_restore(flag);
+    if (calc.lo < 0x8000)
         calc.hi++;
-    calc.lo = cur;
     return calc.val;
 }
 
@@ -104,18 +113,11 @@ calc_time(uint32_t last, uint16_t cur)
 void
 timer_periodic(void)
 {
-    timer_last = calc_time(timer_last, timer_get());
-}
-
-// Return the current time (in absolute clock ticks).
-uint32_t
-timer_read_time(void)
-{
-    irqstatus_t flag = irq_save();
-    uint16_t cur = timer_get();
-    uint32_t last = timer_last;
-    irq_restore(flag);
-    return calc_time(last, cur);
+    if (TIFR1 & (1<<TOV1)) {
+        // Hardware timer has overflowed - update overflow counter
+        TIFR1 = 1<<TOV1;
+        timer_high++;
+    }
 }
 
 #define TIMER_MIN_TICKS 100
@@ -126,11 +128,11 @@ timer_read_time(void)
 uint8_t
 timer_set_next(uint32_t next)
 {
-    uint16_t cur = timer_get();
-    if ((int16_t)(OCR1A - cur) < 0 && !(TIFR1 & (1<<OCF1A)))
+    uint32_t cur = timer_read_time();
+    if ((int16_t)(OCR1A - (uint16_t)cur) < 0 && !(TIFR1 & (1<<OCF1A)))
         // Already processing timer irqs
         try_shutdown("timer_set_next called during timer dispatch");
-    uint32_t mintime = calc_time(timer_last, cur + TIMER_MIN_TICKS);
+    uint32_t mintime = cur + TIMER_MIN_TICKS;
     if (sched_is_before(mintime, next)) {
         timer_set_clear(next);
         return 0;
