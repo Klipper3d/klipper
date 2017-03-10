@@ -19,21 +19,41 @@
 
 static uint16_t millis;
 
+static struct timer ms_timer, sentinel_timer;
+
 // Default millisecond timer.  This timer counts milliseconds.  It
-// also simplifies the timer code by ensuring there is always at least
-// one timer on the timer list and that there is always a timer not
-// more than 1 ms in the future.
+// also simplifies the timer code by ensuring there is always a timer
+// on the timer list and that there is always a timer not more than
+// 1ms in the future.
 static uint_fast8_t
 ms_event(struct timer *t)
 {
     millis++;
     timer_periodic();
-    t->waketime += sched_from_us(1000);
+    ms_timer.waketime += sched_from_us(1000);
+    sentinel_timer.waketime = ms_timer.waketime + 0x80000000;
     return SF_RESCHEDULE;
 }
 
 static struct timer ms_timer = {
-    .func = ms_event
+    .func = ms_event,
+    .next = &sentinel_timer,
+};
+
+// The sentinel timer is always the last timer on timer_list - its
+// presence allows the code to avoid checking for NULL while
+// traversing timer_list.  Since sentinel_timer.waketime is always
+// equal to (ms_timer.waketime + 0x80000000) any added timer must
+// always have a waketime less than one of these two timers.
+static uint_fast8_t
+sentinel_event(struct timer *t)
+{
+    shutdown("sentinel timer called");
+}
+
+static struct timer sentinel_timer = {
+    .func = sentinel_event,
+    .waketime = 0x80000000,
 };
 
 // Check if ready for a recurring periodic event
@@ -91,7 +111,7 @@ sched_timer(struct timer *add)
     } else {
         // Find position in list and insert
         struct timer *pos = timer_list;
-        while (pos->next && !sched_is_before(waketime, pos->next->waketime))
+        while (!sched_is_before(waketime, pos->next->waketime))
             pos = pos->next;
         add->next = pos->next;
         pos->next = add;
@@ -128,7 +148,7 @@ reschedule_timer(struct timer *t)
 {
     struct timer *pos = t->next;
     uint32_t minwaketime = t->waketime + 1;
-    if (!pos || !sched_is_before(pos->waketime, minwaketime))
+    if (!sched_is_before(pos->waketime, minwaketime))
         // Timer is still the first - no insertion needed
         return t;
 
@@ -141,7 +161,7 @@ reschedule_timer(struct timer *t)
             // micro optimization for AVR - reduces register pressure
             asm("" : "+r"(prev) : : "memory");
         pos = pos->next;
-        if (!pos || !sched_is_before(pos->waketime, minwaketime))
+        if (!sched_is_before(pos->waketime, minwaketime))
             break;
     }
     t->next = pos;
@@ -180,7 +200,7 @@ static void
 timer_shutdown(void)
 {
     timer_list = &ms_timer;
-    ms_timer.next = NULL;
+    ms_timer.next = &sentinel_timer;
     timer_set_next(timer_list->waketime);
 }
 DECL_SHUTDOWN(timer_shutdown);
