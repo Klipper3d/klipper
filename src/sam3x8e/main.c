@@ -5,8 +5,11 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/misc.h" // alloc_maxsize
+#include "command.h" // DECL_CONSTANT
 #include "sam3x8e.h" // WDT
 #include "sched.h" // sched_main
+
+DECL_CONSTANT(MCU, "sam3x8e");
 
 
 /****************************************************************
