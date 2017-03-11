@@ -17,9 +17,46 @@
  * Timers
  ****************************************************************/
 
+// Return the number of clock ticks for a given number of microseconds
+uint32_t
+sched_from_us(uint32_t us)
+{
+    return timer_from_us(us);
+}
+
+// Return the current time (in clock ticks)
+uint32_t
+sched_read_time(void)
+{
+    return timer_read_time();
+}
+
+// Return true if time1 is before time2.  Always use this function to
+// compare times as regular C comparisons can fail if the counter
+// rolls over.
+uint8_t
+sched_is_before(uint32_t time1, uint32_t time2)
+{
+    return (int32_t)(time1 - time2) < 0;
+}
+
 static uint16_t millis;
 
-static struct timer ms_timer, sentinel_timer;
+// Check if ready for a recurring periodic event
+uint8_t
+sched_check_periodic(uint16_t time, uint16_t *pnext)
+{
+    uint16_t next = *pnext, cur;
+    irqstatus_t flag = irq_save();
+    cur = millis;
+    irq_restore(flag);
+    if ((int16_t)(cur - next) < 0)
+        return 0;
+    *pnext = cur + time;
+    return 1;
+}
+
+static struct timer ms_timer, sentinel_timer, *timer_list = &ms_timer;
 
 // Default millisecond timer.  This timer counts milliseconds.  It
 // also simplifies the timer code by ensuring there is always a timer
@@ -55,45 +92,6 @@ static struct timer sentinel_timer = {
     .func = sentinel_event,
     .waketime = 0x80000000,
 };
-
-// Check if ready for a recurring periodic event
-uint8_t
-sched_check_periodic(uint16_t time, uint16_t *pnext)
-{
-    uint16_t next = *pnext, cur;
-    irqstatus_t flag = irq_save();
-    cur = millis;
-    irq_restore(flag);
-    if ((int16_t)(cur - next) < 0)
-        return 0;
-    *pnext = cur + time;
-    return 1;
-}
-
-// Return the number of clock ticks for a given number of microseconds
-uint32_t
-sched_from_us(uint32_t us)
-{
-    return timer_from_us(us);
-}
-
-// Return the current time (in clock ticks)
-uint32_t
-sched_read_time(void)
-{
-    return timer_read_time();
-}
-
-// Return true if time1 is before time2.  Always use this function to
-// compare times as regular C comparisons can fail if the counter
-// rolls over.
-uint8_t
-sched_is_before(uint32_t time1, uint32_t time2)
-{
-    return (int32_t)(time1 - time2) < 0;
-}
-
-static struct timer *timer_list = &ms_timer;
 
 // Schedule a function call at a supplied time.
 void
