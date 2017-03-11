@@ -209,7 +209,7 @@ command_start_group(uint32_t *args)
     sched_del_timer(&group_timer);
     group_timer.func = group_end_event;
     group_timer.waketime = args[0];
-    sched_timer(&group_timer);
+    sched_add_timer(&group_timer);
 }
 DECL_COMMAND(command_start_group, "start_group clock=%u");
 

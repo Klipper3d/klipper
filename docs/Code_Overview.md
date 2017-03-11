@@ -54,7 +54,7 @@ functions should never pause, delay, or do any work that lasts more
 than a few micro-seconds. These functions schedule work at specific
 times by scheduling timers.
 
-Timer functions are scheduled by calling sched_timer() (located in
+Timer functions are scheduled by calling sched_add_timer() (located in
 **src/sched.c**). The scheduler code will arrange for the given
 function to be called at the requested clock time. Timer interrupts
 are initially handled in an architecture specific interrupt handler

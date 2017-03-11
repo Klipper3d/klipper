@@ -64,7 +64,7 @@ command_end_stop_home(uint32_t *args)
         return;
     }
     e->flags = ESF_HOMING | (args[3] ? ESF_PIN_HIGH : 0);
-    sched_timer(&e->time);
+    sched_add_timer(&e->time);
 }
 DECL_COMMAND(command_end_stop_home,
              "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c");

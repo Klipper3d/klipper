@@ -8,7 +8,7 @@
 #include "board/gpio.h" // struct gpio_out
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
-#include "sched.h" // sched_timer
+#include "sched.h" // sched_add_timer
 
 
 /****************************************************************
@@ -61,7 +61,7 @@ command_schedule_digital_out(uint32_t *args)
     d->timer.func = digital_out_event;
     d->timer.waketime = args[1];
     d->value = args[2];
-    sched_timer(&d->timer);
+    sched_add_timer(&d->timer);
 }
 DECL_COMMAND(command_schedule_digital_out,
              "schedule_digital_out oid=%c clock=%u value=%c");
@@ -202,7 +202,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
         sched_del_timer(&s->timer);
         s->timer.waketime = time;
         s->timer.func = soft_pwm_load_event;
-        sched_timer(&s->timer);
+        sched_add_timer(&s->timer);
     }
     irq_enable();
 }

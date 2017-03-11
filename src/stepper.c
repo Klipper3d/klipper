@@ -202,7 +202,7 @@ command_queue_step(uint32_t *args)
     } else {
         s->first = m;
         stepper_load_next(s, s->next_step_time + m->interval);
-        sched_timer(&s->time);
+        sched_add_timer(&s->time);
     }
     irq_enable();
 }

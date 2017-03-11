@@ -97,7 +97,7 @@ static struct timer *timer_list = &ms_timer;
 
 // Schedule a function call at a supplied time.
 void
-sched_timer(struct timer *add)
+sched_add_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();

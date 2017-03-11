@@ -7,7 +7,7 @@
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_pwm
 #include "command.h" // DECL_COMMAND
-#include "sched.h" // sched_timer
+#include "sched.h" // sched_add_timer
 
 struct pwm_out_s {
     struct timer timer;
@@ -54,7 +54,7 @@ command_schedule_pwm_out(uint32_t *args)
     p->timer.func = pwm_event;
     p->timer.waketime = args[1];
     p->value = args[2];
-    sched_timer(&p->timer);
+    sched_add_timer(&p->timer);
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%c");

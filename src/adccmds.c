@@ -74,7 +74,7 @@ command_query_analog_in(uint32_t *args)
     a->max_value = args[6];
     if (! a->sample_count)
         return;
-    sched_timer(&a->timer);
+    sched_add_timer(&a->timer);
 }
 DECL_COMMAND(command_query_analog_in,
              "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"

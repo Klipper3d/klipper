@@ -12,7 +12,7 @@
 // Declare a shutdown function (called on an emergency stop)
 #define DECL_SHUTDOWN(FUNC) _DECL_CALLBACK(shutdownfuncs, FUNC)
 
-// Timer structure for scheduling timed events (see sched_timer() )
+// Timer structure for scheduling timed events (see sched_add_timer() )
 struct timer {
     struct timer *next;
     uint_fast8_t (*func)(struct timer*);
@@ -26,7 +26,7 @@ uint8_t sched_check_periodic(uint16_t time, uint16_t *pnext);
 uint32_t sched_from_us(uint32_t us);
 uint32_t sched_read_time(void);
 uint8_t sched_is_before(uint32_t time1, uint32_t time2);
-void sched_timer(struct timer*);
+void sched_add_timer(struct timer*);
 void sched_del_timer(struct timer *del);
 void sched_timer_kick(void);
 uint8_t sched_is_shutdown(void);
