@@ -70,12 +70,6 @@ timer_read_time(void)
 }
 
 uint8_t
-timer_set_next(uint32_t next)
-{
-    return 0;
-}
-
-uint8_t
 timer_try_set_next(uint32_t next)
 {
     return 1;

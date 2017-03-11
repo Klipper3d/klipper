@@ -44,13 +44,6 @@ timer_set(uint32_t value)
 }
 
 static void
-timer_set_clear(uint32_t value)
-{
-    TC0->TC_CHANNEL[0].TC_RA = value;
-    TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
-}
-
-static void
 timer_init(void)
 {
     TcChannel *tc = &TC0->TC_CHANNEL[0];
@@ -69,6 +62,15 @@ timer_init(void)
 }
 DECL_INIT(timer_init);
 
+static void
+timer_shutdown(void)
+{
+    // Reenable timer irq
+    timer_set(timer_read_time() + 50);
+    TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
+}
+DECL_SHUTDOWN(timer_shutdown);
+
 // Called by main code once every millisecond.  (IRQs disabled.)
 void
 timer_periodic(void)
@@ -82,28 +84,6 @@ timer_read_time(void)
     return TC0->TC_CHANNEL[0].TC_CV;
 }
 
-#define TIMER_MIN_TICKS 100
-
-// Set the next timer wake time (in absolute clock ticks).  Caller
-// must disable irqs.  The caller should not schedule a time more than
-// a few milliseconds in the future.
-uint8_t
-timer_set_next(uint32_t next)
-{
-    uint32_t cur = timer_read_time();
-    if (sched_is_before(TC0->TC_CHANNEL[0].TC_RA, cur)
-        && !(TC0->TC_CHANNEL[0].TC_SR & TC_SR_CPAS))
-        // Already processing timer irqs
-        try_shutdown("timer_set_next called during timer dispatch");
-    uint32_t mintime = cur + TIMER_MIN_TICKS;
-    if (sched_is_before(mintime, next)) {
-        timer_set_clear(next);
-        return 0;
-    }
-    timer_set_clear(mintime);
-    return 1;
-}
-
 static uint32_t timer_repeat_until;
 #define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
 #define TIMER_REPEAT_TICKS timer_from_us(100)
@@ -111,8 +91,9 @@ static uint32_t timer_repeat_until;
 #define TIMER_MIN_TRY_TICKS timer_from_us(1)
 #define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
-// Similar to timer_set_next(), but wait for the given time if it is
-// in the near future.
+// Set the next timer wake time (in absolute clock ticks) or return 1
+// if the next timer is too close to schedule.  Caller must disable
+// irqs.
 uint8_t
 timer_try_set_next(uint32_t next)
 {

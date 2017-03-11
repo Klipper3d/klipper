@@ -101,23 +101,28 @@ sched_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();
-    if (sched_is_before(waketime, timer_list->waketime)) {
-        // This timer is the next - insert at front of list and reschedule
-        add->next = timer_list;
-        timer_list = add;
-        uint8_t ret = timer_set_next(waketime);
-        if (ret)
-            shutdown("Timer too close");
-    } else {
-        // Find position in list and insert
-        struct timer *pos = timer_list;
-        while (!sched_is_before(waketime, pos->next->waketime))
-            pos = pos->next;
-        add->next = pos->next;
-        pos->next = add;
-    }
+    if (sched_is_before(waketime, timer_list->waketime))
+        // Timer in past (or very near future)
+        shutdown("Timer too close");
+    // Find position in list and insert
+    struct timer *pos = timer_list;
+    while (!sched_is_before(waketime, pos->next->waketime))
+        pos = pos->next;
+    add->next = pos->next;
+    pos->next = add;
     irq_restore(flag);
 }
+
+// The deleted timer is used when deleting an active timer.
+static uint_fast8_t
+deleted_event(struct timer *t)
+{
+    return SF_DONE;
+}
+
+static struct timer deleted_timer = {
+    .func = deleted_event,
+};
 
 // Remove a timer that may be live.
 void
@@ -125,9 +130,10 @@ sched_del_timer(struct timer *del)
 {
     irqstatus_t flag = irq_save();
     if (timer_list == del) {
-        // Deleting the next active timer - delete and reschedule
-        timer_list = del->next;
-        timer_set_next(timer_list->waketime);
+        // Deleting the next active timer - replace with deleted_timer
+        deleted_timer.waketime = del->waketime;
+        deleted_timer.next = del->next;
+        timer_list = &deleted_timer;
     } else {
         // Find and remove from timer list (if present)
         struct timer *pos;
@@ -197,13 +203,14 @@ sched_timer_kick(void)
 
 // Shutdown all user timers on an emergency stop.
 static void
-timer_shutdown(void)
+sched_timer_shutdown(void)
 {
-    timer_list = &ms_timer;
+    timer_list = &deleted_timer;
+    deleted_timer.waketime = ms_timer.waketime;
+    deleted_timer.next = &ms_timer;
     ms_timer.next = &sentinel_timer;
-    timer_set_next(timer_list->waketime);
 }
-DECL_SHUTDOWN(timer_shutdown);
+DECL_SHUTDOWN(sched_timer_shutdown);
 
 
 /****************************************************************

@@ -39,13 +39,6 @@ timer_set(uint16_t next)
 }
 
 static inline void
-timer_set_clear(uint16_t next)
-{
-    OCR1A = next;
-    TIFR1 = 1<<OCF1A;
-}
-
-static inline void
 timer_repeat_set(uint16_t next)
 {
     // Timer1B is used to limit the number of timers run from a timer1A irq
@@ -77,6 +70,15 @@ timer_init(void)
     TIMSK1 = 1<<OCIE1A;
 }
 DECL_INIT(timer_init);
+
+static void
+timer_shutdown(void)
+{
+    // Reenable timer irq
+    timer_set(timer_get() + 50);
+    TIFR1 = 1<<OCF1A;
+}
+DECL_SHUTDOWN(timer_shutdown);
 
 
 /****************************************************************
@@ -120,35 +122,15 @@ timer_periodic(void)
     }
 }
 
-#define TIMER_MIN_TICKS 100
-
-// Set the next timer wake time (in absolute clock ticks).  Caller
-// must disable irqs.  The caller should not schedule a time more than
-// a few milliseconds in the future.
-uint8_t
-timer_set_next(uint32_t next)
-{
-    uint32_t cur = timer_read_time();
-    if ((int16_t)(OCR1A - (uint16_t)cur) < 0 && !(TIFR1 & (1<<OCF1A)))
-        // Already processing timer irqs
-        try_shutdown("timer_set_next called during timer dispatch");
-    uint32_t mintime = cur + TIMER_MIN_TICKS;
-    if (sched_is_before(mintime, next)) {
-        timer_set_clear(next);
-        return 0;
-    }
-    timer_set_clear(mintime);
-    return 1;
-}
-
 #define TIMER_IDLE_REPEAT_TICKS 8000
 #define TIMER_REPEAT_TICKS 3000
 
 #define TIMER_MIN_TRY_TICKS 60 // 40 ticks to exit irq; 20 ticks of progress
 #define TIMER_DEFER_REPEAT_TICKS 200
 
-// Similar to timer_set_next(), but wait for the given time if it is
-// in the near future.
+// Set the next timer wake time (in absolute clock ticks) or return 1
+// if the next timer is too close to schedule.  Caller must disable
+// irqs.
 uint8_t
 timer_try_set_next(uint32_t target)
 {
