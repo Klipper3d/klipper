@@ -276,7 +276,8 @@ void
 sched_shutdown(unsigned int reason)
 {
     irq_disable();
-    shutdown_reason = reason;
+    if (!shutdown_status)
+        shutdown_reason = reason;
     longjmp(shutdown_jmp, 1);
 }
 
