@@ -16,6 +16,7 @@ class KeyboardReader:
         self.reactor = reactor
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
+        self.mcu_freq = 0
         self.pins = None
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
@@ -24,15 +25,14 @@ class KeyboardReader:
         self.eval_globals = {}
     def connect(self, eventtime):
         self.ser.connect()
+        self.mcu_freq = int(self.ser.msgparser.get_constant_float('CLOCK_FREQ'))
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def update_evals(self, eventtime):
-        f = int(self.ser.msgparser.config.get('CLOCK_FREQ', 1))
-        c = self.ser.get_clock(eventtime)
-        self.eval_globals['freq'] = f
-        self.eval_globals['clock'] = int(c)
+        self.eval_globals['freq'] = self.mcu_freq
+        self.eval_globals['clock'] = int(self.ser.get_clock(eventtime))
     def set_pin_map(self, parts):
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu, parts[1])
@@ -60,7 +60,8 @@ class KeyboardReader:
             print "Eval:", line
         if self.pins is not None:
             try:
-                line = pins.update_command(line, self.pins).strip()
+                line = pins.update_command(
+                    line, self.mcu_freq, self.pins).strip()
             except:
                 print "Unable to map pin: ", line
                 return None

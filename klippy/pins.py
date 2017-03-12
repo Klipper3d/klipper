@@ -100,9 +100,12 @@ def get_pin_map(mcu, mapping_name=None):
             pins['analog%d' % (i,)] = pins[apins[i]]
     return pins
 
-# Translate pin names in a firmware command
+# Translate pin names and tick times in a firmware command
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
-def update_command(cmd, pmap):
-    def fixup(m):
+re_ticks = re.compile(r'TICKS\((?P<ticks>[^)]*)\)')
+def update_command(cmd, mcu_freq, pmap):
+    def pin_fixup(m):
         return m.group('prefix') + str(pmap[m.group('name')])
-    return re_pin.sub(fixup, cmd)
+    def ticks_fixup(m):
+        return str(int(mcu_freq * float(m.group('ticks'))))
+    return re_ticks.sub(ticks_fixup, re_pin.sub(pin_fixup, cmd))

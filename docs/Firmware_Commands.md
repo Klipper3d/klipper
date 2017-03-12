@@ -33,7 +33,11 @@ low-level firmware uses integer encodings of the hardware pin numbers,
 but to make things more readable the host will translate human
 readable pin names (eg, "PA3") to their equivalent integer
 encodings. By convention, any parameter named "pin" or that has a
-"_pin" suffix will use pin name translation by the host.
+"_pin" suffix will use pin name translation by the host. Similarly,
+several commands take time parameters specified in clock ticks. One
+can specify a value for these parameters in seconds using the
+"TICKS()" macro - for example "cycle_ticks=TICKS(0.001)" would result
+in "cycle_ticks=16000" on a micro-controller with a 16Mhz clock.
 
 Common startup commands:
 

@@ -28,13 +28,12 @@ class MCU_stepper:
         step_pin, pullup, invert_step = parse_pin_extras(step_pin)
         dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
         self._mcu_freq = mcu.get_mcu_freq()
-        min_stop_interval = int(min_stop_interval * self._mcu_freq)
         max_error = int(max_error * self._mcu_freq)
         self.commanded_position = 0
         self._mcu_position_offset = 0
         mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=%d invert_step=%d" % (
+            " min_stop_interval=TICKS(%.9f) invert_step=%d" % (
                 self._oid, step_pin, dir_pin, min_stop_interval, invert_step))
         mcu.register_stepper(self)
         self._step_cmd = mcu.lookup_command(
@@ -233,7 +232,8 @@ class MCU_digital_out:
         self._cmd_queue = mcu.alloc_command_queue()
         mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s default_value=%d"
-            " max_duration=%d" % (self._oid, pin, self._invert, max_duration))
+            " max_duration=TICKS(%f)" % (
+                self._oid, pin, self._invert, max_duration))
         self._set_cmd = mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c")
         self.print_to_mcu_time = mcu.print_to_mcu_time
@@ -254,25 +254,26 @@ class MCU_digital_out:
 
 class MCU_pwm:
     PWM_MAX = 255.
-    def __init__(self, mcu, pin, cycle_ticks, max_duration, hard_pwm=False):
+    def __init__(self, mcu, pin, cycle_time, hard_cycle_ticks, max_duration):
         self._mcu = mcu
         self._oid = mcu.create_oid()
         pin, pullup, self._invert = parse_pin_extras(pin)
         self._last_clock = 0
         self._mcu_freq = mcu.get_mcu_freq()
         self._cmd_queue = mcu.alloc_command_queue()
-        if hard_pwm:
+        if hard_cycle_ticks:
             mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=%d"
-                " max_duration=%d" % (
-                    self._oid, pin, cycle_ticks, self._invert, max_duration))
+                " max_duration=TICKS(%f)" % (
+                    self._oid, pin, hard_cycle_ticks, self._invert,
+                    max_duration))
             self._set_cmd = mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%c")
         else:
             mcu.add_config_cmd(
-                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d"
-                " default_value=%d max_duration=%d" % (
-                    self._oid, pin, cycle_ticks, self._invert, max_duration))
+                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=TICKS(%f)"
+                " default_value=%d max_duration=TICKS(%f)" % (
+                    self._oid, pin, cycle_time, self._invert, max_duration))
             self._set_cmd = mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%c")
         self.print_to_mcu_time = mcu.print_to_mcu_time
@@ -461,7 +462,8 @@ class MCU:
         updated_cmds = []
         for cmd in self._config_cmds:
             try:
-                updated_cmds.append(pins.update_command(cmd, pnames))
+                updated_cmds.append(pins.update_command(
+                    cmd, self._mcu_freq, pnames))
             except:
                 raise self._config.error("Unable to translate pin name: %s" % (
                     cmd,))
@@ -531,16 +533,11 @@ class MCU:
     def create_endstop(self, pin, stepper):
         return MCU_endstop(self, pin, stepper)
     def create_digital_out(self, pin, max_duration=2.):
-        max_duration = int(max_duration * self._mcu_freq)
         return MCU_digital_out(self, pin, max_duration)
     def create_pwm(self, pin, cycle_time, hard_cycle_ticks=0, max_duration=2.):
-        max_duration = int(max_duration * self._mcu_freq)
-        if hard_cycle_ticks:
-            return MCU_pwm(self, pin, hard_cycle_ticks, max_duration, True)
         if hard_cycle_ticks < 0:
             return MCU_digital_out(self, pin, max_duration)
-        cycle_ticks = int(cycle_time * self._mcu_freq)
-        return MCU_pwm(self, pin, cycle_ticks, max_duration, False)
+        return MCU_pwm(self, pin, cycle_time, hard_cycle_ticks, max_duration)
     def create_adc(self, pin):
         return MCU_adc(self, pin)
     # Clock syncing
