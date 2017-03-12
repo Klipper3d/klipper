@@ -233,16 +233,18 @@ check_line(struct stepcompress *sc, struct step_move move)
     if (move.count == 1) {
         if (move.interval != (uint32_t)(*sc->queue_pos - sc->last_step_clock)
             || *sc->queue_pos < sc->last_step_clock) {
-            errorf("Count 1 point out of range: %d %d %d"
-                   , move.interval, move.count, move.add);
+            errorf("stepcompress o=%d i=%d c=%d a=%d:"
+                   " Count 1 point out of range (%lld)"
+                   , sc->oid, move.interval, move.count, move.add
+                   , (long long)(*sc->queue_pos - sc->last_step_clock));
             return ERROR_RET;
         }
         return 0;
     }
     if (!move.count || (!move.interval && !move.add)
         || move.interval >= 0x80000000) {
-        errorf("Point out of range: %d %d %d"
-               , move.interval, move.count, move.add);
+        errorf("stepcompress o=%d i=%d c=%d a=%d: Invalid sequence"
+               , sc->oid, move.interval, move.count, move.add);
         return ERROR_RET;
     }
     uint32_t interval = move.interval, p = 0;
@@ -251,13 +253,16 @@ check_line(struct stepcompress *sc, struct step_move move)
         struct points point = minmax_point(sc, sc->queue_pos + i);
         p += interval;
         if (p < point.minp || p > point.maxp) {
-            errorf("Point %d of %d: %d not in %d:%d"
-                   , i+1, move.count, p, point.minp, point.maxp);
+            errorf("stepcompress o=%d i=%d c=%d a=%d: Point %d: %d not in %d:%d"
+                   , sc->oid, move.interval, move.count, move.add
+                   , i+1, p, point.minp, point.maxp);
             return ERROR_RET;
         }
         if (interval >= 0x80000000) {
-            errorf("Point %d of %d: interval overflow %d"
-                   , i+1, move.count, interval);
+            errorf("stepcompress o=%d i=%d c=%d a=%d:"
+                   " Point %d: interval overflow %d"
+                   , sc->oid, move.interval, move.count, move.add
+                   , i+1, interval);
             return ERROR_RET;
         }
         interval += move.add;
