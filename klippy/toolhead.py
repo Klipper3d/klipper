@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import cartesian, delta, extruder
+import cartesian, corexy, delta, extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -185,6 +185,7 @@ class ToolHead:
         if self.extruder is None:
             self.extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
+                    'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
         self.max_speed = config.getfloat('max_velocity')
