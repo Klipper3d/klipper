@@ -22,26 +22,29 @@ def parse_pin_extras(pin, can_pullup=False):
 STEPCOMPRESS_ERROR_RET = -989898989
 
 class MCU_stepper:
-    def __init__(self, mcu, step_pin, dir_pin, min_stop_interval, max_error):
+    def __init__(self, mcu, step_pin, dir_pin):
         self._mcu = mcu
         self._oid = mcu.create_oid(self)
-        self._max_error = max_error
-        step_pin, pullup, invert_step = parse_pin_extras(step_pin)
-        dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
+        self._step_pin, pullup, self._invert_step = parse_pin_extras(step_pin)
+        self._dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
         self.commanded_position = 0
         self._mcu_position_offset = 0
-        self._mcu_freq = 0.
-        mcu.add_config_cmd(
-            "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=TICKS(%.9f) invert_step=%d" % (
-                self._oid, step_pin, dir_pin, min_stop_interval, invert_step))
-        mcu.register_stepper(self)
+        self._mcu_freq = self._min_stop_interval = 0.
         self._reset_cmd = self._get_position_cmd = None
         self.ffi_lib = self._stepqueue = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
+    def set_min_stop_interval(self, min_stop_interval):
+        self._min_stop_interval = min_stop_interval
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
-        max_error = int(self._max_error * self._mcu_freq)
+        max_error = self._mcu.get_max_stepper_error()
+        min_stop_interval = max(0., self._min_stop_interval - max_error)
+        self._mcu.add_config_cmd(
+            "config_stepper oid=%d step_pin=%s dir_pin=%s"
+            " min_stop_interval=TICKS(%.9f) invert_step=%d" % (
+                self._oid, self._step_pin, self._dir_pin,
+                min_stop_interval, self._invert_step))
+        self._mcu.register_stepper(self)
         step_cmd = self._mcu.lookup_command(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd = self._mcu.lookup_command(
@@ -51,6 +54,7 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_command(
             "stepper_get_position oid=%c")
         ffi_main, self.ffi_lib = chelper.get_ffi()
+        max_error = int(max_error * self._mcu_freq)
         self._stepqueue = ffi_main.gc(self.ffi_lib.stepcompress_alloc(
             max_error, step_cmd.msgid, dir_cmd.msgid,
             self._invert_dir, self._oid),
@@ -151,12 +155,9 @@ class MCU_endstop:
         self._mcu = mcu
         self._oid = mcu.create_oid(self)
         self._stepper = stepper
-        stepper_oid = stepper.get_oid()
-        pin, pullup, self._invert = parse_pin_extras(pin, can_pullup=True)
+        self._pin, self._pullup, self._invert = parse_pin_extras(
+            pin, can_pullup=True)
         self._cmd_queue = mcu.alloc_command_queue()
-        mcu.add_config_cmd(
-            "config_end_stop oid=%d pin=%s pull_up=%d stepper_oid=%d" % (
-                self._oid, pin, pullup, stepper_oid))
         self._home_cmd = self._query_cmd = None
         self._homing = False
         self._min_query_time = self._mcu_freq = 0.
@@ -166,6 +167,9 @@ class MCU_endstop:
         self.print_to_mcu_time = mcu.print_to_mcu_time
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
+        self._mcu.add_config_cmd(
+            "config_end_stop oid=%d pin=%s pull_up=%d stepper_oid=%d" % (
+                self._oid, self._pin, self._pullup, self._stepper.get_oid()))
         self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
@@ -383,6 +387,7 @@ class MCU:
         self._pin_map = config.get('pin_map', None)
         # Move command queuing
         ffi_main, self.ffi_lib = chelper.get_ffi()
+        self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025)
         self._steppers = []
         self._steppersync = None
         # Print time to clock epoch calculations
@@ -551,8 +556,8 @@ class MCU:
     def create_command(self, msg):
         return self.serial.msgparser.create_command(msg)
     # Wrappers for mcu object creation
-    def create_stepper(self, step_pin, dir_pin, min_stop_interval, max_error):
-        return MCU_stepper(self, step_pin, dir_pin, min_stop_interval, max_error)
+    def create_stepper(self, step_pin, dir_pin):
+        return MCU_stepper(self, step_pin, dir_pin)
     def create_endstop(self, pin, stepper):
         return MCU_endstop(self, pin, stepper)
     def create_digital_out(self, pin, max_duration=2.):
@@ -579,6 +584,8 @@ class MCU:
         return self._mcu_freq
     def get_last_clock(self):
         return self.serial.get_last_clock()
+    def get_max_stepper_error(self):
+        return self._max_stepper_error
     # Move command queuing
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
         self.serial.send(cmd, minclock, reqclock, cq=cq)

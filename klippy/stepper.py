@@ -51,13 +51,11 @@ class PrinterStepper:
         self.min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
                                   - math.sqrt(inv_max_step_accel + jc**2))
     def build_config(self):
-        max_error = self.config.getfloat('max_error', 0.000025)
         step_pin = self.config.get('step_pin')
         dir_pin = self.config.get('dir_pin')
-        min_stop_interval = max(0., self.min_stop_interval - max_error)
         mcu = self.printer.mcu
-        self.mcu_stepper = mcu.create_stepper(
-            step_pin, dir_pin, min_stop_interval, max_error)
+        self.mcu_stepper = mcu.create_stepper(step_pin, dir_pin)
+        self.mcu_stepper.set_min_stop_interval(self.min_stop_interval)
         enable_pin = self.config.get('enable_pin', None)
         if enable_pin is not None:
             self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
