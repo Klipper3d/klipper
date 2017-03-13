@@ -24,6 +24,8 @@ class KeyboardReader:
         self.eval_globals = {}
     def connect(self, eventtime):
         self.ser.connect()
+        mcu = self.ser.msgparser.get_constant('MCU')
+        self.pins = pins.get_pin_map(mcu)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def update_evals(self, eventtime):
@@ -32,8 +34,8 @@ class KeyboardReader:
         self.eval_globals['freq'] = f
         self.eval_globals['clock'] = int(c)
     def set_pin_map(self, parts):
-        mcu = self.ser.msgparser.config['MCU']
-        self.pins = pins.map_pins(parts[1], mcu)
+        mcu = self.ser.msgparser.get_constant('MCU')
+        self.pins = pins.get_pin_map(mcu, parts[1])
     def set_var(self, parts):
         val = parts[2]
         try:
@@ -44,10 +46,6 @@ class KeyboardReader:
             except ValueError:
                 pass
         self.eval_globals[parts[1]] = val
-    def lookup_pin(self, value):
-        if self.pins is None:
-            self.pins = pins.mcu_to_pins(self.ser.msgparser.config['MCU'])
-        return self.pins[value]
     def translate(self, line, eventtime):
         evalparts = re_eval.split(line)
         if len(evalparts) > 1:
@@ -60,8 +58,6 @@ class KeyboardReader:
                 return None
             line = ''.join(evalparts)
             print "Eval:", line
-        if self.pins is None and self.ser.msgparser.config:
-            self.pins = pins.mcu_to_pins(self.ser.msgparser.config['MCU'])
         if self.pins is not None:
             try:
                 line = pins.update_command(line, self.pins).strip()

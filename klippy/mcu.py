@@ -357,6 +357,7 @@ class MCU:
         self._config_cmds = []
         self._config_crc = None
         self._init_callbacks = []
+        self._pin_map = config.get('pin_map', None)
         # Move command queuing
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._steppers = []
@@ -456,11 +457,7 @@ class MCU:
 
         # Resolve pin names
         mcu = self.serial.msgparser.get_constant('MCU')
-        pin_map = self._config.get('pin_map', None)
-        if pin_map is None:
-            pnames = pins.mcu_to_pins(mcu)
-        else:
-            pnames = pins.map_pins(pin_map, mcu)
+        pnames = pins.get_pin_map(mcu, self._pin_map)
         updated_cmds = []
         for cmd in self._config_cmds:
             try:

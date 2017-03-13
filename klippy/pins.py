@@ -16,24 +16,12 @@ def port_pins(port_count, bit_count=8):
             pins['P%c%d' % (portchr, portbit)] = port * bit_count + portbit
     return pins
 
-PINS_atmega164 = port_pins(4)
-PINS_atmega1280 = port_pins(12)
-
 MCU_PINS = {
-    "atmega168": PINS_atmega164, "atmega644p": PINS_atmega164,
+    "atmega168": port_pins(4), "atmega644p": port_pins(4),
     "at90usb1286": port_pins(5),
-    "atmega1280": PINS_atmega1280, "atmega2560": PINS_atmega1280,
+    "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32)
 }
-
-def mcu_to_pins(mcu):
-    return MCU_PINS.get(mcu, {})
-
-re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
-def update_command(cmd, pmap):
-    def fixup(m):
-        return m.group('prefix') + str(pmap[m.group('name')])
-    return re_pin.sub(fixup, cmd)
 
 
 ######################################################################
@@ -96,12 +84,25 @@ Arduino_from_mcu = {
     "sam3x8e": (Arduino_Due, Arduino_Due_analog),
 }
 
-def map_pins(name, mcu):
+
+######################################################################
+# External commands
+######################################################################
+
+# Obtains the pin mappings
+def get_pin_map(mcu, mapping_name=None):
     pins = MCU_PINS.get(mcu, {})
-    if name == 'arduino':
+    if mapping_name == 'arduino':
         dpins, apins = Arduino_from_mcu.get(mcu, [])
         for i in range(len(dpins)):
             pins['ar' + str(i)] = pins[dpins[i]]
         for i in range(len(apins)):
             pins['analog%d' % (i,)] = pins[apins[i]]
     return pins
+
+# Translate pin names in a firmware command
+re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
+def update_command(cmd, pmap):
+    def fixup(m):
+        return m.group('prefix') + str(pmap[m.group('name')])
+    return re_pin.sub(fixup, cmd)
