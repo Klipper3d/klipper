@@ -72,14 +72,11 @@ class PrinterHeater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0
     def set_pwm(self, read_time, value):
-        if value:
-            if self.target_temp <= 0.:
-                return
-            if (read_time < self.next_pwm_time
-                and abs(value - self.last_pwm_value) < 0.05):
-                return
-        elif not self.last_pwm_value and (
-                self.target_temp <= 0. or read_time < self.next_pwm_time):
+        if self.target_temp <= 0.:
+            value = 0.
+        if ((read_time < self.next_pwm_time or not self.last_pwm_value)
+            and abs(value - self.last_pwm_value) < 0.05):
+            # No significant change in value - can suppress update
             return
         pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
