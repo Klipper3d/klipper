@@ -34,15 +34,16 @@ class GCodeParser:
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
         self.build_handlers()
-    def build_config(self):
-        self.toolhead = self.printer.objects['toolhead']
+    def build_handlers(self):
+        # Lookup printer components
+        self.toolhead = self.printer.objects.get('toolhead')
         self.heater_nozzle = None
         extruder = self.printer.objects.get('extruder')
         if extruder:
             self.heater_nozzle = extruder.heater
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
-    def build_handlers(self):
+        # Map command handlers
         handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
                     'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M115',
                     'M206', 'M400',

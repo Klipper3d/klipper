@@ -100,6 +100,7 @@ class Printer:
         self.startup_state = startup_state
         self.software_version = version
         self.reactor = reactor.Reactor()
+        self.objects = {}
         self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
         self.stats_timer = self.reactor.register_timer(self.stats)
         self.connect_timer = self.reactor.register_timer(
@@ -111,7 +112,6 @@ class Printer:
         self.run_result = None
         self.fileconfig = None
         self.mcu = None
-        self.objects = {}
     def set_fileoutput(self, debugoutput, dictionary):
         self.debugoutput = debugoutput
         self.dictionary = dictionary
@@ -152,7 +152,6 @@ class Printer:
     def build_config(self):
         for oname in sorted(self.objects.keys()):
             self.objects[oname].build_config()
-        self.gcode.build_config()
         self.mcu.build_config()
     def validate_config(self):
         valid_sections = dict([(s, 1) for s, o in self.all_config_options])
