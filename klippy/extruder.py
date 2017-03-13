@@ -33,10 +33,7 @@ class PrinterExtruder:
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio)
         self.max_e_accel = self.config.getfloat(
             'max_extrude_only_accel', max_accel * self.max_extrude_ratio)
-    def build_config(self):
-        self.heater.build_config()
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
-        self.stepper.build_config()
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True

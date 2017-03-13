@@ -9,17 +9,12 @@ PWM_CYCLE_TIME = 0.010
 
 class PrinterFan:
     def __init__(self, printer, config):
-        self.printer = printer
-        self.config = config
-        self.mcu_fan = None
         self.last_fan_value = 0.
         self.last_fan_time = 0.
         self.kick_start_time = config.getfloat('kick_start_time', 0.1)
-    def build_config(self):
-        pin = self.config.get('pin')
-        hard_pwm = self.config.getint('hard_pwm', 0)
-        self.mcu_fan = self.printer.mcu.create_pwm(
-            pin, PWM_CYCLE_TIME, hard_pwm, 0.)
+        pin = config.get('pin')
+        hard_pwm = config.getint('hard_pwm', 0)
+        self.mcu_fan = printer.mcu.create_pwm(pin, PWM_CYCLE_TIME, hard_pwm, 0.)
     # External commands
     def set_speed(self, print_time, value):
         value = max(0., min(1., value))

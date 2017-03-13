@@ -28,44 +28,39 @@ class error(Exception):
 class PrinterHeater:
     error = error
     def __init__(self, printer, config):
-        self.printer = printer
-        self.config = config
-        self.mcu_pwm = self.mcu_adc = None
+        self.name = config.section
         self.thermistor_c = config.getchoice('thermistor_type', Thermistors)
         self.pullup_r = config.getfloat('pullup_resistor', 4700.)
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
-        self.min_temp = self.config.getfloat('min_temp')
-        self.max_temp = self.config.getfloat('max_temp')
-        self.max_power = max(0., min(1., self.config.getfloat('max_power', 1.)))
-        self.can_extrude = (self.min_extrude_temp <= 0.)
+        self.min_temp = config.getfloat('min_temp')
+        self.max_temp = config.getfloat('max_temp')
+        self.max_power = max(0., min(1., config.getfloat('max_power', 1.)))
+        self.can_extrude = (self.min_extrude_temp <= 0.
+                            or printer.mcu.is_fileoutput())
         self.lock = threading.Lock()
         self.last_temp = 0.
         self.last_temp_time = 0.
         self.target_temp = 0.
-        self.control = None
-        # pwm caching
-        self.next_pwm_time = 0.
-        self.last_pwm_value = 0
-    def build_config(self):
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
-        algo = self.config.getchoice('control', algos)
-        heater_pin = self.config.get('heater_pin')
-        thermistor_pin = self.config.get('thermistor_pin')
+        algo = config.getchoice('control', algos)
+        heater_pin = config.get('heater_pin')
+        thermistor_pin = config.get('thermistor_pin')
         if algo is ControlBangBang and self.max_power == 1.:
-            self.mcu_pwm = self.printer.mcu.create_digital_out(
+            self.mcu_pwm = printer.mcu.create_digital_out(
                 heater_pin, MAX_HEAT_TIME)
         else:
-            self.mcu_pwm = self.printer.mcu.create_pwm(
+            self.mcu_pwm = printer.mcu.create_pwm(
                 heater_pin, PWM_CYCLE_TIME, 0, MAX_HEAT_TIME)
-        self.mcu_adc = self.printer.mcu.create_adc(thermistor_pin)
+        self.mcu_adc = printer.mcu.create_adc(thermistor_pin)
         min_adc = self.calc_adc(self.max_temp)
         max_adc = self.calc_adc(self.min_temp)
         self.mcu_adc.set_minmax(
             SAMPLE_TIME, SAMPLE_COUNT, minval=min_adc, maxval=max_adc)
         self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
-        self.control = algo(self, self.config)
-        if self.printer.mcu.is_fileoutput():
-            self.can_extrude = True
+        self.control = algo(self, config)
+        # pwm caching
+        self.next_pwm_time = 0.
+        self.last_pwm_value = 0
     def set_pwm(self, read_time, value):
         if value:
             if self.target_temp <= 0.:
@@ -80,7 +75,7 @@ class PrinterHeater:
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
         logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])" % (
-            self.config.section, value, pwm_time,
+            self.name, value, pwm_time,
             self.last_temp, self.last_temp_time, self.target_temp))
         self.mcu_pwm.set_pwm(pwm_time, value)
     # Temperature calculation

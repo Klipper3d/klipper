@@ -50,6 +50,7 @@ class DeltaKinematics:
             "Delta max build radius %.2fmm (moves slowed past %.2fmm and %.2fmm)"
             % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
                math.sqrt(self.very_slow_xy2)))
+        self.set_position([0., 0., 0.])
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         self.max_velocity = max_velocity
         max_z_velocity = self.config.getfloat('max_z_velocity', max_velocity)
@@ -57,10 +58,6 @@ class DeltaKinematics:
         self.max_accel = max_accel
         for stepper in self.steppers:
             stepper.set_max_jerk(max_xy_halt_velocity, max_accel)
-    def build_config(self):
-        for stepper in self.steppers:
-            stepper.build_config()
-        self.set_position([0., 0., 0.])
     def _cartesian_to_actuator(self, coord):
         return [int((math.sqrt(self.arm_length2
                                - (self.towers[i][0] - coord[0])**2

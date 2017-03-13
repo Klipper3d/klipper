@@ -8,10 +8,7 @@ import homing
 
 class PrinterStepper:
     def __init__(self, printer, config, name):
-        self.printer = printer
-        self.config = config
         self.name = name
-        self.mcu_stepper = self.mcu_enable = self.mcu_endstop = None
 
         self.step_dist = config.getfloat('step_distance')
         self.inv_step_dist = 1. / self.step_dist
@@ -36,32 +33,29 @@ class PrinterStepper:
                     endstop_accuracy * self.inv_step_dist))
             if self.homing_endstop_accuracy >= self.homing_stepper_phases/2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
-                             " phase adjustment" % (self.config.section,))
+                             " phase adjustment" % (name,))
                 self.homing_stepper_phases = None
         self.position_min = self.position_endstop = self.position_max = None
-        if config.get('endstop_pin', None) is not None:
+        endstop_pin = config.get('endstop_pin', None)
+        step_pin = config.get('step_pin')
+        dir_pin = config.get('dir_pin')
+        mcu = printer.mcu
+        self.mcu_stepper = mcu.create_stepper(step_pin, dir_pin)
+        enable_pin = config.get('enable_pin', None)
+        if enable_pin is not None:
+            self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
+        if endstop_pin is not None:
+            self.mcu_endstop = mcu.create_endstop(endstop_pin, self.mcu_stepper)
             self.position_min = config.getfloat('position_min', 0.)
             self.position_endstop = config.getfloat('position_endstop')
             self.position_max = config.getfloat('position_max', 0.)
-
         self.need_motor_enable = True
     def set_max_jerk(self, max_halt_velocity, max_accel):
         jc = max_halt_velocity / max_accel
         inv_max_step_accel = self.step_dist / max_accel
-        self.min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
-                                  - math.sqrt(inv_max_step_accel + jc**2))
-    def build_config(self):
-        step_pin = self.config.get('step_pin')
-        dir_pin = self.config.get('dir_pin')
-        mcu = self.printer.mcu
-        self.mcu_stepper = mcu.create_stepper(step_pin, dir_pin)
-        self.mcu_stepper.set_min_stop_interval(self.min_stop_interval)
-        enable_pin = self.config.get('enable_pin', None)
-        if enable_pin is not None:
-            self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
-        endstop_pin = self.config.get('endstop_pin', None)
-        if endstop_pin is not None:
-            self.mcu_endstop = mcu.create_endstop(endstop_pin, self.mcu_stepper)
+        min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
+                             - math.sqrt(inv_max_step_accel + jc**2))
+        self.mcu_stepper.set_min_stop_interval(min_stop_interval)
     def motor_enable(self, move_time, enable=0):
         if enable and self.need_motor_enable:
             mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
@@ -85,8 +79,7 @@ class PrinterStepper:
         pos = self.mcu_stepper.get_mcu_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
-            logging.info("Setting %s endstop phase to %d" % (
-                self.config.section, pos))
+            logging.info("Setting %s endstop phase to %d" % (self.name, pos))
             self.homing_endstop_phase = pos
             return 0
         delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases

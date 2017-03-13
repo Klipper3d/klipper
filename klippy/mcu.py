@@ -385,6 +385,7 @@ class MCU:
         self._config_crc = None
         self._init_callbacks = []
         self._pin_map = config.get('pin_map', None)
+        self._custom = config.get('custom', '')
         # Move command queuing
         ffi_main, self.ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025)
@@ -427,6 +428,8 @@ class MCU:
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
+        self._build_config()
+        self._send_config()
     def connect_file(self, debugoutput, dictionary, pace=False):
         self._is_fileoutput = True
         self.serial.connect_file(debugoutput, dictionary)
@@ -468,8 +471,7 @@ class MCU:
         return self._is_fileoutput
     # Configuration phase
     def _add_custom(self):
-        data = self._config.get('custom', '')
-        for line in data.split('\n'):
+        for line in self._custom.split('\n'):
             line = line.strip()
             cpos = line.find('#')
             if cpos >= 0:
@@ -477,7 +479,7 @@ class MCU:
             if not line:
                 continue
             self.add_config_cmd(line)
-    def build_config(self):
+    def _build_config(self):
         # Build config commands
         for oid in self._oids:
             oid.build_config()
@@ -501,8 +503,6 @@ class MCU:
         # Calculate config CRC
         self._config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (self._config_crc,))
-
-        self._send_config()
     def _send_config(self):
         msg = self.create_command("get_config")
         if self._is_fileoutput:

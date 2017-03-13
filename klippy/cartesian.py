@@ -21,9 +21,6 @@ class CartKinematics:
         self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[2].set_max_jerk(0., self.max_z_accel)
-    def build_config(self):
-        for stepper in self.steppers:
-            stepper.build_config()
     def set_position(self, newpos):
         for i in StepList:
             s = self.steppers[i]

@@ -138,22 +138,20 @@ class Printer:
         if self.debugoutput is None:
             ConfigLogger(self.fileconfig)
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
-        if self.fileconfig.has_section('fan'):
-            self.objects['fan'] = fan.PrinterFan(
-                self, ConfigWrapper(self, 'fan'))
+        if self.debugoutput is not None:
+            self.mcu.connect_file(self.debugoutput, self.dictionary)
         if self.fileconfig.has_section('extruder'):
             self.objects['extruder'] = extruder.PrinterExtruder(
                 self, ConfigWrapper(self, 'extruder'))
+        if self.fileconfig.has_section('fan'):
+            self.objects['fan'] = fan.PrinterFan(
+                self, ConfigWrapper(self, 'fan'))
         if self.fileconfig.has_section('heater_bed'):
             self.objects['heater_bed'] = heater.PrinterHeater(
                 self, ConfigWrapper(self, 'heater_bed'))
         self.objects['toolhead'] = toolhead.ToolHead(
             self, ConfigWrapper(self, 'printer'))
-    def build_config(self):
-        for oname in sorted(self.objects.keys()):
-            self.objects[oname].build_config()
-        self.mcu.build_config()
-    def validate_config(self):
+        # Validate that there are no undefined parameters in the config file
         valid_sections = dict([(s, 1) for s, o in self.all_config_options])
         for section in self.fileconfig.sections():
             section = section.lower()
@@ -171,11 +169,7 @@ class Printer:
             self.load_config()
             if self.debugoutput is None:
                 self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
-            else:
-                self.mcu.connect_file(self.debugoutput, self.dictionary)
             self.mcu.connect()
-            self.build_config()
-            self.validate_config()
             self.gcode.set_printer_ready(True)
             self.state_message = message_ready
         except ConfigParser.Error, e:
