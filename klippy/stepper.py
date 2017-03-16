@@ -50,11 +50,17 @@ class PrinterStepper:
             self.position_endstop = config.getfloat('position_endstop')
             self.position_max = config.getfloat('position_max', 0.)
         self.need_motor_enable = True
+    def _dist_to_time(self, dist, start_velocity, accel):
+        # Calculate the time it takes to travel a distance with constant accel
+        time_offset = start_velocity / accel
+        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
     def set_max_jerk(self, max_halt_velocity, max_accel):
-        jc = max_halt_velocity / max_accel
-        inv_max_step_accel = self.step_dist / max_accel
-        min_stop_interval = (math.sqrt(3.*inv_max_step_accel + jc**2)
-                             - math.sqrt(inv_max_step_accel + jc**2))
+        # Calculate the firmware's maximum halt interval time
+        last_step_time = self._dist_to_time(
+            self.step_dist, max_halt_velocity, max_accel)
+        second_last_step_time = self._dist_to_time(
+            2. * self.step_dist, max_halt_velocity, max_accel)
+        min_stop_interval = second_last_step_time - last_step_time
         self.mcu_stepper.set_min_stop_interval(min_stop_interval)
     def motor_enable(self, move_time, enable=0):
         if enable and self.need_motor_enable:
