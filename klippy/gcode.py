@@ -115,6 +115,8 @@ class GCodeParser:
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
                 handler(params)
+            except error, e:
+                self.respond_error(str(e))
             except:
                 logging.exception("Exception in command handler")
                 self.toolhead.force_shutdown()
@@ -168,6 +170,27 @@ class GCodeParser:
         if len(lines) > 1:
             self.respond_info("\n".join(lines[:-1]))
         self.respond('!! %s' % (lines[-1].strip(),))
+    # Parameter parsing helpers
+    def get_int(self, name, params, default=None):
+        if name in params:
+            try:
+                return int(params[name])
+            except ValueError:
+                raise error("Error on '%s': unable to parse %s" % (
+                    params['#original'], params[name]))
+        if default is not None:
+            return default
+        raise error("Error on '%s': missing %s" % (params['#original'], name))
+    def get_float(self, name, params, default=None):
+        if name in params:
+            try:
+                return float(params[name])
+            except ValueError:
+                raise error("Error on '%s': unable to parse %s" % (
+                    params['#original'], params[name]))
+        if default is not None:
+            return default
+        raise error("Error on '%s': missing %s" % (params['#original'], name))
     # Temperature wrappers
     def get_temp(self):
         if not self.is_printer_ready:
@@ -191,7 +214,7 @@ class GCodeParser:
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, heater, params, wait=False):
         print_time = self.toolhead.get_last_move_time()
-        temp = float(params.get('S', '0'))
+        temp = self.get_float('S', params, 0.)
         try:
             heater.set_temp(print_time, temp)
         except heater.error, e:
@@ -212,17 +235,22 @@ class GCodeParser:
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
         # Move
-        for a, p in self.axis2pos.items():
-            if a in params:
-                v = float(params[a])
-                if not self.absolutecoord or (p>2 and not self.absoluteextrude):
-                    # value relative to position of last move
-                    self.last_position[p] += v
-                else:
-                    # value relative to base coordinate position
-                    self.last_position[p] = v + self.base_position[p]
-        if 'F' in params:
-            self.speed = float(params['F']) / 60.
+        try:
+            for a, p in self.axis2pos.items():
+                if a in params:
+                    v = float(params[a])
+                    if (not self.absolutecoord
+                        or (p>2 and not self.absoluteextrude)):
+                        # value relative to position of last move
+                        self.last_position[p] += v
+                    else:
+                        # value relative to base coordinate position
+                        self.last_position[p] = v + self.base_position[p]
+            if 'F' in params:
+                self.speed = float(params['F']) / 60.
+        except ValueError, e:
+            self.last_position = self.toolhead.get_position()
+            raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
             self.toolhead.move(self.last_position, self.speed)
         except homing.EndstopError, e:
@@ -231,9 +259,9 @@ class GCodeParser:
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
-            delay = float(params['S'])
+            delay = self.get_float('S', params)
         else:
-            delay = float(params.get('P', '0')) / 1000.
+            delay = self.get_float('P', params, 0.) / 1000.
         self.toolhead.dwell(delay)
     def cmd_G20(self, params):
         # Set units to inches
@@ -270,12 +298,11 @@ class GCodeParser:
         self.absolutecoord = False
     def cmd_G92(self, params):
         # Set position
-        mcount = 0
-        for a, p in self.axis2pos.items():
-            if a in params:
-                self.base_position[p] = self.last_position[p] - float(params[a])
-                mcount += 1
-        if not mcount:
+        offsets = { p: self.get_float(a, params)
+                    for a, p in self.axis2pos.items() if a in params }
+        for p, offset in offsets.items():
+            self.base_position[p] = self.last_position[p] - offset
+        if not offsets:
             self.base_position = list(self.last_position)
     def cmd_M82(self, params):
         # Use absolute distances for extrusion
@@ -330,18 +357,18 @@ class GCodeParser:
     def cmd_M106(self, params):
         # Set fan speed
         print_time = self.toolhead.get_last_move_time()
-        self.fan.set_speed(print_time, float(params.get('S', '255')) / 255.)
+        self.fan.set_speed(print_time, self.get_float('S', params, 255.) / 255.)
     def cmd_M107(self, params):
         # Turn fan off
         print_time = self.toolhead.get_last_move_time()
         self.fan.set_speed(print_time, 0.)
     def cmd_M206(self, params):
         # Set home offset
-        for a, p in self.axis2pos.items():
-            if a in params:
-                v = float(params[a])
-                self.base_position[p] += self.homing_add[p] - v
-                self.homing_add[p] = v
+        offsets = { p: self.get_float(a, params)
+                    for a, p in self.axis2pos.items() if a in params }
+        for p, offset in offsets.items():
+            self.base_position[p] += self.homing_add[p] - offset
+            self.homing_add[p] = offset
     def cmd_M400(self, params):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
@@ -362,9 +389,9 @@ class GCodeParser:
     cmd_PID_TUNE_aliases = ["M303"]
     def cmd_PID_TUNE(self, params):
         # Run PID tuning
-        heater = int(params.get('E', '0'))
+        heater = self.get_int('E', params, 0)
         heater = {0: self.heater_nozzle, -1: self.heater_bed}[heater]
-        temp = float(params.get('S', '60'))
+        temp = self.get_float('S', params)
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
     cmd_CLEAR_SHUTDOWN_when_not_ready = True
@@ -410,3 +437,6 @@ class GCodeParser:
             if desc is not None:
                 cmdhelp.append("%-10s: %s" % (cmd, desc))
         self.respond_info("\n".join(cmdhelp))
+
+class error(Exception):
+    pass
