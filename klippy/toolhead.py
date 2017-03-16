@@ -365,6 +365,9 @@ class ToolHead:
         return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             print_time, buffer_time, self.print_stall)
     def force_shutdown(self):
-        self.printer.mcu.force_shutdown()
-        self.move_queue.reset()
-        self.reset_print_time()
+        try:
+            self.printer.mcu.force_shutdown()
+            self.move_queue.reset()
+            self.reset_print_time()
+        except:
+            logging.exception("Exception in force_shutdown")
