@@ -285,8 +285,10 @@ def main():
     logging.info("Starting Klippy...")
     software_version = util.get_git_version()
     if debugoutput is None:
+        logging.info("Args: %s" % (sys.argv,))
         logging.info("Git version: %s" % (repr(software_version),))
         logging.info("CPU: %s" % (util.get_cpu_info(),))
+        logging.info("Python: %s" % (repr(sys.version),))
 
     # Start firmware
     res = 'startup'
