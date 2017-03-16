@@ -326,9 +326,6 @@ class MCU_adc:
         self._query_cmd = None
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
-        self._report_clock = int(self._report_time * self._mcu_freq)
-        self._mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
-                               , self._oid)
         self._query_cmd = self._mcu.lookup_command(
             "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u min_value=%hu max_value=%hu")
@@ -346,6 +343,9 @@ class MCU_adc:
         mcu_adc_max = self._mcu.serial.msgparser.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
         self._inv_max_adc = 1.0 / max_adc
+        self._report_clock = int(self._report_time * self._mcu_freq)
+        self._mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
+                               , self._oid)
         min_sample = int(self._min_sample * max_adc)
         max_sample = min(0xffff, int(math.ceil(self._max_sample * max_adc)))
         msg = self._query_cmd.encode(
