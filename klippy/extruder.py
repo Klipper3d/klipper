@@ -56,10 +56,15 @@ class PrinterExtruder:
             raise homing.EndstopMoveError(
                 move.end_pos, "Move exceeds maximum extrusion cross section")
     def calc_junction(self, prev_move, move):
-        if move.axes_d[3] or prev_move.axes_d[3]:
-            if (not move.axes_d[3] or not prev_move.axes_d[3]
-                or move.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
-                or prev_move.extrude_r > move.extrude_r * EXTRUDE_DIFF_IGNORE):
+        extrude = move.axes_d[3]
+        prev_extrude = prev_move.axes_d[3]
+        if extrude or prev_extrude:
+            if not extrude or not prev_extrude:
+                # Extrude move to non-extrude move - disable lookahead
+                return 0.
+            if ((move.extrude_r > prev_move.extrude_r * EXTRUDE_DIFF_IGNORE
+                 or prev_move.extrude_r > move.extrude_r * EXTRUDE_DIFF_IGNORE)
+                and abs(move.move_d * prev_move.extrude_r - extrude) >= .001):
                 # Extrude ratio between moves is too different
                 return 0.
             move.extrude_r = prev_move.extrude_r
