@@ -13,11 +13,11 @@ class PrinterExtruder:
         self.config = config
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
-        nozzle_diameter = config.getfloat('nozzle_diameter')
+        self.nozzle_diameter = config.getfloat('nozzle_diameter')
         filament_diameter = config.getfloat('filament_diameter')
         filament_area = math.pi * (filament_diameter * .5)**2
         max_cross_section = config.getfloat(
-            'max_extrude_cross_section', 4. * nozzle_diameter**2)
+            'max_extrude_cross_section', 4. * self.nozzle_diameter**2)
         self.max_extrude_ratio = max_cross_section / filament_area
         self.max_e_dist = config.getfloat('max_extrude_only_distance', 50.)
         self.max_e_velocity = self.max_e_accel = None
@@ -49,8 +49,10 @@ class PrinterExtruder:
                 raise homing.EndstopMoveError(
                     move.end_pos, "Extrude only move too long")
             move.limit_speed(self.max_e_velocity, self.max_e_accel)
-        elif move.extrude_r > self.max_extrude_ratio:
-            logging.debug("%s vs %s" % (move.extrude_r, self.max_extrude_ratio))
+        elif (move.extrude_r > self.max_extrude_ratio
+              and move.axes_d[3] > self.nozzle_diameter*self.max_extrude_ratio):
+            logging.debug("Overextrude: %s vs %s" % (
+                move.extrude_r, self.max_extrude_ratio))
             raise homing.EndstopMoveError(
                 move.end_pos, "Move exceeds maximum extrusion cross section")
     def calc_junction(self, prev_move, move):
