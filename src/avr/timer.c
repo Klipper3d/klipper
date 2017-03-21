@@ -133,32 +133,39 @@ timer_periodic(void)
 uint8_t
 timer_try_set_next(uint32_t target)
 {
-    uint16_t next = target, now = timer_get();
-    int16_t diff = next - now;
-    if (diff > TIMER_MIN_TRY_TICKS)
-        // Schedule next timer normally.
-        goto done;
-
-    // Next timer is in the past or near future - can't reschedule to it
-    if (!(TIFR1 & (1<<OCF1B))) {
-        // Can run more timers from this irq; briefly allow irqs
+    uint16_t next = target;
+    int16_t diff = next - timer_get();
+    if (likely(diff < 0)) {
+        // Another timer is pending - briefly allow irqs to fire
         irq_enable();
-        asm("nop");
+        if (unlikely(TIFR1 & (1<<OCF1B)))
+            // Too many repeat timers - must exit irq handler
+            goto force_pause;
         irq_disable();
-
-        while (diff >= 0) {
-            // Next timer is in the near future - wait for time to occur
-            now = timer_get();
-            irq_enable();
-            diff = next - now;
-            irq_disable();
-        }
         return 0;
     }
-    if (diff < (int16_t)(-timer_from_us(1000)))
-        goto fail;
 
+    if (likely(diff > TIMER_MIN_TRY_TICKS))
+        // Schedule next timer normally
+        goto done;
+
+    // Next timer in very near future - wait for it to be ready
+    for (;;) {
+        irq_enable();
+        if (unlikely(TIFR1 & (1<<OCF1B)))
+            break;
+        irq_disable();
+        diff = next - timer_get();
+        if (diff < 0)
+            return 0;
+    }
+
+force_pause:
     // Too many repeat timers - force a pause so tasks aren't starved
+    irq_disable();
+    uint16_t now = timer_get();
+    if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
+        goto fail;
     timer_repeat_set(now + TIMER_REPEAT_TICKS);
     next = now + TIMER_DEFER_REPEAT_TICKS;
 
