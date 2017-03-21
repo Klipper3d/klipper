@@ -76,7 +76,7 @@ timer_read_time(void)
 }
 
 uint8_t
-timer_try_set_next(uint32_t next)
+timer_try_set_next(unsigned int next)
 {
     return 1;
 }

@@ -50,7 +50,7 @@ static uint32_t timer_repeat_until;
 // if the next timer is too close to schedule.  Caller must disable
 // irqs.
 uint8_t
-timer_try_set_next(uint32_t next)
+timer_try_set_next(unsigned int next)
 {
     uint32_t now = timer_read_time();
     int32_t diff = next - now;

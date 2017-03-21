@@ -122,55 +122,55 @@ sched_del_timer(struct timer *del)
     irq_restore(flag);
 }
 
-// Move a rescheduled timer to its new location in the list.  Returns
-// the next timer to run.
-static struct timer *
-reschedule_timer(struct timer *t)
+// Move a rescheduled timer to its new location in the list.
+static void
+reschedule_timer(struct timer *t, uint32_t updated_waketime)
 {
-    uint32_t waketime = t->waketime;
-    struct timer *pos = t->next;
-    if (timer_is_before(waketime, pos->waketime))
-        // Timer is still the first - no insertion needed
-        return t;
-
     // Find new timer position and update list
+    struct timer *pos = t->next, *prev;
     timer_list = pos;
-    struct timer *prev;
     for (;;) {
         prev = pos;
         if (CONFIG_MACH_AVR)
             // micro optimization for AVR - reduces register pressure
-            asm("" : "+r"(prev) : : "memory");
+            asm("" : "+r"(prev));
         pos = pos->next;
-        if (timer_is_before(waketime, pos->waketime))
+        if (timer_is_before(updated_waketime, pos->waketime))
             break;
     }
     t->next = pos;
     prev->next = t;
-    return timer_list;
 }
 
 // Invoke timers - called from board timer irq code.
 void
 sched_timer_kick(void)
 {
-    struct timer *t = timer_list;
     for (;;) {
         // Invoke timer callback
+        struct timer *t = timer_list;
         uint_fast8_t res;
-        if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func))
+        uint32_t updated_waketime;
+        if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func)) {
             res = stepper_event(t);
-        else
+            updated_waketime = t->waketime;
+        } else {
             res = t->func(t);
+            updated_waketime = t->waketime;
+        }
 
         // Update timer_list (rescheduling current timer if necessary)
-        if (unlikely(res == SF_DONE))
+        unsigned int next_waketime = updated_waketime;
+        if (unlikely(res == SF_DONE)) {
             t = timer_list = t->next;
-        else
-            t = reschedule_timer(t);
+            next_waketime = t->waketime;
+        } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
+            next_waketime = t->next->waketime;
+            reschedule_timer(t, updated_waketime);
+        }
 
         // Schedule next timer event (or run next timer if it's ready)
-        res = timer_try_set_next(t->waketime);
+        res = timer_try_set_next(next_waketime);
         if (res)
             break;
     }

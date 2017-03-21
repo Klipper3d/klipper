@@ -13,7 +13,7 @@ uint32_t timer_from_us(uint32_t us);
 uint8_t timer_is_before(uint32_t time1, uint32_t time2);
 uint32_t timer_read_time(void);
 void timer_periodic(void);
-uint8_t timer_try_set_next(uint32_t next);
+uint8_t timer_try_set_next(unsigned int next);
 
 size_t alloc_maxsize(size_t reqsize);
 

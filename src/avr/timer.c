@@ -153,7 +153,7 @@ timer_periodic(void)
 // if the next timer is too close to schedule.  Caller must disable
 // irqs.
 uint8_t
-timer_try_set_next(uint32_t target)
+timer_try_set_next(unsigned int target)
 {
     uint16_t next = target;
     int16_t diff = next - timer_get();
