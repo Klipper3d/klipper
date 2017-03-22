@@ -281,11 +281,11 @@ check_line(struct stepcompress *sc, struct step_move move)
 static double
 _safe_sqrt(double v)
 {
-    if (v > -0.001)
-        // Due to floating point truncation, it's possible to get a
-        // small negative number - treat it as zero.
-        return 0.;
-    return sqrt(v);
+    // Due to floating point truncation, it's possible to get a small
+    // negative number - treat it as zero.
+    if (v < -0.001)
+        errorf("safe_sqrt of %.9f", v);
+    return 0.;
 }
 static inline double safe_sqrt(double v) {
     return likely(v >= 0.) ? sqrt(v) : _safe_sqrt(v);
