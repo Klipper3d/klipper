@@ -96,15 +96,21 @@ class SerialReader:
             baud_adjust = self.BITS_PER_BYTE / mcu_baud
             self.ffi_lib.serialqueue_set_baud_adjust(
                 self.serialqueue, baud_adjust)
+        # Enable periodic get_status timer
+        get_status = msgparser.lookup_command('get_status')
+        self.status_cmd = get_status.encode()
+        self.reactor.update_timer(self.status_timer, self.reactor.NOW)
         # Load initial last_ack_clock/last_ack_time
         uptime_msg = msgparser.create_command('get_uptime')
         params = self.send_with_response(uptime_msg, 'uptime')
         self.last_ack_clock = (params['high'] << 32) | params['clock']
         self.last_ack_time = params['#receive_time']
-        # Enable periodic get_status timer
-        get_status = msgparser.lookup_command('get_status')
-        self.status_cmd = get_status.encode()
-        self.reactor.update_timer(self.status_timer, self.reactor.NOW)
+        # Make sure est_clock is calculated
+        starttime = eventtime = self.reactor.monotonic()
+        while not self.est_clock:
+            if eventtime > starttime + 5.:
+                raise error("timeout on est_clock calculation")
+            eventtime = self.reactor.pause(eventtime + 0.010)
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
