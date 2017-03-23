@@ -487,7 +487,8 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     if (rseq != sq->receive_seq)
         // New sequence number
         update_receive_seq(sq, eventtime, rseq);
-    else if (len == MESSAGE_MIN && rseq > sq->retransmit_seq)
+    else if (len == MESSAGE_MIN && rseq > sq->retransmit_seq
+             && !list_empty(&sq->sent_queue))
         // Duplicate sequence number in an empty message is a nak
         pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
 
