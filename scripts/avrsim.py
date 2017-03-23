@@ -5,21 +5,22 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import sys, optparse, os, pty, select, fcntl, termios, traceback, errno
+import sys, optparse, os, pty, fcntl, termios, errno
 import pysimulavr
 
 SERIALBITS = 10 # 8N1 = 1 start, 8 data, 1 stop
+SIMULAVR_FREQ = 10**9
 
 # Class to read serial data from AVR serial transmit pin.
 class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
-    def __init__(self, baud):
+    def __init__(self, baud, terminal):
         pysimulavr.Pin.__init__(self)
         pysimulavr.PySimulationMember.__init__(self)
+        self.terminal = terminal
         self.sc = pysimulavr.SystemClock.Instance()
-        self.delay = 10**9 / baud
+        self.delay = SIMULAVR_FREQ / baud
         self.current = 0
         self.pos = -1
-        self.queue = ""
     def SetInState(self, pin):
         pysimulavr.Pin.SetInState(self, pin)
         self.state = pin.outState
@@ -33,32 +34,33 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         if self.pos == 1:
             return int(self.delay * 1.5)
         if self.pos >= SERIALBITS:
-            self.queue += chr((self.current >> 1) & 0xff)
+            data = chr((self.current >> 1) & 0xff)
+            self.terminal.write(data)
             self.pos = -1
             self.current = 0
             return -1
         return self.delay
-    def popChars(self):
-        d = self.queue
-        self.queue = ""
-        return d
 
 # Class to send serial data to AVR serial receive pin.
 class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
-    MAX_QUEUE = 64
-    def __init__(self, baud):
+    def __init__(self, baud, terminal):
         pysimulavr.Pin.__init__(self)
         pysimulavr.PySimulationMember.__init__(self)
+        self.terminal = terminal
         self.SetPin('H')
         self.sc = pysimulavr.SystemClock.Instance()
-        self.delay = 10**9 / baud
+        self.delay = SIMULAVR_FREQ / baud
         self.current = 0
         self.pos = 0
         self.queue = ""
+        self.sc.Add(self)
     def DoStep(self, trueHwStep):
         if not self.pos:
             if not self.queue:
-                return -1
+                data = self.terminal.read()
+                if not data:
+                    return self.delay * 100
+                self.queue += data
             self.current = (ord(self.queue[0]) << 1) | 0x200
             self.queue = self.queue[1:]
         newstate = 'L'
@@ -69,15 +71,6 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         if self.pos >= SERIALBITS:
             self.pos = 0
         return self.delay
-    def needChars(self):
-        if len(self.queue) > self.MAX_QUEUE / 2:
-            return 0
-        return self.MAX_QUEUE - len(self.queue)
-    def pushChars(self, c):
-        queueEmpty = not self.queue
-        self.queue += c
-        if queueEmpty:
-            self.sc.Add(self)
 
 # Support for creating VCD trace files
 class Tracing:
@@ -107,6 +100,22 @@ class Tracing:
     def finish(self):
         if self.dman is not None:
             self.dman.stopApplication()
+
+# Forward data from a terminal device to the serial port pins
+class TerminalIO:
+    def __init__(self):
+        self.fd = -1
+    def run(self, fd):
+        self.fd = fd
+    def write(self, data):
+        os.write(self.fd, data)
+    def read(self):
+        try:
+            return os.read(self.fd, 64)
+        except os.error, e:
+            if e.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
+                pysimulavr.SystemClock.Instance().stop()
+        return ""
 
 # Support for creating a pseudo-tty for emulating a serial port
 def create_pty(ptyname):
@@ -154,18 +163,21 @@ def main():
     trace = Tracing(options.tracefile, options.trace)
     dev = pysimulavr.AvrFactory.instance().makeDevice(proc)
     dev.Load(elffile)
-    dev.SetClockFreq(10**9 / speed)
+    dev.SetClockFreq(SIMULAVR_FREQ / speed)
     sc.Add(dev)
     trace.load_options()
 
+    # Setup terminal
+    io = TerminalIO()
+
     # Setup rx pin
-    rxpin = SerialRxPin(baud)
+    rxpin = SerialRxPin(baud, io)
     net = pysimulavr.Net()
     net.Add(rxpin)
     net.Add(dev.GetPin("D1"))
 
     # Setup tx pin
-    txpin = SerialTxPin(baud)
+    txpin = SerialTxPin(baud, io)
     net2 = pysimulavr.Net()
     net2.Add(dev.GetPin("D0"))
     net2.Add(txpin)
@@ -183,27 +195,9 @@ def main():
 
     # Run loop
     try:
+        io.run(fd)
         trace.start()
-        while 1:
-            starttime = sc.GetCurrentTime()
-            r = sc.RunTimeRange(speed/1000)
-            endtime = sc.GetCurrentTime()
-            if starttime == endtime:
-                break
-            d = rxpin.popChars()
-            if d:
-                os.write(fd, d)
-            txsize = txpin.needChars()
-            if txsize:
-                res = select.select([fd], [], [], 0)
-                if res[0]:
-                    try:
-                        d = os.read(fd, txsize)
-                    except os.error, e:
-                        if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
-                            continue
-                        break
-                    txpin.pushChars(d)
+        sc.RunTimeRange(0x7fff0000ffff0000)
         trace.finish()
     finally:
         os.unlink(ptyname)
