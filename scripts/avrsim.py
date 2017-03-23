@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import sys, optparse, os, pty, fcntl, termios, errno
+import sys, optparse, time, os, pty, fcntl, termios, errno
 import pysimulavr
 
 SERIALBITS = 10 # 8N1 = 1 start, 8 data, 1 stop
@@ -101,6 +101,31 @@ class Tracing:
         if self.dman is not None:
             self.dman.stopApplication()
 
+# Pace the simulation scaled to real time
+class Pacing(pysimulavr.PySimulationMember):
+    def __init__(self, rate):
+        pysimulavr.PySimulationMember.__init__(self)
+        self.sc = pysimulavr.SystemClock.Instance()
+        self.pacing_rate = 1. / (rate * SIMULAVR_FREQ)
+        self.rel_time = self.next_rel_time = time.time()
+        self.rel_clock = self.next_rel_clock = self.sc.GetCurrentTime()
+        self.delay = SIMULAVR_FREQ / 10000
+        self.sc.Add(self)
+    def DoStep(self, trueHwStep):
+        curtime = time.time()
+        clock = self.sc.GetCurrentTime()
+        clock_diff = clock - self.rel_clock
+        time_diff = curtime - self.rel_time
+        offset = clock_diff * self.pacing_rate - time_diff
+        if offset > 0.000050:
+            time.sleep(offset)
+        if clock_diff > self.delay * 20:
+            self.rel_clock = self.next_rel_clock
+            self.rel_time = self.next_rel_time
+            self.next_rel_clock = clock
+            self.next_rel_time = curtime
+        return self.delay
+
 # Forward data from a terminal device to the serial port pins
 class TerminalIO:
     def __init__(self):
@@ -139,6 +164,8 @@ def main():
                     default="atmega644", help="type of AVR machine to simulate")
     opts.add_option("-s", "--speed", type="int", dest="speed", default=8000000,
                     help="machine speed")
+    opts.add_option("-r", "--rate", type="float", dest="pacing_rate", default=0.,
+                    help="real-time pacing rate")
     opts.add_option("-b", "--baud", type="int", dest="baud", default=38400,
                     help="baud rate of the emulated serial port")
     opts.add_option("-t", "--trace", type="string", dest="trace",
@@ -166,6 +193,10 @@ def main():
     dev.SetClockFreq(SIMULAVR_FREQ / speed)
     sc.Add(dev)
     trace.load_options()
+
+    # Do optional real-time pacing
+    if options.pacing_rate:
+        pacing = Pacing(options.pacing_rate)
 
     # Setup terminal
     io = TerminalIO()
