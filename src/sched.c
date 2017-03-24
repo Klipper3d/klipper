@@ -247,6 +247,7 @@ sched_clear_shutdown(void)
 static void
 run_shutdown(void)
 {
+    uint32_t cur = sched_read_time();
     shutdown_status = 2;
     struct callback_handler *p;
     foreachdecl(p, shutdownfuncs) {
@@ -256,7 +257,7 @@ run_shutdown(void)
     shutdown_status = 1;
     irq_enable();
 
-    sendf("shutdown static_string_id=%hu", shutdown_reason);
+    sendf("shutdown clock=%u static_string_id=%hu", cur, shutdown_reason);
 }
 
 // Shutdown the machine if not already in the process of shutting down
