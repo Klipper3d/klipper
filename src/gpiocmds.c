@@ -7,6 +7,7 @@
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_out
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
 
@@ -117,7 +118,7 @@ soft_pwm_toggle_event(struct timer *timer)
         waketime += s->on_duration;
     else
         waketime += s->off_duration;
-    if (s->flags & SPF_CHECK_END && !sched_is_before(waketime, s->end_time)) {
+    if (s->flags & SPF_CHECK_END && !timer_is_before(waketime, s->end_time)) {
         // End of normal pulsing - next event loads new pwm settings
         s->timer.func = soft_pwm_load_event;
         waketime = s->end_time;
@@ -189,13 +190,13 @@ command_schedule_soft_pwm_out(uint32_t *args)
             next_flags |= SPF_NEXT_CHECK_END;
     }
     irq_disable();
-    if (s->flags & SPF_CHECK_END && sched_is_before(s->end_time, time))
+    if (s->flags & SPF_CHECK_END && timer_is_before(s->end_time, time))
         shutdown("next soft pwm extends existing pwm");
     s->end_time = time;
     s->next_on_duration = next_on_duration;
     s->next_off_duration = next_off_duration;
     s->flags |= next_flags;
-    if (s->flags & SPF_TOGGLING && sched_is_before(s->timer.waketime, time)) {
+    if (s->flags & SPF_TOGGLING && timer_is_before(s->timer.waketime, time)) {
         // soft_pwm_toggle_event() will schedule a load event when ready
     } else {
         // Schedule the loading of the pwm parameters at the requested time

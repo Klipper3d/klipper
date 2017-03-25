@@ -58,6 +58,12 @@ timer_from_us(uint32_t us)
     return 0; // XXX
 }
 
+uint8_t
+timer_is_before(uint32_t time1, uint32_t time2)
+{
+    return (int32_t)(time1 - time2) < 0;
+}
+
 void
 timer_periodic(void)
 {

@@ -24,6 +24,15 @@ timer_from_us(uint32_t us)
     return us * (CONFIG_CLOCK_FREQ / 1000000);
 }
 
+// Return true if time1 is before time2.  Always use this function to
+// compare times as regular C comparisons can fail if the counter
+// rolls over.
+uint8_t
+timer_is_before(uint32_t time1, uint32_t time2)
+{
+    return (int32_t)(time1 - time2) < 0;
+}
+
 // Called by main code once every millisecond.  (IRQs disabled.)
 void
 timer_periodic(void)
@@ -50,7 +59,7 @@ timer_try_set_next(uint32_t next)
         goto done;
 
     // Next timer is in the past or near future - can't reschedule to it
-    if (likely(sched_is_before(now, timer_repeat_until))) {
+    if (likely(timer_is_before(now, timer_repeat_until))) {
         // Can run more timers from this irq; briefly allow irqs
         irq_enable();
         while (diff >= 0) {

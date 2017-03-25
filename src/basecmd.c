@@ -228,7 +228,7 @@ DECL_COMMAND(command_end_group, "end_group");
 void
 command_get_status(uint32_t *args)
 {
-    sendf("status clock=%u status=%c", sched_read_time(), sched_is_shutdown());
+    sendf("status clock=%u status=%c", timer_read_time(), sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
 
@@ -237,7 +237,7 @@ static uint32_t stats_send_time, stats_send_time_high;
 void
 command_get_uptime(uint32_t *args)
 {
-    uint32_t cur = sched_read_time();
+    uint32_t cur = timer_read_time();
     uint32_t high = stats_send_time_high + (cur < stats_send_time);
     sendf("uptime high=%u clock=%u", high, cur);
 }
@@ -250,7 +250,7 @@ static void
 stats_task(void)
 {
     static uint32_t last, count, sumsq;
-    uint32_t cur = sched_read_time();
+    uint32_t cur = timer_read_time();
     uint32_t diff = cur - last;
     last = cur;
     count++;
@@ -267,7 +267,7 @@ stats_task(void)
         nextsumsq = 0xffffffff;
     sumsq = nextsumsq;
 
-    if (sched_is_before(cur, stats_send_time + sched_from_us(5000000)))
+    if (timer_is_before(cur, stats_send_time + timer_from_us(5000000)))
         return;
     sendf("stats count=%u sum=%u sumsq=%u", count, cur - stats_send_time, sumsq);
     if (cur < stats_send_time)

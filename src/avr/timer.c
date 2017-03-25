@@ -25,6 +25,15 @@ timer_from_us(uint32_t us)
     return us * (F_CPU / 1000000);
 }
 
+// Return true if time1 is before time2.  Always use this function to
+// compare times as regular C comparisons can fail if the counter
+// rolls over.
+uint8_t
+timer_is_before(uint32_t time1, uint32_t time2)
+{
+    return (int32_t)(time1 - time2) < 0;
+}
+
 static inline uint16_t
 timer_get(void)
 {

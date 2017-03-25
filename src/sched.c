@@ -9,36 +9,13 @@
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
-#include "sched.h" // sched_from_us
+#include "sched.h" // sched_check_periodic
 #include "stepper.h" // stepper_event
 
 
 /****************************************************************
  * Timers
  ****************************************************************/
-
-// Return the number of clock ticks for a given number of microseconds
-uint32_t
-sched_from_us(uint32_t us)
-{
-    return timer_from_us(us);
-}
-
-// Return the current time (in clock ticks)
-uint32_t
-sched_read_time(void)
-{
-    return timer_read_time();
-}
-
-// Return true if time1 is before time2.  Always use this function to
-// compare times as regular C comparisons can fail if the counter
-// rolls over.
-uint8_t
-sched_is_before(uint32_t time1, uint32_t time2)
-{
-    return (int32_t)(time1 - time2) < 0;
-}
 
 static uint16_t millis;
 
@@ -67,7 +44,7 @@ ms_event(struct timer *t)
 {
     millis++;
     timer_periodic();
-    ms_timer.waketime += sched_from_us(1000);
+    ms_timer.waketime += timer_from_us(1000);
     sentinel_timer.waketime = ms_timer.waketime + 0x80000000;
     return SF_RESCHEDULE;
 }
@@ -99,12 +76,12 @@ sched_add_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();
-    if (sched_is_before(waketime, timer_list->waketime))
+    if (timer_is_before(waketime, timer_list->waketime))
         // Timer in past (or very near future)
         shutdown("Timer too close");
     // Find position in list and insert
     struct timer *pos = timer_list;
-    while (!sched_is_before(waketime, pos->next->waketime))
+    while (!timer_is_before(waketime, pos->next->waketime))
         pos = pos->next;
     add->next = pos->next;
     pos->next = add;
@@ -152,7 +129,7 @@ reschedule_timer(struct timer *t)
 {
     struct timer *pos = t->next;
     uint32_t minwaketime = t->waketime + 1;
-    if (!sched_is_before(pos->waketime, minwaketime))
+    if (!timer_is_before(pos->waketime, minwaketime))
         // Timer is still the first - no insertion needed
         return t;
 
@@ -165,7 +142,7 @@ reschedule_timer(struct timer *t)
             // micro optimization for AVR - reduces register pressure
             asm("" : "+r"(prev) : : "memory");
         pos = pos->next;
-        if (!sched_is_before(pos->waketime, minwaketime))
+        if (!timer_is_before(pos->waketime, minwaketime))
             break;
     }
     t->next = pos;
@@ -247,7 +224,7 @@ sched_clear_shutdown(void)
 static void
 run_shutdown(void)
 {
-    uint32_t cur = sched_read_time();
+    uint32_t cur = timer_read_time();
     shutdown_status = 2;
     struct callback_handler *p;
     foreachdecl(p, shutdownfuncs) {

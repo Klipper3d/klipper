@@ -8,6 +8,7 @@
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "stepper.h" // command_config_stepper
@@ -75,9 +76,9 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
         // On faster mcus, it is necessary to schedule unstep events
         // and so there are twice as many events.  Also check that the
         // next step event isn't too close to the last unstep.
-        if (unlikely(sched_is_before(s->next_step_time, min_next_time))) {
+        if (unlikely(timer_is_before(s->next_step_time, min_next_time))) {
             if ((int32_t)(s->next_step_time - min_next_time)
-                < (int32_t)(-sched_from_us(1000)))
+                < (int32_t)(-timer_from_us(1000)))
                 shutdown("stepper too far in past");
             s->time.waketime = min_next_time;
         } else {
@@ -97,7 +98,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     return SF_RESCHEDULE;
 }
 
-#define UNSTEP_TIME sched_from_us(1)
+#define UNSTEP_TIME timer_from_us(1)
 
 // Timer callback - step the given stepper.
 uint_fast8_t
@@ -123,7 +124,7 @@ stepper_event(struct timer *t)
     }
 
     // On faster mcus, it is necessary to schedule the unstep event
-    uint32_t min_next_time = sched_read_time() + UNSTEP_TIME;
+    uint32_t min_next_time = timer_read_time() + UNSTEP_TIME;
     gpio_out_toggle(s->step_pin);
     s->count--;
     if (likely(s->count & 1))
@@ -132,7 +133,7 @@ stepper_event(struct timer *t)
     if (likely(s->count)) {
         s->next_step_time += s->interval;
         s->interval += s->add;
-        if (unlikely(sched_is_before(s->next_step_time, min_next_time)))
+        if (unlikely(timer_is_before(s->next_step_time, min_next_time)))
             // The next step event is too close - push it back
             goto reschedule_min;
         s->time.waketime = s->next_step_time;
