@@ -25,13 +25,29 @@ timer_from_us(uint32_t us)
     return us * (F_CPU / 1000000);
 }
 
+union u32_u {
+    struct { uint8_t b0, b1, b2, b3; };
+    struct { uint16_t lo, hi; };
+    uint32_t val;
+};
+
 // Return true if time1 is before time2.  Always use this function to
 // compare times as regular C comparisons can fail if the counter
 // rolls over.
-uint8_t
+uint8_t __always_inline
 timer_is_before(uint32_t time1, uint32_t time2)
 {
-    return (int32_t)(time1 - time2) < 0;
+    // This asm is equivalent to:
+    //     return (int32_t)(time1 - time2) < 0;
+    // But gcc doesn't do a good job with the above, so it's hand coded.
+    union u32_u utime1 = { .val = time1 };
+    uint8_t f = utime1.b3;
+    asm("    cp  %A1, %A2\n"
+        "    cpc %B1, %B2\n"
+        "    cpc %C1, %C2\n"
+        "    sbc %0,  %D2"
+        : "+r"(f) : "r"(time1), "r"(time2));
+    return (int8_t)f < 0;
 }
 
 static inline uint16_t
@@ -99,11 +115,8 @@ static uint16_t timer_high;
 uint32_t
 timer_read_time(void)
 {
-    union u32_u16_u {
-        struct { uint16_t lo, hi; };
-        uint32_t val;
-    } calc;
     irqstatus_t flag = irq_save();
+    union u32_u calc;
     calc.val = timer_get();
     calc.hi = timer_high;
     if (!(TIFR1 & (1<<TOV1))) {

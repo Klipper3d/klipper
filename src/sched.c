@@ -127,9 +127,9 @@ sched_del_timer(struct timer *del)
 static struct timer *
 reschedule_timer(struct timer *t)
 {
+    uint32_t waketime = t->waketime;
     struct timer *pos = t->next;
-    uint32_t minwaketime = t->waketime + 1;
-    if (!timer_is_before(pos->waketime, minwaketime))
+    if (timer_is_before(waketime, pos->waketime))
         // Timer is still the first - no insertion needed
         return t;
 
@@ -142,7 +142,7 @@ reschedule_timer(struct timer *t)
             // micro optimization for AVR - reduces register pressure
             asm("" : "+r"(prev) : : "memory");
         pos = pos->next;
-        if (!timer_is_before(pos->waketime, minwaketime))
+        if (timer_is_before(waketime, pos->waketime))
             break;
     }
     t->next = pos;
