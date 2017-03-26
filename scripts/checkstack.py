@@ -172,6 +172,9 @@ def main():
             if '+' in ref:
                 # Inter-function jump.
                 pass
+            elif insn.startswith('ld') or insn.startswith('st'):
+                # memory access
+                pass
             elif insn in ('rjmp', 'jmp', 'brne', 'brcs'):
                 # Tail call
                 cur.noteCall(insnaddr, calladdr, 0)
