@@ -25,7 +25,7 @@ enum { SF_DONE=0, SF_RESCHEDULE=1 };
 uint8_t sched_check_periodic(uint16_t time, uint16_t *pnext);
 void sched_add_timer(struct timer*);
 void sched_del_timer(struct timer *del);
-void sched_timer_kick(void);
+unsigned int sched_timer_dispatch(void);
 uint8_t sched_is_shutdown(void);
 uint16_t sched_shutdown_reason(void);
 void sched_clear_shutdown(void);

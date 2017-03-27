@@ -58,9 +58,9 @@ Timer functions are scheduled by calling sched_add_timer() (located in
 **src/sched.c**). The scheduler code will arrange for the given
 function to be called at the requested clock time. Timer interrupts
 are initially handled in an architecture specific interrupt handler
-(eg, **src/avr/timer.c**), but this just calls sched_timer_kick()
-located in **src/sched.c**. The timer interrupt leads to execution of
-schedule timer functions.  Timer functions always run with interrupts
+(eg, **src/avr/timer.c**) which calls sched_timer_dispatch() located
+in **src/sched.c**. The timer interrupt leads to execution of schedule
+timer functions. Timer functions always run with interrupts
 disabled. The timer functions should always complete within a few
 micro-seconds. At completion of the timer event, the function may
 choose to reschedule itself.

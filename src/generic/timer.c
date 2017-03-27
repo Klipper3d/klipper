@@ -49,7 +49,7 @@ static uint32_t timer_repeat_until;
 // Set the next timer wake time (in absolute clock ticks) or return 1
 // if the next timer is too close to schedule.  Caller must disable
 // irqs.
-uint8_t
+static int
 timer_try_set_next(unsigned int next)
 {
     uint32_t now = timer_read_time();
@@ -82,6 +82,20 @@ done:
     return 1;
 fail:
     shutdown("Rescheduled timer in the past");
+}
+
+// Invoke timers - called from board irq code.
+void
+timer_dispatch_many(void)
+{
+    for (;;) {
+        uint32_t next_waketime = sched_timer_dispatch();
+
+        // Schedule next timer event (or run next timer if it's ready)
+        int res = timer_try_set_next(next_waketime);
+        if (res)
+            break;
+    }
 }
 
 // Periodic background task that temporarily boosts priority of

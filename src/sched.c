@@ -135,39 +135,34 @@ sched_del_timer(struct timer *del)
     irq_restore(flag);
 }
 
-// Invoke timers - called from board timer irq code.
-void
-sched_timer_kick(void)
+// Invoke the next timer - called from board hardware irq code.
+unsigned int
+sched_timer_dispatch(void)
 {
-    for (;;) {
-        // Invoke timer callback
-        struct timer *t = timer_list;
-        uint_fast8_t res;
-        uint32_t updated_waketime;
-        if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func)) {
-            res = stepper_event(t);
-            updated_waketime = t->waketime;
-        } else {
-            res = t->func(t);
-            updated_waketime = t->waketime;
-        }
-
-        // Update timer_list (rescheduling current timer if necessary)
-        unsigned int next_waketime = updated_waketime;
-        if (unlikely(res == SF_DONE)) {
-            next_waketime = t->next->waketime;
-            timer_list = t->next;
-        } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
-            next_waketime = t->next->waketime;
-            timer_list = t->next;
-            insert_timer(t, updated_waketime);
-        }
-
-        // Schedule next timer event (or run next timer if it's ready)
-        res = timer_try_set_next(next_waketime);
-        if (res)
-            break;
+    // Invoke timer callback
+    struct timer *t = timer_list;
+    uint_fast8_t res;
+    uint32_t updated_waketime;
+    if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func)) {
+        res = stepper_event(t);
+        updated_waketime = t->waketime;
+    } else {
+        res = t->func(t);
+        updated_waketime = t->waketime;
     }
+
+    // Update timer_list (rescheduling current timer if necessary)
+    unsigned int next_waketime = updated_waketime;
+    if (unlikely(res == SF_DONE)) {
+        next_waketime = t->next->waketime;
+        timer_list = t->next;
+    } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
+        next_waketime = t->next->waketime;
+        timer_list = t->next;
+        insert_timer(t, updated_waketime);
+    }
+
+    return next_waketime;
 }
 
 // Shutdown all user timers on an emergency stop.

@@ -75,12 +75,6 @@ timer_read_time(void)
     return 0; // XXX
 }
 
-uint8_t
-timer_try_set_next(unsigned int next)
-{
-    return 1;
-}
-
 
 /****************************************************************
  * Turn stdin/stdout into serial console

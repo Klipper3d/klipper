@@ -70,11 +70,6 @@ timer_repeat_set(uint16_t next)
     TIFR1 = 1<<OCF1B;
 }
 
-ISR(TIMER1_COMPA_vect)
-{
-    sched_timer_kick();
-}
-
 static void
 timer_init(void)
 {
@@ -143,7 +138,7 @@ timer_periodic(void)
 // Set the next timer wake time (in absolute clock ticks) or return 1
 // if the next timer is too close to schedule.  Caller must disable
 // irqs.
-uint8_t
+static uint8_t
 timer_try_set_next(unsigned int target)
 {
     uint16_t next = target;
@@ -187,6 +182,19 @@ done:
     return 1;
 fail:
     shutdown("Rescheduled timer in the past");
+}
+
+// Harware OCR1A interrupt handler
+ISR(TIMER1_COMPA_vect)
+{
+    for (;;) {
+        uint16_t next_waketime = sched_timer_dispatch();
+
+        // Schedule next timer event (or run next timer if it's ready)
+        uint8_t res = timer_try_set_next(next_waketime);
+        if (res)
+            break;
+    }
 }
 
 // Periodic background task that temporarily boosts priority of
