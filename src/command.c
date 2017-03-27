@@ -139,17 +139,18 @@ _sendf(uint8_t parserid, ...)
             param_types++;
             uint32_t v;
             switch (t) {
-            case PT_byte:
-            case PT_uint16:
-                v = va_arg(args, unsigned int);
-                goto encode_int;
-            case PT_int16:
-                v = (int32_t)va_arg(args, int);
-                goto encode_int;
             case PT_uint32:
             case PT_int32:
-                v = va_arg(args, uint32_t);
-            encode_int:
+            case PT_uint16:
+            case PT_int16:
+            case PT_byte:
+                if (t >= PT_uint16)
+                    if (t == PT_int16)
+                        v = (int32_t)va_arg(args, int);
+                    else
+                        v = va_arg(args, unsigned int);
+                else
+                    v = va_arg(args, uint32_t);
                 p = encode_int(p, v);
                 break;
             case PT_string: {
