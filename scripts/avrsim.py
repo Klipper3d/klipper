@@ -192,6 +192,7 @@ def main():
     dev.Load(elffile)
     dev.SetClockFreq(SIMULAVR_FREQ / speed)
     sc.Add(dev)
+    pysimulavr.cvar.sysConHandler.SetUseExit(False)
     trace.load_options()
 
     # Do optional real-time pacing
