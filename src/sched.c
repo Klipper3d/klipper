@@ -70,6 +70,24 @@ static struct timer sentinel_timer = {
     .waketime = 0x80000000,
 };
 
+// Find position for a timer in timer_list and insert it
+static void __always_inline
+insert_timer(struct timer *t, uint32_t waketime)
+{
+    struct timer *prev, *pos = timer_list;
+    for (;;) {
+        prev = pos;
+        if (CONFIG_MACH_AVR)
+            // micro optimization for AVR - reduces register pressure
+            asm("" : "+r"(prev));
+        pos = pos->next;
+        if (timer_is_before(waketime, pos->waketime))
+            break;
+    }
+    t->next = pos;
+    prev->next = t;
+}
+
 // Schedule a function call at a supplied time.
 void
 sched_add_timer(struct timer *add)
@@ -79,12 +97,7 @@ sched_add_timer(struct timer *add)
     if (timer_is_before(waketime, timer_list->waketime))
         // Timer in past (or very near future)
         shutdown("Timer too close");
-    // Find position in list and insert
-    struct timer *pos = timer_list;
-    while (!timer_is_before(waketime, pos->next->waketime))
-        pos = pos->next;
-    add->next = pos->next;
-    pos->next = add;
+    insert_timer(add, waketime);
     irq_restore(flag);
 }
 
@@ -122,26 +135,6 @@ sched_del_timer(struct timer *del)
     irq_restore(flag);
 }
 
-// Move a rescheduled timer to its new location in the list.
-static void
-reschedule_timer(struct timer *t, uint32_t updated_waketime)
-{
-    // Find new timer position and update list
-    struct timer *pos = t->next, *prev;
-    timer_list = pos;
-    for (;;) {
-        prev = pos;
-        if (CONFIG_MACH_AVR)
-            // micro optimization for AVR - reduces register pressure
-            asm("" : "+r"(prev));
-        pos = pos->next;
-        if (timer_is_before(updated_waketime, pos->waketime))
-            break;
-    }
-    t->next = pos;
-    prev->next = t;
-}
-
 // Invoke timers - called from board timer irq code.
 void
 sched_timer_kick(void)
@@ -162,11 +155,12 @@ sched_timer_kick(void)
         // Update timer_list (rescheduling current timer if necessary)
         unsigned int next_waketime = updated_waketime;
         if (unlikely(res == SF_DONE)) {
-            t = timer_list = t->next;
-            next_waketime = t->waketime;
+            next_waketime = t->next->waketime;
+            timer_list = t->next;
         } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
             next_waketime = t->next->waketime;
-            reschedule_timer(t, updated_waketime);
+            timer_list = t->next;
+            insert_timer(t, updated_waketime);
         }
 
         // Schedule next timer event (or run next timer if it's ready)
