@@ -79,6 +79,6 @@ represent total number of steps per second on the micro-controller.
 
 | Micro-controller  | 1 stepper active | 3 steppers active |
 | ----------------- | ---------------- | ----------------- |
-| 20Mhz AVR         | 160K             | 108K              |
-| 16Mhz AVR         | 128K             | 86K               |
-| Arduino Due (ARM) | 365K             | 314K              |
+| 20Mhz AVR         | 180K             | 115K              |
+| 16Mhz AVR         | 143K             | 92K               |
+| Arduino Due (ARM) | 365K             | 321K              |
