@@ -119,7 +119,7 @@ timer_read_time(void)
     union u32_u calc;
     calc.val = timer_get();
     calc.hi = timer_high;
-    if (!(TIFR1 & (1<<TOV1))) {
+    if (likely(!(TIFR1 & (1<<TOV1)))) {
         irq_restore(flag);
         return calc.val;
     }
@@ -136,7 +136,7 @@ timer_read_time(void)
 void
 timer_periodic(void)
 {
-    if (TIFR1 & (1<<TOV1)) {
+    if (unlikely(TIFR1 & (1<<TOV1))) {
         // Hardware timer has overflowed - update overflow counter
         TIFR1 = 1<<TOV1;
         timer_high++;
