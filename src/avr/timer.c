@@ -16,13 +16,13 @@
  * Low level timer code
  ****************************************************************/
 
-DECL_CONSTANT(CLOCK_FREQ, F_CPU);
+DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
 timer_from_us(uint32_t us)
 {
-    return us * (F_CPU / 1000000);
+    return us * (CONFIG_CLOCK_FREQ / 1000000);
 }
 
 union u32_u {
