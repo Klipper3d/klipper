@@ -135,40 +135,40 @@ timer_periodic(void)
 #define TIMER_MIN_TRY_TICKS 60 // 40 ticks to exit irq; 20 ticks of progress
 #define TIMER_DEFER_REPEAT_TICKS 200
 
-// Set the next timer wake time (in absolute clock ticks) or return 1
-// if the next timer is too close to schedule.  Caller must disable
-// irqs.
-static uint8_t
-timer_try_set_next(unsigned int target)
+// Hardware timer IRQ handler - dispatch software timers
+ISR(TIMER1_COMPA_vect)
 {
-    uint16_t next = target;
-    int16_t diff = next - timer_get();
-    if (likely(diff < 0)) {
-        // Another timer is pending - briefly allow irqs to fire
-        irq_enable();
-        if (unlikely(TIFR1 & (1<<OCF1B)))
-            // Too many repeat timers - must exit irq handler
-            goto force_pause;
-        irq_disable();
-        return 0;
-    }
-
-    if (likely(diff > TIMER_MIN_TRY_TICKS))
-        // Schedule next timer normally
-        goto done;
-
-    // Next timer in very near future - wait for it to be ready
+    uint16_t next;
     for (;;) {
-        irq_enable();
-        if (unlikely(TIFR1 & (1<<OCF1B)))
-            break;
-        irq_disable();
-        diff = next - timer_get();
-        if (diff < 0)
-            return 0;
+        // Run the next software timer
+        next = sched_timer_dispatch();
+
+        int16_t diff = next - timer_get();
+        if (likely(diff < 0)) {
+            // Another timer is pending - briefly allow irqs to fire
+            irq_enable();
+            if (unlikely(TIFR1 & (1<<OCF1B)))
+                // Too many repeat timers - must exit irq handler
+                goto force_defer;
+            irq_disable();
+            continue;
+        }
+
+        if (likely(diff > TIMER_MIN_TRY_TICKS))
+            // Schedule next timer normally
+            goto done;
+
+        // Next timer in very near future - wait for it to be ready
+        do {
+            irq_enable();
+            if (unlikely(TIFR1 & (1<<OCF1B)))
+                goto force_defer;
+            irq_disable();
+            diff = next - timer_get();
+        } while (diff >= 0);
     }
 
-force_pause:
+force_defer:
     // Too many repeat timers - force a pause so tasks aren't starved
     irq_disable();
     uint16_t now = timer_get();
@@ -179,22 +179,9 @@ force_pause:
 
 done:
     timer_set(next);
-    return 1;
+    return;
 fail:
     shutdown("Rescheduled timer in the past");
-}
-
-// Harware OCR1A interrupt handler
-ISR(TIMER1_COMPA_vect)
-{
-    for (;;) {
-        uint16_t next_waketime = sched_timer_dispatch();
-
-        // Schedule next timer event (or run next timer if it's ready)
-        uint8_t res = timer_try_set_next(next_waketime);
-        if (res)
-            break;
-    }
 }
 
 // Periodic background task that temporarily boosts priority of
