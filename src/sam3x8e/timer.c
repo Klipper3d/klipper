@@ -11,19 +11,8 @@
 #include "sam3x8e.h" // TC0
 #include "sched.h" // sched_timer_kick
 
-// IRQ handler
-void __visible
-TC0_Handler(void)
-{
-    irq_disable();
-    uint32_t status = TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
-    if (likely(status & TC_SR_CPAS))
-        timer_dispatch_many();
-    irq_enable();
-}
-
 // Set the next irq time
-void
+static void
 timer_set(uint32_t value)
 {
     TC0->TC_CHANNEL[0].TC_RA = value;
@@ -63,3 +52,16 @@ timer_shutdown(void)
     TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
 }
 DECL_SHUTDOWN(timer_shutdown);
+
+// IRQ handler
+void __visible
+TC0_Handler(void)
+{
+    irq_disable();
+    uint32_t status = TC0->TC_CHANNEL[0].TC_SR; // read to clear irq pending
+    if (likely(status & TC_SR_CPAS)) {
+        uint32_t next = timer_dispatch_many();
+        timer_set(next);
+    }
+    irq_enable();
+}

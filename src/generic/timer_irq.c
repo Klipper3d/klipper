@@ -11,11 +11,6 @@
 #include "command.h" // shutdown
 #include "sched.h" // sched_timer_kick
 
-// In order to use this code the board must still define
-// timer_read_time().  In addition, it must also provide a timer_set()
-// function.
-void timer_set(uint32_t next);
-
 DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
@@ -47,55 +42,41 @@ static uint32_t timer_repeat_until;
 #define TIMER_MIN_TRY_TICKS timer_from_us(1)
 #define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
-// Set the next timer wake time (in absolute clock ticks) or return 1
-// if the next timer is too close to schedule.  Caller must disable
-// irqs.
-static int
-timer_try_set_next(unsigned int next)
+// Reschedule timers after a brief pause to prevent task starvation
+static uint32_t noinline
+force_defer(uint32_t next)
 {
     uint32_t now = timer_read_time();
-    int32_t diff = next - now;
-    if (diff > (int32_t)TIMER_MIN_TRY_TICKS)
-        // Schedule next timer normally.
-        goto done;
-
-    // Next timer is in the past or near future - can't reschedule to it
-    if (likely(timer_is_before(now, timer_repeat_until))) {
-        // Can run more timers from this irq; briefly allow irqs
-        irq_enable();
-        while (diff >= 0) {
-            // Next timer is in the near future - wait for time to occur
-            now = timer_read_time();
-            diff = next - now;
-        }
-        irq_disable();
-        return 0;
-    }
-    if (diff < (int32_t)(-timer_from_us(1000)))
-        goto fail;
-
-    // Too many repeat timers from a single interrupt - force a pause
+    if (timer_is_before(next + timer_from_us(1000), now))
+        shutdown("Rescheduled timer in the past");
     timer_repeat_until = now + TIMER_REPEAT_TICKS;
-    next = now + TIMER_DEFER_REPEAT_TICKS;
-
-done:
-    timer_set(next);
-    return 1;
-fail:
-    shutdown("Rescheduled timer in the past");
+    return now + TIMER_DEFER_REPEAT_TICKS;
 }
 
 // Invoke timers - called from board irq code.
-void
+uint32_t
 timer_dispatch_many(void)
 {
+    uint32_t tru = timer_repeat_until;
     for (;;) {
-        uint32_t next_waketime = sched_timer_dispatch();
+        // Run the next software timer
+        uint32_t next = sched_timer_dispatch();
 
-        // Schedule next timer event (or run next timer if it's ready)
-        int res = timer_try_set_next(next_waketime);
-        if (res)
-            break;
+        uint32_t now = timer_read_time();
+        int32_t diff = next - now;
+        if (diff > (int32_t)TIMER_MIN_TRY_TICKS)
+            // Schedule next timer normally.
+            return next;
+
+        if (unlikely(timer_is_before(tru, now)))
+            // Too many repeat timers from a single interrupt - force a pause
+            return force_defer(next);
+
+        // Next timer in the past or near future - wait for it to be ready
+        irq_enable();
+        while (unlikely(diff > 0))
+            diff = next - timer_read_time();
+        irq_disable();
     }
 }
 
