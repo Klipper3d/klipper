@@ -6,12 +6,10 @@
 
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
+#include "board/timer_irq.h" // timer_dispatch_many
 #include "command.h" // DECL_SHUTDOWN
 #include "sam3x8e.h" // TC0
 #include "sched.h" // sched_timer_kick
-
-// From generic/timer.c
-extern void timer_dispatch_many(void);
 
 // IRQ handler
 void __visible

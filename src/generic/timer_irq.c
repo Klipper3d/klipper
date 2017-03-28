@@ -7,6 +7,7 @@
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
+#include "board/timer_irq.h" // timer_dispatch_many
 #include "command.h" // shutdown
 #include "sched.h" // sched_timer_kick
 
