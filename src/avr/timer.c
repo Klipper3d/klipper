@@ -95,15 +95,6 @@ timer_init(void)
 }
 DECL_INIT(timer_init);
 
-static void
-timer_shutdown(void)
-{
-    // Reenable timer irq
-    timer_set(timer_get() + 50);
-    TIFR1 = 1<<OCF1A;
-}
-DECL_SHUTDOWN(timer_shutdown);
-
 
 /****************************************************************
  * 32bit timer wrappers
@@ -208,3 +199,13 @@ timer_task(void)
     irq_enable();
 }
 DECL_TASK(timer_task);
+
+static void
+timer_shutdown(void)
+{
+    // Reenable timer irq
+    timer_set(timer_get() + 50);
+    TIFR1 = 1<<OCF1A;
+    timer_repeat_set(timer_get() + TIMER_IDLE_REPEAT_TICKS);
+}
+DECL_SHUTDOWN(timer_shutdown);

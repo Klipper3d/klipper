@@ -94,3 +94,10 @@ timer_task(void)
     irq_enable();
 }
 DECL_TASK(timer_task);
+
+static void
+timer_irq_shutdown(void)
+{
+    timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;
+}
+DECL_SHUTDOWN(timer_irq_shutdown);
