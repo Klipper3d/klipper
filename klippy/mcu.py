@@ -570,7 +570,10 @@ class MCU:
         return MCU_adc(self, pin)
     # Clock syncing
     def set_print_start_time(self, eventtime):
-        est_mcu_time = self.serial.get_clock(eventtime) / self._mcu_freq
+        clock = self.serial.get_clock(eventtime)
+        logging.info("Synchronizing mcu clock at %.6f to %d" % (
+            eventtime, clock))
+        est_mcu_time = clock / self._mcu_freq
         self._print_start_time = est_mcu_time
     def get_print_buffer_time(self, eventtime, print_time):
         if self.is_shutdown:
