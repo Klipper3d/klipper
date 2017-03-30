@@ -207,7 +207,7 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
         # Motor off tracking
-        self.motor_off_time = config.getfloat('motor_off_time', 60.000)
+        self.motor_off_time = config.getfloat('motor_off_time', 600.000)
         self.motor_off_timer = self.reactor.register_timer(
             self._motor_off_handler)
         # Determine the maximum velocity a cartesian axis could have
