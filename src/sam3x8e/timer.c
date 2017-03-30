@@ -54,7 +54,7 @@ timer_shutdown(void)
 DECL_SHUTDOWN(timer_shutdown);
 
 // IRQ handler
-void __visible
+void __visible __aligned(16) // aligning helps stabilize perf benchmarks
 TC0_Handler(void)
 {
     irq_disable();
