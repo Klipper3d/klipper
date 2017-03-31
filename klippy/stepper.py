@@ -35,6 +35,8 @@ class PrinterStepper:
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment" % (name,))
                 self.homing_stepper_phases = None
+            if printer.mcu.is_fileoutput():
+                self.homing_endstop_accuracy = self.homing_stepper_phases
         self.position_min = self.position_endstop = self.position_max = None
         endstop_pin = config.get('endstop_pin', None)
         step_pin = config.get('step_pin')
