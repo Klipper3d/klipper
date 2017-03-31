@@ -70,6 +70,17 @@ timer_repeat_set(uint16_t next)
     TIFR1 = 1<<OCF1B;
 }
 
+// Reset the timer - clear settings and dispatch next timer immediately
+static void
+timer_reset(void)
+{
+    uint16_t now = timer_get();
+    timer_set(now + 50);
+    TIFR1 = 1<<OCF1A;
+    timer_repeat_set(now + 50);
+}
+DECL_SHUTDOWN(timer_reset);
+
 static void
 timer_init(void)
 {
@@ -85,8 +96,13 @@ timer_init(void)
     TCCR1A = 0;
     // Normal Mode
     TCCR1B = 1<<CS10;
+    // Setup for first irq
+    irqstatus_t flag = irq_save();
+    timer_reset();
+    TIFR1 = 1<<TOV1;
     // enable interrupt
     TIMSK1 = 1<<OCIE1A;
+    irq_restore(flag);
 }
 DECL_INIT(timer_init);
 
@@ -105,16 +121,9 @@ timer_read_time(void)
     union u32_u calc;
     calc.val = timer_get();
     calc.hi = timer_high;
-    if (likely(!(TIFR1 & (1<<TOV1)))) {
-        irq_restore(flag);
-        return calc.val;
-    }
-    // Hardware timer has overflowed - update overflow counter
-    TIFR1 = 1<<TOV1;
-    timer_high = calc.hi + 1;
-    irq_restore(flag);
-    if (calc.lo < 0x8000)
+    if (TIFR1 & (1<<TOV1) && calc.lo < 0x8000)
         calc.hi++;
+    irq_restore(flag);
     return calc.val;
 }
 
@@ -122,7 +131,7 @@ timer_read_time(void)
 void
 timer_periodic(void)
 {
-    if (unlikely(TIFR1 & (1<<TOV1))) {
+    if (TIFR1 & (1<<TOV1)) {
         // Hardware timer has overflowed - update overflow counter
         TIFR1 = 1<<TOV1;
         timer_high++;
