@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import select, math
+import select, math, time
 import greenlet
 import chelper
 
@@ -71,9 +71,17 @@ class SelectReactor:
             return 0.
         return min(1., max(.001, self._next_timer - self.monotonic()))
     # Greenlets
+    def _sys_pause(self, waketime):
+        # Pause using system sleep for when reactor not running
+        delay = waketime - self.monotonic()
+        if delay > 0.:
+            time.sleep(delay)
+        return self.monotonic()
     def pause(self, waketime):
         g = greenlet.getcurrent()
         if g is not self._g_dispatch:
+            if self._g_dispatch is None:
+                return self._sys_pause(waketime)
             return self._g_dispatch.switch(waketime)
         if self._greenlets:
             g_next = self._greenlets.pop()

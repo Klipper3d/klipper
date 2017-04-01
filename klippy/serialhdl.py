@@ -3,7 +3,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, time
+import logging, threading
 import serial
 
 import msgproto, chelper, util
@@ -338,10 +338,10 @@ def arduino_reset(serialport, reactor):
     # First try opening the port at 1200 baud
     ser = serial.Serial(serialport, 1200, timeout=0)
     ser.read(1)
-    time.sleep(0.100)
+    reactor.pause(reactor.monotonic() + 0.100)
     # Then try toggling DTR
     ser.dtr = True
-    time.sleep(0.100)
+    reactor.pause(reactor.monotonic() + 0.100)
     ser.dtr = False
-    time.sleep(0.100)
+    reactor.pause(reactor.monotonic() + 0.100)
     ser.close()
