@@ -193,7 +193,7 @@ def main():
         funcsbyname[funcnameroot] = info
     mainfunc = funcsbyname.get('sched_main')
     cmdfunc = funcsbyname.get('command_task')
-    eventfunc = funcsbyname.get('__vector_13')
+    eventfunc = funcsbyname.get('__vector_13', funcsbyname.get('__vector_17'))
     for funcnameroot, info in funcsbyname.items():
         if (funcnameroot.startswith('_DECL_taskfuncs_')
             or funcnameroot.startswith('_DECL_initfuncs_')
@@ -207,7 +207,7 @@ def main():
                 numparams = int(datalines[info.funcaddr][2], 16)
                 stackusage = cmdfunc.basic_stack_usage + 2 + numparams * 4
                 cmdfunc.noteCall(0, f.funcaddr, stackusage)
-        if funcnameroot.endswith('_event'):
+        if funcnameroot.endswith('_event') and eventfunc is not None:
             eventfunc.noteCall(0, info.funcaddr, eventfunc.basic_stack_usage + 2)
 
     # Calculate maxstackusage
