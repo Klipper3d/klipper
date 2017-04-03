@@ -36,6 +36,13 @@ DECL_INIT(watchdog_init);
  * misc functions
  ****************************************************************/
 
+void
+command_reset(uint32_t *args)
+{
+    NVIC_SystemReset();
+}
+DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
+
 size_t
 alloc_maxsize(size_t reqsize)
 {
