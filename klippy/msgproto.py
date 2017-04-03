@@ -184,6 +184,7 @@ class UnknownFormat:
         return {'#msgid': msgid, '#msg': msg}, len(s)-MESSAGE_TRAILER_SIZE
 
 class MessageParser:
+    error = error
     def __init__(self):
         self.unknown = UnknownFormat()
         self.messages_by_id = {}

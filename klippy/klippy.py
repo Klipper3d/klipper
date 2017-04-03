@@ -246,8 +246,8 @@ class Printer:
         try:
             if self.mcu is not None:
                 self.stats(self.reactor.monotonic())
-                self.mcu.disconnect()
                 self.mcu.microcontroller_restart()
+                self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during firmware_restart")
     def get_startup_state(self):

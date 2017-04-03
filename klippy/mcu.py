@@ -371,7 +371,6 @@ class MCU:
     COMM_TIMEOUT = 3.5
     def __init__(self, printer, config):
         self._printer = printer
-        self._config = config
         # Serial port
         baud = config.getint('baud', 250000)
         self._serialport = config.get('serial', '/dev/ttyS0')
@@ -382,8 +381,13 @@ class MCU:
         self._is_fileoutput = False
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
+        rmethods = {m: m for m in ['arduino', 'command']}
+        self._restart_method = config.getchoice(
+            'restart_method', rmethods, 'arduino')
         # Config building
-        self._emergency_stop_cmd = self._clear_shutdown_cmd = None
+        self._config_error = config.error
+        self._emergency_stop_cmd = self._reset_cmd = None
+        self._clear_shutdown_cmd = None
         self._oids = []
         self._config_cmds = []
         self._config_crc = None
@@ -430,6 +434,10 @@ class MCU:
             'STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._clear_shutdown_cmd = self.lookup_command("clear_shutdown")
+        try:
+            self._reset_cmd = self.lookup_command("reset")
+        except self.serial.msgparser.error, e:
+            pass
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
@@ -469,9 +477,24 @@ class MCU:
         logging.info("Sending clear_shutdown command")
         self.send(self._clear_shutdown_cmd.encode())
     def microcontroller_restart(self):
+        reactor = self._printer.reactor
+        if self._restart_method == 'command':
+            last_clock, last_clock_time = self.serial.get_last_clock()
+            eventtime = reactor.monotonic()
+            if (self._reset_cmd is None
+                or eventtime > last_clock_time + self.COMM_TIMEOUT):
+                logging.info("Unable to issue reset command")
+                return
+            # Attempt reset via command
+            logging.info("Attempting a microcontroller reset command")
+            self.send(self._reset_cmd.encode())
+            reactor.pause(reactor.monotonic() + 0.015)
+            self.disconnect()
+            return
+        # Attempt reset via arduino mechanism
         logging.info("Attempting a microcontroller reset")
         self.disconnect()
-        serialhdl.arduino_reset(self._serialport, self._printer.reactor)
+        serialhdl.arduino_reset(self._serialport, reactor)
     def is_fileoutput(self):
         return self._is_fileoutput
     # Configuration phase
@@ -501,7 +524,7 @@ class MCU:
                 updated_cmds.append(pins.update_command(
                     cmd, self._mcu_freq, pnames))
             except:
-                raise self._config.error("Unable to translate pin name: %s" % (
+                raise self._config_error("Unable to translate pin name: %s" % (
                     cmd,))
         self._config_cmds = updated_cmds
 
