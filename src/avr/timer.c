@@ -152,8 +152,8 @@ ISR(TIMER1_COMPA_vect)
         // Run the next software timer
         next = sched_timer_dispatch();
 
-        int16_t diff = next - timer_get();
-        if (likely(diff < 0)) {
+        int16_t diff = timer_get() - next;
+        if (likely(diff >= 0)) {
             // Another timer is pending - briefly allow irqs to fire
             irq_enable();
             if (unlikely(TIFR1 & (1<<OCF1B)))
@@ -163,7 +163,7 @@ ISR(TIMER1_COMPA_vect)
             continue;
         }
 
-        if (likely(diff > TIMER_MIN_TRY_TICKS))
+        if (likely(diff <= -TIMER_MIN_TRY_TICKS))
             // Schedule next timer normally
             goto done;
 
@@ -173,8 +173,8 @@ ISR(TIMER1_COMPA_vect)
             if (unlikely(TIFR1 & (1<<OCF1B)))
                 goto force_defer;
             irq_disable();
-            diff = next - timer_get();
-        } while (diff >= 0);
+            diff = timer_get() - next;
+        } while (diff < 0);
     }
 
 force_defer:
@@ -182,15 +182,13 @@ force_defer:
     irq_disable();
     uint16_t now = timer_get();
     if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
-        goto fail;
+        shutdown("Rescheduled timer in the past");
     timer_repeat_set(now + TIMER_REPEAT_TICKS);
     next = now + TIMER_DEFER_REPEAT_TICKS;
 
 done:
     timer_set(next);
     return;
-fail:
-    shutdown("Rescheduled timer in the past");
 }
 
 // Periodic background task that temporarily boosts priority of
