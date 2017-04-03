@@ -6,7 +6,6 @@ CROSS_PREFIX=avr-
 dirs-y += src/avr lib/pjrc_usb_serial
 
 CFLAGS-y += -mmcu=$(CONFIG_MCU)
-LDFLAGS-y += -Wl,--relax
 
 # Add avr source files
 src-y += avr/main.c avr/timer.c avr/gpio.c avr/misc.c
