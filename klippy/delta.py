@@ -183,18 +183,12 @@ class DeltaKinematics:
 
         origx, origy, origz = move.start_pos[:3]
 
+        accel = move.accel
+        cruise_v = move.cruise_v
         accel_t = move.accel_t
         cruise_end_t = accel_t + move.cruise_t
         accel_d = move.accel_r * move_d
         cruise_end_d = accel_d + move.cruise_r * move_d
-
-        inv_cruise_v = 1. / move.cruise_v
-        inv_accel = 1. / move.accel
-        accel_time_offset = move.start_v * inv_accel
-        accel_multiplier = 2.0 * inv_accel
-        accel_offset = move.start_v**2 * 0.5 * inv_accel
-        decel_time_offset = move.cruise_v * inv_accel + cruise_end_t
-        decel_offset = move.cruise_v**2 * 0.5 * inv_accel + cruise_end_d
 
         for i in StepList:
             # Find point on line of movement closest to tower
@@ -235,44 +229,32 @@ class DeltaKinematics:
             # Generate steps
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
-            step_pos = mcu_stepper.commanded_position
-            step_dist = self.steppers[i].step_dist
-            height = step_pos*step_dist - origz
             if accel_up_d > 0.:
-                count = mcu_stepper.step_delta_accel(
-                    mcu_time - accel_time_offset, accel_up_d,
-                    accel_offset, accel_multiplier, step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
-                height += count * step_dist
+                mcu_stepper.step_delta_accel(
+                    mcu_time, 0., accel_up_d, move.start_v, accel,
+                    origz, closestxy_d, closest_height2, movez_r)
             if cruise_up_d > 0.:
-                count = mcu_stepper.step_delta_const(
-                    mcu_time + accel_t, cruise_up_d,
-                    -accel_d, inv_cruise_v, step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
-                height += count * step_dist
+                mcu_stepper.step_delta_const(
+                    mcu_time + accel_t, accel_d, cruise_up_d, cruise_v,
+                    origz, closestxy_d, closest_height2, movez_r)
             if decel_up_d > 0.:
-                count = mcu_stepper.step_delta_accel(
-                    mcu_time + decel_time_offset, decel_up_d,
-                    -decel_offset, -accel_multiplier, step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
-                height += count * step_dist
+                mcu_stepper.step_delta_accel(
+                    mcu_time + cruise_end_t, cruise_end_d, decel_up_d,
+                    cruise_v, -accel,
+                    origz, closestxy_d, closest_height2, movez_r)
             if accel_down_d > 0.:
-                count = mcu_stepper.step_delta_accel(
-                    mcu_time - accel_time_offset, accel_down_d,
-                    accel_offset, accel_multiplier, -step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
-                height += count * step_dist
+                mcu_stepper.step_delta_accel(
+                    mcu_time, 0., -accel_down_d, move.start_v, accel,
+                    origz, closestxy_d, closest_height2, movez_r)
             if cruise_down_d > 0.:
-                count = mcu_stepper.step_delta_const(
-                    mcu_time + accel_t, cruise_down_d,
-                    -accel_d, inv_cruise_v, -step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
-                height += count * step_dist
+                mcu_stepper.step_delta_const(
+                    mcu_time + accel_t, accel_d, -cruise_down_d, cruise_v,
+                    origz, closestxy_d, closest_height2, movez_r)
             if decel_down_d > 0.:
-                count = mcu_stepper.step_delta_accel(
-                    mcu_time + decel_time_offset, decel_down_d,
-                    -decel_offset, -accel_multiplier, -step_dist,
-                    height, closestxy_d, closest_height2, movez_r)
+                mcu_stepper.step_delta_accel(
+                    mcu_time + cruise_end_t, cruise_end_d, -decel_down_d,
+                    cruise_v, -accel,
+                    origz, closestxy_d, closest_height2, movez_r)
 
 
 ######################################################################
