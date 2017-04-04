@@ -43,6 +43,7 @@ class PrinterStepper:
         dir_pin = config.get('dir_pin')
         mcu = printer.mcu
         self.mcu_stepper = mcu.create_stepper(step_pin, dir_pin)
+        self.mcu_stepper.set_step_distance(self.step_dist)
         enable_pin = config.get('enable_pin', None)
         if enable_pin is not None:
             self.mcu_enable = mcu.create_digital_out(enable_pin, 0)

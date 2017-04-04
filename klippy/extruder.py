@@ -111,12 +111,11 @@ class PrinterExtruder:
             self.stepper.motor_enable(move_time, 1)
             self.need_motor_enable = False
         axis_d = move.axes_d[3]
-        extrude_r = abs(axis_d) / move.move_d
-        inv_accel = 1. / (move.accel * extrude_r)
-
-        start_v = move.start_v * extrude_r
-        cruise_v = move.cruise_v * extrude_r
-        end_v = move.end_v * extrude_r
+        axis_r = abs(axis_d) / move.move_d
+        accel = move.accel * axis_r
+        start_v = move.start_v * axis_r
+        cruise_v = move.cruise_v * axis_r
+        end_v = move.end_v * axis_r
         accel_t, cruise_t, decel_t = move.accel_t, move.cruise_t, move.decel_t
         accel_d = move.accel_r * axis_d
         cruise_d = move.cruise_r * axis_d
@@ -156,7 +155,7 @@ class PrinterExtruder:
                         decel_t = decel_d = 0.
                     elif end_v < 0.:
                         # Split decel phase into decel and retraction
-                        retract_t = -end_v * inv_accel
+                        retract_t = -end_v / accel
                         retract_d = -end_v * 0.5 * retract_t
                         decel_t -= retract_t
                         decel_d = decel_v * 0.5 * decel_t
@@ -165,56 +164,30 @@ class PrinterExtruder:
                         decel_d -= extra_decel_d
 
         # Prepare for steps
-        inv_step_dist = self.stepper.inv_step_dist
-        step_dist = self.stepper.step_dist
         mcu_stepper = self.stepper.mcu_stepper
         mcu_time = mcu_stepper.print_to_mcu_time(move_time)
-        step_pos = mcu_stepper.commanded_position
-        step_offset = step_pos - start_pos * inv_step_dist
 
         # Acceleration steps
-        accel_multiplier = 2.0 * step_dist * inv_accel
         if accel_d:
-            #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_time_offset = start_v * inv_accel
-            accel_sqrt_offset = accel_time_offset**2
-            accel_steps = accel_d * inv_step_dist
-            count = mcu_stepper.step_sqrt(
-                mcu_time - accel_time_offset, accel_steps, step_offset
-                , accel_sqrt_offset, accel_multiplier)
-            step_offset += count - accel_steps
+            mcu_stepper.step_accel(mcu_time, start_pos, accel_d, start_v, accel)
+            start_pos += accel_d
             mcu_time += accel_t
         # Cruising steps
         if cruise_d:
-            #t = pos/cruise_v
-            cruise_multiplier = step_dist / cruise_v
-            cruise_steps = cruise_d * inv_step_dist
-            count = mcu_stepper.step_factor(
-                mcu_time, cruise_steps, step_offset, cruise_multiplier)
-            step_offset += count - cruise_steps
+            mcu_stepper.step_const(mcu_time, start_pos, cruise_d, cruise_v)
+            start_pos += cruise_d
             mcu_time += cruise_t
         # Deceleration steps
         if decel_d:
-            #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
-            decel_time_offset = decel_v * inv_accel
-            decel_sqrt_offset = decel_time_offset**2
-            decel_steps = decel_d * inv_step_dist
-            count = mcu_stepper.step_sqrt(
-                mcu_time + decel_time_offset, decel_steps, step_offset
-                , decel_sqrt_offset, -accel_multiplier)
-            step_offset += count - decel_steps
+            mcu_stepper.step_accel(mcu_time, start_pos, decel_d, decel_v, -accel)
+            start_pos += decel_d
             mcu_time += decel_t
         # Retraction steps
         if retract_d:
-            #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-            accel_time_offset = retract_v * inv_accel
-            accel_sqrt_offset = accel_time_offset**2
-            accel_steps = -retract_d * inv_step_dist
-            count = mcu_stepper.step_sqrt(
-                mcu_time - accel_time_offset, accel_steps, step_offset
-                , accel_sqrt_offset, accel_multiplier)
-
-        self.extrude_pos = start_pos + accel_d + cruise_d + decel_d - retract_d
+            mcu_stepper.step_accel(
+                mcu_time, start_pos, -retract_d, retract_v, accel)
+            start_pos -= retract_d
+        self.extrude_pos = start_pos
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:

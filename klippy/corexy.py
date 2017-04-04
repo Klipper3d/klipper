@@ -111,54 +111,39 @@ class CoreXYKinematics:
     def move(self, move_time, move):
         if self.need_motor_enable:
             self._check_motor_enable(move_time, move)
-        inv_accel = 1. / move.accel
-        inv_cruise_v = 1. / move.cruise_v
         sxp = move.start_pos[0]
         syp = move.start_pos[1]
-        start_pos = (sxp + syp, sxp - syp, move.start_pos[2])
+        move_start_pos = (sxp + syp, sxp - syp, move.start_pos[2])
         exp = move.end_pos[0]
         eyp = move.end_pos[1]
-        end_pos = (exp + eyp, exp - eyp, move.start_pos[2])
-        axes_d = (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1],
-                  move.axes_d[2])
+        axes_d = ((exp + eyp) - move_start_pos[0],
+                  (exp - eyp) - move_start_pos[1], move.axes_d[2])
         for i in StepList:
-            if not axes_d[i]:
+            axis_d = axes_d[i]
+            if not axis_d:
                 continue
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
-            step_pos = mcu_stepper.commanded_position
-            inv_step_dist = self.steppers[i].inv_step_dist
-            step_offset = step_pos - start_pos[i] * inv_step_dist
-            steps = axes_d[i] * inv_step_dist
-            move_step_d = move.move_d / abs(steps)
+            start_pos = move_start_pos[i]
+            axis_r = abs(axis_d) / move.move_d
+            accel = move.accel * axis_r
+            cruise_v = move.cruise_v * axis_r
 
             # Acceleration steps
-            accel_multiplier = 2.0 * move_step_d * inv_accel
             if move.accel_r:
-                #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
-                accel_time_offset = move.start_v * inv_accel
-                accel_sqrt_offset = accel_time_offset**2
-                accel_steps = move.accel_r * steps
-                count = mcu_stepper.step_sqrt(
-                    mcu_time - accel_time_offset, accel_steps, step_offset
-                    , accel_sqrt_offset, accel_multiplier)
-                step_offset += count - accel_steps
+                accel_d = move.accel_r * axis_d
+                mcu_stepper.step_accel(
+                    mcu_time, start_pos, accel_d, move.start_v * axis_r, accel)
+                start_pos += accel_d
                 mcu_time += move.accel_t
             # Cruising steps
             if move.cruise_r:
-                #t = pos/cruise_v
-                cruise_multiplier = move_step_d * inv_cruise_v
-                cruise_steps = move.cruise_r * steps
-                count = mcu_stepper.step_factor(
-                    mcu_time, cruise_steps, step_offset, cruise_multiplier)
-                step_offset += count - cruise_steps
+                cruise_d = move.cruise_r * axis_d
+                mcu_stepper.step_const(mcu_time, start_pos, cruise_d, cruise_v)
+                start_pos += cruise_d
                 mcu_time += move.cruise_t
             # Deceleration steps
             if move.decel_r:
-                #t = cruise_v/accel - sqrt((cruise_v/accel)**2 - 2*pos/accel)
-                decel_time_offset = move.cruise_v * inv_accel
-                decel_sqrt_offset = decel_time_offset**2
-                decel_steps = move.decel_r * steps
-                count = mcu_stepper.step_sqrt(
-                    mcu_time + decel_time_offset, decel_steps, step_offset
-                    , decel_sqrt_offset, -accel_multiplier)
+                decel_d = move.decel_r * axis_d
+                mcu_stepper.step_accel(
+                    mcu_time, start_pos, decel_d, cruise_v, -accel)
