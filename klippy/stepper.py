@@ -99,4 +99,4 @@ class PrinterStepper:
             raise homing.EndstopError(
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, pos, self.homing_endstop_phase))
-        return delta
+        return delta * self.step_dist

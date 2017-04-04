@@ -69,10 +69,14 @@ class MCU_stepper:
     def get_oid(self):
         return self._oid
     def set_position(self, pos):
-        self._mcu_position_offset += self._commanded_pos - pos
-        self._commanded_pos = pos
+        if pos >= 0.:
+            steppos = int(pos * self._inv_step_dist + 0.5)
+        else:
+            steppos = int(pos * self._inv_step_dist - 0.5)
+        self._mcu_position_offset += self._commanded_pos - steppos
+        self._commanded_pos = steppos
     def get_commanded_position(self):
-        return self._commanded_pos
+        return self._commanded_pos * self._step_dist
     def get_mcu_position(self):
         return self._commanded_pos + self._mcu_position_offset
     def note_homing_start(self, homing_clock):

@@ -59,10 +59,9 @@ class DeltaKinematics:
         for stepper in self.steppers:
             stepper.set_max_jerk(max_xy_halt_velocity, max_accel)
     def _cartesian_to_actuator(self, coord):
-        return [int((math.sqrt(self.arm_length2
-                               - (self.towers[i][0] - coord[0])**2
-                               - (self.towers[i][1] - coord[1])**2) + coord[2])
-                    * self.steppers[i].inv_step_dist + 0.5)
+        return [math.sqrt(self.arm_length2
+                          - (self.towers[i][0] - coord[0])**2
+                          - (self.towers[i][1] - coord[1])**2) + coord[2]
                 for i in StepList]
     def _actuator_to_cartesian(self, pos):
         # Based on code from Smoothieware
@@ -118,8 +117,7 @@ class DeltaKinematics:
         homing_state.home(list(coord), homepos, self.steppers
                           , s.homing_speed/2.0, second_home=True)
         # Set final homed position
-        coord = [(s.mcu_stepper.get_commanded_position() + s.get_homed_offset())
-                 * s.step_dist
+        coord = [s.mcu_stepper.get_commanded_position() + s.get_homed_offset()
                  for s in self.steppers]
         homing_state.set_homed_position(self._actuator_to_cartesian(coord))
     def motor_off(self, move_time):

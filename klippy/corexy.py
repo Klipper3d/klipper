@@ -26,12 +26,7 @@ class CoreXYKinematics:
     def set_position(self, newpos):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
-            s = self.steppers[i]
-            if pos[i] >= 0.:
-                steppos = int(pos[i]*s.inv_step_dist + 0.5)
-            else:
-                steppos = int(pos[i]*s.inv_step_dist - 0.5)
-            s.mcu_stepper.set_position(steppos)
+            self.steppers[i].mcu_stepper.set_position(pos[i])
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
@@ -63,8 +58,7 @@ class CoreXYKinematics:
                 list(coord), homepos, [s], s.homing_speed/2.0, second_home=True)
             if axis == 2:
                 # Support endstop phase detection on Z axis
-                coord[axis] = (s.position_endstop
-                               + s.get_homed_offset()*s.step_dist)
+                coord[axis] = s.position_endstop + s.get_homed_offset()
                 homing_state.set_homed_position(coord)
     def motor_off(self, move_time):
         self.limits = [(1.0, -1.0)] * 3
