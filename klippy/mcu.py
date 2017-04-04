@@ -29,7 +29,7 @@ class MCU_stepper:
         self._dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
         self._commanded_pos = 0
         self._step_dist = self._inv_step_dist = 1.
-        self._velocity_factor = self._inv_accel_factor = 0.
+        self._velocity_factor = self._accel_factor = 0.
         self._mcu_position_offset = 0
         self._mcu_freq = self._min_stop_interval = 0.
         self._reset_cmd = self._get_position_cmd = None
@@ -43,7 +43,7 @@ class MCU_stepper:
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         self._velocity_factor = 1. / (self._mcu_freq * self._step_dist)
-        self._inv_accel_factor = self._mcu_freq**2 * self._step_dist
+        self._accel_factor = 1. / (self._mcu_freq**2 * self._step_dist)
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
         self._mcu.add_config_cmd(
@@ -119,29 +119,21 @@ class MCU_stepper:
         else:
             self._commanded_pos -= 1
     def step_const(self, mcu_time, start_pos, dist, cruise_v):
-        #t = pos/cruise_v
         inv_step_dist = self._inv_step_dist
         step_offset = self._commanded_pos - start_pos * inv_step_dist
-        steps = dist * inv_step_dist
-        count = self._ffi_lib.stepcompress_push_factor(
-            self._stepqueue, steps, step_offset,
-            mcu_time * self._mcu_freq, 1. / (cruise_v * self._velocity_factor))
+        count = self._ffi_lib.stepcompress_push_const(
+            self._stepqueue, mcu_time * self._mcu_freq, step_offset,
+            dist * inv_step_dist, cruise_v * self._velocity_factor)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count
     def step_accel(self, mcu_time, start_pos, dist, start_v, accel):
-        #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
         inv_step_dist = self._inv_step_dist
-        mcu_freq = self._mcu_freq
-        inv_accel = 1. / accel
-        time_offset = start_v * inv_accel * mcu_freq
-        sqrt_offset = time_offset**2
         step_offset = self._commanded_pos - start_pos * inv_step_dist
-        steps = dist * inv_step_dist
-        clock = mcu_time * mcu_freq - time_offset
-        count = self._ffi_lib.stepcompress_push_sqrt(
-            self._stepqueue, steps, step_offset, clock,
-            sqrt_offset, 2. * inv_accel * self._inv_accel_factor)
+        count = self._ffi_lib.stepcompress_push_accel(
+            self._stepqueue, mcu_time * self._mcu_freq, step_offset,
+            dist * inv_step_dist, start_v * self._velocity_factor,
+            accel * self._accel_factor)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count

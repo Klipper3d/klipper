@@ -465,11 +465,10 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
 }
 
 // Schedule 'steps' number of steps with a constant time between steps
-// using the formula: step_clock = clock_offset + step_num*factor
+// using the formula: step_clock = clock_offset + step_num/cruise_sv
 int32_t
-stepcompress_push_factor(struct stepcompress *sc
-                         , double steps, double step_offset
-                         , double clock_offset, double factor)
+stepcompress_push_const(struct stepcompress *sc, double clock_offset
+                        , double step_offset, double steps, double cruise_sv)
 {
     // Calculate number of steps to take
     int sdir = 1;
@@ -481,8 +480,8 @@ stepcompress_push_factor(struct stepcompress *sc
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 10000000) {
         if (count && steps) {
-            errorf("push_factor invalid count %d %f %f %f %f"
-                   , sc->oid, steps, step_offset, clock_offset, factor);
+            errorf("push_const invalid count %d %f %f %f %f"
+                   , sc->oid, clock_offset, step_offset, steps, cruise_sv);
             return ERROR_RET;
         }
         return 0;
@@ -494,6 +493,7 @@ stepcompress_push_factor(struct stepcompress *sc
 
     // Calculate each step time
     clock_offset += 0.5;
+    double factor = 1. / cruise_sv;
     double pos = step_offset + .5;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     while (count--) {
@@ -507,11 +507,14 @@ stepcompress_push_factor(struct stepcompress *sc
     return res;
 }
 
-// Schedule 'steps' number of steps using the formula:
-//  step_clock = clock_offset + sqrt(step_num*factor + sqrt_offset)
+// Schedule 'steps' number of steps at constant acceleration. It uses
+// the formula:
+//  step_clock = (clock_offset + sqrt(2*step_num/accel + (start_sv/accel)**2)
+//                - start_sv/accel)
 int32_t
-stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
-                       , double clock_offset, double sqrt_offset, double factor)
+stepcompress_push_accel(struct stepcompress *sc, double clock_offset
+                        , double step_offset, double steps
+                        , double start_sv, double accel)
 {
     // Calculate number of steps to take
     int sdir = 1;
@@ -523,9 +526,8 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 10000000) {
         if (count && steps) {
-            errorf("push_sqrt invalid count %d %f %f %f %f %f"
-                   , sc->oid, steps, step_offset, clock_offset, sqrt_offset
-                   , factor);
+            errorf("push_accel invalid count %d %f %f %f %f %f"
+                   , sc->oid, clock_offset, step_offset, steps, start_sv, accel);
             return ERROR_RET;
         }
         return 0;
@@ -536,8 +538,10 @@ stepcompress_push_sqrt(struct stepcompress *sc, double steps, double step_offset
     int res = sdir ? count : -count;
 
     // Calculate each step time
-    clock_offset += 0.5;
-    double pos = step_offset + .5 + sqrt_offset/factor;
+    double inv_accel = 1. / accel;
+    double factor = 2. * inv_accel;
+    clock_offset += 0.5 - start_sv * inv_accel;
+    double pos = step_offset + .5 + .5 * start_sv*start_sv * inv_accel;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     while (count--) {
         int ret = check_expand(sc, &qn, &qend);
