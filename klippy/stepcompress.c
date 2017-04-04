@@ -275,22 +275,6 @@ check_line(struct stepcompress *sc, struct step_move move)
  * Step compress interface
  ****************************************************************/
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-
-// Wrapper around sqrt() to handle small negative numbers
-static double
-_safe_sqrt(double v)
-{
-    // Due to floating point truncation, it's possible to get a small
-    // negative number - treat it as zero.
-    if (v < -0.001)
-        errorf("safe_sqrt of %.9f", v);
-    return 0.;
-}
-static inline double safe_sqrt(double v) {
-    return likely(v >= 0.) ? sqrt(v) : _safe_sqrt(v);
-}
-
 // Allocate a new 'stepcompress' object
 struct stepcompress *
 stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
@@ -378,6 +362,8 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     return 0;
 }
 
+#define likely(x)       __builtin_expect(!!(x), 1)
+
 // Check if the internal queue needs to be expanded, and expand if so
 static int
 _check_expand(struct stepcompress *sc, uint64_t *qn)
@@ -403,6 +389,62 @@ check_expand(struct stepcompress *sc, uint64_t **pqn, uint64_t **pqend)
     *pqn = sc->queue_next;
     *pqend = sc->queue_end;
     return 0;
+}
+
+// Reset the internal state of the stepcompress object
+int
+stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+    sc->last_step_clock = last_step_clock;
+    sc->sdir = -1;
+    return 0;
+}
+
+// Indicate the stepper is in homing mode (or done homing if zero)
+int
+stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+    sc->homing_clock = homing_clock;
+    return 0;
+}
+
+// Queue an mcu command to go out in order with stepper commands
+int
+stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+
+    struct queue_message *qm = message_alloc_and_encode(data, len);
+    qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
+    list_add_tail(&qm->node, &sc->msg_queue);
+    return 0;
+}
+
+
+/****************************************************************
+ * Motion to step conversions
+ ****************************************************************/
+
+// Wrapper around sqrt() to handle small negative numbers
+static double
+_safe_sqrt(double v)
+{
+    // Due to floating point truncation, it's possible to get a small
+    // negative number - treat it as zero.
+    if (v < -0.001)
+        errorf("safe_sqrt of %.9f", v);
+    return 0.;
+}
+static inline double safe_sqrt(double v) {
+    return likely(v >= 0.) ? sqrt(v) : _safe_sqrt(v);
 }
 
 // Schedule a step event at the specified step_clock time
@@ -623,43 +665,6 @@ stepcompress_push_delta_accel(
     }
     sc->queue_next = qn;
     return res;
-}
-
-// Reset the internal state of the stepcompress object
-int
-stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-    sc->last_step_clock = last_step_clock;
-    sc->sdir = -1;
-    return 0;
-}
-
-// Indicate the stepper is in homing mode (or done homing if zero)
-int
-stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-    sc->homing_clock = homing_clock;
-    return 0;
-}
-
-// Queue an mcu command to go out in order with stepper commands
-int
-stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->req_clock = sc->homing_clock ?: sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
-    return 0;
 }
 
 
