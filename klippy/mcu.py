@@ -27,7 +27,7 @@ class MCU_stepper:
         self._oid = mcu.create_oid(self)
         self._step_pin, pullup, self._invert_step = parse_pin_extras(step_pin)
         self._dir_pin, pullup, self._invert_dir = parse_pin_extras(dir_pin)
-        self.commanded_position = 0
+        self._commanded_pos = 0
         self._step_dist = self._inv_step_dist = 1.
         self._velocity_factor = self._inv_accel_factor = 0.
         self._mcu_position_offset = 0
@@ -69,10 +69,12 @@ class MCU_stepper:
     def get_oid(self):
         return self._oid
     def set_position(self, pos):
-        self._mcu_position_offset += self.commanded_position - pos
-        self.commanded_position = pos
+        self._mcu_position_offset += self._commanded_pos - pos
+        self._commanded_pos = pos
+    def get_commanded_position(self):
+        return self._commanded_pos
     def get_mcu_position(self):
-        return self.commanded_position + self._mcu_position_offset
+        return self._commanded_pos + self._mcu_position_offset
     def note_homing_start(self, homing_clock):
         ret = self._ffi_lib.stepcompress_set_homing(
             self._stepqueue, homing_clock)
@@ -92,7 +94,7 @@ class MCU_stepper:
         pos = params['pos']
         if self._invert_dir:
             pos = -pos
-        self._mcu_position_offset = pos - self.commanded_position
+        self._mcu_position_offset = pos - self._commanded_pos
     def reset_step_clock(self, mcu_time):
         clock = int(mcu_time * self._mcu_freq)
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, clock)
@@ -109,20 +111,20 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
         if sdir:
-            self.commanded_position += 1
+            self._commanded_pos += 1
         else:
-            self.commanded_position -= 1
+            self._commanded_pos -= 1
     def step_const(self, mcu_time, start_pos, dist, cruise_v):
         #t = pos/cruise_v
         inv_step_dist = self._inv_step_dist
-        step_offset = self.commanded_position - start_pos * inv_step_dist
+        step_offset = self._commanded_pos - start_pos * inv_step_dist
         steps = dist * inv_step_dist
         count = self._ffi_lib.stepcompress_push_factor(
             self._stepqueue, steps, step_offset,
             mcu_time * self._mcu_freq, 1. / (cruise_v * self._velocity_factor))
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
-        self.commanded_position += count
+        self._commanded_pos += count
     def step_accel(self, mcu_time, start_pos, dist, start_v, accel):
         #t = sqrt(2*pos/accel + (start_v/accel)**2) - start_v/accel
         inv_step_dist = self._inv_step_dist
@@ -130,7 +132,7 @@ class MCU_stepper:
         inv_accel = 1. / accel
         time_offset = start_v * inv_accel * mcu_freq
         sqrt_offset = time_offset**2
-        step_offset = self.commanded_position - start_pos * inv_step_dist
+        step_offset = self._commanded_pos - start_pos * inv_step_dist
         steps = dist * inv_step_dist
         clock = mcu_time * mcu_freq - time_offset
         count = self._ffi_lib.stepcompress_push_sqrt(
@@ -138,12 +140,12 @@ class MCU_stepper:
             sqrt_offset, 2. * inv_accel * self._inv_accel_factor)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
-        self.commanded_position += count
+        self._commanded_pos += count
     def step_delta_const(self, mcu_time, start_pos, dist, cruise_v
                          , height_base, closestxy_d, closest_height2, movez_r):
         mcu_freq = self._mcu_freq
         step_dist = self._step_dist
-        height = self.commanded_position*step_dist - height_base
+        height = self._commanded_pos*step_dist - height_base
         if dist < 0:
             dist = -dist
             step_dist = -step_dist
@@ -153,7 +155,7 @@ class MCU_stepper:
             , height, closestxy_d, closest_height2, movez_r)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
-        self.commanded_position += count
+        self._commanded_pos += count
     def step_delta_accel(self, mcu_time, start_pos, dist, start_v, accel
                          , height_base, closestxy_d, closest_height2, movez_r):
         inv_step_dist = self._inv_step_dist
@@ -162,7 +164,7 @@ class MCU_stepper:
         time_offset = start_v * inv_accel * mcu_freq
         accel_offset = start_v**2 * 0.5 * inv_accel
         step_dist = self._step_dist
-        height = self.commanded_position*step_dist - height_base
+        height = self._commanded_pos*step_dist - height_base
         if dist < 0:
             dist = -dist
             step_dist = -step_dist
@@ -173,7 +175,7 @@ class MCU_stepper:
             , height, closestxy_d, closest_height2, movez_r)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
-        self.commanded_position += count
+        self._commanded_pos += count
 
 class MCU_endstop:
     error = error

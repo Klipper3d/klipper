@@ -118,7 +118,7 @@ class DeltaKinematics:
         homing_state.home(list(coord), homepos, self.steppers
                           , s.homing_speed/2.0, second_home=True)
         # Set final homed position
-        coord = [(s.mcu_stepper.commanded_position + s.get_homed_offset())
+        coord = [(s.mcu_stepper.get_commanded_position() + s.get_homed_offset())
                  * s.step_dist
                  for s in self.steppers]
         homing_state.set_homed_position(self._actuator_to_cartesian(coord))
