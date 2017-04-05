@@ -25,13 +25,13 @@ defs_stepcompress = """
     int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
         , double step_offset, double steps, double start_sv, double accel);
     int32_t stepcompress_push_delta_const(struct stepcompress *sc
-        , double clock_offset, double dist, double start_pos
-        , double inv_velocity, double step_dist, double height
-        , double closestxy_d, double closest_height2, double movez_r);
+        , double clock_offset, double start_pos, double steps, double cruise_sv
+        , double height, double closestxy_sd
+        , double closest_height2, double movez_r);
     int32_t stepcompress_push_delta_accel(struct stepcompress *sc
-        , double clock_offset, double dist, double start_pos
-        , double accel_multiplier, double step_dist, double height
-        , double closestxy_d, double closest_height2, double movez_r);
+        , double clock_offset, double start_pos, double steps, double start_sv
+        , double accel, double height, double closestxy_sd
+        , double closest_height2, double movez_r);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
