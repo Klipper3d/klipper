@@ -128,16 +128,14 @@ class MCU_stepper:
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count
-    def step_delta(self, mcu_time, start_pos, dist, start_v, accel
-                   , height_base, closestxy_d, closest_height2, movez_r):
+    def step_delta(self, mcu_time, dist, start_v, accel
+                   , height_base, startxy_d, arm_d, movez_r):
         inv_step_dist = self._inv_step_dist
         height = self._commanded_pos - height_base * inv_step_dist
         count = self._ffi_lib.stepcompress_push_delta(
-            self._stepqueue, mcu_time * self._mcu_freq,
-            -start_pos * inv_step_dist, dist * inv_step_dist,
+            self._stepqueue, mcu_time * self._mcu_freq, dist * inv_step_dist,
             start_v * self._velocity_factor, accel * self._accel_factor,
-            height, closestxy_d * inv_step_dist,
-            closest_height2 * inv_step_dist**2, movez_r)
+            height, startxy_d * inv_step_dist, arm_d * inv_step_dist, movez_r)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count

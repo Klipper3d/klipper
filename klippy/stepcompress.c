@@ -533,25 +533,26 @@ stepcompress_push_const(
 // Schedule steps using delta kinematics
 int32_t
 stepcompress_push_delta(
-    struct stepcompress *sc, double clock_offset, double start_pos
-    , double steps, double start_sv, double accel
-    , double height, double closestxy_sd, double closest_height2, double movez_r)
+    struct stepcompress *sc, double clock_offset, double move_sd
+    , double start_sv, double accel
+    , double height, double startxy_sd, double arm_sd, double movez_r)
 {
     // Calculate number of steps to take
     double step_dist = 1.;
-    if (steps < 0) {
+    if (move_sd < 0) {
         step_dist = -1.;
-        steps = -steps;
+        move_sd = -move_sd;
     }
     double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
-    double reldist = closestxy_sd - movexy_r*steps;
-    double end_height = safe_sqrt(closest_height2 - reldist*reldist);
-    int count = (end_height - height + movez_r*steps) * step_dist + .5;
+    double arm_sd2 = arm_sd * arm_sd;
+    double endxy_sd = startxy_sd - movexy_r*move_sd;
+    double end_height = safe_sqrt(arm_sd2 - endxy_sd*endxy_sd);
+    int count = (end_height + movez_r*move_sd - height) * step_dist + .5;
     if (count <= 0 || count > 10000000) {
         if (count) {
-            errorf("push_delta invalid count %d %d %f %f %f %f %f %f %f %f %f"
-                   , sc->oid, count, clock_offset, start_pos, steps, start_sv
-                   , accel, height, closestxy_sd, closest_height2, movez_r);
+            errorf("push_delta invalid count %d %d %f %f %f %f %f %f %f %f"
+                   , sc->oid, count, clock_offset, move_sd, start_sv, accel
+                   , height, startxy_sd, arm_sd, movez_r);
             return ERROR_RET;
         }
         return 0;
@@ -563,7 +564,7 @@ stepcompress_push_delta(
 
     // Calculate each step time
     clock_offset += 0.5;
-    start_pos += movexy_r*closestxy_sd;
+    double start_pos = movexy_r*startxy_sd;
     height += .5 * step_dist;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
@@ -575,7 +576,7 @@ stepcompress_push_delta(
                 int ret = check_expand(sc, &qn, &qend);
                 if (ret)
                     return ret;
-                double v = safe_sqrt(closest_height2 - height*height);
+                double v = safe_sqrt(arm_sd2 - height*height);
                 double pos = start_pos + (step_dist > 0. ? -v : v);
                 *qn++ = clock_offset + pos * inv_cruise_sv;
                 height += step_dist;
@@ -597,8 +598,8 @@ stepcompress_push_delta(
                 int ret = check_expand(sc, &qn, &qend);
                 if (ret)
                     return ret;
-                double relheight = movexy_r*height - movez_r*closestxy_sd;
-                double v = safe_sqrt(closest_height2 - relheight*relheight);
+                double relheight = movexy_r*height - movez_r*startxy_sd;
+                double v = safe_sqrt(arm_sd2 - relheight*relheight);
                 double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
                 *qn++ = clock_offset + pos * inv_cruise_sv;
                 height += step_dist;
@@ -614,8 +615,8 @@ stepcompress_push_delta(
             int ret = check_expand(sc, &qn, &qend);
             if (ret)
                 return ret;
-            double relheight = movexy_r*height - movez_r*closestxy_sd;
-            double v = safe_sqrt(closest_height2 - relheight*relheight);
+            double relheight = movexy_r*height - movez_r*startxy_sd;
+            double v = safe_sqrt(arm_sd2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
             v = safe_sqrt(pos * accel_multiplier);
             *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);

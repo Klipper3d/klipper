@@ -162,22 +162,23 @@ class DeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def move(self, move_time, move):
+        if self.need_motor_enable:
+            self._check_motor_enable(move_time)
         axes_d = move.axes_d
         move_d = movexy_d = move.move_d
         movexy_r = 1.
         movez_r = 0.
         inv_movexy_d = 1. / movexy_d
         if not axes_d[0] and not axes_d[1]:
+            # Z only move
             movez_r = axes_d[2] * inv_movexy_d
             movexy_d = movexy_r = inv_movexy_d = 0.
         elif axes_d[2]:
+            # XY+Z move
             movexy_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
             movexy_r = movexy_d * inv_movexy_d
             movez_r = axes_d[2] * inv_movexy_d
             inv_movexy_d = 1. / movexy_d
-
-        if self.need_motor_enable:
-            self._check_motor_enable(move_time)
 
         origx, origy, origz = move.start_pos[:3]
 
@@ -189,15 +190,16 @@ class DeltaKinematics:
         cruise_end_d = accel_d + move.cruise_r * move_d
 
         for i in StepList:
-            # Find point on line of movement closest to tower
+            # Calculate a virtual tower along the line of movement at
+            # the point closest to this stepper's tower.
             towerx_d = self.towers[i][0] - origx
             towery_d = self.towers[i][1] - origy
-            closestxy_d = (towerx_d*axes_d[0] + towery_d*axes_d[1])*inv_movexy_d
-            tangentxy_d2 = towerx_d**2 + towery_d**2 - closestxy_d**2
-            closest_height2 = self.arm_length2 - tangentxy_d2
+            vt_startxy_d = (towerx_d*axes_d[0] + towery_d*axes_d[1])*inv_movexy_d
+            tangentxy_d2 = towerx_d**2 + towery_d**2 - vt_startxy_d**2
+            vt_arm_d = math.sqrt(self.arm_length2 - tangentxy_d2)
 
             # Calculate accel/cruise/decel portions of move
-            reversexy_d = closestxy_d + math.sqrt(closest_height2)*movez_r
+            reversexy_d = vt_startxy_d + vt_arm_d*movez_r
             accel_up_d = cruise_up_d = decel_up_d = 0.
             accel_down_d = cruise_down_d = decel_down_d = 0.
             if reversexy_d <= 0.:
@@ -229,30 +231,36 @@ class DeltaKinematics:
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
             if accel_up_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time, 0., accel_up_d, move.start_v, accel,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    mcu_time, accel_up_d, move.start_v, accel,
+                    origz, vt_startxy_d, vt_arm_d, movez_r)
             if cruise_up_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time + accel_t, accel_d, cruise_up_d, cruise_v, 0.,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    mcu_time + accel_t, cruise_up_d - accel_d, cruise_v, 0.,
+                    origz + accel_d*movez_r, vt_startxy_d - accel_d*movexy_r,
+                    vt_arm_d, movez_r)
             if decel_up_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time + cruise_end_t, cruise_end_d, decel_up_d,
+                    mcu_time + cruise_end_t, decel_up_d - cruise_end_d,
                     cruise_v, -accel,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    origz + cruise_end_d*movez_r,
+                    vt_startxy_d - cruise_end_d*movexy_r,
+                    vt_arm_d, movez_r)
             if accel_down_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time, 0., -accel_down_d, move.start_v, accel,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    mcu_time, -accel_down_d, move.start_v, accel,
+                    origz, vt_startxy_d, vt_arm_d, movez_r)
             if cruise_down_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time + accel_t, accel_d, -cruise_down_d, cruise_v, 0.,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    mcu_time + accel_t, accel_d - cruise_down_d, cruise_v, 0.,
+                    origz + accel_d*movez_r, vt_startxy_d - accel_d*movexy_r,
+                    vt_arm_d, movez_r)
             if decel_down_d > 0.:
                 mcu_stepper.step_delta(
-                    mcu_time + cruise_end_t, cruise_end_d, -decel_down_d,
+                    mcu_time + cruise_end_t, cruise_end_d - decel_down_d,
                     cruise_v, -accel,
-                    origz, closestxy_d, closest_height2, movez_r)
+                    origz + cruise_end_d*movez_r,
+                    vt_startxy_d - cruise_end_d*movexy_r,
+                    vt_arm_d, movez_r)
 
 
 ######################################################################
