@@ -6,7 +6,7 @@
 import os, logging
 import cffi
 
-COMPILE_CMD = "gcc -Wall -g -O -shared -fPIC -o %s %s"
+COMPILE_CMD = "gcc -Wall -g -O2 -shared -fPIC -o %s %s"
 SOURCE_FILES = ['stepcompress.c', 'serialqueue.c', 'pyhelper.c']
 DEST_LIB = "c_helper.so"
 OTHER_FILES = ['list.h', 'serialqueue.h', 'pyhelper.h']

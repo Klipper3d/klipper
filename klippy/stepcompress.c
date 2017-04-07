@@ -362,16 +362,13 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     return 0;
 }
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-
 // Check if the internal queue needs to be expanded, and expand if so
 static int
-_check_expand(struct stepcompress *sc, uint64_t *qn)
+_check_push(struct stepcompress *sc)
 {
-    sc->queue_next = qn;
-    if (qn - sc->queue_pos > 65535 + 2000) {
+    if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
-        int ret = stepcompress_flush(sc, *(qn - 65535));
+        int ret = stepcompress_flush(sc, *(sc->queue_next - 65535));
         if (ret)
             return ret;
     }
@@ -379,15 +376,18 @@ _check_expand(struct stepcompress *sc, uint64_t *qn)
     return 0;
 }
 static inline int
-check_expand(struct stepcompress *sc, uint64_t **pqn, uint64_t **pqend)
+check_push(struct stepcompress *sc, uint64_t **pqnext, uint64_t **pqend
+           , uint64_t c)
 {
-    if (likely(*pqn < *pqend))
-        return 0;
-    int ret = _check_expand(sc, *pqn);
-    if (ret)
-        return ret;
-    *pqn = sc->queue_next;
-    *pqend = sc->queue_end;
+    if (unlikely(*pqnext >= *pqend)) {
+        sc->queue_next = *pqnext;
+        int ret = _check_push(sc);
+        if (ret)
+            return ret;
+        *pqnext = sc->queue_next;
+        *pqend = sc->queue_end;
+    }
+    *(*pqnext)++ = c;
     return 0;
 }
 
@@ -455,12 +455,11 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
     if (ret)
         return ret;
     step_clock += 0.5;
-    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    ret = check_expand(sc, &qn, &qend);
+    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
+    ret = check_push(sc, &qnext, &qend, step_clock);
     if (ret)
         return ret;
-    *qn++ = step_clock;
-    sc->queue_next = qn;
+    sc->queue_next = qnext;
     return 0;
 }
 
@@ -500,15 +499,15 @@ stepcompress_push_const(
     // Calculate each step time
     clock_offset += 0.5;
     double pos = step_offset + .5;
-    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
         double inv_cruise_sv = 1. / start_sv;
         while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
+            uint64_t c = clock_offset + pos*inv_cruise_sv;
+            int ret = check_push(sc, &qnext, &qend, c);
             if (ret)
                 return ret;
-            *qn++ = clock_offset + pos*inv_cruise_sv;
             pos += 1.0;
         }
     } else {
@@ -518,15 +517,15 @@ stepcompress_push_const(
         pos += .5 * start_sv*start_sv * inv_accel;
         double accel_multiplier = 2. * inv_accel;
         while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
+            double v = safe_sqrt(pos * accel_multiplier);
+            uint64_t c = clock_offset + (accel_multiplier >= 0. ? v : -v);
+            int ret = check_push(sc, &qnext, &qend, c);
             if (ret)
                 return ret;
-            double v = safe_sqrt(pos * accel_multiplier);
-            *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
             pos += 1.0;
         }
     }
-    sc->queue_next = qn;
+    sc->queue_next = qnext;
     return res;
 }
 
@@ -561,42 +560,42 @@ _stepcompress_push_delta(
     clock_offset += 0.5;
     height += (sdir ? .5 : -.5);
     double start_pos = movexy_r*startxy_sd;
-    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
+    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
         double inv_cruise_sv = 1. / start_sv;
         if (!movez_r) {
             // Optmized case for common XY only moves (no Z movement)
             while (count--) {
-                int ret = check_expand(sc, &qn, &qend);
-                if (ret)
-                    return ret;
                 double v = safe_sqrt(arm_sd2 - height*height);
                 double pos = start_pos + (sdir ? -v : v);
-                *qn++ = clock_offset + pos * inv_cruise_sv;
+                uint64_t c = clock_offset + pos * inv_cruise_sv;
+                int ret = check_push(sc, &qnext, &qend, c);
+                if (ret)
+                    return ret;
                 height += (sdir ? 1. : -1.);
             }
         } else if (!movexy_r) {
             // Optmized case for Z only moves
             double v = (sdir ? -end_height : end_height);
             while (count--) {
-                int ret = check_expand(sc, &qn, &qend);
+                double pos = start_pos + movez_r*height + v;
+                uint64_t c = clock_offset + pos * inv_cruise_sv;
+                int ret = check_push(sc, &qnext, &qend, c);
                 if (ret)
                     return ret;
-                double pos = start_pos + movez_r*height + v;
-                *qn++ = clock_offset + pos * inv_cruise_sv;
                 height += (sdir ? 1. : -1.);
             }
         } else {
             // General case (handles XY+Z moves)
             while (count--) {
-                int ret = check_expand(sc, &qn, &qend);
-                if (ret)
-                    return ret;
                 double relheight = movexy_r*height - movez_r*startxy_sd;
                 double v = safe_sqrt(arm_sd2 - relheight*relheight);
                 double pos = start_pos + movez_r*height + (sdir ? -v : v);
-                *qn++ = clock_offset + pos * inv_cruise_sv;
+                uint64_t c = clock_offset + pos * inv_cruise_sv;
+                int ret = check_push(sc, &qnext, &qend, c);
+                if (ret)
+                    return ret;
                 height += (sdir ? 1. : -1.);
             }
         }
@@ -607,18 +606,18 @@ _stepcompress_push_delta(
         start_pos += 0.5 * start_sv*start_sv * inv_accel;
         double accel_multiplier = 2. * inv_accel;
         while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
-            if (ret)
-                return ret;
             double relheight = movexy_r*height - movez_r*startxy_sd;
             double v = safe_sqrt(arm_sd2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (sdir ? -v : v);
             v = safe_sqrt(pos * accel_multiplier);
-            *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
+            uint64_t c = clock_offset + (accel_multiplier >= 0. ? v : -v);
+            int ret = check_push(sc, &qnext, &qend, c);
+            if (ret)
+                return ret;
             height += (sdir ? 1. : -1.);
         }
     }
-    sc->queue_next = qn;
+    sc->queue_next = qnext;
     return res;
 }
 
