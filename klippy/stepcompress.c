@@ -530,85 +530,9 @@ stepcompress_push_const(
     return res;
 }
 
-// Schedule 'count' number of steps using the delta kinematic const speed
+// Schedule steps using delta kinematics
 int32_t
-stepcompress_push_delta_const(
-    struct stepcompress *sc, double clock_offset, double start_pos
-    , double steps, double cruise_sv
-    , double height, double closestxy_sd, double closest_height2, double movez_r)
-{
-    // Calculate number of steps to take
-    double step_dist = 1.;
-    if (steps < 0) {
-        step_dist = -1.;
-        steps = -steps;
-    }
-    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
-    double reldist = closestxy_sd - movexy_r*steps;
-    double end_height = safe_sqrt(closest_height2 - reldist*reldist);
-    int count = (end_height - height + movez_r*steps) * step_dist + .5;
-    if (count <= 0 || count > 10000000) {
-        if (count) {
-            errorf("push_delta_const invalid count %d %d %f %f %f %f %f %f %f %f"
-                   , sc->oid, count, clock_offset, start_pos, steps, cruise_sv
-                   , height, closestxy_sd, closest_height2, movez_r);
-            return ERROR_RET;
-        }
-        return 0;
-    }
-    int ret = set_next_step_dir(sc, step_dist > 0.);
-    if (ret)
-        return ret;
-    int res = step_dist > 0. ? count : -count;
-
-    // Calculate each step time
-    double inv_cruise_sv = 1. / cruise_sv;
-    clock_offset += 0.5;
-    start_pos += movexy_r*closestxy_sd;
-    height += .5 * step_dist;
-    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    if (!movez_r) {
-        // Optmized case for common XY only moves (no Z movement)
-        while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
-            if (ret)
-                return ret;
-            double v = safe_sqrt(closest_height2 - height*height);
-            double pos = start_pos + (step_dist > 0. ? -v : v);
-            *qn++ = clock_offset + pos * inv_cruise_sv;
-            height += step_dist;
-        }
-    } else if (!movexy_r) {
-        // Optmized case for Z only moves
-        double v = (step_dist > 0. ? -end_height : end_height);
-        while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
-            if (ret)
-                return ret;
-            double pos = start_pos + movez_r*height + v;
-            *qn++ = clock_offset + pos * inv_cruise_sv;
-            height += step_dist;
-        }
-    } else {
-        // General case (handles XY+Z moves)
-        while (count--) {
-            int ret = check_expand(sc, &qn, &qend);
-            if (ret)
-                return ret;
-            double relheight = movexy_r*height - movez_r*closestxy_sd;
-            double v = safe_sqrt(closest_height2 - relheight*relheight);
-            double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
-            *qn++ = clock_offset + pos * inv_cruise_sv;
-            height += step_dist;
-        }
-    }
-    sc->queue_next = qn;
-    return res;
-}
-
-// Schedule 'count' number of steps using delta kinematic acceleration
-int32_t
-stepcompress_push_delta_accel(
+stepcompress_push_delta(
     struct stepcompress *sc, double clock_offset, double start_pos
     , double steps, double start_sv, double accel
     , double height, double closestxy_sd, double closest_height2, double movez_r)
@@ -625,11 +549,9 @@ stepcompress_push_delta_accel(
     int count = (end_height - height + movez_r*steps) * step_dist + .5;
     if (count <= 0 || count > 10000000) {
         if (count) {
-            errorf("push_delta_accel invalid count %d %d %f %f"
-                   " %f %f %f %f %f %f %f"
-                   , sc->oid, count, clock_offset, start_pos
-                   , steps, start_sv, accel
-                   , height, closestxy_sd, closest_height2, movez_r);
+            errorf("push_delta invalid count %d %d %f %f %f %f %f %f %f %f %f"
+                   , sc->oid, count, clock_offset, start_pos, steps, start_sv
+                   , accel, height, closestxy_sd, closest_height2, movez_r);
             return ERROR_RET;
         }
         return 0;
@@ -640,22 +562,65 @@ stepcompress_push_delta_accel(
     int res = step_dist > 0. ? count : -count;
 
     // Calculate each step time
-    double inv_accel = 1. / accel;
-    double accel_multiplier = 2. * inv_accel;
-    clock_offset += 0.5 - start_sv * inv_accel;
-    start_pos += movexy_r*closestxy_sd + 0.5 * start_sv*start_sv * inv_accel;
+    clock_offset += 0.5;
+    start_pos += movexy_r*closestxy_sd;
     height += .5 * step_dist;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    while (count--) {
-        int ret = check_expand(sc, &qn, &qend);
-        if (ret)
-            return ret;
-        double relheight = movexy_r*height - movez_r*closestxy_sd;
-        double v = safe_sqrt(closest_height2 - relheight*relheight);
-        double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
-        v = safe_sqrt(pos * accel_multiplier);
-        *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
-        height += step_dist;
+    if (!accel) {
+        // Move at constant velocity (zero acceleration)
+        double inv_cruise_sv = 1. / start_sv;
+        if (!movez_r) {
+            // Optmized case for common XY only moves (no Z movement)
+            while (count--) {
+                int ret = check_expand(sc, &qn, &qend);
+                if (ret)
+                    return ret;
+                double v = safe_sqrt(closest_height2 - height*height);
+                double pos = start_pos + (step_dist > 0. ? -v : v);
+                *qn++ = clock_offset + pos * inv_cruise_sv;
+                height += step_dist;
+            }
+        } else if (!movexy_r) {
+            // Optmized case for Z only moves
+            double v = (step_dist > 0. ? -end_height : end_height);
+            while (count--) {
+                int ret = check_expand(sc, &qn, &qend);
+                if (ret)
+                    return ret;
+                double pos = start_pos + movez_r*height + v;
+                *qn++ = clock_offset + pos * inv_cruise_sv;
+                height += step_dist;
+            }
+        } else {
+            // General case (handles XY+Z moves)
+            while (count--) {
+                int ret = check_expand(sc, &qn, &qend);
+                if (ret)
+                    return ret;
+                double relheight = movexy_r*height - movez_r*closestxy_sd;
+                double v = safe_sqrt(closest_height2 - relheight*relheight);
+                double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
+                *qn++ = clock_offset + pos * inv_cruise_sv;
+                height += step_dist;
+            }
+        }
+    } else {
+        // Move with constant acceleration
+        double inv_accel = 1. / accel;
+        clock_offset -= start_sv * inv_accel;
+        start_pos += 0.5 * start_sv*start_sv * inv_accel;
+        double accel_multiplier = 2. * inv_accel;
+        while (count--) {
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
+            double relheight = movexy_r*height - movez_r*closestxy_sd;
+            double v = safe_sqrt(closest_height2 - relheight*relheight);
+            double pos = start_pos + movez_r*height + (step_dist > 0. ? -v : v);
+            v = safe_sqrt(pos * accel_multiplier);
+            *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
+            height += step_dist;
+        }
     }
     sc->queue_next = qn;
     return res;

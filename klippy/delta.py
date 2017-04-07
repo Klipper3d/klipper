@@ -228,28 +228,28 @@ class DeltaKinematics:
             mcu_stepper = self.steppers[i].mcu_stepper
             mcu_time = mcu_stepper.print_to_mcu_time(move_time)
             if accel_up_d > 0.:
-                mcu_stepper.step_delta_accel(
+                mcu_stepper.step_delta(
                     mcu_time, 0., accel_up_d, move.start_v, accel,
                     origz, closestxy_d, closest_height2, movez_r)
             if cruise_up_d > 0.:
-                mcu_stepper.step_delta_const(
-                    mcu_time + accel_t, accel_d, cruise_up_d, cruise_v,
+                mcu_stepper.step_delta(
+                    mcu_time + accel_t, accel_d, cruise_up_d, cruise_v, 0.,
                     origz, closestxy_d, closest_height2, movez_r)
             if decel_up_d > 0.:
-                mcu_stepper.step_delta_accel(
+                mcu_stepper.step_delta(
                     mcu_time + cruise_end_t, cruise_end_d, decel_up_d,
                     cruise_v, -accel,
                     origz, closestxy_d, closest_height2, movez_r)
             if accel_down_d > 0.:
-                mcu_stepper.step_delta_accel(
+                mcu_stepper.step_delta(
                     mcu_time, 0., -accel_down_d, move.start_v, accel,
                     origz, closestxy_d, closest_height2, movez_r)
             if cruise_down_d > 0.:
-                mcu_stepper.step_delta_const(
-                    mcu_time + accel_t, accel_d, -cruise_down_d, cruise_v,
+                mcu_stepper.step_delta(
+                    mcu_time + accel_t, accel_d, -cruise_down_d, cruise_v, 0.,
                     origz, closestxy_d, closest_height2, movez_r)
             if decel_down_d > 0.:
-                mcu_stepper.step_delta_accel(
+                mcu_stepper.step_delta(
                     mcu_time + cruise_end_t, cruise_end_d, -decel_down_d,
                     cruise_v, -accel,
                     origz, closestxy_d, closest_height2, movez_r)
