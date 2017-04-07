@@ -1,6 +1,6 @@
 // Stepper pulse schedule compression
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 //
@@ -531,8 +531,8 @@ stepcompress_push_const(
 }
 
 // Schedule steps using delta kinematics
-int32_t
-stepcompress_push_delta(
+static int32_t
+_stepcompress_push_delta(
     struct stepcompress *sc, double clock_offset, double move_sd
     , double start_sv, double accel
     , double height, double startxy_sd, double arm_sd, double movez_r)
@@ -625,6 +625,38 @@ stepcompress_push_delta(
     }
     sc->queue_next = qn;
     return res;
+}
+
+int32_t
+stepcompress_push_delta(
+    struct stepcompress *sc, double clock_offset, double move_sd
+    , double start_sv, double accel
+    , double height, double startxy_sd, double arm_sd, double movez_r)
+{
+    double reversexy_sd = startxy_sd + arm_sd*movez_r;
+    if (reversexy_sd <= 0.)
+        // All steps are in down direction
+        return _stepcompress_push_delta(
+            sc, clock_offset, -move_sd, start_sv, accel
+            , height, startxy_sd, arm_sd, movez_r);
+    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
+    if (reversexy_sd >= move_sd * movexy_r)
+        // All steps are in up direction
+        return _stepcompress_push_delta(
+            sc, clock_offset, move_sd, start_sv, accel
+            , height, startxy_sd, arm_sd, movez_r);
+    // Steps in both up and down direction
+    int res1 = _stepcompress_push_delta(
+        sc, clock_offset, reversexy_sd / movexy_r, start_sv, accel
+        , height, startxy_sd, arm_sd, movez_r);
+    if (res1 == ERROR_RET)
+        return res1;
+    int res2 = _stepcompress_push_delta(
+        sc, clock_offset, -move_sd, start_sv, accel
+        , height + res1, startxy_sd, arm_sd, movez_r);
+    if (res2 == ERROR_RET)
+        return res2;
+    return res1 + res2;
 }
 
 
