@@ -169,22 +169,22 @@ class PrinterExtruder:
 
         # Acceleration steps
         if accel_d:
-            mcu_stepper.step_accel(mcu_time, start_pos, accel_d, start_v, accel)
+            mcu_stepper.step_const(mcu_time, start_pos, accel_d, start_v, accel)
             start_pos += accel_d
             mcu_time += accel_t
         # Cruising steps
         if cruise_d:
-            mcu_stepper.step_const(mcu_time, start_pos, cruise_d, cruise_v)
+            mcu_stepper.step_const(mcu_time, start_pos, cruise_d, cruise_v, 0.)
             start_pos += cruise_d
             mcu_time += cruise_t
         # Deceleration steps
         if decel_d:
-            mcu_stepper.step_accel(mcu_time, start_pos, decel_d, decel_v, -accel)
+            mcu_stepper.step_const(mcu_time, start_pos, decel_d, decel_v, -accel)
             start_pos += decel_d
             mcu_time += decel_t
         # Retraction steps
         if retract_d:
-            mcu_stepper.step_accel(
+            mcu_stepper.step_const(
                 mcu_time, start_pos, -retract_d, retract_v, accel)
             start_pos -= retract_d
         self.extrude_pos = start_pos

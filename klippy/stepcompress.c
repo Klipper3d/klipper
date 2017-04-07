@@ -464,11 +464,16 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
     return 0;
 }
 
-// Schedule 'steps' number of steps with a constant time between steps
-// using the formula: step_clock = clock_offset + step_num/cruise_sv
+// Schedule 'steps' number of steps at constant acceleration. If
+// acceleration is zero (ie, constant velocity) it uses the formula:
+//  step_clock = clock_offset + step_num/start_sv
+// Otherwise it uses the formula:
+//  step_clock = (clock_offset + sqrt(2*step_num/accel + (start_sv/accel)**2)
+//                - start_sv/accel)
 int32_t
-stepcompress_push_const(struct stepcompress *sc, double clock_offset
-                        , double step_offset, double steps, double cruise_sv)
+stepcompress_push_const(
+    struct stepcompress *sc, double clock_offset
+    , double step_offset, double steps, double start_sv, double accel)
 {
     // Calculate number of steps to take
     int sdir = 1;
@@ -480,8 +485,9 @@ stepcompress_push_const(struct stepcompress *sc, double clock_offset
     int count = steps + .5 - step_offset;
     if (count <= 0 || count > 10000000) {
         if (count && steps) {
-            errorf("push_const invalid count %d %f %f %f %f"
-                   , sc->oid, clock_offset, step_offset, steps, cruise_sv);
+            errorf("push_const invalid count %d %f %f %f %f %f"
+                   , sc->oid, clock_offset, step_offset, steps
+                   , start_sv, accel);
             return ERROR_RET;
         }
         return 0;
@@ -493,63 +499,32 @@ stepcompress_push_const(struct stepcompress *sc, double clock_offset
 
     // Calculate each step time
     clock_offset += 0.5;
-    double factor = 1. / cruise_sv;
     double pos = step_offset + .5;
     uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    while (count--) {
-        int ret = check_expand(sc, &qn, &qend);
-        if (ret)
-            return ret;
-        *qn++ = clock_offset + pos*factor;
-        pos += 1.0;
-    }
-    sc->queue_next = qn;
-    return res;
-}
-
-// Schedule 'steps' number of steps at constant acceleration. It uses
-// the formula:
-//  step_clock = (clock_offset + sqrt(2*step_num/accel + (start_sv/accel)**2)
-//                - start_sv/accel)
-int32_t
-stepcompress_push_accel(struct stepcompress *sc, double clock_offset
-                        , double step_offset, double steps
-                        , double start_sv, double accel)
-{
-    // Calculate number of steps to take
-    int sdir = 1;
-    if (steps < 0) {
-        sdir = 0;
-        steps = -steps;
-        step_offset = -step_offset;
-    }
-    int count = steps + .5 - step_offset;
-    if (count <= 0 || count > 10000000) {
-        if (count && steps) {
-            errorf("push_accel invalid count %d %f %f %f %f %f"
-                   , sc->oid, clock_offset, step_offset, steps, start_sv, accel);
-            return ERROR_RET;
+    if (!accel) {
+        // Move at constant velocity (zero acceleration)
+        double inv_cruise_sv = 1. / start_sv;
+        while (count--) {
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
+            *qn++ = clock_offset + pos*inv_cruise_sv;
+            pos += 1.0;
         }
-        return 0;
-    }
-    int ret = set_next_step_dir(sc, sdir);
-    if (ret)
-        return ret;
-    int res = sdir ? count : -count;
-
-    // Calculate each step time
-    double inv_accel = 1. / accel;
-    double factor = 2. * inv_accel;
-    clock_offset += 0.5 - start_sv * inv_accel;
-    double pos = step_offset + .5 + .5 * start_sv*start_sv * inv_accel;
-    uint64_t *qn = sc->queue_next, *qend = sc->queue_end;
-    while (count--) {
-        int ret = check_expand(sc, &qn, &qend);
-        if (ret)
-            return ret;
-        double v = safe_sqrt(pos*factor);
-        *qn++ = clock_offset + (factor >= 0. ? v : -v);
-        pos += 1.0;
+    } else {
+        // Move with constant acceleration
+        double inv_accel = 1. / accel;
+        clock_offset -= start_sv * inv_accel;
+        pos += .5 * start_sv*start_sv * inv_accel;
+        double accel_multiplier = 2. * inv_accel;
+        while (count--) {
+            int ret = check_expand(sc, &qn, &qend);
+            if (ret)
+                return ret;
+            double v = safe_sqrt(pos * accel_multiplier);
+            *qn++ = clock_offset + (accel_multiplier >= 0. ? v : -v);
+            pos += 1.0;
+        }
     }
     sc->queue_next = qn;
     return res;

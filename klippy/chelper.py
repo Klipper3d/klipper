@@ -23,8 +23,6 @@ defs_stepcompress = """
     int stepcompress_push(struct stepcompress *sc, double step_clock
         , int32_t sdir);
     int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
-        , double step_offset, double steps, double cruise_sv);
-    int32_t stepcompress_push_accel(struct stepcompress *sc, double clock_offset
         , double step_offset, double steps, double start_sv, double accel);
     int32_t stepcompress_push_delta_const(struct stepcompress *sc
         , double clock_offset, double dist, double start_pos
