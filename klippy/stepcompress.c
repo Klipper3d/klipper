@@ -463,6 +463,14 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
     return 0;
 }
 
+// Common suffixes: _sd is step distance (a unit length the same
+// distance the stepper moves on each step), _sv is step velocity (in
+// units of step distance per clock tick), _sd2 is step distance
+// squared, _r is ratio (scalar usually between 0.0 and 1.0).  Times
+// are represented as clock ticks (a unit of time determined by a
+// micro-controller tick) and acceleration is in units of step
+// distance per clock ticks squared.
+
 // Schedule 'steps' number of steps at constant acceleration. If
 // acceleration is zero (ie, constant velocity) it uses the formula:
 //  step_clock = clock_offset + step_num/start_sv
