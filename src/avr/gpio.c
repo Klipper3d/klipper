@@ -210,7 +210,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
         if (READP(pwm_pins[chan]) != pin)
             continue;
         const struct gpio_pwm_info *p = &pwm_regs[chan];
-        irqstatus_t flags = READP(p->flags), cs;
+        uint8_t flags = READP(p->flags), cs;
         if (flags & GP_AFMT) {
             switch (cycle_time) {
             case 0        ...    8*510L - 1: cs = 1; break;
