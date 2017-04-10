@@ -1,6 +1,6 @@
 // GPIO functions on AVR.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -165,56 +165,60 @@ static const uint8_t pwm_pins[ARRAY_SIZE(pwm_regs)] PROGMEM = {
 struct gpio_pwm
 gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
 {
+    // Find pin in pwm_pins table
     uint8_t chan;
-    for (chan=0; chan<ARRAY_SIZE(pwm_regs); chan++) {
-        if (READP(pwm_pins[chan]) != pin)
-            continue;
-        const struct gpio_pwm_info *p = &pwm_regs[chan];
-        uint8_t flags = READP(p->flags), cs;
-        if (flags & GP_AFMT) {
-            switch (cycle_time) {
-            case 0        ...    8*510L - 1: cs = 1; break;
-            case 8*510L   ...   32*510L - 1: cs = 2; break;
-            case 32*510L  ...   64*510L - 1: cs = 3; break;
-            case 64*510L  ...  128*510L - 1: cs = 4; break;
-            case 128*510L ...  256*510L - 1: cs = 5; break;
-            case 256*510L ... 1024*510L - 1: cs = 6; break;
-            default:                         cs = 7; break;
-            }
-        } else {
-            switch (cycle_time) {
-            case 0        ...    8*510L - 1: cs = 1; break;
-            case 8*510L   ...   64*510L - 1: cs = 2; break;
-            case 64*510L  ...  256*510L - 1: cs = 3; break;
-            case 256*510L ... 1024*510L - 1: cs = 4; break;
-            default:                         cs = 5; break;
-            }
-        }
-        volatile uint8_t *rega = READP(p->rega), *regb = READP(p->regb);
-        uint8_t en_bit = READP(p->en_bit);
-        struct gpio_digital_regs *regs = GPIO2REGS(pin);
-        uint8_t bit = GPIO2BIT(pin);
-        struct gpio_pwm g = (struct gpio_pwm) {
-            (void*)READP(p->ocr), flags & GP_8BIT };
-        if (rega == &TCCR1A)
-            shutdown("Can not user timer1 for PWM; timer1 is used for timers");
-
-        // Setup PWM timer
-        irqstatus_t flag = irq_save();
-        uint8_t old_cs = *regb & 0x07;
-        if (old_cs && old_cs != cs)
-            shutdown("PWM already programmed at different speed");
-        *regb = cs;
-
-        // Set default value and enable output
-        gpio_pwm_write(g, val);
-        *rega |= (1<<WGM00) | en_bit;
-        regs->mode |= bit;
-        irq_restore(flag);
-
-        return g;
+    for (chan=0; ; chan++) {
+        if (chan >= ARRAY_SIZE(pwm_pins))
+            shutdown("Not a valid PWM pin");
+        if (READP(pwm_pins[chan]) == pin)
+            break;
     }
-    shutdown("Not a valid PWM pin");
+
+    // Map cycle_time to pwm clock divisor
+    const struct gpio_pwm_info *p = &pwm_regs[chan];
+    uint8_t flags = READP(p->flags), cs;
+    if (flags & GP_AFMT) {
+        switch (cycle_time) {
+        case 0        ...    8*510L - 1: cs = 1; break;
+        case 8*510L   ...   32*510L - 1: cs = 2; break;
+        case 32*510L  ...   64*510L - 1: cs = 3; break;
+        case 64*510L  ...  128*510L - 1: cs = 4; break;
+        case 128*510L ...  256*510L - 1: cs = 5; break;
+        case 256*510L ... 1024*510L - 1: cs = 6; break;
+        default:                         cs = 7; break;
+        }
+    } else {
+        switch (cycle_time) {
+        case 0        ...    8*510L - 1: cs = 1; break;
+        case 8*510L   ...   64*510L - 1: cs = 2; break;
+        case 64*510L  ...  256*510L - 1: cs = 3; break;
+        case 256*510L ... 1024*510L - 1: cs = 4; break;
+        default:                         cs = 5; break;
+        }
+    }
+    volatile uint8_t *rega = READP(p->rega), *regb = READP(p->regb);
+    uint8_t en_bit = READP(p->en_bit);
+    struct gpio_digital_regs *gpio_regs = GPIO2REGS(pin);
+    uint8_t gpio_bit = GPIO2BIT(pin);
+    struct gpio_pwm g = (struct gpio_pwm) {
+        (void*)READP(p->ocr), flags & GP_8BIT };
+    if (rega == &TCCR1A)
+        shutdown("Can not use timer1 for PWM; timer1 is used for timers");
+
+    // Setup PWM timer
+    irqstatus_t flag = irq_save();
+    uint8_t old_cs = *regb & 0x07;
+    if (old_cs && old_cs != cs)
+        shutdown("PWM already programmed at different speed");
+    *regb = cs;
+
+    // Set default value and enable output
+    gpio_pwm_write(g, val);
+    *rega |= (1<<WGM00) | en_bit;
+    gpio_regs->mode |= gpio_bit;
+    irq_restore(flag);
+
+    return g;
 }
 
 void
@@ -259,25 +263,27 @@ DECL_CONSTANT(ADC_MAX, 1024);
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
+    // Find pin in adc_pins table
     uint8_t chan;
-    for (chan=0; chan<ARRAY_SIZE(adc_pins); chan++) {
-        if (READP(adc_pins[chan]) != pin)
-            continue;
-
-        // Enable ADC
-        ADCSRA |= (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
-
-        // Disable digital input for this pin
-#ifdef DIDR2
-        if (chan >= 8)
-            DIDR2 |= 1 << (chan & 0x07);
-        else
-#endif
-            DIDR0 |= 1 << chan;
-
-        return (struct gpio_adc){ chan };
+    for (chan=0; ; chan++) {
+        if (chan >= ARRAY_SIZE(adc_pins))
+            shutdown("Not a valid ADC pin");
+        if (READP(adc_pins[chan]) == pin)
+            break;
     }
-    shutdown("Not a valid ADC pin");
+
+    // Enable ADC
+    ADCSRA |= (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
+
+    // Disable digital input for this pin
+#ifdef DIDR2
+    if (chan >= 8)
+        DIDR2 |= 1 << (chan & 0x07);
+    else
+#endif
+        DIDR0 |= 1 << chan;
+
+    return (struct gpio_adc){ chan };
 }
 
 enum { ADC_DUMMY=0xff };
