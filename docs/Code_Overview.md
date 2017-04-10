@@ -106,3 +106,97 @@ messages from the micro-controller in the Python code (see
 **klippy/serialhdl.py**). The fourth thread writes debug messages to
 the log (see **klippy/queuelogger.py**) so that the other threads
 never block on log writes.
+
+Code flow of a move command
+===========================
+
+A typical printer movement starts when a "G1" command is sent to the
+Klippy host and it completes when the corresponding step pulses are
+produced on the micro-controller. This section outlines the code flow
+of a typical move command.
+
+* Processing for a move command (eg, "G1 X10 F6000") starts in
+  gcode.py. The goal of gcode.py is to translate gcode into internal
+  calls. Changes in origin (eg, G92), changes in relative vs absolute
+  positions (eg, G90), and unit changes (eg, F6000=100mm/s) are
+  handled here. The code path for a move is: process_data() ->
+  process_commands() -> cmd_G1(). Ultimately the ToolHead class is
+  invoked to execute the actual request: cmd_G1() ->
+  ToolHead.move([10, 0, 0, 0], 100.0)
+
+* The ToolHead class (in toolhead.py) handles "lookahead" and tracks
+  the timing of printing actions. The codepath for a move is:
+  ToolHead.move() (create a Move() object) -> MoveQueue.add_move()
+  (place move on lookahead queue) -> MoveQueue.flush() (determine
+  start/end velocity of each move) -> Move.set_junction() (perform
+  "trapezoid generation" for a move) -> Move.move(). The "trapezoid
+  generator" breaks every move into three parts: a constant
+  acceleration phase, followed by a constant velocity phase, followed
+  by a constant deceleration phase. Every move contains these three
+  phases in this order, but some phases may be of zero duration. When
+  Move.move() is called, everything about the move is known - its
+  start location, its end location, its acceleration, its
+  start/crusing/end velocity, and distance traveled during
+  acceleration/cruising/deceleration. All the information is stored in
+  the Move() class and is in cartesian space in units of millimeters
+  and seconds. Times are stored relative to the start of the
+  print. The move is then handed off to the kinematics classes:
+  Move.move() -> kin.move()
+
+* The goal of the kinematics classes is to translate the movement in
+  cartesian space to movement on each stepper. The kinematics classes
+  are in cartesian.py, corexy.py, delta.py, and extruder.py. The
+  kinematic class is given a chance to audit the move (ToolHead.move()
+  -> kin.check_move()) before it goes on the lookahead queue, but once
+  the move arrives in kin.move() the kinematic class is required to
+  handle the move as specified. The kinematic classes translate the
+  three parts of each move (acceleration, constant "cruising"
+  velocity, and deceleration) to the associated movement on each
+  stepper. Note that the extruder is handled in its own kinematic
+  class. Since the Move() class specifies the exact movement time and
+  since step pulses are sent to the micro-controller with specific
+  timing, stepper movements produced by the extruder class will be in
+  sync with head movement even though the code is kept separate.
+
+* For efficiency reasons, the stepper pulse times are generated in C
+  code. The code flow is: kin.move() -> MCU_Stepper.step_const() (in
+  mcu.py) -> stepcompress_push_const() (in stepcompress.c), or for
+  delta kinematics: DeltaKinematics.move() -> MCU_Stepper.step_delta()
+  -> stepcompress_push_delta(). The MCU_Stepper code just performs
+  unit and axis transformation (seconds to clock ticks and millimeters
+  to step distances), and calls the C code. The C code calculates the
+  stepper step times for each movement and fills an array (struct
+  stepcompress.queue) with the corresponding micro-controller clock
+  counter times (in 64bit integers) for every step. Here the
+  "micro-controller clock counter" value directly corresponds to the
+  micro-controller's hardware counter - it is relative to when the
+  micro-controller was last powered up.
+
+* The next major step is to compress the steps: stepcompress_flush()
+  -> compress_bisect_add() (in stepcompress.c). This code generates
+  and encodes micro-controller "queue_step" commands. The compression
+  involves finding a series of queue_step interval/count/add
+  parameters that correspond to the list of micro-controller step
+  times. These "queue_step" commands are then queued, prioritized, and
+  sent to the micro-controller (via stepcompress.c:steppersync and
+  serialqueue.c:serialqueue).
+
+* Processing of the queue_step commands on the micro-controller starts
+  in command.c which parses the command and calls
+  command_queue_step(). The command_queue_step() code (in stepper.c)
+  just appends the interval/count/add parameters to a per stepper
+  queue. Under normal operation the queue_step command is parsed and
+  queued at least 100ms before the time of the first step. Finally,
+  the generation of stepper events is done in stepper_event(). It's
+  called from the hardware timer interrupt at the scheduled time of
+  the first step. The stepper_event() code generates a step pulse and
+  then reschedules itself to run at the time of the next step pulse
+  for the given interval/count/add sequence. At a high-level, the
+  stepper_event() code does: do_step(); next_wake_time =
+  last_wake_time + interval; interval += add;
+
+The above may seem like a lot of complexity to execute a
+movement. However, the only really interesting parts are in the
+ToolHead and kinematic classes. It's this part of the code which
+specifies the movements and their timings. The remaining parts of the
+processing is mostly just communication and plumbing.
