@@ -123,3 +123,26 @@ Klipper source code). To do so, run:
 ```
 ~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial 250000
 ```
+
+Generating load graphs
+======================
+
+The Klippy log file (/tmp/klippy.log) stores statistics on bandwidth,
+micro-controller load, and host buffer load. It can be useful to graph
+these statistics after a print.
+
+To generate a graph, a one time step is necessary to install the
+"matplotlib" package:
+
+```
+sudo apt-get update
+sudo apt-get install python-matplotlib
+```
+
+Then graphs can be produced with:
+
+```
+~/klipper/scripts/graphstats.py /tmp/klippy.log loadgraph.png
+```
+
+One can then view the resulting **loadgraph.png** file.
