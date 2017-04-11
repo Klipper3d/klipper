@@ -1,6 +1,6 @@
 // GPIO functions on sam3x8e
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -28,7 +28,7 @@ static Pio * const digital_regs[] = {
 
 
 /****************************************************************
- * gpio functions
+ * General Purpose Input Output (GPIO) pins
  ****************************************************************/
 
 void
@@ -116,6 +116,10 @@ gpio_in_read(struct gpio_in g)
 }
 
 
+/****************************************************************
+ * Analog to Digital Converter (ADC) pins
+ ****************************************************************/
+
 static const uint8_t adc_pins[] = {
     GPIO('A', 2), GPIO('A', 3), GPIO('A', 4), GPIO('A', 6),
     GPIO('A', 22), GPIO('A', 23), GPIO('A', 24), GPIO('A', 16),
@@ -129,22 +133,24 @@ DECL_CONSTANT(ADC_MAX, 4096);
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
+    // Find pin in adc_pins table
     int chan;
-    for (chan=0; chan<ARRAY_SIZE(adc_pins); chan++) {
-        if (adc_pins[chan] != pin)
-            continue;
-        // Found PIN
-        if (!(PMC->PMC_PCSR1 & (1 << (ID_ADC-32)))) {
-            // Setup ADC
-            PMC->PMC_PCER1 = 1 << (ID_ADC-32);
-            uint32_t prescal = SystemCoreClock / (2 * ADC_FREQ_MAX) - 1;
-            ADC->ADC_MR = (ADC_MR_PRESCAL(prescal)
-                           | ADC_MR_STARTUP_SUT768
-                           | ADC_MR_TRANSFER(1));
-        }
-        return (struct gpio_adc){ .bit = 1 << chan };
+    for (chan=0; ; chan++) {
+        if (chan >= ARRAY_SIZE(adc_pins))
+            shutdown("Not a valid ADC pin");
+        if (adc_pins[chan] == pin)
+            break;
     }
-    shutdown("Not a valid ADC pin");
+
+    if (!(PMC->PMC_PCSR1 & (1 << (ID_ADC-32)))) {
+        // Setup ADC
+        PMC->PMC_PCER1 = 1 << (ID_ADC-32);
+        uint32_t prescal = SystemCoreClock / (2 * ADC_FREQ_MAX) - 1;
+        ADC->ADC_MR = (ADC_MR_PRESCAL(prescal)
+                       | ADC_MR_STARTUP_SUT768
+                       | ADC_MR_TRANSFER(1));
+    }
+    return (struct gpio_adc){ .bit = 1 << chan };
 }
 
 // Try to sample a value. Returns zero if sample ready, otherwise
