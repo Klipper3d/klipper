@@ -15,8 +15,8 @@ compelling features:
 
 * Best in class performance. Klipper is able to achieve high stepping
   rates on both new and old micro-controllers. Even an old 8bit AVR
-  micro-controller can obtain rates up to 150K steps per second. On
-  more recent ARM micro-controllers, rates over 350K steps per second
+  micro-controller can obtain rates over 175K steps per second. On
+  more recent ARM micro-controllers, rates over 450K steps per second
   are possible. Higher stepper rates enable higher print
   velocities. The stepper event timing remains precise even at high
   speeds which improves overall stability.
@@ -79,6 +79,6 @@ represent total number of steps per second on the micro-controller.
 
 | Micro-controller  | 1 stepper active | 3 steppers active |
 | ----------------- | ---------------- | ----------------- |
-| 20Mhz AVR         | 174K             | 116K              |
-| 16Mhz AVR         | 139K             | 93K               |
+| 20Mhz AVR         | 177K             | 117K              |
+| 16Mhz AVR         | 140K             | 93K               |
 | Arduino Due (ARM) | 462K             | 406K              |
