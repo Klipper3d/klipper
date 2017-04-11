@@ -85,7 +85,7 @@ def plot_mcu(data, maxbw, outname):
     # Build plot
     fig, ax1 = plt.subplots()
     ax1.set_title("MCU bandwidth and load utilization")
-    ax1.set_xlabel('Time (UTC)')
+    ax1.set_xlabel('Time')
     ax1.set_ylabel('Usage (%)')
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
