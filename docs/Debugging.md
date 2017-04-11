@@ -82,17 +82,11 @@ compile Klipper (run `make`) and then start the simulation with:
 PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf
 ```
 
-It may be necessary to create a python virtual environment to run
-Klippy on the target machine. To do so, run:
-
-```
-virtualenv ~/klippy-env
-~/klippy-env/bin/pip install cffi==1.6.0 pyserial==2.7
-```
-
 Then, with simulavr running in another window, one can run the
 following to read gcode from a file (eg, "test.gcode"), process it
-with Klippy, and send it to Klipper running in simulavr:
+with Klippy, and send it to Klipper running in simulavr (see
+[installation](Installation.md) for the steps necessary to build the
+python virtual environment):
 
 ```
 ~/klippy-env/bin/python ./klippy/klippy.py config/avrsim.cfg -i test.gcode -v
