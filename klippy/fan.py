@@ -11,7 +11,7 @@ class PrinterFan:
     def __init__(self, printer, config):
         self.last_fan_value = 0.
         self.last_fan_time = 0.
-        self.kick_start_time = config.getfloat('kick_start_time', 0.1)
+        self.kick_start_time = config.getfloat('kick_start_time', 0.1, minval=0.)
         pin = config.get('pin')
         hard_pwm = config.getint('hard_pwm', 0)
         self.mcu_fan = printer.mcu.create_pwm(pin, PWM_CYCLE_TIME, hard_pwm, 0.)

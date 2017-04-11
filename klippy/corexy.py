@@ -15,8 +15,10 @@ class CoreXYKinematics:
                          for n in ['x', 'y', 'z']]
         self.steppers[0].mcu_endstop.add_stepper(self.steppers[1].mcu_stepper)
         self.steppers[1].mcu_endstop.add_stepper(self.steppers[0].mcu_stepper)
-        self.max_z_velocity = config.getfloat('max_z_velocity', 9999999.9)
-        self.max_z_accel = config.getfloat('max_z_accel', 9999999.9)
+        self.max_z_velocity = config.getfloat(
+            'max_z_velocity', 9999999.9, above=0.)
+        self.max_z_accel = config.getfloat(
+            'max_z_accel', 9999999.9, above=0.)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):

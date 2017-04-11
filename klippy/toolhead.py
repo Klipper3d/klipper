@@ -188,18 +188,24 @@ class ToolHead:
                     'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
-        self.max_speed = config.getfloat('max_velocity')
-        self.max_accel = config.getfloat('max_accel')
-        self.max_accel_to_decel = config.getfloat('max_accel_to_decel'
-                                                  , self.max_accel * 0.5)
-        self.junction_deviation = config.getfloat('junction_deviation', 0.02)
+        self.max_speed = config.getfloat('max_velocity', above=0.)
+        self.max_accel = config.getfloat('max_accel', above=0.)
+        self.max_accel_to_decel = config.getfloat(
+            'max_accel_to_decel', self.max_accel * 0.5
+            , above=0., maxval=self.max_accel)
+        self.junction_deviation = config.getfloat(
+            'junction_deviation', 0.02, above=0.)
         self.move_queue = MoveQueue(self.extruder.lookahead)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
-        self.buffer_time_high = config.getfloat('buffer_time_high', 2.000)
-        self.buffer_time_low = config.getfloat('buffer_time_low', 1.000)
-        self.buffer_time_start = config.getfloat('buffer_time_start', 0.250)
-        self.move_flush_time = config.getfloat('move_flush_time', 0.050)
+        self.buffer_time_low = config.getfloat(
+            'buffer_time_low', 1.000, above=0.)
+        self.buffer_time_high = config.getfloat(
+            'buffer_time_high', 2.000, above=self.buffer_time_low)
+        self.buffer_time_start = config.getfloat(
+            'buffer_time_start', 0.250, above=0.)
+        self.move_flush_time = config.getfloat(
+            'move_flush_time', 0.050, above=0.)
         self.print_time = 0.
         self.need_check_stall = -1.
         self.print_stall = 0
@@ -208,7 +214,8 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
         # Motor off tracking
-        self.motor_off_time = config.getfloat('motor_off_time', 600.000)
+        self.motor_off_time = config.getfloat(
+            'motor_off_time', 600.000, minval=0.)
         self.motor_off_timer = self.reactor.register_timer(
             self._motor_off_handler)
         # Determine the maximum velocity a cartesian axis could have

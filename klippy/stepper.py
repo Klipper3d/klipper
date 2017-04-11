@@ -10,19 +10,24 @@ class PrinterStepper:
     def __init__(self, printer, config, name):
         self.name = name
 
-        self.step_dist = config.getfloat('step_distance')
+        self.step_dist = config.getfloat('step_distance', above=0.)
         self.inv_step_dist = 1. / self.step_dist
         self.min_stop_interval = 0.
 
-        self.homing_speed = config.getfloat('homing_speed', 5.0)
+        self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', False)
-        self.homing_retract_dist = config.getfloat('homing_retract_dist', 5.)
-        self.homing_stepper_phases = config.getint('homing_stepper_phases', None)
-        self.homing_endstop_phase = config.getint('homing_endstop_phase', None)
-        endstop_accuracy = config.getfloat('homing_endstop_accuracy', None)
-        self.homing_endstop_accuracy = None
+        self.homing_retract_dist = config.getfloat(
+            'homing_retract_dist', 5., above=0.)
+        self.homing_stepper_phases = config.getint(
+            'homing_stepper_phases', None, minval=0)
+        endstop_accuracy = config.getfloat(
+            'homing_endstop_accuracy', None, above=0.)
+        self.homing_endstop_accuracy = self.homing_endstop_phase = None
         if self.homing_stepper_phases:
+            self.homing_endstop_phase = config.getint(
+                'homing_endstop_phase', None, minval=0
+                , maxval=self.homing_stepper_phases-1)
             if endstop_accuracy is None:
                 self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
             elif self.homing_endstop_phase is not None:
@@ -51,8 +56,9 @@ class PrinterStepper:
             self.mcu_endstop = mcu.create_endstop(endstop_pin)
             self.mcu_endstop.add_stepper(self.mcu_stepper)
             self.position_min = config.getfloat('position_min', 0.)
+            self.position_max = config.getfloat(
+                'position_max', 0., above=self.position_min)
             self.position_endstop = config.getfloat('position_endstop')
-            self.position_max = config.getfloat('position_max', 0.)
         self.need_motor_enable = True
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel

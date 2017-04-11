@@ -37,15 +37,16 @@ class PrinterHeater:
         sensor_params = config.getchoice('sensor_type', Sensors)
         self.is_linear_sensor = (sensor_params[0] == 'linear')
         if self.is_linear_sensor:
-            adc_voltage = config.getfloat('adc_voltage', 5.)
+            adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
             self.sensor_coef = sensor_params[1] * adc_voltage, sensor_params[2]
         else:
-            pullup = config.getfloat('pullup_resistor', 4700.)
+            pullup = config.getfloat('pullup_resistor', 4700., above=0.)
             self.sensor_coef = sensor_params[1:] + (pullup,)
-        self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.)
-        self.min_temp = config.getfloat('min_temp')
-        self.max_temp = config.getfloat('max_temp')
-        self.max_power = max(0., min(1., config.getfloat('max_power', 1.)))
+        self.min_temp = config.getfloat('min_temp', minval=0.)
+        self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.min_extrude_temp = config.getfloat(
+            'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
+        self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.can_extrude = (self.min_extrude_temp <= 0.
                             or printer.mcu.is_fileoutput())
         self.lock = threading.Lock()
@@ -141,7 +142,7 @@ class PrinterHeater:
 class ControlBangBang:
     def __init__(self, heater, config):
         self.heater = heater
-        self.max_delta = config.getfloat('max_delta', 2.0)
+        self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
     def adc_callback(self, read_time, temp):
         if self.heating and temp >= self.heater.target_temp+self.max_delta:
@@ -166,8 +167,8 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
-        self.min_deriv_time = config.getfloat('pid_deriv_time', 2.)
-        imax = config.getfloat('pid_integral_max', heater.max_power)
+        self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
+        imax = config.getfloat('pid_integral_max', heater.max_power, minval=0.)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.

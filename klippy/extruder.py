@@ -13,26 +13,32 @@ class PrinterExtruder:
         self.config = config
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
-        self.nozzle_diameter = config.getfloat('nozzle_diameter')
-        filament_diameter = config.getfloat('filament_diameter')
+        self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
+        filament_diameter = config.getfloat(
+            'filament_diameter', minval=self.nozzle_diameter)
         filament_area = math.pi * (filament_diameter * .5)**2
         max_cross_section = config.getfloat(
-            'max_extrude_cross_section', 4. * self.nozzle_diameter**2)
+            'max_extrude_cross_section', 4. * self.nozzle_diameter**2
+            , above=0.)
         self.max_extrude_ratio = max_cross_section / filament_area
-        self.max_e_dist = config.getfloat('max_extrude_only_distance', 50.)
+        self.max_e_dist = config.getfloat(
+            'max_extrude_only_distance', 50., minval=0.)
         self.max_e_velocity = self.max_e_accel = None
-        self.pressure_advance = config.getfloat('pressure_advance', 0.)
+        self.pressure_advance = config.getfloat(
+            'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = 0.
         if self.pressure_advance:
             self.pressure_advance_lookahead_time = config.getfloat(
-                'pressure_advance_lookahead_time', 0.010)
+                'pressure_advance_lookahead_time', 0.010, minval=0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         self.max_e_velocity = self.config.getfloat(
-            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio)
+            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
+            , above=0.)
         self.max_e_accel = self.config.getfloat(
-            'max_extrude_only_accel', max_accel * self.max_extrude_ratio)
+            'max_extrude_only_accel', max_accel * self.max_extrude_ratio
+            , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)

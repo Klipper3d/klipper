@@ -52,26 +52,47 @@ class ConfigWrapper:
     def __init__(self, printer, section):
         self.printer = printer
         self.section = section
-    def get_wrapper(self, parser, option, default):
+    def get_wrapper(self, parser, option, default
+                    , minval=None, maxval=None, above=None, below=None):
         if (default is not self.sentinel
             and not self.printer.fileconfig.has_option(self.section, option)):
             return default
         self.printer.all_config_options[
             (self.section.lower(), option.lower())] = 1
         try:
-            return parser(self.section, option)
+            v = parser(self.section, option)
         except self.error, e:
             raise
         except:
             raise self.error("Unable to parse option '%s' in section '%s'" % (
                 option, self.section))
+        if minval is not None and v < minval:
+            raise self.error(
+                "Option '%s' in section '%s' must have minimum of %s" % (
+                    option, self.section, minval))
+        if maxval is not None and v > maxval:
+            raise self.error(
+                "Option '%s' in section '%s' must have maximum of %s" % (
+                    option, self.section, maxval))
+        if above is not None and v <= above:
+            raise self.error(
+                "Option '%s' in section '%s' must be above %s" % (
+                    option, self.section, above))
+        if below is not None and v >= below:
+            raise self.error(
+                "Option '%s' in section '%s' must be below %s" % (
+                    option, self.section, below))
+        return v
     def get(self, option, default=sentinel):
         return self.get_wrapper(self.printer.fileconfig.get, option, default)
-    def getint(self, option, default=sentinel):
-        return self.get_wrapper(self.printer.fileconfig.getint, option, default)
-    def getfloat(self, option, default=sentinel):
+    def getint(self, option, default=sentinel, minval=None, maxval=None):
         return self.get_wrapper(
-            self.printer.fileconfig.getfloat, option, default)
+            self.printer.fileconfig.getint, option, default, minval, maxval)
+    def getfloat(self, option, default=sentinel
+                 , minval=None, maxval=None, above=None, below=None):
+        return self.get_wrapper(
+            self.printer.fileconfig.getfloat, option, default
+            , minval, maxval, above, below)
     def getboolean(self, option, default=sentinel):
         return self.get_wrapper(
             self.printer.fileconfig.getboolean, option, default)

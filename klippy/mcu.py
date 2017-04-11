@@ -392,7 +392,8 @@ class MCU:
         self._custom = config.get('custom', '')
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025)
+        self._max_stepper_error = config.getfloat(
+            'max_stepper_error', 0.000025, minval=0.)
         self._steppers = []
         self._steppersync = None
         # Print time to clock epoch calculations

@@ -19,8 +19,8 @@ class DeltaKinematics:
                          for n in ['a', 'b', 'c']]
         self.need_motor_enable = self.need_home = True
         self.max_velocity = self.max_z_velocity = self.max_accel = 0.
-        radius = config.getfloat('delta_radius')
-        arm_length = config.getfloat('delta_arm_length')
+        radius = config.getfloat('delta_radius', above=0.)
+        arm_length = config.getfloat('delta_arm_length', above=radius)
         self.arm_length2 = arm_length**2
         self.limit_xy2 = -1.
         tower_height_at_zeros = math.sqrt(self.arm_length2 - radius**2)
@@ -53,7 +53,8 @@ class DeltaKinematics:
         self.set_position([0., 0., 0.])
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         self.max_velocity = max_velocity
-        max_z_velocity = self.config.getfloat('max_z_velocity', max_velocity)
+        max_z_velocity = self.config.getfloat(
+            'max_z_velocity', max_velocity, above=0.)
         self.max_z_velocity = min(max_velocity, max_z_velocity)
         self.max_accel = max_accel
         for stepper in self.steppers:
