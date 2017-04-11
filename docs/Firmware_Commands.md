@@ -179,15 +179,15 @@ This section lists some commonly used config commands.
   ticks since the last step. It is used as a check on the maximum
   stepper velocity that a stepper may have before stopping.
 
-* config_end_stop oid=%c pin=%c pull_up=%c stepper_oid=%c : This
+* config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c : This
   command creates an internal "endstop" object. It is used to specify
   the endstop pins and to enable "homing" operations (see the
   end_stop_home command below). The command will configure the
   specified pin in digital input mode. The 'pull_up' parameter
   determines whether hardware provided pullup resistors for the pin
-  (if available) will be enabled. The 'stepper_oid' parameter
-  specifies the oid of an associated stepper for the given endstop -
-  it is used during homing operations.
+  (if available) will be enabled. The 'stepper_count' parameter
+  specifies the maximum number of steppers that this endstop may need
+  to halt during a homing operation (see end_stop_home below).
 
 Common commands
 ===============
