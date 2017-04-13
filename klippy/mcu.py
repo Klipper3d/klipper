@@ -571,6 +571,8 @@ class MCU:
                         raise error("Firmware error during config: %s" % (
                             self._shutdown_msg,))
                     raise error("Unable to configure printer")
+        elif self._printer.get_startup_state() == 'firmware_restart':
+            raise error("Failed automated reset of micro-controller")
         if self._config_crc != config_params['crc']:
             self._check_restart("CRC mismatch")
             raise error("Printer CRC does not match config")
