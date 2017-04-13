@@ -39,9 +39,9 @@ Error configuring printer
 """
 
 message_shutdown = """
-Once the underlying issue is corrected, the "CLEAR_SHUTDOWN"
-command can be used to clear the firmware flag and restart
-the host software.
+Once the underlying issue is corrected, use the
+"FIRMWARE_RESTART" command to reset the firmware, reload the
+config, and restart the host software.
 Printer is shutdown
 """
 

@@ -387,7 +387,6 @@ class MCU:
         # Config building
         self._config_error = config.error
         self._emergency_stop_cmd = self._reset_cmd = None
-        self._clear_shutdown_cmd = None
         self._oids = []
         self._config_cmds = []
         self._config_crc = None
@@ -444,7 +443,6 @@ class MCU:
         self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
             'STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
-        self._clear_shutdown_cmd = self.lookup_command("clear_shutdown")
         try:
             self._reset_cmd = self.lookup_command("reset")
         except self.serial.msgparser.error, e:
@@ -484,9 +482,6 @@ class MCU:
             self._mcu_tick_avg, self._mcu_tick_stddev)
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
-    def clear_shutdown(self):
-        logging.info("Sending clear_shutdown command")
-        self.send(self._clear_shutdown_cmd.encode())
     def microcontroller_restart(self):
         reactor = self._printer.reactor
         if self._restart_method == 'rpi_usb':
