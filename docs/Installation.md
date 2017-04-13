@@ -24,7 +24,7 @@ following commands:
 
 ```
 sudo apt-get update
-sudo apt-get install libncurses-dev
+sudo apt-get install libncurses-dev libusb-dev
 sudo apt-get install avrdude gcc-avr binutils-avr avr-libc # AVR toolchain
 sudo apt-get install bossa-cli libnewlib-arm-none-eabi # ARM toolchain
 ```

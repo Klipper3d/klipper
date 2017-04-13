@@ -1,10 +1,15 @@
 # Wrapper around C helper code
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging
 import cffi
+
+
+######################################################################
+# c_helper.so compiling
+######################################################################
 
 COMPILE_CMD = "gcc -Wall -g -O2 -shared -fPIC -o %s %s"
 SOURCE_FILES = ['stepcompress.c', 'serialqueue.c', 'pyhelper.c']
@@ -79,14 +84,14 @@ def get_mtimes(srcdir, filelist):
     return out
 
 # Check if the code needs to be compiled
-def check_build_code(srcdir):
-    src_times = get_mtimes(srcdir, SOURCE_FILES + OTHER_FILES)
-    obj_times = get_mtimes(srcdir, [DEST_LIB])
+def check_build_code(srcdir, target, sources, cmd, other_files=[]):
+    src_times = get_mtimes(srcdir, sources + other_files)
+    obj_times = get_mtimes(srcdir, [target])
     if not obj_times or max(src_times) > min(obj_times):
-        logging.info("Building C code module")
-        srcfiles = [os.path.join(srcdir, fname) for fname in SOURCE_FILES]
-        destlib = os.path.join(srcdir, DEST_LIB)
-        os.system(COMPILE_CMD % (destlib, ' '.join(srcfiles)))
+        logging.info("Building C code module %s" % (target,))
+        srcfiles = [os.path.join(srcdir, fname) for fname in sources]
+        destlib = os.path.join(srcdir, target)
+        os.system(cmd % (destlib, ' '.join(srcfiles)))
 
 FFI_main = None
 FFI_lib = None
@@ -97,7 +102,8 @@ def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
-        check_build_code(srcdir)
+        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD
+                         , OTHER_FILES)
         FFI_main = cffi.FFI()
         FFI_main.cdef(defs_stepcompress)
         FFI_main.cdef(defs_serialqueue)
@@ -110,3 +116,20 @@ def get_ffi():
             "void(const char *)", logging_callback)
         FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
+
+
+######################################################################
+# hub-ctrl hub power controller
+######################################################################
+
+HC_COMPILE_CMD = "gcc -Wall -g -O2 -o %s %s -lusb"
+HC_SOURCE_FILES = ['hub-ctrl.c']
+HC_SOURCE_DIR = '../lib/hub-ctrl'
+HC_TARGET = "hub-ctrl"
+HC_CMD = "sudo %s/hub-ctrl -h 0 -P 2 -p %d"
+
+def run_hub_ctrl(enable_power):
+    srcdir = os.path.dirname(os.path.realpath(__file__))
+    hubdir = os.path.join(srcdir, HC_SOURCE_DIR)
+    check_build_code(hubdir, HC_TARGET, HC_SOURCE_FILES, HC_COMPILE_CMD)
+    os.system(HC_CMD % (hubdir, enable_power))

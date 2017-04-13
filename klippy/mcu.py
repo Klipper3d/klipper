@@ -1,9 +1,9 @@
 # Multi-processor safe interface to micro-controller
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, zlib, logging, math
+import sys, os, zlib, logging, math
 import serialhdl, pins, chelper
 
 class error(Exception):
@@ -381,7 +381,7 @@ class MCU:
         self._is_fileoutput = False
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
-        rmethods = {m: m for m in ['arduino', 'command']}
+        rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
         self._restart_method = config.getchoice(
             'restart_method', rmethods, 'arduino')
         # Config building
@@ -424,8 +424,19 @@ class MCU:
         self.serial.dump_debug()
         self._printer.note_shutdown(self._shutdown_msg)
     # Connection phase
+    def _check_restart(self, reason):
+        if self._printer.get_startup_state() == 'firmware_restart':
+            return
+        logging.info("Attempting automated firmware restart: %s" % (reason,))
+        self._printer.request_exit('firmware_restart')
+        self._printer.reactor.pause(self._printer.reactor.monotonic() + 2.000)
+        raise error("Attempt firmware restart failed")
     def connect(self):
         if not self._is_fileoutput:
+            if (self._restart_method == 'rpi_usb'
+                and not os.path.exists(self._serialport)):
+                # Try toggling usb power
+                self._check_restart("enable power")
             self.serial.connect()
             self._printer.reactor.update_timer(
                 self._timeout_timer, self.monotonic() + self.COMM_TIMEOUT)
@@ -478,6 +489,13 @@ class MCU:
         self.send(self._clear_shutdown_cmd.encode())
     def microcontroller_restart(self):
         reactor = self._printer.reactor
+        if self._restart_method == 'rpi_usb':
+            logging.info("Attempting a microcontroller reset via rpi usb power")
+            self.disconnect()
+            chelper.run_hub_ctrl(0)
+            reactor.pause(reactor.monotonic() + 2.000)
+            chelper.run_hub_ctrl(1)
+            return
         if self._restart_method == 'command':
             last_clock, last_clock_time = self.serial.get_last_clock()
             eventtime = reactor.monotonic()
@@ -539,6 +557,9 @@ class MCU:
         else:
             config_params = self.serial.send_with_response(msg, 'config')
         if not config_params['is_config']:
+            if self._restart_method == 'rpi_usb':
+                # Only configure mcu after usb power reset
+                self._check_restart("full reset before config")
             # Send config commands
             logging.info("Sending printer configuration...")
             for c in self._config_cmds:
@@ -551,12 +572,7 @@ class MCU:
                             self._shutdown_msg,))
                     raise error("Unable to configure printer")
         if self._config_crc != config_params['crc']:
-            if self._printer.get_startup_state() != 'firmware_restart':
-                # Attempt a firmware restart to fix the CRC error
-                logging.info(
-                    "Printer CRC mismatch - attempting firmware restart")
-                self._printer.request_exit('firmware_restart')
-                self._printer.reactor.pause(0.100)
+            self._check_restart("CRC mismatch")
             raise error("Printer CRC does not match config")
         move_count = config_params['move_count']
         logging.info("Configured (%d moves)" % (move_count,))

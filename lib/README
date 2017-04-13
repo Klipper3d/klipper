@@ -10,3 +10,7 @@ The cmsis-sam3x8e directory contains code from the Arduino project:
 version 1.5.1 (extracted on 20160608).  It has been modified to
 compile with gcc's LTO feature. See cmsis-sam3x8e.patch for the
 modifications.
+
+The hub-ctrl directory contains code from:
+  https://github.com/codazoda/hub-ctrl.c/
+revision 42095e522859059e8a5f4ec05c1e3def01a870a9.
