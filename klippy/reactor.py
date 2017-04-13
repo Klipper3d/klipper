@@ -1,6 +1,6 @@
 # File descriptor and timer event helper
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import select, math, time
@@ -105,7 +105,6 @@ class SelectReactor:
         self._fds.pop(self._fds.index(handler))
     # Main loop
     def _dispatch_loop(self):
-        self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = self.monotonic()
         while self._process:
@@ -120,6 +119,7 @@ class SelectReactor:
                     break
         self._g_dispatch = None
     def run(self):
+        self._process = True
         g_next = ReactorGreenlet(run=self._dispatch_loop)
         g_next.switch()
     def end(self):
@@ -145,7 +145,6 @@ class PollReactor(SelectReactor):
         self._fds = fds
     # Main loop
     def _dispatch_loop(self):
-        self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = self.monotonic()
         while self._process:
@@ -180,7 +179,6 @@ class EPollReactor(SelectReactor):
         self._fds = fds
     # Main loop
     def _dispatch_loop(self):
-        self._process = True
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
         eventtime = self.monotonic()
         while self._process:
