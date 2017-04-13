@@ -181,7 +181,8 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
-        self.extruder = printer.objects.get('extruder')
+        self.extruders = printer.objects.get('extruders')
+        self.current_extruder = extruders[0]
         if self.extruder is None:
             self.extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
