@@ -115,56 +115,63 @@ Klippy host and it completes when the corresponding step pulses are
 produced on the micro-controller. This section outlines the code flow
 of a typical move command.
 
-* Processing for a move command (eg, "G1 X10 F6000") starts in
-  gcode.py. The goal of gcode.py is to translate gcode into internal
-  calls. Changes in origin (eg, G92), changes in relative vs absolute
-  positions (eg, G90), and unit changes (eg, F6000=100mm/s) are
-  handled here. The code path for a move is: process_data() ->
-  process_commands() -> cmd_G1(). Ultimately the ToolHead class is
-  invoked to execute the actual request: cmd_G1() ->
-  ToolHead.move([10, 0, 0, 0], 100.0)
+* Processing for a move command starts in gcode.py. The goal of
+  gcode.py is to translate G-code into internal calls. Changes in
+  origin (eg, G92), changes in relative vs absolute positions (eg,
+  G90), and unit changes (eg, F6000=100mm/s) are handled here. The
+  code path for a move is: `process_data() -> process_commands() ->
+  cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
+  actual request: `cmd_G1() -> ToolHead.move()`
 
 * The ToolHead class (in toolhead.py) handles "lookahead" and tracks
   the timing of printing actions. The codepath for a move is:
-  ToolHead.move() (create a Move() object) -> MoveQueue.add_move()
-  (place move on lookahead queue) -> MoveQueue.flush() (determine
-  start/end velocity of each move) -> Move.set_junction() (perform
-  "trapezoid generation" for a move) -> Move.move(). The "trapezoid
-  generator" breaks every move into three parts: a constant
-  acceleration phase, followed by a constant velocity phase, followed
-  by a constant deceleration phase. Every move contains these three
-  phases in this order, but some phases may be of zero duration. When
-  Move.move() is called, everything about the move is known - its
-  start location, its end location, its acceleration, its
+  `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
+  Move.set_junction() -> Move.move()`.
+  * ToolHead.move() creates a Move() object with the parameters of the
+  move (in cartesian space and in units of seconds and millimeters).
+  * MoveQueue.add_move() places the move object on the "lookahead"
+  queue.
+  * MoveQueue.flush() determines the start and end velocities of each
+  move.
+  * Move.set_junction() implements the "trapezoid generator" on a
+  move. The "trapezoid generator" breaks every move into three parts:
+  a constant acceleration phase, followed by a constant velocity
+  phase, followed by a constant deceleration phase. Every move
+  contains these three phases in this order, but some phases may be of
+  zero duration.
+  * When Move.move() is called, everything about the move is known -
+  its start location, its end location, its acceleration, its
   start/crusing/end velocity, and distance traveled during
   acceleration/cruising/deceleration. All the information is stored in
   the Move() class and is in cartesian space in units of millimeters
-  and seconds. Times are stored relative to the start of the
-  print. The move is then handed off to the kinematics classes:
-  Move.move() -> kin.move()
+  and seconds. Times are stored relative to the start of the print.
+
+  The move is then handed off to the kinematics classes: `Move.move()
+  -> kin.move()`
 
 * The goal of the kinematics classes is to translate the movement in
   cartesian space to movement on each stepper. The kinematics classes
   are in cartesian.py, corexy.py, delta.py, and extruder.py. The
-  kinematic class is given a chance to audit the move (ToolHead.move()
-  -> kin.check_move()) before it goes on the lookahead queue, but once
-  the move arrives in kin.move() the kinematic class is required to
-  handle the move as specified. The kinematic classes translate the
-  three parts of each move (acceleration, constant "cruising"
-  velocity, and deceleration) to the associated movement on each
-  stepper. Note that the extruder is handled in its own kinematic
-  class. Since the Move() class specifies the exact movement time and
-  since step pulses are sent to the micro-controller with specific
-  timing, stepper movements produced by the extruder class will be in
-  sync with head movement even though the code is kept separate.
+  kinematic class is given a chance to audit the move
+  (`ToolHead.move() -> kin.check_move()`) before it goes on the
+  lookahead queue, but once the move arrives in *kin*.move() the
+  kinematic class is required to handle the move as specified. The
+  kinematic classes translate the three parts of each move
+  (acceleration, constant "cruising" velocity, and deceleration) to
+  the associated movement on each stepper. Note that the extruder is
+  handled in its own kinematic class. Since the Move() class specifies
+  the exact movement time and since step pulses are sent to the
+  micro-controller with specific timing, stepper movements produced by
+  the extruder class will be in sync with head movement even though
+  the code is kept separate.
 
 * For efficiency reasons, the stepper pulse times are generated in C
-  code. The code flow is: kin.move() -> MCU_Stepper.step_const() (in
-  mcu.py) -> stepcompress_push_const() (in stepcompress.c), or for
-  delta kinematics: DeltaKinematics.move() -> MCU_Stepper.step_delta()
-  -> stepcompress_push_delta(). The MCU_Stepper code just performs
-  unit and axis transformation (seconds to clock ticks and millimeters
-  to step distances), and calls the C code. The C code calculates the
+  code. The code flow is: `kin.move() -> MCU_Stepper.step_const() ->
+  stepcompress_push_const()`, or for delta kinematics:
+  `DeltaKinematics.move() -> MCU_Stepper.step_delta() ->
+  stepcompress_push_delta()`. The MCU_Stepper code just performs unit
+  and axis transformation (seconds to clock ticks and millimeters to
+  step distances), and calls the C code. The C code calculates the
   stepper step times for each movement and fills an array (struct
   stepcompress.queue) with the corresponding micro-controller clock
   counter times (in 64bit integers) for every step. Here the
@@ -172,28 +179,29 @@ of a typical move command.
   micro-controller's hardware counter - it is relative to when the
   micro-controller was last powered up.
 
-* The next major step is to compress the steps: stepcompress_flush()
-  -> compress_bisect_add() (in stepcompress.c). This code generates
-  and encodes micro-controller "queue_step" commands. The compression
-  involves finding a series of queue_step interval/count/add
-  parameters that correspond to the list of micro-controller step
-  times. These "queue_step" commands are then queued, prioritized, and
+* The next major step is to compress the steps: `stepcompress_flush()
+  -> compress_bisect_add()` (in stepcompress.c). This code generates
+  and encodes a series of micro-controller "queue_step" commands that
+  correspond to the list of stepper step times built in the previous
+  stage. These "queue_step" commands are then queued, prioritized, and
   sent to the micro-controller (via stepcompress.c:steppersync and
   serialqueue.c:serialqueue).
 
 * Processing of the queue_step commands on the micro-controller starts
   in command.c which parses the command and calls
-  command_queue_step(). The command_queue_step() code (in stepper.c)
-  just appends the interval/count/add parameters to a per stepper
-  queue. Under normal operation the queue_step command is parsed and
-  queued at least 100ms before the time of the first step. Finally,
-  the generation of stepper events is done in stepper_event(). It's
-  called from the hardware timer interrupt at the scheduled time of
-  the first step. The stepper_event() code generates a step pulse and
-  then reschedules itself to run at the time of the next step pulse
-  for the given interval/count/add sequence. At a high-level, the
-  stepper_event() code does: do_step(); next_wake_time =
-  last_wake_time + interval; interval += add;
+  `command_queue_step()`. The command_queue_step() code (in stepper.c)
+  just appends the parameters of each queue_step command to a per
+  stepper queue. Under normal operation the queue_step command is
+  parsed and queued at least 100ms before the time of its first
+  step. Finally, the generation of stepper events is done in
+  `stepper_event()`. It's called from the hardware timer interrupt at
+  the scheduled time of the first step. The stepper_event() code
+  generates a step pulse and then reschedules itself to run at the
+  time of the next step pulse for the given queue_step parameters. The
+  parameters for each queue_step command are "interval", "count", and
+  "add". At a high-level, stepper_event() runs the following, 'count'
+  times: `do_step(); next_wake_time = last_wake_time + interval;
+  interval += add;`
 
 The above may seem like a lot of complexity to execute a
 movement. However, the only really interesting parts are in the
