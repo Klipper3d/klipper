@@ -99,11 +99,6 @@ Hardware features
   it would also be useful to handle panels already hardwired to the
   micro-controller.)
 
-* The raspberry pi has the ability to cut power to its USB ports. This
-  feature is useful for resetting micro-controllers that are powered
-  over USB. It would be useful to have a high-level command interface
-  in Klippy to request a micro-controller reset via this mechanism.
-
 * Possibly support printers using multiple micro-controllers.
 
 Misc features
