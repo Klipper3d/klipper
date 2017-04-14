@@ -136,18 +136,21 @@ class Printer:
     def set_fileoutput(self, debugoutput, dictionary):
         self.debugoutput = debugoutput
         self.dictionary = dictionary
-    def stats(self, eventtime):
+    def stats(self, eventtime, force_output=False):
         if self.need_dump_debug:
             # Call dump_debug here so it is executed in the main thread
             self.gcode.dump_debug()
             self.need_dump_debug = False
+        toolhead = self.objects.get('toolhead')
+        if toolhead is None or self.mcu is None:
+            return
+        is_active, thstats = toolhead.stats(eventtime)
+        if not is_active and not force_output:
+            return
         out = []
         out.append(self.gcode.stats(eventtime))
-        toolhead = self.objects.get('toolhead')
-        if toolhead is not None:
-            out.append(toolhead.stats(eventtime))
-        if self.mcu is not None:
-            out.append(self.mcu.stats(eventtime))
+        out.append(thstats)
+        out.append(self.mcu.stats(eventtime))
         logging.info("Stats %.1f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.
     def load_config(self):
@@ -238,14 +241,14 @@ class Printer:
     def disconnect(self):
         try:
             if self.mcu is not None:
-                self.stats(self.reactor.monotonic())
+                self.stats(self.reactor.monotonic(), force_output=True)
                 self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during disconnect")
     def firmware_restart(self):
         try:
             if self.mcu is not None:
-                self.stats(self.reactor.monotonic())
+                self.stats(self.reactor.monotonic(), force_output=True)
                 self.mcu.microcontroller_restart()
                 self.mcu.disconnect()
         except:

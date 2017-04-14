@@ -207,6 +207,7 @@ class ToolHead:
         self.move_flush_time = config.getfloat(
             'move_flush_time', 0.050, above=0.)
         self.print_time = 0.
+        self.last_print_end_time = self.reactor.monotonic()
         self.need_check_stall = -1.
         self.print_stall = 0
         self.synch_print_time = True
@@ -258,6 +259,7 @@ class ToolHead:
     def reset_print_time(self):
         self._flush_lookahead(must_synch=True)
         self.print_time = 0.
+        self.last_print_end_time = self.reactor.monotonic()
         self.need_check_stall = -1.
         self.forced_synch = False
         self._reset_motor_off()
@@ -366,11 +368,12 @@ class ToolHead:
         buffer_time = 0.
         print_time = self.print_time
         if print_time:
-            buffer_time = self.printer.mcu.get_print_buffer_time(
-                eventtime, print_time)
-            if buffer_time < 0.:
-                buffer_time = 0.
-        return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
+            is_active = True
+            buffer_time = max(0., self.printer.mcu.get_print_buffer_time(
+                eventtime, print_time))
+        else:
+            is_active = eventtime < self.last_print_end_time + 60.
+        return is_active, "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             print_time, buffer_time, self.print_stall)
     def force_shutdown(self):
         try:
