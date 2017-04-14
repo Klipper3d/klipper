@@ -1,9 +1,9 @@
 # Code to implement asynchronous logging from a background thread
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, Queue
+import logging, logging.handlers, threading, Queue
 
 # Class to forward all messages through a queue to a background thread
 class QueueHandler(logging.Handler):
@@ -38,8 +38,8 @@ class QueueListener(object):
         self.thread.join()
 
 def setup_bg_logging(filename, debuglevel):
-    logoutput = open(filename, 'wb')
-    handler = logging.StreamHandler(logoutput)
+    handler = logging.handlers.TimedRotatingFileHandler(
+        filename, when='midnight', backupCount=5)
     ql = QueueListener(handler)
     qh = QueueHandler(ql.queue)
     root = logging.getLogger()

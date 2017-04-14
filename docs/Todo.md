@@ -26,9 +26,6 @@ Host user interaction
 
 * Improve logging:
 
- * Automatically roll Klippy log files. The default log file should
-   have the current date in the log file name.
-
  * Possibly collate and report the statistics messages in the log in a
    more friendly way.
 
