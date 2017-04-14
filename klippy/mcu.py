@@ -407,7 +407,6 @@ class MCU:
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
     def handle_mcu_stats(self, params):
-        logging.debug("mcu stats: %s" % (params,))
         count = params['count']
         tick_sum = params['sum']
         c = 1.0 / (count * self._mcu_freq)
