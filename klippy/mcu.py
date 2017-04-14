@@ -420,6 +420,9 @@ class MCU:
         self.is_shutdown = True
         self._shutdown_msg = params['#msg']
         logging.info("%s: %s" % (params['#name'], self._shutdown_msg))
+        pst = self._print_start_time
+        logging.info("Clock last synchronized at %.6f (%d)" % (
+            pst, int(pst * self._mcu_freq)))
         self.serial.dump_debug()
         self._printer.note_shutdown(self._shutdown_msg)
     # Connection phase
@@ -612,7 +615,7 @@ class MCU:
     # Clock syncing
     def set_print_start_time(self, eventtime):
         clock = self.serial.get_clock(eventtime)
-        logging.info("Synchronizing mcu clock at %.6f to %d" % (
+        logging.debug("Synchronizing mcu clock at %.6f to %d" % (
             eventtime, clock))
         est_mcu_time = clock / self._mcu_freq
         self._print_start_time = est_mcu_time
