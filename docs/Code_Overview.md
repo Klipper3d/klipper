@@ -113,7 +113,8 @@ Code flow of a move command
 A typical printer movement starts when a "G1" command is sent to the
 Klippy host and it completes when the corresponding step pulses are
 produced on the micro-controller. This section outlines the code flow
-of a typical move command.
+of a typical move command. The [kinematics](Kinematics.md) document
+provides further information on the mechanics of moves.
 
 * Processing for a move command starts in gcode.py. The goal of
   gcode.py is to translate G-code into internal calls. Changes in

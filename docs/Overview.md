@@ -1,7 +1,9 @@
 See [installation](Installation.md) for information on compiling,
 installing, and running Klipper. Read [features](Features.md) for a
-high-level description of useful capabilities. The history of releases
-is available at [releases](Releases.md).
+high-level description of useful capabilities. The
+[kinematics](Kinematics.md) document provides information on how
+movement is implemented. The history of releases is available at
+[releases](Releases.md).
 
 There are also several documents available for developers interested
 in understanding how Klipper works:
