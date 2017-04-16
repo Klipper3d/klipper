@@ -37,12 +37,17 @@ compelling features:
   and thermistor algorithms, etc. are all written in Python. This
   makes it easier to develop new functionality.
 
-* Advanced features. Klipper implements the "pressure advance"
-  algorithm for extruders. When properly tuned, pressure advance
-  reduces extruder ooze. Klipper also implements a novel "stepper
-  phase endstop" algorithm that can dramatically improve the accuracy
-  of typical endstop switches. When properly tuned it can improve a
-  print's first layer bed adhesion.
+* Advanced features:
+  * Klipper implements the "pressure advance" algorithm for
+    extruders. When properly tuned, pressure advance reduces extruder
+    ooze.
+  * Klipper also implements a novel "stepper phase endstop" algorithm
+    that can dramatically improve the accuracy of typical endstop
+    switches. When properly tuned it can improve a print's first layer
+    bed adhesion.
+  * Support for limiting the top speed of short "zig-zag" moves to
+    reduce printer vibration and noise. See the
+    [kinematics](Kinematics.md) document for more information.
 
 To get started with Klipper, read the [installation](Installation.md)
 guide.
@@ -69,7 +74,7 @@ Klipper supports many standard 3d printer features:
   similar direction will be optimized to reduce print stalls and
   improve overall print time.
 
-* Support for both delta printers and cartesian style printers.
+* Support for cartesian, delta, and corexy style printers.
 
 Step Benchmarks
 ===============
