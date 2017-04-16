@@ -69,9 +69,6 @@ Documentation
 * Add documentation describing how to perform bed-leveling accurately
   in Klipper. Improve description of stepper phase based bed leveling.
 
-* Document the kinematic formulas in Klippy. Document how acceleration
-  and jerk limits are enforced.
-
 * Document how one can tune the pressure advance setting.
 
 Hardware features
