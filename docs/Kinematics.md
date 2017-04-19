@@ -170,7 +170,7 @@ the actual tower.
 
 It is then possible to calculate where the head will be along the line
 of movement after each step is taken on the virtual tower. The key
-formula is Pythagorean's formula:
+formula is Pythagoras's theorem:
 
 ```
 distance_to_tower^2 = arm_length^2 - tower_height^2
@@ -197,6 +197,22 @@ must also be used in the calculations.
 Should the move contain only Z movement (ie, no XY movement at all)
 then the same math is used - just in this case the tower is parallel
 to the line of movement (its slope is 1.0).
+
+### Stepper motor acceleration limits ###
+
+With delta kinematics it is possible for a move that is accelerating
+in cartesian space to require an acceleration on a particular stepper
+motor greater than the move's acceleration. This can occur when a
+stepper arm is more horizontal than vertical and the line of movement
+is near that stepper's tower.
+
+Klipper does enforce a maximum ceiling on stepper acceleration that is
+three times the maximum acceleration of a move in cartesian
+space. (Similarly, the maximum velocity of the stepper is limited to
+three times the maximum move velocity.) In order to enforce this
+limit, moves at the extreme edge of the build envelope (where a
+stepper arm may be nearly horizontal) will have a lower maximum
+acceleration and velocity.
 
 Extruder kinematics
 -------------------
