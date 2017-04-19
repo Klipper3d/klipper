@@ -15,7 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="pressure-cornering.svg">
+   sodipodi:docname="pressure-cornering.svg"
+   inkscape:export-filename="/home/kevin/src/reprap/firmware/klipper/docs/img/pressure-cornering.svg.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -26,15 +29,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98"
-     inkscape:cx="284.723"
+     inkscape:cx="110.74341"
      inkscape:cy="35.715236"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1091"
      inkscape:window-height="588"
-     inkscape:window-x="540"
-     inkscape:window-y="225"
+     inkscape:window-x="656"
+     inkscape:window-y="0"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -57,7 +60,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -162,5 +165,16 @@
        id="path12895"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:100%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="435.80841"
+       y="366.8262"
+       id="text3349"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan3351"
+         x="435.80841"
+         y="366.8262">time</tspan></text>
   </g>
 </svg>

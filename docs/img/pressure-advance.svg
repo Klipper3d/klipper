@@ -15,7 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="pressure-advance.svg">
+   sodipodi:docname="pressure-advance.svg"
+   inkscape:export-filename="/home/kevin/src/reprap/firmware/klipper/docs/img/pressure-advance.svg.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -25,16 +28,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98"
-     inkscape:cx="189.31482"
+     inkscape:zoom="0.97968464"
+     inkscape:cx="147.06528"
      inkscape:cy="169.55487"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1091"
      inkscape:window-height="588"
-     inkscape:window-x="540"
-     inkscape:window-y="225"
+     inkscape:window-x="419"
+     inkscape:window-y="273"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -57,7 +60,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -68,10 +71,10 @@
      transform="translate(-118.13451,-140.19216)">
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 150,250.23455 1.06383,102.12765 327.12765,-0.53192 -7.97871,5.85107"
+       d="m 150.47693,249.82417 0.58688,123.9666 m 0,-21.42857 327.12765,-0.53192 -7.97871,5.85107"
        id="path3347"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cccc" />
+       sodipodi:nodetypes="ccccc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.50000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -189,5 +192,16 @@
        id="path3361-9"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:100%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="438.03586"
+       y="499.53384"
+       id="text3349"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan3351"
+         x="438.03586"
+         y="499.53384">time</tspan></text>
   </g>
 </svg>
