@@ -234,9 +234,9 @@ the pressure necessary to extrude is dominated by the flow rate
 through the nozzle orifice (as in
 [Poiseuille law](https://en.wikipedia.org/wiki/Poiseuille_law)). The
 details of the above physics are not important - only that the
-relationship between pressure and flow rate is linear. It is expected
-that an appropriate "pressure advance" value for a particular filament
-and extruder will be determined experimentally.
+relationship between pressure and flow rate is linear. See the
+[pressure advance](Pressure_Advance.md) document for information on
+how to find the pressure advance coefficients.
 
 Once configured, Klipper will push in an additional amount of filament
 during acceleration and retract that additional filament during
