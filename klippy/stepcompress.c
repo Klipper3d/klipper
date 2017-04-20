@@ -567,16 +567,15 @@ _stepcompress_push_delta(
     // Calculate each step time
     clock_offset += 0.5;
     height += (sdir ? .5 : -.5);
-    double start_pos = movexy_r*startxy_sd;
     uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
         double inv_cruise_sv = 1. / start_sv;
         if (!movez_r) {
-            // Optmized case for common XY only moves (no Z movement)
+            // Optimized case for common XY only moves (no Z movement)
             while (count--) {
                 double v = safe_sqrt(arm_sd2 - height*height);
-                double pos = start_pos + (sdir ? -v : v);
+                double pos = startxy_sd + (sdir ? -v : v);
                 uint64_t c = clock_offset + pos * inv_cruise_sv;
                 int ret = check_push(sc, &qnext, &qend, c);
                 if (ret)
@@ -584,20 +583,20 @@ _stepcompress_push_delta(
                 height += (sdir ? 1. : -1.);
             }
         } else if (!movexy_r) {
-            // Optmized case for Z only moves
-            double v = (sdir ? -end_height : end_height);
+            // Optimized case for Z only moves
+            double pos = (sdir ? height-end_height : end_height-height);
             while (count--) {
-                double pos = start_pos + movez_r*height + v;
                 uint64_t c = clock_offset + pos * inv_cruise_sv;
                 int ret = check_push(sc, &qnext, &qend, c);
                 if (ret)
                     return ret;
-                height += (sdir ? 1. : -1.);
+                pos += 1.;
             }
         } else {
             // General case (handles XY+Z moves)
+            double start_pos = movexy_r*startxy_sd, zoffset = movez_r*startxy_sd;
             while (count--) {
-                double relheight = movexy_r*height - movez_r*startxy_sd;
+                double relheight = movexy_r*height - zoffset;
                 double v = safe_sqrt(arm_sd2 - relheight*relheight);
                 double pos = start_pos + movez_r*height + (sdir ? -v : v);
                 uint64_t c = clock_offset + pos * inv_cruise_sv;
@@ -609,12 +608,13 @@ _stepcompress_push_delta(
         }
     } else {
         // Move with constant acceleration
+        double start_pos = movexy_r*startxy_sd, zoffset = movez_r*startxy_sd;
         double inv_accel = 1. / accel;
         clock_offset -= start_sv * inv_accel;
         start_pos += 0.5 * start_sv*start_sv * inv_accel;
         double accel_multiplier = 2. * inv_accel;
         while (count--) {
-            double relheight = movexy_r*height - movez_r*startxy_sd;
+            double relheight = movexy_r*height - zoffset;
             double v = safe_sqrt(arm_sd2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (sdir ? -v : v);
             v = safe_sqrt(pos * accel_multiplier);
