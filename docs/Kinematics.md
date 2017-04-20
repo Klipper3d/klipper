@@ -54,10 +54,10 @@ of zero duration (if the end speed is equal to the cruising speed).
 
 ![trapezoids](img/trapezoids.svg.png)
 
-Lookahead
-=========
+Look-ahead
+==========
 
-The "lookahead" system is used to determine cornering speeds between
+The "look-ahead" system is used to determine cornering speeds between
 moves.
 
 Consider the following two moves contained on an XY plane:
@@ -70,7 +70,7 @@ but that is not ideal as all that acceleration and deceleration would
 greatly increase the print time and the frequent changes in extruder
 flow would result in poor print quality.
 
-To solve this, the "lookahead" mechanism queues multiple incoming
+To solve this, the "look-ahead" mechanism queues multiple incoming
 moves and analyzes the angles between moves to determine a reasonable
 speed that can be obtained during the "junction" between two moves. If
 the next move forms an acute angle (the head is going to travel in
@@ -85,17 +85,17 @@ acceleration". Best
 [described](https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/)
 by the author.
 
-Klipper implements lookahead between moves contained in the XY plane
+Klipper implements look-ahead between moves contained in the XY plane
 that have similar extruder flow rates. Other moves are rare and
-implementing lookahead between them is unnecessary.
+implementing look-ahead between them is unnecessary.
 
-Key formula for lookahead:
+Key formula for look-ahead:
 ```
 end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 ```
 
-Smoothed lookahead
-------------------
+Smoothed look-ahead
+-------------------
 
 Klipper also implements a mechanism for smoothing out the motions of
 short "zig-zag" moves.  Consider the following moves:
@@ -124,7 +124,7 @@ top-speed.
 Generating steps
 ================
 
-Once the lookahead process completes, the print head movement for the
+Once the look-ahead process completes, the print head movement for the
 given move is fully known (time, start position, end position,
 velocity at each point) and it is possible to generate the step times
 for the move.  This process is done within "kinematic classes" in the
@@ -249,18 +249,20 @@ pressure. Pressure increases when filament is pushed into the extruder
 the pressure necessary to extrude is dominated by the flow rate
 through the nozzle orifice (as in
 [Poiseuille law](https://en.wikipedia.org/wiki/Poiseuille_law)). The
-details of the above physics are not important - only that the
-relationship between pressure and flow rate is linear. See the
-[pressure advance](Pressure_Advance.md) document for information on
-how to find the pressure advance coefficients.
+key idea is that the relationship between filament, pressure, and flow
+rate can be modeled using a linear coefficient:
+```
+extra_filament = pressure_advance_coefficient * extruder_velocity
+```
+
+See the [pressure advance](Pressure_Advance.md) document for
+information on how to find this pressure advance coefficient.
 
 Once configured, Klipper will push in an additional amount of filament
-during acceleration and retract that additional filament during
-deceleration. The higher the desired filament flow rate, the more
-filament must be pushed in during acceleration to account for
-pressure. Any additional filament pushed in during head acceleration
-is retracted during head deceleration (the extruder will have a
-negative velocity).
+during acceleration. The higher the desired filament flow rate, the
+more filament must be pushed in during acceleration to account for
+pressure. During head deceleration the extra filament is retracted
+(the extruder will have a negative velocity).
 
 ![pressure-advance](img/pressure-advance.svg.png)
 
@@ -268,8 +270,8 @@ One may notice that the pressure advance algorithm can cause the
 extruder motor to make sudden velocity changes. This is tolerated
 based on the idea that the majority of the inertia in the system is in
 changing the extruder pressure. As long as the extruder pressure does
-not change rapidly it is okay to make some sudden changes in extruder
-motor velocity.
+not change rapidly the sudden changes in extruder motor velocity are
+tolerated.
 
 One area where sudden velocity changes become problematic is during
 small changes in head speed due to cornering.
@@ -277,6 +279,8 @@ small changes in head speed due to cornering.
 ![pressure-cornering](img/pressure-cornering.svg.png)
 
 To prevent this, the Klipper pressure advance code utilizes the move
-lookahead queue to detect intermittent speed changes. In these cases
-the amount of pressure increased and decreased will be reduced or
-eliminated.
+look-ahead queue to detect intermittent speed changes. During a
+deceleration event the code finds the maximum upcoming head speed
+within a configurable time window. The pressure is then only adjusted
+to this found maximum. This can greatly reduce (or even completely
+eliminate) pressure changes during cornering.
