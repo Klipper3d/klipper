@@ -120,9 +120,6 @@ Enter the Settings tab again and under "Serial Connection" change the
 and may be safely left at 250000). Unselect the "Not only cancel
 ongoing prints but also disconnect..." checkbox.
 
-Under the "Features" tab, unselect "Enable SD support". Then click
-"Save".
-
 Running the host software
 =========================
 

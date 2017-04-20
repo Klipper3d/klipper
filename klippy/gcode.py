@@ -44,10 +44,10 @@ class GCodeParser:
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
         # Map command handlers
-        handlers = ['G1', 'G4', 'G20', 'G21', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M105', 'M110', 'M112', 'M114', 'M115',
+        handlers = ['G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
+                    'M18', 'M82', 'M83', 'M105', 'M112', 'M114', 'M115',
                     'M206', 'M400',
-                    'HELP', 'QUERY_ENDSTOPS',
+                    'HELP', 'IGNORE', 'QUERY_ENDSTOPS',
                     'RESTART', 'FIRMWARE_RESTART', 'STATUS']
         if self.heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
@@ -266,9 +266,6 @@ class GCodeParser:
     def cmd_G20(self, params):
         # Set units to inches
         self.respond_error('Machine does not support G20 (inches) command')
-    def cmd_G21(self, params):
-        # Set units to millimeters
-        pass
     def cmd_G28(self, params):
         # Move to origin
         axes = []
@@ -324,10 +321,6 @@ class GCodeParser:
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.set_temp(self.heater_nozzle, params, wait=True)
-    cmd_M110_when_not_ready = True
-    def cmd_M110(self, params):
-        # Set Current Line Number
-        pass
     def cmd_M112(self, params):
         # Emergency Stop
         self.toolhead.force_shutdown()
@@ -372,6 +365,11 @@ class GCodeParser:
     def cmd_M400(self, params):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
+    cmd_IGNORE_when_not_ready = True
+    cmd_IGNORE_aliases = ["G21", "M110", "M21"]
+    def cmd_IGNORE(self, params):
+        # Commands that are just silently accepted
+        pass
     cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
     cmd_QUERY_ENDSTOPS_aliases = ["M119"]
     def cmd_QUERY_ENDSTOPS(self, params):
