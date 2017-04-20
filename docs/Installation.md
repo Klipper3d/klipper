@@ -16,40 +16,29 @@ Raspberry Pi computer. Use OctoPi v0.13.0 or later - see the
 [octopi releases](https://github.com/guysoft/OctoPi/releases) for
 release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
-page, follow the prompt to upgrade OctoPrint to v1.3.0 or later.
+page, follow the prompt to upgrade OctoPrint to v1.3.2 or later.
 
 After installing OctoPi and upgrading OctoPrint, ssh into the target
 machine (ssh pi@octopi -- password is "raspberry") and run the
 following commands:
 
 ```
-sudo apt-get update
-sudo apt-get install libncurses-dev libusb-dev
-sudo apt-get install avrdude gcc-avr binutils-avr avr-libc # AVR toolchain
-sudo apt-get install bossa-cli libnewlib-arm-none-eabi # ARM toolchain
-```
-
-The host software (Klippy) requires a one-time setup - run as the
-regular "pi" user:
-
-```
-virtualenv ~/klippy-env
-~/klippy-env/bin/pip install cffi==1.6.0 pyserial==3.2.1 greenlet==0.4.10
-```
-
-Building Klipper
-================
-
-To obtain Klipper, run the following command on the target machine:
-
-```
 git clone https://github.com/KevinOConnor/klipper
-cd klipper/
+./klipper/scripts/install-octopi.sh
 ```
+
+The above will download Klipper, install some system dependencies,
+setup Klipper to run at system startup, and start the Klipper host
+software. It will require an internet connection and it may take a few
+minutes to complete.
+
+Building the micro-controller code
+==================================
 
 To compile the micro-controller code, start by configuring it:
 
 ```
+cd ~/klipper/
 make menuconfig
 ```
 
@@ -118,21 +107,10 @@ Enter the Settings tab again and under "Serial Connection" change the
 "Serial Port" setting to "/tmp/printer". Change the Baudrate field to
 250000 (this buad rate field is not related to the firmware baudrate
 and may be safely left at 250000). Unselect the "Not only cancel
-ongoing prints but also disconnect..." checkbox.
+ongoing prints but also disconnect..." checkbox. Click "Save".
 
-Running the host software
-=========================
-
-The host software is executed by running the following as the regular
-"pi" user:
-
-```
-~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log < /dev/null > /dev/null 2>&1 &
-```
-
-Once Klippy is running, use a web-browser and navigate to the
-OctoPrint web site. Under the "Connection" tab (on the left of the
-main page) make sure the "Serial Port" is set to "/tmp/printer" and
+From the main page, under the "Connection" window (at the top left of
+the page) make sure the "Serial Port" is set to "/tmp/printer" and
 click "Connect". (If "/tmp/printer" is not an available selection then
 try reloading the page.)
 
@@ -142,7 +120,9 @@ the Klippy config file was successfully read, and the micro-controller
 was successfully found and configured, then this command will report
 that the printer is ready. Klippy reports error messages via this
 terminal tab. The "status" command can be used to re-report error
-messages.
+messages. The default Klipper startup script also places a log in
+**/tmp/klippy.log** which may provide more detailed information should
+an error occur.
 
 In addition to common g-code commands, Klippy supports a few extended
 commands - "status" is an example of one of these commands. Use the
