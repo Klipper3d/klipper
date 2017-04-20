@@ -161,9 +161,19 @@ class Printer:
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.debugoutput is not None:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
+        extruders=[]
         if self.fileconfig.has_section('extruder'):
-            self.objects['extruder'] = extruder.PrinterExtruder(
-                self, ConfigWrapper(self, 'extruder'))
+            extruders.append(
+                extruder.PrinterExtruder(self, ConfigWrapper(self, 'extruder')))
+        elif self.fileconfig.has_section('extruder0'):
+            while True:
+                newextruder = 'extruder' + str(len(extruders))
+                if self.fileconfig.has_section(newextruder):
+                    extruders.append(extruder.PrinterExtruder(
+                        self, ConfigWrapper(self, newextruder)))
+                else: break
+            logging.info("Klipper configured for %s extruders." % len(extruders))
+        self.objects['extruders']=extruders
         if self.fileconfig.has_section('fan'):
             self.objects['fan'] = fan.PrinterFan(
                 self, ConfigWrapper(self, 'fan'))
