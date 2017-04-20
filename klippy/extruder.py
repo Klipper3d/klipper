@@ -4,15 +4,19 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, heater, homing
+import stepper, heater, homing, servo
 
 EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
     def __init__(self, printer, config):
+        name = self.name = config.section
+        self.index=0
+        if name != 'extruder':
+            self.index= int(name[len('extruder'):])
         self.config = config
         self.heater = heater.PrinterHeater(printer, config)
-        self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
+        self.stepper = stepper.PrinterStepper(printer, config, name)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
@@ -32,6 +36,28 @@ class PrinterExtruder:
                 'pressure_advance_lookahead_time', 0.010, minval=0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
+        #Multi-extruder support
+        if name != 'extruder':
+            self.nozzle_offset=[]
+            self.nozzle_offset.append(config.getfloat('x_offset',0))
+            self.nozzle_offset.append(config.getfloat('y_offset',0))
+            self.nozzle_offset.append(config.getfloat('z_offset',0))
+            self.servo=None
+            if config.get('servo_pin', None):
+                self.servo=servo.PrinterServo(printer, config)
+                self.servo_angle_extruder_active = config.getint(
+                    'servo_angle_extruder_active')
+                self.servo_angle_extruder_inactive = config.getint(
+                    'servo_angle_extruder_inactive')
+                self.servo_wait_time = config.getfloat('servo_wait_time',-1)
+    def activate(self, print_time):
+        if not self.servo: return -1
+        self.servo.set_angle(print_time, self.servo_angle_extruder_active)
+        return self.servo_wait_time
+    def deactivate(self, print_time):
+        if not self.servo: return -1
+        self.servo.set_angle(print_time, self.servo_angle_extruder_inactive)
+        return self.servo_wait_time
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         self.max_e_velocity = self.config.getfloat(
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio

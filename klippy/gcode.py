@@ -37,10 +37,10 @@ class GCodeParser:
     def build_handlers(self):
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
-        self.heater_nozzle = None
-        extruder = self.printer.objects.get('extruder')
-        if extruder:
-            self.heater_nozzle = extruder.heater
+        self.extruders = self.printer.objects.get('extruders')
+        heater_nozzle = None
+        if self.toolhead and self.toolhead.current_extruder:
+            heater_nozzle = self.toolhead.current_extruder.heater
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
         # Map command handlers
@@ -49,12 +49,18 @@ class GCodeParser:
                     'M206', 'M400',
                     'HELP', 'QUERY_ENDSTOPS',
                     'RESTART', 'FIRMWARE_RESTART', 'STATUS']
-        if self.heater_nozzle is not None:
+        if heater_nozzle is not None:
             handlers.extend(['M104', 'M109', 'PID_TUNE'])
         if self.heater_bed is not None:
             handlers.extend(['M140', 'M190'])
         if self.fan is not None:
             handlers.extend(['M106', 'M107'])
+        #add toolchange handlers
+        if self.extruders:
+            handlers.append('M280')
+            for t in range(len(self.extruders)-1):
+                handlers.append('T'+str(t))
+                self.add_toolchange_method(t)
         if not self.is_printer_ready:
             handlers = [h for h in handlers
                         if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
@@ -63,6 +69,35 @@ class GCodeParser:
         for h, f in self.gcode_handlers.items():
             aliases = getattr(self, 'cmd_'+h+'_aliases', [])
             self.gcode_handlers.update(dict([(a, f) for a in aliases]))
+    def add_toolchange_method(self, toolindex):
+        def cmd_Tn(self, params):
+            self.toolchange(toolindex)
+        setattr(GCodeParser, "cmd_T%d" % (toolindex), cmd_Tn)
+    def toolchange(self, next_extruder_index):
+        next_extruder=self.extruders[next_extruder_index]
+        t=self.toolhead
+        if next_extruder == t.current_extruder:
+            self.respond_info("%s already selected" % next_extruder.name)
+            return
+        #calculate the XYZ offset between nozzles
+        delta_offset = [a-b for a,b in zip(
+            t.current_extruder.offset, next_extruder.offset)]
+        delta_offset.append(0)
+        self.last_position = [sum(x) for x in zip (self.last_position, delta_offset)]
+        try:
+            print_time=t.get_last_move_time()
+            t.dwell(t.current_extruder.deactivate(print_time))
+            t.move(self.last_position, t.toolchange_velocity)
+            self.base_position=[sum(x) for x in zip(self.base_position, delta_offset)]
+            print_time=t.get_last_move_time()
+            t.dwell(next_extruder.activate(print_time))
+            t.current_extruder = next_extruder
+            self.respond_info("Switched to: %s" % next_extruder.name)
+        except homing.EndstopError, e:
+            self.respond_error(str(e))
+            self.last_position = t.get_position()
+            print_time = t.get_last_move_time()
+            t.current_extruder.activate(print_time)
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
     def set_printer_ready(self, is_ready):
@@ -77,8 +112,9 @@ class GCodeParser:
             return
         self.toolhead.motor_off()
         print_time = self.toolhead.get_last_move_time()
-        if self.heater_nozzle is not None:
-            self.heater_nozzle.set_temp(print_time, 0.)
+        for e in self.extruders:
+            if e.heater is not None: 
+                e.heater.set_temp(print_time, 0.)
         if self.heater_bed is not None:
             self.heater_bed.set_temp(print_time, 0.)
         if self.fan is not None:
@@ -195,11 +231,13 @@ class GCodeParser:
     def get_temp(self):
         if not self.is_printer_ready:
             return "T:0"
-        # T:XXX /YYY B:XXX /YYY
+        # Tn:XXX /YYY, Tn:XXX /YYY, B:XXX /YYY
         out = []
-        if self.heater_nozzle:
-            cur, target = self.heater_nozzle.get_temp()
-            out.append("T:%.1f /%.1f" % (cur, target))
+        for e in self.extruders:
+            cur, target = e.heater.get_temp()
+            out.append("T%d:%.1f /%.1f" % (e.index, cur, target))
+        if len(self.extruders)==1:
+            out[-1]=out[-1].replace('0','',1)
         if self.heater_bed:
             cur, target = self.heater_bed.get_temp()
             out.append("B:%.1f /%.1f" % (cur, target))
@@ -314,16 +352,25 @@ class GCodeParser:
     def cmd_M18(self, params):
         # Turn off motors
         self.toolhead.motor_off()
+    def cmd_M104(self, params):
+        # Set Extruder Temperature
+        if 'T' not in params:
+            heater = self.toolhead.current_extruder.heater
+        else:
+            extruder=self.get_int('T', params, -1)
+            if extruder<0 or extruder>len(self.extruders)-1:
+                self.respond_info("Invalid extruder index: %d" % extruder)
+                return
+            heater = self.extruders[extruder].heater
+        logging.debug("********Setting Heater: %s - pin: %s" % (heater.name, heater.heater_pin))
+        self.set_temp(heater, params)
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
         self.ack(self.get_temp())
-    def cmd_M104(self, params):
-        # Set Extruder Temperature
-        self.set_temp(self.heater_nozzle, params)
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
-        self.set_temp(self.heater_nozzle, params, wait=True)
+        self.set_temp(self.toolhead.current_extruder.heater, params, wait=True)
     cmd_M110_when_not_ready = True
     def cmd_M110(self, params):
         # Set Current Line Number
@@ -369,6 +416,33 @@ class GCodeParser:
         for p, offset in offsets.items():
             self.base_position[p] += self.homing_add[p] - offset
             self.homing_add[p] = offset
+    def cmd_M280(self, params):
+        if len(self.extruders)==1:
+            self.respond_info('Only one extruder present in config file.')
+            return
+        if len(params)<=3:
+            #print servo mapping
+            for e in self.extruders:
+                if e.servo is not None:
+                    servo_status = "has a servo attached (P%d)" % index
+                else:
+                    servo_status = "does not have a servo"
+                self.respond_info("Extruder%d: %s" % (e.index, servo_status))
+        else:
+            index=self.get_int('P', params)
+            if index>(len(self.extruders)-1) or self.extruders[index].servo is None:
+                self.respond_info(
+                    "There is no servo P%d. Enter \"M280\" to list servos" % index)
+                return
+            e=self.extruders[index]
+            servo_position=self.get_int('S', params)
+            print_time = self.toolhead.get_last_move_time()
+            if servo_position<200: #position specified in degrees
+                e.servo.set_angle(print_time, position)
+                self.respond_info("Set servo P%d to %d degrees" % (index, position))
+            else: #position is pulsewidth in microseconds
+                e.servo.set_pulsewidth(print_time, (position/1000000.))
+                self.respond_info("Set servo P%d to %d microseconds" % (index, position))
     def cmd_M400(self, params):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
@@ -390,7 +464,10 @@ class GCodeParser:
     def cmd_PID_TUNE(self, params):
         # Run PID tuning
         heater = self.get_int('E', params, 0)
-        heater = {0: self.heater_nozzle, -1: self.heater_bed}[heater]
+        if heater==-1: 
+            heater=self.heater_bed
+        else:
+            heater=self.extruders[heater].heater
         temp = self.get_float('S', params)
         heater.start_auto_tune(temp)
         self.bg_temp(heater)

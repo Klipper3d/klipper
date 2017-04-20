@@ -181,9 +181,11 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
-        self.extruder = printer.objects.get('extruder')
-        if self.extruder is None:
-            self.extruder = extruder.DummyExtruder()
+        self.toolchange_velocity = config.getfloat('toolchange_velocity', 10.0)
+        self.extruders = printer.objects.get('extruders')
+        self.current_extruder = self.extruders[0]
+        if self.current_extruder is None:
+            self.current_extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
@@ -195,7 +197,8 @@ class ToolHead:
             , above=0., maxval=self.max_accel)
         self.junction_deviation = config.getfloat(
             'junction_deviation', 0.02, above=0.)
-        self.move_queue = MoveQueue(self.extruder.lookahead)
+        #JULZ WARNING MAY NEED TO CANGE THIS
+        self.move_queue = MoveQueue(self.current_extruder.lookahead)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_low = config.getfloat(
@@ -223,7 +226,7 @@ class ToolHead:
         # before cornering.  The 8. was determined experimentally.
         xy_halt = math.sqrt(8. * self.junction_deviation * self.max_accel)
         self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
-        self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
+        self.current_extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -337,7 +340,7 @@ class ToolHead:
         if move.is_kinematic_move:
             self.kin.check_move(move)
         if move.axes_d[3]:
-            self.extruder.check_move(move)
+            self.current_extruder.check_move(move)
         self.commanded_pos[:] = newpos
         self.move_queue.add_move(move)
         if self.print_time > self.need_check_stall:
@@ -345,6 +348,7 @@ class ToolHead:
     def home(self, homing_state):
         self.kin.home(homing_state)
     def dwell(self, delay):
+        if delay==-1: return
         self.get_last_move_time()
         self.update_move_time(delay)
         self._check_stall()
@@ -352,7 +356,7 @@ class ToolHead:
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()
         self.kin.motor_off(last_move_time)
-        self.extruder.motor_off(last_move_time)
+        self.current_extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f' % (last_move_time,))
     def wait_moves(self):
