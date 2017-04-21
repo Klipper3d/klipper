@@ -19,3 +19,7 @@ target-y += $(OUT)klipper.elf.hex
 $(OUT)klipper.elf.hex: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -j .text -j .data -O ihex $< $@
+
+flash: $(OUT)klipper.elf.hex
+	@echo "  Flashing $(FLASH_DEVICE) via avrdude"
+	$(Q)avrdude -p$(CONFIG_MCU) -cwiring -P"$(FLASH_DEVICE)" -D -U"flash:w:$(OUT)klipper.elf.hex:i"

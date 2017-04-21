@@ -27,3 +27,8 @@ target-y += $(OUT)klipper.bin
 $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
+
+flash: $(OUT)klipper.bin
+	@echo "  Flashing $(FLASH_DEVICE) via bossac"
+	$(Q)stty -F "$(FLASH_DEVICE)" 1200
+	$(Q)bossac -i -p "$(FLASH_DEVICE:/dev/%=%)" -R -e -w -v -b $(OUT)klipper.bin
