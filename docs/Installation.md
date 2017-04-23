@@ -49,9 +49,6 @@ configured, run:
 make
 ```
 
-Ignore any warnings you may see about "misspelled signal handler" (it
-is due to a bug fixed in gcc v4.8.3).
-
 Installing Klipper on an AVR micro-controller
 ---------------------------------------------
 

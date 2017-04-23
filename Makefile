@@ -83,7 +83,7 @@ $(OUT)declfunc.lds: src/declfunc.lds.S
 
 $(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)declfunc.lds
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS) -Wl,-r -Wl,-T,$(OUT)declfunc.lds -nostdlib $(patsubst %.c, $(OUT)src/%.o,$(src-y)) -o $@
+	$(Q)$(CC) $(CFLAGS) $(CFLAGS_klipper.o) -Wl,-r -Wl,-T,$(OUT)declfunc.lds -nostdlib $(patsubst %.c, $(OUT)src/%.o,$(src-y)) -o $@
 
 $(OUT)compile_time_request.o: $(OUT)klipper.o ./scripts/buildcommands.py
 	@echo "  Building $@"
