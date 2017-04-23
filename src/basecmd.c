@@ -322,6 +322,21 @@ command_debug_write16(uint32_t *args)
 DECL_COMMAND_FLAGS(command_debug_write16, HF_IN_SHUTDOWN,
                    "debug_write16 addr=%u val=%u");
 
+void
+command_debug_ping(uint32_t *args)
+{
+    uint8_t len = args[0];
+    char *data = (void*)(size_t)args[1];
+    sendf("pong data=%*s", len, data);
+}
+DECL_COMMAND_FLAGS(command_debug_ping, HF_IN_SHUTDOWN, "debug_ping data=%*s");
+
+void
+command_debug_nop(uint32_t *args)
+{
+}
+DECL_COMMAND_FLAGS(command_debug_nop, HF_IN_SHUTDOWN, "debug_nop data=%*s");
+
 
 /****************************************************************
  * Misc commands
