@@ -3,10 +3,10 @@ computer in conjunction with OctoPrint. It is recommended that a
 Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host
 machine.
 
-It should be possible to run the Klipper host software on any recent
-Linux distribution, but doing so will require Linux admin knowledge to
-translate these installation instructions to the particulars of that
-machine.
+It should be possible to run the Klipper host software on any computer
+running a recent Linux distribution, but doing so will require Linux
+admin knowledge to translate these installation instructions to the
+particulars of that machine.
 
 Klipper currently supports Atmel ATmega based micro-controllers and
 Arduino Due (Atmel SAM3x8e ARM micro-controller) printers.
