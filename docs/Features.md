@@ -1,5 +1,4 @@
-Klipper is an experimental 3d printer firmware. It has several
-compelling features:
+Klipper is a 3d printer firmware with several compelling features:
 
 * High precision stepper movement. Klipper utilizes an application
   processor (such as a low-cost Raspberry Pi) when calculating printer

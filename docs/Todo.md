@@ -1,5 +1,5 @@
-Klipper is currently in an experimental state. There are several
-features still to be implemented.  In no particular order:
+There are several features still to be implemented in Klipper.  In no
+particular order:
 
 Host user interaction
 =====================
