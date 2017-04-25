@@ -25,7 +25,7 @@ class KeyboardReader:
         self.eval_globals = {}
     def connect(self, eventtime):
         self.ser.connect()
-        self.mcu_freq = int(self.ser.msgparser.get_constant_float('CLOCK_FREQ'))
+        self.mcu_freq = self.ser.msgparser.get_constant_float('CLOCK_FREQ')
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu)
         self.reactor.unregister_timer(self.connect_timer)
@@ -35,19 +35,16 @@ class KeyboardReader:
         sys.stdout.flush()
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
-        self.eval_globals['clock'] = int(self.ser.get_clock(eventtime))
+        self.eval_globals['clock'] = self.ser.get_clock(eventtime)
     def set_pin_map(self, parts):
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu, parts[1])
     def set_var(self, parts):
         val = parts[2]
         try:
-            val = int(val)
+            val = float(val)
         except ValueError:
-            try:
-                val = float(val)
-            except ValueError:
-                pass
+            pass
         self.eval_globals[parts[1]] = val
     def translate(self, line, eventtime):
         evalparts = re_eval.split(line)
@@ -55,7 +52,10 @@ class KeyboardReader:
             self.update_evals(eventtime)
             try:
                 for i in range(1, len(evalparts), 2):
-                    evalparts[i] = str(eval(evalparts[i], self.eval_globals))
+                    e = eval(evalparts[i], self.eval_globals)
+                    if type(e) == type(0.):
+                        e = int(e)
+                    evalparts[i] = str(e)
             except:
                 self.output("Unable to evaluate: %s" % (line,))
                 return None
