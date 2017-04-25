@@ -23,7 +23,7 @@ class GCodeParser:
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
-        self.gcode_handlers = {}
+        self.gcode_handlers = self.build_handlers(False)
         self.is_printer_ready = False
         self.need_ack = False
         self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
@@ -33,8 +33,26 @@ class GCodeParser:
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
-        self.build_handlers()
-    def build_handlers(self):
+    def build_handlers(self, is_ready):
+        handlers = self.all_handlers
+        if not is_ready:
+            handlers = [h for h in handlers
+                        if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
+        gcode_handlers = dict((h, getattr(self, 'cmd_'+h)) for h in handlers)
+        for h, f in gcode_handlers.items():
+            aliases = getattr(self, 'cmd_'+h+'_aliases', [])
+            gcode_handlers.update(dict([(a, f) for a in aliases]))
+        return gcode_handlers
+    def stats(self, eventtime):
+        return "gcodein=%d" % (self.bytes_read,)
+    def set_printer_ready(self, is_ready):
+        if self.is_printer_ready == is_ready:
+            return
+        self.is_printer_ready = is_ready
+        self.gcode_handlers = self.build_handlers(is_ready)
+        if not is_ready:
+            # Printer is shutdown (could be running in a background thread)
+            return
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
         self.heater_nozzle = None
@@ -43,34 +61,7 @@ class GCodeParser:
             self.heater_nozzle = extruder.heater
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
-        # Map command handlers
-        handlers = ['G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
-                    'M18', 'M82', 'M83', 'M105', 'M112', 'M114', 'M115',
-                    'M206', 'M400',
-                    'HELP', 'IGNORE', 'QUERY_ENDSTOPS',
-                    'RESTART', 'FIRMWARE_RESTART', 'STATUS']
-        if self.heater_nozzle is not None:
-            handlers.extend(['M104', 'M109', 'PID_TUNE'])
-        if self.heater_bed is not None:
-            handlers.extend(['M140', 'M190'])
-        if self.fan is not None:
-            handlers.extend(['M106', 'M107'])
-        if not self.is_printer_ready:
-            handlers = [h for h in handlers
-                        if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
-        self.gcode_handlers = dict((h, getattr(self, 'cmd_'+h))
-                                   for h in handlers)
-        for h, f in self.gcode_handlers.items():
-            aliases = getattr(self, 'cmd_'+h+'_aliases', [])
-            self.gcode_handlers.update(dict([(a, f) for a in aliases]))
-    def stats(self, eventtime):
-        return "gcodein=%d" % (self.bytes_read,)
-    def set_printer_ready(self, is_ready):
-        if self.is_printer_ready == is_ready:
-            return
-        self.is_printer_ready = is_ready
-        self.build_handlers()
-        if is_ready and self.is_fileinput and self.fd_handle is None:
+        if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def motor_heater_off(self):
         if self.toolhead is None:
@@ -213,6 +204,9 @@ class GCodeParser:
             self.respond(self.get_temp())
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, heater, params, wait=False):
+        if heater is None:
+            self.respond_error("Heater not configured")
+            return
         print_time = self.toolhead.get_last_move_time()
         temp = self.get_float('S', params, 0.)
         try:
@@ -222,6 +216,12 @@ class GCodeParser:
             return
         if wait:
             self.bg_temp(heater)
+    def set_fan_speed(self, speed):
+        if self.fan is None:
+            self.respond_info("Fan not configured")
+            return
+        print_time = self.toolhead.get_last_move_time()
+        self.fan.set_speed(print_time, speed)
     # Individual command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
@@ -232,6 +232,12 @@ class GCodeParser:
             logging.debug(params['#original'])
             return
         self.respond('echo:Unknown command:"%s"' % (cmd,))
+    all_handlers = [
+        'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
+        'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
+        'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
+        'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE', 'RESTART', 'FIRMWARE_RESTART',
+        'STATUS', 'HELP']
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
         # Move
@@ -349,12 +355,10 @@ class GCodeParser:
         self.set_temp(self.heater_bed, params, wait=True)
     def cmd_M106(self, params):
         # Set fan speed
-        print_time = self.toolhead.get_last_move_time()
-        self.fan.set_speed(print_time, self.get_float('S', params, 255.) / 255.)
+        self.set_fan_speed(self.get_float('S', params, 255.) / 255.)
     def cmd_M107(self, params):
         # Turn fan off
-        print_time = self.toolhead.get_last_move_time()
-        self.fan.set_speed(print_time, 0.)
+        self.set_fan_speed(0.)
     def cmd_M206(self, params):
         # Set home offset
         offsets = { p: self.get_float(a, params)
@@ -389,6 +393,8 @@ class GCodeParser:
         # Run PID tuning
         heater = self.get_int('E', params, 0)
         heater = {0: self.heater_nozzle, -1: self.heater_bed}[heater]
+        if heater is None:
+            self.respond_error("Heater not configured")
         temp = self.get_float('S', params)
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
