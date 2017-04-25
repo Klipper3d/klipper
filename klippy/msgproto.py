@@ -1,6 +1,6 @@
 # Protocol definitions for firmware communication
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import json, zlib, logging
@@ -106,8 +106,8 @@ class MessageFormat:
         self.name = parts[0]
         argparts = [arg.split('=') for arg in parts[1:]]
         self.param_types = [MessageTypes[fmt] for name, fmt in argparts]
-        self.param_names = [name for name, fmt in argparts]
-        self.name_to_type = dict(zip(self.param_names, self.param_types))
+        self.param_names = [(name, MessageTypes[fmt]) for name, fmt in argparts]
+        self.name_to_type = dict(self.param_names)
     def encode(self, *params):
         out = []
         out.append(self.msgid)
@@ -117,26 +117,24 @@ class MessageFormat:
     def encode_by_name(self, **params):
         out = []
         out.append(self.msgid)
-        for name, t in zip(self.param_names, self.param_types):
+        for name, t in self.param_names:
             t.encode(out, params[name])
         return out
     def parse(self, s, pos):
         pos += 1
         out = {}
-        for t, name in zip(self.param_types, self.param_names):
+        for name, t in self.param_names:
             v, pos = t.parse(s, pos)
             out[name] = v
         return out, pos
-    def dump(self, s, pos):
-        pos += 1
+    def format_params(self, params):
         out = []
-        for t in self.param_types:
-            v, pos = t.parse(s, pos)
+        for name, t in self.param_names:
+            v = params[name]
             if not t.is_int:
                 v = repr(v)
             out.append(v)
-        outmsg = self.debugformat % tuple(out)
-        return outmsg, pos
+        return self.debugformat % tuple(out)
 
 class OutputFormat:
     name = '#output'
@@ -167,14 +165,8 @@ class OutputFormat:
             out.append(v)
         outmsg = self.debugformat % tuple(out)
         return {'#msg': outmsg}, pos
-    def dump(self, s, pos):
-        pos += 1
-        out = []
-        for t in self.param_types:
-            v, pos = t.parse(s, pos)
-            out.append(v)
-        outmsg = self.debugformat % tuple(out)
-        return outmsg, pos
+    def format_params(self, params):
+        return "#output %s" % (params['#msg'],)
 
 class UnknownFormat:
     name = '#unknown'
@@ -182,6 +174,8 @@ class UnknownFormat:
         msgid = s[pos]
         msg = str(bytearray(s))
         return {'#msgid': msgid, '#msg': msg}, len(s)-MESSAGE_TRAILER_SIZE
+    def format_params(self, params):
+        return "#unknown %s" % (repr(params['#msg']),)
 
 class MessageParser:
     error = error
@@ -221,11 +215,20 @@ class MessageParser:
         while 1:
             msgid = s[pos]
             mid = self.messages_by_id.get(msgid, self.unknown)
-            params, pos = mid.dump(s, pos)
-            out.append("%s" % (params,))
+            params, pos = mid.parse(s, pos)
+            out.append(mid.format_params(params))
             if pos >= len(s)-MESSAGE_TRAILER_SIZE:
                 break
         return out
+    def format_params(self, params):
+        name = params.get('#name')
+        mid = self.messages_by_name.get(name)
+        if mid is not None:
+            return mid.format_params(params)
+        msg = params.get('#msg')
+        if msg is not None:
+            return "%s %s" % (name, msg)
+        return str(params)
     def parse(self, s):
         msgid = s[MESSAGE_HEADER_SIZE]
         mid = self.messages_by_id.get(msgid, self.unknown)

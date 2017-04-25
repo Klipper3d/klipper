@@ -25,6 +25,7 @@ class KeyboardReader:
         self.eval_globals = {}
     def connect(self, eventtime):
         self.ser.connect()
+        self.ser.handle_default = self.handle_default
         self.mcu_freq = self.ser.msgparser.get_constant_float('CLOCK_FREQ')
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu)
@@ -33,6 +34,8 @@ class KeyboardReader:
     def output(self, msg):
         sys.stdout.write("%s\n" % (msg,))
         sys.stdout.flush()
+    def handle_default(self, params):
+        self.output(self.ser.msgparser.format_params(params))
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.ser.get_clock(eventtime)
