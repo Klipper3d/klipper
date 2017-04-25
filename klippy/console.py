@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Script to implement a test console with firmware over serial port
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
@@ -30,6 +30,9 @@ class KeyboardReader:
         self.pins = pins.get_pin_map(mcu)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
+    def output(self, msg):
+        sys.stdout.write("%s\n" % (msg,))
+        sys.stdout.flush()
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = int(self.ser.get_clock(eventtime))
@@ -54,16 +57,16 @@ class KeyboardReader:
                 for i in range(1, len(evalparts), 2):
                     evalparts[i] = str(eval(evalparts[i], self.eval_globals))
             except:
-                print "Unable to evaluate: ", line
+                self.output("Unable to evaluate: %s" % (line,))
                 return None
             line = ''.join(evalparts)
-            print "Eval:", line
+            self.output("Eval: %s" % (line,))
         if self.pins is not None:
             try:
                 line = pins.update_command(
                     line, self.mcu_freq, self.pins).strip()
             except:
-                print "Unable to map pin: ", line
+                self.output("Unable to map pin: %s" % (line,))
                 return None
         if line:
             parts = line.split()
@@ -73,7 +76,7 @@ class KeyboardReader:
         try:
             msg = self.ser.msgparser.create_command(line)
         except msgproto.error, e:
-            print "Error:", e
+            self.output("Error: %s" % (str(e),))
             return None
         return msg
     def process_kbd(self, eventtime):
