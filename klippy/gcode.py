@@ -428,7 +428,7 @@ class GCodeParser:
         if not self.is_printer_ready:
             cmdhelp.append("Printer is not ready - not all commands available.")
         cmdhelp.append("Available extended commands:")
-        for cmd in self.gcode_handlers:
+        for cmd in sorted(self.gcode_handlers):
             desc = getattr(self, 'cmd_'+cmd+'_help', None)
             if desc is not None:
                 cmdhelp.append("%-10s: %s" % (cmd, desc))
