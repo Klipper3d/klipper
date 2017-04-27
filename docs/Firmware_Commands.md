@@ -12,7 +12,8 @@ See the [protocol](Protocol.md) document for more information on the
 format of commands and their low-level transmission. The commands here
 are described using their "printf" style syntax - for those unfamiliar
 with that format, just note that where a '%...' sequence is seen it
-should be replaced with an actual integer.
+should be replaced with an actual integer. For example, a description
+with "count=%c" could be replaced with the text "count=10".
 
 Startup Commands
 ================
