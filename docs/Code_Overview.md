@@ -124,13 +124,13 @@ provides further information on the mechanics of moves.
   cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
   actual request: `cmd_G1() -> ToolHead.move()`
 
-* The ToolHead class (in toolhead.py) handles "lookahead" and tracks
+* The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The codepath for a move is:
   `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
   Move.set_junction() -> Move.move()`.
   * ToolHead.move() creates a Move() object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
-  * MoveQueue.add_move() places the move object on the "lookahead"
+  * MoveQueue.add_move() places the move object on the "look-ahead"
   queue.
   * MoveQueue.flush() determines the start and end velocities of each
   move.
@@ -155,7 +155,7 @@ provides further information on the mechanics of moves.
   are in cartesian.py, corexy.py, delta.py, and extruder.py. The
   kinematic class is given a chance to audit the move
   (`ToolHead.move() -> kin.check_move()`) before it goes on the
-  lookahead queue, but once the move arrives in *kin*.move() the
+  look-ahead queue, but once the move arrives in *kin*.move() the
   kinematic class is required to handle the move as specified. The
   kinematic classes translate the three parts of each move
   (acceleration, constant "cruising" velocity, and deceleration) to
