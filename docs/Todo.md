@@ -9,11 +9,6 @@ Host user interaction
   find the error) and errors written to the log can be non-obvious to
   a user.
 
-* Improve startup:
-
- * Provide startup scripts so that Klippy can startup at system
-   bootup.
-
 * Improve gcode interface:
 
  * Provide a better way to handle print nozzle z offsets. The M206
@@ -68,8 +63,6 @@ Documentation
 
 * Add documentation describing how to perform bed-leveling accurately
   in Klipper. Improve description of stepper phase based bed leveling.
-
-* Document how one can tune the pressure advance setting.
 
 Hardware features
 =================
