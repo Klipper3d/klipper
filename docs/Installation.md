@@ -58,8 +58,8 @@ Finally, for common micro-controllers, the code can be flashed with:
 make flash FLASH_DEVICE=/dev/ttyACM0
 ```
 
-Setting up the printer configuration
-====================================
+Configuring Klipper
+===================
 
 The Klipper configuration is stored in a text file on the Raspberry
 Pi. Take a look at the example config files in the

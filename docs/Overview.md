@@ -1,21 +1,33 @@
-See [installation](Installation.md) for information on compiling,
-installing, and running Klipper. Read [features](Features.md) for a
-high-level description of useful capabilities. The history of releases
-is available at [releases](Releases.md).
+Welcome to the Klipper documentation. There are two parts to Klipper -
+code that runs on a micro-controller and code that runs on a "host"
+machine. The host code is intended to run on a low-cost
+general-purpose machine such as a Raspberry Pi, while the
+micro-controller code is intended to run on commodity micro-controller
+chips. Read [features](Features.md) for reasons to use Klipper. See
+[installation](Installation.md) to get started with Klipper.
 
-See the [Pressure Advance](Pressure_Advance.md) document for
-information on tuning the pressure advance system. The
-[kinematics](Kinematics.md) document provides high level information
-on how movement is implemented in Klipper.
+The Klipper configuration is stored in a simple text file on the host
+machine. The [config/example.cfg](../config/example.cfg) file serves
+as a reference for the config file. The
+[Pressure Advance](Pressure_Advance.md) document contains information
+on tuning the pressure advance config.
+
+The [kinematics](Kinematics.md) document provides some technical
+details on how Klipper implements motion.
+
+The history of Klipper releases is available at
+[releases](Releases.md).
+
+Developer Documentation
+=======================
 
 There are also several documents available for developers interested
-in understanding how Klipper works:
+in understanding how Klipper works. Start with the
+[code overview](Code_Overview.md) document - it provides information
+on the structure and layout of the Klipper code.
 
-See [code overview](Code_Overview.md) for information on the structure
-and layout of the Klipper code.
-
-See [protocol](Protocol.md) for information on the messaging protocol
-between host and micro-controller. See also
+See [protocol](Protocol.md) for information on the low-level messaging
+protocol between host and micro-controller. See also
 [MCU commands](MCU_Commands.md) for a description of low-level
 commands implemented in the micro-controller software.
 
