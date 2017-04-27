@@ -114,15 +114,16 @@ are limited to smooth out the printer motion:
 
 ![smoothed](img/smoothed.svg.png)
 
-In the above, note the dashed gray lines - this is a graphical
-representation of the "pseudo acceleration".  Where the two dashed
-lines meet enforces a limit on the move's top speed.  For most moves
-the limit will be at or above the move's existing limits and no change
+In the above, note the dashed gray lines - they are a graphical
+representation of the (slower) "pseudo acceleration".  The point where the 
+two dashed lines meet is used to set the limit of the move's top speed.
+For most moves
+the limit will be at or above the move's existing speed limits, thus no change
 in behavior is induced. However, for short "zig-zag" moves the limit
 comes into play and it reduces the top speed. Note that the grey lines
-represent a pseudo-acceleration to limit top speed only - the move
+represent a pseudo-acceleration used only to calculate top speed only - the move
 continues to use it's normal acceleration scheme up to its adjusted
-top-speed.
+top-speed, or order to maintain maximum printing speed.
 
 Generating steps
 ================
