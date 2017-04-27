@@ -15,9 +15,43 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="lookahead.svg">
+   sodipodi:docname="lookahead-slow.svg"
+   inkscape:export-filename="/home/kevin/src/reprap/firmware/klipper/docs/img/lookahead-slow.svg.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
-     id="defs4" />
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mend-1"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         inkscape:connector-curvature="0"
+         id="path4329-1"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mend"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path4329"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,9 +59,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.94"
-     inkscape:cx="116.54041"
-     inkscape:cy="45.708959"
+     inkscape:zoom="1.15"
+     inkscape:cx="3.4198125"
+     inkscape:cy="101.26451"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -55,7 +89,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -100,37 +134,75 @@
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.62366331px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 179.63013,351.45141 16.05677,-60.94328 61.3451,0 4.83546,8.81561"
+       d="m 179.63013,351.45141 16.05677,-60.94328 43.25999,0 16.53759,47.11348"
        id="path3361"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.7558428px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 261.70791,300.17937 13.5395,-40.67564 59.85662,0 24.69858,91.73948"
+       d="m 254.72406,337.27551 22.65101,-77.77178 43.89917,0 24.69858,91.73948"
        id="path3361-7"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="200.77664"
+       x="195.45749"
        y="286.52051"
        id="text12656-9"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan5532"
-         x="200.77664"
-         y="286.52051">move 1</tspan></text>
+         id="tspan7078"
+         x="195.45749"
+         y="286.52051">move A</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="280.5639"
-       y="255.66946"
+       y="254.60564"
        id="text12656-9-3"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan5534"
+         id="tspan7080"
          x="280.5639"
-         y="255.66946">move 2</tspan></text>
+         y="254.60564">move B</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Mend)"
+       d="m 74.333855,283.02668 -147.83244,52.19984"
+       id="path3514"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Mend-1)"
+       d="m -79.633985,251.6122 154.13499,31.81455"
+       id="path3514-5"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="36.7374"
+       y="252.31848"
+       id="text12656-9-1"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.96753827,0.25272454,-0.25272454,0.96753827,0,0)"
+       inkscape:transform-center-x="-0.91382951"
+       inkscape:transform-center-y="-4.9145266"><tspan
+         sodipodi:role="line"
+         id="tspan7074"
+         x="36.7374"
+         y="252.31848">move A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-126.26086"
+       y="304.35226"
+       id="text12656-9-8"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.93839918,-0.34555314,0.34555314,0.93839918,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan7076"
+         x="-126.26086"
+         y="304.35226">move B</tspan></text>
   </g>
 </svg>

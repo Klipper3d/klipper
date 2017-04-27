@@ -73,21 +73,24 @@ flow would result in poor print quality.
 To solve this, the "look-ahead" mechanism queues multiple incoming
 moves and analyzes the angles between moves to determine a reasonable
 speed that can be obtained during the "junction" between two moves. If
-the next move forms an acute angle (the head is going to travel in
-nearly a reverse direction on the next move) then only a small
-junction speed is permitted. If the next move is nearly in the same
-direction then the head need only slow down a little (if at all).
+the next move is nearly in the same direction then the head need only
+slow down a little (if at all).
 
 ![lookahead](img/lookahead.svg.png)
 
+If the next move forms an acute angle (the head is going to travel in
+nearly a reverse direction on the next move) then only a small
+junction speed is permitted.
+
+![lookahead](img/lookahead-slow.svg.png)
+
 The junction speeds are determined using "approximated centripetal
 acceleration". Best
-[described](https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/)
-by the author.
+[described by the author](https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/).
 
 Klipper implements look-ahead between moves contained in the XY plane
-that have similar extruder flow rates. Other moves are rare and
-implementing look-ahead between them is unnecessary.
+that have similar extruder flow rates. Other moves are relatively rare
+and implementing look-ahead between them is unnecessary.
 
 Key formula for look-ahead:
 ```
@@ -158,20 +161,20 @@ To generate step times on Delta printers it is necessary to correlate
 the movement in cartesian space with the movement on each stepper
 tower.
 
+To simplify the math, for each stepper tower, the code calculates the
+location of a "virtual tower" that is along the line of movement.
+This virtual tower is chosen at the point where the line of movement
+(extended infinitely in both directions) would be closest to the
+actual tower.
+
 ![delta-tower](img/delta-tower.svg.png)
 
-To simplify the math, for each move contained in an XY plane, the code
-calculates the location of a "virtual tower" that is along the line of
-movement.  This virtual tower is chosen at the point where the line of
-movement (extended infinitely in both directions) would be closest to
-the actual tower.
+It is then possible to calculate where the head will be along the line
+of movement after each step is taken on the virtual tower.
 
 ![virtual-tower](img/virtual-tower.svg.png)
 
-It is then possible to calculate where the head will be along the line
-of movement after each step is taken on the virtual tower. The key
-formula is Pythagoras's theorem:
-
+The key formula is Pythagoras's theorem:
 ```
 distance_to_tower^2 = arm_length^2 - tower_height^2
 ```
@@ -196,7 +199,7 @@ must also be used in the calculations.
 
 Should the move contain only Z movement (ie, no XY movement at all)
 then the same math is used - just in this case the tower is parallel
-to the line of movement (its slope is 1.0).
+to the line of movement.
 
 ### Stepper motor acceleration limits ###
 
@@ -248,7 +251,7 @@ pressure. Pressure increases when filament is pushed into the extruder
 (as in [Hooke's law](https://en.wikipedia.org/wiki/Hooke%27s_law)) and
 the pressure necessary to extrude is dominated by the flow rate
 through the nozzle orifice (as in
-[Poiseuille law](https://en.wikipedia.org/wiki/Poiseuille_law)). The
+[Poiseuille's law](https://en.wikipedia.org/wiki/Poiseuille_law)). The
 key idea is that the relationship between filament, pressure, and flow
 rate can be modeled using a linear coefficient:
 ```

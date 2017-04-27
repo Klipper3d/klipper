@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.94"
-     inkscape:cx="294.7319"
-     inkscape:cy="45.708959"
+     inkscape:zoom="2.67"
+     inkscape:cx="164.48301"
+     inkscape:cy="76.011989"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -55,7 +55,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -106,7 +106,7 @@
        sodipodi:nodetypes="cccc" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.7558428px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 263.83557,321.45597 11.41184,-61.95224 59.85662,0 9.80496,28.97352"
+       d="m 263.83557,321.45597 11.41184,-61.95224 59.85662,0 9.80496,29.88826"
        id="path3361-7"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
@@ -118,19 +118,22 @@
        sodipodi:nodetypes="ccc" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 264.47958,319.56052 0,31.9149"
+       d="m 263.86975,321.69491 0.37453,30.52957"
        id="path3412"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 343.73491,288.70946 1.06383,62.76596"
+       d="m 345.25947,289.31929 0.14909,62.46104"
        id="path3414"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 222.45831,289.77329 1.06383,61.70213"
+       d="m 222.45831,289.77329 -0.0598,62.07666"
        id="path3416"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:20.00000119px;line-height:125%;font-family:'DejaVu Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;-inkscape-font-specification:'DejaVu Sans, Normal';font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr;"
