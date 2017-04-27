@@ -78,9 +78,9 @@ slow down a little (if at all).
 
 ![lookahead](img/lookahead.svg.png)
 
-If the next move forms an acute angle (the head is going to travel in
-nearly a reverse direction on the next move) then only a small
-junction speed is permitted.
+However, if the next move forms an acute angle (the head is going to
+travel in nearly a reverse direction on the next move) then only a
+small junction speed is permitted.
 
 ![lookahead](img/lookahead-slow.svg.png)
 
