@@ -31,12 +31,12 @@ Host user interaction
 Safety features
 ===============
 
-* Support loading a valid step range into the firmware after
-  homing. This would provide a sanity check in the firmware that would
-  reduce the risk of the host commanding a stepper motor past its
-  valid step range. To maintain high efficiency in the firmware, the
-  firmware would only need to check periodically (eg, every 100ms)
-  that the stepper is in range.
+* Support loading a valid step range into the micro-controller
+  software after homing. This would provide a sanity check in the
+  micro-controller that would reduce the risk of the host commanding a
+  stepper motor past its valid step range. To maintain high
+  efficiency, the micro-controller would only need to check
+  periodically (eg, every 100ms) that the stepper is in range.
 
  * Possibly support periodically querying the endstop switches and use
    multiple step ranges depending on the switch state. This would
@@ -52,9 +52,10 @@ Testing features
 ================
 
 * Complete the host based simulator. It's possible to compile the
-  firmware for a "host simulator", but that simulator doesn't do
-  anything currently. It would be useful to expand the code to support
-  more error checks, kinematic simulations, and improved logging.
+  micro-controller for a "host simulator", but that simulator doesn't
+  do anything currently. It would be useful to expand the code to
+  support more error checks, kinematic simulations, and improved
+  logging.
 
 Documentation
 =============
@@ -67,7 +68,7 @@ Documentation
 Hardware features
 =================
 
-* Port firmware to more architectures:
+* Port to additional micro-controller architectures:
  * Beagle Bone Black PRU
  * Smoothieboard / NXP LPC1769 (ARM cortex-M3)
  * Unix based scheduling; Unix based real-time scheduling

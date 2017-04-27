@@ -1,4 +1,4 @@
-Klipper is a 3d printer firmware with several compelling features:
+Klipper has several compelling features:
 
 * High precision stepper movement. Klipper utilizes an application
   processor (such as a low-cost Raspberry Pi) when calculating printer
@@ -32,9 +32,9 @@ Klipper is a 3d printer firmware with several compelling features:
   micro-controller architectures as well.
 
 * Simpler code. Klipper uses a very high level language (Python) for
-  most code. The kinematics algorithms, the gcode parsing, the heating
-  and thermistor algorithms, etc. are all written in Python. This
-  makes it easier to develop new functionality.
+  most code. The kinematics algorithms, the G-code parsing, the
+  heating and thermistor algorithms, etc. are all written in
+  Python. This makes it easier to develop new functionality.
 
 * Advanced features:
   * Klipper implements the "pressure advance" algorithm for
@@ -68,10 +68,10 @@ Klipper supports many standard 3d printer features:
   gradually accelerate from standstill to cruising speed and then
   decelerate back to a standstill.
 
-* "Lookahead" support. The incoming stream of G-Code movement commands
-  are queued and analyzed - the acceleration between movements in a
-  similar direction will be optimized to reduce print stalls and
-  improve overall print time.
+* "Look-ahead" support. The incoming stream of G-Code movement
+  commands are queued and analyzed - the acceleration between
+  movements in a similar direction will be optimized to reduce print
+  stalls and improve overall print time.
 
 * Support for cartesian, delta, and corexy style printers.
 

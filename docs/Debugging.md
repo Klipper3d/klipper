@@ -1,17 +1,18 @@
-The Klippy host code has some tools to help in debugging the firmware.
+The Klippy host code has some tools to help in debugging.
 
-Translating gcode files to firmware commands
-============================================
+Translating gcode files to micro-controller commands
+====================================================
 
 The Klippy host code can run in a batch mode to produce the low-level
-firmware commands associated with a gcode file. Inspecting these
-low-level firmware commands is useful when trying to understand the
+micro-controller commands associated with a gcode file. Inspecting
+these low-level commands is useful when trying to understand the
 actions of the low-level hardware. It can also be useful to compare
-the difference in firmware commands after a code change.
+the difference in micro-controller commands after a code change.
 
 To run Klippy in this batch mode, there is a one time step necessary
-to generate the firmware "data dictionary". This is done by compiling
-the firmware code to obtain the **out/klipper.dict** file:
+to generate the micro-controller "data dictionary". This is done by
+compiling the micro-controller code to obtain the **out/klipper.dict**
+file:
 
 ```
 make menuconfig
@@ -34,13 +35,13 @@ output. This output can be translated to readable text with:
 ```
 
 The resulting file **test.txt** contains a human readable list of
-firmware commands.
+micro-controller commands.
 
 The batch mode disables certain response / request commands in order
 to function. As a result, there will be some differences between
-actual firmware commands and the above output. The generated data is
-useful for testing and inspection; it is not useful for sending to a
-real micro-controller.
+actual commands and the above output. The generated data is useful for
+testing and inspection; it is not useful for sending to a real
+micro-controller.
 
 Testing with simulavr
 =====================
@@ -74,9 +75,10 @@ cd /patch/to/klipper
 make menuconfig
 ```
 
-and compile the firmware for an AVR atmega644p, disable the AVR
-watchdog timer, and set the MCU frequency to 20000000. Then one can
-compile Klipper (run `make`) and then start the simulation with:
+and compile the micro-controller software for an AVR atmega644p,
+disable the AVR watchdog timer, and set the MCU frequency
+to 20000000. Then one can compile Klipper (run `make`) and then start
+the simulation with:
 
 ```
 PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf

@@ -17,7 +17,7 @@ host architectures. The build arranges for includes of
 src/generic/somefile.h).
 
 The **klippy/** directory contains the C and Python source for the
-host part of the firmware.
+host part of the software.
 
 The **lib/** directory contains external 3rd-party library code that
 is necessary to build some targets.
@@ -92,8 +92,8 @@ some functionality in C code.
 Initial execution starts in **klippy/klippy.py**. This reads the
 command-line arguments, opens the printer config file, instantiates
 the main printer objects, and starts the serial connection. The main
-execution of gcode commands is in the process_commands() method in
-**klippy/gcode.py**. This code translates the gcode commands into
+execution of G-code commands is in the process_commands() method in
+**klippy/gcode.py**. This code translates the G-code commands into
 printer object calls, which frequently translate the actions to
 commands to be executed on the micro-controller (as declared via the
 DECL_COMMAND macro in the micro-controller code).

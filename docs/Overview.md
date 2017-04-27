@@ -15,9 +15,9 @@ See [code overview](Code_Overview.md) for information on the structure
 and layout of the Klipper code.
 
 See [protocol](Protocol.md) for information on the messaging protocol
-between host and firmware. See also
-[firmware commands](Firmware_Commands.md) for a high-level description
-of common commands implemented in the firmware.
+between host and micro-controller. See also
+[MCU commands](MCU_Commands.md) for a description of low-level
+commands implemented in the micro-controller software.
 
 See [debugging](Debugging.md) for information on how to test and debug
 Klipper.
