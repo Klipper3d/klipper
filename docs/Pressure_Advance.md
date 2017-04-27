@@ -16,13 +16,13 @@ Start by changing the extruder section of the config file so that
 pressure_advance is set to 0.0. (Make sure to issue a RESTART command
 after each update to the config file so that the new configuration
 takes effect.) Then print at least 10 layers of a large hollow square
-at high speed (eg, 100mm/s). See **docs/prints/square.stl** file for
-an STL file that one may use. While the object is printing, make a
-note of which direction the head is moving during external
-perimeters. What many people see here is blobbing occurring at the
-corners - extra filament at the corner in the direction the head
-travels followed by a possible lack of filament on the side
-immediately after that corner:
+at high speed (eg, 100mm/s). See
+[docs/prints/square.stl](prints/square.stl) file for an STL file that
+one may use. While the object is printing, make a note of which
+direction the head is moving during external perimeters. What many
+people see here is blobbing occurring at the corners - extra filament
+at the corner in the direction the head travels followed by a possible
+lack of filament on the side immediately after that corner:
 
 ![corner-blob](img/corner-blob.jpg)
 
