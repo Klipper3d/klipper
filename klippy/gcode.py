@@ -26,8 +26,8 @@ class GCodeParser:
         self.gcode_handlers = self.build_handlers(False)
         self.is_printer_ready = False
         self.need_ack = False
-        self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
-        self.extruder = None
+        self.toolhead = self.fan = self.extruder = None
+        self.heaters = []
         self.speed = 25.0
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
@@ -56,13 +56,12 @@ class GCodeParser:
             return
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
-        self.heater_nozzle = None
         extruders = extruder.get_printer_extruders(self.printer)
         if extruders:
             self.extruder = extruders[0]
-            self.heater_nozzle = self.extruder.get_heater()
             self.toolhead.set_extruder(self.extruder)
-        self.heater_bed = self.printer.objects.get('heater_bed')
+        self.heaters = [ e.get_heater() for e in extruders ]
+        self.heaters.append(self.printer.objects.get('heater_bed'))
         self.fan = self.printer.objects.get('fan')
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
@@ -71,10 +70,9 @@ class GCodeParser:
             return
         self.toolhead.motor_off()
         print_time = self.toolhead.get_last_move_time()
-        if self.heater_nozzle is not None:
-            self.heater_nozzle.set_temp(print_time, 0.)
-        if self.heater_bed is not None:
-            self.heater_bed.set_temp(print_time, 0.)
+        for heater in self.heaters:
+            if heater is not None:
+                heater.set_temp(print_time, 0.)
         if self.fan is not None:
             self.fan.set_speed(print_time, 0.)
     def dump_debug(self):
@@ -189,14 +187,15 @@ class GCodeParser:
     def get_temp(self):
         if not self.is_printer_ready:
             return "T:0"
-        # T:XXX /YYY B:XXX /YYY
+        # Tn:XXX /YYY B:XXX /YYY
         out = []
-        if self.heater_nozzle:
-            cur, target = self.heater_nozzle.get_temp()
-            out.append("T:%.1f /%.1f" % (cur, target))
-        if self.heater_bed:
-            cur, target = self.heater_bed.get_temp()
-            out.append("B:%.1f /%.1f" % (cur, target))
+        for i, heater in enumerate(self.heaters):
+            if heater is not None:
+                cur, target = heater.get_temp()
+                name = "B"
+                if i < len(self.heaters) - 1:
+                    name = "T%d" % (i,)
+                out.append("%s:%.1f /%.1f" % (name, cur, target))
         return " ".join(out)
     def bg_temp(self, heater):
         if self.is_fileinput:
@@ -206,8 +205,17 @@ class GCodeParser:
             print_time = self.toolhead.get_last_move_time()
             self.respond(self.get_temp())
             eventtime = self.reactor.pause(eventtime + 1.)
-    def set_temp(self, heater, params, wait=False):
+    def set_temp(self, params, is_bed=False, wait=False):
         temp = self.get_float('S', params, 0.)
+        heater = None
+        if is_bed:
+            heater = self.heaters[-1]
+        elif 'T' in params:
+            heater_index = self.get_int('T', params)
+            if heater_index >= 0 and heater_index < len(self.heaters) - 1:
+                heater = self.heaters[heater_index]
+        elif self.extruder is not None:
+            heater = self.extruder.get_heater()
         if heater is None:
             if temp > 0.:
                 self.respond_error("Heater not configured")
@@ -352,10 +360,10 @@ class GCodeParser:
         self.ack(self.get_temp())
     def cmd_M104(self, params):
         # Set Extruder Temperature
-        self.set_temp(self.heater_nozzle, params)
+        self.set_temp(params)
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
-        self.set_temp(self.heater_nozzle, params, wait=True)
+        self.set_temp(params, wait=True)
     def cmd_M112(self, params):
         # Emergency Stop
         self.toolhead.force_shutdown()
@@ -378,10 +386,10 @@ class GCodeParser:
         self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
     def cmd_M140(self, params):
         # Set Bed Temperature
-        self.set_temp(self.heater_bed, params)
+        self.set_temp(params, is_bed=True)
     def cmd_M190(self, params):
         # Set Bed Temperature and Wait
-        self.set_temp(self.heater_bed, params, wait=True)
+        self.set_temp(params, is_bed=True, wait=True)
     def cmd_M106(self, params):
         # Set fan speed
         self.set_fan_speed(self.get_float('S', params, 255.) / 255.)
@@ -420,10 +428,11 @@ class GCodeParser:
     cmd_PID_TUNE_aliases = ["M303"]
     def cmd_PID_TUNE(self, params):
         # Run PID tuning
-        heater = self.get_int('E', params, 0)
-        heater = {0: self.heater_nozzle, -1: self.heater_bed}[heater]
-        if heater is None:
+        heater_index = self.get_int('E', params, 0)
+        if (heater_index < -1 or heater_index >= len(self.heaters) - 1
+            or self.heaters[heater_index] is None):
             self.respond_error("Heater not configured")
+        heater = self.heaters[heater_index]
         temp = self.get_float('S', params)
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
