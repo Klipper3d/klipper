@@ -1,6 +1,26 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.4.0
+=============
+
+Available on 20170503. Major changes in this release:
+
+* Improved installation on Raspberry Pi machines. Most of the install
+  is now scripted.
+* Support for corexy kinematics
+* Documentation updates: New Kinematics document, new Pressure Advance
+  tuning guide, new example config files, and more
+* Stepper performance improvements (20Mhz AVRs over 175K steps per
+  second, Arduino Due over 460K)
+* Support for automatic micro-controller resets. Support for resets
+  via toggling USB power on Raspberry Pi.
+* The pressure advance algorithm now works with look-ahead to reduce
+  pressure changes during cornering.
+* Support for limiting the top speed of short zigzag moves
+* Support for AD595 sensors
+* Several bug fixes and code cleanups
+
 Klipper 0.3.0
 =============
 
