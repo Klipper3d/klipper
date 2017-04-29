@@ -96,8 +96,8 @@ LOOKAHEAD_FLUSH_TIME = 0.250
 # Class to track a list of pending move requests and to facilitate
 # "look-ahead" across moves to reduce acceleration between moves.
 class MoveQueue:
-    def __init__(self, extruder_lookahead):
-        self.extruder_lookahead = extruder_lookahead
+    def __init__(self):
+        self.extruder_lookahead = None
         self.queue = []
         self.leftover = 0
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
@@ -107,6 +107,8 @@ class MoveQueue:
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def set_flush_time(self, flush_time):
         self.junction_flush = flush_time
+    def set_extruder(self, extruder):
+        self.extruder_lookahead = extruder.lookahead
     def flush(self, lazy=False):
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
         update_flush_count = lazy
@@ -181,9 +183,7 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
-        self.extruder = printer.objects.get('extruder')
-        if self.extruder is None:
-            self.extruder = extruder.DummyExtruder()
+        self.extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
@@ -195,7 +195,8 @@ class ToolHead:
             , above=0., maxval=self.max_accel)
         self.junction_deviation = config.getfloat(
             'junction_deviation', 0.02, above=0.)
-        self.move_queue = MoveQueue(self.extruder.lookahead)
+        self.move_queue = MoveQueue()
+        self.move_queue.set_extruder(self.extruder)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_low = config.getfloat(
@@ -223,7 +224,8 @@ class ToolHead:
         # before cornering.  The 8. was determined experimentally.
         xy_halt = math.sqrt(8. * self.junction_deviation * self.max_accel)
         self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
-        self.extruder.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
+        for e in extruder.get_printer_extruders(printer):
+            e.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -363,6 +365,13 @@ class ToolHead:
     def query_endstops(self):
         last_move_time = self.get_last_move_time()
         return self.kin.query_endstops(last_move_time)
+    def set_extruder(self, extruder):
+        last_move_time = self.get_last_move_time()
+        self.extruder.set_active(last_move_time, False)
+        extrude_pos = extruder.set_active(last_move_time, True)
+        self.extruder = extruder
+        self.move_queue.set_extruder(extruder)
+        self.commanded_pos[3] = extrude_pos
     # Misc commands
     def stats(self, eventtime):
         buffer_time = 0.

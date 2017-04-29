@@ -40,6 +40,10 @@ class PrinterExtruder:
             'max_extrude_only_accel', max_accel * self.max_extrude_ratio
             , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
+    def get_heater(self):
+        return self.heater
+    def set_active(self, print_time, is_active):
+        return self.extrude_pos
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True
@@ -201,6 +205,8 @@ class PrinterExtruder:
 class DummyExtruder:
     def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
         pass
+    def set_active(self, print_time, is_active):
+        return 0.
     def motor_off(self, move_time):
         pass
     def check_move(self, move):
@@ -212,6 +218,22 @@ class DummyExtruder:
         return flush_count
 
 def add_printer_objects(printer, config):
-    if config.has_section('extruder'):
-        printer.add_object('extruder', PrinterExtruder(
-            printer, config.getsection('extruder')))
+    for i in range(99):
+        section = 'extruder%d' % (i,)
+        if not config.has_section(section):
+            if not i and config.has_section('extruder'):
+                printer.add_object('extruder0', PrinterExtruder(
+                    printer, config.getsection('extruder')))
+                continue
+            break
+        printer.add_object(section, PrinterExtruder(
+            printer, config.getsection(section)))
+
+def get_printer_extruders(printer):
+    out = []
+    for i in range(99):
+        extruder = printer.objects.get('extruder%d' % (i,))
+        if extruder is None:
+            break
+        out.append(extruder)
+    return out

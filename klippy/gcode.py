@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
-import homing
+import homing, extruder
 
 # Parse out incoming GCode and find and translate head movements
 class GCodeParser:
@@ -27,6 +27,7 @@ class GCodeParser:
         self.is_printer_ready = False
         self.need_ack = False
         self.toolhead = self.heater_nozzle = self.heater_bed = self.fan = None
+        self.extruder = None
         self.speed = 25.0
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
@@ -56,9 +57,11 @@ class GCodeParser:
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
         self.heater_nozzle = None
-        extruder = self.printer.objects.get('extruder')
-        if extruder:
-            self.heater_nozzle = extruder.heater
+        extruders = extruder.get_printer_extruders(self.printer)
+        if extruders:
+            self.extruder = extruders[0]
+            self.heater_nozzle = self.extruder.get_heater()
+            self.toolhead.set_extruder(self.extruder)
         self.heater_bed = self.printer.objects.get('heater_bed')
         self.fan = self.printer.objects.get('fan')
         if self.is_fileinput and self.fd_handle is None:
@@ -233,7 +236,28 @@ class GCodeParser:
         if not cmd:
             logging.debug(params['#original'])
             return
+        if cmd[0] == 'T' and len(cmd) > 1 and cmd[1].isdigit():
+            # Tn command has to be handled specially
+            self.cmd_Tn(params)
+            return
         self.respond('echo:Unknown command:"%s"' % (cmd,))
+    def cmd_Tn(self, params):
+        # Select Tool
+        index = self.get_int('T', params)
+        extruders = extruder.get_printer_extruders(self.printer)
+        if self.extruder is None or index < 0 or index >= len(extruders):
+            self.respond_error("Extruder %d not configured" % (index,))
+            return
+        e = extruders[index]
+        if self.extruder is e:
+            return
+        try:
+            self.toolhead.set_extruder(e)
+        except homing.EndstopError, e:
+            self.respond_error(str(e))
+            return
+        self.extruder = e
+        self.last_position = self.toolhead.get_position()
     all_handlers = [
         'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
         'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
