@@ -382,3 +382,6 @@ class ToolHead:
             self.reset_print_time()
         except:
             logging.exception("Exception in force_shutdown")
+
+def add_printer_objects(printer, config):
+    printer.add_object('toolhead', ToolHead(printer, config))

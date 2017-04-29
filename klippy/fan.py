@@ -30,3 +30,7 @@ class PrinterFan:
         self.mcu_fan.set_pwm(mcu_time, value)
         self.last_fan_time = mcu_time
         self.last_fan_value = value
+
+def add_printer_objects(printer, config):
+    if config.has_section('fan'):
+        printer.add_object('fan', PrinterFan(printer, config.getsection('fan')))

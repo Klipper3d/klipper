@@ -308,3 +308,8 @@ class ControlBumpTest:
             return True
         self.heater.control = self.old_control
         return False
+
+def add_printer_objects(printer, config):
+    if config.has_section('heater_bed'):
+        printer.add_object('heater_bed', PrinterHeater(
+            printer, config.getsection('heater_bed')))

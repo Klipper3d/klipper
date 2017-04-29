@@ -210,3 +210,8 @@ class DummyExtruder:
         return move.max_cruise_v2
     def lookahead(self, moves, flush_count, lazy):
         return flush_count
+
+def add_printer_objects(printer, config):
+    if config.has_section('extruder'):
+        printer.add_object('extruder', PrinterExtruder(
+            printer, config.getsection('extruder')))

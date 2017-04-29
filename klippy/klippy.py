@@ -105,6 +105,8 @@ class ConfigWrapper:
         return choices[c]
     def getsection(self, section):
         return ConfigWrapper(self.printer, section)
+    def has_section(self, section):
+        return self.printer.fileconfig.has_section(section)
 
 class ConfigLogger():
     def __init__(self, cfg, bglogger):
@@ -159,6 +161,8 @@ class Printer:
         out.append(self.mcu.stats(eventtime))
         logging.info("Stats %.1f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.
+    def add_object(self, name, obj):
+        self.objects[name] = obj
     def load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
         res = self.fileconfig.read(self.conffile)
@@ -170,17 +174,10 @@ class Printer:
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.debugoutput is not None:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
-        if self.fileconfig.has_section('extruder'):
-            self.objects['extruder'] = extruder.PrinterExtruder(
-                self, ConfigWrapper(self, 'extruder'))
-        if self.fileconfig.has_section('fan'):
-            self.objects['fan'] = fan.PrinterFan(
-                self, ConfigWrapper(self, 'fan'))
-        if self.fileconfig.has_section('heater_bed'):
-            self.objects['heater_bed'] = heater.PrinterHeater(
-                self, ConfigWrapper(self, 'heater_bed'))
-        self.objects['toolhead'] = toolhead.ToolHead(
-            self, ConfigWrapper(self, 'printer'))
+        # Create printer components
+        config = ConfigWrapper(self, 'printer')
+        for m in [extruder, fan, heater, toolhead]:
+            m.add_printer_objects(self, config)
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
