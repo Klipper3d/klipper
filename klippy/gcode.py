@@ -255,7 +255,10 @@ class GCodeParser:
                         # value relative to base coordinate position
                         self.last_position[p] = v + self.base_position[p]
             if 'F' in params:
-                self.speed = float(params['F']) / 60.
+                speed = float(params['F']) / 60.
+                if speed <= 0.:
+                    raise ValueError()
+                self.speed = speed
         except ValueError, e:
             self.last_position = self.toolhead.get_position()
             raise error("Unable to parse move '%s'" % (params['#original'],))
