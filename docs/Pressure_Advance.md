@@ -31,7 +31,7 @@ as a blob when the head slows down to corner.
 
 The next step is to set pressure_advance_lookahead_time to 0.0, slowly
 increase pressure_advance (eg, start with 0.05), and reprint the test
-object. (Be sure to issue RESTART between each config change.)  The
+object. (Be sure to issue RESTART between each config change.) The
 goal is to attempt to eliminate the blobbing during cornering. (With
 pressure advance, the extruder will retract when the head slows down,
 thus countering the pressure buildup and ideally eliminate the

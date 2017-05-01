@@ -1,6 +1,6 @@
 The Klipper messaging protocol is used for low-level communication
 between the Klipper host software and the Klipper micro-controller
-software.  At a high level the protocol can be thought of as a series
+software. At a high level the protocol can be thought of as a series
 of command and response strings that are compressed, transmitted, and
 then processed at the receiving side. An example series of commands in
 uncompressed human-readable format might look like:
@@ -112,7 +112,7 @@ to generate and format arbitrary messages for human consumption.
 Declaring constants
 -------------------
 
-Constants can also be exported.  For example, the following:
+Constants can also be exported. For example, the following:
 
 ```
 DECL_CONSTANT(SERIAL_BAUD, 250000);
@@ -133,7 +133,7 @@ Message Blocks
 
 All data sent from host to micro-controller and vice-versa are
 contained in "message blocks". A message block has a two byte header
-and a three byte trailer.  The format of a message block is:
+and a three byte trailer. The format of a message block is:
 
 ```
 <1 byte length><1 byte sequence><n-byte content><2 byte crc><1 byte sync>

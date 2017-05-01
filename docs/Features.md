@@ -5,7 +5,7 @@ Klipper has several compelling features:
   movements. The application processor determines when to step each
   stepper motor, it compresses those events, transmits them to the
   micro-controller, and then the micro-controller executes each event
-  at the requested time.  Each stepper event is scheduled with a
+  at the requested time. Each stepper event is scheduled with a
   precision of 25 micro-seconds or better. The software does not use
   kinematic estimations (such as the Bresenham algorithm) - instead it
   calculates precise step times based on the physics of acceleration

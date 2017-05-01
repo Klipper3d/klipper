@@ -9,14 +9,14 @@ Acceleration
 
 Klipper implements a constant acceleration scheme whenever the print
 head changes velocity - the velocity is gradually changed to the new
-speed instead of suddenly jerking to it.  Klipper always enforces
-acceleration between the tool head and the print.  The filament
-leaving the extruder can be quite fragile - rapid jerks and/or
-extruder flow changes lead to poor quality and poor bed adhesion. Even
-when not extruding, if the print head is at the same level as the
-print then rapid jerking of the head can cause disruption of recently
-deposited filament. Limiting speed changes of the print head (relative
-to the print) reduces risks of disrupting the print.
+speed instead of suddenly jerking to it. Klipper always enforces
+acceleration between the tool head and the print. The filament leaving
+the extruder can be quite fragile - rapid jerks and/or extruder flow
+changes lead to poor quality and poor bed adhesion. Even when not
+extruding, if the print head is at the same level as the print then
+rapid jerking of the head can cause disruption of recently deposited
+filament. Limiting speed changes of the print head (relative to the
+print) reduces risks of disrupting the print.
 
 It is also important to enforce a maximum acceleration of the stepper
 motors to ensure they do not skip or put excessive stress on the
@@ -25,8 +25,8 @@ limiting the acceleration of the print head. Enforcing acceleration at
 the print head naturally also enforces acceleration at the steppers
 that control that print head (the inverse is not always true).
 
-Klipper implements constant acceleration.  The key formula for
-constant acceleration is:
+Klipper implements constant acceleration. The key formula for constant
+acceleration is:
 ```
 velocity(time) = start_velocity + accel*time
 ```
@@ -101,15 +101,15 @@ Smoothed look-ahead
 -------------------
 
 Klipper also implements a mechanism for smoothing out the motions of
-short "zigzag" moves.  Consider the following moves:
+short "zigzag" moves. Consider the following moves:
 
 ![zigzag](img/zigzag.svg.png)
 
 In the above, the frequent changes from acceleration to deceleration
 can cause the machine to vibrate which causes stress on the machine
-and increases the noise.  To reduce this, Klipper tracks both regular
+and increases the noise. To reduce this, Klipper tracks both regular
 move acceleration as well as a virtual "acceleration to deceleration"
-rate.  Using this system, the top speed of these short "zigzag" moves
+rate. Using this system, the top speed of these short "zigzag" moves
 are limited to smooth out the printer motion:
 
 ![smoothed](img/smoothed.svg.png)
@@ -133,8 +133,8 @@ Generating steps
 Once the look-ahead process completes, the print head movement for the
 given move is fully known (time, start position, end position,
 velocity at each point) and it is possible to generate the step times
-for the move.  This process is done within "kinematic classes" in the
-Klipper code.  Outside of these kinematic classes, everything is
+for the move. This process is done within "kinematic classes" in the
+Klipper code. Outside of these kinematic classes, everything is
 tracked in millimeters, seconds, and in cartesian coordinate space.
 It's the task of the kinematic classes to convert from this generic
 coordinate system to the hardware specifics of the particular printer.
@@ -223,7 +223,7 @@ acceleration and velocity.
 Extruder kinematics
 -------------------
 
-Klipper implements extruder motion in its own kinematic class.  Since
+Klipper implements extruder motion in its own kinematic class. Since
 the timing and speed of each print head movement is fully known for
 each move, it's possible to calculate the step times for the extruder
 independently from the step time calculations of the print head

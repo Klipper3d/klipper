@@ -1,4 +1,4 @@
-There are several features still to be implemented in Klipper.  In no
+There are several features still to be implemented in Klipper. In no
 particular order:
 
 Host user interaction

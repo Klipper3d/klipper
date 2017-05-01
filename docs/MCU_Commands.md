@@ -262,7 +262,7 @@ Stepper commands
 
 * `stepper_get_position oid=%c` : This command causes the
   micro-controller to generate a "stepper_position" response message
-  with the stepper's current position.  The position is the total
+  with the stepper's current position. The position is the total
   number of steps generated with dir=1 minus the total number of steps
   generated with dir=0.
 
