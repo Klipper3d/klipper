@@ -204,11 +204,12 @@ class GCodeParser:
             self.respond(self.get_temp())
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, heater, params, wait=False):
+        temp = self.get_float('S', params, 0.)
         if heater is None:
-            self.respond_error("Heater not configured")
+            if temp > 0.:
+                self.respond_error("Heater not configured")
             return
         print_time = self.toolhead.get_last_move_time()
-        temp = self.get_float('S', params, 0.)
         try:
             heater.set_temp(print_time, temp)
         except heater.error, e:
@@ -218,7 +219,8 @@ class GCodeParser:
             self.bg_temp(heater)
     def set_fan_speed(self, speed):
         if self.fan is None:
-            self.respond_info("Fan not configured")
+            if speed:
+                self.respond_info("Fan not configured")
             return
         print_time = self.toolhead.get_last_move_time()
         self.fan.set_speed(print_time, speed)
