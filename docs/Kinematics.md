@@ -189,10 +189,11 @@ will be taken at the end of the move.
 
 ### Delta movements beyond simple XY plane ###
 
-Movement calculation is a little more complicated if the move is not
-fully contained within a simple XY plane. A virtual tower along the
-line of movement is still calculated, but in this case the tower is
-not at a 90 degree angle relative to the line of movement:
+Movement calculation is more complicated if a single move contains
+both XY movement and Z movement. These moves are rare, but they must
+still be handled correctly. A virtual tower along the line of movement
+is still calculated, but in this case the tower is not at a 90 degree
+angle relative to the line of movement:
 
 ![xy+z-tower](img/xy+z-tower.svg.png)
 
