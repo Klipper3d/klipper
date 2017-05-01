@@ -55,7 +55,9 @@ make
 Finally, for common micro-controllers, the code can be flashed with:
 
 ```
+sudo service klipper stop
 make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
 ```
 
 Configuring Klipper
