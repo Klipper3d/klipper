@@ -44,7 +44,7 @@ Klipper has several compelling features:
     that can dramatically improve the accuracy of typical endstop
     switches. When properly tuned it can improve a print's first layer
     bed adhesion.
-  * Support for limiting the top speed of short "zig-zag" moves to
+  * Support for limiting the top speed of short "zigzag" moves to
     reduce printer vibration and noise. See the
     [kinematics](Kinematics.md) document for more information.
 
