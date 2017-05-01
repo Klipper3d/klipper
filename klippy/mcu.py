@@ -385,6 +385,8 @@ class MCU:
         self._restart_method = config.getchoice(
             'restart_method', rmethods, 'arduino')
         # Config building
+        if printer.bglogger is not None:
+            printer.bglogger.set_rollover_info("mcu", None)
         self._config_error = config.error
         self._emergency_stop_cmd = self._reset_cmd = None
         self._oids = []
@@ -575,6 +577,15 @@ class MCU:
             raise error("Printer CRC does not match config")
         move_count = config_params['move_count']
         logging.info("Configured (%d moves)" % (move_count,))
+        if self._printer.bglogger is not None:
+            msgparser = self.serial.msgparser
+            info = [
+                "Configured (%d moves)" % (move_count,),
+                "Loaded %d commands (%s)" % (
+                    len(msgparser.messages_by_id), msgparser.version),
+                "MCU config: %s" % (" ".join(
+                    ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
+            self._printer.bglogger.set_rollover_info("mcu", "\n".join(info))
         stepqueues = tuple(s._stepqueue for s in self._steppers)
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self.serial.serialqueue, stepqueues, len(stepqueues), move_count)

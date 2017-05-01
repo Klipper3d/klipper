@@ -107,19 +107,25 @@ class ConfigWrapper:
         return ConfigWrapper(self.printer, section)
 
 class ConfigLogger():
-    def __init__(self, cfg):
-        logging.info("===== Config file =====")
+    def __init__(self, cfg, bglogger):
+        self.lines = ["===== Config file ====="]
         cfg.write(self)
-        logging.info("=======================")
+        self.lines.append("=======================")
+        data = "\n".join(self.lines)
+        logging.info(data)
+        bglogger.set_rollover_info("config", data)
     def write(self, data):
-        logging.info(data.strip())
+        self.lines.append(data.strip())
 
 class Printer:
     def __init__(self, conffile, input_fd, startup_state
-                 , is_fileinput=False, version="?"):
+                 , is_fileinput=False, version="?", bglogger=None):
         self.conffile = conffile
         self.startup_state = startup_state
         self.software_version = version
+        self.bglogger = bglogger
+        if bglogger is not None:
+            bglogger.set_rollover_info("config", None)
         self.reactor = reactor.Reactor()
         self.objects = {}
         self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
@@ -159,8 +165,8 @@ class Printer:
         if not res:
             raise ConfigParser.Error("Unable to open config file %s" % (
                 self.conffile,))
-        if self.debugoutput is None:
-            ConfigLogger(self.fileconfig)
+        if self.bglogger is not None:
+            ConfigLogger(self.fileconfig, self.bglogger)
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         if self.debugoutput is not None:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
@@ -308,18 +314,21 @@ def main():
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
     software_version = util.get_git_version()
-    if debugoutput is None:
-        logging.info("Args: %s" % (sys.argv,))
-        logging.info("Git version: %s" % (repr(software_version),))
-        logging.info("CPU: %s" % (util.get_cpu_info(),))
-        logging.info("Python: %s" % (repr(sys.version),))
+    if bglogger is not None:
+        lines = ["Args: %s" % (sys.argv,),
+                 "Git version: %s" % (repr(software_version),),
+                 "CPU: %s" % (util.get_cpu_info(),),
+                 "Python: %s" % (repr(sys.version),)]
+        lines = "\n".join(lines)
+        logging.info(lines)
+        bglogger.set_rollover_info('versions', lines)
 
     # Start firmware
     res = 'startup'
     while 1:
         is_fileinput = debuginput is not None
         printer = Printer(
-            conffile, input_fd, res, is_fileinput, software_version)
+            conffile, input_fd, res, is_fileinput, software_version, bglogger)
         if debugoutput:
             proto_dict = read_dictionary(options.read_dictionary)
             printer.set_fileoutput(debugoutput, proto_dict)
