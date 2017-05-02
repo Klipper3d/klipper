@@ -49,15 +49,16 @@ class PrinterExtruder:
         if not self.heater.can_extrude:
             raise homing.EndstopMoveError(
                 move.end_pos, "Extrude below minimum temp")
-        if not move.is_kinematic_move:
-            # Extrude only move - limit accel and velocity
+        if not move.is_kinematic_move or move.extrude_r < 0.:
+            # Extrude only move (or retraction move) - limit accel and velocity
             if abs(move.axes_d[3]) > self.max_e_dist:
                 raise homing.EndstopMoveError(
-                    move.end_pos, "Extrude only move too long")
-            move.limit_speed(self.max_e_velocity, self.max_e_accel)
-        elif (abs(move.extrude_r) > self.max_extrude_ratio
-              and (abs(move.axes_d[3])
-                   > self.nozzle_diameter*self.max_extrude_ratio)):
+                    move.end_pos, "Extrude move too long")
+            inv_extrude_r = 1. / abs(move.extrude_r)
+            move.limit_speed(self.max_e_velocity * inv_extrude_r
+                             , self.max_e_accel * inv_extrude_r)
+        elif (move.extrude_r > self.max_extrude_ratio
+              and move.axes_d[3] > self.nozzle_diameter*self.max_extrude_ratio):
             logging.debug("Overextrude: %s vs %s" % (
                 move.extrude_r, self.max_extrude_ratio))
             raise homing.EndstopMoveError(
