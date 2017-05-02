@@ -162,6 +162,8 @@ class OutputFormat:
         out = []
         for t in self.param_types:
             v, pos = t.parse(s, pos)
+            if not t.is_int:
+                v = repr(v)
             out.append(v)
         outmsg = self.debugformat % tuple(out)
         return {'#msg': outmsg}, pos
