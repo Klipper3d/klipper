@@ -101,14 +101,15 @@ click "Connect". (If "/tmp/printer" is not an available selection then
 try reloading the page.)
 
 Once connected, navigate to the "Terminal" tab and type "status"
-(without the quotes) into the command entry box and click "Send". If
-the Klipper config file was successfully read, and the
-micro-controller was successfully found and configured, then this
-command will report that the printer is ready. It is not unusual to
-have a configuration error during the initial setup - one may modify
-the printer config file and then issue a "restart" command in the
-OctoPrint terminal to reload the config. Continue modifying the config
-and restarting until "status" reports the printer is ready.
+(without the quotes) into the command entry box and click "Send". The
+terminal window will likely report there is an error opening the
+config file - issue a "restart" command in the OctoPrint terminal to
+load the config. A "status" command will report the printer is ready
+if the Klipper config file is successfully read and the
+micro-controller is successfully found and configured. It is not
+unusual to have configuration errors during the initial setup - update
+the printer config file and issue "restart" until "status" reports the
+printer is ready.
 
 Klipper reports error messages via the OctoPrint terminal tab. The
 "status" command can be used to re-report error messages. The default
