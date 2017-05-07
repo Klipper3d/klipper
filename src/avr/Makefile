@@ -8,7 +8,7 @@ dirs-y += src/avr lib/pjrc_usb_serial
 CFLAGS-y += -mmcu=$(CONFIG_MCU)
 
 # Add avr source files
-src-y += avr/main.c avr/timer.c avr/gpio.c avr/misc.c
+src-y += avr/main.c avr/timer.c avr/gpio.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
 src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c ../lib/pjrc_usb_serial/usb_serial.c
 src-$(CONFIG_AVR_SERIAL) += avr/serial.c
