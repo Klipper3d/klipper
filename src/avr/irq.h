@@ -28,4 +28,7 @@ static inline void irq_restore(irqstatus_t flag) {
     SREG = flag;
 }
 
+static inline void irq_poll(void) {
+}
+
 #endif // irq.h

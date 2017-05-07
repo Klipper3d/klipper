@@ -7,6 +7,7 @@
 #include <stdarg.h> // va_start
 #include <string.h> // memcpy
 #include "board/io.h" // readb
+#include "board/irq.h" // irq_poll
 #include "board/misc.h" // crc16_ccitt
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
@@ -306,6 +307,7 @@ command_task(void)
         p = parsef(p, msgend, cp, args);
         if (!p)
             break;
+        irq_poll();
         void (*func)(uint32_t*) = READP(cp->func);
         func(args);
     }

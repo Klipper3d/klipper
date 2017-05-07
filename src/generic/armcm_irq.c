@@ -34,6 +34,11 @@ irq_restore(irqstatus_t flag)
     asm volatile("msr primask, %0" :: "r" (flag) : "memory");
 }
 
+void
+irq_poll(void)
+{
+}
+
 // Clear the active irq if a shutdown happened in an irq handler
 static void
 clear_active_irq(void)

@@ -47,6 +47,11 @@ irq_restore(irqstatus_t flag)
     Interrupt_off = flag;
 }
 
+void
+irq_poll(void)
+{
+}
+
 
 /****************************************************************
  * Timers

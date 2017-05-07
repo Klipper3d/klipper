@@ -268,6 +268,7 @@ run_task(void)
 {
     struct callback_handler *p;
     foreachdecl(p, taskfuncs) {
+        irq_poll();
         void (*func)(void) = READP(p->func);
         func();
     }
