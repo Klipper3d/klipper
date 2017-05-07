@@ -15,6 +15,7 @@ FILEHEADER = """
 
 #include "board/pgm.h"
 #include "command.h"
+#include "compiler.h"
 """
 
 def error(msg):
@@ -68,7 +69,7 @@ def build_parsers(parsers, msg_to_id, all_param_types):
         parsercode = build_parser(parser, 0, all_param_types)
         pcode.append("{%s\n}, " % (parsercode,))
     fmt = """
-const struct command_encoder command_encoders[] PROGMEM = {
+const struct command_encoder command_encoders[] PROGMEM __visible = {
 %s
 };
 """
@@ -101,7 +102,7 @@ def build_commands(cmd_by_id, messages_by_name, all_param_types):
         index.append("    &%s," % (parsername,))
         parser = msgproto.MessageFormat(msgid, msg)
         parsercode = build_parser(parser, 1, all_param_types)
-        parsers.append("const struct command_parser %s PROGMEM = {"
+        parsers.append("const struct command_parser %s PROGMEM __visible = {"
                        "    %s\n    .flags=%s,\n    .func=%s\n};" % (
                            parsername, parsercode, flags, funcname))
     index = "\n".join(index)
@@ -112,11 +113,11 @@ def build_commands(cmd_by_id, messages_by_name, all_param_types):
 
 %s
 
-const struct command_parser * const command_index[] PROGMEM = {
+const struct command_parser * const command_index[] PROGMEM __visible = {
 %s
 };
 
-const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
+const uint8_t command_index_size PROGMEM __visible = ARRAY_SIZE(command_index);
 """
     return fmt % (externs, '\n'.join(parsers), index)
 
@@ -146,11 +147,12 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
             out.append('\n   ')
         out.append(" 0x%02x," % (ord(zdata[i]),))
     fmt = """
-const uint8_t command_identify_data[] PROGMEM = {%s
+const uint8_t command_identify_data[] PROGMEM __visible = {%s
 };
 
 // Identify size = %d (%d uncompressed)
-const uint32_t command_identify_size PROGMEM = ARRAY_SIZE(command_identify_data);
+const uint32_t command_identify_size PROGMEM __visible
+    = ARRAY_SIZE(command_identify_data);
 """
     return data, fmt % (''.join(out), len(zdata), len(data))
 

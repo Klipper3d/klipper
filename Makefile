@@ -38,7 +38,7 @@ CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -O2 -MD -g \
 CFLAGS += -flto -fwhole-program -fno-use-linker-plugin
 
 CFLAGS_klipper.o = $(CFLAGS) -Wl,-r -nostdlib
-CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections -fno-whole-program
+CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
