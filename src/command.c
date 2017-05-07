@@ -144,7 +144,7 @@ _sendf(uint8_t parserid, ...)
             case PT_uint16:
             case PT_int16:
             case PT_byte:
-                if (t >= PT_uint16)
+                if (sizeof(v) > sizeof(int) && t >= PT_uint16)
                     if (t == PT_int16)
                         v = (int32_t)va_arg(args, int);
                     else
