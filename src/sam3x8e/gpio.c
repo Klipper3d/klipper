@@ -128,7 +128,7 @@ static const uint8_t adc_pins[] = {
 };
 
 #define ADC_FREQ_MAX 20000000
-DECL_CONSTANT(ADC_MAX, 4096);
+DECL_CONSTANT(ADC_MAX, 4095);
 
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)

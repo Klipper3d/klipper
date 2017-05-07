@@ -258,7 +258,7 @@ static const uint8_t adc_pins[] PROGMEM = {
 
 static const uint8_t ADMUX_DEFAULT = 0x40;
 
-DECL_CONSTANT(ADC_MAX, 1024);
+DECL_CONSTANT(ADC_MAX, 1023);
 
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
