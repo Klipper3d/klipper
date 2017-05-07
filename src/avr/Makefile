@@ -5,7 +5,7 @@ CROSS_PREFIX=avr-
 
 dirs-y += src/avr lib/pjrc_usb_serial
 
-CFLAGS-y += -mmcu=$(CONFIG_MCU)
+CFLAGS += -mmcu=$(CONFIG_MCU)
 
 # Add avr source files
 src-y += avr/main.c avr/timer.c avr/gpio.c
@@ -14,7 +14,7 @@ src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c ../lib/pjrc_usb_serial/usb_serial
 src-$(CONFIG_AVR_SERIAL) += avr/serial.c
 
 # Suppress broken "misspelled signal handler" warnings on gcc 4.8.1
-CFLAGS_klipper.o := $(if $(filter 4.8.1, $(shell $(CC) -dumpversion)), -w)
+CFLAGS_klipper.o := $(CFLAGS_klipper.o) $(if $(filter 4.8.1, $(shell $(CC) -dumpversion)), -w)
 
 # Build the additional hex output file
 target-y += $(OUT)klipper.elf.hex

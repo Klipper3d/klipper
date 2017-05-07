@@ -1,6 +1,6 @@
 # Klipper build system
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -32,17 +32,15 @@ dirs-y = src
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS-y := -I$(OUT) -Isrc -I$(OUT)board-generic/ -O2 -MD -g \
+CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -O2 -MD -g \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections
-CFLAGS-y += -flto -fwhole-program -fno-use-linker-plugin
+CFLAGS += -flto -fwhole-program -fno-use-linker-plugin
 
-LDFLAGS-y := -Wl,--gc-sections -fno-whole-program
+CFLAGS_klipper.o = $(CFLAGS) -Wl,-r -nostdlib
+CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections -fno-whole-program
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
-
-CFLAGS = $(CFLAGS-y)
-LDFLAGS = $(LDFLAGS-y)
 
 # Default targets
 target-y := $(OUT)klipper.elf
@@ -83,7 +81,7 @@ $(OUT)declfunc.lds: src/declfunc.lds.S
 
 $(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)declfunc.lds
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS) $(CFLAGS_klipper.o) -Wl,-r -Wl,-T,$(OUT)declfunc.lds -nostdlib $(patsubst %.c, $(OUT)src/%.o,$(src-y)) -o $@
+	$(Q)$(CC) $(CFLAGS_klipper.o) -Wl,-T,$(OUT)declfunc.lds $(patsubst %.c, $(OUT)src/%.o,$(src-y)) -o $@
 
 $(OUT)compile_time_request.o: $(OUT)klipper.o ./scripts/buildcommands.py
 	@echo "  Building $@"
@@ -93,7 +91,7 @@ $(OUT)compile_time_request.o: $(OUT)klipper.o ./scripts/buildcommands.py
 
 $(OUT)klipper.elf: $(OUT)klipper.o $(OUT)compile_time_request.o
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(Q)$(CC) $(CFLAGS_klipper.elf) $^ -o $@
 
 ################ Kconfig rules
 
