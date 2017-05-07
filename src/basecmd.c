@@ -1,11 +1,9 @@
 // Basic infrastructure commands.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stdlib.h> // malloc
-#include <string.h> // memset
 #include "basecmd.h" // oid_lookup
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // alloc_maxsize
@@ -87,10 +85,8 @@ static void
 move_finalize(void)
 {
     move_request_size(sizeof(*move_free_list));
-    uint16_t count = alloc_maxsize(move_item_size*1024) / move_item_size;
-    move_list = malloc(count * move_item_size);
-    if (!count || !move_list)
-        shutdown("move queue malloc failed");
+    size_t count;
+    move_list = alloc_chunks(move_item_size, 1024, &count);
     move_count = count;
     move_reset();
 }
@@ -115,23 +111,14 @@ oid_lookup(uint8_t oid, void *type)
     return oids[oid].data;
 }
 
-static void
-oid_assign(uint8_t oid, void *type, void *data)
+void *
+oid_alloc(uint8_t oid, void *type, uint16_t size)
 {
     if (oid >= oid_count || oids[oid].type || is_finalized())
         shutdown("Can't assign oid");
     oids[oid].type = type;
+    void *data = alloc_chunk(size);
     oids[oid].data = data;
-}
-
-void *
-oid_alloc(uint8_t oid, void *type, uint16_t size)
-{
-    void *data = malloc(size);
-    if (!data)
-        shutdown("malloc failed");
-    memset(data, 0, size);
-    oid_assign(oid, type, data);
     return data;
 }
 
@@ -156,10 +143,7 @@ command_allocate_oids(uint32_t *args)
     if (oids)
         shutdown("oids already allocated");
     uint8_t count = args[0];
-    oids = malloc(sizeof(oids[0]) * count);
-    if (!oids)
-        shutdown("malloc failed");
-    memset(oids, 0, sizeof(oids[0]) * count);
+    oids = alloc_chunk(sizeof(oids[0]) * count);
     oid_count = count;
 }
 DECL_COMMAND(command_allocate_oids, "allocate_oids count=%c");

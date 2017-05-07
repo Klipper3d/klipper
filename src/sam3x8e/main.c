@@ -1,6 +1,6 @@
 // Main starting point for SAM3x8e boards.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -42,12 +42,6 @@ command_reset(uint32_t *args)
     NVIC_SystemReset();
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
-
-size_t
-alloc_maxsize(size_t reqsize)
-{
-    return reqsize;
-}
 
 void * __visible
 _sbrk(int nbytes)
