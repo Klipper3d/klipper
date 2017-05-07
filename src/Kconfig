@@ -8,12 +8,15 @@ choice
         bool "Atmega AVR"
     config MACH_SAM3X8E
         bool "SAM3x8e (Arduino Due)"
+    config MACH_PRU
+        bool "Beaglebone PRU"
     config MACH_SIMU
         bool "Host simulator"
 endchoice
 
 source "src/avr/Kconfig"
 source "src/sam3x8e/Kconfig"
+source "src/pru/Kconfig"
 source "src/simulator/Kconfig"
 
 # The HAVE_GPIO_x options allow boards to disable support for some

@@ -1,0 +1,13 @@
+# Kconfig settings for PRU
+
+if MACH_PRU
+
+config BOARD_DIRECTORY
+    string
+    default "pru"
+
+config CLOCK_FREQ
+    int
+    default 200000000
+
+endif
