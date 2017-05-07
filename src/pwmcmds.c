@@ -43,7 +43,7 @@ command_config_pwm_out(uint32_t *args)
     p->max_duration = args[4];
 }
 DECL_COMMAND(command_config_pwm_out,
-             "config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%c"
+             "config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%hu"
              " max_duration=%u");
 
 void
@@ -57,7 +57,7 @@ command_schedule_pwm_out(uint32_t *args)
     sched_add_timer(&p->timer);
 }
 DECL_COMMAND(command_schedule_pwm_out,
-             "schedule_pwm_out oid=%c clock=%u value=%c");
+             "schedule_pwm_out oid=%c clock=%u value=%hu");
 
 static void
 pwm_shutdown(void)
@@ -75,4 +75,4 @@ command_set_pwm_out(uint32_t *args)
 {
     gpio_pwm_setup(args[0], args[1], args[2]);
 }
-DECL_COMMAND(command_set_pwm_out, "set_pwm_out pin=%u cycle_ticks=%u value=%c");
+DECL_COMMAND(command_set_pwm_out, "set_pwm_out pin=%u cycle_ticks=%u value=%hu");

@@ -162,6 +162,8 @@ static const uint8_t pwm_pins[ARRAY_SIZE(pwm_regs)] PROGMEM = {
 #endif
 };
 
+DECL_CONSTANT(PWM_MAX, 255);
+
 struct gpio_pwm
 gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
 {

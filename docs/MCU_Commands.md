@@ -50,7 +50,7 @@ Common startup commands:
   may be useful for configuring the initial value of LEDs and for
   configuring the initial value of stepper driver micro-stepping pins.
 
-* `set_pwm_out pin=%u cycle_ticks=%u value=%c` : This command will
+* `set_pwm_out pin=%u cycle_ticks=%u value=%hu` : This command will
   immediately configure the given pin to use hardware based
   pulse-width-modulation (PWM) with the given number of
   cycle_ticks. The "cycle_ticks" is the number of MCU clock ticks each
@@ -148,7 +148,7 @@ This section lists some commonly used config commands.
   feature can be used with heater pins to ensure the host does not
   enable the heater and then go off-line.
 
-* `config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%c
+* `config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%hu
   max_duration=%u` : This command creates an internal object for
   hardware based PWM pins that the host may schedule updates for. Its
   usage is analogous to config_digital_out - see the description of
@@ -205,11 +205,11 @@ only of interest to developers looking to gain insight into Klipper.
   same 'oid' parameter must have been issued during micro-controller
   configuration.
 
-* `schedule_pwm_out oid=%c clock=%u value=%c` : Schedules a change to
+* `schedule_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to
   a hardware PWM output pin. See the 'schedule_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u value=%c` : Schedules a
+* `schedule_soft_pwm_out oid=%c clock=%u value=%hu` : Schedules a
   change to a software PWM output pin. See the 'schedule_digital_out'
   and 'config_soft_pwm_out' commands for more info.
 
