@@ -64,12 +64,17 @@ class SerialReader:
         while 1:
             starttime = self.reactor.monotonic()
             try:
-                self.ser = serial.Serial(self.serialport, self.baud, timeout=0)
+                if self.baud:
+                    self.ser = serial.Serial(
+                        self.serialport, self.baud, timeout=0)
+                else:
+                    self.ser = open(self.serialport, 'rb+')
             except (OSError, serial.SerialException), e:
                 logging.warn("Unable to open port: %s" % (e,))
                 self.reactor.pause(starttime + 5.)
                 continue
-            stk500v2_leave(self.ser, self.reactor)
+            if self.baud:
+                stk500v2_leave(self.ser, self.reactor)
             self.serialqueue = self.ffi_lib.serialqueue_alloc(
                 self.ser.fileno(), 0)
             self.background_thread = threading.Thread(target=self._bg_thread)

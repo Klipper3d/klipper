@@ -376,8 +376,12 @@ class MCU:
     def __init__(self, printer, config):
         self._printer = printer
         # Serial port
-        baud = config.getint('baud', 250000)
         self._serialport = config.get('serial', '/dev/ttyS0')
+        if self._serialport.startswith("/dev/rpmsg_"):
+            # Beaglbone PRU
+            baud = 0
+        else:
+            baud = config.getint('baud', 250000, minval=2400)
         self.serial = serialhdl.SerialReader(
             printer.reactor, self._serialport, baud)
         self.is_shutdown = False
