@@ -73,7 +73,7 @@ extern const uint32_t command_identify_size;
 #define _DECL_REQUEST_ID(REQUEST, ID_SECTION) ({                \
     static char __PASTE(_DECLS_, __LINE__)[]                    \
         __section(".compile_time_request") = REQUEST;           \
-    asm volatile("" : : "m"(__PASTE(_DECLS_, __LINE__)));       \
+    asm volatile("" : : "i"(__PASTE(_DECLS_, __LINE__)));       \
     static char __PASTE(_DECLI_, __LINE__)                      \
         __section(".compile_time_request." ID_SECTION);         \
     (size_t)&__PASTE(_DECLI_, __LINE__); })
