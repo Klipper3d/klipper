@@ -21,7 +21,7 @@ struct end_stop {
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_REPORT=1<<2 };
 
-static void noinline
+static void
 stop_steppers(struct end_stop *e)
 {
     e->flags = ESF_REPORT;
