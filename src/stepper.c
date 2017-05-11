@@ -150,7 +150,7 @@ command_config_stepper(uint32_t *args)
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
     s->flags = args[4] ? SF_INVERT_STEP : 0;
-    s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP ? 1 : 0);
+    s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->min_stop_interval = args[3];
     s->position = -POSITION_BIAS;
@@ -276,7 +276,7 @@ stepper_stop(struct stepper *s)
     s->count = 0;
     s->flags &= SF_INVERT_STEP;
     gpio_out_write(s->dir_pin, 0);
-    gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP ? 1 : 0);
+    gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
     while (s->first) {
         struct stepper_move *next = s->first->next;
         move_free(s->first);
