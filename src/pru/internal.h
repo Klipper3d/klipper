@@ -34,6 +34,37 @@ struct shared_mem {
 #define SIGNAL_PRU0_WAITING 0xefefefef
 #define SIGNAL_PRU1_READY   0xabababab
 
-static struct shared_mem *SHARED_MEM = (void*)0x10000;
+#define SHARED_MEM ((struct shared_mem *)0x10000)
+
+// Hardware ADC registers
+struct beaglebone_adc {
+    uint32_t pad_00[10];
+    uint32_t irqstatus;
+    uint32_t irqenable_set;
+    uint32_t irqenable_clr;
+    uint32_t irqwakeup;
+    uint32_t dmaenable_set;
+    uint32_t dmaenable_clr;
+    uint32_t ctrl;
+    uint32_t adcstat;
+    uint32_t adcrange;
+    uint32_t adc_clkdiv;
+    uint32_t adc_misc;
+    uint32_t stepenable;
+    uint32_t idleconfig;
+    uint32_t ts_charge_stepconfig;
+    uint32_t ts_charge_delay;
+    struct {
+        uint32_t config;
+        uint32_t delay;
+    } step[16];
+    uint32_t fifo0count;
+    uint32_t pad_e8[6];
+    uint32_t fifo0data;
+    uint32_t pad_104[63];
+    uint32_t fifo1data;
+};
+
+#define ADC ((struct beaglebone_adc *)0x44e0d000)
 
 #endif // internal.h

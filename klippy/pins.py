@@ -21,12 +21,17 @@ def named_pins(fmt, port_count, bit_count=32):
              for port in range(port_count)
              for portbit in range(bit_count) }
 
+def beaglebone_pins():
+    gpios = named_pins("gpio%d_%d", 4)
+    gpios.update({"AIN%d" % i: i+4*32 for i in range(8)})
+    return gpios
+
 MCU_PINS = {
     "atmega168": port_pins(4), "atmega644p": port_pins(4),
     "at90usb1286": port_pins(5),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
-    "pru": named_pins("gpio%d_%d", 4),
+    "pru": beaglebone_pins(),
 }
 
 
@@ -126,6 +131,9 @@ beagleboneblack_mappings = {
     'P9_27': 'gpio3_19', 'P9_28': 'gpio3_17', 'P9_29': 'gpio3_15',
     'P9_30': 'gpio3_16', 'P9_31': 'gpio3_14', 'P9_41': 'gpio0_20',
     'P9_42': 'gpio3_20', 'P9_43': 'gpio0_7', 'P9_44': 'gpio3_18',
+
+    'P9_33': 'AIN4', 'P9_35': 'AIN6', 'P9_36': 'AIN5', 'P9_37': 'AIN2',
+    'P9_38': 'AIN3', 'P9_39': 'AIN0', 'P9_40': 'AIN1',
 }
 
 def update_map_beaglebone(pins, mcu):

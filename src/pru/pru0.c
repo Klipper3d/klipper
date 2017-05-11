@@ -8,6 +8,7 @@
 #include <string.h> // memset
 #include <pru/io.h> // write_r31
 #include <pru_cfg.h> // CT_CFG
+#include <pru_iep.h> // CT_IEP
 #include <pru_intc.h> // CT_INTC
 #include <pru_rpmsg.h> // pru_rpmsg_send
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
@@ -73,6 +74,44 @@ process_io(struct pru_rpmsg_transport *transport)
         check_can_send(transport);
         check_can_read(transport);
     }
+}
+
+
+/****************************************************************
+ * Peripheral reset
+ ****************************************************************/
+
+static void
+timer_reset(void)
+{
+    CT_IEP.TMR_CMP_CFG = 0x01 << 1;
+    CT_IEP.TMR_GLB_CFG = 0x11;
+}
+
+static void
+adc_reset(void)
+{
+    // Disable ADC
+    ADC->ctrl = (1<<2);
+    barrier();
+    // Clear registers
+    ADC->irqstatus = 0xffffffff;
+    ADC->irqenable_clr = 0xffffffff;
+    ADC->dmaenable_clr = 0xffffffff;
+    ADC->adc_clkdiv = 0;
+    ADC->stepenable = 0;
+    ADC->idleconfig = 0;
+    int i;
+    for (i=0; i<8; i++) {
+        ADC->step[i].config = i<<19;
+        ADC->step[i].delay = 0;
+    }
+    // Enable ADC
+    barrier();
+    writel(&ADC->ctrl, 0x07);
+    // Drain fifo
+    while (readl(&ADC->fifo0count))
+        readl(&ADC->fifo0data);
 }
 
 
@@ -218,8 +257,12 @@ main(void)
                              , CHAN_DESC, CHAN_PORT) != PRU_RPMSG_SUCCESS)
         ;
 
-    // Wait for PRU1 to be ready
+    // Reset peripherals
     memset(SHARED_MEM, 0, sizeof(*SHARED_MEM));
+    timer_reset();
+    adc_reset();
+
+    // Wait for PRU1 to be ready
     writel(&SHARED_MEM->signal, SIGNAL_PRU0_WAITING);
     while (readl(&SHARED_MEM->signal) != SIGNAL_PRU1_READY)
         ;
