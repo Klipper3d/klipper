@@ -16,11 +16,17 @@ def port_pins(port_count, bit_count=8):
             pins['P%c%d' % (portchr, portbit)] = port * bit_count + portbit
     return pins
 
+def named_pins(fmt, port_count, bit_count=32):
+    return { fmt % (port, portbit) : port * bit_count + portbit
+             for port in range(port_count)
+             for portbit in range(bit_count) }
+
 MCU_PINS = {
     "atmega168": port_pins(4), "atmega644p": port_pins(4),
     "at90usb1286": port_pins(5),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
-    "sam3x8e": port_pins(4, 32)
+    "sam3x8e": port_pins(4, 32),
+    "pru": named_pins("gpio%d_%d", 4),
 }
 
 
@@ -84,6 +90,48 @@ Arduino_from_mcu = {
     "sam3x8e": (Arduino_Due, Arduino_Due_analog),
 }
 
+def update_map_arduino(pins, mcu):
+    dpins, apins = Arduino_from_mcu.get(mcu, ([], []))
+    for i in range(len(dpins)):
+        pins['ar' + str(i)] = pins[dpins[i]]
+    for i in range(len(apins)):
+        pins['analog%d' % (i,)] = pins[apins[i]]
+
+
+######################################################################
+# Beaglebone mappings
+######################################################################
+
+beagleboneblack_mappings = {
+    'P8_3': 'gpio1_6', 'P8_4': 'gpio1_7', 'P8_5': 'gpio1_2',
+    'P8_6': 'gpio1_3', 'P8_7': 'gpio2_2', 'P8_8': 'gpio2_3',
+    'P8_9': 'gpio2_5', 'P8_10': 'gpio2_4', 'P8_11': 'gpio1_13',
+    'P8_12': 'gpio1_12', 'P8_13': 'gpio0_23', 'P8_14': 'gpio0_26',
+    'P8_15': 'gpio1_15', 'P8_16': 'gpio1_14', 'P8_17': 'gpio0_27',
+    'P8_18': 'gpio2_1', 'P8_19': 'gpio0_22', 'P8_20': 'gpio1_31',
+    'P8_21': 'gpio1_30', 'P8_22': 'gpio1_5', 'P8_23': 'gpio1_4',
+    'P8_24': 'gpio1_1', 'P8_25': 'gpio1_0', 'P8_26': 'gpio1_29',
+    'P8_27': 'gpio2_22', 'P8_28': 'gpio2_24', 'P8_29': 'gpio2_23',
+    'P8_30': 'gpio2_25', 'P8_31': 'gpio0_10', 'P8_32': 'gpio0_11',
+    'P8_33': 'gpio0_9', 'P8_34': 'gpio2_17', 'P8_35': 'gpio0_8',
+    'P8_36': 'gpio2_16', 'P8_37': 'gpio2_14', 'P8_38': 'gpio2_15',
+    'P8_39': 'gpio2_12', 'P8_40': 'gpio2_13', 'P8_41': 'gpio2_10',
+    'P8_42': 'gpio2_11', 'P8_43': 'gpio2_8', 'P8_44': 'gpio2_9',
+    'P8_45': 'gpio2_6', 'P8_46': 'gpio2_7', 'P9_11': 'gpio0_30',
+    'P9_12': 'gpio1_28', 'P9_13': 'gpio0_31', 'P9_14': 'gpio1_18',
+    'P9_15': 'gpio1_16', 'P9_16': 'gpio1_19', 'P9_17': 'gpio0_5',
+    'P9_18': 'gpio0_4', 'P9_19': 'gpio0_13', 'P9_20': 'gpio0_12',
+    'P9_21': 'gpio0_3', 'P9_22': 'gpio0_2', 'P9_23': 'gpio1_17',
+    'P9_24': 'gpio0_15', 'P9_25': 'gpio3_21', 'P9_26': 'gpio0_14',
+    'P9_27': 'gpio3_19', 'P9_28': 'gpio3_17', 'P9_29': 'gpio3_15',
+    'P9_30': 'gpio3_16', 'P9_31': 'gpio3_14', 'P9_41': 'gpio0_20',
+    'P9_42': 'gpio3_20', 'P9_43': 'gpio0_7', 'P9_44': 'gpio3_18',
+}
+
+def update_map_beaglebone(pins, mcu):
+    for pin, gpio in beagleboneblack_mappings.items():
+        pins[pin] = pins[gpio]
+
 
 ######################################################################
 # External commands
@@ -93,11 +141,9 @@ Arduino_from_mcu = {
 def get_pin_map(mcu, mapping_name=None):
     pins = MCU_PINS.get(mcu, {})
     if mapping_name == 'arduino':
-        dpins, apins = Arduino_from_mcu.get(mcu, [])
-        for i in range(len(dpins)):
-            pins['ar' + str(i)] = pins[dpins[i]]
-        for i in range(len(apins)):
-            pins['analog%d' % (i,)] = pins[apins[i]]
+        update_map_arduino(pins, mcu)
+    elif mapping_name == 'beaglebone':
+        update_map_beaglebone(pins, mcu)
     return pins
 
 # Translate pin names and tick times in a firmware command
