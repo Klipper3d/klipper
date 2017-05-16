@@ -6,22 +6,24 @@ CROSS_PREFIX=pru-
 dirs-y += src/pru src/generic
 dirs-y += lib/pru_rpmsg
 
-CFLAGS += -Os -mmcu=am335x.pru0
+CFLAGS += -Os -mmcu=am335x.pru1
 CFLAGS += -Ilib/pru_rpmsg/include -Ilib/pru_rpmsg/include/am335x
 
 CFLAGS_klipper.o := $(filter-out -mmcu=%, $(CFLAGS_klipper.o))
 CFLAGS_klipper.elf := $(CFLAGS) -minrt -T src/pru/pru.lds
-CFLAGS_pru1.elf := $(filter-out -mmcu=%, $(CFLAGS)) -mmcu=am335x.pru1
+CFLAGS_pru0.elf := $(filter-out -mmcu=%, $(CFLAGS)) -minrt -mmcu=am335x.pru0
 
 # Add source files
 src-y := $(filter-out debugcmds.c, $(src-y))
-src-y += pru/main.c pru/console.c pru/gpio.c
+src-y += pru/main.c pru/gpio.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
-src-y += ../lib/pru_rpmsg/pru_rpmsg.c ../lib/pru_rpmsg/pru_virtqueue.c
 
-# Build the additional PRU1 binary
-target-y += $(OUT)pru1.elf
+pru0-y := pru/pru0.c
+pru0-y += ../lib/pru_rpmsg/pru_rpmsg.c ../lib/pru_rpmsg/pru_virtqueue.c
 
-$(OUT)pru1.elf: $(OUT)src/pru/pru1.o
+# Build the additional PRU0 binary
+target-y += $(OUT)pru0.elf
+
+$(OUT)pru0.elf: $(patsubst %.c, $(OUT)src/%.o,$(pru0-y))
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS_pru1.elf) $^ -o $@
+	$(Q)$(CC) $(CFLAGS_pru0.elf) $^ -o $@

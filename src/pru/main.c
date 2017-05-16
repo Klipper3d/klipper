@@ -7,15 +7,15 @@
 #include <stdint.h> // uint32_t
 #include <string.h> // memset
 #include <pru/io.h> // read_r31
-#include <pru_cfg.h> // CT_CFG
 #include <pru_iep.h> // CT_IEP
 #include <pru_intc.h> // CT_INTC
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
-#include "board/misc.h" // timer_from_us
+#include <rsc_types.h> // resource_table
+#include "board/misc.h" // alloc_chunk
+#include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "command.h" // shutdown
 #include "generic/timer_irq.h" // timer_dispatch_many
-#include "internal.h" // IEP_IRQ
+#include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_main
 
 DECL_CONSTANT(MCU, "pru");
@@ -50,7 +50,6 @@ static void
 timer_set(uint32_t value)
 {
     CT_IEP.TMR_CMP0 = value;
-    CT_INTC.SECR0 = 1 << IEP_EVENT;
 }
 
 uint32_t
@@ -62,14 +61,17 @@ timer_read_time(void)
 static void
 _irq_poll(void)
 {
-    CT_IEP.TMR_CMP_STS = 0xff;
-    uint32_t next = timer_dispatch_many();
-    timer_set(next);
+    if (CT_INTC.SECR0 & (1 << IEP_EVENT)) {
+        CT_IEP.TMR_CMP_STS = 0xff;
+        uint32_t next = timer_dispatch_many();
+        timer_set(next);
+    }
+    CT_INTC.SECR0 = (1 << IEP_EVENT) | (1 << KICK_PRU1_EVENT);
 }
 void
 irq_poll(void)
 {
-    if (read_r31() & (1 << (IEP_IRQ + R31_IRQ_OFFSET)))
+    if (read_r31() & (1 << (WAKE_PRU1_IRQ + R31_IRQ_OFFSET)))
         _irq_poll();
 }
 
@@ -87,10 +89,59 @@ DECL_SHUTDOWN(timer_shutdown);
 static void
 timer_init(void)
 {
-    timer_set(0);
+    CT_IEP.TMR_CNT = 0;
     CT_IEP.TMR_CMP_CFG = 0x01 << 1;
     CT_IEP.TMR_GLB_CFG = 0x11;
     timer_shutdown();
+}
+
+
+/****************************************************************
+ * Console IO
+ ****************************************************************/
+
+// Return a buffer (and length) containing any incoming messages
+char *
+console_get_input(uint8_t *plen)
+{
+    uint32_t read_count = readl(&SHARED_MEM->read_count);
+    if (read_count > 64)
+        read_count = 64;
+    *plen = read_count;
+    return SHARED_MEM->read_data;
+}
+
+// Remove from the receive buffer the given number of bytes
+void
+console_pop_input(uint8_t len)
+{
+    barrier();
+    writel(&SHARED_MEM->read_count, 0);
+}
+
+// Return an output buffer that the caller may fill with transmit messages
+char *
+console_get_output(uint8_t len)
+{
+    if (len > sizeof(SHARED_MEM->send_data[0].data))
+        return NULL;
+    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
+    if (readl(&SHARED_MEM->send_data[send_push_pos].count))
+        // Queue full
+        return NULL;
+    return SHARED_MEM->send_data[send_push_pos].data;
+}
+
+// Accept the given number of bytes added to the transmit buffer
+void
+console_push_output(uint8_t len)
+{
+    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
+    barrier();
+    writel(&SHARED_MEM->send_data[send_push_pos].count, len);
+    write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
+    SHARED_MEM->send_push_pos = (
+        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
 }
 
 
@@ -132,6 +183,24 @@ alloc_chunks(size_t size, size_t count, size_t *avail)
 
 
 /****************************************************************
+ * Resource table
+ ****************************************************************/
+
+struct my_resource_table {
+    struct resource_table base;
+
+    uint32_t offset[1]; /* Should match 'num' in actual definition */
+} resourceTable __visible __section(".resource_table") = {
+    {
+        1,              /* Resource table version: only version 1 is
+                         * supported by the current driver */
+        0,              /* number of entries in the table */
+        { 0, 0 },       /* reserved, must be zero */
+    },
+};
+
+
+/****************************************************************
  * Startup
  ****************************************************************/
 
@@ -139,10 +208,11 @@ alloc_chunks(size_t size, size_t count, size_t *avail)
 int
 main(void)
 {
-    // allow access to external memory
-    CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
+    // Wait for PRU0 to initialize
+    while (readl(&SHARED_MEM->signal) != SIGNAL_PRU0_WAITING)
+        ;
+    writel(&SHARED_MEM->signal, SIGNAL_PRU1_READY);
 
-    console_init();
     timer_init();
 
     sched_main();

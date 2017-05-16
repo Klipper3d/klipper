@@ -1,101 +1,83 @@
-// PRU input/output via RPMsg
+// Code to handle IO on PRU0 and pass the messages to PRU1
 //
 // Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
-#include <string.h> // memcpy
-#include <pru/io.h> // read_r31
+#include <string.h> // memset
+#include <pru/io.h> // write_r31
+#include <pru_cfg.h> // CT_CFG
 #include <pru_intc.h> // CT_INTC
 #include <pru_rpmsg.h> // pru_rpmsg_send
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
-#include "board/misc.h" // console_get_input
-#include "internal.h" // WAKE_ARM_EVENT
-#include "sched.h" // DECL_INIT
+#include <rsc_types.h> // resource_table
+#include "board/io.h" // readl
+#include "compiler.h" // __section
+#include "internal.h" // SHARED_MEM
+
+
+/****************************************************************
+ * IO
+ ****************************************************************/
 
 #define CHAN_NAME                                       "rpmsg-pru"
 #define CHAN_DESC                                       "Channel 30"
 #define CHAN_PORT                                       30
 
-
-/****************************************************************
- * Console interface
- ****************************************************************/
+static uint16_t transport_dst;
 
 static void
-clear_pending(void)
+check_can_send(struct pru_rpmsg_transport *transport)
 {
-    CT_INTC.SECR0 = 1 << GOT_ARM_EVENT;
-}
-
-static struct pru_rpmsg_transport transport;
-static uint16_t transport_dst;
-static char input_data[64];
-
-// XXX
-struct pru_rpmsg_hdr {
-    uint32_t src;
-    uint32_t dst;
-    uint32_t reserved;
-    uint16_t len;
-    uint16_t flags;
-    uint8_t  data[0];
-};
-
-// Return a buffer (and length) containing any incoming messages
-char *
-console_get_input(uint8_t *plen)
-{
-    if (!(read_r31() & (1 << (GOT_ARM_IRQ + R31_IRQ_OFFSET))))
-        goto nodata;
-    struct pru_rpmsg_hdr *msg;
-    uint32_t msg_len;
-    int16_t head = pru_virtqueue_get_avail_buf(
-        &transport.virtqueue1, (void**)&msg, &msg_len);
-    if (head < 0) {
-        clear_pending();
-        goto nodata;
+    for (;;) {
+        uint32_t send_pop_pos = SHARED_MEM->send_pop_pos;
+        uint32_t count = readl(&SHARED_MEM->send_data[send_pop_pos].count);
+        if (!count)
+            // Queue empty
+            break;
+        pru_rpmsg_send(
+            transport, CHAN_PORT, transport_dst
+            , &SHARED_MEM->send_data[send_pop_pos].data, count);
+        barrier();
+        writel(&SHARED_MEM->send_data[send_pop_pos].count, 0);
+        SHARED_MEM->send_pop_pos = (
+            (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
     }
-    transport_dst = msg->src;
-    int len = msg->len < sizeof(input_data) ? msg->len : sizeof(input_data);
-    memcpy(input_data, msg->data, len);
-    pru_virtqueue_add_used_buf(&transport.virtqueue1, head, msg_len);
-    pru_virtqueue_kick(&transport.virtqueue1);
-    *plen = len;
-    return input_data;
-nodata:
-    *plen = 0;
-    return input_data;
 }
 
-// Remove from the receive buffer the given number of bytes
-void
-console_pop_input(uint8_t len)
+static void
+check_can_read(struct pru_rpmsg_transport *transport)
 {
+    if (readl(&SHARED_MEM->read_count))
+        // main processing pru is busy
+        return;
+    uint16_t dst, len;
+    int16_t ret = pru_rpmsg_receive(
+        transport, &transport_dst, &dst, SHARED_MEM->read_data, &len);
+    if (ret || !len)
+        return;
+    SHARED_MEM->read_pos = 0;
+    barrier();
+    writel(&SHARED_MEM->read_count, len);
+    write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU1_EVENT - R31_WRITE_IRQ_OFFSET));
 }
 
-static char output_data[64];
-
-// Return an output buffer that the caller may fill with transmit messages
-char *
-console_get_output(uint8_t len)
+static void
+process_io(struct pru_rpmsg_transport *transport)
 {
-    if (len > sizeof(output_data))
-        return NULL;
-    return output_data;
-}
-
-// Accept the given number of bytes added to the transmit buffer
-void
-console_push_output(uint8_t len)
-{
-    pru_rpmsg_send(&transport, CHAN_PORT, transport_dst, output_data, len);
+    for (;;) {
+        if (!(read_r31() & (1 << (WAKE_PRU0_IRQ + R31_IRQ_OFFSET))))
+            continue;
+        CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
+        check_can_send(transport);
+        check_can_read(transport);
+    }
 }
 
 
 /****************************************************************
- * resource table
+ * Resource table
  ****************************************************************/
 
 /*
@@ -118,9 +100,11 @@ console_push_output(uint8_t len)
 
 /* Mapping sysevts to a channel. Each pair contains a sysevt, channel. */
 static struct ch_map pru_intc_map[] = {
-    {IEP_EVENT, IEP_IRQ},
-    {WAKE_ARM_EVENT, WAKE_ARM_IRQ},
-    {GOT_ARM_EVENT, GOT_ARM_IRQ},
+    {IEP_EVENT, WAKE_PRU1_IRQ},
+    {KICK_ARM_EVENT, WAKE_ARM_IRQ},
+    {KICK_PRU0_FROM_ARM_EVENT, WAKE_PRU0_IRQ},
+    {KICK_PRU0_EVENT, WAKE_PRU0_IRQ},
+    {KICK_PRU1_EVENT, WAKE_PRU1_IRQ},
 };
 
 struct my_resource_table {
@@ -185,7 +169,7 @@ struct my_resource_table {
                 0x0000,
                 /* Channel-to-host mapping, 255 for unused */
                 {
-                    IEP_IRQ, GOT_ARM_IRQ, WAKE_ARM_IRQ,
+                    WAKE_PRU0_IRQ, WAKE_PRU1_IRQ, WAKE_ARM_IRQ,
                     HOST_UNUSED, HOST_UNUSED, HOST_UNUSED,
                     HOST_UNUSED, HOST_UNUSED, HOST_UNUSED, HOST_UNUSED
                 },
@@ -200,15 +184,20 @@ struct my_resource_table {
 
 
 /****************************************************************
- * RPMsg init
+ * Startup
  ****************************************************************/
 
 #define VIRTIO_CONFIG_S_DRIVER_OK       4
 
-void
-console_init(void)
+int
+main(void)
 {
-    clear_pending();
+    // allow access to external memory
+    CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
+
+    // clear all irqs
+    CT_INTC.SECR0 = 0xffffffff;
+    CT_INTC.SECR1 = 0xffffffff;
 
     /* Make sure the Linux drivers are ready for RPMsg communication */
     volatile uint8_t *status = &resourceTable.rpmsg_vdev.status;
@@ -216,15 +205,25 @@ console_init(void)
         ;
 
     /* Initialize the RPMsg transport structure */
+    struct pru_rpmsg_transport transport;
     pru_rpmsg_init(&transport,
                    &resourceTable.rpmsg_vring0,
                    &resourceTable.rpmsg_vring1,
-                   WAKE_ARM_EVENT,
-                   GOT_ARM_EVENT);
+                   KICK_ARM_EVENT,
+                   KICK_PRU0_FROM_ARM_EVENT);
 
     /* Create the RPMsg channel between the PRU and ARM user space
      * using the transport structure. */
     while (pru_rpmsg_channel(RPMSG_NS_CREATE, &transport, CHAN_NAME
                              , CHAN_DESC, CHAN_PORT) != PRU_RPMSG_SUCCESS)
         ;
+
+    // Wait for PRU1 to be ready
+    memset(SHARED_MEM, 0, sizeof(*SHARED_MEM));
+    writel(&SHARED_MEM->signal, SIGNAL_PRU0_WAITING);
+    while (readl(&SHARED_MEM->signal) != SIGNAL_PRU1_READY)
+        ;
+    writel(&SHARED_MEM->signal, 0);
+
+    process_io(&transport);
 }
