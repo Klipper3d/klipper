@@ -69,7 +69,7 @@ report_errno(char *where, int rc)
 }
 
 // Return a hex character for a given number
-#define GETHEX(x) ((x) < 10 ? '0' + (x) : 'e' + (x) - 10)
+#define GETHEX(x) ((x) < 10 ? '0' + (x) : 'a' + (x) - 10)
 
 // Translate a binary string into an ASCII string with escape sequences
 char *
