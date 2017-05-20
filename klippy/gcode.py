@@ -19,7 +19,7 @@ class GCodeParser:
         self.fd_handle = None
         if not is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        self.input_commands = [""]
+        self.partial_input = ""
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -82,9 +82,9 @@ class GCodeParser:
             logging.info("Read %f: %s" % (eventtime, repr(data)))
     # Parse input into commands
     args_r = re.compile('([a-zA-Z_]+|[a-zA-Z*])')
-    def process_commands(self, eventtime):
-        while len(self.input_commands) > 1:
-            line = self.input_commands.pop(0)
+    def process_commands(self, commands, need_ack=True):
+        prev_need_ack = self.need_ack
+        for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
             cpos = line.find(';')
@@ -103,7 +103,7 @@ class GCodeParser:
                 continue
             params['#command'] = cmd = parts[0].upper() + parts[1].strip()
             # Invoke handler for command
-            self.need_ack = True
+            self.need_ack = need_ack
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
                 handler(params)
@@ -117,15 +117,16 @@ class GCodeParser:
                     self.printer.request_exit('exit_eof')
                     break
             self.ack()
+        self.need_ack = prev_need_ack
     def process_data(self, eventtime):
         data = os.read(self.fd, 4096)
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
-        lines[0] = self.input_commands.pop() + lines[0]
-        self.input_commands.extend(lines)
+        lines[0] = self.partial_input + lines[0]
+        self.partial_input = lines.pop()
         if self.is_processing_data:
-            if len(lines) <= 1:
+            if not lines:
                 return
             if not self.is_fileinput and lines[0].strip().upper() == 'M112':
                 self.cmd_M112({})
@@ -133,7 +134,7 @@ class GCodeParser:
             self.fd_handle = None
             return
         self.is_processing_data = True
-        self.process_commands(eventtime)
+        self.process_commands(lines)
         self.is_processing_data = False
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
@@ -259,6 +260,8 @@ class GCodeParser:
         e = extruders[index]
         if self.extruder is e:
             return
+        deactivate_gcode = self.extruder.get_activate_gcode(False)
+        self.process_commands(deactivate_gcode.split('\n'), need_ack=False)
         try:
             self.toolhead.set_extruder(e)
         except homing.EndstopError, e:
@@ -266,6 +269,8 @@ class GCodeParser:
             return
         self.extruder = e
         self.last_position = self.toolhead.get_position()
+        activate_gcode = self.extruder.get_activate_gcode(True)
+        self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
         'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
         'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',

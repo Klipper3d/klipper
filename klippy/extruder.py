@@ -24,6 +24,8 @@ class PrinterExtruder:
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
         self.max_e_velocity = self.max_e_accel = None
+        self.activate_gcode = config.get('activate_gcode', '')
+        self.deactivate_gcode = config.get('deactivate_gcode', '')
         self.pressure_advance = config.getfloat(
             'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = 0.
@@ -44,6 +46,10 @@ class PrinterExtruder:
         return self.heater
     def set_active(self, print_time, is_active):
         return self.extrude_pos
+    def get_activate_gcode(self, is_active):
+        if is_active:
+            return self.activate_gcode
+        return self.deactivate_gcode
     def motor_off(self, move_time):
         self.stepper.motor_enable(move_time, 0)
         self.need_motor_enable = True
