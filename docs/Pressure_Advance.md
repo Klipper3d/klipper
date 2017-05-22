@@ -4,6 +4,18 @@ pressure advance feature can be helpful in reducing ooze. For more
 information on how pressure advance is implemented see the
 [kinematics](Kinematics.md) document.
 
+Prerequisites
+=============
+
+In order to tune the pressure advance setting the printer must be
+configured and operational. The tuning test involves printing objects
+and inspecting the differences between objects. In particular, the
+extruder
+[E steps](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#E_steps)
+and
+[nozzle temperature](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature)
+should be tuned prior to tuning pressure advance.
+
 Tuning pressure advance
 =======================
 
