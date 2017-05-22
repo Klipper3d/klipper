@@ -19,6 +19,12 @@ Host user interaction
    can issue commands that potentially move the head past
    position_min/position_max.
 
+* Remove the "custom" block from the mcu section of the config and add
+  support for config sections to define CPU cooling fans, default LED
+  settings, stepper micro-controller pins, and digipot settings. It is
+  more user friendly to configure the printer via additional config
+  sections than via low-level micro-controller commands.
+
 * Improve logging:
 
  * Possibly collate and report the statistics messages in the log in a
