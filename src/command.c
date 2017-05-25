@@ -112,7 +112,7 @@ static uint8_t in_sendf;
 
 // Encode a message and transmit it
 void
-_sendf(uint8_t parserid, ...)
+_sendf(const struct command_encoder *ce, ...)
 {
     if (readb(&in_sendf))
         // This sendf call was made from an irq handler while the main
@@ -120,8 +120,7 @@ _sendf(uint8_t parserid, ...)
         return;
     writeb(&in_sendf, 1);
 
-    const struct command_encoder *cp = &command_encoders[parserid];
-    uint8_t max_size = READP(cp->max_size);
+    uint8_t max_size = READP(ce->max_size);
     char *buf = console_get_output(max_size + MESSAGE_MIN);
     if (!buf)
         goto done;
@@ -129,10 +128,10 @@ _sendf(uint8_t parserid, ...)
     if (max_size) {
         char *maxend = &p[max_size];
         va_list args;
-        va_start(args, parserid);
-        uint8_t num_params = READP(cp->num_params);
-        const uint8_t *param_types = READP(cp->param_types);
-        *p++ = READP(cp->msg_id);
+        va_start(args, ce);
+        uint8_t num_params = READP(ce->num_params);
+        const uint8_t *param_types = READP(ce->param_types);
+        *p++ = READP(ce->msg_id);
         while (num_params--) {
             if (p > maxend)
                 goto error;

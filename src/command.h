@@ -1,10 +1,9 @@
 #ifndef __COMMAND_H
 #define __COMMAND_H
 
-#include <stdarg.h> // va_list
-#include <stddef.h> // size_t
+#include <stddef.h>
 #include <stdint.h> // uint8_t
-#include "compiler.h" // __section
+#include "ctr.h" // DECL_CTR
 
 // Declare a function to run when the specified command is received
 #define DECL_COMMAND(FUNC, MSG)                 \
@@ -25,7 +24,7 @@
 
 // Declare a message type and transmit it.
 #define sendf(FMT, args...)                     \
-    _sendf(_DECL_PARSER(FMT) , ##args)
+    _sendf(_DECL_ENCODER(FMT) , ##args )
 
 // Shut down the machine (also declares a static string to transmit)
 #define shutdown(msg)                           \
@@ -34,7 +33,8 @@
     sched_try_shutdown(_DECL_STATIC_STR(msg))
 
 // command.c
-void _sendf(uint8_t parserid, ...);
+struct command_encoder;
+void _sendf(const struct command_encoder *ce, ...);
 
 // out/compile_time_request.c (auto generated file)
 struct command_encoder {
@@ -50,41 +50,30 @@ enum {
     PT_uint32, PT_int32, PT_uint16, PT_int16, PT_byte,
     PT_string, PT_progmem_buffer, PT_buffer,
 };
-extern const struct command_encoder command_encoders[];
 extern const struct command_parser * const command_index[];
 extern const uint8_t command_index_size;
 extern const uint8_t command_identify_data[];
 extern const uint32_t command_identify_size;
+const struct command_encoder *ctr_lookup_encoder(const char *str);
+const struct command_encoder *ctr_lookup_output(const char *str);
+uint8_t ctr_lookup_static_string(const char *str);
 
-// Compiler glue for DECL_COMMAND macros above.
 #define _DECL_COMMAND(FUNC, FLAGS, MSG)                                 \
-    char __PASTE(_DECLS_ ## FUNC ## _, __LINE__) []                     \
-        __visible __section(".compile_time_request")                    \
-        = "_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG; \
-    void __visible FUNC(uint32_t*)
+    DECL_CTR("_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG)
 
-#define _DECL_CONSTANT(NAME, VALUE)             \
-    char __PASTE(_DECLC_ ## NAME ## _, __LINE__) []                     \
-        __visible __section(".compile_time_request")                    \
-        = "_DECL_CONSTANT " __stringify(NAME) " " __stringify(VALUE)
+#define _DECL_CONSTANT(NAME, VALUE)                                     \
+    DECL_CTR("_DECL_CONSTANT " __stringify(NAME) " " __stringify(VALUE))
 
-// Create a compile time request and return a unique (incrementing id)
-// for that request.
-#define _DECL_REQUEST_ID(REQUEST, ID_SECTION) ({                \
-    static char __PASTE(_DECLS_, __LINE__)[]                    \
-        __section(".compile_time_request") = REQUEST;           \
-    asm volatile("" : : "i"(__PASTE(_DECLS_, __LINE__)));       \
-    static char __PASTE(_DECLI_, __LINE__)                      \
-        __section(".compile_time_request." ID_SECTION);         \
-    (size_t)&__PASTE(_DECLI_, __LINE__); })
+#define _DECL_ENCODER(FMT) ({                   \
+    DECL_CTR("_DECL_ENCODER " FMT);             \
+    ctr_lookup_encoder(FMT); })
 
-#define _DECL_PARSER(FMT)                               \
-    _DECL_REQUEST_ID("_DECL_PARSER " FMT, "parsers")
+#define _DECL_OUTPUT(FMT) ({                    \
+    DECL_CTR("_DECL_OUTPUT " FMT);              \
+    ctr_lookup_output(FMT); })
 
-#define _DECL_OUTPUT(FMT)                               \
-    _DECL_REQUEST_ID("_DECL_OUTPUT " FMT, "parsers")
-
-#define _DECL_STATIC_STR(FMT)                                   \
-    _DECL_REQUEST_ID("_DECL_STATIC_STR " FMT, "static_strings")
+#define _DECL_STATIC_STR(MSG) ({                \
+    DECL_CTR("_DECL_STATIC_STR " MSG);          \
+    ctr_lookup_static_string(MSG); })
 
 #endif // command.h

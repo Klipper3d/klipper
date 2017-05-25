@@ -58,22 +58,66 @@ def build_parser(parser, iscmd, all_param_types):
         out += "    .max_size=%d," % (max_size,)
     return out
 
-def build_parsers(parsers, msg_to_id, all_param_types):
-    pcode = []
-    for msgname, msg in parsers:
+def build_encoders(encoders, msg_to_id, all_param_types):
+    encoder_defs = []
+    output_code = []
+    encoder_code = []
+    did_output = {}
+    for msgname, msg in encoders:
         msgid = msg_to_id[msg]
+        if msgid in did_output:
+            continue
+        s = msg
+        if s == '#empty':
+            s = ''
+        did_output[msgid] = True
+        code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
+                '        return &command_encoder_%s;\n' % (s, msgid))
         if msgname is None:
             parser = msgproto.OutputFormat(msgid, msg)
+            output_code.append(code)
         else:
             parser = msgproto.MessageFormat(msgid, msg)
+            encoder_code.append(code)
         parsercode = build_parser(parser, 0, all_param_types)
-        pcode.append("{%s\n}, " % (parsercode,))
+        encoder_defs.append(
+            "const struct command_encoder command_encoder_%s PROGMEM = {"
+            "    %s\n};\n" % (
+                msgid, parsercode))
     fmt = """
-const struct command_encoder command_encoders[] PROGMEM __visible = {
 %s
-};
+
+const __always_inline struct command_encoder *
+ctr_lookup_encoder(const char *str)
+{
+    %s
+    return NULL;
+}
+
+const __always_inline struct command_encoder *
+ctr_lookup_output(const char *str)
+{
+    %s
+    return NULL;
+}
 """
-    return fmt % ("".join(pcode).strip(),)
+    return fmt % ("".join(encoder_defs).strip(), "".join(encoder_code).strip(),
+                  "".join(output_code).strip())
+
+def build_static_strings(static_strings):
+    code = []
+    for i, s in enumerate(static_strings):
+        code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
+                    '        return %d;\n' % (s, i))
+    fmt = """
+uint8_t __always_inline
+ctr_lookup_static_string(const char *str)
+{
+    %s
+    return 0xff;
+}
+"""
+    return fmt % ("".join(code).strip(),)
 
 def build_param_types(all_param_types):
     sorted_param_types = sorted([(i, a) for a, i in all_param_types.items()])
@@ -102,7 +146,7 @@ def build_commands(cmd_by_id, messages_by_name, all_param_types):
         index.append("    &%s," % (parsername,))
         parser = msgproto.MessageFormat(msgid, msg)
         parsercode = build_parser(parser, 1, all_param_types)
-        parsers.append("const struct command_parser %s PROGMEM __visible = {"
+        parsers.append("const struct command_parser %s PROGMEM = {"
                        "    %s\n    .flags=%s,\n    .func=%s\n};" % (
                            parsername, parsercode, flags, funcname))
     index = "\n".join(index)
@@ -113,11 +157,11 @@ def build_commands(cmd_by_id, messages_by_name, all_param_types):
 
 %s
 
-const struct command_parser * const command_index[] PROGMEM __visible = {
+const struct command_parser * const command_index[] PROGMEM = {
 %s
 };
 
-const uint8_t command_index_size PROGMEM __visible = ARRAY_SIZE(command_index);
+const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 """
     return fmt % (externs, '\n'.join(parsers), index)
 
@@ -147,11 +191,11 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
             out.append('\n   ')
         out.append(" 0x%02x," % (ord(zdata[i]),))
     fmt = """
-const uint8_t command_identify_data[] PROGMEM __visible = {%s
+const uint8_t command_identify_data[] PROGMEM = {%s
 };
 
 // Identify size = %d (%d uncompressed)
-const uint32_t command_identify_size PROGMEM __visible
+const uint32_t command_identify_size PROGMEM
     = ARRAY_SIZE(command_identify_data);
 """
     return data, fmt % (''.join(out), len(zdata), len(data))
@@ -224,7 +268,7 @@ def main():
     commands = {}
     messages_by_name = dict((m.split()[0], m)
                             for m in msgproto.DefaultMessages.values())
-    parsers = []
+    encoders = []
     static_strings = []
     constants = {}
     # Parse request file
@@ -248,7 +292,7 @@ def main():
             if m is not None and m != msg:
                 error("Conflicting definition for command '%s'" % msgname)
             messages_by_name[msgname] = msg
-        elif cmd == '_DECL_PARSER':
+        elif cmd == '_DECL_ENCODER':
             if len(parts) == 1:
                 msgname = msg = "#empty"
             else:
@@ -257,9 +301,9 @@ def main():
             if m is not None and m != msg:
                 error("Conflicting definition for message '%s'" % msgname)
             messages_by_name[msgname] = msg
-            parsers.append((msgname, msg))
+            encoders.append((msgname, msg))
         elif cmd == '_DECL_OUTPUT':
-            parsers.append((None, msg))
+            encoders.append((None, msg))
         elif cmd == '_DECL_STATIC_STR':
             static_strings.append(req[17:])
         elif cmd == '_DECL_CONSTANT':
@@ -275,14 +319,15 @@ def main():
     # Create unique ids for each message type
     msgid = max(msgproto.DefaultMessages.keys())
     msg_to_id = dict((m, i) for i, m in msgproto.DefaultMessages.items())
-    for msgname in commands.keys() + [m for n, m in parsers]:
+    for msgname in commands.keys() + [m for n, m in encoders]:
         msg = messages_by_name.get(msgname, msgname)
         if msg not in msg_to_id:
             msgid += 1
             msg_to_id[msg] = msgid
     # Create message definitions
     all_param_types = {}
-    parsercode = build_parsers(parsers, msg_to_id, all_param_types)
+    parsercode = build_encoders(encoders, msg_to_id, all_param_types)
+    static_strings_code = build_static_strings(static_strings)
     # Create command definitions
     cmd_by_id = dict((msg_to_id[messages_by_name.get(msgname, msgname)], cmd)
                      for msgname, cmd in commands.items())
@@ -297,7 +342,8 @@ def main():
                                      , static_strings, constants, version)
     # Write output
     f = open(outcfile, 'wb')
-    f.write(FILEHEADER + paramcode + parsercode + cmdcode + icode)
+    f.write(FILEHEADER + paramcode + parsercode + static_strings_code
+            + cmdcode + icode)
     f.close()
 
     # Write data dictionary

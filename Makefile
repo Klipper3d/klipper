@@ -75,21 +75,24 @@ $(OUT)board-link: $(KCONFIG_CONFIG)
 	$(Q)mkdir -p $(OUT)board-generic
 	$(Q)ln -Tsf $(PWD)/src/generic $(OUT)board-generic/board
 
+$(OUT)%.o.ctr: $(OUT)%.o
+	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
+
+$(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scripts/buildcommands.py
+	@echo "  Building $@"
+	$(Q)cat $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) > $(OUT)klipper.compile_time_request
+	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict $(OUT)klipper.compile_time_request $(OUT)compile_time_request.c
+	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
+
 $(OUT)declfunc.lds: src/declfunc.lds.S
 	@echo "  Precompiling $@"
 	$(Q)$(CPP) $(CPPFLAGS) -D__ASSEMBLY__ $< -o $@
 
-$(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)declfunc.lds
+$(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)compile_time_request.o $(OUT)declfunc.lds
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS_klipper.o) -Wl,-T,$(OUT)declfunc.lds $(patsubst %.c, $(OUT)src/%.o,$(src-y)) -o $@
+	$(Q)$(CC) $(CFLAGS_klipper.o) -Wl,-T,$(OUT)declfunc.lds $(patsubst %.c, $(OUT)src/%.o,$(src-y))  $(OUT)compile_time_request.o -o $@
 
-$(OUT)compile_time_request.o: $(OUT)klipper.o ./scripts/buildcommands.py
-	@echo "  Building $@"
-	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $< $(OUT)klipper.o.compile_time_request
-	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict $(OUT)klipper.o.compile_time_request $(OUT)compile_time_request.c
-	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
-
-$(OUT)klipper.elf: $(OUT)klipper.o $(OUT)compile_time_request.o
+$(OUT)klipper.elf: $(OUT)klipper.o
 	@echo "  Linking $@"
 	$(Q)$(CC) $(CFLAGS_klipper.elf) $^ -o $@
 

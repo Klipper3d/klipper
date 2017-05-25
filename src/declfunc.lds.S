@@ -24,11 +24,4 @@ SECTIONS
     DECLWRAPPER(taskfuncs)
     DECLWRAPPER(initfuncs)
     DECLWRAPPER(shutdownfuncs)
-
-    .compile_time_request.static_strings 0 (INFO) : {
-        *( .compile_time_request.static_strings )
-    }
-    .compile_time_request.parsers 0 (INFO) : {
-        *( .compile_time_request.parsers )
-    }
 }
