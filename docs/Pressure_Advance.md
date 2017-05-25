@@ -47,11 +47,13 @@ object. (Be sure to issue RESTART between each config change.) The
 goal is to attempt to eliminate the blobbing during cornering. (With
 pressure advance, the extruder will retract when the head slows down,
 thus countering the pressure buildup and ideally eliminate the
-blobbing.) If a test run is done with a pressure_advance setting that
-is too high, one typically sees a dimple in the corner followed by
-possible blobbing after the corner (too much filament is retracted
-during slow down and then too much filament is extruded during the
-following speed up after cornering):
+blobbing.)
+
+If a test run is done with a pressure_advance setting that is too
+high, one typically sees a dimple in the corner followed by possible
+blobbing after the corner (too much filament is retracted during slow
+down and then too much filament is extruded during the following speed
+up after cornering):
 
 ![corner-dimple](img/corner-dimple.jpg)
 
@@ -62,6 +64,12 @@ in good quality corners:
 
 Typical pressure_advance values are between 0.05 and 0.20 (the high
 end usually only with bowden extruders).
+
+It is not unusual for one corner of the test print to be consistently
+different than the other three corners. This typically occurs when the
+slicer arranges to always change Z height at that corner.  If this
+occurs, then ignore that corner and tune pressure_advance using the
+other three corners.
 
 Once a good pressure_advance value is found, return
 pressure_advance_lookahead_time to its default (0.010). This parameter
