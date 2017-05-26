@@ -117,7 +117,7 @@ console_push_output(uint8_t len)
  ****************************************************************/
 
 // Periodically sleep so we don't consume all CPU
-static void
+void
 simu_pause(void)
 {
     // XXX - should check that no timers are present.

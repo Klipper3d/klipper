@@ -71,7 +71,7 @@ timer_repeat_set(uint16_t next)
 }
 
 // Reset the timer - clear settings and dispatch next timer immediately
-static void
+void
 timer_reset(void)
 {
     uint16_t now = timer_get();
@@ -81,7 +81,7 @@ timer_reset(void)
 }
 DECL_SHUTDOWN(timer_reset);
 
-static void
+void
 timer_init(void)
 {
     if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
@@ -193,7 +193,7 @@ done:
 
 // Periodic background task that temporarily boosts priority of
 // timers.  This helps prioritize timers when tasks are idling.
-static void
+void
 timer_task(void)
 {
     irq_disable();

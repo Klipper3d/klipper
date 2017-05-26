@@ -59,7 +59,7 @@ command_schedule_pwm_out(uint32_t *args)
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");
 
-static void
+void
 pwm_shutdown(void)
 {
     uint8_t i;

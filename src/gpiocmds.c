@@ -67,7 +67,7 @@ command_schedule_digital_out(uint32_t *args)
 DECL_COMMAND(command_schedule_digital_out,
              "schedule_digital_out oid=%c clock=%u value=%c");
 
-static void
+void
 digital_out_shutdown(void)
 {
     uint8_t i;
@@ -212,7 +212,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
 DECL_COMMAND(command_schedule_soft_pwm_out,
              "schedule_soft_pwm_out oid=%c clock=%u value=%hu");
 
-static void
+void
 soft_pwm_shutdown(void)
 {
     uint8_t i;

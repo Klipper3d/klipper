@@ -191,16 +191,9 @@ def main():
     for info in funcs.values():
         funcnameroot = info.funcname.split('.')[0]
         funcsbyname[funcnameroot] = info
-    mainfunc = funcsbyname.get('sched_main')
-    cmdfunc = funcsbyname.get('command_task')
+    cmdfunc = funcsbyname.get('sched_main')
     eventfunc = funcsbyname.get('__vector_13', funcsbyname.get('__vector_17'))
     for funcnameroot, info in funcsbyname.items():
-        if (funcnameroot.startswith('_DECL_taskfuncs_')
-            or funcnameroot.startswith('_DECL_initfuncs_')
-            or funcnameroot.startswith('_DECL_shutdownfuncs_')):
-            funcname = funcnameroot[funcnameroot.index('_', 7)+1:]
-            f = funcsbyname[funcname]
-            mainfunc.noteCall(0, f.funcaddr, mainfunc.basic_stack_usage + 2)
         if funcnameroot.startswith('parser_'):
             f = funcsbyname.get(funcnameroot[7:])
             if f is not None:

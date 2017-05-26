@@ -14,7 +14,7 @@ src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c ../lib/pjrc_usb_serial/usb_serial
 src-$(CONFIG_AVR_SERIAL) += avr/serial.c
 
 # Suppress broken "misspelled signal handler" warnings on gcc 4.8.1
-CFLAGS_klipper.o := $(CFLAGS_klipper.o) $(if $(filter 4.8.1, $(shell $(CC) -dumpversion)), -w)
+CFLAGS_klipper.elf := $(CFLAGS_klipper.elf) $(if $(filter 4.8.1, $(shell $(CC) -dumpversion)), -w)
 
 # Build the additional hex output file
 target-y += $(OUT)klipper.elf.hex

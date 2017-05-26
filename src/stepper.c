@@ -284,7 +284,7 @@ stepper_stop(struct stepper *s)
     }
 }
 
-static void
+void
 stepper_shutdown(void)
 {
     uint8_t i;

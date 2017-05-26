@@ -75,7 +75,7 @@ irq_poll(void)
         _irq_poll();
 }
 
-static void
+void
 timer_shutdown(void)
 {
     // Reenable timer irq
@@ -86,12 +86,13 @@ timer_shutdown(void)
 }
 DECL_SHUTDOWN(timer_shutdown);
 
-static void
+void
 timer_init(void)
 {
     CT_IEP.TMR_CNT = 0;
     timer_shutdown();
 }
+DECL_INIT(timer_init);
 
 
 /****************************************************************
@@ -210,8 +211,6 @@ main(void)
     while (readl(&SHARED_MEM->signal) != SIGNAL_PRU0_WAITING)
         ;
     writel(&SHARED_MEM->signal, SIGNAL_PRU1_READY);
-
-    timer_init();
 
     sched_main();
     return 0;

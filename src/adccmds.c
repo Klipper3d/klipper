@@ -80,7 +80,7 @@ DECL_COMMAND(command_query_analog_in,
              "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
              " rest_ticks=%u min_value=%hu max_value=%hu");
 
-static void
+void
 analog_in_task(void)
 {
     static uint16_t next;
@@ -106,7 +106,7 @@ analog_in_task(void)
 }
 DECL_TASK(analog_in_task);
 
-static void
+void
 analog_in_shutdown(void)
 {
     uint8_t i;

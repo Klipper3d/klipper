@@ -112,7 +112,7 @@ command_end_stop_query(uint32_t *args)
 }
 DECL_COMMAND(command_end_stop_query, "end_stop_query oid=%c");
 
-static void
+void
 end_stop_task(void)
 {
     static uint16_t next;

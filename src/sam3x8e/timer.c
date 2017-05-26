@@ -25,7 +25,7 @@ timer_read_time(void)
     return TC0->TC_CHANNEL[0].TC_CV;
 }
 
-static void
+void
 timer_init(void)
 {
     TcChannel *tc = &TC0->TC_CHANNEL[0];
@@ -44,7 +44,7 @@ timer_init(void)
 }
 DECL_INIT(timer_init);
 
-static void
+void
 timer_shutdown(void)
 {
     // Reenable timer irq

@@ -65,7 +65,7 @@ move_request_size(int size)
         move_item_size = size;
 }
 
-static void
+void
 move_reset(void)
 {
     if (!move_count)
@@ -201,7 +201,7 @@ DECL_COMMAND_FLAGS(command_get_uptime, HF_IN_SHUTDOWN, "get_uptime");
 #define SUMSQ_BASE 256
 DECL_CONSTANT(STATS_SUMSQ_BASE, SUMSQ_BASE);
 
-static void
+void
 stats_task(void)
 {
     static uint32_t last, count, sumsq;

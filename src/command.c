@@ -197,7 +197,7 @@ error:
     shutdown("Message encode error");
 }
 
-static void
+void
 sendf_shutdown(void)
 {
     writeb(&in_sendf, 0);
@@ -289,7 +289,7 @@ nak:
 }
 
 // Background task that reads commands from the board serial port
-static void
+void
 command_task(void)
 {
     // Process commands.

@@ -37,7 +37,6 @@ CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -O2 -MD -g \
     -ffunction-sections -fdata-sections
 CFLAGS += -flto -fwhole-program -fno-use-linker-plugin
 
-CFLAGS_klipper.o = $(CFLAGS) -Wl,-r -nostdlib
 CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
@@ -84,15 +83,7 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict $(OUT)klipper.compile_time_request $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
-$(OUT)declfunc.lds: src/declfunc.lds.S
-	@echo "  Precompiling $@"
-	$(Q)$(CPP) $(CPPFLAGS) -D__ASSEMBLY__ $< -o $@
-
-$(OUT)klipper.o: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)compile_time_request.o $(OUT)declfunc.lds
-	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS_klipper.o) -Wl,-T,$(OUT)declfunc.lds $(patsubst %.c, $(OUT)src/%.o,$(src-y))  $(OUT)compile_time_request.o -o $@
-
-$(OUT)klipper.elf: $(OUT)klipper.o
+$(OUT)klipper.elf: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)compile_time_request.o
 	@echo "  Linking $@"
 	$(Q)$(CC) $(CFLAGS_klipper.elf) $^ -o $@
 

@@ -16,14 +16,14 @@ DECL_CONSTANT(MCU, "sam3x8e");
  * watchdog handler
  ****************************************************************/
 
-static void
+void
 watchdog_reset(void)
 {
     WDT->WDT_CR = 0xA5000001;
 }
 DECL_TASK(watchdog_reset);
 
-static void
+void
 watchdog_init(void)
 {
     uint32_t timeout = 32768 / 2;  // 500ms timeout

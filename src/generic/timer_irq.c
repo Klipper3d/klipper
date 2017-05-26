@@ -82,7 +82,7 @@ timer_dispatch_many(void)
 
 // Periodic background task that temporarily boosts priority of
 // timers.  This helps prioritize timers when tasks are idling.
-static void
+void
 timer_task(void)
 {
     irq_disable();
@@ -91,7 +91,7 @@ timer_task(void)
 }
 DECL_TASK(timer_task);
 
-static void
+void
 timer_irq_shutdown(void)
 {
     timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;

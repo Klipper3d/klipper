@@ -18,7 +18,7 @@ ISR(WDT_vect)
     shutdown("Watchdog timer!");
 }
 
-static void
+void
 watchdog_reset(void)
 {
     wdt_reset();
@@ -29,7 +29,7 @@ watchdog_reset(void)
 }
 DECL_TASK(watchdog_reset);
 
-static void
+void
 watchdog_init(void)
 {
     // 0.5s timeout, interrupt and system reset

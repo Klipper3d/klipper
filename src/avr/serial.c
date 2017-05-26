@@ -25,7 +25,7 @@ static uint8_t transmit_pos, transmit_max;
 
 DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
 
-static void
+void
 serial_init(void)
 {
     if (CONFIG_SERIAL_BAUD_U2X) {

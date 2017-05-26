@@ -14,7 +14,7 @@ static char receive_buf[USBSERIAL_BUFFER_SIZE];
 static uint8_t receive_pos;
 static char transmit_buf[USBSERIAL_BUFFER_SIZE];
 
-static void
+void
 usbserial_init(void)
 {
     usb_init();

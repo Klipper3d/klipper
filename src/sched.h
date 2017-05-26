@@ -2,14 +2,14 @@
 #define __SCHED_H
 
 #include <stdint.h> // uint32_t
-#include "compiler.h" // __section
+#include "ctr.h" // DECL_CTR
 
 // Declare an init function (called at firmware startup)
-#define DECL_INIT(FUNC) _DECL_CALLBACK(initfuncs, FUNC)
+#define DECL_INIT(FUNC) _DECL_CALLLIST(ctr_run_initfuncs, FUNC)
 // Declare a task function (called periodically during normal runtime)
-#define DECL_TASK(FUNC) _DECL_CALLBACK(taskfuncs, FUNC)
+#define DECL_TASK(FUNC) _DECL_CALLLIST(ctr_run_taskfuncs, FUNC)
 // Declare a shutdown function (called on an emergency stop)
-#define DECL_SHUTDOWN(FUNC) _DECL_CALLBACK(shutdownfuncs, FUNC)
+#define DECL_SHUTDOWN(FUNC) _DECL_CALLLIST(ctr_run_shutdownfuncs, FUNC)
 
 // Timer structure for scheduling timed events (see sched_add_timer() )
 struct timer {
@@ -33,15 +33,7 @@ void sched_report_shutdown(void);
 void sched_main(void);
 
 // Compiler glue for DECL_X macros above.
-struct callback_handler {
-    void (*func)(void);
-};
-#define _DECL_CALLBACK(NAME, FUNC)                                      \
-    const struct callback_handler _DECL_ ## NAME ## _ ## FUNC __visible \
-    __section(".rodata." __stringify(NAME) ) = { .func = FUNC }
-
-#define foreachdecl(ITER, NAME)                                 \
-    extern typeof(*ITER) NAME ## _start[], NAME ## _end[];      \
-    for (ITER = NAME ## _start ; ITER < NAME ## _end ; ITER ++)
+#define _DECL_CALLLIST(NAME, FUNC)                                      \
+    DECL_CTR("_DECL_CALLLIST " __stringify(NAME) " " __stringify(FUNC))
 
 #endif // sched.h

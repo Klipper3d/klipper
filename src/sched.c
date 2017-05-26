@@ -1,6 +1,6 @@
 // Basic scheduling functions and startup/shutdown code.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -167,7 +167,7 @@ sched_timer_dispatch(void)
 }
 
 // Shutdown all user timers on an emergency stop.
-static void
+void
 sched_timer_shutdown(void)
 {
     timer_list = &deleted_timer;
@@ -209,11 +209,8 @@ run_shutdown(void)
 {
     uint32_t cur = timer_read_time();
     shutdown_status = 2;
-    struct callback_handler *p;
-    foreachdecl(p, shutdownfuncs) {
-        void (*func)(void) = READP(p->func);
-        func();
-    }
+    extern void ctr_run_shutdownfuncs(void);
+    ctr_run_shutdownfuncs();
     shutdown_status = 1;
     irq_enable();
 
@@ -252,39 +249,20 @@ sched_shutdown(uint_fast8_t reason)
  * Startup and background task processing
  ****************************************************************/
 
-// Invoke all init functions (as declared by DECL_INIT)
-static void
-run_init(void)
-{
-    struct callback_handler *p;
-    foreachdecl(p, initfuncs) {
-        void (*func)(void) = READP(p->func);
-        func();
-    }
-}
-
-// Invoke all background task functions (as declared by DECL_TASK)
-static void
-run_task(void)
-{
-    struct callback_handler *p;
-    foreachdecl(p, taskfuncs) {
-        irq_poll();
-        void (*func)(void) = READP(p->func);
-        func();
-    }
-}
+// Auto-generated code in out/compile_time_requests.c
+extern void ctr_run_initfuncs(void);
+extern void ctr_run_taskfuncs(void);
 
 // Main loop of program
 void
 sched_main(void)
 {
-    run_init();
+    ctr_run_initfuncs();
 
     int ret = setjmp(shutdown_jmp);
     if (ret)
         run_shutdown();
 
     for (;;)
-        run_task();
+        ctr_run_taskfuncs();
 }

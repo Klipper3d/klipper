@@ -40,7 +40,7 @@ irq_poll(void)
 }
 
 // Clear the active irq if a shutdown happened in an irq handler
-static void
+void
 clear_active_irq(void)
 {
     uint32_t psr;

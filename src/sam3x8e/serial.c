@@ -27,7 +27,7 @@ static uint32_t transmit_pos, transmit_max;
 
 DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
 
-static void
+void
 serial_init(void)
 {
     gpio_peripheral('A', PIO_PA8A_URXD, 'A', 1);
