@@ -151,37 +151,31 @@ def build_param_types(all_param_types):
 def build_commands(cmd_by_id, messages_by_name, all_param_types):
     max_cmd_msgid = max(cmd_by_id.keys())
     index = []
-    parsers = []
     externs = {}
     for msgid in range(max_cmd_msgid+1):
         if msgid not in cmd_by_id:
-            index.append("    0,")
+            index.append(" {\n},")
             continue
         funcname, flags, msgname = cmd_by_id[msgid]
         msg = messages_by_name[msgname]
         externs[funcname] = 1
-        parsername = 'parser_%s' % (funcname,)
-        index.append("    &%s," % (parsername,))
         parser = msgproto.MessageFormat(msgid, msg)
         parsercode = build_parser(parser, 1, all_param_types)
-        parsers.append("const struct command_parser %s PROGMEM = {"
-                       "    %s\n    .flags=%s,\n    .func=%s\n};" % (
-                           parsername, parsercode, flags, funcname))
-    index = "\n".join(index)
+        index.append(" {%s\n    .flags=%s,\n    .func=%s\n}," % (
+            parsercode, flags, funcname))
+    index = "".join(index).strip()
     externs = "\n".join(["extern void "+funcname+"(uint32_t*);"
                          for funcname in sorted(externs)])
     fmt = """
 %s
 
-%s
-
-const struct command_parser * const command_index[] PROGMEM = {
+const struct command_parser command_index[] PROGMEM = {
 %s
 };
 
 const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 """
-    return fmt % (externs, '\n'.join(parsers), index)
+    return fmt % (externs, index)
 
 
 ######################################################################

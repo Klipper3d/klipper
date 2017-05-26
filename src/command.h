@@ -50,7 +50,7 @@ enum {
     PT_uint32, PT_int32, PT_uint16, PT_int16, PT_byte,
     PT_string, PT_progmem_buffer, PT_buffer,
 };
-extern const struct command_parser * const command_index[];
+extern const struct command_parser command_index[];
 extern const uint8_t command_index_size;
 extern const uint8_t command_identify_data[];
 extern const uint32_t command_identify_size;

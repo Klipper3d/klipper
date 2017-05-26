@@ -213,14 +213,9 @@ DECL_SHUTDOWN(sendf_shutdown);
 static const struct command_parser *
 command_get_handler(uint8_t cmdid)
 {
-    if (cmdid >= READP(command_index_size))
-        goto error;
-    const struct command_parser *cp = READP(command_index[cmdid]);
-    if (!cp)
-        goto error;
-    return cp;
-error:
-    shutdown("Invalid command");
+    if (!cmdid || cmdid >= READP(command_index_size))
+        shutdown("Invalid command");
+    return &command_index[cmdid];
 }
 
 enum { CF_NEED_SYNC=1<<0, CF_NEED_VALID=1<<1 };

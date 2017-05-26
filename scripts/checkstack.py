@@ -135,8 +135,7 @@ def main():
             continue
         m = re_asm.match(line)
         if m is None:
-            if funcaddr not in datalines:
-                datalines[funcaddr] = line.split()
+            datalines.setdefault(funcaddr, []).append(line)
             #print("other", repr(line))
             continue
         insn = m.group('insn')
@@ -192,14 +191,24 @@ def main():
         funcnameroot = info.funcname.split('.')[0]
         funcsbyname[funcnameroot] = info
     cmdfunc = funcsbyname.get('sched_main')
+    command_index = funcsbyname.get('command_index')
+    if command_index is not None and cmdfunc is not None:
+        for line in datalines[command_index.funcaddr]:
+            parts = line.split()
+            if len(parts) < 9:
+                continue
+            calladdr = int(parts[8]+parts[7], 16) * 2
+            numparams = int(parts[2], 16)
+            stackusage = cmdfunc.basic_stack_usage + 2 + numparams * 4
+            cmdfunc.noteCall(0, calladdr, stackusage)
+            if len(parts) < 17:
+                continue
+            calladdr = int(parts[16]+parts[15], 16) * 2
+            numparams = int(parts[10], 16)
+            stackusage = cmdfunc.basic_stack_usage + 2 + numparams * 4
+            cmdfunc.noteCall(0, calladdr, stackusage)
     eventfunc = funcsbyname.get('__vector_13', funcsbyname.get('__vector_17'))
     for funcnameroot, info in funcsbyname.items():
-        if funcnameroot.startswith('parser_'):
-            f = funcsbyname.get(funcnameroot[7:])
-            if f is not None:
-                numparams = int(datalines[info.funcaddr][2], 16)
-                stackusage = cmdfunc.basic_stack_usage + 2 + numparams * 4
-                cmdfunc.noteCall(0, f.funcaddr, stackusage)
         if funcnameroot.endswith('_event') and eventfunc is not None:
             eventfunc.noteCall(0, info.funcaddr, eventfunc.basic_stack_usage + 2)
 
