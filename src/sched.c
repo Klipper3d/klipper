@@ -8,6 +8,7 @@
 #include "autoconf.h" // CONFIG_*
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
+#include "board/pgm.h" // READP
 #include "command.h" // shutdown
 #include "sched.h" // sched_check_periodic
 #include "stepper.h" // stepper_event
@@ -181,20 +182,13 @@ DECL_SHUTDOWN(sched_timer_shutdown);
  * Shutdown processing
  ****************************************************************/
 
-static uint16_t shutdown_reason;
-static uint8_t shutdown_status;
+static uint_fast8_t shutdown_status, shutdown_reason;
 
 // Return true if the machine is in an emergency stop state
 uint8_t
 sched_is_shutdown(void)
 {
     return !!shutdown_status;
-}
-
-uint16_t
-sched_shutdown_reason(void)
-{
-    return shutdown_reason;
 }
 
 // Transition out of shutdown state
@@ -226,9 +220,16 @@ run_shutdown(void)
     sendf("shutdown clock=%u static_string_id=%hu", cur, shutdown_reason);
 }
 
+// Report the last shutdown reason code
+void
+sched_report_shutdown(void)
+{
+    sendf("is_shutdown static_string_id=%hu", shutdown_reason);
+}
+
 // Shutdown the machine if not already in the process of shutting down
 void
-sched_try_shutdown(unsigned int reason)
+sched_try_shutdown(uint_fast8_t reason)
 {
     if (shutdown_status != 2)
         sched_shutdown(reason);
@@ -238,7 +239,7 @@ static jmp_buf shutdown_jmp;
 
 // Force the machine to immediately run the shutdown handlers
 void
-sched_shutdown(unsigned int reason)
+sched_shutdown(uint_fast8_t reason)
 {
     irq_disable();
     if (!shutdown_status)

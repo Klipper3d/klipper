@@ -72,7 +72,7 @@ static char *
 parsef(char *p, char *maxend, const struct command_parser *cp, uint32_t *args)
 {
     if (sched_is_shutdown() && !(READP(cp->flags) & HF_IN_SHUTDOWN)) {
-        sendf("is_shutdown static_string_id=%hu", sched_shutdown_reason());
+        sched_report_shutdown();
         return NULL;
     }
     uint8_t num_params = READP(cp->num_params);

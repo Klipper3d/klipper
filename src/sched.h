@@ -1,8 +1,7 @@
 #ifndef __SCHED_H
 #define __SCHED_H
 
-#include <stdint.h>
-#include "board/pgm.h" // PSTR
+#include <stdint.h> // uint32_t
 #include "compiler.h" // __section
 
 // Declare an init function (called at firmware startup)
@@ -27,10 +26,10 @@ void sched_add_timer(struct timer*);
 void sched_del_timer(struct timer *del);
 unsigned int sched_timer_dispatch(void);
 uint8_t sched_is_shutdown(void);
-uint16_t sched_shutdown_reason(void);
 void sched_clear_shutdown(void);
-void sched_try_shutdown(unsigned int reason);
-void sched_shutdown(unsigned int reason) __noreturn;
+void sched_try_shutdown(uint_fast8_t reason);
+void sched_shutdown(uint_fast8_t reason) __noreturn;
+void sched_report_shutdown(void);
 void sched_main(void);
 
 // Compiler glue for DECL_X macros above.

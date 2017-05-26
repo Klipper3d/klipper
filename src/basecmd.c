@@ -7,6 +7,7 @@
 #include "basecmd.h" // oid_lookup
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // alloc_maxsize
+#include "board/pgm.h" // READP
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_clear_shutdown
 
