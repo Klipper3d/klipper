@@ -58,6 +58,7 @@ config CLOCK_FREQ
 
 config CLEAR_PRESCALER
     bool "Manually clear the CPU prescaler field at startup"
+    depends on MACH_at90usb1286
     default n
     help
          Some AVR chips ship with a "clock prescaler" that causes the
@@ -76,7 +77,8 @@ config AVR_STACK_SIZE
     default 128
 
 config AVR_WATCHDOG
-    bool "Support for automated reset on watchdog timeout"
+    bool
+    depends on !SIMULAVR
     default y
 config AVR_USBSERIAL
     bool
@@ -91,8 +93,20 @@ config SERIAL_BAUD
     int "Baud rate for serial port"
     default 250000
 config SERIAL_BAUD_U2X
-    depends on AVR_SERIAL
-    bool "Use AVR Baud 2X mode"
+    depends on AVR_SERIAL && !SIMULAVR
+    bool
     default y
+
+config SIMULAVR
+    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p
+    bool "Compile for simulavr software emulation"
+    default n
+    help
+         Compile the code to run on simulavr software emulation
+         instead of for real hardware. This disables support for "U2X
+         baud" mode and for the watchdog timer which are not supported
+         on simulavr.
+
+         If unsure, select "N".
 
 endif

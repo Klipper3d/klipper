@@ -75,10 +75,10 @@ cd /patch/to/klipper
 make menuconfig
 ```
 
-and compile the micro-controller software for an AVR atmega644p,
-disable the AVR watchdog timer, and set the MCU frequency
-to 20000000. Then one can compile Klipper (run `make`) and then start
-the simulation with:
+and compile the micro-controller software for an AVR atmega644p, set
+the MCU frequency to 20Mhz, and select SIMULAVR software emulation
+support. Then one can compile Klipper (run `make`) and then start the
+simulation with:
 
 ```
 PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf
