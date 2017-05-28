@@ -16,16 +16,16 @@ config BOARD_DIRECTORY
 
 choice
     prompt "Processor model"
-    config MACH_atmega168
-        bool "atmega168"
-    config MACH_atmega644p
-        bool "atmega644p"
-    config MACH_at90usb1286
-        bool "at90usb1286"
-    config MACH_atmega1280
-        bool "atmega1280"
     config MACH_atmega2560
         bool "atmega2560"
+    config MACH_atmega1280
+        bool "atmega1280"
+    config MACH_at90usb1286
+        bool "at90usb1286"
+    config MACH_atmega644p
+        bool "atmega644p"
+    config MACH_atmega168
+        bool "atmega168"
 endchoice
 
 config MCU
@@ -38,12 +38,13 @@ config MCU
 
 choice
     prompt "Processor speed"
-    config AVR_FREQ_8000000
-        bool "8Mhz"
-    config AVR_FREQ_16000000
-        bool "16Mhz"
     config AVR_FREQ_20000000
         bool "20Mhz"
+        depends on MACH_atmega168 || MACH_atmega644p
+    config AVR_FREQ_16000000
+        bool "16Mhz"
+    config AVR_FREQ_8000000
+        bool "8Mhz"
 endchoice
 
 config CLOCK_FREQ
