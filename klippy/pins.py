@@ -27,8 +27,8 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "atmega168": port_pins(4), "atmega644p": port_pins(4),
-    "at90usb1286": port_pins(5),
+    "atmega168": port_pins(4), "atmega328": port_pins(4),
+    "atmega644p": port_pins(4), "at90usb1286": port_pins(5),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
     "pru": beaglebone_pins(),

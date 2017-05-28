@@ -24,6 +24,8 @@ choice
         bool "at90usb1286"
     config MACH_atmega644p
         bool "atmega644p"
+    config MACH_atmega328
+        bool "atmega328"
     config MACH_atmega168
         bool "atmega168"
 endchoice
@@ -31,6 +33,7 @@ endchoice
 config MCU
     string
     default "atmega168" if MACH_atmega168
+    default "atmega328" if MACH_atmega328
     default "atmega644p" if MACH_atmega644p
     default "at90usb1286" if MACH_at90usb1286
     default "atmega1280" if MACH_atmega1280
