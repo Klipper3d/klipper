@@ -43,7 +43,7 @@ choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
         bool "20Mhz"
-        depends on MACH_atmega168 || MACH_atmega644p
+        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p
     config AVR_FREQ_16000000
         bool "16Mhz"
     config AVR_FREQ_8000000
