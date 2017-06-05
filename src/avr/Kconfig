@@ -81,7 +81,7 @@ config AVR_WATCHDOG
     depends on !SIMULAVR
     default y
 config AVR_USBSERIAL
-    bool
+    bool "Use USB for communication (instead of serial)"
     depends on MACH_at90usb1286
     default y
 config AVR_SERIAL
