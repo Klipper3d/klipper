@@ -29,12 +29,13 @@ class DeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
                 self.max_z, self.limit_z))
-        sin = lambda angle: math.sin(math.radians(angle))
-        cos = lambda angle: math.cos(math.radians(angle))
-        self.towers = [
-            (cos(210.)*radius, sin(210.)*radius),
-            (cos(330.)*radius, sin(330.)*radius),
-            (cos(90.)*radius, sin(90.)*radius)]
+        # Determine tower locations in cartesian space
+        angles = [config.getsection('stepper_a').getfloat('angle', 210.),
+                  config.getsection('stepper_b').getfloat('angle', 330.),
+                  config.getsection('stepper_c').getfloat('angle', 90.)]
+        self.towers = [(math.cos(math.radians(angle)) * radius,
+                        math.sin(math.radians(angle)) * radius)
+                       for angle in angles]
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([s.step_dist for s in self.steppers]) * .5
