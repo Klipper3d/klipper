@@ -38,10 +38,10 @@ class GCodeParser:
         if not is_ready:
             handlers = [h for h in handlers
                         if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
-        gcode_handlers = dict((h, getattr(self, 'cmd_'+h)) for h in handlers)
+        gcode_handlers = { h: getattr(self, 'cmd_'+h) for h in handlers }
         for h, f in gcode_handlers.items():
             aliases = getattr(self, 'cmd_'+h+'_aliases', [])
-            gcode_handlers.update(dict([(a, f) for a in aliases]))
+            gcode_handlers.update({ a: f for a in aliases })
         return gcode_handlers
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
@@ -91,8 +91,8 @@ class GCodeParser:
                 line = line[:cpos]
             # Break command into parts
             parts = self.args_r.split(line)[1:]
-            params = dict((parts[i].upper(), parts[i+1].strip())
-                          for i in range(0, len(parts), 2))
+            params = { parts[i].upper(): parts[i+1].strip()
+                       for i in range(0, len(parts), 2) }
             params['#original'] = origline
             if parts and parts[0].upper() == 'N':
                 # Skip line number at start of command

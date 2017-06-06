@@ -40,7 +40,7 @@ class SerialReader:
             '#output': self.handle_output, 'status': self.handle_status,
             'shutdown': self.handle_output, 'is_shutdown': self.handle_output
         }
-        self.handlers = dict(((k, None), v) for k, v in handlers.items())
+        self.handlers = { (k, None): v for k, v in handlers.items() }
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:

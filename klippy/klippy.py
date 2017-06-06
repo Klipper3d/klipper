@@ -182,7 +182,7 @@ class Printer:
         self.objects['toolhead'] = toolhead.ToolHead(
             self, ConfigWrapper(self, 'printer'))
         # Validate that there are no undefined parameters in the config file
-        valid_sections = dict([(s, 1) for s, o in self.all_config_options])
+        valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
             section = section.lower()
             if section not in valid_sections:
