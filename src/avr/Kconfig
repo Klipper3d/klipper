@@ -59,7 +59,7 @@ config CLOCK_FREQ
 config CLEAR_PRESCALER
     bool "Manually clear the CPU prescaler field at startup"
     depends on MACH_at90usb1286
-    default n
+    default y
     help
          Some AVR chips ship with a "clock prescaler" that causes the
          chip to run at 1/8th speed. Enable this setting to clear the
