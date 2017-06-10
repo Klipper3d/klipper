@@ -78,7 +78,7 @@ class KeyboardReader:
                 return None
         try:
             msg = self.ser.msgparser.create_command(line)
-        except msgproto.error, e:
+        except msgproto.error as e:
             self.output("Error: %s" % (str(e),))
             return None
         return msg

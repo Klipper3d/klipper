@@ -107,7 +107,7 @@ class GCodeParser:
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
                 handler(params)
-            except error, e:
+            except error as e:
                 self.respond_error(str(e))
             except:
                 logging.exception("Exception in command handler")
@@ -224,7 +224,7 @@ class GCodeParser:
         print_time = self.toolhead.get_last_move_time()
         try:
             heater.set_temp(print_time, temp)
-        except heater.error, e:
+        except heater.error as e:
             self.respond_error(str(e))
             return
         if wait:
@@ -264,7 +264,7 @@ class GCodeParser:
         self.process_commands(deactivate_gcode.split('\n'), need_ack=False)
         try:
             self.toolhead.set_extruder(e)
-        except homing.EndstopError, e:
+        except homing.EndstopError as e:
             self.respond_error(str(e))
             return
         self.extruder = e
@@ -296,12 +296,12 @@ class GCodeParser:
                 if speed <= 0.:
                     raise ValueError()
                 self.speed = speed
-        except ValueError, e:
+        except ValueError as e:
             self.last_position = self.toolhead.get_position()
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
             self.toolhead.move(self.last_position, self.speed)
-        except homing.EndstopError, e:
+        except homing.EndstopError as e:
             self.respond_error(str(e))
             self.last_position = self.toolhead.get_position()
     def cmd_G4(self, params):
@@ -327,7 +327,7 @@ class GCodeParser:
             homing_state.set_no_verify_retract()
         try:
             self.toolhead.home(homing_state)
-        except homing.EndstopError, e:
+        except homing.EndstopError as e:
             self.toolhead.motor_off()
             self.respond_error(str(e))
             return
@@ -424,7 +424,7 @@ class GCodeParser:
             return
         try:
             res = self.toolhead.query_endstops()
-        except self.printer.mcu.error, e:
+        except self.printer.mcu.error as e:
             self.respond_error(str(e))
             return
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])

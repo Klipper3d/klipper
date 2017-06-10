@@ -43,7 +43,7 @@ class Homing:
         for s, es, last_pos in endstops:
             try:
                 es.home_wait()
-            except es.error, e:
+            except es.error as e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
                     s.name, str(e)))
             post_home_pos = s.mcu_stepper.get_mcu_position()

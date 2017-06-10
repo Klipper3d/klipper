@@ -61,7 +61,7 @@ class ConfigWrapper:
             (self.section.lower(), option.lower())] = 1
         try:
             v = parser(self.section, option)
-        except self.error, e:
+        except self.error as e:
             raise
         except:
             raise self.error("Unable to parse option '%s' in section '%s'" % (
@@ -199,15 +199,15 @@ class Printer:
             self.mcu.connect()
             self.gcode.set_printer_ready(True)
             self.state_message = message_ready
-        except ConfigParser.Error, e:
+        except ConfigParser.Error as e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
-        except msgproto.error, e:
+        except msgproto.error as e:
             logging.exception("Protocol error")
             self.state_message = "%s%s" % (str(e), message_protocol_error)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
-        except mcu.error, e:
+        except mcu.error as e:
             logging.exception("MCU error during connect")
             self.state_message = "%s%s" % (str(e), message_mcu_connect_error)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)

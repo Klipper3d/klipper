@@ -457,7 +457,7 @@ class MCU:
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         try:
             self._reset_cmd = self.lookup_command("reset")
-        except self.serial.msgparser.error, e:
+        except self.serial.msgparser.error as e:
             pass
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
