@@ -40,7 +40,7 @@ class GCodeParser:
             handlers = [h for h in handlers
                         if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
         gcode_handlers = { h: getattr(self, 'cmd_'+h) for h in handlers }
-        for h, f in gcode_handlers.items():
+        for h, f in list(gcode_handlers.items()):
             aliases = getattr(self, 'cmd_'+h+'_aliases', [])
             gcode_handlers.update({ a: f for a in aliases })
         return gcode_handlers

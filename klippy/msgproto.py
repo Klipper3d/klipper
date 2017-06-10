@@ -252,7 +252,7 @@ class MessageParser:
     def _parse_buffer(self, value):
         tval = int(value, 16)
         out = []
-        for i in range(len(value)/2):
+        for i in range(len(value) // 2):
             out.append(tval & 0xff)
             tval >>= 8
         out.reverse()

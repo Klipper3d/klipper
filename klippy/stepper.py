@@ -36,7 +36,7 @@ class PrinterStepper:
             else:
                 self.homing_endstop_accuracy = int(math.ceil(
                     endstop_accuracy * self.inv_step_dist))
-            if self.homing_endstop_accuracy >= self.homing_stepper_phases/2:
+            if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment" % (name,))
                 self.homing_stepper_phases = None
