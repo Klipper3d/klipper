@@ -132,7 +132,8 @@ class GCodeParser:
                 self.cmd_M112({})
             self.reactor.unregister_fd(self.fd_handle)
             self.fd_handle = None
-            return
+            while self.is_processing_data:
+                eventtime = self.reactor.pause(eventtime + 0.100)
         self.is_processing_data = True
         self.process_commands(lines)
         self.is_processing_data = False
