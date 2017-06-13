@@ -94,7 +94,7 @@ stepper_load_next(struct stepper *s)
     return SF_RESCHEDULE;
 }
 
-#define UNSTEP_TIME timer_from_us(1)
+#define UNSTEP_TIME timer_from_us(2)
 
 // Timer callback - step the given stepper.
 uint_fast8_t
