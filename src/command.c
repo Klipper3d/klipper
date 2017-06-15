@@ -104,9 +104,85 @@ error:
     shutdown("Command parser error");
 }
 
+// Encode a message
+static uint8_t
+command_encodef(char *buf, uint8_t buf_len
+                , const struct command_encoder *ce, va_list args)
+{
+    if (buf_len <= MESSAGE_MIN)
+        // Ack/Nak message
+        return buf_len;
+    char *p = &buf[MESSAGE_HEADER_SIZE];
+    char *maxend = &p[buf_len - MESSAGE_MIN];
+    uint8_t num_params = READP(ce->num_params);
+    const uint8_t *param_types = READP(ce->param_types);
+    *p++ = READP(ce->msg_id);
+    while (num_params--) {
+        if (p > maxend)
+            goto error;
+        uint8_t t = READP(*param_types);
+        param_types++;
+        uint32_t v;
+        switch (t) {
+        case PT_uint32:
+        case PT_int32:
+        case PT_uint16:
+        case PT_int16:
+        case PT_byte:
+            if (sizeof(v) > sizeof(int) && t >= PT_uint16)
+                if (t == PT_int16)
+                    v = (int32_t)va_arg(args, int);
+                else
+                    v = va_arg(args, unsigned int);
+            else
+                v = va_arg(args, uint32_t);
+            p = encode_int(p, v);
+            break;
+        case PT_string: {
+            char *s = va_arg(args, char*), *lenp = p++;
+            while (*s && p<maxend)
+                *p++ = *s++;
+            *lenp = p-lenp-1;
+            break;
+        }
+        case PT_progmem_buffer:
+        case PT_buffer: {
+            v = va_arg(args, int);
+            if (v > maxend-p)
+                v = maxend-p;
+            *p++ = v;
+            char *s = va_arg(args, char*);
+            if (t == PT_progmem_buffer)
+                memcpy_P(p, s, v);
+            else
+                memcpy(p, s, v);
+            p += v;
+            break;
+        }
+        default:
+            goto error;
+        }
+    }
+    return p - buf + MESSAGE_TRAILER_SIZE;
+error:
+    shutdown("Message encode error");
+}
+
+// Add header and trailer bytes to a message block
+static void
+command_add_frame(char *buf, uint8_t msglen)
+{
+    buf[MESSAGE_POS_LEN] = msglen;
+    buf[MESSAGE_POS_SEQ] = next_sequence;
+    uint16_t crc = crc16_ccitt(buf, msglen - MESSAGE_TRAILER_SIZE);
+    buf[msglen - MESSAGE_TRAILER_CRC + 0] = crc >> 8;
+    buf[msglen - MESSAGE_TRAILER_CRC + 1] = crc;
+    buf[msglen - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
+}
+
 static uint8_t in_sendf;
 
-// Encode a message and transmit it
+// Encode and transmit a "response" message
 void
 _sendf(const struct command_encoder *ce, ...)
 {
@@ -116,81 +192,19 @@ _sendf(const struct command_encoder *ce, ...)
         return;
     writeb(&in_sendf, 1);
 
-    uint8_t max_size = READP(ce->max_size);
-    char *buf = console_get_output(max_size + MESSAGE_MIN);
+    uint8_t buf_len = READP(ce->max_size) + MESSAGE_MIN;
+    char *buf = console_get_output(buf_len);
     if (!buf)
         goto done;
-    char *p = &buf[MESSAGE_HEADER_SIZE];
-    if (max_size) {
-        char *maxend = &p[max_size];
-        va_list args;
-        va_start(args, ce);
-        uint8_t num_params = READP(ce->num_params);
-        const uint8_t *param_types = READP(ce->param_types);
-        *p++ = READP(ce->msg_id);
-        while (num_params--) {
-            if (p > maxend)
-                goto error;
-            uint8_t t = READP(*param_types);
-            param_types++;
-            uint32_t v;
-            switch (t) {
-            case PT_uint32:
-            case PT_int32:
-            case PT_uint16:
-            case PT_int16:
-            case PT_byte:
-                if (sizeof(v) > sizeof(int) && t >= PT_uint16)
-                    if (t == PT_int16)
-                        v = (int32_t)va_arg(args, int);
-                    else
-                        v = va_arg(args, unsigned int);
-                else
-                    v = va_arg(args, uint32_t);
-                p = encode_int(p, v);
-                break;
-            case PT_string: {
-                char *s = va_arg(args, char*), *lenp = p++;
-                while (*s && p<maxend)
-                    *p++ = *s++;
-                *lenp = p-lenp-1;
-                break;
-            }
-            case PT_progmem_buffer:
-            case PT_buffer: {
-                v = va_arg(args, int);
-                if (v > maxend-p)
-                    v = maxend-p;
-                *p++ = v;
-                char *s = va_arg(args, char*);
-                if (t == PT_progmem_buffer)
-                    memcpy_P(p, s, v);
-                else
-                    memcpy(p, s, v);
-                p += v;
-                break;
-            }
-            default:
-                goto error;
-            }
-        }
-        va_end(args);
-    }
-
-    // Send message to serial port
-    uint8_t msglen = p+MESSAGE_TRAILER_SIZE - buf;
-    buf[MESSAGE_POS_LEN] = msglen;
-    buf[MESSAGE_POS_SEQ] = next_sequence;
-    uint16_t crc = crc16_ccitt(buf, p-buf);
-    *p++ = crc>>8;
-    *p++ = crc;
-    *p++ = MESSAGE_SYNC;
+    va_list args;
+    va_start(args, ce);
+    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    va_end(args);
+    command_add_frame(buf, msglen);
     console_push_output(msglen);
 done:
     writeb(&in_sendf, 0);
     return;
-error:
-    shutdown("Message encode error");
 }
 
 void
