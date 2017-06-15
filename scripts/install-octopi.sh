@@ -8,7 +8,7 @@ PYTHONDIR="${HOME}/klippy-env"
 install_packages()
 {
     # Packages for python cffi
-    PKGLIST="libffi-dev"
+    PKGLIST="python-virtualenv libffi-dev"
     # kconfig requirements
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
