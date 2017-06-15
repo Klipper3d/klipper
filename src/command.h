@@ -35,6 +35,8 @@
 // command.c
 struct command_encoder;
 void _sendf(const struct command_encoder *ce, ...);
+int8_t command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count);
+void command_dispatch(char *buf, uint8_t msglen);
 
 // out/compile_time_request.c (auto generated file)
 struct command_encoder {

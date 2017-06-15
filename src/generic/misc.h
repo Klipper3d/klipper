@@ -4,8 +4,6 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // uint8_t
 
-char *console_get_input(uint8_t *plen);
-void console_pop_input(uint8_t len);
 char *console_get_output(uint8_t len);
 void console_push_output(uint8_t len);
 

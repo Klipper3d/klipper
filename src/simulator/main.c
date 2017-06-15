@@ -85,19 +85,6 @@ timer_read_time(void)
  * Turn stdin/stdout into serial console
  ****************************************************************/
 
-// XXX
-char *
-console_get_input(uint8_t *plen)
-{
-    *plen = 0;
-    return NULL;
-}
-
-void
-console_pop_input(uint8_t len)
-{
-}
-
 // Return an output buffer that the caller may fill with transmit messages
 char *
 console_get_output(uint8_t len)

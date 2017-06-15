@@ -231,7 +231,7 @@ command_lookup_parser(uint8_t cmdid)
 enum { CF_NEED_SYNC=1<<0, CF_NEED_VALID=1<<1 };
 
 // Find the next complete message.
-static int8_t
+int8_t
 command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count)
 {
     static uint8_t sync_state;
@@ -293,7 +293,7 @@ nak:
 }
 
 // Dispatch all the commands found in a message block
-static void
+void
 command_dispatch(char *buf, uint8_t msglen)
 {
     char *p = &buf[MESSAGE_HEADER_SIZE];
@@ -312,17 +312,3 @@ command_dispatch(char *buf, uint8_t msglen)
         func(args);
     }
 }
-
-// Background task that reads commands from the board serial port
-void
-command_task(void)
-{
-    uint8_t buf_len, pop_count;
-    char *buf = console_get_input(&buf_len);
-    uint8_t ret = command_find_block(buf, buf_len, &pop_count);
-    if (ret > 0)
-        command_dispatch(buf, pop_count);
-    if (ret)
-        console_pop_input(pop_count);
-}
-DECL_TASK(command_task);

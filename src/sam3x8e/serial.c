@@ -83,7 +83,7 @@ enable_tx_irq(void)
  ****************************************************************/
 
 // Return a buffer (and length) containing any incoming messages
-char *
+static char *
 console_get_input(uint8_t *plen)
 {
     *plen = readl(&receive_pos);
@@ -91,7 +91,7 @@ console_get_input(uint8_t *plen)
 }
 
 // Remove from the receive buffer the given number of bytes
-void
+static void
 console_pop_input(uint8_t len)
 {
     uint32_t copied = 0;
@@ -114,6 +114,20 @@ console_pop_input(uint8_t len)
         break;
     }
 }
+
+// Process any incoming commands
+void
+console_task(void)
+{
+    uint8_t buf_len, pop_count;
+    char *buf = console_get_input(&buf_len);
+    int8_t ret = command_find_block(buf, buf_len, &pop_count);
+    if (ret > 0)
+        command_dispatch(buf, pop_count);
+    if (ret)
+        console_pop_input(pop_count);
+}
+DECL_TASK(console_task);
 
 // Return an output buffer that the caller may fill with transmit messages
 char *
