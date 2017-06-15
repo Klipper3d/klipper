@@ -1,6 +1,6 @@
 // Code for parsing incoming commands and encoding outgoing messages
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -71,10 +71,6 @@ parse_int(char **pp)
 static char *
 parsef(char *p, char *maxend, const struct command_parser *cp, uint32_t *args)
 {
-    if (sched_is_shutdown() && !(READP(cp->flags) & HF_IN_SHUTDOWN)) {
-        sched_report_shutdown();
-        return NULL;
-    }
     uint8_t num_params = READP(cp->num_params);
     const uint8_t *param_types = READP(cp->param_types);
     while (num_params--) {
@@ -211,7 +207,7 @@ DECL_SHUTDOWN(sendf_shutdown);
 
 // Find the command handler associated with a command
 static const struct command_parser *
-command_get_handler(uint8_t cmdid)
+command_lookup_parser(uint8_t cmdid)
 {
     if (!cmdid || cmdid >= READP(command_index_size))
         shutdown("Invalid command");
@@ -221,17 +217,14 @@ command_get_handler(uint8_t cmdid)
 enum { CF_NEED_SYNC=1<<0, CF_NEED_VALID=1<<1 };
 
 // Find the next complete message.
-static char *
-command_get_message(void)
+static int8_t
+command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count)
 {
     static uint8_t sync_state;
-    uint8_t buf_len;
-    char *buf = console_get_input(&buf_len);
     if (buf_len && sync_state & CF_NEED_SYNC)
         goto need_sync;
     if (buf_len < MESSAGE_MIN)
-        // Not ready to run.
-        return NULL;
+        goto need_more_data;
     uint8_t msglen = buf[MESSAGE_POS_LEN];
     if (msglen < MESSAGE_MIN || msglen > MESSAGE_MAX)
         goto error;
@@ -239,8 +232,7 @@ command_get_message(void)
     if ((msgseq & ~MESSAGE_SEQ_MASK) != MESSAGE_DEST)
         goto error;
     if (buf_len < msglen)
-        // Need more data
-        return NULL;
+        goto need_more_data;
     if (buf[msglen-MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC)
         goto error;
     uint16_t msgcrc = ((buf[msglen-MESSAGE_TRAILER_CRC] << 8)
@@ -249,21 +241,24 @@ command_get_message(void)
     if (crc != msgcrc)
         goto error;
     sync_state &= ~CF_NEED_VALID;
+    *pop_count = msglen;
     // Check sequence number
     if (msgseq != next_sequence) {
         // Lost message - discard messages until it is retransmitted
-        console_pop_input(msglen);
         goto nak;
     }
     next_sequence = ((msgseq + 1) & MESSAGE_SEQ_MASK) | MESSAGE_DEST;
     sendf(""); // An empty message with a new sequence number is an ack
-    return buf;
+    return 1;
 
+need_more_data:
+    *pop_count = 0;
+    return 0;
 error:
     if (buf[0] == MESSAGE_SYNC) {
         // Ignore (do not nak) leading SYNC bytes
-        console_pop_input(1);
-        return NULL;
+        *pop_count = 1;
+        return -1;
     }
     sync_state |= CF_NEED_SYNC;
 need_sync: ;
@@ -271,40 +266,49 @@ need_sync: ;
     char *next_sync = memchr(buf, MESSAGE_SYNC, buf_len);
     if (next_sync) {
         sync_state &= ~CF_NEED_SYNC;
-        console_pop_input(next_sync - buf + 1);
+        *pop_count = next_sync - buf + 1;
     } else {
-        console_pop_input(buf_len);
+        *pop_count = buf_len;
     }
     if (sync_state & CF_NEED_VALID)
-        return NULL;
+        return -1;
     sync_state |= CF_NEED_VALID;
 nak:
     sendf(""); // An empty message with a duplicate sequence number is a nak
-    return NULL;
+    return -1;
+}
+
+// Dispatch all the commands found in a message block
+static void
+command_dispatch(char *buf, uint8_t msglen)
+{
+    char *p = &buf[MESSAGE_HEADER_SIZE];
+    char *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
+    while (p < msgend) {
+        uint8_t cmdid = *p++;
+        const struct command_parser *cp = command_lookup_parser(cmdid);
+        uint32_t args[READP(cp->num_args)];
+        p = parsef(p, msgend, cp, args);
+        if (sched_is_shutdown() && !(READP(cp->flags) & HF_IN_SHUTDOWN)) {
+            sched_report_shutdown();
+            continue;
+        }
+        irq_poll();
+        void (*func)(uint32_t*) = READP(cp->func);
+        func(args);
+    }
 }
 
 // Background task that reads commands from the board serial port
 void
 command_task(void)
 {
-    // Process commands.
-    char *buf = command_get_message();
-    if (!buf)
-        return;
-    uint8_t msglen = buf[MESSAGE_POS_LEN];
-    char *p = &buf[MESSAGE_HEADER_SIZE];
-    char *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
-    while (p < msgend) {
-        uint8_t cmdid = *p++;
-        const struct command_parser *cp = command_get_handler(cmdid);
-        uint32_t args[READP(cp->num_args)];
-        p = parsef(p, msgend, cp, args);
-        if (!p)
-            break;
-        irq_poll();
-        void (*func)(uint32_t*) = READP(cp->func);
-        func(args);
-    }
-    console_pop_input(msglen);
+    uint8_t buf_len, pop_count;
+    char *buf = console_get_input(&buf_len);
+    uint8_t ret = command_find_block(buf, buf_len, &pop_count);
+    if (ret > 0)
+        command_dispatch(buf, pop_count);
+    if (ret)
+        console_pop_input(pop_count);
 }
 DECL_TASK(command_task);
