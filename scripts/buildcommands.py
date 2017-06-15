@@ -30,7 +30,8 @@ def error(msg):
 
 def build_parser(parser, iscmd, all_param_types):
     if parser.name == "#empty":
-        return "\n    // Empty message\n    .max_size=0,"
+        return "\n    // Empty message\n    .max_size=%d," % (
+            msgproto.MESSAGE_MIN,)
     if parser.name == "#output":
         comment = "Output: " + parser.msgformat
     else:
@@ -54,8 +55,9 @@ def build_parser(parser, iscmd, all_param_types):
                     + types.count('PT_buffer'))
         out += "    .num_args=%d," % (num_args,)
     else:
-        max_size = min(msgproto.MESSAGE_MAX - msgproto.MESSAGE_MIN
-                       , 1 + sum([t.max_length for t in parser.param_types]))
+        max_size = min(msgproto.MESSAGE_MAX,
+                       (msgproto.MESSAGE_MIN + 1
+                        + sum([t.max_length for t in parser.param_types])))
         out += "    .max_size=%d," % (max_size,)
     return out
 

@@ -192,7 +192,7 @@ _sendf(const struct command_encoder *ce, ...)
         return;
     writeb(&in_sendf, 1);
 
-    uint8_t buf_len = READP(ce->max_size) + MESSAGE_MIN;
+    uint8_t buf_len = READP(ce->max_size);
     char *buf = console_get_output(buf_len);
     if (!buf)
         goto done;
