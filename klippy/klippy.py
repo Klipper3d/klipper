@@ -151,10 +151,10 @@ class Printer:
             self.need_dump_debug = False
         toolhead = self.objects.get('toolhead')
         if toolhead is None or self.mcu is None:
-            return
+            return eventtime + 1.
         is_active, thstats = toolhead.stats(eventtime)
         if not is_active and not force_output:
-            return
+            return eventtime + 1.
         out = []
         out.append(self.gcode.stats(eventtime))
         out.append(thstats)
