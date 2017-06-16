@@ -40,7 +40,6 @@ check_can_send(struct pru_rpmsg_transport *transport)
         pru_rpmsg_send(
             transport, CHAN_PORT, transport_dst
             , &SHARED_MEM->send_data[send_pop_pos].data, count);
-        barrier();
         writel(&SHARED_MEM->send_data[send_pop_pos].count, 0);
         SHARED_MEM->send_pop_pos = (
             (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
@@ -59,7 +58,6 @@ check_can_read(struct pru_rpmsg_transport *transport)
     if (ret || !len)
         return;
     SHARED_MEM->read_pos = 0;
-    barrier();
     writel(&SHARED_MEM->read_count, len);
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU1_EVENT - R31_WRITE_IRQ_OFFSET));
 }
@@ -107,7 +105,6 @@ adc_reset(void)
         ADC->step[i].delay = 0;
     }
     // Enable ADC
-    barrier();
     writel(&ADC->ctrl, 0x07);
     // Drain fifo
     while (readl(&ADC->fifo0count))

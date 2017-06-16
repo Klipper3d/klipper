@@ -114,7 +114,6 @@ console_get_input(uint8_t *plen)
 void
 console_pop_input(uint8_t len)
 {
-    barrier();
     writel(&SHARED_MEM->read_count, 0);
 }
 
@@ -136,7 +135,6 @@ void
 console_push_output(uint8_t len)
 {
     uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    barrier();
     writel(&SHARED_MEM->send_data[send_push_pos].count, len);
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
     SHARED_MEM->send_push_pos = (
