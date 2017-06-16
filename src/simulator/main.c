@@ -85,16 +85,9 @@ timer_read_time(void)
  * Turn stdin/stdout into serial console
  ****************************************************************/
 
-// Return an output buffer that the caller may fill with transmit messages
-char *
-console_get_output(uint8_t len)
-{
-    return NULL;
-}
-
-// Accept the given number of bytes added to the transmit buffer
+// Encode and transmit a "response" message
 void
-console_push_output(uint8_t len)
+console_sendf(const struct command_encoder *ce, va_list args)
 {
 }
 

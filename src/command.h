@@ -1,6 +1,7 @@
 #ifndef __COMMAND_H
 #define __COMMAND_H
 
+#include <stdarg.h> // va_list
 #include <stddef.h>
 #include <stdint.h> // uint8_t
 #include "ctr.h" // DECL_CTR
@@ -20,11 +21,11 @@
 
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
-    _sendf(_DECL_OUTPUT(FMT) , ##args )
+    command_sendf(_DECL_OUTPUT(FMT) , ##args )
 
 // Declare a message type and transmit it.
 #define sendf(FMT, args...)                     \
-    _sendf(_DECL_ENCODER(FMT) , ##args )
+    command_sendf(_DECL_ENCODER(FMT) , ##args )
 
 // Shut down the machine (also declares a static string to transmit)
 #define shutdown(msg)                           \
@@ -32,13 +33,6 @@
 #define try_shutdown(msg)                       \
     sched_try_shutdown(_DECL_STATIC_STR(msg))
 
-// command.c
-struct command_encoder;
-void _sendf(const struct command_encoder *ce, ...);
-int8_t command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count);
-void command_dispatch(char *buf, uint8_t msglen);
-
-// out/compile_time_request.c (auto generated file)
 struct command_encoder {
     uint8_t msg_id, max_size, num_params;
     const uint8_t *param_types;
@@ -52,6 +46,16 @@ enum {
     PT_uint32, PT_int32, PT_uint16, PT_int16, PT_byte,
     PT_string, PT_progmem_buffer, PT_buffer,
 };
+
+// command.c
+uint8_t command_encodef(char *buf, uint8_t buf_len
+                        , const struct command_encoder *ce, va_list args);
+void command_sendf(const struct command_encoder *ce, ...);
+void command_add_frame(char *buf, uint8_t msglen);
+int8_t command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count);
+void command_dispatch(char *buf, uint8_t msglen);
+
+// out/compile_time_request.c (auto generated file)
 extern const struct command_parser command_index[];
 extern const uint8_t command_index_size;
 extern const uint8_t command_identify_data[];

@@ -7,6 +7,8 @@
 #include <avr/interrupt.h> // USART0_RX_vect
 #include <string.h> // memmove
 #include "../lib/pjrc_usb_serial/usb_serial.h"
+#include "command.h" // command_dispatch
+#include "pgm.h" // READP
 #include "sched.h" // DECL_INIT
 
 #define USBSERIAL_BUFFER_SIZE 64
@@ -62,7 +64,7 @@ console_task(void)
 DECL_TASK(console_task);
 
 // Return an output buffer that the caller may fill with transmit messages
-char *
+static char *
 console_get_output(uint8_t len)
 {
     if (len > sizeof(transmit_buf))
@@ -71,9 +73,22 @@ console_get_output(uint8_t len)
 }
 
 // Accept the given number of bytes added to the transmit buffer
-void
+static void
 console_push_output(uint8_t len)
 {
     usb_serial_write((void*)transmit_buf, len);
     usb_serial_flush_output();
+}
+
+// Encode and transmit a "response" message
+void
+console_sendf(const struct command_encoder *ce, va_list args)
+{
+    uint8_t buf_len = READP(ce->max_size);
+    char *buf = console_get_output(buf_len);
+    if (!buf)
+        return;
+    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    command_add_frame(buf, msglen);
+    console_push_output(msglen);
 }

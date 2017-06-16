@@ -10,8 +10,9 @@
 #include "board/io.h" // readb
 #include "board/misc.h" // console_get_input
 #include "command.h" // DECL_CONSTANT
-#include "sched.h" // DECL_INIT
 #include "irq.h" // irq_save
+#include "pgm.h" // READP
+#include "sched.h" // DECL_INIT
 
 static char receive_buf[192];
 static uint8_t receive_pos;
@@ -139,7 +140,7 @@ console_task(void)
 DECL_TASK(console_task);
 
 // Return an output buffer that the caller may fill with transmit messages
-char *
+static char *
 console_get_output(uint8_t len)
 {
     uint8_t tpos = readb(&transmit_pos), tmax = readb(&transmit_max);
@@ -164,9 +165,22 @@ console_get_output(uint8_t len)
 }
 
 // Accept the given number of bytes added to the transmit buffer
-void
+static void
 console_push_output(uint8_t len)
 {
     writeb(&transmit_max, readb(&transmit_max) + len);
     enable_tx_irq();
+}
+
+// Encode and transmit a "response" message
+void
+console_sendf(const struct command_encoder *ce, va_list args)
+{
+    uint8_t buf_len = READP(ce->max_size);
+    char *buf = console_get_output(buf_len);
+    if (!buf)
+        return;
+    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    command_add_frame(buf, msglen);
+    console_push_output(msglen);
 }

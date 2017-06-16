@@ -105,7 +105,7 @@ error:
 }
 
 // Encode a message
-static uint8_t
+uint8_t
 command_encodef(char *buf, uint8_t buf_len
                 , const struct command_encoder *ce, va_list args)
 {
@@ -169,7 +169,7 @@ error:
 }
 
 // Add header and trailer bytes to a message block
-static void
+void
 command_add_frame(char *buf, uint8_t msglen)
 {
     buf[MESSAGE_POS_LEN] = msglen;
@@ -184,7 +184,7 @@ static uint8_t in_sendf;
 
 // Encode and transmit a "response" message
 void
-_sendf(const struct command_encoder *ce, ...)
+command_sendf(const struct command_encoder *ce, ...)
 {
     if (readb(&in_sendf))
         // This sendf call was made from an irq handler while the main
@@ -192,17 +192,11 @@ _sendf(const struct command_encoder *ce, ...)
         return;
     writeb(&in_sendf, 1);
 
-    uint8_t buf_len = READP(ce->max_size);
-    char *buf = console_get_output(buf_len);
-    if (!buf)
-        goto done;
     va_list args;
     va_start(args, ce);
-    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    console_sendf(ce, args);
     va_end(args);
-    command_add_frame(buf, msglen);
-    console_push_output(msglen);
-done:
+
     writeb(&in_sendf, 0);
     return;
 }

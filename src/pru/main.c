@@ -131,7 +131,7 @@ console_task(void)
 DECL_TASK(console_task);
 
 // Return an output buffer that the caller may fill with transmit messages
-char *
+static char *
 console_get_output(uint8_t len)
 {
     if (len > sizeof(SHARED_MEM->send_data[0].data))
@@ -144,7 +144,7 @@ console_get_output(uint8_t len)
 }
 
 // Accept the given number of bytes added to the transmit buffer
-void
+static void
 console_push_output(uint8_t len)
 {
     uint32_t send_push_pos = SHARED_MEM->send_push_pos;
@@ -152,6 +152,19 @@ console_push_output(uint8_t len)
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
     SHARED_MEM->send_push_pos = (
         (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
+}
+
+// Encode and transmit a "response" message
+void
+console_sendf(const struct command_encoder *ce, va_list args)
+{
+    uint8_t buf_len = ce->max_size;
+    char *buf = console_get_output(buf_len);
+    if (!buf)
+        return;
+    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    command_add_frame(buf, msglen);
+    console_push_output(msglen);
 }
 
 

@@ -130,7 +130,7 @@ console_task(void)
 DECL_TASK(console_task);
 
 // Return an output buffer that the caller may fill with transmit messages
-char *
+static char *
 console_get_output(uint8_t len)
 {
     uint32_t tpos = readl(&transmit_pos), tmax = readl(&transmit_max);
@@ -155,9 +155,22 @@ console_get_output(uint8_t len)
 }
 
 // Accept the given number of bytes added to the transmit buffer
-void
+static void
 console_push_output(uint8_t len)
 {
     writel(&transmit_max, readl(&transmit_max) + len);
     enable_tx_irq();
+}
+
+// Encode and transmit a "response" message
+void
+console_sendf(const struct command_encoder *ce, va_list args)
+{
+    uint8_t buf_len = ce->max_size;
+    char *buf = console_get_output(buf_len);
+    if (!buf)
+        return;
+    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    command_add_frame(buf, msglen);
+    console_push_output(msglen);
 }
