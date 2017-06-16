@@ -7,7 +7,7 @@
 #include <string.h> // memmove
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/gpio.h" // gpio_peripheral
-#include "board/io.h" // readb
+#include "board/io.h" // readl
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // console_get_input
 #include "command.h" // DECL_CONSTANT
@@ -86,7 +86,7 @@ enable_tx_irq(void)
 char *
 console_get_input(uint8_t *plen)
 {
-    *plen = readb(&receive_pos);
+    *plen = readl(&receive_pos);
     return receive_buf;
 }
 
@@ -96,7 +96,7 @@ console_pop_input(uint8_t len)
 {
     uint32_t copied = 0;
     for (;;) {
-        uint32_t rpos = readb(&receive_pos);
+        uint32_t rpos = readl(&receive_pos);
         uint32_t needcopy = rpos - len;
         if (needcopy) {
             memmove(&receive_buf[copied], &receive_buf[copied + len]
@@ -104,7 +104,7 @@ console_pop_input(uint8_t len)
             copied = needcopy;
         }
         irqstatus_t flag = irq_save();
-        if (rpos != readb(&receive_pos)) {
+        if (rpos != readl(&receive_pos)) {
             // Raced with irq handler - retry
             irq_restore(flag);
             continue;
@@ -119,23 +119,23 @@ console_pop_input(uint8_t len)
 char *
 console_get_output(uint8_t len)
 {
-    uint32_t tpos = readb(&transmit_pos), tmax = readb(&transmit_max);
+    uint32_t tpos = readl(&transmit_pos), tmax = readl(&transmit_max);
     if (tpos >= tmax) {
         tpos = tmax = 0;
-        writeb(&transmit_max, 0);
-        writeb(&transmit_pos, 0);
+        writel(&transmit_max, 0);
+        writel(&transmit_pos, 0);
     }
     if (tmax + len <= sizeof(transmit_buf))
         return &transmit_buf[tmax];
     if (tmax - tpos + len > sizeof(transmit_buf))
         return NULL;
     // Disable TX irq and move buffer
-    writeb(&transmit_max, 0);
-    tpos = readb(&transmit_pos);
+    writel(&transmit_max, 0);
+    tpos = readl(&transmit_pos);
     tmax -= tpos;
     memmove(&transmit_buf[0], &transmit_buf[tpos], tmax);
-    writeb(&transmit_pos, 0);
-    writeb(&transmit_max, tmax);
+    writel(&transmit_pos, 0);
+    writel(&transmit_max, tmax);
     enable_tx_irq();
     return &transmit_buf[tmax];
 }
@@ -144,6 +144,6 @@ console_get_output(uint8_t len)
 void
 console_push_output(uint8_t len)
 {
-    writeb(&transmit_max, readb(&transmit_max) + len);
+    writel(&transmit_max, readl(&transmit_max) + len);
     enable_tx_irq();
 }
