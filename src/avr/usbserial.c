@@ -23,9 +23,9 @@ usbserial_init(void)
 }
 DECL_INIT(usbserial_init);
 
-// Return a buffer (and length) containing any incoming messages
-static char *
-console_get_input(uint8_t *plen)
+// Check for new incoming data
+static void
+console_check_input(void)
 {
     for (;;) {
         if (receive_pos >= sizeof(receive_buf))
@@ -35,8 +35,6 @@ console_get_input(uint8_t *plen)
             break;
         receive_buf[receive_pos++] = ret;
     }
-    *plen = receive_pos;
-    return receive_buf;
 }
 
 // Remove from the receive buffer the given number of bytes
@@ -53,42 +51,28 @@ console_pop_input(uint8_t len)
 void
 console_task(void)
 {
-    uint8_t buf_len, pop_count;
-    char *buf = console_get_input(&buf_len);
-    int8_t ret = command_find_block(buf, buf_len, &pop_count);
+    console_check_input();
+    uint8_t pop_count;
+    int8_t ret = command_find_block(receive_buf, receive_pos, &pop_count);
     if (ret > 0)
-        command_dispatch(buf, pop_count);
+        command_dispatch(receive_buf, pop_count);
     if (ret)
         console_pop_input(pop_count);
 }
 DECL_TASK(console_task);
 
-// Return an output buffer that the caller may fill with transmit messages
-static char *
-console_get_output(uint8_t len)
-{
-    if (len > sizeof(transmit_buf))
-        return NULL;
-    return transmit_buf;
-}
-
-// Accept the given number of bytes added to the transmit buffer
-static void
-console_push_output(uint8_t len)
-{
-    usb_serial_write((void*)transmit_buf, len);
-    usb_serial_flush_output();
-}
-
 // Encode and transmit a "response" message
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    uint8_t buf_len = READP(ce->max_size);
-    char *buf = console_get_output(buf_len);
-    if (!buf)
+    // Generate message
+    uint8_t max_size = READP(ce->max_size);
+    if (max_size > sizeof(transmit_buf))
         return;
-    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
-    command_add_frame(buf, msglen);
-    console_push_output(msglen);
+    uint8_t msglen = command_encodef(transmit_buf, max_size, ce, args);
+    command_add_frame(transmit_buf, msglen);
+
+    // Transmit message
+    usb_serial_write((void*)transmit_buf, msglen);
+    usb_serial_flush_output();
 }
