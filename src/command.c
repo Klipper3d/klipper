@@ -222,6 +222,11 @@ command_lookup_parser(uint8_t cmdid)
     return &command_index[cmdid];
 }
 
+// Empty message (for ack/nak transmission)
+const struct command_encoder encode_acknak PROGMEM = {
+    .max_size = MESSAGE_MIN,
+};
+
 enum { CF_NEED_SYNC=1<<0, CF_NEED_VALID=1<<1 };
 
 // Find the next complete message.
@@ -256,7 +261,7 @@ command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count)
         goto nak;
     }
     next_sequence = ((msgseq + 1) & MESSAGE_SEQ_MASK) | MESSAGE_DEST;
-    sendf(""); // An empty message with a new sequence number is an ack
+    command_sendf(&encode_acknak);
     return 1;
 
 need_more_data:
@@ -282,7 +287,7 @@ need_sync: ;
         return -1;
     sync_state |= CF_NEED_VALID;
 nak:
-    sendf(""); // An empty message with a duplicate sequence number is a nak
+    command_sendf(&encode_acknak);
     return -1;
 }
 

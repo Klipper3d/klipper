@@ -29,9 +29,6 @@ def error(msg):
 ######################################################################
 
 def build_parser(parser, iscmd, all_param_types):
-    if parser.name == "#empty":
-        return "\n    // Empty message\n    .max_size=%d," % (
-            msgproto.MESSAGE_MIN,)
     if parser.name == "#output":
         comment = "Output: " + parser.msgformat
     else:
@@ -71,8 +68,6 @@ def build_encoders(encoders, msg_to_id, all_param_types):
         if msgid in did_output:
             continue
         s = msg
-        if s == '#empty':
-            s = ''
         did_output[msgid] = True
         code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
                 '        return &command_encoder_%s;\n' % (s, msgid))
@@ -308,10 +303,7 @@ def main():
                 error("Conflicting definition for command '%s'" % msgname)
             messages_by_name[msgname] = msg
         elif cmd == '_DECL_ENCODER':
-            if len(parts) == 1:
-                msgname = msg = "#empty"
-            else:
-                msgname = parts[1]
+            msgname = parts[1]
             m = messages_by_name.get(msgname)
             if m is not None and m != msg:
                 error("Conflicting definition for message '%s'" % msgname)
