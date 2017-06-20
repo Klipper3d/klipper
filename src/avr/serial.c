@@ -92,14 +92,6 @@ enable_tx_irq(void)
  * Console access functions
  ****************************************************************/
 
-// Return a buffer (and length) containing any incoming messages
-static char *
-console_get_input(uint8_t *plen)
-{
-    *plen = readb(&receive_pos);
-    return receive_buf;
-}
-
 // Remove from the receive buffer the given number of bytes
 static void
 console_pop_input(uint8_t len)
@@ -129,58 +121,47 @@ console_pop_input(uint8_t len)
 void
 console_task(void)
 {
-    uint8_t buf_len, pop_count;
-    char *buf = console_get_input(&buf_len);
-    int8_t ret = command_find_block(buf, buf_len, &pop_count);
+    uint8_t pop_count, rpos = readl(&receive_pos);
+    int8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
-        command_dispatch(buf, pop_count);
+        command_dispatch(receive_buf, pop_count);
     if (ret)
         console_pop_input(pop_count);
 }
 DECL_TASK(console_task);
 
-// Return an output buffer that the caller may fill with transmit messages
-static char *
-console_get_output(uint8_t len)
+// Encode and transmit a "response" message
+void
+console_sendf(const struct command_encoder *ce, va_list args)
 {
+    // Verify space for message
     uint8_t tpos = readb(&transmit_pos), tmax = readb(&transmit_max);
     if (tpos >= tmax) {
         tpos = tmax = 0;
         writeb(&transmit_max, 0);
         writeb(&transmit_pos, 0);
     }
-    if (tmax + len <= sizeof(transmit_buf))
-        return &transmit_buf[tmax];
-    if (tmax - tpos + len > sizeof(transmit_buf))
-        return NULL;
-    // Disable TX irq and move buffer
-    writeb(&transmit_max, 0);
-    tpos = readb(&transmit_pos);
-    tmax -= tpos;
-    memmove(&transmit_buf[0], &transmit_buf[tpos], tmax);
-    writeb(&transmit_pos, 0);
-    writeb(&transmit_max, tmax);
-    enable_tx_irq();
-    return &transmit_buf[tmax];
-}
+    uint8_t max_size = READP(ce->max_size);
+    if (tmax + max_size > sizeof(transmit_buf)) {
+        if (tmax + max_size - tpos > sizeof(transmit_buf))
+            // Not enough space for message
+            return;
+        // Disable TX irq and move buffer
+        writeb(&transmit_max, 0);
+        tpos = readb(&transmit_pos);
+        tmax -= tpos;
+        memmove(&transmit_buf[0], &transmit_buf[tpos], tmax);
+        writeb(&transmit_pos, 0);
+        writeb(&transmit_max, tmax);
+        enable_tx_irq();
+    }
 
-// Accept the given number of bytes added to the transmit buffer
-static void
-console_push_output(uint8_t len)
-{
-    writeb(&transmit_max, readb(&transmit_max) + len);
-    enable_tx_irq();
-}
-
-// Encode and transmit a "response" message
-void
-console_sendf(const struct command_encoder *ce, va_list args)
-{
-    uint8_t buf_len = READP(ce->max_size);
-    char *buf = console_get_output(buf_len);
-    if (!buf)
-        return;
-    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
+    // Generate message
+    char *buf = &transmit_buf[tmax];
+    uint8_t msglen = command_encodef(buf, max_size, ce, args);
     command_add_frame(buf, msglen);
-    console_push_output(msglen);
+
+    // Start message transmit
+    writeb(&transmit_max, tmax + msglen);
+    enable_tx_irq();
 }
