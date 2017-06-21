@@ -21,7 +21,9 @@ class KeyboardReader:
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
         self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
-        self.local_commands = { "PINS": self.set_pin_map, "SET": self.set_var }
+        self.local_commands = {
+            "PINS": self.set_pin_map, "SET": self.set_var, "DELAY": self.delay
+        }
         self.eval_globals = {}
     def connect(self, eventtime):
         self.ser.connect()
@@ -49,6 +51,18 @@ class KeyboardReader:
         except ValueError:
             pass
         self.eval_globals[parts[1]] = val
+    def delay(self, parts):
+        try:
+            val = int(parts[1])
+        except ValueError as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        try:
+            msg = self.ser.msgparser.create_command(' '.join(parts[2:]))
+        except msgproto.error as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        self.ser.send(msg, minclock=val)
     def translate(self, line, eventtime):
         evalparts = re_eval.split(line)
         if len(evalparts) > 1:
