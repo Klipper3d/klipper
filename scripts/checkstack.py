@@ -170,10 +170,10 @@ def main():
             ref = m.group('ref')
             if '+' in ref:
                 # Inter-function jump.
-                pass
+                continue
             elif insn.startswith('ld') or insn.startswith('st'):
                 # memory access
-                pass
+                continue
             elif insn in ('rjmp', 'jmp', 'brne', 'brcs'):
                 # Tail call
                 cur.noteCall(insnaddr, calladdr, 0)
