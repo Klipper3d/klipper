@@ -130,9 +130,16 @@ class PrinterHeater:
     def check_busy(self, eventtime):
         with self.lock:
             return self.control.check_busy(eventtime)
-    def start_auto_tune(self, temp):
+    def start_auto_tune(self, degrees):
+        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
+            raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
+                        % (degrees, self.min_temp, self.max_temp))
         with self.lock:
-            self.control = ControlAutoTune(self, self.control, temp)
+            self.control = ControlAutoTune(self, self.control)
+            self.target_temp = degrees
+    def finish_auto_tune(self, old_control):
+        self.control = old_control
+        self.target_temp = 0
 
 
 ######################################################################
@@ -211,19 +218,19 @@ class ControlPID:
 TUNE_PID_DELTA = 5.0
 
 class ControlAutoTune:
-    def __init__(self, heater, old_control, target_temp):
+    def __init__(self, heater, old_control):
         self.heater = heater
         self.old_control = old_control
-        self.target_temp = target_temp
         self.heating = False
         self.peaks = []
         self.peak = 0.
         self.peak_time = 0.
     def adc_callback(self, read_time, temp):
-        if self.heating and temp >= self.target_temp:
+        if self.heating and temp >= self.heater.target_temp:
             self.heating = False
             self.check_peaks()
-        elif not self.heating and temp <= self.target_temp - TUNE_PID_DELTA:
+        elif (not self.heating
+              and temp <= self.heater.target_temp - TUNE_PID_DELTA):
             self.heating = True
             self.check_peaks()
         if self.heating:
@@ -261,7 +268,7 @@ class ControlAutoTune:
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True
-        self.heater.control = self.old_control
+        self.heater.finish_auto_tune(self.old_control)
         return False
 
 
@@ -270,10 +277,9 @@ class ControlAutoTune:
 ######################################################################
 
 class ControlBumpTest:
-    def __init__(self, heater, old_control, target_temp):
+    def __init__(self, heater, old_control):
         self.heater = heater
         self.old_control = old_control
-        self.target_temp = target_temp
         self.temp_samples = {}
         self.pwm_samples = {}
         self.state = 0
@@ -287,14 +293,14 @@ class ControlBumpTest:
             if len(self.temp_samples) >= 20:
                 self.state += 1
         elif self.state == 1:
-            if temp < self.target_temp:
+            if temp < self.heater.target_temp:
                 self.set_pwm(read_time, self.heater.max_power)
                 return
             self.set_pwm(read_time, 0.)
             self.state += 1
         elif self.state == 2:
             self.set_pwm(read_time, 0.)
-            if temp <= (self.target_temp + AMBIENT_TEMP) / 2.:
+            if temp <= (self.heater.target_temp + AMBIENT_TEMP) / 2.:
                 self.dump_stats()
                 self.state += 1
     def dump_stats(self):
@@ -306,7 +312,7 @@ class ControlBumpTest:
     def check_busy(self, eventtime):
         if self.state < 3:
             return True
-        self.heater.control = self.old_control
+        self.heater.finish_auto_tune(self.old_control)
         return False
 
 def add_printer_objects(printer, config):
