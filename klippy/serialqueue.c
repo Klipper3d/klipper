@@ -427,19 +427,26 @@ static void
 update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
 {
     // Remove from sent queue
-    int ack_count = rseq - sq->receive_seq;
     uint64_t sent_seq = sq->receive_seq;
-    while (!list_empty(&sq->sent_queue) && ack_count--) {
+    for (;;) {
         struct queue_message *sent = list_first_entry(
             &sq->sent_queue, struct queue_message, node);
-        if (rseq == ++sent_seq)
-            sq->last_receive_sent_time = sent->receive_time;
+        if (list_empty(&sq->sent_queue)) {
+            // Got an ack for a message not sent; must be connection init
+            sq->send_seq = rseq;
+            sq->last_receive_sent_time = 0.;
+            break;
+        }
         list_del(&sent->node);
         debug_queue_add(&sq->old_sent, sent);
+        sent_seq++;
+        if (rseq == sent_seq) {
+            // Found sent message corresponding with the received sequence
+            sq->last_receive_sent_time = sent->receive_time;
+            break;
+        }
     }
     sq->receive_seq = rseq;
-    if (rseq > sq->send_seq)
-        sq->send_seq = rseq;
     pollreactor_update_timer(&sq->pr, SQPT_COMMAND, PR_NOW);
 
     // Update retransmit info
