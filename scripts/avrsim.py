@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Script to interact with simulavr by simulating a serial port.
 #
 # Copyright (C) 2015  Kevin O'Connor <kevin@koconnor.net>

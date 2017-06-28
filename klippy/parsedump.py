@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Script to parse a serial port data dump
 #
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>

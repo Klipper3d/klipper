@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Script to implement a test console with firmware over serial port
 #
 # Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
