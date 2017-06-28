@@ -59,8 +59,8 @@ void serialqueue_encode_and_send(struct serialqueue *sq, struct command_queue *c
                                  , uint64_t min_clock, uint64_t req_clock);
 void serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm);
 void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
-void serialqueue_set_clock_est(struct serialqueue *sq, double est_clock
-                               , double last_ack_time, uint64_t last_ack_clock);
+void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
+                               , double last_clock_time, uint64_t last_clock);
 void serialqueue_get_stats(struct serialqueue *sq, char *buf, int len);
 int serialqueue_extract_old(struct serialqueue *sq, int sentq
                             , struct pull_queue_message *q, int max);

@@ -344,8 +344,8 @@ struct serialqueue {
     int receive_waiting;
     // Baud / clock tracking
     double baud_adjust, idle_time;
-    double est_clock, last_ack_time;
-    uint64_t last_ack_clock;
+    double est_freq, last_clock_time;
+    uint64_t last_clock;
     double last_receive_sent_time;
     // Retransmit support
     uint64_t send_seq, receive_seq;
@@ -671,8 +671,9 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for stalled messages now ready
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
     idletime += MESSAGE_MIN * sq->baud_adjust;
-    double timedelta = idletime - sq->last_ack_time;
-    uint64_t ack_clock = (uint64_t)(timedelta * sq->est_clock) + sq->last_ack_clock;
+    double timedelta = idletime - sq->last_clock_time;
+    uint64_t ack_clock = ((uint64_t)(timedelta * sq->est_freq)
+                          + sq->last_clock);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
     struct command_queue *cq;
     list_for_each_entry(cq, &sq->pending_queues, node) {
@@ -702,20 +703,20 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for messages to send
     if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
         return PR_NOW;
-    if (! sq->est_clock) {
+    if (! sq->est_freq) {
         if (sq->ready_bytes)
             return PR_NOW;
         sq->need_kick_clock = MAX_CLOCK;
         return PR_NEVER;
     }
-    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->est_clock;
+    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->est_freq;
     if (min_ready_clock <= ack_clock + reqclock_delta)
         return PR_NOW;
     uint64_t wantclock = min_ready_clock - reqclock_delta;
     if (min_stalled_clock < wantclock)
         wantclock = min_stalled_clock;
     sq->need_kick_clock = wantclock;
-    return idletime + (wantclock - ack_clock) / sq->est_clock;
+    return idletime + (wantclock - ack_clock) / sq->est_freq;
 }
 
 // Callback timer to send data to the serial port
@@ -981,13 +982,13 @@ serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
 // Set the estimated clock rate of the mcu on the other end of the
 // serial port
 void
-serialqueue_set_clock_est(struct serialqueue *sq, double est_clock
-                          , double last_ack_time, uint64_t last_ack_clock)
+serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
+                          , double last_clock_time, uint64_t last_clock)
 {
     pthread_mutex_lock(&sq->lock);
-    sq->est_clock = est_clock;
-    sq->last_ack_time = last_ack_time;
-    sq->last_ack_clock = last_ack_clock;
+    sq->est_freq = est_freq;
+    sq->last_clock_time = last_clock_time;
+    sq->last_clock = last_clock;
     pthread_mutex_unlock(&sq->lock);
 }
 
