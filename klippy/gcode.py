@@ -63,7 +63,15 @@ class GCodeParser:
         self.heaters = [ e.get_heater() for e in extruders ]
         self.heaters.append(self.printer.objects.get('heater_bed'))
         self.fan = self.printer.objects.get('fan')
-        self.printer.objects.get('extruder_auto_fan').printer_ready=True
+        
+        for i in range(99):
+            extruder_fan_name='extruder_auto_fan%d' % (i,)
+            extruder_fan=self.printer.objects.get(extruder_fan_name)
+            if not i and not extruder_fan:
+                extruder_fan=self.printer.objects.get('extruder_auto_fan')
+            if extruder_fan:
+                extruder_fan.printer_ready=True
+                
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def motor_heater_off(self):
