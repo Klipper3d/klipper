@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <setjmp.h> // setjmp
 #include <stdint.h> // uint32_t
 #include <string.h> // memset
 #include <pru/io.h> // write_r31
@@ -14,8 +15,13 @@
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
 #include <rsc_types.h> // resource_table
 #include "board/io.h" // readl
+#include "command.h" // command_add_frame
 #include "compiler.h" // __section
 #include "internal.h" // SHARED_MEM
+#include "sched.h" // sched_shutdown
+
+struct pru_rpmsg_transport transport;
+static uint16_t transport_dst;
 
 
 /****************************************************************
@@ -26,10 +32,9 @@
 #define CHAN_DESC                                       "Channel 30"
 #define CHAN_PORT                                       30
 
-static uint16_t transport_dst;
-
+// Check if there is data to be sent from PRU1 to the host
 static void
-check_can_send(struct pru_rpmsg_transport *transport)
+check_can_send(void)
 {
     for (;;) {
         uint32_t send_pop_pos = SHARED_MEM->send_pop_pos;
@@ -37,8 +42,9 @@ check_can_send(struct pru_rpmsg_transport *transport)
         if (!count)
             // Queue empty
             break;
+        command_add_frame(SHARED_MEM->send_data[send_pop_pos].data, count);
         pru_rpmsg_send(
-            transport, CHAN_PORT, transport_dst
+            &transport, CHAN_PORT, transport_dst
             , &SHARED_MEM->send_data[send_pop_pos].data, count);
         writel(&SHARED_MEM->send_data[send_pop_pos].count, 0);
         SHARED_MEM->send_pop_pos = (
@@ -46,32 +52,133 @@ check_can_send(struct pru_rpmsg_transport *transport)
     }
 }
 
+// Wait for PRU1 to finish processing a command
 static void
-check_can_read(struct pru_rpmsg_transport *transport)
+wait_pru1_command(void)
 {
-    if (readl(&SHARED_MEM->read_count))
-        // main processing pru is busy
-        return;
-    uint16_t dst, len;
-    int16_t ret = pru_rpmsg_receive(
-        transport, &transport_dst, &dst, SHARED_MEM->read_data, &len);
-    if (ret || !len)
-        return;
-    SHARED_MEM->read_pos = 0;
-    writel(&SHARED_MEM->read_count, len);
+    while (readl(&SHARED_MEM->next_command))
+        check_can_send();
+    check_can_send();
+}
+
+// Signal PRU1 that a new command is ready
+static void
+send_pru1_command(const struct command_parser *cp)
+{
+    barrier();
+    SHARED_MEM->next_command = cp;
+    barrier();
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU1_EVENT - R31_WRITE_IRQ_OFFSET));
 }
 
+// Instruct PRU1 to shutdown
 static void
-process_io(struct pru_rpmsg_transport *transport)
+send_pru1_shutdown(void)
+{
+    wait_pru1_command();
+    send_pru1_command(SHARED_MEM->shutdown_handler);
+    wait_pru1_command();
+}
+
+// Dispatch all the commands in a message block
+static void
+do_dispatch(char *buf, uint32_t msglen)
+{
+    char *p = &buf[MESSAGE_HEADER_SIZE];
+    char *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
+    while (p < msgend) {
+        // Parse command
+        uint8_t cmdid = *p++;
+        const struct command_parser *cp = &SHARED_MEM->command_index[cmdid];
+        if (!cmdid || cmdid >= SHARED_MEM->command_index_size
+            || cp->num_args > ARRAY_SIZE(SHARED_MEM->next_command_args)) {
+            send_pru1_shutdown();
+            return;
+        }
+        p = command_parsef(p, msgend, cp, SHARED_MEM->next_command_args);
+
+        send_pru1_command(ALT_PRU_PTR(cp));
+        wait_pru1_command();
+    }
+}
+
+// See if there are commands from the host ready to be processed
+static void
+check_can_read(void)
+{
+    // Read data
+    uint16_t dst, len;
+    char *p = SHARED_MEM->read_data;
+    int16_t ret = pru_rpmsg_receive(&transport, &transport_dst, &dst, p, &len);
+    if (ret)
+        return;
+
+    // Parse data into message blocks
+    for (;;) {
+        uint8_t pop_count, msglen = len > 64 ? 64 : len;
+        int8_t ret = command_find_block(p, msglen, &pop_count);
+        if (!ret)
+            break;
+        if (ret > 0)
+            do_dispatch(p, pop_count);
+        p += pop_count;
+        len -= pop_count;
+    }
+}
+
+// Main processing loop
+static void
+process_io(void)
 {
     for (;;) {
         if (!(read_r31() & (1 << (WAKE_PRU0_IRQ + R31_IRQ_OFFSET))))
             continue;
         CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
-        check_can_send(transport);
-        check_can_read(transport);
+        check_can_send();
+        check_can_read();
     }
+}
+
+// Startup initialization
+static void
+setup_io(void)
+{
+    // Fixup pointers in command_parsers
+    SHARED_MEM->command_index = ALT_PRU_PTR(SHARED_MEM->command_index);
+    struct command_parser *p = (void*)SHARED_MEM->command_index;
+    int i;
+    for (i=0; i<SHARED_MEM->command_index_size; i++, p++)
+        if (p->param_types)
+            p->param_types = ALT_PRU_PTR(p->param_types);
+}
+
+
+/****************************************************************
+ * Compatibility wrappers
+ ****************************************************************/
+
+// shutdown() compatibility code
+uint8_t ctr_lookup_static_string(const char *str)
+{
+    return 0;
+}
+
+static jmp_buf shutdown_jmp;
+
+// Handle shutdown()
+void
+sched_shutdown(uint_fast8_t reason)
+{
+    longjmp(shutdown_jmp, 1);
+}
+
+// Generate messages - only used for ack/nak messages
+void
+console_sendf(const struct command_encoder *ce, va_list args)
+{
+    char buf[MESSAGE_MIN];
+    command_add_frame(buf, sizeof(buf));
+    pru_rpmsg_send(&transport, CHAN_PORT, transport_dst, buf, sizeof(buf));
 }
 
 
@@ -241,7 +348,6 @@ main(void)
         ;
 
     /* Initialize the RPMsg transport structure */
-    struct pru_rpmsg_transport transport;
     pru_rpmsg_init(&transport,
                    &resourceTable.rpmsg_vring0,
                    &resourceTable.rpmsg_vring1,
@@ -265,5 +371,14 @@ main(void)
         ;
     writel(&SHARED_MEM->signal, 0);
 
-    process_io(&transport);
+    // Setup incoming message parser
+    setup_io();
+
+    // Support shutdown
+    int ret = setjmp(shutdown_jmp);
+    if (ret)
+        send_pru1_shutdown();
+
+    // Main loop
+    process_io();
 }

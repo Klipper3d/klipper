@@ -13,19 +13,6 @@
 #include "command.h" // output_P
 #include "sched.h" // DECL_TASK
 
-#define MESSAGE_MIN 5
-#define MESSAGE_MAX 64
-#define MESSAGE_HEADER_SIZE  2
-#define MESSAGE_TRAILER_SIZE 3
-#define MESSAGE_POS_LEN 0
-#define MESSAGE_POS_SEQ 1
-#define MESSAGE_TRAILER_CRC  3
-#define MESSAGE_TRAILER_SYNC 1
-#define MESSAGE_PAYLOAD_MAX (MESSAGE_MAX - MESSAGE_MIN)
-#define MESSAGE_SEQ_MASK 0x0f
-#define MESSAGE_DEST 0x10
-#define MESSAGE_SYNC 0x7E
-
 static uint8_t next_sequence = MESSAGE_DEST;
 
 
@@ -68,8 +55,9 @@ parse_int(char **pp)
 }
 
 // Parse an incoming command into 'args'
-static char *
-parsef(char *p, char *maxend, const struct command_parser *cp, uint32_t *args)
+char *
+command_parsef(char *p, char *maxend
+               , const struct command_parser *cp, uint32_t *args)
 {
     uint8_t num_params = READP(cp->num_params);
     const uint8_t *param_types = READP(cp->param_types);
@@ -301,7 +289,7 @@ command_dispatch(char *buf, uint8_t msglen)
         uint8_t cmdid = *p++;
         const struct command_parser *cp = command_lookup_parser(cmdid);
         uint32_t args[READP(cp->num_args)];
-        p = parsef(p, msgend, cp, args);
+        p = command_parsef(p, msgend, cp, args);
         if (sched_is_shutdown() && !(READP(cp->flags) & HF_IN_SHUTDOWN)) {
             sched_report_shutdown();
             continue;

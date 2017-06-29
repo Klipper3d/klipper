@@ -99,73 +99,68 @@ DECL_INIT(timer_init);
  * Console IO
  ****************************************************************/
 
-// Return a buffer (and length) containing any incoming messages
-static char *
-console_get_input(uint8_t *plen)
-{
-    uint32_t read_count = readl(&SHARED_MEM->read_count);
-    if (read_count > 64)
-        read_count = 64;
-    *plen = read_count;
-    return SHARED_MEM->read_data;
-}
-
-// Remove from the receive buffer the given number of bytes
-static void
-console_pop_input(uint8_t len)
-{
-    writel(&SHARED_MEM->read_count, 0);
-}
-
 // Process any incoming commands
 void
 console_task(void)
 {
-    uint8_t buf_len, pop_count;
-    char *buf = console_get_input(&buf_len);
-    int8_t ret = command_find_block(buf, buf_len, &pop_count);
-    if (ret)
-        command_dispatch(buf, pop_count);
-    console_pop_input(pop_count);
+    const struct command_parser *cp = SHARED_MEM->next_command;
+    if (!cp)
+        return;
+    barrier();
+
+    if (sched_is_shutdown() && !(cp->flags & HF_IN_SHUTDOWN)) {
+        sched_report_shutdown();
+    } else {
+        void (*func)(uint32_t*) = cp->func;
+        func(SHARED_MEM->next_command_args);
+    }
+
+    writel(&SHARED_MEM->next_command, 0);
 }
 DECL_TASK(console_task);
-
-// Return an output buffer that the caller may fill with transmit messages
-static char *
-console_get_output(uint8_t len)
-{
-    if (len > sizeof(SHARED_MEM->send_data[0].data))
-        return NULL;
-    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    if (readl(&SHARED_MEM->send_data[send_push_pos].count))
-        // Queue full
-        return NULL;
-    return SHARED_MEM->send_data[send_push_pos].data;
-}
-
-// Accept the given number of bytes added to the transmit buffer
-static void
-console_push_output(uint8_t len)
-{
-    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    writel(&SHARED_MEM->send_data[send_push_pos].count, len);
-    write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
-    SHARED_MEM->send_push_pos = (
-        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
-}
 
 // Encode and transmit a "response" message
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    uint8_t buf_len = ce->max_size;
-    char *buf = console_get_output(buf_len);
-    if (!buf)
+    // Verify space for message
+    uint32_t max_size = ce->max_size;
+    if (max_size > sizeof(SHARED_MEM->send_data[0].data))
         return;
-    uint8_t msglen = command_encodef(buf, buf_len, ce, args);
-    command_add_frame(buf, msglen);
-    console_push_output(msglen);
+    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
+    if (readl(&SHARED_MEM->send_data[send_push_pos].count))
+        // Queue full
+        return;
+
+    // Generate message
+    char *buf = SHARED_MEM->send_data[send_push_pos].data;
+    uint32_t msglen = command_encodef(buf, max_size, ce, args);
+
+    // Signal PRU0 to transmit message
+    writel(&SHARED_MEM->send_data[send_push_pos].count, msglen);
+    write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
+    SHARED_MEM->send_push_pos = (
+        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
 }
+
+void
+console_shutdown(void)
+{
+    writel(&SHARED_MEM->next_command, 0);
+}
+DECL_SHUTDOWN(console_shutdown);
+
+// Handle shutdown request from PRU0
+static void
+shutdown_handler(uint32_t *args)
+{
+    shutdown("Request from PRU0");
+}
+
+// Empty message (for ack/nak transmission)
+const struct command_parser shutdown_request = {
+    .func = shutdown_handler,
+};
 
 
 /****************************************************************
@@ -234,6 +229,9 @@ main(void)
     // Wait for PRU0 to initialize
     while (readl(&SHARED_MEM->signal) != SIGNAL_PRU0_WAITING)
         ;
+    SHARED_MEM->command_index = command_index;
+    SHARED_MEM->command_index_size = command_index_size;
+    SHARED_MEM->shutdown_handler = &shutdown_request;
     writel(&SHARED_MEM->signal, SIGNAL_PRU1_READY);
 
     sched_main();

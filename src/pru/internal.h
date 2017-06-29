@@ -19,16 +19,22 @@
 #define R31_WRITE_IRQ_SELECT (1<<5)
 #define R31_WRITE_IRQ_OFFSET 16
 
+#define ALT_PRU_PTR(ptr) ((typeof(ptr))((uint32_t)(ptr) ^ 0x2000))
+
 // Layout of shared memory
 struct shared_mem {
     uint32_t signal;
-    uint32_t read_pos, read_count;
-    char read_data[512];
+    const struct command_parser *next_command;
+    uint32_t next_command_args[16];
     uint32_t send_push_pos, send_pop_pos;
     struct {
         uint32_t count;
         char data[64];
     } send_data[4];
+    const struct command_parser *command_index;
+    uint32_t command_index_size;
+    const struct command_parser *shutdown_handler;
+    char read_data[512];
 };
 
 #define SIGNAL_PRU0_WAITING 0xefefefef

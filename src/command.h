@@ -33,6 +33,19 @@
 #define try_shutdown(msg)                       \
     sched_try_shutdown(_DECL_STATIC_STR(msg))
 
+#define MESSAGE_MIN 5
+#define MESSAGE_MAX 64
+#define MESSAGE_HEADER_SIZE  2
+#define MESSAGE_TRAILER_SIZE 3
+#define MESSAGE_POS_LEN 0
+#define MESSAGE_POS_SEQ 1
+#define MESSAGE_TRAILER_CRC  3
+#define MESSAGE_TRAILER_SYNC 1
+#define MESSAGE_PAYLOAD_MAX (MESSAGE_MAX - MESSAGE_MIN)
+#define MESSAGE_SEQ_MASK 0x0f
+#define MESSAGE_DEST 0x10
+#define MESSAGE_SYNC 0x7E
+
 struct command_encoder {
     uint8_t msg_id, max_size, num_params;
     const uint8_t *param_types;
@@ -48,6 +61,8 @@ enum {
 };
 
 // command.c
+char *command_parsef(char *p, char *maxend
+                     , const struct command_parser *cp, uint32_t *args);
 uint8_t command_encodef(char *buf, uint8_t buf_len
                         , const struct command_encoder *ce, va_list args);
 void command_sendf(const struct command_encoder *ce, ...);
