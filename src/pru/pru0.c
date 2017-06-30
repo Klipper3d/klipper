@@ -113,6 +113,12 @@ check_can_read(void)
     if (ret)
         return;
 
+    // Check for force shutdown request
+    if (len == 15 && p[14] == '\n' && memcmp(p, "FORCE_SHUTDOWN\n", 15) == 0) {
+        send_pru1_shutdown();
+        return;
+    }
+
     // Parse data into message blocks
     for (;;) {
         uint8_t pop_count, msglen = len > 64 ? 64 : len;
