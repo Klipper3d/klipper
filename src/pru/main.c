@@ -125,19 +125,16 @@ console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Verify space for message
     uint32_t max_size = ce->max_size;
-    if (max_size > sizeof(SHARED_MEM->send_data[0].data))
-        return;
     uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    if (readl(&SHARED_MEM->send_data[send_push_pos].count))
-        // Queue full
+    struct shared_response_buffer *s = &SHARED_MEM->send_data[send_push_pos];
+    if (max_size > sizeof(s->data) || readl(&s->count))
         return;
 
     // Generate message
-    char *buf = SHARED_MEM->send_data[send_push_pos].data;
-    uint32_t msglen = command_encodef(buf, max_size, ce, args);
+    uint32_t msglen = command_encodef(s->data, max_size, ce, args);
 
     // Signal PRU0 to transmit message
-    writel(&SHARED_MEM->send_data[send_push_pos].count, msglen);
+    writel(&s->count, msglen);
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
     SHARED_MEM->send_push_pos = (
         (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));

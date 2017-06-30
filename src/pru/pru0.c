@@ -38,15 +38,14 @@ check_can_send(void)
 {
     for (;;) {
         uint32_t send_pop_pos = SHARED_MEM->send_pop_pos;
-        uint32_t count = readl(&SHARED_MEM->send_data[send_pop_pos].count);
+        struct shared_response_buffer *s = &SHARED_MEM->send_data[send_pop_pos];
+        uint32_t count = readl(&s->count);
         if (!count)
             // Queue empty
             break;
-        command_add_frame(SHARED_MEM->send_data[send_pop_pos].data, count);
-        pru_rpmsg_send(
-            &transport, CHAN_PORT, transport_dst
-            , &SHARED_MEM->send_data[send_pop_pos].data, count);
-        writel(&SHARED_MEM->send_data[send_pop_pos].count, 0);
+        command_add_frame(s->data, count);
+        pru_rpmsg_send(&transport, CHAN_PORT, transport_dst, &s->data, count);
+        writel(&s->count, 0);
         SHARED_MEM->send_pop_pos = (
             (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
     }
