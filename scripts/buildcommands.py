@@ -187,7 +187,8 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
     data['messages'] = messages
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
-    data['static_strings'] = static_strings
+    data['static_strings'] = { i: static_strings[i]
+                               for i in range(len(static_strings)) }
     data['config'] = constants
     data['version'] = version
 

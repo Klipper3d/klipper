@@ -185,7 +185,7 @@ class MessageParser:
         self.unknown = UnknownFormat()
         self.messages_by_id = {}
         self.messages_by_name = {}
-        self.static_strings = []
+        self.static_strings = {}
         self.config = {}
         self.version = ""
         self.raw_identify_data = ""
@@ -240,7 +240,7 @@ class MessageParser:
         params['#name'] = mid.name
         static_string_id = params.get('static_string_id')
         if static_string_id is not None:
-            params['#msg'] = self.static_strings[static_string_id]
+            params['#msg'] = self.static_strings.get(static_string_id, "?")
         return params
     def encode(self, seq, cmd):
         msglen = MESSAGE_MIN + len(cmd)
@@ -311,7 +311,8 @@ class MessageParser:
         commands = data.get('commands')
         responses = data.get('responses')
         self._init_messages(messages, commands+responses)
-        self.static_strings = data.get('static_strings', [])
+        static_strings = data.get('static_strings', {})
+        self.static_strings = { int(k): v for k, v in static_strings.items() }
         self.config.update(data.get('config', {}))
         self.version = data.get('version', '')
     def get_constant(self, name):
