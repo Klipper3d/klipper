@@ -102,11 +102,13 @@ ctr_lookup_output(const char *str)
     return fmt % ("".join(encoder_defs).strip(), "".join(encoder_code).strip(),
                   "".join(output_code).strip())
 
+STATIC_STRING_MIN = 2
+
 def build_static_strings(static_strings):
     code = []
     for i, s in enumerate(static_strings):
         code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
-                    '        return %d;\n' % (s, i))
+                    '        return %d;\n' % (s, i + STATIC_STRING_MIN))
     fmt = """
 uint8_t __always_inline
 ctr_lookup_static_string(const char *str)
@@ -187,7 +189,7 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
     data['messages'] = messages
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
-    data['static_strings'] = { i: static_strings[i]
+    data['static_strings'] = { i + STATIC_STRING_MIN: static_strings[i]
                                for i in range(len(static_strings)) }
     data['config'] = constants
     data['version'] = version

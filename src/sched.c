@@ -205,9 +205,11 @@ sched_clear_shutdown(void)
 
 // Invoke all shutdown functions (as declared by DECL_SHUTDOWN)
 static void
-run_shutdown(void)
+run_shutdown(int reason)
 {
     uint32_t cur = timer_read_time();
+    if (!shutdown_status)
+        shutdown_reason = reason;
     shutdown_status = 2;
     extern void ctr_run_shutdownfuncs(void);
     ctr_run_shutdownfuncs();
@@ -239,9 +241,7 @@ void
 sched_shutdown(uint_fast8_t reason)
 {
     irq_disable();
-    if (!shutdown_status)
-        shutdown_reason = reason;
-    longjmp(shutdown_jmp, 1);
+    longjmp(shutdown_jmp, reason);
 }
 
 
@@ -261,7 +261,7 @@ sched_main(void)
 
     int ret = setjmp(shutdown_jmp);
     if (ret)
-        run_shutdown();
+        run_shutdown(ret);
 
     for (;;)
         ctr_run_taskfuncs();
