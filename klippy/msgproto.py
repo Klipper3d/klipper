@@ -303,18 +303,24 @@ class MessageParser:
             self.messages_by_id[msgid] = msg
             self.messages_by_name[msg.name] = msg
     def process_identify(self, data, decompress=True):
-        if decompress:
-            data = zlib.decompress(data)
-        self.raw_identify_data = data
-        data = json.loads(data)
-        messages = data.get('messages')
-        commands = data.get('commands')
-        responses = data.get('responses')
-        self._init_messages(messages, commands+responses)
-        static_strings = data.get('static_strings', {})
-        self.static_strings = { int(k): v for k, v in static_strings.items() }
-        self.config.update(data.get('config', {}))
-        self.version = data.get('version', '')
+        try:
+            if decompress:
+                data = zlib.decompress(data)
+            self.raw_identify_data = data
+            data = json.loads(data)
+            messages = data.get('messages')
+            commands = data.get('commands')
+            responses = data.get('responses')
+            self._init_messages(messages, commands+responses)
+            static_strings = data.get('static_strings', {})
+            self.static_strings = { int(k): v for k, v in static_strings.items() }
+            self.config.update(data.get('config', {}))
+            self.version = data.get('version', '')
+        except error as e:
+            raise
+        except Exception as e:
+            logging.exception("process_identify error")
+            raise error("Error during identify: %s" % (str(e),))
     def get_constant(self, name):
         try:
             return self.config[name]
