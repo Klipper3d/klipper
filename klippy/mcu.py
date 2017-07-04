@@ -35,6 +35,7 @@ class MCU_stepper:
         self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
+        self.system_to_mcu_time = mcu.system_to_mcu_time
     def set_min_stop_interval(self, min_stop_interval):
         self._min_stop_interval = min_stop_interval
     def set_step_distance(self, step_dist):
@@ -158,6 +159,7 @@ class MCU_endstop:
         self._last_state = {}
         mcu.add_init_callback(self._init_callback)
         self.print_to_mcu_time = mcu.print_to_mcu_time
+        self.system_to_mcu_time = mcu.system_to_mcu_time
     def add_stepper(self, stepper):
         self._steppers.append(stepper)
     def build_config(self):
@@ -252,6 +254,7 @@ class MCU_digital_out:
                 self._oid, pin, self._invert, max_duration))
         self._set_cmd = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
+        self.system_to_mcu_time = mcu.system_to_mcu_time
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         self._set_cmd = self._mcu.lookup_command(
@@ -294,6 +297,7 @@ class MCU_pwm:
                     self._oid, pin, cycle_time, self._invert, max_duration))
         self._set_cmd = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
+        self.system_to_mcu_time = mcu.system_to_mcu_time
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         if self._hard_cycle_ticks:
@@ -645,6 +649,8 @@ class MCU:
         return mcu_time - est_mcu_time
     def print_to_mcu_time(self, print_time):
         return print_time + self._print_start_time
+    def system_to_mcu_time(self, eventtime):
+        return self.serial.get_clock(eventtime) / self._mcu_freq
     def get_mcu_freq(self):
         return self._mcu_freq
     def get_last_clock(self):
