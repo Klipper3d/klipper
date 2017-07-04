@@ -107,6 +107,9 @@ class ConfigWrapper:
         return ConfigWrapper(self.printer, section)
     def has_section(self, section):
         return self.printer.fileconfig.has_section(section)
+    def get_prefix_sections(self, prefix):
+        return [self.getsection(s) for s in self.printer.fileconfig.sections()
+                if s.startswith(prefix)]
 
 class ConfigLogger():
     def __init__(self, cfg, bglogger):

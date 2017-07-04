@@ -243,3 +243,13 @@ def get_printer_extruders(printer):
             break
         out.append(extruder)
     return out
+
+def get_printer_heater(printer, name):
+    if name == 'heater_bed':
+        return printer.objects.get(name)
+    if name == 'extruder':
+        name = 'extruder0'
+    extruder = printer.objects.get(name)
+    if extruder is None:
+        return None
+    return extruder.get_heater()

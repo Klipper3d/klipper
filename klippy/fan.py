@@ -1,8 +1,10 @@
 # Printer fan support
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+
+import extruder
 
 FAN_MIN_TIME = 0.1
 PWM_CYCLE_TIME = 0.010
@@ -16,12 +18,10 @@ class PrinterFan:
         pin = config.get('pin')
         hard_pwm = config.getint('hard_pwm', 0)
         self.mcu_fan = printer.mcu.create_pwm(pin, PWM_CYCLE_TIME, hard_pwm, 0.)
-    # External commands
-    def set_speed(self, print_time, value):
+    def set_pwm(self, mcu_time, value):
         value = max(0., min(self.max_power, value))
         if value == self.last_fan_value:
             return
-        mcu_time = self.mcu_fan.print_to_mcu_time(print_time)
         mcu_time = max(self.last_fan_time + FAN_MIN_TIME, mcu_time)
         if (value and value < self.max_power
             and not self.last_fan_value and self.kick_start_time):
@@ -31,7 +31,34 @@ class PrinterFan:
         self.mcu_fan.set_pwm(mcu_time, value)
         self.last_fan_time = mcu_time
         self.last_fan_value = value
+    # External commands
+    def set_speed(self, print_time, value):
+        mcu_time = self.mcu_fan.print_to_mcu_time(print_time)
+        self.set_pwm(mcu_time, value)
+
+class PrinterHeaterFan:
+    def __init__(self, printer, config):
+        self.fan = PrinterFan(printer, config)
+        heater = config.get("heater", "extruder0")
+        self.heater = extruder.get_printer_heater(printer, heater)
+        if self.heater is None:
+            raise config.error("Unknown heater '%s'" % (heater,))
+        self.heater_temp = config.getfloat("heater_temp", 50.0)
+        printer.reactor.register_timer(self.callback, printer.reactor.NOW)
+    def callback(self, eventtime):
+        current_temp, target_temp = self.heater.get_temp()
+        if not current_temp and not target_temp and not self.fan.last_fan_time:
+            # Printer still starting
+            return eventtime + 1.
+        power = 0.
+        if target_temp or current_temp > self.heater_temp:
+            power = 1.
+        mcu_time = self.fan.mcu_fan.system_to_mcu_time(eventtime + FAN_MIN_TIME)
+        self.fan.set_pwm(mcu_time, power)
+        return eventtime + 1.
 
 def add_printer_objects(printer, config):
     if config.has_section('fan'):
         printer.add_object('fan', PrinterFan(printer, config.getsection('fan')))
+    for s in config.get_prefix_sections('heater_fan '):
+        printer.add_object(s.section, PrinterHeaterFan(printer, s))
