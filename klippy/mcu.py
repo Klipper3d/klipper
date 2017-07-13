@@ -420,6 +420,7 @@ class MCU:
         self._stats_sumsq_base = 0.
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
+        self._mcu_tick_awake = 0.
     def handle_mcu_stats(self, params):
         count = params['count']
         tick_sum = params['sum']
@@ -427,6 +428,7 @@ class MCU:
         self._mcu_tick_avg = tick_sum * c
         tick_sumsq = params['sumsq'] * self._stats_sumsq_base
         self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
+        self._mcu_tick_awake = tick_sum / self._mcu_freq
     def handle_shutdown(self, params):
         if self.is_shutdown:
             return
@@ -493,9 +495,9 @@ class MCU:
             self._ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def stats(self, eventtime):
-        return "%s mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+        return "%s mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
             self.serial.stats(eventtime),
-            self._mcu_tick_avg, self._mcu_tick_stddev)
+            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
     def microcontroller_restart(self):

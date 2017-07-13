@@ -8,6 +8,7 @@
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
 #include "board/timer_irq.h" // timer_dispatch_many
+#include "basecmd.h" // stats_note_sleep
 #include "command.h" // shutdown
 #include "sched.h" // sched_timer_kick
 
@@ -85,9 +86,23 @@ timer_dispatch_many(void)
 void
 timer_task(void)
 {
+    static uint32_t last_timer;
+    uint32_t lst = last_timer;
     irq_disable();
-    timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;
+    uint32_t next = timer_get_next(), cur = timer_read_time();
+    if (lst != next) {
+        timer_repeat_until = cur + TIMER_IDLE_REPEAT_TICKS;
+        irq_enable();
+        last_timer = next;
+        return;
+    }
+
+    // Sleep the processor
+    irq_wait();
+    uint32_t post_sleep = timer_read_time();
+    timer_repeat_until = post_sleep + TIMER_IDLE_REPEAT_TICKS;
     irq_enable();
+    stats_note_sleep(post_sleep - cur);
 }
 DECL_TASK(timer_task);
 

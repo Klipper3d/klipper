@@ -188,6 +188,7 @@ command_get_status(uint32_t *args)
 DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
 
 static uint32_t stats_send_time, stats_send_time_high;
+static uint32_t stats_last_time, stats_sleep_time;
 
 void
 command_get_uptime(uint32_t *args)
@@ -198,16 +199,23 @@ command_get_uptime(uint32_t *args)
 }
 DECL_COMMAND_FLAGS(command_get_uptime, HF_IN_SHUTDOWN, "get_uptime");
 
+void
+stats_note_sleep(uint32_t sleep_time)
+{
+    stats_sleep_time += sleep_time;
+    stats_last_time += sleep_time;
+}
+
 #define SUMSQ_BASE 256
 DECL_CONSTANT(STATS_SUMSQ_BASE, SUMSQ_BASE);
 
 void
 stats_task(void)
 {
-    static uint32_t last, count, sumsq;
+    static uint32_t count, sumsq;
     uint32_t cur = timer_read_time();
-    uint32_t diff = cur - last;
-    last = cur;
+    uint32_t diff = cur - stats_last_time;
+    stats_last_time = cur;
     count++;
     // Calculate sum of diff^2 - be careful of integer overflow
     uint32_t nextsumsq;
@@ -224,10 +232,12 @@ stats_task(void)
 
     if (timer_is_before(cur, stats_send_time + timer_from_us(5000000)))
         return;
-    sendf("stats count=%u sum=%u sumsq=%u", count, cur - stats_send_time, sumsq);
+    sendf("stats count=%u sum=%u sumsq=%u"
+          , count, cur - stats_send_time - stats_sleep_time, sumsq);
     if (cur < stats_send_time)
         stats_send_time_high++;
     stats_send_time = cur;
+    stats_sleep_time = 0;
     count = sumsq = 0;
 }
 DECL_TASK(stats_task);

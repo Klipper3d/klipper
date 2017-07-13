@@ -46,10 +46,22 @@ irq_restore(irqstatus_t flag)
 {
 }
 
+void
+irq_wait(void)
+{
+    asm("slp 1");
+}
+
 static void
 timer_set(uint32_t value)
 {
     CT_IEP.TMR_CMP0 = value;
+}
+
+uint32_t
+timer_get_next(void)
+{
+    return CT_IEP.TMR_CMP0;
 }
 
 uint32_t

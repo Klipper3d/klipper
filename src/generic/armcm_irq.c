@@ -35,6 +35,12 @@ irq_restore(irqstatus_t flag)
 }
 
 void
+irq_wait(void)
+{
+    asm volatile("cpsie i\n    wfi\n    cpsid i\n" ::: "memory");
+}
+
+void
 irq_poll(void)
 {
 }

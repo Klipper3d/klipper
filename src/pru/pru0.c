@@ -135,8 +135,7 @@ static void
 process_io(void)
 {
     for (;;) {
-        if (!(read_r31() & (1 << (WAKE_PRU0_IRQ + R31_IRQ_OFFSET))))
-            continue;
+        asm("slp 1");
         CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
         check_can_send();
         check_can_read();
@@ -326,6 +325,10 @@ main(void)
     while (pru_rpmsg_channel(RPMSG_NS_CREATE, &transport, CHAN_NAME
                              , CHAN_DESC, CHAN_PORT) != PRU_RPMSG_SUCCESS)
         ;
+
+    // Allow PRU0 and PRU1 to wake from sleep
+    PRU0_CTRL.WAKEUP_EN = 1 << (WAKE_PRU0_IRQ + R31_IRQ_OFFSET);
+    PRU1_CTRL.WAKEUP_EN = 1 << (WAKE_PRU1_IRQ + R31_IRQ_OFFSET);
 
     // Wait for PRU1 to be ready
     memset(SHARED_MEM, 0, sizeof(*SHARED_MEM));
