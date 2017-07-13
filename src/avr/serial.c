@@ -121,7 +121,7 @@ console_pop_input(uint8_t len)
 void
 console_task(void)
 {
-    uint8_t pop_count, rpos = readl(&receive_pos);
+    uint8_t pop_count, rpos = readb(&receive_pos);
     int8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
