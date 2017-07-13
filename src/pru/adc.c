@@ -18,14 +18,46 @@
 
 DECL_CONSTANT(ADC_MAX, 4095);
 
+static void
+adc_full_reset(void)
+{
+    static uint8_t have_done_reset;
+    if (have_done_reset)
+        return;
+    have_done_reset = 1;
+
+    // Disable ADC
+    ADC->ctrl = (1<<2);
+    barrier();
+    // Clear registers
+    ADC->irqstatus = 0xffffffff;
+    ADC->irqenable_clr = 0xffffffff;
+    ADC->dmaenable_clr = 0xffffffff;
+    ADC->adc_clkdiv = 0;
+    ADC->stepenable = 0;
+    ADC->idleconfig = 0;
+    int i;
+    for (i=0; i<8; i++) {
+        ADC->step[i].config = i<<19;
+        ADC->step[i].delay = 0;
+    }
+    // Enable ADC
+    writel(&ADC->ctrl, 0x07);
+    // Drain fifo
+    while (readl(&ADC->fifo0count))
+        readl(&ADC->fifo0data);
+
+    if (!readl(&ADC->ctrl))
+        shutdown("ADC module not enabled");
+}
+
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
     uint8_t chan = pin - 4 * 32;
     if (chan >= 8)
         shutdown("Not an adc channel");
-    if (!readl(&ADC->ctrl))
-        shutdown("ADC module not enabled");
+    adc_full_reset();
     return (struct gpio_adc){ .chan = chan };
 }
 

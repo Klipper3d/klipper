@@ -89,6 +89,8 @@ DECL_SHUTDOWN(timer_shutdown);
 void
 timer_init(void)
 {
+    CT_IEP.TMR_CMP_CFG = 0x01 << 1;
+    CT_IEP.TMR_GLB_CFG = 0x11;
     CT_IEP.TMR_CNT = 0;
     timer_shutdown();
 }
