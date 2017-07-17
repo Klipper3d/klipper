@@ -319,11 +319,11 @@ class GCodeParser:
     def cmd_G28(self, params):
         # Move to origin
         axes = []
-        for axis in 'XYZ':
+        for axis in self.toolhead.homing_order:
             if axis in params:
                 axes.append(self.axis2pos[axis])
         if not axes:
-            axes = [0, 1, 2]
+            axes = [self.axis2pos[axis] for axis in self.toolhead.homing_order]
         homing_state = homing.Homing(self.toolhead, axes)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
