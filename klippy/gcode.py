@@ -152,14 +152,15 @@ class GCodeParser:
             os.write(self.fd, "ok\n")
         self.need_ack = False
     def respond(self, msg):
-        logging.debug(msg)
         if self.is_fileinput:
             return
         os.write(self.fd, msg+"\n")
     def respond_info(self, msg):
+        logging.debug(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
         self.respond("// " + "\n// ".join(lines))
     def respond_error(self, msg):
+        logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
             self.respond_info("\n".join(lines[:-1]))
@@ -250,7 +251,7 @@ class GCodeParser:
             # Tn command has to be handled specially
             self.cmd_Tn(params)
             return
-        self.respond('echo:Unknown command:"%s"' % (cmd,))
+        self.respond_info('Unknown command:"%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
         index = self.get_int('T', params)
