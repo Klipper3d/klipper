@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
-import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
+import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger, extruder_auto_fan
 import msgproto
 
 message_ready = "Printer is ready"
@@ -179,7 +179,7 @@ class Printer:
             self.mcu.connect_file(self.debugoutput, self.dictionary)
         # Create printer components
         config = ConfigWrapper(self, 'printer')
-        for m in [extruder, fan, heater, toolhead]:
+        for m in [extruder, fan, heater, toolhead,extruder_auto_fan]:
             m.add_printer_objects(self, config)
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
