@@ -18,12 +18,12 @@ rapid jerking of the head can cause disruption of recently deposited
 filament. Limiting speed changes of the print head (relative to the
 print) reduces risks of disrupting the print.
 
-It is also important to enforce a maximum acceleration of the stepper
-motors to ensure they do not skip or put excessive stress on the
-machine. Klipper limits the acceleration of each stepper by virtue of
-limiting the acceleration of the print head. Enforcing acceleration at
-the print head naturally also enforces acceleration at the steppers
-that control that print head (the inverse is not always true).
+It is also important to limit acceleration so that the stepper motors
+do not skip or put excessive stress on the machine. Klipper limits the
+torque on each stepper by virtue of limiting the acceleration of the
+print head. Enforcing acceleration at the print head naturally also
+limits the torque of the steppers that move the print head (the
+inverse is not always true).
 
 Klipper implements constant acceleration. The key formula for constant
 acceleration is:
@@ -213,10 +213,10 @@ motor greater than the move's acceleration. This can occur when a
 stepper arm is more horizontal than vertical and the line of movement
 passes near that stepper's tower. Although these moves could require a
 stepper motor acceleration greater than the printer's maximum
-configured move acceleration, this would only occur when the stepper
-is moving a small amount of mass. (The stepper would essentially only
-be moving the mass of the tower carriage.) Therefore, these brief
-periods of high acceleration are considered harmless.
+configured move acceleration, the effective mass moved by that stepper
+would be smaller. Thus the higher stepper acceleration does not result
+in significantly higher stepper torque and it is therefore considered
+harmless.
 
 However, to avoid extreme cases, Klipper enforces a maximum ceiling on
 stepper acceleration of three times the printer's configured maximum
