@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt, matplotlib.dates as mdates
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
+STATS_INTERVAL=5.
 
 def parse_log(logname):
     f = open(logname, 'rb')
@@ -48,7 +49,7 @@ def find_print_restarts(data):
             sample_resets[st] = 1
     return sample_resets
 
-def plot_mcu(data, maxbw, outname):
+def plot_mcu(data, maxbw, outname, graph_awake=False):
     # Generate data for plot
     basetime = lasttime = data[0]['#sampletime']
     lastbw = float(data[0]['bytes_write']) + float(data[0]['bytes_retransmit'])
@@ -56,6 +57,7 @@ def plot_mcu(data, maxbw, outname):
     times = []
     bwdeltas = []
     loads = []
+    awake = []
     hostbuffers = []
     for d in data:
         st = d['#sampletime']
@@ -79,6 +81,7 @@ def plot_mcu(data, maxbw, outname):
         times.append(datetime.datetime.utcfromtimestamp(st))
         bwdeltas.append(100. * (bw - lastbw) / (maxbw * timedelta))
         loads.append(100. * load / .001)
+        awake.append(100. * float(d['mcu_awake']) / STATS_INTERVAL)
         lasttime = st
         lastbw = bw
 
@@ -87,6 +90,8 @@ def plot_mcu(data, maxbw, outname):
     ax1.set_title("MCU bandwidth and load utilization")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Usage (%)')
+    if graph_awake:
+        ax1.plot_date(times, awake, 'b', label='Awake time')
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
@@ -99,6 +104,8 @@ def plot_mcu(data, maxbw, outname):
 def main():
     usage = "%prog [options] <logfile> <outname>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-a", "--awake", action="store_true"
+                    , help="graph mcu awake time")
     options, args = opts.parse_args()
     if len(args) != 2:
         opts.error("Incorrect number of arguments")
@@ -106,7 +113,7 @@ def main():
     data = parse_log(logname)
     if not data:
         return
-    plot_mcu(data, MAXBANDWIDTH, outname)
+    plot_mcu(data, MAXBANDWIDTH, outname, graph_awake=options.awake)
 
 if __name__ == '__main__':
     main()
