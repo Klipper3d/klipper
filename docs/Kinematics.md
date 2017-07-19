@@ -211,13 +211,18 @@ With delta kinematics it is possible for a move that is accelerating
 in cartesian space to require an acceleration on a particular stepper
 motor greater than the move's acceleration. This can occur when a
 stepper arm is more horizontal than vertical and the line of movement
-is near that stepper's tower.
+passes near that stepper's tower. Although these moves could require a
+stepper motor acceleration greater than the printer's maximum
+configured move acceleration, this would only occur when the stepper
+is moving a small amount of mass. (The stepper would essentially only
+be moving the mass of the tower carriage.) Therefore, these brief
+periods of high acceleration are considered harmless.
 
-Klipper does enforce a maximum ceiling on stepper acceleration that is
-three times the maximum acceleration of a move in cartesian
-space. (Similarly, the maximum velocity of the stepper is limited to
-three times the maximum move velocity.) In order to enforce this
-limit, moves at the extreme edge of the build envelope (where a
+However, to avoid extreme cases, Klipper enforces a maximum ceiling on
+stepper acceleration of three times the printer's configured maximum
+move acceleration. (Similarly, the maximum velocity of the stepper is
+limited to three times the maximum move velocity.) In order to enforce
+this limit, moves at the extreme edge of the build envelope (where a
 stepper arm may be nearly horizontal) will have a lower maximum
 acceleration and velocity.
 
