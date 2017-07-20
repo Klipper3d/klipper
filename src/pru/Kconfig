@@ -5,6 +5,7 @@ if MACH_PRU
 config PRU_SELECT
     bool
     default y
+    select HAVE_GPIO
     select HAVE_GPIO_ADC
 
 config BOARD_DIRECTORY

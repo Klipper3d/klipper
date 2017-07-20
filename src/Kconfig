@@ -21,6 +21,9 @@ source "src/simulator/Kconfig"
 
 # The HAVE_GPIO_x options allow boards to disable support for some
 # commands if the hardware does not support the feature.
+config HAVE_GPIO
+    bool
+    default n
 config HAVE_GPIO_ADC
     bool
     default n
@@ -41,4 +44,5 @@ config NO_UNSTEP_DELAY
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
     bool
+    depends on HAVE_GPIO
     default y
