@@ -399,7 +399,8 @@ class MCU:
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
         baud = 0
-        if not self._serialport.startswith("/dev/rpmsg_"):
+        if not (self._serialport.startswith("/dev/rpmsg_")
+                or self._serialport.startswith("/tmp/klipper_host_")):
             baud = config.getint('baud', 250000, minval=2400)
         self._serial = serialhdl.SerialReader(
             printer.reactor, self._serialport, baud)
