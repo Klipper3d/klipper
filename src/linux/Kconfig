@@ -1,0 +1,14 @@
+# Kconfig settings for compiling and running the micro-controller code
+# in a Linux process
+
+if MACH_LINUX
+
+config BOARD_DIRECTORY
+    string
+    default "linux"
+
+config CLOCK_FREQ
+    int
+    default 20000000
+
+endif

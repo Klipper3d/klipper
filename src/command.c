@@ -186,7 +186,6 @@ command_sendf(const struct command_encoder *ce, ...)
     va_end(args);
 
     writeb(&in_sendf, 0);
-    return;
 }
 
 void
