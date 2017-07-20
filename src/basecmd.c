@@ -4,12 +4,54 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <string.h> // memset
 #include "basecmd.h" // oid_lookup
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // alloc_maxsize
 #include "board/pgm.h" // READP
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_clear_shutdown
+
+
+/****************************************************************
+ * Low level allocation
+ ****************************************************************/
+
+static void *alloc_end;
+
+void
+alloc_init(void)
+{
+    alloc_end = (void*)ALIGN((size_t)dynmem_start(), __alignof__(void*));
+}
+DECL_INIT(alloc_init);
+
+// Allocate an area of memory
+static void *
+alloc_chunk(size_t size)
+{
+    if (alloc_end + size > dynmem_end())
+        shutdown("alloc_chunk failed");
+    void *data = alloc_end;
+    alloc_end += ALIGN(size, __alignof__(void*));
+    memset(data, 0, size);
+    return data;
+}
+
+// Allocate an array of chunks
+static void *
+alloc_chunks(size_t size, size_t count, uint16_t *avail)
+{
+    size_t can_alloc = 0;
+    void *p = alloc_end, *end = dynmem_end();
+    while (can_alloc < count && p + size <= end)
+        can_alloc++, p += size;
+    if (!can_alloc)
+        shutdown("alloc_chunks failed");
+    void *data = alloc_chunk(p - alloc_end);
+    *avail = can_alloc;
+    return data;
+}
 
 
 /****************************************************************
@@ -85,10 +127,10 @@ DECL_SHUTDOWN(move_reset);
 static void
 move_finalize(void)
 {
+    if (is_finalized())
+        shutdown("Already finalized");
     move_request_size(sizeof(*move_free_list));
-    size_t count;
-    move_list = alloc_chunks(move_item_size, 1024, &count);
-    move_count = count;
+    move_list = alloc_chunks(move_item_size, 1024, &move_count);
     move_reset();
 }
 
@@ -167,8 +209,6 @@ DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 void
 command_finalize_config(uint32_t *args)
 {
-    if (!oids || is_finalized())
-        shutdown("Can't finalize");
     move_finalize();
     config_crc = args[0];
     command_get_config(NULL);

@@ -5,12 +5,11 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
-#include <string.h> // memset
 #include <pru/io.h> // read_r31
 #include <pru_iep.h> // CT_IEP
 #include <pru_intc.h> // CT_INTC
 #include <rsc_types.h> // resource_table
-#include "board/misc.h" // alloc_chunk
+#include "board/misc.h" // dynmem_start
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "command.h" // shutdown
@@ -175,39 +174,24 @@ const struct command_parser shutdown_request = {
 
 
 /****************************************************************
- * Allocator
+ * Dynamic memory
  ****************************************************************/
 
-extern char _heap_start;
-static void *heap_ptr = &_heap_start;
-
 #define STACK_SIZE 256
-#define END_MEM ((void*)(8*1024 - STACK_SIZE))
 
-// Allocate an area of memory
+// Return the start of memory available for dynamic allocations
 void *
-alloc_chunk(size_t size)
+dynmem_start(void)
 {
-    if (heap_ptr + size > END_MEM)
-        shutdown("alloc_chunk failed");
-    void *data = heap_ptr;
-    heap_ptr += size;
-    memset(data, 0, size);
-    return data;
+    extern char _heap_start;
+    return &_heap_start;
 }
 
-// Allocate an array of chunks
+// Return the end of memory available for dynamic allocations
 void *
-alloc_chunks(size_t size, size_t count, size_t *avail)
+dynmem_end(void)
 {
-    size_t can_alloc = 0;
-    void *p = heap_ptr;
-    for (; can_alloc <= count && p + size <= END_MEM; can_alloc++, p += size)
-        ;
-    if (!can_alloc)
-        shutdown("alloc_chunks failed");
-    *avail = can_alloc;
-    return alloc_chunk(size * can_alloc);
+    return (void*)(8*1024 - STACK_SIZE);
 }
 
 

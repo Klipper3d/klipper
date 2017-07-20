@@ -13,8 +13,8 @@ uint8_t timer_is_before(uint32_t time1, uint32_t time2);
 uint32_t timer_read_time(void);
 void timer_periodic(void);
 
-void *alloc_chunk(size_t size);
-void *alloc_chunks(size_t size, size_t count, size_t *avail);
+void *dynmem_start(void);
+void *dynmem_end(void);
 
 uint16_t crc16_ccitt(char *buf, uint8_t len);
 

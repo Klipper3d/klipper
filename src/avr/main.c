@@ -5,10 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <avr/io.h> // AVR_STACK_POINTER_REG
-#include <stdlib.h> // __malloc_heap_end
-#include <string.h> // memset
 #include <util/crc16.h> // _crc_ccitt_update
 #include "autoconf.h" // CONFIG_MCU
+#include "board/misc.h" // dynmem_start
 #include "command.h" // DECL_CONSTANT
 #include "irq.h" // irq_enable
 #include "sched.h" // sched_main
@@ -17,36 +16,22 @@ DECL_CONSTANT(MCU, CONFIG_MCU);
 
 
 /****************************************************************
- * Memmory allocation
+ * Dynamic memory
  ****************************************************************/
 
-// Allocate an area of memory
+// Return the start of memory available for dynamic allocations
 void *
-alloc_chunk(size_t size)
+dynmem_start(void)
 {
-    void *data = malloc(size);
-    if (!data)
-        shutdown("alloc_chunk failed");
-    memset(data, 0, size);
-    return data;
+    extern char _end;
+    return &_end;
 }
 
-// Allocate an array of chunks
+// Return the end of memory available for dynamic allocations
 void *
-alloc_chunks(size_t size, size_t count, size_t *avail)
+dynmem_end(void)
 {
-    uint16_t memend = ALIGN(AVR_STACK_POINTER_REG, 256);
-    __malloc_heap_end = (void*)memend - CONFIG_AVR_STACK_SIZE;
-    extern char *__brkval;
-    uint16_t maxsize = __malloc_heap_end - __brkval - 2;
-    if ((int16_t)maxsize < 0)
-        maxsize = 0;
-    if (count * size > maxsize)
-        count = maxsize / size;
-    if (!count)
-        shutdown("alloc_chunks failed");
-    *avail = count;
-    return alloc_chunk(count * size);
+    return (void*)ALIGN(AVR_STACK_POINTER_REG, 256) - CONFIG_AVR_STACK_SIZE;
 }
 
 
