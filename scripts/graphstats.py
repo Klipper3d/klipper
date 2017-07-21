@@ -81,7 +81,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
         times.append(datetime.datetime.utcfromtimestamp(st))
         bwdeltas.append(100. * (bw - lastbw) / (maxbw * timedelta))
         loads.append(100. * load / .001)
-        awake.append(100. * float(d['mcu_awake']) / STATS_INTERVAL)
+        awake.append(100. * float(d.get('mcu_awake', 0.)) / STATS_INTERVAL)
         lasttime = st
         lastbw = bw
 
