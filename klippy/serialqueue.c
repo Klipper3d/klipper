@@ -448,7 +448,7 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
     pollreactor_update_timer(&sq->pr, SQPT_COMMAND, PR_NOW);
 
     // Update retransmit info
-    if (sq->rtt_sample_seq && rseq >= sq->rtt_sample_seq
+    if (sq->rtt_sample_seq && rseq > sq->rtt_sample_seq
         && sq->last_receive_sent_time) {
         // RFC6298 rtt calculations
         double delta = eventtime - sq->last_receive_sent_time;
@@ -586,7 +586,7 @@ retransmit_event(struct serialqueue *sq, double eventtime)
         if (sq->rto > MAX_RTO)
             sq->rto = MAX_RTO;
     }
-    sq->retransmit_seq = sq->send_seq;
+    sq->retransmit_seq = sq->send_seq - 1;
     sq->rtt_sample_seq = 0;
     if (eventtime > sq->idle_time)
         sq->idle_time = eventtime;
@@ -654,9 +654,9 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
     if (list_empty(&sq->sent_queue))
         pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT
                                  , sq->idle_time + sq->rto);
-    sq->send_seq++;
     if (!sq->rtt_sample_seq)
         sq->rtt_sample_seq = sq->send_seq;
+    sq->send_seq++;
     list_add_tail(&out->node, &sq->sent_queue);
 }
 
