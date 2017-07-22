@@ -347,7 +347,7 @@ struct serialqueue {
     double last_receive_sent_time;
     // Retransmit support
     uint64_t send_seq, receive_seq;
-    uint64_t retransmit_seq, rtt_sample_seq;
+    uint64_t ignore_nak_seq, retransmit_seq, rtt_sample_seq;
     struct list_head sent_queue;
     double srtt, rttvar, rto;
     // Pending transmission message queues
@@ -492,7 +492,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     if (rseq != sq->receive_seq)
         // New sequence number
         update_receive_seq(sq, eventtime, rseq);
-    else if (len == MESSAGE_MIN && rseq > sq->retransmit_seq
+    else if (len == MESSAGE_MIN && rseq > sq->ignore_nak_seq
              && !list_empty(&sq->sent_queue))
         // Duplicate sequence number in an empty message is a nak
         pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
@@ -581,10 +581,18 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     sq->bytes_retransmit += buflen;
 
     // Update rto
-    if (pollreactor_get_timer(&sq->pr, SQPT_RETRANSMIT) != PR_NOW) {
+    if (pollreactor_get_timer(&sq->pr, SQPT_RETRANSMIT) == PR_NOW) {
+        // Retransmit due to nak
+        sq->ignore_nak_seq = sq->receive_seq;
+        if (sq->receive_seq < sq->retransmit_seq)
+            // Second nak for this retransmit - don't allow third
+            sq->ignore_nak_seq = sq->retransmit_seq;
+    } else {
+        // Retransmit due to timeout
         sq->rto *= 2.0;
         if (sq->rto > MAX_RTO)
             sq->rto = MAX_RTO;
+        sq->ignore_nak_seq = sq->send_seq - 1;
     }
     sq->retransmit_seq = sq->send_seq - 1;
     sq->rtt_sample_seq = 0;
