@@ -102,14 +102,12 @@ pollreactor_add_timer(struct pollreactor *pr, int pos, void *callback)
     pr->timers[pos].waketime = PR_NEVER;
 }
 
-#if 0
 // Return the last schedule wake-up time for a timer
 static double
 pollreactor_get_timer(struct pollreactor *pr, int pos)
 {
     return pr->timers[pos].waketime;
 }
-#endif
 
 // Set the wake-up time for a given timer
 static void
@@ -568,12 +566,14 @@ retransmit_event(struct serialqueue *sq, double eventtime)
 
     // Retransmit all pending messages
     uint8_t buf[MESSAGE_MAX * MESSAGE_SEQ_MASK + 1];
-    int buflen = 0;
+    int buflen = 0, first_buflen = 0;
     buf[buflen++] = MESSAGE_SYNC;
     struct queue_message *qm;
     list_for_each_entry(qm, &sq->sent_queue, node) {
         memcpy(&buf[buflen], qm->msg, qm->len);
         buflen += qm->len;
+        if (!first_buflen)
+            first_buflen = qm->len;
     }
     ret = write(sq->serial_fd, buf, buflen);
     if (ret < 0)
@@ -581,13 +581,17 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     sq->bytes_retransmit += buflen;
 
     // Update rto
-    sq->rto *= 2.0;
-    if (sq->rto > MAX_RTO)
-        sq->rto = MAX_RTO;
+    if (pollreactor_get_timer(&sq->pr, SQPT_RETRANSMIT) != PR_NOW) {
+        sq->rto *= 2.0;
+        if (sq->rto > MAX_RTO)
+            sq->rto = MAX_RTO;
+    }
     sq->retransmit_seq = sq->send_seq;
     sq->rtt_sample_seq = 0;
-    sq->idle_time = eventtime + buflen * sq->baud_adjust;
-    double waketime = sq->idle_time + sq->rto;
+    if (eventtime > sq->idle_time)
+        sq->idle_time = eventtime;
+    double waketime = sq->idle_time + first_buflen * sq->baud_adjust + sq->rto;
+    sq->idle_time += buflen * sq->baud_adjust;
 
     pthread_mutex_unlock(&sq->lock);
     return waketime;
