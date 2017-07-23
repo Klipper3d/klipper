@@ -573,7 +573,7 @@ retransmit_event(struct serialqueue *sq, double eventtime)
         memcpy(&buf[buflen], qm->msg, qm->len);
         buflen += qm->len;
         if (!first_buflen)
-            first_buflen = qm->len;
+            first_buflen = qm->len + 1;
     }
     ret = write(sq->serial_fd, buf, buflen);
     if (ret < 0)
@@ -596,10 +596,8 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     }
     sq->retransmit_seq = sq->send_seq - 1;
     sq->rtt_sample_seq = 0;
-    if (eventtime > sq->idle_time)
-        sq->idle_time = eventtime;
-    double waketime = sq->idle_time + first_buflen * sq->baud_adjust + sq->rto;
-    sq->idle_time += buflen * sq->baud_adjust;
+    sq->idle_time = eventtime + buflen * sq->baud_adjust;
+    double waketime = eventtime + first_buflen * sq->baud_adjust + sq->rto;
 
     pthread_mutex_unlock(&sq->lock);
     return waketime;
