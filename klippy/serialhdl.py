@@ -189,6 +189,8 @@ class SerialReader:
                                 self.ffi_lib.serialqueue_free_commandqueue)
     # Dumping debug lists
     def dump_debug(self):
+        logging.info("Dumping serial stats: %s"
+                     , self.stats(self.reactor.monotonic()))
         sdata = self.ffi_main.new('struct pull_queue_message[1024]')
         rdata = self.ffi_main.new('struct pull_queue_message[1024]')
         scount = self.ffi_lib.serialqueue_extract_old(
