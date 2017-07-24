@@ -57,8 +57,17 @@ class PrinterHomingStepper(PrinterStepper):
         self.position_endstop = config.getfloat('position_endstop')
 
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
-        self.homing_positive_dir = config.getboolean(
-            'homing_positive_dir', False)
+        self.homing_positive_dir = config.getboolean('homing_positive_dir', None)
+        if self.homing_positive_dir is None:
+            axis_len = self.position_max - self.position_min
+            if self.position_endstop <= self.position_min + axis_len / 4.:
+                self.homing_positive_dir = False
+            elif self.position_endstop >= self.position_max - axis_len / 4.:
+                self.homing_positive_dir = True
+            else:
+                raise config.error(
+                    "Unable to infer homing_positive_dir in section '%s'" % (
+                        config.section,))
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., above=0.)
         self.homing_stepper_phases = config.getint(
