@@ -140,7 +140,8 @@ class GCodeParser:
         if not data and self.is_fileinput:
             self.motor_heater_off()
             if self.toolhead is not None:
-                self.toolhead.wait_moves()
+                if not self.printer.mcu.is_fileoutput():
+                    self.toolhead.wait_moves()
             self.printer.request_exit('exit_eof')
         self.is_processing_data = False
         if self.fd_handle is None:
