@@ -13,6 +13,48 @@ class PrinterStepper:
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.inv_step_dist = 1. / self.step_dist
         self.min_stop_interval = 0.
+        step_pin = config.get('step_pin')
+        dir_pin = config.get('dir_pin')
+        self.mcu_stepper = printer.mcu.create_stepper(step_pin, dir_pin)
+        self.mcu_stepper.set_step_distance(self.step_dist)
+
+        enable_pin = config.get('enable_pin', None)
+        if enable_pin is not None:
+            self.mcu_enable = printer.mcu.create_digital_out(enable_pin, 0)
+        self.need_motor_enable = True
+    def _dist_to_time(self, dist, start_velocity, accel):
+        # Calculate the time it takes to travel a distance with constant accel
+        time_offset = start_velocity / accel
+        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
+    def set_max_jerk(self, max_halt_velocity, max_accel):
+        # Calculate the firmware's maximum halt interval time
+        last_step_time = self._dist_to_time(
+            self.step_dist, max_halt_velocity, max_accel)
+        second_last_step_time = self._dist_to_time(
+            2. * self.step_dist, max_halt_velocity, max_accel)
+        min_stop_interval = second_last_step_time - last_step_time
+        self.mcu_stepper.set_min_stop_interval(min_stop_interval)
+    def motor_enable(self, move_time, enable=0):
+        if enable and self.need_motor_enable:
+            mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
+            self.mcu_stepper.reset_step_clock(mcu_time)
+        if (self.mcu_enable is not None
+            and self.mcu_enable.get_last_setting() != enable):
+            mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
+            self.mcu_enable.set_digital(mcu_time, enable)
+        self.need_motor_enable = not enable
+
+class PrinterHomingStepper(PrinterStepper):
+    def __init__(self, printer, config, name):
+        PrinterStepper.__init__(self, printer, config, name)
+
+        endstop_pin = config.get('endstop_pin', None)
+        self.mcu_endstop = printer.mcu.create_endstop(endstop_pin)
+        self.mcu_endstop.add_stepper(self.mcu_stepper)
+        self.position_min = config.getfloat('position_min', 0.)
+        self.position_max = config.getfloat(
+            'position_max', 0., above=self.position_min)
+        self.position_endstop = config.getfloat('position_endstop')
 
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_positive_dir = config.getboolean(
@@ -42,45 +84,6 @@ class PrinterStepper:
                 self.homing_stepper_phases = None
             if printer.mcu.is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
-        self.position_min = self.position_endstop = self.position_max = None
-        endstop_pin = config.get('endstop_pin', None)
-        step_pin = config.get('step_pin')
-        dir_pin = config.get('dir_pin')
-        mcu = printer.mcu
-        self.mcu_stepper = mcu.create_stepper(step_pin, dir_pin)
-        self.mcu_stepper.set_step_distance(self.step_dist)
-        enable_pin = config.get('enable_pin', None)
-        if enable_pin is not None:
-            self.mcu_enable = mcu.create_digital_out(enable_pin, 0)
-        if endstop_pin is not None:
-            self.mcu_endstop = mcu.create_endstop(endstop_pin)
-            self.mcu_endstop.add_stepper(self.mcu_stepper)
-            self.position_min = config.getfloat('position_min', 0.)
-            self.position_max = config.getfloat(
-                'position_max', 0., above=self.position_min)
-            self.position_endstop = config.getfloat('position_endstop')
-        self.need_motor_enable = True
-    def _dist_to_time(self, dist, start_velocity, accel):
-        # Calculate the time it takes to travel a distance with constant accel
-        time_offset = start_velocity / accel
-        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
-    def set_max_jerk(self, max_halt_velocity, max_accel):
-        # Calculate the firmware's maximum halt interval time
-        last_step_time = self._dist_to_time(
-            self.step_dist, max_halt_velocity, max_accel)
-        second_last_step_time = self._dist_to_time(
-            2. * self.step_dist, max_halt_velocity, max_accel)
-        min_stop_interval = second_last_step_time - last_step_time
-        self.mcu_stepper.set_min_stop_interval(min_stop_interval)
-    def motor_enable(self, move_time, enable=0):
-        if enable and self.need_motor_enable:
-            mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
-            self.mcu_stepper.reset_step_clock(mcu_time)
-        if (self.mcu_enable is not None
-            and self.mcu_enable.get_last_setting() != enable):
-            mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
-            self.mcu_enable.set_digital(mcu_time, enable)
-        self.need_motor_enable = not enable
     def enable_endstop_checking(self, move_time, step_time):
         mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
         self.mcu_endstop.home_start(mcu_time, step_time)

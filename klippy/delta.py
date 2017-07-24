@@ -14,7 +14,7 @@ SLOW_RATIO = 3.
 class DeltaKinematics:
     def __init__(self, printer, config):
         self.config = config
-        self.steppers = [stepper.PrinterStepper(
+        self.steppers = [stepper.PrinterHomingStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['a', 'b', 'c']]
         self.need_motor_enable = self.need_home = True

@@ -10,7 +10,7 @@ StepList = (0, 1, 2)
 
 class CartKinematics:
     def __init__(self, printer, config):
-        self.steppers = [stepper.PrinterStepper(
+        self.steppers = [stepper.PrinterHomingStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['x', 'y', 'z']]
         self.max_z_velocity = config.getfloat(
