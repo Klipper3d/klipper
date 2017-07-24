@@ -352,7 +352,7 @@ struct serialqueue {
     double srtt, rttvar, rto;
     // Pending transmission message queues
     struct list_head pending_queues;
-    int ready_bytes, stalled_bytes;
+    int ready_bytes, stalled_bytes, need_ack_bytes;
     uint64_t need_kick_clock;
     // Received messages
     struct list_head receive_queue;
@@ -372,7 +372,6 @@ struct serialqueue {
 
 #define MIN_RTO 0.025
 #define MAX_RTO 5.000
-#define MAX_SERIAL_BUFFER 0.050
 #define MIN_REQTIME_DELTA 0.250
 #define IDLE_QUERY_TIME 1.0
 
@@ -435,6 +434,7 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
             sq->last_receive_sent_time = 0.;
             break;
         }
+        sq->need_ack_bytes -= sent->len;
         list_del(&sent->node);
         debug_queue_add(&sq->old_sent, sent);
         sent_seq++;
@@ -663,6 +663,7 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
     if (!sq->rtt_sample_seq)
         sq->rtt_sample_seq = sq->send_seq;
     sq->send_seq++;
+    sq->need_ack_bytes += out->len;
     list_add_tail(&out->node, &sq->sent_queue);
 }
 
@@ -670,10 +671,8 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
 static double
 check_send_command(struct serialqueue *sq, double eventtime)
 {
-    if (eventtime < sq->idle_time - MAX_SERIAL_BUFFER)
-        // Serial port already busy
-        return sq->idle_time - MAX_SERIAL_BUFFER;
-    if (sq->send_seq - sq->receive_seq >= MESSAGE_SEQ_MASK
+    if ((sq->send_seq - sq->receive_seq >= MESSAGE_SEQ_MASK
+         || (sq->need_ack_bytes - 2*MESSAGE_MAX) * sq->baud_adjust > sq->srtt)
         && sq->receive_seq != (uint64_t)-1)
         // Need an ack before more messages can be sent
         return PR_NEVER;
