@@ -51,22 +51,35 @@ irq_wait(void)
     asm("slp 1");
 }
 
+// Set the next timer wake up time
 static void
 timer_set(uint32_t value)
 {
     CT_IEP.TMR_CMP0 = value;
 }
 
+// Return the next scheduled wake up time
 uint32_t
 timer_get_next(void)
 {
     return CT_IEP.TMR_CMP0;
 }
 
+// Return the current time (in absolute clock ticks).
 uint32_t
 timer_read_time(void)
 {
     return CT_IEP.TMR_CNT;
+}
+
+// Activate timer dispatch as soon as possible
+void
+timer_kick(void)
+{
+    timer_set(timer_read_time() + 50);
+    CT_IEP.TMR_CMP_STS = 0xff;
+    __delay_cycles(4);
+    CT_INTC.SECR0 = 1 << IEP_EVENT;
 }
 
 static void
@@ -87,23 +100,12 @@ irq_poll(void)
 }
 
 void
-timer_shutdown(void)
-{
-    // Reenable timer irq
-    timer_set(timer_read_time() + 50);
-    CT_IEP.TMR_CMP_STS = 0xff;
-    __delay_cycles(4);
-    CT_INTC.SECR0 = 1 << IEP_EVENT;
-}
-DECL_SHUTDOWN(timer_shutdown);
-
-void
 timer_init(void)
 {
     CT_IEP.TMR_CMP_CFG = 0x01 << 1;
     CT_IEP.TMR_GLB_CFG = 0x11;
     CT_IEP.TMR_CNT = 0;
-    timer_shutdown();
+    timer_kick();
 }
 DECL_INIT(timer_init);
 

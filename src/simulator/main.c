@@ -74,15 +74,20 @@ timer_is_before(uint32_t time1, uint32_t time2)
     return (int32_t)(time1 - time2) < 0;
 }
 
-void
-timer_periodic(void)
-{
-}
-
 uint32_t
 timer_read_time(void)
 {
     return 0; // XXX
+}
+
+void
+timer_kick(void)
+{
+}
+
+void
+timer_periodic(void)
+{
 }
 
 

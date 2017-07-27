@@ -20,7 +20,7 @@
  ****************************************************************/
 
 static struct timer periodic_timer, *timer_list = &periodic_timer;
-static struct timer sentinel_timer;
+static struct timer sentinel_timer, deleted_timer;
 
 // The periodic_timer simplifies the timer code by ensuring there is
 // always a timer on the timer list and that there is always a timer
@@ -79,10 +79,22 @@ sched_add_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();
-    if (timer_is_before(waketime, timer_list->waketime))
-        // Timer in past (or very near future)
-        shutdown("Timer too close");
-    insert_timer(add, waketime);
+    if (unlikely(timer_is_before(waketime, timer_list->waketime))) {
+        // This timer is before all other scheduled timers
+        struct timer *tl = timer_list;
+        if (timer_is_before(waketime, timer_read_time() + timer_from_us(2000)))
+            try_shutdown("Timer too close");
+        if (tl == &deleted_timer)
+            add->next = deleted_timer.next;
+        else
+            add->next = tl;
+        deleted_timer.waketime = waketime;
+        deleted_timer.next = add;
+        timer_list = &deleted_timer;
+        timer_kick();
+    } else {
+        insert_timer(add, waketime);
+    }
     irq_restore(flag);
 }
 
@@ -158,6 +170,7 @@ sched_timer_shutdown(void)
     deleted_timer.waketime = periodic_timer.waketime;
     deleted_timer.next = &periodic_timer;
     periodic_timer.next = &sentinel_timer;
+    timer_kick();
 }
 DECL_SHUTDOWN(sched_timer_shutdown);
 

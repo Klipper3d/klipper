@@ -10,7 +10,7 @@
 #include "board/timer_irq.h" // timer_dispatch_many
 #include "basecmd.h" // stats_note_sleep
 #include "command.h" // shutdown
-#include "sched.h" // sched_timer_kick
+#include "sched.h" // sched_timer_dispatch
 
 DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
 

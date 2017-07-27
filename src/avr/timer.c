@@ -1,6 +1,6 @@
 // AVR timer interrupt scheduling code.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -10,7 +10,7 @@
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
-#include "sched.h" // sched_timer_kick
+#include "sched.h" // sched_timer_dispatch
 
 
 /****************************************************************
@@ -77,16 +77,13 @@ timer_repeat_set(uint16_t next)
     TIFR1 = 1<<OCF1B;
 }
 
-// Reset the timer - clear settings and dispatch next timer immediately
+// Activate timer dispatch as soon as possible
 void
-timer_reset(void)
+timer_kick(void)
 {
-    uint16_t now = timer_get();
-    timer_set(now + 50);
+    timer_set(timer_get() + 50);
     TIFR1 = 1<<OCF1A;
-    timer_repeat_set(now + 50);
 }
-DECL_SHUTDOWN(timer_reset);
 
 void
 timer_init(void)
@@ -97,7 +94,8 @@ timer_init(void)
     TCCR1B = 1<<CS10;
     // Setup for first irq
     irqstatus_t flag = irq_save();
-    timer_reset();
+    timer_kick();
+    timer_repeat_set(timer_get() + 50);
     TIFR1 = 1<<TOV1;
     // enable interrupt
     TIMSK1 = 1<<OCIE1A;
