@@ -18,6 +18,8 @@ struct analog_in {
     uint8_t state, sample_count;
 };
 
+static struct task_wake analog_wake;
+
 static uint_fast8_t
 analog_in_event(struct timer *timer)
 {
@@ -42,6 +44,7 @@ analog_in_event(struct timer *timer)
     }
     if (a->value < a->min_value || a->value > a->max_value)
         shutdown("adc out of range");
+    sched_wake_task(&analog_wake);
     a->next_begin_time += a->rest_time;
     a->timer.waketime = a->next_begin_time;
     return SF_RESCHEDULE;
@@ -83,8 +86,7 @@ DECL_COMMAND(command_query_analog_in,
 void
 analog_in_task(void)
 {
-    static uint16_t next;
-    if (!sched_check_periodic(3, &next))
+    if (!sched_check_wake(&analog_wake))
         return;
     uint8_t oid;
     struct analog_in *a;

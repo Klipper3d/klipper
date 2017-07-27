@@ -6,6 +6,7 @@
 
 #include <setjmp.h> // setjmp
 #include "autoconf.h" // CONFIG_*
+#include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "board/pgm.h" // READP
@@ -18,48 +19,31 @@
  * Timers
  ****************************************************************/
 
-static uint16_t millis;
+static struct timer periodic_timer, *timer_list = &periodic_timer;
+static struct timer sentinel_timer;
 
-// Check if ready for a recurring periodic event
-uint8_t
-sched_check_periodic(uint16_t time, uint16_t *pnext)
-{
-    uint16_t next = *pnext, cur;
-    irqstatus_t flag = irq_save();
-    cur = millis;
-    irq_restore(flag);
-    if ((int16_t)(cur - next) < 0)
-        return 0;
-    *pnext = cur + time;
-    return 1;
-}
-
-static struct timer ms_timer, sentinel_timer, *timer_list = &ms_timer;
-
-// Default millisecond timer.  This timer counts milliseconds.  It
-// also simplifies the timer code by ensuring there is always a timer
-// on the timer list and that there is always a timer not more than
-// 1ms in the future.
+// The periodic_timer simplifies the timer code by ensuring there is
+// always a timer on the timer list and that there is always a timer
+// not more than 1ms in the future.
 static uint_fast8_t
-ms_event(struct timer *t)
+periodic_event(struct timer *t)
 {
-    millis++;
     timer_periodic();
-    ms_timer.waketime += timer_from_us(1000);
-    sentinel_timer.waketime = ms_timer.waketime + 0x80000000;
+    periodic_timer.waketime += timer_from_us(1000);
+    sentinel_timer.waketime = periodic_timer.waketime + 0x80000000;
     return SF_RESCHEDULE;
 }
 
-static struct timer ms_timer = {
-    .func = ms_event,
+static struct timer periodic_timer = {
+    .func = periodic_event,
     .next = &sentinel_timer,
 };
 
 // The sentinel timer is always the last timer on timer_list - its
 // presence allows the code to avoid checking for NULL while
 // traversing timer_list.  Since sentinel_timer.waketime is always
-// equal to (ms_timer.waketime + 0x80000000) any added timer must
-// always have a waketime less than one of these two timers.
+// equal to (periodic_timer.waketime + 0x80000000) any added timer
+// must always have a waketime less than one of these two timers.
 static uint_fast8_t
 sentinel_event(struct timer *t)
 {
@@ -171,11 +155,33 @@ void
 sched_timer_shutdown(void)
 {
     timer_list = &deleted_timer;
-    deleted_timer.waketime = ms_timer.waketime;
-    deleted_timer.next = &ms_timer;
-    ms_timer.next = &sentinel_timer;
+    deleted_timer.waketime = periodic_timer.waketime;
+    deleted_timer.next = &periodic_timer;
+    periodic_timer.next = &sentinel_timer;
 }
 DECL_SHUTDOWN(sched_timer_shutdown);
+
+
+/****************************************************************
+ * Task waking
+ ****************************************************************/
+
+// Note that a task is ready to run
+void
+sched_wake_task(struct task_wake *w)
+{
+    writeb(&w->wake, 1);
+}
+
+// Check if a task is ready to run (as indicated by sched_wake_task)
+uint8_t
+sched_check_wake(struct task_wake *w)
+{
+    if (!readb(&w->wake))
+        return 0;
+    writeb(&w->wake, 0);
+    return 1;
+}
 
 
 /****************************************************************

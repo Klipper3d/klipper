@@ -21,6 +21,8 @@ struct end_stop {
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_REPORT=1<<2 };
 
+static struct task_wake endstop_wake;
+
 static void
 stop_steppers(struct end_stop *e)
 {
@@ -29,6 +31,7 @@ stop_steppers(struct end_stop *e)
     while (count--)
         if (e->steppers[count])
             stepper_stop(e->steppers[count]);
+    sched_wake_task(&endstop_wake);
 }
 
 // Timer callback for an end stop
@@ -115,8 +118,7 @@ DECL_COMMAND(command_end_stop_query, "end_stop_query oid=%c");
 void
 end_stop_task(void)
 {
-    static uint16_t next;
-    if (!sched_check_periodic(50, &next))
+    if (!sched_check_wake(&endstop_wake))
         return;
     uint8_t oid;
     struct end_stop *e;
