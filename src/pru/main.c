@@ -166,8 +166,6 @@ shutdown_handler(uint32_t *args)
 {
     shutdown("Request from PRU0");
 }
-
-// Empty message (for ack/nak transmission)
 const struct command_parser shutdown_request = {
     .func = shutdown_handler,
 };

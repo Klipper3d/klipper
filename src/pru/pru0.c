@@ -119,7 +119,7 @@ check_can_read(void)
 
     // Parse data into message blocks
     for (;;) {
-        uint8_t pop_count, msglen = len > 64 ? 64 : len;
+        uint8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
         int8_t ret = command_find_block(p, msglen, &pop_count);
         if (!ret)
             break;
