@@ -156,8 +156,10 @@ static struct timer wrap_timer = {
 #define TIMER_IDLE_REPEAT_TICKS 8000
 #define TIMER_REPEAT_TICKS 3000
 
-#define TIMER_MIN_TRY_TICKS 60 // 40 ticks to exit irq; 20 ticks of progress
-#define TIMER_DEFER_REPEAT_TICKS 200
+#define TIMER_MIN_ENTRY_TICKS 44
+#define TIMER_MIN_EXIT_TICKS 47
+#define TIMER_MIN_TRY_TICKS (TIMER_MIN_ENTRY_TICKS + TIMER_MIN_EXIT_TICKS)
+#define TIMER_DEFER_REPEAT_TICKS 256
 
 // Hardware timer IRQ handler - dispatch software timers
 ISR(TIMER1_COMPA_vect)
