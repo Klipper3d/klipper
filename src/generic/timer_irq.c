@@ -30,12 +30,6 @@ timer_is_before(uint32_t time1, uint32_t time2)
     return (int32_t)(time1 - time2) < 0;
 }
 
-// Called by main code once every millisecond.  (IRQs disabled.)
-void
-timer_periodic(void)
-{
-}
-
 static uint32_t timer_repeat_until;
 #define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
 #define TIMER_REPEAT_TICKS timer_from_us(100)

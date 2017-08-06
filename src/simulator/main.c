@@ -85,11 +85,6 @@ timer_kick(void)
 {
 }
 
-void
-timer_periodic(void)
-{
-}
-
 
 /****************************************************************
  * Turn stdin/stdout into serial console

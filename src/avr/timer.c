@@ -85,6 +85,15 @@ timer_kick(void)
     TIFR1 = 1<<OCF1A;
 }
 
+static struct timer wrap_timer;
+
+void
+timer_reset(void)
+{
+    sched_add_timer(&wrap_timer);
+}
+DECL_SHUTDOWN(timer_reset);
+
 void
 timer_init(void)
 {
@@ -96,6 +105,7 @@ timer_init(void)
     irqstatus_t flag = irq_save();
     timer_kick();
     timer_repeat_set(timer_get() + 50);
+    timer_reset();
     TIFR1 = 1<<TOV1;
     // enable interrupt
     TIMSK1 = 1<<OCIE1A;
@@ -115,25 +125,33 @@ uint32_t
 timer_read_time(void)
 {
     irqstatus_t flag = irq_save();
-    union u32_u calc;
-    calc.val = timer_get();
+    union u32_u calc = { .val = timer_get() };
     calc.hi = timer_high;
-    if (TIFR1 & (1<<TOV1) && calc.lo < 0x8000)
-        calc.hi++;
+    if (unlikely(TIFR1 & (1<<TOV1))) {
+        irq_restore(flag);
+        if (calc.b1 < 0xff)
+            calc.hi++;
+        return calc.val;
+    }
     irq_restore(flag);
     return calc.val;
 }
 
-// Called by main code once every millisecond.  (IRQs disabled.)
-void
-timer_periodic(void)
+// Timer that runs every ~2ms - allows 16bit comparison optimizations
+static uint_fast8_t
+timer_event(struct timer *t)
 {
     if (TIFR1 & (1<<TOV1)) {
         // Hardware timer has overflowed - update overflow counter
         TIFR1 = 1<<TOV1;
         timer_high++;
     }
+    wrap_timer.waketime += 0x8000;
+    return SF_RESCHEDULE;
 }
+static struct timer wrap_timer = {
+    .func = timer_event,
+};
 
 #define TIMER_IDLE_REPEAT_TICKS 8000
 #define TIMER_REPEAT_TICKS 3000

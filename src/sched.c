@@ -24,12 +24,11 @@ static struct timer sentinel_timer, deleted_timer;
 
 // The periodic_timer simplifies the timer code by ensuring there is
 // always a timer on the timer list and that there is always a timer
-// not more than 1ms in the future.
+// not far in the future.
 static uint_fast8_t
 periodic_event(struct timer *t)
 {
-    timer_periodic();
-    periodic_timer.waketime += timer_from_us(1000);
+    periodic_timer.waketime += timer_from_us(100000);
     sentinel_timer.waketime = periodic_timer.waketime + 0x80000000;
     return SF_RESCHEDULE;
 }
@@ -162,9 +161,9 @@ sched_timer_dispatch(void)
     return next_waketime;
 }
 
-// Shutdown all user timers on an emergency stop.
-void
-sched_timer_shutdown(void)
+// Remove all user timers on a shutdown
+static void
+sched_timer_reset(void)
 {
     timer_list = &deleted_timer;
     deleted_timer.waketime = periodic_timer.waketime;
@@ -172,7 +171,6 @@ sched_timer_shutdown(void)
     periodic_timer.next = &sentinel_timer;
     timer_kick();
 }
-DECL_SHUTDOWN(sched_timer_shutdown);
 
 
 /****************************************************************
@@ -230,6 +228,7 @@ run_shutdown(int reason)
     if (!shutdown_status)
         shutdown_reason = reason;
     shutdown_status = 2;
+    sched_timer_reset();
     extern void ctr_run_shutdownfuncs(void);
     ctr_run_shutdownfuncs();
     shutdown_status = 1;
