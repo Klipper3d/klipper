@@ -16,13 +16,13 @@ struct pwm_out_s {
     uint8_t value, default_value;
 };
 
-static uint8_t
+static uint_fast8_t
 pwm_end_event(struct timer *timer)
 {
     shutdown("Missed scheduling of next hard pwm event");
 }
 
-static uint8_t
+static uint_fast8_t
 pwm_event(struct timer *timer)
 {
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
