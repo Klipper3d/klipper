@@ -25,7 +25,7 @@ static struct pollfd main_pfd[2];
 #define MP_TTY_IDX   1
 
 // Report 'errno' in a message written to stderr
-static void
+void
 report_errno(char *where, int rc)
 {
     int e = errno;
@@ -37,7 +37,7 @@ report_errno(char *where, int rc)
  * Setup
  ****************************************************************/
 
-static int
+int
 set_non_blocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL);
