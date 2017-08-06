@@ -91,14 +91,6 @@ DECL_SHUTDOWN(timer_reset);
 void
 timer_init(void)
 {
-    if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
-        // Program the clock prescaler
-        irqstatus_t flag = irq_save();
-        CLKPR = 0x80;
-        CLKPR = CONFIG_AVR_CLKPR;
-        irq_restore(flag);
-    }
-
     // no outputs
     TCCR1A = 0;
     // Normal Mode
@@ -110,9 +102,6 @@ timer_init(void)
     // enable interrupt
     TIMSK1 = 1<<OCIE1A;
     irq_restore(flag);
-
-    // Enable idle on sleep instruction
-    SMCR = 0x01;
 }
 DECL_INIT(timer_init);
 

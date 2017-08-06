@@ -39,6 +39,27 @@ dynmem_end(void)
  * Misc functions
  ****************************************************************/
 
+// Initialize the clock prescaler (if necessary)
+void
+prescaler_init(void)
+{
+    if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
+        irqstatus_t flag = irq_save();
+        CLKPR = 0x80;
+        CLKPR = CONFIG_AVR_CLKPR;
+        irq_restore(flag);
+    }
+}
+DECL_INIT(prescaler_init);
+
+// The "sleep" instruction should cause the processor to enter "idle mode"
+void
+sleep_init(void)
+{
+    SMCR = 0x01;
+}
+DECL_INIT(sleep_init);
+
 // Optimized crc16_ccitt for the avr processor
 uint16_t
 crc16_ccitt(char *buf, uint8_t len)
