@@ -49,6 +49,7 @@ void
 irq_wait(void)
 {
     asm("slp 1");
+    irq_poll();
 }
 
 // Set the next timer wake up time
@@ -56,13 +57,6 @@ static void
 timer_set(uint32_t value)
 {
     CT_IEP.TMR_CMP0 = value;
-}
-
-// Return the next scheduled wake up time
-uint32_t
-timer_get_next(void)
-{
-    return CT_IEP.TMR_CMP0;
 }
 
 // Return the current time (in absolute clock ticks).

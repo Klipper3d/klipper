@@ -6,6 +6,7 @@
 
 #include <setjmp.h> // setjmp
 #include "autoconf.h" // CONFIG_*
+#include "basecmd.h" // stats_update
 #include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
@@ -177,13 +178,23 @@ sched_timer_reset(void)
 
 
 /****************************************************************
- * Task waking
+ * Tasks
  ****************************************************************/
+
+static int_fast8_t tasks_pending;
 
 // Note that at least one task is ready to run
 void
 sched_wake_tasks(void)
 {
+    tasks_pending = 0;
+}
+
+// Check if tasks need to be run
+uint8_t
+sched_tasks_busy(void)
+{
+    return tasks_pending >= 0;
 }
 
 // Note that a task is ready to run
@@ -202,6 +213,40 @@ sched_check_wake(struct task_wake *w)
         return 0;
     writeb(&w->wake, 0);
     return 1;
+}
+
+// Main task dispatch loop
+static void
+run_tasks(void)
+{
+    uint32_t start = timer_read_time();
+    for (;;) {
+        // Check if can sleep
+        irq_disable();
+        if (!tasks_pending) {
+            // Tasks are busy - don't sleep
+            irq_enable();
+        } else {
+            // Sleep processor (only run timers) until tasks pending
+            tasks_pending = -1;
+            uint32_t sleep_start = timer_read_time();
+            do {
+                irq_wait();
+            } while (!sched_tasks_busy());
+            irq_enable();
+            start += timer_read_time() - sleep_start;
+        }
+        tasks_pending = 1;
+
+        // Run all tasks
+        extern void ctr_run_taskfuncs(void);
+        ctr_run_taskfuncs();
+
+        // Update statistics
+        uint32_t cur = timer_read_time();
+        stats_update(start, cur);
+        start = cur;
+    }
 }
 
 
@@ -274,23 +319,19 @@ sched_shutdown(uint_fast8_t reason)
 
 
 /****************************************************************
- * Startup and background task processing
+ * Startup
  ****************************************************************/
-
-// Auto-generated code in out/compile_time_requests.c
-extern void ctr_run_initfuncs(void);
-extern void ctr_run_taskfuncs(void);
 
 // Main loop of program
 void
 sched_main(void)
 {
+    extern void ctr_run_initfuncs(void);
     ctr_run_initfuncs();
 
     int ret = setjmp(shutdown_jmp);
     if (ret)
         run_shutdown(ret);
 
-    for (;;)
-        ctr_run_taskfuncs();
+    run_tasks();
 }

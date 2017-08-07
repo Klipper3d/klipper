@@ -6,7 +6,6 @@
 
 #include <avr/interrupt.h> // TCNT1
 #include "autoconf.h" // CONFIG_AVR_CLKPR
-#include "basecmd.h" // stats_note_sleep
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
@@ -61,12 +60,6 @@ static inline void
 timer_set(uint16_t next)
 {
     OCR1A = next;
-}
-
-static inline uint16_t
-timer_get_next(void)
-{
-    return OCR1A;
 }
 
 static inline void
@@ -213,22 +206,8 @@ done:
 void
 timer_task(void)
 {
-    static uint16_t last_timer;
-    uint16_t lst = last_timer;
     irq_disable();
-    uint16_t next = timer_get_next(), cur = timer_get();
-    if (lst != next) {
-        timer_repeat_set(cur + TIMER_IDLE_REPEAT_TICKS);
-        irq_enable();
-        last_timer = next;
-        return;
-    }
-
-    // Sleep the processor
-    irq_wait();
-    uint16_t post_sleep = timer_get();
-    timer_repeat_set(post_sleep + TIMER_IDLE_REPEAT_TICKS);
+    timer_repeat_set(timer_get() + TIMER_IDLE_REPEAT_TICKS);
     irq_enable();
-    stats_note_sleep(post_sleep - cur);
 }
 DECL_TASK(timer_task);

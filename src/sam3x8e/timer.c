@@ -18,13 +18,6 @@ timer_set(uint32_t value)
     TC0->TC_CHANNEL[0].TC_RA = value;
 }
 
-// Return the next scheduled wake up time
-uint32_t
-timer_get_next(void)
-{
-    return TC0->TC_CHANNEL[0].TC_RA;
-}
-
 // Return the current time (in absolute clock ticks).
 uint32_t
 timer_read_time(void)
