@@ -67,7 +67,10 @@ timer_repeat_set(uint16_t next)
 {
     // Timer1B is used to limit the number of timers run from a timer1A irq
     OCR1B = next;
-    TIFR1 = 1<<OCF1B;
+    // This is "TIFR1 = 1<<OCF1B" - gcc handles that poorly, so it's hand coded
+    uint8_t dummy;
+    asm volatile("ldi %0, %2\n    out %1, %0"
+                 : "=d"(dummy) : "i"(&TIFR1 - 0x20), "i"(1<<OCF1B));
 }
 
 // Activate timer dispatch as soon as possible
@@ -162,52 +165,43 @@ ISR(TIMER1_COMPA_vect)
         // Run the next software timer
         next = sched_timer_dispatch();
 
-        int16_t diff = timer_get() - next;
-        if (likely(diff >= 0)) {
-            // Another timer is pending - briefly allow irqs to fire
+        for (;;) {
+            int16_t diff = timer_get() - next;
+            if (likely(diff >= 0)) {
+                // Another timer is pending - briefly allow irqs and then run it
+                irq_enable();
+                if (unlikely(TIFR1 & (1<<OCF1B)))
+                    goto check_defer;
+                irq_disable();
+                break;
+            }
+
+            if (likely(diff <= -TIMER_MIN_TRY_TICKS))
+                // Schedule next timer normally
+                goto done;
+
             irq_enable();
             if (unlikely(TIFR1 & (1<<OCF1B)))
-                // Too many repeat timers - must exit irq handler
-                goto force_defer;
+                goto check_defer;
             irq_disable();
             continue;
-        }
 
-        if (likely(diff <= -TIMER_MIN_TRY_TICKS))
-            // Schedule next timer normally
-            goto done;
-
-        // Next timer in very near future - wait for it to be ready
-        do {
-            irq_enable();
-            if (unlikely(TIFR1 & (1<<OCF1B)))
-                goto force_defer;
+        check_defer:
+            // Check if there are too many repeat timers
             irq_disable();
-            diff = timer_get() - next;
-        } while (diff < 0);
+            uint16_t now = timer_get();
+            if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
+                shutdown("Rescheduled timer in the past");
+            if (sched_tasks_busy()) {
+                timer_repeat_set(now + TIMER_REPEAT_TICKS);
+                next = now + TIMER_DEFER_REPEAT_TICKS;
+                goto done;
+            }
+            timer_repeat_set(now + TIMER_IDLE_REPEAT_TICKS);
+            timer_set(now);
+        }
     }
-
-force_defer:
-    // Too many repeat timers - force a pause so tasks aren't starved
-    irq_disable();
-    uint16_t now = timer_get();
-    if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
-        shutdown("Rescheduled timer in the past");
-    timer_repeat_set(now + TIMER_REPEAT_TICKS);
-    next = now + TIMER_DEFER_REPEAT_TICKS;
 
 done:
     timer_set(next);
-    return;
 }
-
-// Periodic background task that temporarily boosts priority of
-// timers.  This helps prioritize timers when tasks are idling.
-void
-timer_task(void)
-{
-    irq_disable();
-    timer_repeat_set(timer_get() + TIMER_IDLE_REPEAT_TICKS);
-    irq_enable();
-}
-DECL_TASK(timer_task);
