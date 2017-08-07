@@ -65,6 +65,8 @@ DECL_INIT(serial_init);
 ISR(USART0_RX_vect)
 {
     uint8_t data = UDR0;
+    if (data == MESSAGE_SYNC)
+        sched_wake_tasks();
     if (receive_pos >= sizeof(receive_buf))
         // Serial overflow - ignore it as crc error will force retransmit
         return;
@@ -104,6 +106,7 @@ console_pop_input(uint8_t len)
             memmove(&receive_buf[copied], &receive_buf[copied + len]
                     , needcopy - copied);
             copied = needcopy;
+            sched_wake_tasks();
         }
         irqstatus_t flag = irq_save();
         if (rpos != readb(&receive_pos)) {

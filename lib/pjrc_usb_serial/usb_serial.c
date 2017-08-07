@@ -325,7 +325,7 @@ void usb_init(void)
         UDCON = 0;				// enable attach resistor
 	usb_configuration = 0;
 	cdc_line_rtsdtr = 0;
-        UDIEN = (1<<EORSTE)|(1<<SOFE);
+        UDIEN = (1<<EORSTE);
 	sei();
 }
 
@@ -359,6 +359,7 @@ int16_t usb_serial_getchar(void)
 			UEINTX = 0x6B;
 			goto retry;
 		}	
+		UEIENX = (1<<RXOUTE);
 		SREG = intr_state;
 		return -1;
 	}
@@ -775,7 +776,14 @@ static inline void usb_ack_out(void)
 //
 ISR(USB_COM_vect)
 {
-        uint8_t intbits;
+        uint8_t intbits = UEINT;
+        if (intbits & (1<<CDC_RX_ENDPOINT)) {
+                UENUM = CDC_RX_ENDPOINT;
+                UEIENX = 0;
+                extern void sched_wake_tasks(void);
+                sched_wake_tasks();
+                return;
+        }
 	const uint8_t *list;
         const uint8_t *cfg;
 	uint8_t i, n, len, en;

@@ -85,7 +85,10 @@ timer_kick(void)
 static void
 _irq_poll(void)
 {
-    if (CT_INTC.SECR0 & (1 << IEP_EVENT)) {
+    uint32_t secr0 = CT_INTC.SECR0;
+    if (secr0 & (1 << KICK_PRU1_EVENT))
+        sched_wake_tasks();
+    if (secr0 & (1 << IEP_EVENT)) {
         CT_IEP.TMR_CMP_STS = 0xff;
         uint32_t next = timer_dispatch_many();
         timer_set(next);
@@ -121,7 +124,6 @@ console_task(void)
     const struct command_parser *cp = SHARED_MEM->next_command;
     if (!cp)
         return;
-    barrier();
 
     if (sched_is_shutdown() && !(cp->flags & HF_IN_SHUTDOWN)) {
         sched_report_shutdown();

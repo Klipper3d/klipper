@@ -56,6 +56,8 @@ UART_Handler(void)
     uint32_t status = UART->UART_SR;
     if (status & UART_SR_RXRDY) {
         uint8_t data = UART->UART_RHR;
+        if (data == MESSAGE_SYNC)
+            sched_wake_tasks();
         if (receive_pos >= sizeof(receive_buf))
             // Serial overflow - ignore it as crc error will force retransmit
             return;
@@ -94,6 +96,7 @@ console_pop_input(uint32_t len)
             memmove(&receive_buf[copied], &receive_buf[copied + len]
                     , needcopy - copied);
             copied = needcopy;
+            sched_wake_tasks();
         }
         irqstatus_t flag = irq_save();
         if (rpos != readl(&receive_pos)) {

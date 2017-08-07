@@ -28,6 +28,9 @@ static struct timer sentinel_timer, deleted_timer;
 static uint_fast8_t
 periodic_event(struct timer *t)
 {
+    // Make sure the stats task runs periodically
+    sched_wake_tasks();
+    // Reschedule timer
     periodic_timer.waketime += timer_from_us(100000);
     sentinel_timer.waketime = periodic_timer.waketime + 0x80000000;
     return SF_RESCHEDULE;
@@ -177,10 +180,17 @@ sched_timer_reset(void)
  * Task waking
  ****************************************************************/
 
+// Note that at least one task is ready to run
+void
+sched_wake_tasks(void)
+{
+}
+
 // Note that a task is ready to run
 void
 sched_wake_task(struct task_wake *w)
 {
+    sched_wake_tasks();
     writeb(&w->wake, 1);
 }
 

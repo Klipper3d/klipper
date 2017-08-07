@@ -29,6 +29,7 @@ struct task_wake {
 void sched_add_timer(struct timer*);
 void sched_del_timer(struct timer *del);
 unsigned int sched_timer_dispatch(void);
+void sched_wake_tasks(void);
 void sched_wake_task(struct task_wake *w);
 uint8_t sched_check_wake(struct task_wake *w);
 uint8_t sched_is_shutdown(void);

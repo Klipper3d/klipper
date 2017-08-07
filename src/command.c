@@ -11,7 +11,7 @@
 #include "board/misc.h" // crc16_ccitt
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
-#include "sched.h" // DECL_TASK
+#include "sched.h" // sched_is_shutdown
 
 static uint8_t next_sequence = MESSAGE_DEST;
 

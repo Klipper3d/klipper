@@ -42,8 +42,10 @@ static void
 console_pop_input(uint8_t len)
 {
     uint8_t needcopy = receive_pos - len;
-    if (needcopy)
+    if (needcopy) {
         memmove(receive_buf, &receive_buf[len], needcopy);
+        sched_wake_tasks();
+    }
     receive_pos = needcopy;
 }
 
