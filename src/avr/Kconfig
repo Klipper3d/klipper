@@ -79,7 +79,6 @@ config AVR_STACK_SIZE
 
 config AVR_WATCHDOG
     bool
-    depends on !SIMULAVR
     default y
 config AVR_USBSERIAL
     bool "Use USB for communication (instead of serial)"
