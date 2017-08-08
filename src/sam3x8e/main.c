@@ -25,7 +25,7 @@ DECL_TASK(watchdog_reset);
 void
 watchdog_init(void)
 {
-    uint32_t timeout = 32768 / 2;  // 500ms timeout
+    uint32_t timeout = 500 * 32768 / 128 / 1000;  // 500ms timeout
     WDT->WDT_MR = WDT_MR_WDRSTEN | WDT_MR_WDV(timeout) | WDT_MR_WDD(timeout);
 }
 DECL_INIT(watchdog_init);
