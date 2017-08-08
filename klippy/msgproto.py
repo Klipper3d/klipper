@@ -183,6 +183,7 @@ class MessageParser:
     error = error
     def __init__(self):
         self.unknown = UnknownFormat()
+        self.command_ids = []
         self.messages_by_id = {}
         self.messages_by_name = {}
         self.static_strings = {}
@@ -310,6 +311,7 @@ class MessageParser:
             data = json.loads(data)
             messages = data.get('messages')
             commands = data.get('commands')
+            self.command_ids = commands
             responses = data.get('responses')
             self._init_messages(messages, commands+responses)
             static_strings = data.get('static_strings', {})

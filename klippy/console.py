@@ -15,6 +15,7 @@ help_txt = """
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     SET   : Create a local variable (eg, "SET myvar 123.4")
+    LIST  : List available mcu commands, local commands, and local variables
     HELP  : Show this text
   All commands also support evaluation by enclosing an expression in { }.
   For example, "reset_step_clock oid=4 clock={clock + freq}".  In addition
@@ -39,7 +40,8 @@ class KeyboardReader:
         self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
-            "DELAY": self.command_DELAY, "HELP": self.command_HELP,
+            "DELAY": self.command_DELAY, "LIST": self.command_LIST,
+            "HELP": self.command_HELP,
         }
         self.eval_globals = {}
     def connect(self, eventtime):
@@ -83,6 +85,18 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         self.ser.send(msg, minclock=val)
+    def command_LIST(self, parts):
+        self.update_evals(self.reactor.monotonic())
+        mp = self.ser.msgparser
+        out = "Available mcu commands:"
+        out += "\n  ".join([""] + sorted([
+            mp.messages_by_id[i].msgformat for i in mp.command_ids]))
+        out += "\nAvailable artificial commands:"
+        out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
+        out += "\nAvailable local variables:"
+        out += "\n  ".join([""] + ["%s: %s" % (k, v)
+                                   for k, v in sorted(self.eval_globals.items())])
+        self.output(out)
     def command_HELP(self, parts):
         self.output(help_txt)
     def translate(self, line, eventtime):
@@ -91,7 +105,7 @@ class KeyboardReader:
             self.update_evals(eventtime)
             try:
                 for i in range(1, len(evalparts), 2):
-                    e = eval(evalparts[i], self.eval_globals)
+                    e = eval(evalparts[i], dict(self.eval_globals))
                     if type(e) == type(0.):
                         e = int(e)
                     evalparts[i] = str(e)
