@@ -181,20 +181,24 @@ sched_timer_reset(void)
  * Tasks
  ****************************************************************/
 
-static int_fast8_t tasks_pending;
+static int_fast8_t tasks_status;
+
+#define TS_IDLE      -1
+#define TS_REQUESTED 0
+#define TS_RUNNING   1
 
 // Note that at least one task is ready to run
 void
 sched_wake_tasks(void)
 {
-    tasks_pending = 0;
+    tasks_status = TS_REQUESTED;
 }
 
 // Check if tasks need to be run
 uint8_t
 sched_tasks_busy(void)
 {
-    return tasks_pending >= 0;
+    return tasks_status >= TS_REQUESTED;
 }
 
 // Note that a task is ready to run
@@ -222,21 +226,20 @@ run_tasks(void)
     uint32_t start = timer_read_time();
     for (;;) {
         // Check if can sleep
-        irq_disable();
-        if (!tasks_pending) {
-            // Tasks are busy - don't sleep
+        if (tasks_status != TS_REQUESTED) {
+            start -= timer_read_time();
+            irq_disable();
+            if (tasks_status != TS_REQUESTED) {
+                // Sleep processor (only run timers) until tasks woken
+                tasks_status = TS_IDLE;
+                do {
+                    irq_wait();
+                } while (tasks_status != TS_REQUESTED);
+            }
             irq_enable();
-        } else {
-            // Sleep processor (only run timers) until tasks pending
-            tasks_pending = -1;
-            uint32_t sleep_start = timer_read_time();
-            do {
-                irq_wait();
-            } while (!sched_tasks_busy());
-            irq_enable();
-            start += timer_read_time() - sleep_start;
+            start += timer_read_time();
         }
-        tasks_pending = 1;
+        tasks_status = TS_RUNNING;
 
         // Run all tasks
         extern void ctr_run_taskfuncs(void);
