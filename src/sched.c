@@ -329,6 +329,8 @@ sched_main(void)
     extern void ctr_run_initfuncs(void);
     ctr_run_initfuncs();
 
+    sendf("starting");
+
     int ret = setjmp(shutdown_jmp);
     if (ret)
         run_shutdown(ret);
