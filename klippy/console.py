@@ -15,6 +15,7 @@ help_txt = """
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     SET   : Create a local variable (eg, "SET myvar 123.4")
+    STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
     HELP  : Show this text
   All commands also support evaluation by enclosing an expression in { }.
@@ -41,7 +42,7 @@ class KeyboardReader:
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
             "DELAY": self.command_DELAY, "LIST": self.command_LIST,
-            "HELP": self.command_HELP,
+            "STATS": self.command_STATS, "HELP": self.command_HELP,
         }
         self.eval_globals = {}
     def connect(self, eventtime):
@@ -85,6 +86,8 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         self.ser.send(msg, minclock=val)
+    def command_STATS(self, parts):
+        self.output(self.ser.stats(self.reactor.monotonic()))
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
         mp = self.ser.msgparser
