@@ -8,6 +8,22 @@ import sys, optparse, os, re, logging
 
 import reactor, serialhdl, pins, util, msgproto
 
+help_txt = """
+  This is a debugging console for the Klipper micro-controller.
+  In addition to mcu commands, the following artificial commands are
+  available:
+    PINS  : Load pin name aliases (eg, "PINS arduino")
+    DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
+    SET   : Create a local variable (eg, "SET myvar 123.4")
+    HELP  : Show this text
+  All commands also support evaluation by enclosing an expression in { }.
+  For example, "reset_step_clock oid=4 clock={clock + freq}".  In addition
+  to user defined variables (via the SET command) the following builtin
+  variables may be used in expressions:
+    clock : The current mcu clock time (as estimated by the host)
+    freq  : The mcu clock frequency
+"""
+
 re_eval = re.compile(r'\{(?P<eval>[^}]*)\}')
 
 class KeyboardReader:
@@ -22,16 +38,20 @@ class KeyboardReader:
         reactor.register_fd(self.fd, self.process_kbd)
         self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
         self.local_commands = {
-            "PINS": self.set_pin_map, "SET": self.set_var, "DELAY": self.delay
+            "PINS": self.command_PINS, "SET": self.command_SET,
+            "DELAY": self.command_DELAY, "HELP": self.command_HELP,
         }
         self.eval_globals = {}
     def connect(self, eventtime):
+        self.output(help_txt)
+        self.output("="*20 + " attempting to connect " + "="*20)
         self.ser.connect()
         self.ser.handle_default = self.handle_default
         self.mcu_freq = self.ser.msgparser.get_constant_float('CLOCK_FREQ')
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu)
         self.reactor.unregister_timer(self.connect_timer)
+        self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):
         sys.stdout.write("%s\n" % (msg,))
@@ -41,17 +61,17 @@ class KeyboardReader:
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.ser.get_clock(eventtime)
-    def set_pin_map(self, parts):
+    def command_PINS(self, parts):
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu, parts[1])
-    def set_var(self, parts):
+    def command_SET(self, parts):
         val = parts[2]
         try:
             val = float(val)
         except ValueError:
             pass
         self.eval_globals[parts[1]] = val
-    def delay(self, parts):
+    def command_DELAY(self, parts):
         try:
             val = int(parts[1])
         except ValueError as e:
@@ -63,6 +83,8 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         self.ser.send(msg, minclock=val)
+    def command_HELP(self, parts):
+        self.output(help_txt)
     def translate(self, line, eventtime):
         evalparts = re_eval.split(line)
         if len(evalparts) > 1:
