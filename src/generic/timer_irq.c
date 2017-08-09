@@ -36,17 +36,6 @@ static uint32_t timer_repeat_until;
 #define TIMER_MIN_TRY_TICKS timer_from_us(1)
 #define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
-// Reschedule timers after a brief pause to prevent task starvation
-static uint32_t noinline
-force_defer(uint32_t next)
-{
-    uint32_t now = timer_read_time();
-    if (timer_is_before(next + timer_from_us(1000), now))
-        shutdown("Rescheduled timer in the past");
-    timer_repeat_until = now + TIMER_REPEAT_TICKS;
-    return now + TIMER_DEFER_REPEAT_TICKS;
-}
-
 // Invoke timers - called from board irq code.
 uint32_t
 timer_dispatch_many(void)
@@ -62,9 +51,16 @@ timer_dispatch_many(void)
             // Schedule next timer normally.
             return next;
 
-        if (unlikely(timer_is_before(tru, now)))
-            // Too many repeat timers from a single interrupt - force a pause
-            return force_defer(next);
+        if (unlikely(timer_is_before(tru, now))) {
+            // Check if there are too many repeat timers
+            if (diff < (int32_t)(-timer_from_us(1000)))
+                shutdown("Rescheduled timer in the past");
+            if (sched_tasks_busy()) {
+                timer_repeat_until = now + TIMER_REPEAT_TICKS;
+                return now + TIMER_DEFER_REPEAT_TICKS;
+            }
+            timer_repeat_until = tru = now + TIMER_IDLE_REPEAT_TICKS;
+        }
 
         // Next timer in the past or near future - wait for it to be ready
         irq_enable();
@@ -74,20 +70,14 @@ timer_dispatch_many(void)
     }
 }
 
-// Periodic background task that temporarily boosts priority of
-// timers.  This helps prioritize timers when tasks are idling.
+// Make sure timer_repeat_until doesn't wrap 32bit comparisons
 void
 timer_task(void)
 {
+    uint32_t now = timer_read_time();
     irq_disable();
-    timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;
+    if (timer_is_before(timer_repeat_until, now))
+        timer_repeat_until = now;
     irq_enable();
 }
 DECL_TASK(timer_task);
-
-void
-timer_irq_shutdown(void)
-{
-    timer_repeat_until = timer_read_time() + TIMER_IDLE_REPEAT_TICKS;
-}
-DECL_SHUTDOWN(timer_irq_shutdown);
