@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt, matplotlib.dates as mdates
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
 STATS_INTERVAL=5.
+TASK_MAX=0.0025
 
 def parse_log(logname):
     f = open(logname, 'rb')
@@ -80,7 +81,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
         hostbuffers.append(hb)
         times.append(datetime.datetime.utcfromtimestamp(st))
         bwdeltas.append(100. * (bw - lastbw) / (maxbw * timedelta))
-        loads.append(100. * load / .001)
+        loads.append(100. * load / TASK_MAX)
         awake.append(100. * float(d.get('mcu_awake', 0.)) / STATS_INTERVAL)
         lasttime = st
         lastbw = bw
