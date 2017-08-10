@@ -137,16 +137,20 @@ timer_read_time(void)
 static uint_fast8_t
 timer_event(struct timer *t)
 {
+    union u32_u *nextwake = (void*)&wrap_timer.waketime;
     if (TIFR1 & (1<<TOV1)) {
         // Hardware timer has overflowed - update overflow counter
         TIFR1 = 1<<TOV1;
         timer_high++;
+        *nextwake = (union u32_u){ .hi = timer_high, .lo = 0x8000 };
+    } else {
+        *nextwake = (union u32_u){ .hi = timer_high + 1, .lo = 0x0000 };
     }
-    wrap_timer.waketime += 0x8000;
     return SF_RESCHEDULE;
 }
 static struct timer wrap_timer = {
     .func = timer_event,
+    .waketime = 0x8000,
 };
 
 #define TIMER_IDLE_REPEAT_TICKS 8000
