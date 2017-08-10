@@ -35,10 +35,9 @@ struct stepper {
 #if CONFIG_NO_UNSTEP_DELAY
     uint16_t count;
 #define next_step_time time.waketime
-#define min_step_time time.waketime
 #else
     uint32_t count;
-    uint32_t next_step_time, min_step_time;
+    uint32_t next_step_time;
 #endif
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
@@ -55,7 +54,7 @@ enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
-stepper_load_next(struct stepper *s)
+stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     struct stepper_move *m = s->first;
     if (!m) {
@@ -67,7 +66,6 @@ stepper_load_next(struct stepper *s)
     }
 
     s->next_step_time += m->interval;
-    s->time.waketime = s->next_step_time;
     s->add = m->add;
     s->interval = m->interval + m->add;
     if (CONFIG_NO_UNSTEP_DELAY) {
@@ -76,11 +74,17 @@ stepper_load_next(struct stepper *s)
         s->count = m->count;
     } else {
         // On faster mcus, it is necessary to schedule unstep events
-        // and so there are twice as many events.
+        // and so there are twice as many events.  Also check that the
+        // next step event isn't too close to the last unstep.
+        if (unlikely(timer_is_before(s->next_step_time, min_next_time))) {
+            if ((int32_t)(s->next_step_time - min_next_time)
+                < (int32_t)(-timer_from_us(1000)))
+                shutdown("stepper too far in past");
+            s->time.waketime = min_next_time;
+        } else {
+            s->time.waketime = s->next_step_time;
+        }
         s->count = m->count * 2;
-        if (timer_is_before(s->next_step_time + timer_from_us(1000)
-                            , s->min_step_time))
-            shutdown("stepper too far in past");
     }
     if (m->flags & MF_DIR) {
         s->position = -s->position + m->count;
@@ -114,32 +118,30 @@ stepper_event(struct timer *t)
                 s->interval += s->add;
             return SF_RESCHEDULE;
         }
-        uint_fast8_t ret = stepper_load_next(s);
+        uint_fast8_t ret = stepper_load_next(s, 0);
         gpio_out_toggle(s->step_pin);
         return ret;
     }
 
-    // On faster mcus, it is necessary to wait between step and unstep
-    uint32_t curtime = timer_read_time();
-    if (unlikely(timer_is_before(curtime, s->min_step_time)))
-        // Can't step/unstep yet - busy wait in scheduler
-        goto busy_wait;
+    // On faster mcus, it is necessary to schedule the unstep event
+    uint32_t min_next_time = timer_read_time() + UNSTEP_TIME;
     gpio_out_toggle(s->step_pin);
-    s->min_step_time = curtime + UNSTEP_TIME;
     s->count--;
-    if (s->count & 1)
-        // Started step - now busy wait in scheduler until unstep ready
-        goto busy_wait;
+    if (likely(s->count & 1))
+        // Schedule unstep event
+        goto reschedule_min;
     if (likely(s->count)) {
         s->next_step_time += s->interval;
         s->interval += s->add;
+        if (unlikely(timer_is_before(s->next_step_time, min_next_time)))
+            // The next step event is too close - push it back
+            goto reschedule_min;
         s->time.waketime = s->next_step_time;
         return SF_RESCHEDULE;
     }
-    return stepper_load_next(s);
-
-busy_wait:
-    s->time.waketime = curtime;
+    return stepper_load_next(s, min_next_time);
+reschedule_min:
+    s->time.waketime = min_next_time;
     return SF_RESCHEDULE;
 }
 
@@ -200,9 +202,7 @@ command_queue_step(uint32_t *args)
         s->plast = &m->next;
     } else {
         s->first = m;
-        if (!CONFIG_NO_UNSTEP_DELAY)
-            s->min_step_time = s->next_step_time + m->interval;
-        stepper_load_next(s);
+        stepper_load_next(s, s->next_step_time + m->interval);
         sched_add_timer(&s->time);
     }
     irq_enable();
@@ -232,7 +232,6 @@ command_reset_step_clock(uint32_t *args)
     if (s->count)
         shutdown("Can't reset time when stepper active");
     s->next_step_time = waketime;
-    s->min_step_time = s->next_step_time;
     s->flags |= SF_LAST_RESET;
     irq_enable();
 }
