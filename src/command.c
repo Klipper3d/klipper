@@ -217,7 +217,7 @@ const struct command_encoder encode_acknak PROGMEM = {
 
 enum { CF_NEED_SYNC=1<<0, CF_NEED_VALID=1<<1 };
 
-// Find the next complete message.
+// Find the next complete message block
 int8_t
 command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count)
 {

@@ -8,13 +8,14 @@ The **src/** directory contains the C source for the micro-controller
 code. The **src/avr/** directory contains specific code for Atmel
 ATmega micro-controllers. The **src/sam3x8e/** directory contains code
 specific to the Arduino Due style ARM micro-controllers. The
-**src/simulator/** contains code stubs that allow the micro-controller
-to be test compiled on other architectures. The **src/generic/**
-directory contains helper code that may be useful across different
-host architectures. The build arranges for includes of
-"board/somefile.h" to first look in the current architecture directory
-(eg, src/avr/somefile.h) and then in the generic directory (eg,
-src/generic/somefile.h).
+**src/pru/** directory contains code specific to the Beaglebone's
+on-board PRU micro-controller. The **src/simulator/** contains code
+stubs that allow the micro-controller to be test compiled on other
+architectures. The **src/generic/** directory contains helper code
+that may be useful across different host architectures. The build
+arranges for includes of "board/somefile.h" to first look in the
+current architecture directory (eg, src/avr/somefile.h) and then in
+the generic directory (eg, src/generic/somefile.h).
 
 The **klippy/** directory contains the C and Python source for the
 host part of the software.
@@ -43,10 +44,12 @@ all functions that have been tagged with the DECL_INIT() macro. It
 then goes on to repeatedly run all functions tagged with the
 DECL_TASK() macro.
 
-One of the main task functions is command_task() located in
-**src/command.c**. This function processes incoming serial commands
-and runs the associated command function for them. Command functions
-are declared using the DECL_COMMAND() macro.
+One of the main task functions is command_dispatch() located in
+**src/command.c**. This function is called from the board specific
+input/output code (eg, **src/avr/serial.c**) and it runs the command
+functions associated with the commands found in the input
+stream. Command functions are declared using the DECL_COMMAND() macro
+(see the [protocol](Protocol.md) document for more information).
 
 Task, init, and command functions always run with interrupts enabled
 (however, they can temporarily disable interrupts if needed). These
