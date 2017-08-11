@@ -81,8 +81,14 @@ Step Benchmarks
 Below are the results of stepper performance tests. The numbers shown
 represent total number of steps per second on the micro-controller.
 
-| Micro-controller  | 1 stepper active | 3 steppers active |
-| ----------------- | ---------------- | ----------------- |
-| 20Mhz AVR         | 177K             | 117K              |
-| 16Mhz AVR         | 140K             | 93K               |
-| Arduino Due (ARM) | 462K             | 406K              |
+| Micro-controller  | Fastest step rate | 3 steppers active |
+| ----------------- | ----------------- | ----------------- |
+| 20Mhz AVR         | 189K              | 125K              |
+| 16Mhz AVR         | 151K              | 100K              |
+| Arduino Due (ARM) | 382K              | 337K              |
+| Beaglebone PRU    | 689K              | 689K              |
+
+On AVR platforms, the highest achievable step rate is with just one
+stepper stepping. On the Due, the highest step rate is with two
+simultaneous steppers stepping. On the PRU, the highest step rate is
+with three simultaneous steppers.
