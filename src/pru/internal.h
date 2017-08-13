@@ -3,6 +3,7 @@
 // Local definitions for PRU code
 
 #include <stdint.h> // uint32_t
+#include "command.h" // MESSAGE_MAX
 
 #define IEP_EVENT                 7
 #define KICK_ARM_EVENT            16
@@ -24,7 +25,7 @@
 // Layout of shared memory
 struct shared_response_buffer {
     uint32_t count;
-    char data[64];
+    char data[MESSAGE_MAX];
 };
 struct shared_mem {
     uint32_t signal;

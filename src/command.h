@@ -63,8 +63,8 @@ enum {
 // command.c
 char *command_parsef(char *p, char *maxend
                      , const struct command_parser *cp, uint32_t *args);
-uint8_t command_encodef(char *buf, uint8_t buf_len
-                        , const struct command_encoder *ce, va_list args);
+uint8_t command_encodef(char *buf, const struct command_encoder *ce
+                        , va_list args);
 void command_sendf(const struct command_encoder *ce, ...);
 void command_add_frame(char *buf, uint8_t msglen);
 int8_t command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count);

@@ -1,6 +1,6 @@
 // sam3x8e serial port
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -9,7 +9,7 @@
 #include "board/gpio.h" // gpio_peripheral
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_save
-#include "board/misc.h" // console_get_input
+#include "board/misc.h" // console_sendf
 #include "command.h" // DECL_CONSTANT
 #include "sam3x8e.h" // UART
 #include "sched.h" // DECL_INIT
@@ -152,7 +152,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
     // Generate message
     char *buf = &transmit_buf[tmax];
-    uint32_t msglen = command_encodef(buf, max_size, ce, args);
+    uint32_t msglen = command_encodef(buf, ce, args);
     command_add_frame(buf, msglen);
 
     // Start message transmit

@@ -94,14 +94,14 @@ error:
 
 // Encode a message
 uint8_t
-command_encodef(char *buf, uint8_t buf_len
-                , const struct command_encoder *ce, va_list args)
+command_encodef(char *buf, const struct command_encoder *ce, va_list args)
 {
-    if (buf_len <= MESSAGE_MIN)
+    uint8_t max_size = READP(ce->max_size);
+    if (max_size <= MESSAGE_MIN)
         // Ack/Nak message
-        return buf_len;
+        return max_size;
     char *p = &buf[MESSAGE_HEADER_SIZE];
-    char *maxend = &p[buf_len - MESSAGE_MIN];
+    char *maxend = &p[max_size - MESSAGE_MIN];
     uint8_t num_params = READP(ce->num_params);
     const uint8_t *param_types = READP(ce->param_types);
     *p++ = READP(ce->msg_id);

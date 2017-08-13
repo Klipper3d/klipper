@@ -135,14 +135,13 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Verify space for message
-    uint32_t max_size = ce->max_size;
     uint32_t send_push_pos = SHARED_MEM->send_push_pos;
     struct shared_response_buffer *s = &SHARED_MEM->send_data[send_push_pos];
-    if (max_size > sizeof(s->data) || readl(&s->count))
+    if (readl(&s->count))
         return;
 
     // Generate message
-    uint32_t msglen = command_encodef(s->data, max_size, ce, args);
+    uint32_t msglen = command_encodef(s->data, ce, args);
 
     // Signal PRU0 to transmit message
     writel(&s->count, msglen);

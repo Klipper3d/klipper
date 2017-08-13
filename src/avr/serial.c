@@ -1,6 +1,6 @@
 // AVR serial port code.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -8,7 +8,7 @@
 #include <string.h> // memmove
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/io.h" // readb
-#include "board/misc.h" // console_get_input
+#include "board/misc.h" // console_sendf
 #include "command.h" // DECL_CONSTANT
 #include "irq.h" // irq_save
 #include "pgm.h" // READP
@@ -161,7 +161,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
     // Generate message
     char *buf = &transmit_buf[tmax];
-    uint8_t msglen = command_encodef(buf, max_size, ce, args);
+    uint8_t msglen = command_encodef(buf, ce, args);
     command_add_frame(buf, msglen);
 
     // Start message transmit

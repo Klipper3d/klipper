@@ -1,20 +1,17 @@
 // Wrappers for AVR usb serial.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <avr/interrupt.h> // USART0_RX_vect
 #include <string.h> // memmove
 #include "../lib/pjrc_usb_serial/usb_serial.h"
+#include "board/misc.h" // console_sendf
 #include "command.h" // command_dispatch
-#include "pgm.h" // READP
 #include "sched.h" // DECL_INIT
 
-#define USBSERIAL_BUFFER_SIZE 64
-static char receive_buf[USBSERIAL_BUFFER_SIZE];
+static char receive_buf[MESSAGE_MAX];
 static uint8_t receive_pos;
-static char transmit_buf[USBSERIAL_BUFFER_SIZE];
 
 void
 usbserial_init(void)
@@ -68,13 +65,11 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Generate message
-    uint8_t max_size = READP(ce->max_size);
-    if (max_size > sizeof(transmit_buf))
-        return;
-    uint8_t msglen = command_encodef(transmit_buf, max_size, ce, args);
-    command_add_frame(transmit_buf, msglen);
+    static char buf[MESSAGE_MAX];
+    uint8_t msglen = command_encodef(buf, ce, args);
+    command_add_frame(buf, msglen);
 
     // Transmit message
-    usb_serial_write((void*)transmit_buf, msglen);
+    usb_serial_write((void*)buf, msglen);
     usb_serial_flush_output();
 }
