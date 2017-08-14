@@ -33,8 +33,15 @@ install_udev()
 {
     report_status "Installing pru udev rule..."
     sudo /bin/sh -c "cat > /etc/udev/rules.d/pru.rules" <<EOF
-KERNEL=="rpmsg_pru30", MODE="0666"
+KERNEL=="rpmsg_pru30", GROUP="tty", MODE="0660"
 EOF
+}
+
+# Step 5: Add user to tty group
+install_groups()
+{
+    report_status "Adding $USER to tty group..."
+    sudo adduser $USER tty
 }
 
 # Helper functions
@@ -63,3 +70,4 @@ install_main
 install_packages
 install_script
 install_udev
+install_groups

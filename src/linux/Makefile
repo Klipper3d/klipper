@@ -7,3 +7,7 @@ src-y += linux/pca9685.c linux/spidev.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 
 CFLAGS_klipper.elf += -lutil
+
+flash: $(OUT)klipper.elf
+	@echo "  Flashing"
+	$(Q)sudo ./scripts/flash-linux.sh
