@@ -51,6 +51,8 @@ class ClockSync:
             self.last_clock, self.last_clock_time)
     def is_active(self, eventtime):
         return self.queries_pending <= 4
+    def calibrate_clock(self, print_time, eventtime):
+        return (0., self.mcu_freq)
     def get_clock(self, eventtime):
         with self.lock:
             last_clock = self.last_clock
@@ -106,9 +108,8 @@ class ClockSync:
                     new_min_freq = (
                         clock_delta / (sent_time - self.last_clock_time))
                 logging.warning(
-                    "High clock drift! Now %.0f:%.0f was %.0f:%.0f" % (
-                        new_min_freq, new_max_freq,
-                        self.min_freq, self.max_freq))
+                    "High clock drift! Now %.0f:%.0f was %.0f:%.0f",
+                    new_min_freq, new_max_freq, self.min_freq, self.max_freq)
                 self.min_freq, self.max_freq = new_min_freq, new_max_freq
                 min_time, max_time = sent_time, receive_time
             # Update variables
@@ -116,3 +117,54 @@ class ClockSync:
             self.last_clock_time = max_time
             self.last_clock_time_min = min_time
             self.serial.set_clock_est(self.min_freq, max_time + 0.001, clock)
+
+# Clock synching code for secondary MCUs (whose clocks are sync'ed to
+# a primary MCU)
+class SecondarySync(ClockSync):
+    def __init__(self, reactor, main_sync):
+        ClockSync.__init__(self, reactor)
+        self.main_sync = main_sync
+        self.clock_adj = (0., 0.)
+    def connect(self, serial):
+        ClockSync.connect(self, serial)
+        self.clock_adj = (0., self.mcu_freq)
+        curtime = self.reactor.monotonic()
+        main_print_time = self.main_sync.estimated_print_time(curtime)
+        local_print_time = self.estimated_print_time(curtime)
+        self.clock_adj = (main_print_time - local_print_time, self.mcu_freq)
+        self.calibrate_clock(0., curtime)
+    def connect_file(self, serial, pace=False):
+        ClockSync.connect_file(self, serial, pace)
+        self.clock_adj = (0., self.mcu_freq)
+    def print_time_to_clock(self, print_time):
+        adjusted_offset, adjusted_freq = self.clock_adj
+        return int((print_time - adjusted_offset) * adjusted_freq)
+    def clock_to_print_time(self, clock):
+        adjusted_offset, adjusted_freq = self.clock_adj
+        return clock / adjusted_freq + adjusted_offset
+    def get_adjusted_freq(self):
+        adjusted_offset, adjusted_freq = self.clock_adj
+        return adjusted_freq
+    def calibrate_clock(self, print_time, eventtime):
+        #logging.debug("calibrate: %.3f: %.6f vs %.6f",
+        #              eventtime,
+        #              self.estimated_print_time(eventtime),
+        #              self.main_sync.estimated_print_time(eventtime))
+        with self.main_sync.lock:
+            ser_clock = self.main_sync.last_clock
+            ser_clock_time = self.main_sync.last_clock_time
+            ser_freq = self.main_sync.min_freq
+        main_mcu_freq = self.main_sync.mcu_freq
+
+        main_clock = (eventtime - ser_clock_time) * ser_freq + ser_clock
+        print_time = max(print_time, main_clock / main_mcu_freq)
+        main_sync_clock = (print_time + 2.) * main_mcu_freq
+        sync_time = ser_clock_time + (main_sync_clock - ser_clock) / ser_freq
+
+        print_clock = self.print_time_to_clock(print_time)
+        sync_clock = self.get_clock(sync_time)
+        adjusted_freq = .5 * (sync_clock - print_clock)
+        adjusted_offset = print_time - print_clock / adjusted_freq
+
+        self.clock_adj = (adjusted_offset, adjusted_freq)
+        return self.clock_adj
