@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import homing, cartesian, corexy, delta, extruder
+import mcu, homing, cartesian, corexy, delta, extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -184,7 +184,8 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
-        self.mcu = printer.objects['mcu']
+        self.all_mcus = mcu.get_printer_mcus(printer)
+        self.mcu = self.all_mcus[0]
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
         self.max_accel_to_decel = config.getfloat(
@@ -227,7 +228,8 @@ class ToolHead:
     def update_move_time(self, movetime):
         self.print_time += movetime
         flush_to_time = self.print_time - self.move_flush_time
-        self.mcu.flush_moves(flush_to_time)
+        for m in self.all_mcus:
+            m.flush_moves(flush_to_time)
     def get_next_move_time(self):
         if not self.sync_print_time:
             return self.print_time
@@ -248,9 +250,10 @@ class ToolHead:
         if sync_print_time or must_sync:
             self.sync_print_time = True
             self.move_queue.set_flush_time(self.buffer_time_high)
-            self.mcu.flush_moves(self.print_time)
             self.need_check_stall = -1.
             self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
+            for m in self.all_mcus:
+                m.flush_moves(self.print_time)
     def get_last_move_time(self):
         self._flush_lookahead()
         return self.get_next_move_time()
@@ -357,7 +360,8 @@ class ToolHead:
         self.commanded_pos[3] = extrude_pos
     # Misc commands
     def check_active(self, eventtime):
-        self.mcu.check_active(self.print_time, eventtime)
+        for m in self.all_mcus:
+            m.check_active(self.print_time, eventtime)
         if not self.sync_print_time:
             return True
         return self.print_time + 60. > self.mcu.estimated_print_time(eventtime)
@@ -368,7 +372,8 @@ class ToolHead:
             self.print_time, buffer_time, self.print_stall)
     def force_shutdown(self):
         try:
-            self.mcu.force_shutdown()
+            for m in self.all_mcus:
+                m.force_shutdown()
             self.move_queue.reset()
             self.reset_print_time()
         except:
