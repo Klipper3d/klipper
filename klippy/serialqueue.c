@@ -12,6 +12,7 @@
 // clock times, prioritizes commands, and handles retransmissions.  A
 // background thread is launched to do this work and minimize latency.
 
+#include <fcntl.h> // fcntl
 #include <math.h> // ceil
 #include <poll.h> // poll
 #include <pthread.h> // pthread_mutex_lock
@@ -176,6 +177,22 @@ static int
 pollreactor_is_exit(struct pollreactor *pr)
 {
     return pr->must_exit;
+}
+
+static int
+set_non_blocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL);
+    if (flags < 0) {
+        report_errno("fcntl getfl", flags);
+        return -1;
+    }
+    int ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    if (ret < 0) {
+        report_errno("fcntl setfl", flags);
+        return -1;
+    }
+    return 0;
 }
 
 
@@ -776,6 +793,9 @@ serialqueue_alloc(int serial_fd, int write_only)
     pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event);
     pollreactor_add_timer(&sq->pr, SQPT_RETRANSMIT, retransmit_event);
     pollreactor_add_timer(&sq->pr, SQPT_COMMAND, command_event);
+    set_non_blocking(serial_fd);
+    set_non_blocking(sq->pipe_fds[0]);
+    set_non_blocking(sq->pipe_fds[1]);
 
     // Retransmit setup
     sq->send_seq = 1;
