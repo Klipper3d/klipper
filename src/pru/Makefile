@@ -6,7 +6,7 @@ CROSS_PREFIX=pru-
 dirs-y += src/pru src/generic
 dirs-y += lib/pru_rpmsg
 
-CFLAGS += -minrt -mmcu=am335x.pru1
+CFLAGS += -Os -minrt -mmcu=am335x.pru1
 CFLAGS += -Ilib/pru_rpmsg/include -Ilib/pru_rpmsg/include/am335x
 
 CFLAGS_klipper.elf := $(filter-out -mmcu=%, $(CFLAGS))
