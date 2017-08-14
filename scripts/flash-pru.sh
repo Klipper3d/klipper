@@ -13,18 +13,8 @@ cp out/pru0.elf /lib/firmware/am335x-pru0-fw
 cp out/pru1.elf /lib/firmware/am335x-pru1-fw
 sync
 
-# Shutdown existing Klipper instance (if applicable). The goal is to
-# put the GPIO pins in a safe state.
-if [ -c /dev/rpmsg_pru30 ]; then
-    echo "Attempting to shutdown existing firmware..."
-    ( echo "FORCE_SHUTDOWN" > /dev/rpmsg_pru30 ) 2> /dev/null || ( echo "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
-    sleep 1
-    ( echo "FORCE_SHUTDOWN" > /dev/rpmsg_pru30 ) 2> /dev/null || ( echo "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
-    sleep 1
+# Restart (if system install script present)
+if [ -f /etc/init.d/klipper_pru ]; then
+    echo "Attempting PRU restart..."
+    service klipper_pru restart
 fi
-set +e
-
-# Restart the PRU
-echo "Restarting pru_rproc module"
-rmmod -f pru_rproc
-modprobe pru_rproc
