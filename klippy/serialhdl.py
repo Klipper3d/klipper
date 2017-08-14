@@ -71,7 +71,7 @@ class SerialReader:
                         self.serialport, self.baud, timeout=0)
                 else:
                     self.ser = open(self.serialport, 'rb+')
-            except (OSError, serial.SerialException) as e:
+            except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("Unable to open port: %s" % (e,))
                 self.reactor.pause(starttime + 5.)
                 continue
