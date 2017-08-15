@@ -86,7 +86,7 @@ represent total number of steps per second on the micro-controller.
 | 20Mhz AVR         | 189K              | 125K              |
 | 16Mhz AVR         | 151K              | 100K              |
 | Arduino Due (ARM) | 382K              | 337K              |
-| Beaglebone PRU    | 680K              | 680K              |
+| Beaglebone PRU    | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the Due, the highest step rate is with two

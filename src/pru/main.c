@@ -89,7 +89,7 @@ _irq_poll(void)
     }
     CT_INTC.SECR0 = (1 << IEP_EVENT) | (1 << KICK_PRU1_EVENT);
 }
-void
+void __attribute__((optimize("O2")))
 irq_poll(void)
 {
     if (read_r31() & (1 << (WAKE_PRU1_IRQ + R31_IRQ_OFFSET)))
