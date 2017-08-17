@@ -41,10 +41,24 @@ class Thermistor:
     def calc_adc(self, temp):
         temp -= KELVIN_TO_CELCIUS
         temp_inv = 1./temp
-        y = (self.c1 - temp_inv) / (2. * self.c3)
-        x = math.sqrt(math.pow(self.c2 / (3.*self.c3), 3.) + math.pow(y, 2.))
-        r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
+        if self.c3:
+            y = (self.c1 - temp_inv) / (2. * self.c3)
+            x = math.sqrt(math.pow(self.c2 / (3.*self.c3), 3.) + math.pow(y, 2.))
+            r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
+        else:
+            r = math.exp((temp_inv - self.c1) / self.c2)
         return r / (self.pullup + r)
+
+# Thermistor calibrated from one temp measurement and its beta
+class ThermistorBeta(Thermistor):
+    def __init__(self, config, params):
+        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        # Calculate Steinhart-Hart coefficents from beta
+        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
+        ln_r1 = math.log(params['r1'])
+        self.c3 = 0.
+        self.c2 = 1. / params['beta']
+        self.c1 = inv_t1 - self.c2 * ln_r1
 
 # Linear style conversion chips calibrated with two temp measurements
 class Linear:
@@ -66,6 +80,8 @@ Sensors = {
     "ATC Semitec 104GT-2": {
         'class': Thermistor, 't1': 20., 'r1': 126800.,
         't2': 150., 'r2': 1360., 't3': 300., 'r3': 80.65 },
+    "NTC 100K beta 3950": {
+        'class': ThermistorBeta, 't1': 25., 'r1': 100000., 'beta': 3950. },
     "AD595": { 'class': Linear, 't1': 25., 'v1': .25, 't2': 300., 'v2': 3.022 },
 }
 
