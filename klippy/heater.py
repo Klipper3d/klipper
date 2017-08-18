@@ -23,30 +23,31 @@ class Thermistor:
         ln_r1 = math.log(params['r1'])
         ln_r2 = math.log(params['r2'])
         ln_r3 = math.log(params['r3'])
-        ln3_r1, ln3_r2, ln3_r3 = ln_r1**3., ln_r2**3., ln_r3**3.
+        ln3_r1, ln3_r2, ln3_r3 = ln_r1**3, ln_r2**3, ln_r3**3
 
-        inv_t12, inv_t13 = inv_t1-inv_t2, inv_t1 - inv_t3
+        inv_t12, inv_t13 = inv_t1 - inv_t2, inv_t1 - inv_t3
         ln_r12, ln_r13 = ln_r1 - ln_r2, ln_r1 - ln_r3
         ln3_r12, ln3_r13 = ln3_r1 - ln3_r2, ln3_r1 - ln3_r3
 
         self.c3 = ((inv_t12 - inv_t13 * ln_r12 / ln_r13)
                    / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
-        self.c1 = inv_t1 - self.c3 * ln3_r1 - self.c2 * ln_r1
+        self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
     def calc_temp(self, adc):
         r = self.pullup * adc / (1.0 - adc)
         ln_r = math.log(r)
-        temp_inv = self.c1 + self.c2*ln_r + self.c3*math.pow(ln_r, 3.)
-        return 1.0/temp_inv + KELVIN_TO_CELCIUS
+        inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
+        return 1.0/inv_t + KELVIN_TO_CELCIUS
     def calc_adc(self, temp):
-        temp -= KELVIN_TO_CELCIUS
-        temp_inv = 1./temp
+        inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
         if self.c3:
-            y = (self.c1 - temp_inv) / (2. * self.c3)
-            x = math.sqrt(math.pow(self.c2 / (3.*self.c3), 3.) + math.pow(y, 2.))
-            r = math.exp(math.pow(x-y, 1./3.) - math.pow(x+y, 1./3.))
+            y = (self.c1 - inv_t) / (2. * self.c3)
+            x = math.sqrt((self.c2 / (3. * self.c3))**3 + y**2)
+            ln_r = math.pow(x - y, 1./3.) - math.pow(x + y, 1./3.)
+            r = math.exp(ln_r)
         else:
-            r = math.exp((temp_inv - self.c1) / self.c2)
+            ln_r = (inv_t - self.c1) / self.c2
+            r = math.exp(ln_r)
         return r / (self.pullup + r)
 
 # Thermistor calibrated from one temp measurement and its beta
