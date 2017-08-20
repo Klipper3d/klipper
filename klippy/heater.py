@@ -44,10 +44,9 @@ class Thermistor:
             y = (self.c1 - inv_t) / (2. * self.c3)
             x = math.sqrt((self.c2 / (3. * self.c3))**3 + y**2)
             ln_r = math.pow(x - y, 1./3.) - math.pow(x + y, 1./3.)
-            r = math.exp(ln_r)
         else:
             ln_r = (inv_t - self.c1) / self.c2
-            r = math.exp(ln_r)
+        r = math.exp(ln_r)
         return r / (self.pullup + r)
 
 # Thermistor calibrated from one temp measurement and its beta
