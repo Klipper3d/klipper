@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
+import pins
 
 
 ######################################################################
@@ -121,19 +122,18 @@ class PrinterHeater:
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         heater_pin = config.get('heater_pin')
-        sensor_pin = config.get('sensor_pin')
         if algo is ControlBangBang and self.max_power == 1.:
-            self.mcu_pwm = printer.mcu.create_digital_out(
-                heater_pin, MAX_HEAT_TIME)
+            self.mcu_pwm = pins.setup_pin(printer, 'digital_out', heater_pin)
         else:
-            self.mcu_pwm = printer.mcu.create_pwm(
-                heater_pin, PWM_CYCLE_TIME, 0, MAX_HEAT_TIME)
-        self.mcu_adc = printer.mcu.create_adc(sensor_pin)
+            self.mcu_pwm = pins.setup_pin(printer, 'pwm', heater_pin)
+            self.mcu_pwm.setup_cycle_time(PWM_CYCLE_TIME)
+        self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
+        self.mcu_adc = pins.setup_pin(printer, 'adc', config.get('sensor_pin'))
         adc_range = [self.sensor.calc_adc(self.min_temp),
                      self.sensor.calc_adc(self.max_temp)]
-        self.mcu_adc.set_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                minval=min(adc_range), maxval=max(adc_range))
-        self.mcu_adc.set_adc_callback(REPORT_TIME, self.adc_callback)
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range))
+        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
         self.control = algo(self, config)
         # pwm caching
         self.next_pwm_time = 0.

@@ -1,10 +1,15 @@
 # Pin name to pin number definitions
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import re
+
+
+######################################################################
+# Hardware pin names
+######################################################################
 
 def port_pins(port_count, bit_count=8):
     pins = {}
@@ -142,12 +147,12 @@ def update_map_beaglebone(pins, mcu):
 
 
 ######################################################################
-# External commands
+# Command translation
 ######################################################################
 
 # Obtains the pin mappings
 def get_pin_map(mcu, mapping_name=None):
-    pins = MCU_PINS.get(mcu, {})
+    pins = dict(MCU_PINS.get(mcu, {}))
     if mapping_name == 'arduino':
         update_map_arduino(pins, mcu)
     elif mapping_name == 'beaglebone':
@@ -163,3 +168,51 @@ def update_command(cmd, mcu_freq, pmap):
     def ticks_fixup(m):
         return str(int(mcu_freq * float(m.group('ticks'))))
     return re_ticks.sub(ticks_fixup, re_pin.sub(pin_fixup, cmd))
+
+
+######################################################################
+# Pin to chip mapping
+######################################################################
+
+class error(Exception):
+    pass
+
+class PrinterPins:
+    error = error
+    def __init__(self):
+        self.chips = {}
+    def parse_pin_desc(self, pin_desc, can_invert=False, can_pullup=False):
+        pullup = invert = 0
+        if can_pullup and pin_desc.startswith('^'):
+            pullup = 1
+            pin_desc = pin_desc[1:].strip()
+        if can_invert and pin_desc.startswith('!'):
+            invert = 1
+            pin_desc = pin_desc[1:].strip()
+        if ':' not in pin_desc:
+            chip_name, pin = 'mcu', pin_desc
+        else:
+            chip_name, pin = [s.strip() for s in pin_desc.split(':', 1)]
+        if chip_name not in self.chips:
+            raise error("Unknown pin chip name '%s'" % (chip_name,))
+        return {'chip': self.chips[chip_name], 'pin': pin,
+                'invert': invert, 'pullup': pullup}
+    def register_chip(self, chip_name, chip):
+        chip_name = chip_name.strip()
+        if chip_name in self.chips:
+            raise error("Duplicate chip name '%s'" % (chip_name,))
+        self.chips[chip_name] = chip
+
+def add_printer_objects(printer, config):
+    printer.add_object('pins', PrinterPins())
+
+def get_printer_pins(printer):
+    return printer.objects['pins']
+
+def setup_pin(printer, pin_type, pin_desc):
+    ppins = get_printer_pins(printer)
+    can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
+    can_pullup = pin_type == 'endstop'
+    pin_params = ppins.parse_pin_desc(pin_desc, can_invert, can_pullup)
+    pin_params['type'] = pin_type
+    return pin_params['chip'].setup_pin(pin_params)

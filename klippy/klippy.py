@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 # Main code for host side printer firmware
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
-import gcode, toolhead, util, mcu, fan, heater, extruder, reactor, queuelogger
-import msgproto
+import util, reactor, queuelogger, msgproto, gcode
+import pins, mcu, extruder, fan, heater, toolhead
 
 message_ready = "Printer is ready"
 
@@ -170,11 +170,11 @@ class Printer:
                 config_file,))
         if self.bglogger is not None:
             ConfigLogger(self.fileconfig, self.bglogger)
-        self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
         # Create printer components
         config = ConfigWrapper(self, 'printer')
-        for m in [extruder, fan, heater, toolhead]:
+        for m in [pins, mcu, extruder, fan, heater, toolhead]:
             m.add_printer_objects(self, config)
+        self.mcu = self.objects['mcu']
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
@@ -196,7 +196,7 @@ class Printer:
             self.mcu.connect()
             self.gcode.set_printer_ready(True)
             self.state_message = message_ready
-        except ConfigParser.Error as e:
+        except (ConfigParser.Error, pins.error) as e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)

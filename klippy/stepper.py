@@ -1,10 +1,10 @@
 # Printer stepper support
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import homing
+import homing, pins
 
 class PrinterStepper:
     def __init__(self, printer, config, name):
@@ -13,14 +13,17 @@ class PrinterStepper:
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.inv_step_dist = 1. / self.step_dist
         self.min_stop_interval = 0.
-        step_pin = config.get('step_pin')
-        dir_pin = config.get('dir_pin')
-        self.mcu_stepper = printer.mcu.create_stepper(step_pin, dir_pin)
-        self.mcu_stepper.set_step_distance(self.step_dist)
+        self.mcu_stepper = pins.setup_pin(
+            printer, 'stepper', config.get('step_pin'))
+        dir_pin_params = pins.get_printer_pins(printer).parse_pin_desc(
+            config.get('dir_pin'), can_invert=True)
+        self.mcu_stepper.setup_dir_pin(dir_pin_params)
+        self.mcu_stepper.setup_step_distance(self.step_dist)
 
         enable_pin = config.get('enable_pin', None)
         if enable_pin is not None:
-            self.mcu_enable = printer.mcu.create_digital_out(enable_pin, 0)
+            self.mcu_enable = pins.setup_pin(printer, 'digital_out', enable_pin)
+            self.mcu_enable.setup_max_duration(0.)
         self.need_motor_enable = True
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
@@ -33,7 +36,7 @@ class PrinterStepper:
         second_last_step_time = self._dist_to_time(
             2. * self.step_dist, max_halt_velocity, max_accel)
         min_stop_interval = second_last_step_time - last_step_time
-        self.mcu_stepper.set_min_stop_interval(min_stop_interval)
+        self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
     def motor_enable(self, move_time, enable=0):
         if enable and self.need_motor_enable:
             mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
@@ -48,8 +51,8 @@ class PrinterHomingStepper(PrinterStepper):
     def __init__(self, printer, config, name):
         PrinterStepper.__init__(self, printer, config, name)
 
-        endstop_pin = config.get('endstop_pin', None)
-        self.mcu_endstop = printer.mcu.create_endstop(endstop_pin)
+        self.mcu_endstop = pins.setup_pin(
+            printer, 'endstop', config.get('endstop_pin'))
         self.mcu_endstop.add_stepper(self.mcu_stepper)
         self.position_min = config.getfloat('position_min', 0.)
         self.position_max = config.getfloat(
