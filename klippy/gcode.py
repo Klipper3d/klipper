@@ -9,15 +9,15 @@ import homing, extruder
 # Parse out incoming GCode and find and translate head movements
 class GCodeParser:
     RETRY_TIME = 0.100
-    def __init__(self, printer, fd, is_fileinput=False):
+    def __init__(self, printer, fd):
         self.printer = printer
         self.fd = fd
-        self.is_fileinput = is_fileinput
         # Input handling
         self.reactor = printer.reactor
         self.is_processing_data = False
+        self.is_fileinput = not not printer.get_start_args().get("debuginput")
         self.fd_handle = None
-        if not is_fileinput:
+        if not self.is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
         self.bytes_read = 0
@@ -140,8 +140,7 @@ class GCodeParser:
         if not data and self.is_fileinput:
             self.motor_heater_off()
             if self.toolhead is not None:
-                if not self.printer.mcu.is_fileoutput():
-                    self.toolhead.wait_moves()
+                self.toolhead.wait_moves()
             self.printer.request_exit('exit_eof')
         self.is_processing_data = False
         if self.fd_handle is None:
@@ -392,8 +391,8 @@ class GCodeParser:
     cmd_M115_when_not_ready = True
     def cmd_M115(self, params):
         # Get Firmware Version and Capabilities
-        kw = {"FIRMWARE_NAME": "Klipper"
-              , "FIRMWARE_VERSION": self.printer.software_version}
+        software_version = self.printer.get_start_args().get('software_version')
+        kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
         self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
     def cmd_M140(self, params):
         # Set Bed Temperature

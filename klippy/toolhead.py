@@ -359,6 +359,8 @@ class ToolHead:
         logging.debug('; Max time of %f' % (last_move_time,))
     def wait_moves(self):
         self._flush_lookahead()
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
         eventtime = self.reactor.monotonic()
         while self.print_time:
             eventtime = self.reactor.pause(eventtime + 0.100)

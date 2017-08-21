@@ -390,7 +390,6 @@ class MCU:
             printer.reactor, self._serialport, baud)
         self.is_shutdown = False
         self._shutdown_msg = ""
-        self._is_fileoutput = False
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
         rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
@@ -442,14 +441,17 @@ class MCU:
         self._printer.note_shutdown(self._shutdown_msg)
     # Connection phase
     def _check_restart(self, reason):
-        if self._printer.get_startup_state() == 'firmware_restart':
+        start_reason = self._printer.get_start_args().get("start_reason")
+        if start_reason == 'firmware_restart':
             return
         logging.info("Attempting automated firmware restart: %s" % (reason,))
         self._printer.request_exit('firmware_restart')
         self._printer.reactor.pause(self._printer.reactor.monotonic() + 2.000)
         raise error("Attempt firmware restart failed")
     def connect(self):
-        if not self._is_fileoutput:
+        if self.is_fileoutput():
+            self._connect_file()
+        else:
             if (self._restart_method == 'rpi_usb'
                 and not os.path.exists(self._serialport)):
                 # Try toggling usb power
@@ -470,9 +472,16 @@ class MCU:
         self.register_msg(self.handle_mcu_stats, 'stats')
         self._build_config()
         self._send_config()
-    def connect_file(self, debugoutput, dictionary, pace=False):
-        self._is_fileoutput = True
-        self.serial.connect_file(debugoutput, dictionary)
+    def _connect_file(self, pace=False):
+        # In a debugging mode.  Open debug output file and read data dictionary
+        out_fname = self._printer.get_start_args().get('debugoutput')
+        outfile = open(out_fname, 'wb')
+        dict_fname = self._printer.get_start_args().get('dictionary')
+        dfile = open(dict_fname, 'rb')
+        dict_data = dfile.read()
+        dfile.close()
+        self.serial.connect_file(outfile, dict_data)
+        # Handle pacing
         if not pace:
             def dummy_set_print_start_time(eventtime):
                 pass
@@ -527,7 +536,7 @@ class MCU:
         self.disconnect()
         serialhdl.arduino_reset(self._serialport, reactor)
     def is_fileoutput(self):
-        return self._is_fileoutput
+        return self._printer.get_start_args().get('debugoutput') is not None
     # Configuration phase
     def _add_custom(self):
         for line in self._custom.split('\n'):
@@ -564,7 +573,7 @@ class MCU:
         self.add_config_cmd("finalize_config crc=%d" % (self._config_crc,))
     def _send_config(self):
         msg = self.create_command("get_config")
-        if self._is_fileoutput:
+        if self.is_fileoutput():
             config_params = {
                 'is_config': 0, 'move_count': 500, 'crc': self._config_crc}
         else:
@@ -577,15 +586,17 @@ class MCU:
             logging.info("Sending printer configuration...")
             for c in self._config_cmds:
                 self.send(self.create_command(c))
-            if not self._is_fileoutput:
+            if not self.is_fileoutput():
                 config_params = self.serial.send_with_response(msg, 'config')
                 if not config_params['is_config']:
                     if self.is_shutdown:
                         raise error("Firmware error during config: %s" % (
                             self._shutdown_msg,))
                     raise error("Unable to configure printer")
-        elif self._printer.get_startup_state() == 'firmware_restart':
-            raise error("Failed automated reset of micro-controller")
+        else:
+            start_reason = self._printer.get_start_args().get("start_reason")
+            if start_reason == 'firmware_restart':
+                raise error("Failed automated reset of micro-controller")
         if self._config_crc != config_params['crc']:
             self._check_restart("CRC mismatch")
             raise error("Printer CRC does not match config")

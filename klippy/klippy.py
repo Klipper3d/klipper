@@ -123,30 +123,25 @@ class ConfigLogger():
         self.lines.append(data.strip())
 
 class Printer:
-    def __init__(self, conffile, input_fd, startup_state
-                 , is_fileinput=False, version="?", bglogger=None):
-        self.conffile = conffile
-        self.startup_state = startup_state
-        self.software_version = version
+    def __init__(self, input_fd, bglogger, start_args):
         self.bglogger = bglogger
+        self.start_args = start_args
         if bglogger is not None:
             bglogger.set_rollover_info("config", None)
         self.reactor = reactor.Reactor()
         self.objects = {}
-        self.gcode = gcode.GCodeParser(self, input_fd, is_fileinput)
+        self.gcode = gcode.GCodeParser(self, input_fd)
         self.stats_timer = self.reactor.register_timer(self.stats)
         self.connect_timer = self.reactor.register_timer(
             self.connect, self.reactor.NOW)
         self.all_config_options = {}
         self.need_dump_debug = False
         self.state_message = message_startup
-        self.debugoutput = self.dictionary = None
         self.run_result = None
         self.fileconfig = None
         self.mcu = None
-    def set_fileoutput(self, debugoutput, dictionary):
-        self.debugoutput = debugoutput
-        self.dictionary = dictionary
+    def get_start_args(self):
+        return self.start_args
     def stats(self, eventtime, force_output=False):
         if self.need_dump_debug:
             # Call dump_debug here so it is executed in the main thread
@@ -168,15 +163,14 @@ class Printer:
         self.objects[name] = obj
     def load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
-        res = self.fileconfig.read(self.conffile)
+        config_file = self.start_args['config_file']
+        res = self.fileconfig.read(config_file)
         if not res:
             raise ConfigParser.Error("Unable to open config file %s" % (
-                self.conffile,))
+                config_file,))
         if self.bglogger is not None:
             ConfigLogger(self.fileconfig, self.bglogger)
         self.mcu = mcu.MCU(self, ConfigWrapper(self, 'mcu'))
-        if self.debugoutput is not None:
-            self.mcu.connect_file(self.debugoutput, self.dictionary)
         # Create printer components
         config = ConfigWrapper(self, 'printer')
         for m in [extruder, fan, heater, toolhead]:
@@ -197,7 +191,7 @@ class Printer:
     def connect(self, eventtime):
         try:
             self.load_config()
-            if self.debugoutput is None:
+            if self.start_args.get('debugoutput') is None:
                 self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
             self.mcu.connect()
             self.gcode.set_printer_ready(True)
@@ -259,8 +253,6 @@ class Printer:
                 self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during firmware_restart")
-    def get_startup_state(self):
-        return self.startup_state
     def request_exit(self, result="exit"):
         self.run_result = result
         self.reactor.end()
@@ -270,18 +262,10 @@ class Printer:
 # Startup
 ######################################################################
 
-def read_dictionary(filename):
-    dfile = open(filename, 'rb')
-    dictionary = dfile.read()
-    dfile.close()
-    return dictionary
-
 def main():
     usage = "%prog [options] <config file>"
     opts = optparse.OptionParser(usage)
-    opts.add_option("-o", "--debugoutput", dest="outputfile",
-                    help="write output to file instead of to serial port")
-    opts.add_option("-i", "--debuginput", dest="inputfile",
+    opts.add_option("-i", "--debuginput", dest="debuginput",
                     help="read commands from file instead of from tty port")
     opts.add_option("-I", "--input-tty", dest="inputtty", default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
@@ -289,63 +273,60 @@ def main():
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="enable debug messages")
-    opts.add_option("-d", dest="read_dictionary",
+    opts.add_option("-o", "--debugoutput", dest="debugoutput",
+                    help="write output to file instead of to serial port")
+    opts.add_option("-d", "--dictionary", dest="dictionary",
                     help="file to read for mcu protocol dictionary")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    conffile = args[0]
+    start_args = {'config_file': args[0], 'start_reason': 'startup'}
 
-    input_fd = debuginput = debugoutput = bglogger = None
+    input_fd = bglogger = None
 
     debuglevel = logging.INFO
     if options.verbose:
         debuglevel = logging.DEBUG
-    if options.inputfile:
-        debuginput = open(options.inputfile, 'rb')
+    if options.debuginput:
+        start_args['debuginput'] = options.debuginput
+        debuginput = open(options.debuginput, 'rb')
         input_fd = debuginput.fileno()
     else:
         input_fd = util.create_pty(options.inputtty)
-    if options.outputfile:
-        debugoutput = open(options.outputfile, 'wb')
+    if options.debugoutput:
+        start_args['debugoutput'] = options.debugoutput
+        start_args['dictionary'] = options.dictionary
     if options.logfile:
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
-    software_version = util.get_git_version()
+    start_args['software_version'] = util.get_git_version()
     if bglogger is not None:
         lines = ["Args: %s" % (sys.argv,),
-                 "Git version: %s" % (repr(software_version),),
+                 "Git version: %s" % (repr(start_args['software_version']),),
                  "CPU: %s" % (util.get_cpu_info(),),
                  "Python: %s" % (repr(sys.version),)]
         lines = "\n".join(lines)
         logging.info(lines)
         bglogger.set_rollover_info('versions', lines)
 
-    # Start firmware
-    res = 'startup'
+    # Start Printer() class
     while 1:
-        is_fileinput = debuginput is not None
-        printer = Printer(
-            conffile, input_fd, res, is_fileinput, software_version, bglogger)
-        if debugoutput:
-            proto_dict = read_dictionary(options.read_dictionary)
-            printer.set_fileoutput(debugoutput, proto_dict)
+        printer = Printer(input_fd, bglogger, start_args)
         res = printer.run()
         if res == 'restart':
             printer.disconnect()
-            time.sleep(1.)
-            logging.info("Restarting printer")
-            continue
         elif res == 'firmware_restart':
             printer.firmware_restart()
-            time.sleep(1.)
-            logging.info("Restarting printer")
-            continue
         elif res == 'exit_eof':
             printer.disconnect()
-        break
+            break
+        else:
+            break
+        time.sleep(1.)
+        logging.info("Restarting printer")
+        start_args['start_reason'] = res
 
     if bglogger is not None:
         bglogger.stop()
