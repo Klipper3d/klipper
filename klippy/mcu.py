@@ -48,7 +48,6 @@ class MCU_stepper:
             " min_stop_interval=TICKS(%.9f) invert_step=%d" % (
                 self._oid, self._step_pin, self._dir_pin,
                 min_stop_interval, self._invert_step))
-        self._mcu.register_stepper(self)
         step_cmd = self._mcu.lookup_command(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd = self._mcu.lookup_command(
@@ -63,6 +62,7 @@ class MCU_stepper:
             max_error, step_cmd.msgid, dir_cmd.msgid,
             self._invert_dir, self._oid),
                                       self._ffi_lib.stepcompress_free)
+        self._mcu.register_stepqueue(self._stepqueue)
     def get_oid(self):
         return self._oid
     def set_position(self, pos):
@@ -417,7 +417,7 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
-        self._steppers = []
+        self._stepqueues = []
         self._steppersync = None
         # Print time to clock epoch calculations
         self._print_start_time = 0.
@@ -617,9 +617,9 @@ class MCU:
                 "MCU config: %s" % (" ".join(
                     ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
             self._printer.bglogger.set_rollover_info("mcu", "\n".join(info))
-        stepqueues = tuple(s._stepqueue for s in self._steppers)
         self._steppersync = self._ffi_lib.steppersync_alloc(
-            self.serial.serialqueue, stepqueues, len(stepqueues), move_count)
+            self.serial.serialqueue, self._stepqueues, len(self._stepqueues),
+            move_count)
         for c in self._init_cmds:
             self.send(self.create_command(c))
     # Config creation helpers
@@ -644,8 +644,8 @@ class MCU:
             self._config_cmds.append(cmd)
     def register_msg(self, cb, msg, oid=None):
         self.serial.register_callback(cb, msg, oid)
-    def register_stepper(self, stepper):
-        self._steppers.append(stepper)
+    def register_stepqueue(self, stepqueue):
+        self._stepqueues.append(stepqueue)
     def alloc_command_queue(self):
         return self.serial.alloc_command_queue()
     def lookup_command(self, msgformat):
