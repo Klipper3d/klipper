@@ -14,7 +14,7 @@ STEPCOMPRESS_ERROR_RET = -989898989
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid(self)
+        self._oid = mcu.create_oid()
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -142,7 +142,7 @@ class MCU_endstop:
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid(self)
+        self._oid = mcu.create_oid()
         self._steppers = []
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
@@ -236,7 +236,7 @@ class MCU_endstop:
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid(self)
+        self._oid = mcu.create_oid()
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._max_duration = 2.
@@ -278,7 +278,7 @@ class MCU_pwm:
         self._hard_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
-        self._oid = mcu.create_oid(self)
+        self._oid = mcu.create_oid()
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._last_clock = 0
@@ -334,7 +334,7 @@ class MCU_adc:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._pin = pin_params['pin']
-        self._oid = mcu.create_oid(self)
+        self._oid = mcu.create_oid()
         self._min_sample = self._max_sample = 0.
         self._sample_time = self._report_time = 0.
         self._sample_count = 0
@@ -406,7 +406,8 @@ class MCU:
             printer.bglogger.set_rollover_info("mcu", None)
         pins.get_printer_pins(printer).register_chip("mcu", self)
         self._emergency_stop_cmd = self._reset_cmd = None
-        self._oids = []
+        self._oid_count = 0
+        self._config_objects = []
         self._init_cmds = []
         self._config_cmds = []
         self._config_crc = None
@@ -555,11 +556,11 @@ class MCU:
             self.add_config_cmd(line)
     def _build_config(self):
         # Build config commands
-        for oid in self._oids:
-            oid.build_config()
+        for co in self._config_objects:
+            co.build_config()
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
-            len(self._oids),))
+            self._oid_count,))
 
         # Resolve pin names
         mcu = self.serial.msgparser.get_constant('MCU')
@@ -628,10 +629,14 @@ class MCU:
         pin_type = pin_params['type']
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
-        return pcs[pin_type](self, pin_params)
-    def create_oid(self, oid):
-        self._oids.append(oid)
-        return len(self._oids) - 1
+        co = pcs[pin_type](self, pin_params)
+        self.add_config_object(co)
+        return co
+    def create_oid(self):
+        self._oid_count += 1
+        return self._oid_count - 1
+    def add_config_object(self, co):
+        self._config_objects.append(co)
     def add_config_cmd(self, cmd, is_init=False):
         if is_init:
             self._init_cmds.append(cmd)
