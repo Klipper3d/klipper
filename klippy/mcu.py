@@ -14,7 +14,6 @@ STEPCOMPRESS_ERROR_RET = -989898989
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid()
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -23,7 +22,7 @@ class MCU_stepper:
         self._velocity_factor = self._accel_factor = 0.
         self._mcu_position_offset = 0
         self._mcu_freq = self._min_stop_interval = 0.
-        self._reset_cmd = self._get_position_cmd = None
+        self._oid = self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
         self.system_to_mcu_time = mcu.system_to_mcu_time
@@ -39,6 +38,7 @@ class MCU_stepper:
         self._inv_step_dist = 1. / step_dist
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
+        self._oid = self._mcu.create_oid()
         self._velocity_factor = 1. / (self._mcu_freq * self._step_dist)
         self._accel_factor = 1. / (self._mcu_freq**2 * self._step_dist)
         max_error = self._mcu.get_max_stepper_error()
@@ -142,13 +142,12 @@ class MCU_endstop:
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid()
         self._steppers = []
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._cmd_queue = mcu.alloc_command_queue()
-        self._home_cmd = self._query_cmd = None
+        self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
         self._min_query_time = self._mcu_freq = 0.
         self._next_query_clock = self._home_timeout_clock = 0
@@ -160,6 +159,7 @@ class MCU_endstop:
         self._steppers.append(stepper)
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
+        self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
                 self._oid, self._pin, self._pullup, len(self._steppers)))
@@ -236,7 +236,8 @@ class MCU_endstop:
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = mcu.create_oid()
+        self._oid = None
+        self._static_value = None
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._max_duration = 2.
@@ -249,8 +250,15 @@ class MCU_digital_out:
         self.system_to_mcu_time = mcu.system_to_mcu_time
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
+    def setup_static(self):
+        self._static_value = not self._invert
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
+        if self._static_value is not None:
+            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
+                self._pin, self._static_value))
+            return
+        self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s default_value=%d"
             " max_duration=TICKS(%f)" % (
@@ -278,7 +286,8 @@ class MCU_pwm:
         self._hard_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
-        self._oid = mcu.create_oid()
+        self._oid = None
+        self._static_value = None
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._last_clock = 0
@@ -298,26 +307,45 @@ class MCU_pwm:
             return
         self._cycle_time = hard_cycle_ticks
         self._hard_pwm = True
+    def setup_static_pwm(self, value):
+        if self._invert:
+            self._static_value = 1. - value
+        else:
+            self._static_value = value
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         if self._hard_pwm:
+            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
+                "PWM_MAX")
+            if self._static_value is not None:
+                value = int(self._static_value * self._pwm_max + 0.5)
+                self._mcu.add_config_cmd(
+                    "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
+                        self._pin, self._cycle_time, value))
+                return
+            self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=%d"
                 " max_duration=TICKS(%f)" % (
                     self._oid, self._pin, self._cycle_time, self._invert,
                     self._max_duration))
-            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
-                "PWM_MAX")
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
         else:
+            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
+                "SOFT_PWM_MAX")
+            if self._static_value is not None:
+                if self._static_value != 0. and self._static_value != 1.:
+                    raise pins.error("static value on soft pwm not supported")
+                self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
+                    self._pin, int(self._static_value)))
+                return
+            self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=TICKS(%f)"
                 " default_value=%d max_duration=TICKS(%f)" % (
                     self._oid, self._pin, self._cycle_time, self._invert,
                     self._max_duration))
-            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
-                "SOFT_PWM_MAX")
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%hu")
     def set_pwm(self, mcu_time, value):
@@ -334,12 +362,11 @@ class MCU_adc:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._pin = pin_params['pin']
-        self._oid = mcu.create_oid()
         self._min_sample = self._max_sample = 0.
         self._sample_time = self._report_time = 0.
         self._sample_count = 0
         self._report_clock = 0
-        self._callback = None
+        self._oid = self._callback = None
         self._inv_max_adc = 0.
         self._mcu_freq = 0.
         self._cmd_queue = mcu.alloc_command_queue()
@@ -355,6 +382,7 @@ class MCU_adc:
         if not self._sample_count:
             return
         self._mcu_freq = self._mcu.get_mcu_freq()
+        self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (
             self._oid, self._pin))
         last_clock, last_clock_time = self._mcu.get_last_clock()
