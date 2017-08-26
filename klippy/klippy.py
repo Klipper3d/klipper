@@ -131,9 +131,9 @@ class Printer:
         self.reactor = reactor.Reactor()
         self.objects = {}
         self.gcode = gcode.GCodeParser(self, input_fd)
-        self.stats_timer = self.reactor.register_timer(self.stats)
+        self.stats_timer = self.reactor.register_timer(self._stats)
         self.connect_timer = self.reactor.register_timer(
-            self.connect, self.reactor.NOW)
+            self._connect, self.reactor.NOW)
         self.all_config_options = {}
         self.need_dump_debug = False
         self.state_message = message_startup
@@ -142,7 +142,7 @@ class Printer:
         self.mcu = None
     def get_start_args(self):
         return self.start_args
-    def stats(self, eventtime, force_output=False):
+    def _stats(self, eventtime, force_output=False):
         if self.need_dump_debug:
             # Call dump_debug here so it is executed in the main thread
             self.gcode.dump_debug()
@@ -161,7 +161,7 @@ class Printer:
         return eventtime + 1.
     def add_object(self, name, obj):
         self.objects[name] = obj
-    def load_config(self):
+    def _load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
         config_file = self.start_args['config_file']
         res = self.fileconfig.read(config_file)
@@ -188,9 +188,9 @@ class Printer:
                     raise ConfigParser.Error(
                         "Unknown option '%s' in section '%s'" % (
                             option, section))
-    def connect(self, eventtime):
+    def _connect(self, eventtime):
         try:
-            self.load_config()
+            self._load_config()
             if self.start_args.get('debugoutput') is None:
                 self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
             self.mcu.connect()
@@ -241,14 +241,14 @@ class Printer:
     def disconnect(self):
         try:
             if self.mcu is not None:
-                self.stats(self.reactor.monotonic(), force_output=True)
+                self._stats(self.reactor.monotonic(), force_output=True)
                 self.mcu.disconnect()
         except:
             logging.exception("Unhandled exception during disconnect")
     def firmware_restart(self):
         try:
             if self.mcu is not None:
-                self.stats(self.reactor.monotonic(), force_output=True)
+                self._stats(self.reactor.monotonic(), force_output=True)
                 self.mcu.microcontroller_restart()
                 self.mcu.disconnect()
         except:
