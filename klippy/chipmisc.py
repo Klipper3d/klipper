@@ -3,7 +3,7 @@
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins
+import pins, mcu
 
 
 ######################################################################
@@ -58,10 +58,182 @@ class ad5206:
 
 
 ######################################################################
+# Replicape board
+######################################################################
+
+REPLICAPE_MAX_CURRENT = 3.84
+REPLICAPE_SHIFT_REGISTER_BUS = 1
+REPLICAPE_SHIFT_REGISTER_DEVICE = 1
+REPLICAPE_PCA9685_BUS = 2
+REPLICAPE_PCA9685_ADDRESS = 0x70
+REPLICAPE_PCA9685_CYCLE_TIME = .001
+
+class pca9685_pwm:
+    def __init__(self, replicape, channel, pin_params):
+        self._replicape = replicape
+        self._channel = channel
+        if pin_params['type'] not in ['digital_out', 'pwm']:
+            raise pins.error("Pin type not supported on replicape")
+        self._mcu = replicape.host_mcu
+        self._mcu.add_config_object(self)
+        self._bus = REPLICAPE_PCA9685_BUS
+        self._address = REPLICAPE_PCA9685_ADDRESS
+        self._cycle_time = REPLICAPE_PCA9685_CYCLE_TIME
+        self._max_duration = 2.
+        self._oid = None
+        self._invert = pin_params['invert']
+        self._last_clock = 0
+        self._pwm_max = 0.
+        self._cmd_queue = self._mcu.alloc_command_queue()
+        self._set_cmd = None
+        self._static_value = None
+    def get_mcu(self):
+        return self._mcu
+    def setup_max_duration(self, max_duration):
+        self._max_duration = max_duration
+    def setup_cycle_time(self, cycle_time):
+        pass
+    def setup_hard_pwm(self, hard_cycle_ticks):
+        if hard_cycle_ticks:
+            raise pins.error("pca9685 does not support hard_pwm parameter")
+    def setup_static_pwm(self, value):
+        if self._invert:
+            value = 1. - value
+        self._static_value = max(0., min(1., value))
+    def build_config(self):
+        self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
+        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        if self._static_value is not None:
+            value = int(self._static_value * self._pwm_max + 0.5)
+            self._mcu.add_config_cmd(
+                "set_pca9685_out bus=%d addr=%d channel=%d"
+                " cycle_ticks=%d value=%d" % (
+                    self._bus, self._address, self._channel,
+                    cycle_ticks, value))
+            return
+        self._oid = self._mcu.create_oid()
+        self._mcu.add_config_cmd(
+            "config_pca9685 oid=%d bus=%d addr=%d channel=%d"
+            " cycle_ticks=%d max_duration=%d" % (
+                self._oid, self._bus, self._address, self._channel,
+                cycle_ticks, self._mcu.seconds_to_clock(self._max_duration)))
+        self._set_cmd = self._mcu.lookup_command(
+            "schedule_pca9685_out oid=%c clock=%u value=%hu")
+    def set_pwm(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        if self._invert:
+            value = 1. - value
+        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+        self._replicape.note_enable(print_time, self._channel, not not value)
+        msg = self._set_cmd.encode(self._oid, clock, value)
+        self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
+                      , cq=self._cmd_queue)
+        self._last_clock = clock
+    def set_digital(self, print_time, value):
+        if value:
+            self.set_pwm(print_time, 1.)
+        else:
+            self.set_pwm(print_time, 0.)
+
+class ReplicapeDACEnable:
+    def __init__(self, replicape, channel, pin_params):
+        if pin_params['type'] != 'digital_out':
+            raise pins.error("Replicape virtual enable pin must be digital_out")
+        if pin_params['invert']:
+            raise pins.error("Replicape virtual enable pin can not be inverted")
+        self.mcu = replicape.host_mcu
+        self.value = replicape.stepper_dacs[channel]
+        self.pwm = pca9685_pwm(replicape, channel, pin_params)
+        self.last = 0
+    def get_mcu(self):
+        return self.mcu
+    def setup_max_duration(self, max_duration):
+        self.pwm.setup_max_duration(max_duration)
+    def set_digital(self, print_time, value):
+        if value:
+            self.pwm.set_pwm(print_time, self.value)
+        else:
+            self.pwm.set_pwm(print_time, 0.)
+        self.last = value
+    def get_last_setting(self):
+        return self.last
+
+ReplicapeStepConfig = {
+    'disable': None,
+    '1': (1<<7)|(1<<5), '2': (1<<7)|(1<<5)|(1<<6), 'spread2': (1<<5),
+    '4': (1<<7)|(1<<5)|(1<<4), '16': (1<<7)|(1<<5)|(1<<6)|(1<<4),
+    'spread4': (1<<5)|(1<<4), 'spread16': (1<<7), 'stealth4': (1<<7)|(1<<6),
+    'stealth16': 0
+}
+
+class Replicape:
+    def __init__(self, printer, config):
+        pins.get_printer_pins(printer).register_chip('replicape', self)
+        revisions = {'B3': 'B3'}
+        config.getchoice('revision', revisions)
+        self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
+        # Setup enable pin
+        self.mcu_enable = pins.setup_pin(
+            printer, 'digital_out', config.get('enable_pin', '!P9_41'))
+        self.mcu_enable.setup_max_duration(0.)
+        self.enabled_channels = {}
+        # Setup power pins
+        self.pins = {
+            "power_e": (pca9685_pwm, 5), "power_h": (pca9685_pwm, 3),
+            "power_hotbed": (pca9685_pwm, 4),
+            "power_fan0": (pca9685_pwm, 7), "power_fan1": (pca9685_pwm, 8),
+            "power_fan2": (pca9685_pwm, 9), "power_fan3": (pca9685_pwm, 10) }
+        # Setup stepper config
+        self.stepper_dacs = {}
+        shift_registers = [1] * 5
+        for port, name in enumerate('xyzeh'):
+            prefix = 'stepper_%s_' % (name,)
+            sc = config.getchoice(
+                prefix + 'microstep_mode', ReplicapeStepConfig, 'disable')
+            if sc is None:
+                continue
+            if config.getboolean(prefix + 'chopper_off_time_high', False):
+                sc |= 1<<3
+            if config.getboolean(prefix + 'chopper_hysteresis_high', False):
+                sc |= 1<<2
+            if config.getboolean(prefix + 'chopper_blank_time_high', True):
+                sc |= 1<<1
+            shift_registers[port] = sc
+            channel = port + 11
+            cur = config.getfloat(
+                prefix + 'current', above=0., maxval=REPLICAPE_MAX_CURRENT)
+            self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
+            self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
+        shift_registers.reverse()
+        self.host_mcu.add_config_cmd("send_spi bus=%d dev=%d msg=%s" % (
+            REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
+            "".join(["%02x" % (x,) for x in shift_registers])))
+    def note_enable(self, print_time, channel, is_enable):
+        if is_enable:
+            is_off = not self.enabled_channels
+            self.enabled_channels[channel] = 1
+            if is_off:
+                self.mcu_enable.set_digital(print_time, 1)
+        elif channel in self.enabled_channels:
+            del self.enabled_channels[channel]
+            if not self.enabled_channels:
+                self.mcu_enable.set_digital(print_time, 0)
+    def setup_pin(self, pin_params):
+        pin = pin_params['pin']
+        if pin not in self.pins:
+            raise pins.error("Unknown replicape pin %s" % (pin,))
+        pclass, channel = self.pins[pin]
+        return pclass(self, channel, pin_params)
+
+
+######################################################################
 # Setup
 ######################################################################
 
 def add_printer_objects(printer, config):
+    if config.has_section('replicape'):
+        printer.add_object('replicape', Replicape(
+            printer, config.getsection('replicape')))
     for s in config.get_prefix_sections('static_digital_output '):
         printer.add_object(s.section, PrinterStaticDigitalOut(printer, s))
     for s in config.get_prefix_sections('static_pwm_output '):

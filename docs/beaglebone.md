@@ -71,6 +71,20 @@ make flash
 sudo service klipper start
 ```
 
+For the Replicape, it is also necessary to compile and install the
+micro-controller code for a Linux host process. Run "make menuconfig"
+a second time and configure it for a "Linux process":
+```
+make menuconfig
+```
+
+Then install this micro-controller code as well:
+```
+sudo service klipper stop
+make flash
+sudo service klipper start
+```
+
 Remaining configuration
 =======================
 
