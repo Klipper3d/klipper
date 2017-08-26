@@ -45,9 +45,9 @@ class MCU_stepper:
         min_stop_interval = max(0., self._min_stop_interval - max_error)
         self._mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=TICKS(%.9f) invert_step=%d" % (
+            " min_stop_interval=%d invert_step=%d" % (
                 self._oid, self._step_pin, self._dir_pin,
-                min_stop_interval, self._invert_step))
+                min_stop_interval * self._mcu_freq, self._invert_step))
         step_cmd = self._mcu.lookup_command(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd = self._mcu.lookup_command(
@@ -261,8 +261,9 @@ class MCU_digital_out:
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s default_value=%d"
-            " max_duration=TICKS(%f)" % (
-                self._oid, self._pin, self._invert, self._max_duration))
+            " max_duration=%d" % (
+                self._oid, self._pin, self._invert,
+                self._max_duration * self._mcu_freq))
         self._set_cmd = self._mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c")
     def set_digital(self, mcu_time, value):
@@ -326,9 +327,9 @@ class MCU_pwm:
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=%d"
-                " max_duration=TICKS(%f)" % (
+                " max_duration=%d" % (
                     self._oid, self._pin, self._cycle_time, self._invert,
-                    self._max_duration))
+                    self._max_duration * self._mcu_freq))
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
         else:
@@ -342,10 +343,10 @@ class MCU_pwm:
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
-                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=TICKS(%f)"
-                " default_value=%d max_duration=TICKS(%f)" % (
-                    self._oid, self._pin, self._cycle_time, self._invert,
-                    self._max_duration))
+                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d"
+                " default_value=%d max_duration=%d" % (
+                    self._oid, self._pin, self._cycle_time * self._mcu_freq,
+                    self._invert, self._max_duration * self._mcu_freq))
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%hu")
     def set_pwm(self, mcu_time, value):
