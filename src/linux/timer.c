@@ -92,6 +92,17 @@ timespec_update(void)
 }
 DECL_TASK(timespec_update);
 
+// Check if a given time has past
+int
+timer_check_periodic(struct timespec *ts)
+{
+    if (timespec_is_before(next_wake_time, *ts))
+        return 0;
+    *ts = next_wake_time;
+    ts->tv_sec += 2;
+    return 1;
+}
+
 
 /****************************************************************
  * Timers
