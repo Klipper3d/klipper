@@ -114,7 +114,7 @@ class GCodeParser:
                 self.toolhead.force_shutdown()
                 self.respond_error('Internal error on command:"%s"' % (cmd,))
                 if self.is_fileinput:
-                    self.printer.request_exit('exit_eof')
+                    self.printer.request_exit()
                     break
             self.ack()
         self.need_ack = prev_need_ack
@@ -141,7 +141,7 @@ class GCodeParser:
             self.motor_heater_off()
             if self.toolhead is not None:
                 self.toolhead.wait_moves()
-            self.printer.request_exit('exit_eof')
+            self.printer.request_exit()
         self.is_processing_data = False
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)

@@ -211,7 +211,7 @@ class Printer:
         except:
             logging.exception("Unhandled exception during connect")
             self.state_message = "Internal error during connect.%s" % (
-                message_restart)
+                message_restart,)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
@@ -220,12 +220,23 @@ class Printer:
         monotime = self.reactor.monotonic()
         logging.info("Start printer at %s (%.1f %.1f)" % (
             time.asctime(time.localtime(systime)), systime, monotime))
+        # Enter main reactor loop
         try:
             self.reactor.run()
         except:
             logging.exception("Unhandled exception during run")
-            return
-        return self.run_result
+            return "exit"
+        # Check restart flags
+        run_result = self.run_result
+        try:
+            self._stats(self.reactor.monotonic(), force_output=True)
+            if self.mcu is not None:
+                if run_result == 'firmware_restart':
+                    self.mcu.microcontroller_restart()
+                self.mcu.disconnect()
+        except:
+            logging.exception("Unhandled exception during post run")
+        return run_result
     def get_state_message(self):
         return self.state_message
     def note_shutdown(self, msg):
@@ -238,21 +249,6 @@ class Printer:
         self.state_message = "%s%s" % (msg, message_restart)
         self.gcode.set_printer_ready(False)
         self.gcode.motor_heater_off()
-    def disconnect(self):
-        try:
-            if self.mcu is not None:
-                self._stats(self.reactor.monotonic(), force_output=True)
-                self.mcu.disconnect()
-        except:
-            logging.exception("Unhandled exception during disconnect")
-    def firmware_restart(self):
-        try:
-            if self.mcu is not None:
-                self._stats(self.reactor.monotonic(), force_output=True)
-                self.mcu.microcontroller_restart()
-                self.mcu.disconnect()
-        except:
-            logging.exception("Unhandled exception during firmware_restart")
     def request_exit(self, result="exit"):
         self.run_result = result
         self.reactor.end()
@@ -315,14 +311,7 @@ def main():
     while 1:
         printer = Printer(input_fd, bglogger, start_args)
         res = printer.run()
-        if res == 'restart':
-            printer.disconnect()
-        elif res == 'firmware_restart':
-            printer.firmware_restart()
-        elif res == 'exit_eof':
-            printer.disconnect()
-            break
-        else:
+        if res == 'exit':
             break
         time.sleep(1.)
         logging.info("Restarting printer")
