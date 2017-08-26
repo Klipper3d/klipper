@@ -4,10 +4,8 @@ by the Klipper micro-controller software. This document is not an
 authoritative reference for these commands, nor is it an exclusive
 list of all available commands.
 
-This document may be useful for users needing to configure a set of
-hardware actions that their printer may require at startup (via the
-"custom" field in the printer config file), and it may be useful for
-developers wishing to obtain a high-level feel for low-level commands.
+This document may be useful for developers interested in understanding
+the low-level micro-controller commands.
 
 See the [protocol](Protocol.md) document for more information on the
 format of commands and their transmission. The commands here are
@@ -25,22 +23,13 @@ commands available for that purpose. Unlike most micro-controller
 commands, these commands run as soon as they are received and they do
 not require any particular setup.
 
-These commands are most useful in the "custom" block of the "mcu"
-section of the printer configuration file. This feature is typically
-used to configure the initial settings of LEDs, to configure
-micro-stepping pins, to configure a digipot, etc.
-
 Several of these commands will take a "pin=%u" parameter. The
 low-level micro-controller software uses integer encodings of the
 hardware pin numbers, but to make things more readable the host will
 translate human readable pin names (eg, "PA3") to their equivalent
 integer encodings. By convention, any parameter named "pin" or that
 has a "_pin" suffix will use pin name translation by the
-host. Similarly, several commands take time parameters specified in
-clock ticks. One can specify a value for these parameters in seconds
-using the "TICKS()" macro - for example "cycle_ticks=TICKS(0.001)"
-would result in "cycle_ticks=16000" on a micro-controller with a 16Mhz
-clock.
+host.
 
 Common startup commands:
 
