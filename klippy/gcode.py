@@ -429,7 +429,7 @@ class GCodeParser:
             return
         try:
             res = self.toolhead.query_endstops()
-        except self.printer.mcu.error as e:
+        except homing.EndstopError as e:
             self.respond_error(str(e))
             return
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])

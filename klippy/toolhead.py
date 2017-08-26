@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import cartesian, corexy, delta, extruder
+import homing, cartesian, corexy, delta, extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -183,6 +183,7 @@ class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
         self.reactor = printer.reactor
+        self.mcu = printer.objects['mcu']
         self.extruder = extruder.DummyExtruder()
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'corexy': corexy.CoreXYKinematics,
@@ -230,19 +231,19 @@ class ToolHead:
     def update_move_time(self, movetime):
         self.print_time += movetime
         flush_to_time = self.print_time - self.move_flush_time
-        self.printer.mcu.flush_moves(flush_to_time)
+        self.mcu.flush_moves(flush_to_time)
     def get_next_move_time(self):
         if self.synch_print_time:
             curtime = self.reactor.monotonic()
             if self.print_time:
-                buffer_time = self.printer.mcu.get_print_buffer_time(
+                buffer_time = self.mcu.get_print_buffer_time(
                     curtime, self.print_time)
                 self.print_time += max(self.buffer_time_start - buffer_time, 0.)
                 if self.forced_synch:
                     self.print_stall += 1
                     self.forced_synch = False
             else:
-                self.printer.mcu.set_print_start_time(curtime)
+                self.mcu.set_print_start_time(curtime)
                 self.print_time = self.buffer_time_start
                 self._reset_motor_off()
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
@@ -254,7 +255,7 @@ class ToolHead:
         if synch_print_time or must_synch:
             self.synch_print_time = True
             self.move_queue.set_flush_time(self.buffer_time_high)
-            self.printer.mcu.flush_moves(self.print_time)
+            self.mcu.flush_moves(self.print_time)
     def get_last_move_time(self):
         self._flush_lookahead()
         return self.get_next_move_time()
@@ -273,7 +274,7 @@ class ToolHead:
             return
         # Check if there are lots of queued moves and stall if so
         while 1:
-            buffer_time = self.printer.mcu.get_print_buffer_time(
+            buffer_time = self.mcu.get_print_buffer_time(
                 eventtime, self.print_time)
             stall_time = buffer_time - self.buffer_time_high
             if stall_time <= 0.:
@@ -290,8 +291,7 @@ class ToolHead:
                 if not self.print_time:
                     return self.reactor.NEVER
             print_time = self.print_time
-            buffer_time = self.printer.mcu.get_print_buffer_time(
-                eventtime, print_time)
+            buffer_time = self.mcu.get_print_buffer_time(eventtime, print_time)
             if buffer_time > self.buffer_time_low:
                 # Running normally - reschedule check
                 return eventtime + buffer_time - self.buffer_time_low
@@ -366,7 +366,10 @@ class ToolHead:
             eventtime = self.reactor.pause(eventtime + 0.100)
     def query_endstops(self):
         last_move_time = self.get_last_move_time()
-        return self.kin.query_endstops(last_move_time)
+        try:
+            return self.kin.query_endstops(last_move_time)
+        except self.mcu.error as e:
+            raise homing.EndstopError(str(e))
     def set_extruder(self, extruder):
         last_move_time = self.get_last_move_time()
         self.extruder.set_active(last_move_time, False)
@@ -380,7 +383,7 @@ class ToolHead:
         print_time = self.print_time
         if print_time:
             is_active = True
-            buffer_time = max(0., self.printer.mcu.get_print_buffer_time(
+            buffer_time = max(0., self.mcu.get_print_buffer_time(
                 eventtime, print_time))
         else:
             is_active = eventtime < self.last_print_end_time + 60.
@@ -388,7 +391,7 @@ class ToolHead:
             print_time, buffer_time, self.print_stall)
     def force_shutdown(self):
         try:
-            self.printer.mcu.force_shutdown()
+            self.mcu.force_shutdown()
             self.move_queue.reset()
             self.reset_print_time()
         except:
