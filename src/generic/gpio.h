@@ -1,7 +1,7 @@
 #ifndef __GENERIC_GPIO_H
 #define __GENERIC_GPIO_H
 
-#include <stdint.h>
+#include <stdint.h> // uint8_t
 
 struct gpio_out {
     uint8_t pin;
