@@ -3,6 +3,11 @@
 
 if MACH_LINUX
 
+config LINUX_SELECT
+    bool
+    default y
+    select HAVE_GPIO_ADC
+
 config BOARD_DIRECTORY
     string
     default "linux"
