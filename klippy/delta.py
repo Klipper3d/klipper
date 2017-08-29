@@ -107,17 +107,18 @@ class DeltaKinematics:
         s = self.steppers[0] # Assume homing speed same for all steppers
         self.need_home = False
         # Initial homing
+        homing_speed = s.get_homing_speed()
         homepos = [0., 0., self.max_z, None]
         coord = list(homepos)
         coord[2] = -1.5 * math.sqrt(self.arm_length2-self.max_xy2)
-        homing_state.home(list(coord), homepos, self.steppers, s.homing_speed)
+        homing_state.home(list(coord), homepos, self.steppers, homing_speed)
         # Retract
         coord[2] = homepos[2] - s.homing_retract_dist
-        homing_state.retract(list(coord), s.homing_speed)
+        homing_state.retract(list(coord), homing_speed)
         # Home again
         coord[2] -= s.homing_retract_dist
         homing_state.home(list(coord), homepos, self.steppers
-                          , s.homing_speed/2.0, second_home=True)
+                          , homing_speed/2.0, second_home=True)
         # Set final homed position
         spos = self._cartesian_to_actuator(homepos)
         spos = [spos[i] + self.steppers[i].position_endstop - self.max_z

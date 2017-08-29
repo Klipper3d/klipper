@@ -104,6 +104,12 @@ class PrinterHomingStepper(PrinterStepper):
         mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(print_time)
         self.mcu_endstop.query_endstop(mcu_time)
         return self.mcu_endstop
+    def get_homing_speed(self):
+        # Round the configured homing speed so that it is an even
+        # number of ticks per step.
+        dist_ticks = self.mcu_stepper.get_mcu().get_mcu_freq() * self.step_dist
+        ticks_per_step = round(dist_ticks / self.homing_speed)
+        return dist_ticks / ticks_per_step
     def get_homed_offset(self):
         if not self.homing_stepper_phases or self.need_motor_enable:
             return 0
