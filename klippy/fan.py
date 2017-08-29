@@ -33,7 +33,7 @@ class PrinterFan:
         self.last_fan_value = value
     # External commands
     def set_speed(self, print_time, value):
-        mcu_time = self.mcu_fan.print_to_mcu_time(print_time)
+        mcu_time = self.mcu_fan.get_mcu().print_to_mcu_time(print_time)
         self.set_pwm(mcu_time, value)
 
 class PrinterHeaterFan:
@@ -53,7 +53,8 @@ class PrinterHeaterFan:
         power = 0.
         if target_temp or current_temp > self.heater_temp:
             power = 1.
-        mcu_time = self.fan.mcu_fan.system_to_mcu_time(eventtime + FAN_MIN_TIME)
+        mcu_time = self.fan.mcu_fan.get_mcu().system_to_mcu_time(
+            eventtime + FAN_MIN_TIME)
         self.fan.set_pwm(mcu_time, power)
         return eventtime + 1.
 

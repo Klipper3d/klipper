@@ -26,7 +26,8 @@ class MCU_stepper:
         self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
-        self.system_to_mcu_time = mcu.system_to_mcu_time
+    def get_mcu(self):
+        return self._mcu
     def setup_dir_pin(self, pin_params):
         if pin_params['chip'] is not self._mcu:
             raise pins.error("Stepper dir pin must be on same mcu as step pin")
@@ -153,8 +154,8 @@ class MCU_endstop:
         self._next_query_clock = self._home_timeout_clock = 0
         self._retry_query_ticks = 0
         self._last_state = {}
-        self.print_to_mcu_time = mcu.print_to_mcu_time
-        self.system_to_mcu_time = mcu.system_to_mcu_time
+    def get_mcu(self):
+        return self._mcu
     def add_stepper(self, stepper):
         self._steppers.append(stepper)
     def build_config(self):
@@ -246,8 +247,8 @@ class MCU_digital_out:
         self._mcu_freq = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._set_cmd = None
-        self.print_to_mcu_time = mcu.print_to_mcu_time
-        self.system_to_mcu_time = mcu.system_to_mcu_time
+    def get_mcu(self):
+        return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
     def setup_static(self):
@@ -296,8 +297,8 @@ class MCU_pwm:
         self._pwm_max = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._set_cmd = None
-        self.print_to_mcu_time = mcu.print_to_mcu_time
-        self.system_to_mcu_time = mcu.system_to_mcu_time
+    def get_mcu(self):
+        return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
     def setup_cycle_time(self, cycle_time):
@@ -371,6 +372,8 @@ class MCU_adc:
         self._inv_max_adc = 0.
         self._mcu_freq = 0.
         self._cmd_queue = mcu.alloc_command_queue()
+    def get_mcu(self):
+        return self._mcu
     def setup_minmax(self, sample_time, sample_count, minval=0., maxval=1.):
         self._sample_time = sample_time
         self._sample_count = sample_count

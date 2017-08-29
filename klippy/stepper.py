@@ -43,7 +43,7 @@ class PrinterStepper:
             self.mcu_stepper.reset_step_clock(mcu_time)
         if (self.mcu_enable is not None
             and self.mcu_enable.get_last_setting() != enable):
-            mcu_time = self.mcu_enable.print_to_mcu_time(move_time)
+            mcu_time = self.mcu_enable.get_mcu().print_to_mcu_time(move_time)
             self.mcu_enable.set_digital(mcu_time, enable)
         self.need_motor_enable = not enable
 
@@ -97,11 +97,11 @@ class PrinterHomingStepper(PrinterStepper):
             if printer.get_start_args().get('debugoutput') is not None:
                 self.homing_endstop_accuracy = self.homing_stepper_phases
     def enable_endstop_checking(self, move_time, step_time):
-        mcu_time = self.mcu_endstop.print_to_mcu_time(move_time)
+        mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(move_time)
         self.mcu_endstop.home_start(mcu_time, step_time)
         return self.mcu_endstop
     def query_endstop(self, print_time):
-        mcu_time = self.mcu_endstop.print_to_mcu_time(print_time)
+        mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(print_time)
         self.mcu_endstop.query_endstop(mcu_time)
         return self.mcu_endstop
     def get_homed_offset(self):
