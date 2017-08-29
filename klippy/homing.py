@@ -1,9 +1,11 @@
 # Code for state tracking during homing operations
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+
+HOMING_DELAY = 0.250
 
 class Homing:
     def __init__(self, toolhead, changed_axes):
@@ -29,6 +31,8 @@ class Homing:
         # Alter kinematics class to think printer is at forcepos
         self.toolhead.set_position(self._fill_coord(forcepos))
         # Start homing and issue move
+        if not second_home:
+            self.toolhead.dwell(HOMING_DELAY)
         print_time = self.toolhead.get_last_move_time()
         endstops = []
         for s in steppers:
