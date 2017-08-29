@@ -14,6 +14,7 @@ STEPCOMPRESS_ERROR_RET = -989898989
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
+        self._oid = self._mcu.create_oid()
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -22,7 +23,7 @@ class MCU_stepper:
         self._velocity_factor = self._accel_factor = 0.
         self._mcu_position_offset = 0
         self._mcu_freq = self._min_stop_interval = 0.
-        self._oid = self._reset_cmd = self._get_position_cmd = None
+        self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
         self.print_to_mcu_time = mcu.print_to_mcu_time
         self.system_to_mcu_time = mcu.system_to_mcu_time
@@ -38,7 +39,6 @@ class MCU_stepper:
         self._inv_step_dist = 1. / step_dist
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
-        self._oid = self._mcu.create_oid()
         self._velocity_factor = 1. / (self._mcu_freq * self._step_dist)
         self._accel_factor = 1. / (self._mcu_freq**2 * self._step_dist)
         max_error = self._mcu.get_max_stepper_error()
