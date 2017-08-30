@@ -40,42 +40,6 @@ struct stepcompress {
 
 
 /****************************************************************
- * Queue management
- ****************************************************************/
-
-// Shuffle the internal queue to avoid having to allocate more ram
-static void
-clean_queue(struct stepcompress *sc)
-{
-    int in_use = sc->queue_next - sc->queue_pos;
-    memmove(sc->queue, sc->queue_pos, in_use * sizeof(*sc->queue));
-    sc->queue_pos = sc->queue;
-    sc->queue_next = sc->queue + in_use;
-}
-
-// Expand the internal queue of step times
-static void
-expand_queue(struct stepcompress *sc, int count)
-{
-    int alloc = sc->queue_end - sc->queue;
-    if (count + sc->queue_next - sc->queue_pos <= alloc) {
-        clean_queue(sc);
-        return;
-    }
-    int pos = sc->queue_pos - sc->queue;
-    int next = sc->queue_next - sc->queue;
-    if (!alloc)
-        alloc = QUEUE_START_SIZE;
-    while (next + count > alloc)
-        alloc *= 2;
-    sc->queue = realloc(sc->queue, alloc * sizeof(*sc->queue));
-    sc->queue_end = sc->queue + alloc;
-    sc->queue_pos = sc->queue + pos;
-    sc->queue_next = sc->queue + next;
-}
-
-
-/****************************************************************
  * Step compression
  ****************************************************************/
 
@@ -362,35 +326,6 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     return 0;
 }
 
-// Check if the internal queue needs to be expanded, and expand if so
-static int
-_check_push(struct stepcompress *sc)
-{
-    if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
-        // No point in keeping more than 64K steps in memory
-        int ret = stepcompress_flush(sc, *(sc->queue_next - 65535));
-        if (ret)
-            return ret;
-    }
-    expand_queue(sc, 1);
-    return 0;
-}
-static inline int
-check_push(struct stepcompress *sc, uint64_t **pqnext, uint64_t **pqend
-           , uint64_t c)
-{
-    if (unlikely(*pqnext >= *pqend)) {
-        sc->queue_next = *pqnext;
-        int ret = _check_push(sc);
-        if (ret)
-            return ret;
-        *pqnext = sc->queue_next;
-        *pqend = sc->queue_end;
-    }
-    *(*pqnext)++ = c;
-    return 0;
-}
-
 // Reset the internal state of the stepcompress object
 int
 stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
@@ -430,8 +365,94 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 
 
 /****************************************************************
+ * Queue management
+ ****************************************************************/
+
+struct queue_append {
+    struct stepcompress *sc;
+    uint64_t *qnext, *qend;
+    double clock_offset;
+};
+
+// Create a cursor for inserting clock times into the queue
+static inline struct queue_append
+queue_append_start(struct stepcompress *sc, double clock_offset, double adjust)
+{
+    return (struct queue_append) {
+        .sc = sc, .qnext = sc->queue_next, .qend = sc->queue_end,
+        .clock_offset = clock_offset + adjust };
+}
+
+// Finalize a cursor created with queue_append_start()
+static inline void
+queue_append_finish(struct queue_append qa)
+{
+    qa.sc->queue_next = qa.qnext;
+}
+
+// Slow path for queue_append()
+static int
+queue_append_slow(struct stepcompress *sc, double abs_step_clock)
+{
+    if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
+        // No point in keeping more than 64K steps in memory
+        int ret = stepcompress_flush(sc, *(sc->queue_next - 65535));
+        if (ret)
+            return ret;
+    }
+
+    int in_use = sc->queue_next - sc->queue_pos;
+    if (sc->queue_pos > sc->queue) {
+        // Shuffle the internal queue to avoid having to allocate more ram
+        memmove(sc->queue, sc->queue_pos, in_use * sizeof(*sc->queue));
+    } else {
+        // Expand the internal queue of step times
+        int alloc = sc->queue_end - sc->queue;
+        if (!alloc)
+            alloc = QUEUE_START_SIZE;
+        while (in_use >= alloc)
+            alloc *= 2;
+        sc->queue = realloc(sc->queue, alloc * sizeof(*sc->queue));
+        sc->queue_end = sc->queue + alloc;
+    }
+    sc->queue_pos = sc->queue;
+    sc->queue_next = sc->queue + in_use;
+    *sc->queue_next++ = abs_step_clock;
+    return 0;
+}
+
+// Add a clock time to the queue (flushing the queue if needed)
+static inline int
+queue_append(struct queue_append *qa, double step_clock)
+{
+    double abs_step_clock = step_clock + qa->clock_offset;
+    if (likely(qa->qnext < qa->qend)) {
+        *qa->qnext++ = abs_step_clock;
+        return 0;
+    }
+    // Call queue_append_slow() to handle queue expansion
+    struct stepcompress *sc = qa->sc;
+    sc->queue_next = qa->qnext;
+    int ret = queue_append_slow(sc, abs_step_clock);
+    if (ret)
+        return ret;
+    qa->qnext = sc->queue_next;
+    qa->qend = sc->queue_end;
+    return 0;
+}
+
+
+/****************************************************************
  * Motion to step conversions
  ****************************************************************/
+
+// Common suffixes: _sd is step distance (a unit length the same
+// distance the stepper moves on each step), _sv is step velocity (in
+// units of step distance per clock tick), _sd2 is step distance
+// squared, _r is ratio (scalar usually between 0.0 and 1.0).  Times
+// are represented as clock ticks (a unit of time determined by a
+// micro-controller tick) and acceleration is in units of step
+// distance per clock ticks squared.
 
 // Wrapper around sqrt() to handle small negative numbers
 static double
@@ -454,22 +475,13 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
     int ret = set_next_step_dir(sc, !!sdir);
     if (ret)
         return ret;
-    step_clock += 0.5;
-    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
-    ret = check_push(sc, &qnext, &qend, step_clock);
+    struct queue_append qa = queue_append_start(sc, step_clock, 0.5);
+    ret = queue_append(&qa, 0.);
     if (ret)
         return ret;
-    sc->queue_next = qnext;
+    queue_append_finish(qa);
     return 0;
 }
-
-// Common suffixes: _sd is step distance (a unit length the same
-// distance the stepper moves on each step), _sv is step velocity (in
-// units of step distance per clock tick), _sd2 is step distance
-// squared, _r is ratio (scalar usually between 0.0 and 1.0).  Times
-// are represented as clock ticks (a unit of time determined by a
-// micro-controller tick) and acceleration is in units of step
-// distance per clock ticks squared.
 
 // Schedule 'steps' number of steps at constant acceleration. If
 // acceleration is zero (ie, constant velocity) it uses the formula:
@@ -505,35 +517,34 @@ stepcompress_push_const(
     int res = sdir ? count : -count;
 
     // Calculate each step time
-    clock_offset += 0.5;
     double pos = step_offset + .5;
-    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
+        struct queue_append qa = queue_append_start(sc, clock_offset, .5);
         double inv_cruise_sv = 1. / start_sv;
         while (count--) {
-            uint64_t c = clock_offset + pos*inv_cruise_sv;
-            int ret = check_push(sc, &qnext, &qend, c);
+            ret = queue_append(&qa, pos * inv_cruise_sv);
             if (ret)
                 return ret;
             pos += 1.0;
         }
+        queue_append_finish(qa);
     } else {
         // Move with constant acceleration
         double inv_accel = 1. / accel;
-        clock_offset -= start_sv * inv_accel;
         pos += .5 * start_sv*start_sv * inv_accel;
+        struct queue_append qa = queue_append_start(
+            sc, clock_offset, 0.5 - start_sv * inv_accel);
         double accel_multiplier = 2. * inv_accel;
         while (count--) {
             double v = safe_sqrt(pos * accel_multiplier);
-            uint64_t c = clock_offset + (accel_multiplier >= 0. ? v : -v);
-            int ret = check_push(sc, &qnext, &qend, c);
+            int ret = queue_append(&qa, accel_multiplier >= 0. ? v : -v);
             if (ret)
                 return ret;
             pos += 1.0;
         }
+        queue_append_finish(qa);
     }
-    sc->queue_next = qnext;
     return res;
 }
 
@@ -565,19 +576,17 @@ _stepcompress_push_delta(
     int res = sdir ? count : -count;
 
     // Calculate each step time
-    clock_offset += 0.5;
     height += (sdir ? .5 : -.5);
-    uint64_t *qnext = sc->queue_next, *qend = sc->queue_end;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
+        struct queue_append qa = queue_append_start(sc, clock_offset, .5);
         double inv_cruise_sv = 1. / start_sv;
         if (!movez_r) {
             // Optimized case for common XY only moves (no Z movement)
             while (count--) {
                 double v = safe_sqrt(arm_sd2 - height*height);
                 double pos = startxy_sd + (sdir ? -v : v);
-                uint64_t c = clock_offset + pos * inv_cruise_sv;
-                int ret = check_push(sc, &qnext, &qend, c);
+                int ret = queue_append(&qa, pos * inv_cruise_sv);
                 if (ret)
                     return ret;
                 height += (sdir ? 1. : -1.);
@@ -586,8 +595,7 @@ _stepcompress_push_delta(
             // Optimized case for Z only moves
             double pos = (sdir ? height-end_height : end_height-height);
             while (count--) {
-                uint64_t c = clock_offset + pos * inv_cruise_sv;
-                int ret = check_push(sc, &qnext, &qend, c);
+                int ret = queue_append(&qa, pos * inv_cruise_sv);
                 if (ret)
                     return ret;
                 pos += 1.;
@@ -599,33 +607,33 @@ _stepcompress_push_delta(
                 double relheight = movexy_r*height - zoffset;
                 double v = safe_sqrt(arm_sd2 - relheight*relheight);
                 double pos = start_pos + movez_r*height + (sdir ? -v : v);
-                uint64_t c = clock_offset + pos * inv_cruise_sv;
-                int ret = check_push(sc, &qnext, &qend, c);
+                int ret = queue_append(&qa, pos * inv_cruise_sv);
                 if (ret)
                     return ret;
                 height += (sdir ? 1. : -1.);
             }
         }
+        queue_append_finish(qa);
     } else {
         // Move with constant acceleration
         double start_pos = movexy_r*startxy_sd, zoffset = movez_r*startxy_sd;
         double inv_accel = 1. / accel;
-        clock_offset -= start_sv * inv_accel;
         start_pos += 0.5 * start_sv*start_sv * inv_accel;
+        struct queue_append qa = queue_append_start(
+            sc, clock_offset, 0.5 - start_sv * inv_accel);
         double accel_multiplier = 2. * inv_accel;
         while (count--) {
             double relheight = movexy_r*height - zoffset;
             double v = safe_sqrt(arm_sd2 - relheight*relheight);
             double pos = start_pos + movez_r*height + (sdir ? -v : v);
             v = safe_sqrt(pos * accel_multiplier);
-            uint64_t c = clock_offset + (accel_multiplier >= 0. ? v : -v);
-            int ret = check_push(sc, &qnext, &qend, c);
+            int ret = queue_append(&qa, accel_multiplier >= 0. ? v : -v);
             if (ret)
                 return ret;
             height += (sdir ? 1. : -1.);
         }
+        queue_append_finish(qa);
     }
-    sc->queue_next = qnext;
     return res;
 }
 
