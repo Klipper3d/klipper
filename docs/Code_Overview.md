@@ -178,10 +178,10 @@ provides further information on the mechanics of moves.
   step distances), and calls the C code. The C code calculates the
   stepper step times for each movement and fills an array (struct
   stepcompress.queue) with the corresponding micro-controller clock
-  counter times (in 64bit integers) for every step. Here the
-  "micro-controller clock counter" value directly corresponds to the
-  micro-controller's hardware counter - it is relative to when the
-  micro-controller was last powered up.
+  counter times for every step. Here the "micro-controller clock
+  counter" value directly corresponds to the micro-controller's
+  hardware counter - it is relative to when the micro-controller was
+  last powered up.
 
 * The next major step is to compress the steps: `stepcompress_flush()
   -> compress_bisect_add()` (in stepcompress.c). This code generates
