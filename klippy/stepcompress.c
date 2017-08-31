@@ -66,9 +66,8 @@ struct points {
 static inline struct points
 minmax_point(struct stepcompress *sc, uint32_t *pos)
 {
-    uint32_t lsc = sc->last_step_clock;
+    uint32_t lsc = sc->last_step_clock, point = *pos - lsc;
     uint32_t prevpoint = pos > sc->queue_pos ? *(pos-1) - lsc : 0;
-    uint32_t point = *pos - lsc;
     uint32_t max_error = (point - prevpoint) / 2;
     if (max_error > sc->max_error)
         max_error = sc->max_error;
@@ -443,7 +442,7 @@ static inline int
 queue_append(struct queue_append *qa, double step_clock)
 {
     double rel_sc = step_clock + qa->clock_offset;
-    if (likely(qa->qnext < qa->qend && rel_sc < (double)CLOCK_DIFF_MAX)) {
+    if (likely(!(qa->qnext >= qa->qend || rel_sc >= (double)CLOCK_DIFF_MAX))) {
         *qa->qnext++ = qa->last_step_clock_32 + (uint32_t)rel_sc;
         return 0;
     }
