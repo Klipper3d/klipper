@@ -537,31 +537,32 @@ stepcompress_push_const(
     int res = sdir ? count : -count;
 
     // Calculate each step time
-    double pos = step_offset + .5;
     if (!accel) {
         // Move at constant velocity (zero acceleration)
         struct queue_append qa = queue_append_start(sc, clock_offset, .5);
         double inv_cruise_sv = 1. / start_sv;
+        double pos = (step_offset + .5) * inv_cruise_sv;
         while (count--) {
-            ret = queue_append(&qa, pos * inv_cruise_sv);
+            ret = queue_append(&qa, pos);
             if (ret)
                 return ret;
-            pos += 1.0;
+            pos += inv_cruise_sv;
         }
         queue_append_finish(qa);
     } else {
         // Move with constant acceleration
         double inv_accel = 1. / accel;
-        pos += .5 * start_sv*start_sv * inv_accel;
+        double accel_time = start_sv * inv_accel;
         struct queue_append qa = queue_append_start(
-            sc, clock_offset, 0.5 - start_sv * inv_accel);
+            sc, clock_offset, 0.5 - accel_time);
         double accel_multiplier = 2. * inv_accel;
+        double pos = (step_offset + .5)*accel_multiplier + accel_time*accel_time;
         while (count--) {
-            double v = safe_sqrt(pos * accel_multiplier);
+            double v = safe_sqrt(pos);
             int ret = queue_append(&qa, accel_multiplier >= 0. ? v : -v);
             if (ret)
                 return ret;
-            pos += 1.0;
+            pos += accel_multiplier;
         }
         queue_append_finish(qa);
     }
@@ -613,12 +614,13 @@ _stepcompress_push_delta(
             }
         } else if (!movexy_r) {
             // Optimized case for Z only moves
-            double pos = (sdir ? height-end_height : end_height-height);
+            double pos = ((sdir ? height-end_height : end_height-height)
+                          * inv_cruise_sv);
             while (count--) {
-                int ret = queue_append(&qa, pos * inv_cruise_sv);
+                int ret = queue_append(&qa, pos);
                 if (ret)
                     return ret;
-                pos += 1.;
+                pos += inv_cruise_sv;
             }
         } else {
             // General case (handles XY+Z moves)
