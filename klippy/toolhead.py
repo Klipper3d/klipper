@@ -189,6 +189,7 @@ class ToolHead:
                     'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(printer, config)
+        self.homing_order = config.get('homing_order', 'XYZ')
         self.max_speed = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
         self.max_accel_to_decel = config.getfloat(
