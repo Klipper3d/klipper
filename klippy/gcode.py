@@ -281,7 +281,7 @@ class GCodeParser:
         'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
         'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
         'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE', 'RESTART', 'FIRMWARE_RESTART',
-        'STATUS', 'HELP']
+        'ECHO', 'STATUS', 'HELP']
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
         # Move
@@ -462,6 +462,9 @@ class GCodeParser:
     def cmd_FIRMWARE_RESTART(self, params):
         self.prep_restart()
         self.printer.request_exit('firmware_restart')
+    cmd_ECHO_when_not_ready = True
+    def cmd_ECHO(self, params):
+        self.respond_info(params['#original'])
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):
