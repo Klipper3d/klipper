@@ -126,15 +126,15 @@ class GCodeParser:
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         if self.is_processing_data:
-            if not self.is_fileinput:
-                if not lines:
-                    return
-                if lines[0].strip().upper() == 'M112':
-                    self.cmd_M112({})
+            if not self.is_fileinput and not lines:
+                return
             self.reactor.unregister_fd(self.fd_handle)
             self.fd_handle = None
+            if not self.is_fileinput and lines[0].strip().upper() == 'M112':
+                self.cmd_M112({})
             while self.is_processing_data:
                 eventtime = self.reactor.pause(eventtime + 0.100)
+            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.is_processing_data = True
         self.process_commands(lines)
         if not data and self.is_fileinput:
@@ -143,8 +143,6 @@ class GCodeParser:
                 self.toolhead.wait_moves()
             self.printer.request_exit()
         self.is_processing_data = False
-        if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
