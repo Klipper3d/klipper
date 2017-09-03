@@ -88,9 +88,9 @@ The junction speeds are determined using "approximated centripetal
 acceleration". Best
 [described by the author](https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/).
 
-Klipper implements look-ahead between moves contained in the XY plane
-that have similar extruder flow rates. Other moves are relatively rare
-and implementing look-ahead between them is unnecessary.
+Klipper implements look-ahead between moves that have similar extruder
+flow rates. Other moves are relatively rare and implementing
+look-ahead between them is unnecessary.
 
 Key formula for look-ahead:
 ```

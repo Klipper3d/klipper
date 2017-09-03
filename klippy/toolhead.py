@@ -42,18 +42,18 @@ class Move:
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def calc_junction(self, prev_move):
-        axes_d = self.axes_d
-        prev_axes_d = prev_move.axes_d
-        if (axes_d[2] or prev_axes_d[2] or self.accel != prev_move.accel
-            or not self.is_kinematic_move or not prev_move.is_kinematic_move):
+        if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
         # Allow extruder to calculate its maximum junction
         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
         # Find max velocity using approximated centripetal velocity as
         # described at:
         # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
+        axes_d = self.axes_d
+        prev_axes_d = prev_move.axes_d
         junction_cos_theta = -((axes_d[0] * prev_axes_d[0]
-                                + axes_d[1] * prev_axes_d[1])
+                                + axes_d[1] * prev_axes_d[1]
+                                + axes_d[2] * prev_axes_d[2])
                                / (self.move_d * prev_move.move_d))
         if junction_cos_theta > 0.999999:
             return
@@ -61,8 +61,9 @@ class Move:
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
         self.max_start_v2 = min(
-            R * self.accel, self.max_cruise_v2, prev_move.max_cruise_v2
-            , extruder_v2, prev_move.max_start_v2 + prev_move.delta_v2)
+            R * self.accel, R * prev_move.accel, extruder_v2
+            , self.max_cruise_v2, prev_move.max_cruise_v2
+            , prev_move.max_start_v2 + prev_move.delta_v2)
         self.max_smoothed_v2 = min(
             self.max_start_v2
             , prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
