@@ -12,13 +12,11 @@ StepList = (0, 1, 2)
 SLOW_RATIO = 3.
 
 class DeltaKinematics:
-    def __init__(self, printer, config):
-        self.config = config
+    def __init__(self, toolhead, printer, config):
         self.steppers = [stepper.PrinterHomingStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['a', 'b', 'c']]
         self.need_motor_enable = self.need_home = True
-        self.max_velocity = self.max_z_velocity = self.max_accel = 0.
         radius = config.getfloat('delta_radius', above=0.)
         arm_length = config.getfloat('delta_arm_length', above=radius)
         self.arm_length2 = arm_length**2
@@ -29,6 +27,14 @@ class DeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
                 self.max_z, self.limit_z))
+        # Setup stepper max halt velocity
+        self.max_velocity, self.max_accel = toolhead.get_max_velocity()
+        self.max_z_velocity = config.getfloat(
+            'max_z_velocity', self.max_velocity,
+            above=0., maxval=self.max_velocity)
+        max_xy_halt_velocity = toolhead.get_max_axis_halt(self.max_accel)
+        for s in self.steppers:
+            s.set_max_jerk(max_xy_halt_velocity, self.max_accel)
         # Determine tower locations in cartesian space
         angles = [config.getsection('stepper_a').getfloat('angle', 210.),
                   config.getsection('stepper_b').getfloat('angle', 330.),
@@ -52,14 +58,6 @@ class DeltaKinematics:
             % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
                math.sqrt(self.very_slow_xy2)))
         self.set_position([0., 0., 0.])
-    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
-        self.max_velocity = max_velocity
-        max_z_velocity = self.config.getfloat(
-            'max_z_velocity', max_velocity, above=0.)
-        self.max_z_velocity = min(max_velocity, max_z_velocity)
-        self.max_accel = max_accel
-        for stepper in self.steppers:
-            stepper.set_max_jerk(max_xy_halt_velocity, max_accel)
     def _cartesian_to_actuator(self, coord):
         return [math.sqrt(self.arm_length2
                           - (self.towers[i][0] - coord[0])**2

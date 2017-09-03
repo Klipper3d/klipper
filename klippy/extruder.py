@@ -21,6 +21,15 @@ class PrinterExtruder:
             'max_extrude_cross_section', 4. * self.nozzle_diameter**2
             , above=0.)
         self.max_extrude_ratio = max_cross_section / filament_area
+        toolhead = printer.objects['toolhead']
+        max_velocity, max_accel = toolhead.get_max_velocity()
+        self.max_e_velocity = self.config.getfloat(
+            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
+            , above=0.)
+        self.max_e_accel = self.config.getfloat(
+            'max_extrude_only_accel', max_accel * self.max_extrude_ratio
+            , above=0.)
+        self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
         self.max_e_velocity = self.max_e_accel = None
@@ -34,14 +43,6 @@ class PrinterExtruder:
                 'pressure_advance_lookahead_time', 0.010, minval=0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
-    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
-        self.max_e_velocity = self.config.getfloat(
-            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
-            , above=0.)
-        self.max_e_accel = self.config.getfloat(
-            'max_extrude_only_accel', max_accel * self.max_extrude_ratio
-            , above=0.)
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):

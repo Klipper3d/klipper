@@ -184,12 +184,7 @@ class ToolHead:
         self.printer = printer
         self.reactor = printer.reactor
         self.mcu = printer.objects['mcu']
-        self.extruder = extruder.DummyExtruder()
-        kintypes = {'cartesian': cartesian.CartKinematics,
-                    'corexy': corexy.CoreXYKinematics,
-                    'delta': delta.DeltaKinematics}
-        self.kin = config.getchoice('kinematics', kintypes)(printer, config)
-        self.max_speed = config.getfloat('max_velocity', above=0.)
+        self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
         self.max_accel_to_decel = config.getfloat(
             'max_accel_to_decel', self.max_accel * 0.5
@@ -197,7 +192,6 @@ class ToolHead:
         self.junction_deviation = config.getfloat(
             'junction_deviation', 0.02, above=0.)
         self.move_queue = MoveQueue()
-        self.move_queue.set_extruder(self.extruder)
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
         self.buffer_time_low = config.getfloat(
@@ -221,12 +215,14 @@ class ToolHead:
             'motor_off_time', 600.000, minval=0.)
         self.motor_off_timer = self.reactor.register_timer(
             self._motor_off_handler)
-        # Determine the maximum velocity a cartesian axis could have
-        # before cornering.  The 8. was determined experimentally.
-        xy_halt = math.sqrt(8. * self.junction_deviation * self.max_accel)
-        self.kin.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
-        for e in extruder.get_printer_extruders(printer):
-            e.set_max_jerk(xy_halt, self.max_speed, self.max_accel)
+        # Create kinematics class
+        self.extruder = extruder.DummyExtruder()
+        self.move_queue.set_extruder(self.extruder)
+        kintypes = {'cartesian': cartesian.CartKinematics,
+                    'corexy': corexy.CoreXYKinematics,
+                    'delta': delta.DeltaKinematics}
+        self.kin = config.getchoice('kinematics', kintypes)(
+            self, printer, config)
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -332,7 +328,7 @@ class ToolHead:
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
     def move(self, newpos, speed):
-        speed = min(speed, self.max_speed)
+        speed = min(speed, self.max_velocity)
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
@@ -396,6 +392,13 @@ class ToolHead:
             self.reset_print_time()
         except:
             logging.exception("Exception in force_shutdown")
+    def get_max_velocity(self):
+        return self.max_velocity, self.max_accel
+    def get_max_axis_halt(self, max_accel):
+        # Determine the maximum velocity a cartesian axis could halt
+        # at due to the junction_deviation setting.  The 8.0 was
+        # determined experimentally.
+        return math.sqrt(8. * self.junction_deviation * max_accel)
 
 def add_printer_objects(printer, config):
     printer.add_object('toolhead', ToolHead(printer, config))

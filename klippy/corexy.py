@@ -9,22 +9,25 @@ import stepper, homing
 StepList = (0, 1, 2)
 
 class CoreXYKinematics:
-    def __init__(self, printer, config):
+    def __init__(self, toolhead, printer, config):
         self.steppers = [stepper.PrinterHomingStepper(
             printer, config.getsection('stepper_' + n), n)
                          for n in ['x', 'y', 'z']]
         self.steppers[0].mcu_endstop.add_stepper(self.steppers[1].mcu_stepper)
         self.steppers[1].mcu_endstop.add_stepper(self.steppers[0].mcu_stepper)
+        max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
-            'max_z_velocity', 9999999.9, above=0.)
+            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
-            'max_z_accel', 9999999.9, above=0.)
+            'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
-    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
+        # Setup stepper max halt velocity
+        max_xy_halt_velocity = toolhead.get_max_axis_halt(max_accel)
         self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
-        self.steppers[2].set_max_jerk(0., self.max_z_accel)
+        max_z_halt_velocity = toolhead.get_max_axis_halt(self.max_z_accel)
+        self.steppers[2].set_max_jerk(max_z_halt_velocity, self.max_z_accel)
     def set_position(self, newpos):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
