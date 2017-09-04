@@ -101,7 +101,7 @@ do_dispatch(char *buf, uint32_t msglen)
 }
 
 // See if there are commands from the host ready to be processed
-static void
+static int
 check_can_read(void)
 {
     // Read data
@@ -109,12 +109,12 @@ check_can_read(void)
     char *p = SHARED_MEM->read_data;
     int16_t ret = pru_rpmsg_receive(&transport, &transport_dst, &dst, p, &len);
     if (ret)
-        return;
+        return ret == PRU_RPMSG_NO_BUF_AVAILABLE;
 
     // Check for force shutdown request
     if (len == 15 && p[14] == '\n' && memcmp(p, "FORCE_SHUTDOWN\n", 15) == 0) {
         send_pru1_shutdown();
-        return;
+        return 0;
     }
 
     // Parse data into message blocks
@@ -128,6 +128,7 @@ check_can_read(void)
         p += pop_count;
         len -= pop_count;
     }
+    return 0;
 }
 
 // Main processing loop
@@ -135,10 +136,11 @@ static void
 process_io(void)
 {
     for (;;) {
-        asm("slp 1");
         CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
         check_can_send();
-        check_can_read();
+        int can_sleep = check_can_read();
+        if (can_sleep)
+            asm("slp 1");
     }
 }
 
