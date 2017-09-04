@@ -430,14 +430,17 @@ class MCU:
         self._shutdown_msg = ""
         self._timeout_timer = printer.reactor.register_timer(
             self.timeout_handler)
-        rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
-        self._restart_method = config.getchoice(
-            'restart_method', rmethods, 'arduino')
+        self._restart_method = 'command'
+        if baud:
+            rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
+            self._restart_method = config.getchoice(
+                'restart_method', rmethods, 'arduino')
         # Config building
         if printer.bglogger is not None:
             printer.bglogger.set_rollover_info("mcu", None)
         pins.get_printer_pins(printer).register_chip("mcu", self)
-        self._emergency_stop_cmd = self._reset_cmd = None
+        self._emergency_stop_cmd = None
+        self._reset_cmd = self._config_reset_cmd = None
         self._oid_count = 0
         self._config_objects = []
         self._init_cmds = []
@@ -502,10 +505,8 @@ class MCU:
         self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
             'STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
-        try:
-            self._reset_cmd = self.lookup_command("reset")
-        except self.serial.msgparser.error as e:
-            pass
+        self._reset_cmd = self.try_lookup_command("reset")
+        self._config_reset_cmd = self.try_lookup_command("config_reset")
         self.register_msg(self.handle_shutdown, 'shutdown')
         self.register_msg(self.handle_shutdown, 'is_shutdown')
         self.register_msg(self.handle_mcu_stats, 'stats')
@@ -560,11 +561,21 @@ class MCU:
         if self._restart_method == 'command':
             last_clock, last_clock_time = self.serial.get_last_clock()
             eventtime = reactor.monotonic()
-            if (self._reset_cmd is None
+            if ((self._reset_cmd is None and self._config_reset_cmd is None)
                 or eventtime > last_clock_time + self.COMM_TIMEOUT):
                 logging.info("Unable to issue reset command")
                 return
-            # Attempt reset via command
+            if self._reset_cmd is None:
+                # Attempt reset via config_reset command
+                logging.info("Attempting a microcontroller config_reset command")
+                self.is_shutdown = True
+                self.force_shutdown()
+                reactor.pause(reactor.monotonic() + 0.015)
+                self.send(self._config_reset_cmd.encode())
+                reactor.pause(reactor.monotonic() + 0.015)
+                self.disconnect()
+                return
+            # Attempt reset via reset command
             logging.info("Attempting a microcontroller reset command")
             self.send(self._reset_cmd.encode())
             reactor.pause(reactor.monotonic() + 0.015)
@@ -682,6 +693,11 @@ class MCU:
         return self.serial.alloc_command_queue()
     def lookup_command(self, msgformat):
         return self.serial.msgparser.lookup_command(msgformat)
+    def try_lookup_command(self, msgformat):
+        try:
+            return self.serial.msgparser.lookup_command(msgformat)
+        except self.serial.msgparser.error as e:
+            return None
     def create_command(self, msg):
         return self.serial.msgparser.create_command(msg)
     # Clock syncing

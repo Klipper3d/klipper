@@ -165,8 +165,8 @@ sched_timer_dispatch(void)
     return next_waketime;
 }
 
-// Remove all user timers on a shutdown
-static void
+// Remove all user timers
+void
 sched_timer_reset(void)
 {
     timer_list = &deleted_timer;

@@ -215,6 +215,25 @@ command_finalize_config(uint32_t *args)
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 
+// Attempt a full manual reset of the config
+void
+config_reset(uint32_t *args)
+{
+    if (! sched_is_shutdown())
+        shutdown("config_reset only available when shutdown");
+    irq_disable();
+    config_crc = 0;
+    oid_count = 0;
+    oids = NULL;
+    move_free_list = NULL;
+    move_list = NULL;
+    move_count = move_item_size = 0;
+    alloc_init();
+    sched_timer_reset();
+    sched_clear_shutdown();
+    irq_enable();
+}
+
 
 /****************************************************************
  * Timing and load stats

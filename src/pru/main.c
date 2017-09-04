@@ -212,6 +212,9 @@ struct my_resource_table {
  * Startup
  ****************************************************************/
 
+// Support config_reset
+DECL_COMMAND_FLAGS(config_reset, HF_IN_SHUTDOWN, "config_reset");
+
 // Main entry point
 int
 main(void)
