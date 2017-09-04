@@ -36,6 +36,23 @@ realtime_setup(void)
 
 
 /****************************************************************
+ * Restart
+ ****************************************************************/
+
+static char **orig_argv;
+
+void
+command_config_reset(uint32_t *args)
+{
+    if (! sched_is_shutdown())
+        shutdown("config_reset only available when shutdown");
+    int ret = execv(orig_argv[0], orig_argv);
+    report_errno("execv", ret);
+}
+DECL_COMMAND_FLAGS(config_reset, HF_IN_SHUTDOWN, "config_reset");
+
+
+/****************************************************************
  * Startup
  ****************************************************************/
 
@@ -43,6 +60,8 @@ realtime_setup(void)
 int
 main(int argc, char **argv)
 {
+    // Parse program args
+    orig_argv = argv;
     int opt, watchdog = 0, realtime = 0;
     while ((opt = getopt(argc, argv, "wr")) != -1) {
         switch (opt) {
@@ -58,6 +77,7 @@ main(int argc, char **argv)
         }
     }
 
+    // Initial setup
     if (watchdog) {
         int ret = watchdog_setup();
         if (ret)
@@ -74,6 +94,7 @@ main(int argc, char **argv)
     if (ret)
         return -1;
 
+    // Main loop
     sched_main();
     return 0;
 }
