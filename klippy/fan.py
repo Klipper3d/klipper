@@ -41,8 +41,6 @@ class PrinterHeaterFan:
         self.fan = PrinterFan(printer, config)
         heater = config.get("heater", "extruder0")
         self.heater = extruder.get_printer_heater(printer, heater)
-        if self.heater is None:
-            raise config.error("Unknown heater '%s'" % (heater,))
         self.heater_temp = config.getfloat("heater_temp", 50.0)
         printer.reactor.register_timer(self.callback, printer.reactor.NOW)
     def callback(self, eventtime):

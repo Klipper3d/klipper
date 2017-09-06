@@ -6,7 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
 import util, reactor, queuelogger, msgproto, gcode
-import pins, mcu, chipmisc, toolhead, extruder, fan, heater
+import pins, mcu, chipmisc, toolhead, extruder, heater, fan
 
 message_ready = "Printer is ready"
 
@@ -123,6 +123,7 @@ class ConfigLogger():
         self.lines.append(data.strip())
 
 class Printer:
+    config_error = ConfigParser.Error
     def __init__(self, input_fd, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
@@ -166,13 +167,13 @@ class Printer:
         config_file = self.start_args['config_file']
         res = self.fileconfig.read(config_file)
         if not res:
-            raise ConfigParser.Error("Unable to open config file %s" % (
+            raise self.config_error("Unable to open config file %s" % (
                 config_file,))
         if self.bglogger is not None:
             ConfigLogger(self.fileconfig, self.bglogger)
         # Create printer components
         config = ConfigWrapper(self, 'printer')
-        for m in [pins, mcu, chipmisc, toolhead, extruder, fan, heater]:
+        for m in [pins, mcu, chipmisc, toolhead, extruder, heater, fan]:
             m.add_printer_objects(self, config)
         self.mcu = self.objects['mcu']
         # Validate that there are no undefined parameters in the config file
@@ -180,12 +181,12 @@ class Printer:
         for section in self.fileconfig.sections():
             section = section.lower()
             if section not in valid_sections:
-                raise ConfigParser.Error("Unknown config file section '%s'" % (
+                raise self.config_error("Unknown config file section '%s'" % (
                     section,))
             for option in self.fileconfig.options(section):
                 option = option.lower()
                 if (section, option) not in self.all_config_options:
-                    raise ConfigParser.Error(
+                    raise self.config_error(
                         "Unknown option '%s' in section '%s'" % (
                             option, section))
     def _connect(self, eventtime):
@@ -196,7 +197,7 @@ class Printer:
             self.mcu.connect()
             self.gcode.set_printer_ready(True)
             self.state_message = message_ready
-        except (ConfigParser.Error, pins.error) as e:
+        except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
             self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)

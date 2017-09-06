@@ -252,11 +252,10 @@ def get_printer_extruders(printer):
     return out
 
 def get_printer_heater(printer, name):
-    if name == 'heater_bed':
-        return printer.objects.get(name)
+    if name == 'heater_bed' and name in printer.objects:
+        return printer.objects[name]
     if name == 'extruder':
         name = 'extruder0'
-    extruder = printer.objects.get(name)
-    if extruder is None:
-        return None
-    return extruder.get_heater()
+    if name.startswith('extruder') and name in printer.objects:
+        return printer.objects[name].get_heater()
+    raise printer.config_error("Unknown heater '%s'" % (name,))
