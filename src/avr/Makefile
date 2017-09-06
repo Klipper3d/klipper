@@ -25,4 +25,5 @@ $(OUT)klipper.elf.hex: $(OUT)klipper.elf
 
 flash: $(OUT)klipper.elf.hex
 	@echo "  Flashing $(FLASH_DEVICE) via avrdude"
+	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
 	$(Q)avrdude -p$(CONFIG_MCU) -cwiring -P"$(FLASH_DEVICE)" -D -U"flash:w:$(OUT)klipper.elf.hex:i"
