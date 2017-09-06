@@ -14,6 +14,7 @@ help_txt = """
   available:
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
+    FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
     SET   : Create a local variable (eg, "SET myvar 123.4")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
@@ -41,8 +42,9 @@ class KeyboardReader:
         self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
-            "DELAY": self.command_DELAY, "LIST": self.command_LIST,
-            "STATS": self.command_STATS, "HELP": self.command_HELP,
+            "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
+            "STATS": self.command_STATS, "LIST": self.command_LIST,
+            "HELP": self.command_HELP,
         }
         self.eval_globals = {}
     def connect(self, eventtime):
@@ -86,6 +88,25 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         self.ser.send(msg, minclock=val)
+    def command_FLOOD(self, parts):
+        try:
+            count = int(parts[1])
+            delay = float(parts[2])
+        except ValueError as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        try:
+            msg = self.ser.msgparser.create_command(' '.join(parts[3:]))
+        except msgproto.error as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        delay_clock = int(delay * self.mcu_freq)
+        msg_clock = int(self.ser.get_clock(self.reactor.monotonic())
+                        + self.mcu_freq * .200)
+        for i in range(count):
+            next_clock = msg_clock + delay_clock
+            self.ser.send(msg, minclock=msg_clock, reqclock=next_clock)
+            msg_clock = next_clock
     def command_STATS(self, parts):
         self.output(self.ser.stats(self.reactor.monotonic()))
     def command_LIST(self, parts):
