@@ -15,6 +15,7 @@ help_txt = """
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
+    SUPPRESS : Suppress a response message (eg, "SUPPRESS stats")
     SET   : Create a local variable (eg, "SET myvar 123.4")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
@@ -43,8 +44,8 @@ class KeyboardReader:
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
-            "STATS": self.command_STATS, "LIST": self.command_LIST,
-            "HELP": self.command_HELP,
+            "SUPPRESS": self.command_SUPPRESS, "STATS": self.command_STATS,
+            "LIST": self.command_LIST, "HELP": self.command_HELP,
         }
         self.eval_globals = {}
     def connect(self, eventtime):
@@ -63,6 +64,8 @@ class KeyboardReader:
         sys.stdout.flush()
     def handle_default(self, params):
         self.output(self.ser.msgparser.format_params(params))
+    def handle_suppress(self, params):
+        pass
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.ser.get_clock(eventtime)
@@ -107,6 +110,16 @@ class KeyboardReader:
             next_clock = msg_clock + delay_clock
             self.ser.send(msg, minclock=msg_clock, reqclock=next_clock)
             msg_clock = next_clock
+    def command_SUPPRESS(self, parts):
+        oid = None
+        try:
+            name = parts[1]
+            if len(parts) > 2:
+                oid = int(parts[2])
+        except ValueError as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        self.ser.register_callback(self.handle_suppress, name, oid)
     def command_STATS(self, parts):
         self.output(self.ser.stats(self.reactor.monotonic()))
     def command_LIST(self, parts):
