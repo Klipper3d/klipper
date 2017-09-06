@@ -748,10 +748,10 @@ class MCU:
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """
 This is generally indicative of an intermittent
-communication failure.""",
+communication failure between micro-controller and host.""",
     ("ADC out of range",): """
 This generally occurs when a heater temperature exceeds
-it's configured min_temp or max_temp.""",
+its configured min_temp or max_temp.""",
     ("Rescheduled timer in the past", "Stepper too far in past"): """
 This generally occurs when the micro-controller has been
 requested to step at a rate higher than it is capable of
