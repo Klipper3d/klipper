@@ -16,11 +16,11 @@ class PrinterExtruder:
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
-        filament_area = math.pi * (filament_diameter * .5)**2
+        self.filament_area = math.pi * (filament_diameter * .5)**2
         max_cross_section = config.getfloat(
             'max_extrude_cross_section', 4. * self.nozzle_diameter**2
             , above=0.)
-        self.max_extrude_ratio = max_cross_section / filament_area
+        self.max_extrude_ratio = max_cross_section / self.filament_area
         toolhead = printer.objects['toolhead']
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = self.config.getfloat(
@@ -57,22 +57,29 @@ class PrinterExtruder:
         move.extrude_r = move.axes_d[3] / move.move_d
         move.extrude_max_corner_v = 0.
         if not self.heater.can_extrude:
-            raise homing.EndstopMoveError(
-                move.end_pos, "Extrude below minimum temp")
+            raise homing.EndstopError(
+                "Extrude below minimum temp\n"
+                "See the 'min_extrude_temp' config option for details")
         if not move.is_kinematic_move or move.extrude_r < 0.:
             # Extrude only move (or retraction move) - limit accel and velocity
             if abs(move.axes_d[3]) > self.max_e_dist:
-                raise homing.EndstopMoveError(
-                    move.end_pos, "Extrude move too long")
+                raise homing.EndstopError(
+                    "Extrude only move too long (%.3fmm vs %.3fmm)\n"
+                    "See the 'max_extrude_only_distance' config"
+                    " option for details" % (move.axes_d[3], self.max_e_dist))
             inv_extrude_r = 1. / abs(move.extrude_r)
             move.limit_speed(self.max_e_velocity * inv_extrude_r
                              , self.max_e_accel * inv_extrude_r)
         elif (move.extrude_r > self.max_extrude_ratio
               and move.axes_d[3] > self.nozzle_diameter*self.max_extrude_ratio):
-            logging.debug("Overextrude: %s vs %s" % (
-                move.extrude_r, self.max_extrude_ratio))
-            raise homing.EndstopMoveError(
-                move.end_pos, "Move exceeds maximum extrusion cross section")
+            area = move.axes_d[3] * self.filament_area / move.move_d
+            logging.debug("Overextrude: %s vs %s (area=%.3f dist=%.3f)",
+                          move.extrude_r, self.max_extrude_ratio,
+                          area, move.move_d)
+            raise homing.EndstopError(
+                "Move exceeds maximum extrusion (%.3fmm^2 vs %.3fmm^2)\n"
+                "See the 'max_extrude_cross_section' config option for details"
+                % (area, self.max_extrude_ratio * self.filament_area))
     def calc_junction(self, prev_move, move):
         extrude = move.axes_d[3]
         prev_extrude = prev_move.axes_d[3]
