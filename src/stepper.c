@@ -79,7 +79,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
         if (unlikely(timer_is_before(s->next_step_time, min_next_time))) {
             if ((int32_t)(s->next_step_time - min_next_time)
                 < (int32_t)(-timer_from_us(1000)))
-                shutdown("stepper too far in past");
+                shutdown("Stepper too far in past");
             s->time.waketime = min_next_time;
         } else {
             s->time.waketime = s->next_step_time;

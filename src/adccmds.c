@@ -43,7 +43,7 @@ analog_in_event(struct timer *timer)
         return SF_RESCHEDULE;
     }
     if (a->value < a->min_value || a->value > a->max_value)
-        shutdown("adc out of range");
+        shutdown("ADC out of range");
     sched_wake_task(&analog_wake);
     a->next_begin_time += a->rest_time;
     a->timer.waketime = a->next_begin_time;

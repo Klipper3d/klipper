@@ -297,7 +297,7 @@ stats_update(uint32_t start, uint32_t cur)
 void
 command_emergency_stop(uint32_t *args)
 {
-    shutdown("command request");
+    shutdown("Command request");
 }
 DECL_COMMAND_FLAGS(command_emergency_stop, HF_IN_SHUTDOWN, "emergency_stop");
 

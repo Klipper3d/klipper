@@ -475,13 +475,16 @@ class MCU:
         if self.is_shutdown:
             return
         self.is_shutdown = True
-        self._shutdown_msg = params['#msg']
+        self._shutdown_msg = msg = params['#msg']
         logging.info("%s: %s" % (params['#name'], self._shutdown_msg))
         pst = self._print_start_time
         logging.info("Clock last synchronized at %.6f (%d)" % (
             pst, int(pst * self._mcu_freq)))
         self.serial.dump_debug()
-        self._printer.note_shutdown(self._shutdown_msg)
+        prefix = "MCU shutdown: "
+        if params['#name'] == 'is_shutdown':
+            prefix = "Previous MCU shutdown: "
+        self._printer.note_shutdown(prefix + msg + error_help(msg))
     # Connection phase
     def _check_restart(self, reason):
         start_reason = self._printer.get_start_args().get("start_reason")
@@ -741,6 +744,29 @@ class MCU:
         return self._printer.reactor.monotonic()
     def __del__(self):
         self.disconnect()
+
+Common_MCU_errors = {
+    ("Timer too close", "No next step", "Missed scheduling of next "): """
+This is generally indicative of an intermittent
+communication failure.""",
+    ("ADC out of range",): """
+This generally occurs when a heater temperature exceeds
+it's configured min_temp or max_temp.""",
+    ("Rescheduled timer in the past", "Stepper too far in past"): """
+This generally occurs when the micro-controller has been
+requested to step at a rate higher than it is capable of
+obtaining.""",
+    ("Command request",): """
+This generally occurs in response to an M112 G-Code command
+or in response to an internal error in the host software.""",
+}
+
+def error_help(msg):
+    for prefixes, help_msg in Common_MCU_errors.items():
+        for prefix in prefixes:
+            if msg.startswith(prefix):
+                return help_msg
+    return ""
 
 def add_printer_objects(printer, config):
     printer.add_object('mcu', MCU(printer, config.getsection('mcu')))

@@ -242,8 +242,7 @@ class Printer:
     def note_shutdown(self, msg):
         if self.state_message == message_ready:
             self.need_dump_debug = True
-        self.state_message = "Firmware shutdown: %s%s" % (
-            msg, message_shutdown)
+        self.state_message = "%s%s" % (msg, message_shutdown)
         self.gcode.set_printer_ready(False)
     def note_mcu_error(self, msg):
         self.state_message = "%s%s" % (msg, message_restart)
