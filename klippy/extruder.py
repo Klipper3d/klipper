@@ -32,7 +32,6 @@ class PrinterExtruder:
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
-        self.max_e_velocity = self.max_e_accel = None
         self.activate_gcode = config.get('activate_gcode', '')
         self.deactivate_gcode = config.get('deactivate_gcode', '')
         self.pressure_advance = config.getfloat(
