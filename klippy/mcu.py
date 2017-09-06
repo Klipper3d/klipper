@@ -269,7 +269,8 @@ class MCU_digital_out:
             "schedule_digital_out oid=%c clock=%u value=%c")
     def set_digital(self, mcu_time, value):
         clock = int(mcu_time * self._mcu_freq)
-        msg = self._set_cmd.encode(self._oid, clock, value ^ self._invert)
+        msg = self._set_cmd.encode(
+            self._oid, clock, not not (value ^ self._invert))
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
         self._last_clock = clock
@@ -277,10 +278,7 @@ class MCU_digital_out:
     def get_last_setting(self):
         return self._last_value
     def set_pwm(self, mcu_time, value):
-        dval = 0
-        if value >= 0.5:
-            dval = 1
-        self.set_digital(mcu_time, dval)
+        self.set_digital(mcu_time, value >= 0.5)
 
 class MCU_pwm:
     def __init__(self, mcu, pin_params):
@@ -311,9 +309,8 @@ class MCU_pwm:
         self._hard_pwm = True
     def setup_static_pwm(self, value):
         if self._invert:
-            self._static_value = 1. - value
-        else:
-            self._static_value = value
+            value = 1. - value
+        self._static_value = max(0., min(1., value))
     def build_config(self):
         self._mcu_freq = self._mcu.get_mcu_freq()
         if self._hard_pwm:
@@ -340,7 +337,7 @@ class MCU_pwm:
                 if self._static_value != 0. and self._static_value != 1.:
                     raise pins.error("static value on soft pwm not supported")
                 self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                    self._pin, int(self._static_value)))
+                    self._pin, self._static_value >= 0.5))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
@@ -354,7 +351,7 @@ class MCU_pwm:
         clock = int(mcu_time * self._mcu_freq)
         if self._invert:
             value = 1. - value
-        value = int(value * self._pwm_max + 0.5)
+        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
         msg = self._set_cmd.encode(self._oid, clock, value)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
