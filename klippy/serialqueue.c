@@ -609,9 +609,9 @@ retransmit_event(struct serialqueue *sq, double eventtime)
         sq->rto *= 2.0;
         if (sq->rto > MAX_RTO)
             sq->rto = MAX_RTO;
-        sq->ignore_nak_seq = sq->send_seq - 1;
+        sq->ignore_nak_seq = sq->send_seq;
     }
-    sq->retransmit_seq = sq->send_seq - 1;
+    sq->retransmit_seq = sq->send_seq;
     sq->rtt_sample_seq = 0;
     sq->idle_time = eventtime + buflen * sq->baud_adjust;
     double waketime = eventtime + first_buflen * sq->baud_adjust + sq->rto;
