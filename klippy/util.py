@@ -54,11 +54,11 @@ def get_cpu_info():
 
 def get_git_version():
     # Obtain version info from "git" program
-    gitdir = os.path.join(sys.path[0], '..', '.git')
+    gitdir = os.path.join(sys.path[0], '..')
     if not os.path.exists(gitdir):
         logging.debug("No '.git' file/directory found")
         return "?"
-    prog = "git --git-dir=%s describe --tags --long --dirty" % (gitdir,)
+    prog = "git -C %s describe --tags --long --dirty" % (gitdir,)
     try:
         process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
         output = process.communicate()[0]
