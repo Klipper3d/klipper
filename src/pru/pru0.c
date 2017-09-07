@@ -31,6 +31,32 @@ static uint16_t transport_dst;
 #define CHAN_DESC                                       "Channel 30"
 #define CHAN_PORT                                       30
 
+#define RPMSG_HDR_SIZE 16
+static char transmit_buf[RPMSG_BUF_SIZE - RPMSG_HDR_SIZE];
+static int transmit_pos;
+
+// Transmit all pending message blocks
+static void
+flush_messages(void)
+{
+    if (!transmit_pos)
+        return;
+    pru_rpmsg_send(&transport, CHAN_PORT, transport_dst
+                   , transmit_buf, transmit_pos);
+    transmit_pos = 0;
+}
+
+// Generate a message block and queue it for transmission
+static void
+build_message(char *msg, int msglen)
+{
+    if (transmit_pos + msglen > sizeof(transmit_buf))
+        flush_messages();
+    memcpy(&transmit_buf[transmit_pos], msg, msglen);
+    command_add_frame(&transmit_buf[transmit_pos], msglen);
+    transmit_pos += msglen;
+}
+
 // Check if there is data to be sent from PRU1 to the host
 static void
 check_can_send(void)
@@ -42,8 +68,7 @@ check_can_send(void)
         if (!count)
             // Queue empty
             break;
-        command_add_frame(s->data, count);
-        pru_rpmsg_send(&transport, CHAN_PORT, transport_dst, &s->data, count);
+        build_message(s->data, count);
         writel(&s->count, 0);
         SHARED_MEM->send_pop_pos = (
             (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
@@ -139,8 +164,10 @@ process_io(void)
         CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
         check_can_send();
         int can_sleep = check_can_read();
-        if (can_sleep)
+        if (can_sleep) {
+            flush_messages();
             asm("slp 1");
+        }
     }
 }
 
@@ -182,8 +209,7 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     char buf[MESSAGE_MIN];
-    command_add_frame(buf, sizeof(buf));
-    pru_rpmsg_send(&transport, CHAN_PORT, transport_dst, buf, sizeof(buf));
+    build_message(buf, sizeof(buf));
 }
 
 
