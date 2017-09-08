@@ -216,8 +216,6 @@ class PrinterExtruder:
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
-    def set_max_jerk(self, max_xy_halt_velocity, max_velocity, max_accel):
-        pass
     def set_active(self, print_time, is_active):
         return 0.
     def motor_off(self, move_time):
