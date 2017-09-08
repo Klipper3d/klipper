@@ -80,14 +80,16 @@ static void
 _irq_poll(void)
 {
     uint32_t secr0 = CT_INTC.SECR0;
-    if (secr0 & (1 << KICK_PRU1_EVENT))
+    if (secr0 & (1 << KICK_PRU1_EVENT)) {
+        CT_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
         sched_wake_tasks();
+    }
     if (secr0 & (1 << IEP_EVENT)) {
         CT_IEP.TMR_CMP_STS = 0xff;
         uint32_t next = timer_dispatch_many();
         timer_set(next);
+        CT_INTC.SECR0 = 1 << IEP_EVENT;
     }
-    CT_INTC.SECR0 = (1 << IEP_EVENT) | (1 << KICK_PRU1_EVENT);
 }
 void __attribute__((optimize("O2")))
 irq_poll(void)
