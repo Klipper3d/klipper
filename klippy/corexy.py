@@ -3,7 +3,7 @@
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, math
 import stepper, homing
 
 StepList = (0, 1, 2)
@@ -24,6 +24,7 @@ class CoreXYKinematics:
         self.limits = [(1.0, -1.0)] * 3
         # Setup stepper max halt velocity
         max_xy_halt_velocity = toolhead.get_max_axis_halt(max_accel)
+        max_xy_halt_velocity *= math.sqrt(2.)
         self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
         max_z_halt_velocity = toolhead.get_max_axis_halt(self.max_z_accel)
