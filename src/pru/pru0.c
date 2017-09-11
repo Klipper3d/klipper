@@ -166,7 +166,9 @@ process_io(void)
         int can_sleep = check_can_read();
         if (can_sleep) {
             flush_messages();
-            asm("slp 1");
+            while (!(read_r31() & (1 << (WAKE_PRU0_IRQ + R31_IRQ_OFFSET)))) {
+                //asm("slp 1");
+            }
         }
     }
 }
