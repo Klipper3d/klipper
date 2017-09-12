@@ -39,6 +39,7 @@ class PrinterFan:
 class PrinterHeaterFan:
     def __init__(self, printer, config):
         self.fan = PrinterFan(printer, config)
+        self.mcu = printer.objects['mcu']
         heater = config.get("heater", "extruder0")
         self.heater = extruder.get_printer_heater(printer, heater)
         self.heater_temp = config.getfloat("heater_temp", 50.0)
@@ -51,9 +52,8 @@ class PrinterHeaterFan:
         power = 0.
         if target_temp or current_temp > self.heater_temp:
             power = 1.
-        mcu_time = self.fan.mcu_fan.get_mcu().system_to_mcu_time(
-            eventtime + FAN_MIN_TIME)
-        self.fan.set_pwm(mcu_time, power)
+        print_time = self.mcu.estimated_print_time(eventtime) + FAN_MIN_TIME
+        self.fan.set_speed(print_time, power)
         return eventtime + 1.
 
 def add_printer_objects(printer, config):

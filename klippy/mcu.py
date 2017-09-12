@@ -443,15 +443,13 @@ class MCU:
         self._config_crc = None
         self._pin_map = config.get('pin_map', None)
         self._custom = config.get('custom', '')
+        self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
         self._stepqueues = []
         self._steppersync = None
-        # Print time to clock epoch calculations
-        self._print_start_time = 0.
-        self._mcu_freq = 0.
         # Stats
         self._stats_sumsq_base = 0.
         self._mcu_tick_avg = 0.
@@ -471,9 +469,6 @@ class MCU:
         self.is_shutdown = True
         self._shutdown_msg = msg = params['#msg']
         logging.info("%s: %s" % (params['#name'], self._shutdown_msg))
-        pst = self._print_start_time
-        logging.info("Clock last synchronized at %.6f (%d)" % (
-            pst, int(pst * self._mcu_freq)))
         self.serial.dump_debug()
         prefix = "MCU shutdown: "
         if params['#name'] == 'is_shutdown':
@@ -521,12 +516,9 @@ class MCU:
         self.serial.connect_file(outfile, dict_data)
         # Handle pacing
         if not pace:
-            def dummy_set_print_start_time(eventtime):
-                pass
-            def dummy_get_print_buffer_time(eventtime, last_move_end):
-                return 1.250
-            self.set_print_start_time = dummy_set_print_start_time
-            self.get_print_buffer_time = dummy_get_print_buffer_time
+            def dummy_estimated_print_time(eventtime):
+                return 0.
+            self.estimated_print_time = dummy_estimated_print_time
     def timeout_handler(self, eventtime):
         last_clock, last_clock_time = self.serial.get_last_clock()
         timeout = last_clock_time + self.COMM_TIMEOUT
@@ -698,22 +690,14 @@ class MCU:
     def create_command(self, msg):
         return self.serial.msgparser.create_command(msg)
     # Clock syncing
-    def set_print_start_time(self, eventtime):
-        clock = self.serial.get_clock(eventtime)
-        logging.debug("Synchronizing mcu clock at %.6f to %d" % (
-            eventtime, clock))
-        est_mcu_time = clock / self._mcu_freq
-        self._print_start_time = est_mcu_time
-    def get_print_buffer_time(self, eventtime, print_time):
-        if self.is_shutdown:
-            return 0.
-        mcu_time = print_time + self._print_start_time
-        est_mcu_time = self.serial.get_clock(eventtime) / self._mcu_freq
-        return mcu_time - est_mcu_time
     def print_to_mcu_time(self, print_time):
-        return print_time + self._print_start_time
-    def system_to_mcu_time(self, eventtime):
-        return self.serial.get_clock(eventtime) / self._mcu_freq
+        return print_time
+    def print_time_to_clock(self, print_time):
+        return int(print_time * self._mcu_freq)
+    def clock_to_print_time(self, clock):
+        return clock / self._mcu_freq
+    def estimated_print_time(self, eventtime):
+        return self.clock_to_print_time(self.serial.get_clock(eventtime))
     def get_mcu_freq(self):
         return self._mcu_freq
     def get_last_clock(self):
@@ -726,8 +710,7 @@ class MCU:
     def flush_moves(self, print_time):
         if self._steppersync is None:
             return
-        mcu_time = print_time + self._print_start_time
-        clock = int(mcu_time * self._mcu_freq)
+        clock = self.print_time_to_clock(print_time)
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
             raise error("Internal error in stepcompress")
