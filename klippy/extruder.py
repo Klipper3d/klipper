@@ -50,8 +50,8 @@ class PrinterExtruder:
         if is_active:
             return self.activate_gcode
         return self.deactivate_gcode
-    def motor_off(self, move_time):
-        self.stepper.motor_enable(move_time, 0)
+    def motor_off(self, print_time):
+        self.stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True
     def check_move(self, move):
         move.extrude_r = move.axes_d[3] / move.move_d
@@ -131,9 +131,9 @@ class PrinterExtruder:
                     return i
             move.extrude_max_corner_v = max_corner_v
         return flush_count
-    def move(self, move_time, move):
+    def move(self, print_time, move):
         if self.need_motor_enable:
-            self.stepper.motor_enable(move_time, 1)
+            self.stepper.motor_enable(print_time, 1)
             self.need_motor_enable = False
         axis_d = move.axes_d[3]
         axis_r = abs(axis_d) / move.move_d
@@ -190,27 +190,28 @@ class PrinterExtruder:
 
         # Prepare for steps
         mcu_stepper = self.stepper.mcu_stepper
-        mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+        move_time = print_time
 
         # Acceleration steps
         if accel_d:
-            mcu_stepper.step_const(mcu_time, start_pos, accel_d, start_v, accel)
+            mcu_stepper.step_const(move_time, start_pos, accel_d, start_v, accel)
             start_pos += accel_d
-            mcu_time += accel_t
+            move_time += accel_t
         # Cruising steps
         if cruise_d:
-            mcu_stepper.step_const(mcu_time, start_pos, cruise_d, cruise_v, 0.)
+            mcu_stepper.step_const(move_time, start_pos, cruise_d, cruise_v, 0.)
             start_pos += cruise_d
-            mcu_time += cruise_t
+            move_time += cruise_t
         # Deceleration steps
         if decel_d:
-            mcu_stepper.step_const(mcu_time, start_pos, decel_d, decel_v, -accel)
+            mcu_stepper.step_const(
+                move_time, start_pos, decel_d, decel_v, -accel)
             start_pos += decel_d
-            mcu_time += decel_t
+            move_time += decel_t
         # Retraction steps
         if retract_d:
             mcu_stepper.step_const(
-                mcu_time, start_pos, -retract_d, retract_v, accel)
+                move_time, start_pos, -retract_d, retract_v, accel)
             start_pos -= retract_d
         self.extrude_pos = start_pos
 

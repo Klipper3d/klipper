@@ -42,7 +42,7 @@ class Homing:
         move_end_print_time = self.toolhead.get_last_move_time()
         self.toolhead.reset_print_time()
         for s, es, last_pos in endstops:
-            es.home_finalize(es.get_mcu().print_to_mcu_time(move_end_print_time))
+            es.home_finalize(move_end_print_time)
         # Wait for endstops to trigger
         for s, es, last_pos in endstops:
             try:

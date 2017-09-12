@@ -38,14 +38,12 @@ class PrinterStepper:
             2. * self.step_dist, max_halt_velocity, max_accel)
         min_stop_interval = second_last_step_time - last_step_time
         self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
-    def motor_enable(self, move_time, enable=0):
+    def motor_enable(self, print_time, enable=0):
         if enable and self.need_motor_enable:
-            mcu_time = self.mcu_stepper.print_to_mcu_time(move_time)
-            self.mcu_stepper.reset_step_clock(mcu_time)
+            self.mcu_stepper.reset_step_clock(print_time)
         if (self.mcu_enable is not None
             and self.mcu_enable.get_last_setting() != enable):
-            mcu_time = self.mcu_enable.get_mcu().print_to_mcu_time(move_time)
-            self.mcu_enable.set_digital(mcu_time, enable)
+            self.mcu_enable.set_digital(print_time, enable)
         self.need_motor_enable = not enable
 
 class PrinterHomingStepper(PrinterStepper):
@@ -97,13 +95,11 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
-    def enable_endstop_checking(self, move_time, step_time):
-        mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(move_time)
-        self.mcu_endstop.home_start(mcu_time, step_time)
+    def enable_endstop_checking(self, print_time, step_time):
+        self.mcu_endstop.home_start(print_time, step_time)
         return self.mcu_endstop
     def query_endstop(self, print_time):
-        mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(print_time)
-        self.mcu_endstop.query_endstop(mcu_time)
+        self.mcu_endstop.query_endstop(print_time)
         return self.mcu_endstop
     def get_homing_speed(self):
         # Round the configured homing speed so that it is an even

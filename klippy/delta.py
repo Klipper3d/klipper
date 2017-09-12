@@ -123,14 +123,14 @@ class DeltaKinematics:
                 + self.steppers[i].get_homed_offset()
                 for i in StepList]
         homing_state.set_homed_position(self._actuator_to_cartesian(spos))
-    def motor_off(self, move_time):
+    def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:
-            stepper.motor_enable(move_time, 0)
+            stepper.motor_enable(print_time, 0)
         self.need_motor_enable = self.need_home = True
-    def _check_motor_enable(self, move_time):
+    def _check_motor_enable(self, print_time):
         for i in StepList:
-            self.steppers[i].motor_enable(move_time, 1)
+            self.steppers[i].motor_enable(print_time, 1)
         self.need_motor_enable = False
     def query_endstops(self, print_time):
         endstops = [(s, s.query_endstop(print_time)) for s in self.steppers]
@@ -164,9 +164,9 @@ class DeltaKinematics:
             move.limit_speed(max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
-    def move(self, move_time, move):
+    def move(self, print_time, move):
         if self.need_motor_enable:
-            self._check_motor_enable(move_time)
+            self._check_motor_enable(print_time)
         axes_d = move.axes_d
         move_d = move.move_d
         movexy_r = 1.
@@ -203,24 +203,24 @@ class DeltaKinematics:
 
             # Generate steps
             mcu_stepper = self.steppers[i].mcu_stepper
-            mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+            move_time = print_time
             if accel_d:
                 mcu_stepper.step_delta(
-                    mcu_time, accel_d, move.start_v, accel,
+                    move_time, accel_d, move.start_v, accel,
                     vt_startz, vt_startxy_d, vt_arm_d, movez_r)
                 vt_startz += accel_d * movez_r
                 vt_startxy_d -= accel_d * movexy_r
-                mcu_time += move.accel_t
+                move_time += move.accel_t
             if cruise_d:
                 mcu_stepper.step_delta(
-                    mcu_time, cruise_d, cruise_v, 0.,
+                    move_time, cruise_d, cruise_v, 0.,
                     vt_startz, vt_startxy_d, vt_arm_d, movez_r)
                 vt_startz += cruise_d * movez_r
                 vt_startxy_d -= cruise_d * movexy_r
-                mcu_time += move.cruise_t
+                move_time += move.cruise_t
             if decel_d:
                 mcu_stepper.step_delta(
-                    mcu_time, decel_d, cruise_v, -accel,
+                    move_time, decel_d, cruise_v, -accel,
                     vt_startz, vt_startxy_d, vt_arm_d, movez_r)
 
 

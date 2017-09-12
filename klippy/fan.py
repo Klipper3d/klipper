@@ -18,23 +18,19 @@ class PrinterFan:
         self.mcu_fan.setup_max_duration(0.)
         self.mcu_fan.setup_cycle_time(PWM_CYCLE_TIME)
         self.mcu_fan.setup_hard_pwm(config.getint('hard_pwm', 0))
-    def set_pwm(self, mcu_time, value):
+    def set_speed(self, print_time, value):
         value = max(0., min(self.max_power, value))
         if value == self.last_fan_value:
             return
-        mcu_time = max(self.last_fan_time + FAN_MIN_TIME, mcu_time)
+        print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
         if (value and value < self.max_power
             and not self.last_fan_value and self.kick_start_time):
             # Run fan at full speed for specified kick_start_time
-            self.mcu_fan.set_pwm(mcu_time, self.max_power)
-            mcu_time += self.kick_start_time
-        self.mcu_fan.set_pwm(mcu_time, value)
-        self.last_fan_time = mcu_time
+            self.mcu_fan.set_pwm(print_time, self.max_power)
+            print_time += self.kick_start_time
+        self.mcu_fan.set_pwm(print_time, value)
+        self.last_fan_time = print_time
         self.last_fan_value = value
-    # External commands
-    def set_speed(self, print_time, value):
-        mcu_time = self.mcu_fan.get_mcu().print_to_mcu_time(print_time)
-        self.set_pwm(mcu_time, value)
 
 class PrinterHeaterFan:
     def __init__(self, printer, config):

@@ -25,7 +25,6 @@ class MCU_stepper:
         self._mcu_freq = self._min_stop_interval = 0.
         self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
-        self.print_to_mcu_time = mcu.print_to_mcu_time
     def get_mcu(self):
         return self._mcu
     def setup_dir_pin(self, pin_params):
@@ -48,7 +47,8 @@ class MCU_stepper:
             "config_stepper oid=%d step_pin=%s dir_pin=%s"
             " min_stop_interval=%d invert_step=%d" % (
                 self._oid, self._step_pin, self._dir_pin,
-                min_stop_interval * self._mcu_freq, self._invert_step))
+                self._mcu.seconds_to_clock(min_stop_interval),
+                self._invert_step))
         step_cmd = self._mcu.lookup_command(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd = self._mcu.lookup_command(
@@ -58,9 +58,8 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_command(
             "stepper_get_position oid=%c")
         ffi_main, self._ffi_lib = chelper.get_ffi()
-        max_error = int(max_error * self._mcu_freq)
         self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(
-            max_error, step_cmd.msgid, dir_cmd.msgid,
+            self._mcu.seconds_to_clock(max_error), step_cmd.msgid, dir_cmd.msgid,
             self._invert_dir, self._oid),
                                       self._ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
@@ -97,8 +96,8 @@ class MCU_stepper:
         if self._invert_dir:
             pos = -pos
         self._mcu_position_offset = pos - self._commanded_pos
-    def reset_step_clock(self, mcu_time):
-        clock = int(mcu_time * self._mcu_freq)
+    def reset_step_clock(self, print_time):
+        clock = self._mcu.print_time_to_clock(print_time)
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, clock)
         if ret:
             raise error("Internal error in stepcompress")
@@ -107,28 +106,29 @@ class MCU_stepper:
             self._stepqueue, data, len(data))
         if ret:
             raise error("Internal error in stepcompress")
-    def step(self, mcu_time, sdir):
-        count = self._ffi_lib.stepcompress_push(
-            self._stepqueue, mcu_time * self._mcu_freq, sdir)
+    def step(self, print_time, sdir):
+        clock = print_time * self._mcu_freq
+        count = self._ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count
-    def step_const(self, mcu_time, start_pos, dist, start_v, accel):
+    def step_const(self, print_time, start_pos, dist, start_v, accel):
+        clock = print_time * self._mcu_freq
         inv_step_dist = self._inv_step_dist
         step_offset = self._commanded_pos - start_pos * inv_step_dist
         count = self._ffi_lib.stepcompress_push_const(
-            self._stepqueue, mcu_time * self._mcu_freq, step_offset,
-            dist * inv_step_dist, start_v * self._velocity_factor,
-            accel * self._accel_factor)
+            self._stepqueue, clock, step_offset, dist * inv_step_dist,
+            start_v * self._velocity_factor, accel * self._accel_factor)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count
-    def step_delta(self, mcu_time, dist, start_v, accel
+    def step_delta(self, print_time, dist, start_v, accel
                    , height_base, startxy_d, arm_d, movez_r):
+        clock = print_time * self._mcu_freq
         inv_step_dist = self._inv_step_dist
         height = self._commanded_pos - height_base * inv_step_dist
         count = self._ffi_lib.stepcompress_push_delta(
-            self._stepqueue, mcu_time * self._mcu_freq, dist * inv_step_dist,
+            self._stepqueue, clock, dist * inv_step_dist,
             start_v * self._velocity_factor, accel * self._accel_factor,
             height, startxy_d * inv_step_dist, arm_d * inv_step_dist, movez_r)
         if count == STEPCOMPRESS_ERROR_RET:
@@ -147,7 +147,7 @@ class MCU_endstop:
         self._cmd_queue = mcu.alloc_command_queue()
         self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
-        self._min_query_time = self._mcu_freq = 0.
+        self._min_query_time = 0.
         self._next_query_clock = self._home_timeout_clock = 0
         self._retry_query_ticks = 0
         self._last_state = {}
@@ -156,7 +156,6 @@ class MCU_endstop:
     def add_stepper(self, stepper):
         self._steppers.append(stepper)
     def build_config(self):
-        self._mcu_freq = self._mcu.get_mcu_freq()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
@@ -165,15 +164,15 @@ class MCU_endstop:
             self._mcu.add_config_cmd(
                 "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
-        self._retry_query_ticks = int(self._mcu_freq * self.RETRY_QUERY)
+        self._retry_query_ticks = self._mcu.seconds_to_clock(self.RETRY_QUERY)
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
         self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
                                , self._oid)
-    def home_start(self, mcu_time, rest_time):
-        clock = int(mcu_time * self._mcu_freq)
-        rest_ticks = int(rest_time * self._mcu_freq)
+    def home_start(self, print_time, rest_time):
+        clock = self._mcu.print_time_to_clock(print_time)
+        rest_ticks = self._mcu.seconds_to_clock(rest_time)
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
         self._next_query_clock = clock + self._retry_query_ticks
@@ -182,10 +181,10 @@ class MCU_endstop:
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
         for s in self._steppers:
             s.note_homing_start(clock)
-    def home_finalize(self, mcu_time):
+    def home_finalize(self, print_time):
         for s in self._steppers:
             s.note_homing_finalized()
-        self._home_timeout_clock = int(mcu_time * self._mcu_freq)
+        self._home_timeout_clock = self._mcu.print_time_to_clock(print_time)
     def home_wait(self):
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
@@ -220,11 +219,10 @@ class MCU_endstop:
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return True
-    def query_endstop(self, mcu_time):
-        clock = int(mcu_time * self._mcu_freq)
+    def query_endstop(self, print_time):
         self._homing = False
+        self._next_query_clock = self._mcu.print_time_to_clock(print_time)
         self._min_query_time = self._mcu.monotonic()
-        self._next_query_clock = clock
     def query_endstop_wait(self):
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
@@ -241,7 +239,6 @@ class MCU_digital_out:
         self._max_duration = 2.
         self._last_clock = 0
         self._last_value = None
-        self._mcu_freq = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._set_cmd = None
     def get_mcu(self):
@@ -251,7 +248,6 @@ class MCU_digital_out:
     def setup_static(self):
         self._static_value = not self._invert
     def build_config(self):
-        self._mcu_freq = self._mcu.get_mcu_freq()
         if self._static_value is not None:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
                 self._pin, self._static_value))
@@ -261,11 +257,11 @@ class MCU_digital_out:
             "config_digital_out oid=%d pin=%s default_value=%d"
             " max_duration=%d" % (
                 self._oid, self._pin, self._invert,
-                self._max_duration * self._mcu_freq))
+                self._mcu.seconds_to_clock(self._max_duration)))
         self._set_cmd = self._mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c")
-    def set_digital(self, mcu_time, value):
-        clock = int(mcu_time * self._mcu_freq)
+    def set_digital(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
         msg = self._set_cmd.encode(
             self._oid, clock, not not (value ^ self._invert))
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
@@ -274,8 +270,8 @@ class MCU_digital_out:
         self._last_value = value
     def get_last_setting(self):
         return self._last_value
-    def set_pwm(self, mcu_time, value):
-        self.set_digital(mcu_time, value >= 0.5)
+    def set_pwm(self, print_time, value):
+        self.set_digital(print_time, value >= 0.5)
 
 class MCU_pwm:
     def __init__(self, mcu, pin_params):
@@ -288,7 +284,6 @@ class MCU_pwm:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._last_clock = 0
-        self._mcu_freq = 0.
         self._pwm_max = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._set_cmd = None
@@ -309,7 +304,6 @@ class MCU_pwm:
             value = 1. - value
         self._static_value = max(0., min(1., value))
     def build_config(self):
-        self._mcu_freq = self._mcu.get_mcu_freq()
         if self._hard_pwm:
             self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
                 "PWM_MAX")
@@ -324,7 +318,7 @@ class MCU_pwm:
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d default_value=%d"
                 " max_duration=%d" % (
                     self._oid, self._pin, self._cycle_time, self._invert,
-                    self._max_duration * self._mcu_freq))
+                    self._mcu.seconds_to_clock(self._max_duration)))
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
         else:
@@ -340,12 +334,14 @@ class MCU_pwm:
             self._mcu.add_config_cmd(
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d"
                 " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, self._cycle_time * self._mcu_freq,
-                    self._invert, self._max_duration * self._mcu_freq))
+                    self._oid, self._pin,
+                    self._mcu.seconds_to_clock(self._cycle_time),
+                    self._invert,
+                    self._mcu.seconds_to_clock(self._max_duration)))
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%hu")
-    def set_pwm(self, mcu_time, value):
-        clock = int(mcu_time * self._mcu_freq)
+    def set_pwm(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
@@ -364,7 +360,6 @@ class MCU_adc:
         self._report_clock = 0
         self._oid = self._callback = None
         self._inv_max_adc = 0.
-        self._mcu_freq = 0.
         self._cmd_queue = mcu.alloc_command_queue()
     def get_mcu(self):
         return self._mcu
@@ -379,17 +374,17 @@ class MCU_adc:
     def build_config(self):
         if not self._sample_count:
             return
-        self._mcu_freq = self._mcu.get_mcu_freq()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (
             self._oid, self._pin))
         last_clock, last_clock_time = self._mcu.get_last_clock()
-        clock = last_clock + int(self._mcu_freq * (1.0 + self._oid * 0.01)) # XXX
-        sample_ticks = int(self._sample_time * self._mcu_freq)
+        clock = last_clock + self._mcu.seconds_to_clock(
+            1.0 + self._oid * 0.01) # XXX
+        sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
         mcu_adc_max = self._mcu.serial.msgparser.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
         self._inv_max_adc = 1.0 / max_adc
-        self._report_clock = int(self._report_time * self._mcu_freq)
+        self._report_clock = self._mcu.seconds_to_clock(self._report_time)
         min_sample = max(0, min(0xffff, int(self._min_sample * max_adc)))
         max_sample = max(0, min(0xffff, int(
             math.ceil(self._max_sample * max_adc))))
@@ -403,7 +398,8 @@ class MCU_adc:
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.serial.translate_clock(params['next_clock'])
-        last_read_time = (next_clock - self._report_clock) / self._mcu_freq
+        last_read_clock = next_clock - self._report_clock
+        last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
@@ -690,8 +686,6 @@ class MCU:
     def create_command(self, msg):
         return self.serial.msgparser.create_command(msg)
     # Clock syncing
-    def print_to_mcu_time(self, print_time):
-        return print_time
     def print_time_to_clock(self, print_time):
         return int(print_time * self._mcu_freq)
     def clock_to_print_time(self, clock):
@@ -700,6 +694,8 @@ class MCU:
         return self.clock_to_print_time(self.serial.get_clock(eventtime))
     def get_mcu_freq(self):
         return self._mcu_freq
+    def seconds_to_clock(self, time):
+        return int(time * self._mcu_freq)
     def get_last_clock(self):
         return self.serial.get_last_clock()
     def get_max_stepper_error(self):

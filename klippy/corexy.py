@@ -67,17 +67,17 @@ class CoreXYKinematics:
                 # Support endstop phase detection on Z axis
                 coord[axis] = s.position_endstop + s.get_homed_offset()
                 homing_state.set_homed_position(coord)
-    def motor_off(self, move_time):
+    def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
-            stepper.motor_enable(move_time, 0)
+            stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True
-    def _check_motor_enable(self, move_time, move):
+    def _check_motor_enable(self, print_time, move):
         if move.axes_d[0] or move.axes_d[1]:
-            self.steppers[0].motor_enable(move_time, 1)
-            self.steppers[1].motor_enable(move_time, 1)
+            self.steppers[0].motor_enable(print_time, 1)
+            self.steppers[1].motor_enable(print_time, 1)
         if move.axes_d[2]:
-            self.steppers[2].motor_enable(move_time, 1)
+            self.steppers[2].motor_enable(print_time, 1)
         need_motor_enable = False
         for i in StepList:
             need_motor_enable |= self.steppers[i].need_motor_enable
@@ -109,9 +109,9 @@ class CoreXYKinematics:
         z_ratio = move.move_d / abs(move.axes_d[2])
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def move(self, move_time, move):
+    def move(self, print_time, move):
         if self.need_motor_enable:
-            self._check_motor_enable(move_time, move)
+            self._check_motor_enable(print_time, move)
         sxp = move.start_pos[0]
         syp = move.start_pos[1]
         move_start_pos = (sxp + syp, sxp - syp, move.start_pos[2])
@@ -124,7 +124,7 @@ class CoreXYKinematics:
             if not axis_d:
                 continue
             mcu_stepper = self.steppers[i].mcu_stepper
-            mcu_time = mcu_stepper.print_to_mcu_time(move_time)
+            move_time = print_time
             start_pos = move_start_pos[i]
             axis_r = abs(axis_d) / move.move_d
             accel = move.accel * axis_r
@@ -134,18 +134,18 @@ class CoreXYKinematics:
             if move.accel_r:
                 accel_d = move.accel_r * axis_d
                 mcu_stepper.step_const(
-                    mcu_time, start_pos, accel_d, move.start_v * axis_r, accel)
+                    move_time, start_pos, accel_d, move.start_v * axis_r, accel)
                 start_pos += accel_d
-                mcu_time += move.accel_t
+                move_time += move.accel_t
             # Cruising steps
             if move.cruise_r:
                 cruise_d = move.cruise_r * axis_d
                 mcu_stepper.step_const(
-                    mcu_time, start_pos, cruise_d, cruise_v, 0.)
+                    move_time, start_pos, cruise_d, cruise_v, 0.)
                 start_pos += cruise_d
-                mcu_time += move.cruise_t
+                move_time += move.cruise_t
             # Deceleration steps
             if move.decel_r:
                 decel_d = move.decel_r * axis_d
                 mcu_stepper.step_const(
-                    mcu_time, start_pos, decel_d, cruise_v, -accel)
+                    move_time, start_pos, decel_d, cruise_v, -accel)
