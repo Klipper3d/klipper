@@ -1,0 +1,138 @@
+# Regression test helper script
+#
+# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+import sys, os, optparse, logging, subprocess
+
+
+######################################################################
+# Test cases
+######################################################################
+
+class error(Exception):
+    pass
+
+class TestCase:
+    def __init__(self, fname, dictdir, tempdir):
+        self.fname = fname
+        self.dictdir = dictdir
+        self.tempdir = tempdir
+    def relpath(self, fname, rel='test'):
+        if rel == 'dict':
+            reldir = self.dictdir
+        elif rel == 'temp':
+            reldir = self.tempdir
+        else:
+            reldir = os.path.dirname(self.fname)
+        return os.path.join(reldir, fname)
+    def parse_test(self):
+        # Parse file into test cases
+        config_fname = gcode_fname = dict_fname = None
+        should_fail = multi_tests = False
+        gcode = []
+        f = open(self.fname, 'rb')
+        for line in f:
+            cpos = line.find('#')
+            if cpos >= 0:
+                line = line[:cpos]
+            parts = line.strip().split()
+            if not parts:
+                continue
+            if parts[0] == "CONFIG":
+                if config_fname is not None:
+                    # Multiple tests in same file
+                    if not multi_tests:
+                        multi_tests = True
+                        self.launch_test(config_fname, dict_fname,
+                                         gcode_fname, gcode, should_fail)
+                config_fname = self.relpath(parts[1])
+                if multi_tests:
+                    self.launch_test(config_fname, dict_fname,
+                                     gcode_fname, gcode, should_fail)
+            elif parts[0] == "DICTIONARY":
+                dict_fname = self.relpath(parts[1], 'dict')
+            elif parts[0] == "GCODE":
+                gcode_fname = self.relpath(parts[1])
+            elif parts[0] == "SHOULD_FAIL":
+                should_fail = True
+            else:
+                gcode.append(line)
+        f.close()
+        if not multi_tests:
+            self.launch_test(config_fname, dict_fname,
+                             gcode_fname, gcode, should_fail)
+    def launch_test(self, config_fname, dict_fname, gcode_fname, gcode,
+                    should_fail):
+        gcode_is_temp = False
+        if gcode_fname is None:
+            gcode_fname = self.relpath("_test_.gcode", 'temp')
+            gcode_is_temp = True
+            f = open(gcode_fname, 'wb')
+            f.write('\n'.join(gcode))
+            f.close()
+        elif gcode:
+            raise error("Can't specify both a gcode file and gcode commands")
+        if config_fname is None:
+            raise error("config file not specified")
+        if dict_fname is None:
+            raise error("data dictionary file not specified")
+        # Call klippy
+        sys.stderr.write("\n    Starting %s (%s)\n" % (
+            self.fname, os.path.basename(config_fname)))
+        args = [sys.executable, './klippy/klippy.py', config_fname,
+                '-i', gcode_fname, '-o', '/dev/null',
+                '-d', dict_fname
+        ]
+        res = subprocess.call(args)
+        if should_fail:
+            if not res:
+                raise error("Test failed to raise and error")
+        else:
+            if res:
+                raise error("Error during test")
+        # Do cleanup
+        if gcode_is_temp:
+            os.unlink(gcode_fname)
+    def run(self):
+        try:
+            self.parse_test()
+        except error as e:
+            return str(e)
+        except Exception:
+            logging.exception("Unhandled exception during test run")
+            return "internal error"
+        return "success"
+
+
+######################################################################
+# Startup
+######################################################################
+
+def main():
+    # Parse args
+    usage = "%prog [options] <test cases>"
+    opts = optparse.OptionParser(usage)
+    opts.add_option("-d", "--dictdir", dest="dictdir", default=".",
+                    help="directory for dictionary files")
+    opts.add_option("-t", "--tempdir", dest="tempdir", default=".",
+                    help="directory for temporary files")
+    options, args = opts.parse_args()
+    if len(args) < 1:
+        opts.error("Incorrect number of arguments")
+    logging.basicConfig(level=logging.DEBUG)
+    dictdir = options.dictdir
+    tempdir = options.tempdir
+
+    # Run each test
+    for fname in args:
+        tc = TestCase(fname, dictdir, tempdir)
+        res = tc.run()
+        if res != 'success':
+            sys.stderr.write("\n\nTest case %s FAILED (%s)!\n\n" % (fname, res))
+            sys.exit(-1)
+
+    sys.stderr.write("\n    All %d test cases passed\n" % (len(args),))
+
+if __name__ == '__main__':
+    main()

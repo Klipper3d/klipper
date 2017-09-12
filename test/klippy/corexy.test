@@ -1,0 +1,4 @@
+# Test case for basic corexy movement
+CONFIG ../../config/example-corexy.cfg
+DICTIONARY atmega2560-16mhz.dict
+GCODE move.gcode

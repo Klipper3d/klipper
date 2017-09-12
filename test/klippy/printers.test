@@ -1,0 +1,40 @@
+# Basic sanity checks on the example printer config files
+GCODE move.gcode
+
+# Printers using the atmega2560
+DICTIONARY atmega2560-16mhz.dict
+CONFIG ../../config/generic-einsy-rambo.cfg
+CONFIG ../../config/generic-mini-rambo.cfg
+CONFIG ../../config/generic-rambo.cfg
+CONFIG ../../config/generic-ramps.cfg
+CONFIG ../../config/generic-rumba.cfg
+CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
+CONFIG ../../config/printer-anycubic-kossel-2016.cfg
+CONFIG ../../config/printer-creality-cr10s-2017.cfg
+CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
+CONFIG ../../config/printer-makergear-m2-2012.cfg
+CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
+
+# Printers using the atmega1284p
+DICTIONARY atmega1284p.dict
+CONFIG ../../config/generic-melzi.cfg
+CONFIG ../../config/printer-anet-a8-2017.cfg
+CONFIG ../../config/printer-anet-e10-2018.cfg
+CONFIG ../../config/printer-creality-cr10-2017.cfg
+CONFIG ../../config/printer-creality-cr10mini-2017.cfg
+CONFIG ../../config/printer-creality-ender3-2018.cfg
+CONFIG ../../config/printer-tronxy-x5s-2018.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg
+
+# Printers using the at90usb1286
+DICTIONARY at90usb1286.dict
+CONFIG ../../config/generic-printrboard.cfg
+
+# Printers using the sam3x8e
+DICTIONARY sam3x8e.dict
+CONFIG ../../config/generic-radds.cfg
+
+# Printers using the lpc176x
+DICTIONARY lpc176x.dict
+CONFIG ../../config/generic-smoothieboard.cfg

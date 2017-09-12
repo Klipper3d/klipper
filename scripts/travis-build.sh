@@ -39,6 +39,5 @@ mkdir -p ${HOSTDIR}
 
 echo "travis_fold:start:klippy"
 echo "=============== Test invoke klippy"
-$PYTHON klippy/klippy.py config/example.cfg -i /dev/null -o ${HOSTDIR}/output -v -d ${DICTDIR}/atmega2560-16mhz.dict
-$PYTHON klippy/parsedump.py ${DICTDIR}/atmega2560-16mhz.dict ${HOSTDIR}/output > ${HOSTDIR}/output-parsed
+$PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
 echo "travis_fold:end:klippy"
