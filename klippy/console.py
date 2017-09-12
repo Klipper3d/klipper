@@ -153,8 +153,7 @@ class KeyboardReader:
             self.output("Eval: %s" % (line,))
         if self.pins is not None:
             try:
-                line = pins.update_command(
-                    line, self.mcu_freq, self.pins).strip()
+                line = pins.update_command(line, self.pins).strip()
             except:
                 self.output("Unable to map pin: %s" % (line,))
                 return None

@@ -612,8 +612,7 @@ class MCU:
         updated_cmds = []
         for cmd in self._config_cmds:
             try:
-                updated_cmds.append(pins.update_command(
-                    cmd, self._mcu_freq, pnames))
+                updated_cmds.append(pins.update_command(cmd, pnames))
             except:
                 raise pins.error("Unable to translate pin name: %s" % (cmd,))
         self._config_cmds = updated_cmds

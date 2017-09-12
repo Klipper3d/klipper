@@ -161,7 +161,7 @@ def get_pin_map(mcu, mapping_name=None):
 
 # Translate pin names in a firmware command
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
-def update_command(cmd, mcu_freq, pmap):
+def update_command(cmd, pmap):
     def pin_fixup(m):
         return m.group('prefix') + str(pmap[m.group('name')])
     return re_pin.sub(pin_fixup, cmd)
