@@ -95,7 +95,7 @@ class PrinterHomingStepper(PrinterStepper):
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment" % (name,))
                 self.homing_stepper_phases = None
-            if printer.get_start_args().get('debugoutput') is not None:
+            if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
     def enable_endstop_checking(self, move_time, step_time):
         mcu_time = self.mcu_endstop.get_mcu().print_to_mcu_time(move_time)

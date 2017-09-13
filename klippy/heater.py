@@ -113,8 +113,6 @@ class PrinterHeater:
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        is_fileoutput = printer.get_start_args().get('debugoutput') is not None
-        self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.lock = threading.Lock()
         self.last_temp = 0.
         self.last_temp_time = 0.
@@ -134,6 +132,8 @@ class PrinterHeater:
         self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
                                   minval=min(adc_range), maxval=max(adc_range))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        is_fileoutput = self.mcu_adc.get_mcu().is_fileoutput()
+        self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.control = algo(self, config)
         # pwm caching
         self.next_pwm_time = 0.
