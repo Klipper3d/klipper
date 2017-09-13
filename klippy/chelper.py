@@ -25,7 +25,7 @@ defs_stepcompress = """
     int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
     int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
-    int stepcompress_push(struct stepcompress *sc, double step_clock
+    int32_t stepcompress_push(struct stepcompress *sc, double step_clock
         , int32_t sdir);
     int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
         , double step_offset, double steps, double start_sv, double accel);

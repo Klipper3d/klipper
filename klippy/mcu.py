@@ -108,14 +108,11 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
     def step(self, mcu_time, sdir):
-        clock = mcu_time * self._mcu_freq
-        ret = self._ffi_lib.stepcompress_push(self._stepqueue, clock, sdir)
-        if ret:
+        count = self._ffi_lib.stepcompress_push(
+            self._stepqueue, mcu_time * self._mcu_freq, sdir)
+        if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
-        if sdir:
-            self._commanded_pos += 1
-        else:
-            self._commanded_pos -= 1
+        self._commanded_pos += count
     def step_const(self, mcu_time, start_pos, dist, start_v, accel):
         inv_step_dist = self._inv_step_dist
         step_offset = self._commanded_pos - start_pos * inv_step_dist

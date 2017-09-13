@@ -488,7 +488,7 @@ static inline double safe_sqrt(double v) {
 }
 
 // Schedule a step event at the specified step_clock time
-int
+int32_t
 stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
 {
     int ret = set_next_step_dir(sc, !!sdir);
@@ -499,7 +499,7 @@ stepcompress_push(struct stepcompress *sc, double step_clock, int32_t sdir)
     if (ret)
         return ret;
     queue_append_finish(qa);
-    return 0;
+    return sdir ? 1 : -1;
 }
 
 // Schedule 'steps' number of steps at constant acceleration. If
