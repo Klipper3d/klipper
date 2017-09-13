@@ -95,12 +95,6 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
-    def enable_endstop_checking(self, print_time, step_time):
-        self.mcu_endstop.home_start(print_time, step_time)
-        return self.mcu_endstop
-    def query_endstop(self, print_time):
-        self.mcu_endstop.query_endstop(print_time)
-        return self.mcu_endstop
     def get_homing_speed(self):
         # Round the configured homing speed so that it is an even
         # number of ticks per step.

@@ -62,6 +62,8 @@ class CartKinematics:
             # Set final homed position
             coord[axis] = s.position_endstop + s.get_homed_offset()
             homing_state.set_homed_position(coord)
+    def query_endstops(self, print_time):
+        return homing.query_endstops(print_time, self.steppers)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
@@ -74,9 +76,6 @@ class CartKinematics:
                 self.steppers[i].motor_enable(print_time, 1)
             need_motor_enable |= self.steppers[i].need_motor_enable
         self.need_motor_enable = need_motor_enable
-    def query_endstops(self, print_time):
-        endstops = [(s, s.query_endstop(print_time)) for s in self.steppers]
-        return [(s.name, es.query_endstop_wait()) for s, es in endstops]
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in StepList:

@@ -347,10 +347,7 @@ class ToolHead:
             eventtime = self.reactor.pause(eventtime + 0.100)
     def query_endstops(self):
         last_move_time = self.get_last_move_time()
-        try:
-            return self.kin.query_endstops(last_move_time)
-        except self.mcu.error as e:
-            raise homing.EndstopError(str(e))
+        return self.kin.query_endstops(last_move_time)
     def set_extruder(self, extruder):
         last_move_time = self.get_last_move_time()
         self.extruder.set_active(last_move_time, False)

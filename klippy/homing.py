@@ -36,18 +36,18 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         endstops = []
         for s in steppers:
-            es = s.enable_endstop_checking(print_time, s.step_dist / speed)
-            endstops.append((s, es, s.mcu_stepper.get_mcu_position()))
+            s.mcu_endstop.home_start(print_time, s.step_dist / speed)
+            endstops.append((s, s.mcu_stepper.get_mcu_position()))
         self.toolhead.move(self._fill_coord(movepos), speed)
         move_end_print_time = self.toolhead.get_last_move_time()
         self.toolhead.reset_print_time()
-        for s, es, last_pos in endstops:
-            es.home_finalize(move_end_print_time)
+        for s, last_pos in endstops:
+            s.mcu_endstop.home_finalize(move_end_print_time)
         # Wait for endstops to trigger
-        for s, es, last_pos in endstops:
+        for s, last_pos in endstops:
             try:
-                es.home_wait()
-            except es.error as e:
+                s.mcu_endstop.home_wait()
+            except s.mcu_endstop.error as e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
                     s.name, str(e)))
             post_home_pos = s.mcu_stepper.get_mcu_position()
@@ -56,6 +56,17 @@ class Homing:
                     s.name,))
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
+
+def query_endstops(print_time, steppers):
+    for s in steppers:
+        s.mcu_endstop.query_endstop(print_time)
+    out = []
+    for s in steppers:
+        try:
+            out.append((s.name, s.mcu_endstop.query_endstop_wait()))
+        except s.mcu_endstop.error as e:
+            raise EndstopError(str(e))
+    return out
 
 class EndstopError(Exception):
     pass
