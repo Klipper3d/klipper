@@ -148,7 +148,7 @@ provides further information on the mechanics of moves.
   start/crusing/end velocity, and distance traveled during
   acceleration/cruising/deceleration. All the information is stored in
   the Move() class and is in cartesian space in units of millimeters
-  and seconds. Times are stored relative to the start of the print.
+  and seconds.
 
   The move is then handed off to the kinematics classes: `Move.move()
   -> kin.move()`
@@ -174,14 +174,13 @@ provides further information on the mechanics of moves.
   stepcompress_push_const()`, or for delta kinematics:
   `DeltaKinematics.move() -> MCU_Stepper.step_delta() ->
   stepcompress_push_delta()`. The MCU_Stepper code just performs unit
-  and axis transformation (seconds to clock ticks and millimeters to
-  step distances), and calls the C code. The C code calculates the
-  stepper step times for each movement and fills an array (struct
-  stepcompress.queue) with the corresponding micro-controller clock
-  counter times for every step. Here the "micro-controller clock
-  counter" value directly corresponds to the micro-controller's
-  hardware counter - it is relative to when the micro-controller was
-  last powered up.
+  and axis transformation (millimeters to step distances), and calls
+  the C code. The C code calculates the stepper step times for each
+  movement and fills an array (struct stepcompress.queue) with the
+  corresponding micro-controller clock counter times for every
+  step. Here the "micro-controller clock counter" value directly
+  corresponds to the micro-controller's hardware counter - it is
+  relative to when the micro-controller was last powered up.
 
 * The next major step is to compress the steps: `stepcompress_flush()
   -> compress_bisect_add()` (in stepcompress.c). This code generates
