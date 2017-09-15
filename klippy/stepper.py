@@ -98,7 +98,8 @@ class PrinterHomingStepper(PrinterStepper):
     def get_homing_speed(self):
         # Round the configured homing speed so that it is an even
         # number of ticks per step.
-        dist_ticks = self.mcu_stepper.get_mcu().get_mcu_freq() * self.step_dist
+        adjusted_freq = self.mcu_stepper.get_mcu().get_adjusted_freq()
+        dist_ticks = adjusted_freq * self.step_dist
         ticks_per_step = round(dist_ticks / self.homing_speed)
         return dist_ticks / ticks_per_step
     def get_homed_offset(self):

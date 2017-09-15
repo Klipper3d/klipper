@@ -14,6 +14,7 @@ class ClockSync:
         self.queries_pending = 0
         self.status_timer = self.reactor.register_timer(self._status_event)
         self.status_cmd = None
+        self.mcu_freq = 0.
         self.lock = threading.Lock()
         self.last_clock = 0
         self.last_clock_time = self.last_clock_time_min = 0.
@@ -27,18 +28,19 @@ class ClockSync:
         self.last_clock = (params['high'] << 32) | params['clock']
         self.last_clock_time = params['#receive_time']
         self.last_clock_time_min = params['#sent_time']
-        clock_freq = msgparser.get_constant_float('CLOCK_FREQ')
-        self.min_freq = clock_freq * (1. - MAX_CLOCK_DRIFT)
-        self.max_freq = clock_freq * (1. + MAX_CLOCK_DRIFT)
+        self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
+        self.min_freq = self.mcu_freq * (1. - MAX_CLOCK_DRIFT)
+        self.max_freq = self.mcu_freq * (1. + MAX_CLOCK_DRIFT)
         # Enable periodic get_status timer
         serial.register_callback(self._handle_status, 'status')
         self.status_cmd = msgparser.create_command('get_status')
         self.reactor.update_timer(self.status_timer, self.reactor.NOW)
     def connect_file(self, serial, pace=False):
         self.serial = serial
+        self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
         est_freq = 1000000000000.
         if pace:
-            est_freq = float(self.msgparser.config['CLOCK_FREQ'])
+            est_freq = self.mcu_freq
         self.min_freq = self.max_freq = est_freq
         self.last_clock = 0
         self.last_clock_time = self.reactor.monotonic()
@@ -55,13 +57,21 @@ class ClockSync:
             last_clock_time = self.last_clock_time
             min_freq = self.min_freq
         return int(last_clock + (eventtime - last_clock_time) * min_freq)
-    def translate_clock(self, raw_clock):
+    def clock32_to_clock64(self, clock32):
         with self.lock:
             last_clock = self.last_clock
-        clock_diff = (last_clock - raw_clock) & 0xffffffff
+        clock_diff = (last_clock - clock32) & 0xffffffff
         if clock_diff & 0x80000000:
             return last_clock + 0x100000000 - clock_diff
         return last_clock - clock_diff
+    def print_time_to_clock(self, print_time):
+        return int(print_time * self.mcu_freq)
+    def clock_to_print_time(self, clock):
+        return clock / self.mcu_freq
+    def estimated_print_time(self, eventtime):
+        return self.clock_to_print_time(self.get_clock(eventtime))
+    def get_adjusted_freq(self):
+        return self.mcu_freq
     def _status_event(self, eventtime):
         self.queries_pending += 1
         self.serial.send(self.status_cmd)

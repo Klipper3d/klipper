@@ -162,7 +162,7 @@ class MCU_endstop:
                                , self._oid)
     def home_start(self, print_time, rest_time):
         clock = self._mcu.print_time_to_clock(print_time)
-        rest_ticks = self._mcu.seconds_to_clock(rest_time)
+        rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
         self._next_query_time = print_time + self.RETRY_QUERY
@@ -382,7 +382,7 @@ class MCU_adc:
                                , self._oid)
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
-        next_clock = self._mcu.translate_clock(params['next_clock'])
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         if self._callback is not None:
@@ -674,17 +674,17 @@ class MCU:
         return self._serial.msgparser.get_constant_float(name)
     # Clock syncing
     def print_time_to_clock(self, print_time):
-        return int(print_time * self._mcu_freq)
+        return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):
-        return clock / self._mcu_freq
+        return self._clocksync.clock_to_print_time(clock)
     def estimated_print_time(self, eventtime):
-        return self.clock_to_print_time(self._clocksync.get_clock(eventtime))
-    def get_mcu_freq(self):
-        return self._mcu_freq
+        return self._clocksync.estimated_print_time(eventtime)
+    def get_adjusted_freq(self):
+        return self._clocksync.get_adjusted_freq()
+    def clock32_to_clock64(self, clock32):
+        return self._clocksync.clock32_to_clock64(clock32)
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
-    def translate_clock(self, clock):
-        return self._clocksync.translate_clock(clock)
     def get_max_stepper_error(self):
         return self._max_stepper_error
     # Move command queuing
