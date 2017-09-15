@@ -1,4 +1,4 @@
-# Multi-processor safe interface to micro-controller
+# Interface to Klipper micro-controller code
 #
 # Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
