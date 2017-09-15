@@ -53,8 +53,8 @@ class SerialReader:
             params = self.msgparser.parse(response.msg[0:count])
             params['#sent_time'] = response.sent_time
             params['#receive_time'] = response.receive_time
+            hdl = (params['#name'], params.get('oid'))
             with self.lock:
-                hdl = (params['#name'], params.get('oid'))
                 hdl = self.handlers.get(hdl, self.handle_default)
             try:
                 hdl(params)
@@ -160,8 +160,10 @@ class SerialReader:
     # Clock tracking
     def get_clock(self, eventtime):
         with self.lock:
-            return int(self.last_clock
-                       + (eventtime - self.last_clock_time) * self.min_freq)
+            last_clock = self.last_clock
+            last_clock_time = self.last_clock_time
+            min_freq = self.min_freq
+        return int(last_clock + (eventtime - last_clock_time) * min_freq)
     def translate_clock(self, raw_clock):
         with self.lock:
             last_clock = self.last_clock
