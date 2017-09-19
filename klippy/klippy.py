@@ -151,12 +151,12 @@ class Printer:
         toolhead = self.objects.get('toolhead')
         if toolhead is None or self.mcu is None:
             return eventtime + 1.
-        is_active, thstats = toolhead.stats(eventtime)
+        is_active = toolhead.check_active(eventtime)
         if not is_active and not force_output:
             return eventtime + 1.
         out = []
         out.append(self.gcode.stats(eventtime))
-        out.append(thstats)
+        out.append(toolhead.stats(eventtime))
         out.append(self.mcu.stats(eventtime))
         logging.info("Stats %.1f: %s" % (eventtime, ' '.join(out)))
         return eventtime + 1.
