@@ -21,6 +21,7 @@ class PrinterStepper:
         self.mcu_stepper.setup_step_distance(self.step_dist)
 
         enable_pin = config.get('enable_pin', None)
+        self.mcu_enable = None
         if enable_pin is not None:
             self.mcu_enable = pins.setup_pin(printer, 'digital_out', enable_pin)
             self.mcu_enable.setup_max_duration(0.)
