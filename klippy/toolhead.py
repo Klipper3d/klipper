@@ -357,6 +357,7 @@ class ToolHead:
         self.commanded_pos[3] = extrude_pos
     # Misc commands
     def check_active(self, eventtime):
+        self.mcu.check_active(self.print_time, eventtime)
         if not self.sync_print_time:
             return True
         return self.print_time + 60. > self.mcu.estimated_print_time(eventtime)

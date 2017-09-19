@@ -147,9 +147,7 @@ class MCU_endstop:
         self._cmd_queue = mcu.alloc_command_queue()
         self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
-        self._min_query_time = 0.
-        self._next_query_clock = self._home_timeout_clock = 0
-        self._retry_query_ticks = 0
+        self._min_query_time = self._next_query_time = self._home_timeout = 0.
         self._last_state = {}
     def get_mcu(self):
         return self._mcu
@@ -164,7 +162,6 @@ class MCU_endstop:
             self._mcu.add_config_cmd(
                 "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
-        self._retry_query_ticks = self._mcu.seconds_to_clock(self.RETRY_QUERY)
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
@@ -175,7 +172,7 @@ class MCU_endstop:
         rest_ticks = self._mcu.seconds_to_clock(rest_time)
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
-        self._next_query_clock = clock + self._retry_query_ticks
+        self._next_query_time = print_time + self.RETRY_QUERY
         msg = self._home_cmd.encode(
             self._oid, clock, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
@@ -184,7 +181,7 @@ class MCU_endstop:
     def home_finalize(self, print_time):
         for s in self._steppers:
             s.note_homing_finalized()
-        self._home_timeout_clock = self._mcu.print_time_to_clock(print_time)
+        self._home_timeout = print_time
     def home_wait(self):
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
@@ -196,6 +193,7 @@ class MCU_endstop:
         # Check if need to send an end_stop_query command
         if self._mcu.is_fileoutput():
             return False
+        print_time = self._mcu.estimated_print_time(eventtime)
         last_sent_time = self._last_state.get('#sent_time', -1.)
         if last_sent_time >= self._min_query_time:
             if not self._homing:
@@ -205,23 +203,21 @@ class MCU_endstop:
                     s.note_homing_triggered()
                 self._homing = False
                 return False
-            last_clock, last_clock_time = self._mcu.get_last_clock()
-            if last_clock > self._home_timeout_clock:
+            if print_time > self._home_timeout:
                 # Timeout - disable endstop checking
                 msg = self._home_cmd.encode(self._oid, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
                 raise error("Timeout during endstop homing")
         if self._mcu.is_shutdown:
             raise error("MCU is shutdown")
-        last_clock, last_clock_time = self._mcu.get_last_clock()
-        if last_clock >= self._next_query_clock:
-            self._next_query_clock = last_clock + self._retry_query_ticks
+        if print_time >= self._next_query_time:
+            self._next_query_time = print_time + self.RETRY_QUERY
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return True
     def query_endstop(self, print_time):
         self._homing = False
-        self._next_query_clock = self._mcu.print_time_to_clock(print_time)
+        self._next_query_time = print_time
         self._min_query_time = self._mcu.monotonic()
     def query_endstop_wait(self):
         eventtime = self._mcu.monotonic()
@@ -377,9 +373,7 @@ class MCU_adc:
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (
             self._oid, self._pin))
-        last_clock, last_clock_time = self._mcu.get_last_clock()
-        clock = last_clock + self._mcu.seconds_to_clock(
-            1.0 + self._oid * 0.01) # XXX
+        clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
         mcu_adc_max = self._mcu.serial.msgparser.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
@@ -405,7 +399,6 @@ class MCU_adc:
 
 class MCU:
     error = error
-    COMM_TIMEOUT = 3.5
     def __init__(self, printer, config, clocksync):
         self._printer = printer
         self._clocksync = clocksync
@@ -420,8 +413,6 @@ class MCU:
             printer.reactor, self._serialport, baud)
         self.is_shutdown = False
         self._shutdown_msg = ""
-        self._timeout_timer = printer.reactor.register_timer(
-            self.timeout_handler)
         self._restart_method = 'command'
         if baud:
             rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
@@ -490,8 +481,6 @@ class MCU:
                 self._check_restart("enable power")
             self.serial.connect()
             self._clocksync.connect(self.serial)
-            self._printer.reactor.update_timer(
-                self._timeout_timer, self.monotonic() + self.COMM_TIMEOUT)
         self._mcu_freq = self.serial.msgparser.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
             'STATS_SUMSQ_BASE')
@@ -518,15 +507,11 @@ class MCU:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
-    def timeout_handler(self, eventtime):
-        last_clock, last_clock_time = self.get_last_clock()
-        timeout = last_clock_time + self.COMM_TIMEOUT
-        if eventtime < timeout:
-            return timeout
-        logging.info("Timeout with firmware (eventtime=%f last_status=%f)" % (
-            eventtime, last_clock_time))
+    def check_active(self, print_time, eventtime):
+        if self._clocksync.is_active(eventtime):
+            return
+        logging.info("Timeout with firmware (eventtime=%f)", eventtime)
         self._printer.note_mcu_error("Lost communication with firmware")
-        return self._printer.reactor.NEVER
     def disconnect(self):
         self.serial.disconnect()
         if self._steppersync is not None:
@@ -549,10 +534,9 @@ class MCU:
             chelper.run_hub_ctrl(1)
             return
         if self._restart_method == 'command':
-            last_clock, last_clock_time = self.get_last_clock()
             eventtime = reactor.monotonic()
             if ((self._reset_cmd is None and self._config_reset_cmd is None)
-                or eventtime > last_clock_time + self.COMM_TIMEOUT):
+                or not self._clocksync.is_active(eventtime)):
                 logging.info("Unable to issue reset command")
                 return
             if self._reset_cmd is None:
@@ -689,6 +673,10 @@ class MCU:
             return None
     def create_command(self, msg):
         return self.serial.msgparser.create_command(msg)
+    def get_query_slot(self, oid):
+        slot = self.seconds_to_clock(oid * .01)
+        t = int(self.estimated_print_time(self.monotonic()) + 1.5)
+        return self.print_time_to_clock(t) + slot
     # Clock syncing
     def print_time_to_clock(self, print_time):
         return int(print_time * self._mcu_freq)
@@ -700,8 +688,6 @@ class MCU:
         return self._mcu_freq
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
-    def get_last_clock(self):
-        return self._clocksync.get_last_clock()
     def translate_clock(self, clock):
         return self._clocksync.translate_clock(clock)
     def get_max_stepper_error(self):

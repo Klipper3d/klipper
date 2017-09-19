@@ -11,9 +11,10 @@ class ClockSync:
     def __init__(self, reactor):
         self.reactor = reactor
         self.serial = None
-        self.lock = threading.Lock()
+        self.queries_pending = 0
         self.status_timer = self.reactor.register_timer(self._status_event)
         self.status_cmd = None
+        self.lock = threading.Lock()
         self.last_clock = 0
         self.last_clock_time = self.last_clock_time_min = 0.
         self.min_freq = self.max_freq = 0.
@@ -46,6 +47,8 @@ class ClockSync:
     def stats(self, eventtime):
         return "last_clock=%d last_clock_time=%.3f" % (
             self.last_clock, self.last_clock_time)
+    def is_active(self, eventtime):
+        return self.queries_pending <= 4
     def get_clock(self, eventtime):
         with self.lock:
             last_clock = self.last_clock
@@ -59,13 +62,12 @@ class ClockSync:
         if clock_diff & 0x80000000:
             return last_clock + 0x100000000 - clock_diff
         return last_clock - clock_diff
-    def get_last_clock(self):
-        with self.lock:
-            return self.last_clock, self.last_clock_time
     def _status_event(self, eventtime):
+        self.queries_pending += 1
         self.serial.send(self.status_cmd)
         return eventtime + 1.0
     def _handle_status(self, params):
+        self.queries_pending = 0
         sent_time = params['#sent_time']
         if not sent_time:
             return
