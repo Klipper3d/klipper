@@ -85,9 +85,8 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
     def note_homing_triggered(self):
-        params = self._mcu.serial.send_with_response(
-            self._get_position_cmd.encode(self._oid),
-            'stepper_position', self._oid)
+        cmd = self._get_position_cmd.encode(self._oid)
+        params = self._mcu.send_with_response(cmd, 'stepper_position', self._oid)
         pos = params['pos']
         if self._invert_dir:
             pos = -pos
@@ -202,7 +201,7 @@ class MCU_endstop:
                 msg = self._home_cmd.encode(self._oid, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
                 raise error("Timeout during endstop homing")
-        if self._mcu.is_shutdown:
+        if self._mcu.is_shutdown():
             raise error("MCU is shutdown")
         if print_time >= self._next_query_time:
             self._next_query_time = print_time + self.RETRY_QUERY
@@ -295,8 +294,7 @@ class MCU_pwm:
         self._static_value = max(0., min(1., value))
     def build_config(self):
         if self._hard_pwm:
-            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
-                "PWM_MAX")
+            self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._static_value is not None:
                 value = int(self._static_value * self._pwm_max + 0.5)
                 self._mcu.add_config_cmd(
@@ -312,8 +310,7 @@ class MCU_pwm:
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
         else:
-            self._pwm_max = self._mcu.serial.msgparser.get_constant_float(
-                "SOFT_PWM_MAX")
+            self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
             if self._static_value is not None:
                 if self._static_value != 0. and self._static_value != 1.:
                     raise pins.error("static value on soft pwm not supported")
@@ -369,7 +366,7 @@ class MCU_adc:
             self._oid, self._pin))
         clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
-        mcu_adc_max = self._mcu.serial.msgparser.get_constant_float("ADC_MAX")
+        mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
         self._inv_max_adc = 1.0 / max_adc
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
@@ -403,9 +400,9 @@ class MCU:
             baud = 0
         else:
             baud = config.getint('baud', 250000, minval=2400)
-        self.serial = serialhdl.SerialReader(
+        self._serial = serialhdl.SerialReader(
             printer.reactor, self._serialport, baud)
-        self.is_shutdown = False
+        self._is_shutdown = False
         self._shutdown_msg = ""
         self._restart_method = 'command'
         if baud:
@@ -446,12 +443,12 @@ class MCU:
         self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
         self._mcu_tick_awake = tick_sum / self._mcu_freq
     def handle_shutdown(self, params):
-        if self.is_shutdown:
+        if self._is_shutdown:
             return
-        self.is_shutdown = True
+        self._is_shutdown = True
         self._shutdown_msg = msg = params['#msg']
         logging.info("%s: %s" % (params['#name'], self._shutdown_msg))
-        self.serial.dump_debug()
+        self._serial.dump_debug()
         prefix = "MCU shutdown: "
         if params['#name'] == 'is_shutdown':
             prefix = "Previous MCU shutdown: "
@@ -473,11 +470,10 @@ class MCU:
                 and not os.path.exists(self._serialport)):
                 # Try toggling usb power
                 self._check_restart("enable power")
-            self.serial.connect()
-            self._clocksync.connect(self.serial)
-        self._mcu_freq = self.serial.msgparser.get_constant_float('CLOCK_FREQ')
-        self._stats_sumsq_base = self.serial.msgparser.get_constant_float(
-            'STATS_SUMSQ_BASE')
+            self._serial.connect()
+            self._clocksync.connect(self._serial)
+        self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
+        self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._reset_cmd = self.try_lookup_command("reset")
         self._config_reset_cmd = self.try_lookup_command("config_reset")
@@ -494,8 +490,8 @@ class MCU:
         dfile = open(dict_fname, 'rb')
         dict_data = dfile.read()
         dfile.close()
-        self.serial.connect_file(outfile, dict_data)
-        self._clocksync.connect_file(self.serial, pace)
+        self._serial.connect_file(outfile, dict_data)
+        self._clocksync.connect_file(self._serial, pace)
         # Handle pacing
         if not pace:
             def dummy_estimated_print_time(eventtime):
@@ -507,14 +503,14 @@ class MCU:
         logging.info("Timeout with firmware (eventtime=%f)", eventtime)
         self._printer.note_mcu_error("Lost communication with firmware")
     def disconnect(self):
-        self.serial.disconnect()
+        self._serial.disconnect()
         if self._steppersync is not None:
             self._ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def stats(self, eventtime):
         msg = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
             self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
-        return ' '.join([self.serial.stats(eventtime),
+        return ' '.join([self._serial.stats(eventtime),
                          self._clocksync.stats(eventtime), msg])
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
@@ -536,7 +532,7 @@ class MCU:
             if self._reset_cmd is None:
                 # Attempt reset via config_reset command
                 logging.info("Attempting a microcontroller config_reset command")
-                self.is_shutdown = True
+                self._is_shutdown = True
                 self.force_shutdown()
                 reactor.pause(reactor.monotonic() + 0.015)
                 self.send(self._config_reset_cmd.encode())
@@ -574,7 +570,7 @@ class MCU:
             self._oid_count,))
 
         # Resolve pin names
-        mcu = self.serial.msgparser.get_constant('MCU')
+        mcu = self._serial.msgparser.get_constant('MCU')
         pnames = pins.get_pin_map(mcu, self._pin_map)
         updated_cmds = []
         for cmd in self._config_cmds:
@@ -593,7 +589,7 @@ class MCU:
             config_params = {
                 'is_config': 0, 'move_count': 500, 'crc': self._config_crc}
         else:
-            config_params = self.serial.send_with_response(msg, 'config')
+            config_params = self.send_with_response(msg, 'config')
         if not config_params['is_config']:
             if self._restart_method == 'rpi_usb':
                 # Only configure mcu after usb power reset
@@ -603,9 +599,9 @@ class MCU:
             for c in self._config_cmds:
                 self.send(self.create_command(c))
             if not self.is_fileoutput():
-                config_params = self.serial.send_with_response(msg, 'config')
+                config_params = self.send_with_response(msg, 'config')
                 if not config_params['is_config']:
-                    if self.is_shutdown:
+                    if self._is_shutdown:
                         raise error("Firmware error during config: %s" % (
                             self._shutdown_msg,))
                     raise error("Unable to configure printer")
@@ -619,7 +615,7 @@ class MCU:
         move_count = config_params['move_count']
         logging.info("Configured (%d moves)" % (move_count,))
         if self._printer.bglogger is not None:
-            msgparser = self.serial.msgparser
+            msgparser = self._serial.msgparser
             info = [
                 "Configured (%d moves)" % (move_count,),
                 "Loaded %d commands (%s)" % (
@@ -628,7 +624,7 @@ class MCU:
                     ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
             self._printer.bglogger.set_rollover_info("mcu", "\n".join(info))
         self._steppersync = self._ffi_lib.steppersync_alloc(
-            self.serial.serialqueue, self._stepqueues, len(self._stepqueues),
+            self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
             move_count)
         self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         for c in self._init_cmds:
@@ -654,24 +650,28 @@ class MCU:
         else:
             self._config_cmds.append(cmd)
     def register_msg(self, cb, msg, oid=None):
-        self.serial.register_callback(cb, msg, oid)
+        self._serial.register_callback(cb, msg, oid)
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
     def alloc_command_queue(self):
-        return self.serial.alloc_command_queue()
+        return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat):
-        return self.serial.msgparser.lookup_command(msgformat)
+        return self._serial.msgparser.lookup_command(msgformat)
     def try_lookup_command(self, msgformat):
         try:
-            return self.serial.msgparser.lookup_command(msgformat)
-        except self.serial.msgparser.error as e:
+            return self._serial.msgparser.lookup_command(msgformat)
+        except self._serial.msgparser.error as e:
             return None
     def create_command(self, msg):
-        return self.serial.msgparser.create_command(msg)
+        return self._serial.msgparser.create_command(msg)
     def get_query_slot(self, oid):
         slot = self.seconds_to_clock(oid * .01)
         t = int(self.estimated_print_time(self.monotonic()) + 1.5)
         return self.print_time_to_clock(t) + slot
+    def is_shutdown(self):
+        return self._is_shutdown
+    def get_constant_float(self, name):
+        return self._serial.msgparser.get_constant_float(name)
     # Clock syncing
     def print_time_to_clock(self, print_time):
         return int(print_time * self._mcu_freq)
@@ -689,7 +689,9 @@ class MCU:
         return self._max_stepper_error
     # Move command queuing
     def send(self, cmd, minclock=0, reqclock=0, cq=None):
-        self.serial.send(cmd, minclock, reqclock, cq=cq)
+        self._serial.send(cmd, minclock, reqclock, cq=cq)
+    def send_with_response(self, cmd, name, oid=None):
+        return self._serial.send_with_response(cmd, name, oid)
     def flush_moves(self, print_time):
         if self._steppersync is None:
             return
