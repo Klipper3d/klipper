@@ -395,26 +395,25 @@ class MCU:
         self._clocksync = clocksync
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
-        if self._serialport.startswith("/dev/rpmsg_"):
-            # Beaglbone PRU
-            baud = 0
-        else:
+        baud = 0
+        if not self._serialport.startswith("/dev/rpmsg_"):
             baud = config.getint('baud', 250000, minval=2400)
         self._serial = serialhdl.SerialReader(
             printer.reactor, self._serialport, baud)
-        self._is_shutdown = False
-        self._shutdown_msg = ""
+        # Restarts
         self._restart_method = 'command'
         if baud:
             rmethods = {m: m for m in ['arduino', 'command', 'rpi_usb']}
             self._restart_method = config.getchoice(
                 'restart_method', rmethods, 'arduino')
-        # Config building
+        self._reset_cmd = self._config_reset_cmd = None
+        self._emergency_stop_cmd = None
+        self._is_shutdown = False
+        self._shutdown_msg = ""
         if printer.bglogger is not None:
             printer.bglogger.set_rollover_info("mcu", None)
+        # Config building
         pins.get_printer_pins(printer).register_chip("mcu", self)
-        self._emergency_stop_cmd = None
-        self._reset_cmd = self._config_reset_cmd = None
         self._oid_count = 0
         self._config_objects = []
         self._init_cmds = []
@@ -434,6 +433,7 @@ class MCU:
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
+    # Serial callbacks
     def handle_mcu_stats(self, params):
         count = params['count']
         tick_sum = params['sum']
@@ -462,26 +462,6 @@ class MCU:
         self._printer.request_exit('firmware_restart')
         self._printer.reactor.pause(self._printer.reactor.monotonic() + 2.000)
         raise error("Attempt firmware restart failed")
-    def connect(self):
-        if self.is_fileoutput():
-            self._connect_file()
-        else:
-            if (self._restart_method == 'rpi_usb'
-                and not os.path.exists(self._serialport)):
-                # Try toggling usb power
-                self._check_restart("enable power")
-            self._serial.connect()
-            self._clocksync.connect(self._serial)
-        self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
-        self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
-        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
-        self._reset_cmd = self.try_lookup_command("reset")
-        self._config_reset_cmd = self.try_lookup_command("config_reset")
-        self.register_msg(self.handle_shutdown, 'shutdown')
-        self.register_msg(self.handle_shutdown, 'is_shutdown')
-        self.register_msg(self.handle_mcu_stats, 'stats')
-        self._build_config()
-        self._send_config()
     def _connect_file(self, pace=False):
         # In a debugging mode.  Open debug output file and read data dictionary
         out_fname = self._printer.get_start_args().get('debugoutput')
@@ -497,61 +477,6 @@ class MCU:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
-    def check_active(self, print_time, eventtime):
-        if self._clocksync.is_active(eventtime):
-            return
-        logging.info("Timeout with firmware (eventtime=%f)", eventtime)
-        self._printer.note_mcu_error("Lost communication with firmware")
-    def disconnect(self):
-        self._serial.disconnect()
-        if self._steppersync is not None:
-            self._ffi_lib.steppersync_free(self._steppersync)
-            self._steppersync = None
-    def stats(self, eventtime):
-        msg = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
-            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
-        return ' '.join([self._serial.stats(eventtime),
-                         self._clocksync.stats(eventtime), msg])
-    def force_shutdown(self):
-        self.send(self._emergency_stop_cmd.encode())
-    def microcontroller_restart(self):
-        reactor = self._printer.reactor
-        if self._restart_method == 'rpi_usb':
-            logging.info("Attempting a microcontroller reset via rpi usb power")
-            self.disconnect()
-            chelper.run_hub_ctrl(0)
-            reactor.pause(reactor.monotonic() + 2.000)
-            chelper.run_hub_ctrl(1)
-            return
-        if self._restart_method == 'command':
-            eventtime = reactor.monotonic()
-            if ((self._reset_cmd is None and self._config_reset_cmd is None)
-                or not self._clocksync.is_active(eventtime)):
-                logging.info("Unable to issue reset command")
-                return
-            if self._reset_cmd is None:
-                # Attempt reset via config_reset command
-                logging.info("Attempting a microcontroller config_reset command")
-                self._is_shutdown = True
-                self.force_shutdown()
-                reactor.pause(reactor.monotonic() + 0.015)
-                self.send(self._config_reset_cmd.encode())
-                reactor.pause(reactor.monotonic() + 0.015)
-                self.disconnect()
-                return
-            # Attempt reset via reset command
-            logging.info("Attempting a microcontroller reset command")
-            self.send(self._reset_cmd.encode())
-            reactor.pause(reactor.monotonic() + 0.015)
-            self.disconnect()
-            return
-        # Attempt reset via arduino mechanism
-        logging.info("Attempting a microcontroller reset")
-        self.disconnect()
-        serialhdl.arduino_reset(self._serialport, reactor)
-    def is_fileoutput(self):
-        return self._printer.get_start_args().get('debugoutput') is not None
-    # Configuration phase
     def _add_custom(self):
         for line in self._custom.split('\n'):
             line = line.strip()
@@ -629,6 +554,26 @@ class MCU:
         self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         for c in self._init_cmds:
             self.send(self.create_command(c))
+    def connect(self):
+        if self.is_fileoutput():
+            self._connect_file()
+        else:
+            if (self._restart_method == 'rpi_usb'
+                and not os.path.exists(self._serialport)):
+                # Try toggling usb power
+                self._check_restart("enable power")
+            self._serial.connect()
+            self._clocksync.connect(self._serial)
+        self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
+        self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
+        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
+        self._reset_cmd = self.try_lookup_command("reset")
+        self._config_reset_cmd = self.try_lookup_command("config_reset")
+        self.register_msg(self.handle_shutdown, 'shutdown')
+        self.register_msg(self.handle_shutdown, 'is_shutdown')
+        self.register_msg(self.handle_mcu_stats, 'stats')
+        self._build_config()
+        self._send_config()
     # Config creation helpers
     def setup_pin(self, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
@@ -649,12 +594,27 @@ class MCU:
             self._init_cmds.append(cmd)
         else:
             self._config_cmds.append(cmd)
-    def register_msg(self, cb, msg, oid=None):
-        self._serial.register_callback(cb, msg, oid)
+    def get_query_slot(self, oid):
+        slot = self.seconds_to_clock(oid * .01)
+        t = int(self.estimated_print_time(self.monotonic()) + 1.5)
+        return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
+    def seconds_to_clock(self, time):
+        return int(time * self._mcu_freq)
+    def get_max_stepper_error(self):
+        return self._max_stepper_error
+    # Wrapper functions
+    def send(self, cmd, minclock=0, reqclock=0, cq=None):
+        self._serial.send(cmd, minclock, reqclock, cq=cq)
+    def send_with_response(self, cmd, name, oid=None):
+        return self._serial.send_with_response(cmd, name, oid)
+    def register_msg(self, cb, msg, oid=None):
+        self._serial.register_callback(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
+    def create_command(self, msg):
+        return self._serial.msgparser.create_command(msg)
     def lookup_command(self, msgformat):
         return self._serial.msgparser.lookup_command(msgformat)
     def try_lookup_command(self, msgformat):
@@ -662,17 +622,8 @@ class MCU:
             return self._serial.msgparser.lookup_command(msgformat)
         except self._serial.msgparser.error as e:
             return None
-    def create_command(self, msg):
-        return self._serial.msgparser.create_command(msg)
-    def get_query_slot(self, oid):
-        slot = self.seconds_to_clock(oid * .01)
-        t = int(self.estimated_print_time(self.monotonic()) + 1.5)
-        return self.print_time_to_clock(t) + slot
-    def is_shutdown(self):
-        return self._is_shutdown
     def get_constant_float(self, name):
         return self._serial.msgparser.get_constant_float(name)
-    # Clock syncing
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):
@@ -683,15 +634,15 @@ class MCU:
         return self._clocksync.get_adjusted_freq()
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
-    def seconds_to_clock(self, time):
-        return int(time * self._mcu_freq)
-    def get_max_stepper_error(self):
-        return self._max_stepper_error
-    # Move command queuing
-    def send(self, cmd, minclock=0, reqclock=0, cq=None):
-        self._serial.send(cmd, minclock, reqclock, cq=cq)
-    def send_with_response(self, cmd, name, oid=None):
-        return self._serial.send_with_response(cmd, name, oid)
+    def pause(self, waketime):
+        return self._printer.reactor.pause(waketime)
+    def monotonic(self):
+        return self._printer.reactor.monotonic()
+    # Misc external commands
+    def is_fileoutput(self):
+        return self._printer.get_start_args().get('debugoutput') is not None
+    def is_shutdown(self):
+        return self._is_shutdown
     def flush_moves(self, print_time):
         if self._steppersync is None:
             return
@@ -699,10 +650,58 @@ class MCU:
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
             raise error("Internal error in stepcompress")
-    def pause(self, waketime):
-        return self._printer.reactor.pause(waketime)
-    def monotonic(self):
-        return self._printer.reactor.monotonic()
+    def check_active(self, print_time, eventtime):
+        if self._clocksync.is_active(eventtime):
+            return
+        logging.info("Timeout with firmware (eventtime=%f)", eventtime)
+        self._printer.note_mcu_error("Lost communication with firmware")
+    def stats(self, eventtime):
+        msg = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
+        return ' '.join([self._serial.stats(eventtime),
+                         self._clocksync.stats(eventtime), msg])
+    def force_shutdown(self):
+        self.send(self._emergency_stop_cmd.encode())
+    def microcontroller_restart(self):
+        reactor = self._printer.reactor
+        if self._restart_method == 'rpi_usb':
+            logging.info("Attempting a microcontroller reset via rpi usb power")
+            self.disconnect()
+            chelper.run_hub_ctrl(0)
+            reactor.pause(reactor.monotonic() + 2.000)
+            chelper.run_hub_ctrl(1)
+            return
+        if self._restart_method == 'command':
+            eventtime = reactor.monotonic()
+            if ((self._reset_cmd is None and self._config_reset_cmd is None)
+                or not self._clocksync.is_active(eventtime)):
+                logging.info("Unable to issue reset command")
+                return
+            if self._reset_cmd is None:
+                # Attempt reset via config_reset command
+                logging.info("Attempting a microcontroller config_reset command")
+                self._is_shutdown = True
+                self.force_shutdown()
+                reactor.pause(reactor.monotonic() + 0.015)
+                self.send(self._config_reset_cmd.encode())
+                reactor.pause(reactor.monotonic() + 0.015)
+                self.disconnect()
+                return
+            # Attempt reset via reset command
+            logging.info("Attempting a microcontroller reset command")
+            self.send(self._reset_cmd.encode())
+            reactor.pause(reactor.monotonic() + 0.015)
+            self.disconnect()
+            return
+        # Attempt reset via arduino mechanism
+        logging.info("Attempting a microcontroller reset")
+        self.disconnect()
+        serialhdl.arduino_reset(self._serialport, reactor)
+    def disconnect(self):
+        self._serial.disconnect()
+        if self._steppersync is not None:
+            self._ffi_lib.steppersync_free(self._steppersync)
+            self._steppersync = None
     def __del__(self):
         self.disconnect()
 
