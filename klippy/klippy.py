@@ -190,31 +190,27 @@ class Printer:
                         "Unknown option '%s' in section '%s'" % (
                             option, section))
     def _connect(self, eventtime):
+        self.reactor.unregister_timer(self.connect_timer)
         try:
             self._load_config()
-            if self.start_args.get('debugoutput') is None:
-                self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
             self.mcu.connect()
             self.gcode.set_printer_ready(True)
             self.state_message = message_ready
+            if self.start_args.get('debugoutput') is None:
+                self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self.state_message = "%s%s" % (str(e), message_restart)
-            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         except msgproto.error as e:
             logging.exception("Protocol error")
             self.state_message = "%s%s" % (str(e), message_protocol_error)
-            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         except mcu.error as e:
             logging.exception("MCU error during connect")
             self.state_message = "%s%s" % (str(e), message_mcu_connect_error)
-            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
         except:
             logging.exception("Unhandled exception during connect")
             self.state_message = "Internal error during connect.%s" % (
                 message_restart,)
-            self.reactor.update_timer(self.stats_timer, self.reactor.NEVER)
-        self.reactor.unregister_timer(self.connect_timer)
         return self.reactor.NEVER
     def run(self):
         systime = time.time()
