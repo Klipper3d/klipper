@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
-import serialhdl, pins, chelper
+import serialhdl, pins, chelper, clocksync
 
 class error(Exception):
     pass
@@ -205,8 +205,8 @@ class MCU_endstop:
                     s.note_homing_triggered()
                 self._homing = False
                 return False
-            if (self._mcu.serial.get_clock(last_sent_time)
-                > self._home_timeout_clock):
+            last_clock, last_clock_time = self._mcu.get_last_clock()
+            if last_clock > self._home_timeout_clock:
                 # Timeout - disable endstop checking
                 msg = self._home_cmd.encode(self._oid, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
@@ -397,7 +397,7 @@ class MCU_adc:
                                , self._oid)
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
-        next_clock = self._mcu.serial.translate_clock(params['next_clock'])
+        next_clock = self._mcu.translate_clock(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         if self._callback is not None:
@@ -406,8 +406,9 @@ class MCU_adc:
 class MCU:
     error = error
     COMM_TIMEOUT = 3.5
-    def __init__(self, printer, config):
+    def __init__(self, printer, config, clocksync):
         self._printer = printer
+        self._clocksync = clocksync
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
         if self._serialport.startswith("/dev/rpmsg_"):
@@ -488,6 +489,7 @@ class MCU:
                 # Try toggling usb power
                 self._check_restart("enable power")
             self.serial.connect()
+            self._clocksync.connect(self.serial)
             self._printer.reactor.update_timer(
                 self._timeout_timer, self.monotonic() + self.COMM_TIMEOUT)
         self._mcu_freq = self.serial.msgparser.get_constant_float('CLOCK_FREQ')
@@ -510,13 +512,14 @@ class MCU:
         dict_data = dfile.read()
         dfile.close()
         self.serial.connect_file(outfile, dict_data)
+        self._clocksync.connect_file(self.serial, pace)
         # Handle pacing
         if not pace:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
     def timeout_handler(self, eventtime):
-        last_clock, last_clock_time = self.serial.get_last_clock()
+        last_clock, last_clock_time = self.get_last_clock()
         timeout = last_clock_time + self.COMM_TIMEOUT
         if eventtime < timeout:
             return timeout
@@ -530,9 +533,10 @@ class MCU:
             self._ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def stats(self, eventtime):
-        return "%s mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
-            self.serial.stats(eventtime),
+        msg = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
             self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
+        return ' '.join([self.serial.stats(eventtime),
+                         self._clocksync.stats(eventtime), msg])
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
     def microcontroller_restart(self):
@@ -545,7 +549,7 @@ class MCU:
             chelper.run_hub_ctrl(1)
             return
         if self._restart_method == 'command':
-            last_clock, last_clock_time = self.serial.get_last_clock()
+            last_clock, last_clock_time = self.get_last_clock()
             eventtime = reactor.monotonic()
             if ((self._reset_cmd is None and self._config_reset_cmd is None)
                 or eventtime > last_clock_time + self.COMM_TIMEOUT):
@@ -691,13 +695,15 @@ class MCU:
     def clock_to_print_time(self, clock):
         return clock / self._mcu_freq
     def estimated_print_time(self, eventtime):
-        return self.clock_to_print_time(self.serial.get_clock(eventtime))
+        return self.clock_to_print_time(self._clocksync.get_clock(eventtime))
     def get_mcu_freq(self):
         return self._mcu_freq
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_last_clock(self):
-        return self.serial.get_last_clock()
+        return self._clocksync.get_last_clock()
+    def translate_clock(self, clock):
+        return self._clocksync.translate_clock(clock)
     def get_max_stepper_error(self):
         return self._max_stepper_error
     # Move command queuing
@@ -741,4 +747,5 @@ def error_help(msg):
     return ""
 
 def add_printer_objects(printer, config):
-    printer.add_object('mcu', MCU(printer, config.getsection('mcu')))
+    mainsync = clocksync.ClockSync(printer.reactor)
+    printer.add_object('mcu', MCU(printer, config.getsection('mcu'), mainsync))

@@ -5,8 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
-
-import reactor, serialhdl, pins, util, msgproto
+import reactor, serialhdl, pins, util, msgproto, clocksync
 
 help_txt = """
   This is a debugging console for the Klipper micro-controller.
@@ -34,6 +33,7 @@ class KeyboardReader:
     def __init__(self, ser, reactor):
         self.ser = ser
         self.reactor = reactor
+        self.clocksync = clocksync.ClockSync(self.reactor)
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
         self.mcu_freq = 0
@@ -52,6 +52,7 @@ class KeyboardReader:
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
         self.ser.connect()
+        self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
         self.mcu_freq = self.ser.msgparser.get_constant_float('CLOCK_FREQ')
         mcu = self.ser.msgparser.get_constant('MCU')
@@ -68,7 +69,7 @@ class KeyboardReader:
         pass
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
-        self.eval_globals['clock'] = self.ser.get_clock(eventtime)
+        self.eval_globals['clock'] = self.clocksync.get_clock(eventtime)
     def command_PINS(self, parts):
         mcu = self.ser.msgparser.get_constant('MCU')
         self.pins = pins.get_pin_map(mcu, parts[1])
@@ -104,7 +105,7 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         delay_clock = int(delay * self.mcu_freq)
-        msg_clock = int(self.ser.get_clock(self.reactor.monotonic())
+        msg_clock = int(self.clocksync.get_clock(self.reactor.monotonic())
                         + self.mcu_freq * .200)
         for i in range(count):
             next_clock = msg_clock + delay_clock
@@ -121,7 +122,9 @@ class KeyboardReader:
             return
         self.ser.register_callback(self.handle_suppress, name, oid)
     def command_STATS(self, parts):
-        self.output(self.ser.stats(self.reactor.monotonic()))
+        curtime = self.reactor.monotonic()
+        self.output(' '.join([self.ser.stats(curtime),
+                              self.clocksync.stats(curtime)]))
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
         mp = self.ser.msgparser
