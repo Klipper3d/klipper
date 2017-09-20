@@ -650,6 +650,43 @@ class MCU:
         return self._printer.reactor.pause(waketime)
     def monotonic(self):
         return self._printer.reactor.monotonic()
+    # Restarts
+    def _restart_arduino(self):
+        logging.info("Attempting MCU '%s' reset", self._name)
+        self.disconnect()
+        serialhdl.arduino_reset(self._serialport, self._printer.reactor)
+    def _restart_via_command(self):
+        reactor = self._printer.reactor
+        if ((self._reset_cmd is None and self._config_reset_cmd is None)
+            or not self._clocksync.is_active(reactor.monotonic())):
+            logging.info("Unable to issue reset command on MCU '%s'", self._name)
+            return
+        if self._reset_cmd is None:
+            # Attempt reset via config_reset command
+            logging.info("Attempting MCU '%s' config_reset command", self._name)
+            self._is_shutdown = True
+            self.force_shutdown()
+            reactor.pause(reactor.monotonic() + 0.015)
+            self.send(self._config_reset_cmd.encode())
+        else:
+            # Attempt reset via reset command
+            logging.info("Attempting MCU '%s' reset command", self._name)
+            self.send(self._reset_cmd.encode())
+        reactor.pause(reactor.monotonic() + 0.015)
+        self.disconnect()
+    def _restart_rpi_usb(self):
+        logging.info("Attempting MCU '%s' reset via rpi usb power", self._name)
+        self.disconnect()
+        chelper.run_hub_ctrl(0)
+        self._printer.reactor.pause(self._printer.reactor.monotonic() + 2.)
+        chelper.run_hub_ctrl(1)
+    def microcontroller_restart(self):
+        if self._restart_method == 'rpi_usb':
+            self._restart_rpi_usb()
+        elif self._restart_method == 'command':
+            self._restart_via_command()
+        else:
+            self._restart_arduino()
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None
@@ -684,44 +721,6 @@ class MCU:
                          self._clocksync.stats(eventtime)])
     def force_shutdown(self):
         self.send(self._emergency_stop_cmd.encode())
-    def microcontroller_restart(self):
-        reactor = self._printer.reactor
-        if self._restart_method == 'rpi_usb':
-            logging.info("Attempting MCU '%s' reset via rpi usb power",
-                         self._name)
-            self.disconnect()
-            chelper.run_hub_ctrl(0)
-            reactor.pause(reactor.monotonic() + 2.000)
-            chelper.run_hub_ctrl(1)
-            return
-        if self._restart_method == 'command':
-            eventtime = reactor.monotonic()
-            if ((self._reset_cmd is None and self._config_reset_cmd is None)
-                or not self._clocksync.is_active(eventtime)):
-                logging.info("Unable to issue reset command on MCU '%s'",
-                             self._name)
-                return
-            if self._reset_cmd is None:
-                # Attempt reset via config_reset command
-                logging.info("Attempting MCU '%s' config_reset command",
-                             self._name)
-                self._is_shutdown = True
-                self.force_shutdown()
-                reactor.pause(reactor.monotonic() + 0.015)
-                self.send(self._config_reset_cmd.encode())
-                reactor.pause(reactor.monotonic() + 0.015)
-                self.disconnect()
-                return
-            # Attempt reset via reset command
-            logging.info("Attempting MCU '%s' reset command", self._name)
-            self.send(self._reset_cmd.encode())
-            reactor.pause(reactor.monotonic() + 0.015)
-            self.disconnect()
-            return
-        # Attempt reset via arduino mechanism
-        logging.info("Attempting MCU '%s' reset", self._name)
-        self.disconnect()
-        serialhdl.arduino_reset(self._serialport, reactor)
     def disconnect(self):
         self._serial.disconnect()
         if self._steppersync is not None:
