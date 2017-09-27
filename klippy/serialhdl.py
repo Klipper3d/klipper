@@ -141,26 +141,28 @@ class SerialReader:
                                 self.ffi_lib.serialqueue_free_commandqueue)
     # Dumping debug lists
     def dump_debug(self):
-        logging.info("Dumping serial stats: %s"
-                     , self.stats(self.reactor.monotonic()))
+        out = []
+        out.append("Dumping serial stats: %s" % (
+            self.stats(self.reactor.monotonic()),))
         sdata = self.ffi_main.new('struct pull_queue_message[1024]')
         rdata = self.ffi_main.new('struct pull_queue_message[1024]')
         scount = self.ffi_lib.serialqueue_extract_old(
             self.serialqueue, 1, sdata, len(sdata))
         rcount = self.ffi_lib.serialqueue_extract_old(
             self.serialqueue, 0, rdata, len(rdata))
-        logging.info("Dumping send queue %d messages" % (scount,))
+        out.append("Dumping send queue %d messages" % (scount,))
         for i in range(scount):
             msg = sdata[i]
             cmds = self.msgparser.dump(msg.msg[0:msg.len])
-            logging.info("Sent %d %f %f %d: %s" % (
+            out.append("Sent %d %f %f %d: %s" % (
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
-        logging.info("Dumping receive queue %d messages" % (rcount,))
+        out.append("Dumping receive queue %d messages" % (rcount,))
         for i in range(rcount):
             msg = rdata[i]
             cmds = self.msgparser.dump(msg.msg[0:msg.len])
-            logging.info("Receive: %d %f %f %d: %s" % (
+            out.append("Receive: %d %f %f %d: %s" % (
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
+        return '\n'.join(out)
     # Default message handlers
     def handle_unknown(self, params):
         logging.warn("Unknown message type %d: %s" % (
