@@ -257,9 +257,10 @@ class ToolHead:
     def get_last_move_time(self):
         self._flush_lookahead()
         return self.get_next_move_time()
-    def reset_print_time(self):
+    def reset_print_time(self, min_print_time=0.):
         self._flush_lookahead(must_sync=True)
-        self.print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
+        self.print_time = max(min_print_time, self.mcu.estimated_print_time(
+            self.reactor.monotonic()))
     def _check_stall(self):
         eventtime = self.reactor.monotonic()
         if self.sync_print_time:

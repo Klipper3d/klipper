@@ -40,7 +40,7 @@ class Homing:
             endstops.append((s, s.mcu_stepper.get_mcu_position()))
         self.toolhead.move(self._fill_coord(movepos), speed)
         move_end_print_time = self.toolhead.get_last_move_time()
-        self.toolhead.reset_print_time()
+        self.toolhead.reset_print_time(print_time)
         for s, last_pos in endstops:
             s.mcu_endstop.home_finalize(move_end_print_time)
         # Wait for endstops to trigger
