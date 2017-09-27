@@ -451,8 +451,9 @@ class MCU:
             return
         self._is_shutdown = True
         self._shutdown_msg = msg = params['#msg']
-        logging.info("MCU '%s' %s: %s\n%s", self._name, params['#name'],
-                     self._shutdown_msg, self._serial.dump_debug())
+        logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, params['#name'],
+                     self._shutdown_msg, self._clocksync.dump_debug(),
+                     self._serial.dump_debug())
         prefix = "MCU '%s' shutdown: " % (self._name,)
         if params['#name'] == 'is_shutdown':
             prefix = "Previous MCU '%s' shutdown: " % (self._name,)

@@ -115,6 +115,15 @@ class ClockSync:
         print_time = self.estimated_print_time(eventtime)
         last_clock_print_time = self.clock_to_print_time(self.last_clock)
         return print_time < last_clock_print_time + COMM_TIMEOUT
+    def dump_debug(self):
+        sample_time, clock, freq = self.clock_est
+        prev_time, prev_clock, prev_freq = self.prev_est
+        return ("clocksync state: mcu_freq=%d last_clock=%d"
+                " min_half_rtt=%.6f min_half_rtt_time=%.3f last_clock_fast=%s"
+                " clock_est=(%.3f %d %.3f) prev_est=(%.3f %d %.3f)" % (
+                    self.mcu_freq, self.last_clock, self.min_half_rtt,
+                    self.min_half_rtt_time, self.last_clock_fast,
+                    sample_time, clock, freq, prev_time, prev_clock, prev_freq))
     def stats(self, eventtime):
         sample_time, clock, freq = self.clock_est
         return "freq=%d" % (freq,)
@@ -150,6 +159,10 @@ class SecondarySync(ClockSync):
         adjusted_offset, adjusted_freq = self.clock_adj
         return adjusted_freq
     # misc commands
+    def dump_debug(self):
+        adjusted_offset, adjusted_freq = self.clock_adj
+        return "%s clock_adj=(%.3f %.3f)" % (
+            ClockSync.dump_debug(self), adjusted_offset, adjusted_freq)
     def stats(self, eventtime):
         adjusted_offset, adjusted_freq = self.clock_adj
         return "%s adj=%d" % (ClockSync.stats(self, eventtime), adjusted_freq)
