@@ -208,7 +208,7 @@ class MessageParser:
         msgcrc = s[msglen-MESSAGE_TRAILER_CRC:msglen-MESSAGE_TRAILER_CRC+2]
         crc = crc16_ccitt(s[:msglen-MESSAGE_TRAILER_SIZE])
         if crc != msgcrc:
-            #logging.debug("got crc %s vs %s" % (repr(crc), repr(msgcrc)))
+            #logging.debug("got crc %s vs %s", repr(crc), repr(msgcrc))
             return -1
         return msglen
     def dump(self, s):

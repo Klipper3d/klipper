@@ -63,7 +63,7 @@ class SerialReader:
                 else:
                     self.ser = open(self.serialport, 'rb+')
             except (OSError, IOError, serial.SerialException) as e:
-                logging.warn("Unable to open port: %s" % (e,))
+                logging.warn("Unable to open port: %s", e)
                 self.reactor.pause(starttime + 5.)
                 continue
             if self.baud:
@@ -84,10 +84,10 @@ class SerialReader:
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
         self.register_callback(self.handle_unknown, '#unknown')
-        logging.info("Loaded %d commands (%s)" % (
-            len(msgparser.messages_by_id), msgparser.version))
-        logging.info("MCU config: %s" % (" ".join(
-            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
+        logging.info("Loaded %d commands (%s)",
+                     len(msgparser.messages_by_id), msgparser.version)
+        logging.info("MCU config: %s", " ".join(
+            ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))
         # Setup baud adjust
         mcu_baud = float(msgparser.config.get('SERIAL_BAUD', 0.))
         if mcu_baud:
@@ -165,12 +165,12 @@ class SerialReader:
         return '\n'.join(out)
     # Default message handlers
     def handle_unknown(self, params):
-        logging.warn("Unknown message type %d: %s" % (
-            params['#msgid'], repr(params['#msg'])))
+        logging.warn("Unknown message type %d: %s",
+                     params['#msgid'], repr(params['#msg']))
     def handle_output(self, params):
-        logging.info("%s: %s" % (params['#name'], params['#msg']))
+        logging.info("%s: %s", params['#name'], params['#msg'])
     def handle_default(self, params):
-        logging.warn("got %s" % (params,))
+        logging.warn("got %s", params)
     def __del__(self):
         self.disconnect()
 
@@ -249,8 +249,8 @@ class SerialBootStrap:
         self.serial.send(imsg)
         return eventtime + self.RETRY_TIME
     def handle_unknown(self, params):
-        logging.debug("Unknown message %d (len %d) while identifying" % (
-            params['#msgid'], len(params['#msg'])))
+        logging.debug("Unknown message %d (len %d) while identifying",
+                      params['#msgid'], len(params['#msg']))
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):
@@ -267,7 +267,7 @@ def stk500v2_leave(ser, reactor):
     ser.write('\x1b\x01\x00\x01\x0e\x11\x04')
     reactor.pause(reactor.monotonic() + 0.050)
     res = ser.read(4096)
-    logging.debug("Got %s from stk500v2" % (repr(res),))
+    logging.debug("Got %s from stk500v2", repr(res))
     ser.baudrate = origbaud
 
 # Attempt an arduino style reset on a serial port

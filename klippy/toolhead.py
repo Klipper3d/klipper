@@ -339,7 +339,7 @@ class ToolHead:
         self.extruder.motor_off(last_move_time)
         self.dwell(STALL_TIME)
         self.need_motor_off = False
-        logging.debug('; Max time of %f' % (last_move_time,))
+        logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):
         self._flush_lookahead()
         if self.mcu.is_fileoutput():

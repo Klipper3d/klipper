@@ -43,8 +43,8 @@ def get_cpu_info():
         data = f.read()
         f.close()
     except OSError:
-        logging.debug("Exception on read /proc/cpuinfo: %s" % (
-            traceback.format_exc(),))
+        logging.debug("Exception on read /proc/cpuinfo: %s",
+                      traceback.format_exc())
         return "?"
     lines = [l.split(':', 1) for l in data.split('\n')]
     lines = [(l[0].strip(), l[1].strip()) for l in lines if len(l) == 2]
@@ -64,6 +64,6 @@ def get_git_version():
         output = process.communicate()[0]
         retcode = process.poll()
     except OSError:
-        logging.debug("Exception on run: %s" % (traceback.format_exc(),))
+        logging.debug("Exception on run: %s", traceback.format_exc())
         return "?"
     return output.strip()

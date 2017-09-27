@@ -159,7 +159,7 @@ class Printer:
         out.append(toolhead.stats(eventtime))
         for m in self.mcus:
             out.append(m.stats(eventtime))
-        logging.info("Stats %.1f: %s" % (eventtime, ' '.join(out)))
+        logging.info("Stats %.1f: %s", eventtime, ' '.join(out))
         return eventtime + 1.
     def add_object(self, name, obj):
         self.objects[name] = obj
@@ -217,8 +217,8 @@ class Printer:
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
-        logging.info("Start printer at %s (%.1f %.1f)" % (
-            time.asctime(time.localtime(systime)), systime, monotime))
+        logging.info("Start printer at %s (%.1f %.1f)",
+                     time.asctime(time.localtime(systime)), systime, monotime)
         # Enter main reactor loop
         try:
             self.reactor.run()

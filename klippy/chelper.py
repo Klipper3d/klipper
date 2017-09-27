@@ -90,7 +90,7 @@ def check_build_code(srcdir, target, sources, cmd, other_files=[]):
     src_times = get_mtimes(srcdir, sources + other_files)
     obj_times = get_mtimes(srcdir, [target])
     if not obj_times or max(src_times) > min(obj_times):
-        logging.info("Building C code module %s" % (target,))
+        logging.info("Building C code module %s", target)
         srcfiles = [os.path.join(srcdir, fname) for fname in sources]
         destlib = os.path.join(srcdir, target)
         os.system(cmd % (destlib, ' '.join(srcfiles)))

@@ -148,9 +148,9 @@ class PrinterHeater:
         pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])" % (
-            self.name, value, pwm_time,
-            self.last_temp, self.last_temp_time, self.target_temp))
+        logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
+                      self.name, value, pwm_time,
+                      self.last_temp, self.last_temp_time, self.target_temp)
         self.mcu_pwm.set_pwm(pwm_time, value)
     def adc_callback(self, read_time, read_value):
         temp = self.sensor.calc_temp(read_value)
@@ -159,7 +159,7 @@ class PrinterHeater:
             self.last_temp_time = read_time
             self.can_extrude = (temp >= self.min_extrude_temp)
             self.control.adc_callback(read_time, temp)
-        #logging.debug("temp: %.3f %f = %f" % (read_time, read_value, temp))
+        #logging.debug("temp: %.3f %f = %f", read_time, read_value, temp)
     # External commands
     def set_temp(self, print_time, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
@@ -239,8 +239,8 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d" % (
-        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co))
+        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
+        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater.max_power, co))
         self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
@@ -305,9 +305,9 @@ class ControlAutoTune:
         Td = 0.125 * Tu
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f" % (
-            temp_diff, max_power, Ku, Tu,
-            Kp * PID_PARAM_BASE, Ki * PID_PARAM_BASE, Kd * PID_PARAM_BASE))
+        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
+                     temp_diff, max_power, Ku, Tu, Kp * PID_PARAM_BASE,
+                     Ki * PID_PARAM_BASE, Kd * PID_PARAM_BASE)
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True

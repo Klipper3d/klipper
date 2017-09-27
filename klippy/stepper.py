@@ -91,7 +91,7 @@ class PrinterHomingStepper(PrinterStepper):
                     endstop_accuracy * self.inv_step_dist))
             if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
-                             " phase adjustment" % (name,))
+                             " phase adjustment", name)
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
@@ -108,7 +108,7 @@ class PrinterHomingStepper(PrinterStepper):
         pos = self.mcu_stepper.get_mcu_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
-            logging.info("Setting %s endstop phase to %d" % (self.name, pos))
+            logging.info("Setting %s endstop phase to %d", self.name, pos)
             self.homing_endstop_phase = pos
             return 0
         delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
