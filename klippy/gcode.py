@@ -78,10 +78,12 @@ class GCodeParser:
         if self.fan is not None:
             self.fan.set_speed(print_time, 0.)
     def dump_debug(self):
-        logging.info("Dumping gcode input %d blocks" % (
+        out = []
+        out.append("Dumping gcode input %d blocks" % (
             len(self.input_log),))
         for eventtime, data in self.input_log:
-            logging.info("Read %f: %s" % (eventtime, repr(data)))
+            out.append("Read %f: %s" % (eventtime, repr(data)))
+        logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
     def process_commands(self, commands, need_ack=True):
