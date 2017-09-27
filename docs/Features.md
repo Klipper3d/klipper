@@ -40,6 +40,14 @@ Klipper has several compelling features:
   * Klipper implements the "pressure advance" algorithm for
     extruders. When properly tuned, pressure advance reduces extruder
     ooze.
+  * Klipper supports printers with multiple micro-controllers. For
+    example, one micro-controller could be used to control an
+    extruder, while another could control the printer's heaters, while
+    a third controls the rest of the printer. The Klipper host
+    software implements clock synchronization to account for clock
+    drift between micro-controllers. No special code is needed to
+    enable multiple micro-controllers - it just requires a few extra
+    lines in the config file.
   * Klipper also implements a novel "stepper phase endstop" algorithm
     that can dramatically improve the accuracy of typical endstop
     switches. When properly tuned it can improve a print's first layer
