@@ -53,6 +53,8 @@ class GCodeParser:
         self.gcode_handlers = self.build_handlers(is_ready)
         if not is_ready:
             # Printer is shutdown (could be running in a background thread)
+            if self.is_fileinput:
+                self.printer.request_exit()
             return
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
