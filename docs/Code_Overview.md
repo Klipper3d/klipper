@@ -211,3 +211,67 @@ movement. However, the only really interesting parts are in the
 ToolHead and kinematic classes. It's this part of the code which
 specifies the movements and their timings. The remaining parts of the
 processing is mostly just communication and plumbing.
+
+Time
+====
+
+Fundamental to the operation of Klipper is the handling of clocks,
+times, and timestamps. Klipper executes actions on the printer by
+scheduling events to occur in the near future. For example, to turn on
+a fan, the code might schedule a change to a GPIO pin in a 100ms. It
+is rare for the code to attempt to take an instantaneous action. Thus,
+the handling of time within Klipper is critical to correct operation.
+
+There are three types of times tracked internally in the Klipper host
+software:
+* System time. The system time uses the system's monotonic clock - it
+  is a floating point number stored as seconds and it is (generally)
+  relative to when the host computer was last started. System times
+  have limited use in the software - they are primarily used when
+  interacting with the operating system. Within the host code, system
+  times are frequently stored in variables named *eventtime* or
+  *curtime*.
+* Print time. The print time is synchronized to the main
+  micro-controller clock (the micro-controller defined in the "[mcu]"
+  config section). It is a floating point number stored as seconds and
+  is relative to when the main mcu was last restarted. It is possible
+  to convert from a "print time" to the main micro-controller's
+  hardware clock by multiplying the print time by the mcu's statically
+  configured frequency rate. The high-level host code uses print times
+  to calculates almost all physical actions (eg, head movement, heater
+  changes, etc.). Within the host code, print times are generally
+  stored in variables named *print_time* or *move_time*.
+* MCU clock. This is the hardware clock counter on each
+  micro-controller. It is stored as an integer and its update rate is
+  relative to the frequency of the given micro-controller. The host
+  software translates its internal times to clocks before transmission
+  to the mcu. The mcu code only ever tracks time in clock
+  ticks. Within the host code, clock values are tracked as 64bit
+  integers, while the mcu code uses 32bit integers. Within the host
+  code, clocks are generally stored in variables with names containing
+  *clock* or *ticks*.
+
+Conversion between the different time formats is primarily implemented
+in the **klippy/clocksync.py** code.
+
+Some things to be aware of when reviewing the code:
+* 32bit and 64bit clocks: To reduce bandwidth and to improve
+  micro-controller efficiency, clocks on the micro-controller are
+  tracked as 32bit integers. When comparing two clocks in the mcu
+  code, the `timer_is_before()` function must always be used to ensure
+  integer rollovers are handled properly. The host software converts
+  32bit clocks to 64bit clocks by appending the high-order bits from
+  the last mcu timestamp it has received - no message from the mcu is
+  ever more than 2^31 clock ticks in the future or past so this
+  conversion is never ambiguous. The host converts from 64bit clocks
+  to 32bit clocks by simply truncating the high-order bits. To ensure
+  there is no ambiguity in this conversion, the
+  **klippy/serialqueue.c** code will buffer messages until they are
+  within 2^31 clock ticks of their target time.
+* Multiple micro-controllers: The host software supports using
+  multiple micro-controllers on a single printer. In this case, the
+  "MCU clock" of each micro-controller is tracked separately. The
+  clocksync.py code handles clock drift between micro-controllers by
+  modifying the way it converts from "print time" to "MCU clock". On
+  secondary mcus, the mcu frequency that is used in this conversion is
+  regularly updated to account for measured drift.
