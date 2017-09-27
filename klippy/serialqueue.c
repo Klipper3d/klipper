@@ -519,6 +519,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         struct queue_message *qm = message_fill(sq->input_buf, len);
         qm->sent_time = sq->last_receive_sent_time;
         qm->receive_time = get_monotonic(); // must be time post read()
+        qm->receive_time -= sq->baud_adjust * len;
         list_add_tail(&qm->node, &sq->receive_queue);
         check_wake_receive(sq);
     }
