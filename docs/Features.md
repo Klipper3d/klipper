@@ -15,10 +15,10 @@ Klipper has several compelling features:
 * Best in class performance. Klipper is able to achieve high stepping
   rates on both new and old micro-controllers. Even an old 8bit AVR
   micro-controller can obtain rates over 175K steps per second. On
-  more recent ARM micro-controllers, rates over 450K steps per second
-  are possible. Higher stepper rates enable higher print
-  velocities. The stepper event timing remains precise even at high
-  speeds which improves overall stability.
+  more recent micro-controllers, rates over 500K steps per second are
+  possible. Higher stepper rates enable higher print velocities. The
+  stepper event timing remains precise even at high speeds which
+  improves overall stability.
 
 * Configuration via simple config file. There's no need to reflash the
   micro-controller to change a setting. All of Klipper's configuration
