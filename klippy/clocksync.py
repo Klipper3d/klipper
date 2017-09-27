@@ -19,6 +19,7 @@ class ClockSync:
         self.min_half_rtt = 999999999.9
         self.min_half_rtt_time = 0.
         self.clock_est = self.prev_est = (0., 0, 0.)
+        self.min_freq = 0.
         self.last_clock_fast = False
     def connect(self, serial):
         self.serial = serial
@@ -30,6 +31,7 @@ class ClockSync:
         self.last_clock = clock = (params['high'] << 32) | params['clock']
         new_time = .5 * (params['#sent_time'] + params['#receive_time'])
         self.clock_est = self.prev_est = (new_time, clock, self.mcu_freq)
+        self.min_freq = self.mcu_freq
         # Enable periodic get_status timer
         self.status_cmd = msgparser.create_command('get_status')
         for i in range(8):
@@ -85,7 +87,9 @@ class ClockSync:
             self.prev_est = self.clock_est
             self.last_clock_fast = clock_fast
         new_freq = (self.prev_est[1] - clock) / (self.prev_est[0] - new_time)
-        self.serial.set_clock_est(new_freq, new_time + 0.001, clock)
+        self.min_freq = min(self.min_freq, new_freq)
+        self.serial.set_clock_est(
+            self.min_freq, new_time + self.min_half_rtt + 0.001, clock)
         self.clock_est = (new_time, clock, new_freq)
     # clock frequency conversions
     def print_time_to_clock(self, print_time):
