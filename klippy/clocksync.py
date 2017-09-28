@@ -83,7 +83,8 @@ class ClockSync:
             clock_fast = False
             new_time = sent_time + self.min_half_rtt
         if clock_fast != self.last_clock_fast:
-            self.prev_est = self.clock_est
+            if sent_time > self.min_half_rtt_time:
+                self.prev_est = self.clock_est
             self.last_clock_fast = clock_fast
         new_freq = (clock - self.prev_est[1]) / (new_time - self.prev_est[0])
         self.serial.set_clock_est(
