@@ -14,7 +14,7 @@ class ClockSync:
         self.serial = None
         self.status_timer = self.reactor.register_timer(self._status_event)
         self.status_cmd = None
-        self.mcu_freq = 0.
+        self.mcu_freq = 1.
         self.last_clock = 0
         self.min_half_rtt = 999999999.9
         self.min_half_rtt_time = 0.
