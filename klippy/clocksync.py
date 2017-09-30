@@ -3,11 +3,12 @@
 # Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, math
 
 COMM_TIMEOUT = 3.5
 RTT_AGE = .000010 / (60. * 60.)
-TRANSMIT_EXTRA = .005
+DECAY = 1. / (2. * 60.)
+TRANSMIT_EXTRA = .001
 
 class ClockSync:
     def __init__(self, reactor):
@@ -17,10 +18,15 @@ class ClockSync:
         self.status_cmd = None
         self.mcu_freq = 1.
         self.last_clock = 0
+        self.clock_est = (0., 0., 0.)
+        # Minimum round-trip-time tracking
         self.min_half_rtt = 999999999.9
-        self.min_half_rtt_time = 0.
-        self.clock_est = self.prev_est = (0., 0, 0.)
-        self.last_clock_fast = False
+        self.min_rtt_time = 0.
+        # Linear regression of mcu clock and system sent_time
+        self.time_avg = self.time_variance = 0.
+        self.clock_avg = self.clock_covariance = 0.
+        self.prediction_variance = 0.
+        self.last_prediction_time = 0.
     def connect(self, serial):
         self.serial = serial
         msgparser = serial.msgparser
@@ -28,9 +34,11 @@ class ClockSync:
         # Load initial clock and frequency
         uptime_msg = msgparser.create_command('get_uptime')
         params = serial.send_with_response(uptime_msg, 'uptime')
-        self.last_clock = clock = (params['high'] << 32) | params['clock']
-        new_time = .5 * (params['#sent_time'] + params['#receive_time'])
-        self.clock_est = self.prev_est = (new_time, clock, self.mcu_freq)
+        self.last_clock = (params['high'] << 32) | params['clock']
+        self.clock_avg = self.last_clock
+        self.time_avg = params['#sent_time']
+        self.clock_est = (self.time_avg, self.clock_avg, self.mcu_freq)
+        self.prediction_variance = (.001 * self.mcu_freq)**2
         # Enable periodic get_status timer
         self.status_cmd = msgparser.create_command('get_status')
         for i in range(8):
@@ -46,15 +54,14 @@ class ClockSync:
         if pace:
             freq = self.mcu_freq
         serial.set_clock_est(freq, self.reactor.monotonic(), 0)
-    # mcu clock querying
+    # MCU clock querying (status callback invoked from background thread)
     def _status_event(self, eventtime):
         self.serial.send(self.status_cmd)
         return eventtime + 1.0
     def _handle_status(self, params):
         # Extend clock to 64bit
-        clock32 = params['clock']
         last_clock = self.last_clock
-        clock = (last_clock & ~0xffffffff) | clock32
+        clock = (last_clock & ~0xffffffff) | params['clock']
         if clock < last_clock:
             clock += 0x100000000
         self.last_clock = clock
@@ -64,32 +71,50 @@ class ClockSync:
             return
         receive_time = params['#receive_time']
         half_rtt = .5 * (receive_time - sent_time)
-        aged_rtt = (sent_time - self.min_half_rtt_time) * RTT_AGE
+        aged_rtt = (sent_time - self.min_rtt_time) * RTT_AGE
         if half_rtt < self.min_half_rtt + aged_rtt:
             self.min_half_rtt = half_rtt
-            self.min_half_rtt_time = sent_time
-            logging.debug("new minimum rtt=%.6f (%d)", half_rtt, self.mcu_freq)
-        # Calculate expected clock range from sent/receive time
-        est_min_clock = self.get_clock(sent_time + self.min_half_rtt)
-        est_max_clock = self.get_clock(receive_time - self.min_half_rtt)
-        if clock >= est_min_clock and clock <= est_max_clock:
-            # Sample inline with expectations
-            return
-        # Update estimated frequency based on latest sample
-        if clock > est_max_clock:
-            clock_fast = True
-            new_time = receive_time - self.min_half_rtt
+            self.min_rtt_time = sent_time
+            logging.debug("new minimum rtt %.3f: hrtt=%.6f freq=%d",
+                          sent_time, half_rtt, self.clock_est[2])
+        # Compare clock to predicted clock and track prediction accuracy
+        exp_clock = ((sent_time - self.time_avg) * self.clock_est[2]
+                     + self.clock_avg)
+        clock_diff2 = (clock - exp_clock)**2
+        if clock_diff2 > 25. * self.prediction_variance:
+            if clock > exp_clock and sent_time < self.last_prediction_time + 10.:
+                logging.debug("Ignoring clock sample %.3f:"
+                              " freq=%d diff=%d stddev=%.3f",
+                              sent_time, self.clock_est[2], clock - exp_clock,
+                              math.sqrt(self.prediction_variance))
+                return
+            logging.info("Resetting prediction variance %.3f:"
+                         " freq=%d diff=%d stddev=%.3f",
+                         sent_time, self.clock_est[2], clock - exp_clock,
+                         math.sqrt(self.prediction_variance))
+            self.prediction_variance = (.001 * self.mcu_freq)**2
         else:
-            clock_fast = False
-            new_time = sent_time + self.min_half_rtt
-        if clock_fast != self.last_clock_fast:
-            if sent_time > self.min_half_rtt_time:
-                self.prev_est = self.clock_est
-            self.last_clock_fast = clock_fast
-        new_freq = (clock - self.prev_est[1]) / (new_time - self.prev_est[0])
-        self.serial.set_clock_est(
-            new_freq, new_time + self.min_half_rtt + TRANSMIT_EXTRA, clock)
-        self.clock_est = (new_time, clock, new_freq)
+            self.last_prediction_time = sent_time
+            self.prediction_variance = (
+                (1. - DECAY) * (self.prediction_variance + clock_diff2 * DECAY))
+        # Add clock and sent_time to linear regression
+        diff_sent_time = sent_time - self.time_avg
+        self.time_avg += DECAY * diff_sent_time
+        self.time_variance = (1. - DECAY) * (
+            self.time_variance + diff_sent_time**2 * DECAY)
+        diff_clock = clock - self.clock_avg
+        self.clock_avg += DECAY * diff_clock
+        self.clock_covariance = (1. - DECAY) * (
+            self.clock_covariance + diff_sent_time * diff_clock * DECAY)
+        # Update prediction from linear regression
+        new_freq = self.clock_covariance / self.time_variance
+        pred_stddev = math.sqrt(self.prediction_variance)
+        self.serial.set_clock_est(new_freq, self.time_avg + TRANSMIT_EXTRA,
+                                  int(self.clock_avg - 3. * pred_stddev))
+        self.clock_est = (self.time_avg - self.min_half_rtt,
+                          self.clock_avg + 3. * pred_stddev, new_freq)
+        #logging.debug("regr %.3f: freq=%.3f d=%d(%.3f)",
+        #              sent_time, new_freq, clock - exp_clock, pred_stddev)
     # clock frequency conversions
     def print_time_to_clock(self, print_time):
         return int(print_time * self.mcu_freq)
@@ -116,13 +141,15 @@ class ClockSync:
         return print_time < last_clock_print_time + COMM_TIMEOUT
     def dump_debug(self):
         sample_time, clock, freq = self.clock_est
-        prev_time, prev_clock, prev_freq = self.prev_est
         return ("clocksync state: mcu_freq=%d last_clock=%d"
-                " min_half_rtt=%.6f min_half_rtt_time=%.3f last_clock_fast=%s"
-                " clock_est=(%.3f %d %.3f) prev_est=(%.3f %d %.3f)" % (
-                    self.mcu_freq, self.last_clock, self.min_half_rtt,
-                    self.min_half_rtt_time, self.last_clock_fast,
-                    sample_time, clock, freq, prev_time, prev_clock, prev_freq))
+                " clock_est=(%.3f %d %.3f) min_half_rtt=%.6f min_rtt_time=%.3f"
+                " time_avg=%.3f(%.3f) clock_avg=%.3f(%.3f)"
+                " pred_variance=%.3f" % (
+                    self.mcu_freq, self.last_clock, sample_time, clock, freq,
+                    self.min_half_rtt, self.min_rtt_time,
+                    self.time_avg, self.time_variance,
+                    self.clock_avg, self.clock_covariance,
+                    self.prediction_variance))
     def stats(self, eventtime):
         sample_time, clock, freq = self.clock_est
         return "freq=%d" % (freq,)
