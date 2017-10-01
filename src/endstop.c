@@ -13,9 +13,9 @@
 
 struct end_stop {
     struct timer time;
-    uint32_t rest_time;
+    uint32_t rest_time, sample_time;
     struct gpio_in pin;
-    uint8_t flags, stepper_count;
+    uint8_t flags, stepper_count, sample_count, trigger_count;
     struct stepper *steppers[0];
 };
 
@@ -34,6 +34,8 @@ stop_steppers(struct end_stop *e)
     sched_wake_task(&endstop_wake);
 }
 
+static uint_fast8_t end_stop_oversample_event(struct timer *t);
+
 // Timer callback for an end stop
 static uint_fast8_t
 end_stop_event(struct timer *t)
@@ -45,8 +47,32 @@ end_stop_event(struct timer *t)
         e->time.waketime += e->rest_time;
         return SF_RESCHEDULE;
     }
-    stop_steppers(e);
-    return SF_DONE;
+    e->time.func = end_stop_oversample_event;
+    return end_stop_oversample_event(t);
+}
+
+// Timer callback for an end stop this is sampling extra times
+static uint_fast8_t
+end_stop_oversample_event(struct timer *t)
+{
+    struct end_stop *e = container_of(t, struct end_stop, time);
+    uint8_t val = gpio_in_read(e->pin);
+    if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
+        // No longer matching - reschedule for the next attempt
+        e->time.func = end_stop_event;
+        uint8_t past_triggers = e->sample_count - e->trigger_count;
+        e->time.waketime += e->rest_time - past_triggers * e->sample_time;
+        e->trigger_count = e->sample_count;
+        return SF_RESCHEDULE;
+    }
+    uint8_t count = e->trigger_count - 1;
+    if (!count) {
+        stop_steppers(e);
+        return SF_DONE;
+    }
+    e->trigger_count = count;
+    e->time.waketime += e->sample_time;
+    return SF_RESCHEDULE;
 }
 
 void
@@ -56,9 +82,9 @@ command_config_end_stop(uint32_t *args)
     struct end_stop *e = oid_alloc(
         args[0], command_config_end_stop
         , sizeof(*e) + sizeof(e->steppers[0]) * stepper_count);
-    e->time.func = end_stop_event;
     e->pin = gpio_in_setup(args[1], args[2]);
     e->stepper_count = stepper_count;
+    e->sample_count = 1;
 }
 DECL_COMMAND(command_config_end_stop,
              "config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c");
@@ -75,6 +101,18 @@ command_end_stop_set_stepper(uint32_t *args)
 DECL_COMMAND(command_end_stop_set_stepper,
              "end_stop_set_stepper oid=%c pos=%c stepper_oid=%c");
 
+void
+command_end_stop_set_oversample(uint32_t *args)
+{
+    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
+    e->sample_time = args[1];
+    e->sample_count = args[2];
+    if (!e->sample_count)
+        e->sample_count = 1;
+}
+DECL_COMMAND(command_end_stop_set_oversample,
+             "end_stop_set_oversample oid=%c sample_ticks=%u sample_count=%c");
+
 // Home an axis
 void
 command_end_stop_home(uint32_t *args)
@@ -88,6 +126,8 @@ command_end_stop_home(uint32_t *args)
         e->flags = 0;
         return;
     }
+    e->time.func = end_stop_event;
+    e->trigger_count = e->sample_count;
     e->flags = ESF_HOMING | (args[3] ? ESF_PIN_HIGH : 0);
     sched_add_timer(&e->time);
 }

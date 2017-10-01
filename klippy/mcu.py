@@ -137,6 +137,8 @@ class MCU_endstop:
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
+        self._oversample_count = 0
+        self._oversample_time = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
@@ -144,6 +146,9 @@ class MCU_endstop:
         self._last_state = {}
     def get_mcu(self):
         return self._mcu
+    def setup_oversample(self, oversample_count, oversample_time):
+        self._oversample_count = oversample_count
+        self._oversample_time = oversample_time
     def add_stepper(self, stepper):
         self._steppers.append(stepper)
     def build_config(self):
@@ -155,6 +160,10 @@ class MCU_endstop:
             self._mcu.add_config_cmd(
                 "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
+        self._mcu.add_config_cmd(
+            "end_stop_set_oversample oid=%d sample_ticks=%d sample_count=%d" % (
+                self._oid, self._mcu.seconds_to_clock(self._oversample_time),
+                self._oversample_count), is_init=True)
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
