@@ -60,8 +60,6 @@ Testing features
 Documentation
 =============
 
-* Document and test running the host software on a Beagle Bone Black.
-
 * Add documentation describing how to perform bed-leveling accurately
   in Klipper. Improve description of stepper phase based bed leveling.
 
@@ -69,15 +67,11 @@ Hardware features
 =================
 
 * Port to additional micro-controller architectures:
- * Beagle Bone Black PRU
  * Smoothieboard / NXP LPC1769 (ARM cortex-M3)
- * Unix based scheduling; Unix based real-time scheduling
 
 * Support for additional kinematics: scara, etc.
 
 * Support shared motor enable GPIO lines.
-
-* Support for multiple extruders.
 
 * Support for bed-level probes.
 
@@ -87,13 +81,8 @@ Hardware features
   it would also be useful to handle panels already hardwired to the
   micro-controller.)
 
-* Possibly support printers using multiple micro-controllers.
-
 Misc features
 =============
-
-* Possibly use cubic functions instead of quadratic functions in step
-  compression code.
 
 * Possibly support a "feed forward PID" that takes into account the
   amount of plastic being extruded. If the extrude rate changes
