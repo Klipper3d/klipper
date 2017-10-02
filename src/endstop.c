@@ -51,7 +51,7 @@ end_stop_event(struct timer *t)
     return end_stop_oversample_event(t);
 }
 
-// Timer callback for an end stop this is sampling extra times
+// Timer callback for an end stop that is sampling extra times
 static uint_fast8_t
 end_stop_oversample_event(struct timer *t)
 {
