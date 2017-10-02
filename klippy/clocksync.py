@@ -77,11 +77,12 @@ class ClockSync:
             self.min_rtt_time = sent_time
             logging.debug("new minimum rtt %.3f: hrtt=%.6f freq=%d",
                           sent_time, half_rtt, self.clock_est[2])
-        # Compare clock to predicted clock and track prediction accuracy
+        # Filter out samples that are extreme outliers
         exp_clock = ((sent_time - self.time_avg) * self.clock_est[2]
                      + self.clock_avg)
         clock_diff2 = (clock - exp_clock)**2
-        if clock_diff2 > 25. * self.prediction_variance:
+        if (clock_diff2 > 25. * self.prediction_variance
+            and clock_diff2 > (.000500 * self.mcu_freq)**2):
             if clock > exp_clock and sent_time < self.last_prediction_time + 10.:
                 logging.debug("Ignoring clock sample %.3f:"
                               " freq=%d diff=%d stddev=%.3f",
@@ -112,7 +113,7 @@ class ClockSync:
         self.serial.set_clock_est(new_freq, self.time_avg + TRANSMIT_EXTRA,
                                   int(self.clock_avg - 3. * pred_stddev))
         self.clock_est = (self.time_avg - self.min_half_rtt,
-                          self.clock_avg + 3. * pred_stddev, new_freq)
+                          self.clock_avg, new_freq)
         #logging.debug("regr %.3f: freq=%.3f d=%d(%.3f)",
         #              sent_time, new_freq, clock - exp_clock, pred_stddev)
     # clock frequency conversions
