@@ -204,7 +204,9 @@ class GCodeParser:
         eargs = m.group('args')
         try:
             eparams = [earg.split('=', 1) for earg in eargs.split()]
-            return { k.upper(): v for k, v in eparams }
+            eparams = { k.upper(): v for k, v in eparams }
+            eparams.update({k: params[k] for k in params if k.startswith('#')})
+            return eparams
         except ValueError as e:
             raise error("Malformed command '%s'" % (params['#original'],))
     # Temperature wrappers
