@@ -62,8 +62,8 @@ class CartKinematics:
             # Set final homed position
             coord[axis] = s.position_endstop + s.get_homed_offset()
             homing_state.set_homed_position(coord)
-    def query_endstops(self, print_time):
-        return homing.query_endstops(print_time, self.steppers)
+    def query_endstops(self, print_time, query_flags):
+        return homing.query_endstops(print_time, query_flags, self.steppers)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:

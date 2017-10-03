@@ -349,9 +349,9 @@ class ToolHead:
         while (not self.sync_print_time
                or self.print_time >= self.mcu.estimated_print_time(eventtime)):
             eventtime = self.reactor.pause(eventtime + 0.100)
-    def query_endstops(self):
+    def query_endstops(self, query_flags=""):
         last_move_time = self.get_last_move_time()
-        return self.kin.query_endstops(last_move_time)
+        return self.kin.query_endstops(last_move_time, query_flags)
     def set_extruder(self, extruder):
         last_move_time = self.get_last_move_time()
         self.extruder.set_active(last_move_time, False)

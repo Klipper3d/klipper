@@ -57,7 +57,11 @@ class Homing:
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
 
-def query_endstops(print_time, steppers):
+def query_endstops(print_time, query_flags, steppers):
+    if query_flags == "get_mcu_position":
+        # Only the commanded position is requested
+        return [(s.name.upper(), s.mcu_stepper.get_mcu_position())
+                for s in steppers]
     for s in steppers:
         s.mcu_endstop.query_endstop(print_time)
     out = []

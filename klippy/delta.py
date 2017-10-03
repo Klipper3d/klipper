@@ -123,8 +123,8 @@ class DeltaKinematics:
                 + self.steppers[i].get_homed_offset()
                 for i in StepList]
         homing_state.set_homed_position(self._actuator_to_cartesian(spos))
-    def query_endstops(self, print_time):
-        return homing.query_endstops(print_time, self.steppers)
+    def query_endstops(self, print_time, query_flags):
+        return homing.query_endstops(print_time, query_flags, self.steppers)
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:
