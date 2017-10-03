@@ -11,4 +11,6 @@ difference() {
   cube([square_size, square_size, square_height]);
   translate([square_width, square_width, -1])
     cube([square_size-2*square_width, square_size-2*square_width, square_height+2]);
+  translate([-.5, square_size/2 - 4, -1])
+    cube([1, 2, square_height+2]);
 }
