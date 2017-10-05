@@ -3,7 +3,6 @@
 # Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
 import re
 
 
@@ -33,7 +32,8 @@ def beaglebone_pins():
 
 MCU_PINS = {
     "atmega168": port_pins(4), "atmega328": port_pins(4),
-    "atmega644p": port_pins(4), "at90usb1286": port_pins(6),
+    "atmega644p": port_pins(4), "atmega1284p": port_pins(4),
+    "at90usb1286": port_pins(6),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
     "pru": beaglebone_pins(),
