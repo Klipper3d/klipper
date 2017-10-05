@@ -23,6 +23,8 @@ choice
         bool "atmega1280"
     config MACH_at90usb1286
         bool "at90usb1286"
+    config MACH_atmega1284p
+        bool "atmega1284p"
     config MACH_atmega644p
         bool "atmega644p"
     config MACH_atmega328
@@ -35,6 +37,7 @@ config MCU
     string
     default "atmega168" if MACH_atmega168
     default "atmega328" if MACH_atmega328
+    default "atmega1284p" if MACH_atmega1284p
     default "atmega644p" if MACH_atmega644p
     default "at90usb1286" if MACH_at90usb1286
     default "atmega1280" if MACH_atmega1280
@@ -44,7 +47,7 @@ choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
         bool "20Mhz"
-        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p
+        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
     config AVR_FREQ_16000000
         bool "16Mhz"
     config AVR_FREQ_8000000
@@ -98,7 +101,7 @@ config SERIAL_BAUD_U2X
     default y
 
 config SIMULAVR
-    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p
+    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
     bool "Compile for simulavr software emulation"
     default n
     help

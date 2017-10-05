@@ -126,6 +126,8 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #ifdef OCR3A
     { &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, 0 },
     { &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, 0 },
+#endif
+#ifdef OCR3C
     { &OCR3C, &TCCR3A, &TCCR3B, 1<<COM3C1, 0 },
 #endif
 #ifdef OCR4A
@@ -143,10 +145,13 @@ static const uint8_t pwm_pins[ARRAY_SIZE(pwm_regs)] PROGMEM = {
     GPIO('D', 6), GPIO('D', 5),
     GPIO('B', 1), GPIO('B', 2),
     GPIO('B', 3), GPIO('D', 3),
-#elif CONFIG_MACH_atmega644p
+#elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
     GPIO('B', 3), GPIO('B', 4),
     GPIO('D', 5), GPIO('D', 4),
     GPIO('D', 7), GPIO('D', 6),
+# ifdef OCR3A
+    GPIO('B', 6), GPIO('B', 7),
+# endif
 #elif CONFIG_MACH_at90usb1286
     GPIO('B', 7), GPIO('D', 0),
     GPIO('B', 5), GPIO('B', 6), GPIO('B', 7),
@@ -244,7 +249,7 @@ static const uint8_t adc_pins[] PROGMEM = {
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
     GPIO('C', 4), GPIO('C', 5), GPIO('E', 0), GPIO('E', 1),
-#elif CONFIG_MACH_atmega644p
+#elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
 #elif CONFIG_MACH_at90usb1286
@@ -345,7 +350,7 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
 static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5), MOSI = GPIO('B', 3);
-#elif CONFIG_MACH_atmega644p
+#elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
 static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7), MOSI = GPIO('B', 5);
 #elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
 static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1), MOSI = GPIO('B', 2);
