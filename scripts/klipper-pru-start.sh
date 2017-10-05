@@ -43,8 +43,11 @@ pru_start()
 {
     if [ -c /dev/rpmsg_pru30 ]; then
         pru_stop
-        sleep 1
+    else
+        echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/unbind
+        echo 4a338000.pru1 > /sys/bus/platform/drivers/pru-rproc/unbind
     fi
+    sleep 1
 
     log_daemon_msg "Starting pru"
     echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/bind
