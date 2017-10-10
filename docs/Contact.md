@@ -21,6 +21,17 @@ https://github.com/KevinOConnor/klipper/issues , attach the
 `klippy.log.gz` file to that issue, and provide a description of the
 problem.
 
+Mailing list
+============
+
+There is a mailing list for general discussions on Klipper. In order
+to send am email to the list, one must first subscribe:
+https://www.freelists.org/list/klipper . Once subscribed, emails may
+be sent to `klipper@freelists.org`.
+
+Archives of the mailing list are available at:
+https://www.freelists.org/archive/klipper/
+
 IRC
 ===
 
