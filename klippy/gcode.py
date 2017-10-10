@@ -123,7 +123,7 @@ class GCodeParser:
                 self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
-    args_r = re.compile('([A-Z_]+|[A-Z*])')
+    args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
@@ -205,6 +205,17 @@ class GCodeParser:
             pending_commands = self.pending_commands
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+    def process_batch(self, command):
+        if self.is_processing_data:
+            return False
+        self.is_processing_data = True
+        try:
+            self.process_commands([command], need_ack=False)
+        finally:
+            if self.pending_commands:
+                self.process_pending()
+            self.is_processing_data = False
+        return True
     def run_script(self, script):
         prev_need_ack = self.need_ack
         try:
