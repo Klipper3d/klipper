@@ -16,7 +16,8 @@ The [kinematics](Kinematics.md) document provides some technical
 details on how Klipper implements motion.
 
 The history of Klipper releases is available at
-[releases](Releases.md).
+[releases](Releases.md). See [contact](Contact.md) for information on
+bug reporting and general communication with the developers.
 
 Developer Documentation
 =======================

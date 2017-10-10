@@ -119,3 +119,8 @@ provides more detailed information.
 In addition to common g-code commands, Klipper supports a few extended
 commands - "status" and "restart" are examples of these commands. Use
 the "help" command to get a list of other extended commands.
+
+Contacting the developers
+=========================
+
+See the [contact page](Contact.md) to ask questions or report a bug.
