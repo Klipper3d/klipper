@@ -256,7 +256,7 @@ class GCodeParser:
             self.bg_temp(heater)
     def set_fan_speed(self, speed):
         if self.fan is None:
-            if speed:
+            if speed and not self.is_fileinput:
                 self.respond_info("Fan not configured")
             return
         print_time = self.toolhead.get_last_move_time()
