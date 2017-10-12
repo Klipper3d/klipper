@@ -50,6 +50,7 @@ class ClockSync:
     def connect_file(self, serial, pace=False):
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
+        self.clock_est = (0., 0., self.mcu_freq)
         freq = 1000000000000.
         if pace:
             freq = self.mcu_freq
