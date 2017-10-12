@@ -136,18 +136,15 @@ class Printer:
         self.connect_timer = self.reactor.register_timer(
             self._connect, self.reactor.NOW)
         self.all_config_options = {}
-        self.need_dump_debug = False
         self.state_message = message_startup
+        self.is_shutdown = False
+        self.async_shutdown_msg = ""
         self.run_result = None
         self.fileconfig = None
         self.mcus = []
     def get_start_args(self):
         return self.start_args
     def _stats(self, eventtime, force_output=False):
-        if self.need_dump_debug:
-            # Call dump_debug here so it is executed in the main thread
-            self.gcode.dump_debug()
-            self.need_dump_debug = False
         toolhead = self.objects.get('toolhead')
         if toolhead is None:
             return eventtime + 1.
@@ -196,7 +193,7 @@ class Printer:
             self._load_config()
             for m in self.mcus:
                 m.connect()
-            self.gcode.set_printer_ready(True)
+            self.gcode.connect()
             self.state_message = message_ready
             if self.start_args.get('debugoutput') is None:
                 self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
@@ -219,34 +216,46 @@ class Printer:
         monotime = self.reactor.monotonic()
         logging.info("Start printer at %s (%.1f %.1f)",
                      time.asctime(time.localtime(systime)), systime, monotime)
-        # Enter main reactor loop
-        try:
-            self.reactor.run()
-        except:
-            logging.exception("Unhandled exception during run")
-            return "exit"
-        # Check restart flags
-        run_result = self.run_result
-        try:
-            self._stats(self.reactor.monotonic(), force_output=True)
-            for m in self.mcus:
-                if run_result == 'firmware_restart':
-                    m.microcontroller_restart()
-                m.disconnect()
-        except:
-            logging.exception("Unhandled exception during post run")
-        return run_result
+        while 1:
+            # Enter main reactor loop
+            try:
+                self.reactor.run()
+            except:
+                logging.exception("Unhandled exception during run")
+                return "exit"
+            # Check restart flags
+            run_result = self.run_result
+            try:
+                if run_result == 'shutdown':
+                    self.invoke_shutdown(self.async_shutdown_msg, True)
+                    continue
+                self._stats(self.reactor.monotonic(), force_output=True)
+                for m in self.mcus:
+                    if run_result == 'firmware_restart':
+                        m.microcontroller_restart()
+                    m.disconnect()
+            except:
+                logging.exception("Unhandled exception during post run")
+            return run_result
     def get_state_message(self):
         return self.state_message
-    def note_shutdown(self, msg):
-        if self.state_message == message_ready:
-            self.need_dump_debug = True
-        self.state_message = "%s%s" % (msg, message_shutdown)
-        self.gcode.set_printer_ready(False)
-    def note_mcu_error(self, msg):
-        self.state_message = "%s%s" % (msg, message_restart)
-        self.gcode.set_printer_ready(False)
-        self.gcode.motor_heater_off()
+    def invoke_shutdown(self, msg, is_mcu_shutdown=False):
+        if self.is_shutdown:
+            return
+        self.is_shutdown = True
+        if is_mcu_shutdown:
+            self.state_message = "%s%s" % (msg, message_shutdown)
+        else:
+            self.state_message = "%s%s" % (msg, message_restart)
+        for m in self.mcus:
+            m.do_shutdown()
+        self.gcode.do_shutdown()
+        toolhead = self.objects.get('toolhead')
+        if toolhead is not None:
+            toolhead.do_shutdown()
+    def invoke_async_shutdown(self, msg):
+        self.async_shutdown_msg = msg
+        self.request_exit("shutdown")
     def request_exit(self, result="exit"):
         self.run_result = result
         self.reactor.end()

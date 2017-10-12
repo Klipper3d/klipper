@@ -292,7 +292,7 @@ class ToolHead:
                 self.last_flush_from_idle = True
         except:
             logging.exception("Exception in flush_handler")
-            self.force_shutdown()
+            self.printer.invoke_shutdown("Exception in flush_handler")
         return self.reactor.NEVER
     # Motor off timer
     def _motor_off_handler(self, eventtime):
@@ -305,7 +305,7 @@ class ToolHead:
             self.motor_off()
         except:
             logging.exception("Exception in motor_off_handler")
-            self.force_shutdown()
+            self.printer.invoke_shutdown("Exception in motor_off_handler")
         return eventtime + self.motor_off_time
     # Movement commands
     def get_position(self):
@@ -371,14 +371,12 @@ class ToolHead:
         buffer_time = max(0., self.print_time - est_print_time)
         return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             self.print_time, buffer_time, self.print_stall)
-    def force_shutdown(self):
+    def do_shutdown(self):
         try:
-            for m in self.all_mcus:
-                m.force_shutdown()
             self.move_queue.reset()
             self.reset_print_time()
         except:
-            logging.exception("Exception in force_shutdown")
+            logging.exception("Exception in do_shutdown")
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):

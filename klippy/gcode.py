@@ -23,8 +23,9 @@ class GCodeParser:
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
-        self.gcode_handlers = self.build_handlers(False)
         self.is_printer_ready = False
+        self.gcode_handlers = {}
+        self.build_handlers()
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heaters = []
@@ -34,28 +35,21 @@ class GCodeParser:
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
-    def build_handlers(self, is_ready):
+    def build_handlers(self):
         handlers = self.all_handlers
-        if not is_ready:
+        if not self.is_printer_ready:
             handlers = [h for h in handlers
                         if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
         gcode_handlers = { h: getattr(self, 'cmd_'+h) for h in handlers }
         for h, f in list(gcode_handlers.items()):
             aliases = getattr(self, 'cmd_'+h+'_aliases', [])
             gcode_handlers.update({ a: f for a in aliases })
-        return gcode_handlers
+        self.gcode_handlers = gcode_handlers
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
-    def set_printer_ready(self, is_ready):
-        if self.is_printer_ready == is_ready:
-            return
-        self.is_printer_ready = is_ready
-        self.gcode_handlers = self.build_handlers(is_ready)
-        if not is_ready:
-            # Printer is shutdown (could be running in a background thread)
-            if self.is_fileinput:
-                self.printer.request_exit()
-            return
+    def connect(self):
+        self.is_printer_ready = True
+        self.build_handlers()
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
         extruders = extruder.get_printer_extruders(self.printer)
@@ -67,6 +61,14 @@ class GCodeParser:
         self.fan = self.printer.objects.get('fan')
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+    def do_shutdown(self):
+        if not self.is_printer_ready:
+            return
+        self.is_printer_ready = False
+        self.build_handlers()
+        self.dump_debug()
+        if self.is_fileinput:
+            self.printer.request_exit()
     def motor_heater_off(self):
         if self.toolhead is None:
             return
@@ -114,12 +116,10 @@ class GCodeParser:
             except error as e:
                 self.respond_error(str(e))
             except:
-                logging.exception("Exception in command handler")
-                self.toolhead.force_shutdown()
-                self.respond_error('Internal error on command:"%s"' % (cmd,))
-                if self.is_fileinput:
-                    self.printer.request_exit()
-                    break
+                msg = 'Internal error on command:"%s"' % (cmd,)
+                logging.exception(msg)
+                self.printer.invoke_shutdown(msg)
+                self.respond_error(msg)
             self.ack()
         self.need_ack = prev_need_ack
     def process_data(self, eventtime):
@@ -396,7 +396,7 @@ class GCodeParser:
         self.set_temp(params, wait=True)
     def cmd_M112(self, params):
         # Emergency Stop
-        self.toolhead.force_shutdown()
+        self.printer.invoke_shutdown("Shutdown due to M112 command")
     cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position

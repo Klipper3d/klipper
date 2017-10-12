@@ -472,7 +472,7 @@ class MCU:
         prefix = "MCU '%s' shutdown: " % (self._name,)
         if params['#name'] == 'is_shutdown':
             prefix = "Previous MCU '%s' shutdown: " % (self._name,)
-        self._printer.note_shutdown(prefix + msg + error_help(msg))
+        self._printer.invoke_async_shutdown(prefix + msg + error_help(msg))
     # Connection phase
     def _check_restart(self, reason):
         start_reason = self._printer.get_start_args().get("start_reason")
@@ -723,11 +723,11 @@ class MCU:
             return
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._ffi_lib.steppersync_set_time(self._steppersync, offset, freq)
-        if self._clocksync.is_active(eventtime):
+        if self._clocksync.is_active(eventtime) or self.is_fileoutput():
             return
         logging.info("Timeout with MCU '%s' (eventtime=%f)",
                      self._name, eventtime)
-        self._printer.note_mcu_error("Lost communication with MCU '%s'" % (
+        self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
     def stats(self, eventtime):
         msg = "%s: mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
@@ -735,7 +735,9 @@ class MCU:
             self._mcu_tick_stddev)
         return ' '.join([msg, self._serial.stats(eventtime),
                          self._clocksync.stats(eventtime)])
-    def force_shutdown(self):
+    def do_shutdown(self):
+        if self._is_shutdown or self._emergency_stop_cmd is None:
+            return
         self.send(self._emergency_stop_cmd.encode())
     def disconnect(self):
         self._serial.disconnect()
