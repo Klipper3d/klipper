@@ -1,5 +1,5 @@
 This document describes the process of running Klipper on a Beaglebone
-PRU. The PRU support is experimental.
+PRU.
 
 Building an OS image
 ====================
@@ -91,4 +91,4 @@ Remaining configuration
 
 Complete the installation by configuring Klipper and Octoprint
 following the instructions in
-[the main installation document](Installation.md#Configuring_Klipper).
+[the main installation document](Installation.md#configuring-klipper).

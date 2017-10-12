@@ -1,15 +1,17 @@
 These instructions assume the software will run on a Raspberry Pi
-computer in conjunction with OctoPrint. It is recommended that a
-Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host
-machine.
+computer in conjunction with OctoPrint. (See the
+[Beaglebone specific instructions](beaglebone.md) if using a
+Beaglebone.) It is recommended that a Raspberry Pi 2 or Raspberry Pi 3
+computer be used as the host machine.
 
 It should be possible to run the Klipper host software on any computer
 running a recent Linux distribution, but doing so will require Linux
 admin knowledge to translate these installation instructions to the
 particulars of that machine.
 
-Klipper currently supports Atmel ATmega based micro-controllers and
-Arduino Due (Atmel SAM3x8e ARM micro-controller) printers.
+Klipper currently supports Atmel ATmega based micro-controllers,
+Arduino Due (Atmel SAM3x8e ARM micro-controller), and
+[Beaglebone PRU](beaglebone.md) based printers.
 
 Prepping an OS image
 ====================
