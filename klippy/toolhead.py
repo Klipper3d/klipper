@@ -381,11 +381,12 @@ class ToolHead:
             logging.exception("Exception in force_shutdown")
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
-    def get_max_axis_halt(self, max_accel):
+    def get_max_axis_halt(self):
         # Determine the maximum velocity a cartesian axis could halt
         # at due to the junction_deviation setting.  The 8.0 was
         # determined experimentally.
-        return math.sqrt(8. * self.junction_deviation * max_accel)
+        return min(self.max_velocity,
+                   math.sqrt(8. * self.junction_deviation * self.max_accel))
 
 def add_printer_objects(printer, config):
     printer.add_object('toolhead', ToolHead(printer, config))

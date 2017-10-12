@@ -23,12 +23,12 @@ class CoreXYKinematics:
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
         # Setup stepper max halt velocity
-        max_xy_halt_velocity = toolhead.get_max_axis_halt(max_accel)
-        max_xy_halt_velocity *= math.sqrt(2.)
+        max_halt_velocity = toolhead.get_max_axis_halt()
+        max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
         self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
-        max_z_halt_velocity = toolhead.get_max_axis_halt(self.max_z_accel)
-        self.steppers[2].set_max_jerk(max_z_halt_velocity, self.max_z_accel)
+        self.steppers[2].set_max_jerk(
+            min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
     def set_position(self, newpos):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
