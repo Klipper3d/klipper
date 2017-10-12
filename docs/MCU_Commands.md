@@ -118,16 +118,16 @@ Common micro-controller objects
 
 This section lists some commonly used config commands.
 
-* `config_digital_out oid=%c pin=%u default_value=%c
+* `config_digital_out oid=%c pin=%u value=%c default_value=%c
   max_duration=%u` : This command creates an internal micro-controller
   object for the given GPIO 'pin'. The pin will be configured in
   digital output mode and set to an initial value as specified by
-  'default_value' (0 for low, 1 for high). Creating a digital_out
-  object allows the host to schedule GPIO updates for the given pin at
+  'value' (0 for low, 1 for high). Creating a digital_out object
+  allows the host to schedule GPIO updates for the given pin at
   specified times (see the schedule_digital_out command described
   below). Should the micro-controller software go into shutdown mode
-  then all configured digital_out objects will be set back to their
-  default values. The 'max_duration' parameter is used to implement a
+  then all configured digital_out objects will be set to
+  'default_value'. The 'max_duration' parameter is used to implement a
   safety check - if it is non-zero then it is the maximum number of
   clock ticks that the host may set the given GPIO to a non-default
   value without further updates. For example, if the default_value is
@@ -137,23 +137,23 @@ This section lists some commonly used config commands.
   feature can be used with heater pins to ensure the host does not
   enable the heater and then go off-line.
 
-* `config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%hu
-  max_duration=%u` : This command creates an internal object for
-  hardware based PWM pins that the host may schedule updates for. Its
-  usage is analogous to config_digital_out - see the description of
-  the 'set_pwm_out' and 'config_digital_out' commands for parameter
-  description.
+* `config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu
+  default_value=%hu max_duration=%u` : This command creates an
+  internal object for hardware based PWM pins that the host may
+  schedule updates for. Its usage is analogous to config_digital_out -
+  see the description of the 'set_pwm_out' and 'config_digital_out'
+  commands for parameter description.
 
-* `config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%c
-  max_duration=%u` : This command creates an internal micro-controller
-  object for software implemented PWM. Unlike hardware pwm pins, a
-  software pwm object does not require any special hardware support
-  (other than the ability to configure the pin as a digital output
-  GPIO). Because the output switching is implemented in the
-  micro-controller software, it is recommended that the cycle_ticks
-  parameter correspond to a time of 10ms or greater. See the
-  description of the 'set_pwm_out' and 'config_digital_out' commands
-  for parameter description.
+* `config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u value=%c
+  default_value=%c max_duration=%u` : This command creates an internal
+  micro-controller object for software implemented PWM. Unlike
+  hardware pwm pins, a software pwm object does not require any
+  special hardware support (other than the ability to configure the
+  pin as a digital output GPIO). Because the output switching is
+  implemented in the micro-controller software, it is recommended that
+  the cycle_ticks parameter correspond to a time of 10ms or
+  greater. See the description of the 'set_pwm_out' and
+  'config_digital_out' commands for parameter description.
 
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be

@@ -44,14 +44,15 @@ digital_out_event(struct timer *timer)
 void
 command_config_digital_out(uint32_t *args)
 {
+    struct gpio_out pin = gpio_out_setup(args[1], args[2]);
     struct digital_out_s *d = oid_alloc(args[0], command_config_digital_out
                                         , sizeof(*d));
-    d->default_value = args[2];
-    d->pin = gpio_out_setup(args[1], d->default_value);
-    d->max_duration = args[3];
+    d->pin = pin;
+    d->default_value = args[3];
+    d->max_duration = args[4];
 }
 DECL_COMMAND(command_config_digital_out,
-             "config_digital_out oid=%c pin=%u default_value=%c"
+             "config_digital_out oid=%c pin=%u value=%c default_value=%c"
              " max_duration=%u");
 
 void
@@ -159,17 +160,18 @@ soft_pwm_load_event(struct timer *timer)
 void
 command_config_soft_pwm_out(uint32_t *args)
 {
+    struct gpio_out pin = gpio_out_setup(args[1], !!args[3]);
     struct soft_pwm_s *s = oid_alloc(args[0], command_config_soft_pwm_out
                                      , sizeof(*s));
+    s->pin = pin;
     s->cycle_time = args[2];
-    s->default_value = !!args[3];
-    s->max_duration = args[4];
+    s->default_value = !!args[4];
+    s->max_duration = args[5];
     s->flags = s->default_value ? SPF_ON : 0;
-    s->pin = gpio_out_setup(args[1], s->default_value);
 }
 DECL_COMMAND(command_config_soft_pwm_out,
-             "config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%c"
-             " max_duration=%u");
+             "config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u value=%c"
+             " default_value=%c max_duration=%u");
 
 void
 command_schedule_soft_pwm_out(uint32_t *args)

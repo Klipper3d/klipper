@@ -37,14 +37,15 @@ pwm_event(struct timer *timer)
 void
 command_config_pwm_out(uint32_t *args)
 {
+    struct gpio_pwm pin = gpio_pwm_setup(args[1], args[2], args[3]);
     struct pwm_out_s *p = oid_alloc(args[0], command_config_pwm_out, sizeof(*p));
-    p->default_value = args[3];
-    p->pin = gpio_pwm_setup(args[1], args[2], p->default_value);
-    p->max_duration = args[4];
+    p->pin = pin;
+    p->default_value = args[4];
+    p->max_duration = args[5];
 }
 DECL_COMMAND(command_config_pwm_out,
-             "config_pwm_out oid=%c pin=%u cycle_ticks=%u default_value=%hu"
-             " max_duration=%u");
+             "config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu"
+             " default_value=%hu max_duration=%u");
 
 void
 command_schedule_pwm_out(uint32_t *args)
