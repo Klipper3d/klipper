@@ -39,8 +39,9 @@ sudo update-rc.d octoprint defaults
 
 It is necessary to modify OctoPrint's **/etc/default/octoprint**
 configuration file. One must change the OCTOPRINT_USER user to
-"debian", uncomment the BASEDIR, CONFIGFILE, and DAEMON settings and
-change the references from "/home/pi/" to "/home/debian/":
+"debian", change NICELEVEL to 0, uncomment the BASEDIR, CONFIGFILE,
+and DAEMON settings and change the references from "/home/pi/" to
+"/home/debian/":
 ```
 sudo nano /etc/default/octoprint
 ```
