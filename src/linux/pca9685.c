@@ -118,15 +118,6 @@ open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
     return fd;
 }
 
-void
-pca9685_shutdown(void)
-{
-    int i;
-    for (i=0; i<devices_count; i++)
-        pca9685_write(devices[i].fd, CHANNEL_ALL, 0);
-}
-DECL_SHUTDOWN(pca9685_shutdown);
-
 
 /****************************************************************
  * Command interface
@@ -136,7 +127,7 @@ struct i2cpwm_s {
     struct timer timer;
     int fd;
     uint8_t channel;
-    uint16_t value;
+    uint16_t value, default_value;
     uint32_t max_duration;
 };
 
@@ -153,7 +144,7 @@ pca9685_event(struct timer *timer)
 {
     struct i2cpwm_s *p = container_of(timer, struct i2cpwm_s, timer);
     pca9685_write(p->fd, p->channel, p->value);
-    if (!p->value || !p->max_duration)
+    if (p->value == p->default_value || !p->max_duration)
         return SF_DONE;
     p->timer.waketime += p->max_duration;
     p->timer.func = pca9685_end_event;
@@ -163,18 +154,22 @@ pca9685_event(struct timer *timer)
 void
 command_config_pca9685(uint32_t *args)
 {
-    struct i2cpwm_s *p = oid_alloc(args[0], command_config_pca9685
-                                   , sizeof(*p));
-    uint8_t bus = args[1];
-    uint8_t addr = args[2];
-    p->channel = args[3];
-    if (p->channel > CHANNEL_MAX)
-        shutdown("Invalid pca9685 channel");
-    p->max_duration = args[5];
-    p->fd = open_i2c(bus, addr, args[4]);
+    uint8_t bus = args[1], addr = args[2], channel = args[3];
+    uint16_t value = args[5], default_value = args[6];
+    if (channel > CHANNEL_MAX || value > VALUE_MAX || default_value > VALUE_MAX)
+        shutdown("Invalid pca9685 channel or value");
+    int fd = open_i2c(bus, addr, args[4]);
+    if (value)
+        pca9685_write(fd, channel, value);
+    struct i2cpwm_s *p = oid_alloc(args[0], command_config_pca9685, sizeof(*p));
+    p->fd = fd;
+    p->channel = channel;
+    p->default_value = default_value;
+    p->max_duration = args[7];
 }
 DECL_COMMAND(command_config_pca9685, "config_pca9685 oid=%c bus=%c addr=%c"
-             " channel=%c cycle_ticks=%u max_duration=%u");
+             " channel=%c cycle_ticks=%u value=%hu"
+             " default_value=%hu max_duration=%u");
 
 void
 command_schedule_pca9685_out(uint32_t *args)
@@ -203,3 +198,18 @@ command_set_pca9685_out(uint32_t *args)
 }
 DECL_COMMAND(command_set_pca9685_out, "set_pca9685_out bus=%c addr=%c"
              " channel=%c cycle_ticks=%u value=%hu");
+
+void
+pca9685_shutdown(void)
+{
+    int i;
+    for (i=0; i<devices_count; i++)
+        pca9685_write(devices[i].fd, CHANNEL_ALL, 0);
+    uint8_t j;
+    struct i2cpwm_s *p;
+    foreach_oid(j, p, command_config_pca9685) {
+        if (p->default_value)
+            pca9685_write(p->fd, p->channel, p->default_value);
+    }
+}
+DECL_SHUTDOWN(pca9685_shutdown);

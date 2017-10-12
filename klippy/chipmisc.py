@@ -123,6 +123,7 @@ class pca9685_pwm:
         self._max_duration = 2.
         self._oid = None
         self._invert = pin_params['invert']
+        self._shutdown_value = float(self._invert)
         self._last_clock = 0
         self._pwm_max = 0.
         self._cmd_queue = self._mcu.alloc_command_queue()
@@ -141,6 +142,12 @@ class pca9685_pwm:
         if self._invert:
             value = 1. - value
         self._static_value = max(0., min(1., value))
+    def setup_shutdown_value(self, value):
+        if self._invert:
+            value = 1. - value
+        self._shutdown_value = max(0., min(1., value))
+        if self._shutdown_value:
+            self._replicape.note_enable_on_shutdown()
     def build_config(self):
         self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
@@ -154,10 +161,12 @@ class pca9685_pwm:
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_pca9685 oid=%d bus=%d addr=%d channel=%d"
-            " cycle_ticks=%d max_duration=%d" % (
-                self._oid, self._bus, self._address, self._channel,
-                cycle_ticks, self._mcu.seconds_to_clock(self._max_duration)))
+            "config_pca9685 oid=%d bus=%d addr=%d channel=%d cycle_ticks=%d"
+            " value=%d default_value=%d max_duration=%d" % (
+                self._oid, self._bus, self._address, self._channel, cycle_ticks,
+                self._invert * self._pwm_max,
+                self._shutdown_value * self._pwm_max,
+                self._mcu.seconds_to_clock(self._max_duration)))
         self._set_cmd = self._mcu.lookup_command(
             "schedule_pca9685_out oid=%c clock=%u value=%hu")
     def set_pwm(self, print_time, value):
@@ -249,6 +258,8 @@ class Replicape:
         self.host_mcu.add_config_cmd("send_spi bus=%d dev=%d msg=%s" % (
             REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
             "".join(["%02x" % (x,) for x in shift_registers])))
+    def note_enable_on_shutdown(self):
+        self.mcu_enable.setup_shutdown_value(1)
     def note_enable(self, print_time, channel, is_enable):
         if is_enable:
             is_off = not self.enabled_channels
