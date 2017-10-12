@@ -306,7 +306,7 @@ sched_report_shutdown(void)
 void
 sched_try_shutdown(uint_fast8_t reason)
 {
-    if (shutdown_status != 2)
+    if (!shutdown_status)
         sched_shutdown(reason);
 }
 

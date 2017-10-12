@@ -166,9 +166,8 @@ timer_dispatch(void)
 
         if (unlikely(timespec_is_before(tru, now))) {
             // Check if there are too many repeat timers
-            if (unlikely(timespec_is_before(timespec_add(nt, 100000000), now))
-                && !sched_is_shutdown())
-                shutdown("Rescheduled timer in the past");
+            if (unlikely(timespec_is_before(timespec_add(nt, 100000000), now)))
+                try_shutdown("Rescheduled timer in the past");
             if (sched_tasks_busy()) {
                 timer_repeat_until = timespec_add(now, TIMER_REPEAT_NS);
                 next_wake_time = timespec_add(now, TIMER_DEFER_REPEAT_NS);

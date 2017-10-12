@@ -195,7 +195,7 @@ ISR(TIMER1_COMPA_vect)
             irq_disable();
             uint16_t now = timer_get();
             if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
-                shutdown("Rescheduled timer in the past");
+                try_shutdown("Rescheduled timer in the past");
             if (sched_tasks_busy()) {
                 timer_repeat_set(now + TIMER_REPEAT_TICKS);
                 next = now + TIMER_DEFER_REPEAT_TICKS;
