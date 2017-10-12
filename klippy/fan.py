@@ -39,6 +39,10 @@ class PrinterHeaterFan:
         heater = config.get("heater", "extruder0")
         self.heater = extruder.get_printer_heater(printer, heater)
         self.heater_temp = config.getfloat("heater_temp", 50.0)
+        max_power = self.fan.max_power
+        self.fan_speed = config.getfloat(
+            "fan_speed", max_power, minval=0., maxval=max_power)
+        self.fan.mcu_fan.setup_shutdown_value(max_power)
         printer.reactor.register_timer(self.callback, printer.reactor.NOW)
     def callback(self, eventtime):
         current_temp, target_temp = self.heater.get_temp(eventtime)
@@ -47,7 +51,7 @@ class PrinterHeaterFan:
             return eventtime + 1.
         power = 0.
         if target_temp or current_temp > self.heater_temp:
-            power = 1.
+            power = self.fan_speed
         print_time = self.mcu.estimated_print_time(eventtime) + FAN_MIN_TIME
         self.fan.set_speed(print_time, power)
         return eventtime + 1.
