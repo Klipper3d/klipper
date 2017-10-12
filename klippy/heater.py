@@ -167,8 +167,11 @@ class PrinterHeater:
                         % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.target_temp = degrees
-    def get_temp(self):
+    def get_temp(self, eventtime):
+        print_time = self.mcu_adc.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
+            if self.last_temp_time < print_time:
+                return 0., self.target_temp
             return self.last_temp, self.target_temp
     def check_busy(self, eventtime):
         with self.lock:

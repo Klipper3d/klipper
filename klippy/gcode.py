@@ -210,18 +210,18 @@ class GCodeParser:
         except ValueError as e:
             raise error("Malformed command '%s'" % (params['#original'],))
     # Temperature wrappers
-    def get_temp(self):
-        if not self.is_printer_ready:
-            return "T:0"
+    def get_temp(self, eventtime):
         # Tn:XXX /YYY B:XXX /YYY
         out = []
         for i, heater in enumerate(self.heaters):
             if heater is not None:
-                cur, target = heater.get_temp()
+                cur, target = heater.get_temp(eventtime)
                 name = "B"
                 if i < len(self.heaters) - 1:
                     name = "T%d" % (i,)
                 out.append("%s:%.1f /%.1f" % (name, cur, target))
+        if not out:
+            return "T:0"
         return " ".join(out)
     def bg_temp(self, heater):
         if self.is_fileinput:
@@ -229,7 +229,7 @@ class GCodeParser:
         eventtime = self.reactor.monotonic()
         while self.is_printer_ready and heater.check_busy(eventtime):
             print_time = self.toolhead.get_last_move_time()
-            self.respond(self.get_temp())
+            self.respond(self.get_temp(eventtime))
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, params, is_bed=False, wait=False):
         temp = self.get_float('S', params, 0.)
@@ -387,7 +387,7 @@ class GCodeParser:
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
-        self.ack(self.get_temp())
+        self.ack(self.get_temp(self.reactor.monotonic()))
     def cmd_M104(self, params):
         # Set Extruder Temperature
         self.set_temp(params)

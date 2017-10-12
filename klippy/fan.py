@@ -41,7 +41,7 @@ class PrinterHeaterFan:
         self.heater_temp = config.getfloat("heater_temp", 50.0)
         printer.reactor.register_timer(self.callback, printer.reactor.NOW)
     def callback(self, eventtime):
-        current_temp, target_temp = self.heater.get_temp()
+        current_temp, target_temp = self.heater.get_temp(eventtime)
         if not current_temp and not target_temp and not self.fan.last_fan_time:
             # Printer still starting
             return eventtime + 1.

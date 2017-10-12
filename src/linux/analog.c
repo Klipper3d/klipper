@@ -49,7 +49,8 @@ gpio_adc_read(struct gpio_adc g)
     int ret = pread(g.fd, buf, sizeof(buf)-1, 0);
     if (ret <= 0) {
         report_errno("analog read", ret);
-        shutdown("Error on analog read");
+        try_shutdown("Error on analog read");
+        return 0;
     }
     buf[ret] = '\0';
     return atoi(buf);

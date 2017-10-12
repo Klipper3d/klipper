@@ -43,7 +43,7 @@ analog_in_event(struct timer *timer)
         return SF_RESCHEDULE;
     }
     if (a->value < a->min_value || a->value > a->max_value)
-        shutdown("ADC out of range");
+        try_shutdown("ADC out of range");
     sched_wake_task(&analog_wake);
     a->next_begin_time += a->rest_time;
     a->timer.waketime = a->next_begin_time;
@@ -115,6 +115,12 @@ analog_in_shutdown(void)
     struct analog_in *a;
     foreach_oid(i, a, command_config_analog_in) {
         gpio_adc_cancel_sample(a->pin);
+        if (a->sample_count) {
+            a->state = a->sample_count + 1;
+            a->next_begin_time += a->rest_time;
+            a->timer.waketime = a->next_begin_time;
+            sched_add_timer(&a->timer);
+        }
     }
 }
 DECL_SHUTDOWN(analog_in_shutdown);
