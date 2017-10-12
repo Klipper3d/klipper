@@ -1,6 +1,6 @@
 // Handling of end stops.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,8 +13,8 @@
 
 struct end_stop {
     struct timer time;
-    uint32_t rest_time, sample_time;
     struct gpio_in pin;
+    uint32_t rest_time, sample_time, nextwake;
     uint8_t flags, stepper_count, sample_count, trigger_count;
     struct stepper *steppers[0];
 };
@@ -42,11 +42,13 @@ end_stop_event(struct timer *t)
 {
     struct end_stop *e = container_of(t, struct end_stop, time);
     uint8_t val = gpio_in_read(e->pin);
+    uint32_t nextwake = e->time.waketime + e->rest_time;
     if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
         // No match - reschedule for the next attempt
-        e->time.waketime += e->rest_time;
+        e->time.waketime = nextwake;
         return SF_RESCHEDULE;
     }
+    e->nextwake = nextwake;
     e->time.func = end_stop_oversample_event;
     return end_stop_oversample_event(t);
 }
@@ -60,8 +62,7 @@ end_stop_oversample_event(struct timer *t)
     if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
         // No longer matching - reschedule for the next attempt
         e->time.func = end_stop_event;
-        uint8_t past_triggers = e->sample_count - e->trigger_count;
-        e->time.waketime += e->rest_time - past_triggers * e->sample_time;
+        e->time.waketime = e->nextwake;
         e->trigger_count = e->sample_count;
         return SF_RESCHEDULE;
     }
@@ -101,18 +102,6 @@ command_end_stop_set_stepper(uint32_t *args)
 DECL_COMMAND(command_end_stop_set_stepper,
              "end_stop_set_stepper oid=%c pos=%c stepper_oid=%c");
 
-void
-command_end_stop_set_oversample(uint32_t *args)
-{
-    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
-    e->sample_time = args[1];
-    e->sample_count = args[2];
-    if (!e->sample_count)
-        e->sample_count = 1;
-}
-DECL_COMMAND(command_end_stop_set_oversample,
-             "end_stop_set_oversample oid=%c sample_ticks=%u sample_count=%c");
-
 // Home an axis
 void
 command_end_stop_home(uint32_t *args)
@@ -120,19 +109,22 @@ command_end_stop_home(uint32_t *args)
     struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
     sched_del_timer(&e->time);
     e->time.waketime = args[1];
-    e->rest_time = args[2];
-    if (!e->rest_time) {
+    e->sample_time = args[2];
+    e->sample_count = args[3];
+    if (!e->sample_count) {
         // Disable end stop checking
         e->flags = 0;
         return;
     }
+    e->rest_time = args[4];
     e->time.func = end_stop_event;
     e->trigger_count = e->sample_count;
-    e->flags = ESF_HOMING | (args[3] ? ESF_PIN_HIGH : 0);
+    e->flags = ESF_HOMING | (args[5] ? ESF_PIN_HIGH : 0);
     sched_add_timer(&e->time);
 }
 DECL_COMMAND(command_end_stop_home,
-             "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c");
+             "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
+             " rest_ticks=%u pin_value=%c");
 
 static void
 end_stop_report(uint8_t oid, struct end_stop *e)

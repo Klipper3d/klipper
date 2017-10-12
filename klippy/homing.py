@@ -6,6 +6,8 @@
 import logging
 
 HOMING_DELAY = 0.250
+ENDSTOP_SAMPLE_TIME = .000015
+ENDSTOP_SAMPLE_COUNT = 4
 
 class Homing:
     def __init__(self, toolhead, changed_axes):
@@ -36,7 +38,8 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         endstops = []
         for s in steppers:
-            s.mcu_endstop.home_start(print_time, s.step_dist / speed)
+            s.mcu_endstop.home_start(print_time, ENDSTOP_SAMPLE_TIME,
+                                     ENDSTOP_SAMPLE_COUNT, s.step_dist / speed)
             endstops.append((s, s.mcu_stepper.get_mcu_position()))
         self.toolhead.move(self._fill_coord(movepos), speed)
         move_end_print_time = self.toolhead.get_last_move_time()

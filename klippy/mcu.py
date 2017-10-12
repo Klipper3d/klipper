@@ -137,8 +137,6 @@ class MCU_endstop:
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
-        self._oversample_count = 0
-        self._oversample_time = 0.
         self._cmd_queue = mcu.alloc_command_queue()
         self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
@@ -146,9 +144,6 @@ class MCU_endstop:
         self._last_state = {}
     def get_mcu(self):
         return self._mcu
-    def setup_oversample(self, oversample_count, oversample_time):
-        self._oversample_count = oversample_count
-        self._oversample_time = oversample_time
     def add_stepper(self, stepper):
         self._steppers.append(stepper)
     def build_config(self):
@@ -160,23 +155,21 @@ class MCU_endstop:
             self._mcu.add_config_cmd(
                 "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
-        self._mcu.add_config_cmd(
-            "end_stop_set_oversample oid=%d sample_ticks=%d sample_count=%d" % (
-                self._oid, self._mcu.seconds_to_clock(self._oversample_time),
-                self._oversample_count), is_init=True)
         self._home_cmd = self._mcu.lookup_command(
-            "end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c")
+            "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
+            " rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
         self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
                                , self._oid)
-    def home_start(self, print_time, rest_time):
+    def home_start(self, print_time, sample_time, sample_count, rest_time):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
         self._next_query_time = print_time + self.RETRY_QUERY
         msg = self._home_cmd.encode(
-            self._oid, clock, rest_ticks, 1 ^ self._invert)
+            self._oid, clock, self._mcu.seconds_to_clock(sample_time),
+            sample_count, rest_ticks, 1 ^ self._invert)
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
         for s in self._steppers:
             s.note_homing_start(clock)
@@ -207,7 +200,7 @@ class MCU_endstop:
                 return False
             if print_time > self._home_timeout:
                 # Timeout - disable endstop checking
-                msg = self._home_cmd.encode(self._oid, 0, 0, 0)
+                msg = self._home_cmd.encode(self._oid, 0, 0, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
                 raise error("Timeout during endstop homing")
         if self._mcu.is_shutdown():

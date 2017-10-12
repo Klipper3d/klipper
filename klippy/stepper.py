@@ -6,9 +6,6 @@
 import math, logging
 import homing, pins
 
-ENDSTOP_OVERSAMPLE_COUNT = 4
-ENDSTOP_OVERSAMPLE_TIME = .000015
-
 class PrinterStepper:
     def __init__(self, printer, config, name):
         self.name = name
@@ -55,8 +52,6 @@ class PrinterHomingStepper(PrinterStepper):
 
         self.mcu_endstop = pins.setup_pin(
             printer, 'endstop', config.get('endstop_pin'))
-        self.mcu_endstop.setup_oversample(
-            ENDSTOP_OVERSAMPLE_COUNT, ENDSTOP_OVERSAMPLE_TIME)
         self.mcu_endstop.add_stepper(self.mcu_stepper)
         self.position_min = config.getfloat('position_min', 0.)
         self.position_max = config.getfloat(

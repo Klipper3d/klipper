@@ -255,13 +255,15 @@ Stepper commands
   number of steps generated with dir=1 minus the total number of steps
   generated with dir=0.
 
-* `end_stop_home oid=%c clock=%u rest_ticks=%u pin_value=%c` : This
-  command is used during stepper "homing" operations. To use this
-  command a 'config_end_stop' command with the same 'oid' parameter
-  must have been issued during micro-controller configuration. When
-  this command is invoked, the micro-controller will sample the
-  endstop pin every 'rest_ticks' clock ticks and check if it has a
-  value equal to 'pin_value'. If the value matches then the movement
+* `end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
+  rest_ticks=%u pin_value=%c` : This command is used during stepper
+  "homing" operations. To use this command a 'config_end_stop' command
+  with the same 'oid' parameter must have been issued during
+  micro-controller configuration. When this command is invoked, the
+  micro-controller will sample the endstop pin every 'rest_ticks'
+  clock ticks and check if it has a value equal to 'pin_value'. If the
+  value matches (and it continues to match for 'sample_count'
+  additional samples spread 'sample_ticks' apart) then the movement
   queue for the associated stepper will be cleared and the stepper
   will come to an immediate halt. The host uses this command to
   implement homing - the host instructs the endstop to sample for the
