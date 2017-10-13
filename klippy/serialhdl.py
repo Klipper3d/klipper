@@ -272,11 +272,11 @@ def stk500v2_leave(ser, reactor):
 
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
-    # First try opening the port at 1200 baud
-    ser = serial.Serial(serialport, 1200, timeout=0)
+    # First try opening the port at a different baud
+    ser = serial.Serial(serialport, 2400, timeout=0)
     ser.read(1)
     reactor.pause(reactor.monotonic() + 0.100)
-    # Then try toggling DTR
+    # Then toggle DTR
     ser.dtr = True
     reactor.pause(reactor.monotonic() + 0.100)
     ser.dtr = False
