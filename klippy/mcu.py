@@ -681,7 +681,7 @@ class MCU:
             # Attempt reset via config_reset command
             logging.info("Attempting MCU '%s' config_reset command", self._name)
             self._is_shutdown = True
-            self.force_shutdown()
+            self.do_shutdown(force=True)
             reactor.pause(reactor.monotonic() + 0.015)
             self.send(self._config_reset_cmd.encode())
         else:
@@ -735,8 +735,8 @@ class MCU:
             self._mcu_tick_stddev)
         return ' '.join([msg, self._serial.stats(eventtime),
                          self._clocksync.stats(eventtime)])
-    def do_shutdown(self):
-        if self._is_shutdown or self._emergency_stop_cmd is None:
+    def do_shutdown(self, force=False):
+        if self._emergency_stop_cmd is None or (self._is_shutdown and not force):
             return
         self.send(self._emergency_stop_cmd.encode())
     def disconnect(self):
