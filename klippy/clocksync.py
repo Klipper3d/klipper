@@ -164,7 +164,7 @@ class SecondarySync(ClockSync):
     def __init__(self, reactor, main_sync):
         ClockSync.__init__(self, reactor)
         self.main_sync = main_sync
-        self.clock_adj = (0., 0.)
+        self.clock_adj = (0., 1.)
     def connect(self, serial):
         ClockSync.connect(self, serial)
         self.clock_adj = (0., self.mcu_freq)
