@@ -77,21 +77,19 @@ main(int argc, char **argv)
     }
 
     // Initial setup
-    if (watchdog) {
-        int ret = watchdog_setup();
-        if (ret)
-            return ret;
-    }
-
     if (realtime) {
         int ret = realtime_setup();
         if (ret)
             return ret;
     }
-
     int ret = console_setup("/tmp/klipper_host_mcu");
     if (ret)
         return -1;
+    if (watchdog) {
+        int ret = watchdog_setup();
+        if (ret)
+            return ret;
+    }
 
     // Main loop
     sched_main();
