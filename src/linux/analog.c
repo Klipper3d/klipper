@@ -26,14 +26,16 @@ gpio_adc_setup(uint8_t pin)
     int fd = open(fname, O_RDONLY|O_CLOEXEC);
     if (fd < 0) {
         report_errno("analog open", fd);
-        shutdown("Unable to open adc path");
+        goto fail;
     }
     int ret = set_non_blocking(fd);
-    if (ret < 0) {
-        report_errno("analog set_non_blocking", ret);
-        shutdown("Unable to set non blocking on adc path");
-    }
+    if (ret < 0)
+        goto fail;
     return (struct gpio_adc){ .fd = fd };
+fail:
+    if (fd >= 0)
+        close(fd);
+    shutdown("Unable to open adc device");
 }
 
 uint32_t

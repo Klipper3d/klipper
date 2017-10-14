@@ -76,23 +76,23 @@ open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
     int fd = open(fname, O_RDWR|O_CLOEXEC);
     if (fd < 0) {
         report_errno("open i2c", fd);
-        shutdown("Unable to open i2c device");
+        goto fail;
     }
     int ret = ioctl(fd, I2C_SLAVE, addr);
     if (ret < 0) {
         report_errno("ioctl i2c", fd);
-        shutdown("Unable to set address on i2c device");
+        goto fail;
     }
     ret = set_non_blocking(fd);
     if (ret < 0)
-        shutdown("Unable to set non-blocking on i2c device");
+        goto fail;
 
     // Init PCA9685
     const uint8_t sleep_msg[2] = { P9_MODE1, 0x31 };
     ret = write(fd, sleep_msg, sizeof(sleep_msg));
     if (ret < 0) {
         report_errno("write sleep i2c", ret);
-        shutdown("Unable to sleep PCA9685");
+        goto fail;
     }
     uint32_t freq = DIV_ROUND_CLOSEST(OSC_MHZ*cycle_ticks, 4096*CLOCK_MHZ) - 1;
     freq = freq > 0xff ? 0xff : (freq < 0x03 ? 0x03 : freq);
@@ -100,13 +100,13 @@ open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
     ret = write(fd, freq_msg, sizeof(freq_msg));
     if (ret < 0) {
         report_errno("write freq i2c", ret);
-        shutdown("Unable to set freq on PCA9685");
+        goto fail;
     }
     const uint8_t wake_msg[2] = { P9_MODE1, 0x21 };
     ret = write(fd, wake_msg, sizeof(wake_msg));
     if (ret < 0) {
         report_errno("write unsleep i2c", ret);
-        shutdown("Unable to wake PCA9685");
+        goto fail;
     }
     usleep(500);
     pca9685_write(fd, CHANNEL_ALL, 0);
@@ -117,6 +117,10 @@ open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
     devices[devices_count].fd = fd;
     devices_count++;
     return fd;
+fail:
+    if (fd >= 0)
+        close(fd);
+    shutdown("Unable to open and init PCA9685 device");
 }
 
 
