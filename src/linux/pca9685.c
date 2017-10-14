@@ -115,6 +115,7 @@ open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
     devices[devices_count].addr = addr;
     devices[devices_count].cycle_ticks = cycle_ticks;
     devices[devices_count].fd = fd;
+    devices_count++;
     return fd;
 }
 
