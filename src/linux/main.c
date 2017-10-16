@@ -49,7 +49,7 @@ command_config_reset(uint32_t *args)
     int ret = execv(orig_argv[0], orig_argv);
     report_errno("execv", ret);
 }
-DECL_COMMAND_FLAGS(config_reset, HF_IN_SHUTDOWN, "config_reset");
+DECL_COMMAND_FLAGS(command_config_reset, HF_IN_SHUTDOWN, "config_reset");
 
 
 /****************************************************************
