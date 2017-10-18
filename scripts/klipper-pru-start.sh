@@ -52,6 +52,9 @@ pru_start()
     log_daemon_msg "Starting pru"
     echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/bind
     echo 4a338000.pru1 > /sys/bus/platform/drivers/pru-rproc/bind
+
+    log_daemon_msg "Loading ADC module"
+    echo 'BB-ADC' > /sys/devices/platform/bone_capemgr/slots
 }
 
 mcu_host_stop()
