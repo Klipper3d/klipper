@@ -24,7 +24,6 @@ adc_full_reset(void)
     static uint8_t have_done_reset;
     if (have_done_reset)
         return;
-    have_done_reset = 1;
 
     // Disable ADC
     ADC->ctrl = (1<<2);
@@ -49,6 +48,7 @@ adc_full_reset(void)
 
     if (!readl(&ADC->ctrl))
         shutdown("ADC module not enabled");
+    have_done_reset = 1;
 }
 
 struct gpio_adc
