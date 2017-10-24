@@ -8,9 +8,7 @@
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/misc.h" // timer_from_us
 #include "board/irq.h" // irq_disable
-#include "basecmd.h" // stats_note_sleep
 #include "command.h" // DECL_CONSTANT
-#include "generic/timer_irq.h" // timer_dispatch_many
 #include "internal.h" // console_sleep
 #include "sched.h" // DECL_INIT
 
