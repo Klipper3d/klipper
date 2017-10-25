@@ -1,6 +1,26 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.5.0
+=============
+
+Available on 20171025. Major changes in this release:
+
+* Support for printers with multiple extruders.
+* Initial support for running on the Beaglebone PRU. Initial support
+  for the Replicape board.
+* Initial support for running the micro-controller code in a real-time
+  Linux process.
+* Support for multiple micro-controllers. (For example, one could
+  control an extruder with one micro-controller and the rest of the
+  printer with another.) Software clock synchronization is implemented
+  to coordinate actions between micro-controllers.
+* Stepper performance improvements (20Mhz AVRs up to 189K steps per
+  second).
+* Support for controlling servos and support for defining nozzle
+  cooling fans.
+* Several bug fixes and code cleanups
+
 Klipper 0.4.0
 =============
 
