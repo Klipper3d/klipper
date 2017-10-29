@@ -66,36 +66,30 @@ class DeltaKinematics:
                           - (self.towers[i][1] - coord[1])**2) + coord[2]
                 for i in StepList]
     def _actuator_to_cartesian(self, pos):
-        # Based on code from Smoothieware
-        tower1 = list(self.towers[0]) + [pos[0]]
-        tower2 = list(self.towers[1]) + [pos[1]]
-        tower3 = list(self.towers[2]) + [pos[2]]
+        # Find nozzle position using trilateration (see wikipedia)
+        carriage1 = list(self.towers[0]) + [pos[0]]
+        carriage2 = list(self.towers[1]) + [pos[1]]
+        carriage3 = list(self.towers[2]) + [pos[2]]
 
-        s12 = matrix_sub(tower1, tower2)
-        s23 = matrix_sub(tower2, tower3)
-        s13 = matrix_sub(tower1, tower3)
+        s21 = matrix_sub(carriage2, carriage1)
+        s31 = matrix_sub(carriage3, carriage1)
 
-        normal = matrix_cross(s12, s23)
+        d = math.sqrt(matrix_magsq(s21))
+        ex = matrix_mul(s21, 1. / d)
+        i = matrix_dot(ex, s31)
+        vect_ey = matrix_sub(s31, matrix_mul(ex, i))
+        ey = matrix_mul(vect_ey, 1. / math.sqrt(matrix_magsq(vect_ey)))
+        ez = matrix_cross(ex, ey)
+        j = matrix_dot(ey, s31)
 
-        magsq_s12 = matrix_magsq(s12)
-        magsq_s23 = matrix_magsq(s23)
-        magsq_s13 = matrix_magsq(s13)
+        x = d**2 / (2. * d)
+        y = (j**2 + (x-i)**2 - x**2) / (2. * j)
+        z = -math.sqrt(self.arm_length2 - x**2 - y**2)
 
-        inv_nmag_sq = 1.0 / matrix_magsq(normal)
-        q = 0.5 * inv_nmag_sq
-
-        a = q * magsq_s23 * matrix_dot(s12, s13)
-        b = -q * magsq_s13 * matrix_dot(s12, s23) # negate because we use s12 instead of s21
-        c = q * magsq_s12 * matrix_dot(s13, s23)
-
-        circumcenter = [tower1[0] * a + tower2[0] * b + tower3[0] * c,
-                        tower1[1] * a + tower2[1] * b + tower3[1] * c,
-                        tower1[2] * a + tower2[2] * b + tower3[2] * c]
-
-        r_sq = 0.5 * q * magsq_s12 * magsq_s23 * magsq_s13
-        dist = math.sqrt(inv_nmag_sq * (self.arm_length2 - r_sq))
-
-        return matrix_sub(circumcenter, matrix_mul(normal, dist))
+        ex_x = matrix_mul(ex, x)
+        ey_y = matrix_mul(ey, y)
+        ez_z = matrix_mul(ez, z)
+        return matrix_add(carriage1, matrix_add(ex_x, matrix_add(ey_y, ez_z)))
     def set_position(self, newpos):
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
@@ -235,6 +229,9 @@ def matrix_dot(m1, m2):
 
 def matrix_magsq(m1):
     return m1[0]**2 + m1[1]**2 + m1[2]**2
+
+def matrix_add(m1, m2):
+    return [m1[0] + m2[0], m1[1] + m2[1], m1[2] + m2[2]]
 
 def matrix_sub(m1, m2):
     return [m1[0] - m2[0], m1[1] - m2[1], m1[2] - m2[2]]
