@@ -11,7 +11,7 @@ StepList = (0, 1, 2)
 class CartKinematics:
     def __init__(self, toolhead, printer, config):
         self.steppers = [stepper.PrinterHomingStepper(
-            printer, config.getsection('stepper_' + n), n)
+            printer, config.getsection('stepper_' + n))
                          for n in ['x', 'y', 'z']]
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(

@@ -7,8 +7,10 @@ import math, logging
 import homing, pins
 
 class PrinterStepper:
-    def __init__(self, printer, config, name):
-        self.name = name
+    def __init__(self, printer, config):
+        self.name = config.section
+        if self.name.startswith('stepper_'):
+            self.name = self.name[8:]
 
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.inv_step_dist = 1. / self.step_dist
@@ -47,8 +49,8 @@ class PrinterStepper:
         self.need_motor_enable = not enable
 
 class PrinterHomingStepper(PrinterStepper):
-    def __init__(self, printer, config, name):
-        PrinterStepper.__init__(self, printer, config, name)
+    def __init__(self, printer, config):
+        PrinterStepper.__init__(self, printer, config)
 
         self.mcu_endstop = pins.setup_pin(
             printer, 'endstop', config.get('endstop_pin'))

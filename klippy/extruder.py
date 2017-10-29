@@ -12,7 +12,7 @@ class PrinterExtruder:
     def __init__(self, printer, config):
         self.config = config
         self.heater = heater.PrinterHeater(printer, config)
-        self.stepper = stepper.PrinterStepper(printer, config, 'extruder')
+        self.stepper = stepper.PrinterStepper(printer, config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)

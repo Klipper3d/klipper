@@ -11,7 +11,7 @@ StepList = (0, 1, 2)
 class CoreXYKinematics:
     def __init__(self, toolhead, printer, config):
         self.steppers = [stepper.PrinterHomingStepper(
-            printer, config.getsection('stepper_' + n), n)
+            printer, config.getsection('stepper_' + n))
                          for n in ['x', 'y', 'z']]
         self.steppers[0].mcu_endstop.add_stepper(self.steppers[1].mcu_stepper)
         self.steppers[1].mcu_endstop.add_stepper(self.steppers[0].mcu_stepper)
