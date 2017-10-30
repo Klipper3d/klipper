@@ -21,7 +21,8 @@ def parse_log(logname):
             #if parts and parts[0] == 'INFO:root:shutdown:':
             #    break
             continue
-        keyparts = dict(p.split('=', 1) for p in parts[2:])
+        keyparts = dict(p.split('=', 1)
+                        for p in parts[2:] if not p.endswith(':'))
         if keyparts.get('bytes_write', '0') == '0':
             continue
         keyparts['#sampletime'] = float(parts[1][:-1])
@@ -34,10 +35,11 @@ def find_print_restarts(data):
     print_resets = []
     for d in data:
         print_time = float(d.get('print_time', last_print_time))
-        if print_time < last_print_time:
+        buffer_time = float(d.get('buffer_time', 0.))
+        if print_time == last_print_time and not buffer_time:
             print_resets.append(d['#sampletime'])
             last_print_time = 0.
-        else:
+        elif buffer_time:
             last_print_time = print_time
     sample_resets = {}
     for d in data:
@@ -74,7 +76,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
             load = 0.
         pt = float(d['print_time'])
         hb = float(d['buffer_time'])
-        if pt <= 2. * MAXBUFFER or hb >= MAXBUFFER or st in sample_resets:
+        if not hb or hb >= MAXBUFFER or st in sample_resets:
             hb = 0.
         else:
             hb = 100. * (MAXBUFFER - hb) / MAXBUFFER
