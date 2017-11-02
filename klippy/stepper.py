@@ -51,13 +51,17 @@ class PrinterStepper:
 
 # Support for stepper controlled linear axis with an endstop
 class PrinterHomingStepper(PrinterStepper):
-    def __init__(self, printer, config):
+    def __init__(self, printer, config, default_position=None):
         PrinterStepper.__init__(self, printer, config)
         # Endstop and its position
         self.mcu_endstop = pins.setup_pin(
             printer, 'endstop', config.get('endstop_pin'))
         self.mcu_endstop.add_stepper(self.mcu_stepper)
-        self.position_endstop = config.getfloat('position_endstop')
+        if default_position is None:
+            self.position_endstop = config.getfloat('position_endstop')
+        else:
+            self.position_endstop = config.getfloat(
+                'position_endstop', default_position)
         # Axis range
         self.position_min = config.getfloat('position_min', 0.)
         self.position_max = config.getfloat(
