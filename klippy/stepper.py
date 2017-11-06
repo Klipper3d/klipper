@@ -128,13 +128,13 @@ class PrinterHomingStepper(PrinterStepper):
         return dist_ticks / ticks_per_step
     def get_homed_offset(self):
         if not self.homing_stepper_phases or self.need_motor_enable:
-            return 0
+            return 0.
         pos = self.mcu_stepper.get_mcu_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
             logging.info("Setting %s endstop phase to %d", self.name, pos)
             self.homing_endstop_phase = pos
-            return 0
+            return 0.
         delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
         if delta >= self.homing_stepper_phases - self.homing_endstop_accuracy:
             delta -= self.homing_stepper_phases
