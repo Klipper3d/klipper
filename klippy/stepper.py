@@ -6,6 +6,7 @@
 import math, logging
 import homing, pins
 
+# Code storing the definitions for a stepper motor
 class PrinterStepper:
     def __init__(self, printer, config):
         self.name = config.section
@@ -48,19 +49,23 @@ class PrinterStepper:
             self.mcu_enable.set_digital(print_time, enable)
         self.need_motor_enable = not enable
 
+# Support for stepper controlled linear axis with an endstop
 class PrinterHomingStepper(PrinterStepper):
     def __init__(self, printer, config):
         PrinterStepper.__init__(self, printer, config)
-
+        # Endstop and its position
         self.mcu_endstop = pins.setup_pin(
             printer, 'endstop', config.get('endstop_pin'))
         self.mcu_endstop.add_stepper(self.mcu_stepper)
+        self.position_endstop = config.getfloat('position_endstop')
+        # Axis range
         self.position_min = config.getfloat('position_min', 0.)
         self.position_max = config.getfloat(
             'position_max', 0., above=self.position_min)
-        self.position_endstop = config.getfloat('position_endstop')
-
+        # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
+        self.homing_retract_dist = config.getfloat(
+            'homing_retract_dist', 5., above=0.)
         self.homing_positive_dir = config.getboolean('homing_positive_dir', None)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
@@ -72,8 +77,7 @@ class PrinterHomingStepper(PrinterStepper):
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.section,))
-        self.homing_retract_dist = config.getfloat(
-            'homing_retract_dist', 5., above=0.)
+        # Endstop stepper phase position tracking
         self.homing_stepper_phases = config.getint(
             'homing_stepper_phases', None, minval=0)
         endstop_accuracy = config.getfloat(
