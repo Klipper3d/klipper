@@ -12,21 +12,23 @@ class PrinterStepper:
         self.name = config.section
         if self.name.startswith('stepper_'):
             self.name = self.name[8:]
-
-        self.step_dist = config.getfloat('step_distance', above=0.)
+        self.need_motor_enable = True
+        # Stepper definition
         self.mcu_stepper = pins.setup_pin(
             printer, 'stepper', config.get('step_pin'))
         dir_pin_params = pins.get_printer_pins(printer).parse_pin_desc(
             config.get('dir_pin'), can_invert=True)
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
+        self.step_dist = config.getfloat('step_distance', above=0.)
         self.mcu_stepper.setup_step_distance(self.step_dist)
-
+        self.step_const = self.mcu_stepper.step_const
+        self.step_delta = self.mcu_stepper.step_delta
+        # Enable pin
         enable_pin = config.get('enable_pin', None)
         self.mcu_enable = None
         if enable_pin is not None:
             self.mcu_enable = pins.setup_pin(printer, 'digital_out', enable_pin)
             self.mcu_enable.setup_max_duration(0.)
-        self.need_motor_enable = True
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel

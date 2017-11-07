@@ -201,26 +201,23 @@ class DeltaKinematics:
             vt_startz = origz
 
             # Generate steps
-            mcu_stepper = self.steppers[i].mcu_stepper
+            step_delta = self.steppers[i].step_delta
             move_time = print_time
             if accel_d:
-                mcu_stepper.step_delta(
-                    move_time, accel_d, move.start_v, accel,
-                    vt_startz, vt_startxy_d, vt_arm_d, movez_r)
+                step_delta(move_time, accel_d, move.start_v, accel,
+                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
                 vt_startz += accel_d * movez_r
                 vt_startxy_d -= accel_d * movexy_r
                 move_time += move.accel_t
             if cruise_d:
-                mcu_stepper.step_delta(
-                    move_time, cruise_d, cruise_v, 0.,
-                    vt_startz, vt_startxy_d, vt_arm_d, movez_r)
+                step_delta(move_time, cruise_d, cruise_v, 0.,
+                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
                 vt_startz += cruise_d * movez_r
                 vt_startxy_d -= cruise_d * movexy_r
                 move_time += move.cruise_t
             if decel_d:
-                mcu_stepper.step_delta(
-                    move_time, decel_d, cruise_v, -accel,
-                    vt_startz, vt_startxy_d, vt_arm_d, movez_r)
+                step_delta(move_time, decel_d, cruise_v, -accel,
+                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
 
 
 ######################################################################

@@ -122,7 +122,7 @@ class CoreXYKinematics:
             axis_d = axes_d[i]
             if not axis_d:
                 continue
-            mcu_stepper = self.steppers[i].mcu_stepper
+            step_const = self.steppers[i].step_const
             move_time = print_time
             start_pos = move_start_pos[i]
             axis_r = abs(axis_d) / move.move_d
@@ -132,19 +132,17 @@ class CoreXYKinematics:
             # Acceleration steps
             if move.accel_r:
                 accel_d = move.accel_r * axis_d
-                mcu_stepper.step_const(
-                    move_time, start_pos, accel_d, move.start_v * axis_r, accel)
+                step_const(move_time, start_pos, accel_d,
+                           move.start_v * axis_r, accel)
                 start_pos += accel_d
                 move_time += move.accel_t
             # Cruising steps
             if move.cruise_r:
                 cruise_d = move.cruise_r * axis_d
-                mcu_stepper.step_const(
-                    move_time, start_pos, cruise_d, cruise_v, 0.)
+                step_const(move_time, start_pos, cruise_d, cruise_v, 0.)
                 start_pos += cruise_d
                 move_time += move.cruise_t
             # Deceleration steps
             if move.decel_r:
                 decel_d = move.decel_r * axis_d
-                mcu_stepper.step_const(
-                    move_time, start_pos, decel_d, cruise_v, -accel)
+                step_const(move_time, start_pos, decel_d, cruise_v, -accel)
