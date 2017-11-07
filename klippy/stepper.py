@@ -14,8 +14,6 @@ class PrinterStepper:
             self.name = self.name[8:]
 
         self.step_dist = config.getfloat('step_distance', above=0.)
-        self.inv_step_dist = 1. / self.step_dist
-        self.min_stop_interval = 0.
         self.mcu_stepper = pins.setup_pin(
             printer, 'stepper', config.get('step_pin'))
         dir_pin_params = pins.get_printer_pins(printer).parse_pin_desc(
@@ -105,10 +103,10 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
             elif self.homing_endstop_phase is not None:
                 self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy * self.inv_step_dist / 2.))
+                    endstop_accuracy * .5 / self.step_dist))
             else:
                 self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy * self.inv_step_dist))
+                    endstop_accuracy / self.step_dist))
             if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment", name)
