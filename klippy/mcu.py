@@ -61,6 +61,8 @@ class MCU_stepper:
         self._mcu.register_stepqueue(self._stepqueue)
     def get_oid(self):
         return self._oid
+    def get_step_dist(self):
+        return self._step_dist
     def set_position(self, pos):
         if pos >= 0.:
             steppos = int(pos * self._inv_step_dist + 0.5)

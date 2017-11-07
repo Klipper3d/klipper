@@ -32,7 +32,7 @@ class CoreXYKinematics:
     def set_position(self, newpos):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
-            self.steppers[i].mcu_stepper.set_position(pos[i])
+            self.steppers[i].set_position(pos[i])
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():

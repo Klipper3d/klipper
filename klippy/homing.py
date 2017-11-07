@@ -38,41 +38,47 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         endstops = []
         for s in steppers:
-            s.mcu_endstop.home_start(print_time, ENDSTOP_SAMPLE_TIME,
-                                     ENDSTOP_SAMPLE_COUNT, s.step_dist / speed)
-            endstops.append((s, s.mcu_stepper.get_mcu_position()))
+            for mcu_endstop, mcu_stepper, name in s.get_endstops():
+                mcu_endstop.home_start(
+                    print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
+                    mcu_stepper.get_step_dist() / speed)
+                endstops.append((mcu_endstop, mcu_stepper, name,
+                                 mcu_stepper.get_mcu_position()))
         self.toolhead.move(self._fill_coord(movepos), speed)
         move_end_print_time = self.toolhead.get_last_move_time()
         self.toolhead.reset_print_time(print_time)
-        for s, last_pos in endstops:
-            s.mcu_endstop.home_finalize(move_end_print_time)
+        for mcu_endstop, mcu_stepper, name, last_pos in endstops:
+            mcu_endstop.home_finalize(move_end_print_time)
         # Wait for endstops to trigger
-        for s, last_pos in endstops:
+        for mcu_endstop, mcu_stepper, name, last_pos in endstops:
             try:
-                s.mcu_endstop.home_wait()
-            except s.mcu_endstop.error as e:
+                mcu_endstop.home_wait()
+            except mcu_endstop.error as e:
                 raise EndstopError("Failed to home stepper %s: %s" % (
-                    s.name, str(e)))
-            post_home_pos = s.mcu_stepper.get_mcu_position()
+                    name, str(e)))
+            post_home_pos = mcu_stepper.get_mcu_position()
             if second_home and self.verify_retract and last_pos == post_home_pos:
                 raise EndstopError("Endstop %s still triggered after retract" % (
-                    s.name,))
+                    name,))
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
 
 def query_endstops(print_time, query_flags, steppers):
     if query_flags == "get_mcu_position":
         # Only the commanded position is requested
-        return [(s.name.upper(), s.mcu_stepper.get_mcu_position())
-                for s in steppers]
+        return [(name.upper(), mcu_stepper.get_mcu_position())
+                for s in steppers
+                for mcu_endstop, mcu_stepper, name in s.get_endstops()]
     for s in steppers:
-        s.mcu_endstop.query_endstop(print_time)
+        for mcu_endstop, mcu_stepper, name in s.get_endstops():
+            mcu_endstop.query_endstop(print_time)
     out = []
     for s in steppers:
-        try:
-            out.append((s.name, s.mcu_endstop.query_endstop_wait()))
-        except s.mcu_endstop.error as e:
-            raise EndstopError(str(e))
+        for mcu_endstop, mcu_stepper, name in s.get_endstops():
+            try:
+                out.append((name, mcu_endstop.query_endstop_wait()))
+            except mcu_endstop.error as e:
+                raise EndstopError(str(e))
     return out
 
 class EndstopError(Exception):

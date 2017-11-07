@@ -28,7 +28,7 @@ class CartKinematics:
             min(max_halt_velocity, self.max_z_velocity), max_accel)
     def set_position(self, newpos):
         for i in StepList:
-            self.steppers[i].mcu_stepper.set_position(newpos[i])
+            self.steppers[i].set_position(newpos[i])
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():

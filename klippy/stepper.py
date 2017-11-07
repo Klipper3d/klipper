@@ -41,6 +41,8 @@ class PrinterStepper:
             2. * self.step_dist, max_halt_velocity, max_accel)
         min_stop_interval = second_last_step_time - last_step_time
         self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
+    def set_position(self, pos):
+        self.mcu_stepper.set_position(pos)
     def motor_enable(self, print_time, enable=0):
         if enable and self.need_motor_enable:
             self.mcu_stepper.reset_step_clock(print_time)
@@ -115,6 +117,8 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
+    def get_endstops(self):
+        return [(self.mcu_endstop, self.mcu_stepper, self.name)]
     def get_homing_speed(self):
         # Round the configured homing speed so that it is an even
         # number of ticks per step.

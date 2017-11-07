@@ -97,7 +97,7 @@ class DeltaKinematics:
     def set_position(self, newpos):
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
-            self.steppers[i].mcu_stepper.set_position(pos[i])
+            self.steppers[i].set_position(pos[i])
         self.limit_xy2 = -1.
     def home(self, homing_state):
         # All axes are homed simultaneously
