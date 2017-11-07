@@ -143,3 +143,49 @@ class PrinterHomingStepper(PrinterStepper):
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, pos, self.homing_endstop_phase))
         return delta * self.step_dist
+
+# Wrapper for dual stepper motor support
+class PrinterMultiStepper(PrinterHomingStepper):
+    def __init__(self, printer, config):
+        PrinterHomingStepper.__init__(self, printer, config)
+        self.endstops = PrinterHomingStepper.get_endstops(self)
+        self.extras = []
+        self.all_step_const = [self.step_const]
+        for i in range(1, 99):
+            if not config.has_section(config.section + str(i)):
+                break
+            extraconfig = config.getsection(config.section + str(i))
+            extra = PrinterStepper(printer, extraconfig)
+            self.extras.append(extra)
+            self.all_step_const.append(extra.step_const)
+            extraendstop = extraconfig.get('endstop_pin', None)
+            if extraendstop is not None:
+                mcu_endstop = pins.setup_pin(printer, 'endstop', extraendstop)
+                mcu_endstop.add_stepper(extra.mcu_stepper)
+                self.endstops.append(
+                    (mcu_endstop, extra.mcu_stepper, extra.name))
+            else:
+                self.mcu_endstop.add_stepper(extra.mcu_stepper)
+        self.step_const = self.step_multi_const
+    def step_multi_const(self, print_time, start_pos, dist, start_v, accel):
+        for step_const in self.all_step_const:
+            step_const(print_time, start_pos, dist, start_v, accel)
+    def set_max_jerk(self, max_halt_velocity, max_accel):
+        PrinterHomingStepper.set_max_jerk(self, max_halt_velocity, max_accel)
+        for extra in self.extras:
+            extra.set_max_jerk(max_halt_velocity, max_accel)
+    def set_position(self, pos):
+        PrinterHomingStepper.set_position(self, pos)
+        for extra in self.extras:
+            extra.set_position(pos)
+    def motor_enable(self, print_time, enable=0):
+        PrinterHomingStepper.motor_enable(self, print_time, enable)
+        for extra in self.extras:
+            extra.motor_enable(print_time, enable)
+    def get_endstops(self):
+        return self.endstops
+
+def LookupMultiHomingStepper(printer, config):
+    if not config.has_section(config.section + '1'):
+        return PrinterHomingStepper(printer, config)
+    return PrinterMultiStepper(printer, config)
