@@ -523,7 +523,6 @@ class MCU:
         # Resolve pin names
         mcu = self._serial.msgparser.get_constant('MCU')
         pnames = pins.get_pin_map(mcu, self._pin_map)
-        print(pnames)
         updated_cmds = []
         for cmd in self._config_cmds:
             try:
