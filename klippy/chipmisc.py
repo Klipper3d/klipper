@@ -26,18 +26,19 @@ class PrinterToogleDigitalOut:
                 'last_value': 0,
                 'mcu_pin': pins.setup_pin(printer, 'digital_out', pin_desc)
             }
+            self.pins[pin_desc]['mcu_pin'].setup_max_duration(0.)
 
     
     def set_state(self, print_time, pin, value):
-        #if value == self.last_value:
-        #    return
         if not pin in self.pins:
             raise pins.error("Toogle pin not configured")
+        if value == self.pins[pin]['last_value']:
+            return
         if value==0:
             self.pins[pin]['mcu_pin'].set_digital(print_time, False)
         else:
             self.pins[pin]['mcu_pin'].set_digital(print_time, True)
-        
+        self.pins[pin]['last_value']=value
         pass
 
 def get_printer_digital_out(printer, name):
