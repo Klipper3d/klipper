@@ -3,3 +3,5 @@ out
 *.pyc
 .config
 .config.old
+venv
+config.cfg

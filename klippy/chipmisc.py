@@ -17,6 +17,32 @@ class PrinterStaticDigitalOut:
             mcu_pin = pins.setup_pin(printer, 'digital_out', pin_desc)
             mcu_pin.setup_static()
 
+class PrinterToogleDigitalOut:
+    def __init__(self, printer, config):
+        self.pins = {}
+        pin_list = [pin.strip() for pin in config.get('pins').split(',')]
+        for pin_desc in pin_list:
+            self.pins[pin_desc]={
+                'last_value': 0,
+                'mcu_pin': pins.setup_pin(printer, 'digital_out', pin_desc)
+            }
+
+    
+    def set_state(self, print_time, pin, value):
+        #if value == self.last_value:
+        #    return
+        if not pin in self.pins:
+            raise pins.error("Toogle pin not configured")
+        if value==0:
+            self.pins[pin]['mcu_pin'].set_digital(print_time, False)
+        else:
+            self.pins[pin]['mcu_pin'].set_digital(print_time, True)
+        
+        pass
+
+def get_printer_digital_out(printer, name):
+    return printer.objects.get('toogle_digital_output ' + name)
+
 class PrinterStaticPWM:
     def __init__(self, printer, config):
         mcu_pwm = pins.setup_pin(printer, 'pwm', config.get('pin'))
@@ -288,6 +314,8 @@ def add_printer_objects(printer, config):
             printer, config.getsection('replicape')))
     for s in config.get_prefix_sections('static_digital_output '):
         printer.add_object(s.section, PrinterStaticDigitalOut(printer, s))
+    for s in config.get_prefix_sections('toogle_digital_output '):
+        printer.add_object(s.section, PrinterToogleDigitalOut(printer, s))
     for s in config.get_prefix_sections('static_pwm_output '):
         printer.add_object(s.section, PrinterStaticPWM(printer, s))
     for s in config.get_prefix_sections('servo '):
