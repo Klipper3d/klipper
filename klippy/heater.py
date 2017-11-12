@@ -35,6 +35,9 @@ class Thermistor:
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
         self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
     def calc_temp(self, adc):
+        #print(adc)
+        if adc == 1.0:
+            return 0
         r = self.pullup * adc / (1.0 - adc)
         ln_r = math.log(r)
         inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3

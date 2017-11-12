@@ -224,6 +224,8 @@ class ToolHead:
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(
             self, printer, config)
+
+        self.endstops_enabled = True
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -319,7 +321,7 @@ class ToolHead:
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
-        if move.is_kinematic_move:
+        if move.is_kinematic_move and self.endstops_enabled:
             self.kin.check_move(move)
         if move.axes_d[3]:
             self.extruder.check_move(move)

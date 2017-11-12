@@ -298,7 +298,7 @@ class GCodeParser:
         self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
         'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
-        'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
+        'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115', 'M120', 'M121',
         'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
         'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE', 'SET_SERVO', 'SET_DIGITAL',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -397,6 +397,12 @@ class GCodeParser:
     def cmd_M112(self, params):
         # Emergency Stop
         self.printer.invoke_shutdown("Shutdown due to M112 command")
+    def cmd_M120(self, params):
+        #disable endstops
+        self.toolhead.endstops_enabled = False
+    def cmd_M121(self, params):
+        #enable endstops
+        self.toolhead.endstops_enabled = True
     cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position
