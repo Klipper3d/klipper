@@ -17,9 +17,16 @@ Then scp the resulting `/tmp/klippy.log.gz` file from the host machine
 to your desktop. (If your desktop does not have scp installed, there
 are a number of free scp programs available - just do a web search for
 `windows scp` to find one.) Open a new issue at
-https://github.com/KevinOConnor/klipper/issues , attach the
-`klippy.log.gz` file to that issue, and provide a description of the
-problem.
+https://github.com/KevinOConnor/klipper/issues , provide a description
+of the problem, and attach the `klippy.log.gz` file to the issue (use
+the blue "selecting them" link beneath the problem description on the
+github issue page to attach files).
+
+If the Klipper software does something unexpected but does not produce
+an error, then immediately issue an M112 command in the Octoprint
+terminal window and then gather the log as described above. The M112
+command instructs Klipper to enter a "shutdown" state and it will
+cause additional debugging information to be added to the log.
 
 Mailing list
 ============
