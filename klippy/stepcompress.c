@@ -423,27 +423,32 @@ queue_append_slow(struct stepcompress *sc, double rel_sc)
 
     if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
-        int ret = stepcompress_flush(sc, *(sc->queue_next - 65535));
+        uint32_t flush = *(sc->queue_next-65535) - (uint32_t)sc->last_step_clock;
+        int ret = stepcompress_flush(sc, sc->last_step_clock + flush);
         if (ret)
             return ret;
     }
 
-    int in_use = sc->queue_next - sc->queue_pos;
-    if (sc->queue_pos > sc->queue) {
-        // Shuffle the internal queue to avoid having to allocate more ram
-        memmove(sc->queue, sc->queue_pos, in_use * sizeof(*sc->queue));
-    } else {
-        // Expand the internal queue of step times
-        int alloc = sc->queue_end - sc->queue;
-        if (!alloc)
-            alloc = QUEUE_START_SIZE;
-        while (in_use >= alloc)
-            alloc *= 2;
-        sc->queue = realloc(sc->queue, alloc * sizeof(*sc->queue));
-        sc->queue_end = sc->queue + alloc;
+    if (sc->queue_next >= sc->queue_end) {
+        // Make room in the queue
+        int in_use = sc->queue_next - sc->queue_pos;
+        if (sc->queue_pos > sc->queue) {
+            // Shuffle the internal queue to avoid having to allocate more ram
+            memmove(sc->queue, sc->queue_pos, in_use * sizeof(*sc->queue));
+        } else {
+            // Expand the internal queue of step times
+            int alloc = sc->queue_end - sc->queue;
+            if (!alloc)
+                alloc = QUEUE_START_SIZE;
+            while (in_use >= alloc)
+                alloc *= 2;
+            sc->queue = realloc(sc->queue, alloc * sizeof(*sc->queue));
+            sc->queue_end = sc->queue + alloc;
+        }
+        sc->queue_pos = sc->queue;
+        sc->queue_next = sc->queue + in_use;
     }
-    sc->queue_pos = sc->queue;
-    sc->queue_next = sc->queue + in_use;
+
     *sc->queue_next++ = abs_step_clock;
     return 0;
 }
