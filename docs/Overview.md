@@ -13,7 +13,8 @@ as a reference for the config file. The
 on tuning the pressure advance config.
 
 The [kinematics](Kinematics.md) document provides some technical
-details on how Klipper implements motion.
+details on how Klipper implements motion. The [FAQ](FAQ.md) answers
+some common questions.
 
 The history of Klipper releases is available at
 [releases](Releases.md). See [contact](Contact.md) for information on

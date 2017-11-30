@@ -125,4 +125,6 @@ the "help" command to get a list of other extended commands.
 Contacting the developers
 =========================
 
-See the [contact page](Contact.md) to ask questions or report a bug.
+Be sure to see the [FAQ](FAQ.md) for answers to some common questions.
+See the [contact page](Contact.md) to report a bug or to contact the
+developers.
