@@ -329,10 +329,11 @@ class ToolHead:
             self._check_stall()
     def home(self, homing_state):
         self.kin.home(homing_state)
-    def dwell(self, delay):
+    def dwell(self, delay, check_stall=True):
         self.get_last_move_time()
         self.update_move_time(delay)
-        self._check_stall()
+        if check_stall:
+            self._check_stall()
     def motor_off(self):
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()

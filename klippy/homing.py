@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
-HOMING_DELAY = 0.250
+HOMING_STEP_DELAY = 0.00000025
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
@@ -34,7 +34,13 @@ class Homing:
         self.toolhead.set_position(self._fill_coord(forcepos))
         # Start homing and issue move
         if not second_home:
-            self.toolhead.dwell(HOMING_DELAY)
+            est_move_d = sum([abs(forcepos[i]-movepos[i])
+                              for i in range(3) if movepos[i] is not None])
+            est_steps = sum(
+                [est_move_d / mcu_stepper.get_step_dist()
+                 for s in steppers
+                 for mcu_endstop, mcu_stepper, name in s.get_endstops()])
+            self.toolhead.dwell(est_steps * HOMING_STEP_DELAY, check_stall=False)
         print_time = self.toolhead.get_last_move_time()
         endstops = []
         for s in steppers:
