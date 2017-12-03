@@ -3,6 +3,7 @@
 # Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import homing
 
 class PrinterProbe:
@@ -47,6 +48,91 @@ class PrinterProbe:
         res = self.mcu_probe.query_endstop_wait()
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
+
+# Helper code that can probe a series of points and report the
+# position at each point.
+class ProbePointsHelper:
+    def __init__(self, printer, probe_points, horizontal_move_z, speed,
+                 manual_probe, callback):
+        self.printer = printer
+        self.probe_points = probe_points
+        self.horizontal_move_z = horizontal_move_z
+        self.speed = speed
+        self.callback = callback
+        self.toolhead = self.printer.lookup_object('toolhead')
+        self.results = []
+        self.busy = True
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command(
+            'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
+        # Begin probing
+        self.move_next()
+        if not manual_probe:
+            while self.busy:
+                self.gcode.run_script("PROBE")
+                self.cmd_NEXT({})
+    def move_next(self):
+        x, y = self.probe_points[len(self.results)]
+        curpos = self.toolhead.get_position()
+        curpos[0] = x
+        curpos[1] = y
+        curpos[2] = self.horizontal_move_z
+        self.toolhead.move(curpos, self.speed)
+        self.gcode.reset_last_position()
+    cmd_NEXT_help = "Move to the next XY position to probe"
+    def cmd_NEXT(self, params):
+        # Record current position
+        self.toolhead.wait_moves()
+        self.results.append(self.callback.get_position())
+        # Move to next position
+        curpos = self.toolhead.get_position()
+        curpos[2] = self.horizontal_move_z
+        self.toolhead.move(curpos, self.speed)
+        if len(self.results) == len(self.probe_points):
+            self.toolhead.get_last_move_time()
+            self.finalize(True)
+            return
+        self.move_next()
+    def finalize(self, success):
+        self.busy = False
+        self.gcode.reset_last_position()
+        self.gcode.register_command('NEXT', None)
+        if success:
+            self.callback.finalize(self.results)
+
+# Helper code that implements coordinate descent
+def coordinate_descent(adj_params, params, error_func):
+    # Define potential changes
+    params = dict(params)
+    dp = {param_name: 1. for param_name in adj_params}
+    # Calculate the error
+    best_err = error_func(params)
+
+    threshold = 0.00001
+    rounds = 0
+
+    while sum(dp.values()) > threshold and rounds < 10000:
+        rounds += 1
+        for param_name in adj_params:
+            orig = params[param_name]
+            params[param_name] = orig + dp[param_name]
+            err = error_func(params)
+            if err < best_err:
+                # There was some improvement
+                best_err = err
+                dp[param_name] *= 1.1
+                continue
+            params[param_name] = orig - dp[param_name]
+            err = error_func(params)
+            if err < best_err:
+                # There was some improvement
+                best_err = err
+                dp[param_name] *= 1.1
+                continue
+            params[param_name] = orig
+            dp[param_name] *= 0.9
+    logging.debug("best_err: %s  rounds: %d", best_err, rounds)
+    return params
 
 def load_config(config):
     if config.get_name() != 'probe':

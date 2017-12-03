@@ -24,10 +24,11 @@ class DeltaKinematics:
             default_position=stepper_a.position_endstop)
         self.steppers = [stepper_a, stepper_b, stepper_c]
         self.need_motor_enable = self.need_home = True
-        radius = config.getfloat('delta_radius', above=0.)
+        self.radius = radius = config.getfloat('delta_radius', above=0.)
         arm_length_a = stepper_configs[0].getfloat('arm_length', above=radius)
-        arm_lengths = [sconfig.getfloat('arm_length', arm_length_a, above=radius)
-                       for sconfig in stepper_configs]
+        self.arm_lengths = arm_lengths = [
+            sconfig.getfloat('arm_length', arm_length_a, above=radius)
+            for sconfig in stepper_configs]
         self.arm2 = [arm**2 for arm in arm_lengths]
         self.endstops = [s.position_endstop + math.sqrt(arm2 - radius**2)
                          for s, arm2 in zip(self.steppers, self.arm2)]
@@ -48,11 +49,12 @@ class DeltaKinematics:
         for s in self.steppers:
             s.set_max_jerk(max_halt_velocity, self.max_accel)
         # Determine tower locations in cartesian space
-        angles = [sconfig.getfloat('angle', angle)
-                  for sconfig, angle in zip(stepper_configs, [210., 330., 90.])]
+        self.angles = [sconfig.getfloat('angle', angle)
+                       for sconfig, angle in zip(stepper_configs,
+                                                 [210., 330., 90.])]
         self.towers = [(math.cos(math.radians(angle)) * radius,
                         math.sin(math.radians(angle)) * radius)
-                       for angle in angles]
+                       for angle in self.angles]
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([s.step_dist for s in self.steppers]) * .5
@@ -77,30 +79,7 @@ class DeltaKinematics:
                           - (self.towers[i][1] - coord[1])**2) + coord[2]
                 for i in StepList]
     def _actuator_to_cartesian(self, pos):
-        # Find nozzle position using trilateration (see wikipedia)
-        carriage1 = list(self.towers[0]) + [pos[0]]
-        carriage2 = list(self.towers[1]) + [pos[1]]
-        carriage3 = list(self.towers[2]) + [pos[2]]
-
-        s21 = matrix_sub(carriage2, carriage1)
-        s31 = matrix_sub(carriage3, carriage1)
-
-        d = math.sqrt(matrix_magsq(s21))
-        ex = matrix_mul(s21, 1. / d)
-        i = matrix_dot(ex, s31)
-        vect_ey = matrix_sub(s31, matrix_mul(ex, i))
-        ey = matrix_mul(vect_ey, 1. / math.sqrt(matrix_magsq(vect_ey)))
-        ez = matrix_cross(ex, ey)
-        j = matrix_dot(ey, s31)
-
-        x = (self.arm2[0] - self.arm2[1] + d**2) / (2. * d)
-        y = (self.arm2[0] - self.arm2[2] - x**2 + (x-i)**2 + j**2) / (2. * j)
-        z = -math.sqrt(self.arm2[0] - x**2 - y**2)
-
-        ex_x = matrix_mul(ex, x)
-        ey_y = matrix_mul(ey, y)
-        ez_z = matrix_mul(ez, z)
-        return matrix_add(carriage1, matrix_add(ex_x, matrix_add(ey_y, ez_z)))
+        return actuator_to_cartesian(self.towers, self.arm2, pos)
     def get_position(self):
         spos = [s.mcu_stepper.get_commanded_position() for s in self.steppers]
         return self._actuator_to_cartesian(spos)
@@ -225,6 +204,21 @@ class DeltaKinematics:
             if decel_d:
                 step_delta(move_time, decel_d, cruise_v, -accel,
                            vt_startz, vt_startxy_d, vt_arm_d, movez_r)
+    # Helper functions for DELTA_CALIBRATE script
+    def get_stable_position(self):
+        return [int((ep - s.mcu_stepper.get_commanded_position())
+                    /  s.mcu_stepper.get_step_dist() + .5)
+                * s.mcu_stepper.get_step_dist()
+                for ep, s in zip(self.endstops, self.steppers)]
+    def get_calibrate_params(self):
+        return {
+            'endstop_a': self.steppers[0].position_endstop,
+            'endstop_b': self.steppers[1].position_endstop,
+            'endstop_c': self.steppers[2].position_endstop,
+            'angle_a': self.angles[0], 'angle_b': self.angles[1],
+            'angle_c': self.angles[2], 'radius': self.radius,
+            'arm_a': self.arm_lengths[0], 'arm_b': self.arm_lengths[1],
+            'arm_c': self.arm_lengths[2] }
 
 
 ######################################################################
@@ -250,3 +244,41 @@ def matrix_sub(m1, m2):
 
 def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
+
+def actuator_to_cartesian(towers, arm2, pos):
+    # Find nozzle position using trilateration (see wikipedia)
+    carriage1 = list(towers[0]) + [pos[0]]
+    carriage2 = list(towers[1]) + [pos[1]]
+    carriage3 = list(towers[2]) + [pos[2]]
+
+    s21 = matrix_sub(carriage2, carriage1)
+    s31 = matrix_sub(carriage3, carriage1)
+
+    d = math.sqrt(matrix_magsq(s21))
+    ex = matrix_mul(s21, 1. / d)
+    i = matrix_dot(ex, s31)
+    vect_ey = matrix_sub(s31, matrix_mul(ex, i))
+    ey = matrix_mul(vect_ey, 1. / math.sqrt(matrix_magsq(vect_ey)))
+    ez = matrix_cross(ex, ey)
+    j = matrix_dot(ey, s31)
+
+    x = (arm2[0] - arm2[1] + d**2) / (2. * d)
+    y = (arm2[0] - arm2[2] - x**2 + (x-i)**2 + j**2) / (2. * j)
+    z = -math.sqrt(arm2[0] - x**2 - y**2)
+
+    ex_x = matrix_mul(ex, x)
+    ey_y = matrix_mul(ey, y)
+    ez_z = matrix_mul(ez, z)
+    return matrix_add(carriage1, matrix_add(ex_x, matrix_add(ey_y, ez_z)))
+
+def get_position_from_stable(spos, params):
+    angles = [params['angle_a'], params['angle_b'], params['angle_c']]
+    radius = params['radius']
+    radius2 = radius**2
+    towers = [(math.cos(angle) * radius, math.sin(angle) * radius)
+              for angle in map(math.radians, angles)]
+    arm2 = [a**2 for a in [params['arm_a'], params['arm_b'], params['arm_c']]]
+    endstops = [params['endstop_a'], params['endstop_b'], params['endstop_c']]
+    pos = [es + math.sqrt(a2 - radius2) - p
+           for es, a2, p in zip(endstops, arm2, spos)]
+    return actuator_to_cartesian(towers, arm2, pos)
