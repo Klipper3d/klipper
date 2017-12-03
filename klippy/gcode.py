@@ -394,6 +394,7 @@ class GCodeParser:
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.set_temp(params, wait=True)
+    cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
         # Emergency Stop
         self.printer.invoke_shutdown("Shutdown due to M112 command")
