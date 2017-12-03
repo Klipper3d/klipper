@@ -227,7 +227,7 @@ class Printer:
             run_result = self.run_result
             try:
                 if run_result == 'shutdown':
-                    self.invoke_shutdown(self.async_shutdown_msg, True)
+                    self.invoke_shutdown(self.async_shutdown_msg)
                     continue
                 self._stats(self.reactor.monotonic(), force_output=True)
                 for m in self.mcus:
@@ -239,14 +239,11 @@ class Printer:
             return run_result
     def get_state_message(self):
         return self.state_message
-    def invoke_shutdown(self, msg, is_mcu_shutdown=False):
+    def invoke_shutdown(self, msg):
         if self.is_shutdown:
             return
         self.is_shutdown = True
-        if is_mcu_shutdown:
-            self.state_message = "%s%s" % (msg, message_shutdown)
-        else:
-            self.state_message = "%s%s" % (msg, message_restart)
+        self.state_message = "%s%s" % (msg, message_shutdown)
         for m in self.mcus:
             m.do_shutdown()
         self.gcode.do_shutdown()
