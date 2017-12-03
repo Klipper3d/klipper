@@ -27,8 +27,17 @@ class GCodeParser:
         self.input_log = collections.deque([], 50)
         # Command handling
         self.is_printer_ready = False
-        self.gcode_handlers = {}
-        self.build_handlers()
+        self.base_gcode_handlers = self.gcode_handlers = {}
+        self.ready_gcode_handlers = {}
+        self.gcode_help = {}
+        for cmd in self.all_handlers:
+            func = getattr(self, 'cmd_' + cmd)
+            wnr = getattr(self, 'cmd_' + cmd + '_when_not_ready', False)
+            desc = getattr(self, 'cmd_' + cmd + '_help', None)
+            self.register_command(cmd, func, wnr, desc)
+            for a in getattr(self, 'cmd_' + cmd + '_aliases', []):
+                self.register_command(a, func, wnr)
+        # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heaters = []
@@ -38,21 +47,17 @@ class GCodeParser:
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
-    def build_handlers(self):
-        handlers = self.all_handlers
-        if not self.is_printer_ready:
-            handlers = [h for h in handlers
-                        if getattr(self, 'cmd_'+h+'_when_not_ready', False)]
-        gcode_handlers = { h: getattr(self, 'cmd_'+h) for h in handlers }
-        for h, f in list(gcode_handlers.items()):
-            aliases = getattr(self, 'cmd_'+h+'_aliases', [])
-            gcode_handlers.update({ a: f for a in aliases })
-        self.gcode_handlers = gcode_handlers
+    def register_command(self, cmd, func, when_not_ready=False, desc=None):
+        self.ready_gcode_handlers[cmd] = func
+        if when_not_ready:
+            self.base_gcode_handlers[cmd] = func
+        if desc is not None:
+            self.gcode_help[cmd] = desc
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
     def connect(self):
         self.is_printer_ready = True
-        self.build_handlers()
+        self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
         self.toolhead = self.printer.objects.get('toolhead')
         extruders = extruder.get_printer_extruders(self.printer)
@@ -71,7 +76,7 @@ class GCodeParser:
         if not self.is_printer_ready:
             return
         self.is_printer_ready = False
-        self.build_handlers()
+        self.gcode_handlers = self.base_gcode_handlers
         self.dump_debug()
         if self.is_fileinput:
             self.printer.request_exit()
@@ -508,7 +513,6 @@ class GCodeParser:
             cmdhelp.append("Printer is not ready - not all commands available.")
         cmdhelp.append("Available extended commands:")
         for cmd in sorted(self.gcode_handlers):
-            desc = getattr(self, 'cmd_'+cmd+'_help', None)
-            if desc is not None:
-                cmdhelp.append("%-10s: %s" % (cmd, desc))
+            if cmd in self.gcode_help:
+                cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         self.respond_info("\n".join(cmdhelp))
