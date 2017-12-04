@@ -328,7 +328,11 @@ class ToolHead:
         if self.print_time > self.need_check_stall:
             self._check_stall()
     def home(self, homing_state):
-        self.kin.home(homing_state)
+        try:
+            self.kin.home(homing_state)
+        except homing.EndstopError as e:
+            self.motor_off()
+            raise
     def dwell(self, delay, check_stall=True):
         self.get_last_move_time()
         self.update_move_time(delay)

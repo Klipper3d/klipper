@@ -1,12 +1,15 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
 import homing, extruder, chipmisc
 
-# Parse out incoming GCode and find and translate head movements
+class error(Exception):
+    pass
+
+# Parse and handle G-Code commands
 class GCodeParser:
     RETRY_TIME = 0.100
     def __init__(self, printer, fd):
@@ -61,6 +64,9 @@ class GCodeParser:
         self.fan = self.printer.objects.get('fan')
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+    def reset_last_position(self):
+        if self.toolhead is not None:
+            self.last_position = self.toolhead.get_position()
     def do_shutdown(self):
         if not self.is_printer_ready:
             return
@@ -115,6 +121,7 @@ class GCodeParser:
                 handler(params)
             except error as e:
                 self.respond_error(str(e))
+                self.reset_last_position()
             except:
                 msg = 'Internal error on command:"%s"' % (cmd,)
                 logging.exception(msg)
@@ -250,8 +257,7 @@ class GCodeParser:
         try:
             heater.set_temp(print_time, temp)
         except heater.error as e:
-            self.respond_error(str(e))
-            return
+            raise error(str(e))
         if wait:
             self.bg_temp(heater)
     def set_fan_speed(self, speed):
@@ -290,10 +296,9 @@ class GCodeParser:
         try:
             self.toolhead.set_extruder(e)
         except homing.EndstopError as e:
-            self.respond_error(str(e))
-            return
+            raise error(str(e))
         self.extruder = e
-        self.last_position = self.toolhead.get_position()
+        self.reset_last_position()
         activate_gcode = self.extruder.get_activate_gcode(True)
         self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
@@ -319,16 +324,14 @@ class GCodeParser:
             if 'F' in params:
                 speed = float(params['F']) / 60.
                 if speed <= 0.:
-                    raise ValueError()
+                    raise error("Invalid speed in '%s'" % (params['#original'],))
                 self.speed = speed
         except ValueError as e:
-            self.last_position = self.toolhead.get_position()
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
             self.toolhead.move(self.last_position, self.speed)
         except homing.EndstopError as e:
-            self.respond_error(str(e))
-            self.last_position = self.toolhead.get_position()
+            raise error(str(e))
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
@@ -353,9 +356,7 @@ class GCodeParser:
         try:
             self.toolhead.home(homing_state)
         except homing.EndstopError as e:
-            self.toolhead.motor_off()
-            self.respond_error(str(e))
-            return
+            raise error(str(e))
         newpos = self.toolhead.get_position()
         for axis in homing_state.get_axes():
             self.last_position[axis] = newpos[axis]
@@ -451,8 +452,7 @@ class GCodeParser:
         try:
             res = self.toolhead.query_endstops()
         except homing.EndstopError as e:
-            self.respond_error(str(e))
-            return
+            raise error(str(e))
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                                for name, t in res]))
     cmd_PID_TUNE_help = "Run PID Tuning"
@@ -519,6 +519,3 @@ class GCodeParser:
             if desc is not None:
                 cmdhelp.append("%-10s: %s" % (cmd, desc))
         self.respond_info("\n".join(cmdhelp))
-
-class error(Exception):
-    pass
