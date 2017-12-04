@@ -130,8 +130,8 @@ class Printer:
         if bglogger is not None:
             bglogger.set_rollover_info("config", None)
         self.reactor = reactor.Reactor()
-        self.objects = {}
         self.gcode = gcode.GCodeParser(self, input_fd)
+        self.objects = {'gcode': self.gcode}
         self.stats_timer = self.reactor.register_timer(self._stats)
         self.connect_timer = self.reactor.register_timer(
             self._connect, self.reactor.NOW)

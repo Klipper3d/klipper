@@ -4,13 +4,14 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
-import homing, extruder, chipmisc
+import homing, extruder
 
 class error(Exception):
     pass
 
 # Parse and handle G-Code commands
 class GCodeParser:
+    error = error
     RETRY_TIME = 0.100
     def __init__(self, printer, fd):
         self.printer = printer
@@ -48,6 +49,9 @@ class GCodeParser:
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
+        if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
+            origfunc = func
+            func = lambda params: origfunc(self.get_extended_params(params))
         self.ready_gcode_handlers[cmd] = func
         if when_not_ready:
             self.base_gcode_handlers[cmd] = func
@@ -305,7 +309,7 @@ class GCodeParser:
         'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
         'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
         'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
-        'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE', 'SET_SERVO',
+        'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
@@ -467,18 +471,6 @@ class GCodeParser:
         temp = self.get_float('S', params)
         heater.start_auto_tune(temp)
         self.bg_temp(heater)
-    cmd_SET_SERVO_help = "Set servo angle"
-    def cmd_SET_SERVO(self, params):
-        params = self.get_extended_params(params)
-        name = self.get_str('SERVO', params)
-        s = chipmisc.get_printer_servo(self.printer, name)
-        if s is None:
-            raise error("Servo not configured")
-        print_time = self.toolhead.get_last_move_time()
-        if 'WIDTH' in params:
-            s.set_pulse_width(print_time, self.get_float('WIDTH', params))
-            return
-        s.set_angle(print_time, self.get_float('ANGLE', params))
     def prep_restart(self):
         if self.is_printer_ready:
             self.respond_info("Preparing to restart...")

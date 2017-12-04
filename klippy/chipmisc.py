@@ -41,6 +41,7 @@ SERVO_SIGNAL_PERIOD = 0.020
 
 class PrinterServo:
     def __init__(self, printer, config):
+        self.printer = printer
         self.mcu_servo = pins.setup_pin(printer, 'pwm', config.get('pin'))
         self.mcu_servo.setup_max_duration(0.)
         self.mcu_servo.setup_cycle_time(SERVO_SIGNAL_PERIOD)
@@ -53,6 +54,9 @@ class PrinterServo:
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.
+        self.gcode = printer.objects['gcode']
+        self.gcode.register_command("SET_SERVO", self.cmd_SET_SERVO,
+                                    desc=self.cmd_SET_SERVO_help)
     def set_pwm(self, print_time, value):
         if value == self.last_value:
             return
@@ -60,7 +64,6 @@ class PrinterServo:
         self.mcu_servo.set_pwm(print_time, value)
         self.last_value = value
         self.last_value_time = print_time
-    # External commands
     def set_angle(self, print_time, angle):
         angle = max(0., min(self.max_angle, angle))
         width = self.min_width + angle * self.angle_to_width
@@ -68,9 +71,20 @@ class PrinterServo:
     def set_pulse_width(self, print_time, width):
         width = max(self.min_width, min(self.max_width, width))
         self.set_pwm(print_time, width * self.width_to_value)
-
-def get_printer_servo(printer, name):
-    return printer.objects.get('servo ' + name)
+    cmd_SET_SERVO_help = "Set servo angle"
+    def cmd_SET_SERVO(self, params):
+        servo_name = self.gcode.get_str('SERVO', params)
+        servo = self.printer.objects.get('servo ' + servo_name)
+        if servo is not self:
+            if servo is None:
+                raise self.gcode.error("Servo not configured")
+            return servo.cmd_SET_SERVO(params)
+        print_time = self.printer.objects['toolhead'].get_last_move_time()
+        if 'WIDTH' in params:
+            self.set_pulse_width(print_time,
+                                 self.gcode.get_float('WIDTH', params))
+        else:
+            self.set_angle(print_time, self.gcode.get_float('ANGLE', params))
 
 
 ######################################################################
