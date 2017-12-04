@@ -178,26 +178,21 @@ class GCodeParser:
             self.respond_info("\n".join(lines[:-1]))
         self.respond('!! %s' % (lines[-1].strip(),))
     # Parameter parsing helpers
-    def get_int(self, name, params, default=None):
+    class sentinel: pass
+    def get_str(self, name, params, default=sentinel, parser=str):
         if name in params:
             try:
-                return int(params[name])
-            except ValueError:
+                return parser(params[name])
+            except:
                 raise error("Error on '%s': unable to parse %s" % (
                     params['#original'], params[name]))
-        if default is not None:
+        if default is not self.sentinel:
             return default
         raise error("Error on '%s': missing %s" % (params['#original'], name))
-    def get_float(self, name, params, default=None):
-        if name in params:
-            try:
-                return float(params[name])
-            except ValueError:
-                raise error("Error on '%s': unable to parse %s" % (
-                    params['#original'], params[name]))
-        if default is not None:
-            return default
-        raise error("Error on '%s': missing %s" % (params['#original'], name))
+    def get_int(self, name, params, default=sentinel):
+        return self.get_str(name, params, default, parser=int)
+    def get_float(self, name, params, default=sentinel):
+        return self.get_str(name, params, default, parser=float)
     extended_r = re.compile(
         r'^\s*(?:N[0-9]+\s*)?'
         r'(?P<cmd>[a-zA-Z_][a-zA-Z_]+)(?:\s+|$)'
@@ -470,9 +465,7 @@ class GCodeParser:
     cmd_SET_SERVO_help = "Set servo angle"
     def cmd_SET_SERVO(self, params):
         params = self.get_extended_params(params)
-        name = params.get('SERVO')
-        if name is None:
-            raise error("Error on '%s': missing SERVO" % (params['#original'],))
+        name = self.get_str('SERVO', params)
         s = chipmisc.get_printer_servo(self.printer, name)
         if s is None:
             raise error("Servo not configured")
