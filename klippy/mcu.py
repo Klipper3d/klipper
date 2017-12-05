@@ -147,6 +147,8 @@ class MCU_endstop:
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
+        if stepper.get_mcu() is not self._mcu:
+            raise pins.error("Endstop and stepper must be on the same mcu")
         self._steppers.append(stepper)
     def build_config(self):
         self._oid = self._mcu.create_oid()
