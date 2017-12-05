@@ -153,6 +153,9 @@ class MCU_endstop:
         self._mcu.add_config_cmd(
             "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
                 self._oid, self._pin, self._pullup, len(self._steppers)))
+        self._mcu.add_config_cmd(
+            "end_stop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
+            " rest_ticks=0 pin_value=0" % (self._oid,), is_init=True)
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
                 "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
