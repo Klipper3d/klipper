@@ -118,7 +118,7 @@ class PrinterHomingStepper(PrinterStepper):
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
     def get_endstops(self):
-        return [(self.mcu_endstop, self.mcu_stepper, self.name)]
+        return [(self.mcu_endstop, self.name)]
     def get_homing_speed(self):
         # Round the configured homing speed so that it is an even
         # number of ticks per step.
@@ -162,8 +162,7 @@ class PrinterMultiStepper(PrinterHomingStepper):
             if extraendstop is not None:
                 mcu_endstop = pins.setup_pin(printer, 'endstop', extraendstop)
                 mcu_endstop.add_stepper(extra.mcu_stepper)
-                self.endstops.append(
-                    (mcu_endstop, extra.mcu_stepper, extra.name))
+                self.endstops.append((mcu_endstop, extra.name))
             else:
                 self.mcu_endstop.add_stepper(extra.mcu_stepper)
         self.step_const = self.step_multi_const

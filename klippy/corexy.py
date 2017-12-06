@@ -59,14 +59,14 @@ class CoreXYKinematics:
             homepos[axis] = s.position_endstop
             coord = [None, None, None, None]
             coord[axis] = pos
-            homing_state.home(list(coord), homepos, [s], homing_speed)
+            homing_state.home(coord, homepos, s.get_endstops(), homing_speed)
             # Retract
             coord[axis] = rpos
-            homing_state.retract(list(coord), homing_speed)
+            homing_state.retract(coord, homing_speed)
             # Home again
             coord[axis] = r2pos
-            homing_state.home(
-                list(coord), homepos, [s], homing_speed/2.0, second_home=True)
+            homing_state.home(coord, homepos, s.get_endstops(),
+                              homing_speed/2.0, second_home=True)
             if axis == 2:
                 # Support endstop phase detection on Z axis
                 coord[axis] = s.position_endstop + s.get_homed_offset()
