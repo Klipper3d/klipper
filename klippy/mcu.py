@@ -79,14 +79,17 @@ class MCU_stepper:
             self._stepqueue, homing_clock)
         if ret:
             raise error("Internal error in stepcompress")
-    def note_homing_finalized(self):
+    def note_homing_end(self, did_trigger=False):
         ret = self._ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
+        if not did_trigger:
+            return
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
-    def note_homing_triggered(self):
+        if self._mcu.is_fileoutput():
+            return
         cmd = self._get_position_cmd.encode(self._oid)
         params = self._mcu.send_with_response(cmd, 'stepper_position', self._oid)
         pos = params['pos']
@@ -131,7 +134,8 @@ class MCU_stepper:
         self._commanded_pos += count
 
 class MCU_endstop:
-    error = error
+    class TimeoutError(Exception):
+        pass
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
@@ -142,7 +146,7 @@ class MCU_endstop:
         self._cmd_queue = mcu.alloc_command_queue()
         self._oid = self._home_cmd = self._query_cmd = None
         self._homing = False
-        self._min_query_time = self._next_query_time = self._home_timeout = 0.
+        self._min_query_time = self._next_query_time = 0.
         self._last_state = {}
     def get_mcu(self):
         return self._mcu
@@ -182,36 +186,33 @@ class MCU_endstop:
         self._mcu.send(msg, reqclock=clock, cq=self._cmd_queue)
         for s in self._steppers:
             s.note_homing_start(clock)
-    def home_finalize(self, print_time):
-        for s in self._steppers:
-            s.note_homing_finalized()
-        self._home_timeout = print_time
-    def home_wait(self):
+    def home_wait(self, home_end_time):
         eventtime = self._mcu.monotonic()
-        while self._check_busy(eventtime):
+        while self._check_busy(eventtime, home_end_time):
             eventtime = self._mcu.pause(eventtime + 0.1)
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s", params)
         self._last_state = params
-    def _check_busy(self, eventtime):
+    def _check_busy(self, eventtime, home_end_time=0.):
         # Check if need to send an end_stop_query command
-        if self._mcu.is_fileoutput():
-            return False
         print_time = self._mcu.estimated_print_time(eventtime)
         last_sent_time = self._last_state.get('#sent_time', -1.)
-        if last_sent_time >= self._min_query_time:
+        if last_sent_time >= self._min_query_time or self._mcu.is_fileoutput():
             if not self._homing:
                 return False
             if not self._last_state.get('homing', 0):
                 for s in self._steppers:
-                    s.note_homing_triggered()
+                    s.note_homing_end(did_trigger=True)
                 self._homing = False
                 return False
-            if print_time > self._home_timeout:
+            if print_time > home_end_time:
                 # Timeout - disable endstop checking
+                for s in self._steppers:
+                    s.note_homing_end()
+                self._homing = False
                 msg = self._home_cmd.encode(self._oid, 0, 0, 0, 0, 0)
                 self._mcu.send(msg, reqclock=0, cq=self._cmd_queue)
-                raise error("Timeout during endstop homing")
+                raise self.TimeoutError("Timeout during endstop homing")
         if self._mcu.is_shutdown():
             raise error("MCU is shutdown")
         if print_time >= self._next_query_time:
