@@ -99,7 +99,7 @@ class MCU_stepper:
         pos = params['pos']
         if self._invert_dir:
             pos = -pos
-        self._mcu_position_offset = pos - self._commanded_pos
+        self._commanded_pos = pos - self._mcu_position_offset
     def step(self, print_time, sdir):
         count = self._ffi_lib.stepcompress_push(
             self._stepqueue, print_time, sdir)

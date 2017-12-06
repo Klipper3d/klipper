@@ -70,7 +70,7 @@ class DeltaKinematics:
             % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
                math.sqrt(self.very_slow_xy2)))
         self.set_position([0., 0., 0.])
-    def get_steppers(self):
+    def get_steppers(self, flags=""):
         return list(self.steppers)
     def _cartesian_to_actuator(self, coord):
         return [math.sqrt(self.arm2[i] - (self.towers[i][0] - coord[0])**2
@@ -101,6 +101,9 @@ class DeltaKinematics:
         ey_y = matrix_mul(ey, y)
         ez_z = matrix_mul(ez, z)
         return matrix_add(carriage1, matrix_add(ex_x, matrix_add(ey_y, ez_z)))
+    def get_position(self):
+        spos = [s.mcu_stepper.get_commanded_position() for s in self.steppers]
+        return self._actuator_to_cartesian(spos)
     def set_position(self, newpos):
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
