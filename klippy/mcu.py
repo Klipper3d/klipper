@@ -45,6 +45,8 @@ class MCU_stepper:
                 self._oid, self._step_pin, self._dir_pin,
                 self._mcu.seconds_to_clock(min_stop_interval),
                 self._invert_step))
+        self._mcu.add_config_cmd(
+            "reset_step_clock oid=%d clock=0" % (self._oid,), is_init=True)
         step_cmd = self._mcu.lookup_command(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd = self._mcu.lookup_command(
@@ -83,12 +85,15 @@ class MCU_stepper:
         ret = self._ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
-        if not did_trigger:
-            return
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
-        if self._mcu.is_fileoutput():
+        data = (self._reset_cmd.msgid, self._oid, 0)
+        ret = self._ffi_lib.stepcompress_queue_msg(
+            self._stepqueue, data, len(data))
+        if ret:
+            raise error("Internal error in stepcompress")
+        if not did_trigger or self._mcu.is_fileoutput():
             return
         cmd = self._get_position_cmd.encode(self._oid)
         params = self._mcu.send_with_response(cmd, 'stepper_position', self._oid)
@@ -96,16 +101,6 @@ class MCU_stepper:
         if self._invert_dir:
             pos = -pos
         self._mcu_position_offset = pos - self._commanded_pos
-    def reset_step_clock(self, print_time):
-        clock = self._mcu.print_time_to_clock(print_time)
-        ret = self._ffi_lib.stepcompress_reset(self._stepqueue, clock)
-        if ret:
-            raise error("Internal error in stepcompress")
-        data = (self._reset_cmd.msgid, self._oid, clock & 0xffffffff)
-        ret = self._ffi_lib.stepcompress_queue_msg(
-            self._stepqueue, data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
     def step(self, print_time, sdir):
         count = self._ffi_lib.stepcompress_push(
             self._stepqueue, print_time, sdir)
