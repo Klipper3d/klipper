@@ -179,7 +179,7 @@ class MCU_endstop:
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
-        self._next_query_time = print_time + self.RETRY_QUERY
+        self._next_query_time = self._min_query_time + self.RETRY_QUERY
         msg = self._home_cmd.encode(
             self._oid, clock, self._mcu.seconds_to_clock(sample_time),
             sample_count, rest_ticks, 1 ^ self._invert)
@@ -195,7 +195,6 @@ class MCU_endstop:
         self._last_state = params
     def _check_busy(self, eventtime, home_end_time=0.):
         # Check if need to send an end_stop_query command
-        print_time = self._mcu.estimated_print_time(eventtime)
         last_sent_time = self._last_state.get('#sent_time', -1.)
         if last_sent_time >= self._min_query_time or self._mcu.is_fileoutput():
             if not self._homing:
@@ -205,7 +204,8 @@ class MCU_endstop:
                     s.note_homing_end(did_trigger=True)
                 self._homing = False
                 return False
-            if print_time > home_end_time:
+            last_sent_print_time = self._mcu.estimated_print_time(last_sent_time)
+            if last_sent_print_time > home_end_time:
                 # Timeout - disable endstop checking
                 for s in self._steppers:
                     s.note_homing_end()
@@ -215,15 +215,14 @@ class MCU_endstop:
                 raise self.TimeoutError("Timeout during endstop homing")
         if self._mcu.is_shutdown():
             raise error("MCU is shutdown")
-        if print_time >= self._next_query_time:
-            self._next_query_time = print_time + self.RETRY_QUERY
+        if eventtime >= self._next_query_time:
+            self._next_query_time = eventtime + self.RETRY_QUERY
             msg = self._query_cmd.encode(self._oid)
             self._mcu.send(msg, cq=self._cmd_queue)
         return True
     def query_endstop(self, print_time):
         self._homing = False
-        self._next_query_time = print_time
-        self._min_query_time = self._mcu.monotonic()
+        self._min_query_time = self._next_query_time = self._mcu.monotonic()
     def query_endstop_wait(self):
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
