@@ -10,9 +10,9 @@ ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
 class Homing:
-    def __init__(self, toolhead, changed_axes):
+    def __init__(self, toolhead):
         self.toolhead = toolhead
-        self.changed_axes = changed_axes
+        self.changed_axes = []
         self.verify_retract = True
     def set_no_verify_retract(self):
         self.verify_retract = False
@@ -79,6 +79,13 @@ class Homing:
                 if s.get_mcu_position() == pos:
                     raise EndstopError(
                         "Endstop %s still triggered after retract" % (name,))
+    def home_axes(self, axes):
+        self.changed_axes = axes
+        try:
+            self.toolhead.get_kinematics().home(self)
+        except EndstopError:
+            self.toolhead.motor_off()
+            raise
 
 def query_endstops(print_time, query_flags, steppers):
     if query_flags == "get_mcu_position":

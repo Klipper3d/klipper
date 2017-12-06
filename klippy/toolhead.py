@@ -327,12 +327,6 @@ class ToolHead:
         self.move_queue.add_move(move)
         if self.print_time > self.need_check_stall:
             self._check_stall()
-    def home(self, homing_state):
-        try:
-            self.kin.home(homing_state)
-        except homing.EndstopError as e:
-            self.motor_off()
-            raise
     def dwell(self, delay, check_stall=True):
         self.get_last_move_time()
         self.update_move_time(delay)
@@ -382,6 +376,8 @@ class ToolHead:
             self.reset_print_time()
         except:
             logging.exception("Exception in do_shutdown")
+    def get_kinematics(self):
+        return self.kin
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):

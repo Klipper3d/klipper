@@ -354,11 +354,11 @@ class GCodeParser:
                 axes.append(self.axis2pos[axis])
         if not axes:
             axes = [0, 1, 2]
-        homing_state = homing.Homing(self.toolhead, axes)
+        homing_state = homing.Homing(self.toolhead)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
         try:
-            self.toolhead.home(homing_state)
+            homing_state.home_axes(axes)
         except homing.EndstopError as e:
             raise error(str(e))
         newpos = self.toolhead.get_position()
