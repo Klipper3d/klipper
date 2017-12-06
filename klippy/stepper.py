@@ -45,7 +45,7 @@ class PrinterStepper:
         self.mcu_stepper.set_position(pos)
     def motor_enable(self, print_time, enable=0):
         if (self.mcu_enable is not None
-            and self.mcu_enable.get_last_setting() != enable):
+            and self.need_motor_enable != (not enable)):
             self.mcu_enable.set_digital(print_time, enable)
         self.need_motor_enable = not enable
 

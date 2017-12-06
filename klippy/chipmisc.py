@@ -208,7 +208,6 @@ class ReplicapeDACEnable:
         self.mcu = replicape.host_mcu
         self.value = replicape.stepper_dacs[channel]
         self.pwm = pca9685_pwm(replicape, channel, pin_params)
-        self.last = 0
     def get_mcu(self):
         return self.mcu
     def setup_max_duration(self, max_duration):
@@ -218,9 +217,6 @@ class ReplicapeDACEnable:
             self.pwm.set_pwm(print_time, self.value)
         else:
             self.pwm.set_pwm(print_time, 0.)
-        self.last = value
-    def get_last_setting(self):
-        return self.last
 
 ReplicapeStepConfig = {
     'disable': None,

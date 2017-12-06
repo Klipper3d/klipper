@@ -233,7 +233,6 @@ class MCU_digital_out:
         self._invert = self._shutdown_value = pin_params['invert']
         self._max_duration = 2.
         self._last_clock = 0
-        self._last_value = None
         self._cmd_queue = mcu.alloc_command_queue()
         self._set_cmd = None
     def get_mcu(self):
@@ -264,9 +263,6 @@ class MCU_digital_out:
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
         self._last_clock = clock
-        self._last_value = value
-    def get_last_setting(self):
-        return self._last_value
     def set_pwm(self, print_time, value):
         self.set_digital(print_time, value >= 0.5)
 
