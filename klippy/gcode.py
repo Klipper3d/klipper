@@ -409,7 +409,7 @@ class GCodeParser:
         if self.toolhead is None:
             self.cmd_default(params)
             return
-        raw_pos = self.toolhead.query_endstops("get_mcu_position")
+        raw_pos = homing.query_position(self.toolhead)
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f Count %s" % (
             self.last_position[0], self.last_position[1],
             self.last_position[2], self.last_position[3],
@@ -451,12 +451,7 @@ class GCodeParser:
     cmd_QUERY_ENDSTOPS_aliases = ["M119"]
     def cmd_QUERY_ENDSTOPS(self, params):
         # Get Endstop Status
-        if self.is_fileinput:
-            return
-        try:
-            res = self.toolhead.query_endstops()
-        except homing.EndstopError as e:
-            raise error(str(e))
+        res = homing.query_endstops(self.toolhead)
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                                for name, t in res]))
     cmd_PID_TUNE_help = "Run PID Tuning"

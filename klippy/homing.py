@@ -87,11 +87,9 @@ class Homing:
             self.toolhead.motor_off()
             raise
 
-def query_endstops(print_time, query_flags, steppers):
-    if query_flags == "get_mcu_position":
-        # Only the commanded position is requested
-        return [(s.name.upper(), s.mcu_stepper.get_mcu_position())
-                for s in steppers]
+def query_endstops(toolhead):
+    print_time = toolhead.get_last_move_time()
+    steppers = toolhead.get_kinematics().get_steppers()
     out = []
     for s in steppers:
         for mcu_endstop, name in s.get_endstops():
@@ -100,6 +98,10 @@ def query_endstops(print_time, query_flags, steppers):
         for mcu_endstop, name in s.get_endstops():
             out.append((name, mcu_endstop.query_endstop_wait()))
     return out
+
+def query_position(toolhead):
+    steppers = toolhead.get_kinematics().get_steppers()
+    return [(s.name.upper(), s.mcu_stepper.get_mcu_position()) for s in steppers]
 
 class EndstopError(Exception):
     pass

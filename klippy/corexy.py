@@ -33,6 +33,8 @@ class CoreXYKinematics:
         self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.steppers[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
+    def get_steppers(self):
+        return list(self.steppers)
     def set_position(self, newpos):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
@@ -71,8 +73,6 @@ class CoreXYKinematics:
                 # Support endstop phase detection on Z axis
                 coord[axis] = s.position_endstop + s.get_homed_offset()
                 homing_state.set_homed_position(coord)
-    def query_endstops(self, print_time, query_flags):
-        return homing.query_endstops(print_time, query_flags, self.steppers)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:

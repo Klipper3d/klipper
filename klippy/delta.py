@@ -58,6 +58,8 @@ class DeltaKinematics:
             % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
                math.sqrt(self.very_slow_xy2)))
         self.set_position([0., 0., 0.])
+    def get_steppers(self):
+        return list(self.steppers)
     def _cartesian_to_actuator(self, coord):
         return [math.sqrt(self.arm_length2
                           - (self.towers[i][0] - coord[0])**2
@@ -124,8 +126,6 @@ class DeltaKinematics:
                 + self.steppers[i].get_homed_offset()
                 for i in StepList]
         homing_state.set_homed_position(self._actuator_to_cartesian(spos))
-    def query_endstops(self, print_time, query_flags):
-        return homing.query_endstops(print_time, query_flags, self.steppers)
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:
