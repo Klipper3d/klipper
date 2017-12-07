@@ -87,7 +87,8 @@ class PrinterHomingStepper(PrinterStepper):
             self.homing_endstop_phase = config.getint(
                 'homing_endstop_phase', None, minval=0
                 , maxval=self.homing_stepper_phases-1)
-            if self.homing_endstop_phase is not None:
+            if (self.homing_endstop_phase is not None
+                and config.getboolean('homing_endstop_align_zero', False)):
                 # Adjust the endstop position so 0.0 is always at a full step
                 micro_steps = self.homing_stepper_phases // 4
                 phase_offset = (
