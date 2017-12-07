@@ -18,9 +18,8 @@ class MCU_stepper:
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
-        self._commanded_pos = 0
+        self._commanded_pos = self._mcu_position_offset = 0.
         self._step_dist = self._inv_step_dist = 1.
-        self._mcu_position_offset = 0
         self._min_stop_interval = 0.
         self._reset_cmd = self._get_position_cmd = None
         self._ffi_lib = self._stepqueue = None
@@ -66,16 +65,16 @@ class MCU_stepper:
     def get_step_dist(self):
         return self._step_dist
     def set_position(self, pos):
-        if pos >= 0.:
-            steppos = int(pos * self._inv_step_dist + 0.5)
-        else:
-            steppos = int(pos * self._inv_step_dist - 0.5)
+        steppos = pos * self._inv_step_dist
         self._mcu_position_offset += self._commanded_pos - steppos
         self._commanded_pos = steppos
     def get_commanded_position(self):
         return self._commanded_pos * self._step_dist
     def get_mcu_position(self):
-        return self._commanded_pos + self._mcu_position_offset
+        mcu_pos = self._commanded_pos + self._mcu_position_offset
+        if mcu_pos >= 0.:
+            return int(mcu_pos + 0.5)
+        return int(mcu_pos - 0.5)
     def note_homing_start(self, homing_clock):
         ret = self._ffi_lib.stepcompress_set_homing(
             self._stepqueue, homing_clock)
