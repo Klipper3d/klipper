@@ -124,3 +124,18 @@ rates, but the stepper motor may not have sufficient torque to move at
 a higher speed. So, for a Z axis with a very precise step_distance the
 actual obtainable max_z_velocity may be smaller than what is
 configured in Marlin.
+
+### When I set "restart_method=command" my AVR device just hangs on a restart
+
+Some old versions of the AVR bootloader have a known bug in watchdog
+event handling. This typically manifests when the printer.cfg file has
+restart_method set to "command". When the bug occurs, the AVR device
+will be unresponsive until power is removed and reapplied to the
+device (the power or status LEDs may also blink repeatedly until the
+power is removed).
+
+The workaround is to use a restart_method other than "command" or to
+flash an updated bootloader to the AVR devices. Flashing a new
+bootloader is a one time step that typically requires an external
+programmer - search the web to find the instructions for your
+particular device.
