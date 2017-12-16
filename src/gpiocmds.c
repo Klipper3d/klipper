@@ -142,7 +142,7 @@ soft_pwm_load_event(struct timer *timer)
     s->flags = flags;
     gpio_out_write(s->pin, flags & SPF_ON);
     if (!(flags & SPF_TOGGLING)) {
-        // Pin is in an always on (value=255) or always off (value=0) state
+        // Pin is in an always on (value=256) or always off (value=0) state
         if (!(flags & SPF_CHECK_END))
             return SF_DONE;
         s->timer.waketime = s->end_time = s->end_time + s->max_duration;
@@ -199,7 +199,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
     s->end_time = time;
     s->next_on_duration = next_on_duration;
     s->next_off_duration = next_off_duration;
-    s->flags |= next_flags;
+    s->flags = (s->flags & 0xf) | next_flags;
     if (s->flags & SPF_TOGGLING && timer_is_before(s->timer.waketime, time)) {
         // soft_pwm_toggle_event() will schedule a load event when ready
     } else {
