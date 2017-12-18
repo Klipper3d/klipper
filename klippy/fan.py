@@ -42,7 +42,7 @@ class PrinterHeaterFan:
         max_power = self.fan.max_power
         self.fan_speed = config.getfloat(
             "fan_speed", max_power, minval=0., maxval=max_power)
-        self.fan.mcu_fan.setup_shutdown_value(max_power)
+        self.fan.mcu_fan.setup_start_value(0., max_power)
         printer.reactor.register_timer(self.callback, printer.reactor.NOW)
     def callback(self, eventtime):
         current_temp, target_temp = self.heater.get_temp(eventtime)
