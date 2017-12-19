@@ -7,7 +7,7 @@ import pins, mcu
 
 
 ######################################################################
-# Statically configured output pins
+# Output pins
 ######################################################################
 
 class PrinterStaticDigitalOut:
@@ -17,26 +17,70 @@ class PrinterStaticDigitalOut:
             mcu_pin = pins.setup_pin(printer, 'digital_out', pin_desc)
             mcu_pin.setup_static()
 
-class PrinterStaticPWM:
+PIN_MIN_TIME = 0.100
+
+class PrinterPin:
     def __init__(self, printer, config):
-        mcu_pwm = pins.setup_pin(printer, 'pwm', config.get('pin'))
-        mcu_pwm.setup_max_duration(0.)
-        hard_pwm = config.getint('hard_pwm', None, minval=1)
-        if hard_pwm is None:
-            mcu_pwm.setup_cycle_time(config.getfloat(
-                'cycle_time', 0.100, above=0.))
+        self.printer = printer
+        self.is_pwm = 'pwm' in config.section.split()[0]
+        if self.is_pwm:
+            self.mcu_pin = pins.setup_pin(printer, 'pwm', config.get('pin'))
+            hard_pwm = config.getint('hard_pwm', None, minval=1)
+            if hard_pwm is None:
+                self.mcu_pin.setup_cycle_time(config.getfloat(
+                    'cycle_time', 0.100, above=0.))
+            else:
+                self.mcu_pin.setup_hard_pwm(hard_pwm)
+            self.scale = config.getfloat('scale', 1., above=0.)
         else:
-            mcu_pwm.setup_hard_pwm(hard_pwm)
-        scale = config.getfloat('scale', 1., above=0.)
-        value = config.getfloat('value', minval=0., maxval=scale)
-        mcu_pwm.setup_static_pwm(value / scale)
+            self.mcu_pin = pins.setup_pin(
+                printer, 'digital_out', config.get('pin'))
+            self.scale = 1.
+        self.mcu_pin.setup_max_duration(0.)
+        self.last_value_time = 0.
+        self.last_value = config.getfloat(
+            'value', 0., minval=0., maxval=self.scale)
+        self.is_static = config.section.startswith('static_')
+        if self.is_static:
+            self.mcu_pin.setup_static_pwm(self.last_value / self.scale)
+        else:
+            self.mcu_pin.setup_start_value(
+                self.last_value, config.getfloat('shutdown_value', 0.,
+                                                 minval=0., maxval=self.scale))
+        self.gcode = printer.objects['gcode']
+        self.gcode.register_command("SET_PIN", self.cmd_SET_PIN,
+                                    desc=self.cmd_SET_PIN_help)
+    cmd_SET_PIN_help = "Set the value of an output pin"
+    def cmd_SET_PIN(self, params):
+        pin_name = self.gcode.get_str('PIN', params)
+        pin = self.printer.objects.get('pin ' + pin_name)
+        if pin is not self:
+            if pin is None:
+                raise self.gcode.error("Pin not configured")
+            return pin.cmd_SET_PIN(params)
+        if self.is_static:
+            raise self.gcode.error("Static pin can not be changed at run-time")
+        value = self.gcode.get_float('VALUE', params)
+        if value == self.last_value:
+            return
+        print_time = self.printer.objects['toolhead'].get_last_move_time()
+        print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
+        if self.is_pwm:
+            if value < 0. or value > self.scale:
+                raise self.gcode.error("Invalid pin value")
+            self.mcu_pin.set_pwm(print_time, value)
+        else:
+            if value not in [0., 1.]:
+                raise self.gcode.error("Invalid pin value")
+            self.mcu_pin.set_digital(print_time, value)
+        self.last_value = value
+        self.last_value_time = print_time
 
 
 ######################################################################
 # Servos
 ######################################################################
 
-SERVO_MIN_TIME = 0.100
 SERVO_SIGNAL_PERIOD = 0.020
 
 class PrinterServo:
@@ -60,7 +104,7 @@ class PrinterServo:
     def set_pwm(self, print_time, value):
         if value == self.last_value:
             return
-        print_time = max(self.last_value_time + SERVO_MIN_TIME, print_time)
+        print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         self.mcu_servo.set_pwm(print_time, value)
         self.last_value = value
         self.last_value_time = print_time
@@ -300,8 +344,12 @@ def add_printer_objects(printer, config):
             printer, config.getsection('replicape')))
     for s in config.get_prefix_sections('static_digital_output '):
         printer.add_object(s.section, PrinterStaticDigitalOut(printer, s))
+    for s in config.get_prefix_sections('digital_output '):
+        printer.add_object('pin' + s.section[14:], PrinterPin(printer, s))
     for s in config.get_prefix_sections('static_pwm_output '):
-        printer.add_object(s.section, PrinterStaticPWM(printer, s))
+        printer.add_object('pin' + s.section[17:], PrinterPin(printer, s))
+    for s in config.get_prefix_sections('pwm_output '):
+        printer.add_object('pin' + s.section[10:], PrinterPin(printer, s))
     for s in config.get_prefix_sections('servo '):
         printer.add_object(s.section, PrinterServo(printer, s))
     for s in config.get_prefix_sections('ad5206 '):
