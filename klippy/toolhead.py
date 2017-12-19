@@ -12,18 +12,22 @@ import mcu, homing, cartesian, corexy, delta, extruder
 
 # Class to track each move request
 class Move:
-    def __init__(self, toolhead, start_pos, end_pos, speed):
+    def __init__(self, toolhead, start_pos, end_pos, speed, speed_factor, flow_factor):
         self.toolhead = toolhead
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
         self.is_kinematic_move = True
-        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
-        self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
+        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        axes_d[3] *= flow_factor
+        speed *= speed_factor
         if not move_d:
             # Extrude only move
-            self.move_d = move_d = abs(axes_d[3])
+            move_d = abs(axes_d[3])
             self.is_kinematic_move = False
+        self.axes_d = axes_d
+        self.move_d = move_d
         self.min_move_t = move_d / speed
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
@@ -314,9 +318,9 @@ class ToolHead:
         self._flush_lookahead()
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos)
-    def move(self, newpos, speed):
+    def move(self, newpos, speed, speed_factor = 1.0, flow_factor = 1.0):
         speed = min(speed, self.max_velocity)
-        move = Move(self, self.commanded_pos, newpos, speed)
+        move = Move(self, self.commanded_pos, newpos, speed, speed_factor, flow_factor)
         if not move.move_d:
             return
         if move.is_kinematic_move:
