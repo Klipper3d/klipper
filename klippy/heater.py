@@ -221,6 +221,8 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.max_delta = config.getfloat('max_delta', 1.0, above=0.)
+        self.max_deriv = config.getfloat('max_deriv', 0.1, above=0.)
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
         imax = config.getfloat('pid_integral_max', heater.max_power, minval=0.)
         self.temp_integ_max = imax / self.Ki
@@ -255,7 +257,7 @@ class ControlPID:
             self.prev_temp_integ = temp_integ
     def check_busy(self, eventtime):
         temp_diff = self.heater.target_temp - self.heater.last_temp
-        return abs(temp_diff) > 1. or abs(self.prev_temp_deriv) > 0.1
+        return abs(temp_diff) > self.max_delta or abs(self.prev_temp_deriv) > self.max_deriv
 
 
 ######################################################################
