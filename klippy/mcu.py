@@ -574,9 +574,9 @@ class MCU:
             msgparser = self._serial.msgparser
             info = [
                 "Configured MCU '%s' (%d moves)" % (self._name, move_count),
-                "Loaded MCU '%s' %d commands (%s)" % (
+                "Loaded MCU '%s' %d commands (%s / %s)" % (
                     self._name, len(msgparser.messages_by_id),
-                    msgparser.version),
+                    msgparser.version, msgparser.build_versions),
                 "MCU '%s' config: %s" % (self._name, " ".join(
                     ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
             self._printer.bglogger.set_rollover_info(self._name, "\n".join(info))

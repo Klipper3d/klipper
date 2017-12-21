@@ -4,8 +4,7 @@
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-import sys, os, subprocess, optparse, logging, shlex, socket, time
+import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
 import json, zlib
 sys.path.append('./klippy')
 import msgproto
@@ -182,7 +181,7 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 ######################################################################
 
 def build_identify(cmd_by_id, msg_to_id, responses, static_strings
-                   , constants, version):
+                   , constants, version, toolstr):
     #commands, messages, static_strings
     messages = dict((msgid, msg) for msg, msgid in msg_to_id.items())
     data = {}
@@ -193,6 +192,7 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
                                for i in range(len(static_strings)) }
     data['config'] = constants
     data['version'] = version
+    data['build_versions'] = toolstr
 
     # Format compressed info into C code
     data = json.dumps(data)
@@ -203,6 +203,9 @@ def build_identify(cmd_by_id, msg_to_id, responses, static_strings
             out.append('\n   ')
         out.append(" 0x%02x," % (ord(zdata[i]),))
     fmt = """
+// version: %s
+// build_versions: %s
+
 const uint8_t command_identify_data[] PROGMEM = {%s
 };
 
@@ -210,7 +213,7 @@ const uint8_t command_identify_data[] PROGMEM = {%s
 const uint32_t command_identify_size PROGMEM
     = ARRAY_SIZE(command_identify_data);
 """
-    return data, fmt % (''.join(out), len(zdata), len(data))
+    return data, fmt % (version, toolstr, ''.join(out), len(zdata), len(data))
 
 
 ######################################################################
@@ -254,6 +257,36 @@ def build_version(extra):
     version = "%s-%s-%s%s" % (version, btime, hostname, extra)
     return version
 
+# Run "tool --version" for each specified tool and extract versions
+def tool_versions(tools):
+    tools = [t.strip() for t in tools.split(';')]
+    versions = ['', '']
+    success = 0
+    for tool in tools:
+        # Extract first line from "tool --version" output
+        verstr = check_output("%s --version" % (tool,)).split('\n')[0]
+        # Check if this tool looks like a binutils program
+        isbinutils = 0
+        if verstr.startswith('GNU '):
+            isbinutils = 1
+            verstr = verstr[4:]
+        # Extract version information and exclude program name
+        if ' ' not in verstr:
+            continue
+        prog, ver = verstr.split(' ', 1)
+        if not prog or not ver:
+            continue
+        # Check for any version conflicts
+        if versions[isbinutils] and versions[isbinutils] != ver:
+            logging.debug("Mixed version %s vs %s" % (
+                repr(versions[isbinutils]), repr(ver)))
+            versions[isbinutils] = "mixed"
+            continue
+        versions[isbinutils] = ver
+        success += 1
+    cleanbuild = versions[0] and versions[1] and success == len(tools)
+    return cleanbuild, "gcc: %s binutils: %s" % (versions[0], versions[1])
+
 
 ######################################################################
 # Main code
@@ -266,6 +299,8 @@ def main():
                     help="extra version string to append to version")
     opts.add_option("-d", dest="write_dictionary",
                     help="file to write mcu protocol dictionary")
+    opts.add_option("-t", "--tools", dest="tools", default="",
+                    help="list of build programs to extract version from")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="enable debug messages")
 
@@ -349,12 +384,14 @@ def main():
     cmdcode = build_commands(cmd_by_id, messages_by_name, all_param_types)
     paramcode = build_param_types(all_param_types)
     # Create identify information
+    cleanbuild, toolstr = tool_versions(options.tools)
     version = build_version(options.extra)
     sys.stdout.write("Version: %s\n" % (version,))
     responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
                  if msgname not in commands]
-    datadict, icode = build_identify(cmd_by_id, msg_to_id, responses
-                                     , static_strings, constants, version)
+    datadict, icode = build_identify(
+        cmd_by_id, msg_to_id, responses,
+        static_strings, constants, version, toolstr)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + call_lists_code + static_strings_code
