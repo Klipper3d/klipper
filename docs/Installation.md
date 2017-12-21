@@ -23,9 +23,14 @@ release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
 page, follow the prompt to upgrade OctoPrint to v1.3.5 or later.
 
-After installing OctoPi and upgrading OctoPrint, ssh into the target
-machine (ssh pi@octopi -- password is "raspberry") and run the
-following commands:
+After installing OctoPi and upgrading OctoPrint, it will be necessary
+to ssh into the target machine to run a handful of system commands. If
+using a Linux or MacOS desktop, then the "ssh" software should already
+be installed on the desktop. There are free ssh clients available for
+other desktops (eg,
+[PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/)). Use the
+ssh utility to connect to the Raspberry Pi (ssh pi@octopi -- password
+is "raspberry") and run the following commands:
 
 ```
 git clone https://github.com/KevinOConnor/klipper
@@ -40,7 +45,8 @@ minutes to complete.
 Building and flashing the micro-controller
 ==========================================
 
-To compile the micro-controller code, start by configuring it:
+To compile the micro-controller code, start by running these commands
+on the Raspberry Pi:
 
 ```
 cd ~/klipper/
@@ -61,26 +67,6 @@ sudo service klipper stop
 make flash FLASH_DEVICE=/dev/ttyACM0
 sudo service klipper start
 ```
-
-Configuring Klipper
-===================
-
-The Klipper configuration is stored in a text file on the Raspberry
-Pi. Take a look at the example config files in the
-[config directory](../config/). The
-[example.cfg](../config/example.cfg) file contains documentation on
-command parameters and it can also be used as an initial config file
-template. However, for most printers, one of the other config files
-may be a more concise starting point. The next step is to copy and
-edit one of these config files - for example:
-
-```
-cp ~/klipper/config/example.cfg ~/printer.cfg
-nano ~/printer.cfg
-```
-
-Make sure to review and update each setting that is appropriate for
-the hardware.
 
 Configuring OctoPrint to use Klipper
 ====================================
@@ -105,13 +91,47 @@ try reloading the page.)
 Once connected, navigate to the "Terminal" tab and type "status"
 (without the quotes) into the command entry box and click "Send". The
 terminal window will likely report there is an error opening the
-config file - issue a "restart" command in the OctoPrint terminal to
-load the config. A "status" command will report the printer is ready
-if the Klipper config file is successfully read and the
-micro-controller is successfully found and configured. It is not
-unusual to have configuration errors during the initial setup - update
-the printer config file and issue "restart" until "status" reports the
-printer is ready.
+config file - that means Octoprint is successfully communicating with
+Klipper. Proceed to the next section.
+
+Configuring Klipper
+===================
+
+The Klipper configuration is stored in a text file on the Raspberry
+Pi. Take a look at the example config files in the
+[config directory](../config/). The
+[example.cfg](../config/example.cfg) file contains documentation on
+command parameters and it can also be used as an initial config file
+template. However, for most printers, one of the other config files
+may be a more concise starting point.
+
+Arguably the easiest way to update the Klipper configuration file is
+to use a desktop editor that supports editing files over the "scp"
+and/or "sftp" protocols. There are freely available tools that support
+this (eg, Notepad++, WinSCP, and Cyberduck). Use one of the example
+config files as a starting point and save it as a file named
+"printer.cfg" in the home directory of the pi user (ie,
+/home/pi/printer.cfg).
+
+Alternatively, one can also copy and edit the file directly on the
+Raspberry Pi via ssh - for example:
+
+```
+cp ~/klipper/config/example.cfg ~/printer.cfg
+nano ~/printer.cfg
+```
+
+Make sure to review and update each setting that is appropriate for
+the hardware.
+
+After creating and editing the file it will be necessary to issue a
+"restart" command in the OctoPrint web terminal to load the config. A
+"status" command will report the printer is ready if the Klipper
+config file is successfully read and the micro-controller is
+successfully found and configured. It is not unusual to have
+configuration errors during the initial setup - update the printer
+config file and issue "restart" until "status" reports the printer is
+ready.
 
 Klipper reports error messages via the OctoPrint terminal tab. The
 "status" command can be used to re-report error messages. The default
