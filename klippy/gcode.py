@@ -43,6 +43,7 @@ class GCodeParser:
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
+        self.speed_factor = 1. / 60.
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
@@ -104,10 +105,10 @@ class GCodeParser:
         out.append(
             "gcode state: absolutecoord=%s absoluteextrude=%s"
             " base_position=%s last_position=%s homing_add=%s"
-            " speed=%s" % (
+            " speed_factor=%s speed=%s" % (
                 self.absolutecoord, self.absoluteextrude,
                 self.base_position, self.last_position, self.homing_add,
-                self.speed))
+                self.speed_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
@@ -315,7 +316,7 @@ class GCodeParser:
         self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M114', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -335,7 +336,7 @@ class GCodeParser:
                         # value relative to base coordinate position
                         self.last_position[p] = v + self.base_position[p]
             if 'F' in params:
-                speed = float(params['F']) / 60.
+                speed = float(params['F']) * self.speed_factor
                 if speed <= 0.:
                     raise error("Invalid speed in '%s'" % (params['#original'],))
                 self.speed = speed
@@ -409,6 +410,12 @@ class GCodeParser:
         for p, offset in offsets.items():
             self.base_position[p] += self.homing_add[p] - offset
             self.homing_add[p] = offset
+    def cmd_M220(self, params):
+        # Set speed factor override percentage
+        value = self.get_float('S', params, 100.) / (60. * 100.)
+        if value <= 0.:
+            raise error("Invalid factor in '%s'" % (params['#original'],))
+        self.speed_factor = value
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
