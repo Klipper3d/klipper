@@ -1,3 +1,3 @@
 # FIRMWARE_RESTART - Restart Firmware 
 
-Restarts the firmare on the MCU
+Restarts the firmware on the MCU
