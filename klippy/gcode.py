@@ -44,6 +44,7 @@ class GCodeParser:
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.speed_factor = 1. / 60.
+        self.extrude_factor = 1.
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
@@ -105,10 +106,10 @@ class GCodeParser:
         out.append(
             "gcode state: absolutecoord=%s absoluteextrude=%s"
             " base_position=%s last_position=%s homing_add=%s"
-            " speed_factor=%s speed=%s" % (
+            " speed_factor=%s extrude_factor=%s speed=%s" % (
                 self.absolutecoord, self.absoluteextrude,
                 self.base_position, self.last_position, self.homing_add,
-                self.speed_factor, self.speed))
+                self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
@@ -316,7 +317,7 @@ class GCodeParser:
         self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220', 'M221',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M114', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -325,16 +326,24 @@ class GCodeParser:
     def cmd_G1(self, params):
         # Move
         try:
-            for a, p in self.axis2pos.items():
-                if a in params:
-                    v = float(params[a])
-                    if (not self.absolutecoord
-                        or (p>2 and not self.absoluteextrude)):
+            for axis in 'XYZ':
+                if axis in params:
+                    v = float(params[axis])
+                    pos = self.axis2pos[axis]
+                    if not self.absolutecoord:
                         # value relative to position of last move
-                        self.last_position[p] += v
+                        self.last_position[pos] += v
                     else:
                         # value relative to base coordinate position
-                        self.last_position[p] = v + self.base_position[p]
+                        self.last_position[pos] = v + self.base_position[pos]
+            if 'E' in params:
+                v = float(params['E']) * self.extrude_factor
+                if not self.absolutecoord or not self.absoluteextrude:
+                    # value relative to position of last move
+                    self.last_position[3] += v
+                else:
+                    # value relative to base coordinate position
+                    self.last_position[3] = v + self.base_position[3]
             if 'F' in params:
                 speed = float(params['F']) * self.speed_factor
                 if speed <= 0.:
@@ -400,13 +409,15 @@ class GCodeParser:
         offsets = { p: self.get_float(a, params)
                     for a, p in self.axis2pos.items() if a in params }
         for p, offset in offsets.items():
+            if p == 3:
+                offset *= self.extrude_factor
             self.base_position[p] = self.last_position[p] - offset
         if not offsets:
             self.base_position = list(self.last_position)
     def cmd_M206(self, params):
         # Set home offset
-        offsets = { p: self.get_float(a, params)
-                    for a, p in self.axis2pos.items() if a in params }
+        offsets = { self.axis2pos[a]: self.get_float(a, params)
+                    for a in 'XYZ' if a in params }
         for p, offset in offsets.items():
             self.base_position[p] += self.homing_add[p] - offset
             self.homing_add[p] = offset
@@ -416,6 +427,15 @@ class GCodeParser:
         if value <= 0.:
             raise error("Invalid factor in '%s'" % (params['#original'],))
         self.speed_factor = value
+    def cmd_M221(self, params):
+        # Set extrude factor override percentage
+        new_extrude_factor = self.get_float('S', params, 100.) / 100.
+        if new_extrude_factor <= 0.:
+            raise error("Invalid factor in '%s'" % (params['#original'],))
+        last_e_pos = self.last_position[3]
+        e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
+        self.base_position[3] = last_e_pos - e_value * new_extrude_factor
+        self.extrude_factor = new_extrude_factor
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
