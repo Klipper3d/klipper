@@ -101,6 +101,13 @@ class GCodeParser:
             len(self.input_log),))
         for eventtime, data in self.input_log:
             out.append("Read %f: %s" % (eventtime, repr(data)))
+        out.append(
+            "gcode state: absolutecoord=%s absoluteextrude=%s"
+            " base_position=%s last_position=%s homing_add=%s"
+            " speed=%s" % (
+                self.absolutecoord, self.absoluteextrude,
+                self.base_position, self.last_position, self.homing_add,
+                self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
