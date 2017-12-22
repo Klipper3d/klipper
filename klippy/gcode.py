@@ -43,6 +43,8 @@ class GCodeParser:
         self.toolhead = self.fan = self.extruder = None
         self.heaters = []
         self.speed = 25.0
+        self.speed_factor = 1.0
+        self.flow_factor = 1.0
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
@@ -308,7 +310,9 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
         'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
-        'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
+        'M140', 'M190', 'M106', 'M107', 'M206',
+        'M220', 'M221',
+        'M400',
         'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     cmd_G1_aliases = ['G0']
@@ -333,7 +337,7 @@ class GCodeParser:
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.toolhead.move(self.last_position, self.speed)
+            self.toolhead.move(self.last_position, self.speed, self.speed_factor, self.flow_factor)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):
@@ -439,6 +443,12 @@ class GCodeParser:
         for p, offset in offsets.items():
             self.base_position[p] += self.homing_add[p] - offset
             self.homing_add[p] = offset
+    def cmd_M220(self, params):
+        # Set speed factor
+        self.speed_factor = self.get_float('S', params, 100.) / 100.
+    def cmd_M221(self, params):
+        # Set flow factor
+        self.flow_factor = self.get_float('S', params, 100.) / 100.
     def cmd_M400(self, params):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
