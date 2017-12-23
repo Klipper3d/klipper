@@ -33,6 +33,7 @@ class DeltaKinematics:
                          for s, arm2 in zip(self.steppers, self.arm2)]
         self.limit_xy2 = -1.
         self.max_z = min([s.position_endstop for s in self.steppers])
+        self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
         self.limit_z = min([ep - arm
                             for ep, arm in zip(self.endstops, arm_lengths)])
         logging.info(
@@ -148,7 +149,7 @@ class DeltaKinematics:
         limit_xy2 = self.max_xy2
         if end_pos[2] > self.limit_z:
             limit_xy2 = min(limit_xy2, (self.max_z - end_pos[2])**2)
-        if xy2 > limit_xy2 or end_pos[2] < 0. or end_pos[2] > self.max_z:
+        if xy2 > limit_xy2 or end_pos[2] < self.min_z or end_pos[2] > self.max_z:
             raise homing.EndstopMoveError(end_pos)
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
