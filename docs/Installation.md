@@ -142,6 +142,10 @@ In addition to common g-code commands, Klipper supports a few extended
 commands - "status" and "restart" are examples of these commands. Use
 the "help" command to get a list of other extended commands.
 
+After Klipper reports that the "printer is ready" go on to the
+[config check document](Config_checks.md) to perform some basic checks
+on the pin definitions in the config file.
+
 Contacting the developers
 =========================
 
