@@ -103,7 +103,8 @@ class GatherShutdown:
         ext_clock = add_high_bits(clock, exp_clock, 0xffffffff)
         return sample_time + (ext_clock - sample_clock) / freq
     def annotate(self, line, seq, ts):
-        line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
+        if seq is not None:
+            line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
         def clock_update(m):
             return m.group(0)[:-1] + "(%.6f) " % (
                 self.trans_clock(int(m.group('clock')), ts),)
