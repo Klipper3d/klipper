@@ -7,7 +7,7 @@
 import optparse, datetime
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot, matplotlib.dates
+import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
@@ -100,7 +100,9 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
-    ax1.legend(loc='best')
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
     fig.savefig(outname)
