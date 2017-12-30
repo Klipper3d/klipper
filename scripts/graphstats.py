@@ -5,7 +5,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
-import matplotlib.pyplot as plt, matplotlib.dates as mdates
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot, matplotlib.dates
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
@@ -89,7 +91,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
         lastbw = bw
 
     # Build plot
-    fig, ax1 = plt.subplots()
+    fig, ax1 = matplotlib.pyplot.subplots()
     ax1.set_title("MCU bandwidth and load utilization")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Usage (%)')
@@ -99,10 +101,9 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
     ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
     ax1.legend(loc='best')
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-    #plt.gcf().autofmt_xdate()
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
-    plt.savefig(outname)
+    fig.savefig(outname)
 
 def main():
     usage = "%prog [options] <logfile> <outname>"
