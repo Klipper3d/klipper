@@ -95,7 +95,6 @@ Sensors = {
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
-PWM_CYCLE_TIME = 0.100
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -125,7 +124,9 @@ class PrinterHeater:
             self.mcu_pwm = pins.setup_pin(printer, 'digital_out', heater_pin)
         else:
             self.mcu_pwm = pins.setup_pin(printer, 'pwm', heater_pin)
-            self.mcu_pwm.setup_cycle_time(PWM_CYCLE_TIME)
+            pwm_cycle_time = config.getfloat(
+                'pwm_cycle_time', 0.100, above=0., maxval=REPORT_TIME)
+            self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         self.mcu_adc = pins.setup_pin(printer, 'adc', config.get('sensor_pin'))
         adc_range = [self.sensor.calc_adc(self.min_temp),
