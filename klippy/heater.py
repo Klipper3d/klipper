@@ -215,6 +215,9 @@ class ControlBangBang:
 # Proportional Integral Derivative (PID) control algo
 ######################################################################
 
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
+
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
@@ -255,7 +258,8 @@ class ControlPID:
             self.prev_temp_integ = temp_integ
     def check_busy(self, eventtime):
         temp_diff = self.heater.target_temp - self.heater.last_temp
-        return abs(temp_diff) > 1. or abs(self.prev_temp_deriv) > 0.1
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 
 
 ######################################################################
