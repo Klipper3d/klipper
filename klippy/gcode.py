@@ -270,7 +270,7 @@ class GCodeParser:
             heater.set_temp(print_time, temp)
         except heater.error as e:
             raise error(str(e))
-        if wait:
+        if wait and temp:
             self.bg_temp(heater)
     def set_fan_speed(self, speed):
         if self.fan is None:
