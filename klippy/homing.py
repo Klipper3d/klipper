@@ -3,7 +3,7 @@
 # Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, math
 
 HOMING_STEP_DELAY = 0.00000025
 ENDSTOP_SAMPLE_TIME = .000015
@@ -31,6 +31,15 @@ class Homing:
         self.toolhead.move(self._fill_coord(newpos), speed)
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
+    def _get_homing_speed(self, speed, endstops):
+        # Round the requested homing speed so that it is an even
+        # number of ticks per step.
+        speed = min(speed, self.toolhead.get_max_velocity()[0])
+        mcu_stepper = endstops[0][0].get_steppers()[0]
+        adjusted_freq = mcu_stepper.get_mcu().get_adjusted_freq()
+        dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
+        ticks_per_step = math.ceil(dist_ticks / speed)
+        return dist_ticks / ticks_per_step
     def homing_move(self, movepos, endstops, speed):
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
@@ -67,6 +76,7 @@ class Homing:
             est_steps = sum([est_move_d / s.get_step_dist()
                              for es, n in endstops for s in es.get_steppers()])
             self.toolhead.dwell(est_steps * HOMING_STEP_DELAY, check_stall=False)
+            speed = self._get_homing_speed(speed, endstops)
         # Setup for retract verification
         self.toolhead.get_last_move_time()
         start_mcu_pos = [(s, name, s.get_mcu_position())

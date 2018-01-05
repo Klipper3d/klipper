@@ -5,7 +5,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
-import matplotlib.pyplot as plt, matplotlib.dates as mdates
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
+import matplotlib.ticker
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
@@ -21,8 +24,16 @@ def parse_log(logname):
             #if parts and parts[0] == 'INFO:root:shutdown:':
             #    break
             continue
-        keyparts = dict(p.split('=', 1)
-                        for p in parts[2:] if not p.endswith(':'))
+        prefix = ""
+        keyparts = {}
+        for p in parts[2:]:
+            if p.endswith(':'):
+                prefix = p
+                if prefix == 'mcu:':
+                    prefix = ''
+                continue
+            name, val = p.split('=', 1)
+            keyparts[prefix + name] = val
         if keyparts.get('bytes_write', '0') == '0':
             continue
         keyparts['#sampletime'] = float(parts[1][:-1])
@@ -89,7 +100,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
         lastbw = bw
 
     # Build plot
-    fig, ax1 = plt.subplots()
+    fig, ax1 = matplotlib.pyplot.subplots()
     ax1.set_title("MCU bandwidth and load utilization")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Usage (%)')
@@ -98,23 +109,64 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
     ax1.plot_date(times, bwdeltas, 'g', label='Bandwidth')
     ax1.plot_date(times, loads, 'r', label='MCU load')
     ax1.plot_date(times, hostbuffers, 'c', label='Host buffer')
-    ax1.legend(loc='best')
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-    #plt.gcf().autofmt_xdate()
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
-    plt.savefig(outname)
+    fig.savefig(outname)
+
+def plot_frequency(data, outname):
+    all_keys = {}
+    for d in data:
+        all_keys.update(d)
+    graph_keys = {}
+    for key in all_keys:
+        if ((key in ("freq", "adj")
+             or key.endswith(":freq") or key.endswith(":adj"))
+            and key not in graph_keys):
+            graph_keys[key] = ([], [])
+    basetime = lasttime = data[0]['#sampletime']
+    for d in data:
+        st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
+        for key, (times, values) in graph_keys.items():
+            val = d.get(key)
+            if val not in (None, '0', '1'):
+                times.append(st)
+                values.append(float(val))
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("MCU frequency")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Frequency')
+    for key in sorted(graph_keys):
+        times, values = graph_keys[key]
+        ax1.plot_date(times, values, '.', label=key)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
+    ax1.grid(True)
+    fig.savefig(outname)
 
 def main():
     usage = "%prog [options] <logfile> <outname>"
     opts = optparse.OptionParser(usage)
-    opts.add_option("-a", "--awake", action="store_true"
-                    , help="graph mcu awake time")
+    opts.add_option("-a", "--awake", action="store_true",
+                    help="graph mcu awake time")
+    opts.add_option("-f", "--frequency", action="store_true",
+                    help="graph mcu frequency")
     options, args = opts.parse_args()
     if len(args) != 2:
         opts.error("Incorrect number of arguments")
     logname, outname = args
     data = parse_log(logname)
     if not data:
+        return
+    if options.frequency:
+        plot_frequency(data, outname)
         return
     plot_mcu(data, MAXBANDWIDTH, outname, graph_awake=options.awake)
 

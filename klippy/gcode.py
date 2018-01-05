@@ -38,15 +38,18 @@ class GCodeParser:
             self.register_command(cmd, func, wnr, desc)
             for a in getattr(self, 'cmd_' + cmd + '_aliases', []):
                 self.register_command(a, func, wnr)
+        # G-Code coordinate manipulation
+        self.absolutecoord = self.absoluteextrude = True
+        self.base_position = [0.0, 0.0, 0.0, 0.0]
+        self.last_position = [0.0, 0.0, 0.0, 0.0]
+        self.homing_add = [0.0, 0.0, 0.0, 0.0]
+        self.speed_factor = 1. / 60.
+        self.extrude_factor = 1.
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heaters = []
         self.speed = 25.0
-        self.absolutecoord = self.absoluteextrude = True
-        self.base_position = [0.0, 0.0, 0.0, 0.0]
-        self.last_position = [0.0, 0.0, 0.0, 0.0]
-        self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
@@ -100,6 +103,13 @@ class GCodeParser:
             len(self.input_log),))
         for eventtime, data in self.input_log:
             out.append("Read %f: %s" % (eventtime, repr(data)))
+        out.append(
+            "gcode state: absolutecoord=%s absoluteextrude=%s"
+            " base_position=%s last_position=%s homing_add=%s"
+            " speed_factor=%s extrude_factor=%s speed=%s" % (
+                self.absolutecoord, self.absoluteextrude,
+                self.base_position, self.last_position, self.homing_add,
+                self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
@@ -262,7 +272,7 @@ class GCodeParser:
             heater.set_temp(print_time, temp)
         except heater.error as e:
             raise error(str(e))
-        if wait:
+        if wait and temp:
             self.bg_temp(heater)
     def set_fan_speed(self, speed):
         if self.fan is None:
@@ -271,7 +281,7 @@ class GCodeParser:
             return
         print_time = self.toolhead.get_last_move_time()
         self.fan.set_speed(print_time, speed)
-    # Individual command handlers
+    # G-Code special command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
             self.respond_error(self.printer.get_state_message())
@@ -306,27 +316,36 @@ class GCodeParser:
         activate_gcode = self.extruder.get_activate_gcode(True)
         self.process_commands(activate_gcode.split('\n'), need_ack=False)
     all_handlers = [
-        'G1', 'G4', 'G20', 'G28', 'G90', 'G91', 'G92',
-        'M82', 'M83', 'M18', 'M105', 'M104', 'M109', 'M112', 'M114', 'M115',
-        'M140', 'M190', 'M106', 'M107', 'M206', 'M400',
-        'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
+        'G1', 'G4', 'G28', 'M18', 'M400',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220', 'M221',
+        'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
+        'M112', 'M114', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+    # G-Code movement commands
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
         # Move
         try:
-            for a, p in self.axis2pos.items():
-                if a in params:
-                    v = float(params[a])
-                    if (not self.absolutecoord
-                        or (p>2 and not self.absoluteextrude)):
+            for axis in 'XYZ':
+                if axis in params:
+                    v = float(params[axis])
+                    pos = self.axis2pos[axis]
+                    if not self.absolutecoord:
                         # value relative to position of last move
-                        self.last_position[p] += v
+                        self.last_position[pos] += v
                     else:
                         # value relative to base coordinate position
-                        self.last_position[p] = v + self.base_position[p]
+                        self.last_position[pos] = v + self.base_position[pos]
+            if 'E' in params:
+                v = float(params['E']) * self.extrude_factor
+                if not self.absolutecoord or not self.absoluteextrude:
+                    # value relative to position of last move
+                    self.last_position[3] += v
+                else:
+                    # value relative to base coordinate position
+                    self.last_position[3] = v + self.base_position[3]
             if 'F' in params:
-                speed = float(params['F']) / 60.
+                speed = float(params['F']) * self.speed_factor
                 if speed <= 0.:
                     raise error("Invalid speed in '%s'" % (params['#original'],))
                 self.speed = speed
@@ -343,9 +362,6 @@ class GCodeParser:
         else:
             delay = self.get_float('P', params, 0.) / 1000.
         self.toolhead.dwell(delay)
-    def cmd_G20(self, params):
-        # Set units to inches
-        self.respond_error('Machine does not support G20 (inches) command')
     def cmd_G28(self, params):
         # Move to origin
         axes = []
@@ -365,6 +381,23 @@ class GCodeParser:
         for axis in homing_state.get_axes():
             self.last_position[axis] = newpos[axis]
             self.base_position[axis] = -self.homing_add[axis]
+    cmd_M18_aliases = ["M84"]
+    def cmd_M18(self, params):
+        # Turn off motors
+        self.toolhead.motor_off()
+    def cmd_M400(self, params):
+        # Wait for current moves to finish
+        self.toolhead.wait_moves()
+    # G-Code coordinate manipulation
+    def cmd_G20(self, params):
+        # Set units to inches
+        self.respond_error('Machine does not support G20 (inches) command')
+    def cmd_M82(self, params):
+        # Use absolute distances for extrusion
+        self.absoluteextrude = True
+    def cmd_M83(self, params):
+        # Use relative distances for extrusion
+        self.absoluteextrude = False
     def cmd_G90(self, params):
         # Use absolute coordinates
         self.absolutecoord = True
@@ -376,19 +409,34 @@ class GCodeParser:
         offsets = { p: self.get_float(a, params)
                     for a, p in self.axis2pos.items() if a in params }
         for p, offset in offsets.items():
+            if p == 3:
+                offset *= self.extrude_factor
             self.base_position[p] = self.last_position[p] - offset
         if not offsets:
             self.base_position = list(self.last_position)
-    def cmd_M82(self, params):
-        # Use absolute distances for extrusion
-        self.absoluteextrude = True
-    def cmd_M83(self, params):
-        # Use relative distances for extrusion
-        self.absoluteextrude = False
-    cmd_M18_aliases = ["M84"]
-    def cmd_M18(self, params):
-        # Turn off motors
-        self.toolhead.motor_off()
+    def cmd_M206(self, params):
+        # Set home offset
+        offsets = { self.axis2pos[a]: self.get_float(a, params)
+                    for a in 'XYZ' if a in params }
+        for p, offset in offsets.items():
+            self.base_position[p] += self.homing_add[p] - offset
+            self.homing_add[p] = offset
+    def cmd_M220(self, params):
+        # Set speed factor override percentage
+        value = self.get_float('S', params, 100.) / (60. * 100.)
+        if value <= 0.:
+            raise error("Invalid factor in '%s'" % (params['#original'],))
+        self.speed_factor = value
+    def cmd_M221(self, params):
+        # Set extrude factor override percentage
+        new_extrude_factor = self.get_float('S', params, 100.) / 100.
+        if new_extrude_factor <= 0.:
+            raise error("Invalid factor in '%s'" % (params['#original'],))
+        last_e_pos = self.last_position[3]
+        e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
+        self.base_position[3] = last_e_pos - e_value * new_extrude_factor
+        self.extrude_factor = new_extrude_factor
+    # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
@@ -399,6 +447,19 @@ class GCodeParser:
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.set_temp(params, wait=True)
+    def cmd_M140(self, params):
+        # Set Bed Temperature
+        self.set_temp(params, is_bed=True)
+    def cmd_M190(self, params):
+        # Set Bed Temperature and Wait
+        self.set_temp(params, is_bed=True, wait=True)
+    def cmd_M106(self, params):
+        # Set fan speed
+        self.set_fan_speed(self.get_float('S', params, 255.) / 255.)
+    def cmd_M107(self, params):
+        # Turn fan off
+        self.set_fan_speed(0.)
+    # G-Code miscellaneous commands
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
         # Emergency Stop
@@ -420,28 +481,6 @@ class GCodeParser:
         software_version = self.printer.get_start_args().get('software_version')
         kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
         self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
-    def cmd_M140(self, params):
-        # Set Bed Temperature
-        self.set_temp(params, is_bed=True)
-    def cmd_M190(self, params):
-        # Set Bed Temperature and Wait
-        self.set_temp(params, is_bed=True, wait=True)
-    def cmd_M106(self, params):
-        # Set fan speed
-        self.set_fan_speed(self.get_float('S', params, 255.) / 255.)
-    def cmd_M107(self, params):
-        # Turn fan off
-        self.set_fan_speed(0.)
-    def cmd_M206(self, params):
-        # Set home offset
-        offsets = { p: self.get_float(a, params)
-                    for a, p in self.axis2pos.items() if a in params }
-        for p, offset in offsets.items():
-            self.base_position[p] += self.homing_add[p] - offset
-            self.homing_add[p] = offset
-    def cmd_M400(self, params):
-        # Wait for current moves to finish
-        self.toolhead.wait_moves()
     cmd_IGNORE_when_not_ready = True
     cmd_IGNORE_aliases = ["G21", "M110", "M21"]
     def cmd_IGNORE(self, params):

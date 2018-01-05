@@ -282,6 +282,7 @@ sched_clear_shutdown(void)
 static void
 run_shutdown(int reason)
 {
+    irq_disable();
     uint32_t cur = timer_read_time();
     if (!shutdown_status)
         shutdown_reason = reason;
@@ -334,9 +335,11 @@ sched_main(void)
 
     sendf("starting");
 
+    irq_disable();
     int ret = setjmp(shutdown_jmp);
     if (ret)
         run_shutdown(ret);
+    irq_enable();
 
     run_tasks();
 }

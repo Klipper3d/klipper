@@ -4,23 +4,20 @@ developers.
 Bug reporting
 =============
 
-Bug reports are submitted through github issues.  All bug reports must
-include the full /tmp/klippy.log log file from the session that
-produced the error.  To acquire this log file, ssh into the computer
-running the klipper host software, and run:
+Bug reports are submitted through github issues.  **All bug reports
+must include the full /tmp/klippy.log log file from the session that
+produced the error.** An "scp" and/or "sftp" utility is needed to
+acquire this log file. The "scp" utility comes standard with Linux and
+MacOS desktops. There are freely available scp utilities for other
+desktops (eg, WinSCP).
 
-```
-gzip -k /tmp/klippy.log
-```
-
-Then scp the resulting `/tmp/klippy.log.gz` file from the host machine
-to your desktop. (If your desktop does not have scp installed, there
-are a number of free scp programs available - just do a web search for
-`windows scp` to find one.) Open a new issue at
+Use the scp utility to copy the `/tmp/klippy.log` file from the host
+machine to your desktop. Open a new issue at
 https://github.com/KevinOConnor/klipper/issues , provide a description
-of the problem, and attach the `klippy.log.gz` file to the issue (use
-the blue "selecting them" link beneath the problem description on the
-github issue page to attach files).
+of the problem, and attach the `klippy.log` file to the issue (use the
+blue "selecting them" link beneath the problem description on the
+github issue page to attach files). It is a good idea to compress the
+klippy.log file before posting it (eg, using zip or gzip).
 
 If the Klipper software does something unexpected but does not produce
 an error, then immediately issue an M112 command in the Octoprint

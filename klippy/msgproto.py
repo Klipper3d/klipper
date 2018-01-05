@@ -188,7 +188,7 @@ class MessageParser:
         self.messages_by_name = {}
         self.static_strings = {}
         self.config = {}
-        self.version = ""
+        self.version = self.build_versions = ""
         self.raw_identify_data = ""
         self._init_messages(DefaultMessages, DefaultMessages.keys())
     def check_packet(self, s):
@@ -318,6 +318,7 @@ class MessageParser:
             self.static_strings = { int(k): v for k, v in static_strings.items() }
             self.config.update(data.get('config', {}))
             self.version = data.get('version', '')
+            self.build_versions = data.get('build_versions', '')
         except error as e:
             raise
         except Exception as e:

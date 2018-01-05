@@ -19,9 +19,9 @@ module hollow_square() {
 module notch() {
     CUT = 0.01;
     depth = .5;
-    width = 2;
-    translate([-depth, -width/2, -CUT])
-        cube([depth*2, width, square_height + 2*CUT]);
+    width = 1;
+    translate([-depth, -width, -CUT])
+        cube([2*depth, 2*width, square_height + 2*CUT]);
 }
 
 module square_with_notches() {

@@ -54,7 +54,7 @@ count_s = r"(?P<count>[0-9]+)"
 time_s = r"(?P<time>[0-9]+[.][0-9]+)"
 esttime_s = r"(?P<esttime>[0-9]+[.][0-9]+)"
 shortseq_s = r"(?P<shortseq>[0-9a-f])"
-stats_r = re.compile(r"^Stats " + time_s + ": .*" + stats_seq_s)
+stats_r = re.compile(r"^Stats " + time_s + ": ")
 serial_dump_r = re.compile(r"^Dumping serial stats: .*" + stats_seq_s)
 send_dump_r = re.compile(r"^Dumping send queue " + count_s + " messages$")
 sent_r = re.compile(r"^Sent " + count_s + " " + esttime_s + " " + time_s
@@ -67,12 +67,25 @@ clock_r = re.compile(r"^clocksync state: .* clock_est=\((?P<st>[^ ]+)"
                      + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
 repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
 repl_clock_r = re.compile(r"clock=(?P<clock>[0-9]+) ")
+mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' shutdown: (?P<reason>.*)$")
 
 def add_high_bits(val, ref, mask):
     half = (mask + 1) // 2
     return ref + ((val - (ref & mask) + half) & mask) - half
 
 class GatherShutdown:
+    class mcu_info:
+        def __init__(self):
+            self.sent_stream = []
+            self.receive_stream = []
+            self.sent_stream = []
+            self.receive_stream = []
+            self.sent_time_to_seq = {}
+            self.sent_seq_to_time = {}
+            self.receive_seq_to_time = {}
+            self.clock_est = 0., 0., 1.
+            self.shutdown_seq = None
+            self.send_count = self.receive_count = 0
     def __init__(self, configs, line_num, recent_lines, logname):
         self.shutdown_line_num = line_num
         self.filename = "%s.shutdown%05d" % (logname, line_num)
@@ -82,28 +95,48 @@ class GatherShutdown:
         self.config.add_comment(format_comment(line_num, recent_lines[-1][1]))
         self.stats_stream = []
         self.gcode_stream = []
-        self.sent_stream = []
-        self.receive_stream = []
-        self.sent_time_to_seq = {}
-        self.sent_seq_to_time = {}
-        self.receive_seq_to_time = {}
-        self.clock_est = 0., 0., 1.
-        self.shutdown_seq = None
+        self.mcus = {}
+        self.mcu = None
         self.first_stat_time = self.last_stat_time = None
-        self.send_count = self.receive_count = 0
         for line_num, line in recent_lines:
             self.parse_line(line_num, line)
         self.first_stat_time = self.last_stat_time
     def add_comment(self, comment):
         if comment is not None:
             self.comments.append(comment)
+    def check_stats_seq(self, ts, line):
+        # Parse stats
+        parts = line.split()
+        mcu = ""
+        keyparts = {}
+        for p in parts[2:]:
+            if p.endswith(':'):
+                mcu = p
+                continue
+            name, val = p.split('=', 1)
+            keyparts[mcu + name] = val
+        min_ts = 0
+        max_ts = 999999999999
+        for mcu, info in self.mcus.items():
+            sname = '%s:send_seq' % (mcu,)
+            rname = '%s:receive_seq' % (mcu,)
+            if sname not in keyparts:
+                continue
+            sseq = int(keyparts[sname])
+            rseq = int(keyparts[rname])
+            min_ts = max(min_ts, info.sent_seq_to_time.get(sseq-1, 0),
+                         info.receive_seq_to_time.get(rseq, 0))
+            max_ts = min(max_ts, info.sent_seq_to_time.get(sseq, 999999999999),
+                         info.receive_seq_to_time.get(rseq+1, 999999999999))
+        return min(max(ts, min_ts + 0.00000001), max_ts - 0.00000001)
     def trans_clock(self, clock, ts):
-        sample_time, sample_clock, freq = self.clock_est
+        sample_time, sample_clock, freq = self.mcu.clock_est
         exp_clock = int(sample_clock + (ts - sample_time) * freq)
         ext_clock = add_high_bits(clock, exp_clock, 0xffffffff)
         return sample_time + (ext_clock - sample_clock) / freq
     def annotate(self, line, seq, ts):
-        line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
+        if seq is not None:
+            line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
         def clock_update(m):
             return m.group(0)[:-1] + "(%.6f) " % (
                 self.trans_clock(int(m.group('clock')), ts),)
@@ -124,25 +157,26 @@ class GatherShutdown:
         m = sent_r.match(line)
         if m is not None:
             shortseq = int(m.group('shortseq'), 16)
-            seq = self.shutdown_seq + int(m.group('count')) - self.send_count
+            seq = (self.mcu.shutdown_seq + int(m.group('count'))
+                   - self.mcu.send_count)
             seq = add_high_bits(shortseq, seq, 0xf)
             ts = float(m.group('time'))
             esttime = float(m.group('esttime'))
-            self.sent_time_to_seq[(esttime, seq & 0xf)] = seq
-            self.sent_seq_to_time[seq] = ts
+            self.mcu.sent_time_to_seq[(esttime, seq & 0xf)] = seq
+            self.mcu.sent_seq_to_time[seq] = ts
             line = self.annotate(line, seq, ts)
-            self.sent_stream.append((ts, line_num, line))
+            self.mcu.sent_stream.append((ts, line_num, line))
             return
         m = receive_r.match(line)
         if m is not None:
             shortseq = int(m.group('shortseq'), 16)
             ts = float(m.group('time'))
             esttime = float(m.group('esttime'))
-            seq = self.sent_time_to_seq.get((esttime, (shortseq - 1) & 0xf))
+            seq = self.mcu.sent_time_to_seq.get((esttime, (shortseq - 1) & 0xf))
             if seq is not None:
-                self.receive_seq_to_time[seq + 1] = ts
+                self.mcu.receive_seq_to_time[seq + 1] = ts
             line = self.annotate(line, seq, ts)
-            self.receive_stream.append((ts, line_num, line))
+            self.mcu.receive_stream.append((ts, line_num, line))
             return
         m = gcode_r.match(line)
         if m is not None:
@@ -152,32 +186,35 @@ class GatherShutdown:
         m = stats_r.match(line)
         if m is not None:
             ts = float(m.group('time'))
-            sseq = int(m.group('sseq'))
-            rseq = int(m.group('rseq'))
             self.last_stat_time = ts
             if self.first_stat_time is None:
                 self.first_stat_time = ts
-            self.stats_stream.append((ts, sseq, rseq, line_num, line))
+            self.stats_stream.append((ts, line_num, line))
             return
+        m = mcu_r.match(line)
+        if m is not None:
+            mcu = m.group('mcu')
+            self.mcu = self.mcus.setdefault(mcu, self.mcu_info())
         m = clock_r.match(line)
         if m is not None:
             st = float(m.group('st'))
             sc = int(m.group('sc'))
             f = float(m.group('f'))
-            self.clock_est = (st, sc, f)
+            self.mcu.clock_est = (st, sc, f)
         m = serial_dump_r.match(line)
         if m is not None:
-            self.shutdown_seq = int(m.group('rseq'))
+            self.mcu.shutdown_seq = int(m.group('rseq'))
         m = send_dump_r.match(line)
         if m is not None:
-            self.send_count = int(m.group('count'))
+            self.mcu.send_count = int(m.group('count'))
         m = receive_dump_r.match(line)
         if m is not None:
-            self.receive_count = int(m.group('count'))
-        self.stats_stream.append((None, None, None, line_num, line))
+            self.mcu.receive_count = int(m.group('count'))
+        self.stats_stream.append((None, line_num, line))
     def finalize(self):
         # Ignore old stats
-        stream_ts = [i[0] for i in self.sent_stream + self.receive_stream]
+        stream_ts = [i[0] for mcu in self.mcus.values()
+                     for i in mcu.sent_stream + mcu.receive_stream]
         if not stream_ts:
             return
         min_stream_ts = min(stream_ts)
@@ -188,26 +225,22 @@ class GatherShutdown:
                 break
         # Improve accuracy of stats timestamps
         last_ts = self.stats_stream[0][0]
-        out = []
-        for i in range(len(self.stats_stream)):
-            ts, sseq, rseq, line_num, line = self.stats_stream[i]
+        for i, (ts, line_num, line) in enumerate(self.stats_stream):
             if ts is not None:
-                min_ts = max(self.sent_seq_to_time.get(sseq-1, 0),
-                             self.receive_seq_to_time.get(rseq, 0))
-                max_ts = min(self.sent_seq_to_time.get(sseq, 999999999999),
-                             self.receive_seq_to_time.get(rseq+1, 999999999999))
-                last_ts = min(max(ts, min_ts + 0.00000001),
-                              max_ts - 0.00000001)
+                last_ts = self.check_stats_seq(ts, line)
             elif line_num >= self.shutdown_line_num and last_ts <= max_stream_ts:
                 last_ts = max_stream_ts + 0.00000001
-            out.append((last_ts, line_num, line))
+            self.stats_stream[i] = (last_ts, line_num, line)
         # Make sure no timestamp goes backwards
-        for s in [self.sent_stream, self.receive_stream, self.gcode_stream]:
+        streams = ([self.stats_stream, self.gcode_stream] +
+                   [mcu.sent_stream for mcu in self.mcus.values()] +
+                   [mcu.receive_stream for mcu in self.mcus.values()])
+        for s in streams:
             for i in range(1, len(s)):
                 if s[i-1][0] > s[i][0]:
                     s[i] = (s[i-1][0], s[i][1], s[i][2])
         # Produce output sorted by timestamp
-        out = out + self.sent_stream + self.receive_stream + self.gcode_stream
+        out = [i for s in streams for i in s]
         out.sort()
         out = [i[2] for i in out]
         f = open(self.filename, 'wb')
