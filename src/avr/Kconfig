@@ -43,6 +43,12 @@ config MCU
     default "atmega1280" if MACH_atmega1280
     default "atmega2560" if MACH_atmega2560
 
+config AVRDUDE_PROTOCOL
+    string
+    default "wiring" if MACH_atmega2560
+    default "avr109" if MACH_at90usb1286
+    default "arduino"
+
 choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
