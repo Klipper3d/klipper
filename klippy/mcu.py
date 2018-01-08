@@ -431,7 +431,7 @@ class MCU:
                 'restart_method', rmethods, 'arduino')
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
-        self._is_shutdown = False
+        self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         if printer.bglogger is not None:
             printer.bglogger.set_rollover_info(self._name, None)
@@ -727,8 +727,10 @@ class MCU:
             return
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._ffi_lib.steppersync_set_time(self._steppersync, offset, freq)
-        if self._clocksync.is_active(eventtime) or self.is_fileoutput():
+        if (self._clocksync.is_active(eventtime) or self.is_fileoutput()
+            or self._is_timeout):
             return
+        self._is_timeout = True
         logging.info("Timeout with MCU '%s' (eventtime=%f)",
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
