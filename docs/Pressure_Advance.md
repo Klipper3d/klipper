@@ -63,7 +63,10 @@ in good quality corners:
 ![corner-good](img/corner-good.jpg)
 
 Typical pressure_advance values are between 0.05 and 0.20 (the high
-end usually only with bowden extruders).
+end usually only with bowden extruders). If there is no significant
+improvement seen after increasing pressure_advance to 0.20, then
+pressure advance is unlikely to improve the quality of prints. Return
+to a default configuration with pressure_advance disabled.
 
 It is not unusual for one corner of the test print to be consistently
 different than the other three corners. This typically occurs when the
