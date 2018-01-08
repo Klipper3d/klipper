@@ -93,12 +93,13 @@ DECL_SHUTDOWN(timer_reset);
 void
 timer_init(void)
 {
+    irqstatus_t flag = irq_save();
     // no outputs
     TCCR1A = 0;
     // Normal Mode
     TCCR1B = 1<<CS10;
     // Setup for first irq
-    irqstatus_t flag = irq_save();
+    TCNT1 = 0;
     timer_kick();
     timer_repeat_set(timer_get() + 50);
     timer_reset();
