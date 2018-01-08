@@ -280,7 +280,7 @@ gpio_adc_setup(uint8_t pin)
     }
 
     // Enable ADC
-    ADCSRA |= (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
+    ADCSRA = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
 
     // Disable digital input for this pin
 #ifdef DIDR2
@@ -316,7 +316,7 @@ gpio_adc_sample(struct gpio_adc g)
 #if defined(ADCSRB) && defined(MUX5)
     // the MUX5 bit of ADCSRB selects whether we're reading from channels
     // 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
-    ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((g.chan >> 3) & 0x01) << MUX5);
+    ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
 #endif
 
     ADMUX = ADMUX_DEFAULT | (g.chan & 0x07);
