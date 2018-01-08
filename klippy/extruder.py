@@ -70,8 +70,11 @@ class PrinterExtruder:
             inv_extrude_r = 1. / abs(move.extrude_r)
             move.limit_speed(self.max_e_velocity * inv_extrude_r
                              , self.max_e_accel * inv_extrude_r)
-        elif (move.extrude_r > self.max_extrude_ratio
-              and move.axes_d[3] > self.nozzle_diameter*self.max_extrude_ratio):
+        elif move.extrude_r > self.max_extrude_ratio:
+            if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
+                # Permit extrusion if amount extruded is tiny
+                move.extrude_r = self.max_extrude_ratio
+                return
             area = move.axes_d[3] * self.filament_area / move.move_d
             logging.debug("Overextrude: %s vs %s (area=%.3f dist=%.3f)",
                           move.extrude_r, self.max_extrude_ratio,
