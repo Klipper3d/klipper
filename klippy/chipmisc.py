@@ -15,7 +15,7 @@ class PrinterStaticDigitalOut:
         pin_list = [pin.strip() for pin in config.get('pins').split(',')]
         for pin_desc in pin_list:
             mcu_pin = pins.setup_pin(printer, 'digital_out', pin_desc)
-            mcu_pin.setup_static()
+            mcu_pin.setup_start_value(1, 1, True)
 
 PIN_MIN_TIME = 0.100
 
@@ -39,14 +39,15 @@ class PrinterPin:
         self.mcu_pin.setup_max_duration(0.)
         self.last_value_time = 0.
         self.last_value = config.getfloat(
-            'value', 0., minval=0., maxval=self.scale)
+            'value', 0., minval=0., maxval=self.scale) / self.scale
         self.is_static = config.section.startswith('static_')
         if self.is_static:
-            self.mcu_pin.setup_static_pwm(self.last_value / self.scale)
-        else:
             self.mcu_pin.setup_start_value(
-                self.last_value, config.getfloat('shutdown_value', 0.,
-                                                 minval=0., maxval=self.scale))
+                self.last_value, self.last_value, True)
+        else:
+            shutdown_value = config.getfloat(
+                'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
+            self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
         self.gcode = printer.objects['gcode']
         self.gcode.register_command("SET_PIN", self.cmd_SET_PIN,
                                     desc=self.cmd_SET_PIN_help)
@@ -60,13 +61,13 @@ class PrinterPin:
             return pin.cmd_SET_PIN(params)
         if self.is_static:
             raise self.gcode.error("Static pin can not be changed at run-time")
-        value = self.gcode.get_float('VALUE', params)
+        value = self.gcode.get_float('VALUE', params) / self.scale
         if value == self.last_value:
             return
         print_time = self.printer.objects['toolhead'].get_last_move_time()
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         if self.is_pwm:
-            if value < 0. or value > self.scale:
+            if value < 0. or value > 1.:
                 raise self.gcode.error("Invalid pin value")
             self.mcu_pin.set_pwm(print_time, value)
         else:
@@ -230,11 +231,11 @@ class pca9685_pwm:
         self._oid = None
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
+        self._is_static = False
         self._last_clock = 0
         self._pwm_max = 0.
         self._cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = None
-        self._static_value = None
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -244,28 +245,26 @@ class pca9685_pwm:
     def setup_hard_pwm(self, hard_cycle_ticks):
         if hard_cycle_ticks:
             raise pins.error("pca9685 does not support hard_pwm parameter")
-    def setup_static_pwm(self, value):
-        if self._invert:
-            value = 1. - value
-        self._static_value = max(0., min(1., value))
-    def setup_start_value(self, start_value, shutdown_value):
+    def setup_start_value(self, start_value, shutdown_value, is_static=False):
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
+        self._is_static = is_static
         if self._shutdown_value:
             self._replicape.note_enable_on_shutdown()
     def build_config(self):
         self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
-        if self._static_value is not None:
-            value = int(self._static_value * self._pwm_max + 0.5)
+        if self._is_static:
             self._mcu.add_config_cmd(
                 "set_pca9685_out bus=%d addr=%d channel=%d"
                 " cycle_ticks=%d value=%d" % (
                     self._bus, self._address, self._channel,
-                    cycle_ticks, value))
+                    cycle_ticks, self._start_value * self._pwm_max))
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(

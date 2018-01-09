@@ -230,7 +230,7 @@ class MCU_digital_out:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = self._invert
-        self._static_value = None
+        self._is_static = False
         self._max_duration = 2.
         self._last_clock = 0
         self._cmd_queue = mcu.alloc_command_queue()
@@ -239,21 +239,22 @@ class MCU_digital_out:
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
-    def setup_static(self):
-        self._static_value = not self._invert
-    def setup_start_value(self, start_value, shutdown_value):
+    def setup_start_value(self, start_value, shutdown_value, is_static=False):
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
+        self._is_static = is_static
     def build_config(self):
-        if self._static_value is not None:
+        if self._is_static:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                self._pin, self._static_value))
+                self._pin, self._start_value))
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
             " max_duration=%d" % (
-                self._oid, self._pin, self._invert, self._shutdown_value,
+                self._oid, self._pin, self._start_value, self._shutdown_value,
                 self._mcu.seconds_to_clock(self._max_duration)))
         self._set_cmd = self._mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c")
@@ -277,7 +278,7 @@ class MCU_pwm:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
-        self._static_value = None
+        self._is_static = False
         self._last_clock = 0
         self._pwm_max = 0.
         self._cmd_queue = mcu.alloc_command_queue()
@@ -294,24 +295,23 @@ class MCU_pwm:
             return
         self._cycle_time = hard_cycle_ticks
         self._hard_pwm = True
-    def setup_static_pwm(self, value):
-        if self._invert:
-            value = 1. - value
-        self._static_value = max(0., min(1., value))
-    def setup_start_value(self, start_value, shutdown_value):
+    def setup_start_value(self, start_value, shutdown_value, is_static=False):
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
+        self._is_static = is_static
     def build_config(self):
         if self._hard_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
-            if self._static_value is not None:
-                value = int(self._static_value * self._pwm_max + 0.5)
+            if self._is_static:
                 self._mcu.add_config_cmd(
                     "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
-                        self._pin, self._cycle_time, value))
+                        self._pin, self._cycle_time,
+                        self._static_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
@@ -324,18 +324,15 @@ class MCU_pwm:
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
         else:
-            self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
-            if self._static_value is not None:
-                if self._static_value not in [0., 1.]:
-                    raise pins.error(
-                        "static value must be 0.0 or 1.0 on soft pwm")
-                self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                    self._pin, self._static_value >= 0.5))
-                return
             if (self._start_value not in [0., 1.]
                 or self._shutdown_value not in [0., 1.]):
                 raise pins.error(
                     "start and shutdown values must be 0.0 or 1.0 on soft pwm")
+            self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
+            if self._is_static:
+                self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
+                    self._pin, self._start_value >= 0.5))
+                return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
