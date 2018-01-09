@@ -254,8 +254,8 @@ class pca9685_pwm:
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
-        if self._shutdown_value:
-            self._replicape.note_enable_on_shutdown()
+        self._replicape.note_pwm_start_value(
+            self._channel, self._start_value, self._shutdown_value)
     def build_config(self):
         self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
@@ -281,7 +281,7 @@ class pca9685_pwm:
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._replicape.note_enable(print_time, self._channel, not not value)
+        self._replicape.note_pwm_enable(print_time, self._channel, value)
         msg = self._set_cmd.encode(self._oid, clock, value)
         self._mcu.send(msg, minclock=self._last_clock, reqclock=clock
                       , cq=self._cmd_queue)
@@ -326,10 +326,10 @@ class Replicape:
         config.getchoice('revision', revisions)
         self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
         # Setup enable pin
-        self.mcu_enable = pins.setup_pin(
+        self.mcu_pwm_enable = pins.setup_pin(
             printer, 'digital_out', config.get('enable_pin', '!P9_41'))
-        self.mcu_enable.setup_max_duration(0.)
-        self.enabled_channels = {}
+        self.mcu_pwm_enable.setup_max_duration(0.)
+        self.mcu_pwm_start_value = self.mcu_pwm_shutdown_value = False
         # Setup power pins
         self.pins = {
             "power_e": (pca9685_pwm, 5), "power_h": (pca9685_pwm, 3),
@@ -357,22 +357,29 @@ class Replicape:
                 prefix + 'current', above=0., maxval=REPLICAPE_MAX_CURRENT)
             self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
+        self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
         shift_registers.reverse()
         self.host_mcu.add_config_cmd("send_spi bus=%d dev=%d msg=%s" % (
             REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
             "".join(["%02x" % (x,) for x in shift_registers])))
-    def note_enable_on_shutdown(self):
-        self.mcu_enable.setup_start_value(0, 1)
-    def note_enable(self, print_time, channel, is_enable):
-        if is_enable:
-            is_off = not self.enabled_channels
-            self.enabled_channels[channel] = 1
-            if is_off:
-                self.mcu_enable.set_digital(print_time, 1)
-        elif channel in self.enabled_channels:
-            del self.enabled_channels[channel]
-            if not self.enabled_channels:
-                self.mcu_enable.set_digital(print_time, 0)
+    def note_pwm_start_value(self, channel, start_value, shutdown_value):
+        self.mcu_pwm_start_value |= not not start_value
+        self.mcu_pwm_shutdown_value |= not not shutdown_value
+        self.mcu_pwm_enable.setup_start_value(
+            self.mcu_pwm_start_value, self.mcu_pwm_shutdown_value)
+        self.enabled_channels[channel] = not not start_value
+    def note_pwm_enable(self, print_time, channel, value):
+        is_enable = not not value
+        if self.enabled_channels[channel] == is_enable:
+            # Nothing to do
+            return
+        self.enabled_channels[channel] = is_enable
+        # Check if need to set the pca9685 enable pin
+        on_channels = [1 for c, e in self.enabled_channels.items() if e]
+        if not on_channels:
+            self.mcu_pwm_enable.set_digital(print_time, 0)
+        elif is_enable and len(on_channels) == 1:
+            self.mcu_pwm_enable.set_digital(print_time, 1)
     def setup_pin(self, pin_params):
         pin = pin_params['pin']
         if pin not in self.pins:
