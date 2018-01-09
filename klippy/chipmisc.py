@@ -359,18 +359,23 @@ class Replicape:
             self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
         self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
+        self.disable_stepper_cmd = "send_spi bus=%d dev=%d msg=%s" % (
+            REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
+            "".join(["%02x" % (x,) for x in reversed(shift_registers)]))
         if [i for i in [0, 1, 2] if 11+i in self.stepper_dacs]:
             # Enable xyz steppers
             shift_registers[0] &= ~1
         if [i for i in [3, 4] if 11+i in self.stepper_dacs]:
             # Enable eh steppers
             shift_registers[3] &= ~1
-        if config.getboolean('standstill_power_down', False):
+        if (config.getboolean('standstill_power_down', False)
+            and self.stepper_dacs):
             shift_registers[4] &= ~1
-        shift_registers.reverse()
-        self.host_mcu.add_config_cmd("send_spi bus=%d dev=%d msg=%s" % (
+        self.enable_stepper_cmd = "send_spi bus=%d dev=%d msg=%s" % (
             REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
-            "".join(["%02x" % (x,) for x in shift_registers])))
+            "".join(["%02x" % (x,) for x in reversed(shift_registers)]))
+        self.host_mcu.add_config_cmd(self.disable_stepper_cmd)
+        self.last_stepper_time = 0.
     def note_pwm_start_value(self, channel, start_value, shutdown_value):
         self.mcu_pwm_start_value |= not not start_value
         self.mcu_pwm_shutdown_value |= not not shutdown_value
@@ -389,6 +394,22 @@ class Replicape:
             self.mcu_pwm_enable.set_digital(print_time, 0)
         elif is_enable and len(on_channels) == 1:
             self.mcu_pwm_enable.set_digital(print_time, 1)
+        # Check if need to set the stepper enable lines
+        if channel not in self.stepper_dacs:
+            return
+        on_dacs = [1 for c in self.stepper_dacs.keys()
+                   if self.enabled_channels[c]]
+        if not on_dacs:
+            cmd = self.disable_stepper_cmd
+        elif is_enable and len(on_dacs) == 1:
+            cmd = self.enable_stepper_cmd
+        else:
+            return
+        print_time = max(print_time, self.last_stepper_time + PIN_MIN_TIME)
+        clock = self.host_mcu.print_time_to_clock(print_time)
+        # XXX - the send_spi message should be scheduled
+        self.host_mcu.send(self.host_mcu.create_command(cmd),
+                           minclock=clock, reqclock=clock)
     def setup_pin(self, pin_params):
         pin = pin_params['pin']
         if pin not in self.pins:
