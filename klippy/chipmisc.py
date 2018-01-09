@@ -338,13 +338,14 @@ class Replicape:
             "power_fan2": (pca9685_pwm, 9), "power_fan3": (pca9685_pwm, 10) }
         # Setup stepper config
         self.stepper_dacs = {}
-        shift_registers = [1] * 5
+        shift_registers = [1, 0, 0, 1, 1]
         for port, name in enumerate('xyzeh'):
             prefix = 'stepper_%s_' % (name,)
             sc = config.getchoice(
                 prefix + 'microstep_mode', ReplicapeStepConfig, 'disable')
             if sc is None:
                 continue
+            sc |= shift_registers[port]
             if config.getboolean(prefix + 'chopper_off_time_high', False):
                 sc |= 1<<3
             if config.getboolean(prefix + 'chopper_hysteresis_high', False):
@@ -358,6 +359,14 @@ class Replicape:
             self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
         self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
+        if [i for i in [0, 1, 2] if 11+i in self.stepper_dacs]:
+            # Enable xyz steppers
+            shift_registers[0] &= ~1
+        if [i for i in [3, 4] if 11+i in self.stepper_dacs]:
+            # Enable eh steppers
+            shift_registers[3] &= ~1
+        if config.getboolean('standstill_power_down', False):
+            shift_registers[4] &= ~1
         shift_registers.reverse()
         self.host_mcu.add_config_cmd("send_spi bus=%d dev=%d msg=%s" % (
             REPLICAPE_SHIFT_REGISTER_BUS, REPLICAPE_SHIFT_REGISTER_DEVICE,
