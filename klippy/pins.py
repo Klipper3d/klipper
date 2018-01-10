@@ -1,6 +1,6 @@
 # Pin name to pin number definitions
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
@@ -180,7 +180,8 @@ class PrinterPins:
     error = error
     def __init__(self):
         self.chips = {}
-    def lookup_pin(self, pin_type, pin_desc):
+        self.active_pins = {}
+    def lookup_pin(self, pin_type, pin_desc, share_type=None):
         can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
         can_pullup = pin_type == 'endstop'
         pullup = invert = 0
@@ -196,8 +197,19 @@ class PrinterPins:
             chip_name, pin = [s.strip() for s in pin_desc.split(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
-        return {'chip': self.chips[chip_name], 'chip_name': chip_name,
-                'type': pin_type, 'pin': pin, 'invert': invert, 'pullup': pullup}
+        share_name = "%s:%s" % (chip_name, pin)
+        if share_name in self.active_pins:
+            pin_params = self.active_pins[share_name]
+            if share_type is None or share_type != pin_params['share_type']:
+                raise error("pin %s used multiple times in config" % (pin,))
+            if invert != pin_params['invert'] or pullup != pin_params['pullup']:
+                raise error("Shared pin %s must have same polarity" % (pin,))
+            return pin_params
+        pin_params = {'chip': self.chips[chip_name], 'chip_name': chip_name,
+                      'type': pin_type, 'share_type': share_type,
+                      'pin': pin, 'invert': invert, 'pullup': pullup}
+        self.active_pins[share_name] = pin_params
+        return pin_params
     def setup_pin(self, pin_type, pin_desc):
         pin_params = self.lookup_pin(pin_type, pin_desc)
         return pin_params['chip'].setup_pin(pin_params)

@@ -1,10 +1,37 @@
 # Printer stepper support
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 import homing, pins
+
+# Tracking of shared stepper enable pins
+class StepperEnablePin:
+    def __init__(self, mcu_enable, enable_count=0):
+        self.mcu_enable = mcu_enable
+        self.enable_count = enable_count
+    def set_enable(self, print_time, enable):
+        if enable:
+            if not self.enable_count:
+                self.mcu_enable.set_digital(print_time, 1)
+            self.enable_count += 1
+        else:
+            self.enable_count -= 1
+            if not self.enable_count:
+                self.mcu_enable.set_digital(print_time, 0)
+
+def lookup_enable_pin(printer, pin):
+    if pin is None:
+        return StepperEnablePin(None, 9999)
+    pin_params = pins.get_printer_pins(printer).lookup_pin(
+        'digital_out', pin, 'stepper_enable')
+    enable = pin_params.get('class')
+    if enable is None:
+        mcu_enable = pin_params['chip'].setup_pin(pin_params)
+        mcu_enable.setup_max_duration(0.)
+        pin_params['class'] = enable = StepperEnablePin(mcu_enable)
+    return enable
 
 # Code storing the definitions for a stepper motor
 class PrinterStepper:
@@ -23,12 +50,7 @@ class PrinterStepper:
         self.mcu_stepper.setup_step_distance(self.step_dist)
         self.step_const = self.mcu_stepper.step_const
         self.step_delta = self.mcu_stepper.step_delta
-        # Enable pin
-        enable_pin = config.get('enable_pin', None)
-        self.mcu_enable = None
-        if enable_pin is not None:
-            self.mcu_enable = pins.setup_pin(printer, 'digital_out', enable_pin)
-            self.mcu_enable.setup_max_duration(0.)
+        self.enable = lookup_enable_pin(printer, config.get('enable_pin', None))
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -44,9 +66,8 @@ class PrinterStepper:
     def set_position(self, pos):
         self.mcu_stepper.set_position(pos)
     def motor_enable(self, print_time, enable=0):
-        if (self.mcu_enable is not None
-            and self.need_motor_enable != (not enable)):
-            self.mcu_enable.set_digital(print_time, enable)
+        if self.need_motor_enable != (not enable):
+            self.enable.set_enable(print_time, enable)
         self.need_motor_enable = not enable
 
 # Support for stepper controlled linear axis with an endstop

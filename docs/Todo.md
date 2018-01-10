@@ -71,8 +71,6 @@ Hardware features
 
 * Support for additional kinematics: scara, etc.
 
-* Support shared motor enable GPIO lines.
-
 * Support for bed-level probes.
 
 * Possible support for touch panels attached to the micro-controller.
