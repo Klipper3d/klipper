@@ -16,8 +16,8 @@ class PrinterStepper:
         # Stepper definition
         self.mcu_stepper = pins.setup_pin(
             printer, 'stepper', config.get('step_pin'))
-        dir_pin_params = pins.get_printer_pins(printer).parse_pin_desc(
-            config.get('dir_pin'), can_invert=True)
+        dir_pin_params = pins.get_printer_pins(printer).lookup_pin(
+            'digital_out', config.get('dir_pin'))
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.mcu_stepper.setup_step_distance(self.step_dist)

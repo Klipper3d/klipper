@@ -180,7 +180,9 @@ class PrinterPins:
     error = error
     def __init__(self):
         self.chips = {}
-    def parse_pin_desc(self, pin_desc, can_invert=False, can_pullup=False):
+    def lookup_pin(self, pin_type, pin_desc):
+        can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
+        can_pullup = pin_type == 'endstop'
         pullup = invert = 0
         if can_pullup and pin_desc.startswith('^'):
             pullup = 1
@@ -194,8 +196,11 @@ class PrinterPins:
             chip_name, pin = [s.strip() for s in pin_desc.split(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
-        return {'chip': self.chips[chip_name], 'pin': pin,
-                'invert': invert, 'pullup': pullup}
+        return {'chip': self.chips[chip_name], 'chip_name': chip_name,
+                'type': pin_type, 'pin': pin, 'invert': invert, 'pullup': pullup}
+    def setup_pin(self, pin_type, pin_desc):
+        pin_params = self.lookup_pin(pin_type, pin_desc)
+        return pin_params['chip'].setup_pin(pin_params)
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
@@ -209,9 +214,4 @@ def get_printer_pins(printer):
     return printer.objects['pins']
 
 def setup_pin(printer, pin_type, pin_desc):
-    ppins = get_printer_pins(printer)
-    can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
-    can_pullup = pin_type == 'endstop'
-    pin_params = ppins.parse_pin_desc(pin_desc, can_invert, can_pullup)
-    pin_params['type'] = pin_type
-    return pin_params['chip'].setup_pin(pin_params)
+    return get_printer_pins(printer).setup_pin(pin_type, pin_desc)

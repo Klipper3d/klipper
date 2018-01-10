@@ -186,8 +186,8 @@ class PrinterServo:
 
 class ad5206:
     def __init__(self, printer, config):
-        enable_pin_params = pins.get_printer_pins(printer).parse_pin_desc(
-            config.get('enable_pin'))
+        enable_pin_params = pins.get_printer_pins(printer).lookup_pin(
+            'digital_out', config.get('enable_pin'))
         self.mcu = enable_pin_params['chip']
         self.pin = enable_pin_params['pin']
         self.mcu.add_config_object(self)
