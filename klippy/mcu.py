@@ -522,15 +522,14 @@ class MCU:
             self._oid_count,))
 
         # Resolve pin names
-        mcu = self._serial.msgparser.get_constant('MCU')
-        pnames = pins.get_pin_map(mcu, self._pin_map)
-        updated_cmds = []
-        for cmd in self._config_cmds:
-            try:
-                updated_cmds.append(pins.update_command(cmd, pnames))
-            except:
-                raise pins.error("Unable to translate pin name: %s" % (cmd,))
-        self._config_cmds = updated_cmds
+        mcu_type = self._serial.msgparser.get_constant('MCU')
+        pin_resolver = pins.PinResolver(mcu_type)
+        if self._pin_map is not None:
+            pin_resolver.update_aliases(self._pin_map)
+        for i, cmd in enumerate(self._config_cmds):
+            self._config_cmds[i] = pin_resolver.update_command(cmd)
+        for i, cmd in enumerate(self._init_cmds):
+            self._init_cmds[i] = pin_resolver.update_command(cmd)
 
         # Calculate config CRC
         self._config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff

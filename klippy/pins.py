@@ -152,21 +152,32 @@ def update_map_beaglebone(pins, mcu):
 # Command translation
 ######################################################################
 
-# Obtains the pin mappings
-def get_pin_map(mcu, mapping_name=None):
-    pins = dict(MCU_PINS.get(mcu, {}))
-    if mapping_name == 'arduino':
-        update_map_arduino(pins, mcu)
-    elif mapping_name == 'beaglebone':
-        update_map_beaglebone(pins, mcu)
-    return pins
-
-# Translate pin names in a firmware command
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
-def update_command(cmd, pmap):
-    def pin_fixup(m):
-        return m.group('prefix') + str(pmap[m.group('name')])
-    return re_pin.sub(pin_fixup, cmd)
+
+class PinResolver:
+    def __init__(self, mcu_type, validate_aliases=True):
+        self.mcu_type = mcu_type
+        self.validate_aliases = validate_aliases
+        self.pins = dict(MCU_PINS.get(mcu_type, {}))
+        self.active_pins = {}
+    def update_aliases(self, mapping_name):
+        self.pins = dict(MCU_PINS.get(self.mcu_type, {}))
+        if mapping_name == 'arduino':
+            update_map_arduino(self.pins, self.mcu_type)
+        elif mapping_name == 'beaglebone':
+            update_map_beaglebone(self.pins, self.mcu_type)
+    def update_command(self, cmd):
+        def pin_fixup(m):
+            name = m.group('name')
+            if name not in self.pins:
+                raise error("Unable to translate pin name: %s" % (cmd,))
+            pin_id = self.pins[name]
+            if (name != self.active_pins.setdefault(pin_id, name)
+                and self.validate_aliases):
+                raise error("pin %s is an alias for %s" % (
+                    name, self.active_pins[pin_id]))
+            return m.group('prefix') + str(pin_id)
+        return re_pin.sub(pin_fixup, cmd)
 
 
 ######################################################################
