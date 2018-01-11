@@ -105,6 +105,7 @@ class error(Exception):
 class PrinterHeater:
     error = error
     def __init__(self, printer, config):
+        self.printer = printer
         self.name = config.section
         sensor_params = config.getchoice('sensor_type', Sensors)
         self.sensor = sensor_params['class'](config, sensor_params)
@@ -303,23 +304,37 @@ class ControlAutoTune:
             self.peak = -9999999.
         if len(self.peaks) < 4:
             return
-        temp_diff = self.peaks[-1][0] - self.peaks[-2][0]
-        time_diff = self.peaks[-1][1] - self.peaks[-3][1]
+        self.calc_pid(len(self.peaks)-1)
+    def calc_pid(self, pos):
+        temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
+        time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
         max_power = self.heater.max_power
         Ku = 4. * (2. * max_power) / (abs(temp_diff) * math.pi)
         Tu = time_diff
 
-        Kp = 0.6 * Ku
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
+        Kp = 0.6 * Ku * PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, max_power, Ku, Tu, Kp * PID_PARAM_BASE,
-                     Ki * PID_PARAM_BASE, Kd * PID_PARAM_BASE)
+                     temp_diff, max_power, Ku, Tu, Kp, Ki, Kd)
+        return Kp, Ki, Kd
+    def final_calc(self):
+        cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
+                       for pos in range(4, len(self.peaks))]
+        midpoint_pos = sorted(cycle_times)[len(cycle_times)/2][1]
+        Kp, Ki, Kd = self.calc_pid(midpoint_pos)
+        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
+        gcode = self.heater.printer.objects['gcode']
+        gcode.respond_info(
+            "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
+            "To use these parameters, update the printer config file with\n"
+            "the above and then issue a RESTART command" % (Kp, Ki, Kd))
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True
+        self.final_calc()
         self.heater.finish_auto_tune(self.old_control)
         return False
 
