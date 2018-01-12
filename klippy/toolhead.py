@@ -208,7 +208,7 @@ class ToolHead:
         self.need_check_stall = -1.
         self.print_stall = 0
         self.sync_print_time = True
-        self.last_flush_from_idle = False
+        self.idle_flush_print_time = 0.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
         # Motor off tracking
@@ -234,11 +234,8 @@ class ToolHead:
         if not self.sync_print_time:
             return self.print_time
         self.sync_print_time = False
-        est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
-        if self.last_flush_from_idle and self.print_time > est_print_time:
-            self.print_stall += 1
-        self.last_flush_from_idle = False
         self.need_motor_off = True
+        est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
         self.print_time = max(
             self.print_time, est_print_time + self.buffer_time_start)
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
@@ -246,7 +243,7 @@ class ToolHead:
     def _flush_lookahead(self, must_sync=False):
         sync_print_time = self.sync_print_time
         self.move_queue.flush()
-        self.last_flush_from_idle = False
+        self.idle_flush_print_time = 0.
         if sync_print_time or must_sync:
             self.sync_print_time = True
             self.move_queue.set_flush_time(self.buffer_time_high)
@@ -265,6 +262,11 @@ class ToolHead:
         eventtime = self.reactor.monotonic()
         if self.sync_print_time:
             # Building initial queue - make sure to flush on idle input
+            if self.idle_flush_print_time:
+                est_print_time = self.mcu.estimated_print_time(eventtime)
+                if est_print_time < self.idle_flush_print_time:
+                    self.print_stall += 1
+                self.idle_flush_print_time = 0.
             self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
             return
         # Check if there are lots of queued moves and stall if so
@@ -289,7 +291,7 @@ class ToolHead:
             # Under ran low buffer mark - flush lookahead queue
             self._flush_lookahead(must_sync=True)
             if print_time != self.print_time:
-                self.last_flush_from_idle = True
+                self.idle_flush_print_time = self.print_time
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
