@@ -10,6 +10,7 @@ Frequently asked questions
 7. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
 8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+10. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
@@ -191,3 +192,38 @@ flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
 programmer - search the web to find the instructions for your
 particular device.
+
+### How do I upgrade to the latest software?
+
+The general way to upgrade is to ssh into the Raspberry Pi and run:
+
+```
+cd ~/klipper
+git pull
+~/klipper/scripts/install-octopi.sh
+```
+
+Then one can recompile and flash the micro-controller code. For
+example:
+
+```
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
+```
+
+However, it's often the case that only the host software changes. In
+this case, one can update and restart just the host software with:
+
+```
+cd ~/klipper
+git pull
+sudo service klipper restart
+```
+
+If after using this shortcut the software warns about needing to
+reflash the micro-controller or some other unusual error occurs, then
+follow the full upgrade steps outlined above. Note that the RESTART
+and FIRMWARE_RESTART g-code commands do not load new software - the
+above "sudo service klipper restart" and "make flash" commands are
+needed for a software change to take effect.
