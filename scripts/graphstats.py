@@ -42,25 +42,31 @@ def parse_log(logname):
     return out
 
 def find_print_restarts(data):
-    last_print_time = 0.
-    print_resets = []
-    for d in data:
-        print_time = float(d.get('print_time', last_print_time))
+    runoff_samples = {}
+    last_runoff_start = last_buffer_time = last_sampletime = 0.
+    last_print_stall = 0
+    for d in reversed(data):
+        # Check for buffer runoff
+        sampletime = d['#sampletime']
         buffer_time = float(d.get('buffer_time', 0.))
-        if print_time == last_print_time and not buffer_time:
-            print_resets.append(d['#sampletime'])
-            last_print_time = 0.
-        elif buffer_time:
-            last_print_time = print_time
-    sample_resets = {}
-    for d in data:
-        st = d['#sampletime']
-        while print_resets and st > print_resets[0]:
-            print_resets.pop(0)
-        if not print_resets:
-            break
-        if st + 2. * MAXBUFFER > print_resets[0]:
-            sample_resets[st] = 1
+        if buffer_time < 1. or (buffer_time < MAXBUFFER
+                                and buffer_time > last_buffer_time):
+            if not last_runoff_start:
+                last_runoff_start = last_sampletime
+                runoff_samples[last_runoff_start] = [False, []]
+            runoff_samples[last_runoff_start][1].append(sampletime)
+        else:
+            last_runoff_start = 0.
+        last_buffer_time = buffer_time
+        last_sampletime = sampletime
+        # Check for print stall
+        print_stall = int(d['print_stall'])
+        if print_stall < last_print_stall:
+            if last_runoff_start:
+                runoff_samples[last_runoff_start][0] = True
+        last_print_stall = print_stall
+    sample_resets = {sampletime: 1 for stall, samples in runoff_samples.values()
+                     for sampletime in samples if not stall}
     return sample_resets
 
 def plot_mcu(data, maxbw, outname, graph_awake=False):
@@ -87,7 +93,7 @@ def plot_mcu(data, maxbw, outname, graph_awake=False):
             load = 0.
         pt = float(d['print_time'])
         hb = float(d['buffer_time'])
-        if not hb or hb >= MAXBUFFER or st in sample_resets:
+        if hb >= MAXBUFFER or st in sample_resets:
             hb = 0.
         else:
             hb = 100. * (MAXBUFFER - hb) / MAXBUFFER
