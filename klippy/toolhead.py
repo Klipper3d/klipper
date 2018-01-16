@@ -312,10 +312,10 @@ class ToolHead:
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
-    def set_position(self, newpos):
+    def set_position(self, newpos, homing_axes=()):
         self._flush_lookahead()
         self.commanded_pos[:] = newpos
-        self.kin.set_position(newpos)
+        self.kin.set_position(newpos, homing_axes)
     def move(self, newpos, speed):
         speed = min(speed, self.max_velocity)
         move = Move(self, self.commanded_pos, newpos, speed)

@@ -71,7 +71,7 @@ class DeltaKinematics:
             "Delta max build radius %.2fmm (moves slowed past %.2fmm and %.2fmm)"
             % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
                math.sqrt(self.very_slow_xy2)))
-        self.set_position([0., 0., 0.])
+        self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return list(self.steppers)
     def _cartesian_to_actuator(self, coord):
@@ -83,17 +83,18 @@ class DeltaKinematics:
     def get_position(self):
         spos = [s.mcu_stepper.get_commanded_position() for s in self.steppers]
         return self._actuator_to_cartesian(spos)
-    def set_position(self, newpos):
+    def set_position(self, newpos, homing_axes):
         pos = self._cartesian_to_actuator(newpos)
         for i in StepList:
             self.steppers[i].set_position(pos[i])
         self.limit_xy2 = -1.
+        if tuple(homing_axes) == StepList:
+            self.need_home = False
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
         endstops = [es for s in self.steppers for es in s.get_endstops()]
         s = self.steppers[0] # Assume homing speed same for all steppers
-        self.need_home = False
         # Initial homing
         homing_speed = min(s.homing_speed, self.max_z_velocity)
         homepos = [0., 0., self.max_z, None]

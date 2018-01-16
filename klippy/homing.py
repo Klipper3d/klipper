@@ -78,7 +78,9 @@ class Homing:
             raise EndstopError(error)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):
         # Alter kinematics class to think printer is at forcepos
-        self.toolhead.set_position(self._fill_coord(forcepos))
+        homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
+        self.toolhead.set_position(
+            self._fill_coord(forcepos), homing_axes=homing_axes)
         # Add a CPU delay when homing a large axis
         if not second_home:
             est_move_d = sum([abs(forcepos[i]-movepos[i])

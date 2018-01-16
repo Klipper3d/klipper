@@ -6,16 +6,29 @@
 
 class HomingOverride:
     def __init__(self, config):
-        printer = config.get_printer()
+        self.printer = config.get_printer()
+        self.start_pos = [config.getfloat('set_position_' + a, None)
+                          for a in 'xyz']
         self.script = config.get('gcode')
         self.in_script = False
-        self.gcode = printer.lookup_object('gcode')
+        self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G28", self.cmd_G28)
     def cmd_G28(self, params):
         if self.in_script:
             # Was called recursively - invoke the real G28 command
             self.gcode.cmd_G28(params)
             return
+        # Calculate forced position (if configured)
+        toolhead = self.printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        homing_axes = []
+        for axis, loc in enumerate(self.start_pos):
+            if loc is not None:
+                pos[axis] = loc
+                homing_axes.append(axis)
+        toolhead.set_position(pos, homing_axes=homing_axes)
+        self.gcode.reset_last_position()
+        # Perform homing
         try:
             self.in_script = True
             self.gcode.run_script(self.script)
