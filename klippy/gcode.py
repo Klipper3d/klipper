@@ -52,6 +52,12 @@ class GCodeParser:
         self.speed = 25.0
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
+        if func is None:
+            if cmd in self.ready_gcode_handlers:
+                del self.ready_gcode_handlers[cmd]
+            if cmd in self.base_gcode_handlers:
+                del self.base_gcode_handlers[cmd]
+            return
         if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
             origfunc = func
             func = lambda params: origfunc(self.get_extended_params(params))
