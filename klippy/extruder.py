@@ -10,7 +10,6 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
     def __init__(self, printer, config):
-        self.config = config
         self.heater = heater.PrinterHeater(printer, config)
         self.stepper = stepper.PrinterStepper(printer, config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
@@ -23,10 +22,10 @@ class PrinterExtruder:
         self.max_extrude_ratio = max_cross_section / self.filament_area
         toolhead = printer.objects['toolhead']
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_e_velocity = self.config.getfloat(
+        self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
             , above=0.)
-        self.max_e_accel = self.config.getfloat(
+        self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * self.max_extrude_ratio
             , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
