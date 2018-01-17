@@ -377,10 +377,9 @@ class GCodeParser:
             homing_state.home_axes(axes)
         except homing.EndstopError as e:
             raise error(str(e))
-        newpos = self.toolhead.get_position()
         for axis in homing_state.get_axes():
-            self.last_position[axis] = newpos[axis]
             self.base_position[axis] = -self.homing_add[axis]
+        self.reset_last_position()
     cmd_M18_aliases = ["M84"]
     def cmd_M18(self, params):
         # Turn off motors
