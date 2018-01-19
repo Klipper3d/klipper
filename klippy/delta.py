@@ -112,7 +112,7 @@ class DeltaKinematics:
         s = self.steppers[0] # Assume homing speed same for all steppers
         self.need_home = False
         # Initial homing
-        homing_speed = s.get_homing_speed()
+        homing_speed = min(s.homing_speed, self.max_z_velocity)
         homepos = [0., 0., self.max_z, None]
         coord = list(homepos)
         coord[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
