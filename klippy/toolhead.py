@@ -369,12 +369,13 @@ class ToolHead:
         buffer_time = max(0., self.print_time - est_print_time)
         return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             self.print_time, buffer_time, self.print_stall)
-    def do_shutdown(self):
-        try:
-            self.move_queue.reset()
-            self.reset_print_time()
-        except:
-            logging.exception("Exception in do_shutdown")
+    def printer_state(self, state):
+        if state == 'shutdown':
+            try:
+                self.move_queue.reset()
+                self.reset_print_time()
+            except:
+                logging.exception("Exception in toolhead shutdown")
     def get_kinematics(self):
         return self.kin
     def get_max_velocity(self):

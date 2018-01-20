@@ -4,9 +4,10 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, optparse, ConfigParser, logging, time, threading
-import util, reactor, queuelogger, msgproto, gcode
-import pins, mcu, chipmisc, toolhead, extruder, heater, fan
+import sys, optparse, logging, time, threading
+import collections, ConfigParser, importlib
+import util, reactor, queuelogger, msgproto
+import gcode, pins, mcu, chipmisc, toolhead, extruder, heater, fan
 
 message_ready = "Printer is ready"
 
@@ -134,8 +135,8 @@ class Printer:
         if bglogger is not None:
             bglogger.set_rollover_info("config", None)
         self.reactor = reactor.Reactor()
-        self.gcode = gcode.GCodeParser(self, input_fd)
-        self.objects = {'gcode': self.gcode}
+        gc = gcode.GCodeParser(self, input_fd)
+        self.objects = collections.OrderedDict({'gcode': gc})
         self.stats_timer = self.reactor.register_timer(self._stats)
         self.connect_timer = self.reactor.register_timer(
             self._connect, self.reactor.NOW)
@@ -145,7 +146,8 @@ class Printer:
         self.async_shutdown_msg = ""
         self.run_result = None
         self.fileconfig = None
-        self.mcus = []
+        self.stats_cb = []
+        self.state_cb = []
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):
@@ -165,8 +167,7 @@ class Printer:
         return default
     def lookup_module_objects(self, module_name):
         prefix = module_name + ' '
-        objs = [self.objects[n]
-                for n in sorted(self.objects) if n.startswith(prefix)]
+        objs = [self.objects[n] for n in self.objects if n.startswith(prefix)]
         if module_name in self.objects:
             return [self.objects[module_name]] + objs
         return objs
@@ -180,12 +181,8 @@ class Printer:
         is_active = toolhead.check_active(eventtime)
         if not is_active and not force_output:
             return eventtime + 1.
-        out = []
-        out.append(self.gcode.stats(eventtime))
-        out.append(toolhead.stats(eventtime))
-        for m in self.mcus:
-            out.append(m.stats(eventtime))
-        logging.info("Stats %.1f: %s", eventtime, ' '.join(out))
+        stats = [cb(eventtime) for cb in self.stats_cb]
+        logging.info("Stats %.1f: %s", eventtime, ' '.join(stats))
         return eventtime + 1.
     def _load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
@@ -200,7 +197,6 @@ class Printer:
         config = ConfigWrapper(self, 'printer')
         for m in [pins, mcu, chipmisc, toolhead, extruder, heater, fan]:
             m.add_printer_objects(self, config)
-        self.mcus = self.lookup_module_objects('mcu')
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
@@ -214,14 +210,24 @@ class Printer:
                     raise self.config_error(
                         "Unknown option '%s' in section '%s'" % (
                             option, section))
+        # Determine which printer objects have stats/state callbacks
+        self.stats_cb = [o.stats for o in self.objects.values()
+                         if hasattr(o, 'stats')]
+        self.state_cb = [o.printer_state for o in self.objects.values()
+                         if hasattr(o, 'printer_state')]
     def _connect(self, eventtime):
         self.reactor.unregister_timer(self.connect_timer)
         try:
             self._load_config()
-            for m in self.mcus:
-                m.connect()
-            self.gcode.connect()
+            for cb in self.state_cb:
+                if self.state_message is not message_startup:
+                    return self.reactor.NEVER
+                cb('connect')
             self.state_message = message_ready
+            for cb in self.state_cb:
+                if self.state_message is not message_ready:
+                    return self.reactor.NEVER
+                cb('ready')
             if self.start_args.get('debugoutput') is None:
                 self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
         except (self.config_error, pins.error) as e:
@@ -257,10 +263,11 @@ class Printer:
                     self.invoke_shutdown(self.async_shutdown_msg)
                     continue
                 self._stats(self.reactor.monotonic(), force_output=True)
-                for m in self.mcus:
-                    if run_result == 'firmware_restart':
+                if run_result == 'firmware_restart':
+                    for m in self.lookup_module_objects('mcu'):
                         m.microcontroller_restart()
-                    m.disconnect()
+                for cb in self.state_cb:
+                    cb('disconnect')
             except:
                 logging.exception("Unhandled exception during post run")
             return run_result
@@ -269,12 +276,8 @@ class Printer:
             return
         self.is_shutdown = True
         self.state_message = "%s%s" % (msg, message_shutdown)
-        for m in self.mcus:
-            m.do_shutdown()
-        self.gcode.do_shutdown()
-        toolhead = self.objects.get('toolhead')
-        if toolhead is not None:
-            toolhead.do_shutdown()
+        for cb in self.state_cb:
+            cb('shutdown')
     def invoke_async_shutdown(self, msg):
         self.async_shutdown_msg = msg
         self.request_exit("shutdown")

@@ -68,7 +68,18 @@ class GCodeParser:
             self.gcode_help[cmd] = desc
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
-    def connect(self):
+    def printer_state(self, state):
+        if state == 'shutdown':
+            if not self.is_printer_ready:
+                return
+            self.is_printer_ready = False
+            self.gcode_handlers = self.base_gcode_handlers
+            self.dump_debug()
+            if self.is_fileinput:
+                self.printer.request_exit()
+            return
+        if state != 'ready':
+            return
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
@@ -85,14 +96,6 @@ class GCodeParser:
     def reset_last_position(self):
         if self.toolhead is not None:
             self.last_position = self.toolhead.get_position()
-    def do_shutdown(self):
-        if not self.is_printer_ready:
-            return
-        self.is_printer_ready = False
-        self.gcode_handlers = self.base_gcode_handlers
-        self.dump_debug()
-        if self.is_fileinput:
-            self.printer.request_exit()
     def motor_heater_off(self):
         if self.toolhead is None:
             return

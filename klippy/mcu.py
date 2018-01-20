@@ -581,7 +581,7 @@ class MCU:
         self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         for c in self._init_cmds:
             self.send(self.create_command(c))
-    def connect(self):
+    def _connect(self):
         if self.is_fileoutput():
             self._connect_file()
         else:
@@ -666,9 +666,18 @@ class MCU:
     def monotonic(self):
         return self._reactor.monotonic()
     # Restarts
+    def _disconnect(self):
+        self._serial.disconnect()
+        if self._steppersync is not None:
+            self._ffi_lib.steppersync_free(self._steppersync)
+            self._steppersync = None
+    def _shutdown(self, force=False):
+        if self._emergency_stop_cmd is None or (self._is_shutdown and not force):
+            return
+        self.send(self._emergency_stop_cmd.encode())
     def _restart_arduino(self):
         logging.info("Attempting MCU '%s' reset", self._name)
-        self.disconnect()
+        self._disconnect()
         serialhdl.arduino_reset(self._serialport, self._reactor)
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
@@ -679,7 +688,7 @@ class MCU:
             # Attempt reset via config_reset command
             logging.info("Attempting MCU '%s' config_reset command", self._name)
             self._is_shutdown = True
-            self.do_shutdown(force=True)
+            self._shutdown(force=True)
             self._reactor.pause(self._reactor.monotonic() + 0.015)
             self.send(self._config_reset_cmd.encode())
         else:
@@ -687,10 +696,10 @@ class MCU:
             logging.info("Attempting MCU '%s' reset command", self._name)
             self.send(self._reset_cmd.encode())
         self._reactor.pause(self._reactor.monotonic() + 0.015)
-        self.disconnect()
+        self._disconnect()
     def _restart_rpi_usb(self):
         logging.info("Attempting MCU '%s' reset via rpi usb power", self._name)
-        self.disconnect()
+        self._disconnect()
         chelper.run_hub_ctrl(0)
         self._reactor.pause(self._reactor.monotonic() + 2.)
         chelper.run_hub_ctrl(1)
@@ -735,17 +744,15 @@ class MCU:
             self._mcu_tick_stddev)
         return ' '.join([msg, self._serial.stats(eventtime),
                          self._clocksync.stats(eventtime)])
-    def do_shutdown(self, force=False):
-        if self._emergency_stop_cmd is None or (self._is_shutdown and not force):
-            return
-        self.send(self._emergency_stop_cmd.encode())
-    def disconnect(self):
-        self._serial.disconnect()
-        if self._steppersync is not None:
-            self._ffi_lib.steppersync_free(self._steppersync)
-            self._steppersync = None
+    def printer_state(self, state):
+        if state == 'connect':
+            self._connect()
+        elif state == 'disconnect':
+            self._disconnect()
+        elif state == 'shutdown':
+            self._shutdown()
     def __del__(self):
-        self.disconnect()
+        self._disconnect()
 
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """
