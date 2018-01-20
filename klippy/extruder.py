@@ -1,6 +1,6 @@
 # Code for handling printer nozzle extruders
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -24,7 +24,7 @@ class PrinterExtruder:
             'max_extrude_cross_section', 4. * self.nozzle_diameter**2
             , above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
-        toolhead = printer.objects['toolhead']
+        toolhead = printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
@@ -248,17 +248,17 @@ def add_printer_objects(printer, config):
 def get_printer_extruders(printer):
     out = []
     for i in range(99):
-        extruder = printer.objects.get('extruder%d' % (i,))
+        extruder = printer.lookup_object('extruder%d' % (i,), None)
         if extruder is None:
             break
         out.append(extruder)
     return out
 
 def get_printer_heater(printer, name):
-    if name == 'heater_bed' and name in printer.objects:
-        return printer.objects[name]
+    if name == 'heater_bed':
+        return printer.lookup_object(name)
     if name == 'extruder':
         name = 'extruder0'
-    if name.startswith('extruder') and name in printer.objects:
-        return printer.objects[name].get_heater()
+    if name.startswith('extruder'):
+        return printer.lookup_object(name).get_heater()
     raise printer.config_error("Unknown heater '%s'" % (name,))

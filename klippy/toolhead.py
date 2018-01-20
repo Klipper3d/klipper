@@ -1,6 +1,6 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -183,8 +183,8 @@ STALL_TIME = 0.100
 class ToolHead:
     def __init__(self, printer, config):
         self.printer = printer
-        self.reactor = printer.reactor
-        self.all_mcus = mcu.get_printer_mcus(printer)
+        self.reactor = printer.get_reactor()
+        self.all_mcus = printer.lookup_module_objects('mcu')
         self.mcu = self.all_mcus[0]
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)

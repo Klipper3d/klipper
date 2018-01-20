@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Main code for host side printer firmware
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, ConfigParser, logging, time, threading
@@ -52,8 +52,12 @@ class ConfigWrapper:
     def __init__(self, printer, section):
         self.printer = printer
         self.section = section
-    def get_wrapper(self, parser, option, default
-                    , minval=None, maxval=None, above=None, below=None):
+    def get_printer(self):
+        return self.printer
+    def get_name(self):
+        return self.section
+    def _get_wrapper(self, parser, option, default,
+                     minval=None, maxval=None, above=None, below=None):
         if (default is not self.sentinel
             and not self.printer.fileconfig.has_option(self.section, option)):
             return default
@@ -84,17 +88,17 @@ class ConfigWrapper:
                     option, self.section, below))
         return v
     def get(self, option, default=sentinel):
-        return self.get_wrapper(self.printer.fileconfig.get, option, default)
+        return self._get_wrapper(self.printer.fileconfig.get, option, default)
     def getint(self, option, default=sentinel, minval=None, maxval=None):
-        return self.get_wrapper(
+        return self._get_wrapper(
             self.printer.fileconfig.getint, option, default, minval, maxval)
     def getfloat(self, option, default=sentinel
                  , minval=None, maxval=None, above=None, below=None):
-        return self.get_wrapper(
+        return self._get_wrapper(
             self.printer.fileconfig.getfloat, option, default
             , minval, maxval, above, below)
     def getboolean(self, option, default=sentinel):
-        return self.get_wrapper(
+        return self._get_wrapper(
             self.printer.fileconfig.getboolean, option, default)
     def getchoice(self, option, choices, default=sentinel):
         c = self.get(option, default)
@@ -144,6 +148,31 @@ class Printer:
         self.mcus = []
     def get_start_args(self):
         return self.start_args
+    def get_reactor(self):
+        return self.reactor
+    def get_state_message(self):
+        return self.state_message
+    def add_object(self, name, obj):
+        if obj in self.objects:
+            raise self.config_error(
+                "Printer object '%s' already created" % (name,))
+        self.objects[name] = obj
+    def lookup_object(self, name, default=ConfigWrapper.sentinel):
+        if name in self.objects:
+            return self.objects[name]
+        if default is ConfigWrapper.sentinel:
+            raise self.config_error("Unknown config object '%s'" % (name,))
+        return default
+    def lookup_module_objects(self, module_name):
+        prefix = module_name + ' '
+        objs = [self.objects[n]
+                for n in sorted(self.objects) if n.startswith(prefix)]
+        if module_name in self.objects:
+            return [self.objects[module_name]] + objs
+        return objs
+    def set_rollover_info(self, name, info):
+        if self.bglogger is not None:
+            self.bglogger.set_rollover_info(name, info)
     def _stats(self, eventtime, force_output=False):
         toolhead = self.objects.get('toolhead')
         if toolhead is None:
@@ -158,8 +187,6 @@ class Printer:
             out.append(m.stats(eventtime))
         logging.info("Stats %.1f: %s", eventtime, ' '.join(out))
         return eventtime + 1.
-    def add_object(self, name, obj):
-        self.objects[name] = obj
     def _load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
         config_file = self.start_args['config_file']
@@ -173,7 +200,7 @@ class Printer:
         config = ConfigWrapper(self, 'printer')
         for m in [pins, mcu, chipmisc, toolhead, extruder, heater, fan]:
             m.add_printer_objects(self, config)
-        self.mcus = mcu.get_printer_mcus(self)
+        self.mcus = self.lookup_module_objects('mcu')
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
@@ -237,8 +264,6 @@ class Printer:
             except:
                 logging.exception("Unhandled exception during post run")
             return run_result
-    def get_state_message(self):
-        return self.state_message
     def invoke_shutdown(self, msg):
         if self.is_shutdown:
             return

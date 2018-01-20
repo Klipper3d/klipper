@@ -1,6 +1,6 @@
 # Printer heater support
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
@@ -106,7 +106,7 @@ class PrinterHeater:
     error = error
     def __init__(self, printer, config):
         self.printer = printer
-        self.name = config.section
+        self.name = config.get_name()
         sensor_params = config.getchoice('sensor_type', Sensors)
         self.sensor = sensor_params['class'](config, sensor_params)
         self.min_temp = config.getfloat('min_temp', minval=0.)
@@ -326,7 +326,7 @@ class ControlAutoTune:
         midpoint_pos = sorted(cycle_times)[len(cycle_times)/2][1]
         Kp, Ki, Kd = self.calc_pid(midpoint_pos)
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
-        gcode = self.heater.printer.objects['gcode']
+        gcode = self.heater.printer.lookup_object('gcode')
         gcode.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "To use these parameters, update the printer config file with\n"

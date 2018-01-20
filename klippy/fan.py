@@ -1,6 +1,6 @@
 # Printer fan support
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import extruder, pins
@@ -35,7 +35,7 @@ class PrinterFan:
 class PrinterHeaterFan:
     def __init__(self, printer, config):
         self.fan = PrinterFan(printer, config)
-        self.mcu = printer.objects['mcu']
+        self.mcu = printer.lookup_object('mcu')
         heater = config.get("heater", "extruder0")
         self.heater = extruder.get_printer_heater(printer, heater)
         self.heater_temp = config.getfloat("heater_temp", 50.0)
@@ -43,7 +43,8 @@ class PrinterHeaterFan:
         self.fan_speed = config.getfloat(
             "fan_speed", max_power, minval=0., maxval=max_power)
         self.fan.mcu_fan.setup_start_value(0., max_power)
-        printer.reactor.register_timer(self.callback, printer.reactor.NOW)
+        reactor = printer.get_reactor()
+        reactor.register_timer(self.callback, reactor.NOW)
     def callback(self, eventtime):
         current_temp, target_temp = self.heater.get_temp(eventtime)
         if not current_temp and not target_temp and not self.fan.last_fan_time:

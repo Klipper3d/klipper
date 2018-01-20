@@ -1,6 +1,6 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
@@ -17,7 +17,7 @@ class GCodeParser:
         self.printer = printer
         self.fd = fd
         # Input handling
-        self.reactor = printer.reactor
+        self.reactor = printer.get_reactor()
         self.is_processing_data = False
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
         self.fd_handle = None
@@ -72,14 +72,14 @@ class GCodeParser:
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
-        self.toolhead = self.printer.objects.get('toolhead')
+        self.toolhead = self.printer.lookup_object('toolhead')
         extruders = extruder.get_printer_extruders(self.printer)
         if extruders:
             self.extruder = extruders[0]
             self.toolhead.set_extruder(self.extruder)
         self.heaters = [ e.get_heater() for e in extruders ]
-        self.heaters.append(self.printer.objects.get('heater_bed'))
-        self.fan = self.printer.objects.get('fan')
+        self.heaters.append(self.printer.lookup_object('heater_bed', None))
+        self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def reset_last_position(self):

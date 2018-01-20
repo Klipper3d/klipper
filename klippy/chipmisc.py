@@ -1,6 +1,6 @@
 # Code to configure miscellaneous chips
 #
-# Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import pins, mcu
@@ -22,7 +22,7 @@ PIN_MIN_TIME = 0.100
 class PrinterPin:
     def __init__(self, printer, config):
         self.printer = printer
-        self.is_pwm = 'pwm' in config.section.split()[0]
+        self.is_pwm = 'pwm' in config.get_name().split()[0]
         if self.is_pwm:
             self.mcu_pin = pins.setup_pin(printer, 'pwm', config.get('pin'))
             hard_pwm = config.getint('hard_pwm', None, minval=1)
@@ -40,7 +40,7 @@ class PrinterPin:
         self.last_value_time = 0.
         self.last_value = config.getfloat(
             'value', 0., minval=0., maxval=self.scale) / self.scale
-        self.is_static = config.section.startswith('static_')
+        self.is_static = config.get_name().startswith('static_')
         if self.is_static:
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
@@ -48,13 +48,13 @@ class PrinterPin:
             shutdown_value = config.getfloat(
                 'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
             self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
-        self.gcode = printer.objects['gcode']
+        self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command("SET_PIN", self.cmd_SET_PIN,
                                     desc=self.cmd_SET_PIN_help)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, params):
         pin_name = self.gcode.get_str('PIN', params)
-        pin = self.printer.objects.get('pin ' + pin_name)
+        pin = self.printer.lookup_object('pin ' + pin_name, None)
         if pin is not self:
             if pin is None:
                 raise self.gcode.error("Pin not configured")
@@ -64,7 +64,7 @@ class PrinterPin:
         value = self.gcode.get_float('VALUE', params) / self.scale
         if value == self.last_value:
             return
-        print_time = self.printer.objects['toolhead'].get_last_move_time()
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         if self.is_pwm:
             if value < 0. or value > 1.:
@@ -89,7 +89,7 @@ class PrinterMultiPin:
         self.mcu_pins = []
     def setup_pin(self, pin_params):
         pin_name = pin_params['pin']
-        pin = self.printer.objects.get('multi_pin ' + pin_name)
+        pin = self.printer.lookup_object('multi_pin ' + pin_name, None)
         if pin is not self:
             if pin is None:
                 raise pins.error("multi_pin %s not configured" % (pin_name,))
@@ -147,7 +147,7 @@ class PrinterServo:
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.
-        self.gcode = printer.objects['gcode']
+        self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command("SET_SERVO", self.cmd_SET_SERVO,
                                     desc=self.cmd_SET_SERVO_help)
     def set_pwm(self, print_time, value):
@@ -167,12 +167,12 @@ class PrinterServo:
     cmd_SET_SERVO_help = "Set servo angle"
     def cmd_SET_SERVO(self, params):
         servo_name = self.gcode.get_str('SERVO', params)
-        servo = self.printer.objects.get('servo ' + servo_name)
+        servo = self.printer.lookup_object('servo ' + servo_name, None)
         if servo is not self:
             if servo is None:
                 raise self.gcode.error("Servo not configured")
             return servo.cmd_SET_SERVO(params)
-        print_time = self.printer.objects['toolhead'].get_last_move_time()
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         if 'WIDTH' in params:
             self.set_pulse_width(print_time,
                                  self.gcode.get_float('WIDTH', params))

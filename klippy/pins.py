@@ -234,7 +234,7 @@ def add_printer_objects(printer, config):
     printer.add_object('pins', PrinterPins())
 
 def get_printer_pins(printer):
-    return printer.objects['pins']
+    return printer.lookup_object('pins')
 
 def setup_pin(printer, pin_type, pin_desc):
     return get_printer_pins(printer).setup_pin(pin_type, pin_desc)

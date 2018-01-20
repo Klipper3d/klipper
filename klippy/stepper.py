@@ -36,7 +36,7 @@ def lookup_enable_pin(printer, pin):
 # Code storing the definitions for a stepper motor
 class PrinterStepper:
     def __init__(self, printer, config):
-        self.name = config.section
+        self.name = config.get_name()
         if self.name.startswith('stepper_'):
             self.name = self.name[8:]
         self.need_motor_enable = True
@@ -101,7 +101,7 @@ class PrinterHomingStepper(PrinterStepper):
             else:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
-                        config.section,))
+                        config.get_name(),))
         # Endstop stepper phase position tracking
         self.homing_stepper_phases = config.getint(
             'homing_stepper_phases', None, minval=0)
@@ -169,9 +169,9 @@ class PrinterMultiStepper(PrinterHomingStepper):
         self.extras = []
         self.all_step_const = [self.step_const]
         for i in range(1, 99):
-            if not config.has_section(config.section + str(i)):
+            if not config.has_section(config.get_name() + str(i)):
                 break
-            extraconfig = config.getsection(config.section + str(i))
+            extraconfig = config.getsection(config.get_name() + str(i))
             extra = PrinterStepper(printer, extraconfig)
             self.extras.append(extra)
             self.all_step_const.append(extra.step_const)
@@ -202,6 +202,6 @@ class PrinterMultiStepper(PrinterHomingStepper):
         return self.endstops
 
 def LookupMultiHomingStepper(printer, config):
-    if not config.has_section(config.section + '1'):
+    if not config.has_section(config.get_name() + '1'):
         return PrinterHomingStepper(printer, config)
     return PrinterMultiStepper(printer, config)
