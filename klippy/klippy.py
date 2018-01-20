@@ -4,7 +4,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, optparse, logging, time, threading
+import sys, os, optparse, logging, time, threading
 import collections, ConfigParser, importlib
 import util, reactor, queuelogger, msgproto
 import gcode, pins, mcu, chipmisc, toolhead, extruder, heater, fan
@@ -184,6 +184,16 @@ class Printer:
         stats = [cb(eventtime) for cb in self.stats_cb]
         logging.info("Stats %.1f: %s", eventtime, ' '.join(stats))
         return eventtime + 1.
+    def _try_load_module(self, config, section):
+        if section in self.objects:
+            return
+        module_name = section.split()[0]
+        py_name = os.path.join(os.path.dirname(__file__),
+                               'extras', module_name + '.py')
+        if not os.path.exists(py_name):
+            return
+        mod = importlib.import_module('extras.' + module_name)
+        self.objects[section] = mod.load_config(config.getsection(section))
     def _load_config(self):
         self.fileconfig = ConfigParser.RawConfigParser()
         config_file = self.start_args['config_file']
@@ -195,13 +205,17 @@ class Printer:
             ConfigLogger(self.fileconfig, self.bglogger)
         # Create printer components
         config = ConfigWrapper(self, 'printer')
-        for m in [pins, mcu, chipmisc, toolhead, extruder, heater, fan]:
+        for m in [pins, mcu]:
+            m.add_printer_objects(self, config)
+        for section in self.fileconfig.sections():
+            self._try_load_module(config, section)
+        for m in [chipmisc, toolhead, extruder, heater, fan]:
             m.add_printer_objects(self, config)
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section in self.fileconfig.sections():
             section = section.lower()
-            if section not in valid_sections:
+            if section not in valid_sections and section not in self.objects:
                 raise self.config_error("Unknown config file section '%s'" % (
                     section,))
             for option in self.fileconfig.options(section):
