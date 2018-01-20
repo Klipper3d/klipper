@@ -77,54 +77,6 @@ class PrinterPin:
         self.last_value = value
         self.last_value_time = print_time
 
-class PrinterMultiPin:
-    def __init__(self, printer, config):
-        self.printer = printer
-        try:
-            pins.get_printer_pins(printer).register_chip('multi_pin', self)
-        except pins.error:
-            pass
-        self.pin_type = None
-        self.pin_list = [pin.strip() for pin in config.get('pins').split(',')]
-        self.mcu_pins = []
-    def setup_pin(self, pin_params):
-        pin_name = pin_params['pin']
-        pin = self.printer.lookup_object('multi_pin ' + pin_name, None)
-        if pin is not self:
-            if pin is None:
-                raise pins.error("multi_pin %s not configured" % (pin_name,))
-            return pin.setup_pin(pin_params)
-        if self.pin_type is not None:
-            raise pins.error("Can't setup multi_pin %s twice" % (pin_name,))
-        self.pin_type = pin_params['type']
-        invert = ""
-        if pin_params['invert']:
-            invert = "!"
-        self.mcu_pins = [
-            pins.setup_pin(self.printer, self.pin_type, invert + pin_desc)
-            for pin_desc in self.pin_list]
-        return self
-    def get_mcu(self):
-        return self.mcu_pins[0].get_mcu()
-    def setup_max_duration(self, max_duration):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_max_duration(max_duration)
-    def setup_start_value(self, start_value, shutdown_value):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_start_value(start_value, shutdown_value)
-    def setup_cycle_time(self, cycle_time):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_cycle_time(cycle_time)
-    def setup_hard_pwm(self, hard_cycle_ticks):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_hard_pwm(hard_cycle_ticks)
-    def set_digital(self, print_time, value):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.set_digital(print_time, value)
-    def set_pwm(self, print_time, value):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.set_pwm(print_time, value)
-
 
 ######################################################################
 # Servos
@@ -434,8 +386,6 @@ def add_printer_objects(printer, config):
         printer.add_object('pin' + s.section[17:], PrinterPin(printer, s))
     for s in config.get_prefix_sections('pwm_output '):
         printer.add_object('pin' + s.section[10:], PrinterPin(printer, s))
-    for s in config.get_prefix_sections('multi_pin '):
-        printer.add_object(s.section, PrinterMultiPin(printer, s))
     for s in config.get_prefix_sections('servo '):
         printer.add_object(s.section, PrinterServo(printer, s))
     for s in config.get_prefix_sections('ad5206 '):
