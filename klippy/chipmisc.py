@@ -79,31 +79,6 @@ class PrinterPin:
 
 
 ######################################################################
-# AD5206 digipot
-######################################################################
-
-class ad5206:
-    def __init__(self, printer, config):
-        enable_pin_params = pins.get_printer_pins(printer).lookup_pin(
-            'digital_out', config.get('enable_pin'))
-        self.mcu = enable_pin_params['chip']
-        self.pin = enable_pin_params['pin']
-        self.mcu.add_config_object(self)
-        scale = config.getfloat('scale', 1., above=0.)
-        self.channels = [None] * 6
-        for i in range(len(self.channels)):
-            val = config.getfloat('channel_%d' % (i+1,), None,
-                                  minval=0., maxval=scale)
-            if val is not None:
-                self.channels[i] = int(val * 256. / scale + .5)
-    def build_config(self):
-        for i, val in enumerate(self.channels):
-            if val is not None:
-                self.mcu.add_config_cmd(
-                    "send_spi_message pin=%s msg=%02x%02x" % (self.pin, i, val))
-
-
-######################################################################
 # Replicape board
 ######################################################################
 
@@ -332,5 +307,3 @@ def add_printer_objects(printer, config):
         printer.add_object('pin' + s.section[17:], PrinterPin(printer, s))
     for s in config.get_prefix_sections('pwm_output '):
         printer.add_object('pin' + s.section[10:], PrinterPin(printer, s))
-    for s in config.get_prefix_sections('ad5206 '):
-        printer.add_object(s.section, ad5206(printer, s))
