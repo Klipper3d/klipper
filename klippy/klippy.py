@@ -7,7 +7,7 @@
 import sys, os, optparse, logging, time, threading
 import collections, ConfigParser, importlib
 import util, reactor, queuelogger, msgproto
-import gcode, pins, mcu, chipmisc, toolhead, extruder, heater, fan
+import gcode, pins, mcu, chipmisc, toolhead, extruder, heater
 
 message_ready = "Printer is ready"
 
@@ -209,7 +209,7 @@ class Printer:
             m.add_printer_objects(self, config)
         for section in self.fileconfig.sections():
             self._try_load_module(config, section)
-        for m in [chipmisc, toolhead, extruder, heater, fan]:
+        for m in [chipmisc, toolhead, extruder, heater]:
             m.add_printer_objects(self, config)
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
