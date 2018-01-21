@@ -89,10 +89,12 @@ class GatherShutdown:
     def __init__(self, configs, line_num, recent_lines, logname):
         self.shutdown_line_num = line_num
         self.filename = "%s.shutdown%05d" % (logname, line_num)
-        configs_by_id = {c.config_num: c for c in configs.values()}
-        self.config = configs_by_id[max(configs_by_id.keys())]
-        self.comments = ["# config %s" % (self.config.filename,)]
-        self.config.add_comment(format_comment(line_num, recent_lines[-1][1]))
+        self.comments = []
+        if configs:
+            configs_by_id = {c.config_num: c for c in configs.values()}
+            config = configs_by_id[max(configs_by_id.keys())]
+            config.add_comment(format_comment(line_num, recent_lines[-1][1]))
+            self.comments.append("# config %s" % (self.config.filename,))
         self.stats_stream = []
         self.gcode_stream = []
         self.mcus = {}
