@@ -45,6 +45,8 @@ class GCodeParser:
         self.homing_add = [0.0, 0.0, 0.0, 0.0]
         self.speed_factor = 1. / 60.
         self.extrude_factor = 1.
+        self.move_transform = self.move_with_transform = None
+        self.position_with_transform = (lambda: [0., 0., 0., 0.])
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
@@ -66,6 +68,13 @@ class GCodeParser:
             self.base_gcode_handlers[cmd] = func
         if desc is not None:
             self.gcode_help[cmd] = desc
+    def set_move_transform(self, transform):
+        if self.move_transform is not None:
+            raise self.printer.config_error(
+                "G-Code move transform already specified")
+        self.move_transform = transform
+        self.move_with_transform = transform.move
+        self.position_with_transform = transform.get_position
     def stats(self, eventtime):
         return "gcodein=%d" % (self.bytes_read,)
     def printer_state(self, state):
@@ -84,6 +93,9 @@ class GCodeParser:
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
         self.toolhead = self.printer.lookup_object('toolhead')
+        if self.move_transform is None:
+            self.move_with_transform = self.toolhead.move
+            self.position_with_transform = self.toolhead.get_position
         extruders = extruder.get_printer_extruders(self.printer)
         if extruders:
             self.extruder = extruders[0]
@@ -94,8 +106,7 @@ class GCodeParser:
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def reset_last_position(self):
-        if self.toolhead is not None:
-            self.last_position = self.toolhead.get_position()
+        self.last_position = self.position_with_transform()
     def motor_heater_off(self):
         if self.toolhead is None:
             return
@@ -361,7 +372,7 @@ class GCodeParser:
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.toolhead.move(self.last_position, self.speed)
+            self.move_with_transform(self.last_position, self.speed)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):
