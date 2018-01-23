@@ -4,13 +4,14 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import homing
+import pins, homing
 
 class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
         self.z_position = config.getfloat('z_position', 0.)
+        # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
         pin_params = ppins.lookup_pin('endstop', config.get('pin'))
         mcu = pin_params['chip']
@@ -19,6 +20,9 @@ class PrinterProbe:
         if (config.get('activate_gcode', None) is not None or
             config.get('deactivate_gcode', None) is not None):
             self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
+        # Create z_virtual_endstop pin
+        ppins.register_chip('probe', self)
+        # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'PROBE', self.cmd_PROBE, desc=self.cmd_PROBE_help)
@@ -31,6 +35,13 @@ class PrinterProbe:
             for mcu_endstop, name in s.get_endstops():
                 for mcu_stepper in mcu_endstop.get_steppers():
                     self.mcu_probe.add_stepper(mcu_stepper)
+    def setup_pin(self, pin_params):
+        if (pin_params['pin'] != 'z_virtual_endstop'
+            or pin_params['type'] != 'endstop'):
+            raise pins.error("Probe virtual endstop only useful as endstop pin")
+        if pin_params['invert'] or pin_params['pullup']:
+            raise pins.error("Can not pullup/invert probe virtual endstop")
+        return self.mcu_probe
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         toolhead = self.printer.lookup_object('toolhead')
