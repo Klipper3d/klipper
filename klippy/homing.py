@@ -42,6 +42,8 @@ class Homing:
         return dist_ticks / ticks_per_step
     def homing_move(self, movepos, endstops, speed, probe_pos=False):
         # Start endstop checking
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_prepare()
         print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
@@ -70,6 +72,8 @@ class Homing:
                 list(self.toolhead.get_kinematics().get_position()) + [None])
         else:
             self.toolhead.set_position(movepos)
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_finalize()
         if error is not None:
             raise EndstopError(error)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):

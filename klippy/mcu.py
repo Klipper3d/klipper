@@ -168,6 +168,8 @@ class MCU_endstop:
         self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c")
         self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
                                , self._oid)
+    def home_prepare(self):
+        pass
     def home_start(self, print_time, sample_time, sample_count, rest_time):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
@@ -184,6 +186,8 @@ class MCU_endstop:
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime, home_end_time):
             eventtime = self._mcu.pause(eventtime + 0.1)
+    def home_finalize(self):
+        pass
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s", params)
         self._last_state = params

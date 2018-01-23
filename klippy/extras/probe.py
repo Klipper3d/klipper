@@ -16,6 +16,9 @@ class PrinterProbe:
         mcu = pin_params['chip']
         mcu.add_config_object(self)
         self.mcu_probe = mcu.setup_pin(pin_params)
+        if (config.get('activate_gcode', None) is not None or
+            config.get('deactivate_gcode', None) is not None):
+            self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'PROBE', self.cmd_PROBE, desc=self.cmd_PROBE_help)
@@ -48,6 +51,29 @@ class PrinterProbe:
         res = self.mcu_probe.query_endstop_wait()
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
+
+# Endstop wrapper that enables running g-code scripts on setup
+class ProbeEndstopWrapper:
+    def __init__(self, config, mcu_endstop):
+        self.mcu_endstop = mcu_endstop
+        self.gcode = config.get_printer().lookup_object('gcode')
+        self.activate_gcode = config.get('activate_gcode', "")
+        self.deactivate_gcode = config.get('deactivate_gcode', "")
+        # Wrappers
+        self.get_mcu = self.mcu_endstop.get_mcu
+        self.add_stepper = self.mcu_endstop.add_stepper
+        self.get_steppers = self.mcu_endstop.get_steppers
+        self.home_start = self.mcu_endstop.home_start
+        self.home_wait = self.mcu_endstop.home_wait
+        self.query_endstop = self.mcu_endstop.query_endstop
+        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
+        self.TimeoutError = self.mcu_endstop.TimeoutError
+    def home_prepare(self):
+        self.gcode.run_script(self.activate_gcode)
+        self.mcu_endstop.home_prepare()
+    def home_finalize(self):
+        self.gcode.run_script(self.deactivate_gcode)
+        self.mcu_endstop.home_finalize()
 
 # Helper code that can probe a series of points and report the
 # position at each point.
