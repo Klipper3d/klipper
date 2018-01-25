@@ -179,6 +179,8 @@ class GCodeParser:
                 self.toolhead.wait_moves()
             self.printer.request_exit()
         self.is_processing_data = False
+    def run_script(self, script):
+        self.process_commands(script.split('\n'), need_ack=False)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -311,16 +313,14 @@ class GCodeParser:
         e = extruders[index]
         if self.extruder is e:
             return
-        deactivate_gcode = self.extruder.get_activate_gcode(False)
-        self.process_commands(deactivate_gcode.split('\n'), need_ack=False)
+        self.run_script(self.extruder.get_activate_gcode(False))
         try:
             self.toolhead.set_extruder(e)
         except homing.EndstopError as e:
             raise error(str(e))
         self.extruder = e
         self.reset_last_position()
-        activate_gcode = self.extruder.get_activate_gcode(True)
-        self.process_commands(activate_gcode.split('\n'), need_ack=False)
+        self.run_script(self.extruder.get_activate_gcode(True))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220', 'M221',
