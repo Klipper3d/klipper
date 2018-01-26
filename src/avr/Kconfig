@@ -9,6 +9,7 @@ config AVR_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM
+    select HAVE_USER_INTERFACE
     select NO_UNSTEP_DELAY
 
 config BOARD_DIRECTORY

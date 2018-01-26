@@ -36,6 +36,9 @@ config HAVE_GPIO_SPI
 config HAVE_GPIO_HARD_PWM
     bool
     default n
+config HAVE_USER_INTERFACE
+    bool
+    default n
 
 config NO_UNSTEP_DELAY
     # Slow micro-controllers do not require a delay before returning a
