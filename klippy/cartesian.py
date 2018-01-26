@@ -26,46 +26,68 @@ class CartKinematics:
         self.steppers[1].set_max_jerk(max_halt_velocity, max_accel)
         self.steppers[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), max_accel)
+        # Printers using Distance Sensor or Touch Sensor should move X and Y axes before homing Z axis
+        self.safe_homing = config.getboolean('safe_homing', default=False)
     def get_steppers(self):
         return list(self.steppers)
     def set_position(self, newpos):
         for i in StepList:
             self.steppers[i].set_position(newpos[i])
     def home(self, homing_state):
-        # Each axis is homed independently and in order
-        for axis in homing_state.get_axes():
-            s = self.steppers[axis]
-            self.limits[axis] = (s.position_min, s.position_max)
-            # Determine moves
+        axes = homing_state.get_axes()
+        if self.safe_homing and 2 in axes:
+            # Home all axes any way in this order XYZ
+            axes = [0, 1, 2]
+            # Up Z axis a little to not hit head with bed
+            s = self.steppers[2]
+            self.limits[2] = (s.position_min, s.position_max)
+            coord = [None, None, s.homing_retract_dist, None]
             if s.homing_positive_dir:
-                pos = s.position_endstop - 1.5*(
-                    s.position_endstop - s.position_min)
-                rpos = s.position_endstop - s.homing_retract_dist
-                r2pos = rpos - s.homing_retract_dist
-            else:
-                pos = s.position_endstop + 1.5*(
-                    s.position_max - s.position_endstop)
-                rpos = s.position_endstop + s.homing_retract_dist
-                r2pos = rpos + s.homing_retract_dist
-            # Initial homing
-            homing_speed = s.homing_speed
-            if axis == 2:
-                homing_speed = min(homing_speed, self.max_z_velocity)
-            homepos = [None, None, None, None]
-            homepos[axis] = s.position_endstop
-            coord = [None, None, None, None]
-            coord[axis] = pos
-            homing_state.home(coord, homepos, s.get_endstops(), homing_speed)
-            # Retract
-            coord[axis] = rpos
-            homing_state.retract(coord, homing_speed)
-            # Home again
-            coord[axis] = r2pos
-            homing_state.home(coord, homepos, s.get_endstops(),
-                              homing_speed/2.0, second_home=True)
-            # Set final homed position
-            coord[axis] = s.position_endstop + s.get_homed_offset()
-            homing_state.set_homed_position(coord)
+                coord[2] = -s.homing_retract_dist
+            homing_state.retract(coord, min(s.homing_speed, self.max_z_velocity))
+        # Each axis is homed independently and in order
+        for axis in axes:
+            # Move X and Y Axes before Z homing
+            if self.safe_homing and axis == 2:
+                coord = [None, None, None, None]
+                for moving_axis in [0, 1]:
+                    s = self.steppers[moving_axis]
+                    coord[moving_axis] = s.position_max / 2 
+                homing_state.retract(coord, homing_state.toolhead.max_velocity)
+            self._home(homing_state, axis)
+    def _home(self, homing_state, axis):
+        s = self.steppers[axis]
+        self.limits[axis] = (s.position_min, s.position_max)
+        # Determine moves
+        if s.homing_positive_dir:
+            pos = s.position_endstop - 1.5*(
+                s.position_endstop - s.position_min)
+            rpos = s.position_endstop - s.homing_retract_dist
+            r2pos = rpos - s.homing_retract_dist
+        else:
+            pos = s.position_endstop + 1.5*(
+                s.position_max - s.position_endstop)
+            rpos = s.position_endstop + s.homing_retract_dist
+            r2pos = rpos + s.homing_retract_dist
+        # Initial homing
+        homing_speed = s.homing_speed
+        if axis == 2:
+            homing_speed = min(homing_speed, self.max_z_velocity)
+        homepos = [None, None, None, None]
+        homepos[axis] = s.position_endstop
+        coord = [None, None, None, None]
+        coord[axis] = pos
+        homing_state.home(coord, homepos, s.get_endstops(), homing_speed)
+        # Retract
+        coord[axis] = rpos
+        homing_state.retract(coord, homing_speed)
+        # Home again
+        coord[axis] = r2pos
+        homing_state.home(coord, homepos, s.get_endstops(),
+                          homing_speed/2.0, second_home=True)
+        # Set final homed position
+        coord[axis] = s.position_endstop + s.get_homed_offset()
+        homing_state.set_homed_position(coord)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for stepper in self.steppers:
