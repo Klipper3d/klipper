@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <string.h> // memcpy
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/misc.h" // timer_is_before
@@ -29,15 +28,19 @@ static struct st7920 *main_st7920;
 
 #define CMD_WAIT_TICKS timer_from_us(72)
 
+// Write eight bits to the st7920 via the serial interface.  The code
+// is arranged to encourage avr-gcc to layout the code such that each
+// sclk toggle is at least 200ns (4 clock cycles).
 static inline void
 st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
 {
-    uint8_t bits = 8, last_b = 0;
+    uint8_t bits = 8;
     for (;;) {
-        if ((data ^ last_b) & 0x80)
+        if (data & 0x80) {
+            data = ~data;
             gpio_out_toggle(sid);
+        }
         gpio_out_toggle(sclk);
-        last_b = data;
         data <<= 1;
         if (!--bits)
             break;
@@ -85,8 +88,7 @@ command_config_st7920(uint32_t *args)
 {
     if (main_st7920)
         shutdown("st7920 already configured");
-    struct st7920 *s = oid_alloc(
-        args[0], command_config_st7920, sizeof(*main_st7920));
+    struct st7920 *s = oid_alloc(args[0], command_config_st7920, sizeof(*s));
     s->sclk = gpio_out_setup(args[1], 0);
     s->sid = gpio_out_setup(args[2], 0);
     main_st7920 = s;
@@ -100,8 +102,7 @@ command_st7920_send_cmds(uint32_t *args)
     struct st7920 *s = main_st7920;
     if (!s)
         shutdown("st7920 not configured");
-    uint8_t len = args[0];
-    uint8_t *cmds = (void*)(size_t)args[1];
+    uint8_t len = args[0], *cmds = (void*)(size_t)args[1];
     st7920_xmit_cmds(s, len, cmds);
 }
 DECL_COMMAND(command_st7920_send_cmds, "st7920_send_cmds cmds=%*s");
@@ -112,8 +113,7 @@ command_st7920_send_data(uint32_t *args)
     struct st7920 *s = main_st7920;
     if (!s)
         shutdown("st7920 not configured");
-    uint8_t len = args[0];
-    uint8_t *data = (void*)(size_t)args[1];
+    uint8_t len = args[0], *data = (void*)(size_t)args[1];
     st7920_xmit_data(s, len, data);
 }
 DECL_COMMAND(command_st7920_send_data, "st7920_send_data data=%*s");
