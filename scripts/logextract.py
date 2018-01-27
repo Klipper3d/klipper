@@ -94,7 +94,7 @@ class GatherShutdown:
             configs_by_id = {c.config_num: c for c in configs.values()}
             config = configs_by_id[max(configs_by_id.keys())]
             config.add_comment(format_comment(line_num, recent_lines[-1][1]))
-            self.comments.append("# config %s" % (self.config.filename,))
+            self.comments.append("# config %s" % (config.filename,))
         self.stats_stream = []
         self.gcode_stream = []
         self.mcus = {}
