@@ -10,7 +10,11 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
     def __init__(self, printer, config):
-        self.heater = heater.PrinterHeater(printer, config)
+        shared_heater = config.get('shared_heater', None)
+        if shared_heater is None:
+            self.heater = heater.PrinterHeater(printer, config)
+        else:
+            self.heater = get_printer_heater(printer, shared_heater)
         self.stepper = stepper.PrinterStepper(printer, config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
