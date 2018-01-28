@@ -49,12 +49,12 @@ def find_print_restarts(data):
         # Check for buffer runoff
         sampletime = d['#sampletime']
         buffer_time = float(d.get('buffer_time', 0.))
-        if buffer_time < 1. or (buffer_time < MAXBUFFER
-                                and buffer_time > last_buffer_time):
-            if not last_runoff_start:
-                last_runoff_start = last_sampletime
-                runoff_samples[last_runoff_start] = [False, []]
+        if (last_runoff_start and last_sampletime - sampletime < 5
+            and buffer_time > last_buffer_time):
             runoff_samples[last_runoff_start][1].append(sampletime)
+        elif buffer_time < 1.:
+            last_runoff_start = sampletime
+            runoff_samples[last_runoff_start] = [False, [sampletime]]
         else:
             last_runoff_start = 0.
         last_buffer_time = buffer_time
