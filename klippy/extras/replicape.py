@@ -3,6 +3,7 @@
 # Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import pins, mcu
 
 REPLICAPE_MAX_CURRENT = 3.84
@@ -37,11 +38,12 @@ class pca9685_pwm:
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
-    def setup_cycle_time(self, cycle_time):
-        pass
-    def setup_hard_pwm(self, hard_cycle_ticks):
-        if hard_cycle_ticks:
-            raise pins.error("pca9685 does not support hard_pwm parameter")
+    def setup_cycle_time(self, cycle_time, hardware_pwm=False):
+        if hardware_pwm:
+            raise pins.error("pca9685 does not support hardware_pwm parameter")
+        if cycle_time != self._cycle_time:
+            logging.info("Ignoring pca9685 cycle time of %.6f (using %.6f)",
+                         cycle_time, self._cycle_time)
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
         if is_static and start_value != shutdown_value:
             raise pins.error("Static pin can not have shutdown value")

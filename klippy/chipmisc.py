@@ -25,12 +25,9 @@ class PrinterPin:
         self.is_pwm = 'pwm' in config.get_name().split()[0]
         if self.is_pwm:
             self.mcu_pin = pins.setup_pin(printer, 'pwm', config.get('pin'))
-            hard_pwm = config.getint('hard_pwm', None, minval=1)
-            if hard_pwm is None:
-                self.mcu_pin.setup_cycle_time(config.getfloat(
-                    'cycle_time', 0.100, above=0.))
-            else:
-                self.mcu_pin.setup_hard_pwm(hard_pwm)
+            cycle_time = config.getfloat('cycle_time', 0.100, above=0.)
+            hardware_pwm = config.getboolean('hardware_pwm', False)
+            self.mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.scale = config.getfloat('scale', 1., above=0.)
         else:
             self.mcu_pin = pins.setup_pin(

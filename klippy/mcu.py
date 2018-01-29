@@ -275,7 +275,7 @@ class MCU_digital_out:
 class MCU_pwm:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._hard_pwm = False
+        self._hardware_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
         self._oid = None
@@ -291,14 +291,9 @@ class MCU_pwm:
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
-    def setup_cycle_time(self, cycle_time):
+    def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         self._cycle_time = cycle_time
-        self._hard_pwm = False
-    def setup_hard_pwm(self, hard_cycle_ticks):
-        if not hard_cycle_ticks:
-            return
-        self._cycle_time = hard_cycle_ticks
-        self._hard_pwm = True
+        self._hardware_pwm = hardware_pwm
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
         if is_static and start_value != shutdown_value:
             raise pins.error("Static pin can not have shutdown value")
@@ -309,19 +304,20 @@ class MCU_pwm:
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
     def build_config(self):
-        if self._hard_pwm:
+        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd(
                     "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
-                        self._pin, self._cycle_time,
+                        self._pin, cycle_ticks,
                         self._static_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
                 " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, self._cycle_time,
+                    self._oid, self._pin, cycle_ticks,
                     self._start_value * self._pwm_max,
                     self._shutdown_value * self._pwm_max,
                     self._mcu.seconds_to_clock(self._max_duration)))
@@ -341,8 +337,7 @@ class MCU_pwm:
             self._mcu.add_config_cmd(
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
                 " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin,
-                    self._mcu.seconds_to_clock(self._cycle_time),
+                    self._oid, self._pin, cycle_ticks,
                     self._start_value >= 0.5, self._shutdown_value >= 0.5,
                     self._mcu.seconds_to_clock(self._max_duration)))
             self._set_cmd = self._mcu.lookup_command(

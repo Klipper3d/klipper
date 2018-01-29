@@ -5,8 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import pins
 
-FAN_MIN_TIME = 0.1
-PWM_CYCLE_TIME = 0.010
+FAN_MIN_TIME = 0.100
 
 class PrinterFan:
     def __init__(self, config):
@@ -17,8 +16,9 @@ class PrinterFan:
         printer = config.get_printer()
         self.mcu_fan = pins.setup_pin(printer, 'pwm', config.get('pin'))
         self.mcu_fan.setup_max_duration(0.)
-        self.mcu_fan.setup_cycle_time(PWM_CYCLE_TIME)
-        self.mcu_fan.setup_hard_pwm(config.getint('hard_pwm', 0))
+        cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
+        hardware_pwm = config.getboolean('hardware_pwm', False)
+        self.mcu_fan.setup_cycle_time(cycle_time, hardware_pwm)
     def set_speed(self, print_time, value):
         value = max(0., min(self.max_power, value))
         if value == self.last_fan_value:

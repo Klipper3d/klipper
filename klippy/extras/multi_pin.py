@@ -40,12 +40,9 @@ class PrinterMultiPin:
     def setup_start_value(self, start_value, shutdown_value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.setup_start_value(start_value, shutdown_value)
-    def setup_cycle_time(self, cycle_time):
+    def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_cycle_time(cycle_time)
-    def setup_hard_pwm(self, hard_cycle_ticks):
-        for mcu_pin in self.mcu_pins:
-            mcu_pin.setup_hard_pwm(hard_cycle_ticks)
+            mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
     def set_digital(self, print_time, value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_digital(print_time, value)
