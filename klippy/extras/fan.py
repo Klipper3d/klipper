@@ -14,10 +14,11 @@ class PrinterFan:
         self.last_fan_time = 0.
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1, minval=0.)
+        self.cycle_time = config.getfloat('cycle_time', PWM_CYCLE_TIME, above=0.)
         printer = config.get_printer()
         self.mcu_fan = pins.setup_pin(printer, 'pwm', config.get('pin'))
         self.mcu_fan.setup_max_duration(0.)
-        self.mcu_fan.setup_cycle_time(PWM_CYCLE_TIME)
+        self.mcu_fan.setup_cycle_time(self.cycle_time)
         self.mcu_fan.setup_hard_pwm(config.getint('hard_pwm', 0))
     def set_speed(self, print_time, value):
         value = max(0., min(self.max_power, value))
