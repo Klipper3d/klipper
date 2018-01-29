@@ -186,21 +186,21 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     uint8_t flags = READP(p->flags), cs;
     if (flags & GP_AFMT) {
         switch (cycle_time) {
-        case 0        ...    8*510L - 1: cs = 1; break;
-        case 8*510L   ...   32*510L - 1: cs = 2; break;
-        case 32*510L  ...   64*510L - 1: cs = 3; break;
-        case 64*510L  ...  128*510L - 1: cs = 4; break;
-        case 128*510L ...  256*510L - 1: cs = 5; break;
-        case 256*510L ... 1024*510L - 1: cs = 6; break;
-        default:                         cs = 7; break;
+        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+        case     (1+8) * 510L / 2 ...     (8+32) * 510L / 2 - 1: cs = 2; break;
+        case    (8+32) * 510L / 2 ...    (32+64) * 510L / 2 - 1: cs = 3; break;
+        case   (32+64) * 510L / 2 ...   (64+128) * 510L / 2 - 1: cs = 4; break;
+        case  (64+128) * 510L / 2 ...  (128+256) * 510L / 2 - 1: cs = 5; break;
+        case (128+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 6; break;
+        default:                                                 cs = 7; break;
         }
     } else {
         switch (cycle_time) {
-        case 0        ...    8*510L - 1: cs = 1; break;
-        case 8*510L   ...   64*510L - 1: cs = 2; break;
-        case 64*510L  ...  256*510L - 1: cs = 3; break;
-        case 256*510L ... 1024*510L - 1: cs = 4; break;
-        default:                         cs = 5; break;
+        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+        case     (1+8) * 510L / 2 ...     (8+64) * 510L / 2 - 1: cs = 2; break;
+        case    (8+64) * 510L / 2 ...   (64+256) * 510L / 2 - 1: cs = 3; break;
+        case  (64+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 4; break;
+        default:                                                 cs = 5; break;
         }
     }
     volatile uint8_t *rega = READP(p->rega), *regb = READP(p->regb);
