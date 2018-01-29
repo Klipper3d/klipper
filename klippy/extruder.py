@@ -53,6 +53,8 @@ class PrinterExtruder:
         if is_active:
             return self.activate_gcode
         return self.deactivate_gcode
+    def stats(self, eventtime):
+        return self.heater.stats(eventtime)
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True

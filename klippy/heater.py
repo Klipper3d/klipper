@@ -140,7 +140,7 @@ class PrinterHeater:
         self.control = algo(self, config)
         # pwm caching
         self.next_pwm_time = 0.
-        self.last_pwm_value = 0
+        self.last_pwm_value = 0.
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -189,6 +189,13 @@ class PrinterHeater:
     def finish_auto_tune(self, old_control):
         self.control = old_control
         self.target_temp = 0
+    def stats(self, eventtime):
+        with self.lock:
+            target_temp = self.target_temp
+            last_temp = self.last_temp
+            last_pwm_value = self.last_pwm_value
+        return '%s: target=%.0f temp=%.0f pwm=%.3f' % (
+            self.name, target_temp, last_temp, last_pwm_value)
 
 
 ######################################################################
