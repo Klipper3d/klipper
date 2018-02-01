@@ -150,8 +150,8 @@ class GCodeParser:
                 # Skip line number at start of command
                 del parts[:2]
             if not parts:
-                self.cmd_default(params)
-                continue
+                # Treat empty line as empty command
+                parts = ['', '']
             params['#command'] = cmd = parts[0] + parts[1].strip()
             # Invoke handler for command
             self.need_ack = need_ack
