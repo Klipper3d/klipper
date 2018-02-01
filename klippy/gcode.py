@@ -161,11 +161,15 @@ class GCodeParser:
             except error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
+                if not need_ack:
+                    raise
             except:
                 msg = 'Internal error on command:"%s"' % (cmd,)
                 logging.exception(msg)
                 self.printer.invoke_shutdown(msg)
                 self.respond_error(msg)
+                if not need_ack:
+                    raise
             self.ack()
         self.need_ack = prev_need_ack
     def process_data(self, eventtime):
