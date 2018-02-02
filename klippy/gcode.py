@@ -24,6 +24,7 @@ class GCodeParser:
         if not self.is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
+        self.pending_commands = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -172,31 +173,45 @@ class GCodeParser:
                     raise
             self.ack()
         self.need_ack = prev_need_ack
+    m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
+        # Read input, separate by newline, and add to pending_commands
         data = os.read(self.fd, 4096)
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
+        pending_commands = self.pending_commands
+        pending_commands.extend(lines)
+        # Check for M112 out-of-order
+        if ((len(pending_commands) > 1 or self.is_processing_data)
+            and len(pending_commands) < 20):
+            for line in lines:
+                if self.m112_r.match(line) is not None:
+                    self.cmd_M112({})
+        # Check if already processing data
         if self.is_processing_data:
-            if not self.is_fileinput and not lines:
-                return
-            self.reactor.unregister_fd(self.fd_handle)
-            self.fd_handle = None
-            if not self.is_fileinput and lines[0].strip().upper() == 'M112':
-                self.cmd_M112({})
-            while self.is_processing_data:
-                eventtime = self.reactor.pause(eventtime + 0.100)
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            if len(pending_commands) >= 20 or not data:
+                # Stop reading input
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
+            return
+        # Process commands
         self.is_processing_data = True
-        self.process_commands(lines)
+        while pending_commands:
+            self.pending_commands = []
+            self.process_commands(pending_commands)
+            pending_commands = self.pending_commands
+        self.is_processing_data = False
+        # Reenable input reading if it was stopped
+        if self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         if not data and self.is_fileinput:
             self.motor_heater_off()
             if self.toolhead is not None:
                 self.toolhead.wait_moves()
             self.printer.request_exit()
-        self.is_processing_data = False
     def run_script(self, script):
         self.process_commands(script.split('\n'), need_ack=False)
     # Response handling
