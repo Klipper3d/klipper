@@ -30,8 +30,7 @@ def create_pty(ptyname):
     except os.error:
         pass
     os.symlink(os.ttyname(sfd), ptyname)
-    fcntl.fcntl(mfd, fcntl.F_SETFL
-                , fcntl.fcntl(mfd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    set_nonblock(mfd)
     old = termios.tcgetattr(mfd)
     old[3] = old[3] & ~termios.ECHO
     termios.tcsetattr(mfd, termios.TCSADRAIN, old)
