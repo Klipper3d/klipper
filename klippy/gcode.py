@@ -135,7 +135,6 @@ class GCodeParser:
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
     def process_commands(self, commands, need_ack=True):
-        prev_need_ack = self.need_ack
         for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
@@ -172,7 +171,6 @@ class GCodeParser:
                 if not need_ack:
                     raise
             self.ack()
-        self.need_ack = prev_need_ack
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
@@ -213,7 +211,11 @@ class GCodeParser:
                 self.toolhead.wait_moves()
             self.printer.request_exit()
     def run_script(self, script):
-        self.process_commands(script.split('\n'), need_ack=False)
+        prev_need_ack = self.need_ack
+        try:
+            self.process_commands(script.split('\n'), need_ack=False)
+        finally:
+            self.need_ack = prev_need_ack
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
