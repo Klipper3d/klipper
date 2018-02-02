@@ -186,21 +186,21 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     uint8_t flags = READP(p->flags), cs;
     if (flags & GP_AFMT) {
         switch (cycle_time) {
-        case 0        ...    8*510L - 1: cs = 1; break;
-        case 8*510L   ...   32*510L - 1: cs = 2; break;
-        case 32*510L  ...   64*510L - 1: cs = 3; break;
-        case 64*510L  ...  128*510L - 1: cs = 4; break;
-        case 128*510L ...  256*510L - 1: cs = 5; break;
-        case 256*510L ... 1024*510L - 1: cs = 6; break;
-        default:                         cs = 7; break;
+        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+        case     (1+8) * 510L / 2 ...     (8+32) * 510L / 2 - 1: cs = 2; break;
+        case    (8+32) * 510L / 2 ...    (32+64) * 510L / 2 - 1: cs = 3; break;
+        case   (32+64) * 510L / 2 ...   (64+128) * 510L / 2 - 1: cs = 4; break;
+        case  (64+128) * 510L / 2 ...  (128+256) * 510L / 2 - 1: cs = 5; break;
+        case (128+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 6; break;
+        default:                                                 cs = 7; break;
         }
     } else {
         switch (cycle_time) {
-        case 0        ...    8*510L - 1: cs = 1; break;
-        case 8*510L   ...   64*510L - 1: cs = 2; break;
-        case 64*510L  ...  256*510L - 1: cs = 3; break;
-        case 256*510L ... 1024*510L - 1: cs = 4; break;
-        default:                         cs = 5; break;
+        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+        case     (1+8) * 510L / 2 ...     (8+64) * 510L / 2 - 1: cs = 2; break;
+        case    (8+64) * 510L / 2 ...   (64+256) * 510L / 2 - 1: cs = 3; break;
+        case  (64+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 4; break;
+        default:                                                 cs = 5; break;
         }
     }
     volatile uint8_t *rega = READP(p->rega), *regb = READP(p->regb);
@@ -280,7 +280,7 @@ gpio_adc_setup(uint8_t pin)
     }
 
     // Enable ADC
-    ADCSRA |= (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
+    ADCSRA = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
 
     // Disable digital input for this pin
 #ifdef DIDR2
@@ -316,7 +316,7 @@ gpio_adc_sample(struct gpio_adc g)
 #if defined(ADCSRB) && defined(MUX5)
     // the MUX5 bit of ADCSRB selects whether we're reading from channels
     // 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
-    ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((g.chan >> 3) & 0x01) << MUX5);
+    ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
 #endif
 
     ADMUX = ADMUX_DEFAULT | (g.chan & 0x07);

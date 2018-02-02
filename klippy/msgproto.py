@@ -324,12 +324,16 @@ class MessageParser:
         except Exception as e:
             logging.exception("process_identify error")
             raise error("Error during identify: %s" % (str(e),))
-    def get_constant(self, name):
-        try:
-            return self.config[name]
-        except KeyError:
+    class sentinel: pass
+    def get_constant(self, name, default=sentinel):
+        if name not in self.config:
+            if default is not self.sentinel:
+                return default
             raise error("Firmware constant '%s' not found" % (name,))
-    def get_constant_float(self, name):
+        return self.config[name]
+    def get_constant_float(self, name, default=sentinel):
+        if name not in self.config and default is not self.sentinel:
+            return default
         try:
             return float(self.config[name])
         except ValueError:

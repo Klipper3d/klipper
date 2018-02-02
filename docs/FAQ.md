@@ -1,6 +1,17 @@
 Frequently asked questions
 ==========================
 
+1. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
+2. [Where's my serial port?](#wheres-my-serial-port)
+3. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
+4. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
+5. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
+6. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
+7. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
+8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
+9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+10. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+
 ### How do I calculate the step_distance parameter in the printer config file?
 
 If you know the steps per millimeter for the axis then use a
@@ -13,23 +24,33 @@ each motor driver pulse. It can also be calculated from the axis
 pitch, motor step angle, and driver microstepping. If unsure, do a web
 search for "calculate steps per mm" to find an online calculator.
 
-### When I restart my micro-controller the device changes to /dev/ttyACM1
+### Where's my serial port?
 
-If the device sometimes changes from /dev/ttyACM0 to /dev/ttyACM1 then
-ssh into the host computer and run: ```ls -l /dev/serial/by-id/```
+The general way to find a USB serial port is to run `ls -l
+/dev/serial/by-id/` from an ssh terminal on the host machine. It will
+likely produce output similar to the following:
+```
+lrwxrwxrwx 1 root root 13 Jan 3 22:15 usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00 -> ../../ttyACM0
+```
 
 The name found in the above command is stable and it is possible to
-use it in the config file. For example, an updated config might look
-like:
+use it in the config file and while flashing the micro-controller
+code. For example, a flash command might look similar to:
+```
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00
+sudo service klipper start
+```
+and the updated config might look like:
 ```
 [mcu]
 serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00
 ```
 
-Be sure to copy-and-paste the name from the "ls" command above as the
-name will be different on each printer.
+Be sure to copy-and-paste the name from the "ls" command that you ran
+above as the name will be different for each printer.
 
-### The "make flash" command doesn't work.
+### The "make flash" command doesn't work
 
 The code attempts to flash the device using the most common method for
 each platform. Unfortunately, there is a lot of variance in flashing
@@ -37,11 +58,11 @@ methods, so the "make flash" command may not work on all boards.
 
 If you're having an intermittent failure or you do have a standard
 setup, then double check that Klipper isn't running when flashing
-(sudo service klipper stop), make sure Octoprint isn't trying to
+(sudo service klipper stop), make sure OctoPrint isn't trying to
 connect directly to the device (open the Connection tab in the web
 page and click Disconnect if the Serial Port is set to the device),
 and make sure FLASH_DEVICE is set correctly for your board (see the
-[question above](#when-i-restart-my-micro-controller-the-device-changes-to-devttyacm1)).
+[question above](#wheres-my-serial-port)).
 
 However, if "make flash" just doesn't work for your board, then you
 will need to manually flash. See if there is a config file in the
@@ -52,12 +73,44 @@ may be possible to manually flash the device using
 [avrdude](http://www.nongnu.org/avrdude/) with custom command-line
 parameters - see the avrdude documentation for further information.
 
-### Can I run Klipper on something other than a Raspberry Pi?
+### How do I change the serial baud rate?
 
-Klipper only requires Python running on a Linux (or similar)
+The default baud rate is 250000 in both the Klipper micro-controller
+configuration and in the Klipper host software. This works on almost
+all micro-controllers and it is the recommended setting. (Most online
+guides that refer to a baud rate of 115200 are outdated.)
+
+If you need to change the baud rate, then the new rate will need to be
+configured in the micro-controller (during **make menuconfig**) and
+that updated code will need to be flashed to the micro-controller. The
+Klipper printer.cfg file will also need to be updated to match that
+baud rate (see the example.cfg file for details).  For example:
+```
+[mcu]
+baud: 250000
+```
+
+The baud rate shown on the OctoPrint web page has no impact on the
+internal Klipper micro-controller baud rate. Always set the OctoPrint
+baud rate to 250000 when using Klipper.
+
+### Can I run Klipper on something other than a Raspberry Pi 3?
+
+The recommended hardware is a Raspberry Pi 2 or a Raspberry
+Pi 3. Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi
+Zero, but these boards don't have enough processing power to run
+OctoPrint well. It's not uncommon for print stalls to occur on these
+slower machines (the printer may move faster than OctoPrint can send
+movement commands).
+
+For running on the Beaglebone, see the
+[Beaglebone specific installation instructions](beaglebone.md).
+
+Klipper has been run on other machines.  The Klipper host software
+only requires Python running on a Linux (or similar)
 computer. However, if you wish to run it on a different machine you
 will need Linux admin knowledge to install the system prerequisites
-for the Linux distribution running on that particular machine. See the
+for that particular machine. See the
 [install-octopi.sh](../scripts/install-octopi.sh) script for further
 information on the necessary Linux admin steps.
 
@@ -70,9 +123,9 @@ the config file. If the motors are disabled (via an M84 or M18
 command) then the motors will need to be homed again prior to
 movement.
 
-If you want to move the head after canceling a print via Octoprint,
-consider changing the Octoprint cancel sequence to do that for
-you. It's configured in Octoprint via a web browser under:
+If you want to move the head after canceling a print via OctoPrint,
+consider changing the OctoPrint cancel sequence to do that for
+you. It's configured in OctoPrint via a web browser under:
 Settings->GCODE Scripts
 
 If you want to move the head after a print finishes, consider adding
@@ -135,7 +188,42 @@ device (the power or status LEDs may also blink repeatedly until the
 power is removed).
 
 The workaround is to use a restart_method other than "command" or to
-flash an updated bootloader to the AVR devices. Flashing a new
+flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
 programmer - search the web to find the instructions for your
 particular device.
+
+### How do I upgrade to the latest software?
+
+The general way to upgrade is to ssh into the Raspberry Pi and run:
+
+```
+cd ~/klipper
+git pull
+~/klipper/scripts/install-octopi.sh
+```
+
+Then one can recompile and flash the micro-controller code. For
+example:
+
+```
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
+```
+
+However, it's often the case that only the host software changes. In
+this case, one can update and restart just the host software with:
+
+```
+cd ~/klipper
+git pull
+sudo service klipper restart
+```
+
+If after using this shortcut the software warns about needing to
+reflash the micro-controller or some other unusual error occurs, then
+follow the full upgrade steps outlined above. Note that the RESTART
+and FIRMWARE_RESTART g-code commands do not load new software - the
+above "sudo service klipper restart" and "make flash" commands are
+needed for a software change to take effect.

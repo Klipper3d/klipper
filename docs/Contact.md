@@ -1,29 +1,29 @@
 This page provides information on how to contact the Klipper
 developers.
 
-Bug reporting
-=============
+Issue reporting
+===============
 
-Bug reports are submitted through github issues.  **All bug reports
-must include the full /tmp/klippy.log log file from the session that
+In order to report a problem or request a change in behavior, it is
+necessary to collect the Klipper log file. The first step is to
+**issue an M112 command** in the OctoPrint terminal window immediately
+after the undesirable event occurs. This causes Klipper to go into a
+"shutdown state" and it will cause additional debugging information to
+be written to the log file.
+
+Issue requests are submitted through Github.  **All issues must
+include the full /tmp/klippy.log log file from the session that
 produced the error.** An "scp" and/or "sftp" utility is needed to
 acquire this log file. The "scp" utility comes standard with Linux and
 MacOS desktops. There are freely available scp utilities for other
 desktops (eg, WinSCP).
 
 Use the scp utility to copy the `/tmp/klippy.log` file from the host
-machine to your desktop. Open a new issue at
+machine to your desktop. It is a good idea to compress the klippy.log
+file before posting it (eg, using zip or gzip). Open a new issue at
 https://github.com/KevinOConnor/klipper/issues , provide a description
-of the problem, and attach the `klippy.log` file to the issue (use the
-blue "selecting them" link beneath the problem description on the
-github issue page to attach files). It is a good idea to compress the
-klippy.log file before posting it (eg, using zip or gzip).
-
-If the Klipper software does something unexpected but does not produce
-an error, then immediately issue an M112 command in the Octoprint
-terminal window and then gather the log as described above. The M112
-command instructs Klipper to enter a "shutdown" state and it will
-cause additional debugging information to be added to the log.
+of the problem, and **attach the `klippy.log` file to the issue**:
+![attach-issue](img/attach-issue.png)
 
 Mailing list
 ============

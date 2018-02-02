@@ -1,13 +1,9 @@
 These instructions assume the software will run on a Raspberry Pi
-computer in conjunction with OctoPrint. (See the
-[Beaglebone specific instructions](beaglebone.md) if using a
-Beaglebone.) It is recommended that a Raspberry Pi 2 or Raspberry Pi 3
-computer be used as the host machine.
-
-It should be possible to run the Klipper host software on any computer
-running a recent Linux distribution, but doing so will require Linux
-admin knowledge to translate these installation instructions to the
-particulars of that machine.
+computer in conjunction with OctoPrint. It is recommended that a
+Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host machine
+(see the
+[FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
+for other machines).
 
 Klipper currently supports Atmel ATmega based micro-controllers,
 Arduino Due (Atmel SAM3x8e ARM micro-controller), and
@@ -53,8 +49,10 @@ cd ~/klipper/
 make menuconfig
 ```
 
-Select the appropriate micro-controller and serial baud rate. Once
-configured, run:
+Select the appropriate micro-controller and review any other options
+provided. For boards with serial ports, the default baud rate is
+250000 (see the [FAQ](FAQ.md#how-do-i-change-the-serial-baud-rate) if
+changing). Once configured, run:
 
 ```
 make
@@ -67,6 +65,12 @@ sudo service klipper stop
 make flash FLASH_DEVICE=/dev/ttyACM0
 sudo service klipper start
 ```
+
+When flashing for the first time, make sure that OctoPrint is not
+connected directly to the printer (from the OctoPrint web page, under
+the "Connection" section, click "Disconnect"). The most common
+communication device is **/dev/ttyACM0** - see the
+[FAQ](FAQ.md#wheres-my-serial-port) for other possibilities.
 
 Configuring OctoPrint to use Klipper
 ====================================
@@ -91,7 +95,7 @@ try reloading the page.)
 Once connected, navigate to the "Terminal" tab and type "status"
 (without the quotes) into the command entry box and click "Send". The
 terminal window will likely report there is an error opening the
-config file - that means Octoprint is successfully communicating with
+config file - that means OctoPrint is successfully communicating with
 Klipper. Proceed to the next section.
 
 Configuring Klipper
@@ -141,6 +145,10 @@ provides more detailed information.
 In addition to common g-code commands, Klipper supports a few extended
 commands - "status" and "restart" are examples of these commands. Use
 the "help" command to get a list of other extended commands.
+
+After Klipper reports that the "printer is ready" go on to the
+[config check document](Config_checks.md) to perform some basic checks
+on the pin definitions in the config file.
 
 Contacting the developers
 =========================

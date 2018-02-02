@@ -1,6 +1,6 @@
 # Pin name to pin number definitions
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
@@ -152,21 +152,32 @@ def update_map_beaglebone(pins, mcu):
 # Command translation
 ######################################################################
 
-# Obtains the pin mappings
-def get_pin_map(mcu, mapping_name=None):
-    pins = dict(MCU_PINS.get(mcu, {}))
-    if mapping_name == 'arduino':
-        update_map_arduino(pins, mcu)
-    elif mapping_name == 'beaglebone':
-        update_map_beaglebone(pins, mcu)
-    return pins
-
-# Translate pin names in a firmware command
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
-def update_command(cmd, pmap):
-    def pin_fixup(m):
-        return m.group('prefix') + str(pmap[m.group('name')])
-    return re_pin.sub(pin_fixup, cmd)
+
+class PinResolver:
+    def __init__(self, mcu_type, validate_aliases=True):
+        self.mcu_type = mcu_type
+        self.validate_aliases = validate_aliases
+        self.pins = dict(MCU_PINS.get(mcu_type, {}))
+        self.active_pins = {}
+    def update_aliases(self, mapping_name):
+        self.pins = dict(MCU_PINS.get(self.mcu_type, {}))
+        if mapping_name == 'arduino':
+            update_map_arduino(self.pins, self.mcu_type)
+        elif mapping_name == 'beaglebone':
+            update_map_beaglebone(self.pins, self.mcu_type)
+    def update_command(self, cmd):
+        def pin_fixup(m):
+            name = m.group('name')
+            if name not in self.pins:
+                raise error("Unable to translate pin name: %s" % (cmd,))
+            pin_id = self.pins[name]
+            if (name != self.active_pins.setdefault(pin_id, name)
+                and self.validate_aliases):
+                raise error("pin %s is an alias for %s" % (
+                    name, self.active_pins[pin_id]))
+            return m.group('prefix') + str(pin_id)
+        return re_pin.sub(pin_fixup, cmd)
 
 
 ######################################################################
@@ -180,7 +191,10 @@ class PrinterPins:
     error = error
     def __init__(self):
         self.chips = {}
-    def parse_pin_desc(self, pin_desc, can_invert=False, can_pullup=False):
+        self.active_pins = {}
+    def lookup_pin(self, pin_type, pin_desc, share_type=None):
+        can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
+        can_pullup = pin_type == 'endstop'
         pullup = invert = 0
         if can_pullup and pin_desc.startswith('^'):
             pullup = 1
@@ -194,8 +208,22 @@ class PrinterPins:
             chip_name, pin = [s.strip() for s in pin_desc.split(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
-        return {'chip': self.chips[chip_name], 'pin': pin,
-                'invert': invert, 'pullup': pullup}
+        share_name = "%s:%s" % (chip_name, pin)
+        if share_name in self.active_pins:
+            pin_params = self.active_pins[share_name]
+            if share_type is None or share_type != pin_params['share_type']:
+                raise error("pin %s used multiple times in config" % (pin,))
+            if invert != pin_params['invert'] or pullup != pin_params['pullup']:
+                raise error("Shared pin %s must have same polarity" % (pin,))
+            return pin_params
+        pin_params = {'chip': self.chips[chip_name], 'chip_name': chip_name,
+                      'type': pin_type, 'share_type': share_type,
+                      'pin': pin, 'invert': invert, 'pullup': pullup}
+        self.active_pins[share_name] = pin_params
+        return pin_params
+    def setup_pin(self, pin_type, pin_desc):
+        pin_params = self.lookup_pin(pin_type, pin_desc)
+        return pin_params['chip'].setup_pin(pin_params)
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
@@ -206,12 +234,7 @@ def add_printer_objects(printer, config):
     printer.add_object('pins', PrinterPins())
 
 def get_printer_pins(printer):
-    return printer.objects['pins']
+    return printer.lookup_object('pins')
 
 def setup_pin(printer, pin_type, pin_desc):
-    ppins = get_printer_pins(printer)
-    can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
-    can_pullup = pin_type == 'endstop'
-    pin_params = ppins.parse_pin_desc(pin_desc, can_invert, can_pullup)
-    pin_params['type'] = pin_type
-    return pin_params['chip'].setup_pin(pin_params)
+    return get_printer_pins(printer).setup_pin(pin_type, pin_desc)

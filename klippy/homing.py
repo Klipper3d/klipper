@@ -40,8 +40,10 @@ class Homing:
         dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
         ticks_per_step = math.ceil(dist_ticks / speed)
         return dist_ticks / ticks_per_step
-    def homing_move(self, movepos, endstops, speed):
+    def homing_move(self, movepos, endstops, speed, probe_pos=False):
         # Start endstop checking
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_prepare()
         print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
@@ -50,9 +52,10 @@ class Homing:
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
                 min_step_dist / speed)
         # Issue move
+        movepos = self._fill_coord(movepos)
         error = None
         try:
-            self.toolhead.move(self._fill_coord(movepos), speed)
+            self.toolhead.move(movepos, speed)
         except EndstopError as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
@@ -64,11 +67,20 @@ class Homing:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
+        if probe_pos:
+            self.set_homed_position(
+                list(self.toolhead.get_kinematics().get_position()) + [None])
+        else:
+            self.toolhead.set_position(movepos)
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_finalize()
         if error is not None:
             raise EndstopError(error)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):
         # Alter kinematics class to think printer is at forcepos
-        self.toolhead.set_position(self._fill_coord(forcepos))
+        homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
+        self.toolhead.set_position(
+            self._fill_coord(forcepos), homing_axes=homing_axes)
         # Add a CPU delay when homing a large axis
         if not second_home:
             est_move_d = sum([abs(forcepos[i]-movepos[i])

@@ -1,6 +1,6 @@
 # Printer heater support
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
@@ -95,7 +95,6 @@ Sensors = {
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
-PWM_CYCLE_TIME = 0.100
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -106,7 +105,8 @@ class error(Exception):
 class PrinterHeater:
     error = error
     def __init__(self, printer, config):
-        self.name = config.section
+        self.printer = printer
+        self.name = config.get_name()
         sensor_params = config.getchoice('sensor_type', Sensors)
         self.sensor = sensor_params['class'](config, sensor_params)
         self.min_temp = config.getfloat('min_temp', minval=0.)
@@ -125,7 +125,9 @@ class PrinterHeater:
             self.mcu_pwm = pins.setup_pin(printer, 'digital_out', heater_pin)
         else:
             self.mcu_pwm = pins.setup_pin(printer, 'pwm', heater_pin)
-            self.mcu_pwm.setup_cycle_time(PWM_CYCLE_TIME)
+            pwm_cycle_time = config.getfloat(
+                'pwm_cycle_time', 0.100, above=0., maxval=REPORT_TIME)
+            self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         self.mcu_adc = pins.setup_pin(printer, 'adc', config.get('sensor_pin'))
         adc_range = [self.sensor.calc_adc(self.min_temp),
@@ -138,7 +140,7 @@ class PrinterHeater:
         self.control = algo(self, config)
         # pwm caching
         self.next_pwm_time = 0.
-        self.last_pwm_value = 0
+        self.last_pwm_value = 0.
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -187,6 +189,13 @@ class PrinterHeater:
     def finish_auto_tune(self, old_control):
         self.control = old_control
         self.target_temp = 0
+    def stats(self, eventtime):
+        with self.lock:
+            target_temp = self.target_temp
+            last_temp = self.last_temp
+            last_pwm_value = self.last_pwm_value
+        return '%s: target=%.0f temp=%.0f pwm=%.3f' % (
+            self.name, target_temp, last_temp, last_pwm_value)
 
 
 ######################################################################
@@ -214,6 +223,9 @@ class ControlBangBang:
 ######################################################################
 # Proportional Integral Derivative (PID) control algo
 ######################################################################
+
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
 
 class ControlPID:
     def __init__(self, heater, config):
@@ -255,7 +267,8 @@ class ControlPID:
             self.prev_temp_integ = temp_integ
     def check_busy(self, eventtime):
         temp_diff = self.heater.target_temp - self.heater.last_temp
-        return abs(temp_diff) > 1. or abs(self.prev_temp_deriv) > 0.1
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 
 
 ######################################################################
@@ -298,23 +311,37 @@ class ControlAutoTune:
             self.peak = -9999999.
         if len(self.peaks) < 4:
             return
-        temp_diff = self.peaks[-1][0] - self.peaks[-2][0]
-        time_diff = self.peaks[-1][1] - self.peaks[-3][1]
+        self.calc_pid(len(self.peaks)-1)
+    def calc_pid(self, pos):
+        temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
+        time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
         max_power = self.heater.max_power
         Ku = 4. * (2. * max_power) / (abs(temp_diff) * math.pi)
         Tu = time_diff
 
-        Kp = 0.6 * Ku
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
+        Kp = 0.6 * Ku * PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, max_power, Ku, Tu, Kp * PID_PARAM_BASE,
-                     Ki * PID_PARAM_BASE, Kd * PID_PARAM_BASE)
+                     temp_diff, max_power, Ku, Tu, Kp, Ki, Kd)
+        return Kp, Ki, Kd
+    def final_calc(self):
+        cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
+                       for pos in range(4, len(self.peaks))]
+        midpoint_pos = sorted(cycle_times)[len(cycle_times)/2][1]
+        Kp, Ki, Kd = self.calc_pid(midpoint_pos)
+        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
+        gcode = self.heater.printer.lookup_object('gcode')
+        gcode.respond_info(
+            "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
+            "To use these parameters, update the printer config file with\n"
+            "the above and then issue a RESTART command" % (Kp, Ki, Kd))
     def check_busy(self, eventtime):
         if self.heating or len(self.peaks) < 12:
             return True
+        self.final_calc()
         self.heater.finish_auto_tune(self.old_control)
         return False
 

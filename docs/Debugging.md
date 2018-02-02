@@ -115,16 +115,19 @@ gtkwave avrsim.vcd
 ```
 
 Manually sending commands to the micro-controller
--------------------------------------------------
+=================================================
 
-Normally, Klippy would be used to translate gcode commands to Klipper
-commands. However, it's also possible to manually send Klipper
-commands (functions marked with the DECL_COMMAND() macro in the
-Klipper source code). To do so, run:
+Normally, the host klippy.py process would be used to translate gcode
+commands to Klipper micro-controller commands. However, it's also
+possible to manually send these MCU commands (functions marked with
+the DECL_COMMAND() macro in the Klipper source code). To do so, run:
 
 ```
 ~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial 250000
 ```
+
+See the "HELP" command within the tool for more information on its
+functionality.
 
 Generating load graphs
 ======================
@@ -148,3 +151,23 @@ Then graphs can be produced with:
 ```
 
 One can then view the resulting **loadgraph.png** file.
+
+Extracting information from the klippy.log file
+===============================================
+
+The Klippy log file (/tmp/klippy.log) also contains debugging
+information. There is a logextract.py script that may be useful when
+analyzing a micro-controller shutdown or similar problem. It is
+typically run with something like:
+
+```
+mkdir work_directory
+cd work_directory
+cp /tmp/klippy.log .
+~/klipper/scripts/logextract.py ./klippy.log
+```
+
+The script will extract the printer config file and will extract MCU
+shutdown information. The information dumps from an MCU shutdown (if
+present) will be reordered by timestamp to assist in diagnosing cause
+and effect scenarios.

@@ -90,8 +90,8 @@ class SerialReader:
         logging.info("MCU config: %s", " ".join(
             ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))
         # Setup baud adjust
-        mcu_baud = float(msgparser.config.get('SERIAL_BAUD', 0.))
-        if mcu_baud:
+        mcu_baud = msgparser.get_constant_float('SERIAL_BAUD', None)
+        if mcu_baud is not None:
             baud_adjust = self.BITS_PER_BYTE / mcu_baud
             self.ffi_lib.serialqueue_set_baud_adjust(
                 self.serialqueue, baud_adjust)

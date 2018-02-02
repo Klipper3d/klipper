@@ -26,16 +26,22 @@ class CartKinematics:
         self.steppers[1].set_max_jerk(max_halt_velocity, max_accel)
         self.steppers[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), max_accel)
-    def get_steppers(self):
+    def get_steppers(self, flags=""):
+        if flags == "Z":
+            return [self.steppers[2]]
         return list(self.steppers)
-    def set_position(self, newpos):
+    def get_position(self):
+        return [s.mcu_stepper.get_commanded_position() for s in self.steppers]
+    def set_position(self, newpos, homing_axes):
         for i in StepList:
-            self.steppers[i].set_position(newpos[i])
+            s = self.steppers[i]
+            s.set_position(newpos[i])
+            if i in homing_axes:
+                self.limits[i] = (s.position_min, s.position_max)
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             s = self.steppers[axis]
-            self.limits[axis] = (s.position_min, s.position_max)
             # Determine moves
             if s.homing_positive_dir:
                 pos = s.position_endstop - 1.5*(

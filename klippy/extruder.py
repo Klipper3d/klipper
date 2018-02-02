@@ -1,6 +1,6 @@
 # Code for handling printer nozzle extruders
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -10,8 +10,11 @@ EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
     def __init__(self, printer, config):
-        self.config = config
-        self.heater = heater.PrinterHeater(printer, config)
+        shared_heater = config.get('shared_heater', None)
+        if shared_heater is None:
+            self.heater = heater.PrinterHeater(printer, config)
+        else:
+            self.heater = get_printer_heater(printer, shared_heater)
         self.stepper = stepper.PrinterStepper(printer, config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
@@ -21,12 +24,12 @@ class PrinterExtruder:
             'max_extrude_cross_section', 4. * self.nozzle_diameter**2
             , above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
-        toolhead = printer.objects['toolhead']
+        toolhead = printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_e_velocity = self.config.getfloat(
+        self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
             , above=0.)
-        self.max_e_accel = self.config.getfloat(
+        self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * self.max_extrude_ratio
             , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
@@ -50,6 +53,8 @@ class PrinterExtruder:
         if is_active:
             return self.activate_gcode
         return self.deactivate_gcode
+    def stats(self, eventtime):
+        return self.heater.stats(eventtime)
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True
@@ -70,8 +75,11 @@ class PrinterExtruder:
             inv_extrude_r = 1. / abs(move.extrude_r)
             move.limit_speed(self.max_e_velocity * inv_extrude_r
                              , self.max_e_accel * inv_extrude_r)
-        elif (move.extrude_r > self.max_extrude_ratio
-              and move.axes_d[3] > self.nozzle_diameter*self.max_extrude_ratio):
+        elif move.extrude_r > self.max_extrude_ratio:
+            if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
+                # Permit extrusion if amount extruded is tiny
+                move.extrude_r = self.max_extrude_ratio
+                return
             area = move.axes_d[3] * self.filament_area / move.move_d
             logging.debug("Overextrude: %s vs %s (area=%.3f dist=%.3f)",
                           move.extrude_r, self.max_extrude_ratio,
@@ -242,17 +250,17 @@ def add_printer_objects(printer, config):
 def get_printer_extruders(printer):
     out = []
     for i in range(99):
-        extruder = printer.objects.get('extruder%d' % (i,))
+        extruder = printer.lookup_object('extruder%d' % (i,), None)
         if extruder is None:
             break
         out.append(extruder)
     return out
 
 def get_printer_heater(printer, name):
-    if name == 'heater_bed' and name in printer.objects:
-        return printer.objects[name]
+    if name == 'heater_bed':
+        return printer.lookup_object(name)
     if name == 'extruder':
         name = 'extruder0'
-    if name.startswith('extruder') and name in printer.objects:
-        return printer.objects[name].get_heater()
+    if name.startswith('extruder'):
+        return printer.lookup_object(name).get_heater()
     raise printer.config_error("Unknown heater '%s'" % (name,))
