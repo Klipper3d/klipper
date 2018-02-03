@@ -90,6 +90,4 @@ class BedTiltCalibrate:
                 z_warn, new_params['x_adjust'], new_params['y_adjust']))
 
 def load_config(config):
-    if config.get_name() != 'bed_tilt':
-        raise config.error("Invalid bed_tilt config name")
     return BedTilt(config)

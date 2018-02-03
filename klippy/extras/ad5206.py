@@ -26,5 +26,5 @@ class ad5206:
                 self.mcu.add_config_cmd(
                     "send_spi_message pin=%s msg=%02x%02x" % (self.pin, i, val))
 
-def load_config(config):
+def load_config_prefix(config):
     return ad5206(config)

@@ -50,5 +50,5 @@ class PrinterMultiPin:
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_pwm(print_time, value)
 
-def load_config(config):
+def load_config_prefix(config):
     return PrinterMultiPin(config)

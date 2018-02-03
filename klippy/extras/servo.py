@@ -55,5 +55,5 @@ class PrinterServo:
         else:
             self.set_angle(print_time, self.gcode.get_float('ANGLE', params))
 
-def load_config(config):
+def load_config_prefix(config):
     return PrinterServo(config)

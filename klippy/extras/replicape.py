@@ -218,6 +218,4 @@ class Replicape:
         return pclass(self, channel, pin_params)
 
 def load_config(config):
-    if config.get_name() != 'replicape':
-        raise config.error("Invalid replicape config name")
     return Replicape(config)

@@ -34,6 +34,4 @@ class PrinterFan:
         self.last_fan_value = value
 
 def load_config(config):
-    if config.get_name() != 'fan':
-        raise config.error("Invalid print cooling fan config name")
     return PrinterFan(config)

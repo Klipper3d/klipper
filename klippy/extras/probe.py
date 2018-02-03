@@ -172,6 +172,4 @@ def coordinate_descent(adj_params, params, error_func):
     return params
 
 def load_config(config):
-    if config.get_name() != 'probe':
-        raise config.error("Invalid probe config name")
     return PrinterProbe(config)

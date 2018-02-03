@@ -71,6 +71,4 @@ class DeltaCalibrate:
                 new_params['radius']))
 
 def load_config(config):
-    if config.get_name() != 'delta_calibrate':
-        raise config.error("Invalid delta_calibrate config name")
     return DeltaCalibrate(config)

@@ -185,13 +185,19 @@ class Printer:
     def _try_load_module(self, config, section):
         if section in self.objects:
             return
-        module_name = section.split()[0]
+        module_parts = section.split()
+        module_name = module_parts[0]
         py_name = os.path.join(os.path.dirname(__file__),
                                'extras', module_name + '.py')
         if not os.path.exists(py_name):
             return
         mod = importlib.import_module('extras.' + module_name)
-        self.objects[section] = mod.load_config(config.getsection(section))
+        init_func = 'load_config'
+        if len(module_parts) > 1:
+            init_func = 'load_config_prefix'
+        init_func = getattr(mod, init_func, None)
+        if init_func is not None:
+            self.objects[section] = init_func(config.getsection(section))
     def _read_config(self):
         fileconfig = ConfigParser.RawConfigParser()
         config_file = self.start_args['config_file']
