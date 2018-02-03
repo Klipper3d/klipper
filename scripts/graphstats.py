@@ -15,7 +15,11 @@ MAXBUFFER=2.
 STATS_INTERVAL=5.
 TASK_MAX=0.0025
 
+APPLY_PREFIX = ['mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
+                'bytes_read', 'bytes_retransmit', 'freq', 'adj']
+
 def parse_log(logname):
+    apply_prefix = { p: 1 for p in APPLY_PREFIX }
     f = open(logname, 'rb')
     out = []
     for line in f:
@@ -33,7 +37,9 @@ def parse_log(logname):
                     prefix = ''
                 continue
             name, val = p.split('=', 1)
-            keyparts[prefix + name] = val
+            if name in apply_prefix:
+                name = prefix + name
+            keyparts[name] = val
         if keyparts.get('bytes_write', '0') == '0':
             continue
         keyparts['#sampletime'] = float(parts[1][:-1])
