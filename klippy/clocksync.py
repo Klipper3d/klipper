@@ -7,7 +7,7 @@ import logging, threading, math
 
 COMM_TIMEOUT = 3.5
 RTT_AGE = .000010 / (60. * 60.)
-DECAY = 1. / (2. * 60.)
+DECAY = 1. / 30.
 TRANSMIT_EXTRA = .001
 
 class ClockSync:
