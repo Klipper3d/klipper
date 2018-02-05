@@ -173,14 +173,10 @@ class Printer:
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
     def _stats(self, eventtime, force_output=False):
-        toolhead = self.objects.get('toolhead')
-        if toolhead is None:
-            return eventtime + 1.
-        is_active = toolhead.check_active(eventtime)
-        if not is_active and not force_output:
-            return eventtime + 1.
         stats = [cb(eventtime) for cb in self.stats_cb]
-        logging.info("Stats %.1f: %s", eventtime, ' '.join(stats))
+        if max([s[0] for s in stats] + [force_output]):
+            logging.info("Stats %.1f: %s", eventtime,
+                         ' '.join([s[1] for s in stats]))
         return eventtime + 1.
     def _try_load_module(self, config, section):
         if section in self.objects:

@@ -194,7 +194,7 @@ class PrinterHeater:
             target_temp = self.target_temp
             last_temp = self.last_temp
             last_pwm_value = self.last_pwm_value
-        return '%s: target=%.0f temp=%.0f pwm=%.3f' % (
+        return False, '%s: target=%.0f temp=%.0f pwm=%.3f' % (
             self.name, target_temp, last_temp, last_pwm_value)
 
 

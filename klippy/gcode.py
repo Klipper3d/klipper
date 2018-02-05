@@ -77,7 +77,7 @@ class GCodeParser:
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
     def stats(self, eventtime):
-        return "gcodein=%d" % (self.bytes_read,)
+        return False, "gcodein=%d" % (self.bytes_read,)
     def printer_state(self, state):
         if state == 'shutdown':
             if not self.is_printer_ready:

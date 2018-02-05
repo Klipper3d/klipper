@@ -747,8 +747,8 @@ class MCU:
         msg = "%s: mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
             self._name, self._mcu_tick_awake, self._mcu_tick_avg,
             self._mcu_tick_stddev)
-        return ' '.join([msg, self._serial.stats(eventtime),
-                         self._clocksync.stats(eventtime)])
+        return False, ' '.join([msg, self._serial.stats(eventtime),
+                                self._clocksync.stats(eventtime)])
     def printer_state(self, state):
         if state == 'connect':
             self._connect()
