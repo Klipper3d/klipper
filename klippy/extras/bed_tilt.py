@@ -66,7 +66,7 @@ class BedTiltCalibrate:
         logging.debug("Params: %s", params)
         def adjusted_height(pos, params):
             x, y, z = pos
-            return (z + x*params['x_adjust'] + y*params['y_adjust']
+            return (z - x*params['x_adjust'] - y*params['y_adjust']
                     - params['z_adjust'])
         def errorfunc(params):
             total_error = 0.
