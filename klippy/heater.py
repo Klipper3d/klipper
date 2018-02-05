@@ -194,7 +194,8 @@ class PrinterHeater:
             target_temp = self.target_temp
             last_temp = self.last_temp
             last_pwm_value = self.last_pwm_value
-        return False, '%s: target=%.0f temp=%.0f pwm=%.3f' % (
+        is_active = target_temp or last_temp > 50.
+        return is_active, '%s: target=%.0f temp=%.1f pwm=%.3f' % (
             self.name, target_temp, last_temp, last_pwm_value)
 
 
