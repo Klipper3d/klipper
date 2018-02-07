@@ -195,19 +195,29 @@ class PrinterPins:
     def lookup_pin(self, pin_type, pin_desc, share_type=None):
         can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
         can_pullup = pin_type == 'endstop'
+        desc = pin_desc
         pullup = invert = 0
-        if can_pullup and pin_desc.startswith('^'):
+        if can_pullup and desc.startswith('^'):
             pullup = 1
-            pin_desc = pin_desc[1:].strip()
-        if can_invert and pin_desc.startswith('!'):
+            desc = desc[1:].strip()
+        if can_invert and desc.startswith('!'):
             invert = 1
-            pin_desc = pin_desc[1:].strip()
-        if ':' not in pin_desc:
-            chip_name, pin = 'mcu', pin_desc
+            desc = desc[1:].strip()
+        if ':' not in desc:
+            chip_name, pin = 'mcu', desc
         else:
-            chip_name, pin = [s.strip() for s in pin_desc.split(':', 1)]
+            chip_name, pin = [s.strip() for s in desc.split(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
+        if [c for c in '^!: ' if c in pin]:
+            format = ""
+            if can_pullup:
+                format += "[^] "
+            if can_invert:
+                format += "[!] "
+            raise error("Invalid pin description '%s'\n"
+                        "Format is: %s[chip_name:] pin_name" % (
+                            pin_desc, format))
         share_name = "%s:%s" % (chip_name, pin)
         if share_name in self.active_pins:
             pin_params = self.active_pins[share_name]
