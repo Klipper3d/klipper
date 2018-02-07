@@ -39,7 +39,7 @@ terminal tab.
 
 ### Verify heaters
 
-Navigate to the Octoprint terminal tab and type in 50 followed by
+Navigate to the Octoprint temperature tab and type in 50 followed by
 enter in the "Tool" temperature box. The extruder temperature in the
 graph should start to increase (within about 30 seconds or so). Then
 go to the "Tool" temperature drop-down box and select "Off". After
