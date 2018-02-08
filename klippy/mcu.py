@@ -311,7 +311,7 @@ class MCU_pwm:
                 self._mcu.add_config_cmd(
                     "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
                         self._pin, cycle_ticks,
-                        self._static_value * self._pwm_max))
+                        self._start_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
