@@ -5,6 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
+
 class PrinterHD44780:
     def __init__(self, config):
         printer = config.get_printer()
@@ -51,8 +53,7 @@ class PrinterHD44780:
             msg = self.send_cmds_cmd.encode(self.pending_data)
         else:
             msg = self.send_data_cmd.encode(self.pending_data)
-        # XXX - send with low priority
-        self.mcu.send(msg, cq=self.cmd_queue)
+        self.mcu.send(msg, reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
         del self.pending_data[:]
     def send_data(self, byte):
         if self.pending_type != 'data' or len(self.pending_data) >= 16:
@@ -67,18 +68,9 @@ class PrinterHD44780:
     def init_event(self, eventtime):
         self.reactor.unregister_timer(self.init_timer)
         self.init_timer = None
-        self.send_command(0x33)
-        self.flush()
-        self.reactor.pause(self.reactor.monotonic() + .100)
-        self.send_command(0x33)
-        self.flush()
-        self.reactor.pause(self.reactor.monotonic() + .100)
-        self.send_command(0x33)
-        self.flush()
-        self.reactor.pause(self.reactor.monotonic() + .100)
-        self.send_command(0x22)
-        self.flush()
-        self.reactor.pause(self.reactor.monotonic() + .100)
+        for cmd in [0x33, 0x33, 0x33, 0x22]:
+            self.mcu.send(self.send_cmds_cmd.encode([cmd]), cq=self.cmd_queue)
+            self.reactor.pause(self.reactor.monotonic() + .100)
         self.send_command(0x08)
         self.send_command(0x06)
         self.send_command(0x10)
