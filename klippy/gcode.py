@@ -182,34 +182,42 @@ class GCodeParser:
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
         pending_commands.extend(lines)
-        # Check for M112 out-of-order
-        if ((len(pending_commands) > 1 or self.is_processing_data)
-            and len(pending_commands) < 20):
-            for line in lines:
-                if self.m112_r.match(line) is not None:
-                    self.cmd_M112({})
-        # Check if already processing data
-        if self.is_processing_data:
-            if len(pending_commands) >= 20 or not data:
-                # Stop reading input
-                self.reactor.unregister_fd(self.fd_handle)
-                self.fd_handle = None
-            return
+        # Special handling for debug file input EOF
+        if not data and self.is_fileinput:
+            if not self.is_processing_data:
+                self.motor_heater_off()
+                if self.toolhead is not None:
+                    self.toolhead.wait_moves()
+                self.printer.request_exit()
+            pending_commands.append("")
+        # Handle case where multiple commands pending
+        if self.is_processing_data or len(pending_commands) > 1:
+            if len(pending_commands) < 20:
+                # Check for M112 out-of-order
+                for line in lines:
+                    if self.m112_r.match(line) is not None:
+                        self.cmd_M112({})
+            if self.is_processing_data:
+                if len(pending_commands) >= 20:
+                    # Stop reading input
+                    self.reactor.unregister_fd(self.fd_handle)
+                    self.fd_handle = None
+                return
         # Process commands
         self.is_processing_data = True
+        self.pending_commands = []
+        self.process_commands(pending_commands)
+        if self.pending_commands:
+            self.process_pending()
+        self.is_processing_data = False
+    def process_pending(self):
+        pending_commands = self.pending_commands
         while pending_commands:
             self.pending_commands = []
             self.process_commands(pending_commands)
             pending_commands = self.pending_commands
-        self.is_processing_data = False
-        # Reenable input reading if it was stopped
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        if not data and self.is_fileinput:
-            self.motor_heater_off()
-            if self.toolhead is not None:
-                self.toolhead.wait_moves()
-            self.printer.request_exit()
     def run_script(self, script):
         prev_need_ack = self.need_ack
         try:
