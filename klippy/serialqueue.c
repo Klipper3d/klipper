@@ -390,6 +390,7 @@ struct serialqueue {
 #define MIN_RTO 0.025
 #define MAX_RTO 5.000
 #define MIN_REQTIME_DELTA 0.250
+#define MIN_BACKGROUND_DELTA 0.005
 #define IDLE_QUERY_TIME 1.0
 
 #define DEBUG_QUEUE_SENT 100
@@ -723,8 +724,13 @@ check_send_command(struct serialqueue *sq, double eventtime)
         if (!list_empty(&cq->ready_queue)) {
             struct queue_message *qm = list_first_entry(
                 &cq->ready_queue, struct queue_message, node);
-            if (qm->req_clock < min_ready_clock)
-                min_ready_clock = qm->req_clock;
+            uint64_t req_clock = qm->req_clock;
+            if (req_clock == BACKGROUND_PRIORITY_CLOCK)
+                req_clock = (uint64_t)(
+                    (sq->idle_time - sq->last_clock_time + MIN_BACKGROUND_DELTA)
+                    * sq->est_freq) + sq->last_clock;
+            if (req_clock < min_ready_clock)
+                min_ready_clock = req_clock;
         }
     }
 
@@ -908,7 +914,8 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
     int len = 0;
     struct queue_message *qm;
     list_for_each_entry(qm, msgs, node) {
-        if (qm->min_clock + (1LL<<31) < qm->req_clock)
+        if (qm->min_clock + (1LL<<31) < qm->req_clock
+            && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)
             qm->min_clock = qm->req_clock - (1LL<<31);
         len += qm->len;
     }
