@@ -117,7 +117,8 @@ class ST7920:
         self.glyph_framebuffer = [
             [bytearray([0x00]*128), bytearray([0xff]*128), 0x40, 0]]
         self.graphics_framebuffer = [
-            [bytearray([0x00]*16), bytearray([0xff]*16), 0x00, i]
+            [bytearray([0x00]*16), bytearray([0xff]*16),
+             i & 0x1f, (i & 0x20) >> 2]
             for i in range(64)]
         self.pending_framebuffers = (
             self.glyph_framebuffer + self.text_framebuffers
@@ -143,9 +144,10 @@ class ST7920:
                 count += count & 0x01
                 pos = pos & ~0x01
                 chip_pos = pos >> 1
-                if cmd == 0x00:
+                if cmd < 0x40:
+                    # Graphics framebuffer update
                     self.send(self.send_cmds_cmd,
-                              [0x26, 0x80 | offset, 0x80 | chip_pos, 0x22])
+                              [0x26, 0x80+cmd, 0x80+offset+chip_pos, 0x22])
                 else:
                     self.send(self.send_cmds_cmd, [cmd + offset + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
