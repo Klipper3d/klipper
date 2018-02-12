@@ -341,21 +341,20 @@ class PrinterLCD:
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
     def update_framebuffer(self, fb, pos, data):
-        new_fb_data = fb[0]
-        len_fb_data = len(new_fb_data)
-        if new_fb_data is not fb[1]:
+        new_fb_data, old_fb_data = fb[:2]
+        if new_fb_data is not old_fb_data:
             # Some changes are already pending to this buffer
             new_fb_data[pos:pos+len(data)] = data
         else:
-            new_fb_data = bytearray(fb[1])
+            new_fb_data = bytearray(old_fb_data)
             new_fb_data[pos:pos+len(data)] = data
-            if new_fb_data == fb[1]:
+            if new_fb_data == old_fb_data:
                 # No update
                 return
             fb[0] = new_fb_data
             self.lcd_chip.pending_framebuffers.append(fb)
-        if len(new_fb_data) > len_fb_data:
-            del new_fb_data[len_fb_data:]
+        if len(new_fb_data) > len(old_fb_data):
+            del new_fb_data[len(old_fb_data):]
     def write_str(self, x, y, data):
         self.update_framebuffer(self.lcd_chip.text_framebuffers[y], x, data)
     def write_graphics(self, x, y, row, data):
