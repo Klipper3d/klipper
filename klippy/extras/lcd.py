@@ -338,7 +338,7 @@ class PrinterLCD:
         self.draw_icon(0, 0, nozzle_icon)
         if self.extruder_count == 2:
             self.draw_icon(0, 1, nozzle_icon)
-        self.draw_icon(12, 1, feedrate_icon)
+        self.draw_icon(10, 1, feedrate_icon)
 
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
