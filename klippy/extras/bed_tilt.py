@@ -59,11 +59,11 @@ class BedTiltCalibrate:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_position()
     def finalize(self, positions):
-        logging.debug("Got: %s", positions)
+        logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,
                    'z_adjust': self.probe_z_offset }
-        logging.debug("Params: %s", params)
+        logging.info("Initial bed_tilt parameters: %s", params)
         def adjusted_height(pos, params):
             x, y, z = pos
             return (z - x*params['x_adjust'] - y*params['y_adjust']
@@ -74,11 +74,10 @@ class BedTiltCalibrate:
                 total_error += adjusted_height(pos, params)**2
             return total_error
         new_params = probe.coordinate_descent(params.keys(), params, errorfunc)
-        logging.debug("Got2: %s", new_params)
+        logging.info("Calculated bed_tilt parameters: %s", new_params)
         for pos in positions:
-            logging.debug("orig: %s new: %s",
-                          adjusted_height(pos, params),
-                          adjusted_height(pos, new_params))
+            logging.info("orig: %s new: %s", adjusted_height(pos, params),
+                         adjusted_height(pos, new_params))
         z_warn = ""
         z_diff = new_params['z_adjust'] - self.probe_z_offset
         if abs(z_diff) > .010:

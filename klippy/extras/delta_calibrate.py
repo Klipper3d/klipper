@@ -40,9 +40,9 @@ class DeltaCalibrate:
         return kin.get_stable_position()
     def finalize(self, positions):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        logging.debug("Got: %s", positions)
+        logging.info("Calculating delta_calibrate with: %s", positions)
         params = kin.get_calibrate_params()
-        logging.debug("Params: %s", params)
+        logging.info("Initial delta_calibrate parameters: %s", params)
         adj_params = ('endstop_a', 'endstop_b', 'endstop_c', 'radius',
                       'angle_a', 'angle_b')
         def delta_errorfunc(params):
@@ -53,11 +53,11 @@ class DeltaCalibrate:
             return total_error
         new_params = probe.coordinate_descent(
             adj_params, params, delta_errorfunc)
-        logging.debug("Got2: %s", new_params)
+        logging.info("Calculated delta_calibrate parameters: %s", new_params)
         for spos in positions:
-            logging.debug("orig: %s new: %s",
-                          delta.get_position_from_stable(spos, params),
-                          delta.get_position_from_stable(spos, new_params))
+            logging.info("orig: %s new: %s",
+                         delta.get_position_from_stable(spos, params),
+                         delta.get_position_from_stable(spos, new_params))
         self.gcode.respond_info(
             "stepper_a: position_endstop: %.6f angle: %.6f\n"
             "stepper_b: position_endstop: %.6f angle: %.6f\n"

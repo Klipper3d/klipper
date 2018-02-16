@@ -168,7 +168,7 @@ def coordinate_descent(adj_params, params, error_func):
                 continue
             params[param_name] = orig
             dp[param_name] *= 0.9
-    logging.debug("best_err: %s  rounds: %d", best_err, rounds)
+    logging.info("Coordinate descent best_err: %s  rounds: %d", best_err, rounds)
     return params
 
 def load_config(config):
