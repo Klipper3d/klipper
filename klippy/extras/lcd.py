@@ -408,19 +408,19 @@ class PrinterLCD:
             self.write_str(x, y, " {:^5}".format(str(value)+'%'))
 
         # Draw bar
-        self.write_graphics(x, y, 0, [0xff]*width)
+        data = [0x00] * width
         char_pcnt = int(100/width)
+        for i in range(width):
+            if (i+1)*char_pcnt <= value:
+                # Draw completely filled bytes
+                data[i] |= 0xFF
+            elif (i*char_pcnt) < value:
+                # Draw partially filled bytes
+                data[i] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
+        data[0] |= 0x80
+        data[-1] |= 0x01
+        self.write_graphics(x, y, 0, [0xff]*width)
         for i in range(1, 15):
-            data = [0x00] * width
-            data[0] |= 0x80
-            data[-1] |= 0x01
-            for x in range(width):
-                if (x+1)*char_pcnt <= value:
-                    # Draw completely filled bytes
-                    data[x] |= 0xFF
-                elif (x*char_pcnt) < value:
-                    # Draw partially filled bytes
-                    data[x] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
             self.write_graphics(x, y, i, data)
         self.write_graphics(x, y, 15, [0xff]*width)
 
