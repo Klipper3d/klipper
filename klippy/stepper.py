@@ -48,6 +48,7 @@ class PrinterStepper:
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.mcu_stepper.setup_step_distance(self.step_dist)
+        self.step = self.mcu_stepper.step
         self.step_const = self.mcu_stepper.step_const
         self.step_delta = self.mcu_stepper.step_delta
         self.enable = lookup_enable_pin(printer, config.get('enable_pin', None))

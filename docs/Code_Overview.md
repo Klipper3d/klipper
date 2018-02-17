@@ -212,6 +212,92 @@ ToolHead and kinematic classes. It's this part of the code which
 specifies the movements and their timings. The remaining parts of the
 processing is mostly just communication and plumbing.
 
+Adding new kinematics
+=====================
+
+This section provides some tips on adding support to Klipper for
+additional types of printer kinematics. This type of activity requires
+excellent understanding of the math formulas for the target
+kinematics. It also requires software development skills - though one
+should only need to update the host software (which is written in
+Python).
+
+Useful steps:
+1. Start by studying the [above section](#code-flow-of-a-move-command)
+   and the [Kinematics document](Kinematics.md).
+2. Review the existing kinematic classes in cartesian.py, corexy.py,
+   and delta.py. The kinematic classes are tasked with converting a
+   move in cartesian coordinates to the movement on each stepper. One
+   should be able to copy one of these files as a starting point.
+3. Implement the `get_postion()` method in the new kinematics
+   class. This method converts the current stepper position of each
+   stepper axis (stored in millimeters) to a position in cartesian
+   space (also in millimeters).
+4. Implement the `set_postion()` method. This is the inverse of
+   get_position() - it sets each axis position (in millimeters) given
+   a position in cartesian coordinates.
+5. Implement the `move()` method. The goal of the move() method is to
+   convert a move defined in cartesian space to a series of stepper
+   step times that implement the requested movement.
+   * The `move()` method is passed a "print_time" parameter (which
+     stores a time in seconds) and a "move" class instance that fully
+     defines the movement. The goal is to repeatedly invoke the
+     `stepper.step()` method with the time (relative to print_time)
+     that each stepper should step at to obtain the desired motion.
+   * One "trick" to help with the movement calculations is to imagine
+     there is a physical rail between `move.start_pos` and
+     `move.end_pos` that confines the print head so that it can only
+     move along this straight line of motion. Then, if the head is
+     confined to that imaginary rail, the head is at `move.start_pos`,
+     only one stepper is enabled (all other steppers can move freely),
+     and the given stepper is stepped a single step, then one can
+     imagine that the head will move along the line of movement some
+     distance. Determine the formula converting this step distance to
+     distance along the line of movement. Once one has the distance
+     along the line of movement, one can figure out the time that the
+     head should be at that position (using the standard formulas for
+     velocity and acceleration). This time is the ideal step time for
+     the given stepper and it can be passed to the `stepper.step()`
+     method.
+   * The `stepper.step()` method must always be called with an
+     increasing time for a given stepper (steps must be scheduled in
+     the order they are to be executed). A common error during
+     kinematic development is to receive an "Internal error in
+     stepcompress" failure - this is generally due to the step()
+     method being invoked with a time earlier than the last scheduled
+     step. For example, if the last step in move1 is scheduled at a
+     time greater than the first step in move2 it will generally
+     result in the above error.
+   * Fractional steps. Be aware that a move request is given in
+     cartesian space and it is not confined to discreet
+     locations. Thus a move's start and end locations may translate to
+     a location on a stepper axis that is between two steps (a
+     fractional step). The code must handle this. The preferred
+     approach is to schedule the next step at the time a move would
+     position the stepper axis at least half way towards the next
+     possible step location. Incorrect handling of fractional steps is
+     a common cause of "Internal error in stepcompress" failures.
+6. Other methods. The `home()`, `check_move()`, and other methods
+   should also be implemented. However, at the start of development
+   one can use empty code here.
+7. Implement test cases. Create a g-code file with a series of moves
+   that can test important cases for the given kinematics. Follow the
+   [debugging documentation](Debugging.md) to convert this g-code file
+   to micro-controller commands. This is useful to exercise corner
+   cases and to check for regressions.
+8. Optimize if needed. One may notice that the existing kinematic
+   classes do not call `stepper.step()`. This is purely an
+   optimization - the inner loop of the kinematic calculations were
+   moved to C to reduce load on the host cpu. All of the existing
+   kinematic classes started development using `stepper.step()` and
+   then were later optimized. The g-code to mcu command translation
+   (described in the previous step) is a useful tool during
+   optimization - if a code change is purely an optimization then it
+   should not impact the resulting text representation of the mcu
+   commands (though minor changes in output due to floating point
+   rounding are possible). So, one can use this system to detect
+   regressions.
+
 Time
 ====
 
