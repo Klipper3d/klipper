@@ -44,9 +44,6 @@ class HD44780:
             [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 0x40 + 20]]
         self.glyph_framebuffer = [
             [bytearray([0x00]*40), bytearray([0xff]*40), 0x40, 0]]
-        self.graphics_framebuffer = [
-            [bytearray([0x00]*16), bytearray([0xff]*16), 0x00, i]
-            for i in range(64)]
         self.pending_framebuffers = (
             self.glyph_framebuffer + self.text_framebuffers)
     def build_config(self):
@@ -72,6 +69,21 @@ class HD44780:
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             fb[1] = new_data
         del self.pending_framebuffers[:]
+    def update_framebuffer(self, fb, pos, data):
+        new_fb_data, old_fb_data = fb[:2]
+        if new_fb_data is not old_fb_data:
+            # Some changes are already pending to this buffer
+            new_fb_data[pos:pos+len(data)] = data
+        else:
+            new_fb_data = bytearray(old_fb_data)
+            new_fb_data[pos:pos+len(data)] = data
+            if new_fb_data == old_fb_data:
+                # No update
+                return
+            fb[0] = new_fb_data
+            self.pending_framebuffers.append(fb)
+        if len(new_fb_data) > len(old_fb_data):
+            del new_fb_data[len(old_fb_data):]
     def init(self):
         reactor = self.printer.get_reactor()
         for cmd in [0x33, 0x33, 0x33, 0x22]:
@@ -81,13 +93,17 @@ class HD44780:
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
+    def write_str(self, x, y, data):
+        self.update_framebuffer(self.text_framebuffers[y], x, data)
+    def write_graphics(self, x, y, row, data):
+        pass
 
 
 ######################################################################
 # ST7920 (128x64 graphics) lcd chip
 ######################################################################
 
-class ST7920:
+class ST7920(HD44780):
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
@@ -126,9 +142,6 @@ class ST7920:
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command("st7920_send_cmds cmds=%*s")
         self.send_data_cmd = self.mcu.lookup_command("st7920_send_data data=%*s")
-    def send(self, cmd_type, data):
-        self.mcu.send(cmd_type.encode(data),
-                      reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for fb in self.pending_framebuffers:
@@ -157,15 +170,10 @@ class ST7920:
         self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
-        gfb = self.glyph_framebuffer[0]
-        if gfb[0] is gfb[1]:
-            gfb[0] = bytearray(gfb[1])
-            self.pending_framebuffers.append(gfb)
-        pos = glyph_id * 32
-        for i, d in enumerate(data):
-            gfb[0][pos + i*2] = (d >> 8) & 0xff
-            gfb[0][pos + i*2 + 1] = d & 0xff
+        self.update_framebuffer(self.glyph_framebuffer[0], glyph_id * 32, data)
         return (0x00, glyph_id * 2)
+    def write_graphics(self, x, y, row, data):
+        self.update_framebuffer(self.graphics_framebuffer[y*16 + row], x, data)
 
 
 ######################################################################
@@ -297,6 +305,8 @@ class PrinterLCD:
     def __init__(self, config):
         printer = config.get_printer()
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
+        self.write_str = self.lcd_chip.write_str
+        self.write_graphics = self.lcd_chip.write_graphics
         # work timer
         self.reactor = printer.get_reactor()
         self.work_timer = self.reactor.register_timer(self.work_event)
@@ -331,10 +341,10 @@ class PrinterLCD:
         self.lcd_chip.init()
 
         # Load the icons
-        self.fan_glyphs = [self.lcd_chip.load_glyph(0, fan1_icon, "f+"),
-                           self.lcd_chip.load_glyph(1, fan2_icon, "f*")]
-        self.bed_glyphs = [self.lcd_chip.load_glyph(2, bed1_icon, "b-"),
-                           self.lcd_chip.load_glyph(3, bed2_icon, "b_")]
+        self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f+"),
+                           self.load_glyph(1, fan2_icon, "f*")]
+        self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b-"),
+                           self.load_glyph(3, bed2_icon, "b_")]
         self.draw_icon(0, 0, nozzle_icon)
         if self.extruder_count == 2:
             self.draw_icon(0, 1, nozzle_icon)
@@ -342,26 +352,6 @@ class PrinterLCD:
 
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
-    def update_framebuffer(self, fb, pos, data):
-        new_fb_data, old_fb_data = fb[:2]
-        if new_fb_data is not old_fb_data:
-            # Some changes are already pending to this buffer
-            new_fb_data[pos:pos+len(data)] = data
-        else:
-            new_fb_data = bytearray(old_fb_data)
-            new_fb_data[pos:pos+len(data)] = data
-            if new_fb_data == old_fb_data:
-                # No update
-                return
-            fb[0] = new_fb_data
-            self.lcd_chip.pending_framebuffers.append(fb)
-        if len(new_fb_data) > len(old_fb_data):
-            del new_fb_data[len(old_fb_data):]
-    def write_str(self, x, y, data):
-        self.update_framebuffer(self.lcd_chip.text_framebuffers[y], x, data)
-    def write_graphics(self, x, y, row, data):
-        self.update_framebuffer(
-            self.lcd_chip.graphics_framebuffer[y*16 + row], x, data)
 
     def demo_animation(self):
         self.print_progress  = (self.print_progress + 1) % 100
@@ -390,6 +380,12 @@ class PrinterLCD:
     def draw_icon(self, x, y, data):
         for i, bits in enumerate(data):
             self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+    def load_glyph(self, glyph_id, data, alt_text):
+        glyph = [0x00] * (len(data) * 2)
+        for i, bits in enumerate(data):
+            glyph[i*2] = (bits >> 8) & 0xff
+            glyph[i*2 + 1] = bits & 0xff
+        return self.lcd_chip.load_glyph(glyph_id, glyph, alt_text)
 
     # We animate the fan / bed by changing the active glyph
     def animate_fan(self):
