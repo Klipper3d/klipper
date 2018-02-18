@@ -303,35 +303,20 @@ LCD_chips = { 'st7920': ST7920, 'hd44780': HD44780 }
 
 class PrinterLCD:
     def __init__(self, config):
-        printer = config.get_printer()
+        self.printer = config.get_printer()
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.write_str = self.lcd_chip.write_str
         self.write_graphics = self.lcd_chip.write_graphics
         # work timer
-        self.reactor = printer.get_reactor()
+        self.reactor = self.printer.get_reactor()
         self.work_timer = self.reactor.register_timer(self.work_event)
         self.init_timer = self.reactor.register_timer(self.init_event)
-        # Glyphs
+        # glyphs
         self.fan_glyphs = self.bed_glyphs = None
-        # For the fan animation
-        self.odd_frame = False
-        # Information which is printed on the LCD screen
-        self.extruder_count      = 1   # Can be 1 or 2
-        self.extruder_1_temp     = 100
-        self.extruder_1_target   = 210
-        self.extruder_2_temp     = 178
-        self.extruder_2_target   = 205
-        self.feedrate_percentage = 100
-        self.bed_temp            = 0
-        self.bed_target          = 110
-        self.print_progress      = 0
-        self.print_time_hrs      = 0
-        self.print_time_min      = 0
-        self.fan_percentage      = 90
-        self.position_x          = 0
-        self.position_y          = 0
-        self.position_z          = 0
-        self.status_message      = "Ready" # If blank, position will be shown
+        # printer objects
+        self.gcode = self.toolhead = self.sdcard = None
+        self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
+    # Initialization
     def printer_state(self, state):
         if state == 'ready':
             self.reactor.update_timer(self.init_timer, self.reactor.NOW)
@@ -339,74 +324,31 @@ class PrinterLCD:
         self.reactor.unregister_timer(self.init_timer)
         self.init_timer = None
         self.lcd_chip.init()
-
+        # Load printer objects
+        self.gcode = self.printer.lookup_object('gcode')
+        self.toolhead = self.printer.lookup_object('toolhead')
+        self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
+        self.fan = self.printer.lookup_object('fan', None)
+        self.extruder0 = self.printer.lookup_object('extruder0', None)
+        self.extruder1 = self.printer.lookup_object('extruder1', None)
+        self.heater_bed = self.printer.lookup_object('heater_bed', None)
         # Load the icons
-        self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f+"),
-                           self.load_glyph(1, fan2_icon, "f*")]
-        self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b-"),
-                           self.load_glyph(3, bed2_icon, "b_")]
+        self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
+                           self.load_glyph(1, fan2_icon, "f+")]
+        self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
+                           self.load_glyph(3, bed2_icon, "b-")]
         self.draw_icon(0, 0, nozzle_icon)
-        if self.extruder_count == 2:
+        if self.extruder1 is not None:
             self.draw_icon(0, 1, nozzle_icon)
         self.draw_icon(10, 1, feedrate_icon)
 
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
-
-    def demo_animation(self):
-        self.print_progress  = (self.print_progress + 1) % 100
-        self.extruder_1_temp = self.extruder_1_temp*0.95 + self.extruder_1_target*0.05
-        self.extruder_2_temp = self.extruder_2_temp*0.95 + self.extruder_1_target*0.05
-        self.bed_temp        = self.bed_temp*0.95 + self.bed_target*0.05
-        self.print_time_min  += 1
-        if self.print_time_min < 10 and self.print_time_hrs == 0:
-            self.status_message = "Heating..."
-        else:
-            self.status_message = ""
-        if self.print_time_min == 60:
-            self.print_time_min = 0
-            self.print_time_hrs += 1
-        self.position_x = 150 + 150 * math.cos(2*math.pi*self.print_time_min/60)
-        self.position_y = 150 + 150 * math.sin(2*math.pi*self.print_time_min/60)
-        self.position_z = self.print_time_hrs * 0.01
-
-    def work_event(self, eventtime):
-        self.lcd_draw_interface()
-        self.lcd_chip.flush()
-        self.demo_animation()
-        return eventtime + 1.
-
-    # Draws an icon to the graphics framebuffer
-    def draw_icon(self, x, y, data):
-        for i, bits in enumerate(data):
-            self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
-    def load_glyph(self, glyph_id, data, alt_text):
-        glyph = [0x00] * (len(data) * 2)
-        for i, bits in enumerate(data):
-            glyph[i*2] = (bits >> 8) & 0xff
-            glyph[i*2 + 1] = bits & 0xff
-        return self.lcd_chip.load_glyph(glyph_id, glyph, alt_text)
-
-    # We animate the fan / bed by changing the active glyph
-    def animate_fan(self):
-        frame = 0
-        if self.fan_percentage > 0:
-            frame = self.odd_frame
-        self.write_str(10, 0, self.fan_glyphs[frame])
-    def animate_bed(self):
-        self.odd_frame = not self.odd_frame
-        self.write_str(0, self.extruder_count, self.bed_glyphs[self.odd_frame])
-
-    def draw_progress_bar(self, value):
-        # Draw the percentage as text
-        if self.extruder_count == 1:
-            x, y, width = 0, 2, 10
-            self.write_str(x, y, " {:^9}".format(str(value)+'%'))
-        else:
-            x, y, width = 10, 1, 6
-            self.write_str(x, y, " {:^5}".format(str(value)+'%'))
-
-        # Draw bar
+    # Screen updating
+    def animate_glyphs(self, eventtime, x, y, glyphs, do_animate):
+        frame = do_animate and int(eventtime) & 1
+        self.write_str(x, y, glyphs[frame])
+    def draw_progress_bar(self, x, y, width, value):
         data = [0x00] * width
         char_pcnt = int(100/width)
         for i in range(width):
@@ -422,55 +364,64 @@ class PrinterLCD:
         for i in range(1, 15):
             self.write_graphics(x, y, i, data)
         self.write_graphics(x, y, 15, [0xff]*width)
-
-    def draw_extruder_1_temp(self):
-        self.write_str(2, 0, "%3d/%3d" % (
-            self.extruder_1_temp, self.extruder_1_target))
-
-    def draw_extruder_2_temp(self):
-        self.write_str(2, 1, "%3d/%3d" % (
-            self.extruder_2_temp, self.extruder_2_target))
-
-    def draw_bed_temp(self):
-        self.write_str(2, self.extruder_count, "%3d/%3d" % (
-            self.bed_temp, self.bed_target))
-        self.animate_bed()
-
-    def draw_print_time(self):
-        self.write_str(10, 2, " %02d:%02d" % (
-            self.print_time_hrs, self.print_time_min))
-
-    def draw_fan_speed(self):
-        self.write_str(12, 0, "%3d%%" % (self.fan_percentage,))
-        self.animate_fan()
-
-    def draw_feedrate_percentage(self):
-        # We only have enough room for the feedrate when
-        # we have one extruder
-        if self.extruder_count == 1:
-            self.write_str(12, 1, "%3d%%" % (self.feedrate_percentage))
-
-    def draw_status_message(self):
-        self.write_str(0, 3, self.status_message)
-
-    def draw_position(self):
-        self.write_str(0, 3, "X%-4dY%-4dZ%-5.2f" % (
-            self.position_x, self.position_y, self.position_z))
-
-    # Paints the entire LCD interface
-    def lcd_draw_interface(self):
-        self.draw_extruder_1_temp()
-        if self.extruder_count == 2:
-            self.draw_extruder_2_temp()
-        self.draw_bed_temp()
-        self.draw_fan_speed()
-        self.draw_print_time()
-        self.draw_feedrate_percentage()
-        if self.status_message:
-            self.draw_status_message()
+    def work_event(self, eventtime):
+        if self.extruder0 is not None:
+            info = self.extruder0.get_heater().get_status(eventtime)
+            self.write_str(2, 0, "%3d/%-3d" % (
+                info['temperature'], info['target']))
+        extruder_count = 1
+        if self.extruder1 is not None:
+            info = self.extruder1.get_heater().get_status(eventtime)
+            self.write_str(2, 1, "%3d/%-3d" % (
+                info['temperature'], info['target']))
+            extruder_count = 2
         else:
-            self.draw_position()
-        self.draw_progress_bar(self.print_progress);
+            # Display g-code speed override
+            info = self.gcode.get_status(eventtime)
+            self.write_str(12, 1, "%3d%%" % (info['speed_factor'] * 100.,))
+        if self.heater_bed is not None:
+            info = self.heater_bed.get_status(eventtime)
+            self.write_str(2, extruder_count, "%3d/%-3d" % (
+                info['temperature'], info['target']))
+            self.animate_glyphs(eventtime, 0, extruder_count, self.bed_glyphs,
+                                info['target'] != 0.)
+        if self.fan is not None:
+            info = self.fan.get_status(eventtime)
+            self.write_str(12, 0, "%3d%%" % (info['speed'] * 100.,))
+            self.animate_glyphs(eventtime, 10, 0, self.fan_glyphs,
+                                info['speed'] != 0.)
+        if self.sdcard is not None:
+            info = self.sdcard.get_status(eventtime)
+            progress = int(info['progress'] * 100.)
+            if extruder_count == 1:
+                self.write_str(0, 2, " {:^9}".format(str(progress)+'%'))
+                self.draw_progress_bar(0, 2, 10, progress)
+            else:
+                self.write_str(10, 1, " {:^5}".format(str(progress)+'%'))
+                self.draw_progress_bar(10, 1, 6, progress)
+        info = self.toolhead.get_status(eventtime)
+        printing_time = int(info['printing_time'])
+        self.write_str(10, 2, " %02d:%02d" % (
+            printing_time // (60 * 60), (printing_time // 60) % 60))
+        status = info['status']
+        if status != 'Printing':
+            self.write_str(0, 3, "%-20s" % (status,))
+        else:
+            pos = self.toolhead.get_position()
+            self.write_str(0, 3, "X%-4dY%-4dZ%-5.2f    " % (
+                pos[0], pos[1], pos[2]))
+        self.lcd_chip.flush()
+        return eventtime + .500
+    # Icon handling
+    def draw_icon(self, x, y, data):
+        for i, bits in enumerate(data):
+            self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+    def load_glyph(self, glyph_id, data, alt_text):
+        glyph = [0x00] * (len(data) * 2)
+        for i, bits in enumerate(data):
+            glyph[i*2] = (bits >> 8) & 0xff
+            glyph[i*2 + 1] = bits & 0xff
+        return self.lcd_chip.load_glyph(glyph_id, glyph, alt_text)
 
 def load_config(config):
     return PrinterLCD(config)
