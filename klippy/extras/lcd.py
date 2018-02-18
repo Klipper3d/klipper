@@ -4,7 +4,8 @@
 # Copyright (C) 2018  Aleph Objects, Inc <marcio@alephobjects.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, pins, math
+import math, logging
+import pins
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -305,8 +306,6 @@ class PrinterLCD:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
-        self.write_str = self.lcd_chip.write_str
-        self.write_graphics = self.lcd_chip.write_graphics
         # work timer
         self.reactor = self.printer.get_reactor()
         self.work_timer = self.reactor.register_timer(self.work_event)
@@ -347,7 +346,7 @@ class PrinterLCD:
     # Screen updating
     def animate_glyphs(self, eventtime, x, y, glyphs, do_animate):
         frame = do_animate and int(eventtime) & 1
-        self.write_str(x, y, glyphs[frame])
+        self.lcd_chip.write_str(x, y, glyphs[frame])
     def draw_progress_bar(self, x, y, width, value):
         data = [0x00] * width
         char_pcnt = int(100/width)
@@ -360,62 +359,61 @@ class PrinterLCD:
                 data[i] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
         data[0] |= 0x80
         data[-1] |= 0x01
-        self.write_graphics(x, y, 0, [0xff]*width)
+        self.lcd_chip.write_graphics(x, y, 0, [0xff]*width)
         for i in range(1, 15):
-            self.write_graphics(x, y, i, data)
-        self.write_graphics(x, y, 15, [0xff]*width)
+            self.lcd_chip.write_graphics(x, y, i, data)
+        self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
     def work_event(self, eventtime):
+        write_str = self.lcd_chip.write_str
         gcode_info = self.gcode.get_status(eventtime)
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            self.write_str(2, 0, "%3d/%-3d" % (
-                info['temperature'], info['target']))
+            write_str(2, 0, "%3d/%-3d" % (info['temperature'], info['target']))
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            self.write_str(2, 1, "%3d/%-3d" % (
-                info['temperature'], info['target']))
+            write_str(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
             extruder_count = 2
         else:
             # Display g-code speed override
-            self.write_str(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
+            write_str(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            self.write_str(2, extruder_count, "%3d/%-3d" % (
+            write_str(2, extruder_count, "%3d/%-3d" % (
                 info['temperature'], info['target']))
             self.animate_glyphs(eventtime, 0, extruder_count, self.bed_glyphs,
                                 info['target'] != 0.)
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            self.write_str(12, 0, "%3d%%" % (info['speed'] * 100.,))
+            write_str(12, 0, "%3d%%" % (info['speed'] * 100.,))
             self.animate_glyphs(eventtime, 10, 0, self.fan_glyphs,
                                 info['speed'] != 0.)
         if self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = int(info['progress'] * 100.)
             if extruder_count == 1:
-                self.write_str(0, 2, " {:^9}".format(str(progress)+'%'))
+                write_str(0, 2, " {:^9}".format(str(progress)+'%'))
                 self.draw_progress_bar(0, 2, 10, progress)
             else:
-                self.write_str(10, 1, " {:^5}".format(str(progress)+'%'))
+                write_str(10, 1, " {:^5}".format(str(progress)+'%'))
                 self.draw_progress_bar(10, 1, 6, progress)
         info = self.toolhead.get_status(eventtime)
         printing_time = int(info['printing_time'])
-        self.write_str(10, 2, " %02d:%02d" % (
+        write_str(10, 2, " %02d:%02d" % (
             printing_time // (60 * 60), (printing_time // 60) % 60))
         status = info['status']
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
-            self.write_str(0, 3, "X%-4dY%-4dZ%-5.2f    " % (
-                pos[0], pos[1], pos[2]))
+            write_str(0, 3, "X%-4dY%-4dZ%-5.2f    " % (pos[0], pos[1], pos[2]))
         else:
-            self.write_str(0, 3, "%-20s" % (status,))
+            write_str(0, 3, "%-20s" % (status,))
         self.lcd_chip.flush()
         return eventtime + .500
     # Icon handling
     def draw_icon(self, x, y, data):
         for i, bits in enumerate(data):
-            self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            self.lcd_chip.write_graphics(
+                x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
     def load_glyph(self, glyph_id, data, alt_text):
         glyph = [0x00] * (len(data) * 2)
         for i, bits in enumerate(data):
