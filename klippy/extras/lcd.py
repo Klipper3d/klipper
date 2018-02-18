@@ -45,7 +45,7 @@ class HD44780:
             [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 0x40 + 20]]
         self.glyph_framebuffer = [
             [bytearray([0x00]*40), bytearray([0xff]*40), 0x40, 0]]
-        self.pending_framebuffers = (
+        self.framebuffers = (
             self.glyph_framebuffer + self.text_framebuffers)
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command(
@@ -57,8 +57,12 @@ class HD44780:
                       reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for fb in self.pending_framebuffers:
+        for fb in self.framebuffers:
             new_data, old_data, cmd, offset = fb
+            if new_data == old_data:
+                continue
+            if len(new_data) > len(old_data):
+                new_data = new_data[:len(old_data)]
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
                      if nd != od]
             for i in range(len(diffs)-2, -1, -1):
@@ -68,23 +72,7 @@ class HD44780:
             for pos, count in diffs:
                 self.send(self.send_cmds_cmd, [cmd + offset + pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1] = new_data
-        del self.pending_framebuffers[:]
-    def update_framebuffer(self, fb, pos, data):
-        new_fb_data, old_fb_data = fb[:2]
-        if new_fb_data is not old_fb_data:
-            # Some changes are already pending to this buffer
-            new_fb_data[pos:pos+len(data)] = data
-        else:
-            new_fb_data = bytearray(old_fb_data)
-            new_fb_data[pos:pos+len(data)] = data
-            if new_fb_data == old_fb_data:
-                # No update
-                return
-            fb[0] = new_fb_data
-            self.pending_framebuffers.append(fb)
-        if len(new_fb_data) > len(old_fb_data):
-            del new_fb_data[len(old_fb_data):]
+            fb[1] = bytearray(new_data)
     def init(self):
         reactor = self.printer.get_reactor()
         for cmd in [0x33, 0x33, 0x33, 0x22]:
@@ -92,6 +80,8 @@ class HD44780:
             reactor.pause(reactor.monotonic() + .100)
         self.send(self.send_cmds_cmd, [0x08, 0x06, 0x10, 0x0c])
         self.flush()
+    def update_framebuffer(self, fb, pos, data):
+        fb[0][pos:pos+len(data)] = data
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
     def write_str(self, x, y, data):
@@ -104,7 +94,7 @@ class HD44780:
 # ST7920 (128x64 graphics) lcd chip
 ######################################################################
 
-class ST7920(HD44780):
+class ST7920:
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
@@ -137,16 +127,23 @@ class ST7920(HD44780):
             [bytearray([0x00]*16), bytearray([0xff]*16),
              i & 0x1f, (i & 0x20) >> 2]
             for i in range(64)]
-        self.pending_framebuffers = (
+        self.framebuffers = (
             self.glyph_framebuffer + self.text_framebuffers
             + self.graphics_framebuffer)
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command("st7920_send_cmds cmds=%*s")
         self.send_data_cmd = self.mcu.lookup_command("st7920_send_data data=%*s")
+    def send(self, cmd_type, data):
+        self.mcu.send(cmd_type.encode(data),
+                      reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for fb in self.pending_framebuffers:
+        for fb in self.framebuffers:
             new_data, old_data, cmd, offset = fb
+            if new_data == old_data:
+                continue
+            if len(new_data) > len(old_data):
+                new_data = new_data[:len(old_data)]
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
                      if nd != od]
             for i in range(len(diffs)-2, -1, -1):
@@ -165,14 +162,17 @@ class ST7920(HD44780):
                 else:
                     self.send(self.send_cmds_cmd, [cmd + offset + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1] = new_data
-        del self.pending_framebuffers[:]
+            fb[1] = bytearray(new_data)
     def init(self):
         self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
         self.flush()
+    def update_framebuffer(self, fb, pos, data):
+        fb[0][pos:pos+len(data)] = data
     def load_glyph(self, glyph_id, data, alt_text):
         self.update_framebuffer(self.glyph_framebuffer[0], glyph_id * 32, data)
         return (0x00, glyph_id * 2)
+    def write_str(self, x, y, data):
+        self.update_framebuffer(self.text_framebuffers[y], x, data)
     def write_graphics(self, x, y, row, data):
         self.update_framebuffer(self.graphics_framebuffer[y*16 + row], x, data)
 
