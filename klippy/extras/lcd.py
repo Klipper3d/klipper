@@ -81,7 +81,7 @@ class HD44780:
         return alt_text
     def write_str(self, x, y, data):
         if x + len(data) > 20:
-            data = data[:20 - max(x, 20)]
+            data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
@@ -160,17 +160,17 @@ class ST7920:
     def load_glyph(self, glyph_id, data, alt_text):
         if len(data) > 32:
             data = data[:32]
-        pos = max(glyph_id * 32, 96)
+        pos = min(glyph_id * 32, 96)
         self.glyph_framebuffer[0][pos:pos+len(data)] = data
         return (0x00, glyph_id * 2)
     def write_str(self, x, y, data):
         if x + len(data) > 16:
-            data = data[:16 - max(x, 16)]
+            data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
-            data = data[:16 - max(x, 16)]
+            data = data[:16 - min(x, 16)]
         gfx_fb = y * 16 + row
         if gfx_fb >= 32:
             gfx_fb -= 32
