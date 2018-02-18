@@ -114,20 +114,15 @@ class ST7920:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffers = [
-            [bytearray([' ']*16), bytearray([0x00]*16), 0x80, 0x00],
-            [bytearray([' ']*16), bytearray([0x00]*16), 0x80, 0x10],
-            [bytearray([' ']*16), bytearray([0x00]*16), 0x80, 0x08],
-            [bytearray([' ']*16), bytearray([0x00]*16), 0x80, 0x18]]
+        self.text_framebuffer = [
+            bytearray([' ']*64), bytearray([0x00]*64), 0x80]
         self.glyph_framebuffer = [
-            [bytearray([0x00]*128), bytearray([0xff]*128), 0x40, 0]]
-        self.graphics_framebuffer = [
-            [bytearray([0x00]*16), bytearray([0xff]*16),
-             i & 0x1f, (i & 0x20) >> 2]
-            for i in range(64)]
-        self.framebuffers = (
-            self.glyph_framebuffer + self.text_framebuffers
-            + self.graphics_framebuffer)
+            bytearray([0x00]*128), bytearray([0xff]*128), 0x40]
+        self.graphics_framebuffers = [
+            [bytearray([0x00]*32), bytearray([0xff]*32), i]
+            for i in range(32)]
+        self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
+                             + self.graphics_framebuffers)
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command("st7920_send_cmds cmds=%*s")
         self.send_data_cmd = self.mcu.lookup_command("st7920_send_data data=%*s")
@@ -137,11 +132,9 @@ class ST7920:
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for fb in self.framebuffers:
-            new_data, old_data, cmd, offset = fb
+            new_data, old_data, fb_id = fb
             if new_data == old_data:
                 continue
-            if len(new_data) > len(old_data):
-                new_data = new_data[:len(old_data)]
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
                      if nd != od]
             for i in range(len(diffs)-2, -1, -1):
@@ -153,26 +146,36 @@ class ST7920:
                 count += count & 0x01
                 pos = pos & ~0x01
                 chip_pos = pos >> 1
-                if cmd < 0x40:
+                if fb_id < 0x40:
                     # Graphics framebuffer update
                     self.send(self.send_cmds_cmd,
-                              [0x26, 0x80+cmd, 0x80+offset+chip_pos, 0x22])
+                              [0x26, 0x80 + fb_id, 0x80 + chip_pos, 0x22])
                 else:
-                    self.send(self.send_cmds_cmd, [cmd + offset + chip_pos])
+                    self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             fb[1] = bytearray(new_data)
     def init(self):
         self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
         self.flush()
-    def update_framebuffer(self, fb, pos, data):
-        fb[0][pos:pos+len(data)] = data
     def load_glyph(self, glyph_id, data, alt_text):
-        self.update_framebuffer(self.glyph_framebuffer[0], glyph_id * 32, data)
+        if len(data) > 32:
+            data = data[:32]
+        pos = max(glyph_id * 32, 96)
+        self.glyph_framebuffer[0][pos:pos+len(data)] = data
         return (0x00, glyph_id * 2)
     def write_str(self, x, y, data):
-        self.update_framebuffer(self.text_framebuffers[y], x, data)
+        if x + len(data) > 16:
+            data = data[:16 - max(x, 16)]
+        pos = [0, 32, 16, 48][y] + x
+        self.text_framebuffer[0][pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
-        self.update_framebuffer(self.graphics_framebuffer[y*16 + row], x, data)
+        if x + len(data) > 16:
+            data = data[:16 - max(x, 16)]
+        gfx_fb = y * 16 + row
+        if gfx_fb >= 32:
+            gfx_fb -= 32
+            x += 16
+        self.graphics_framebuffers[gfx_fb][0][x:x+len(data)] = data
 
 
 ######################################################################
