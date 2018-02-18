@@ -365,6 +365,7 @@ class PrinterLCD:
             self.write_graphics(x, y, i, data)
         self.write_graphics(x, y, 15, [0xff]*width)
     def work_event(self, eventtime):
+        gcode_info = self.gcode.get_status(eventtime)
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
             self.write_str(2, 0, "%3d/%-3d" % (
@@ -377,8 +378,7 @@ class PrinterLCD:
             extruder_count = 2
         else:
             # Display g-code speed override
-            info = self.gcode.get_status(eventtime)
-            self.write_str(12, 1, "%3d%%" % (info['speed_factor'] * 100.,))
+            self.write_str(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
             self.write_str(2, extruder_count, "%3d/%-3d" % (
@@ -404,12 +404,12 @@ class PrinterLCD:
         self.write_str(10, 2, " %02d:%02d" % (
             printing_time // (60 * 60), (printing_time // 60) % 60))
         status = info['status']
-        if status != 'Printing':
-            self.write_str(0, 3, "%-20s" % (status,))
-        else:
+        if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
             self.write_str(0, 3, "X%-4dY%-4dZ%-5.2f    " % (
                 pos[0], pos[1], pos[2]))
+        else:
+            self.write_str(0, 3, "%-20s" % (status,))
         self.lcd_chip.flush()
         return eventtime + .500
     # Icon handling
