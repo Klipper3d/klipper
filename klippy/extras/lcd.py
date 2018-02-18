@@ -393,7 +393,10 @@ class PrinterLCD:
 
     # We animate the fan / bed by changing the active glyph
     def animate_fan(self):
-        self.write_str(10, 0, self.fan_glyphs[self.odd_frame])
+        frame = 0
+        if self.fan_percentage > 0:
+            frame = self.odd_frame
+        self.write_str(10, 0, self.fan_glyphs[frame])
     def animate_bed(self):
         self.odd_frame = not self.odd_frame
         self.write_str(0, self.extruder_count, self.bed_glyphs[self.odd_frame])
@@ -442,10 +445,8 @@ class PrinterLCD:
             self.print_time_hrs, self.print_time_min))
 
     def draw_fan_speed(self):
-        self.write_str(10, 0, "%s%3d" % (
-            self.fan_glyphs[0], self.fan_percentage))
-        if self.fan_percentage > 0:
-            self.animate_fan()
+        self.write_str(12, 0, "%3d%%" % (self.fan_percentage,))
+        self.animate_fan()
 
     def draw_feedrate_percentage(self):
         # We only have enough room for the feedrate when
