@@ -38,15 +38,11 @@ class HD44780:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffers = [
-            [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 0],
-            [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 0x40],
-            [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 20],
-            [bytearray([' ']*20), bytearray([0x00]*20), 0x80, 0x40 + 20]]
+        self.text_framebuffer = [
+            bytearray([' ']*80), bytearray([0x00]*80), 0x80]
         self.glyph_framebuffer = [
-            [bytearray([0x00]*40), bytearray([0xff]*40), 0x40, 0]]
-        self.framebuffers = (
-            self.glyph_framebuffer + self.text_framebuffers)
+            bytearray([0x00]*40), bytearray([0xff]*40), 0x40]
+        self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command(
             "hd44780_send_cmds cmds=%*s")
@@ -58,11 +54,9 @@ class HD44780:
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for fb in self.framebuffers:
-            new_data, old_data, cmd, offset = fb
+            new_data, old_data, fb_id = fb
             if new_data == old_data:
                 continue
-            if len(new_data) > len(old_data):
-                new_data = new_data[:len(old_data)]
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
                      if nd != od]
             for i in range(len(diffs)-2, -1, -1):
@@ -70,7 +64,10 @@ class HD44780:
                     diffs[i][1] = diffs[i+1][1] + diffs[i+1][0] - diffs[i][0]
                     del diffs[i+1]
             for pos, count in diffs:
-                self.send(self.send_cmds_cmd, [cmd + offset + pos])
+                chip_pos = pos
+                if fb_id == 0x80 and pos >= 40:
+                    chip_pos += 0x40 - 40
+                self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             fb[1] = bytearray(new_data)
     def init(self):
@@ -80,12 +77,13 @@ class HD44780:
             reactor.pause(reactor.monotonic() + .100)
         self.send(self.send_cmds_cmd, [0x08, 0x06, 0x10, 0x0c])
         self.flush()
-    def update_framebuffer(self, fb, pos, data):
-        fb[0][pos:pos+len(data)] = data
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
     def write_str(self, x, y, data):
-        self.update_framebuffer(self.text_framebuffers[y], x, data)
+        if x + len(data) > 20:
+            data = data[:20 - max(x, 20)]
+        pos = [0, 40, 20, 60][y] + x
+        self.text_framebuffer[0][pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
         pass
 
