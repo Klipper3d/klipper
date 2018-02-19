@@ -69,10 +69,12 @@ class HD44780:
             old_data[:] = new_data
     def init(self):
         reactor = self.printer.get_reactor()
-        for cmd in [0x33, 0x33, 0x33, 0x22]:
+        # Program 4bit mode and then issue 0x02 "Return Home" command
+        for cmd in [0x33, 0x33, 0x33, 0x22, 0x02]:
             self.mcu.send(self.send_cmds_cmd.encode([cmd]), cq=self.cmd_queue)
             reactor.pause(reactor.monotonic() + .100)
-        self.send(self.send_cmds_cmd, [0x08, 0x06, 0x10, 0x0c])
+        # Reset (set positive direction ; enable display and hide cursor)
+        self.send(self.send_cmds_cmd, [0x06, 0x0c])
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
