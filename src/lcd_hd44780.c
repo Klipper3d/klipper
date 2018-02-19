@@ -11,17 +11,22 @@
 #include "sched.h" // DECL_TASK
 
 struct hd44780 {
-    uint32_t next_cmd_time;
-    uint8_t is_busy, last;
+    uint32_t last_cmd_time;
+    uint8_t last;
     struct gpio_out rs, e, d4, d5, d6, d7;
 };
 
 static struct hd44780 *main_hd44780;
 
+
+/****************************************************************
+ * Transmit functions
+ ****************************************************************/
+
 #define CMD_WAIT_TICKS timer_from_us(37)
 
 // Write 4 bits to the hd44780 using the 4bit parallel interface
-static inline void
+static __always_inline void
 hd44780_xmit_bits(uint8_t last, uint8_t data, struct gpio_out e
                   , struct gpio_out d4, struct gpio_out d5
                   , struct gpio_out d6, struct gpio_out d7)
@@ -46,18 +51,20 @@ hd44780_xmit(struct hd44780 *h, uint8_t len, uint8_t *data)
     struct gpio_out e = h->e, d4 = h->d4, d5 = h->d5, d6 = h->d6, d7 = h->d7;
     while (len--) {
         uint8_t b = *data++;
-        if (h->is_busy)
-            while (timer_is_before(timer_read_time(), h->next_cmd_time))
-                ;
+        while (timer_read_time() - h->last_cmd_time < CMD_WAIT_TICKS)
+            ;
         hd44780_xmit_bits(last, b >> 4, e, d4, d5, d6, d7);
-        last = b >> 4;
-        hd44780_xmit_bits(last, b, e, d4, d5, d6, d7);
-        h->next_cmd_time = timer_read_time() + CMD_WAIT_TICKS;
+        hd44780_xmit_bits(b >> 4, b, e, d4, d5, d6, d7);
+        h->last_cmd_time = timer_read_time();
         last = b;
-        h->is_busy = 1;
     }
     h->last = last;
 }
+
+
+/****************************************************************
+ * Interface
+ ****************************************************************/
 
 void
 command_config_hd44780(uint32_t *args)
@@ -100,18 +107,6 @@ command_hd44780_send_data(uint32_t *args)
     hd44780_xmit(h, len, data);
 }
 DECL_COMMAND(command_hd44780_send_data, "hd44780_send_data data=%*s");
-
-void
-hd44780_task(void)
-{
-    struct hd44780 *h = main_hd44780;
-    if (!h || !h->is_busy)
-        return;
-    // Avoid 32bit rollover on h->next_cmd_time
-    if (!timer_is_before(timer_read_time(), h->next_cmd_time))
-        h->is_busy = 0;
-}
-DECL_TASK(hd44780_task);
 
 void
 hd44780_shutdown(void)
