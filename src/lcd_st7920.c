@@ -11,8 +11,7 @@
 #include "sched.h" // DECL_TASK
 
 struct st7920 {
-    uint32_t next_cmd_time;
-    uint8_t is_busy;
+    uint32_t last_cmd_time;
     struct gpio_out sclk, sid;
 };
 
@@ -31,7 +30,7 @@ static struct st7920 *main_st7920;
 // Write eight bits to the st7920 via the serial interface.  The code
 // is arranged to encourage avr-gcc to layout the code such that each
 // sclk toggle is at least 200ns (4 clock cycles).
-static inline void
+static __always_inline void
 st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
 {
     uint8_t bits = 8;
@@ -67,14 +66,12 @@ st7920_xmit_cmds(struct st7920 *s, uint8_t count, uint8_t *cmds)
     struct gpio_out sclk = s->sclk, sid = s->sid;
     while (count--) {
         uint8_t cmd = *cmds++;
-        if (s->is_busy)
-            while (timer_is_before(timer_read_time(), s->next_cmd_time))
-                ;
+        while (timer_read_time() - s->last_cmd_time < CMD_WAIT_TICKS)
+            ;
         st7920_xmit_byte(sclk, sid, SYNC_CMD);
         st7920_xmit_byte(sclk, sid, cmd & 0xf0);
         st7920_xmit_byte(sclk, sid, cmd << 4);
-        s->next_cmd_time = timer_read_time() + CMD_WAIT_TICKS;
-        s->is_busy = 1;
+        s->last_cmd_time = timer_read_time();
     }
 }
 
@@ -117,18 +114,6 @@ command_st7920_send_data(uint32_t *args)
     st7920_xmit_data(s, len, data);
 }
 DECL_COMMAND(command_st7920_send_data, "st7920_send_data data=%*s");
-
-void
-st7920_task(void)
-{
-    struct st7920 *s = main_st7920;
-    if (!s || !s->is_busy)
-        return;
-    // Avoid 32bit rollover on s->next_cmd_time
-    if (!timer_is_before(timer_read_time(), s->next_cmd_time))
-        s->is_busy = 0;
-}
-DECL_TASK(st7920_task);
 
 void
 st7920_shutdown(void)
