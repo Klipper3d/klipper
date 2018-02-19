@@ -81,10 +81,10 @@ class HD44780:
             data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
-    def clear_text(self):
-        self.text_framebuffer[0][:] = ' '*80
     def write_graphics(self, x, y, row, data):
         pass
+    def clear(self):
+        self.text_framebuffer[0][:] = ' '*80
 
 
 ######################################################################
@@ -119,6 +119,7 @@ class ST7920:
                                       for i in range(32)]
         self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
                              + self.graphics_framebuffers)
+        self.zero_graphics = bytearray([0]*32)
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command("st7920_send_cmds cmds=%*s")
         self.send_data_cmd = self.mcu.lookup_command("st7920_send_data data=%*s")
@@ -163,8 +164,6 @@ class ST7920:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
-    def clear_text(self):
-        self.text_framebuffer[0][:] = ' '*64
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -173,6 +172,10 @@ class ST7920:
             gfx_fb -= 32
             x += 16
         self.graphics_framebuffers[gfx_fb][0][x:x+len(data)] = data
+    def clear(self):
+        self.text_framebuffer[0][:] = ' '*64
+        for new_data, old_data, fb_id in self.graphics_framebuffers:
+            new_data[:] = self.zero_graphics
 
 
 ######################################################################
@@ -329,17 +332,11 @@ class PrinterLCD:
         self.extruder0 = self.printer.lookup_object('extruder0', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
-        # Load the icons
+        # Load glyphs
         self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
                            self.load_glyph(1, fan2_icon, "f+")]
         self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
                            self.load_glyph(3, bed2_icon, "b-")]
-        if self.extruder0 is not None:
-            self.draw_icon(0, 0, nozzle_icon)
-        if self.extruder1 is not None:
-            self.draw_icon(0, 1, nozzle_icon)
-        else:
-            self.draw_icon(10, 1, feedrate_icon)
 
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
@@ -364,31 +361,34 @@ class PrinterLCD:
             self.lcd_chip.write_graphics(x, y, i, data)
         self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
     def work_event(self, eventtime):
-        self.lcd_chip.clear_text()
+        self.lcd_chip.clear()
         write_text = self.lcd_chip.write_text
         gcode_info = self.gcode.get_status(eventtime)
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
+            self.draw_icon(0, 0, nozzle_icon)
             write_text(2, 0, "%3d/%-3d" % (info['temperature'], info['target']))
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
+            self.draw_icon(0, 1, nozzle_icon)
             write_text(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
             extruder_count = 2
         else:
             # Display g-code speed override
+            self.draw_icon(10, 1, feedrate_icon)
             write_text(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            write_text(2, extruder_count, "%3d/%-3d" % (
-                info['temperature'], info['target']))
             self.animate_glyphs(eventtime, 0, extruder_count, self.bed_glyphs,
                                 info['target'] != 0.)
+            write_text(2, extruder_count, "%3d/%-3d" % (
+                info['temperature'], info['target']))
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            write_text(12, 0, "%3d%%" % (info['speed'] * 100.,))
             self.animate_glyphs(eventtime, 10, 0, self.fan_glyphs,
                                 info['speed'] != 0.)
+            write_text(12, 0, "%3d%%" % (info['speed'] * 100.,))
         if self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = int(info['progress'] * 100.)
