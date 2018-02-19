@@ -51,8 +51,7 @@ class HD44780:
                       reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for fb in self.framebuffers:
-            new_data, old_data, fb_id = fb
+        for new_data, old_data, fb_id in self.framebuffers:
             if new_data == old_data:
                 continue
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
@@ -67,7 +66,7 @@ class HD44780:
                     chip_pos += 0x40 - 40
                 self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1][:] = new_data
+            old_data[:] = new_data
     def init(self):
         reactor = self.printer.get_reactor()
         for cmd in [0x33, 0x33, 0x33, 0x22]:
@@ -128,8 +127,7 @@ class ST7920:
                       reqclock=BACKGROUND_PRIORITY_CLOCK, cq=self.cmd_queue)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for fb in self.framebuffers:
-            new_data, old_data, fb_id = fb
+        for new_data, old_data, fb_id in self.framebuffers:
             if new_data == old_data:
                 continue
             diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
@@ -150,7 +148,7 @@ class ST7920:
                 else:
                     self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1][:] = new_data
+            old_data[:] = new_data
     def init(self):
         self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
         self.flush()
@@ -336,10 +334,12 @@ class PrinterLCD:
                            self.load_glyph(1, fan2_icon, "f+")]
         self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
                            self.load_glyph(3, bed2_icon, "b-")]
-        self.draw_icon(0, 0, nozzle_icon)
+        if self.extruder0 is not None:
+            self.draw_icon(0, 0, nozzle_icon)
         if self.extruder1 is not None:
             self.draw_icon(0, 1, nozzle_icon)
-        self.draw_icon(10, 1, feedrate_icon)
+        else:
+            self.draw_icon(10, 1, feedrate_icon)
 
         self.reactor.update_timer(self.work_timer, self.reactor.NOW)
         return self.reactor.NEVER
