@@ -68,13 +68,16 @@ class HD44780:
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             old_data[:] = new_data
     def init(self):
-        reactor = self.printer.get_reactor()
-        # Program 4bit mode and then issue 0x02 "Return Home" command
-        for cmd in [0x33, 0x33, 0x33, 0x22, 0x02]:
-            self.mcu.send(self.send_cmds_cmd.encode([cmd]), cq=self.cmd_queue)
-            reactor.pause(reactor.monotonic() + .100)
+        curtime = self.printer.get_reactor().monotonic()
+        print_time = self.mcu.estimated_print_time(curtime)
+        # Program 4bit / 2-line mode and then issue 0x02 "Home" command
+        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
         # Reset (set positive direction ; enable display and hide cursor)
-        self.send(self.send_cmds_cmd, [0x06, 0x0c])
+        init.append([0x06, 0x0c])
+        for i, cmds in enumerate(init):
+            minclock = self.mcu.print_time_to_clock(print_time + i * .100)
+            cmd = self.send_cmds_cmd.encode(cmds)
+            self.mcu.send(cmd, cq=self.cmd_queue, minclock=minclock)
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
@@ -320,7 +323,6 @@ class PrinterLCD:
         # work timer
         self.reactor = self.printer.get_reactor()
         self.work_timer = self.reactor.register_timer(self.work_event)
-        self.init_timer = self.reactor.register_timer(self.init_event)
         # glyphs
         self.fan_glyphs = self.bed_glyphs = None
         # printer objects
@@ -329,27 +331,22 @@ class PrinterLCD:
     # Initialization
     def printer_state(self, state):
         if state == 'ready':
-            self.reactor.update_timer(self.init_timer, self.reactor.NOW)
-    def init_event(self, eventtime):
-        self.reactor.unregister_timer(self.init_timer)
-        self.init_timer = None
-        self.lcd_chip.init()
-        # Load printer objects
-        self.gcode = self.printer.lookup_object('gcode')
-        self.toolhead = self.printer.lookup_object('toolhead')
-        self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
-        self.fan = self.printer.lookup_object('fan', None)
-        self.extruder0 = self.printer.lookup_object('extruder0', None)
-        self.extruder1 = self.printer.lookup_object('extruder1', None)
-        self.heater_bed = self.printer.lookup_object('heater_bed', None)
-        # Load glyphs
-        self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
-                           self.load_glyph(1, fan2_icon, "f+")]
-        self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
-                           self.load_glyph(3, bed2_icon, "b-")]
-
-        self.reactor.update_timer(self.work_timer, self.reactor.NOW)
-        return self.reactor.NEVER
+            self.lcd_chip.init()
+            # Load printer objects
+            self.gcode = self.printer.lookup_object('gcode')
+            self.toolhead = self.printer.lookup_object('toolhead')
+            self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
+            self.fan = self.printer.lookup_object('fan', None)
+            self.extruder0 = self.printer.lookup_object('extruder0', None)
+            self.extruder1 = self.printer.lookup_object('extruder1', None)
+            self.heater_bed = self.printer.lookup_object('heater_bed', None)
+            # Load glyphs
+            self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
+                               self.load_glyph(1, fan2_icon, "f+")]
+            self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
+                               self.load_glyph(3, bed2_icon, "b-")]
+            # Start screen update timer
+            self.reactor.update_timer(self.work_timer, self.reactor.NOW)
     # Glyphs
     def load_glyph(self, glyph_id, data, alt_text):
         glyph = [0x00] * (len(data) * 2)
