@@ -161,6 +161,7 @@ def plot_frequency(data, outname):
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
     ax1.grid(True)
+    fig.set_size_inches(8, 6)
     fig.savefig(outname)
 
 def main():
