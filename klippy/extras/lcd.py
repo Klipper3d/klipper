@@ -38,10 +38,8 @@ class HD44780:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffer = [
-            bytearray([' ']*80), bytearray([0x00]*80), 0x80]
-        self.glyph_framebuffer = [
-            bytearray([0x00]*40), bytearray([0xff]*40), 0x40]
+        self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
+        self.glyph_framebuffer = (bytearray([0]*40), bytearray('~'*40), 0x40)
         self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command(
@@ -69,7 +67,7 @@ class HD44780:
                     chip_pos += 0x40 - 40
                 self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1] = bytearray(new_data)
+            fb[1][:] = new_data
     def init(self):
         reactor = self.printer.get_reactor()
         for cmd in [0x33, 0x33, 0x33, 0x22]:
@@ -79,11 +77,13 @@ class HD44780:
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
-    def write_str(self, x, y, data):
+    def write_text(self, x, y, data):
         if x + len(data) > 20:
             data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
+    def clear_text(self):
+        self.text_framebuffer[0][:] = ' '*80
     def write_graphics(self, x, y, row, data):
         pass
 
@@ -114,13 +114,10 @@ class ST7920:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffer = [
-            bytearray([' ']*64), bytearray([0x00]*64), 0x80]
-        self.glyph_framebuffer = [
-            bytearray([0x00]*128), bytearray([0xff]*128), 0x40]
-        self.graphics_framebuffers = [
-            [bytearray([0x00]*32), bytearray([0xff]*32), i]
-            for i in range(32)]
+        self.text_framebuffer = (bytearray(' '*64), bytearray('~'*64), 0x80)
+        self.glyph_framebuffer = (bytearray([0]*128), bytearray('~'*128), 0x40)
+        self.graphics_framebuffers = [(bytearray([0]*32), bytearray('~'*32), i)
+                                      for i in range(32)]
         self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
                              + self.graphics_framebuffers)
     def build_config(self):
@@ -153,7 +150,7 @@ class ST7920:
                 else:
                     self.send(self.send_cmds_cmd, [fb_id + chip_pos])
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
-            fb[1] = bytearray(new_data)
+            fb[1][:] = new_data
     def init(self):
         self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
         self.flush()
@@ -163,11 +160,13 @@ class ST7920:
         pos = min(glyph_id * 32, 96)
         self.glyph_framebuffer[0][pos:pos+len(data)] = data
         return (0x00, glyph_id * 2)
-    def write_str(self, x, y, data):
+    def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
+    def clear_text(self):
+        self.text_framebuffer[0][:] = ' '*64
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -347,7 +346,7 @@ class PrinterLCD:
     # Screen updating
     def animate_glyphs(self, eventtime, x, y, glyphs, do_animate):
         frame = do_animate and int(eventtime) & 1
-        self.lcd_chip.write_str(x, y, glyphs[frame])
+        self.lcd_chip.write_text(x, y, glyphs[frame])
     def draw_progress_bar(self, x, y, width, value):
         data = [0x00] * width
         char_pcnt = int(100/width)
@@ -365,49 +364,50 @@ class PrinterLCD:
             self.lcd_chip.write_graphics(x, y, i, data)
         self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
     def work_event(self, eventtime):
-        write_str = self.lcd_chip.write_str
+        self.lcd_chip.clear_text()
+        write_text = self.lcd_chip.write_text
         gcode_info = self.gcode.get_status(eventtime)
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            write_str(2, 0, "%3d/%-3d" % (info['temperature'], info['target']))
+            write_text(2, 0, "%3d/%-3d" % (info['temperature'], info['target']))
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            write_str(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
+            write_text(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
             extruder_count = 2
         else:
             # Display g-code speed override
-            write_str(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
+            write_text(12, 1, "%3d%%" % (gcode_info['speed_factor'] * 100.,))
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            write_str(2, extruder_count, "%3d/%-3d" % (
+            write_text(2, extruder_count, "%3d/%-3d" % (
                 info['temperature'], info['target']))
             self.animate_glyphs(eventtime, 0, extruder_count, self.bed_glyphs,
                                 info['target'] != 0.)
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            write_str(12, 0, "%3d%%" % (info['speed'] * 100.,))
+            write_text(12, 0, "%3d%%" % (info['speed'] * 100.,))
             self.animate_glyphs(eventtime, 10, 0, self.fan_glyphs,
                                 info['speed'] != 0.)
         if self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = int(info['progress'] * 100.)
             if extruder_count == 1:
-                write_str(0, 2, " {:^9}".format(str(progress)+'%'))
+                write_text(0, 2, " {:^9}".format(str(progress)+'%'))
                 self.draw_progress_bar(0, 2, 10, progress)
             else:
-                write_str(10, 1, " {:^5}".format(str(progress)+'%'))
+                write_text(10, 1, " {:^5}".format(str(progress)+'%'))
                 self.draw_progress_bar(10, 1, 6, progress)
         info = self.toolhead.get_status(eventtime)
         printing_time = int(info['printing_time'])
-        write_str(10, 2, " %02d:%02d" % (
+        write_text(10, 2, " %02d:%02d" % (
             printing_time // (60 * 60), (printing_time // 60) % 60))
         status = info['status']
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
-            write_str(0, 3, "X%-4dY%-4dZ%-5.2f    " % (pos[0], pos[1], pos[2]))
+            write_text(0, 3, "X%-4dY%-4dZ%-5.2f" % (pos[0], pos[1], pos[2]))
         else:
-            write_str(0, 3, "%-20s" % (status,))
+            write_text(0, 3, status)
         self.lcd_chip.flush()
         return eventtime + .500
     # Icon handling
