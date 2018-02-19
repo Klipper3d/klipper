@@ -153,7 +153,15 @@ class ST7920:
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             old_data[:] = new_data
     def init(self):
-        self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
+        cmds = [0x24, # Enter extended mode
+                0x40, # Clear vertical scroll address
+                0x02, # Enable CGRAM access
+                0x26, # Enable graphics
+                0x22, # Leave extended mode
+                0x02, # Home the display
+                0x06, # Set positive update direction
+                0x0c] # Enable display and hide cursor
+        self.send(self.send_cmds_cmd, cmds)
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         if len(data) > 32:
