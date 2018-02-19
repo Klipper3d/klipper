@@ -39,7 +39,7 @@ class HD44780:
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
         self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
-        self.glyph_framebuffer = (bytearray([0]*40), bytearray('~'*40), 0x40)
+        self.glyph_framebuffer = (bytearray([0]*64), bytearray('~'*64), 0x40)
         self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command(
