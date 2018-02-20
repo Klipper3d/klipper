@@ -398,6 +398,11 @@ class PrinterLCD:
             self.lcd_chip.write_graphics(x, y, i, data)
         self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
     # Screen updating
+    def format_temperature(self, info):
+        temperature, target = info['temperature'], info['target']
+        if target and abs(temperature - target) > 2.:
+            return "%3d/%-3d" % (temperature, target)
+        return "%3d" % (temperature)
     def work_event(self, eventtime):
         self.lcd_chip.clear()
         write_text = self.lcd_chip.write_text
@@ -405,12 +410,12 @@ class PrinterLCD:
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
             self.draw_icon(0, 0, nozzle_icon)
-            write_text(2, 0, "%3d/%-3d" % (info['temperature'], info['target']))
+            write_text(2, 0, self.format_temperature(info))
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
             self.draw_icon(0, 1, nozzle_icon)
-            write_text(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
+            write_text(2, 1, self.format_temperature(info))
             extruder_count = 2
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
@@ -418,8 +423,7 @@ class PrinterLCD:
             if info['target']:
                 self.animate_glyphs(eventtime, 0, extruder_count,
                                     self.heat_glyphs, True)
-            write_text(2, extruder_count, "%3d/%-3d" % (
-                info['temperature'], info['target']))
+            write_text(2, extruder_count, self.format_temperature(info))
         # Fan speed
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
