@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Script to parse a logging file, extract the stats, and graph them
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
@@ -18,7 +18,10 @@ TASK_MAX=0.0025
 APPLY_PREFIX = ['mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
                 'bytes_read', 'bytes_retransmit', 'freq', 'adj']
 
-def parse_log(logname):
+def parse_log(logname, mcu):
+    if mcu is None:
+        mcu = "mcu"
+    mcu_prefix = mcu + ":"
     apply_prefix = { p: 1 for p in APPLY_PREFIX }
     f = open(logname, 'rb')
     out = []
@@ -33,7 +36,7 @@ def parse_log(logname):
         for p in parts[2:]:
             if p.endswith(':'):
                 prefix = p
-                if prefix == 'mcu:':
+                if prefix == mcu_prefix:
                     prefix = ''
                 continue
             name, val = p.split('=', 1)
@@ -128,16 +131,14 @@ def plot_mcu(data, maxbw, outname):
     fig.set_size_inches(8, 6)
     fig.savefig(outname)
 
-def plot_frequency(data, outname):
+def plot_frequency(data, outname, mcu):
     all_keys = {}
     for d in data:
         all_keys.update(d)
-    graph_keys = {}
-    for key in all_keys:
-        if ((key in ("freq", "adj")
-             or key.endswith(":freq") or key.endswith(":adj"))
-            and key not in graph_keys):
-            graph_keys[key] = ([], [])
+    one_mcu = mcu is not None
+    graph_keys = { key: ([], []) for key in all_keys
+                   if (key in ("freq", "adj") or (not one_mcu and (
+                           key.endswith(":freq") or key.endswith(":adj")))) }
     basetime = lasttime = data[0]['#sampletime']
     for d in data:
         st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
@@ -149,7 +150,10 @@ def plot_frequency(data, outname):
 
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
-    ax1.set_title("MCU frequency")
+    if one_mcu:
+        ax1.set_title("MCU '%s' frequency" % (mcu,))
+    else:
+        ax1.set_title("MCU frequency")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Frequency')
     for key in sorted(graph_keys):
@@ -161,6 +165,7 @@ def plot_frequency(data, outname):
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
     ax1.grid(True)
+    fig.set_size_inches(8, 6)
     fig.savefig(outname)
 
 def main():
@@ -168,15 +173,17 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-f", "--frequency", action="store_true",
                     help="graph mcu frequency")
+    opts.add_option("-m", "--mcu", type="string", dest="mcu", default=None,
+                    help="limit stats to the given mcu")
     options, args = opts.parse_args()
     if len(args) != 2:
         opts.error("Incorrect number of arguments")
     logname, outname = args
-    data = parse_log(logname)
+    data = parse_log(logname, options.mcu)
     if not data:
         return
     if options.frequency:
-        plot_frequency(data, outname)
+        plot_frequency(data, outname, options.mcu)
         return
     plot_mcu(data, MAXBANDWIDTH, outname)
 

@@ -39,7 +39,7 @@ class HD44780:
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
         self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
-        self.glyph_framebuffer = (bytearray([0]*40), bytearray('~'*40), 0x40)
+        self.glyph_framebuffer = (bytearray([0]*64), bytearray('~'*64), 0x40)
         self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
     def build_config(self):
         self.send_cmds_cmd = self.mcu.lookup_command(
@@ -68,13 +68,16 @@ class HD44780:
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             old_data[:] = new_data
     def init(self):
-        reactor = self.printer.get_reactor()
-        # Program 4bit mode and then issue 0x02 "Return Home" command
-        for cmd in [0x33, 0x33, 0x33, 0x22, 0x02]:
-            self.mcu.send(self.send_cmds_cmd.encode([cmd]), cq=self.cmd_queue)
-            reactor.pause(reactor.monotonic() + .100)
+        curtime = self.printer.get_reactor().monotonic()
+        print_time = self.mcu.estimated_print_time(curtime)
+        # Program 4bit / 2-line mode and then issue 0x02 "Home" command
+        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
         # Reset (set positive direction ; enable display and hide cursor)
-        self.send(self.send_cmds_cmd, [0x06, 0x0c])
+        init.append([0x06, 0x0c])
+        for i, cmds in enumerate(init):
+            minclock = self.mcu.print_time_to_clock(print_time + i * .100)
+            cmd = self.send_cmds_cmd.encode(cmds)
+            self.mcu.send(cmd, cq=self.cmd_queue, minclock=minclock)
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         return alt_text
@@ -153,7 +156,15 @@ class ST7920:
                 self.send(self.send_data_cmd, new_data[pos:pos+count])
             old_data[:] = new_data
     def init(self):
-        self.send(self.send_cmds_cmd, [0x06, 0x24, 0x02, 0x26, 0x22])
+        cmds = [0x24, # Enter extended mode
+                0x40, # Clear vertical scroll address
+                0x02, # Enable CGRAM access
+                0x26, # Enable graphics
+                0x22, # Leave extended mode
+                0x02, # Home the display
+                0x06, # Set positive update direction
+                0x0c] # Enable display and hide cursor
+        self.send(self.send_cmds_cmd, cmds)
         self.flush()
     def load_glyph(self, glyph_id, data, alt_text):
         if len(data) > 32:
@@ -203,18 +214,18 @@ nozzle_icon = [
     0b0000000000000000
 ];
 
-bed_icon = [
+bed1_icon = [
     0b0000000000000000,
     0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
+    0b0010001000100000,
+    0b0001000100010000,
+    0b0000100010001000,
+    0b0000100010001000,
+    0b0001000100010000,
+    0b0010001000100000,
+    0b0010001000100000,
+    0b0001000100010000,
+    0b0000100010001000,
     0b0000000000000000,
     0b0111111111111110,
     0b0111111111111110,
@@ -222,26 +233,7 @@ bed_icon = [
     0b0000000000000000
 ];
 
-heat1_icon = [
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0010001000100000,
-    0b0001000100010000,
-    0b0000100010001000,
-    0b0000100010001000,
-    0b0001000100010000,
-    0b0010001000100000,
-    0b0010001000100000,
-    0b0001000100010000,
-    0b0000100010001000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000
-];
-
-heat2_icon = [
+bed2_icon = [
     0b0000000000000000,
     0b0000000000000000,
     0b0000100010001000,
@@ -254,8 +246,8 @@ heat2_icon = [
     0b0000100010001000,
     0b0001000100010000,
     0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
+    0b0111111111111110,
+    0b0111111111111110,
     0b0000000000000000,
     0b0000000000000000
 ];
@@ -331,36 +323,30 @@ class PrinterLCD:
         # work timer
         self.reactor = self.printer.get_reactor()
         self.work_timer = self.reactor.register_timer(self.work_event)
-        self.init_timer = self.reactor.register_timer(self.init_event)
         # glyphs
-        self.fan_glyphs = self.heat_glyphs = None
+        self.fan_glyphs = self.bed_glyphs = None
         # printer objects
         self.gcode = self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
     # Initialization
     def printer_state(self, state):
         if state == 'ready':
-            self.reactor.update_timer(self.init_timer, self.reactor.NOW)
-    def init_event(self, eventtime):
-        self.reactor.unregister_timer(self.init_timer)
-        self.init_timer = None
-        self.lcd_chip.init()
-        # Load printer objects
-        self.gcode = self.printer.lookup_object('gcode')
-        self.toolhead = self.printer.lookup_object('toolhead')
-        self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
-        self.fan = self.printer.lookup_object('fan', None)
-        self.extruder0 = self.printer.lookup_object('extruder0', None)
-        self.extruder1 = self.printer.lookup_object('extruder1', None)
-        self.heater_bed = self.printer.lookup_object('heater_bed', None)
-        # Load glyphs
-        self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
-                           self.load_glyph(1, fan2_icon, "f+")]
-        self.heat_glyphs = [self.load_glyph(2, heat1_icon, "b_"),
-                           self.load_glyph(3, heat2_icon, "b-")]
-
-        self.reactor.update_timer(self.work_timer, self.reactor.NOW)
-        return self.reactor.NEVER
+            self.lcd_chip.init()
+            # Load printer objects
+            self.gcode = self.printer.lookup_object('gcode')
+            self.toolhead = self.printer.lookup_object('toolhead')
+            self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
+            self.fan = self.printer.lookup_object('fan', None)
+            self.extruder0 = self.printer.lookup_object('extruder0', None)
+            self.extruder1 = self.printer.lookup_object('extruder1', None)
+            self.heater_bed = self.printer.lookup_object('heater_bed', None)
+            # Load glyphs
+            self.fan_glyphs = [self.load_glyph(0, fan1_icon, "f*"),
+                               self.load_glyph(1, fan2_icon, "f+")]
+            self.bed_glyphs = [self.load_glyph(2, bed1_icon, "b_"),
+                               self.load_glyph(3, bed2_icon, "b-")]
+            # Start screen update timer
+            self.reactor.update_timer(self.work_timer, self.reactor.NOW)
     # Glyphs
     def load_glyph(self, glyph_id, data, alt_text):
         glyph = [0x00] * (len(data) * 2)
@@ -368,12 +354,9 @@ class PrinterLCD:
             glyph[i*2] = (bits >> 8) & 0xff
             glyph[i*2 + 1] = bits & 0xff
         return self.lcd_chip.load_glyph(glyph_id, glyph, alt_text)
-    def animate_glyphs(self, eventtime, x, y, glyphs, do_animate, hide_glyph):
-        if hide_glyph:
-            self.lcd_chip.write_text(x, y, "  ")
-        else:
-            frame = do_animate and int(eventtime) & 1
-            self.lcd_chip.write_text(x, y, glyphs[frame])
+    def animate_glyphs(self, eventtime, x, y, glyphs, do_animate):
+        frame = do_animate and int(eventtime) & 1
+        self.lcd_chip.write_text(x, y, glyphs[frame])
     # Graphics drawing
     def draw_icon(self, x, y, data):
         for i, bits in enumerate(data):
@@ -411,16 +394,16 @@ class PrinterLCD:
             write_text(2, 1, "%3d/%-3d" % (info['temperature'], info['target']))
             extruder_count = 2
         if self.heater_bed is not None:
-            self.draw_icon(0, extruder_count, bed_icon)
             info = self.heater_bed.get_status(eventtime)
-            self.animate_glyphs(eventtime, 0, extruder_count, self.heat_glyphs,True, info['target'] == 0)
+            self.animate_glyphs(eventtime, 0, extruder_count, self.bed_glyphs,
+                                info['target'] != 0.)
             write_text(2, extruder_count, "%3d/%-3d" % (
                 info['temperature'], info['target']))
         # Fan speed
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
             self.animate_glyphs(eventtime, 10, 0, self.fan_glyphs,
-                                info['speed'] != 0., False)
+                                info['speed'] != 0.)
             write_text(12, 0, "%3d%%" % (info['speed'] * 100.,))
         # SD card print progress
         if self.sdcard is not None:
