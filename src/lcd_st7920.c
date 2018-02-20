@@ -39,13 +39,13 @@ _st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
             data = ~data;
             gpio_out_toggle(sid);
         }
-        asm("nop");
         gpio_out_toggle(sclk);
+        asm("nop");
         data <<= 1;
         if (!--bits)
             break;
-        asm("nop");
         gpio_out_toggle(sclk);
+        asm("nop");
     }
 }
 
