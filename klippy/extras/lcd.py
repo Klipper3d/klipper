@@ -423,8 +423,8 @@ class PrinterLCD:
             write_temperature(2, 1, info['temperature'], info['target'])
             extruder_count = 2
         if self.heater_bed is not None:
-            self.draw_icon(0, extruder_count, bed_icon)
             info = self.heater_bed.get_status(eventtime)
+            self.draw_icon(0, extruder_count, bed_icon)
             self.animate_glyphs(eventtime, 0, extruder_count, self.heat_glyphs,True, info['target'] == 0)
             write_temperature(2, extruder_count, info['temperature'], info['target'])
         # Fan speed
