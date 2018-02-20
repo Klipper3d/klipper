@@ -73,9 +73,9 @@ static void
 st7920_xmit_cmds(struct st7920 *s, uint8_t count, uint8_t *cmds)
 {
     struct gpio_out sclk = s->sclk, sid = s->sid;
+    st7920_xmit_byte(sclk, sid, SYNC_CMD);
     while (count--) {
         uint8_t cmd = *cmds++;
-        st7920_xmit_byte(sclk, sid, SYNC_CMD);
         st7920_xmit_byte(sclk, sid, cmd & 0xf0);
         _st7920_xmit_byte(sclk, sid, cmd << 4);
         // Last SCLK toggle must wait until 72us from last command
