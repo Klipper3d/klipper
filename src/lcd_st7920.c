@@ -28,7 +28,7 @@ struct st7920 {
 #define CMD_WAIT_TICKS timer_from_us(72)
 
 // Delay between SCLK pulses while bit banging to the lcd chip
-static void
+static __always_inline void
 st7920_bitbang_delay(void)
 {
     if (CONFIG_MACH_AVR) {
