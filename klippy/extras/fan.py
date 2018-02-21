@@ -32,6 +32,8 @@ class PrinterFan:
         self.mcu_fan.set_pwm(print_time, value)
         self.last_fan_time = print_time
         self.last_fan_value = value
+    def get_status(self, eventtime):
+        return {'speed': self.last_fan_value}
 
 def load_config(config):
     return PrinterFan(config)
