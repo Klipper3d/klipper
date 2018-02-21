@@ -16,8 +16,6 @@ struct hd44780 {
     struct gpio_out rs, e, d4, d5, d6, d7;
 };
 
-static struct hd44780 *main_hd44780;
-
 
 /****************************************************************
  * Transmit functions
@@ -69,8 +67,6 @@ hd44780_xmit(struct hd44780 *h, uint8_t len, uint8_t *data)
 void
 command_config_hd44780(uint32_t *args)
 {
-    if (main_hd44780)
-        shutdown("hd44780 already configured");
     struct hd44780 *h = oid_alloc(args[0], command_config_hd44780, sizeof(*h));
     h->rs = gpio_out_setup(args[1], 0);
     h->e = gpio_out_setup(args[2], 0);
@@ -78,7 +74,6 @@ command_config_hd44780(uint32_t *args)
     h->d5 = gpio_out_setup(args[4], 0);
     h->d6 = gpio_out_setup(args[5], 0);
     h->d7 = gpio_out_setup(args[6], 0);
-    main_hd44780 = h;
 }
 DECL_COMMAND(command_config_hd44780,
              "config_hd44780 oid=%c rs_pin=%u e_pin=%u"
@@ -87,39 +82,36 @@ DECL_COMMAND(command_config_hd44780,
 void
 command_hd44780_send_cmds(uint32_t *args)
 {
-    struct hd44780 *h = main_hd44780;
-    if (!h)
-        shutdown("hd44780 not configured");
+    struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 0);
-    uint8_t len = args[0], *cmds = (void*)(size_t)args[1];
+    uint8_t len = args[1], *cmds = (void*)(size_t)args[2];
     hd44780_xmit(h, len, cmds);
 }
-DECL_COMMAND(command_hd44780_send_cmds, "hd44780_send_cmds cmds=%*s");
+DECL_COMMAND(command_hd44780_send_cmds, "hd44780_send_cmds oid=%c cmds=%*s");
 
 void
 command_hd44780_send_data(uint32_t *args)
 {
-    struct hd44780 *h = main_hd44780;
-    if (!h)
-        shutdown("hd44780 not configured");
+    struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 1);
-    uint8_t len = args[0], *data = (void*)(size_t)args[1];
+    uint8_t len = args[1], *data = (void*)(size_t)args[2];
     hd44780_xmit(h, len, data);
 }
-DECL_COMMAND(command_hd44780_send_data, "hd44780_send_data data=%*s");
+DECL_COMMAND(command_hd44780_send_data, "hd44780_send_data oid=%c data=%*s");
 
 void
 hd44780_shutdown(void)
 {
-    struct hd44780 *h = main_hd44780;
-    if (!h)
-        return;
-    gpio_out_write(h->rs, 0);
-    gpio_out_write(h->e, 0);
-    gpio_out_write(h->d4, 0);
-    gpio_out_write(h->d5, 0);
-    gpio_out_write(h->d6, 0);
-    gpio_out_write(h->d7, 0);
-    h->last = 0;
+    uint8_t i;
+    struct hd44780 *h;
+    foreach_oid(i, h, command_config_hd44780) {
+        gpio_out_write(h->rs, 0);
+        gpio_out_write(h->e, 0);
+        gpio_out_write(h->d4, 0);
+        gpio_out_write(h->d5, 0);
+        gpio_out_write(h->d6, 0);
+        gpio_out_write(h->d7, 0);
+        h->last = 0;
+    }
 }
 DECL_SHUTDOWN(hd44780_shutdown);
