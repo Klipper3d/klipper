@@ -15,6 +15,7 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 ######################################################################
 
 class HD44780:
+    lcd_width        = 20
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
@@ -99,6 +100,7 @@ class HD44780:
 ######################################################################
 
 class ST7920:
+    lcd_width        = 16
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
@@ -353,6 +355,8 @@ class PrinterLCD:
         # printer objects
         self.gcode = self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
+        # for rotating the status string
+        self.status_scroll_pos = 0
     # Initialization
     def printer_state(self, state):
         if state == 'ready':
@@ -461,7 +465,18 @@ class PrinterLCD:
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
             status = "X%-4dY%-4dZ%-5.2f" % (pos[0], pos[1], pos[2])
-        write_text(0, 3, status)
+        if len(status) <= self.lcd_chip.lcd_width:
+            write_text(0, 3, status)
+        else:
+            # If the message won't fit, then it will need to rotate into view.
+            padded_len = len(status) + 2
+            indices = [(x+self.status_scroll_pos) % padded_len for x in range(self.lcd_chip.lcd_width)]
+            rotation = ''.join([' ' if x >= len(status) else status[x] for x in indices])
+            write_text(0, 3, rotation)
+            self.status_scroll_pos = (self.status_scroll_pos + 1) % len(status)
+            # TODO: Whenever a new status string is set, status_scroll_pos
+            # will need to be set to zero. Either that or we must save the
+            # old string and check for changes each time.
         self.lcd_chip.flush()
         return eventtime + .500
 
