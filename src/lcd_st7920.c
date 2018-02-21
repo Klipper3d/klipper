@@ -33,7 +33,7 @@ st7920_bitbang_delay(void)
 {
     if (CONFIG_MACH_AVR) {
         // On the AVR, a single NOP should be sufficient
-        asm("nop");
+        asm("nop\n nop\n nop\n nop");
         return;
     }
     uint32_t end = timer_read_time() + timer_from_us(1);
@@ -83,10 +83,10 @@ st7920_xmit_cmds(struct st7920 *s, uint8_t count, uint8_t *cmds)
     st7920_xmit_byte(sclk, sid, SYNC_CMD);
     while (count--) {
         uint8_t cmd = *cmds++;
-        st7920_xmit_byte(sclk, sid, cmd & 0xf0);
         // Can't complete transfer until 72us from last command
         while (timer_read_time() - s->last_cmd_time < CMD_WAIT_TICKS)
             irq_poll();
+        st7920_xmit_byte(sclk, sid, cmd & 0xf0);
         st7920_xmit_byte(sclk, sid, cmd << 4);
         s->last_cmd_time = timer_read_time();
     }
