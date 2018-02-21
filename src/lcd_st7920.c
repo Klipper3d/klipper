@@ -43,7 +43,7 @@ st7920_bitbang_delay(void)
 
 // Write eight bits to the st7920 via the serial interface
 static __always_inline void
-_st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
+st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
 {
     uint8_t bits = 8;
     for (;;) {
@@ -59,13 +59,6 @@ _st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
         gpio_out_toggle(sclk);
         st7920_bitbang_delay();
     }
-}
-
-// Transmit a full byte (including the last SCLK toggle)
-static __always_inline void
-st7920_xmit_byte(struct gpio_out sclk, struct gpio_out sid, uint8_t data)
-{
-    _st7920_xmit_byte(sclk, sid, data);
     gpio_out_toggle(sclk);
 }
 
@@ -91,11 +84,10 @@ st7920_xmit_cmds(struct st7920 *s, uint8_t count, uint8_t *cmds)
     while (count--) {
         uint8_t cmd = *cmds++;
         st7920_xmit_byte(sclk, sid, cmd & 0xf0);
-        _st7920_xmit_byte(sclk, sid, cmd << 4);
-        // Last SCLK toggle must wait until 72us from last command
+        // Can't complete transfer until 72us from last command
         while (timer_read_time() - s->last_cmd_time < CMD_WAIT_TICKS)
             irq_poll();
-        gpio_out_toggle(sclk);
+        st7920_xmit_byte(sclk, sid, cmd << 4);
         s->last_cmd_time = timer_read_time();
     }
 }
