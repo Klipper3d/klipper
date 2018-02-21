@@ -15,6 +15,7 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 ######################################################################
 
 class HD44780:
+    char_right_arrow = '\x7e'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
@@ -99,6 +100,7 @@ class HD44780:
 ######################################################################
 
 class ST7920:
+    char_right_arrow = '\x1a'
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
@@ -407,7 +409,7 @@ class PrinterLCD:
     def format_temperature(self, info):
         temperature, target = info['temperature'], info['target']
         if target and abs(temperature - target) > 2.:
-            return "%3d/%-3d" % (temperature, target)
+            return "%3d%s%-3d" % (temperature, self.lcd_chip.char_right_arrow, target)
         return "%3d" % (temperature)
     def work_event(self, eventtime):
         self.lcd_chip.clear()
