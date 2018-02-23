@@ -49,6 +49,10 @@ config AVRDUDE_PROTOCOL
     default "avr109" if MACH_at90usb1286
     default "arduino"
 
+config AVRDUDE_EXTRA_OPTS
+    string "Extra avrdude options"
+    default ""
+
 choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
