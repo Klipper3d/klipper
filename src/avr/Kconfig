@@ -23,6 +23,8 @@ choice
         bool "atmega1280"
     config MACH_at90usb1286
         bool "at90usb1286"
+    config MACH_at90usb646
+        bool "at90usb646"
     config MACH_atmega1284p
         bool "atmega1284p"
     config MACH_atmega644p
@@ -40,6 +42,7 @@ config MCU
     default "atmega1284p" if MACH_atmega1284p
     default "atmega644p" if MACH_atmega644p
     default "at90usb1286" if MACH_at90usb1286
+    default "at90usb646" if MACH_at90usb646
     default "atmega1280" if MACH_atmega1280
     default "atmega2560" if MACH_atmega2560
 
@@ -47,6 +50,7 @@ config AVRDUDE_PROTOCOL
     string
     default "wiring" if MACH_atmega2560
     default "avr109" if MACH_at90usb1286
+    default "avr109" if MACH_at90usb646
     default "arduino"
 
 choice
@@ -68,7 +72,7 @@ config CLOCK_FREQ
 
 config CLEAR_PRESCALER
     bool "Manually clear the CPU prescaler field at startup"
-    depends on MACH_at90usb1286
+    depends on MACH_at90usb1286 || MACH_at90usb646
     default y
     help
          Some AVR chips ship with a "clock prescaler" that causes the
@@ -91,7 +95,7 @@ config AVR_WATCHDOG
     default y
 config AVR_USBSERIAL
     bool "Use USB for communication (instead of serial)"
-    depends on MACH_at90usb1286
+    depends on MACH_at90usb1286 || MACH_at90usb646
     default y
 config AVR_SERIAL
     depends on !AVR_USBSERIAL
