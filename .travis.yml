@@ -1,0 +1,20 @@
+language: c
+
+addons:
+    apt:
+        sourceline: 'ppa:team-gcc-arm-embedded/ppa'
+        packages:
+            - gcc-avr
+            - avr-libc
+            - wget
+
+env:
+    - TARGET=atmega2560-16mhz
+    - TARGET=atmega328-16mhz
+      # - TARGET=beaglebone needs pru-gcc (not out of the box available on Ubuntu)
+    - TARGET=hostsimulator
+    - TARGET=linuxprocess
+    - TARGET=sam3x8e GCC_SRC=https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2 GCC_DIR=gcc-arm-none-eabi-7-2017-q4-major
+
+script: ./test/travis-build.sh
+
