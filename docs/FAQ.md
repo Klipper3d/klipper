@@ -11,6 +11,7 @@ Frequently asked questions
 8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
 10. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+11. [How do I use more than one mcu?](#how-do-i-use-more-than-one-mcu)
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
@@ -227,3 +228,8 @@ follow the full upgrade steps outlined above. Note that the RESTART
 and FIRMWARE_RESTART g-code commands do not load new software - the
 above "sudo service klipper restart" and "make flash" commands are
 needed for a software change to take effect.
+
+### How do I use more than one mcu?
+
+See the sample configuration file example-extras.cfg for an explanation 
+of how to use more than one mcu.
