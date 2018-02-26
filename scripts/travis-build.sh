@@ -1,0 +1,40 @@
+#!/bin/bash
+# Test script for travis-ci.org continuous integration.
+
+# Stop script early on any error; check variables; be verbose
+set -eux
+
+# Paths to tools installed by travis-install.sh
+export PATH=${PWD}/gcc-arm-none-eabi-7-2017-q4-major/bin:${PATH}
+PYTHON=${PWD}/python-env/bin/python
+
+
+######################################################################
+# Run compile tests for several different MCU types
+######################################################################
+
+DICTDIR=${PWD}/dict
+mkdir -p ${DICTDIR}
+
+for TARGET in test/configs/*.config ; do
+    echo "=============== Test compile $TARGET"
+    make clean
+    make distclean
+    unset CC
+    cp ${TARGET} .config
+    make olddefconfig
+    make V=1
+    cp out/klipper.dict ${DICTDIR}/$(basename ${TARGET} .config).dict
+done
+
+
+######################################################################
+# Verify klippy host software
+######################################################################
+
+HOSTDIR=${PWD}/hosttest
+mkdir -p ${HOSTDIR}
+
+echo "=============== Test invoke klippy"
+$PYTHON klippy/klippy.py config/example.cfg -i /dev/null -o ${HOSTDIR}/output -v -d ${DICTDIR}/atmega2560-16mhz.dict
+$PYTHON klippy/parsedump.py ${DICTDIR}/atmega2560-16mhz.dict ${HOSTDIR}/output > ${HOSTDIR}/output-parsed
