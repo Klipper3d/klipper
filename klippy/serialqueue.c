@@ -147,7 +147,6 @@ pollreactor_check_timers(struct pollreactor *pr, double eventtime)
 static void
 pollreactor_run(struct pollreactor *pr)
 {
-    pr->must_exit = 0;
     double eventtime = get_monotonic();
     while (! pr->must_exit) {
         int timeout = pollreactor_check_timers(pr, eventtime);
