@@ -17,6 +17,7 @@ DICTDIR=${PWD}/dict
 mkdir -p ${DICTDIR}
 
 for TARGET in test/configs/*.config ; do
+    echo "travis_fold:start:mcu_compile $TARGET"
     echo "=============== Test compile $TARGET"
     make clean
     make distclean
@@ -25,6 +26,7 @@ for TARGET in test/configs/*.config ; do
     make olddefconfig
     make V=1
     cp out/klipper.dict ${DICTDIR}/$(basename ${TARGET} .config).dict
+    echo "travis_fold:end:mcu_compile $TARGET"
 done
 
 
@@ -35,6 +37,8 @@ done
 HOSTDIR=${PWD}/hosttest
 mkdir -p ${HOSTDIR}
 
+echo "travis_fold:start:klippy"
 echo "=============== Test invoke klippy"
 $PYTHON klippy/klippy.py config/example.cfg -i /dev/null -o ${HOSTDIR}/output -v -d ${DICTDIR}/atmega2560-16mhz.dict
 $PYTHON klippy/parsedump.py ${DICTDIR}/atmega2560-16mhz.dict ${HOSTDIR}/output > ${HOSTDIR}/output-parsed
+echo "travis_fold:end:klippy"
