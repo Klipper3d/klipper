@@ -29,20 +29,19 @@ class ClockSync:
         self.last_prediction_time = 0.
     def connect(self, serial):
         self.serial = serial
-        msgparser = serial.msgparser
-        self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
+        self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
         # Load initial clock and frequency
-        uptime_msg = msgparser.create_command('get_uptime')
-        params = serial.send_with_response(uptime_msg, 'uptime')
+        get_uptime_cmd = serial.lookup_command('get_uptime')
+        params = get_uptime_cmd.send_with_response(response='uptime')
         self.last_clock = (params['high'] << 32) | params['clock']
         self.clock_avg = self.last_clock
         self.time_avg = params['#sent_time']
         self.clock_est = (self.time_avg, self.clock_avg, self.mcu_freq)
         self.prediction_variance = (.001 * self.mcu_freq)**2
         # Enable periodic get_status timer
-        self.status_cmd = msgparser.create_command('get_status')
+        self.status_cmd = serial.lookup_command('get_status')
         for i in range(8):
-            params = serial.send_with_response(self.status_cmd, 'status')
+            params = self.status_cmd.send_with_response(response='status')
             self._handle_status(params)
             self.reactor.pause(0.100)
         serial.register_callback(self._handle_status, 'status')
@@ -57,7 +56,7 @@ class ClockSync:
         serial.set_clock_est(freq, self.reactor.monotonic(), 0)
     # MCU clock querying (status callback invoked from background thread)
     def _status_event(self, eventtime):
-        self.serial.send(self.status_cmd)
+        self.status_cmd.send()
         return eventtime + 1.0
     def _handle_status(self, params):
         # Extend clock to 64bit

@@ -108,7 +108,7 @@ class MessageFormat:
         self.param_types = [MessageTypes[fmt] for name, fmt in argparts]
         self.param_names = [(name, MessageTypes[fmt]) for name, fmt in argparts]
         self.name_to_type = dict(self.param_names)
-    def encode(self, *params):
+    def encode(self, params):
         out = []
         out.append(self.msgid)
         for i, t in enumerate(self.param_types):
