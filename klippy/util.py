@@ -57,7 +57,7 @@ def get_git_version():
     if not os.path.exists(gitdir):
         logging.debug("No '.git' file/directory found")
         return "?"
-    prog = "git -C %s describe --tags --long --dirty" % (gitdir,)
+    prog = "git -C %s describe --always --tags --long --dirty" % (gitdir,)
     try:
         process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
         output = process.communicate()[0]
