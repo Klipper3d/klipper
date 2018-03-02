@@ -209,24 +209,6 @@ class PrinterHeater:
                       format(eventtime, (eventtime + next_time),
                              current_temp, target_temp))
         return eventtime + next_time
-    def get_min_extrude_status(self):
-        stat = "prevented"
-        if self.min_extrude_temp_disabled:
-            stat = "allowed"
-        return stat, self.min_extrude_temp
-    def set_min_extrude_temp(self, temp, disable=None):
-        if disable is not None:
-            self.min_extrude_temp_disabled = disable
-        if temp is None:
-            return
-        if (self.max_temp < temp):
-            raise error("min_extrude_temp {} is not between min_temp {} and max_temp {}!"
-                        .format(temp, self.min_temp, self.max_temp))
-        self.min_extrude_temp = temp;
-        is_fileoutput = self.mcu_sensor.get_mcu().is_fileoutput()
-        self.can_extrude = (self.min_extrude_temp <= self.min_temp) or \
-                           self.min_extrude_temp_disabled or \
-                           is_fileoutput
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
