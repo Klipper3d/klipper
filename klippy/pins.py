@@ -197,12 +197,11 @@ class PrinterPins:
         can_pullup = pin_type == 'endstop'
         desc = pin_desc
         pullup = invert = 0
-        if can_pullup and desc.startswith('^'):
+        if can_pullup and '^' in desc:
             pullup = 1
-            desc = desc[1:].strip()
-        if can_invert and desc.startswith('!'):
+        if can_invert and '!' in desc:
             invert = 1
-            desc = desc[1:].strip()
+        desc = desc.translate(None, '^!').strip()
         if ':' not in desc:
             chip_name, pin = 'mcu', desc
         else:
