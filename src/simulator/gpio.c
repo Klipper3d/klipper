@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/gpio.h" // gpio_out_write
+#include "generic/spi.h"
 
 struct gpio_out gpio_out_setup(uint8_t pin, uint8_t val) {
     return (struct gpio_out){.pin=pin};
@@ -36,7 +37,20 @@ uint16_t gpio_adc_read(struct gpio_adc g) {
 void gpio_adc_cancel_sample(struct gpio_adc g) {
 }
 
-void spi_config(void) {
+SPI_t spi_basic_config = 0;
+
+void spi_init(void) {
+    spi_basic_config = spi_get_config(0, 4000000);
 }
-void spi_transfer(char *data, uint8_t len) {
+DECL_INIT(spi_init);
+
+SPI_t spi_get_config(uint8_t const mode, uint32_t const speed) {
+    return spi_basic_config;
+}
+void spi_set_config(SPI_t const config) {
+}
+void spi_transfer_len(char *data, uint8_t len) {
+}
+uint8_t spi_transfer(uint8_t const data, uint8_t const last) {
+    return data;
 }

@@ -10,7 +10,7 @@
 #include "command.h" // shutdown
 #include "compiler.h" // ARRAY_SIZE
 #include "gpio.h" // gpio_out_setup
-#include "sam3x8e.h" // Pio
+#include <sam3x8e.h> // Pio
 #include "sched.h" // sched_shutdown
 
 
@@ -18,7 +18,6 @@
  * Pin mappings
  ****************************************************************/
 
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
@@ -35,15 +34,16 @@ void
 gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
 {
     Pio *regs = digital_regs[bank - 'A'];
+    regs->PIO_IDR = bit;
     if (ptype == 'A')
         regs->PIO_ABSR &= ~bit;
     else
         regs->PIO_ABSR |= bit;
+    regs->PIO_PDR = bit;
     if (pull_up)
         regs->PIO_PUER = bit;
     else
         regs->PIO_PUDR = bit;
-    regs->PIO_PDR = bit;
 }
 
 
