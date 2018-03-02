@@ -316,12 +316,12 @@ class ToolHead:
         self._flush_lookahead()
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
-    def move(self, newpos, speed):
+    def move(self, newpos, speed, check=True):
         speed = min(speed, self.max_velocity)
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
-        if move.is_kinematic_move:
+        if move.is_kinematic_move and check:
             self.kin.check_move(move)
         if move.axes_d[3]:
             self.extruder.check_move(move)
