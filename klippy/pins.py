@@ -108,6 +108,7 @@ def update_map_arduino(pins, mcu):
         pins['ar' + str(i)] = pins[dpins[i]]
     for i in range(len(apins)):
         pins['analog%d' % (i,)] = pins[apins[i]]
+        pins['A%d' % (i,)] = pins[apins[i]]
 
 
 ######################################################################
