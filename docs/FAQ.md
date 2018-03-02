@@ -97,11 +97,17 @@ baud rate to 250000 when using Klipper.
 ### Can I run Klipper on something other than a Raspberry Pi 3?
 
 The recommended hardware is a Raspberry Pi 2 or a Raspberry
-Pi 3. Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi
-Zero, but these boards don't have enough processing power to run
-OctoPrint well. It's not uncommon for print stalls to occur on these
-slower machines (the printer may move faster than OctoPrint can send
-movement commands).
+Pi 3.
+
+Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi Zero, but
+these boards don't have enough processing power to run OctoPrint
+well. It's not uncommon for print stalls to occur on these slower
+machines (the printer may move faster than OctoPrint can send movement
+commands) when printing directly from OctoPrint. If you wish to run on
+one one of these slower boards anyway, consider using the
+"virtual_sdcard" feature (see
+[config/example-extras.cfg](../config/example-extras.cfg) for details)
+when printing.
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).

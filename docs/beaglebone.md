@@ -54,7 +54,6 @@ sudo systemctl start octoprint
 Make sure the octoprint web server is accessible - it should be at:
 [http://beaglebone:5000/](http://beaglebone:5000/)
 
-
 Building the micro-controller code
 ==================================
 
@@ -92,3 +91,13 @@ Remaining configuration
 Complete the installation by configuring Klipper and Octoprint
 following the instructions in
 [the main installation document](Installation.md#configuring-klipper).
+
+Printing on the Beaglebone
+==========================
+
+Unfortunately, the Beaglebone processor can sometimes struggle to run
+OctoPrint well. Print stalls have been known to occur on complex
+prints (the printer may move faster than OctoPrint can send movement
+commands). If this occurs, consider using the "virtual_sdcard" feature
+(see [config/example-extras.cfg](../config/example-extras.cfg) for
+details) to print directly from Klipper.
