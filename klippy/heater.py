@@ -141,6 +141,74 @@ class PrinterHeater:
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
+        # heater protection
+        self.protection_period_heat = \
+            config.getfloat('protect_period_heat', 10.0, above=0.0, maxval=120.0)
+        self.protection_hysteresis_heat = \
+            config.getfloat('protect_hysteresis_heat', 4.0, above=0.50)
+        self.protection_period = \
+            config.getfloat('protect_period', 10.0, above=0.0, maxval=120.0)
+        self.protect_hyst_runaway = \
+            config.getfloat('protect_hysteresis_runaway', 4.0, above=0.0)
+        self.reactor = printer.reactor
+        self.protection_timer = self.reactor.register_timer(self._check_heating)
+
+    def _check_heating(self, eventtime):
+        next_time = 10.0 # next 10sec from now
+        with self.lock:
+            current_temp = self.last_temp
+            target_temp = self.target_temp
+        if self.protection_last_temp is None:
+            self.is_heating = False
+            self.is_runaway = False
+            self.is_cooling = False
+            # Set init value
+            self.protection_last_temp = current_temp
+            if (current_temp <= (target_temp - self.protect_hyst_runaway)):
+                self.is_heating = True
+                next_time = self.protection_period_heat
+            elif (target_temp < current_temp and 0 < target_temp):
+                self.is_cooling = True
+                next_time = self.protection_period
+            else:
+                self.is_runaway = True
+                next_time = self.protection_period
+        elif self.is_runaway:
+            # Check hysteresis during maintain
+            if (self.protect_hyst_runaway < abs(current_temp - target_temp)):
+                errorstr = "Thermal runaway! current temp {}, last {}". \
+                           format(current_temp, self.protection_last_temp)
+                self.set_temp(0, 0);
+                gcode = self.printer.lookup_object('gcode')
+                gcode.respond_error(errorstr)
+                self.printer.request_exit('shutdown')
+            self.protection_last_temp = current_temp
+            next_time = self.protection_period
+        elif (self.is_cooling):
+            next_time = self.protection_period_heat
+            if ((current_temp - self.protect_hyst_runaway) < target_temp):
+                self.is_cooling = False
+                self.is_heating = True
+        elif (self.is_heating):
+            # Check hysteresis during the preheating
+            if ((target_temp - self.protect_hyst_runaway) \
+                <= current_temp <=
+                (target_temp + self.protect_hyst_runaway)):
+                self.is_runaway = True;
+            elif (current_temp < target_temp):
+                if (abs(current_temp - self.protection_last_temp) < self.protection_hysteresis_heat):
+                    errorstr = "Heating error! current temp {}, last {}". \
+                               format(current_temp, self.protection_last_temp)
+                    self.set_temp(0, 0);
+                    gcode = self.printer.lookup_object('gcode')
+                    gcode.respond_error(errorstr)
+                    self.printer.request_exit('shutdown')
+            self.protection_last_temp = current_temp
+            next_time = self.protection_period_heat
+        logging.debug("check_heating(eventtime {}, next {}) {} / {}".
+                      format(eventtime, (eventtime + next_time),
+                             current_temp, target_temp))
+        return eventtime + next_time
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -170,6 +238,17 @@ class PrinterHeater:
                         % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.target_temp = degrees
+        if (degrees):
+            # Start checking
+            self.protection_last_temp = None
+            self.reactor.update_timer(self.protection_timer,
+                                      self.reactor.NOW)
+            logging.debug("Temperature protection timer started")
+        else:
+            # stop checking
+            self.reactor.update_timer(self.protection_timer,
+                                      self.reactor.NEVER)
+            logging.debug("Temperature protection timer stopped")
     def get_temp(self, eventtime):
         print_time = self.mcu_adc.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
@@ -180,15 +259,12 @@ class PrinterHeater:
         with self.lock:
             return self.control.check_busy(eventtime)
     def start_auto_tune(self, degrees):
-        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
-            raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
-                        % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.control = ControlAutoTune(self, self.control)
-            self.target_temp = degrees
+        self.set_temp(0, degrees)
     def finish_auto_tune(self, old_control):
         self.control = old_control
-        self.target_temp = 0
+        self.set_temp(0, 0)
     def stats(self, eventtime):
         with self.lock:
             target_temp = self.target_temp
