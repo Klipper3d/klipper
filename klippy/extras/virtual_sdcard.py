@@ -59,6 +59,8 @@ class VirtualSD:
         try:
             orig = params['#original']
             filename = orig[orig.find("M23") + 4:].split()[0].strip()
+            if '*' in filename:
+                filename = filename[:filename.find('*')].strip()
         except:
             raise self.gcode.error("Unable to extract filename")
         if filename.startswith('/'):
