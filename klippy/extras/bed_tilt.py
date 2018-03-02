@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import probe
+import probe, mathutil
 
 class BedTilt:
     def __init__(self, config):
@@ -73,7 +73,8 @@ class BedTiltCalibrate:
             for pos in positions:
                 total_error += adjusted_height(pos, params)**2
             return total_error
-        new_params = probe.coordinate_descent(params.keys(), params, errorfunc)
+        new_params = mathutil.coordinate_descent(
+            params.keys(), params, errorfunc)
         logging.info("Calculated bed_tilt parameters: %s", new_params)
         for pos in positions:
             logging.info("orig: %s new: %s", adjusted_height(pos, params),

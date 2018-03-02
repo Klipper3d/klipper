@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import probe, delta
+import probe, delta, mathutil
 
 class DeltaCalibrate:
     def __init__(self, config):
@@ -51,7 +51,7 @@ class DeltaCalibrate:
                 x, y, z = delta.get_position_from_stable(spos, params)
                 total_error += (z - self.probe_z_offset)**2
             return total_error
-        new_params = probe.coordinate_descent(
+        new_params = mathutil.coordinate_descent(
             adj_params, params, delta_errorfunc)
         logging.info("Calculated delta_calibrate parameters: %s", new_params)
         for spos in positions:
