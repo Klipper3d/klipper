@@ -34,7 +34,4 @@ uint32_t gpio_adc_sample(struct gpio_adc g);
 uint16_t gpio_adc_read(struct gpio_adc g);
 void gpio_adc_cancel_sample(struct gpio_adc g);
 
-void spi_config(void);
-void spi_transfer(char *data, uint8_t len);
-
 #endif // gpio.h

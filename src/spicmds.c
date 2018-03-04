@@ -6,6 +6,7 @@
 
 #include "board/gpio.h" // gpio_out_write
 #include "command.h" // DECL_COMMAND
+#include "generic/spi.h"
 
 void
 command_send_spi_message(uint32_t *args)
@@ -13,9 +14,10 @@ command_send_spi_message(uint32_t *args)
     // For now, this only implements enough to program an ad5206 digipot
     uint8_t len = args[1];
     char *msg = (void*)(size_t)args[2];
-    spi_config();
+
+    spi_set_config(spi_basic_config);
     struct gpio_out pin = gpio_out_setup(args[0], 0);
-    spi_transfer(msg, len);
+    spi_transfer_len(msg, len);
     gpio_out_write(pin, 1);
     sendf("spi_response response=%*s", len, msg);
 }

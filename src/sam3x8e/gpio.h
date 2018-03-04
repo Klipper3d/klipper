@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
+
 void gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up);
 
 struct gpio_out {

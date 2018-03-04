@@ -12,6 +12,7 @@
 #include "gpio.h" // gpio_adc_setup
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
+#include "generic/spi.h"
 
 DECL_CONSTANT(ADC_MAX, 4095); // Assume 12bit adc
 
@@ -61,4 +62,23 @@ gpio_adc_read(struct gpio_adc g)
 void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
+}
+
+SPI_t spi_basic_config = 0;
+
+void spi_init(void) {
+    spi_basic_config = spi_get_config(0, 4000000);
+}
+DECL_INIT(spi_init);
+
+SPI_t spi_get_config(uint8_t const mode, uint32_t const speed) {
+    return spi_basic_config;
+}
+void spi_set_config(SPI_t const config) {
+}
+void spi_transfer_len(char *data, uint8_t len) {
+    (void)data; (void)len;
+}
+uint8_t spi_transfer(uint8_t const data, uint8_t const last) {
+    return data;
 }
