@@ -9,6 +9,9 @@ import collections, ConfigParser, importlib
 import util, reactor, queuelogger, msgproto
 import gcode, pins, mcu, chipmisc, toolhead, extruder, heater
 
+# Include extras path to search list
+sys.path.append(os.path.join(os.path.dirname(__file__), "extras"))
+
 message_ready = "Printer is ready"
 
 message_startup = """
@@ -183,11 +186,10 @@ class Printer:
             return
         module_parts = section.split()
         module_name = module_parts[0]
-        py_name = os.path.join(os.path.dirname(__file__),
-                               'extras', module_name + '.py')
-        if not os.path.exists(py_name):
+        try:
+            mod = importlib.import_module(module_name)
+        except ImportError:
             return
-        mod = importlib.import_module('extras.' + module_name)
         init_func = 'load_config'
         if len(module_parts) > 1:
             init_func = 'load_config_prefix'
