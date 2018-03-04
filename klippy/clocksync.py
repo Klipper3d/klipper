@@ -203,7 +203,7 @@ class SecondarySync(ClockSync):
         # Determine sync1_print_time and sync2_print_time
         sync1_print_time = max(print_time, est_print_time)
         sync2_print_time = max(sync1_print_time + 4., self.last_sync_time,
-                               2.5 * (print_time - est_print_time))
+                               print_time + 2.5 * (print_time - est_print_time))
         # Calc sync2_sys_time (inverse of main_sync.estimatated_print_time)
         sync2_main_clock = sync2_print_time * main_mcu_freq
         sync2_sys_time = ser_time + (sync2_main_clock - ser_clock) / ser_freq
