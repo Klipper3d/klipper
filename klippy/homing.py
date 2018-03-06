@@ -77,6 +77,8 @@ class Homing:
         if error is not None:
             raise EndstopError(error)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):
+        if second_home and forcepos == movepos:
+            return
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         self.toolhead.set_position(
