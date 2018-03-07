@@ -178,7 +178,7 @@ class Printer:
             logging.info("Stats %.1f: %s", eventtime,
                          ' '.join([s[1] for s in stats]))
         return eventtime + 1.
-    def _try_load_module(self, config, section):
+    def try_load_module(self, config, section):
         if section in self.objects:
             return
         module_parts = section.split()
@@ -208,7 +208,7 @@ class Printer:
         for m in [pins, mcu]:
             m.add_printer_objects(self, config)
         for section in fileconfig.sections():
-            self._try_load_module(config, section)
+            self.try_load_module(config, section)
         for m in [chipmisc, toolhead, extruder, heater]:
             m.add_printer_objects(self, config)
         # Validate that there are no undefined parameters in the config file
