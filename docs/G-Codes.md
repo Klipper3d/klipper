@@ -9,6 +9,7 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
+- Select tool: `T<index>`
 - Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
