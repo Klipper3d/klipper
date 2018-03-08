@@ -16,7 +16,8 @@ on tuning the pressure advance config.
 
 The [kinematics](Kinematics.md) document provides some technical
 details on how Klipper implements motion. The [FAQ](FAQ.md) answers
-some common questions.
+some common questions. The [G-Codes](G-Codes.md) document lists
+currently supported run-time commands.
 
 The history of Klipper releases is available at
 [releases](Releases.md). See [contact](Contact.md) for information on
