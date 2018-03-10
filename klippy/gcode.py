@@ -367,9 +367,9 @@ class GCodeParser:
         self.run_script(self.extruder.get_activate_gcode(True))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220', 'M221',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M206', 'M220', 'M221',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
-        'M112', 'M114', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
+        'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION', 'PID_TUNE',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -463,6 +463,12 @@ class GCodeParser:
             self.base_position[p] = self.last_position[p] - offset
         if not offsets:
             self.base_position = list(self.last_position)
+    cmd_M114_when_not_ready = True
+    def cmd_M114(self, params):
+        # Get Current Position
+        p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
+        p[3] /= self.extrude_factor
+        self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M206(self, params):
         # Set home offset
         offsets = { self.axis2pos[a]: self.get_float(a, params)
@@ -513,17 +519,6 @@ class GCodeParser:
     def cmd_M112(self, params):
         # Emergency Stop
         self.printer.invoke_shutdown("Shutdown due to M112 command")
-    cmd_M114_when_not_ready = True
-    def cmd_M114(self, params):
-        # Get Current Position
-        if self.toolhead is None:
-            self.cmd_default(params)
-            return
-        raw_pos = homing.query_position(self.toolhead)
-        self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f Count %s" % (
-            self.last_position[0], self.last_position[1],
-            self.last_position[2], self.last_position[3],
-            " ".join(["%s:%d" % (n.upper(), p) for n, p in raw_pos])))
     cmd_M115_when_not_ready = True
     def cmd_M115(self, params):
         # Get Firmware Version and Capabilities
@@ -542,6 +537,38 @@ class GCodeParser:
         res = homing.query_endstops(self.toolhead)
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                                for name, t in res]))
+    cmd_GET_POSITION_when_not_ready = True
+    def cmd_GET_POSITION(self, params):
+        if self.toolhead is None:
+            self.cmd_default(params)
+            return
+        kin = self.toolhead.get_kinematics()
+        steppers = kin.get_steppers()
+        mcu_pos = " ".join(["%s:%d" % (s.name, s.mcu_stepper.get_mcu_position())
+                            for s in steppers])
+        stepper_pos = " ".join(
+            ["%s:%.6f" % (s.name, s.mcu_stepper.get_commanded_position())
+             for s in steppers])
+        kinematic_pos = " ".join(["%s:%.6f"  % (a, v)
+                                  for a, v in zip("XYZE", kin.get_position())])
+        toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
+            "XYZE", self.toolhead.get_position())])
+        gcode_pos = " ".join(["%s:%.6f"  % (a, v)
+                              for a, v in zip("XYZE", self.last_position)])
+        origin_pos = " ".join(["%s:%.6f"  % (a, v)
+                               for a, v in zip("XYZE", self.base_position)])
+        homing_pos = " ".join(["%s:%.6f"  % (a, v)
+                               for a, v in zip("XYZE", self.homing_add)])
+        self.respond_info(
+            "mcu: %s\n"
+            "stepper: %s\n"
+            "kinematic: %s\n"
+            "toolhead: %s\n"
+            "gcode: %s\n"
+            "gcode origin: %s\n"
+            "gcode homing: %s" % (
+                mcu_pos, stepper_pos, kinematic_pos, toolhead_pos,
+                gcode_pos, origin_pos, homing_pos))
     cmd_PID_TUNE_help = "Run PID Tuning"
     cmd_PID_TUNE_aliases = ["M303"]
     def cmd_PID_TUNE(self, params):

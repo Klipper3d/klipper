@@ -123,10 +123,6 @@ def query_endstops(toolhead):
             out.append((name, mcu_endstop.query_endstop_wait()))
     return out
 
-def query_position(toolhead):
-    steppers = toolhead.get_kinematics().get_steppers()
-    return [(s.name.upper(), s.mcu_stepper.get_mcu_position()) for s in steppers]
-
 class EndstopError(Exception):
     pass
 

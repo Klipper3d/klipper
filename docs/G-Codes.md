@@ -63,6 +63,8 @@ The following standard commands are supported:
 - `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
   "triggered" or in an "open" state. This command is typically used to
   verify that an endstop is working correctly.
+- `GET_POSITION`: Return information on the current location of the
+  toolhead.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
