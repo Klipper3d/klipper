@@ -11,8 +11,8 @@ class HeaterCheck:
         self.printer = config.get_printer()
         self.heater_name = config.get_name().split()[1]
         self.heater = None
-        self.hysteresis = config.getfloat('hysteresis', 10., above=0.)
-        self.check_time = config.getfloat('check_time', 15., minval=1.)
+        self.hysteresis = config.getfloat('hysteresis', 5., minval=0.)
+        self.max_error = config.getfloat('max_error', 120., minval=0.)
         self.heating_gain = config.getfloat('heating_gain', 2., above=0.)
         default_gain_time = 20.
         if self.heater_name == 'heater_bed':
@@ -20,7 +20,7 @@ class HeaterCheck:
         self.check_gain_time = config.getfloat(
             'check_gain_time', default_gain_time, minval=1.)
         self.met_target = False
-        self.last_target = self.goal_temp = 0.
+        self.last_target = self.goal_temp = self.error = 0.
         self.fault_systime = self.printer.get_reactor().NEVER
     def printer_state(self, state):
         if state == 'connect':
@@ -33,12 +33,13 @@ class HeaterCheck:
         temp, target = self.heater.get_temp(eventtime)
         if temp >= target - self.hysteresis:
             # Temperature near target - reset checks
-            if not self.met_target:
+            if not self.met_target and target:
                 logging.info("Heater %s within range of %.3f",
                              self.heater_name, target)
             self.met_target = True
-            self.fault_systime = eventtime + self.check_time
+            self.error = 0.
         elif self.met_target:
+            self.error += (target - self.hysteresis) - temp
             if target != self.last_target:
                 # Target changed - reset checks
                 logging.info("Heater %s approaching new target of %.3f",
@@ -46,7 +47,7 @@ class HeaterCheck:
                 self.met_target = False
                 self.goal_temp = temp + self.heating_gain
                 self.fault_systime = eventtime + self.check_gain_time
-            elif eventtime >= self.fault_systime:
+            elif self.error >= self.max_error:
                 # Failure due to inability to maintain target temperature
                 return self.heater_fault()
         elif temp >= self.goal_temp:
