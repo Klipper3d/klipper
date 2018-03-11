@@ -44,10 +44,6 @@ Safety features
    endstop detection is a good idea because of spurious signals caused
    by electrical noise.)
 
-* Support validating that heaters are heating at expected rates. This
-  can be useful to detect a sensor failure (eg, thermistor short) that
-  could otherwise cause the PID to command excessive heating.
-
 Testing features
 ================
 

@@ -141,6 +141,8 @@ class PrinterHeater:
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
+        # Load verify_heater module
+        printer.try_load_module(config, "verify_heater %s" % (self.name,))
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
