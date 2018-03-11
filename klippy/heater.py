@@ -5,87 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
 import pins
-
-
-######################################################################
-# Sensors
-######################################################################
-
-KELVIN_TO_CELCIUS = -273.15
-
-# Thermistor calibrated with three temp measurements
-class Thermistor:
-    def __init__(self, config, params):
-        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        # Calculate Steinhart-Hart coefficents from temp measurements
-        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
-        inv_t2 = 1. / (params['t2'] - KELVIN_TO_CELCIUS)
-        inv_t3 = 1. / (params['t3'] - KELVIN_TO_CELCIUS)
-        ln_r1 = math.log(params['r1'])
-        ln_r2 = math.log(params['r2'])
-        ln_r3 = math.log(params['r3'])
-        ln3_r1, ln3_r2, ln3_r3 = ln_r1**3, ln_r2**3, ln_r3**3
-
-        inv_t12, inv_t13 = inv_t1 - inv_t2, inv_t1 - inv_t3
-        ln_r12, ln_r13 = ln_r1 - ln_r2, ln_r1 - ln_r3
-        ln3_r12, ln3_r13 = ln3_r1 - ln3_r2, ln3_r1 - ln3_r3
-
-        self.c3 = ((inv_t12 - inv_t13 * ln_r12 / ln_r13)
-                   / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
-        self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
-        self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
-    def calc_temp(self, adc):
-        adc = max(.00001, min(.99999, adc))
-        r = self.pullup * adc / (1.0 - adc)
-        ln_r = math.log(r)
-        inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
-        return 1.0/inv_t + KELVIN_TO_CELCIUS
-    def calc_adc(self, temp):
-        inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
-        if self.c3:
-            y = (self.c1 - inv_t) / (2. * self.c3)
-            x = math.sqrt((self.c2 / (3. * self.c3))**3 + y**2)
-            ln_r = math.pow(x - y, 1./3.) - math.pow(x + y, 1./3.)
-        else:
-            ln_r = (inv_t - self.c1) / self.c2
-        r = math.exp(ln_r)
-        return r / (self.pullup + r)
-
-# Thermistor calibrated from one temp measurement and its beta
-class ThermistorBeta(Thermistor):
-    def __init__(self, config, params):
-        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        # Calculate Steinhart-Hart coefficents from beta
-        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
-        ln_r1 = math.log(params['r1'])
-        self.c3 = 0.
-        self.c2 = 1. / params['beta']
-        self.c1 = inv_t1 - self.c2 * ln_r1
-
-# Linear style conversion chips calibrated with two temp measurements
-class Linear:
-    def __init__(self, config, params):
-        adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
-        slope = (params['t2'] - params['t1']) / (params['v2'] - params['v1'])
-        self.gain = adc_voltage * slope
-        self.offset = params['t1'] - params['v1'] * slope
-    def calc_temp(self, adc):
-        return adc * self.gain + self.offset
-    def calc_adc(self, temp):
-        return (temp - self.offset) / self.gain
-
-# Available sensors
-Sensors = {
-    "EPCOS 100K B57560G104F": {
-        'class': Thermistor, 't1': 25., 'r1': 100000.,
-        't2': 150., 'r2': 1641.9, 't3': 250., 'r3': 226.15 },
-    "ATC Semitec 104GT-2": {
-        'class': Thermistor, 't1': 20., 'r1': 126800.,
-        't2': 150., 'r2': 1360., 't3': 300., 'r3': 80.65 },
-    "NTC 100K beta 3950": {
-        'class': ThermistorBeta, 't1': 25., 'r1': 100000., 'beta': 3950. },
-    "AD595": { 'class': Linear, 't1': 25., 'v1': .25, 't2': 300., 'v2': 3.022 },
-}
+import extras.sensors as sensors
 
 
 ######################################################################
@@ -107,10 +27,12 @@ class PrinterHeater:
     def __init__(self, printer, config):
         self.printer = printer
         self.name = config.get_name()
-        sensor_params = config.getchoice('sensor_type', Sensors)
-        self.sensor = sensor_params['class'](config, sensor_params)
-        self.min_temp = config.getfloat('min_temp', minval=0.)
-        self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        sensor_name = config.get('sensor')
+        logging.debug("Add heater: {}, sensor: {}".
+                          format(self.name, sensor_name))
+        self.sensor = sensors.load_sensor(
+            config.getsection('sensor %s'%sensor_name))
+        self.min_temp, self.max_temp = self.sensor.get_min_max_temp()
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
@@ -129,13 +51,9 @@ class PrinterHeater:
                 'pwm_cycle_time', 0.100, above=0., maxval=REPORT_TIME)
             self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
-        self.mcu_adc = pins.setup_pin(printer, 'adc', config.get('sensor_pin'))
-        adc_range = [self.sensor.calc_adc(self.min_temp),
-                     self.sensor.calc_adc(self.max_temp)]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range))
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        is_fileoutput = self.mcu_adc.get_mcu().is_fileoutput()
+        self.mcu_sensor = self.sensor.get_mcu()
+        self.mcu_sensor.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        is_fileoutput = self.mcu_sensor.get_mcu().is_fileoutput()
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.control = algo(self, config)
         # pwm caching
@@ -150,14 +68,16 @@ class PrinterHeater:
             and abs(value - self.last_pwm_value) < 0.05):
             # No significant change in value - can suppress update
             return
-        pwm_time = read_time + REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
+        pwm_time = read_time + REPORT_TIME + self.sensor.sample_time*self.sensor.sample_count
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
         logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
                       self.name, value, pwm_time,
                       self.last_temp, self.last_temp_time, self.target_temp)
         self.mcu_pwm.set_pwm(pwm_time, value)
-    def adc_callback(self, read_time, read_value):
+    def adc_callback(self, read_time, read_value, fault = 0):
+        if (fault):
+            self.sensor.check_faults(fault)
         temp = self.sensor.calc_temp(read_value)
         with self.lock:
             self.last_temp = temp
@@ -173,7 +93,7 @@ class PrinterHeater:
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
-        print_time = self.mcu_adc.get_mcu().estimated_print_time(eventtime) - 5.
+        print_time = self.mcu_sensor.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
