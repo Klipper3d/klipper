@@ -11,8 +11,8 @@ class HeaterCheck:
         self.printer = config.get_printer()
         self.heater_name = config.get_name().split()[1]
         self.heater = None
-        self.hysteresis = config.getfloat('hysteresis', 4., above=0.)
-        self.check_time = config.getfloat('check_time', 10., minval=1.)
+        self.hysteresis = config.getfloat('hysteresis', 10., above=0.)
+        self.check_time = config.getfloat('check_time', 15., minval=1.)
         self.heating_gain = config.getfloat('heating_gain', 2., above=0.)
         default_gain_time = 20.
         if self.heater_name == 'heater_bed':
