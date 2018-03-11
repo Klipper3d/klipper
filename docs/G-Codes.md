@@ -113,3 +113,11 @@ section is enabled:
   - `NEXT`: If manual bed probing is enabled, then one can use this
     command to move to the next probing point during a
     BED_TILT_CALIBRATE operation.
+
+## Dual Carriages
+
+The following commands are available when the "dual_carriage" config
+section is enabled:
+- `SET_DUAL_CARRIAGE CARRIAGE=[0|1]`: This command will set the active
+  carriage. It is typically invoked from the activate_gcode and
+  deactivate_gcode fields in a multiple extruder configuration.
