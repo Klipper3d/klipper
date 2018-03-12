@@ -109,7 +109,7 @@ class PrinterHeater:
         self.name = config.get_name()
         sensor_params = config.getchoice('sensor_type', Sensors)
         self.sensor = sensor_params['class'](config, sensor_params)
-        self.min_temp = config.getfloat('min_temp', minval=0.)
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
