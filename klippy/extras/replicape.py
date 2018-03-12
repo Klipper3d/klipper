@@ -160,6 +160,10 @@ class Replicape:
             self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
         self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
+        if config.getboolean('servo0_enable', False):
+            shift_registers[1] |= 1
+        if config.getboolean('servo1_enable', False):
+            shift_registers[2] |= 1
         self.sr_disabled = tuple(reversed(shift_registers))
         if [i for i in [0, 1, 2] if 11+i in self.stepper_dacs]:
             # Enable xyz steppers
