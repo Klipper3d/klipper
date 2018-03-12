@@ -39,6 +39,8 @@ class BedTiltCalibrate:
                            for p in points]
         except:
             raise config.error("Unable to parse bed tilt points")
+        if len(self.points) < 3:
+            raise config.error("Need at least 3 points for bed_tilt_calibrate")
         self.speed = config.getfloat('speed', 50., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z_offset = config.getfloat('probe_z_offset', 0.)
