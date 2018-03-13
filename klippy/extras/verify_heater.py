@@ -6,6 +6,11 @@
 import logging
 import extruder
 
+HINT_THERMAL = """
+See the 'verify_heater' section in config/example-extras.cfg
+for the parameters that control this check.
+"""
+
 class HeaterCheck:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -60,8 +65,9 @@ class HeaterCheck:
         self.last_target = target
         return eventtime + 1.
     def heater_fault(self):
-        logging.error("Heater %s not heating at expected rate", self.heater_name)
-        self.printer.invoke_shutdown("Heater %s failsafe" % (self.heater_name,))
+        msg = "Heater %s not heating at expected rate" % (self.heater_name,)
+        logging.error(msg)
+        self.printer.invoke_shutdown(msg + HINT_THERMAL)
         return self.printer.get_reactor().NEVER
 
 def load_config_prefix(config):
