@@ -34,6 +34,7 @@ class PrinterProbe:
             self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
         # Create z_virtual_endstop pin
         ppins.register_chip('probe', self)
+        self.z_virtual_endstop = None
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -53,7 +54,13 @@ class PrinterProbe:
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
-        return self.mcu_probe
+        self.z_virtual_endstop = ProbeVirtualEndstop(
+            self.printer, self.mcu_probe)
+        return self.z_virtual_endstop
+    def last_home_position(self):
+        if self.z_virtual_endstop is None:
+            return None
+        return self.z_virtual_endstop.position
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         toolhead = self.printer.lookup_object('toolhead')
@@ -99,6 +106,26 @@ class ProbeEndstopWrapper:
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         self.gcode.run_script(self.deactivate_gcode)
+        self.mcu_endstop.home_finalize()
+
+# Wrapper that records the last XY position of a virtual endstop probe
+class ProbeVirtualEndstop:
+    def __init__(self, printer, mcu_endstop):
+        self.printer = printer
+        self.mcu_endstop = mcu_endstop
+        self.position = None
+        # Wrappers
+        self.get_mcu = self.mcu_endstop.get_mcu
+        self.add_stepper = self.mcu_endstop.add_stepper
+        self.get_steppers = self.mcu_endstop.get_steppers
+        self.home_start = self.mcu_endstop.home_start
+        self.home_wait = self.mcu_endstop.home_wait
+        self.query_endstop = self.mcu_endstop.query_endstop
+        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
+        self.home_prepare = self.mcu_endstop.home_prepare
+        self.TimeoutError = self.mcu_endstop.TimeoutError
+    def home_finalize(self):
+        self.position = self.printer.lookup_object('toolhead').get_position()
         self.mcu_endstop.home_finalize()
 
 # Helper code that can probe a series of points and report the
