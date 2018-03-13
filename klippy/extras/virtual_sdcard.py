@@ -118,7 +118,7 @@ class VirtualSD:
             self.current_file.seek(self.file_position)
         except:
             logging.exception("virtual_sdcard seek")
-            self.gcode.error("Unable to seek file")
+            self.gcode.respond_error("Unable to seek file")
             self.work_timer = None
             return self.reactor.NEVER
         partial_input = ""
