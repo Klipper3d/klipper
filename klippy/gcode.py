@@ -246,8 +246,8 @@ class GCodeParser:
         logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
-            self.respond_info("\n".join(lines[:-1]))
-        self.respond('!! %s' % (lines[-1].strip(),))
+            self.respond_info("\n".join(lines))
+        self.respond('!! %s' % (lines[0].strip(),))
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str):
