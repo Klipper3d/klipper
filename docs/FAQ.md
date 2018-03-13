@@ -10,7 +10,8 @@ Frequently asked questions
 7. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
 8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-10. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+10. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+11. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
@@ -198,6 +199,17 @@ flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
 programmer - search the web to find the instructions for your
 particular device.
+
+### Will the heaters be left on if the Raspberry Pi crashes?
+
+The software has been designed to prevent that. Once the host enables
+a heater, the host software needs to confirm that enablement every 5
+seconds. If the micro-controller does not receive a confirmation every
+5 seconds it goes into a "shutdown" state which is designed to turn
+off all heaters and stepper motors.
+
+See the "config_digital_out" command in the
+[MCU commands](MCU_Commands.md) document for further details.
 
 ### How do I upgrade to the latest software?
 
