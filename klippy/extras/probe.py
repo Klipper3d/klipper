@@ -7,21 +7,22 @@ import pins, homing
 
 HINT_TIMEOUT = """
 Make sure to home the printer before probing. If the probe
-did not move far enough to trigger, then consider setting
-the probe z_position (and the Z axis minimum position) to a
-negative value.
-"""
-HINT_MOVE_ERROR = """
-Make sure the probe z_position is in range of the Z axis
-minimum and maximum position. (The minimum position may
-be set to a negative number.)
+did not move far enough to trigger, then consider reducing
+the Z axis minimum position so the probe can travel further
+(the Z minimum position can be negative).
 """
 
 class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
-        self.z_position = config.getfloat('z_position', 0.)
+        # Infer Z position to move to during a probe
+        if config.has_section('stepper_z'):
+            zconfig = config.getsection('stepper_z')
+            self.z_position = zconfig.getfloat('position_min', 0.)
+        else:
+            pconfig = config.getsection('printer')
+            self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
         pin_params = ppins.lookup_pin('endstop', config.get('pin'))
@@ -66,8 +67,6 @@ class PrinterProbe:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
-            elif "Move out of range" in reason:
-                reason += HINT_MOVE_ERROR
             raise self.gcode.error(reason)
         self.gcode.reset_last_position()
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
