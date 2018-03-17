@@ -10,13 +10,6 @@ import pins
 # Output pins
 ######################################################################
 
-class PrinterStaticDigitalOut:
-    def __init__(self, printer, config):
-        pin_list = [pin.strip() for pin in config.get('pins').split(',')]
-        for pin_desc in pin_list:
-            mcu_pin = pins.setup_pin(printer, 'digital_out', pin_desc)
-            mcu_pin.setup_start_value(1, 1, True)
-
 PIN_MIN_TIME = 0.100
 
 class PrinterPin:
@@ -80,8 +73,6 @@ class PrinterPin:
 ######################################################################
 
 def add_printer_objects(printer, config):
-    for s in config.get_prefix_sections('static_digital_output '):
-        printer.add_object(s.section, PrinterStaticDigitalOut(printer, s))
     for s in config.get_prefix_sections('digital_output '):
         printer.add_object('pin' + s.section[14:], PrinterPin(printer, s))
     for s in config.get_prefix_sections('static_pwm_output '):
