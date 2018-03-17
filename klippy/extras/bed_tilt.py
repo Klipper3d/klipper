@@ -43,7 +43,6 @@ class BedTiltCalibrate:
             raise config.error("Need at least 3 points for bed_tilt_calibrate")
         self.speed = config.getfloat('speed', 50., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
-        self.probe_z_offset = config.getfloat('probe_z_offset', 0.)
         self.z_position_endstop = None
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -64,11 +63,11 @@ class BedTiltCalibrate:
     def get_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_position()
-    def finalize(self, positions):
+    def finalize(self, z_offset, positions):
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,
-                   'z_adjust': self.probe_z_offset }
+                   'z_adjust': z_offset }
         logging.info("Initial bed_tilt parameters: %s", params)
         def adjusted_height(pos, params):
             x, y, z = pos
@@ -85,7 +84,7 @@ class BedTiltCalibrate:
         for pos in positions:
             logging.info("orig: %s new: %s", adjusted_height(pos, params),
                          adjusted_height(pos, new_params))
-        z_diff = new_params['z_adjust'] - self.probe_z_offset
+        z_diff = new_params['z_adjust'] - z_offset
         if self.z_position_endstop is not None:
             # Cartesian style robot
             z_extra = ""

@@ -16,6 +16,7 @@ class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
+        self.z_offset = config.getfloat('z_offset')
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -137,6 +138,7 @@ class ProbePointsHelper:
         self.probe_points = probe_points
         self.horizontal_move_z = horizontal_move_z
         self.speed = speed
+        self.manual_probe = manual_probe
         self.callback = callback
         self.toolhead = self.printer.lookup_object('toolhead')
         self.results = []
@@ -177,7 +179,11 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            self.callback.finalize(self.results)
+            z_offset = 0.
+            if not self.manual_probe:
+                probe = self.printer.lookup_object('probe')
+                z_offset = probe.z_offset
+            self.callback.finalize(z_offset, self.results)
 
 def load_config(config):
     return PrinterProbe(config)
