@@ -369,7 +369,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M206', 'M220', 'M221',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
-        'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION', 'PID_TUNE',
+        'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -569,18 +569,6 @@ class GCodeParser:
             "gcode homing: %s" % (
                 mcu_pos, stepper_pos, kinematic_pos, toolhead_pos,
                 gcode_pos, origin_pos, homing_pos))
-    cmd_PID_TUNE_help = "Run PID Tuning"
-    cmd_PID_TUNE_aliases = ["M303"]
-    def cmd_PID_TUNE(self, params):
-        # Run PID tuning
-        heater_index = self.get_int('E', params, 0)
-        if (heater_index < -1 or heater_index >= len(self.heaters) - 1
-            or self.heaters[heater_index] is None):
-            self.respond_error("Heater not configured")
-        heater = self.heaters[heater_index]
-        temp = self.get_float('S', params)
-        heater.start_auto_tune(temp)
-        self.bg_temp(heater)
     def request_restart(self, result):
         if self.is_printer_ready:
             self.respond_info("Preparing to restart...")

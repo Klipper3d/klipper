@@ -26,7 +26,6 @@ Klipper supports the following standard G-Code commands:
 - Get current position: `M114`
 - Get firmware version: `M115`
 - Set home offset: `M206 [X<pos>] [Y<pos>] [Z<pos>]`
-- Run PID tuning: `M303 [E<index>] S<temperature>`
 
 For further details on the above commands see the
 [RepRap G-Code documentation](http://reprap.org/wiki/G-code).
@@ -65,6 +64,13 @@ The following standard commands are supported:
   verify that an endstop is working correctly.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
+- `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
+  [WRITE_FILE=1]`: Perform a PID calibration test. The specified
+  heater will be enabled until the specified target temperature is
+  reached, and then the heater will be turned off and on for several
+  cycles. If the WRITE_FILE parameter is enabled, then the file
+  /tmp/heattest.txt will be created with a log of all temperature
+  samples taken during the test.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
