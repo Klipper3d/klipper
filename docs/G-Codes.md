@@ -13,7 +13,7 @@ Klipper supports the following standard G-Code commands:
 - Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
-- Set speed factor override percentage: `M220 S<speed>`
+- Set speed factor override percentage: `M220 S<percent>`
 - Set extrude factor override percentage: `M221 S<percent>`
 - Get extruder temperature: `M105`
 - Set extruder temperature: `M104 [T<index>] [S<temperature>]`
