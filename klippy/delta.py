@@ -111,7 +111,15 @@ class DeltaKinematics:
         # Set final homed position
         spos = [ep + s.get_homed_offset()
                 for ep, s in zip(self.endstops, self.steppers)]
-        homing_state.set_homed_position(self._actuator_to_cartesian(spos))
+        # Apply fine tune to towers after homing
+        fine_tune = [s.tune_after_homing for s in self.steppers]
+        spos = [ a-b for a,b in zip(spos, fine_tune) ]
+        cart_pos = self._actuator_to_cartesian(spos)
+        homing_state.retract(cart_pos, homing_speed, check=False) # could be neagtive
+        # Reset X and Y to 0 since delta should be in center after homing
+        cart_pos[0] = 0
+        cart_pos[1] = 0
+        homing_state.set_homed_position(cart_pos)
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for stepper in self.steppers:

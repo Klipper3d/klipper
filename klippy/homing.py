@@ -27,8 +27,8 @@ class Homing:
             if coord[i] is not None:
                 thcoord[i] = coord[i]
         return thcoord
-    def retract(self, newpos, speed):
-        self.toolhead.move(self._fill_coord(newpos), speed)
+    def retract(self, newpos, speed, check=True):
+        self.toolhead.move(self._fill_coord(newpos), speed, check=check)
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
     def _get_homing_speed(self, speed, endstops):
