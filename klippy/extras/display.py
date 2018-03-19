@@ -578,15 +578,15 @@ class PrinterLCD:
     def draw_heater(self, x, y, info):
         temperature, target = info['temperature'], info['target']
         if target and abs(temperature - target) > 2.:
-            s = "%3d%s%d" % (temperature, self.lcd_chip.char_right_arrow, target)
+            s = "%3.0f%s%.0f" % (
+                temperature, self.lcd_chip.char_right_arrow, target)
         else:
-            s = "%3d" % (temperature,)
+            s = "%3.0f" % (temperature,)
         if self.lcd_type == 'hd44780':
             s += self.lcd_chip.char_degrees
         self.lcd_chip.write_text(x, y, s)
     def draw_percent(self, x, y, width, value):
-        value = int(value * 100.)
-        self.lcd_chip.write_text(x, y, ("%d%%" % (value)).center(width))
+        self.lcd_chip.write_text(x, y, ("%d%%" % (value * 100.,)).center(width))
     def draw_time(self, x, y, seconds):
         seconds = int(seconds)
         self.lcd_chip.write_text(x, y, "%02d:%02d" % (
@@ -595,7 +595,7 @@ class PrinterLCD:
         status = toolhead_info['status']
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
-            status = "X%-4dY%-4dZ%-5.2f" % (pos[0], pos[1], pos[2])
+            status = "X%-4.0fY%-4.0fZ%-5.2f" % (pos[0], pos[1], pos[2])
         self.lcd_chip.write_text(x, y, status)
 
 def load_config(config):
