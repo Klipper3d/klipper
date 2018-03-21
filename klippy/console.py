@@ -86,11 +86,10 @@ class KeyboardReader:
             self.output("Error: %s" % (str(e),))
             return
         try:
-            msg = self.ser.msgparser.create_command(' '.join(parts[2:]))
+            self.ser.send(' '.join(parts[2:]), minclock=val)
         except msgproto.error as e:
             self.output("Error: %s" % (str(e),))
             return
-        self.ser.send(msg, minclock=val)
     def command_FLOOD(self, parts):
         try:
             count = int(parts[1])
@@ -98,18 +97,18 @@ class KeyboardReader:
         except ValueError as e:
             self.output("Error: %s" % (str(e),))
             return
-        try:
-            msg = self.ser.msgparser.create_command(' '.join(parts[3:]))
-        except msgproto.error as e:
-            self.output("Error: %s" % (str(e),))
-            return
+        msg = ' '.join(parts[3:])
         delay_clock = int(delay * self.mcu_freq)
         msg_clock = int(self.clocksync.get_clock(self.reactor.monotonic())
                         + self.mcu_freq * .200)
-        for i in range(count):
-            next_clock = msg_clock + delay_clock
-            self.ser.send(msg, minclock=msg_clock, reqclock=next_clock)
-            msg_clock = next_clock
+        try:
+            for i in range(count):
+                next_clock = msg_clock + delay_clock
+                self.ser.send(msg, minclock=msg_clock, reqclock=next_clock)
+                msg_clock = next_clock
+        except msgproto.error as e:
+            self.output("Error: %s" % (str(e),))
+            return
     def command_SUPPRESS(self, parts):
         oid = None
         try:
@@ -164,12 +163,7 @@ class KeyboardReader:
             if parts[0] in self.local_commands:
                 self.local_commands[parts[0]](parts)
                 return None
-        try:
-            msg = self.ser.msgparser.create_command(line)
-        except msgproto.error as e:
-            self.output("Error: %s" % (str(e),))
-            return None
-        return msg
+        return line
     def process_kbd(self, eventtime):
         self.data += os.read(self.fd, 4096)
 
@@ -184,7 +178,11 @@ class KeyboardReader:
             msg = self.translate(line.strip(), eventtime)
             if msg is None:
                 continue
-            self.ser.send(msg)
+            try:
+                self.ser.send(msg)
+            except msgproto.error as e:
+                self.output("Error: %s" % (str(e),))
+                return None
         self.data = kbdlines[-1]
 
 def main():

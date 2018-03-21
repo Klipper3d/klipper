@@ -7,7 +7,7 @@ import logging, threading, math
 
 COMM_TIMEOUT = 3.5
 RTT_AGE = .000010 / (60. * 60.)
-DECAY = 1. / (2. * 60.)
+DECAY = 1. / 30.
 TRANSMIT_EXTRA = .001
 
 class ClockSync:
@@ -29,20 +29,19 @@ class ClockSync:
         self.last_prediction_time = 0.
     def connect(self, serial):
         self.serial = serial
-        msgparser = serial.msgparser
-        self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
+        self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
         # Load initial clock and frequency
-        uptime_msg = msgparser.create_command('get_uptime')
-        params = serial.send_with_response(uptime_msg, 'uptime')
+        get_uptime_cmd = serial.lookup_command('get_uptime')
+        params = get_uptime_cmd.send_with_response(response='uptime')
         self.last_clock = (params['high'] << 32) | params['clock']
         self.clock_avg = self.last_clock
         self.time_avg = params['#sent_time']
         self.clock_est = (self.time_avg, self.clock_avg, self.mcu_freq)
         self.prediction_variance = (.001 * self.mcu_freq)**2
         # Enable periodic get_status timer
-        self.status_cmd = msgparser.create_command('get_status')
+        self.status_cmd = serial.lookup_command('get_status')
         for i in range(8):
-            params = serial.send_with_response(self.status_cmd, 'status')
+            params = self.status_cmd.send_with_response(response='status')
             self._handle_status(params)
             self.reactor.pause(0.100)
         serial.register_callback(self._handle_status, 'status')
@@ -57,7 +56,7 @@ class ClockSync:
         serial.set_clock_est(freq, self.reactor.monotonic(), 0)
     # MCU clock querying (status callback invoked from background thread)
     def _status_event(self, eventtime):
-        self.serial.send(self.status_cmd)
+        self.status_cmd.send()
         return eventtime + 1.0
     def _handle_status(self, params):
         # Extend clock to 64bit
@@ -165,6 +164,7 @@ class SecondarySync(ClockSync):
         ClockSync.__init__(self, reactor)
         self.main_sync = main_sync
         self.clock_adj = (0., 1.)
+        self.last_sync_time = 0.
     def connect(self, serial):
         ClockSync.connect(self, serial)
         self.clock_adj = (0., self.mcu_freq)
@@ -195,18 +195,25 @@ class SecondarySync(ClockSync):
         adjusted_offset, adjusted_freq = self.clock_adj
         return "%s adj=%d" % (ClockSync.stats(self, eventtime), adjusted_freq)
     def calibrate_clock(self, print_time, eventtime):
+        # Calculate: est_print_time = main_sync.estimatated_print_time()
         ser_time, ser_clock, ser_freq = self.main_sync.clock_est
         main_mcu_freq = self.main_sync.mcu_freq
-
-        main_clock = (eventtime - ser_time) * ser_freq + ser_clock
-        print_time = max(print_time, main_clock / main_mcu_freq)
-        main_sync_clock = (print_time + 4.) * main_mcu_freq
-        sync_time = ser_time + (main_sync_clock - ser_clock) / ser_freq
-
-        print_clock = self.print_time_to_clock(print_time)
-        sync_clock = self.get_clock(sync_time)
-        adjusted_freq = .25 * (sync_clock - print_clock)
-        adjusted_offset = print_time - print_clock / adjusted_freq
-
+        est_main_clock = (eventtime - ser_time) * ser_freq + ser_clock
+        est_print_time = est_main_clock / main_mcu_freq
+        # Determine sync1_print_time and sync2_print_time
+        sync1_print_time = max(print_time, est_print_time)
+        sync2_print_time = max(sync1_print_time + 4., self.last_sync_time,
+                               print_time + 2.5 * (print_time - est_print_time))
+        # Calc sync2_sys_time (inverse of main_sync.estimatated_print_time)
+        sync2_main_clock = sync2_print_time * main_mcu_freq
+        sync2_sys_time = ser_time + (sync2_main_clock - ser_clock) / ser_freq
+        # Adjust freq so estimated print_time will match at sync2_print_time
+        sync1_clock = self.print_time_to_clock(sync1_print_time)
+        sync2_clock = self.get_clock(sync2_sys_time)
+        adjusted_freq = ((sync2_clock - sync1_clock)
+                         / (sync2_print_time - sync1_print_time))
+        adjusted_offset = sync1_print_time - sync1_clock / adjusted_freq
+        # Apply new values
         self.clock_adj = (adjusted_offset, adjusted_freq)
+        self.last_sync_time = sync2_print_time
         return self.clock_adj

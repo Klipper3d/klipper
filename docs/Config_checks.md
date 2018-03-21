@@ -39,7 +39,7 @@ terminal tab.
 
 ### Verify heaters
 
-Navigate to the Octoprint terminal tab and type in 50 followed by
+Navigate to the Octoprint temperature tab and type in 50 followed by
 enter in the "Tool" temperature box. The extruder temperature in the
 graph should start to increase (within about 30 seconds or so). Then
 go to the "Tool" temperature drop-down box and select "Off". After
@@ -114,6 +114,29 @@ tab and click the "Extrude" button. Verify that the extruder motor
 turns in the correct direction. If it does not, see the
 troubleshooting tips in the previous section to confirm the
 "enable_pin", "step_pin", and "dir_pin" settings for the extruder.
+
+### Calibrate PID settings
+
+Klipper supports
+[PID control](https://en.wikipedia.org/wiki/PID_controller) for the
+extruder and bed heaters. In order to use this control mechanism it is
+necessary to calibrate the PID settings on each printer. (PID settings
+found in other firmwares or in the example configuration files often
+work poorly.)
+
+To calibrate the extruder, navigate to the OctoPrint terminal tab and
+run the PID_CALIBRATE command. For example: `PID_CALIBRATE
+HEATER=extruder TARGET=170`
+
+At the completion of the tuning test, update the printer.cfg file with
+the recommended pid_Kp, pid_Ki, and pid_Kd values.
+
+If the printer has a heated bed and it supports being driven by PWM
+(Pulse Width Modulation) then it is recommended to use PID control for
+the bed. (When the bed heater is controlled using the PID algorithm it
+may turn on and off ten times a second, which may not be suitable for
+heaters using a mechanical switch.) A typical bed PID calibration
+command is: `PID_CALIBRATE HEATER=heater_bed TARGET=60`
 
 ### Next steps
 

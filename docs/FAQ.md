@@ -10,7 +10,8 @@ Frequently asked questions
 7. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
 8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-10. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+10. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+11. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
@@ -97,11 +98,17 @@ baud rate to 250000 when using Klipper.
 ### Can I run Klipper on something other than a Raspberry Pi 3?
 
 The recommended hardware is a Raspberry Pi 2 or a Raspberry
-Pi 3. Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi
-Zero, but these boards don't have enough processing power to run
-OctoPrint well. It's not uncommon for print stalls to occur on these
-slower machines (the printer may move faster than OctoPrint can send
-movement commands).
+Pi 3.
+
+Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi Zero, but
+these boards don't have enough processing power to run OctoPrint
+well. It's not uncommon for print stalls to occur on these slower
+machines (the printer may move faster than OctoPrint can send movement
+commands) when printing directly from OctoPrint. If you wish to run on
+one one of these slower boards anyway, consider using the
+"virtual_sdcard" feature (see
+[config/example-extras.cfg](../config/example-extras.cfg) for details)
+when printing.
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
@@ -192,6 +199,17 @@ flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
 programmer - search the web to find the instructions for your
 particular device.
+
+### Will the heaters be left on if the Raspberry Pi crashes?
+
+The software has been designed to prevent that. Once the host enables
+a heater, the host software needs to confirm that enablement every 5
+seconds. If the micro-controller does not receive a confirmation every
+5 seconds it goes into a "shutdown" state which is designed to turn
+off all heaters and stepper motors.
+
+See the "config_digital_out" command in the
+[MCU commands](MCU_Commands.md) document for further details.
 
 ### How do I upgrade to the latest software?
 

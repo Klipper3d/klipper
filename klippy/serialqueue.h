@@ -3,7 +3,8 @@
 
 #include "list.h" // struct list_head
 
-#define MAX_CLOCK 0x7fffffffffffffff
+#define MAX_CLOCK 0x7fffffffffffffffLL
+#define BACKGROUND_PRIORITY_CLOCK 0x7fffffff00000000LL
 
 #define MESSAGE_MIN 5
 #define MESSAGE_MAX 64

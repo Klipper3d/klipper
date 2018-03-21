@@ -126,17 +126,17 @@ class SerialReader:
         with self.lock:
             del self.handlers[name, oid]
     # Command sending
-    def send(self, cmd, minclock=0, reqclock=0, cq=None):
+    def raw_send(self, cmd, minclock, reqclock, cmd_queue):
+        self.ffi_lib.serialqueue_send(
+            self.serialqueue, cmd_queue, cmd, len(cmd), minclock, reqclock)
+    def send(self, msg, minclock=0, reqclock=0):
+        cmd = self.msgparser.create_command(msg)
+        self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
+    def lookup_command(self, msgformat, cq=None):
         if cq is None:
             cq = self.default_cmd_queue
-        self.ffi_lib.serialqueue_send(
-            self.serialqueue, cq, cmd, len(cmd), minclock, reqclock)
-    def encode_and_send(self, data, minclock, reqclock, cq):
-        self.ffi_lib.serialqueue_encode_and_send(
-            self.serialqueue, cq, data, len(data), minclock, reqclock)
-    def send_with_response(self, cmd, name, oid=None):
-        src = SerialRetryCommand(self, cmd, name, oid)
-        return src.get_response()
+        cmd = self.msgparser.lookup_command(msgformat)
+        return SerialCommand(self, cq, cmd)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -175,6 +175,20 @@ class SerialReader:
     def __del__(self):
         self.disconnect()
 
+# Wrapper around command sending
+class SerialCommand:
+    def __init__(self, serial, cmd_queue, cmd):
+        self.serial = serial
+        self.cmd_queue = cmd_queue
+        self.cmd = cmd
+    def send(self, data=(), minclock=0, reqclock=0):
+        cmd = self.cmd.encode(data)
+        self.serial.raw_send(cmd, minclock, reqclock, self.cmd_queue)
+    def send_with_response(self, data=(), response=None, response_oid=None):
+        cmd = self.cmd.encode(data)
+        src = SerialRetryCommand(self.serial, cmd, response, response_oid)
+        return src.get_response()
+
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:
     TIMEOUT_TIME = 5.0
@@ -195,7 +209,7 @@ class SerialRetryCommand:
     def send_event(self, eventtime):
         if self.response is not None:
             return self.serial.reactor.NEVER
-        self.serial.send(self.cmd)
+        self.serial.raw_send(self.cmd, 0, 0, self.serial.default_cmd_queue)
         return eventtime + self.RETRY_TIME
     def handle_callback(self, params):
         last_sent_time = params['#sent_time']
@@ -217,7 +231,7 @@ class SerialBootStrap:
     def __init__(self, serial):
         self.serial = serial
         self.identify_data = ""
-        self.identify_cmd = self.serial.msgparser.lookup_command(
+        self.identify_cmd = self.serial.lookup_command(
             "identify offset=%u count=%c")
         self.is_done = False
         self.serial.register_callback(self.handle_identify, 'identify_response')
@@ -241,13 +255,11 @@ class SerialBootStrap:
             self.is_done = True
             return
         self.identify_data += msgdata
-        imsg = self.identify_cmd.encode(len(self.identify_data), 40)
-        self.serial.send(imsg)
+        self.identify_cmd.send([len(self.identify_data), 40])
     def send_event(self, eventtime):
         if self.is_done:
             return self.serial.reactor.NEVER
-        imsg = self.identify_cmd.encode(len(self.identify_data), 40)
-        self.serial.send(imsg)
+        self.identify_cmd.send([len(self.identify_data), 40])
         return eventtime + self.RETRY_TIME
     def handle_unknown(self, params):
         logging.debug("Unknown message %d (len %d) while identifying",

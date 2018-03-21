@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 # Script to interact with simulavr by simulating a serial port.
 #
-# Copyright (C) 2015  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2015-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
 import sys, optparse, time, os, pty, fcntl, termios, errno
 import pysimulavr
 
@@ -107,23 +106,22 @@ class Pacing(pysimulavr.PySimulationMember):
         pysimulavr.PySimulationMember.__init__(self)
         self.sc = pysimulavr.SystemClock.Instance()
         self.pacing_rate = 1. / (rate * SIMULAVR_FREQ)
-        self.rel_time = self.next_rel_time = time.time()
-        self.rel_clock = self.next_rel_clock = self.sc.GetCurrentTime()
+        self.next_check_clock = 0
+        self.rel_time = time.time()
+        self.best_offset = 0.
         self.delay = SIMULAVR_FREQ / 10000
         self.sc.Add(self)
     def DoStep(self, trueHwStep):
         curtime = time.time()
         clock = self.sc.GetCurrentTime()
-        clock_diff = clock - self.rel_clock
-        time_diff = curtime - self.rel_time
-        offset = clock_diff * self.pacing_rate - time_diff
+        offset = clock * self.pacing_rate - (curtime - self.rel_time)
+        self.best_offset = max(self.best_offset, offset)
         if offset > 0.000050:
-            time.sleep(offset)
-        if clock_diff > self.delay * 20:
-            self.rel_clock = self.next_rel_clock
-            self.rel_time = self.next_rel_time
-            self.next_rel_clock = clock
-            self.next_rel_time = curtime
+            time.sleep(offset - 0.000040)
+        if clock >= self.next_check_clock:
+            self.rel_time -= min(self.best_offset, 0.)
+            self.next_check_clock = clock + self.delay * 500
+            self.best_offset = -999999999.
         return self.delay
 
 # Forward data from a terminal device to the serial port pins

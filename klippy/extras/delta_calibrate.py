@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import probe, delta
+import probe, delta, mathutil
 
 class DeltaCalibrate:
     def __init__(self, config):
@@ -14,7 +14,6 @@ class DeltaCalibrate:
         self.radius = config.getfloat('radius', above=0.)
         self.speed = config.getfloat('speed', 50., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
-        self.probe_z_offset = config.getfloat('probe_z_offset', 0.)
         self.manual_probe = config.getboolean('manual_probe', None)
         if self.manual_probe is None:
             self.manual_probe = not config.has_section('probe')
@@ -38,26 +37,26 @@ class DeltaCalibrate:
     def get_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_stable_position()
-    def finalize(self, positions):
+    def finalize(self, z_offset, positions):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        logging.debug("Got: %s", positions)
+        logging.info("Calculating delta_calibrate with: %s", positions)
         params = kin.get_calibrate_params()
-        logging.debug("Params: %s", params)
+        logging.info("Initial delta_calibrate parameters: %s", params)
         adj_params = ('endstop_a', 'endstop_b', 'endstop_c', 'radius',
                       'angle_a', 'angle_b')
         def delta_errorfunc(params):
             total_error = 0.
             for spos in positions:
                 x, y, z = delta.get_position_from_stable(spos, params)
-                total_error += (z - self.probe_z_offset)**2
+                total_error += (z - z_offset)**2
             return total_error
-        new_params = probe.coordinate_descent(
+        new_params = mathutil.coordinate_descent(
             adj_params, params, delta_errorfunc)
-        logging.debug("Got2: %s", new_params)
+        logging.info("Calculated delta_calibrate parameters: %s", new_params)
         for spos in positions:
-            logging.debug("orig: %s new: %s",
-                          delta.get_position_from_stable(spos, params),
-                          delta.get_position_from_stable(spos, new_params))
+            logging.info("orig: %s new: %s",
+                         delta.get_position_from_stable(spos, params),
+                         delta.get_position_from_stable(spos, new_params))
         self.gcode.respond_info(
             "stepper_a: position_endstop: %.6f angle: %.6f\n"
             "stepper_b: position_endstop: %.6f angle: %.6f\n"
@@ -71,6 +70,4 @@ class DeltaCalibrate:
                 new_params['radius']))
 
 def load_config(config):
-    if config.get_name() != 'delta_calibrate':
-        raise config.error("Invalid delta_calibrate config name")
     return DeltaCalibrate(config)

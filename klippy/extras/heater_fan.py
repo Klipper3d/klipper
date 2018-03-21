@@ -33,5 +33,5 @@ class PrinterHeaterFan:
         self.fan.set_speed(print_time, power)
         return eventtime + 1.
 
-def load_config(config):
+def load_config_prefix(config):
     return PrinterHeaterFan(config)

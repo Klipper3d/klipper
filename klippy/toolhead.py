@@ -205,6 +205,7 @@ class ToolHead:
         self.move_flush_time = config.getfloat(
             'move_flush_time', 0.050, above=0.)
         self.print_time = 0.
+        self.last_print_start_time = 0.
         self.need_check_stall = -1.
         self.print_stall = 0
         self.sync_print_time = True
@@ -236,8 +237,9 @@ class ToolHead:
         self.sync_print_time = False
         self.need_motor_off = True
         est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
-        self.print_time = max(
-            self.print_time, est_print_time + self.buffer_time_start)
+        if est_print_time + self.buffer_time_start > self.print_time:
+            self.print_time = est_print_time + self.buffer_time_start
+            self.last_print_start_time = self.print_time
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         return self.print_time
     def _flush_lookahead(self, must_sync=False):
@@ -358,17 +360,23 @@ class ToolHead:
         self.move_queue.set_extruder(extruder)
         self.commanded_pos[3] = extrude_pos
     # Misc commands
-    def check_active(self, eventtime):
+    def stats(self, eventtime):
         for m in self.all_mcus:
             m.check_active(self.print_time, eventtime)
-        if not self.sync_print_time:
-            return True
-        return self.print_time + 60. > self.mcu.estimated_print_time(eventtime)
-    def stats(self, eventtime):
-        est_print_time = self.mcu.estimated_print_time(eventtime)
-        buffer_time = max(0., self.print_time - est_print_time)
-        return "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
-            self.print_time, buffer_time, self.print_stall)
+        buffer_time = self.print_time - self.mcu.estimated_print_time(eventtime)
+        is_active = buffer_time > -60. or not self.sync_print_time
+        return is_active, "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
+            self.print_time, max(buffer_time, 0.), self.print_stall)
+    def get_status(self, eventtime):
+        buffer_time = self.print_time - self.mcu.estimated_print_time(eventtime)
+        if buffer_time > -1. or not self.sync_print_time:
+            status = "Printing"
+        elif self.need_motor_off:
+            status = "Ready"
+        else:
+            status = "Idle"
+        printing_time = self.print_time - self.last_print_start_time
+        return {'status': status, 'printing_time': printing_time}
     def printer_state(self, state):
         if state == 'shutdown':
             try:

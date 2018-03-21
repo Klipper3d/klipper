@@ -48,6 +48,7 @@ class PrinterStepper:
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
         self.step_dist = config.getfloat('step_distance', above=0.)
         self.mcu_stepper.setup_step_distance(self.step_dist)
+        self.step = self.mcu_stepper.step
         self.step_const = self.mcu_stepper.step_const
         self.step_delta = self.mcu_stepper.step_delta
         self.enable = lookup_enable_pin(printer, config.get('enable_pin', None))
@@ -90,7 +91,7 @@ class PrinterHomingStepper(PrinterStepper):
         # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_retract_dist = config.getfloat(
-            'homing_retract_dist', 5., above=0.)
+            'homing_retract_dist', 5., minval=0.)
         self.homing_positive_dir = config.getboolean('homing_positive_dir', None)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min

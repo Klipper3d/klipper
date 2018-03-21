@@ -1,0 +1,13 @@
+# This is a travis-ci.org continuous integration configuration file.
+language: c
+
+addons:
+    apt:
+        packages:
+            - gcc-avr
+            - avr-libc
+            - wget
+
+install: ./scripts/travis-install.sh
+
+script: ./scripts/travis-build.sh

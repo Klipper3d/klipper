@@ -77,7 +77,10 @@ class GCodeParser:
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
     def stats(self, eventtime):
-        return "gcodein=%d" % (self.bytes_read,)
+        return False, "gcodein=%d" % (self.bytes_read,)
+    def get_status(self, eventtime):
+        busy = self.is_processing_data
+        return {'speed_factor': self.speed_factor * 60., 'busy': busy}
     def printer_state(self, state):
         if state == 'shutdown':
             if not self.is_printer_ready:
@@ -108,16 +111,6 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
-    def motor_heater_off(self):
-        if self.toolhead is None:
-            return
-        self.toolhead.motor_off()
-        print_time = self.toolhead.get_last_move_time()
-        for heater in self.heaters:
-            if heater is not None:
-                heater.set_temp(print_time, 0.)
-        if self.fan is not None:
-            self.fan.set_speed(print_time, 0.)
     def dump_debug(self):
         out = []
         out.append("Dumping gcode input %d blocks" % (
@@ -133,9 +126,8 @@ class GCodeParser:
                 self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
-    args_r = re.compile('([A-Z_]+|[A-Z*])')
+    args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def process_commands(self, commands, need_ack=True):
-        prev_need_ack = self.need_ack
         for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
@@ -172,7 +164,6 @@ class GCodeParser:
                 if not need_ack:
                     raise
             self.ack()
-        self.need_ack = prev_need_ack
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
@@ -184,36 +175,56 @@ class GCodeParser:
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
         pending_commands.extend(lines)
-        # Check for M112 out-of-order
-        if ((len(pending_commands) > 1 or self.is_processing_data)
-            and len(pending_commands) < 20):
-            for line in lines:
-                if self.m112_r.match(line) is not None:
-                    self.cmd_M112({})
-        # Check if already processing data
-        if self.is_processing_data:
-            if len(pending_commands) >= 20 or not data:
-                # Stop reading input
-                self.reactor.unregister_fd(self.fd_handle)
-                self.fd_handle = None
-            return
+        # Special handling for debug file input EOF
+        if not data and self.is_fileinput:
+            if not self.is_processing_data:
+                self.request_restart('exit')
+            pending_commands.append("")
+        # Handle case where multiple commands pending
+        if self.is_processing_data or len(pending_commands) > 1:
+            if len(pending_commands) < 20:
+                # Check for M112 out-of-order
+                for line in lines:
+                    if self.m112_r.match(line) is not None:
+                        self.cmd_M112({})
+            if self.is_processing_data:
+                if len(pending_commands) >= 20:
+                    # Stop reading input
+                    self.reactor.unregister_fd(self.fd_handle)
+                    self.fd_handle = None
+                return
         # Process commands
         self.is_processing_data = True
+        self.pending_commands = []
+        self.process_commands(pending_commands)
+        if self.pending_commands:
+            self.process_pending()
+        self.is_processing_data = False
+    def process_pending(self):
+        pending_commands = self.pending_commands
         while pending_commands:
             self.pending_commands = []
             self.process_commands(pending_commands)
             pending_commands = self.pending_commands
-        self.is_processing_data = False
-        # Reenable input reading if it was stopped
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        if not data and self.is_fileinput:
-            self.motor_heater_off()
-            if self.toolhead is not None:
-                self.toolhead.wait_moves()
-            self.printer.request_exit()
+    def process_batch(self, command):
+        if self.is_processing_data:
+            return False
+        self.is_processing_data = True
+        try:
+            self.process_commands([command], need_ack=False)
+        finally:
+            if self.pending_commands:
+                self.process_pending()
+            self.is_processing_data = False
+        return True
     def run_script(self, script):
-        self.process_commands(script.split('\n'), need_ack=False)
+        prev_need_ack = self.need_ack
+        try:
+            self.process_commands(script.split('\n'), need_ack=False)
+        finally:
+            self.need_ack = prev_need_ack
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -235,8 +246,8 @@ class GCodeParser:
         logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
-            self.respond_info("\n".join(lines[:-1]))
-        self.respond('!! %s' % (lines[-1].strip(),))
+            self.respond_info("\n".join(lines))
+        self.respond('!! %s' % (lines[0].strip(),))
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str):
@@ -356,9 +367,9 @@ class GCodeParser:
         self.run_script(self.extruder.get_activate_gcode(True))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M206', 'M220', 'M221',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M206', 'M220', 'M221',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
-        'M112', 'M114', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'PID_TUNE',
+        'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -452,6 +463,12 @@ class GCodeParser:
             self.base_position[p] = self.last_position[p] - offset
         if not offsets:
             self.base_position = list(self.last_position)
+    cmd_M114_when_not_ready = True
+    def cmd_M114(self, params):
+        # Get Current Position
+        p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
+        p[3] /= self.extrude_factor
+        self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M206(self, params):
         # Set home offset
         offsets = { self.axis2pos[a]: self.get_float(a, params)
@@ -502,17 +519,6 @@ class GCodeParser:
     def cmd_M112(self, params):
         # Emergency Stop
         self.printer.invoke_shutdown("Shutdown due to M112 command")
-    cmd_M114_when_not_ready = True
-    def cmd_M114(self, params):
-        # Get Current Position
-        if self.toolhead is None:
-            self.cmd_default(params)
-            return
-        raw_pos = homing.query_position(self.toolhead)
-        self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f Count %s" % (
-            self.last_position[0], self.last_position[1],
-            self.last_position[2], self.last_position[3],
-            " ".join(["%s:%d" % (n.upper(), p) for n, p in raw_pos])))
     cmd_M115_when_not_ready = True
     def cmd_M115(self, params):
         # Get Firmware Version and Capabilities
@@ -531,34 +537,59 @@ class GCodeParser:
         res = homing.query_endstops(self.toolhead)
         self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                                for name, t in res]))
-    cmd_PID_TUNE_help = "Run PID Tuning"
-    cmd_PID_TUNE_aliases = ["M303"]
-    def cmd_PID_TUNE(self, params):
-        # Run PID tuning
-        heater_index = self.get_int('E', params, 0)
-        if (heater_index < -1 or heater_index >= len(self.heaters) - 1
-            or self.heaters[heater_index] is None):
-            self.respond_error("Heater not configured")
-        heater = self.heaters[heater_index]
-        temp = self.get_float('S', params)
-        heater.start_auto_tune(temp)
-        self.bg_temp(heater)
-    def prep_restart(self):
+    cmd_GET_POSITION_when_not_ready = True
+    def cmd_GET_POSITION(self, params):
+        if self.toolhead is None:
+            self.cmd_default(params)
+            return
+        kin = self.toolhead.get_kinematics()
+        steppers = kin.get_steppers()
+        mcu_pos = " ".join(["%s:%d" % (s.name, s.mcu_stepper.get_mcu_position())
+                            for s in steppers])
+        stepper_pos = " ".join(
+            ["%s:%.6f" % (s.name, s.mcu_stepper.get_commanded_position())
+             for s in steppers])
+        kinematic_pos = " ".join(["%s:%.6f"  % (a, v)
+                                  for a, v in zip("XYZE", kin.get_position())])
+        toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
+            "XYZE", self.toolhead.get_position())])
+        gcode_pos = " ".join(["%s:%.6f"  % (a, v)
+                              for a, v in zip("XYZE", self.last_position)])
+        origin_pos = " ".join(["%s:%.6f"  % (a, v)
+                               for a, v in zip("XYZE", self.base_position)])
+        homing_pos = " ".join(["%s:%.6f"  % (a, v)
+                               for a, v in zip("XYZE", self.homing_add)])
+        self.respond_info(
+            "mcu: %s\n"
+            "stepper: %s\n"
+            "kinematic: %s\n"
+            "toolhead: %s\n"
+            "gcode: %s\n"
+            "gcode origin: %s\n"
+            "gcode homing: %s" % (
+                mcu_pos, stepper_pos, kinematic_pos, toolhead_pos,
+                gcode_pos, origin_pos, homing_pos))
+    def request_restart(self, result):
         if self.is_printer_ready:
             self.respond_info("Preparing to restart...")
-            self.motor_heater_off()
+            self.toolhead.motor_off()
+            print_time = self.toolhead.get_last_move_time()
+            for heater in self.heaters:
+                if heater is not None:
+                    heater.set_temp(print_time, 0.)
+            if self.fan is not None:
+                self.fan.set_speed(print_time, 0.)
             self.toolhead.dwell(0.500)
             self.toolhead.wait_moves()
+        self.printer.request_exit(result)
     cmd_RESTART_when_not_ready = True
     cmd_RESTART_help = "Reload config file and restart host software"
     def cmd_RESTART(self, params):
-        self.prep_restart()
-        self.printer.request_exit('restart')
+        self.request_restart('restart')
     cmd_FIRMWARE_RESTART_when_not_ready = True
     cmd_FIRMWARE_RESTART_help = "Restart firmware, host, and reload config"
     def cmd_FIRMWARE_RESTART(self, params):
-        self.prep_restart()
-        self.printer.request_exit('firmware_restart')
+        self.request_restart('firmware_restart')
     cmd_ECHO_when_not_ready = True
     def cmd_ECHO(self, params):
         self.respond_info(params['#original'])

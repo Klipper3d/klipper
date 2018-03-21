@@ -10,6 +10,8 @@ class ad5206:
         printer = config.get_printer()
         enable_pin_params = pins.get_printer_pins(printer).lookup_pin(
             'digital_out', config.get('enable_pin'))
+        if enable_pin_params['invert']:
+            raise pins.error("ad5206 can not invert pin")
         self.mcu = enable_pin_params['chip']
         self.pin = enable_pin_params['pin']
         self.mcu.add_config_object(self)
@@ -26,5 +28,5 @@ class ad5206:
                 self.mcu.add_config_cmd(
                     "send_spi_message pin=%s msg=%02x%02x" % (self.pin, i, val))
 
-def load_config(config):
+def load_config_prefix(config):
     return ad5206(config)

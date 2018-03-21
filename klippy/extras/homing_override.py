@@ -36,6 +36,4 @@ class HomingOverride:
             self.in_script = False
 
 def load_config(config):
-    if config.get_name() != 'homing_override':
-        raise config.error("Invalid homing_override config name")
     return HomingOverride(config)

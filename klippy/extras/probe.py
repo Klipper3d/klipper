@@ -3,14 +3,27 @@
 # Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 import pins, homing
+
+HINT_TIMEOUT = """
+Make sure to home the printer before probing. If the probe
+did not move far enough to trigger, then consider reducing
+the Z axis minimum position so the probe can travel further
+(the Z minimum position can be negative).
+"""
 
 class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
-        self.z_position = config.getfloat('z_position', 0.)
+        self.z_offset = config.getfloat('z_offset')
+        # Infer Z position to move to during a probe
+        if config.has_section('stepper_z'):
+            zconfig = config.getsection('stepper_z')
+            self.z_position = zconfig.getfloat('position_min', 0.)
+        else:
+            pconfig = config.getsection('printer')
+            self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
         pin_params = ppins.lookup_pin('endstop', config.get('pin'))
@@ -22,6 +35,7 @@ class PrinterProbe:
             self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
         # Create z_virtual_endstop pin
         ppins.register_chip('probe', self)
+        self.z_virtual_endstop = None
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -41,7 +55,13 @@ class PrinterProbe:
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
-        return self.mcu_probe
+        self.z_virtual_endstop = ProbeVirtualEndstop(
+            self.printer, self.mcu_probe)
+        return self.z_virtual_endstop
+    def last_home_position(self):
+        if self.z_virtual_endstop is None:
+            return None
+        return self.z_virtual_endstop.position
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         toolhead = self.printer.lookup_object('toolhead')
@@ -52,7 +72,10 @@ class PrinterProbe:
             homing_state.homing_move(
                 pos, [(self.mcu_probe, "probe")], self.speed, probe_pos=True)
         except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
+            reason = str(e)
+            if "Timeout during endstop homing" in reason:
+                reason += HINT_TIMEOUT
+            raise self.gcode.error(reason)
         self.gcode.reset_last_position()
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, params):
@@ -86,6 +109,26 @@ class ProbeEndstopWrapper:
         self.gcode.run_script(self.deactivate_gcode)
         self.mcu_endstop.home_finalize()
 
+# Wrapper that records the last XY position of a virtual endstop probe
+class ProbeVirtualEndstop:
+    def __init__(self, printer, mcu_endstop):
+        self.printer = printer
+        self.mcu_endstop = mcu_endstop
+        self.position = None
+        # Wrappers
+        self.get_mcu = self.mcu_endstop.get_mcu
+        self.add_stepper = self.mcu_endstop.add_stepper
+        self.get_steppers = self.mcu_endstop.get_steppers
+        self.home_start = self.mcu_endstop.home_start
+        self.home_wait = self.mcu_endstop.home_wait
+        self.query_endstop = self.mcu_endstop.query_endstop
+        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
+        self.home_prepare = self.mcu_endstop.home_prepare
+        self.TimeoutError = self.mcu_endstop.TimeoutError
+    def home_finalize(self):
+        self.position = self.printer.lookup_object('toolhead').get_position()
+        self.mcu_endstop.home_finalize()
+
 # Helper code that can probe a series of points and report the
 # position at each point.
 class ProbePointsHelper:
@@ -95,6 +138,7 @@ class ProbePointsHelper:
         self.probe_points = probe_points
         self.horizontal_move_z = horizontal_move_z
         self.speed = speed
+        self.manual_probe = manual_probe
         self.callback = callback
         self.toolhead = self.printer.lookup_object('toolhead')
         self.results = []
@@ -135,43 +179,11 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            self.callback.finalize(self.results)
-
-# Helper code that implements coordinate descent
-def coordinate_descent(adj_params, params, error_func):
-    # Define potential changes
-    params = dict(params)
-    dp = {param_name: 1. for param_name in adj_params}
-    # Calculate the error
-    best_err = error_func(params)
-
-    threshold = 0.00001
-    rounds = 0
-
-    while sum(dp.values()) > threshold and rounds < 10000:
-        rounds += 1
-        for param_name in adj_params:
-            orig = params[param_name]
-            params[param_name] = orig + dp[param_name]
-            err = error_func(params)
-            if err < best_err:
-                # There was some improvement
-                best_err = err
-                dp[param_name] *= 1.1
-                continue
-            params[param_name] = orig - dp[param_name]
-            err = error_func(params)
-            if err < best_err:
-                # There was some improvement
-                best_err = err
-                dp[param_name] *= 1.1
-                continue
-            params[param_name] = orig
-            dp[param_name] *= 0.9
-    logging.debug("best_err: %s  rounds: %d", best_err, rounds)
-    return params
+            z_offset = 0.
+            if not self.manual_probe:
+                probe = self.printer.lookup_object('probe')
+                z_offset = probe.z_offset
+            self.callback.finalize(z_offset, self.results)
 
 def load_config(config):
-    if config.get_name() != 'probe':
-        raise config.error("Invalid probe config name")
     return PrinterProbe(config)

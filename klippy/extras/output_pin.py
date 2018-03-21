@@ -3,55 +3,46 @@
 # Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins
-
-
-######################################################################
-# Output pins
-######################################################################
-
-class PrinterStaticDigitalOut:
-    def __init__(self, printer, config):
-        pin_list = [pin.strip() for pin in config.get('pins').split(',')]
-        for pin_desc in pin_list:
-            mcu_pin = pins.setup_pin(printer, 'digital_out', pin_desc)
-            mcu_pin.setup_start_value(1, 1, True)
 
 PIN_MIN_TIME = 0.100
 
-class PrinterPin:
-    def __init__(self, printer, config):
-        self.printer = printer
-        self.is_pwm = 'pwm' in config.get_name().split()[0]
+class PrinterOutputPin:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        ppins = self.printer.lookup_object('pins')
+        self.is_pwm = config.getboolean('pwm', False)
         if self.is_pwm:
-            self.mcu_pin = pins.setup_pin(printer, 'pwm', config.get('pin'))
+            self.mcu_pin = ppins.setup_pin('pwm', config.get('pin'))
             cycle_time = config.getfloat('cycle_time', 0.100, above=0.)
             hardware_pwm = config.getboolean('hardware_pwm', False)
             self.mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.scale = config.getfloat('scale', 1., above=0.)
         else:
-            self.mcu_pin = pins.setup_pin(
-                printer, 'digital_out', config.get('pin'))
+            self.mcu_pin = ppins.setup_pin('digital_out', config.get('pin'))
             self.scale = 1.
         self.mcu_pin.setup_max_duration(0.)
         self.last_value_time = 0.
-        self.last_value = config.getfloat(
-            'value', 0., minval=0., maxval=self.scale) / self.scale
-        self.is_static = config.get_name().startswith('static_')
-        if self.is_static:
+        static_value = config.getfloat('static_value', None,
+                                       minval=0., maxval=self.scale)
+        if static_value is not None:
+            self.is_static = True
+            self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
+            self.is_static = False
+            self.last_value = config.getfloat(
+                'value', 0., minval=0., maxval=self.scale) / self.scale
             shutdown_value = config.getfloat(
                 'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
             self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
-        self.gcode = printer.lookup_object('gcode')
+        self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("SET_PIN", self.cmd_SET_PIN,
                                     desc=self.cmd_SET_PIN_help)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, params):
         pin_name = self.gcode.get_str('PIN', params)
-        pin = self.printer.lookup_object('pin ' + pin_name, None)
+        pin = self.printer.lookup_object('output_pin ' + pin_name, None)
         if pin is not self:
             if pin is None:
                 raise self.gcode.error("Pin not configured")
@@ -74,17 +65,5 @@ class PrinterPin:
         self.last_value = value
         self.last_value_time = print_time
 
-
-######################################################################
-# Setup
-######################################################################
-
-def add_printer_objects(printer, config):
-    for s in config.get_prefix_sections('static_digital_output '):
-        printer.add_object(s.section, PrinterStaticDigitalOut(printer, s))
-    for s in config.get_prefix_sections('digital_output '):
-        printer.add_object('pin' + s.section[14:], PrinterPin(printer, s))
-    for s in config.get_prefix_sections('static_pwm_output '):
-        printer.add_object('pin' + s.section[17:], PrinterPin(printer, s))
-    for s in config.get_prefix_sections('pwm_output '):
-        printer.add_object('pin' + s.section[10:], PrinterPin(printer, s))
+def load_config_prefix(config):
+    return PrinterOutputPin(config)
