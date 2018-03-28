@@ -83,8 +83,8 @@ The following standard commands are supported:
 
 ## Custom Pin Commands
 
-The following command is available when a "digital_output" or
-"pwm_output" config section is enabled:
+The following command is available when an "output_pin" config section
+is enabled:
 - `SET_PIN PIN=config_name VALUE=<value>`
 
 ## Servo Commands
@@ -124,7 +124,7 @@ section is enabled:
 
 ## Dual Carriages
 
-The following commands are available when the "dual_carriage" config
+The following command is available when the "dual_carriage" config
 section is enabled:
 - `SET_DUAL_CARRIAGE CARRIAGE=[0|1]`: This command will set the active
   carriage. It is typically invoked from the activate_gcode and
