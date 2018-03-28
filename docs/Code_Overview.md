@@ -29,6 +29,8 @@ files.
 The **scripts/** directory contains build-time scripts useful for
 compiling the micro-controller code.
 
+The **test/** directory contains automated test cases.
+
 During compilation, the build may create an **out/** directory. This
 contains temporary build time objects. The final micro-controller
 object that is built is **out/klipper.elf.hex** on AVR and
@@ -77,7 +79,7 @@ interrupts disabled.
 Much of the functionality of the micro-controller involves working
 with General-Purpose Input/Output pins (GPIO). In order to abstract
 the low-level architecture specific code from the high-level task
-code, all GPIO events are implemented in architectures specific
+code, all GPIO events are implemented in architecture specific
 wrappers (eg, **src/avr/gpio.c**). The code is compiled with gcc's
 "-flto -fwhole-program" optimization which does an excellent job of
 inlining functions across compilation units, so most of these tiny
@@ -211,6 +213,76 @@ movement. However, the only really interesting parts are in the
 ToolHead and kinematic classes. It's this part of the code which
 specifies the movements and their timings. The remaining parts of the
 processing is mostly just communication and plumbing.
+
+Adding a host module
+====================
+
+The Klippy host code has a dynamic module loading capability. If a
+config section named "[my_module]" is found in the printer config file
+then the software will automatically attempt to load the python module
+klippy/extras/my_module.py . This module system is the preferred
+method for adding new functionality to Klipper.
+
+The easiest way to add a new module is to use an existing module as a
+reference - see **klippy/extras/servo.py** as an example.
+
+The following may also be useful:
+* Execution of the module starts in the module level `load_config()`
+  function (for config sections of the form [my_module]) or in
+  `load_config_prefix()` (for config sections of the form
+  [my_module my_name]). This function is passed a "config" object and
+  it must return a new "printer object" associated with the given
+  config section.
+* During the process of instantiating a new printer object, the config
+  object can be used to read parameters from the given config
+  section. This is done using `config.get()`, `config.getfloat()`,
+  `config.getint()`, etc. methods. Be sure to read all values from the
+  config during the construction of the printer object - if the user
+  specifies a config parameter that is not read during this phase then
+  it will be assumed it is a typo in the config and an error will be
+  raised.
+* Use the `config.get_printer()` method to obtain a reference to the
+  main "printer" class. This "printer" class stores references to all
+  the "printer objects" that have been instantiated. Use the
+  `printer.lookup_object()` method to find references to other printer
+  objects. Almost all functionality (even core kinematic modules) are
+  encapsulated in one of these printer objects. Note, though, that
+  when a new module is instantiated, not all other printer objects
+  will have been instantiated. The "gcode" and "pins" modules will
+  always be available, but for other modules it is a good idea to
+  defer the lookup.
+* Define a `printer_state()` method if the code needs to be called
+  during printer setup and/or shutdown. This method is called twice
+  during setup (with "connect" and then "ready") and may also be
+  called at run-time (with "shutdown" or "disconnect"). It is common
+  to perform "printer object" lookup during the "connect" and "ready"
+  phases.
+* If there is an error in the user's config, be sure to raise it
+  during the `load_config()` or `printer_state("connect")` phases. Use
+  either `raise config.error("my error")` or `raise
+  printer.config_error("my error")` to report the error.
+* Use the "pins" module to configure a pin on a micro-controller. This
+  is typically done with something similar to
+  `printer.lookup_object("pins").setup_pin("pwm",
+  config.get("my_pin"))`. The returned object can then be commanded at
+  run-time.
+* If the module needs access to system timing or external file
+  descriptors then use `printer.get_reactor()` to obtain access to the
+  global "event reactor" class. This reactor class allows one to
+  schedule timers, wait for input on file descriptors, and to "sleep"
+  the host code.
+* Do not use global variables. All state should be stored in the
+  printer object returned from the `load_config()` function. This is
+  important as otherwise the RESTART command may not perform as
+  expected. Also, for similar reasons, if any external files (or
+  sockets) are opened then be sure to close them from the
+  `printer_state("disconnect")` callback.
+* Avoid accessing the internal member variables (or calling methods
+  that start with an underscore) of other printer objects. Observing
+  this convention makes it easier to manage future changes.
+* If submitting the module for inclusion in the main Klipper code, be
+  sure to place a copyright notice at the top of the module. See the
+  existing modules for the preferred format.
 
 Adding new kinematics
 =====================
