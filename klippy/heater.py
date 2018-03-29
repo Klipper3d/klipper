@@ -17,7 +17,8 @@ KELVIN_TO_CELCIUS = -273.15
 class Thermistor:
     def __init__(self, config, params):
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        # Calculate Steinhart-Hart coefficents from temp measurements
+        # Calculate Steinhart-Hart coefficents from temp measurements.
+        # Arrange samples as 3 linear equations and solve for c1, c2, and c3.
         inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
         inv_t2 = 1. / (params['t2'] - KELVIN_TO_CELCIUS)
         inv_t3 = 1. / (params['t3'] - KELVIN_TO_CELCIUS)
@@ -43,6 +44,7 @@ class Thermistor:
     def calc_adc(self, temp):
         inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
         if self.c3:
+            # Solve for ln_r using Cardano's formula
             y = (self.c1 - inv_t) / (2. * self.c3)
             x = math.sqrt((self.c2 / (3. * self.c3))**3 + y**2)
             ln_r = math.pow(x - y, 1./3.) - math.pow(x + y, 1./3.)
