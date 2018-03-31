@@ -36,6 +36,7 @@ MCU_PINS = {
     "at90usb1286": port_pins(6), "at90usb646": port_pins(6),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
+    "stm32f103": port_pins(5, 16),
     "pru": beaglebone_pins(),
     "linux": {"analog%d" % i: i for i in range(8)}, # XXX
 }
