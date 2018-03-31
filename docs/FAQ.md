@@ -1,17 +1,22 @@
 Frequently asked questions
 ==========================
 
-1. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
-2. [Where's my serial port?](#wheres-my-serial-port)
-3. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
-4. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
-5. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
-6. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
-7. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
-8. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
-9. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-10. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-11. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
+2. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
+3. [Where's my serial port?](#wheres-my-serial-port)
+4. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
+5. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
+6. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
+7. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
+8. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
+9. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
+10. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+11. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+12. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+
+### How can I donate to the project?
+
+Thanks. Kevin has a Patreon page at: https://www.patreon.com/koconnor
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
