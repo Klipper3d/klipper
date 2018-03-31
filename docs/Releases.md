@@ -1,6 +1,37 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.6.0
+=============
+
+Available on 20180331. Major changes in this release:
+* Enhanced heater and thermistor hardware failure checks
+* Support for Z probes
+* Initial support for automatic parameter calibration on deltas (via a
+  new delta_calibrate command)
+* Initial support for bed tilt compensation (via bed_tilt_calibrate
+  command)
+* Initial support for "safe homing" and homing overrides
+* Initial support for displaying status on RepRapDiscount style 2004
+  and 12864 displays
+* New multi-extruder improvements:
+  * Support for shared heaters
+  * Initial support for dual carriages
+* Support for configuring multiple steppers per axis (eg, dual Z)
+* Support for custom digital and pwm output pins (with a new SET_PIN command)
+* Initial support for a "virtual sdcard" that allows printing directly
+  from Klipper (helps on machines too slow to run OctoPrint well)
+* Support for setting different arm lengths on each tower of a delta
+* Support for G-Code M220/M221 commands (speed factor override /
+  extrude factor override)
+* Several documentation updates:
+  * Many new example config files for common off-the-shelf printers
+  * New multiple MCU config example
+  * New bltouch sensor config example
+  * New FAQ, config check, and G-Code documents
+* Initial support for continuous integration testing on all github commits
+* Several bug fixes and code cleanups
+
 Klipper 0.5.0
 =============
 
