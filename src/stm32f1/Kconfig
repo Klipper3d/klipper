@@ -1,0 +1,28 @@
+# Kconfig settings for STM32F1 processors
+
+if MACH_STM32F1
+
+config STM32F1_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+
+config BOARD_DIRECTORY
+    string
+    default "stm32f1"
+
+config CLOCK_FREQ
+    int
+    default 8000000 # 72000000 / 9
+
+config SERIAL
+    bool
+    default y
+
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port"
+    default 250000
+
+endif
