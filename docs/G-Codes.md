@@ -71,6 +71,9 @@ The following standard commands are supported:
   cycles. If the WRITE_FILE parameter is enabled, then the file
   /tmp/heattest.txt will be created with a log of all temperature
   samples taken during the test.
+- `SET_PRESSURE_ADVANCE [ADVANCE=<pressure_advance>]
+  [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
+  Set pressure advance parameters.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
