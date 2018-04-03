@@ -11,6 +11,7 @@ class BedTilt:
         self.printer = config.get_printer()
         self.x_adjust = config.getfloat('x_adjust', 0.)
         self.y_adjust = config.getfloat('y_adjust', 0.)
+        self.z_adjust = 0.
         if config.get('points', None) is not None:
             BedTiltCalibrate(config, self)
         self.toolhead = None
@@ -21,11 +22,11 @@ class BedTilt:
             self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
         x, y, z, e = self.toolhead.get_position()
-        return [x, y, z - x*self.x_adjust - y*self.y_adjust, e]
+        return [x, y, z - x*self.x_adjust - y*self.y_adjust - self.z_adjust, e]
     def move(self, newpos, speed):
         x, y, z, e = newpos
-        self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust, e],
-                           speed)
+        self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
+                            + self.z_adjust, e], speed)
 
 # Helper script to calibrate the bed tilt
 class BedTiltCalibrate:
@@ -84,7 +85,14 @@ class BedTiltCalibrate:
         for pos in positions:
             logging.info("orig: %s new: %s", adjusted_height(pos, params),
                          adjusted_height(pos, new_params))
+        # Update current bed_tilt calculations
+        bed_tilt = self.printer.lookup_object('bed_tilt')
+        bed_tilt.x_adjust = new_params['x_adjust']
+        bed_tilt.y_adjust = new_params['y_adjust']
         z_diff = new_params['z_adjust'] - z_offset
+        bed_tilt.z_adjust = z_diff
+        self.gcode.reset_last_position()
+        # Report results back to user
         if self.z_position_endstop is not None:
             # Cartesian style robot
             z_extra = ""
@@ -104,10 +112,11 @@ class BedTiltCalibrate:
             z_adjust = "Add %.6f to endstop position\n" % (-z_diff,)
         msg = "%sx_adjust: %.6f y_adjust: %.6f" % (
             z_adjust, new_params['x_adjust'], new_params['y_adjust'])
-        logging.info("bed_tilt_calibrate: %s", msg)
+        self.printer.set_rollover_info("bed_tilt", "bed_tilt: %s" % (msg,))
         self.gcode.respond_info(
-            "%s\nTo use these parameters, update the printer config file with\n"
-            "the above and then issue a RESTART command" % (msg,))
+            "%s\nThe above parameters have been applied to the current\n"
+            "session. Update the printer config file with the above to\n"
+            "use these settings in future sessions." % (msg,))
 
 def load_config(config):
     return BedTilt(config)
