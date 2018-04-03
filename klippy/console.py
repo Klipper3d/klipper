@@ -52,10 +52,16 @@ class KeyboardReader:
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
         self.ser.connect()
+        msgparser = self.ser.msgparser
+        self.output("Loaded %d commands (%s / %s)" % (
+            len(msgparser.messages_by_id),
+            msgparser.version, msgparser.build_versions))
+        self.output("MCU config: %s" % (" ".join(
+            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
-        self.mcu_freq = self.ser.msgparser.get_constant_float('CLOCK_FREQ')
-        mcu_type = self.ser.msgparser.get_constant('MCU')
+        self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
+        mcu_type = msgparser.get_constant('MCU')
         self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
         self.reactor.unregister_timer(self.connect_timer)
         self.output("="*20 + "       connected       " + "="*20)

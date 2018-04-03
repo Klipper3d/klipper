@@ -40,11 +40,12 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
         self.bg_thread.join()
     def set_rollover_info(self, name, info):
         self.rollover_info[name] = info
+    def clear_rollover_info(self):
+        self.rollover_info.clear()
     def doRollover(self):
         logging.handlers.TimedRotatingFileHandler.doRollover(self)
         lines = [self.rollover_info[name]
-                 for name in sorted(self.rollover_info)
-                 if self.rollover_info[name]]
+                 for name in sorted(self.rollover_info)]
         lines.append(
             "=============== Log rollover at %s ===============" % (
                 time.asctime(),))

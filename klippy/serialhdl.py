@@ -84,11 +84,6 @@ class SerialReader:
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
         self.register_callback(self.handle_unknown, '#unknown')
-        logging.info("Loaded %d commands (%s / %s)",
-                     len(msgparser.messages_by_id),
-                     msgparser.version, msgparser.build_versions)
-        logging.info("MCU config: %s", " ".join(
-            ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))
         # Setup baud adjust
         mcu_baud = msgparser.get_constant_float('SERIAL_BAUD', None)
         if mcu_baud is not None:

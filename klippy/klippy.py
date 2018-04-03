@@ -131,8 +131,6 @@ class Printer:
     def __init__(self, input_fd, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
-        if bglogger is not None:
-            bglogger.set_rollover_info("config", None)
         self.reactor = reactor.Reactor()
         gc = gcode.GCodeParser(self, input_fd)
         self.objects = collections.OrderedDict({'gcode': gc})
@@ -170,6 +168,7 @@ class Printer:
             return [self.objects[module_name]] + objs
         return objs
     def set_rollover_info(self, name, info):
+        logging.info(info)
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
     def _stats(self, eventtime, force_output=False):
@@ -355,16 +354,18 @@ def main():
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
     if bglogger is not None:
-        lines = ["Args: %s" % (sys.argv,),
-                 "Git version: %s" % (repr(start_args['software_version']),),
-                 "CPU: %s" % (util.get_cpu_info(),),
-                 "Python: %s" % (repr(sys.version),)]
-        lines = "\n".join(lines)
-        logging.info(lines)
-        bglogger.set_rollover_info('versions', lines)
+        versions = "\n".join([
+            "Args: %s" % (sys.argv,),
+            "Git version: %s" % (repr(start_args['software_version']),),
+            "CPU: %s" % (util.get_cpu_info(),),
+            "Python: %s" % (repr(sys.version),)])
+        logging.info(versions)
 
     # Start Printer() class
     while 1:
+        if bglogger is not None:
+            bglogger.clear_rollover_info()
+            bglogger.set_rollover_info('versions', versions)
         printer = Printer(input_fd, bglogger, start_args)
         res = printer.run()
         if res == 'exit':
