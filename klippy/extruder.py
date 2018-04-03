@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, heater, homing
+import stepper, homing
 
 EXTRUDE_DIFF_IGNORE = 1.02
 
@@ -13,10 +13,11 @@ class PrinterExtruder:
         self.printer = printer
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
+        pheater = printer.lookup_object('heater')
         if shared_heater is None:
-            self.heater = heater.PrinterHeater(printer, config)
+            self.heater = pheater.setup_heater(config)
         else:
-            self.heater = get_printer_heater(printer, shared_heater)
+            self.heater = pheater.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(printer, config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
@@ -274,12 +275,3 @@ def get_printer_extruders(printer):
             break
         out.append(extruder)
     return out
-
-def get_printer_heater(printer, name):
-    if name == 'heater_bed':
-        return printer.lookup_object(name)
-    if name == 'extruder':
-        name = 'extruder0'
-    if name.startswith('extruder'):
-        return printer.lookup_object(name).get_heater()
-    raise printer.config_error("Unknown heater '%s'" % (name,))

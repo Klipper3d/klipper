@@ -104,13 +104,14 @@ PWM_DELAY = REPORT_TIME + SAMPLE_TIME*SAMPLE_COUNT
 class error(Exception):
     pass
 
-class PrinterHeater:
+class Heater:
     error = error
-    def __init__(self, printer, config):
-        self.printer = printer
+    def __init__(self, config):
+        printer = config.get_printer()
         self.name = config.get_name()
-        sensor_params = config.getchoice('sensor_type', Sensors)
-        self.sensor = sensor_params['class'](config, sensor_params)
+        sensor_type = config.get('sensor_type')
+        pheater = printer.lookup_object('heater')
+        self.sensor = pheater.setup_sensor(sensor_type, config)
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.min_extrude_temp = config.getfloat(
@@ -278,7 +279,42 @@ class ControlPID:
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 
+
+######################################################################
+# Sensor and heater lookup
+######################################################################
+
+class PrinterHeaters:
+    def __init__(self, printer, config):
+        self.printer = printer
+        self.sensors = {}
+        self.heaters = {}
+    def add_sensor(self, sensor_type, params):
+        self.sensors[sensor_type] = params
+    def setup_sensor(self, sensor_type, config):
+        if sensor_type not in self.sensors:
+            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
+                sensor_type,))
+        params = self.sensors[sensor_type]
+        return params['class'](config, params)
+    def setup_heater(self, config):
+        heater_name = config.get_name()
+        if heater_name == 'extruder':
+            heater_name = 'extruder0'
+        if heater_name in self.heaters:
+            raise config.error("Heater %s already registered" % (heater_name,))
+        self.heaters[heater_name] = heater = Heater(config)
+        return heater
+    def lookup_heater(self, heater_name):
+        if heater_name == 'extruder':
+            heater_name = 'extruder0'
+        if heater_name not in self.heaters:
+            raise self.printer.config_error(
+                "Unknown heater '%s'" % (heater_name,))
+        return self.heaters[heater_name]
+
 def add_printer_objects(printer, config):
-    if config.has_section('heater_bed'):
-        printer.add_object('heater_bed', PrinterHeater(
-            printer, config.getsection('heater_bed')))
+    ph = PrinterHeaters(printer, config)
+    printer.add_object('heater', ph)
+    for sensor_type, params in Sensors.items():
+        ph.add_sensor(sensor_type, params)

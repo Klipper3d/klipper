@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import extruder, heater
+import heater
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -18,8 +18,9 @@ class PIDCalibrate:
         heater_name = self.gcode.get_str('HEATER', params)
         target = self.gcode.get_float('TARGET', params)
         write_file = self.gcode.get_int('WRITE_FILE', params, 0)
+        pheater = self.printer.lookup_object('heater')
         try:
-            heater = extruder.get_printer_heater(self.printer, heater_name)
+            heater = pheater.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise self.gcode.error(str(e))
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
