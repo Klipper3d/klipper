@@ -11,6 +11,7 @@ EXTRUDE_DIFF_IGNORE = 1.02
 class PrinterExtruder:
     def __init__(self, printer, config):
         self.printer = printer
+        self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
         if shared_heater is None:
             self.heater = heater.PrinterHeater(printer, config)
@@ -232,11 +233,12 @@ class PrinterExtruder:
         if 'ADVANCE_LOOKAHEAD_TIME' in params:
             v = gcode.get_float('ADVANCE_LOOKAHEAD_TIME', params)
             self.pressure_advance_lookahead_time = v if v > 0. else 0.
-        gcode.respond_info(
-            "pressure_advance: %.6f\n"
-            "pressure_advance_lookahead_time: %.6f\n" % (
+        msg = ("pressure_advance: %.6f\n"
+               "pressure_advance_lookahead_time: %.6f\n" % (
                 self.pressure_advance,
                 self.pressure_advance_lookahead_time))
+        self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
+        gcode.respond_info(msg)
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
