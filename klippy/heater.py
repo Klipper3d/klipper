@@ -12,10 +12,16 @@ import math, logging, threading
 
 KELVIN_TO_CELCIUS = -273.15
 
-# Thermistor calibrated with three temp measurements
+# Analog voltage to temperature converter for thermistors
 class Thermistor:
     def __init__(self, config, params):
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        self.c1 = self.c2 = self.c3 = 0.
+        if 'beta' in params:
+            self.calc_coefficients_beta(params)
+        else:
+            self.calc_coefficients(params)
+    def calc_coefficients(self, params):
         # Calculate Steinhart-Hart coefficents from temp measurements.
         # Arrange samples as 3 linear equations and solve for c1, c2, and c3.
         inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
@@ -34,6 +40,13 @@ class Thermistor:
                    / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
         self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
+    def calc_coefficients_beta(self, params):
+        # Calculate equivalent Steinhart-Hart coefficents from beta
+        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
+        ln_r1 = math.log(params['r1'])
+        self.c3 = 0.
+        self.c2 = 1. / params['beta']
+        self.c1 = inv_t1 - self.c2 * ln_r1
     def calc_temp(self, adc):
         adc = max(.00001, min(.99999, adc))
         r = self.pullup * adc / (1.0 - adc)
@@ -51,17 +64,6 @@ class Thermistor:
             ln_r = (inv_t - self.c1) / self.c2
         r = math.exp(ln_r)
         return r / (self.pullup + r)
-
-# Thermistor calibrated from one temp measurement and its beta
-class ThermistorBeta(Thermistor):
-    def __init__(self, config, params):
-        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        # Calculate Steinhart-Hart coefficents from beta
-        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
-        ln_r1 = math.log(params['r1'])
-        self.c3 = 0.
-        self.c2 = 1. / params['beta']
-        self.c1 = inv_t1 - self.c2 * ln_r1
 
 # Linear style conversion chips calibrated with two temp measurements
 class Linear:
@@ -84,7 +86,7 @@ Sensors = {
         'class': Thermistor, 't1': 20., 'r1': 126800.,
         't2': 150., 'r2': 1360., 't3': 300., 'r3': 80.65 },
     "NTC 100K beta 3950": {
-        'class': ThermistorBeta, 't1': 25., 'r1': 100000., 'beta': 3950. },
+        'class': Thermistor, 't1': 25., 'r1': 100000., 'beta': 3950. },
     "AD595": { 'class': Linear, 't1': 25., 'v1': .25, 't2': 300., 'v2': 3.022 },
 }
 
