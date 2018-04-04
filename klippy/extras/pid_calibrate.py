@@ -59,7 +59,7 @@ class ControlAutoTune:
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
-            self.pwm_samples.append((read_time + heater.PWM_DELAY, value))
+            self.pwm_samples.append((read_time + self.heater.pwm_delay, value))
             self.last_pwm = value
         self.heater.set_pwm(read_time, value)
     def temperature_callback(self, read_time, temp):
