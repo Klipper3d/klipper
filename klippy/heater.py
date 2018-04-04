@@ -11,11 +11,18 @@ import math, logging, threading
 ######################################################################
 
 KELVIN_TO_CELCIUS = -273.15
+SAMPLE_TIME = 0.001
+SAMPLE_COUNT = 8
+REPORT_TIME = 0.300
 
 # Analog voltage to temperature converter for thermistors
 class Thermistor:
     def __init__(self, config, params):
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        ppins = config.get_printer().lookup_object('pins')
+        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
+        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        self.temperature_callback = None
         self.c1 = self.c2 = self.c3 = 0.
         if 'beta' in params:
             self.calc_coefficients_beta(params)
@@ -47,12 +54,20 @@ class Thermistor:
         self.c3 = 0.
         self.c2 = 1. / params['beta']
         self.c1 = inv_t1 - self.c2 * ln_r1
-    def calc_temp(self, adc):
-        adc = max(.00001, min(.99999, adc))
+    def setup_minmax(self, min_temp, max_temp):
+        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range))
+    def setup_callback(self, temperature_callback):
+        self.temperature_callback = temperature_callback
+    def adc_callback(self, read_time, read_value):
+        # Calculate temperature from adc
+        adc = max(.00001, min(.99999, read_value))
         r = self.pullup * adc / (1.0 - adc)
         ln_r = math.log(r)
         inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
-        return 1.0/inv_t + KELVIN_TO_CELCIUS
+        temp = 1.0/inv_t + KELVIN_TO_CELCIUS
+        self.temperature_callback(read_time, temp)
     def calc_adc(self, temp):
         inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
         if self.c3:
@@ -69,11 +84,22 @@ class Thermistor:
 class Linear:
     def __init__(self, config, params):
         adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
+        ppins = config.get_printer().lookup_object('pins')
+        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
+        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        self.temperature_callback = None
         slope = (params['t2'] - params['t1']) / (params['v2'] - params['v1'])
         self.gain = adc_voltage * slope
         self.offset = params['t1'] - params['v1'] * slope
-    def calc_temp(self, adc):
-        return adc * self.gain + self.offset
+    def setup_minmax(self, min_temp, max_temp):
+        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range))
+    def setup_callback(self, temperature_callback):
+        self.temperature_callback = temperature_callback
+    def adc_callback(self, read_time, read_value):
+        temp = read_value * self.gain + self.offset
+        self.temperature_callback(read_time, temp)
     def calc_adc(self, temp):
         return (temp - self.offset) / self.gain
 
@@ -95,9 +121,6 @@ Sensors = {
 # Heater
 ######################################################################
 
-SAMPLE_TIME = 0.001
-SAMPLE_COUNT = 8
-REPORT_TIME = 0.300
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -108,14 +131,14 @@ class error(Exception):
 
 class Heater:
     error = error
-    def __init__(self, config):
-        printer = config.get_printer()
+    def __init__(self, config, sensor):
+        self.sensor = sensor
         self.name = config.get_name()
-        sensor_type = config.get('sensor_type')
-        pheater = printer.lookup_object('heater')
-        self.sensor = pheater.setup_sensor(sensor_type, config)
+        printer = config.get_printer()
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.sensor.setup_minmax(self.min_temp, self.max_temp)
+        self.sensor.setup_callback(self.temperature_callback)
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
@@ -135,13 +158,7 @@ class Heater:
                 'pwm_cycle_time', 0.100, above=0., maxval=REPORT_TIME)
             self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
-        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
-        adc_range = [self.sensor.calc_adc(self.min_temp),
-                     self.sensor.calc_adc(self.max_temp)]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range))
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        is_fileoutput = self.mcu_adc.get_mcu().is_fileoutput()
+        is_fileoutput = self.mcu_pwm.get_mcu().is_fileoutput()
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.control = algo(self, config)
         # pwm caching
@@ -164,14 +181,13 @@ class Heater:
                       self.name, value, pwm_time,
                       self.last_temp, self.last_temp_time, self.target_temp)
         self.mcu_pwm.set_pwm(pwm_time, value)
-    def adc_callback(self, read_time, read_value):
-        temp = self.sensor.calc_temp(read_value)
+    def temperature_callback(self, read_time, temp):
         with self.lock:
             self.last_temp = temp
             self.last_temp_time = read_time
             self.can_extrude = (temp >= self.min_extrude_temp)
-            self.control.adc_callback(read_time, temp)
-        #logging.debug("temp: %.3f %f = %f", read_time, read_value, temp)
+            self.control.temperature_callback(read_time, temp)
+        #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def set_temp(self, print_time, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
@@ -180,7 +196,7 @@ class Heater:
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
-        print_time = self.mcu_adc.get_mcu().estimated_print_time(eventtime) - 5.
+        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
@@ -218,7 +234,7 @@ class ControlBangBang:
         self.heater = heater
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
-    def adc_callback(self, read_time, temp):
+    def temperature_callback(self, read_time, temp):
         if self.heating and temp >= self.heater.target_temp+self.max_delta:
             self.heating = False
         elif not self.heating and temp <= self.heater.target_temp-self.max_delta:
@@ -251,7 +267,7 @@ class ControlPID:
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
-    def adc_callback(self, read_time, temp):
+    def temperature_callback(self, read_time, temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
@@ -293,19 +309,19 @@ class PrinterHeaters:
         self.heaters = {}
     def add_sensor(self, sensor_type, params):
         self.sensors[sensor_type] = params
-    def setup_sensor(self, sensor_type, config):
-        if sensor_type not in self.sensors:
-            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
-                sensor_type,))
-        params = self.sensors[sensor_type]
-        return params['class'](config, params)
     def setup_heater(self, config):
         heater_name = config.get_name()
         if heater_name == 'extruder':
             heater_name = 'extruder0'
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
-        self.heaters[heater_name] = heater = Heater(config)
+        sensor_type = config.get('sensor_type')
+        if sensor_type not in self.sensors:
+            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
+                sensor_type,))
+        params = self.sensors[sensor_type]
+        sensor = params['class'](config, params)
+        self.heaters[heater_name] = heater = Heater(config, sensor)
         return heater
     def lookup_heater(self, heater_name):
         if heater_name == 'extruder':
