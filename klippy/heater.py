@@ -121,10 +121,10 @@ class PrinterHeater:
         self.last_temp = 0.
         self.last_temp_time = 0.
         self.target_temp = 0.
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID, 'deadtime': ControlDeadTime}
         algo = config.getchoice('control', algos)
         heater_pin = config.get('heater_pin')
-        if algo is ControlBangBang and self.max_power == 1.:
+        if (algo is ControlBangBang or algo is ControlDeadTime) and self.max_power == 1.:
             self.mcu_pwm = pins.setup_pin(printer, 'digital_out', heater_pin)
         else:
             self.mcu_pwm = pins.setup_pin(printer, 'pwm', heater_pin)
@@ -226,6 +226,45 @@ class ControlBangBang:
             self.heater.set_pwm(read_time, 0.)
     def check_busy(self, eventtime):
         return self.heater.last_temp < self.heater.target_temp-self.max_delta
+
+
+######################################################################
+# Dead Time control algo
+######################################################################
+
+class ControlDeadTime:
+
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.dead_time = config.getfloat('dt_deadtime', 5.0, above = 0.1)  # dead time defined in seconds 
+        self.min_deriv_time = config.getfloat('dt_deriv_time', self.dead_time/10, above=0.) # only check every this many seconds, 0 is good too
+        self.heating = False
+        self.delta_temp = 0.
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        
+    def adc_callback(self, read_time, temp):
+        if read_time < self.prev_temp_time + self.min_deriv_time:
+            return
+        self.delta_temp = self.dead_time * (temp - self.prev_temp)/(read_time - self.prev_temp_time)
+        projected_temp = temp + self.delta_temp
+        if self.heating and projected_temp >= self.heater.target_temp:
+            self.heating = False
+        elif not self.heating and projected_temp <= self.heater.target_temp:
+            self.heating = True
+        if self.heating:
+            self.heater.set_pwm(read_time, self.heater.max_power)
+        else:
+            self.heater.set_pwm(read_time, 0.)
+        #logging.debug("curr_temp=%7.2f delta_temp=%7.2f projected_temp=%7.2f heater=%1.0f",
+        #    temp, self.delta_temp, projected_temp, self.heating)
+
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        
+    def check_busy(self, eventtime):
+        temp_diff = self.heater.target_temp - self.heater.last_temp
+        return abs(temp_diff) >= self.delta_temp;
 
 
 ######################################################################
