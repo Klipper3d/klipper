@@ -3,7 +3,6 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins
 
 FAN_MIN_TIME = 0.100
 
@@ -13,8 +12,8 @@ class PrinterFan:
         self.last_fan_time = 0.
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1, minval=0.)
-        printer = config.get_printer()
-        self.mcu_fan = pins.setup_pin(printer, 'pwm', config.get('pin'))
+        ppins = config.get_printer().lookup_object('pins')
+        self.mcu_fan = ppins.setup_pin('pwm', config.get('pin'))
         self.mcu_fan.setup_max_duration(0.)
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)

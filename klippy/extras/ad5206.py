@@ -3,15 +3,14 @@
 # Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins
 
 class ad5206:
     def __init__(self, config):
-        printer = config.get_printer()
-        enable_pin_params = pins.get_printer_pins(printer).lookup_pin(
-            'digital_out', config.get('enable_pin'))
+        ppins = config.get_printer().lookup_object('pins')
+        enable_pin = config.get('enable_pin')
+        enable_pin_params = ppins.lookup_pin('digital_out', enable_pin)
         if enable_pin_params['invert']:
-            raise pins.error("ad5206 can not invert pin")
+            raise ppins.error("ad5206 can not invert pin")
         self.mcu = enable_pin_params['chip']
         self.pin = enable_pin_params['pin']
         self.mcu.add_config_object(self)

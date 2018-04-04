@@ -425,7 +425,7 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         # Config building
-        pins.get_printer_pins(printer).register_chip(self._name, self)
+        printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_objects = []
         self._init_cmds = []

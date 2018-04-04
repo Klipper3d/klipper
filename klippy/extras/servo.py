@@ -3,7 +3,6 @@
 # Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins
 
 SERVO_SIGNAL_PERIOD = 0.020
 PIN_MIN_TIME = 0.100
@@ -11,7 +10,8 @@ PIN_MIN_TIME = 0.100
 class PrinterServo:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mcu_servo = pins.setup_pin(self.printer, 'pwm', config.get('pin'))
+        ppins = self.printer.lookup_object('pins')
+        self.mcu_servo = ppins.setup_pin('pwm', config.get('pin'))
         self.mcu_servo.setup_max_duration(0.)
         self.mcu_servo.setup_cycle_time(SERVO_SIGNAL_PERIOD)
         self.min_width = config.getfloat(

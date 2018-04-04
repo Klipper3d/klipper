@@ -120,13 +120,14 @@ ReplicapeStepConfig = {
 class Replicape:
     def __init__(self, config):
         printer = config.get_printer()
-        pins.get_printer_pins(printer).register_chip('replicape', self)
+        ppins = printer.lookup_object('pins')
+        ppins.register_chip('replicape', self)
         revisions = {'B3': 'B3'}
         config.getchoice('revision', revisions)
         self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
         # Setup enable pin
-        self.mcu_pwm_enable = pins.setup_pin(
-            printer, 'digital_out', config.get('enable_pin', '!P9_41'))
+        enable_pin = config.get('enable_pin', '!P9_41')
+        self.mcu_pwm_enable = ppins.setup_pin('digital_out', enable_pin)
         self.mcu_pwm_enable.setup_max_duration(0.)
         self.mcu_pwm_start_value = self.mcu_pwm_shutdown_value = False
         # Setup power pins

@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, threading
-import pins
 
 
 ######################################################################
@@ -124,15 +123,16 @@ class PrinterHeater:
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         heater_pin = config.get('heater_pin')
+        ppins = printer.lookup_object('pins')
         if algo is ControlBangBang and self.max_power == 1.:
-            self.mcu_pwm = pins.setup_pin(printer, 'digital_out', heater_pin)
+            self.mcu_pwm = ppins.setup_pin('digital_out', heater_pin)
         else:
-            self.mcu_pwm = pins.setup_pin(printer, 'pwm', heater_pin)
+            self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
             pwm_cycle_time = config.getfloat(
                 'pwm_cycle_time', 0.100, above=0., maxval=REPORT_TIME)
             self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
-        self.mcu_adc = pins.setup_pin(printer, 'adc', config.get('sensor_pin'))
+        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         adc_range = [self.sensor.calc_adc(self.min_temp),
                      self.sensor.calc_adc(self.max_temp)]
         self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
