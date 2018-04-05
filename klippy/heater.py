@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import math, logging, threading
 
 
 ######################################################################
@@ -48,7 +48,8 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = { 'watermark': ControlBangBang, 'pid': ControlPID,
+                  'fopdt': ControlFOPDT }
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -76,7 +77,7 @@ class Heater:
         if ((read_time < self.next_pwm_time or not self.last_pwm_value)
             and abs(value - self.last_pwm_value) < 0.05):
             # No significant change in value - can suppress update
-            return
+            return 0., self.last_pwm_value
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
@@ -84,6 +85,7 @@ class Heater:
                       self.name, value, pwm_time,
                       self.last_temp, self.last_temp_time, self.target_temp)
         self.mcu_pwm.set_pwm(pwm_time, value)
+        return pwm_time, value
     def temperature_callback(self, read_time, temp):
         with self.lock:
             time_diff = read_time - self.last_temp_time
@@ -222,6 +224,131 @@ class ControlPID:
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
+
+######################################################################
+# First Order Plus Delay Time (FOPDT) model
+######################################################################
+
+# The key idea of a First Order model is that future temperatures can be
+# estimated with the following formula:
+#  new_temp = (prev_temp * exp(-time_diff / time_constant)
+#              + gain * heater_pwm * (1 - exp(-time_diff / time_constant)))
+# Where new_temp and old_temp are relative to the ambient temperature.
+# The First Order Plus Delay Time model adds a delay parameter which
+# specifies the time delay between changes to the heater_pwm and when
+# its effect becomes apparent in measured temperatures. This delay is
+# modeled as a smoothing of the first order model temperature over the
+# delay time.
+
+INV_AMBIENT_SMOOTH = 1. / 8.
+MIN_AMBIENT = 0.
+INV_TEMP_SMOOTH = 1. / 2.
+
+class ControlFOPDT:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        # Model config (gain, time_constant, delay_time)
+        self.gain = config.getfloat('gain', above=0.)
+        self.inv_gain = 1. / self.gain
+        time_constant = config.getfloat('time_constant', above=0.)
+        self.inv_time_constant = 1. / time_constant
+        delay = config.getfloat('delay_time', above=0.)
+        self.inv_delay = 1. / delay
+        # Initial temperature check
+        self.first_set_temp = True
+        self.start_time = self.printer.get_reactor().monotonic()
+        # Model calculations
+        self.last_pwm_time = self.next_pwm_time = self.last_model_time = 0.
+        self.last_pwm = self.next_pwm = 0.
+        self.model_temp = self.last_model_temp = self.model_smooth_temp = 0.
+        # Ambient calculations
+        self.smooth_ambient = AMBIENT_TEMP
+        self.did_fault = False
+        # Proportional only control
+        self.Kp = .7 * time_constant * self.inv_gain
+        logging.debug("%s: kp=%.3f", heater.name, self.Kp)
+        # check_busy temperature slope detection
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.temp_slope = 0.
+    # Model updating
+    def calc_model_temp(self, read_time):
+        time_diff = read_time - self.last_pwm_time
+        tc_factor = math.exp(-time_diff * self.inv_time_constant)
+        return (self.model_temp * tc_factor
+                + self.gain * self.last_pwm * (1. - tc_factor))
+    def note_temperature(self, read_time, temp, target_temp):
+        # Update internal model (based solely on history of PWM output)
+        if self.last_pwm != self.next_pwm and read_time > self.next_pwm_time:
+            self.model_temp = self.calc_model_temp(self.next_pwm_time)
+            self.last_pwm = self.next_pwm
+            self.last_pwm_time = self.next_pwm_time
+        self.last_model_temp = model_temp = self.calc_model_temp(read_time)
+        time_diff = read_time - self.last_model_time
+        self.last_model_time = read_time
+        smooth_factor = 1. - math.exp(-time_diff * self.inv_delay)
+        self.model_smooth_temp += (
+            model_temp - self.model_smooth_temp) * smooth_factor
+        # Determine the ambient temperature that would make the model match
+        ambient = temp - self.model_smooth_temp
+        ambient_factor = 1. - math.exp(-time_diff * INV_AMBIENT_SMOOTH)
+        self.smooth_ambient += (ambient - self.smooth_ambient) * ambient_factor
+        # Validate calculated ambient is sane
+        if (self.smooth_ambient < MIN_AMBIENT and not self.did_fault
+            and temp <= target_temp):
+            logging.error("Heater %s not heating at expected rate"
+                          " (model=%.3f ambient=%.3f temp=%.3f)",
+                          self.name, self.model_smooth_temp,
+                          self.smooth_ambient, temp)
+            self.did_fault = True
+    def set_pwm(self, read_time, value):
+        pwm_time, value = self.heater.set_pwm(read_time, value)
+        if self.last_pwm != self.next_pwm:
+            self.model_temp = self.calc_model_temp(self.next_pwm_time)
+            self.last_pwm = self.next_pwm
+            self.last_pwm_time = self.next_pwm_time
+        self.next_pwm_time = pwm_time
+        self.next_pwm = value
+    def note_first_temp(self):
+        self.first_set_temp = False
+        curtime = self.printer.get_reactor().monotonic()
+        if curtime >= self.start_time + 5. / self.inv_time_constant:
+            return
+        # Assume excess ambient temperature is from previous session
+        delta = self.smooth_ambient - AMBIENT_TEMP
+        if delta <= 0.:
+            return
+        self.model_temp += delta
+        self.model_smooth_temp += delta
+        self.smooth_ambient -= delta
+        self.last_pwm_time = self.last_model_time
+        logging.info("Adjusting %s model temperature by %.3f", self.name, delta)
+    # Control callbacks
+    def temperature_update(self, read_time, temp, target_temp):
+        if target_temp and self.first_set_temp:
+            self.note_first_temp()
+        self.note_temperature(read_time, temp, target_temp)
+        # Calculate temperature slope
+        time_diff = read_time - self.prev_temp_time
+        temp_diff = temp - self.prev_temp
+        self.prev_temp = temp
+        smooth_factor = 1. - math.exp(-time_diff * INV_TEMP_SMOOTH)
+        self.temp_slope += (temp_diff - self.temp_slope) * smooth_factor
+        # Calculate new output
+        adj_target_temp = target_temp - self.smooth_ambient
+        bias = adj_target_temp * self.inv_gain
+        temp_err = adj_target_temp - self.last_model_temp
+        bounded_co = max(0., min(self.heater_max_power,
+                                 bias + self.Kp*temp_err))
+        self.set_pwm(read_time, bounded_co)
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.temp_slope) > PID_SETTLE_SLOPE)
 
 
 ######################################################################
