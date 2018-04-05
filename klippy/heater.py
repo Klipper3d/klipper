@@ -65,6 +65,7 @@ class Heater:
         # Load additional modules
         self.printer.try_load_module(config, "verify_heater %s" % (self.name,))
         self.printer.try_load_module(config, "pid_calibrate")
+        self.printer.try_load_module(config, "heater_calibrate")
         self.gcode.register_mux_command(
             "SET_HEATER_TEMPERATURE", "HEATER", self.name,
             self.cmd_SET_HEATER_TEMPERATURE,
