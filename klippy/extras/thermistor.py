@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
+import math, logging
 
 KELVIN_TO_CELCIUS = -273.15
 SAMPLE_TIME = 0.001
@@ -13,6 +13,7 @@ REPORT_TIME = 0.300
 # Analog voltage to temperature converter for thermistors
 class Thermistor:
     def __init__(self, config, params):
+        self.name = config.get_name()
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
@@ -20,7 +21,7 @@ class Thermistor:
         self.temperature_callback = None
         self.c1 = self.c2 = self.c3 = 0.
         if 'beta' in params:
-            self.calc_coefficients_beta(params)
+            self.calc_coefficients_beta(params, params['beta'])
         else:
             self.calc_coefficients(params)
     def calc_coefficients(self, params):
@@ -40,14 +41,20 @@ class Thermistor:
 
         self.c3 = ((inv_t12 - inv_t13 * ln_r12 / ln_r13)
                    / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
+        if self.c3 <= 0.:
+            beta = ln_r13 / inv_t13
+            logging.warn("Using thermistor beta %.3f in heater %s",
+                         beta, self.name)
+            self.calc_coefficients_beta(params, beta)
+            return
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
         self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
-    def calc_coefficients_beta(self, params):
+    def calc_coefficients_beta(self, params, beta):
         # Calculate equivalent Steinhart-Hart coefficents from beta
         inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
         ln_r1 = math.log(params['r1'])
         self.c3 = 0.
-        self.c2 = 1. / params['beta']
+        self.c2 = 1. / beta
         self.c1 = inv_t1 - self.c2 * ln_r1
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
