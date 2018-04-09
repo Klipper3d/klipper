@@ -77,6 +77,27 @@ class Thermistor:
         r = math.exp(ln_r)
         return r / (self.pullup + r)
 
+# Custom defined thermistors from the config file
+class CustomThermistor:
+    def __init__(self, config):
+        self.name = " ".join(config.get_name().split()[1:])
+        t1 = config.getfloat("temperature1", minval=KELVIN_TO_CELCIUS)
+        r1 = config.getfloat("resistance1", minval=0.)
+        beta = config.getfloat("beta", None, above=0.)
+        if beta is not None:
+            self.params = {'t1': t1, 'r1': r1, 'beta': beta}
+            return
+        t2 = config.getfloat("temperature2", minval=KELVIN_TO_CELCIUS)
+        r2 = config.getfloat("resistance2", minval=0.)
+        t3 = config.getfloat("temperature3", minval=KELVIN_TO_CELCIUS)
+        r3 = config.getfloat("resistance3", minval=0.)
+        (t1, r1), (t2, r2), (t3, r3) = sorted([(t1, r1), (t2, r2), (t3, r3)])
+        self.params = {'t1': t1, 'r1': r1, 't2': t2, 'r2': r2,
+                       't3': t3, 'r3': r3}
+    def create(self, config):
+        return Thermistor(config, self.params)
+
+# Default sensors
 Sensors = {
     "EPCOS 100K B57560G104F": {
         't1': 25., 'r1': 100000., 't2': 150., 'r2': 1641.9,
@@ -93,3 +114,8 @@ def load_config(config):
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: Thermistor(config, params))
         pheater.add_sensor(sensor_type, func)
+
+def load_config_prefix(config):
+    thermistor = CustomThermistor(config)
+    pheater = config.get_printer().lookup_object("heater")
+    pheater.add_sensor(thermistor.name, thermistor.create)
