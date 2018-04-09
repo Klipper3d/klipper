@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging, bisect
 
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
@@ -11,14 +12,41 @@ REPORT_TIME = 0.300
 # Linear style conversion chips calibrated with two temp measurements
 class Linear:
     def __init__(self, config, params):
-        adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
         self.temperature_callback = None
-        slope = (params['t2'] - params['t1']) / (params['v2'] - params['v1'])
-        self.gain = adc_voltage * slope
-        self.offset = params['t1'] - params['v1'] * slope
+        self.adc_samples = []
+        self.slope_samples = []
+        self.calc_coefficients(config, params)
+    def calc_coefficients(self, config, params):
+        adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
+        last_volt = last_temp = None
+        for volt, temp in sorted([(v, t) for t, v in params]):
+            adc = volt / adc_voltage
+            if adc < 0. or adc > 1.:
+                logging.warn("Ignoring adc sample %.3f/%.3f in heater %s",
+                             temp, volt, config.get_name())
+                continue
+            if last_volt is None:
+                last_volt = volt
+                last_temp = temp
+                continue
+            if volt <= last_volt:
+                raise config.error("adc_temperature duplicate voltage")
+            slope = (temp - last_temp) / (volt - last_volt)
+            gain = adc_voltage * slope
+            offset = last_temp - last_volt * slope
+            if self.slope_samples and self.slope_samples[-1] == (gain, offset):
+                continue
+            last_temp = temp
+            last_volt = volt
+            self.adc_samples.append(adc)
+            self.slope_samples.append((gain, offset))
+        if not self.adc_samples:
+            raise config.error(
+                "adc_temperature needs two volt and temperature measurements")
+        self.adc_samples[-1] = 1.
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
@@ -28,18 +56,34 @@ class Linear:
     def get_report_time_delta(self):
         return REPORT_TIME
     def adc_callback(self, read_time, read_value):
-        temp = read_value * self.gain + self.offset
+        pos = bisect.bisect(self.adc_samples, read_value)
+        gain, offset = self.slope_samples[pos]
+        temp = read_value * gain + offset
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def calc_adc(self, temp):
-        return (temp - self.offset) / self.gain
+        temps = [adc * gain + offset for adc, (gain, offset) in zip(
+            self.adc_samples, self.slope_samples)]
+        if temps[0] < temps[-1]:
+            pos = min([i for i in range(len(temps)) if temps[i] >= temp]
+                      + [len(temps) - 1])
+        else:
+            pos = min([i for i in range(len(temps)) if temps[i] <= temp]
+                      + [len(temps) - 1])
+        gain, offset = self.slope_samples[pos]
+        return (temp - offset) / gain
 
-Sensors = {
-    "AD595": { 't1': 25., 'v1': .25, 't2': 300., 'v2': 3.022 },
-}
+AD595 = [
+    (0., .0027), (10., .101), (20., .200), (25., .250), (30., .300), (40., .401),
+    (50., .503), (60., .605), (80., .810), (100., 1.015), (120., 1.219),
+    (140., 1.420), (160., 1.620), (180., 1.817), (200., 2.015), (220., 2.213),
+    (240., 2.413), (260., 2.614), (280., 2.817), (300., 3.022), (320., 3.227),
+    (340., 3.434), (360., 3.641), (380., 3.849), (400., 4.057), (420., 4.266),
+    (440., 4.476), (460., 4.686), (480., 4.896)
+]
 
 def load_config(config):
     # Register default sensors
     pheater = config.get_printer().lookup_object("heater")
-    for sensor_type, params in Sensors.items():
+    for sensor_type, params in [("AD595", AD595)]:
         func = (lambda config, params=params: Linear(config, params))
         pheater.add_sensor(sensor_type, func)
