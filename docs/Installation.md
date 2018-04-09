@@ -17,7 +17,7 @@ Raspberry Pi computer. Use OctoPi v0.14.0 or later - see the
 [octopi releases](https://github.com/guysoft/OctoPi/releases) for
 release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
-page, follow the prompt to upgrade OctoPrint to v1.3.5 or later.
+page, follow the prompt to upgrade OctoPrint to v1.3.7 or later.
 
 After installing OctoPi and upgrading OctoPrint, it will be necessary
 to ssh into the target machine to run a handful of system commands. If
@@ -84,8 +84,9 @@ Under "Serial Connection" in "Additional serial ports" add
 "/tmp/printer". Then click "Save".
 
 Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer". Unselect the "Not only cancel
-ongoing prints but also disconnect..." checkbox. Click "Save".
+"Serial Port" setting to "/tmp/printer". Navigate to the "Behavior"
+sub-tab and select the "Cancel any ongoing prints but stay connected
+to the printer" option. Click "Save".
 
 From the main page, under the "Connection" section (at the top left of
 the page) make sure the "Serial Port" is set to "/tmp/printer" and
