@@ -72,6 +72,20 @@ class Linear:
         gain, offset = self.slope_samples[pos]
         return (temp - offset) / gain
 
+# Custom defined sensors from the config file
+class CustomLinear:
+    def __init__(self, config):
+        self.name = " ".join(config.get_name().split()[1:])
+        self.params = []
+        for i in range(1, 1000):
+            t = config.getfloat("temperature%d" % (i,), None)
+            if t is None:
+                break
+            v = config.getfloat("voltage%d" % (i,))
+            self.params.append((t, v))
+    def create(self, config):
+        return Linear(config, self.params)
+
 AD595 = [
     (0., .0027), (10., .101), (20., .200), (25., .250), (30., .300), (40., .401),
     (50., .503), (60., .605), (80., .810), (100., 1.015), (120., 1.219),
@@ -99,3 +113,8 @@ def load_config(config):
     for sensor_type, params in [("AD595", AD595), ("PT100 INA826", PT100)]:
         func = (lambda config, params=params: Linear(config, params))
         pheater.add_sensor(sensor_type, func)
+
+def load_config_prefix(config):
+    linear = CustomLinear(config)
+    pheater = config.get_printer().lookup_object("heater")
+    pheater.add_sensor(linear.name, linear.create)
