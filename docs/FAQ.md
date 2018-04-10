@@ -216,6 +216,19 @@ off all heaters and stepper motors.
 See the "config_digital_out" command in the
 [MCU commands](MCU_Commands.md) document for further details.
 
+In addition, the micro-controller software is configured with a
+minimum and maximum temperature range for each heater at startup (see
+the min_temp and max_temp parameters in the
+[example.cfg](../config/example.cfg) file for details). If the
+micro-controller detects that the temperature is outside of that range
+then it will also enter a "shutdown" state.
+
+Separately, the host software also implements code to check that
+heaters and temperature sensors are functioning correctly. See the
+"verify_heater" section of the
+[example-extras.cfg](../config/example-extras.cfg) for further
+details.
+
 ### How do I upgrade to the latest software?
 
 The general way to upgrade is to ssh into the Raspberry Pi and run:
