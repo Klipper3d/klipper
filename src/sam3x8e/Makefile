@@ -20,7 +20,7 @@ src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/cmsis-sam3x8e/source/system_sam3xa.c
 src-y += ../lib/cmsis-sam3x8e/source/gcc/startup_sam3xa.c
-src-$(CONFIG_SERIAL) += sam3x8e/serial.c
+src-$(CONFIG_SERIAL) += sam3x8e/serial.c generic/serial_irq.c
 
 # Build the additional hex output file
 target-y += $(OUT)klipper.bin
