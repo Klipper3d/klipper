@@ -14,14 +14,13 @@
 #include "command.h" // shutdown
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_save
+#include "generic/timer_irq.h" // timer_dispatch_many
 #include "sched.h" // sched_timer_dispatch
 
 
 /****************************************************************
  * Low level timer code
  ****************************************************************/
-
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
 
 static inline uint32_t
 timer_get(void)
@@ -33,13 +32,7 @@ static inline void
 timer_set(uint32_t next)
 {
     LL_TIM_OC_SetCompareCH1(TIM2, next);
-}
-
-static inline void
-timer_repeat_set(uint32_t next)
-{
-    LL_TIM_OC_SetCompareCH2(TIM2, next);
-    LL_TIM_ClearFlag_CC2(TIM2);
+    LL_TIM_ClearFlag_CC1(TIM2);
 }
 
 // Activate timer dispatch as soon as possible
@@ -47,7 +40,6 @@ void
 timer_kick(void)
 {
     timer_set(timer_get() + 50);
-    LL_TIM_ClearFlag_CC1(TIM2);
 }
 
 
@@ -104,11 +96,9 @@ timer_init(void)
     LL_TIM_SetAutoReload(TIM2, 0xFFFF);
     LL_TIM_EnableIT_CC1(TIM2);
     LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
     NVIC_EnableIRQ(TIM2_IRQn);
     NVIC_SetPriority(TIM2_IRQn, 0);
     timer_kick();
-    timer_repeat_set(timer_get() + 50);
     timer_reset();
     LL_TIM_EnableCounter(TIM2);
     irq_restore(flag);
@@ -120,61 +110,12 @@ DECL_INIT(timer_init);
  * Main timer dispatch irq handler
  ****************************************************************/
 
-#define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
-#define TIMER_REPEAT_TICKS timer_from_us(100)
-
-#define TIMER_MIN_TRY_TICKS timer_from_us(1)
-#define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
-
 // Hardware timer IRQ handler - dispatch software timers
 void __visible __aligned(16)
 TIM2_IRQHandler(void)
 {
     irq_disable();
-    LL_TIM_ClearFlag_CC1(TIM2);
-    uint32_t next;
-    for (;;) {
-        // Run the next software timer
-        next = sched_timer_dispatch();
-
-        for (;;) {
-            int16_t diff = timer_get() - next;
-            if (likely(diff >= 0)) {
-                // Another timer is pending - briefly allow irqs and then run it
-                irq_enable();
-                if (unlikely(LL_TIM_IsActiveFlag_CC2(TIM2)))
-                    goto check_defer;
-                irq_disable();
-                break;
-            }
-
-            if (likely(diff <= -TIMER_MIN_TRY_TICKS))
-                // Schedule next timer normally
-                goto done;
-
-            irq_enable();
-            if (unlikely(LL_TIM_IsActiveFlag_CC2(TIM2)))
-                goto check_defer;
-            irq_disable();
-            continue;
-
-        check_defer:
-            // Check if there are too many repeat timers
-            irq_disable();
-            uint32_t now = timer_get();
-            if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
-                try_shutdown("Rescheduled timer in the past");
-            if (sched_tasks_busy()) {
-                timer_repeat_set(now + TIMER_REPEAT_TICKS);
-                next = now + TIMER_DEFER_REPEAT_TICKS;
-                goto done;
-            }
-            timer_repeat_set(now + TIMER_IDLE_REPEAT_TICKS);
-            timer_set(now);
-        }
-    }
-
-done:
+    uint32_t next = timer_dispatch_many();
     timer_set(next);
     irq_enable();
 }
