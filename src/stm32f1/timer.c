@@ -27,20 +27,20 @@ union u32_u {
     uint32_t val;
 };
 
-static inline uint16_t
+static inline uint32_t
 timer_get(void)
 {
     return LL_TIM_GetCounter(TIM2);
 }
 
 static inline void
-timer_set(uint16_t next)
+timer_set(uint32_t next)
 {
     LL_TIM_OC_SetCompareCH1(TIM2, next);
 }
 
 static inline void
-timer_repeat_set(uint16_t next)
+timer_repeat_set(uint32_t next)
 {
     LL_TIM_OC_SetCompareCH2(TIM2, next);
     LL_TIM_ClearFlag_CC2(TIM2);
@@ -89,7 +89,7 @@ DECL_INIT(timer_init);
  * 32bit timer wrappers
  ****************************************************************/
 
-static uint16_t timer_high;
+static uint32_t timer_high;
 
 // Return the current time (in absolute clock ticks).
 uint32_t
@@ -140,7 +140,7 @@ TIM2_IRQHandler(void)
 {
     irq_disable();
     LL_TIM_ClearFlag_CC1(TIM2);
-    uint16_t next;
+    uint32_t next;
     for (;;) {
         // Run the next software timer
         next = sched_timer_dispatch();
@@ -169,7 +169,7 @@ TIM2_IRQHandler(void)
         check_defer:
             // Check if there are too many repeat timers
             irq_disable();
-            uint16_t now = timer_get();
+            uint32_t now = timer_get();
             if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
                 try_shutdown("Rescheduled timer in the past");
             if (sched_tasks_busy()) {
