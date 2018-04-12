@@ -91,12 +91,13 @@ represent total number of steps per second on the micro-controller.
 
 | Micro-controller  | Fastest step rate | 3 steppers active |
 | ----------------- | ----------------- | ----------------- |
-| 20Mhz AVR         | 189K              | 125K              |
 | 16Mhz AVR         | 151K              | 100K              |
+| 20Mhz AVR         | 189K              | 125K              |
+| STM32F103         | 340K              | 300K              |
 | Arduino Due (ARM) | 382K              | 337K              |
 | Beaglebone PRU    | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one
-stepper stepping. On the Due, the highest step rate is with two
-simultaneous steppers stepping. On the PRU, the highest step rate is
-with three simultaneous steppers.
+stepper stepping. On the Due amd STM32F103, the highest step rate is
+with two simultaneous steppers stepping. On the PRU, the highest step
+rate is with three simultaneous steppers.
