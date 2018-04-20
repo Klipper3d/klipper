@@ -104,8 +104,8 @@ class ConfigWrapper:
         c = self.get(option, default)
         if c not in choices:
             raise self.error(
-                "Option '%s' in section '%s' is not a valid choice" % (
-                    option, self.section))
+                "Choice '%s' for option '%s' in section '%s'"
+                " is not a valid choice" % (c, option, self.section))
         return choices[c]
     def getsection(self, section):
         return ConfigWrapper(self.printer, self.fileconfig, section)
@@ -215,13 +215,13 @@ class Printer:
         for section in fileconfig.sections():
             section = section.lower()
             if section not in valid_sections and section not in self.objects:
-                raise self.config_error("Unknown config file section '%s'" % (
-                    section,))
+                raise self.config_error(
+                    "Section '%s' is not a valid config section" % (section,))
             for option in fileconfig.options(section):
                 option = option.lower()
                 if (section, option) not in self.all_config_options:
                     raise self.config_error(
-                        "Unknown option '%s' in section '%s'" % (
+                        "Option '%s' is not valid in section '%s'" % (
                             option, section))
         # Determine which printer objects have stats/state callbacks
         self.stats_cb = [o.stats for o in self.objects.values()
