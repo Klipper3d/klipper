@@ -25,7 +25,6 @@ Klipper supports the following standard G-Code commands:
 - Emergency stop: `M112`
 - Get current position: `M114`
 - Get firmware version: `M115`
-- Set home offset: `M206 [X<pos>] [Y<pos>] [Z<pos>]`
 
 For further details on the above commands see the
 [RepRap G-Code documentation](http://reprap.org/wiki/G-code).
@@ -64,6 +63,16 @@ The following standard commands are supported:
   verify that an endstop is working correctly.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
+- `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
+  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]`: Set a
+  positional offset to apply to future G-Code commands. This is
+  commonly used to virtually change the Z bed offset or to set nozzle
+  XY offsets when switching extruders. For example, if
+  "SET_GCODE_OFFSET Z=0.2" is sent, then future G-Code moves will
+  have 0.2mm added to their Z height. If the X_ADJUST style parameters
+  are used, then the adjustment will be added to any existing offset
+  (eg, "SET_GCODE_OFFSET Z=-0.2" followed by "SET_GCODE_OFFSET
+  Z_ADJUST=0.3" would result in a total Z offset of 0.1).
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is

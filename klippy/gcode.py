@@ -367,7 +367,8 @@ class GCodeParser:
         self.run_script(self.extruder.get_activate_gcode(True))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221', 'M206',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
+        'SET_GCODE_OFFSET', 'M206',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -484,6 +485,18 @@ class GCodeParser:
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
+    cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
+    def cmd_SET_GCODE_OFFSET(self, params):
+        for axis, pos in self.axis2pos.items():
+            if axis in params:
+                offset = self.get_float(axis, params)
+            elif axis + '_ADJUST' in params:
+                offset = self.homing_position[pos]
+                offset += self.get_float(axis + '_ADJUST', params)
+            else:
+                continue
+            self.base_position[pos] += offset - self.homing_position[pos]
+            self.homing_position[pos] = offset
     def cmd_M206(self, params):
         # Offset axes
         offsets = { self.axis2pos[a]: self.get_float(a, params)

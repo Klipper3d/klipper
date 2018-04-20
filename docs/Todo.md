@@ -11,10 +11,6 @@ Host user interaction
 
 * Improve gcode interface:
 
- * Provide a better way to handle print nozzle z offsets. The M206
-   command is cryptic to use and it is too easy to set the value
-   incorrectly or to forget to set it.
-
  * Provide a way to temporarily disable endstop checks so that a user
    can issue commands that potentially move the head past
    position_min/position_max.
