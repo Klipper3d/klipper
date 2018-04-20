@@ -137,7 +137,7 @@ class ProbePointsHelper:
         self.printer = printer
         self.probe_points = probe_points
         self.horizontal_move_z = horizontal_move_z
-        self.speed = speed
+        self.speed = self.lift_speed = speed
         self.manual_probe = manual_probe
         self.callback = callback
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -149,6 +149,9 @@ class ProbePointsHelper:
         # Begin probing
         self.move_next()
         if not manual_probe:
+            probe = self.printer.lookup_object('probe', None)
+            if probe is not None:
+                self.lift_speed = min(self.lift_speed, probe.speed)
             while self.busy:
                 self.gcode.run_script("PROBE")
                 self.cmd_NEXT({})
@@ -165,10 +168,11 @@ class ProbePointsHelper:
         # Record current position
         self.toolhead.wait_moves()
         self.results.append(self.callback.get_position())
-        # Move to next position
+        # Lift toolhead
         curpos = self.toolhead.get_position()
         curpos[2] = self.horizontal_move_z
-        self.toolhead.move(curpos, self.speed)
+        self.toolhead.move(curpos, self.lift_speed)
+        # Move to next position
         if len(self.results) == len(self.probe_points):
             self.toolhead.get_last_move_time()
             self.finalize(True)
