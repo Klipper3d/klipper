@@ -4,15 +4,16 @@ Frequently asked questions
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
 2. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
 3. [Where's my serial port?](#wheres-my-serial-port)
-4. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
-5. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
-6. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
-7. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
-8. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
-9. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
-10. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-11. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-12. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+4. [When the micro-controller restarts the device changes to /dev/ttyUSB1](#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1)
+5. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
+6. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
+7. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
+8. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
+9. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
+10. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
+11. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+12. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+13. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -55,6 +56,12 @@ serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_12345678912345
 
 Be sure to copy-and-paste the name from the "ls" command that you ran
 above as the name will be different for each printer.
+
+### When the micro-controller restarts the device changes to /dev/ttyUSB1
+
+Follow the directions in the
+"[Where's my serial port?](#wheres-my-serial-port)" section to prevent
+this from occurring.
 
 ### The "make flash" command doesn't work
 
