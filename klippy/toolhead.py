@@ -193,9 +193,9 @@ class ToolHead:
         self.mcu = self.all_mcus[0]
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
-        self.max_accel_to_decel = config.getfloat(
-            'max_accel_to_decel', self.max_accel * 0.5
-            , above=0., maxval=self.max_accel)
+        max_accel_to_decel = config.getfloat('max_accel_to_decel',
+                                             self.max_accel * 0.5, above=0.)
+        self.max_accel_to_decel = min(max_accel_to_decel, self.max_accel)
         self.junction_deviation = config.getfloat(
             'junction_deviation', 0.02, minval=0.)
         self.move_queue = MoveQueue()
