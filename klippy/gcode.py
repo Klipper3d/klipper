@@ -43,7 +43,7 @@ class GCodeParser:
         self.absolutecoord = self.absoluteextrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
-        self.homing_add = [0.0, 0.0, 0.0, 0.0]
+        self.homing_position = [0.0, 0.0, 0.0, 0.0]
         self.speed_factor = 1. / 60.
         self.extrude_factor = 1.
         self.move_transform = self.move_with_transform = None
@@ -119,10 +119,10 @@ class GCodeParser:
             out.append("Read %f: %s" % (eventtime, repr(data)))
         out.append(
             "gcode state: absolutecoord=%s absoluteextrude=%s"
-            " base_position=%s last_position=%s homing_add=%s"
+            " base_position=%s last_position=%s homing_position=%s"
             " speed_factor=%s extrude_factor=%s speed=%s" % (
                 self.absolutecoord, self.absoluteextrude,
-                self.base_position, self.last_position, self.homing_add,
+                self.base_position, self.last_position, self.homing_position,
                 self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
     # Parse input into commands
@@ -367,7 +367,7 @@ class GCodeParser:
         self.run_script(self.extruder.get_activate_gcode(True))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M206', 'M220', 'M221',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221', 'M206',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -428,7 +428,7 @@ class GCodeParser:
         except homing.EndstopError as e:
             raise error(str(e))
         for axis in homing_state.get_axes():
-            self.base_position[axis] = -self.homing_add[axis]
+            self.base_position[axis] = self.homing_position[axis]
         self.reset_last_position()
     cmd_M18_aliases = ["M84"]
     def cmd_M18(self, params):
@@ -469,13 +469,6 @@ class GCodeParser:
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
-    def cmd_M206(self, params):
-        # Set home offset
-        offsets = { self.axis2pos[a]: self.get_float(a, params)
-                    for a in 'XYZ' if a in params }
-        for p, offset in offsets.items():
-            self.base_position[p] += self.homing_add[p] - offset
-            self.homing_add[p] = offset
     def cmd_M220(self, params):
         # Set speed factor override percentage
         value = self.get_float('S', params, 100.) / (60. * 100.)
@@ -491,6 +484,13 @@ class GCodeParser:
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
+    def cmd_M206(self, params):
+        # Offset axes
+        offsets = { self.axis2pos[a]: self.get_float(a, params)
+                    for a in 'XYZ' if a in params }
+        for p, offset in offsets.items():
+            self.base_position[p] -= self.homing_position[p] + offset
+            self.homing_position[p] = -offset
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
@@ -555,20 +555,20 @@ class GCodeParser:
             "XYZE", self.toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)
                               for a, v in zip("XYZE", self.last_position)])
-        origin_pos = " ".join(["%s:%.6f"  % (a, v)
-                               for a, v in zip("XYZE", self.base_position)])
+        base_pos = " ".join(["%s:%.6f"  % (a, v)
+                             for a, v in zip("XYZE", self.base_position)])
         homing_pos = " ".join(["%s:%.6f"  % (a, v)
-                               for a, v in zip("XYZE", self.homing_add)])
+                               for a, v in zip("XYZ", self.homing_position)])
         self.respond_info(
             "mcu: %s\n"
             "stepper: %s\n"
             "kinematic: %s\n"
             "toolhead: %s\n"
             "gcode: %s\n"
-            "gcode origin: %s\n"
+            "gcode base: %s\n"
             "gcode homing: %s" % (
                 mcu_pos, stepper_pos, kinematic_pos, toolhead_pos,
-                gcode_pos, origin_pos, homing_pos))
+                gcode_pos, base_pos, homing_pos))
     def request_restart(self, result):
         if self.is_printer_ready:
             self.respond_info("Preparing to restart...")
