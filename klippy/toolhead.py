@@ -193,11 +193,15 @@ class ToolHead:
         self.mcu = self.all_mcus[0]
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
-        max_accel_to_decel = config.getfloat('max_accel_to_decel',
-                                             self.max_accel * 0.5, above=0.)
-        self.max_accel_to_decel = min(max_accel_to_decel, self.max_accel)
+        self.requested_accel_to_decel = config.getfloat(
+            'max_accel_to_decel', self.max_accel * 0.5, above=0.)
+        self.max_accel_to_decel = min(self.requested_accel_to_decel,
+                                      self.max_accel)
         self.junction_deviation = config.getfloat(
             'junction_deviation', 0.02, minval=0.)
+        self.config_max_velocity = self.max_velocity
+        self.config_max_accel = self.max_accel
+        self.config_junction_deviation = self.junction_deviation
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
         # Print time tracking
@@ -230,6 +234,10 @@ class ToolHead:
                     'delta': delta.DeltaKinematics}
         self.kin = config.getchoice('kinematics', kintypes)(
             self, printer, config)
+        # SET_VELOCITY_LIMIT command
+        gcode = printer.lookup_object('gcode')
+        gcode.register_command('SET_VELOCITY_LIMIT', self.cmd_SET_VELOCITY_LIMIT,
+                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -399,6 +407,33 @@ class ToolHead:
         # determined experimentally.
         return min(self.max_velocity,
                    math.sqrt(8. * self.junction_deviation * self.max_accel))
+    cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
+    def cmd_SET_VELOCITY_LIMIT(self, params):
+        print_time = self.get_last_move_time()
+        gcode = self.printer.lookup_object('gcode')
+        max_velocity = gcode.get_float(
+            'VELOCITY', params, self.max_velocity,
+            above=0., maxval=self.config_max_velocity)
+        max_accel = gcode.get_float(
+            'ACCEL', params, self.max_accel,
+            above=0., maxval=self.config_max_accel)
+        junction_deviation = gcode.get_float(
+            'JUNCTION_DEVIATION', params, self.junction_deviation,
+            minval=0., maxval=self.config_junction_deviation)
+        self.requested_accel_to_decel = gcode.get_float(
+            'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
+        self.max_velocity = max_velocity
+        self.max_accel = max_accel
+        self.max_accel_to_decel = min(self.requested_accel_to_decel, max_accel)
+        self.junction_deviation = junction_deviation
+        msg = ("max_velocity: %.6f\n"
+               "max_accel: %.6f\n"
+               "max_accel_to_decel: %.6f\n"
+               "junction_deviation: %.6f"% (
+                   max_velocity, max_accel, self.requested_accel_to_decel,
+                   junction_deviation))
+        self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
+        gcode.respond_info(msg)
 
 def add_printer_objects(printer, config):
     printer.add_object('toolhead', ToolHead(printer, config))
