@@ -18,6 +18,8 @@ class PrinterFan:
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.mcu_fan.setup_cycle_time(cycle_time, hardware_pwm)
+    def set_shutdown_speed(self, speed):
+        self.mcu_fan.setup_start_value(0., max(0., min(self.max_power, speed)))
     def set_speed(self, print_time, value):
         value = max(0., min(self.max_power, value * self.max_power))
         if value == self.last_fan_value:
