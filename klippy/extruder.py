@@ -228,16 +228,16 @@ class PrinterExtruder:
     def cmd_SET_PRESSURE_ADVANCE(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
-        if 'ADVANCE' in params:
-            v = gcode.get_float('ADVANCE', params)
-            self.pressure_advance = v if v > 0. else 0.
-        if 'ADVANCE_LOOKAHEAD_TIME' in params:
-            v = gcode.get_float('ADVANCE_LOOKAHEAD_TIME', params)
-            self.pressure_advance_lookahead_time = v if v > 0. else 0.
+        pressure_advance = gcode.get_float(
+            'ADVANCE', params, self.pressure_advance, minval=0.)
+        pressure_advance_lookahead_time = gcode.get_float(
+            'ADVANCE_LOOKAHEAD_TIME', params,
+            self.pressure_advance_lookahead_time, minval=0.)
+        self.pressure_advance = pressure_advance
+        self.pressure_advance_lookahead_time = pressure_advance_lookahead_time
         msg = ("pressure_advance: %.6f\n"
-               "pressure_advance_lookahead_time: %.6f\n" % (
-                self.pressure_advance,
-                self.pressure_advance_lookahead_time))
+               "pressure_advance_lookahead_time: %.6f" % (
+                   pressure_advance, pressure_advance_lookahead_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg)
 

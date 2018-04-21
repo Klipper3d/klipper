@@ -183,8 +183,6 @@ class CartKinematics:
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, params):
         gcode = self.printer.lookup_object('gcode')
-        carriage = gcode.get_int('CARRIAGE', params)
-        if carriage not in (0, 1):
-            raise gcode.error("Invalid carriage")
+        carriage = gcode.get_int('CARRIAGE', params, minval=0, maxval=1)
         self._activate_carriage(carriage)
         gcode.reset_last_position()

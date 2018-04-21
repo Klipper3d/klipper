@@ -49,14 +49,13 @@ class PrinterOutputPin:
             return pin.cmd_SET_PIN(params)
         if self.is_static:
             raise self.gcode.error("Static pin can not be changed at run-time")
-        value = self.gcode.get_float('VALUE', params) / self.scale
+        value = self.gcode.get_float('VALUE', params, minval=0., maxval=1.)
+        value /= self.scale
         if value == self.last_value:
             return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         if self.is_pwm:
-            if value < 0. or value > 1.:
-                raise self.gcode.error("Invalid pin value")
             self.mcu_pin.set_pwm(print_time, value)
         else:
             if value not in [0., 1.]:

@@ -250,20 +250,38 @@ class GCodeParser:
         self.respond('!! %s' % (lines[0].strip(),))
     # Parameter parsing helpers
     class sentinel: pass
-    def get_str(self, name, params, default=sentinel, parser=str):
-        if name in params:
-            try:
-                return parser(params[name])
-            except:
-                raise error("Error on '%s': unable to parse %s" % (
-                    params['#original'], params[name]))
-        if default is not self.sentinel:
+    def get_str(self, name, params, default=sentinel, parser=str,
+                minval=None, maxval=None, above=None, below=None):
+        if name not in params:
+            if default is self.sentinel:
+                raise error("Error on '%s': missing %s" % (
+                    params['#original'], name))
             return default
-        raise error("Error on '%s': missing %s" % (params['#original'], name))
-    def get_int(self, name, params, default=sentinel):
-        return self.get_str(name, params, default, parser=int)
-    def get_float(self, name, params, default=sentinel):
-        return self.get_str(name, params, default, parser=float)
+        try:
+            value = parser(params[name])
+        except:
+            raise error("Error on '%s': unable to parse %s" % (
+                params['#original'], params[name]))
+        if minval is not None and value < minval:
+            raise self.error("Error on '%s': %s must have minimum of %s" % (
+                params['#original'], name, minval))
+        if maxval is not None and value > maxval:
+            raise self.error("Error on '%s': %s must have maximum of %s" % (
+                params['#original'], name, maxval))
+        if above is not None and value <= above:
+            raise self.error("Error on '%s': %s must be above %s" % (
+                params['#original'], name, above))
+        if below is not None and value >= below:
+            raise self.error("Error on '%s': %s must be below %s" % (
+                params['#original'], name, below))
+        return value
+    def get_int(self, name, params, default=sentinel, minval=None, maxval=None):
+        return self.get_str(name, params, default, parser=int,
+                            minval=minval, maxval=maxval)
+    def get_float(self, name, params, default=sentinel,
+                  minval=None, maxval=None, above=None, below=None):
+        return self.get_str(name, params, default, parser=float, minval=minval,
+                            maxval=maxval, above=above, below=below)
     extended_r = re.compile(
         r'^\s*(?:N[0-9]+\s*)?'
         r'(?P<cmd>[a-zA-Z_][a-zA-Z_]+)(?:\s+|$)'
@@ -310,9 +328,9 @@ class GCodeParser:
         if is_bed:
             heater = self.heaters[-1]
         elif 'T' in params:
-            heater_index = self.get_int('T', params)
-            if heater_index >= 0 and heater_index < len(self.heaters) - 1:
-                heater = self.heaters[heater_index]
+            index = self.get_int(
+                'T', params, minval=0, maxval=len(self.heaters)-2)
+            heater = self.heaters[index]
         elif self.extruder is not None:
             heater = self.extruder.get_heater()
         if heater is None:
@@ -349,11 +367,8 @@ class GCodeParser:
         self.respond_info('Unknown command:"%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
-        index = self.get_int('T', params)
         extruders = extruder.get_printer_extruders(self.printer)
-        if self.extruder is None or index < 0 or index >= len(extruders):
-            self.respond_error("Extruder %d not configured" % (index,))
-            return
+        index = self.get_int('T', params, minval=0, maxval=len(extruders)-1)
         e = extruders[index]
         if self.extruder is e:
             return
@@ -409,9 +424,9 @@ class GCodeParser:
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
-            delay = self.get_float('S', params)
+            delay = self.get_float('S', params, minval=0.)
         else:
-            delay = self.get_float('P', params, 0.) / 1000.
+            delay = self.get_float('P', params, 0., minval=0.) / 1000.
         self.toolhead.dwell(delay)
     def cmd_G28(self, params):
         # Move to origin
@@ -472,15 +487,11 @@ class GCodeParser:
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M220(self, params):
         # Set speed factor override percentage
-        value = self.get_float('S', params, 100.) / (60. * 100.)
-        if value <= 0.:
-            raise error("Invalid factor in '%s'" % (params['#original'],))
+        value = self.get_float('S', params, 100., above=0.) / (60. * 100.)
         self.speed_factor = value
     def cmd_M221(self, params):
         # Set extrude factor override percentage
-        new_extrude_factor = self.get_float('S', params, 100.) / 100.
-        if new_extrude_factor <= 0.:
-            raise error("Invalid factor in '%s'" % (params['#original'],))
+        new_extrude_factor = self.get_float('S', params, 100., above=0.) / 100.
         last_e_pos = self.last_position[3]
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
@@ -523,7 +534,7 @@ class GCodeParser:
         self.set_temp(params, is_bed=True, wait=True)
     def cmd_M106(self, params):
         # Set fan speed
-        self.set_fan_speed(self.get_float('S', params, 255.) / 255.)
+        self.set_fan_speed(self.get_float('S', params, 255., minval=0.) / 255.)
     def cmd_M107(self, params):
         # Turn fan off
         self.set_fan_speed(0.)

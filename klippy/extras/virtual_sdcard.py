@@ -102,7 +102,7 @@ class VirtualSD:
         # Set SD position
         if self.work_timer is not None:
             raise self.gcode.error("SD busy")
-        pos = self.gcode.get_int('S', params)
+        pos = self.gcode.get_int('S', params, minval=0)
         self.file_position = pos
     def cmd_M27(self, params):
         # Report SD print status
