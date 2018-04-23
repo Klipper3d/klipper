@@ -295,8 +295,9 @@ should only need to update the host software (which is written in
 Python).
 
 Useful steps:
-1. Start by studying the [above section](#code-flow-of-a-move-command)
-   and the [Kinematics document](Kinematics.md).
+1. Start by studying the
+   "[code flow of a move](#code-flow-of-a-move-command)" section and
+   the [Kinematics document](Kinematics.md).
 2. Review the existing kinematic classes in cartesian.py, corexy.py,
    and delta.py. The kinematic classes are tasked with converting a
    move in cartesian coordinates to the movement on each stepper. One
