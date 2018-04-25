@@ -110,6 +110,10 @@ config SERIAL_BAUD_U2X
     depends on AVR_SERIAL && !SIMULAVR
     bool
     default y
+config SERIAL_PORT
+    int
+    default 1 if MACH_at90usb1286 || MACH_at90usb646
+    default 0
 
 config SIMULAVR
     depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
