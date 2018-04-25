@@ -250,6 +250,10 @@ Then one can recompile and flash the micro-controller code. For
 example:
 
 ```
+make menuconfig
+make clean
+make
+
 sudo service klipper stop
 make flash FLASH_DEVICE=/dev/ttyACM0
 sudo service klipper start
