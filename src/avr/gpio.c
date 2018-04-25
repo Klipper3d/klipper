@@ -295,7 +295,7 @@ gpio_adc_setup(uint8_t pin)
 }
 
 enum { ADC_DUMMY=0xff };
-static uint8_t last_analog_read = ADC_DUMMY, adc_retry_count;
+static uint8_t last_analog_read = ADC_DUMMY, adc_retry_count, adc_busy;
 
 // Try to sample a value. Returns zero if sample ready, otherwise
 // returns the number of clock ticks the caller should wait before
@@ -309,6 +309,7 @@ gpio_adc_sample(struct gpio_adc g)
     if (last_analog_read == g.chan)
         // Sample now ready
         return 0;
+    adc_busy++;
     if (last_analog_read != ADC_DUMMY)
         // Sample on another channel in progress
         goto need_delay;
@@ -328,8 +329,10 @@ gpio_adc_sample(struct gpio_adc g)
     // Schedule next attempt after sample is likely to be complete
 need_delay: ;
     uint8_t count = adc_retry_count - 1;
-    if (!count)
+    if (!count) {
+        output("ADC %hu %hu %hu", adc_busy, last_analog_read, ADCSRA);
         try_shutdown("ADC hardware is not responding");
+    }
     adc_retry_count = count;
     return (13 + 1) * 128 + 200;
 }
@@ -339,6 +342,7 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     adc_retry_count = 0;
+    adc_busy = 0;
     last_analog_read = ADC_DUMMY;
     return ADC;
 }
