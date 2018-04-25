@@ -263,7 +263,8 @@ static const uint8_t adc_pins[] PROGMEM = {
 #endif
 };
 
-static const uint8_t ADMUX_DEFAULT = 0x40;
+enum { ADMUX_DEFAULT = 0x40 };
+enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };
 
 DECL_CONSTANT(ADC_MAX, 1023);
 
@@ -280,7 +281,7 @@ gpio_adc_setup(uint8_t pin)
     }
 
     // Enable ADC
-    ADCSRA = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN);
+    ADCSRA = ADC_ENABLE;
 
     // Disable digital input for this pin
 #ifdef DIDR2
@@ -313,16 +314,18 @@ gpio_adc_sample(struct gpio_adc g)
         goto need_delay;
     last_analog_read = g.chan;
 
+    // Set the channel to sample
 #if defined(ADCSRB) && defined(MUX5)
-    // the MUX5 bit of ADCSRB selects whether we're reading from channels
-    // 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
+    // The MUX5 bit of ADCSRB selects whether we're reading from
+    // channels 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
     ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
 #endif
-
     ADMUX = ADMUX_DEFAULT | (g.chan & 0x07);
 
-    // start the conversion
-    ADCSRA |= 1<<ADSC;
+    // Start the sample
+    ADCSRA = ADC_ENABLE | (1<<ADSC);
+
+    // Schedule next attempt after sample is likely to be complete
 need_delay:
     return (13 + 1) * 128 + 200;
 }
