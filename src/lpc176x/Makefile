@@ -17,6 +17,7 @@ src-y += lpc176x/main.c lpc176x/timer.c lpc176x/gpio.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/lpc176x/device/system_LPC17xx.c
+src-$(CONFIG_USBSERIAL) += lpc176x/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += lpc176x/serial.c generic/serial_irq.c
 
 # Add the TOOLCHAIN_GCC_ARM files to the build

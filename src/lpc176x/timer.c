@@ -38,7 +38,7 @@ timer_init(void)
     // Disable timer
     LPC_TIM0->TCR = 0x02;
     // Enable interrupts
-    NVIC_SetPriority(TIMER0_IRQn, 1);
+    NVIC_SetPriority(TIMER0_IRQn, 2);
     NVIC_EnableIRQ(TIMER0_IRQn);
     LPC_TIM0->MCR = 0x01;
     // Clear counter value

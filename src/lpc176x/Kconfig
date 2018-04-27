@@ -25,7 +25,11 @@ config CLOCK_FREQ
     default 25000000 if MACH_LPC1768 # 100000000 / 4
     default 30000000 if MACH_LPC1769 # 120000000 / 4
 
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    default y
 config SERIAL
+    depends on !USBSERIAL
     bool
     default y
 config SERIAL_BAUD
