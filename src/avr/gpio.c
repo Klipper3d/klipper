@@ -297,6 +297,8 @@ gpio_adc_setup(uint8_t pin)
 enum { ADC_DUMMY=0xff };
 static uint8_t last_analog_read = ADC_DUMMY, adc_retry_count, adc_busy;
 
+#include "board/misc.h"
+
 // Try to sample a value. Returns zero if sample ready, otherwise
 // returns the number of clock ticks the caller should wait before
 // retrying this function.
@@ -330,9 +332,13 @@ gpio_adc_sample(struct gpio_adc g)
 need_delay: ;
     uint8_t count = adc_retry_count - 1;
     if (!count) {
-        output("ADC %hu %hu %hu", adc_busy, last_analog_read, ADCSRA);
+        output("ADC stuck %u %hu %hu %hu", timer_read_time()
+               , adc_busy, last_analog_read, ADCSRA);
         try_shutdown("ADC hardware is not responding");
     }
+    if (!(count & 0x1f))
+        output("ADC busy %u %hu %hu %hu", timer_read_time()
+               , adc_busy, last_analog_read, ADCSRA);
     adc_retry_count = count;
     return (13 + 1) * 128 + 200;
 }
