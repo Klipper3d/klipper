@@ -29,7 +29,7 @@ static inline void irq_restore(irqstatus_t flag) {
 }
 
 static inline void irq_wait(void) {
-    asm("sei\n    sleep\n    cli" : : : "memory");
+    asm("sei\n    nop\n    cli" : : : "memory");
 }
 
 static inline void irq_poll(void) {
