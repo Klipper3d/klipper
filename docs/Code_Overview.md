@@ -17,8 +17,10 @@ arranges for includes of "board/somefile.h" to first look in the
 current architecture directory (eg, src/avr/somefile.h) and then in
 the generic directory (eg, src/generic/somefile.h).
 
-The **klippy/** directory contains the C and Python source for the
-host part of the software.
+The **klippy/** directory contains the host software. Most of the host
+software is written in Python, however the **klippy/chelper/**
+directory contains some C code helpers. The **klippy/extras/**
+directory contains the host code extensible "modules".
 
 The **lib/** directory contains external 3rd-party library code that
 is necessary to build some targets.
@@ -105,9 +107,9 @@ DECL_COMMAND macro in the micro-controller code).
 
 There are four threads in the Klippy host code. The main thread
 handles incoming gcode commands. A second thread (which resides
-entirely in the **klippy/serialqueue.c** C code) handles low-level IO
-with the serial port. The third thread is used to process response
-messages from the micro-controller in the Python code (see
+entirely in the **klippy/chelper/serialqueue.c** C code) handles
+low-level IO with the serial port. The third thread is used to process
+response messages from the micro-controller in the Python code (see
 **klippy/serialhdl.py**). The fourth thread writes debug messages to
 the log (see **klippy/queuelogger.py**) so that the other threads
 never block on log writes.
@@ -185,28 +187,28 @@ provides further information on the mechanics of moves.
   relative to when the micro-controller was last powered up.
 
 * The next major step is to compress the steps: `stepcompress_flush()
-  -> compress_bisect_add()` (in stepcompress.c). This code generates
-  and encodes a series of micro-controller "queue_step" commands that
-  correspond to the list of stepper step times built in the previous
-  stage. These "queue_step" commands are then queued, prioritized, and
-  sent to the micro-controller (via stepcompress.c:steppersync and
-  serialqueue.c:serialqueue).
+  -> compress_bisect_add()` (in klippy/chelper/stepcompress.c). This
+  code generates and encodes a series of micro-controller "queue_step"
+  commands that correspond to the list of stepper step times built in
+  the previous stage. These "queue_step" commands are then queued,
+  prioritized, and sent to the micro-controller (via
+  stepcompress.c:steppersync and serialqueue.c:serialqueue).
 
 * Processing of the queue_step commands on the micro-controller starts
-  in command.c which parses the command and calls
-  `command_queue_step()`. The command_queue_step() code (in stepper.c)
-  just appends the parameters of each queue_step command to a per
-  stepper queue. Under normal operation the queue_step command is
-  parsed and queued at least 100ms before the time of its first
-  step. Finally, the generation of stepper events is done in
-  `stepper_event()`. It's called from the hardware timer interrupt at
-  the scheduled time of the first step. The stepper_event() code
-  generates a step pulse and then reschedules itself to run at the
-  time of the next step pulse for the given queue_step parameters. The
-  parameters for each queue_step command are "interval", "count", and
-  "add". At a high-level, stepper_event() runs the following, 'count'
-  times: `do_step(); next_wake_time = last_wake_time + interval;
-  interval += add;`
+  in src/command.c which parses the command and calls
+  `command_queue_step()`. The command_queue_step() code (in
+  src/stepper.c) just appends the parameters of each queue_step
+  command to a per stepper queue. Under normal operation the
+  queue_step command is parsed and queued at least 100ms before the
+  time of its first step. Finally, the generation of stepper events is
+  done in `stepper_event()`. It's called from the hardware timer
+  interrupt at the scheduled time of the first step. The
+  stepper_event() code generates a step pulse and then reschedules
+  itself to run at the time of the next step pulse for the given
+  queue_step parameters. The parameters for each queue_step command
+  are "interval", "count", and "add". At a high-level, stepper_event()
+  runs the following, 'count' times: `do_step(); next_wake_time =
+  last_wake_time + interval; interval += add;`
 
 The above may seem like a lot of complexity to execute a
 movement. However, the only really interesting parts are in the
@@ -425,8 +427,8 @@ Some things to be aware of when reviewing the code:
   conversion is never ambiguous. The host converts from 64bit clocks
   to 32bit clocks by simply truncating the high-order bits. To ensure
   there is no ambiguity in this conversion, the
-  **klippy/serialqueue.c** code will buffer messages until they are
-  within 2^31 clock ticks of their target time.
+  **klippy/chelper/serialqueue.c** code will buffer messages until
+  they are within 2^31 clock ticks of their target time.
 * Multiple micro-controllers: The host software supports using
   multiple micro-controllers on a single printer. In this case, the
   "MCU clock" of each micro-controller is tracked separately. The
