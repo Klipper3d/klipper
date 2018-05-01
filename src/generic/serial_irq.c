@@ -96,7 +96,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
     }
     uint_fast8_t max_size = READP(ce->max_size);
     if (tmax + max_size > sizeof(transmit_buf)) {
-        if (tmax + max_size - tpos > sizeof(transmit_buf))
+        if ((tmax + max_size - tpos) > (int)sizeof(transmit_buf))
             // Not enough space for message
             return;
         // Disable TX irq and move buffer

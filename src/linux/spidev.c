@@ -16,13 +16,13 @@ struct spi_s {
     int fd;
 };
 static struct spi_s devices[16];
-static int devices_count;
+static uint32_t devices_count = 0;
 
 static int
 spi_open(uint32_t bus, uint32_t dev)
 {
     // Find existing device (if already opened)
-    int i;
+    uint32_t i;
     for (i=0; i<devices_count; i++)
         if (devices[i].bus == bus && devices[i].dev == dev)
             return devices[i].fd;

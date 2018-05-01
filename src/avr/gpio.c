@@ -11,7 +11,9 @@
 #include "irq.h" // irq_save
 #include "pgm.h" // PROGMEM
 #include "sched.h" // DECL_INIT
+#include "generic/spi.h"
 
+#include <avr/io.h>
 
 /****************************************************************
  * General Purpose Input Output (GPIO) pins
@@ -334,6 +336,7 @@ need_delay:
 uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
+    (void)g;
     last_analog_read = ADC_DUMMY;
     return ADC;
 }
@@ -352,29 +355,137 @@ gpio_adc_cancel_sample(struct gpio_adc g)
  ****************************************************************/
 
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
-static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5), MOSI = GPIO('B', 3);
+static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5), MOSI = GPIO('B', 3), MISO = GPIO('B', 4);
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
-static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7), MOSI = GPIO('B', 5);
+static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7), MOSI = GPIO('B', 5), MISO = GPIO('B', 6);
 #elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
-static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1), MOSI = GPIO('B', 2);
+static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1), MOSI = GPIO('B', 2), MISO = GPIO('B', 3);
 #endif
 
+// make sure SPCR rate is in expected bits
+#if (SPR0 != 0 || SPR1 != 1)
+#error "AVR: unexpected SPCR bits"
+#endif
+
+struct spi_config spi_basic_config = {.cfg = 0};
+
 void
-spi_config(void)
+spi_init(void)
 {
+    // SS Must be configured as OUT even not used
     gpio_out_setup(SS, 1);
     gpio_out_setup(SCK, 0);
     gpio_out_setup(MOSI, 0);
-    SPCR = (1<<MSTR) | (1<<SPE);
+    gpio_in_setup(MISO, 0);
+
+    // Power Reduction SPI bit must be written to "0"
+#ifdef PRR
+    PRR  &= ~_BV(PRSPI);
+#elif defined(PRR0)
+    PRR0 &= ~_BV(PRSPI);
+#endif
+
+    SPCR = _BV(MSTR) | _BV(SPE);
+    SPSR = 0;
+
+    spi_basic_config = spi_get_config(0, 4000000);
+}
+DECL_INIT(spi_init);
+
+struct spi_config
+spi_get_config(uint8_t const mode, uint32_t const clock)
+{
+    uint16_t config = 0;
+    uint8_t clockDiv;
+    if (clock >= CONFIG_CLOCK_FREQ) {
+        clockDiv = 0;
+    } else if (clock >= (CONFIG_CLOCK_FREQ / 2)) {
+        clockDiv = 1;
+    } else if (clock >= (CONFIG_CLOCK_FREQ / 4)) {
+        clockDiv = 2;
+    } else if (clock >= (CONFIG_CLOCK_FREQ / 8)) {
+        clockDiv = 3;
+    } else if (clock >= (CONFIG_CLOCK_FREQ / 16)) {
+        clockDiv = 4;
+    } else if (clock >= (CONFIG_CLOCK_FREQ / 32)) {
+        clockDiv = 5;
+    } else /*if (clock >= (CONFIG_CLOCK_FREQ / 64))*/ {
+        clockDiv = 6;
+    }
+
+    /* Set SPCR command */
+    config |= _BV(SPE) | _BV(MSTR);
+    switch(mode) {
+        case 0: {
+            // MODE 0 - CPOL=0, CPHA=0
+            break;
+        }
+        case 1: {
+            // MODE 1 - CPOL=0, CPHA=1
+            config |= _BV(CPHA);
+            break;
+        }
+        case 2: {
+            // MODE 2 - CPOL=1, CPHA=0
+            config |= _BV(CPOL);
+            break;
+        }
+        case 3: {
+            // MODE 3 - CPOL=1, CPHA=1
+            config |= _BV(CPOL);
+            config |= _BV(CPHA);
+            break;
+        }
+    }
+
+    config |= (clockDiv >> 1);
+
+    /* Set SPSR command */
+    config <<= 8;
+    config |= ((clockDiv & 1) || clockDiv == 6) ? 0 : _BV(SPI2X);
+
+    return (struct spi_config){.cfg = config};
+}
+
+static uint8_t volatile reserved = 0;
+
+uint8_t
+spi_set_config(struct spi_config const config) {
+    if (reserved) return 0;
+    SPCR = (uint8_t)(config.cfg >> 8);
+    SPSR = (uint8_t)(config.cfg & 0xFF);
+    return ++reserved;
 }
 
 void
-spi_transfer(char *data, uint8_t len)
-{
+spi_set_ready(void) {
+    reserved = 0;
+}
+
+void
+spi_transfer_len(char *data, uint8_t len) {
     while (len--) {
         SPDR = *data;
-        while (!(SPSR & (1<<SPIF)))
-            ;
+        while (!(SPSR & _BV(SPIF))); // Wait ready
         *data++ = SPDR;
     }
+}
+
+uint8_t
+spi_transfer(uint8_t const data) {
+    SPDR = data;
+    /*
+     * The following NOP introduces a small delay that can prevent the wait
+     * loop form iterating when running at the maximum speed. This gives
+     * about 10% more speed, even if it seems counter-intuitive. At lower
+     * speeds it is unnoticed.
+     */
+    asm volatile("nop");
+    while (!(SPSR & _BV(SPIF))); // Wait ready
+    return SPDR;
+}
+
+uint8_t
+spi_read_rdy(void) {
+    return (!!(SPSR & _BV(SPIF)));
 }
