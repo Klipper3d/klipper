@@ -1,0 +1,32 @@
+[Version]
+Signature="$Windows NT$"
+Class=Ports
+ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider=%CodeRed%
+DriverVer=05/20/2010,1.0.0.0
+
+[MANUFACTURER]
+%ProviderName%=DeviceList, NTx86, NTamd64
+
+[DeviceList.NTx86]
+%RDB1768CDC%=DriverInstall,USB\VID_FFFF&PID_0005
+
+[DeviceList.NTamd64]
+%RDB1768CDC%=DriverInstall,USB\VID_FFFF&PID_0005
+
+[DriverInstall]
+include=mdmcpq.inf
+CopyFiles=FakeModemCopyFileSection
+AddReg=LowerFilterAddReg,SerialPropPageAddReg
+
+[DriverInstall.Services]
+include = mdmcpq.inf
+AddService = usbser, 0x00000002, LowerFilter_Service_Inst
+
+; This adds the serial port property tab to the device properties dialog
+[SerialPropPageAddReg]
+HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
+
+[Strings]
+ProviderName = "CDC Driver"
+RDB1768CDC = "LPCUSB Virtual Com Port
