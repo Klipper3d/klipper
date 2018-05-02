@@ -135,7 +135,6 @@ void command_config_thermocouple_ss_pin(uint32_t *args) {
     spi->pin        = gpio_out_setup(args[1], 1); // CS pin
     spi->spi_config = spi_get_config(args[2], args[3]);
 }
-// TODO : Add support for inverted pin!
 DECL_COMMAND(command_config_thermocouple_ss_pin,
              "config_thermocouple_ss_pin oid=%c pin=%u spi_mode=%u spi_speed=%u");
 

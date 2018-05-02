@@ -128,7 +128,3 @@ uint8_t spi_transfer(uint8_t const data) {
     // get data
     return pSpi->SPI_RDR;
 }
-
-uint8_t spi_read_rdy(void) {
-    return (!!(REGPTR->SPI_SR & SPI_SR_RDRF));
-}

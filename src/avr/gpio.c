@@ -484,8 +484,3 @@ spi_transfer(uint8_t const data) {
     while (!(SPSR & _BV(SPIF))); // Wait ready
     return SPDR;
 }
-
-uint8_t
-spi_read_rdy(void) {
-    return (!!(SPSR & _BV(SPIF)));
-}
