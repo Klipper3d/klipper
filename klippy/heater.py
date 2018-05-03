@@ -206,13 +206,7 @@ class PrinterHeaters:
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
-        self.printer.try_load_module(config, "thermistor")
-        self.printer.try_load_module(config, "adc_temperature")
-        sensor_type = config.get('sensor_type')
-        if sensor_type not in self.sensors:
-            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
-                sensor_type,))
-        sensor = self.sensors[sensor_type](config)
+        sensor = self.setup_sensor(config)
         # Create heater
         self.heaters[heater_name] = heater = Heater(config, sensor)
         return heater
@@ -223,6 +217,14 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "Unknown heater '%s'" % (heater_name,))
         return self.heaters[heater_name]
+    def setup_sensor(self, config):
+        self.printer.try_load_module(config, "thermistor")
+        self.printer.try_load_module(config, "adc_temperature")
+        sensor_type = config.get('sensor_type')
+        if sensor_type not in self.sensors:
+            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
+                sensor_type,))
+        return self.sensors[sensor_type](config)
 
 def add_printer_objects(printer, config):
     printer.add_object('heater', PrinterHeaters(printer, config))
