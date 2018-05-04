@@ -243,6 +243,7 @@ class PrinterHeaters:
     def setup_sensor(self, config):
         self.printer.try_load_module(config, "thermistor")
         self.printer.try_load_module(config, "adc_temperature")
+        self.printer.try_load_module(config, "spi_temperature")
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensors:
             raise self.printer.config_error("Unknown temperature sensor '%s'" % (
