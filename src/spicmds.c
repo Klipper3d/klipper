@@ -9,6 +9,7 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
+#include "spicmds.h" // spidev_transfer
 
 struct spidev_s {
     struct spi_config spi_config;
@@ -53,7 +54,13 @@ DECL_COMMAND(command_config_spi_without_cs,
              "config_spi_without_cs oid=%c bus=%u mode=%u rate=%u"
              " shutdown_msg=%*s");
 
-static void
+struct spidev_s *
+spidev_oid_lookup(uint8_t oid)
+{
+    return oid_lookup(oid, command_config_spi);
+}
+
+void
 spidev_transfer(struct spidev_s *spi, uint8_t receive_data
                 , uint8_t data_len, uint8_t *data)
 {
