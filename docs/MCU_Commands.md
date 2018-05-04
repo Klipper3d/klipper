@@ -49,13 +49,6 @@ Common startup commands:
   and 255 indicating a full on state. This command may be useful for
   enabling CPU and nozzle cooling fans.
 
-* `send_spi_message pin=%u msg=%*s` : This command can be used to
-  transmit messages to a serial-peripheral-interface (SPI) component
-  connected to the micro-controller. It has been used to configure the
-  startup settings of AD5206 digipots. The 'pin' parameter specifies
-  the chip select line to use during the transmission. The 'msg'
-  indicates the binary message to transmit to the given chip.
-
 Low-level micro-controller configuration
 ========================================
 
@@ -182,6 +175,22 @@ This section lists some commonly used config commands.
   specifies the maximum number of steppers that this endstop may need
   to halt during a homing operation (see end_stop_home below).
 
+* `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
+  This command creates an internal SPI object. It is used with
+  spi_transfer and spi_send commands (see below).  The "bus"
+  identifies the SPI bus to use (if the micro-controller has more than
+  one SPI bus available). The "pin" specifies the chip select (CS) pin
+  for the device. The "mode" is the SPI mode (should be between 0 and
+  3). The "rate" parameter specifies the SPI bus rate (in cycles per
+  second). Finally, the "shutdown_msg" is an SPI command to send to
+  the given device should the micro-controller go into a shutdown
+  state.
+
+* `config_spi_without_cs oid=%c bus=%u mode=%u rate=%u
+  shutdown_msg=%*s` : This command is similar to config_spi, but
+  without a CS pin definition. It is useful for SPI devices that do
+  not have a chip select line.
+
 Common commands
 ===============
 
@@ -283,3 +292,15 @@ It is the responsibility of the host to ensure that there is available
 space in the queue before sending a queue_step command. The host does
 this by calculating when each queue_step command completes and
 scheduling new queue_step commands accordingly.
+
+SPI Commands
+------------
+
+* `spi_transfer oid=%c data=%*s` : This command causes the
+  micro-controller to send 'data' to the spi device specified by 'oid'
+  and it generates a "spi_transfer_response" response message with the
+  data returned during the transmission.
+
+* `spi_send oid=%c data=%*s` : This command is similar to
+  "spi_transfer", but it does not generate a "spi_transfer_response"
+  message.

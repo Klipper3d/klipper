@@ -11,21 +11,24 @@ class ad5206:
         enable_pin_params = ppins.lookup_pin('digital_out', enable_pin)
         if enable_pin_params['invert']:
             raise ppins.error("ad5206 can not invert pin")
-        self.mcu = enable_pin_params['chip']
-        self.pin = enable_pin_params['pin']
-        self.mcu.add_config_object(self)
+        mcu = enable_pin_params['chip']
+        pin = enable_pin_params['pin']
         scale = config.getfloat('scale', 1., above=0.)
-        self.channels = [None] * 6
-        for i in range(len(self.channels)):
+        channels = [None]*6
+        for i in range(len(channels)):
             val = config.getfloat('channel_%d' % (i+1,), None,
                                   minval=0., maxval=scale)
             if val is not None:
-                self.channels[i] = int(val * 256. / scale + .5)
-    def build_config(self):
-        for i, val in enumerate(self.channels):
+                channels[i] = int(val * 256. / scale + .5)
+        oid = mcu.create_oid()
+        mcu.add_config_cmd(
+            "config_spi oid=%d bus=%d pin=%s mode=%u rate=%u shutdown_msg=" % (
+                oid, 0, pin, 0, 25000000))
+        for i, val in enumerate(channels):
             if val is not None:
-                self.mcu.add_config_cmd(
-                    "send_spi_message pin=%s msg=%02x%02x" % (self.pin, i, val))
+                mcu.add_config_cmd(
+                    "spi_send oid=%d data=%02x%02x" % (oid, i, val),
+                    is_init=True)
 
 def load_config_prefix(config):
     return ad5206(config)
