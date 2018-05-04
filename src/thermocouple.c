@@ -13,7 +13,6 @@ struct thermocouple_spi {
     struct timer timer;
     uint32_t rest_time;
     uint32_t next_begin_time;     // Start time
-    volatile uint32_t value;      // Stores the thermocouple/RTD ADC output
     uint32_t min_value;           // Min allowed ADC value
     uint32_t max_value;           // Max allowed ADC value
     uint32_t fault_mask;          // Fault check mask
@@ -21,9 +20,7 @@ struct thermocouple_spi {
     uint8_t  read_cmd;            // SPI command to get ADC result
     uint8_t  read_bytes;          // Num of bytes to be read
     uint8_t  fault_cmd;           // SPI command to get fault register (0 = disabled)
-    uint8_t  fault_value;         // fault register value
     struct gpio_out pin;
-    uint8_t flag : 8;
 };
 
 enum {
@@ -34,7 +31,6 @@ enum {
 };
 
 static struct task_wake thermocouple_wake;
-
 
 static uint32_t read_data_len(uint8_t len) {
     uint32_t value = 0;
@@ -51,37 +47,10 @@ static uint32_t read_data_len(uint8_t len) {
 static uint_fast8_t thermocouple_event(struct timer *timer) {
     struct thermocouple_spi *spi = container_of(
             timer, struct thermocouple_spi, timer);
-    uint32_t waketime = spi->timer.waketime + POLL_DELAY;
-    if (likely(spi->flag & READY)) {
-        spi_set_ready();
-        gpio_out_write(spi->pin, 1); // Disable slave
-        // ----------------------------------------
-        /* Trigger task to send result */
-        sched_wake_task(&thermocouple_wake);
-        /* Order next read */
-        spi->next_begin_time += spi->rest_time;
-        waketime = spi->next_begin_time;
-        // ----------------------------------------
-
-    } else if (likely(spi->flag == FAULT)) {
-        spi_transfer(spi->fault_cmd);
-        spi->fault_value = spi_transfer(0x00);
-        spi->flag = READY;
-
-    } else if (likely(spi->flag & VALUE)) {
-        spi->value = read_data_len(spi->read_bytes);
-        spi->flag = spi->fault_cmd ? FAULT : READY;
-        waketime = timer_read_time() + POLL_DELAY;
-
-    } else if (likely(spi->flag & INIT)) {
-        if (likely(spi_set_config(spi->spi_config))) {
-            gpio_out_write(spi->pin, 0); // Enable slave
-            if (likely(spi->read_cmd != 0xFF))
-                spi_transfer(spi->read_cmd);
-            spi->flag = VALUE;
-        }
-    }
-    spi->timer.waketime = waketime;
+    /* Trigger task to send result */
+    sched_wake_task(&thermocouple_wake);
+    spi->next_begin_time += spi->rest_time;
+    spi->timer.waketime = spi->next_begin_time;
     return SF_RESCHEDULE;
 }
 
@@ -98,7 +67,6 @@ void command_config_thermocouple(uint32_t *args) {
     spi->fault_mask      = args[6];
     spi->rest_time       = args[7];
     spi->fault_cmd       = args[8];
-    spi->flag = INIT;
 
     /* Configure reader here... */
     uint8_t len = args[9];
@@ -147,11 +115,22 @@ void thermocouple_task(void) {
     struct thermocouple_spi *spi;
     foreach_oid(oid, spi, command_config_thermocouple) {
         irq_disable();
-        uint32_t const value           = spi->value;
         uint32_t const next_begin_time = spi->next_begin_time;
-        uint8_t  const fault           = spi->fault_value;
-        spi->flag = INIT;
         irq_enable();
+        uint32_t value = 0;
+        uint8_t  fault = 0;
+
+        while (!spi_set_config(spi->spi_config));
+        gpio_out_write(spi->pin, 0); // Enable slave
+        if (likely(spi->read_cmd != 0xFF))
+            spi_transfer(spi->read_cmd);
+        value = read_data_len(spi->read_bytes);
+        if (likely(spi->fault_cmd)) {
+            spi_transfer(spi->fault_cmd);
+            fault = spi_transfer(0x00);
+        }
+        spi_set_ready();
+        gpio_out_write(spi->pin, 1); // Disable slave
 
         // ----------------------------------------
         /* check the faults and stop  */

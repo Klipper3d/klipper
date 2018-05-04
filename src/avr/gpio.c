@@ -466,6 +466,7 @@ void
 spi_transfer_len(char *data, uint8_t len) {
     while (len--) {
         SPDR = *data;
+        asm volatile("nop");
         while (!(SPSR & _BV(SPIF))); // Wait ready
         *data++ = SPDR;
     }
