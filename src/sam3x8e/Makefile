@@ -15,7 +15,7 @@ CFLAGS_klipper.elf += -T lib/cmsis-sam3x8e/source/gcc/sam3x8e_flash.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += sam3x8e/main.c sam3x8e/timer.c sam3x8e/gpio.c
+src-y += sam3x8e/main.c sam3x8e/timer.c sam3x8e/gpio.c sam3x8e/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/cmsis-sam3x8e/source/system_sam3xa.c
