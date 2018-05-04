@@ -251,13 +251,15 @@ class MessageParser:
         out.append(MESSAGE_SYNC)
         return ''.join(out)
     def _parse_buffer(self, value):
+        if not value:
+            return []
         tval = int(value, 16)
         out = []
         for i in range(len(value) // 2):
             out.append(tval & 0xff)
             tval >>= 8
         out.reverse()
-        return ''.join([chr(i) for i in out])
+        return out
     def lookup_command(self, msgformat):
         parts = msgformat.strip().split()
         msgname = parts[0]
