@@ -1,6 +1,6 @@
-// Communicating with an SPI device via linux spidev
+// Very basic shift-register support via a Linux SPI device
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -8,6 +8,7 @@
 #include <stdio.h> // snprintf
 #include <unistd.h> // write
 #include "command.h" // DECL_COMMAND
+#include "gpio.h" // spi_setup
 #include "internal.h" // report_errno
 #include "sched.h" // shutdown
 
@@ -47,22 +48,33 @@ spi_open(uint32_t bus, uint32_t dev)
     return fd;
 }
 
-static void
-spi_write(int fd, char *data, int len)
+struct spi_config
+spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    int ret = write(fd, data, len);
+    int bus_id = (bus >> 8) & 0xff, dev_id = bus & 0xff;
+    int fd = spi_open(bus_id, dev_id);
+    return (struct spi_config) { fd };
+}
+
+void
+spi_transfer(struct spi_config config, uint8_t receive_data
+             , uint8_t len, uint8_t *data)
+{
+    int ret = write(config.fd, data, len);
     if (ret < 0) {
         report_errno("write spi", ret);
         shutdown("Unable to write to spi");
     }
 }
 
-void
-command_send_spi(uint32_t *args)
+// Dummy versions of gpio_out functions
+struct gpio_out
+gpio_out_setup(uint8_t pin, uint8_t val)
 {
-    int fd = spi_open(args[0], args[1]);
-    uint8_t len = args[2];
-    char *msg = (void*)(size_t)args[3];
-    spi_write(fd, msg, len);
+    shutdown("gpio_out_setup not supported");
 }
-DECL_COMMAND(command_send_spi, "send_spi bus=%u dev=%u msg=%*s");
+
+void
+gpio_out_write(struct gpio_out g, uint8_t val)
+{
+}
