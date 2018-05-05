@@ -11,9 +11,10 @@ Frequently asked questions
 8. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
 9. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
 10. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
-11. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-12. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-13. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+11. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
+12. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+13. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+14. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -196,6 +197,20 @@ rates, but the stepper motor may not have sufficient torque to move at
 a higher speed. So, for a Z axis with a very precise step_distance the
 actual obtainable max_z_velocity may be smaller than what is
 configured in Marlin.
+
+### My TMC motor driver turns off in the middle of a print
+
+There have been reports of some TMC drivers being disabled in the
+middle of a print. (In particular, with the TMC2208 driver.) When this
+issue occurs, the stepper associated with the driver moves freely,
+while the print continues.
+
+It is believed this may be due to "over current" detection within the
+TMC driver. Trinamic has indicated that this could occur if the driver
+is in "stealthChop mode" and an abrupt velocity change occurs. If you
+experience this problem during homing, consider using a slower homing
+speed. If you experience this problem in the middle of a print,
+consider using a lower junction_deviation setting.
 
 ### When I set "restart_method=command" my AVR device just hangs on a restart
 
