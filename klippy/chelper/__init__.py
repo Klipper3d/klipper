@@ -126,7 +126,7 @@ def get_ffi():
 
 HC_COMPILE_CMD = "gcc -Wall -g -O2 -o %s %s -lusb"
 HC_SOURCE_FILES = ['hub-ctrl.c']
-HC_SOURCE_DIR = '../lib/hub-ctrl'
+HC_SOURCE_DIR = '../../lib/hub-ctrl'
 HC_TARGET = "hub-ctrl"
 HC_CMD = "sudo %s/hub-ctrl -h 0 -P 2 -p %d"
 
