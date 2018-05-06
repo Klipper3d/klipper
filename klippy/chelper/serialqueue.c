@@ -726,7 +726,8 @@ check_send_command(struct serialqueue *sq, double eventtime)
             uint64_t req_clock = qm->req_clock;
             if (req_clock == BACKGROUND_PRIORITY_CLOCK)
                 req_clock = (uint64_t)(
-                    (sq->idle_time - sq->last_clock_time + MIN_BACKGROUND_DELTA)
+                    (sq->idle_time - sq->last_clock_time
+                     + MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA)
                     * sq->est_freq) + sq->last_clock;
             if (req_clock < min_ready_clock)
                 min_ready_clock = req_clock;
