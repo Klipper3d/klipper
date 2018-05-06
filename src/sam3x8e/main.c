@@ -38,6 +38,7 @@ DECL_INIT(watchdog_init);
 void
 command_reset(uint32_t *args)
 {
+    (void)args;
     NVIC_SystemReset();
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");

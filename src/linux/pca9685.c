@@ -36,7 +36,7 @@ struct i2c_s {
     int fd;
 };
 static struct i2c_s devices[16];
-static int devices_count;
+static uint32_t devices_count = 0;
 
 static void
 pca9685_write(int fd, uint8_t channel, uint16_t value)
@@ -60,7 +60,7 @@ static int
 open_i2c(uint8_t bus, uint8_t addr, uint32_t cycle_ticks)
 {
     // Find existing device (if already opened)
-    int i;
+    uint32_t i;
     for (i=0; i<devices_count; i++)
         if (devices[i].bus == bus && devices[i].addr == addr) {
             if (cycle_ticks != devices[i].cycle_ticks)
@@ -141,6 +141,7 @@ DECL_CONSTANT(PCA9685_MAX, VALUE_MAX);
 static uint_fast8_t
 pca9685_end_event(struct timer *timer)
 {
+    (void)timer;
     shutdown("Missed scheduling of next pca9685 event");
 }
 
@@ -207,7 +208,7 @@ DECL_COMMAND(command_set_pca9685_out, "set_pca9685_out bus=%c addr=%c"
 void
 pca9685_shutdown(void)
 {
-    int i;
+    uint32_t i;
     for (i=0; i<devices_count; i++)
         pca9685_write(devices[i].fd, CHANNEL_ALL, 0);
     uint8_t j;

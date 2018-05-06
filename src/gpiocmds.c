@@ -26,6 +26,7 @@ struct digital_out_s {
 static uint_fast8_t
 digital_end_event(struct timer *timer)
 {
+    (void)timer;
     shutdown("Missed scheduling of next pin event");
 }
 

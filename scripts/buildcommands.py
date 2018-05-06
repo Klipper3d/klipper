@@ -84,17 +84,18 @@ def build_encoders(encoders, msg_to_id, all_param_types):
     fmt = """
 %s
 
-const __always_inline struct command_encoder *
+__always_inline const struct command_encoder *
 ctr_lookup_encoder(const char *str)
 {
     %s
     return NULL;
 }
 
-const __always_inline struct command_encoder *
+__always_inline const struct command_encoder *
 ctr_lookup_output(const char *str)
 {
     %s
+    (void)str;
     return NULL;
 }
 """
@@ -109,7 +110,7 @@ def build_static_strings(static_strings):
         code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
                     '        return %d;\n' % (s, i + STATIC_STRING_MIN))
     fmt = """
-uint8_t __always_inline
+__always_inline uint8_t
 ctr_lookup_static_string(const char *str)
 {
     %s
@@ -152,7 +153,7 @@ def build_commands(cmd_by_id, messages_by_name, all_param_types):
     externs = {}
     for msgid in range(max_cmd_msgid+1):
         if msgid not in cmd_by_id:
-            index.append(" {\n},")
+            index.append(" {0, 0, 0, 0, 0, 0\n},")
             continue
         funcname, flags, msgname = cmd_by_id[msgid]
         msg = messages_by_name[msgname]

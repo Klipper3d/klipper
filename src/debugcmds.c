@@ -18,6 +18,7 @@ static struct timer group_timer;
 static uint_fast8_t
 group_end_event(struct timer *timer)
 {
+    (void)timer;
     shutdown("Missed scheduling of next event");
 }
 
@@ -34,6 +35,7 @@ DECL_COMMAND(command_start_group, "start_group clock=%u");
 void
 command_end_group(uint32_t *args)
 {
+    (void)args;
     sched_del_timer(&group_timer);
 }
 DECL_COMMAND(command_end_group, "end_group");
@@ -95,5 +97,6 @@ DECL_COMMAND_FLAGS(command_debug_ping, HF_IN_SHUTDOWN, "debug_ping data=%*s");
 void
 command_debug_nop(uint32_t *args)
 {
+    (void)args;
 }
 DECL_COMMAND_FLAGS(command_debug_nop, HF_IN_SHUTDOWN, "debug_nop data=%*s");

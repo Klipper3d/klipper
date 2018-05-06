@@ -29,6 +29,7 @@ static struct timer sentinel_timer, deleted_timer;
 static uint_fast8_t
 periodic_event(struct timer *t)
 {
+    (void)t;
     // Make sure the stats task runs periodically
     sched_wake_tasks();
     // Reschedule timer
@@ -50,6 +51,7 @@ static struct timer periodic_timer = {
 static uint_fast8_t
 sentinel_event(struct timer *t)
 {
+    (void)t;
     shutdown("sentinel timer called");
 }
 
@@ -59,7 +61,7 @@ static struct timer sentinel_timer = {
 };
 
 // Find position for a timer in timer_list and insert it
-static void __always_inline
+static __always_inline void
 insert_timer(struct timer *t, uint32_t waketime)
 {
     struct timer *prev, *pos = timer_list;
@@ -105,6 +107,7 @@ sched_add_timer(struct timer *add)
 static uint_fast8_t
 deleted_event(struct timer *t)
 {
+    (void)t;
     return SF_DONE;
 }
 

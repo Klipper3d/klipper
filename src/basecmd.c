@@ -101,7 +101,7 @@ move_alloc(void)
 void
 move_request_size(int size)
 {
-    if (size > UINT8_MAX || is_finalized())
+    if (size > (int)UINT8_MAX || is_finalized())
         shutdown("Invalid move request size");
     if (size > move_item_size)
         move_item_size = size;
@@ -113,8 +113,8 @@ move_reset(void)
     if (!move_count)
         return;
     // Add everything in move_list to the free list.
-    uint32_t i;
-    for (i=0; i<move_count-1; i++) {
+    int32_t i;
+    for (i=0; i<(move_count-1); i++) {
         struct move_freed *mf = move_list + i*move_item_size;
         mf->next = move_list + (i + 1)*move_item_size;
     }
@@ -201,6 +201,7 @@ static uint32_t config_crc;
 void
 command_get_config(uint32_t *args)
 {
+    (void)args;
     sendf("config is_config=%c crc=%u move_count=%hu"
           , is_finalized(), config_crc, move_count);
 }
@@ -219,6 +220,7 @@ DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 void
 config_reset(uint32_t *args)
 {
+    (void)args;
     if (! sched_is_shutdown())
         shutdown("config_reset only available when shutdown");
     irq_disable();
@@ -242,6 +244,7 @@ config_reset(uint32_t *args)
 void
 command_get_status(uint32_t *args)
 {
+    (void)args;
     sendf("status clock=%u status=%c", timer_read_time(), sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
@@ -251,6 +254,7 @@ static uint32_t stats_send_time, stats_send_time_high;
 void
 command_get_uptime(uint32_t *args)
 {
+    (void)args;
     uint32_t cur = timer_read_time();
     uint32_t high = stats_send_time_high + (cur < stats_send_time);
     sendf("uptime high=%u clock=%u", high, cur);
@@ -297,6 +301,7 @@ stats_update(uint32_t start, uint32_t cur)
 void
 command_emergency_stop(uint32_t *args)
 {
+    (void)args;
     shutdown("Command request");
 }
 DECL_COMMAND_FLAGS(command_emergency_stop, HF_IN_SHUTDOWN, "emergency_stop");
@@ -304,6 +309,7 @@ DECL_COMMAND_FLAGS(command_emergency_stop, HF_IN_SHUTDOWN, "emergency_stop");
 void
 command_clear_shutdown(uint32_t *args)
 {
+    (void)args;
     sched_clear_shutdown();
 }
 DECL_COMMAND_FLAGS(command_clear_shutdown, HF_IN_SHUTDOWN, "clear_shutdown");

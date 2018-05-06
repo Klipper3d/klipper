@@ -18,7 +18,6 @@
  * Pin mappings
  ****************************************************************/
 
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
@@ -134,7 +133,7 @@ struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
     // Find pin in adc_pins table
-    int chan;
+    uint32_t chan;
     for (chan=0; ; chan++) {
         if (chan >= ARRAY_SIZE(adc_pins))
             shutdown("Not a valid ADC pin");
@@ -190,8 +189,12 @@ gpio_adc_read(struct gpio_adc g)
 void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
+#if 0
     irqstatus_t flag = irq_save();
     if ((ADC->ADC_CHSR & 0xffff) == g.bit)
         gpio_adc_read(g);
     irq_restore(flag);
+#else
+    ADC->ADC_CHDR = g.bit;
+#endif
 }

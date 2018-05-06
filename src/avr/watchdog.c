@@ -50,6 +50,7 @@ watchdog_early_init(void)
 void
 command_reset(uint32_t *args)
 {
+    (void)args;
     irq_disable();
     wdt_enable(WDTO_15MS);
     for (;;)

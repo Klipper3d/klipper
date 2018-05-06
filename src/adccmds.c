@@ -12,9 +12,9 @@
 
 struct analog_in {
     struct timer timer;
+    struct gpio_adc pin;
     uint32_t rest_time, sample_time, next_begin_time;
     uint16_t value, min_value, max_value;
-    struct gpio_adc pin;
     uint8_t state, sample_count;
 };
 
@@ -111,9 +111,9 @@ DECL_TASK(analog_in_task);
 void
 analog_in_shutdown(void)
 {
-    uint8_t i;
+    uint8_t oid;
     struct analog_in *a;
-    foreach_oid(i, a, command_config_analog_in) {
+    foreach_oid(oid, a, command_config_analog_in) {
         gpio_adc_cancel_sample(a->pin);
         if (a->sample_count) {
             a->state = a->sample_count + 1;

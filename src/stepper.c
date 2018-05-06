@@ -23,15 +23,18 @@ struct stepper_move {
     int16_t add;
     uint16_t count;
     struct stepper_move *next;
-    uint8_t flags;
+    uint8_t flags : 8;
 };
 
 enum { MF_DIR=1<<0 };
 
 struct stepper {
     struct timer time;
+    struct gpio_out step_pin, dir_pin;
+    struct stepper_move *first, **plast;
     uint32_t interval;
-    int16_t add;
+    uint32_t position;
+    uint32_t min_stop_interval;
 #if CONFIG_NO_UNSTEP_DELAY
     uint16_t count;
 #define next_step_time time.waketime
@@ -39,10 +42,7 @@ struct stepper {
     uint32_t count;
     uint32_t next_step_time;
 #endif
-    struct gpio_out step_pin, dir_pin;
-    uint32_t position;
-    struct stepper_move *first, **plast;
-    uint32_t min_stop_interval;
+    int16_t add;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
@@ -58,7 +58,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     struct stepper_move *m = s->first;
     if (!m) {
-        if (s->interval - s->add < s->min_stop_interval
+        if ((s->interval - s->add) < s->min_stop_interval
             && !(s->flags & SF_NO_NEXT_CHECK))
             shutdown("No next step");
         s->count = 0;
@@ -98,7 +98,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     return SF_RESCHEDULE;
 }
 
-#define UNSTEP_TIME timer_from_us(2)
+#define UNSTEP_TIME timer_from_us(2) // DRV requires >= 1.9us
 
 // Timer callback - step the given stepper.
 uint_fast8_t
@@ -149,6 +149,7 @@ void
 command_config_stepper(uint32_t *args)
 {
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
+    s->time.func = NULL;
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
     s->flags = args[4] ? SF_INVERT_STEP : 0;

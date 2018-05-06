@@ -19,6 +19,7 @@ struct pwm_out_s {
 static uint_fast8_t
 pwm_end_event(struct timer *timer)
 {
+    (void)timer;
     shutdown("Missed scheduling of next hard pwm event");
 }
 
