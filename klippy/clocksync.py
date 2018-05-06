@@ -54,10 +54,12 @@ class ClockSync:
         if pace:
             freq = self.mcu_freq
         serial.set_clock_est(freq, self.reactor.monotonic(), 0)
-    # MCU clock querying (status callback invoked from background thread)
+    # MCU clock querying (_handle_status is invoked from background thread)
     def _status_event(self, eventtime):
         self.status_cmd.send()
-        return eventtime + 1.0
+        # Use an unusual time for the next event so status messages
+        # don't resonate with other periodic events.
+        return eventtime + .9839
     def _handle_status(self, params):
         # Extend clock to 64bit
         last_clock = self.last_clock
