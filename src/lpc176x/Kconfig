@@ -1,0 +1,34 @@
+# Kconfig settings for LPC176x processors
+
+if MACH_LPC176X
+
+config LPC_SELECT
+    bool
+    default y
+
+config BOARD_DIRECTORY
+    string
+    default "lpc176x"
+
+choice
+    prompt "Processor model"
+    config MACH_LPC1768
+        bool "lpc1768 (100 Mhz)"
+    config MACH_LPC1769
+        bool "lpc1769 (120 Mhz)"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 25000000 if MACH_LPC1768 # 100000000 / 4
+    default 30000000 if MACH_LPC1769 # 120000000 / 4
+
+config SERIAL
+    bool
+    default y
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port"
+    default 250000
+
+endif

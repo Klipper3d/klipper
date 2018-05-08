@@ -12,6 +12,14 @@ The cmsis-sam3x8e directory contains code from the Arduino project:
 version 1.5.1 (extracted on 20160608). It has been modified to compile
 with gcc's LTO feature. See cmsis-sam3x8e.patch for the modifications.
 
+The lpc176x directory contains code from the mbed project:
+  https://github.com/ARMmbed/mbed-os
+version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
+Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory
+and the cmsis/TARGET_CORTEX_M/ directory. It has been modified to
+compile with gcc's LTO feature and to use appropriate clock speeds on
+the LPC1768 and LPC1769. See lpc176x.patch for the modifications.
+
 The cmsis-stm32f1 and the hal-stm32f1 directories contain code from
 STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html

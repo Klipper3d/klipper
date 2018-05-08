@@ -1,0 +1,39 @@
+--- device/system_LPC17xx.c	2018-05-02 12:23:57.292132454 -0400
++++ device/system_LPC17xx.c	2018-05-23 20:09:29.681308483 -0400
+@@ -297,19 +297,16 @@
+ #define CLKSRCSEL_Val         0x00000001
+ #define PLL0_SETUP            1
+ 
+-#ifdef MCB1700
+-#    define PLL0CFG_Val           0x00050063
+-#    define PLL1_SETUP            1
+-#    define PLL1CFG_Val           0x00000023
+-#    define CCLKCFG_Val           0x00000003
+-#    define USBCLKCFG_Val         0x00000000
++#include "autoconf.h" // CONFIG_MACH_LPC1769
++#if CONFIG_MACH_LPC1769
++# define PLL0CFG_Val           0x0000000E
+ #else
+-#    define PLL0CFG_Val           0x0000000B
+-#    define PLL1_SETUP            0
+-#    define PLL1CFG_Val           0x00000000
+-#    define CCLKCFG_Val           0x00000002
+-#    define USBCLKCFG_Val         0x00000005
++# define PLL0CFG_Val           0x00010018
+ #endif
++#define PLL1_SETUP            1
++#define PLL1CFG_Val           0x00000023
++#define CCLKCFG_Val           0x00000002
++#define USBCLKCFG_Val         0x00000000
+ 
+ #define PCLKSEL0_Val          0x00000000
+ #define PCLKSEL1_Val          0x00000000
+@@ -514,7 +511,7 @@
+  * @brief  Setup the microcontroller system.
+  *         Initialize the System.
+  */
+-void SystemInit (void)
++void __attribute__((externally_visible)) SystemInit (void)
+ {
+ #if (CLOCK_SETUP)                       /* Clock Setup                        */
+   LPC_SC->SCS       = SCS_Val;
