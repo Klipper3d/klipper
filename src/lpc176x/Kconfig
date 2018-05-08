@@ -5,6 +5,7 @@ if MACH_LPC176X
 config LPC_SELECT
     bool
     default y
+    select HAVE_GPIO
 
 config BOARD_DIRECTORY
     string
