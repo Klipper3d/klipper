@@ -188,7 +188,6 @@ class KeyboardReader:
                 self.ser.send(msg)
             except msgproto.error as e:
                 self.output("Error: %s" % (str(e),))
-                return None
         self.data = kbdlines[-1]
 
 def main():
