@@ -19,4 +19,12 @@ struct gpio_in {
 struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up);
 uint8_t gpio_in_read(struct gpio_in g);
 
+struct gpio_adc {
+    uint32_t cmd;
+};
+struct gpio_adc gpio_adc_setup(uint8_t pin);
+uint32_t gpio_adc_sample(struct gpio_adc g);
+uint16_t gpio_adc_read(struct gpio_adc g);
+void gpio_adc_cancel_sample(struct gpio_adc g);
+
 #endif // gpio.h
