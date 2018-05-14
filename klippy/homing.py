@@ -40,10 +40,8 @@ class Homing:
         dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
         ticks_per_step = math.ceil(dist_ticks / speed)
         return dist_ticks / ticks_per_step
-    def homing_move(self, movepos, endstops, speed, probe_pos=False):
+    def _homing_move(self, movepos, endstops, speed, probe_pos=False):
         # Start endstop checking
-        for mcu_endstop, name in endstops:
-            mcu_endstop.home_prepare()
         print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
@@ -76,6 +74,10 @@ class Homing:
             mcu_endstop.home_finalize()
         if error is not None:
             raise EndstopError(error)
+    def homing_move(self, movepos, endstops, speed, probe_pos=False):
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_prepare()
+        self._homing_move(movepos, endstops, speed, probe_pos)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):
         if second_home and forcepos == movepos:
             return
@@ -83,6 +85,9 @@ class Homing:
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         self.toolhead.set_position(
             self._fill_coord(forcepos), homing_axes=homing_axes)
+        # Notify endstops of upcoming home
+        for mcu_endstop, name in endstops:
+            mcu_endstop.home_prepare()
         # Add a CPU delay when homing a large axis
         if not second_home:
             est_move_d = sum([abs(forcepos[i]-movepos[i])
@@ -96,7 +101,7 @@ class Homing:
         start_mcu_pos = [(s, name, s.get_mcu_position())
                          for es, name in endstops for s in es.get_steppers()]
         # Issue homing move
-        self.homing_move(movepos, endstops, speed)
+        self._homing_move(movepos, endstops, speed)
         # Verify retract led to some movement on second home
         if second_home and self.verify_retract:
             for s, name, pos in start_mcu_pos:
