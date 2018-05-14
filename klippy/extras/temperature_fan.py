@@ -5,8 +5,10 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import fan
 
-PIN_MIN_TIME = 0.100
 KELVIN_TO_CELCIUS = -273.15
+MAX_FAN_TIME = 5.0
+AMBIENT_TEMP = 25.
+PID_PARAM_BASE = 255.
 
 class TemperatureFan:
     def __init__(self, config):
@@ -14,31 +16,105 @@ class TemperatureFan:
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
-        self.fan_speed = config.getfloat('fan_speed', 1., minval=0., maxval=1.)
-        min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
-        max_temp = config.getfloat('max_temp', above=min_temp)
-        self.temp = config.getfloat('temp', 40. if max_temp > 40. else max_temp,
-            minval=min_temp, maxval=max_temp)
-        self.fan.set_shutdown_speed(1.)
-        self.last_temp = KELVIN_TO_CELCIUS
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
+        self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
-        self.sensor.setup_minmax(min_temp, max_temp)
+        self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
-    def printer_state(self, state):
-        if state == 'ready':
-            reactor = self.printer.get_reactor()
-            reactor.register_timer(self.callback, reactor.NOW)
-    def callback(self, eventtime):
-        power = 0.
-        if self.last_temp > self.temp:
-            power = self.fan_speed
-        print_time = self.mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
-        self.fan.set_speed(print_time, power)
-        return eventtime + 1.
+        self.speed_delay = self.sensor.get_report_time_delta()
+        self.fan.set_shutdown_speed(1.)
+        self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
+        self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
+        self.last_temp = 0.
+        self.last_temp_time = 0.
+        self.target_temp = config.getfloat('target_temp', 40. if self.max_temp > 40. else self.max_temp,
+                                           minval=self.min_temp, maxval=self.max_temp)
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algo = config.getchoice('control', algos)
+        self.control = algo(self, config)
+        self.next_speed_time = 0.
+        self.last_speed_value = 0.
+    def set_speed(self, read_time, value):
+        if value < self.min_speed:
+            value = 0.
+        if self.target_temp <= 0.:
+            value = 0.
+        if ((read_time < self.next_speed_time or not self.last_speed_value)
+                and abs(value - self.last_speed_value) < 0.05):
+            # No significant change in value - can suppress update
+            return
+        speed_time = read_time + self.speed_delay
+        self.next_speed_time = speed_time + 0.75 * MAX_FAN_TIME
+        self.last_speed_value = value
+        self.fan.set_speed(speed_time, value)
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
+        self.control.temperature_callback(read_time, temp)
     def stats(self, eventtime):
-        return True, '%s: temp=%.1f' % (self.name, self.last_temp)
+        return True, '%s: temp=%.1f fan_speed=%.3f' % (self.name, self.last_temp, self.last_speed_value)
+
+######################################################################
+# Bang-bang control algo
+######################################################################
+
+class ControlBangBang:
+    def __init__(self, temperature_fan, config):
+        self.temperature_fan = temperature_fan
+        self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
+        self.heating = False
+    def temperature_callback(self, read_time, temp):
+        if self.heating and temp >= self.temperature_fan.target_temp+self.max_delta:
+            self.heating = False
+        elif not self.heating and temp <= self.temperature_fan.target_temp-self.max_delta:
+            self.heating = True
+        if self.heating:
+            self.temperature_fan.set_speed(read_time, 0.)
+        else:
+            self.temperature_fan.set_speed(read_time, self.temperature_fan.max_power)
+
+######################################################################
+# Proportional Integral Derivative (PID) control algo
+######################################################################
+
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
+
+class ControlPID:
+    def __init__(self, temperature_fan, config):
+        self.temperature_fan = temperature_fan
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
+        imax = config.getfloat('pid_integral_max', temperature_fan.max_speed, minval=0.)
+        self.temp_integ_max = imax / self.Ki
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.prev_temp_deriv = 0.
+        self.prev_temp_integ = 0.
+    def temperature_callback(self, read_time, temp):
+        time_diff = read_time - self.prev_temp_time
+        # Calculate change of temperature
+        temp_diff = temp - self.prev_temp
+        if time_diff >= self.min_deriv_time:
+            temp_deriv = temp_diff / time_diff
+        else:
+            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+                          + temp_diff) / self.min_deriv_time
+        # Calculate accumulated temperature "error"
+        temp_err = self.temperature_fan.target_temp - temp
+        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        temp_integ = max(0., min(self.temp_integ_max, temp_integ))
+        # Calculate output
+        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        bounded_co = max(0., min(self.temperature_fan.max_speed, co))
+        self.temperature_fan.set_speed(read_time, self.temperature_fan.max_speed - bounded_co)
+        # Store state for next measurement
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        self.prev_temp_deriv = temp_deriv
+        if co == bounded_co:
+            self.prev_temp_integ = temp_integ
 
 def load_config_prefix(config):
     return TemperatureFan(config)
