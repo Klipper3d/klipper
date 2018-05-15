@@ -11,6 +11,7 @@ struct gpio_out {
     uint32_t bit;
 };
 struct gpio_out gpio_out_setup(uint8_t pin, uint8_t val);
+void gpio_out_toggle_noirq(struct gpio_out g);
 void gpio_out_toggle(struct gpio_out g);
 void gpio_out_write(struct gpio_out g, uint8_t val);
 

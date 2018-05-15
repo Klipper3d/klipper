@@ -69,10 +69,18 @@ fail:
 }
 
 void
-gpio_out_toggle(struct gpio_out g)
+gpio_out_toggle_noirq(struct gpio_out g)
 {
     Pio *regs = g.regs;
     regs->PIO_ODSR ^= g.bit;
+}
+
+void
+gpio_out_toggle(struct gpio_out g)
+{
+    irqstatus_t flag = irq_save();
+    gpio_out_toggle_noirq(g);
+    irq_restore(flag);
 }
 
 void

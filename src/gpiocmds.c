@@ -115,7 +115,7 @@ static uint_fast8_t
 soft_pwm_toggle_event(struct timer *timer)
 {
     struct soft_pwm_s *s = container_of(timer, struct soft_pwm_s, timer);
-    gpio_out_toggle(s->pin);
+    gpio_out_toggle_noirq(s->pin);
     s->flags ^= SPF_ON;
     uint32_t waketime = s->timer.waketime;
     if (s->flags & SPF_ON)

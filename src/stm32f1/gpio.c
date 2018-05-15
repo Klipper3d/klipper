@@ -72,9 +72,17 @@ fail:
 }
 
 void
-gpio_out_toggle(struct gpio_out g)
+gpio_out_toggle_noirq(struct gpio_out g)
 {
     LL_GPIO_TogglePin(g.regs, g.bit);
+}
+
+void
+gpio_out_toggle(struct gpio_out g)
+{
+    irqstatus_t flag = irq_save();
+    gpio_out_toggle_noirq(g);
+    irq_restore(flag);
 }
 
 void

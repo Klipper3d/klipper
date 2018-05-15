@@ -104,9 +104,15 @@ fail:
 }
 
 void
-gpio_out_toggle(struct gpio_out g)
+gpio_out_toggle_noirq(struct gpio_out g)
 {
     gpio_out_write(g, !(*g.reg & g.bit));
+}
+
+void
+gpio_out_toggle(struct gpio_out g)
+{
+    gpio_out_toggle_noirq(g);
 }
 
 void

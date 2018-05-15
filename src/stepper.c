@@ -88,7 +88,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     }
     if (m->flags & MF_DIR) {
         s->position = -s->position + m->count;
-        gpio_out_toggle(s->dir_pin);
+        gpio_out_toggle_noirq(s->dir_pin);
     } else {
         s->position += m->count;
     }
@@ -108,24 +108,24 @@ stepper_event(struct timer *t)
     if (CONFIG_NO_UNSTEP_DELAY) {
         // On slower mcus it is possible to simply step and unstep in
         // the same timer event.
-        gpio_out_toggle(s->step_pin);
+        gpio_out_toggle_noirq(s->step_pin);
         uint16_t count = s->count - 1;
         if (likely(count)) {
             s->count = count;
             s->time.waketime += s->interval;
-            gpio_out_toggle(s->step_pin);
+            gpio_out_toggle_noirq(s->step_pin);
             if (s->flags & SF_HAVE_ADD)
                 s->interval += s->add;
             return SF_RESCHEDULE;
         }
         uint_fast8_t ret = stepper_load_next(s, 0);
-        gpio_out_toggle(s->step_pin);
+        gpio_out_toggle_noirq(s->step_pin);
         return ret;
     }
 
     // On faster mcus, it is necessary to schedule the unstep event
     uint32_t min_next_time = timer_read_time() + UNSTEP_TIME;
-    gpio_out_toggle(s->step_pin);
+    gpio_out_toggle_noirq(s->step_pin);
     s->count--;
     if (likely(s->count & 1))
         // Schedule unstep event
