@@ -33,6 +33,7 @@ class KeyboardReader:
     def __init__(self, ser, reactor):
         self.ser = ser
         self.reactor = reactor
+        self.start_time = reactor.monotonic()
         self.clocksync = clocksync.ClockSync(self.reactor)
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
@@ -60,6 +61,7 @@ class KeyboardReader:
             ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
+        self.ser.register_callback(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
         self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
@@ -70,7 +72,12 @@ class KeyboardReader:
         sys.stdout.write("%s\n" % (msg,))
         sys.stdout.flush()
     def handle_default(self, params):
-        self.output(self.ser.msgparser.format_params(params))
+        tdiff = params['#receive_time'] - self.start_time
+        self.output("%07.3f: %s" % (
+            tdiff, self.ser.msgparser.format_params(params)))
+    def handle_output(self, params):
+        tdiff = params['#receive_time'] - self.start_time
+        self.output("%07.3f: %s: %s" % (tdiff, params['#name'], params['#msg']))
     def handle_suppress(self, params):
         pass
     def update_evals(self, eventtime):
