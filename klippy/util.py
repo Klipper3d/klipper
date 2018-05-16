@@ -29,7 +29,9 @@ def create_pty(ptyname):
         os.unlink(ptyname)
     except os.error:
         pass
-    os.symlink(os.ttyname(sfd), ptyname)
+    filename = os.ttyname(sfd)
+    os.chmod(filename, 0660)
+    os.symlink(filename, ptyname)
     set_nonblock(mfd)
     old = termios.tcgetattr(mfd)
     old[3] = old[3] & ~termios.ECHO
