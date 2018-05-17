@@ -33,7 +33,7 @@ target-y := $(OUT)LPC1768.ld $(target-y)
 
 $(OUT)LPC1768.ld: lib/lpc176x/device/TOOLCHAIN_GCC_ARM/LPC1768.ld $(OUT)board-link
 	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -P -MD -MT $@ $< -o $@
+	$(Q)$(CPP) -P -MD -MT $@ -DMBED_APP_START=$(CONFIG_FLASH_START) -DMBED_APP_SIZE="(512K - $(CONFIG_FLASH_START))" $< -o $@
 
 # Build the additional bin output file
 target-y += $(OUT)klipper.bin

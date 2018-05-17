@@ -25,6 +25,15 @@ config CLOCK_FREQ
     default 25000000 if MACH_LPC1768 # 100000000 / 4
     default 30000000 if MACH_LPC1769 # 120000000 / 4
 
+config SMOOTHIEWARE_BOOTLOADER
+    bool "Target board uses Smoothieware bootloader"
+    default y
+
+config FLASH_START
+    hex
+    default 0x4000 if SMOOTHIEWARE_BOOTLOADER
+    default 0x0000
+
 config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     default y
