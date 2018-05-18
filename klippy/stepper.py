@@ -71,21 +71,31 @@ class PrinterStepper:
 
 # Support for stepper controlled linear axis with an endstop
 class PrinterHomingStepper(PrinterStepper):
-    def __init__(self, printer, config, default_position=None):
+    def __init__(self, printer, config, need_position_minmax=True,
+                 default_position_endstop=None):
         PrinterStepper.__init__(self, printer, config)
         # Endstop and its position
         ppins = printer.lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         self.mcu_endstop.add_stepper(self.mcu_stepper)
-        if default_position is None:
+        if default_position_endstop is None:
             self.position_endstop = config.getfloat('position_endstop')
         else:
             self.position_endstop = config.getfloat(
-                'position_endstop', default_position)
+                'position_endstop', default_position_endstop)
         # Axis range
-        self.position_min = config.getfloat('position_min', 0.)
-        self.position_max = config.getfloat(
-            'position_max', 0., above=self.position_min)
+        if need_position_minmax:
+            self.position_min = config.getfloat('position_min', 0.)
+            self.position_max = config.getfloat(
+                'position_max', above=self.position_min)
+        else:
+            self.position_min = 0.
+            self.position_max = self.position_endstop
+        if (self.position_endstop < self.position_min
+            or self.position_endstop > self.position_max):
+            raise config.error(
+                "position_endstop in section '%s' must be between"
+                " position_min and position_max" % config.get_name())
         # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_retract_dist = config.getfloat(

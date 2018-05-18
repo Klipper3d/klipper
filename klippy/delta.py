@@ -15,13 +15,14 @@ class DeltaKinematics:
     def __init__(self, toolhead, printer, config):
         stepper_configs = [config.getsection('stepper_' + n)
                            for n in ['a', 'b', 'c']]
-        stepper_a = stepper.PrinterHomingStepper(printer, stepper_configs[0])
+        stepper_a = stepper.PrinterHomingStepper(
+            printer, stepper_configs[0], need_position_minmax = False)
         stepper_b = stepper.PrinterHomingStepper(
-            printer, stepper_configs[1],
-            default_position=stepper_a.position_endstop)
+            printer, stepper_configs[1], need_position_minmax = False,
+            default_position_endstop=stepper_a.position_endstop)
         stepper_c = stepper.PrinterHomingStepper(
-            printer, stepper_configs[2],
-            default_position=stepper_a.position_endstop)
+            printer, stepper_configs[2], need_position_minmax = False,
+            default_position_endstop=stepper_a.position_endstop)
         self.steppers = [stepper_a, stepper_b, stepper_c]
         self.need_motor_enable = self.need_home = True
         self.radius = radius = config.getfloat('delta_radius', above=0.)
