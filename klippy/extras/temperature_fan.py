@@ -14,7 +14,7 @@ class TemperatureFan:
     def __init__(self, config):
         self.name = config.get_name()
         self.printer = config.get_printer()
-        self.fan = fan.PrinterFan(config)
+        self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
@@ -22,7 +22,6 @@ class TemperatureFan:
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.speed_delay = self.sensor.get_report_time_delta()
-        self.fan.set_shutdown_speed(1.)
         self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
         self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
         self.last_temp = 0.

@@ -12,10 +12,9 @@ class PrinterHeaterFan:
         self.printer = config.get_printer()
         self.heater_name = config.get("heater", "extruder0")
         self.heater_temp = config.getfloat("heater_temp", 50.0)
-        self.fan = fan.PrinterFan(config)
+        self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.fan_speed = config.getfloat("fan_speed", 1., minval=0., maxval=1.)
-        self.fan.set_shutdown_speed(1.)
     def printer_state(self, state):
         if state == 'ready':
             pheater = self.printer.lookup_object('heater')
