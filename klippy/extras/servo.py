@@ -23,9 +23,11 @@ class PrinterServo:
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.
+        servo_name = config.get_name().split()[1]
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("SET_SERVO", self.cmd_SET_SERVO,
-                                    desc=self.cmd_SET_SERVO_help)
+        self.gcode.register_mux_command("SET_SERVO", "SERVO", servo_name,
+                                        self.cmd_SET_SERVO,
+                                        desc=self.cmd_SET_SERVO_help)
     def set_pwm(self, print_time, value):
         if value == self.last_value:
             return
@@ -42,12 +44,6 @@ class PrinterServo:
         self.set_pwm(print_time, width * self.width_to_value)
     cmd_SET_SERVO_help = "Set servo angle"
     def cmd_SET_SERVO(self, params):
-        servo_name = self.gcode.get_str('SERVO', params)
-        servo = self.printer.lookup_object('servo ' + servo_name, None)
-        if servo is not self:
-            if servo is None:
-                raise self.gcode.error("Servo not configured")
-            return servo.cmd_SET_SERVO(params)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         if 'WIDTH' in params:
             self.set_pulse_width(print_time,
