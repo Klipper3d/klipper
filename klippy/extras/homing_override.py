@@ -12,6 +12,7 @@ class HomingOverride:
         self.script = config.get('gcode')
         self.in_script = False
         self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
     def cmd_G28(self, params):
         if self.in_script:
