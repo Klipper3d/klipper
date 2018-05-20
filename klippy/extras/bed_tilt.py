@@ -31,26 +31,15 @@ class BedTilt:
 # Helper script to calibrate the bed tilt
 class BedTiltCalibrate:
     def __init__(self, config, bedtilt):
-        self.bedtilt = bedtilt
         self.printer = config.get_printer()
-        points = config.get('points').split('\n')
-        try:
-            points = [line.split(',', 1) for line in points if line.strip()]
-            self.points = [(float(p[0].strip()), float(p[1].strip()))
-                           for p in points]
-        except:
-            raise config.error("Unable to parse bed tilt points")
-        if len(self.points) < 3:
-            raise config.error("Need at least 3 points for bed_tilt_calibrate")
-        self.speed = config.getfloat('speed', 50., above=0.)
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
+        self.bedtilt = bedtilt
+        self.probe_helper = probe.ProbePointsHelper(config, self)
+        # Automatic probe:z_virtual_endstop XY detection
         self.z_position_endstop = None
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
             self.z_position_endstop = zconfig.getfloat('position_endstop', None)
-        self.manual_probe = config.getboolean('manual_probe', None)
-        if self.manual_probe is None:
-            self.manual_probe = not config.has_section('probe')
+        # Register BED_TILT_CALIBRATE command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_TILT_CALIBRATE', self.cmd_BED_TILT_CALIBRATE,
@@ -58,9 +47,7 @@ class BedTiltCalibrate:
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, params):
         self.gcode.run_script("G28")
-        probe.ProbePointsHelper(
-            self.printer, self.points, self.horizontal_move_z,
-            self.speed, self.manual_probe, self)
+        self.probe_helper.start_probe()
     def get_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_position()

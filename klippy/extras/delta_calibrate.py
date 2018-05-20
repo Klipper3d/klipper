@@ -11,29 +11,25 @@ class DeltaCalibrate:
         self.printer = config.get_printer()
         if config.getsection('printer').get('kinematics') != 'delta':
             raise config.error("Delta calibrate is only for delta printers")
-        self.radius = config.getfloat('radius', above=0.)
-        self.speed = config.getfloat('speed', 50., above=0.)
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
-        self.manual_probe = config.getboolean('manual_probe', None)
-        if self.manual_probe is None:
-            self.manual_probe = not config.has_section('probe')
+        # Calculate default probing points
+        radius = config.getfloat('radius', above=0.)
+        points = [(0., 0.)]
+        scatter = [.95, .90, .85, .70, .75, .80]
+        for i in range(6):
+            r = math.radians(90. + 60. * i)
+            dist = radius * scatter[i]
+            points.append((math.cos(r) * dist, math.sin(r) * dist))
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self, default_points=points)
+        # Register DELTA_CALIBRATE command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'DELTA_CALIBRATE', self.cmd_DELTA_CALIBRATE,
             desc=self.cmd_DELTA_CALIBRATE_help)
     cmd_DELTA_CALIBRATE_help = "Delta calibration script"
     def cmd_DELTA_CALIBRATE(self, params):
-        # Setup probe points
-        points = [(0., 0.)]
-        scatter = [.95, .90, .85, .70, .75, .80]
-        for i in range(6):
-            r = math.radians(90. + 60. * i)
-            dist = self.radius * scatter[i]
-            points.append((math.cos(r) * dist, math.sin(r) * dist))
-        # Probe them
         self.gcode.run_script("G28")
-        probe.ProbePointsHelper(self.printer, points, self.horizontal_move_z,
-                                self.speed, self.manual_probe, self)
+        self.probe_helper.start_probe()
     def get_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_stable_position()

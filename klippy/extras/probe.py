@@ -132,26 +132,50 @@ class ProbeVirtualEndstop:
 # Helper code that can probe a series of points and report the
 # position at each point.
 class ProbePointsHelper:
-    def __init__(self, printer, probe_points, horizontal_move_z, speed,
-                 manual_probe, callback):
-        self.printer = printer
-        self.probe_points = probe_points
-        self.horizontal_move_z = horizontal_move_z
-        self.speed = self.lift_speed = speed
-        self.manual_probe = manual_probe
+    def __init__(self, config, callback, default_points=None):
+        self.printer = config.get_printer()
         self.callback = callback
-        self.toolhead = self.printer.lookup_object('toolhead')
+        self.probe_points = default_points
+        # Read config settings
+        if default_points is None or config.get('points', None) is not None:
+            points = config.get('points').split('\n')
+            try:
+                points = [line.split(',', 1) for line in points if line.strip()]
+                self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
+                                     for p in points]
+            except:
+                raise config.error("Unable to parse probe points in %s" % (
+                    config.get_name()))
+            if len(self.probe_points) < 3:
+                raise config.error("Need at least 3 points for %s" % (
+                    config.get_name()))
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
+        self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
+        # Lookup probe object
+        self.probe = None
+        self.probe_z_offset = 0.
+        manual_probe = config.getboolean('manual_probe', None)
+        if manual_probe is None:
+            manual_probe = not config.has_section('probe')
+        if not manual_probe:
+            self.printer.try_load_module(config, 'probe')
+            self.probe = self.printer.lookup_object('probe')
+            self.lift_speed = min(self.speed, self.probe.speed)
+            self.probe_z_offset = self.probe.z_offset
+        # Internal probing state
         self.results = []
-        self.busy = True
+        self.busy = False
+        self.gcode = self.toolhead = None
+    def start_probe(self):
+        # Begin probing
+        self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
-        # Begin probing
+        self.results = []
+        self.busy = True
         self.move_next()
-        if not manual_probe:
-            probe = self.printer.lookup_object('probe', None)
-            if probe is not None:
-                self.lift_speed = min(self.lift_speed, probe.speed)
+        if self.probe is not None:
             while self.busy:
                 self.gcode.run_script("PROBE")
                 self.cmd_NEXT({})
@@ -183,11 +207,7 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            z_offset = 0.
-            if not self.manual_probe:
-                probe = self.printer.lookup_object('probe')
-                z_offset = probe.z_offset
-            self.callback.finalize(z_offset, self.results)
+            self.callback.finalize(self.probe_z_offset, self.results)
 
 def load_config(config):
     return PrinterProbe(config)
