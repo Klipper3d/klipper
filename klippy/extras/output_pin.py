@@ -25,30 +25,22 @@ class PrinterOutputPin:
         static_value = config.getfloat('static_value', None,
                                        minval=0., maxval=self.scale)
         if static_value is not None:
-            self.is_static = True
             self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
-            self.is_static = False
             self.last_value = config.getfloat(
                 'value', 0., minval=0., maxval=self.scale) / self.scale
             shutdown_value = config.getfloat(
                 'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
             self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("SET_PIN", self.cmd_SET_PIN,
-                                    desc=self.cmd_SET_PIN_help)
+            pin_name = config.get_name().split()[1]
+            self.gcode = self.printer.lookup_object('gcode')
+            self.gcode.register_mux_command("SET_PIN", "PIN", pin_name,
+                                            self.cmd_SET_PIN,
+                                            desc=self.cmd_SET_PIN_help)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, params):
-        pin_name = self.gcode.get_str('PIN', params)
-        pin = self.printer.lookup_object('output_pin ' + pin_name, None)
-        if pin is not self:
-            if pin is None:
-                raise self.gcode.error("Pin not configured")
-            return pin.cmd_SET_PIN(params)
-        if self.is_static:
-            raise self.gcode.error("Static pin can not be changed at run-time")
         value = self.gcode.get_float('VALUE', params, minval=0., maxval=1.)
         value /= self.scale
         if value == self.last_value:
