@@ -31,6 +31,7 @@ class GCodeParser:
         self.is_printer_ready = False
         self.base_gcode_handlers = self.gcode_handlers = {}
         self.ready_gcode_handlers = {}
+        self.mux_commands = {}
         self.gcode_help = {}
         for cmd in self.all_handlers:
             func = getattr(self, 'cmd_' + cmd)
@@ -69,6 +70,19 @@ class GCodeParser:
             self.base_gcode_handlers[cmd] = func
         if desc is not None:
             self.gcode_help[cmd] = desc
+    def register_mux_command(self, cmd, key, value, func, desc=None):
+        prev = self.mux_commands.get(cmd)
+        if prev is None:
+            self.register_command(cmd, self.cmd_mux, desc=desc)
+            self.mux_commands[cmd] = prev = (key, {})
+        prev_key, prev_values = prev
+        if prev_key != key:
+            raise error("mux command %s %s %s may have only one key (%s)" % (
+                cmd, key, value, prev_key))
+        if value in prev_values:
+            raise error("mux command %s %s %s already registered (%s)" % (
+                cmd, key, value))
+        prev_values[value] = func
     def set_move_transform(self, transform):
         if self.move_transform is not None:
             raise self.printer.config_error(
@@ -380,6 +394,15 @@ class GCodeParser:
         self.extruder = e
         self.reset_last_position()
         self.run_script(self.extruder.get_activate_gcode(True))
+    def cmd_mux(self, params):
+        key, values = self.mux_commands[params['#command']]
+        if None in values:
+            key_param = self.get_str(key, params, None)
+        else:
+            key_param = self.get_str(key, params)
+        if key_param not in values:
+            raise error("The value '%s' is not valid for %s" % (key_param, key))
+        values[key_param](params)
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
