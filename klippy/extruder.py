@@ -46,9 +46,14 @@ class PrinterExtruder:
             'pressure_advance_lookahead_time', 0.010, minval=0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
-        self.printer.lookup_object('gcode').register_command(
-            "SET_PRESSURE_ADVANCE", self.cmd_SET_PRESSURE_ADVANCE,
-            desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode = self.printer.lookup_object('gcode')
+        if self.name in ('extruder', 'extruder0'):
+            gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
+                                       self.cmd_default_SET_PRESSURE_ADVANCE,
+                                       desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", self.name,
+                                   self.cmd_SET_PRESSURE_ADVANCE,
+                                   desc=self.cmd_SET_PRESSURE_ADVANCE_help)
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
@@ -225,6 +230,9 @@ class PrinterExtruder:
             start_pos -= retract_d
         self.extrude_pos = start_pos
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
+    def cmd_default_SET_PRESSURE_ADVANCE(self, params):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_SET_PRESSURE_ADVANCE(params)
     def cmd_SET_PRESSURE_ADVANCE(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')

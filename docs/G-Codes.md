@@ -84,9 +84,10 @@ The following standard commands are supported:
   [ACCEL_TO_DECEL=<value>] [JUNCTION_DEVIATION=<value>]`: Modify the
   printer's velocity limits. Note that one may only set values less
   than or equal to the limits specified in the config file.
-- `SET_PRESSURE_ADVANCE [ADVANCE=<pressure_advance>]
+- `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
-  Set pressure advance parameters.
+  Set pressure advance parameters. If EXTRUDER is not specified, it
+  defaults to the active extruder.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it

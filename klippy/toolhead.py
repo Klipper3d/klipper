@@ -372,6 +372,8 @@ class ToolHead:
         self.extruder = extruder
         self.move_queue.set_extruder(extruder)
         self.commanded_pos[3] = extrude_pos
+    def get_extruder(self):
+        return self.extruder
     # Misc commands
     def stats(self, eventtime):
         for m in self.all_mcus:
