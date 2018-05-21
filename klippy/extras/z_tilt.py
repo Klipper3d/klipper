@@ -1,0 +1,109 @@
+# Mechanical bed tilt calibration with multiple Z steppers
+#
+# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+import probe, mathutil
+
+class ZTilt:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        z_positions = config.get('z_positions').split('\n')
+        try:
+            z_positions = [line.split(',', 1)
+                           for line in z_positions if line.strip()]
+            self.z_positions = [(float(zp[0].strip()), float(zp[1].strip()))
+                                for zp in z_positions]
+        except:
+            raise config.error("Unable to parse z_positions in %s" % (
+                config.get_name()))
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self, default_points=self.z_positions)
+        self.z_steppers = []
+        # Register Z_TILT_ADJUST command
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command(
+            'Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
+            desc=self.cmd_Z_TILT_ADJUST_help)
+    def printer_state(self, state):
+        if state == 'connect':
+            self.handle_connect()
+    def handle_connect(self):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        try:
+            z_stepper = kin.get_steppers('Z')[0]
+            z_steppers = [z_stepper] + z_stepper.extras
+        except:
+            logging.exception("z_tilt stepper lookup")
+            raise self.printer.config_error(
+                "z_tilt requires multiple Z steppers")
+        if len(z_steppers) != len(self.z_positions):
+            raise self.printer.config_error(
+                "z_tilt z_positions needs exactly %d items" % (len(z_steppers),))
+        self.z_steppers = z_steppers
+    cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
+    def cmd_Z_TILT_ADJUST(self, params):
+        self.probe_helper.start_probe()
+    def get_position(self):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        return kin.get_position()
+    def finalize(self, z_offset, positions):
+        logging.info("Calculating bed tilt with: %s", positions)
+        params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
+        def adjusted_height(pos, params):
+            x, y, z = pos
+            return (z - x*params['x_adjust'] - y*params['y_adjust']
+                    - params['z_adjust'])
+        def errorfunc(params):
+            total_error = 0.
+            for pos in positions:
+                total_error += adjusted_height(pos, params)**2
+            return total_error
+        new_params = mathutil.coordinate_descent(
+            params.keys(), params, errorfunc)
+        logging.info("Calculated bed tilt parameters: %s", new_params)
+        try:
+            self.adjust_steppers(new_params['x_adjust'], new_params['y_adjust'],
+                                 new_params['z_adjust'], z_offset)
+        except:
+            logging.exception("z_tilt adjust_steppers")
+            for s in self.z_steppers:
+                z.mcu_stepper.set_ignore_move(False)
+            raise
+    def adjust_steppers(self, x_adjust, y_adjust, z_adjust, z_offset):
+        toolhead = self.printer.lookup_object('toolhead')
+        curpos = toolhead.get_position()
+        speed = self.probe_helper.get_lift_speed()
+        # Find each stepper adjustment and disable all stepper movements
+        positions = []
+        for s, (x, y) in zip(self.z_steppers, self.z_positions):
+            s.mcu_stepper.set_ignore_move(True)
+            stepper_offset = -(x*x_adjust + y*y_adjust)
+            positions.append((stepper_offset, s))
+        # Report on movements
+        msg = "Making the following Z tilt adjustments:\n%s\nz_offset = %.6f" % (
+            "\n".join(["%s = %.6f" % (s.name, so) for so, s in positions]),
+            z_adjust - z_offset)
+        logging.info(msg)
+        self.gcode.respond_info(msg)
+        # Move each z stepper (sorted from lowest to highest) until they match
+        positions.sort()
+        first_stepper_offset, first_stepper = positions[0]
+        z_low = curpos[2] - first_stepper_offset
+        for i in range(len(positions)-1):
+            stepper_offset, stepper = positions[i]
+            next_stepper_offset, next_stepper = positions[i+1]
+            stepper.mcu_stepper.set_ignore_move(False)
+            curpos[2] = z_low + next_stepper_offset
+            toolhead.move(curpos, speed)
+            toolhead.set_position(curpos)
+        # Z should now be level - do final cleanup
+        last_stepper_offset, last_stepper = positions[-1]
+        last_stepper.mcu_stepper.set_ignore_move(False)
+        curpos[2] -= z_adjust - z_offset
+        toolhead.set_position(curpos)
+        self.gcode.reset_last_position()
+
+def load_config(config):
+    return ZTilt(config)

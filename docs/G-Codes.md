@@ -139,6 +139,14 @@ section is enabled:
     command to move to the next probing point during a
     BED_TILT_CALIBRATE operation.
 
+## Z Tilt
+
+The following commands are available when the "z_tilt" config section
+is enabled:
+- `Z_TILT_ADJUST`: This command will probe the points specified in the
+  config and then make independent adjustments to each Z stepper to
+  compensate for tilt.
+
 ## Dual Carriages
 
 The following command is available when the "dual_carriage" config

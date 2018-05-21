@@ -169,6 +169,8 @@ class ProbePointsHelper:
         self.results = []
         self.busy = False
         self.gcode = self.toolhead = None
+    def get_lift_speed(self):
+        return self.lift_speed
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
