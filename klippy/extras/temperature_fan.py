@@ -50,7 +50,8 @@ class TemperatureFan:
         self.last_temp = temp
         self.control.temperature_callback(read_time, temp)
     def stats(self, eventtime):
-        return True, '%s: temp=%.1f fan_speed=%.3f' % (self.name, self.last_temp, self.last_speed_value)
+        return False, '%s: temp=%.1f fan_speed=%.3f' % (
+            self.name, self.last_temp, self.last_speed_value)
 
 ######################################################################
 # Bang-bang control algo
