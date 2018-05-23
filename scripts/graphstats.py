@@ -34,7 +34,7 @@ def parse_log(logname, mcu):
         prefix = ""
         keyparts = {}
         for p in parts[2:]:
-            if p.endswith(':'):
+            if '=' not in p:
                 prefix = p
                 if prefix == mcu_prefix:
                     prefix = ''

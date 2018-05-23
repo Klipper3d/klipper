@@ -112,7 +112,7 @@ class GatherShutdown:
         mcu = ""
         keyparts = {}
         for p in parts[2:]:
-            if p.endswith(':'):
+            if '=' not in p:
                 mcu = p
                 continue
             name, val = p.split('=', 1)
