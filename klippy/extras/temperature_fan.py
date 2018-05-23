@@ -12,7 +12,7 @@ PID_PARAM_BASE = 255.
 
 class TemperatureFan:
     def __init__(self, config):
-        self.name = config.get_name()
+        self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
         self.mcu = self.fan.mcu_fan.get_mcu()
