@@ -5,6 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 
+TMC_FREQUENCY=13200000.
+
 class tmc2130:
     def __init__(self, config):
         printer = config.get_printer()
@@ -26,9 +28,10 @@ class tmc2130:
         sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
                  '8': 5, '4': 6, '2': 7, '1': 8}
-        microsteps = config.getchoice('microsteps', steps)
+        self.mres = config.getchoice('microsteps', steps)
         interpolate = config.getboolean('interpolate', True)
-        stealthchop = config.getboolean('stealthchop', False)
+        sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
+        sc_threshold = self.velocity_to_clock(config, sc_velocity)
         iholddelay = config.getint('driver_IHOLDDELAY', 8, minval=0, maxval=15)
         tpowerdown = config.getint('driver_TPOWERDOWN', 0, minval=0, maxval=255)
         blank_time_select = config.getint('driver_BLANK_TIME_SELECT', 1,
@@ -45,15 +48,17 @@ class tmc2130:
             irun = self.current_bits(run_current, sense_resistor, vsense)
             ihold = self.current_bits(hold_current, sense_resistor, vsense)
         # configure GCONF
-        self.add_config_cmd(0x00, stealthchop << 2)
+        self.add_config_cmd(0x00, (sc_velocity > 0.) << 2)
         # configure CHOPCONF
         self.add_config_cmd(
             0x6c, toff | (hstrt << 4) | (hend << 7) | (blank_time_select << 15)
-            | (vsense << 17) | (microsteps << 24) | (interpolate << 28))
+            | (vsense << 17) | (self.mres << 24) | (interpolate << 28))
         # configure IHOLD_IRUN
         self.add_config_cmd(0x10, ihold | (irun << 8) | (iholddelay << 16))
         # configure TPOWERDOWN
         self.add_config_cmd(0x11, tpowerdown)
+        # configure TPWMTHRS
+        self.add_config_cmd(0x13, max(0, min(0xfffff, sc_threshold)))
     def add_config_cmd(self, addr, val):
         self.mcu.add_config_cmd("spi_send oid=%d data=%02x%08x" % (
             self.oid, (addr | 0x80) & 0xff, val & 0xffffffff), is_init=True)
@@ -65,6 +70,14 @@ class tmc2130:
         cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense
                  - 1. + .5)
         return max(0, min(31, cs))
+    def velocity_to_clock(self, config, velocity):
+        if not velocity:
+            return 0
+        stepper_name = config.get_name().split()[1]
+        stepper_config = config.getsection(stepper_name)
+        step_dist = stepper_config.getfloat('step_distance')
+        step_dist_256 = step_dist / (1 << self.mres)
+        return int(TMC_FREQUENCY * step_dist_256 / velocity + .5)
 
 def load_config_prefix(config):
     return tmc2130(config)
