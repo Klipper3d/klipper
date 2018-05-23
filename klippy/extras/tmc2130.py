@@ -21,7 +21,7 @@ class tmc2130:
         self.oid = self.mcu.create_oid()
         self.mcu.add_config_cmd(
             "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
-                self.oid, 0, cs_pin_params['pin'], 3, 3600000))
+                self.oid, 0, cs_pin_params['pin'], 3, 4000000))
         run_current = config.getfloat('run_current', above=0., maxval=2.)
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=2.)
