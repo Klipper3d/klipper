@@ -75,8 +75,11 @@ console_task(void)
     int_fast8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
-    if (ret)
+    if (ret) {
         console_pop_input(pop_count);
+        if (ret > 0)
+            command_send_ack();
+    }
 }
 DECL_TASK(console_task);
 

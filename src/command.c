@@ -257,7 +257,6 @@ command_find_block(uint8_t *buf, uint_fast8_t buf_len, uint_fast8_t *pop_count)
         goto nak;
     }
     next_sequence = ((msgseq + 1) & MESSAGE_SEQ_MASK) | MESSAGE_DEST;
-    command_sendf(&encode_acknak);
     return 1;
 
 need_more_data:
@@ -308,13 +307,22 @@ command_dispatch(uint8_t *buf, uint_fast8_t msglen)
     }
 }
 
+// Send an ack message to the host (notifying that it can send more data)
+void
+command_send_ack(void)
+{
+    command_sendf(&encode_acknak);
+}
+
 // Find a message block and then dispatch all the commands in it
 int_fast8_t
 command_find_and_dispatch(uint8_t *buf, uint_fast8_t buf_len
                           , uint_fast8_t *pop_count)
 {
     int_fast8_t ret = command_find_block(buf, buf_len, pop_count);
-    if (ret > 0)
+    if (ret > 0) {
         command_dispatch(buf, *pop_count);
+        command_send_ack();
+    }
     return ret;
 }

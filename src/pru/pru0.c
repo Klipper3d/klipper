@@ -148,8 +148,10 @@ check_can_read(void)
         int_fast8_t ret = command_find_block(p, msglen, &pop_count);
         if (!ret)
             break;
-        if (ret > 0)
+        if (ret > 0) {
             do_dispatch(p, pop_count);
+            command_send_ack();
+        }
         p += pop_count;
         len -= pop_count;
     }

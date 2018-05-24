@@ -72,6 +72,7 @@ void command_sendf(const struct command_encoder *ce, ...);
 int_fast8_t command_find_block(uint8_t *buf, uint_fast8_t buf_len
                                , uint_fast8_t *pop_count);
 void command_dispatch(uint8_t *buf, uint_fast8_t msglen);
+void command_send_ack(void);
 int_fast8_t command_find_and_dispatch(uint8_t *buf, uint_fast8_t buf_len
                                       , uint_fast8_t *pop_count);
 

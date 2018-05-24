@@ -363,7 +363,7 @@ struct serialqueue {
     double last_receive_sent_time;
     // Retransmit support
     uint64_t send_seq, receive_seq;
-    uint64_t ignore_nak_seq, retransmit_seq, rtt_sample_seq;
+    uint64_t ignore_nak_seq, last_ack_seq, retransmit_seq, rtt_sample_seq;
     struct list_head sent_queue;
     double srtt, rttvar, rto;
     // Pending transmission message queues
@@ -509,10 +509,14 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     if (rseq != sq->receive_seq)
         // New sequence number
         update_receive_seq(sq, eventtime, rseq);
-    else if (len == MESSAGE_MIN && rseq > sq->ignore_nak_seq
-             && !list_empty(&sq->sent_queue))
-        // Duplicate sequence number in an empty message is a nak
-        pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
+    if (len == MESSAGE_MIN) {
+        // Ack/nak message
+        if (sq->last_ack_seq < rseq)
+            sq->last_ack_seq = rseq;
+        else if (rseq > sq->ignore_nak_seq && !list_empty(&sq->sent_queue))
+            // Duplicate Ack is a Nak - do fast retransmit
+            pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
+    }
 
     if (len > MESSAGE_MIN) {
         // Add message to receive queue
