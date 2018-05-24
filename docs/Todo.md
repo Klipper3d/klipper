@@ -63,12 +63,6 @@ Hardware features
 
 * Support for additional kinematics: scara, etc.
 
-* Possible support for touch panels attached to the micro-controller.
-  (In general, it would be preferable to attach touch panels to the
-  host system and have octoprint interact with the panel directly, but
-  it would also be useful to handle panels already hardwired to the
-  micro-controller.)
-
 Misc features
 =============
 
