@@ -11,6 +11,7 @@ GCONF_EN_PWM_MODE=1<<2
 GCONF_DIAG1_STALL=1<<8
 REG_TCOOLTHRS=0x14
 REG_COOLCONF=0x6d
+REG_PWMCONF=0x70
 
 class TMC2130:
     def __init__(self, config):
@@ -45,6 +46,10 @@ class TMC2130:
         hend = config.getint('driver_HEND', 7, minval=0, maxval=15)
         hstrt = config.getint('driver_HSTRT', 0, minval=0, maxval=7)
         sgt = config.getint('driver_SGT', 0, minval=-64, maxval=63) & 0x7f
+        pwm_scale = config.getboolean('driver_PWM_AUTOSCALE', True)
+        pwm_freq = config.getint('driver_PWM_FREQ', 1, minval=0, maxval=3)
+        pwm_grad = config.getint('driver_PWM_GRAD', 4, minval=0, maxval=255)
+        pwm_ampl = config.getint('driver_PWM_AMPL', 128, minval=0, maxval=255)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
         ppins.register_chip("_".join(config.get_name().split()[:2]), self)
@@ -73,6 +78,9 @@ class TMC2130:
         self.add_config_cmd(0x13, max(0, min(0xfffff, sc_threshold)))
         # configure COOLCONF
         self.add_config_cmd(REG_COOLCONF, sgt << 16)
+        # configure PWMCONF
+        self.add_config_cmd(REG_PWMCONF, pwm_ampl | (pwm_grad << 8)
+                            | (pwm_freq << 16) | (pwm_scale << 18))
     def add_config_cmd(self, addr, val):
         self.mcu.add_config_cmd("spi_send oid=%d data=%02x%08x" % (
             self.oid, (addr | 0x80) & 0xff, val & 0xffffffff), is_init=True)
