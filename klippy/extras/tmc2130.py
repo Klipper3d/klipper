@@ -33,7 +33,7 @@ class tmc2130:
         tpowerdown = config.getint('driver_TPOWERDOWN', 0, minval=0, maxval=255)
         blank_time_select = config.getint('driver_BLANK_TIME_SELECT', 1,
                                           minval=0, maxval=3)
-        toff = config.getint('driver_TOFF', 1, minval=1, maxval=15)
+        toff = config.getint('driver_TOFF', 4, minval=1, maxval=15)
         hend = config.getint('driver_HEND', 7, minval=0, maxval=15)
         hstrt = config.getint('driver_HSTRT', 0, minval=0, maxval=7)
         # calculate current
