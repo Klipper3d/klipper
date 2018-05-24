@@ -93,9 +93,7 @@ usb_bulk_out_task(void)
         return;
     // Process any existing message blocks
     uint_fast8_t rpos = receive_pos, pop_count;
-    int_fast8_t ret = command_find_block(receive_buf, rpos, &pop_count);
-    if (ret > 0)
-        command_dispatch(receive_buf, pop_count);
+    int_fast8_t ret = command_find_and_dispatch(receive_buf, rpos, &pop_count);
     if (ret) {
         // Move buffer
         uint_fast8_t needcopy = rpos - pop_count;

@@ -307,3 +307,14 @@ command_dispatch(uint8_t *buf, uint_fast8_t msglen)
         func(args);
     }
 }
+
+// Find a message block and then dispatch all the commands in it
+int_fast8_t
+command_find_and_dispatch(uint8_t *buf, uint_fast8_t buf_len
+                          , uint_fast8_t *pop_count)
+{
+    int_fast8_t ret = command_find_block(buf, buf_len, pop_count);
+    if (ret > 0)
+        command_dispatch(buf, *pop_count);
+    return ret;
+}

@@ -156,9 +156,7 @@ console_task(void)
     // Find and dispatch message blocks in the input
     int len = receive_pos + ret;
     uint_fast8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
-    ret = command_find_block(receive_buf, msglen, &pop_count);
-    if (ret > 0)
-        command_dispatch(receive_buf, pop_count);
+    ret = command_find_and_dispatch(receive_buf, msglen, &pop_count);
     if (ret) {
         len -= pop_count;
         if (len) {
