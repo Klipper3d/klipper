@@ -88,6 +88,9 @@ The following standard commands are supported:
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
   Set pressure advance parameters. If EXTRUDER is not specified, it
   defaults to the active extruder.
+- `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
+  one mm and then backward one mm, repeated 10 times. This is a
+  diagnostic tool to help verify stepper connectivity.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it

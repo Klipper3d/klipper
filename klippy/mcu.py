@@ -78,12 +78,15 @@ class MCU_stepper:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
     def set_ignore_move(self, ignore_move):
+        was_ignore = (self._stepcompress_push_const
+                      is not self._ffi_lib.stepcompress_push_const)
         if ignore_move:
             self._stepcompress_push_const = (lambda *args: 0)
             self._stepcompress_push_delta = (lambda *args: 0)
         else:
             self._stepcompress_push_const = self._ffi_lib.stepcompress_push_const
             self._stepcompress_push_delta = self._ffi_lib.stepcompress_push_delta
+        return was_ignore
     def note_homing_start(self, homing_clock):
         ret = self._ffi_lib.stepcompress_set_homing(
             self._stepqueue, homing_clock)
