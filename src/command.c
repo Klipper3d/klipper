@@ -167,6 +167,16 @@ command_add_frame(uint8_t *buf, uint_fast8_t msglen)
     buf[msglen - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
 }
 
+// Encode a message and then add a message block frame around it
+uint_fast8_t
+command_encode_and_frame(uint8_t *buf, const struct command_encoder *ce
+                         , va_list args)
+{
+    uint_fast8_t msglen = command_encodef(buf, ce, args);
+    command_add_frame(buf, msglen);
+    return msglen;
+}
+
 static uint8_t in_sendf;
 
 // Encode and transmit a "response" message

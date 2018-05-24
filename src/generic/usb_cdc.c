@@ -65,8 +65,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
     // Generate message
     uint8_t *buf = &transmit_buf[tpos];
-    uint_fast8_t msglen = command_encodef(buf, ce, args);
-    command_add_frame(buf, msglen);
+    uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
 
     // Start message transmit
     transmit_pos = tpos + msglen;

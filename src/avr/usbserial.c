@@ -65,8 +65,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Generate message
     static uint8_t buf[MESSAGE_MAX];
-    uint8_t msglen = command_encodef(buf, ce, args);
-    command_add_frame(buf, msglen);
+    uint8_t msglen = command_encode_and_frame(buf, ce, args);
 
     // Transmit message
     usb_serial_write((void*)buf, msglen);
