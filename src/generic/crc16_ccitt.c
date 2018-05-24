@@ -8,7 +8,7 @@
 
 // Implement the standard crc "ccitt" algorithm on the given buffer
 uint16_t
-crc16_ccitt(char *buf, uint8_t len)
+crc16_ccitt(uint8_t *buf, uint_fast8_t len)
 {
     uint16_t crc = 0xffff;
     while (len--) {

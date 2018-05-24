@@ -54,7 +54,7 @@ DECL_INIT(prescaler_init);
 
 // Optimized crc16_ccitt for the avr processor
 uint16_t
-crc16_ccitt(char *buf, uint8_t len)
+crc16_ccitt(uint8_t *buf, uint_fast8_t len)
 {
     uint16_t crc = 0xFFFF;
     while (len--)

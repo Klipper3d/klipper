@@ -14,10 +14,8 @@
 #include "sched.h" // sched_wake_tasks
 #include "serial_irq.h" // serial_enable_tx_irq
 
-static char receive_buf[192];
-static uint8_t receive_pos;
-static char transmit_buf[96];
-static uint8_t transmit_pos, transmit_max;
+static uint8_t receive_buf[192], receive_pos;
+static uint8_t transmit_buf[96], transmit_pos, transmit_max;
 
 DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
 
@@ -73,9 +71,8 @@ console_pop_input(uint_fast8_t len)
 void
 console_task(void)
 {
-    uint_fast8_t rpos = readb(&receive_pos);
-    uint8_t pop_count;
-    int8_t ret = command_find_block(receive_buf, rpos, &pop_count);
+    uint_fast8_t rpos = readb(&receive_pos), pop_count;
+    int_fast8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
     if (ret)
@@ -110,8 +107,8 @@ console_sendf(const struct command_encoder *ce, va_list args)
     }
 
     // Generate message
-    char *buf = &transmit_buf[tmax];
-    uint8_t msglen = command_encodef(buf, ce, args);
+    uint8_t *buf = &transmit_buf[tmax];
+    uint_fast8_t msglen = command_encodef(buf, ce, args);
     command_add_frame(buf, msglen);
 
     // Start message transmit

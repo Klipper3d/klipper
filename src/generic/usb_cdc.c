@@ -23,8 +23,7 @@
  ****************************************************************/
 
 static struct task_wake usb_bulk_in_wake;
-static char transmit_buf[96];
-static uint8_t transmit_pos;
+static uint8_t transmit_buf[96], transmit_pos;
 
 void
 usb_notify_bulk_in(void)
@@ -65,8 +64,8 @@ console_sendf(const struct command_encoder *ce, va_list args)
         return;
 
     // Generate message
-    char *buf = &transmit_buf[tpos];
-    uint8_t msglen = command_encodef(buf, ce, args);
+    uint8_t *buf = &transmit_buf[tpos];
+    uint_fast8_t msglen = command_encodef(buf, ce, args);
     command_add_frame(buf, msglen);
 
     // Start message transmit
@@ -80,8 +79,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
  ****************************************************************/
 
 static struct task_wake usb_bulk_out_wake;
-static char receive_buf[128];
-static uint8_t receive_pos;
+static uint8_t receive_buf[128], receive_pos;
 
 void
 usb_notify_bulk_out(void)
@@ -95,8 +93,7 @@ usb_bulk_out_task(void)
     if (!sched_check_wake(&usb_bulk_out_wake))
         return;
     // Process any existing message blocks
-    uint_fast8_t rpos = receive_pos;
-    uint8_t pop_count;
+    uint_fast8_t rpos = receive_pos, pop_count;
     int_fast8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);

@@ -25,7 +25,7 @@
 // Layout of shared memory
 struct shared_response_buffer {
     uint32_t count;
-    char data[MESSAGE_MAX];
+    uint8_t data[MESSAGE_MAX];
 };
 struct shared_mem {
     uint32_t signal;
@@ -36,7 +36,7 @@ struct shared_mem {
     const struct command_parser *command_index;
     uint32_t command_index_size;
     const struct command_parser *shutdown_handler;
-    char read_data[512];
+    uint8_t read_data[512];
 };
 
 #define SIGNAL_PRU0_WAITING 0xefefefef
