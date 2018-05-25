@@ -58,9 +58,6 @@ Documentation
 Hardware features
 =================
 
-* Port to additional micro-controller architectures:
- * Smoothieboard / NXP LPC1769 (ARM cortex-M3)
-
 * Support for additional kinematics: scara, etc.
 
 Misc features
