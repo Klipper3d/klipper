@@ -41,3 +41,11 @@ target-y += $(OUT)klipper.bin
 $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
+
+flash: $(OUT)klipper.bin
+	@echo ""
+	@echo "  The LPC176x build does not currently support 'make flash'"
+	@echo ""
+	@echo "  To flash a Smoothieboard, copy the $(OUT)klipper.bin to a file"
+	@echo "  named firmware.bin on an SD card and then restart the"
+	@echo "  Smoothieboard with that SD card."
