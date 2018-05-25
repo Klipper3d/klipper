@@ -340,6 +340,7 @@ class GCodeParser:
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, params, is_bed=False, wait=False):
         temp = self.get_float('S', params, 0.)
+        temp = self.get_float('R', params, temp)
         heater = None
         if is_bed:
             heater = self.heaters[-1]
