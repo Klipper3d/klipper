@@ -357,6 +357,7 @@ struct serialqueue {
     pthread_cond_t cond;
     int receive_waiting;
     // Baud / clock tracking
+    int receive_window;
     double baud_adjust, idle_time;
     double est_freq, last_clock_time;
     uint64_t last_clock;
@@ -368,7 +369,7 @@ struct serialqueue {
     double srtt, rttvar, rto;
     // Pending transmission message queues
     struct list_head pending_queues;
-    int ready_bytes, stalled_bytes, need_ack_bytes;
+    int ready_bytes, stalled_bytes, need_ack_bytes, last_ack_bytes;
     uint64_t need_kick_clock;
     // Received messages
     struct list_head receive_queue;
@@ -458,6 +459,7 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
         if (rseq == sent_seq) {
             // Found sent message corresponding with the received sequence
             sq->last_receive_sent_time = sent->receive_time;
+            sq->last_ack_bytes = sent->len;
             break;
         }
     }
@@ -694,11 +696,18 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
 static double
 check_send_command(struct serialqueue *sq, double eventtime)
 {
-    if ((sq->send_seq - sq->receive_seq >= MESSAGE_SEQ_MASK
-         || (sq->need_ack_bytes - 2*MESSAGE_MAX) * sq->baud_adjust > sq->srtt)
+    if (sq->send_seq - sq->receive_seq >= MESSAGE_SEQ_MASK
         && sq->receive_seq != (uint64_t)-1)
         // Need an ack before more messages can be sent
         return PR_NEVER;
+    if (sq->send_seq > sq->receive_seq && sq->receive_window) {
+        int need_ack_bytes = sq->need_ack_bytes + MESSAGE_MAX;
+        if (sq->last_ack_seq < sq->receive_seq)
+            need_ack_bytes += sq->last_ack_bytes;
+        if (need_ack_bytes > sq->receive_window)
+            // Wait for ack from past messages before sending next message
+            return PR_NEVER;
+    }
 
     // Check for stalled messages now ready
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
@@ -1018,6 +1027,14 @@ serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
 {
     pthread_mutex_lock(&sq->lock);
     sq->baud_adjust = baud_adjust;
+    pthread_mutex_unlock(&sq->lock);
+}
+
+void
+serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
+{
+    pthread_mutex_lock(&sq->lock);
+    sq->receive_window = receive_window;
     pthread_mutex_unlock(&sq->lock);
 }
 

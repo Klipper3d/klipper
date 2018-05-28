@@ -14,10 +14,13 @@
 #include "sched.h" // sched_wake_tasks
 #include "serial_irq.h" // serial_enable_tx_irq
 
-static uint8_t receive_buf[192], receive_pos;
+#define RX_BUFFER_SIZE 192
+
+static uint8_t receive_buf[RX_BUFFER_SIZE], receive_pos;
 static uint8_t transmit_buf[96], transmit_pos, transmit_max;
 
 DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
+DECL_CONSTANT(RECEIVE_WINDOW, RX_BUFFER_SIZE);
 
 // Rx interrupt - store read data
 void
