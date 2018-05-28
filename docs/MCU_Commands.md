@@ -226,11 +226,11 @@ only of interest to developers looking to gain insight into Klipper.
   pins attached to thermistors controlling heaters - it can be used to
   check that a heater is within a temperature range.
 
-* `get_status` : This command causes the micro-controller to generate
-  a "status" response message. The host sends this command once a
-  second to obtain the value of the micro-controller clock and to
-  estimate the drift between host and micro-controller clocks. It
-  enables the host to accurately estimate the micro-controller clock.
+* `get_clock` : This command causes the micro-controller to generate a
+  "clock" response message. The host sends this command once a second
+  to obtain the value of the micro-controller clock and to estimate
+  the drift between host and micro-controller clocks. It enables the
+  host to accurately estimate the micro-controller clock.
 
 Stepper commands
 ----------------

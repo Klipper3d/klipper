@@ -240,11 +240,11 @@ config_reset(uint32_t *args)
  ****************************************************************/
 
 void
-command_get_status(uint32_t *args)
+command_get_clock(uint32_t *args)
 {
-    sendf("status clock=%u status=%c", timer_read_time(), sched_is_shutdown());
+    sendf("clock clock=%u", timer_read_time());
 }
-DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
+DECL_COMMAND_FLAGS(command_get_clock, HF_IN_SHUTDOWN, "get_clock");
 
 static uint32_t stats_send_time, stats_send_time_high;
 
