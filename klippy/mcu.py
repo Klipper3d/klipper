@@ -567,6 +567,9 @@ class MCU:
             if start_reason == 'firmware_restart':
                 raise error("Failed automated reset of MCU '%s'" % (self._name,))
         if self._config_crc != config_params['crc']:
+            if config_params['is_shutdown']:
+                raise error("Can not update MCU '%s' config as it is shutdown"
+                            % (self._name,))
             self._check_restart("CRC mismatch")
             raise error("MCU '%s' CRC does not match config" % (self._name,))
         move_count = config_params['move_count']

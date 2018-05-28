@@ -201,8 +201,8 @@ static uint32_t config_crc;
 void
 command_get_config(uint32_t *args)
 {
-    sendf("config is_config=%c crc=%u move_count=%hu"
-          , is_finalized(), config_crc, move_count);
+    sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
+          , is_finalized(), config_crc, move_count, sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
