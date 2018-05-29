@@ -533,7 +533,9 @@ class GCodeParser:
                 offset += self.get_float(axis + '_ADJUST', params)
             else:
                 continue
-            self.base_position[pos] += offset - self.homing_position[pos]
+            delta = offset - self.homing_position[pos]
+            self.last_position[pos] += delta
+            self.base_position[pos] += delta
             self.homing_position[pos] = offset
     def cmd_M206(self, params):
         # Offset axes
