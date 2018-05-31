@@ -690,7 +690,7 @@ class MCU:
         serialhdl.arduino_reset(self._serialport, self._reactor)
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
-            or not self._clocksync.is_active(self._reactor.monotonic())):
+            or not self._clocksync.is_active()):
             logging.info("Unable to issue reset command on MCU '%s'", self._name)
             return
         if self._reset_cmd is None:
@@ -739,7 +739,7 @@ class MCU:
             return
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._ffi_lib.steppersync_set_time(self._steppersync, offset, freq)
-        if (self._clocksync.is_active(eventtime) or self.is_fileoutput()
+        if (self._clocksync.is_active() or self.is_fileoutput()
             or self._is_timeout):
             return
         self._is_timeout = True

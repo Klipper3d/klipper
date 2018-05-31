@@ -1,11 +1,10 @@
 # Micro-controller clock synchronization
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, math
+import logging, math
 
-COMM_TIMEOUT = 3.5
 RTT_AGE = .000010 / (60. * 60.)
 DECAY = 1. / 30.
 TRANSMIT_EXTRA = .001
@@ -16,6 +15,7 @@ class ClockSync:
         self.serial = None
         self.get_clock_timer = self.reactor.register_timer(self._get_clock_event)
         self.get_clock_cmd = None
+        self.queries_pending = 0
         self.mcu_freq = 1.
         self.last_clock = 0
         self.clock_est = (0., 0., 0.)
@@ -57,10 +57,12 @@ class ClockSync:
     # MCU clock querying (_handle_clock is invoked from background thread)
     def _get_clock_event(self, eventtime):
         self.get_clock_cmd.send()
+        self.queries_pending += 1
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.
         return eventtime + .9839
     def _handle_clock(self, params):
+        self.queries_pending = 0
         # Extend clock to 64bit
         last_clock = self.last_clock
         clock = (last_clock & ~0xffffffff) | params['clock']
@@ -138,10 +140,8 @@ class ClockSync:
         if clock_diff & 0x80000000:
             return last_clock + 0x100000000 - clock_diff
         return last_clock - clock_diff
-    def is_active(self, eventtime):
-        print_time = self.estimated_print_time(eventtime)
-        last_clock_print_time = self.clock_to_print_time(self.last_clock)
-        return print_time < last_clock_print_time + COMM_TIMEOUT
+    def is_active(self):
+        return self.queries_pending <= 4
     def dump_debug(self):
         sample_time, clock, freq = self.clock_est
         return ("clocksync state: mcu_freq=%d last_clock=%d"
