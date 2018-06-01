@@ -605,7 +605,7 @@ class MCU:
         self._config_reset_cmd = self.try_lookup_command("config_reset")
         if (self._restart_method is None
             and (self._reset_cmd is not None
-                 or self.config_reset_cmd is not None)
+                 or self._config_reset_cmd is not None)
             and self._serial.msgparser.get_constant(
                 'SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
