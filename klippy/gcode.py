@@ -83,7 +83,7 @@ class GCodeParser:
                 cmd, key, value, prev_key))
         if value in prev_values:
             raise error("mux command %s %s %s already registered (%s)" % (
-                cmd, key, value))
+                cmd, key, value, prev_values))
         prev_values[value] = func
     def set_move_transform(self, transform):
         if self.move_transform is not None:
