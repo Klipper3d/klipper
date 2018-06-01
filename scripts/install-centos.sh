@@ -20,8 +20,8 @@ install_packages()
     #PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
 
     # Update system package info
-    report_status "Running package update..."
-    sudo yum check-update
+    # report_status "Running package update..."
+    # sudo yum check-update
 
     # Install desired packages
     report_status "Installing packages..."
@@ -45,7 +45,7 @@ install_script()
 {
     report_status "Installing system start script..."
     sudo cp "${SRCDIR}/scripts/klipper-start.sh" /etc/init.d/klipper
-    sudo update-rc.d klipper defaults
+    sudo chkconfig klipper on
 }
 
 # Step 4: Install startup script config
@@ -62,7 +62,7 @@ KLIPPY_USER=$USER
 
 KLIPPY_EXEC=${PYTHONDIR}/bin/python
 
-KLIPPY_ARGS="${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /tmp/klippy.log"
+KLIPPY_ARGS="${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log"
 
 EOF
 }
