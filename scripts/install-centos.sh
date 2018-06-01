@@ -18,6 +18,8 @@ install_packages()
     # ARM chip installation and building
     # CentOS/Fedora do not appear to have these packages available at this time
     #PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
+    # CentOS needs lsb-core for init script
+    PKGLIST="${PKGLIST} redhat-lsb-core"
 
     # Update system package info
     # report_status "Running package update..."
