@@ -38,7 +38,7 @@ The general way to find a USB serial port is to run `ls -l
 /dev/serial/by-id/` from an ssh terminal on the host machine. It will
 likely produce output similar to the following:
 ```
-lrwxrwxrwx 1 root root 13 Jan 3 22:15 usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00 -> ../../ttyACM0
+lrwxrwxrwx 1 root root 13 Jun  1 21:12 usb-1a86_USB2.0-Serial-if00-port0 -> ../../ttyUSB0
 ```
 
 The name found in the above command is stable and it is possible to
@@ -46,17 +46,21 @@ use it in the config file and while flashing the micro-controller
 code. For example, a flash command might look similar to:
 ```
 sudo service klipper stop
-make flash FLASH_DEVICE=/dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 ```
 and the updated config might look like:
 ```
 [mcu]
-serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_12345678912345678912-if00
+serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```
 
 Be sure to copy-and-paste the name from the "ls" command that you ran
 above as the name will be different for each printer.
+
+If you are using multiple micro-controllers and they do not have
+unique ids (common on boards with a CH340 USB chip) then follow the
+directions above using the directory `/dev/serial/by-path/` instead.
 
 ### When the micro-controller restarts the device changes to /dev/ttyUSB1
 
