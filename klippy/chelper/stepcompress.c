@@ -11,7 +11,7 @@
 // add parameters such that 'count' pulses occur, with each step event
 // calculating the next step event time using:
 //  next_wake_time = last_wake_time + interval; interval += add
-// This code is writtin in C (instead of python) for processing
+// This code is written in C (instead of python) for processing
 // efficiency - the repetitive integer math is vastly faster in C.
 
 #include <math.h> // sqrt
