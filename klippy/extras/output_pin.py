@@ -41,7 +41,8 @@ class PrinterOutputPin:
                                             desc=self.cmd_SET_PIN_help)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, params):
-        value = self.gcode.get_float('VALUE', params, minval=0., maxval=1.)
+        value = self.gcode.get_float('VALUE', params,
+                                     minval=0., maxval=self.scale)
         value /= self.scale
         if value == self.last_value:
             return
