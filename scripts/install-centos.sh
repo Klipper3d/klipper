@@ -3,6 +3,7 @@
 # OctoPi distribution.
 
 PYTHONDIR="${HOME}/klippy-env"
+SYSTEMDDIR="/etc/systemd/system"
 
 # Step 1: Install system packages
 install_packages()
@@ -18,8 +19,8 @@ install_packages()
     # ARM chip installation and building
     # CentOS/Fedora do not appear to have these packages available at this time
     #PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
-    # CentOS needs lsb-core for init script
-    PKGLIST="${PKGLIST} redhat-lsb-core"
+    # CentOS needs lsb-core for init.d script. Currently using systemd service installation instead
+    #PKGLIST="${PKGLIST} redhat-lsb-core"
 
     # Update system package info
     # report_status "Running package update..."
@@ -46,34 +47,34 @@ create_virtualenv()
 install_script()
 {
     report_status "Installing system start script..."
-    sudo cp "${SRCDIR}/scripts/klipper-start.sh" /etc/init.d/klipper
-    sudo chkconfig klipper on
+    sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper.service" << EOF
+#Systemd service file for klipper
+[Unit]
+Description=Starts klipper on startup
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+User=$USER
+RemainAfterExit=yes
+ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log
+EOF
+    sudo systemctl enable klipper.service
 }
 
-# Step 4: Install startup script config
-install_config()
-{
-    DEFAULTS_FILE=/etc/default/klipper
-    [ -f $DEFAULTS_FILE ] && return
-
-    report_status "Installing system start configuration..."
-    sudo /bin/sh -c "cat > $DEFAULTS_FILE" <<EOF
-# Configuration for /etc/init.d/klipper
+# Configuration for systemctl klipper
 
 KLIPPY_USER=$USER
 
-KLIPPY_EXEC=${PYTHONDIR}/bin/python
-
-KLIPPY_ARGS="${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log"
-
-EOF
-}
 
 # Step 5: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
-    sudo /etc/init.d/klipper restart
+    sudo systemctl klipper restart
 }
 
 # Helper functions
@@ -101,5 +102,4 @@ verify_ready
 install_packages
 create_virtualenv
 install_script
-install_config
 start_software
