@@ -1,6 +1,6 @@
 // Stepper pulse schedule compression
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 //
@@ -229,7 +229,7 @@ check_line(struct stepcompress *sc, struct step_move move)
  ****************************************************************/
 
 // Allocate a new 'stepcompress' object
-struct stepcompress *
+struct stepcompress * __visible
 stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
                    , uint32_t set_next_step_dir_msgid, uint32_t invert_sdir
                    , uint32_t oid)
@@ -247,7 +247,7 @@ stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
 }
 
 // Free memory associated with a 'stepcompress' object
-void
+void __visible
 stepcompress_free(struct stepcompress *sc)
 {
     if (!sc)
@@ -328,7 +328,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
 }
 
 // Reset the internal state of the stepcompress object
-int
+int __visible
 stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 {
     int ret = stepcompress_flush(sc, UINT64_MAX);
@@ -340,7 +340,7 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 }
 
 // Indicate the stepper is in homing mode (or done homing if zero)
-int
+int __visible
 stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
 {
     int ret = stepcompress_flush(sc, UINT64_MAX);
@@ -351,7 +351,7 @@ stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock)
 }
 
 // Queue an mcu command to go out in order with stepper commands
-int
+int __visible
 stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 {
     int ret = stepcompress_flush(sc, UINT64_MAX);
@@ -502,7 +502,7 @@ static inline double safe_sqrt(double v) {
 }
 
 // Schedule a step event at the specified step_clock time
-int32_t
+int32_t __visible
 stepcompress_push(struct stepcompress *sc, double print_time, int32_t sdir)
 {
     int ret = set_next_step_dir(sc, !!sdir);
@@ -522,7 +522,7 @@ stepcompress_push(struct stepcompress *sc, double print_time, int32_t sdir)
 // Otherwise it uses the formula:
 //  step_time = (print_time + sqrt(2*step_num/accel + (start_sv/accel)**2)
 //               - start_sv/accel)
-int32_t
+int32_t __visible
 stepcompress_push_const(
     struct stepcompress *sc, double print_time
     , double step_offset, double steps, double start_sv, double accel)
@@ -672,7 +672,7 @@ _stepcompress_push_delta(
     return res;
 }
 
-int32_t
+int32_t __visible
 stepcompress_push_delta(
     struct stepcompress *sc, double print_time, double move_sd
     , double start_sv, double accel
@@ -729,7 +729,7 @@ struct steppersync {
 };
 
 // Allocate a new 'steppersync' object
-struct steppersync *
+struct steppersync * __visible
 steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
                   , int sc_num, int move_num)
 {
@@ -750,7 +750,7 @@ steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
 }
 
 // Free memory associated with a 'steppersync' object
-void
+void __visible
 steppersync_free(struct steppersync *ss)
 {
     if (!ss)
@@ -762,7 +762,7 @@ steppersync_free(struct steppersync *ss)
 }
 
 // Set the conversion rate of 'print_time' to mcu clock
-void
+void __visible
 steppersync_set_time(struct steppersync *ss, double time_offset, double mcu_freq)
 {
     int i;
@@ -798,7 +798,7 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
 }
 
 // Find and transmit any scheduled steps prior to the given 'move_clock'
-int
+int __visible
 steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
     // Flush each stepcompress to the specified move_clock

@@ -11,7 +11,9 @@ import cffi
 # c_helper.so compiling
 ######################################################################
 
-COMPILE_CMD = "gcc -Wall -g -O2 -shared -fPIC -o %s %s"
+COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
+               " -flto -fwhole-program -fno-use-linker-plugin"
+               " -o %s %s")
 SOURCE_FILES = ['stepcompress.c', 'serialqueue.c', 'pyhelper.c']
 DEST_LIB = "c_helper.so"
 OTHER_FILES = ['list.h', 'serialqueue.h', 'pyhelper.h']
@@ -56,9 +58,6 @@ defs_serialqueue = """
     void serialqueue_free_commandqueue(struct command_queue *cq);
     void serialqueue_send(struct serialqueue *sq, struct command_queue *cq
         , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock);
-    void serialqueue_encode_and_send(struct serialqueue *sq
-        , struct command_queue *cq, uint32_t *data, int len
-        , uint64_t min_clock, uint64_t req_clock);
     void serialqueue_pull(struct serialqueue *sq
         , struct pull_queue_message *pqm);
     void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
