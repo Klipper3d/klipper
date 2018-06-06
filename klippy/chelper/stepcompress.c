@@ -14,7 +14,6 @@
 // This code is written in C (instead of python) for processing
 // efficiency - the repetitive integer math is vastly faster in C.
 
-#include <math.h> // sqrt
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint32_t
 #include <stdio.h> // fprintf
@@ -23,6 +22,7 @@
 #include "compiler.h" // DIV_ROUND_UP
 #include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
+#include "stepcompress.h" // stepcompress_alloc
 
 #define CHECK_LINES 1
 #define QUEUE_START_SIZE 1024
@@ -186,8 +186,6 @@ compress_bisect_add(struct stepcompress *sc)
  * Step compress checking
  ****************************************************************/
 
-#define ERROR_RET -989898989
-
 // Verify that a given 'step_move' matches the actual step times
 static int
 check_line(struct stepcompress *sc, struct step_move move)
@@ -309,7 +307,7 @@ stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
 }
 
 // Send the set_next_step_dir command
-static int
+int
 set_next_step_dir(struct stepcompress *sc, int sdir)
 {
     if (sc->sdir == sdir)
@@ -373,22 +371,28 @@ stepcompress_set_time(struct stepcompress *sc
     sc->mcu_freq = mcu_freq;
 }
 
+double
+stepcompress_get_mcu_freq(struct stepcompress *sc)
+{
+    return sc->mcu_freq;
+}
+
+uint32_t
+stepcompress_get_oid(struct stepcompress *sc)
+{
+    return sc->oid;
+}
+
 
 /****************************************************************
  * Queue management
  ****************************************************************/
 
-struct queue_append {
-    struct stepcompress *sc;
-    uint32_t *qnext, *qend, last_step_clock_32;
-    double clock_offset;
-};
-
 // Maximium clock delta between messages in the queue
 #define CLOCK_DIFF_MAX (3<<28)
 
 // Create a cursor for inserting clock times into the queue
-static inline struct queue_append
+inline struct queue_append
 queue_append_start(struct stepcompress *sc, double print_time, double adjust)
 {
     double print_clock = (print_time - sc->mcu_time_offset) * sc->mcu_freq;
@@ -399,7 +403,7 @@ queue_append_start(struct stepcompress *sc, double print_time, double adjust)
 }
 
 // Finalize a cursor created with queue_append_start()
-static inline void
+inline void
 queue_append_finish(struct queue_append qa)
 {
     qa.sc->queue_next = qa.qnext;
@@ -453,7 +457,7 @@ queue_append_slow(struct stepcompress *sc, double rel_sc)
 }
 
 // Add a clock time to the queue (flushing the queue if needed)
-static inline int
+inline int
 queue_append(struct queue_append *qa, double step_clock)
 {
     double rel_sc = step_clock + qa->clock_offset;
@@ -473,235 +477,6 @@ queue_append(struct queue_append *qa, double step_clock)
     qa->last_step_clock_32 = sc->last_step_clock;
     qa->clock_offset -= sc->last_step_clock - old_last_step_clock;
     return 0;
-}
-
-
-/****************************************************************
- * Motion to step conversions
- ****************************************************************/
-
-// Common suffixes: _sd is step distance (a unit length the same
-// distance the stepper moves on each step), _sv is step velocity (in
-// units of step distance per time), _sd2 is step distance squared, _r
-// is ratio (scalar usually between 0.0 and 1.0).  Times are in
-// seconds and acceleration is in units of step distance per second
-// squared.
-
-// Wrapper around sqrt() to handle small negative numbers
-static double
-_safe_sqrt(double v)
-{
-    // Due to floating point truncation, it's possible to get a small
-    // negative number - treat it as zero.
-    if (v < -0.001)
-        errorf("safe_sqrt of %.9f", v);
-    return 0.;
-}
-static inline double safe_sqrt(double v) {
-    return likely(v >= 0.) ? sqrt(v) : _safe_sqrt(v);
-}
-
-// Schedule a step event at the specified step_clock time
-int32_t __visible
-stepcompress_push(struct stepcompress *sc, double print_time, int32_t sdir)
-{
-    int ret = set_next_step_dir(sc, !!sdir);
-    if (ret)
-        return ret;
-    struct queue_append qa = queue_append_start(sc, print_time, 0.5);
-    ret = queue_append(&qa, 0.);
-    if (ret)
-        return ret;
-    queue_append_finish(qa);
-    return sdir ? 1 : -1;
-}
-
-// Schedule 'steps' number of steps at constant acceleration. If
-// acceleration is zero (ie, constant velocity) it uses the formula:
-//  step_time = print_time + step_num/start_sv
-// Otherwise it uses the formula:
-//  step_time = (print_time + sqrt(2*step_num/accel + (start_sv/accel)**2)
-//               - start_sv/accel)
-int32_t __visible
-stepcompress_push_const(
-    struct stepcompress *sc, double print_time
-    , double step_offset, double steps, double start_sv, double accel)
-{
-    // Calculate number of steps to take
-    int sdir = 1;
-    if (steps < 0) {
-        sdir = 0;
-        steps = -steps;
-        step_offset = -step_offset;
-    }
-    int count = steps + .5 - step_offset;
-    if (count <= 0 || count > 10000000) {
-        if (count && steps) {
-            errorf("push_const invalid count %d %f %f %f %f %f"
-                   , sc->oid, print_time, step_offset, steps
-                   , start_sv, accel);
-            return ERROR_RET;
-        }
-        return 0;
-    }
-    int ret = set_next_step_dir(sc, sdir);
-    if (ret)
-        return ret;
-    int res = sdir ? count : -count;
-
-    // Calculate each step time
-    if (!accel) {
-        // Move at constant velocity (zero acceleration)
-        struct queue_append qa = queue_append_start(sc, print_time, .5);
-        double inv_cruise_sv = sc->mcu_freq / start_sv;
-        double pos = (step_offset + .5) * inv_cruise_sv;
-        while (count--) {
-            ret = queue_append(&qa, pos);
-            if (ret)
-                return ret;
-            pos += inv_cruise_sv;
-        }
-        queue_append_finish(qa);
-    } else {
-        // Move with constant acceleration
-        double inv_accel = 1. / accel;
-        double accel_time = start_sv * inv_accel * sc->mcu_freq;
-        struct queue_append qa = queue_append_start(
-            sc, print_time, 0.5 - accel_time);
-        double accel_multiplier = 2. * inv_accel * sc->mcu_freq * sc->mcu_freq;
-        double pos = (step_offset + .5)*accel_multiplier + accel_time*accel_time;
-        while (count--) {
-            double v = safe_sqrt(pos);
-            int ret = queue_append(&qa, accel_multiplier >= 0. ? v : -v);
-            if (ret)
-                return ret;
-            pos += accel_multiplier;
-        }
-        queue_append_finish(qa);
-    }
-    return res;
-}
-
-// Schedule steps using delta kinematics
-static int32_t
-_stepcompress_push_delta(
-    struct stepcompress *sc, int sdir
-    , double print_time, double move_sd, double start_sv, double accel
-    , double height, double startxy_sd, double arm_sd, double movez_r)
-{
-    // Calculate number of steps to take
-    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
-    double arm_sd2 = arm_sd * arm_sd;
-    double endxy_sd = startxy_sd - movexy_r*move_sd;
-    double end_height = safe_sqrt(arm_sd2 - endxy_sd*endxy_sd);
-    int count = (end_height + movez_r*move_sd - height) * (sdir ? 1. : -1.) + .5;
-    if (count <= 0 || count > 10000000) {
-        if (count) {
-            errorf("push_delta invalid count %d %d %f %f %f %f %f %f %f %f"
-                   , sc->oid, count, print_time, move_sd, start_sv, accel
-                   , height, startxy_sd, arm_sd, movez_r);
-            return ERROR_RET;
-        }
-        return 0;
-    }
-    int ret = set_next_step_dir(sc, sdir);
-    if (ret)
-        return ret;
-    int res = sdir ? count : -count;
-
-    // Calculate each step time
-    height += (sdir ? .5 : -.5);
-    if (!accel) {
-        // Move at constant velocity (zero acceleration)
-        struct queue_append qa = queue_append_start(sc, print_time, .5);
-        double inv_cruise_sv = sc->mcu_freq / start_sv;
-        if (!movez_r) {
-            // Optimized case for common XY only moves (no Z movement)
-            while (count--) {
-                double v = safe_sqrt(arm_sd2 - height*height);
-                double pos = startxy_sd + (sdir ? -v : v);
-                int ret = queue_append(&qa, pos * inv_cruise_sv);
-                if (ret)
-                    return ret;
-                height += (sdir ? 1. : -1.);
-            }
-        } else if (!movexy_r) {
-            // Optimized case for Z only moves
-            double pos = ((sdir ? height-end_height : end_height-height)
-                          * inv_cruise_sv);
-            while (count--) {
-                int ret = queue_append(&qa, pos);
-                if (ret)
-                    return ret;
-                pos += inv_cruise_sv;
-            }
-        } else {
-            // General case (handles XY+Z moves)
-            double start_pos = movexy_r*startxy_sd, zoffset = movez_r*startxy_sd;
-            while (count--) {
-                double relheight = movexy_r*height - zoffset;
-                double v = safe_sqrt(arm_sd2 - relheight*relheight);
-                double pos = start_pos + movez_r*height + (sdir ? -v : v);
-                int ret = queue_append(&qa, pos * inv_cruise_sv);
-                if (ret)
-                    return ret;
-                height += (sdir ? 1. : -1.);
-            }
-        }
-        queue_append_finish(qa);
-    } else {
-        // Move with constant acceleration
-        double start_pos = movexy_r*startxy_sd, zoffset = movez_r*startxy_sd;
-        double inv_accel = 1. / accel;
-        start_pos += 0.5 * start_sv*start_sv * inv_accel;
-        struct queue_append qa = queue_append_start(
-            sc, print_time, 0.5 - start_sv * inv_accel * sc->mcu_freq);
-        double accel_multiplier = 2. * inv_accel * sc->mcu_freq * sc->mcu_freq;
-        while (count--) {
-            double relheight = movexy_r*height - zoffset;
-            double v = safe_sqrt(arm_sd2 - relheight*relheight);
-            double pos = start_pos + movez_r*height + (sdir ? -v : v);
-            v = safe_sqrt(pos * accel_multiplier);
-            int ret = queue_append(&qa, accel_multiplier >= 0. ? v : -v);
-            if (ret)
-                return ret;
-            height += (sdir ? 1. : -1.);
-        }
-        queue_append_finish(qa);
-    }
-    return res;
-}
-
-int32_t __visible
-stepcompress_push_delta(
-    struct stepcompress *sc, double print_time, double move_sd
-    , double start_sv, double accel
-    , double height, double startxy_sd, double arm_sd, double movez_r)
-{
-    double reversexy_sd = startxy_sd + arm_sd*movez_r;
-    if (reversexy_sd <= 0.)
-        // All steps are in down direction
-        return _stepcompress_push_delta(
-            sc, 0, print_time, move_sd, start_sv, accel
-            , height, startxy_sd, arm_sd, movez_r);
-    double movexy_r = movez_r ? sqrt(1. - movez_r*movez_r) : 1.;
-    if (reversexy_sd >= move_sd * movexy_r)
-        // All steps are in up direction
-        return _stepcompress_push_delta(
-            sc, 1, print_time, move_sd, start_sv, accel
-            , height, startxy_sd, arm_sd, movez_r);
-    // Steps in both up and down direction
-    int res1 = _stepcompress_push_delta(
-        sc, 1, print_time, reversexy_sd / movexy_r, start_sv, accel
-        , height, startxy_sd, arm_sd, movez_r);
-    if (res1 == ERROR_RET)
-        return res1;
-    int res2 = _stepcompress_push_delta(
-        sc, 0, print_time, move_sd, start_sv, accel
-        , height + res1, startxy_sd, arm_sd, movez_r);
-    if (res2 == ERROR_RET)
-        return res2;
-    return res1 + res2;
 }
 
 

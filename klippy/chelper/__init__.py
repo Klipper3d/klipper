@@ -14,9 +14,12 @@ import cffi
 COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -flto -fwhole-program -fno-use-linker-plugin"
                " -o %s %s")
-SOURCE_FILES = ['stepcompress.c', 'serialqueue.c', 'pyhelper.c']
+SOURCE_FILES = [
+    'stepcompress.c', 'kin_cartesian.c', 'kin_delta.c',
+    'serialqueue.c', 'pyhelper.c'
+]
 DEST_LIB = "c_helper.so"
-OTHER_FILES = ['list.h', 'serialqueue.h', 'pyhelper.h']
+OTHER_FILES = ['list.h', 'serialqueue.h', 'stepcompress.h', 'pyhelper.h']
 
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t max_error
@@ -27,20 +30,25 @@ defs_stepcompress = """
     int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
     int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
-    int32_t stepcompress_push(struct stepcompress *sc, double step_clock
-        , int32_t sdir);
-    int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
-        , double step_offset, double steps, double start_sv, double accel);
-    int32_t stepcompress_push_delta(struct stepcompress *sc
-        , double clock_offset, double move_sd, double start_sv, double accel
-        , double height, double startxy_sd, double arm_d, double movez_r);
-
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
     int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
+"""
+
+defs_kin_cartesian = """
+    int32_t stepcompress_push(struct stepcompress *sc, double step_clock
+        , int32_t sdir);
+    int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
+        , double step_offset, double steps, double start_sv, double accel);
+"""
+
+defs_kin_delta = """
+    int32_t stepcompress_push_delta(struct stepcompress *sc
+        , double clock_offset, double move_sd, double start_sv, double accel
+        , double height, double startxy_sd, double arm_d, double movez_r);
 """
 
 defs_serialqueue = """
@@ -74,6 +82,11 @@ defs_pyhelper = """
     void set_python_logging_callback(void (*func)(const char *));
     double get_monotonic(void);
 """
+
+defs_all = [
+    defs_stepcompress, defs_kin_cartesian, defs_kin_delta,
+    defs_serialqueue, defs_pyhelper
+]
 
 # Return the list of file modification times
 def get_mtimes(srcdir, filelist):
@@ -109,9 +122,8 @@ def get_ffi():
         check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD
                          , OTHER_FILES)
         FFI_main = cffi.FFI()
-        FFI_main.cdef(defs_stepcompress)
-        FFI_main.cdef(defs_serialqueue)
-        FFI_main.cdef(defs_pyhelper)
+        for d in defs_all:
+            FFI_main.cdef(d)
         FFI_lib = FFI_main.dlopen(os.path.join(srcdir, DEST_LIB))
         # Setup error logging
         def logging_callback(msg):
