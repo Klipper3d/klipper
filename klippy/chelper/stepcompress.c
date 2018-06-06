@@ -20,6 +20,7 @@
 #include <stdio.h> // fprintf
 #include <stdlib.h> // malloc
 #include <string.h> // memset
+#include "compiler.h" // DIV_ROUND_UP
 #include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
 
@@ -44,12 +45,10 @@ struct stepcompress {
  * Step compression
  ****************************************************************/
 
-#define DIV_UP(n,d) (((n) + (d) - 1) / (d))
-
 static inline int32_t
 idiv_up(int32_t n, int32_t d)
 {
-    return (n>=0) ? DIV_UP(n,d) : (n/d);
+    return (n>=0) ? DIV_ROUND_UP(n,d) : (n/d);
 }
 
 static inline int32_t
@@ -116,7 +115,7 @@ compress_bisect_add(struct stepcompress *sc)
             int32_t nextaddfactor = nextcount*(nextcount-1)/2;
             int32_t c = add*nextaddfactor;
             if (nextmininterval*nextcount < nextpoint.minp - c)
-                nextmininterval = DIV_UP(nextpoint.minp - c, nextcount);
+                nextmininterval = DIV_ROUND_UP(nextpoint.minp - c, nextcount);
             if (nextmaxinterval*nextcount > nextpoint.maxp - c)
                 nextmaxinterval = (nextpoint.maxp - c) / nextcount;
             if (nextmininterval > nextmaxinterval)

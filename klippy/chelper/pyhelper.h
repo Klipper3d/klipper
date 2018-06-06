@@ -1,9 +1,6 @@
 #ifndef PYHELPER_H
 #define PYHELPER_H
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
-
 double get_monotonic(void);
 struct timespec fill_time(double time);
 void set_python_logging_callback(void (*func)(const char *));
