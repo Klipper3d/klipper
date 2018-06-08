@@ -389,6 +389,12 @@ stepcompress_get_oid(struct stepcompress *sc)
     return sc->oid;
 }
 
+int
+stepcompress_get_step_dir(struct stepcompress *sc)
+{
+    return sc->sdir;
+}
+
 
 /****************************************************************
  * Queue management
@@ -476,6 +482,22 @@ queue_append(struct queue_append *qa, double step_clock)
     uint64_t old_last_step_clock = sc->last_step_clock;
     sc->queue_next = qa->qnext;
     int ret = queue_append_slow(sc, rel_sc);
+    if (ret)
+        return ret;
+    qa->qnext = sc->queue_next;
+    qa->qend = sc->queue_end;
+    qa->last_step_clock_32 = sc->last_step_clock;
+    qa->clock_offset -= sc->last_step_clock - old_last_step_clock;
+    return 0;
+}
+
+inline int
+queue_append_set_next_step_dir(struct queue_append *qa, int sdir)
+{
+    struct stepcompress *sc = qa->sc;
+    uint64_t old_last_step_clock = sc->last_step_clock;
+    sc->queue_next = qa->qnext;
+    int ret = set_next_step_dir(sc, sdir);
     if (ret)
         return ret;
     qa->qnext = sc->queue_next;

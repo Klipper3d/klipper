@@ -15,11 +15,13 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -flto -fwhole-program -fno-use-linker-plugin"
                " -o %s %s")
 SOURCE_FILES = [
-    'stepcompress.c', 'kin_cartesian.c', 'kin_delta.c',
+    'stepcompress.c', 'kin_cartesian.c', 'kin_delta.c', 'itersolve.c',
     'serialqueue.c', 'pyhelper.c'
 ]
 DEST_LIB = "c_helper.so"
-OTHER_FILES = ['list.h', 'serialqueue.h', 'stepcompress.h', 'pyhelper.h']
+OTHER_FILES = [
+    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h'
+]
 
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t oid);
@@ -37,6 +39,19 @@ defs_stepcompress = """
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
     int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
+"""
+
+defs_itersolve = """
+    struct move *move_alloc(void);
+    void move_fill(struct move *m, double print_time
+        , double accel_t, double cruise_t, double decel_t
+        , double start_pos_x, double start_pos_y, double start_pos_z
+        , double axes_d_x, double axes_d_y, double axes_d_z
+        , double start_v, double cruise_v, double accel);
+    int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
+    void itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos);
+    void itersolve_set_stepcompress(struct stepper_kinematics *sk
+        , struct stepcompress *sc, double step_dist);
 """
 
 defs_kin_cartesian = """
@@ -84,9 +99,13 @@ defs_pyhelper = """
     double get_monotonic(void);
 """
 
+defs_std = """
+    void free(void*);
+"""
+
 defs_all = [
-    defs_stepcompress, defs_kin_cartesian, defs_kin_delta,
-    defs_serialqueue, defs_pyhelper
+    defs_stepcompress, defs_itersolve, defs_kin_cartesian, defs_kin_delta,
+    defs_serialqueue, defs_pyhelper, defs_std
 ]
 
 # Return the list of file modification times
