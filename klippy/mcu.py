@@ -14,7 +14,7 @@ STEPCOMPRESS_ERROR_RET = -989898989
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._oid = self._mcu.create_oid()
+        self._oid = oid = self._mcu.create_oid()
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -22,8 +22,12 @@ class MCU_stepper:
         self._step_dist = self._inv_step_dist = 1.
         self._min_stop_interval = 0.
         self._reset_cmd_id = self._get_position_cmd = None
-        self._ffi_lib = self._stepqueue = None
+        ffi_main, self._ffi_lib = chelper.get_ffi()
+        self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
+                                      self._ffi_lib.stepcompress_free)
+        self._mcu.register_stepqueue(self._stepqueue)
         self._stepcompress_push_const = self._stepcompress_push_delta = None
+        self.set_ignore_move(False)
     def get_mcu(self):
         return self._mcu
     def setup_dir_pin(self, pin_params):
@@ -55,13 +59,9 @@ class MCU_stepper:
             "reset_step_clock oid=%c clock=%u")
         self._get_position_cmd = self._mcu.lookup_command(
             "stepper_get_position oid=%c")
-        ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(
-            self._mcu.seconds_to_clock(max_error), step_cmd_id, dir_cmd_id,
-            self._invert_dir, self._oid),
-                                      self._ffi_lib.stepcompress_free)
-        self._mcu.register_stepqueue(self._stepqueue)
-        self.set_ignore_move(False)
+        self._ffi_lib.stepcompress_fill(
+            self._stepqueue, self._mcu.seconds_to_clock(max_error),
+            self._invert_dir, step_cmd_id, dir_cmd_id)
     def get_oid(self):
         return self._oid
     def get_step_dist(self):

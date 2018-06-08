@@ -228,20 +228,26 @@ check_line(struct stepcompress *sc, struct step_move move)
 
 // Allocate a new 'stepcompress' object
 struct stepcompress * __visible
-stepcompress_alloc(uint32_t max_error, uint32_t queue_step_msgid
-                   , uint32_t set_next_step_dir_msgid, uint32_t invert_sdir
-                   , uint32_t oid)
+stepcompress_alloc(uint32_t oid)
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
-    sc->max_error = max_error;
     list_init(&sc->msg_queue);
-    sc->queue_step_msgid = queue_step_msgid;
-    sc->set_next_step_dir_msgid = set_next_step_dir_msgid;
     sc->oid = oid;
     sc->sdir = -1;
-    sc->invert_sdir = !!invert_sdir;
     return sc;
+}
+
+// Fill message id information
+void __visible
+stepcompress_fill(struct stepcompress *sc, uint32_t max_error
+                  , uint32_t invert_sdir, uint32_t queue_step_msgid
+                  , uint32_t set_next_step_dir_msgid)
+{
+    sc->max_error = max_error;
+    sc->invert_sdir = !!invert_sdir;
+    sc->queue_step_msgid = queue_step_msgid;
+    sc->set_next_step_dir_msgid = set_next_step_dir_msgid;
 }
 
 // Free memory associated with a 'stepcompress' object

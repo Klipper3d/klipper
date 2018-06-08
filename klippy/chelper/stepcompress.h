@@ -5,9 +5,10 @@
 
 #define ERROR_RET -989898989
 
-struct stepcompress *stepcompress_alloc(
-    uint32_t max_error, uint32_t queue_step_msgid
-    , uint32_t set_next_step_dir_msgid, uint32_t invert_sdir, uint32_t oid);
+struct stepcompress *stepcompress_alloc(uint32_t oid);
+void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
+                       , uint32_t invert_sdir, uint32_t queue_step_msgid
+                       , uint32_t set_next_step_dir_msgid);
 void stepcompress_free(struct stepcompress *sc);
 int set_next_step_dir(struct stepcompress *sc, int sdir);
 int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);

@@ -22,9 +22,10 @@ DEST_LIB = "c_helper.so"
 OTHER_FILES = ['list.h', 'serialqueue.h', 'stepcompress.h', 'pyhelper.h']
 
 defs_stepcompress = """
-    struct stepcompress *stepcompress_alloc(uint32_t max_error
-        , uint32_t queue_step_msgid, uint32_t set_next_step_dir_msgid
-        , uint32_t invert_sdir, uint32_t oid);
+    struct stepcompress *stepcompress_alloc(uint32_t oid);
+    void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
+        , uint32_t invert_sdir, uint32_t queue_step_msgid
+        , uint32_t set_next_step_dir_msgid);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
