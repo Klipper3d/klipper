@@ -62,9 +62,8 @@ defs_kin_cartesian = """
 """
 
 defs_kin_delta = """
-    int32_t stepcompress_push_delta(struct stepcompress *sc
-        , double clock_offset, double move_sd, double start_sv, double accel
-        , double height, double startxy_sd, double arm_d, double movez_r);
+    struct stepper_kinematics *delta_stepper_alloc(double arm2
+        , double tower_x, double tower_y);
 """
 
 defs_serialqueue = """

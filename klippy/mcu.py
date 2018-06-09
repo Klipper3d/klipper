@@ -26,7 +26,8 @@ class MCU_stepper:
         self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
                                       self._ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
-        self._stepcompress_push_const = self._stepcompress_push_delta = None
+        self._stepcompress_push_const = self._itersolve_gen_steps = None
+        self._stepper_kinematics = None
         self.set_ignore_move(False)
     def get_mcu(self):
         return self._mcu
@@ -40,6 +41,10 @@ class MCU_stepper:
     def setup_step_distance(self, step_dist):
         self._step_dist = step_dist
         self._inv_step_dist = 1. / step_dist
+    def setup_itersolve(self, sk):
+        self._stepper_kinematics = sk
+        self._ffi_lib.itersolve_set_stepcompress(
+            sk, self._stepqueue, self._step_dist)
     def build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
@@ -67,6 +72,9 @@ class MCU_stepper:
     def get_step_dist(self):
         return self._step_dist
     def set_position(self, pos):
+        if self._stepper_kinematics is not None:
+            self._ffi_lib.itersolve_set_commanded_pos(
+                self._stepper_kinematics, pos)
         steppos = pos * self._inv_step_dist
         self._mcu_position_offset += self._commanded_pos - steppos
         self._commanded_pos = steppos
@@ -82,10 +90,10 @@ class MCU_stepper:
                       is not self._ffi_lib.stepcompress_push_const)
         if ignore_move:
             self._stepcompress_push_const = (lambda *args: 0)
-            self._stepcompress_push_delta = (lambda *args: 0)
+            self._itersolve_gen_steps = (lambda *args: 0)
         else:
             self._stepcompress_push_const = self._ffi_lib.stepcompress_push_const
-            self._stepcompress_push_delta = self._ffi_lib.stepcompress_push_delta
+            self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
         return was_ignore
     def note_homing_start(self, homing_clock):
         ret = self._ffi_lib.stepcompress_set_homing(
@@ -127,14 +135,8 @@ class MCU_stepper:
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count
-    def step_delta(self, print_time, dist, start_v, accel
-                   , height_base, startxy_d, arm_d, movez_r):
-        inv_step_dist = self._inv_step_dist
-        height = self._commanded_pos - height_base * inv_step_dist
-        count = self._stepcompress_push_delta(
-            self._stepqueue, print_time, dist * inv_step_dist,
-            start_v * inv_step_dist, accel * inv_step_dist,
-            height, startxy_d * inv_step_dist, arm_d * inv_step_dist, movez_r)
+    def step_itersolve(self, cmove):
+        count = self._itersolve_gen_steps(self._stepper_kinematics, cmove)
         if count == STEPCOMPRESS_ERROR_RET:
             raise error("Internal error in stepcompress")
         self._commanded_pos += count

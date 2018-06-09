@@ -49,7 +49,8 @@ class PrinterStepper:
         self.mcu_stepper.setup_step_distance(self.step_dist)
         self.step = self.mcu_stepper.step
         self.step_const = self.mcu_stepper.step_const
-        self.step_delta = self.mcu_stepper.step_delta
+        self.step_itersolve = self.mcu_stepper.step_itersolve
+        self.setup_itersolve = self.mcu_stepper.setup_itersolve
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
         stepper_buzz = printer.try_load_module(config, 'stepper_buzz')

@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing
+import stepper, homing, chelper
 
 StepList = (0, 1, 2)
 
@@ -56,6 +56,14 @@ class DeltaKinematics:
         self.towers = [(math.cos(math.radians(angle)) * radius,
                         math.sin(math.radians(angle)) * radius)
                        for angle in self.angles]
+        # Setup iterative solver
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
+        self.move_fill = ffi_lib.move_fill
+        for s, a, t in zip(self.steppers, self.arm2, self.towers):
+            sk = ffi_main.gc(ffi_lib.delta_stepper_alloc(a, t[0], t[1]),
+                             ffi_lib.free)
+            s.setup_itersolve(sk)
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([s.step_dist for s in self.steppers]) * .5
@@ -154,58 +162,14 @@ class DeltaKinematics:
     def move(self, print_time, move):
         if self.need_motor_enable:
             self._check_motor_enable(print_time)
-        axes_d = move.axes_d
-        move_d = move.move_d
-        movexy_r = 1.
-        movez_r = 0.
-        inv_movexy_d = 1. / move_d
-        if not axes_d[0] and not axes_d[1]:
-            # Z only move
-            movez_r = axes_d[2] * inv_movexy_d
-            movexy_r = inv_movexy_d = 0.
-        elif axes_d[2]:
-            # XY+Z move
-            movexy_d = math.sqrt(axes_d[0]**2 + axes_d[1]**2)
-            movexy_r = movexy_d * inv_movexy_d
-            movez_r = axes_d[2] * inv_movexy_d
-            inv_movexy_d = 1. / movexy_d
-
-        origx, origy, origz = move.start_pos[:3]
-
-        accel = move.accel
-        cruise_v = move.cruise_v
-        accel_d = move.accel_r * move_d
-        cruise_d = move.cruise_r * move_d
-        decel_d = move.decel_r * move_d
-
-        for i in StepList:
-            # Calculate a virtual tower along the line of movement at
-            # the point closest to this stepper's tower.
-            towerx_d = self.towers[i][0] - origx
-            towery_d = self.towers[i][1] - origy
-            vt_startxy_d = (towerx_d*axes_d[0] + towery_d*axes_d[1])*inv_movexy_d
-            tangentxy_d2 = towerx_d**2 + towery_d**2 - vt_startxy_d**2
-            vt_arm_d = math.sqrt(self.arm2[i] - tangentxy_d2)
-            vt_startz = origz
-
-            # Generate steps
-            step_delta = self.steppers[i].step_delta
-            move_time = print_time
-            if accel_d:
-                step_delta(move_time, accel_d, move.start_v, accel,
-                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
-                vt_startz += accel_d * movez_r
-                vt_startxy_d -= accel_d * movexy_r
-                move_time += move.accel_t
-            if cruise_d:
-                step_delta(move_time, cruise_d, cruise_v, 0.,
-                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
-                vt_startz += cruise_d * movez_r
-                vt_startxy_d -= cruise_d * movexy_r
-                move_time += move.cruise_t
-            if decel_d:
-                step_delta(move_time, decel_d, cruise_v, -accel,
-                           vt_startz, vt_startxy_d, vt_arm_d, movez_r)
+        self.move_fill(
+            self.cmove, print_time,
+            move.accel_t, move.cruise_t, move.decel_t,
+            move.start_pos[0], move.start_pos[1], move.start_pos[2],
+            move.axes_d[0], move.axes_d[1], move.axes_d[2],
+            move.start_v, move.cruise_v, move.accel)
+        for stepper in self.steppers:
+            stepper.step_itersolve(self.cmove)
     # Helper functions for DELTA_CALIBRATE script
     def get_stable_position(self):
         return [int((ep - s.mcu_stepper.get_commanded_position())
