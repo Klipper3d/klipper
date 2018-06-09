@@ -1,10 +1,10 @@
 # Code for handling the kinematics of corexy robots
 #
-# Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper, homing
+import stepper, homing, chelper
 
 StepList = (0, 1, 2)
 
@@ -26,6 +26,15 @@ class CoreXYKinematics:
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
+        # Setup iterative solver
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
+        self.move_fill = ffi_lib.move_fill
+        self.steppers[0].setup_itersolve(ffi_main.gc(
+            ffi_lib.corexy_stepper_alloc('+'), ffi_lib.free))
+        self.steppers[1].setup_itersolve(ffi_main.gc(
+            ffi_lib.corexy_stepper_alloc('-'), ffi_lib.free))
+        self.steppers[2].setup_cartesian_itersolve('z')
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
@@ -124,38 +133,17 @@ class CoreXYKinematics:
     def move(self, print_time, move):
         if self.need_motor_enable:
             self._check_motor_enable(print_time, move)
-        sxp = move.start_pos[0]
-        syp = move.start_pos[1]
-        move_start_pos = (sxp + syp, sxp - syp, move.start_pos[2])
-        exp = move.end_pos[0]
-        eyp = move.end_pos[1]
-        axes_d = ((exp + eyp) - move_start_pos[0],
-                  (exp - eyp) - move_start_pos[1], move.axes_d[2])
-        for i in StepList:
-            axis_d = axes_d[i]
-            if not axis_d:
-                continue
-            step_const = self.steppers[i].step_const
-            move_time = print_time
-            start_pos = move_start_pos[i]
-            axis_r = abs(axis_d) / move.move_d
-            accel = move.accel * axis_r
-            cruise_v = move.cruise_v * axis_r
-
-            # Acceleration steps
-            if move.accel_r:
-                accel_d = move.accel_r * axis_d
-                step_const(move_time, start_pos, accel_d,
-                           move.start_v * axis_r, accel)
-                start_pos += accel_d
-                move_time += move.accel_t
-            # Cruising steps
-            if move.cruise_r:
-                cruise_d = move.cruise_r * axis_d
-                step_const(move_time, start_pos, cruise_d, cruise_v, 0.)
-                start_pos += cruise_d
-                move_time += move.cruise_t
-            # Deceleration steps
-            if move.decel_r:
-                decel_d = move.decel_r * axis_d
-                step_const(move_time, start_pos, decel_d, cruise_v, -accel)
+        axes_d = move.axes_d
+        cmove = self.cmove
+        self.move_fill(
+            cmove, print_time,
+            move.accel_t, move.cruise_t, move.decel_t,
+            move.start_pos[0], move.start_pos[1], move.start_pos[2],
+            axes_d[0], axes_d[1], axes_d[2],
+            move.start_v, move.cruise_v, move.accel)
+        stepper_a, stepper_b, stepper_z = self.steppers
+        if axes_d[0] or axes_d[1]:
+            stepper_a.step_itersolve(cmove)
+            stepper_b.step_itersolve(cmove)
+        if axes_d[2]:
+            stepper_z.step_itersolve(cmove)

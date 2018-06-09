@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import homing
+import homing, chelper
 
 # Tracking of shared stepper enable pins
 class StepperEnablePin:
@@ -155,6 +155,10 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
+    def setup_cartesian_itersolve(self, axis):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.setup_itersolve(ffi_main.gc(
+            ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
     def get_endstops(self):
         return [(self.mcu_endstop, self.name)]
     def get_homed_offset(self):
@@ -182,6 +186,7 @@ class PrinterMultiStepper(PrinterHomingStepper):
         self.endstops = PrinterHomingStepper.get_endstops(self)
         self.extras = []
         self.all_step_const = [self.step_const]
+        self.all_step_itersolve = [self.step_itersolve]
         for i in range(1, 99):
             if not config.has_section(config.get_name() + str(i)):
                 break
@@ -189,6 +194,7 @@ class PrinterMultiStepper(PrinterHomingStepper):
             extra = PrinterStepper(printer, extraconfig)
             self.extras.append(extra)
             self.all_step_const.append(extra.step_const)
+            self.all_step_itersolve.append(extra.step_itersolve)
             extraendstop = extraconfig.get('endstop_pin', None)
             if extraendstop is not None:
                 ppins = printer.lookup_object('pins')
@@ -198,9 +204,20 @@ class PrinterMultiStepper(PrinterHomingStepper):
             else:
                 self.mcu_endstop.add_stepper(extra.mcu_stepper)
         self.step_const = self.step_multi_const
+        self.step_itersolve = self.step_multi_itersolve
     def step_multi_const(self, print_time, start_pos, dist, start_v, accel):
         for step_const in self.all_step_const:
             step_const(print_time, start_pos, dist, start_v, accel)
+    def step_multi_itersolve(self, cmove):
+        for step_itersolve in self.all_step_itersolve:
+            step_itersolve(cmove)
+    def setup_cartesian_itersolve(self, axis):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.setup_itersolve(ffi_main.gc(
+            ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
+        for extra in self.extras:
+            extra.setup_itersolve(ffi_main.gc(
+                ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
     def set_max_jerk(self, max_halt_velocity, max_accel):
         PrinterHomingStepper.set_max_jerk(self, max_halt_velocity, max_accel)
         for extra in self.extras:

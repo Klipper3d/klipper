@@ -15,8 +15,8 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -flto -fwhole-program -fno-use-linker-plugin"
                " -o %s %s")
 SOURCE_FILES = [
-    'stepcompress.c', 'kin_cartesian.c', 'kin_delta.c', 'itersolve.c',
-    'serialqueue.c', 'pyhelper.c'
+    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c',
+    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -59,6 +59,11 @@ defs_kin_cartesian = """
         , int32_t sdir);
     int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
         , double step_offset, double steps, double start_sv, double accel);
+    struct stepper_kinematics *cartesian_stepper_alloc(char axis);
+"""
+
+defs_kin_corexy = """
+    struct stepper_kinematics *corexy_stepper_alloc(char type);
 """
 
 defs_kin_delta = """
@@ -103,8 +108,8 @@ defs_std = """
 """
 
 defs_all = [
-    defs_stepcompress, defs_itersolve, defs_kin_cartesian, defs_kin_delta,
-    defs_serialqueue, defs_pyhelper, defs_std
+    defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress, defs_itersolve,
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta
 ]
 
 # Return the list of file modification times
