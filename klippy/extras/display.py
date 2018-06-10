@@ -644,9 +644,9 @@ class PrinterLCD:
             seconds // (60 * 60), (seconds // 60) % 60))
     def draw_status(self, x, y, gcode_info, toolhead_info):
         status = toolhead_info['status']
-#        if status == 'Printing' or gcode_info['busy']:
-        pos = self.toolhead.get_position()
-        status = "X%-5.0fY%-5.0fZ%-4.2f" % (pos[0], pos[1], pos[2])
+        if status == 'Printing' or gcode_info['busy']:
+            pos = self.toolhead.get_position()
+            status = "X%-4.0fY%-4.0fZ%-5.2f" % (pos[0], pos[1], pos[2])
         self.lcd_chip.write_text(x, y, status)
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
