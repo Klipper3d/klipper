@@ -22,6 +22,7 @@ class HD44780:
     char_speed_factor = '\x02'
     char_clock = '\x03'
     char_degrees = '\x04'
+    char_fan = '\x05'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
@@ -44,6 +45,7 @@ class HD44780:
         self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
         self.glyph_framebuffer = (bytearray(64), bytearray('~'*64), 0x40)
         self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
+        self.last_pos = 0
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
@@ -101,10 +103,19 @@ class HD44780:
             self.glyph_framebuffer[1][i] = self.glyph_framebuffer[0][i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
-        if x + len(data) > 20:
-            data = data[:20 - min(x, 20)]
+        if x == -1:
+            pos = self.last_pos + y
+        else:
+            pos = y * 20 + x
+        [self.write_char(pos + idx, data[idx]) for idx in range(0,len(data))]
+        self.last_pos = pos+len(data)
+    def write_char(self, offset, data):
+        if offset > 79:
+            return
+        y = offset // 20
+        x = offset % 20
         pos = [0, 40, 20, 60][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        self.text_framebuffer[0][pos] = data[0]
     def clear(self):
         self.text_framebuffer[0][:] = ' '*80
 
@@ -152,6 +163,15 @@ HD44780_chars = [
     0b01100,
     0b00000,
     0b00000,
+    0b00000,
+    0b00000,
+    # Fan
+    0b00000,
+    0b01010,
+    0b11011,
+    0b00100,
+    0b11011,
+    0b01010,
     0b00000,
     0b00000,
 ]
@@ -431,6 +451,7 @@ class PrinterLCD:
         # printer objects
         self.gcode = self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
+        self.message = ""
         # screen updating
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
@@ -449,6 +470,7 @@ class PrinterLCD:
             self.heater_bed = self.printer.lookup_object('heater_bed', None)
             self.progress = None
             self.gcode.register_command('M73', self.cmd_M73)
+            self.gcode.register_command('M117', self.cmd_M117)
             # Load glyphs
             self.load_glyph(self.BED1_GLYPH, heat1_icon)
             self.load_glyph(self.BED2_GLYPH, heat2_icon)
@@ -505,34 +527,40 @@ class PrinterLCD:
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
             lcd_chip.write_text(0, 0, lcd_chip.char_thermometer)
-            self.draw_heater(1, 0, info)
-        if self.extruder1 is not None:
-            info = self.extruder1.get_heater().get_status(eventtime)
-            lcd_chip.write_text(0, 1, lcd_chip.char_thermometer)
-            self.draw_heater(1, 1, info)
+            self.draw_heater(-1, 0, info)
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            lcd_chip.write_text(10, 0, lcd_chip.char_heater_bed)
-            self.draw_heater(11, 0, info)
+            lcd_chip.write_text(-1, 1, lcd_chip.char_heater_bed)
+            self.draw_heater(-1, 0, info)
         # Fan speed
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            lcd_chip.write_text(10, 1, "Fan")
-            self.draw_percent(14, 1, 4, info['speed'])
+            lcd_chip.write_text(-1, 1,  lcd_chip.char_fan)
+            self.draw_percent(-1, 0, 0, info['speed'])
+
+        # absolute positioning to show correctly second extruder if present
+        lcd_chip.write_text(0,1,"")
+        offset = 0
+        if self.extruder1 is not None:
+            info = self.extruder1.get_heater().get_status(eventtime)
+            lcd_chip.write_text(-1, 0, lcd_chip.char_thermometer)
+            self.draw_heater(-1, 0, info)
+            offset = 1
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
-        lcd_chip.write_text(0, 2, lcd_chip.char_speed_factor)
-        self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
+        lcd_chip.write_text(-1, offset, lcd_chip.char_speed_factor)
+        self.draw_percent(-1, 0, 0, gcode_info['speed_factor'])
         # SD card print progress
         if self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
-            lcd_chip.write_text(7, 2, "SD")
-            self.draw_percent(9, 2, 4, info['progress'])
+            lcd_chip.write_text(-1, 1, "SD")
+            self.draw_percent(-1, 0, 4, info['progress'])
         # Printing time and status
         toolhead_info = self.toolhead.get_status(eventtime)
-        lcd_chip.write_text(14, 2, lcd_chip.char_clock)
-        self.draw_time(15, 2, toolhead_info['printing_time'])
-        self.draw_status(0, 3, gcode_info, toolhead_info)
+        lcd_chip.write_text(-1, 1, lcd_chip.char_clock)
+        self.draw_time(-1, 0, toolhead_info['printing_time'])
+        self.draw_status(0, 2, gcode_info, toolhead_info)
+        lcd_chip.write_text(0, 3, self.message);
     def screen_update_st7920(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
@@ -601,10 +629,10 @@ class PrinterLCD:
     def draw_heater(self, x, y, info):
         temperature, target = info['temperature'], info['target']
         if target and abs(temperature - target) > 2.:
-            s = "%3.0f%s%.0f" % (
+            s = "%.0f%s%.0f" % (
                 temperature, self.lcd_chip.char_right_arrow, target)
         else:
-            s = "%3.0f" % (temperature,)
+            s = "%.0f" % (temperature,)
         if self.lcd_type == 'hd44780':
             s += self.lcd_chip.char_degrees
         self.lcd_chip.write_text(x, y, s)
@@ -623,6 +651,10 @@ class PrinterLCD:
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
         self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
+
+    # print custom messsage: M114 <message>
+    def cmd_M117(self, params):
+        self.message = params['#original'][5:]
 
 def load_config(config):
     return PrinterLCD(config)
