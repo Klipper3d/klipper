@@ -16,7 +16,7 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -o %s %s")
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c',
-    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c',
+    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_extruder.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -71,6 +71,14 @@ defs_kin_delta = """
         , double tower_x, double tower_y);
 """
 
+defs_kin_extruder = """
+    struct stepper_kinematics *extruder_stepper_alloc(void);
+    void extruder_move_fill(struct move *m, double print_time
+        , double accel_t, double cruise_t, double decel_t, double start_pos
+        , double start_v, double cruise_v, double accel
+        , double extra_accel_v, double extra_decel_v);
+"""
+
 defs_serialqueue = """
     #define MESSAGE_MAX 64
     struct pull_queue_message {
@@ -109,7 +117,7 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress, defs_itersolve,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_extruder
 ]
 
 # Return the list of file modification times

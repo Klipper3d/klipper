@@ -17,19 +17,6 @@
  * Kinematic moves
  ****************************************************************/
 
-struct move_accel {
-    double c1, c2;
-};
-
-struct move {
-    double print_time, move_t;
-    double accel_t, cruise_t;
-    double cruise_start_d, decel_start_d;
-    double cruise_v;
-    struct move_accel accel, decel;
-    struct coord start_pos, axes_r;
-};
-
 struct move * __visible
 move_alloc(void)
 {
@@ -80,7 +67,7 @@ move_eval_accel(struct move_accel *ma, double move_time)
 }
 
 // Return the distance moved given a time in a move
-static double
+inline double
 move_get_distance(struct move *m, double move_time)
 {
     if (unlikely(move_time < m->accel_t))

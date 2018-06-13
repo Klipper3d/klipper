@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing
+import stepper, homing, chelper
 
 EXTRUDE_DIFF_IGNORE = 1.02
 
@@ -47,6 +47,13 @@ class PrinterExtruder:
             'pressure_advance_lookahead_time', 0.010, minval=0.)
         self.need_motor_enable = True
         self.extrude_pos = 0.
+        # Setup iterative solver
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
+        self.extruder_move_fill = ffi_lib.extruder_move_fill
+        sk = ffi_main.gc(ffi_lib.extruder_stepper_alloc(), ffi_lib.free)
+        self.stepper.setup_itersolve(sk)
+        # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
         if self.name in ('extruder', 'extruder0'):
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
@@ -154,82 +161,42 @@ class PrinterExtruder:
             self.stepper.motor_enable(print_time, 1)
             self.need_motor_enable = False
         axis_d = move.axes_d[3]
-        axis_r = abs(axis_d) / move.move_d
+        axis_r = axis_d / move.move_d
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
-        end_v = move.end_v * axis_r
         accel_t, cruise_t, decel_t = move.accel_t, move.cruise_t, move.decel_t
-        accel_d = move.accel_r * axis_d
-        cruise_d = move.cruise_r * axis_d
-        decel_d = move.decel_r * axis_d
-
-        retract_t = retract_d = retract_v = 0.
-        decel_v = cruise_v
 
         # Update for pressure advance
+        extra_accel_v = extra_decel_v = 0.
         start_pos = self.extrude_pos
         if (axis_d >= 0. and (move.axes_d[0] or move.axes_d[1])
             and self.pressure_advance):
-            # Increase accel_d and start_v when accelerating
+            # Calculate extra_accel_v
             pressure_advance = self.pressure_advance * move.extrude_r
             prev_pressure_d = start_pos - move.start_pos[3]
-            if accel_d:
+            if accel_t:
                 npd = move.cruise_v * pressure_advance
                 extra_accel_d = npd - prev_pressure_d
                 if extra_accel_d > 0.:
-                    accel_d += extra_accel_d
-                    start_v += extra_accel_d / accel_t
+                    extra_accel_v = extra_accel_d / accel_t
+                    axis_d += extra_accel_d
                     prev_pressure_d += extra_accel_d
-            # Update decel and retract parameters when decelerating
+            # Calculate extra_decel_v
             emcv = move.extrude_max_corner_v
-            if decel_d and emcv < move.cruise_v:
+            if decel_t and emcv < move.cruise_v:
                 npd = max(emcv, move.end_v) * pressure_advance
-                extra_decel_d = prev_pressure_d - npd
-                if extra_decel_d > 0.:
+                extra_decel_d = npd - prev_pressure_d
+                if extra_decel_d < 0.:
+                    axis_d += extra_decel_d
                     extra_decel_v = extra_decel_d / decel_t
-                    decel_v -= extra_decel_v
-                    end_v -= extra_decel_v
-                    if decel_v <= 0.:
-                        # The entire decel phase is replaced with retraction
-                        retract_t = decel_t
-                        retract_d = -(end_v + decel_v) * 0.5 * decel_t
-                        retract_v = -decel_v
-                        decel_t = decel_d = 0.
-                    elif end_v < 0.:
-                        # Split decel phase into decel and retraction
-                        retract_t = -end_v / accel
-                        retract_d = -end_v * 0.5 * retract_t
-                        decel_t -= retract_t
-                        decel_d = decel_v * 0.5 * decel_t
-                    else:
-                        # There is still only a decel phase (no retraction)
-                        decel_d -= extra_decel_d
 
-        # Prepare for steps
-        step_const = self.stepper.step_const
-        move_time = print_time
-
-        # Acceleration steps
-        if accel_d:
-            step_const(move_time, start_pos, accel_d, start_v, accel)
-            start_pos += accel_d
-            move_time += accel_t
-        # Cruising steps
-        if cruise_d:
-            step_const(move_time, start_pos, cruise_d, cruise_v, 0.)
-            start_pos += cruise_d
-            move_time += cruise_t
-        # Deceleration steps
-        if decel_d:
-            step_const(move_time, start_pos, decel_d, decel_v, -accel)
-            start_pos += decel_d
-            move_time += decel_t
-        # Retraction steps
-        if retract_d:
-            step_const(move_time, start_pos, -retract_d, retract_v, accel)
-            start_pos -= retract_d
-        self.extrude_pos = start_pos
+        # Generate steps
+        self.extruder_move_fill(
+            self.cmove, print_time, accel_t, cruise_t, decel_t, start_pos,
+            start_v, cruise_v, accel, extra_accel_v, extra_decel_v)
+        self.stepper.step_itersolve(self.cmove)
+        self.extrude_pos = start_pos + axis_d
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
