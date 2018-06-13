@@ -76,6 +76,10 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.gcode.error(reason)
+        kin = toolhead.get_kinematics()
+        pos = kin.get_position()
+        self.gcode.respond_info(
+            "probe z: %.3f" % (pos[2]))
         self.gcode.reset_last_position()
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, params):
