@@ -26,8 +26,7 @@ class MCU_stepper:
         self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
                                       self._ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
-        self._stepcompress_push_const = self._itersolve_gen_steps = None
-        self._stepper_kinematics = None
+        self._stepper_kinematics = self._itersolve_gen_steps = None
         self.set_ignore_move(False)
     def get_mcu(self):
         return self._mcu
@@ -88,13 +87,11 @@ class MCU_stepper:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
     def set_ignore_move(self, ignore_move):
-        was_ignore = (self._stepcompress_push_const
-                      is not self._ffi_lib.stepcompress_push_const)
+        was_ignore = (self._itersolve_gen_steps
+                      is not self._ffi_lib.itersolve_gen_steps)
         if ignore_move:
-            self._stepcompress_push_const = (lambda *args: 0)
             self._itersolve_gen_steps = (lambda *args: 0)
         else:
-            self._stepcompress_push_const = self._ffi_lib.stepcompress_push_const
             self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
         return was_ignore
     def note_homing_start(self, homing_clock):
@@ -122,21 +119,6 @@ class MCU_stepper:
         if self._invert_dir:
             pos = -pos
         self._commanded_pos = pos - self._mcu_position_offset
-    def step(self, print_time, sdir):
-        count = self._ffi_lib.stepcompress_push(
-            self._stepqueue, print_time, sdir)
-        if count == STEPCOMPRESS_ERROR_RET:
-            raise error("Internal error in stepcompress")
-        self._commanded_pos += count
-    def step_const(self, print_time, start_pos, dist, start_v, accel):
-        inv_step_dist = self._inv_step_dist
-        step_offset = self._commanded_pos - start_pos * inv_step_dist
-        count = self._stepcompress_push_const(
-            self._stepqueue, print_time, step_offset, dist * inv_step_dist,
-            start_v * inv_step_dist, accel * inv_step_dist)
-        if count == STEPCOMPRESS_ERROR_RET:
-            raise error("Internal error in stepcompress")
-        self._commanded_pos += count
     def step_itersolve(self, cmove):
         count = self._itersolve_gen_steps(self._stepper_kinematics, cmove)
         if count == STEPCOMPRESS_ERROR_RET:

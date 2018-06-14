@@ -55,10 +55,6 @@ defs_itersolve = """
 """
 
 defs_kin_cartesian = """
-    int32_t stepcompress_push(struct stepcompress *sc, double step_clock
-        , int32_t sdir);
-    int32_t stepcompress_push_const(struct stepcompress *sc, double clock_offset
-        , double step_offset, double steps, double start_sv, double accel);
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
 """
 

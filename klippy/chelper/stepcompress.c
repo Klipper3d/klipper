@@ -313,7 +313,7 @@ stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
 }
 
 // Send the set_next_step_dir command
-int
+static int
 set_next_step_dir(struct stepcompress *sc, int sdir)
 {
     if (sc->sdir == sdir)
