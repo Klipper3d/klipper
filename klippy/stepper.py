@@ -52,10 +52,8 @@ class PrinterStepper:
         self.step_delta = self.mcu_stepper.step_delta
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
-        self.gcode = printer.lookup_object('gcode')
-        self.gcode.register_mux_command(
-            'STEPPER_BUZZ', 'STEPPER', config.get_name(), self.cmd_STEPPER_BUZZ,
-            desc=self.cmd_STEPPER_BUZZ_help)
+        stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
+        stepper_buzz.register_stepper(self, config.get_name())
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -74,30 +72,6 @@ class PrinterStepper:
         if self.need_motor_enable != (not enable):
             self.enable.set_enable(print_time, enable)
         self.need_motor_enable = not enable
-    cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
-    def cmd_STEPPER_BUZZ(self, params):
-        logging.info("Stepper buzz %s", self.name)
-        need_motor_enable = self.need_motor_enable
-        # Move stepper
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.wait_moves()
-        pos = self.mcu_stepper.get_commanded_position()
-        print_time = toolhead.get_last_move_time()
-        if need_motor_enable:
-            self.motor_enable(print_time, 1)
-            print_time += .1
-        was_ignore = self.mcu_stepper.set_ignore_move(False)
-        for i in range(10):
-            self.step_const(print_time, pos, 1., 4., 0.)
-            print_time += .3
-            self.step_const(print_time, pos + 1., -1., 4., 0.)
-            toolhead.reset_print_time(print_time + .7)
-            print_time = toolhead.get_last_move_time()
-        self.mcu_stepper.set_ignore_move(was_ignore)
-        if need_motor_enable:
-            print_time += .1
-            self.motor_enable(print_time, 0)
-            toolhead.reset_print_time(print_time)
 
 # Support for stepper controlled linear axis with an endstop
 class PrinterHomingStepper(PrinterStepper):
