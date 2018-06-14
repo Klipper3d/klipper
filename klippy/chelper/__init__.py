@@ -44,6 +44,7 @@ defs_stepcompress = """
 
 defs_itersolve = """
     struct move *move_alloc(void);
+    void move_set_accel_order(struct move *m, int accel_order);
     void move_fill(struct move *m, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z

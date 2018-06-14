@@ -50,9 +50,9 @@ class PrinterExtruder:
         self.need_motor_enable = True
         self.extrude_pos = 0.
         # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.extruder_move_fill = ffi_lib.extruder_move_fill
+        ffi_main, self.ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(self.ffi_lib.move_alloc(), self.ffi_lib.free)
+        self.extruder_move_fill = self.ffi_lib.extruder_move_fill
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
@@ -73,6 +73,8 @@ class PrinterExtruder:
         return self.deactivate_gcode
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
+    def setup_accel_order(self, accel_order):
+        self.ffi_lib.move_set_accel_order(self.cmove, accel_order)
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True
@@ -222,6 +224,8 @@ class PrinterExtruder:
 class DummyExtruder:
     def set_active(self, print_time, is_active):
         return 0.
+    def setup_accel_order(self, accel_order):
+        pass
     def motor_off(self, move_time):
         pass
     def check_move(self, move):
