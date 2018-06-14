@@ -42,9 +42,11 @@ class MCU_stepper:
         self._step_dist = step_dist
         self._inv_step_dist = 1. / step_dist
     def setup_itersolve(self, sk):
+        old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
         self._ffi_lib.itersolve_set_stepcompress(
             sk, self._stepqueue, self._step_dist)
+        return old_sk
     def build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
