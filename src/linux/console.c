@@ -128,7 +128,7 @@ console_setup(char *name)
  ****************************************************************/
 
 static struct task_wake console_wake;
-static char receive_buf[4096];
+static uint8_t receive_buf[4096];
 static int receive_pos;
 
 // Process any incoming commands
@@ -155,10 +155,8 @@ console_task(void)
 
     // Find and dispatch message blocks in the input
     int len = receive_pos + ret;
-    uint8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
-    ret = command_find_block(receive_buf, msglen, &pop_count);
-    if (ret > 0)
-        command_dispatch(receive_buf, pop_count);
+    uint_fast8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
+    ret = command_find_and_dispatch(receive_buf, msglen, &pop_count);
     if (ret) {
         len -= pop_count;
         if (len) {
@@ -175,9 +173,8 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Generate message
-    char buf[MESSAGE_MAX];
-    uint8_t msglen = command_encodef(buf, ce, args);
-    command_add_frame(buf, msglen);
+    uint8_t buf[MESSAGE_MAX];
+    uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
 
     // Transmit message
     int ret = write(main_pfd[MP_TTY_IDX].fd, buf, msglen);

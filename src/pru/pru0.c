@@ -32,7 +32,7 @@ static uint16_t transport_dst;
 #define CHAN_PORT                                       30
 
 #define RPMSG_HDR_SIZE 16
-static char transmit_buf[RPMSG_BUF_SIZE - RPMSG_HDR_SIZE];
+static uint8_t transmit_buf[RPMSG_BUF_SIZE - RPMSG_HDR_SIZE];
 static int transmit_pos;
 
 // Transmit all pending message blocks
@@ -48,7 +48,7 @@ flush_messages(void)
 
 // Generate a message block and queue it for transmission
 static void
-build_message(char *msg, int msglen)
+build_message(uint8_t *msg, int msglen)
 {
     if (transmit_pos + msglen > sizeof(transmit_buf))
         flush_messages();
@@ -105,13 +105,13 @@ send_pru1_shutdown(void)
 
 // Dispatch all the commands in a message block
 static void
-do_dispatch(char *buf, uint32_t msglen)
+do_dispatch(uint8_t *buf, uint32_t msglen)
 {
-    char *p = &buf[MESSAGE_HEADER_SIZE];
-    char *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
+    uint8_t *p = &buf[MESSAGE_HEADER_SIZE];
+    uint8_t *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
     while (p < msgend) {
         // Parse command
-        uint8_t cmdid = *p++;
+        uint_fast8_t cmdid = *p++;
         const struct command_parser *cp = &SHARED_MEM->command_index[cmdid];
         if (!cmdid || cmdid >= SHARED_MEM->command_index_size
             || cp->num_args > ARRAY_SIZE(SHARED_MEM->next_command_args)) {
@@ -131,7 +131,7 @@ check_can_read(void)
 {
     // Read data
     uint16_t dst, len;
-    char *p = SHARED_MEM->read_data;
+    uint8_t *p = SHARED_MEM->read_data;
     int16_t ret = pru_rpmsg_receive(&transport, &transport_dst, &dst, p, &len);
     if (ret)
         return ret == PRU_RPMSG_NO_BUF_AVAILABLE;
@@ -144,12 +144,14 @@ check_can_read(void)
 
     // Parse data into message blocks
     for (;;) {
-        uint8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
-        int8_t ret = command_find_block(p, msglen, &pop_count);
+        uint_fast8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
+        int_fast8_t ret = command_find_block(p, msglen, &pop_count);
         if (!ret)
             break;
-        if (ret > 0)
+        if (ret > 0) {
             do_dispatch(p, pop_count);
+            command_send_ack();
+        }
         p += pop_count;
         len -= pop_count;
     }
@@ -210,7 +212,7 @@ sched_shutdown(uint_fast8_t reason)
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    char buf[MESSAGE_MIN];
+    uint8_t buf[MESSAGE_MIN];
     build_message(buf, sizeof(buf));
 }
 

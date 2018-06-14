@@ -9,6 +9,7 @@ class HomingOverride:
         self.printer = config.get_printer()
         self.start_pos = [config.getfloat('set_position_' + a, None)
                           for a in 'xyz']
+        self.axes = config.get('axes', 'XYZ').upper()
         self.script = config.get('gcode')
         self.in_script = False
         self.gcode = self.printer.lookup_object('gcode')
@@ -19,6 +20,27 @@ class HomingOverride:
             # Was called recursively - invoke the real G28 command
             self.gcode.cmd_G28(params)
             return
+
+        # if no axis is given as parameter we assume the override
+        no_axis = True
+        for axis in 'XYZ':
+            if axis in params:
+                no_axis = False
+                break
+
+        if no_axis:
+            override = True
+        else:
+            # check if we home an axsis which needs the override
+            override = False
+            for axis in self.axes:
+                if axis in params:
+                    override = True
+
+        if not override:
+            self.gcode.cmd_G28(params)
+            return
+
         # Calculate forced position (if configured)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()

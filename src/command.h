@@ -61,14 +61,20 @@ enum {
 };
 
 // command.c
-char *command_parsef(char *p, char *maxend
-                     , const struct command_parser *cp, uint32_t *args);
-uint8_t command_encodef(char *buf, const struct command_encoder *ce
-                        , va_list args);
+uint8_t *command_parsef(uint8_t *p, uint8_t *maxend
+                        , const struct command_parser *cp, uint32_t *args);
+uint_fast8_t command_encodef(uint8_t *buf, const struct command_encoder *ce
+                             , va_list args);
+void command_add_frame(uint8_t *buf, uint_fast8_t msglen);
+uint_fast8_t command_encode_and_frame(
+    uint8_t *buf, const struct command_encoder *ce, va_list args);
 void command_sendf(const struct command_encoder *ce, ...);
-void command_add_frame(char *buf, uint8_t msglen);
-int8_t command_find_block(char *buf, uint8_t buf_len, uint8_t *pop_count);
-void command_dispatch(char *buf, uint8_t msglen);
+int_fast8_t command_find_block(uint8_t *buf, uint_fast8_t buf_len
+                               , uint_fast8_t *pop_count);
+void command_dispatch(uint8_t *buf, uint_fast8_t msglen);
+void command_send_ack(void);
+int_fast8_t command_find_and_dispatch(uint8_t *buf, uint_fast8_t buf_len
+                                      , uint_fast8_t *pop_count);
 
 // out/compile_time_request.c (auto generated file)
 extern const struct command_parser command_index[];

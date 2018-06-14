@@ -14,12 +14,13 @@
 #include "sched.h" // sched_wake_tasks
 #include "serial_irq.h" // serial_enable_tx_irq
 
-static char receive_buf[192];
-static uint8_t receive_pos;
-static char transmit_buf[96];
-static uint8_t transmit_pos, transmit_max;
+#define RX_BUFFER_SIZE 192
+
+static uint8_t receive_buf[RX_BUFFER_SIZE], receive_pos;
+static uint8_t transmit_buf[96], transmit_pos, transmit_max;
 
 DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
+DECL_CONSTANT(RECEIVE_WINDOW, RX_BUFFER_SIZE);
 
 // Rx interrupt - store read data
 void
@@ -73,13 +74,15 @@ console_pop_input(uint_fast8_t len)
 void
 console_task(void)
 {
-    uint_fast8_t rpos = readb(&receive_pos);
-    uint8_t pop_count;
-    int8_t ret = command_find_block(receive_buf, rpos, &pop_count);
+    uint_fast8_t rpos = readb(&receive_pos), pop_count;
+    int_fast8_t ret = command_find_block(receive_buf, rpos, &pop_count);
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
-    if (ret)
+    if (ret) {
         console_pop_input(pop_count);
+        if (ret > 0)
+            command_send_ack();
+    }
 }
 DECL_TASK(console_task);
 
@@ -110,9 +113,8 @@ console_sendf(const struct command_encoder *ce, va_list args)
     }
 
     // Generate message
-    char *buf = &transmit_buf[tmax];
-    uint8_t msglen = command_encodef(buf, ce, args);
-    command_add_frame(buf, msglen);
+    uint8_t *buf = &transmit_buf[tmax];
+    uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
 
     // Start message transmit
     writeb(&transmit_max, tmax + msglen);

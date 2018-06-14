@@ -76,6 +76,10 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.gcode.error(reason)
+        kin = toolhead.get_kinematics()
+        pos = kin.get_position()
+        self.gcode.respond_info(
+            "probe z: %.3f" % (pos[2]))
         self.gcode.reset_last_position()
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, params):
@@ -181,16 +185,24 @@ class ProbePointsHelper:
         self.busy = True
         self.move_next()
         if self.probe is not None:
-            while self.busy:
-                self.gcode.run_script("PROBE")
-                self.cmd_NEXT({})
+            try:
+                while self.busy:
+                    self.gcode.run_script("PROBE")
+                    self.cmd_NEXT({})
+            except:
+                self.finalize(False)
+                raise
     def move_next(self):
         x, y = self.probe_points[len(self.results)]
         curpos = self.toolhead.get_position()
         curpos[0] = x
         curpos[1] = y
         curpos[2] = self.horizontal_move_z
-        self.toolhead.move(curpos, self.speed)
+        try:
+            self.toolhead.move(curpos, self.speed)
+        except homing.EndstopError as e:
+            self.finalize(False)
+            raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
     cmd_NEXT_help = "Move to the next XY position to probe"
     def cmd_NEXT(self, params):
@@ -200,7 +212,11 @@ class ProbePointsHelper:
         # Lift toolhead
         curpos = self.toolhead.get_position()
         curpos[2] = self.horizontal_move_z
-        self.toolhead.move(curpos, self.lift_speed)
+        try:
+            self.toolhead.move(curpos, self.lift_speed)
+        except homing.EndstopError as e:
+            self.finalize(False)
+            raise self.gcode.error(str(e))
         # Move to next position
         if len(self.results) == len(self.probe_points):
             self.toolhead.get_last_move_time()

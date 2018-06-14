@@ -201,8 +201,8 @@ static uint32_t config_crc;
 void
 command_get_config(uint32_t *args)
 {
-    sendf("config is_config=%c crc=%u move_count=%hu"
-          , is_finalized(), config_crc, move_count);
+    sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
+          , is_finalized(), config_crc, move_count, sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
@@ -240,11 +240,11 @@ config_reset(uint32_t *args)
  ****************************************************************/
 
 void
-command_get_status(uint32_t *args)
+command_get_clock(uint32_t *args)
 {
-    sendf("status clock=%u status=%c", timer_read_time(), sched_is_shutdown());
+    sendf("clock clock=%u", timer_read_time());
 }
-DECL_COMMAND_FLAGS(command_get_status, HF_IN_SHUTDOWN, "get_status");
+DECL_COMMAND_FLAGS(command_get_clock, HF_IN_SHUTDOWN, "get_clock");
 
 static uint32_t stats_send_time, stats_send_time_high;
 

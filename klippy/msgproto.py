@@ -327,18 +327,18 @@ class MessageParser:
             logging.exception("process_identify error")
             raise error("Error during identify: %s" % (str(e),))
     class sentinel: pass
-    def get_constant(self, name, default=sentinel):
+    def get_constant(self, name, default=sentinel, parser=str):
         if name not in self.config:
             if default is not self.sentinel:
                 return default
             raise error("Firmware constant '%s' not found" % (name,))
-        return self.config[name]
-    def get_constant_float(self, name, default=sentinel):
-        if name not in self.config and default is not self.sentinel:
-            return default
         try:
-            return float(self.config[name])
-        except ValueError:
-            raise error("Firmware constant '%s' not a float" % (name,))
-        except KeyError:
-            raise error("Firmware constant '%s' not found" % (name,))
+            value = parser(self.config[name])
+        except:
+            raise error("Unable to parse firmware constant %s: %s" % (
+                name, self.config[name]))
+        return value
+    def get_constant_float(self, name, default=sentinel):
+        return self.get_constant(name, default, parser=float)
+    def get_constant_int(self, name, default=sentinel):
+        return self.get_constant(name, default, parser=int)

@@ -66,7 +66,7 @@ gcode_r = re.compile(r"^Read " + time_s + ": ['\"]")
 clock_r = re.compile(r"^clocksync state: .* clock_est=\((?P<st>[^ ]+)"
                      + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
 repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
-repl_clock_r = re.compile(r"clock=(?P<clock>[0-9]+) ")
+repl_clock_r = re.compile(r"clock=(?P<clock>[0-9]+)(?: |$)")
 mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
 
 def add_high_bits(val, ref, mask):

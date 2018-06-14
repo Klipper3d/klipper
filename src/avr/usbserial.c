@@ -7,11 +7,10 @@
 #include <string.h> // memmove
 #include "../lib/pjrc_usb_serial/usb_serial.h"
 #include "board/misc.h" // console_sendf
-#include "command.h" // command_dispatch
+#include "command.h" // command_find_and_dispatch
 #include "sched.h" // DECL_INIT
 
-static char receive_buf[MESSAGE_MAX];
-static uint8_t receive_pos;
+static uint8_t receive_buf[MESSAGE_MAX], receive_pos;
 
 void
 usbserial_init(void)
@@ -51,10 +50,8 @@ void
 console_task(void)
 {
     console_check_input();
-    uint8_t pop_count;
-    int8_t ret = command_find_block(receive_buf, receive_pos, &pop_count);
-    if (ret > 0)
-        command_dispatch(receive_buf, pop_count);
+    uint_fast8_t pop_count;
+    int8_t ret = command_find_and_dispatch(receive_buf, receive_pos, &pop_count);
     if (ret)
         console_pop_input(pop_count);
 }
@@ -65,9 +62,8 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Generate message
-    static char buf[MESSAGE_MAX];
-    uint8_t msglen = command_encodef(buf, ce, args);
-    command_add_frame(buf, msglen);
+    static uint8_t buf[MESSAGE_MAX];
+    uint8_t msglen = command_encode_and_frame(buf, ce, args);
 
     // Transmit message
     usb_serial_write((void*)buf, msglen);

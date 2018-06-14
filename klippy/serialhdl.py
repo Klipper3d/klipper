@@ -90,6 +90,10 @@ class SerialReader:
             baud_adjust = self.BITS_PER_BYTE / mcu_baud
             self.ffi_lib.serialqueue_set_baud_adjust(
                 self.serialqueue, baud_adjust)
+        receive_window = msgparser.get_constant_int('RECEIVE_WINDOW', None)
+        if receive_window is not None:
+            self.ffi_lib.serialqueue_set_receive_window(
+                self.serialqueue, receive_window)
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)

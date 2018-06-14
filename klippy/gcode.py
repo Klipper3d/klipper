@@ -83,7 +83,7 @@ class GCodeParser:
                 cmd, key, value, prev_key))
         if value in prev_values:
             raise error("mux command %s %s %s already registered (%s)" % (
-                cmd, key, value))
+                cmd, key, value, prev_values))
         prev_values[value] = func
     def set_move_transform(self, transform):
         if self.move_transform is not None:
@@ -533,7 +533,9 @@ class GCodeParser:
                 offset += self.get_float(axis + '_ADJUST', params)
             else:
                 continue
-            self.base_position[pos] += offset - self.homing_position[pos]
+            delta = offset - self.homing_position[pos]
+            self.last_position[pos] += delta
+            self.base_position[pos] += delta
             self.homing_position[pos] = offset
     def cmd_M206(self, params):
         # Offset axes
