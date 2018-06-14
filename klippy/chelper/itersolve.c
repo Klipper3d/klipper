@@ -149,7 +149,7 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
     double mcu_freq = stepcompress_get_mcu_freq(sc);
     struct timepos last = { 0., sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = 0.000100;
-    int steps = 0, sdir = stepcompress_get_step_dir(sc);
+    int sdir = stepcompress_get_step_dir(sc);
     struct queue_append qa = queue_append_start(sc, m->print_time, .5);
     for (;;) {
         // Determine if next step is in forward or reverse direction
@@ -192,7 +192,6 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
         int ret = queue_append(&qa, next.time * mcu_freq);
         if (ret)
             return ret;
-        steps += sdir ? 1 : -1;
         seek_time_delta = next.time - last.time;
         if (seek_time_delta < .000000001)
             seek_time_delta = .000000001;
@@ -205,7 +204,7 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
     }
     queue_append_finish(qa);
     sk->commanded_pos = last.position;
-    return steps;
+    return 0;
 }
 
 void __visible
@@ -220,4 +219,10 @@ void __visible
 itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos)
 {
     sk->commanded_pos = pos;
+}
+
+double __visible
+itersolve_get_commanded_pos(struct stepper_kinematics *sk)
+{
+    return sk->commanded_pos;
 }

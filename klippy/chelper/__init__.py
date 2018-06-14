@@ -49,9 +49,10 @@ defs_itersolve = """
         , double axes_d_x, double axes_d_y, double axes_d_z
         , double start_v, double cruise_v, double accel);
     int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
-    void itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos);
     void itersolve_set_stepcompress(struct stepper_kinematics *sk
         , struct stepcompress *sc, double step_dist);
+    void itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos);
+    double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
 """
 
 defs_kin_cartesian = """
