@@ -246,9 +246,12 @@ class ToolHead:
         self.print_stall = 0
         self.drip_completion = None
         # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
+        ffi_main, self.ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(self.ffi_lib.move_alloc(), self.ffi_lib.free)
+        self.move_fill = self.ffi_lib.move_fill
+        self.accel_order = config.getchoice(
+            'acceleration_order', { "2": 2, "4": 4, "6": 6 }, "2")
+        self.ffi_lib.move_set_accel_order(self.cmove, self.accel_order)
         # Create kinematics class
         self.extruder = kinematics.extruder.DummyExtruder()
         self.move_queue.set_extruder(self.extruder)
@@ -416,6 +419,7 @@ class ToolHead:
         self.extruder.set_active(last_move_time, False)
         extrude_pos = extruder.set_active(last_move_time, True)
         self.extruder = extruder
+        self.extruder.setup_accel_order(self.accel_order)
         self.move_queue.set_extruder(extruder)
         self.commanded_pos[3] = extrude_pos
     def get_extruder(self):
@@ -515,17 +519,21 @@ class ToolHead:
             minval=0.)
         self.requested_accel_to_decel = gcode.get_float(
             'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
+        accel_order = gcode.get_int(
+            'ACCEL_ORDER', params, self.accel_order, minval=2, maxval=6)
+        if accel_order != self.accel_order:
+            self.accel_order = accel_order
+            self.ffi_lib.move_set_accel_order(self.cmove, accel_order)
+            self.extruder.setup_accel_order(accel_order)
         self.max_velocity = min(max_velocity, self.config_max_velocity)
         self.max_accel = min(max_accel, self.config_max_accel)
         self.square_corner_velocity = min(square_corner_velocity,
                                           self.config_square_corner_velocity)
         self._calc_junction_deviation()
-        msg = ("max_velocity: %.6f\n"
-               "max_accel: %.6f\n"
-               "max_accel_to_decel: %.6f\n"
-               "square_corner_velocity: %.6f"% (
-                   max_velocity, max_accel, self.requested_accel_to_decel,
-                   square_corner_velocity))
+        msg = ("max_velocity: %.6f max_accel: %.6f accel_order: %d\n"
+               "max_accel_to_decel: %.6f square_corner_velocity: %.6f"% (
+                   max_velocity, max_accel, accel_order,
+                   self.requested_accel_to_decel, square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         gcode.respond_info(msg, log=False)
     def cmd_M204(self, params):
