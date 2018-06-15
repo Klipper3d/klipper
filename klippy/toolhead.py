@@ -238,6 +238,7 @@ class ToolHead:
         gcode = printer.lookup_object('gcode')
         gcode.register_command('SET_VELOCITY_LIMIT', self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
+        gcode.register_command('M204', self.cmd_M204)
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -436,6 +437,10 @@ class ToolHead:
                    junction_deviation))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         gcode.respond_info(msg)
+    def cmd_M204(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        accel = gcode.get_float('S', params, above=0.)
+        self.max_accel = min(accel, self.config_max_accel)
 
 def add_printer_objects(printer, config):
     printer.add_object('toolhead', ToolHead(printer, config))
