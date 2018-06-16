@@ -105,7 +105,7 @@ class GCodeParser:
             self.gcode_handlers = self.base_gcode_handlers
             self.dump_debug()
             if self.is_fileinput:
-                self.printer.request_exit()
+                self.printer.request_exit('error_exit')
             return
         if state != 'ready':
             return
@@ -264,6 +264,8 @@ class GCodeParser:
         if len(lines) > 1:
             self.respond_info("\n".join(lines))
         self.respond('!! %s' % (lines[0].strip(),))
+        if self.is_fileinput:
+            self.printer.request_exit('error_exit')
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str,
