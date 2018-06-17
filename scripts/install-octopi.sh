@@ -16,7 +16,9 @@ install_packages()
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
+    PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi"
+    # GCC Complier
+    PKGLIST="${PKGLIST} buildessential"
 
     # Update system package info
     report_status "Running apt-get update..."
