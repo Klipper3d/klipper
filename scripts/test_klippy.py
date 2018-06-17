@@ -5,6 +5,9 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse, logging, subprocess
 
+TEMP_GCODE_FILE = "_test_.gcode"
+TEMP_LOG_FILE = "_test_.log"
+
 
 ######################################################################
 # Test cases
@@ -14,10 +17,11 @@ class error(Exception):
     pass
 
 class TestCase:
-    def __init__(self, fname, dictdir, tempdir):
+    def __init__(self, fname, dictdir, tempdir, verbose):
         self.fname = fname
         self.dictdir = dictdir
         self.tempdir = tempdir
+        self.verbose = verbose
     def relpath(self, fname, rel='test'):
         if rel == 'dict':
             reldir = self.dictdir
@@ -66,7 +70,7 @@ class TestCase:
                     should_fail):
         gcode_is_temp = False
         if gcode_fname is None:
-            gcode_fname = self.relpath("_test_.gcode", 'temp')
+            gcode_fname = self.relpath(TEMP_GCODE_FILE, 'temp')
             gcode_is_temp = True
             f = open(gcode_fname, 'wb')
             f.write('\n'.join(gcode + ['']))
@@ -78,20 +82,27 @@ class TestCase:
         if dict_fname is None:
             raise error("data dictionary file not specified")
         # Call klippy
-        sys.stderr.write("\n    Starting %s (%s)\n" % (
+        sys.stderr.write("    Starting %s (%s)\n" % (
             self.fname, os.path.basename(config_fname)))
         args = [sys.executable, './klippy/klippy.py', config_fname,
                 '-i', gcode_fname, '-o', '/dev/null', '-v',
                 '-d', dict_fname
         ]
+        if not self.verbose:
+            args += ['-l', TEMP_LOG_FILE]
         res = subprocess.call(args)
-        if should_fail:
-            if not res:
+        is_fail = (should_fail and not res) or (not should_fail and res)
+        if is_fail:
+            if not self.verbose:
+                self.show_log()
+            if should_fail:
                 raise error("Test failed to raise an error")
-        else:
-            if res:
-                raise error("Error during test")
+            raise error("Error during test")
         # Do cleanup
+        if not self.verbose:
+            os.unlink(TEMP_LOG_FILE)
+        else:
+            sys.stderr.write('\n')
         if gcode_is_temp:
             os.unlink(gcode_fname)
     def run(self):
@@ -103,6 +114,11 @@ class TestCase:
             logging.exception("Unhandled exception during test run")
             return "internal error"
         return "success"
+    def show_log(self):
+        f = open(TEMP_LOG_FILE, 'rb')
+        data = f.read()
+        f.close()
+        sys.stdout.write(data)
 
 
 ######################################################################
@@ -117,16 +133,16 @@ def main():
                     help="directory for dictionary files")
     opts.add_option("-t", "--tempdir", dest="tempdir", default=".",
                     help="directory for temporary files")
+    opts.add_option("-v", action="store_true", dest="verbose",
+                    help="show all output from tests")
     options, args = opts.parse_args()
     if len(args) < 1:
         opts.error("Incorrect number of arguments")
     logging.basicConfig(level=logging.DEBUG)
-    dictdir = options.dictdir
-    tempdir = options.tempdir
 
     # Run each test
     for fname in args:
-        tc = TestCase(fname, dictdir, tempdir)
+        tc = TestCase(fname, options.dictdir, options.tempdir, options.verbose)
         res = tc.run()
         if res != 'success':
             sys.stderr.write("\n\nTest case %s FAILED (%s)!\n\n" % (fname, res))
