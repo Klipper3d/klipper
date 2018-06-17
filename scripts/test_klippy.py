@@ -57,7 +57,7 @@ class TestCase:
             elif parts[0] == "SHOULD_FAIL":
                 should_fail = True
             else:
-                gcode.append(line)
+                gcode.append(line.strip())
         f.close()
         if not multi_tests:
             self.launch_test(config_fname, dict_fname,
@@ -69,7 +69,7 @@ class TestCase:
             gcode_fname = self.relpath("_test_.gcode", 'temp')
             gcode_is_temp = True
             f = open(gcode_fname, 'wb')
-            f.write('\n'.join(gcode))
+            f.write('\n'.join(gcode + ['']))
             f.close()
         elif gcode:
             raise error("Can't specify both a gcode file and gcode commands")
@@ -81,13 +81,13 @@ class TestCase:
         sys.stderr.write("\n    Starting %s (%s)\n" % (
             self.fname, os.path.basename(config_fname)))
         args = [sys.executable, './klippy/klippy.py', config_fname,
-                '-i', gcode_fname, '-o', '/dev/null',
+                '-i', gcode_fname, '-o', '/dev/null', '-v',
                 '-d', dict_fname
         ]
         res = subprocess.call(args)
         if should_fail:
             if not res:
-                raise error("Test failed to raise and error")
+                raise error("Test failed to raise an error")
         else:
             if res:
                 raise error("Error during test")
