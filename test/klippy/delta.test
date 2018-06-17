@@ -31,3 +31,17 @@ G1 x145 y0
 
 # Move to another extreme position
 G1 x145 y5
+
+# Test delta_calibrate command
+DELTA_CALIBRATE
+
+# Dummy move
+G1 Z5 X0 Y0
+
+# Verify stepper_buzz
+STEPPER_BUZZ STEPPER=stepper_a
+STEPPER_BUZZ STEPPER=stepper_b
+STEPPER_BUZZ STEPPER=stepper_c
+
+# Dummy move
+G1 Z3 X2 Y3
