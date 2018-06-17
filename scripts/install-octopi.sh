@@ -8,7 +8,7 @@ PYTHONDIR="${HOME}/klippy-env"
 install_packages()
 {
     # Packages for python cffi
-    PKGLIST="python-virtualenv python-dev libffi-dev"
+    PKGLIST="python-virtualenv python-dev libffi-dev build-essential python-pip"
     # kconfig requirements
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
@@ -17,8 +17,6 @@ install_packages()
     PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
     # ARM chip installation and building
     PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi"
-    # GCC Complier
-    PKGLIST="${PKGLIST} buildessential"
 
     # Update system package info
     report_status "Running apt-get update..."
