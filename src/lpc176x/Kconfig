@@ -7,6 +7,7 @@ config LPC_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
+    select HAVE_USER_INTERFACE
 
 config BOARD_DIRECTORY
     string
