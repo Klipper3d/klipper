@@ -40,6 +40,7 @@ MCU_PINS = {
     "pru": beaglebone_pins(),
     "linux": {"analog%d" % i: i for i in range(8)}, # XXX
 }
+MCU_PINS["linux"].update({"spi1_%d" % i: i+8 for i in range(3)})
 
 
 ######################################################################
