@@ -12,11 +12,11 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
 #include "spicmds.h" // spidev_transfer
-
 enum {
     TS_CHIP_MAX31855 = 1 << 0,
     TS_CHIP_MAX31856 = 1 << 1,
-    TS_CHIP_MAX31865 = 1 << 2
+    TS_CHIP_MAX31865 = 1 << 2,
+    TS_CHIP_MAX6675  = 1 << 3
 };
 
 struct thermocouple_spi {
@@ -48,7 +48,7 @@ void
 command_config_thermocouple(uint32_t *args)
 {
     uint8_t chip_type = args[2];
-    if (chip_type > TS_CHIP_MAX31865 || !chip_type)
+    if (chip_type > TS_CHIP_MAX6675 || !chip_type)
         shutdown("Invalid thermocouple chip type");
     struct thermocouple_spi *spi = oid_alloc(
         args[0], command_config_thermocouple, sizeof(*spi));
@@ -90,7 +90,7 @@ thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
           oid, next_begin_time, value, fault);
 }
 
-/* Logic of thermocouple K readers MAX6675 and MAX31855 are same */
+
 static void
 thermocouple_handle_max31855(struct thermocouple_spi *spi
                              , uint32_t next_begin_time, uint8_t oid)
@@ -147,6 +147,20 @@ thermocouple_handle_max31865(struct thermocouple_spi *spi
         try_shutdown("Thermocouple reader fault");
 }
 
+static void thermocouple_handle_max6675(struct thermocouple_spi *spi
+                             , uint32_t next_begin_time, uint8_t oid)
+{
+    uint8_t msg[2] = { 0x00, 0x00};
+    spidev_transfer(spi->spi, 1, sizeof(msg), msg);
+    uint16_t value;
+    memcpy(&value, msg, sizeof(msg));
+    value = be16_to_cpu(value);
+    thermocouple_respond(spi, next_begin_time, value, 0, oid);
+    // Kill after data send, host decode an error
+    if (value & 0x04)
+        try_shutdown("Thermocouple reader fault");
+}
+
 // task to read thermocouple and send response
 void
 thermocouple_task(void)
@@ -171,6 +185,9 @@ thermocouple_task(void)
             break;
         case TS_CHIP_MAX31865:
             thermocouple_handle_max31865(spi, next_begin_time, oid);
+            break;
+        case TS_CHIP_MAX6675:
+            thermocouple_handle_max6675(spi, next_begin_time, oid);
             break;
         }
     }
