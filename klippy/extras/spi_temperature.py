@@ -15,9 +15,10 @@ SAMPLE_COUNT_DEFAULT   = 8
 REPORT_TIME_DEFAULT    = 0.300
 
 VALID_SPI_SENSORS = {
-    'MAX6675' : 1, 'MAX31855' : 1,
+    'MAX31855' : 1,
     'MAX31856' : 2,
-    'MAX31865' : 4
+    'MAX31865' : 4,
+    'MAX6675'  : 8
 }
 
 class error(Exception):
@@ -180,18 +181,26 @@ class Thermocouple(SensorBase):
         if chip_type == "MAX31856":
             self.val_a = 0.0078125
             self.scale = 5
+        elif chip_type == "MAX6675":
+            self.val_a = 0.25
+            self.scale = 3
         else:
             self.val_a = 0.25
             self.scale = 18
         SensorBase.__init__(self, config, is_spi = True, sample_count = 1)
     def _check_faults_simple(self, val):
-        if not self.chip_type == "MAX31856":
+        if self.chip_type == "MAX6675":
+            if val & 0x02:
+                raise self.error("Max6675 : Device ID error")
+            if val & 0x04:
+                raise self.error("Max6675 : Thermocouple Open Fault")
+        elif not self.chip_type == "MAX31856":
             if val & 0x1:
-                raise self.error("MAX6675/MAX31855 : Open Circuit")
+                raise self.error("MAX31855 : Open Circuit")
             if val & 0x2:
-                raise self.error("MAX6675/MAX31855 : Short to GND")
+                raise self.error("MAX31855 : Short to GND")
             if val & 0x4:
-                raise self.error("MAX6675/MAX31855 : Short to Vcc")
+                raise self.error("MAX31855 : Short to Vcc")
     def check_faults(self, fault):
         if self.chip_type == "MAX31856":
             if fault & MAX31856_FAULT_CJRANGE:
