@@ -15,9 +15,10 @@ SAMPLE_COUNT_DEFAULT   = 8
 REPORT_TIME_DEFAULT    = 0.300
 
 VALID_SPI_SENSORS = {
-    'MAX6675' : 1, 'MAX31855' : 1,
+    'MAX31855' : 1,
     'MAX31856' : 2,
-    'MAX31865' : 4
+    'MAX31865' : 4,
+    'MAX6675'  : 8
 }
 
 class error(Exception):
@@ -46,18 +47,38 @@ class SensorBase(object):
         self._report_clock = 0
         ppins = config.get_printer().lookup_object('pins')
         if is_spi:
-            pin_params = ppins.lookup_pin('digital_out', sensor_pin)
+            if "spi" in sensor_pin:
+                pin_params = ppins.lookup_pin('adc', sensor_pin)
+            else:
+                pin_params = ppins.lookup_pin('digital_out', sensor_pin)
+
             self.mcu = mcu = pin_params['chip']
             pin = pin_params['pin']
+
+            if "spi" in pin:
+                b, d = pin[3:].split('_')
+                bus = int(d)+(int(b) << 8)
+            else:
+                bus = 0
+
             # SPI bus configuration
             spi_oid = mcu.create_oid()
             spi_mode = config.getint('spi_mode', minval=0, maxval=3)
             spi_speed = config.getint('spi_speed', minval=0)
-            mcu.add_config_cmd(
-                "config_spi oid=%u bus=%u pin=%s"
-                " mode=%u rate=%u shutdown_msg=" % (
-                    spi_oid, 0, pin, spi_mode, spi_speed))
+
+            if not "spi" in pin:
+                mcu.add_config_cmd(
+                    "config_spi oid=%u bus=%u pin=%s"
+                    " mode=%u rate=%u shutdown_msg=" % (
+                        spi_oid, 0, pin, spi_mode, spi_speed))
+            else:
+                mcu.add_config_cmd(
+                    "config_spi_without_cs oid=%u bus=%u"
+                    " mode=%u rate=%u shutdown_msg=" % (
+                        spi_oid, bus, spi_mode, spi_speed))
+
             config_cmd = "".join("%02x" % b for b in self.get_configs())
+
             mcu.add_config_cmd("spi_send oid=%u data=%s" % (
                 spi_oid, config_cmd), is_init=True)
             # Reader chip configuration
@@ -180,18 +201,27 @@ class Thermocouple(SensorBase):
         if chip_type == "MAX31856":
             self.val_a = 0.0078125
             self.scale = 5
+        elif chip_type == "MAX6675":
+            self.val_a = 0.25
+            self.scale = 3
         else:
             self.val_a = 0.25
             self.scale = 18
         SensorBase.__init__(self, config, is_spi = True, sample_count = 1)
     def _check_faults_simple(self, val):
-        if not self.chip_type == "MAX31856":
+
+        if self.chip_type == "MAX6675":
+            if val & 0x02:
+                raise self.error("Max6675 : Device ID error")
+            if val & 0x04:
+                raise self.error("Max6675 : Thermocouple Open Fault")
+        elif not self.chip_type == "MAX31856":
             if val & 0x1:
-                raise self.error("MAX6675/MAX31855 : Open Circuit")
+                raise self.error("MAX31855 : Open Circuit")
             if val & 0x2:
-                raise self.error("MAX6675/MAX31855 : Short to GND")
+                raise self.error("MAX31855 : Short to GND")
             if val & 0x4:
-                raise self.error("MAX6675/MAX31855 : Short to Vcc")
+                raise self.error("MAX31855 : Short to Vcc")
     def check_faults(self, fault):
         if self.chip_type == "MAX31856":
             if fault & MAX31856_FAULT_CJRANGE:
