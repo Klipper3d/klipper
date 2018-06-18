@@ -5,8 +5,11 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <fcntl.h> // open
+#include <sys/ioctl.h>
+#include <linux/spi/spidev.h>
 #include <stdio.h> // snprintf
 #include <unistd.h> // write
+#include <string.h> // memset
 #include "command.h" // DECL_COMMAND
 #include "gpio.h" // spi_setup
 #include "internal.h" // report_errno
@@ -53,14 +56,36 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
     int bus_id = (bus >> 8) & 0xff, dev_id = bus & 0xff;
     int fd = spi_open(bus_id, dev_id);
-    return (struct spi_config) { fd };
+
+    int ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &rate);
+    if(ret < 0)
+        shutdown("Unable to set SPI speed");
+
+    return (struct spi_config) { fd , rate};
 }
 
 void
 spi_transfer(struct spi_config config, uint8_t receive_data
              , uint8_t len, uint8_t *data)
 {
-    int ret = write(config.fd, data, len);
+    struct spi_ioc_transfer transfer;
+    int ret;
+
+    memset (&transfer, 0, sizeof (transfer)); /* This is very important to avoid errno 22 */
+    if (len ==0) return;
+    if(receive_data)
+    {
+        transfer.tx_buf = (uintptr_t) data;
+        transfer.rx_buf = (uintptr_t) data;
+        transfer.len = len;
+        transfer.speed_hz = config.rate;
+        transfer.bits_per_word = 8;
+        transfer.cs_change = 0;
+        ret = ioctl(config.fd, SPI_IOC_MESSAGE(1), &transfer);
+    }
+    else
+        ret = write(config.fd, data, len);
+
     if (ret < 0) {
         report_errno("write spi", ret);
         shutdown("Unable to write to spi");
