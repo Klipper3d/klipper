@@ -5,7 +5,10 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <fcntl.h> // open
+#include <linux/spi/spidev.h> // SPI_IOC_MESSAGE
 #include <stdio.h> // snprintf
+#include <string.h> // memset
+#include <sys/ioctl.h> // ioctl
 #include <unistd.h> // write
 #include "command.h" // DECL_COMMAND
 #include "gpio.h" // spi_setup
@@ -53,7 +56,12 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
     int bus_id = (bus >> 8) & 0xff, dev_id = bus & 0xff;
     int fd = spi_open(bus_id, dev_id);
-    return (struct spi_config) { fd };
+    int ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &rate);
+    if (ret < 0) {
+        report_errno("ioctl set max spi speed", ret);
+        shutdown("Unable to set SPI speed");
+    }
+    return (struct spi_config) { fd , rate};
 }
 
 void
@@ -65,10 +73,29 @@ void
 spi_transfer(struct spi_config config, uint8_t receive_data
              , uint8_t len, uint8_t *data)
 {
-    int ret = write(config.fd, data, len);
-    if (ret < 0) {
-        report_errno("write spi", ret);
-        shutdown("Unable to write to spi");
+    if (!len)
+        return;
+
+    if (receive_data) {
+        struct spi_ioc_transfer transfer;
+        memset(&transfer, 0, sizeof(transfer));
+        transfer.tx_buf = (uintptr_t)data;
+        transfer.rx_buf = (uintptr_t)data;
+        transfer.len = len;
+        transfer.speed_hz = config.rate;
+        transfer.bits_per_word = 8;
+        transfer.cs_change = 0;
+        int ret = ioctl(config.fd, SPI_IOC_MESSAGE(1), &transfer);
+        if (ret < 0) {
+            report_errno("spi ioctl", ret);
+            shutdown("Unable to issue spi ioctl");
+        }
+    } else {
+        int ret = write(config.fd, data, len);
+        if (ret < 0) {
+            report_errno("write spi", ret);
+            shutdown("Unable to write to spi");
+        }
     }
 }
 
