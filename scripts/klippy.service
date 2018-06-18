@@ -1,0 +1,10 @@
+[Unit]
+    Description=klippy service
+    After=klipper-pru.service klipper-host-mcu.service
+[Service]
+    User=debian
+    ExecStart=/home/debian/klipper/klippy/klippy.py /home/debian/klipper/config/printer.cfg -l /tmp/klipper.log
+
+[Install]
+    WantedBy=multi-user.target
+

@@ -1,0 +1,11 @@
+[Unit]
+    Description=Klipper pru and mcu service
+[Service]
+    Type=oneshot
+    ExecStart=/usr/local/bin/klipper-pru.sh start
+    RemainAfterExit=true
+    ExecStop=/usr/local/bin/klipper-pru.sh stop
+    
+[Install]
+    WantedBy=multi-user.target
+

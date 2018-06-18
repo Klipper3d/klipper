@@ -1,0 +1,10 @@
+[Unit]
+    Description=OctoPrint service
+
+[Service]
+    User=debian
+    ExecStart=/home/debian/OctoPrint/venv/bin/python /home/debian/OctoPrint/venv/bin/octoprint serve
+
+[Install]
+    WantedBy=multi-user.target
+

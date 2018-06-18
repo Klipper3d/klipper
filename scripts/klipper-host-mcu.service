@@ -1,0 +1,11 @@
+[Unit]
+    Description=Klipper mcu service
+[Service]
+    Type=oneshot
+    RemainAfterExit=true
+    ExecStart=/usr/local/bin/klipper-host-mcu.sh start
+    ExecStop=/usr/local/bin/klipper-host-mcu.sh stop
+    
+[Install]
+    WantedBy=multi-user.target
+
