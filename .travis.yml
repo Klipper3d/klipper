@@ -8,6 +8,10 @@ addons:
             - avr-libc
             - wget
 
+cache:
+  directories:
+  - downloads
+
 install: ./scripts/travis-install.sh
 
 script: ./scripts/travis-build.sh
