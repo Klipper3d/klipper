@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script installs Klipper on a Raspberry Pi machine running the
-# OctoPi distribution.
+# This script installs Klipper on an x86_64 machine running the
+# CentOS 7 distribution.
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
@@ -18,13 +18,7 @@ install_packages()
     PKGLIST="${PKGLIST} avrdude gcc-avr32-linux-gnu binutils-avr32-linux-gnu avr-libc"
     # ARM chip installation and building
     # CentOS/Fedora do not appear to have these packages available at this time
-    #PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
-    # CentOS needs lsb-core for init.d script. Currently using systemd service installation instead
-    #PKGLIST="${PKGLIST} redhat-lsb-core"
-
-    # Update system package info
-    # report_status "Running package update..."
-    # sudo yum check-update
+    PKGLIST="${PKGLIST} arm-none-eabi-gcc-cs arm-none-eabi-newlib"
 
     # Install desired packages
     report_status "Installing packages..."
@@ -46,6 +40,7 @@ create_virtualenv()
 # Step 3: Install startup script
 install_script()
 {
+# Create systemd service file
     report_status "Installing system start script..."
     sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper.service" << EOF
 #Systemd service file for klipper
@@ -62,6 +57,7 @@ User=$USER
 RemainAfterExit=yes
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log
 EOF
+# Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
 }
 
