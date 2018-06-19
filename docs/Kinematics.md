@@ -139,15 +139,32 @@ tracked in millimeters, seconds, and in cartesian coordinate space.
 It's the task of the kinematic classes to convert from this generic
 coordinate system to the hardware specifics of the particular printer.
 
-In general, the code determines each step time by first calculating
-where along the line of movement the head would be if a step is
-taken. It then calculates what time the head should be at that
-position. Determining the time along the line of movement can be done
-using the formulas for constant acceleration and constant velocity:
+Klipper uses an
+[iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
+to generate the step times for each stepper. The code contains the
+formulas to calculate the ideal cartesian coordinates of the head at
+each moment in time, and it has the kinematic formulas to calculate
+the ideal stepper positions based on those cartesian coordinates. With
+these formulas, Klipper can determine the ideal time that the stepper
+should be at each step position. The given steps are then scheduled at
+these calculated times.
 
+The key formula to determine how far a move should travel under
+constant acceleration is:
 ```
-time = sqrt(2*distance/accel + (start_velocity/accel)^2) - start_velocity/accel
-time = distance/cruise_velocity
+move_distance = (start_velocity + .5 * accel * move_time) * move_time
+```
+and the key formula for movement with constant velocity is:
+```
+move_distance = cruise_velocity * move_time
+```
+
+The key formulas for determining the cartesian coordinate of a move
+given a move distance is:
+```
+cartesian_x_position = start_x + move_distance * total_x_movement / total_movement
+cartesian_y_position = start_y + move_distance * total_y_movement / total_movement
+cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
 ```
 
 Cartesian Robots
@@ -157,53 +174,34 @@ Generating steps for cartesian printers is the simplest case. The
 movement on each axis is directly related to the movement in cartesian
 space.
 
+Key formulas:
+```
+stepper_x_position = cartesian_x_position
+stepper_y_position = cartesian_y_position
+stepper_z_position = cartesian_z_position
+```
+
+CoreXY Robots
+----------------
+
+Generating steps on a CoreXY machine is only a little more complex
+than basic cartesian robots. The key formulas are:
+```
+stepper_a_position = cartesian_x_position + cartesian_y_position
+stepper_b_position = cartesian_x_position - cartesian_y_position
+stepper_z_position = cartesian_z_position
+```
+
 Delta Robots
 ------------
 
-To generate step times on Delta printers it is necessary to correlate
-the movement in cartesian space with the movement on each stepper
-tower.
-
-To simplify the math, for each stepper tower, the code calculates the
-location of a "virtual tower" that is along the line of movement.
-This virtual tower is chosen at the point where the line of movement
-(extended infinitely in both directions) would be closest to the
-actual tower.
-
-![delta-tower](img/delta-tower.svg.png)
-
-It is then possible to calculate where the head will be along the line
-of movement after each step is taken on the virtual tower.
-
-![virtual-tower](img/virtual-tower.svg.png)
-
-The key formula is Pythagoras's theorem:
+Step generation on a delta robot is based on Pythagoras's theorem:
 ```
-distance_to_tower^2 = arm_length^2 - tower_height^2
+stepper_position = (sqrt(arm_length^2
+                         - (cartesian_x_position - tower_x_position)^2
+                         - (cartesian_y_position - tower_y_position)^2)
+                    + cartesian_z_position)
 ```
-
-One complexity is that if the print head passes the virtual tower
-location then the stepper direction must be reversed. In this case
-forward steps will be taken at the start of the move and reverse steps
-will be taken at the end of the move.
-
-### Delta movements beyond simple XY plane ###
-
-Movement calculation is more complicated if a single move contains
-both XY movement and Z movement. These moves are rare, but they must
-still be handled correctly. A virtual tower along the line of movement
-is still calculated, but in this case the tower is not at a 90 degree
-angle relative to the line of movement:
-
-![xy+z-tower](img/xy+z-tower.svg.png)
-
-The code continues to calculate step times using the same general
-scheme as delta moves within an XY plane, but the slope of the tower
-must also be used in the calculations.
-
-Should the move contain only Z movement (ie, no XY movement at all)
-then the same math is used - just in this case the tower is parallel
-to the line of movement.
 
 ### Stepper motor acceleration limits ###
 
@@ -236,8 +234,10 @@ independently from the step time calculations of the print head
 movement.
 
 Basic extruder movement is simple to calculate. The step time
-generation uses the same constant acceleration and constant velocity
-formulas that cartesian robots use.
+generation uses the same formulas that cartesian robots use:
+```
+stepper_position = requested_e_position
+```
 
 ### Pressure advance ###
 
@@ -264,7 +264,7 @@ through the nozzle orifice (as in
 key idea is that the relationship between filament, pressure, and flow
 rate can be modeled using a linear coefficient:
 ```
-extra_filament = pressure_advance_coefficient * extruder_velocity
+stepper_position = requested_e_position + pressure_advance_coefficient * nominal_extruder_velocity
 ```
 
 See the [pressure advance](Pressure_Advance.md) document for

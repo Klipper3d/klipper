@@ -163,28 +163,37 @@ provides further information on the mechanics of moves.
   kinematic class is given a chance to audit the move
   (`ToolHead.move() -> kin.check_move()`) before it goes on the
   look-ahead queue, but once the move arrives in *kin*.move() the
-  kinematic class is required to handle the move as specified. The
-  kinematic classes translate the three parts of each move
-  (acceleration, constant "cruising" velocity, and deceleration) to
-  the associated movement on each stepper. Note that the extruder is
-  handled in its own kinematic class. Since the Move() class specifies
-  the exact movement time and since step pulses are sent to the
-  micro-controller with specific timing, stepper movements produced by
-  the extruder class will be in sync with head movement even though
-  the code is kept separate.
+  kinematic class is required to handle the move as specified. Note
+  that the extruder is handled in its own kinematic class. Since the
+  Move() class specifies the exact movement time and since step pulses
+  are sent to the micro-controller with specific timing, stepper
+  movements produced by the extruder class will be in sync with head
+  movement even though the code is kept separate.
 
-* For efficiency reasons, the stepper pulse times are generated in C
-  code. The code flow is: `kin.move() -> MCU_Stepper.step_const() ->
-  stepcompress_push_const()`, or for delta kinematics:
-  `DeltaKinematics.move() -> MCU_Stepper.step_delta() ->
-  stepcompress_push_delta()`. The MCU_Stepper code just performs unit
-  and axis transformation (millimeters to step distances), and calls
-  the C code. The C code calculates the stepper step times for each
-  movement and fills an array (struct stepcompress.queue) with the
-  corresponding micro-controller clock counter times for every
-  step. Here the "micro-controller clock counter" value directly
-  corresponds to the micro-controller's hardware counter - it is
-  relative to when the micro-controller was last powered up.
+* Klipper uses an
+  [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
+  to generate the step times for each stepper. For efficiency reasons,
+  the stepper pulse times are generated in C code. The code flow is:
+  `kin.move() -> MCU_Stepper.step_itersolve() ->
+  itersolve_gen_steps()` (in klippy/chelper/itersolve.c). The goal of
+  the iterative solver is to find step times given a formula that
+  calculates a stepper position from a given time in a move. This is
+  done by repeatedly "guessing" various times until the stepper
+  position formula returns the desired position of the next step on
+  the stepper. The feedback produced from each guess is used to
+  improve future guesses so that the process rapidly converges to the
+  desired time. The kinematic stepper position formulas are located in
+  the klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
+  kin_delta.c, kin_extruder.c).
+
+* After the iterative solver calculates the step times they are added
+  to an array: `itersolve_gen_steps() -> queue_append()` (in
+  klippy/chelper/stepcompress.c). The array (struct
+  stepcompress.queue) stores the corresponding micro-controller clock
+  counter times for every step. Here the "micro-controller clock
+  counter" value directly corresponds to the micro-controller's
+  hardware counter - it is relative to when the micro-controller was
+  last powered up.
 
 * The next major step is to compress the steps: `stepcompress_flush()
   -> compress_bisect_add()` (in klippy/chelper/stepcompress.c). This
@@ -293,8 +302,7 @@ This section provides some tips on adding support to Klipper for
 additional types of printer kinematics. This type of activity requires
 excellent understanding of the math formulas for the target
 kinematics. It also requires software development skills - though one
-should only need to update the host software (which is written in
-Python).
+should only need to update the host software.
 
 Useful steps:
 1. Start by studying the
@@ -304,74 +312,30 @@ Useful steps:
    and delta.py. The kinematic classes are tasked with converting a
    move in cartesian coordinates to the movement on each stepper. One
    should be able to copy one of these files as a starting point.
-3. Implement the `get_postion()` method in the new kinematics
-   class. This method converts the current stepper position of each
-   stepper axis (stored in millimeters) to a position in cartesian
-   space (also in millimeters).
-4. Implement the `set_postion()` method. This is the inverse of
-   get_position() - it sets each axis position (in millimeters) given
-   a position in cartesian coordinates.
-5. Implement the `move()` method. The goal of the move() method is to
-   convert a move defined in cartesian space to a series of stepper
-   step times that implement the requested movement.
-   * The `move()` method is passed a "print_time" parameter (which
-     stores a time in seconds) and a "move" class instance that fully
-     defines the movement. The goal is to repeatedly invoke the
-     `stepper.step()` method with the time (relative to print_time)
-     that each stepper should step at to obtain the desired motion.
-   * One "trick" to help with the movement calculations is to imagine
-     there is a physical rail between `move.start_pos` and
-     `move.end_pos` that confines the print head so that it can only
-     move along this straight line of motion. Then, if the head is
-     confined to that imaginary rail, the head is at `move.start_pos`,
-     only one stepper is enabled (all other steppers can move freely),
-     and the given stepper is stepped a single step, then one can
-     imagine that the head will move along the line of movement some
-     distance. Determine the formula converting this step distance to
-     distance along the line of movement. Once one has the distance
-     along the line of movement, one can figure out the time that the
-     head should be at that position (using the standard formulas for
-     velocity and acceleration). This time is the ideal step time for
-     the given stepper and it can be passed to the `stepper.step()`
-     method.
-   * The `stepper.step()` method must always be called with an
-     increasing time for a given stepper (steps must be scheduled in
-     the order they are to be executed). A common error during
-     kinematic development is to receive an "Internal error in
-     stepcompress" failure - this is generally due to the step()
-     method being invoked with a time earlier than the last scheduled
-     step. For example, if the last step in move1 is scheduled at a
-     time greater than the first step in move2 it will generally
-     result in the above error.
-   * Fractional steps. Be aware that a move request is given in
-     cartesian space and it is not confined to discreet
-     locations. Thus a move's start and end locations may translate to
-     a location on a stepper axis that is between two steps (a
-     fractional step). The code must handle this. The preferred
-     approach is to schedule the next step at the time a move would
-     position the stepper axis at least half way towards the next
-     possible step location. Incorrect handling of fractional steps is
-     a common cause of "Internal error in stepcompress" failures.
-6. Other methods. The `home()`, `check_move()`, and other methods
+3. Implement the C stepper kinematic position functions for each
+   stepper if they are not already available (see kin_cart.c,
+   kin_corexy.c, and kin_delta.c in klippy/chelper/). The function
+   should call `move_get_coord()` to convert a given move time (in
+   seconds) to a cartesian coordinate (in millimeters), and then
+   calculate the desired stepper position (in millimeters) from that
+   cartesian coordinate.
+4. Implement the `set_position()` method in the python code. This also
+   calculates the desired stepper positions given a cartesian
+   coordinate.
+5. Implement the `get_position()` method in the new kinematics
+   class. This method is the inverse of set_position(). It does not
+   need to be efficient as it is typically only called during homing
+   and probing operations.
+6. Implement the `move()` method. This method generally invokes the
+   iterative solver for each stepper.
+7. Other methods. The `home()`, `check_move()`, and other methods
    should also be implemented. However, at the start of development
    one can use empty code here.
-7. Implement test cases. Create a g-code file with a series of moves
+8. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
-8. Optimize if needed. One may notice that the existing kinematic
-   classes do not call `stepper.step()`. This is purely an
-   optimization - the inner loop of the kinematic calculations were
-   moved to C to reduce load on the host cpu. All of the existing
-   kinematic classes started development using `stepper.step()` and
-   then were later optimized. The g-code to mcu command translation
-   (described in the previous step) is a useful tool during
-   optimization - if a code change is purely an optimization then it
-   should not impact the resulting text representation of the mcu
-   commands (though minor changes in output due to floating point
-   rounding are possible). So, one can use this system to detect
-   regressions.
 
 Time
 ====
