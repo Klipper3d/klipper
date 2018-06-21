@@ -101,7 +101,7 @@ class CoreXYKinematics:
             self.steppers[2].motor_enable(print_time, 1)
         need_motor_enable = False
         for i in StepList:
-            need_motor_enable |= self.steppers[i].need_motor_enable
+            need_motor_enable |= not self.steppers[i].is_motor_enabled()
         self.need_motor_enable = need_motor_enable
     def _check_endstops(self, move):
         end_pos = move.end_pos

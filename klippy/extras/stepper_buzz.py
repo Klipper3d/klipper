@@ -35,7 +35,7 @@ class StepperBuzz:
         name = self.gcode.get_str('STEPPER', params)
         logging.info("Stepper buzz %s", name)
         stepper = self.steppers[name]
-        need_motor_enable = stepper.need_motor_enable
+        need_motor_enable = not stepper.is_motor_enabled()
         # Move stepper
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.wait_moves()
