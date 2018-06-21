@@ -59,18 +59,17 @@ class CartKinematics:
             s = self.steppers[i]
             s.set_position(newpos[i])
             if i in homing_axes:
-                self.limits[i] = (s.position_min, s.position_max)
+                self.limits[i] = s.get_range()
     def _home_axis(self, homing_state, axis, stepper):
         s = stepper
         # Determine moves
+        position_min, position_max = s.get_range()
         if s.homing_positive_dir:
-            pos = s.position_endstop - 1.5*(
-                s.position_endstop - s.position_min)
+            pos = s.position_endstop - 1.5*(s.position_endstop - position_min)
             rpos = s.position_endstop - s.homing_retract_dist
             r2pos = rpos - s.homing_retract_dist
         else:
-            pos = s.position_endstop + 1.5*(
-                s.position_max - s.position_endstop)
+            pos = s.position_endstop + 1.5*(position_max - s.position_endstop)
             rpos = s.position_endstop + s.homing_retract_dist
             r2pos = rpos + s.homing_retract_dist
         # Initial homing
@@ -165,8 +164,7 @@ class CartKinematics:
         extruder_pos = toolhead.get_position()[3]
         toolhead.set_position(self.get_position() + [extruder_pos])
         if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
-            self.limits[dc_axis] = (
-                dc_stepper.position_min, dc_stepper.position_max)
+            self.limits[dc_axis] = dc_stepper.get_range()
         self.need_motor_enable = True
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, params):

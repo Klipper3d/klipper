@@ -52,20 +52,21 @@ class CoreXYKinematics:
             s = self.steppers[i]
             s.set_position(pos[i])
             if i in homing_axes:
-                self.limits[i] = (s.position_min, s.position_max)
+                self.limits[i] = s.get_range()
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             s = self.steppers[axis]
             # Determine moves
+            position_min, position_max = s.get_range()
             if s.homing_positive_dir:
                 pos = s.position_endstop - 1.5*(
-                    s.position_endstop - s.position_min)
+                    s.position_endstop - position_min)
                 rpos = s.position_endstop - s.homing_retract_dist
                 r2pos = rpos - s.homing_retract_dist
             else:
                 pos = s.position_endstop + 1.5*(
-                    s.position_max - s.position_endstop)
+                    position_max - s.position_endstop)
                 rpos = s.position_endstop + s.homing_retract_dist
                 r2pos = rpos + s.homing_retract_dist
             # Initial homing

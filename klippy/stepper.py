@@ -170,6 +170,8 @@ class PrinterHomingStepper(PrinterStepper):
         ffi_main, ffi_lib = chelper.get_ffi()
         self.setup_itersolve(ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
+    def get_range(self):
+        return self.position_min, self.position_max
     def get_endstops(self):
         return [(self.mcu_endstop, self.get_name(short=True))]
     def get_homed_offset(self):
