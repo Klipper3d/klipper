@@ -66,7 +66,7 @@ class DeltaKinematics:
             s.setup_itersolve(sk)
         # Find the point where an XY move could result in excessive
         # tower movement
-        half_min_step_dist = min([s.step_dist for s in self.steppers]) * .5
+        half_min_step_dist = min([s.get_step_dist() for s in self.steppers]) * .5
         min_arm_length = min(arm_lengths)
         def ratio_to_dist(ratio):
             return (ratio * math.sqrt(min_arm_length**2 / (ratio**2 + 1.)

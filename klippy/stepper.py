@@ -43,14 +43,16 @@ class PrinterStepper:
         self.mcu_stepper = ppins.setup_pin('stepper', config.get('step_pin'))
         dir_pin_params = ppins.lookup_pin('digital_out', config.get('dir_pin'))
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
-        self.step_dist = config.getfloat('step_distance', above=0.)
-        self.mcu_stepper.setup_step_distance(self.step_dist)
-        self.step_itersolve = self.mcu_stepper.step_itersolve
-        self.setup_itersolve = self.mcu_stepper.setup_itersolve
+        step_dist = config.getfloat('step_distance', above=0.)
+        self.mcu_stepper.setup_step_distance(step_dist)
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
         stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
         stepper_buzz.register_stepper(self, config.get_name())
+        # Wrappers
+        self.step_itersolve = self.mcu_stepper.step_itersolve
+        self.setup_itersolve = self.mcu_stepper.setup_itersolve
+        self.get_step_dist = self.mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
@@ -61,10 +63,11 @@ class PrinterStepper:
         return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
     def set_max_jerk(self, max_halt_velocity, max_accel):
         # Calculate the firmware's maximum halt interval time
+        step_dist = self.get_step_dist()
         last_step_time = self._dist_to_time(
-            self.step_dist, max_halt_velocity, max_accel)
+            step_dist, max_halt_velocity, max_accel)
         second_last_step_time = self._dist_to_time(
-            2. * self.step_dist, max_halt_velocity, max_accel)
+            2. * step_dist, max_halt_velocity, max_accel)
         min_stop_interval = second_last_step_time - last_step_time
         self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
     def set_position(self, pos):
@@ -123,6 +126,7 @@ class PrinterHomingStepper(PrinterStepper):
             'homing_endstop_accuracy', None, above=0.)
         self.homing_endstop_accuracy = self.homing_endstop_phase = None
         if self.homing_stepper_phases:
+            step_dist = self.get_step_dist()
             self.homing_endstop_phase = config.getint(
                 'homing_endstop_phase', None, minval=0
                 , maxval=self.homing_stepper_phases-1)
@@ -132,8 +136,8 @@ class PrinterHomingStepper(PrinterStepper):
                 micro_steps = self.homing_stepper_phases // 4
                 phase_offset = (
                     ((self.homing_endstop_phase + micro_steps // 2) % micro_steps)
-                    - micro_steps // 2) * self.step_dist
-                full_step = micro_steps * self.step_dist
+                    - micro_steps // 2) * step_dist
+                full_step = micro_steps * step_dist
                 es_pos = (int(self.position_endstop / full_step + .5) * full_step
                           + phase_offset)
                 if es_pos != self.position_endstop:
@@ -145,10 +149,10 @@ class PrinterHomingStepper(PrinterStepper):
                 self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
             elif self.homing_endstop_phase is not None:
                 self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy * .5 / self.step_dist))
+                    endstop_accuracy * .5 / step_dist))
             else:
                 self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy / self.step_dist))
+                    endstop_accuracy / step_dist))
             if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
                              " phase adjustment", self.get_name(short=True))
@@ -178,7 +182,7 @@ class PrinterHomingStepper(PrinterStepper):
             raise homing.EndstopError(
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.get_name(short=True), pos, self.homing_endstop_phase))
-        return delta * self.step_dist
+        return delta * self.get_step_dist()
 
 # Wrapper for dual stepper motor support
 class PrinterMultiStepper(PrinterHomingStepper):
