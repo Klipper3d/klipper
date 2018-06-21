@@ -83,7 +83,7 @@ class ZTilt:
             positions.append((stepper_offset, s))
         # Report on movements
         msg = "Making the following Z tilt adjustments:\n%s\nz_offset = %.6f" % (
-            "\n".join(["%s = %.6f" % (s.name, so) for so, s in positions]),
+            "\n".join(["%s = %.6f" % (s.get_name(), so) for so, s in positions]),
             z_adjust - z_offset)
         logging.info(msg)
         self.gcode.respond_info(msg)

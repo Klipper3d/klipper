@@ -37,8 +37,6 @@ class PrinterStepper:
     def __init__(self, config):
         printer = config.get_printer()
         self.name = config.get_name()
-        if self.name.startswith('stepper_'):
-            self.name = self.name[8:]
         self.need_motor_enable = True
         # Stepper definition
         ppins = printer.lookup_object('pins')
@@ -53,6 +51,10 @@ class PrinterStepper:
         # Register STEPPER_BUZZ command
         stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
         stepper_buzz.register_stepper(self, config.get_name())
+    def get_name(self, short=False):
+        if short and self.name.startswith('stepper_'):
+            return self.name[8:]
+        return self.name
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -136,8 +138,8 @@ class PrinterHomingStepper(PrinterStepper):
                           + phase_offset)
                 if es_pos != self.position_endstop:
                     logging.info("Changing %s endstop position to %.3f"
-                                 " (from %.3f)", self.name, es_pos,
-                                 self.position_endstop)
+                                 " (from %.3f)", self.get_name(short=True),
+                                 es_pos, self.position_endstop)
                     self.position_endstop = es_pos
             if endstop_accuracy is None:
                 self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
@@ -149,7 +151,7 @@ class PrinterHomingStepper(PrinterStepper):
                     endstop_accuracy / self.step_dist))
             if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
                 logging.info("Endstop for %s is not accurate enough for stepper"
-                             " phase adjustment", self.name)
+                             " phase adjustment", self.get_name(short=True))
                 self.homing_stepper_phases = None
             if self.mcu_endstop.get_mcu().is_fileoutput():
                 self.homing_endstop_accuracy = self.homing_stepper_phases
@@ -158,14 +160,15 @@ class PrinterHomingStepper(PrinterStepper):
         self.setup_itersolve(ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
     def get_endstops(self):
-        return [(self.mcu_endstop, self.name)]
+        return [(self.mcu_endstop, self.get_name(short=True))]
     def get_homed_offset(self):
         if not self.homing_stepper_phases or self.need_motor_enable:
             return 0.
         pos = self.mcu_stepper.get_mcu_position()
         pos %= self.homing_stepper_phases
         if self.homing_endstop_phase is None:
-            logging.info("Setting %s endstop phase to %d", self.name, pos)
+            logging.info("Setting %s endstop phase to %d",
+                         self.get_name(short=True), pos)
             self.homing_endstop_phase = pos
             return 0.
         delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
@@ -174,7 +177,7 @@ class PrinterHomingStepper(PrinterStepper):
         elif delta > self.homing_endstop_accuracy:
             raise homing.EndstopError(
                 "Endstop %s incorrect phase (got %d vs %d)" % (
-                    self.name, pos, self.homing_endstop_phase))
+                    self.get_name(short=True), pos, self.homing_endstop_phase))
         return delta * self.step_dist
 
 # Wrapper for dual stepper motor support
@@ -196,7 +199,7 @@ class PrinterMultiStepper(PrinterHomingStepper):
                 ppins = config.get_printer().lookup_object('pins')
                 mcu_endstop = ppins.setup_pin('endstop', extraendstop)
                 mcu_endstop.add_stepper(extra.mcu_stepper)
-                self.endstops.append((mcu_endstop, extra.name))
+                self.endstops.append((mcu_endstop, extra.get_name(short=True)))
             else:
                 self.mcu_endstop.add_stepper(extra.mcu_stepper)
         self.step_itersolve = self.step_multi_itersolve
