@@ -53,7 +53,7 @@ class CartKinematics:
             return [self.steppers[2]]
         return list(self.steppers)
     def get_position(self):
-        return [s.mcu_stepper.get_commanded_position() for s in self.steppers]
+        return [s.get_commanded_position() for s in self.steppers]
     def set_position(self, newpos, homing_axes):
         for i in StepList:
             s = self.steppers[i]

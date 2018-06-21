@@ -52,11 +52,16 @@ class PrinterStepper:
         # Wrappers
         self.step_itersolve = self.mcu_stepper.step_itersolve
         self.setup_itersolve = self.mcu_stepper.setup_itersolve
+        self.set_ignore_move = self.mcu_stepper.set_ignore_move
+        self.get_mcu_position = self.mcu_stepper.get_mcu_position
+        self.get_commanded_position = self.mcu_stepper.get_commanded_position
         self.get_step_dist = self.mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
         return self.name
+    def add_to_endstop(self, mcu_endstop):
+        mcu_endstop.add_stepper(self.mcu_stepper)
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -87,7 +92,7 @@ class PrinterHomingStepper(PrinterStepper):
         # Endstop and its position
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
-        self.mcu_endstop.add_stepper(self.mcu_stepper)
+        self.add_to_endstop(self.mcu_endstop)
         if default_position_endstop is None:
             self.position_endstop = config.getfloat('position_endstop')
         else:
@@ -200,14 +205,13 @@ class PrinterMultiStepper(PrinterHomingStepper):
             extra = PrinterStepper(extraconfig)
             self.extras.append(extra)
             self.all_step_itersolve.append(extra.step_itersolve)
+            mcu_endstop = self.mcu_endstop
             extraendstop = extraconfig.get('endstop_pin', None)
             if extraendstop is not None:
                 ppins = config.get_printer().lookup_object('pins')
                 mcu_endstop = ppins.setup_pin('endstop', extraendstop)
-                mcu_endstop.add_stepper(extra.mcu_stepper)
                 self.endstops.append((mcu_endstop, extra.get_name(short=True)))
-            else:
-                self.mcu_endstop.add_stepper(extra.mcu_stepper)
+            extra.add_to_endstop(mcu_endstop)
         self.step_itersolve = self.step_multi_itersolve
     def step_multi_itersolve(self, cmove):
         for step_itersolve in self.all_step_itersolve:

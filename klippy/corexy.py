@@ -14,8 +14,8 @@ class CoreXYKinematics:
             stepper.PrinterHomingStepper(config.getsection('stepper_x')),
             stepper.PrinterHomingStepper(config.getsection('stepper_y')),
             stepper.LookupMultiHomingStepper(config.getsection('stepper_z'))]
-        self.steppers[0].mcu_endstop.add_stepper(self.steppers[1].mcu_stepper)
-        self.steppers[1].mcu_endstop.add_stepper(self.steppers[0].mcu_stepper)
+        self.steppers[0].add_to_endstop(self.steppers[1].get_endstops()[0][0])
+        self.steppers[1].add_to_endstop(self.steppers[0].get_endstops()[0][0])
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
@@ -44,7 +44,7 @@ class CoreXYKinematics:
             return [self.steppers[2]]
         return list(self.steppers)
     def get_position(self):
-        pos = [s.mcu_stepper.get_commanded_position() for s in self.steppers]
+        pos = [s.get_commanded_position() for s in self.steppers]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
     def set_position(self, newpos, homing_axes):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])

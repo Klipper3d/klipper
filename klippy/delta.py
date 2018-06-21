@@ -90,7 +90,7 @@ class DeltaKinematics:
     def _actuator_to_cartesian(self, pos):
         return actuator_to_cartesian(self.towers, self.arm2, pos)
     def get_position(self):
-        spos = [s.mcu_stepper.get_commanded_position() for s in self.steppers]
+        spos = [s.get_commanded_position() for s in self.steppers]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         pos = self._cartesian_to_actuator(newpos)
@@ -172,9 +172,8 @@ class DeltaKinematics:
             stepper.step_itersolve(self.cmove)
     # Helper functions for DELTA_CALIBRATE script
     def get_stable_position(self):
-        return [int((ep - s.mcu_stepper.get_commanded_position())
-                    /  s.mcu_stepper.get_step_dist() + .5)
-                * s.mcu_stepper.get_step_dist()
+        return [int((ep - s.get_commanded_position()) / s.get_step_dist() + .5)
+                * s.get_step_dist()
                 for ep, s in zip(self.endstops, self.steppers)]
     def get_calibrate_params(self):
         return {
