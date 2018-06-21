@@ -161,7 +161,7 @@ HD44780_chars = [
 # ST7920 (128x64 graphics) lcd chip
 ######################################################################
 
-ST7920_DELAY = .000020 # Spec says 72us, but faster is possible in practice
+ST7920_DELAY = .000040 # Spec says 72us, but faster is possible in practice
 
 class ST7920:
     char_right_arrow = '\x1a'
