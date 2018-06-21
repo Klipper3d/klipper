@@ -182,6 +182,7 @@ class ST7920:
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
         self.mcu.add_config_object(self)
+        self.chip_delay = config.getfloat('chip_delay', ST7920_DELAY, minval=0.)
         self.send_data_cmd = self.send_cmds_cmd = None
         self.is_extended = False
         # framebuffers
@@ -196,7 +197,7 @@ class ST7920:
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
             " delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1], self.pins[2],
-                self.mcu.seconds_to_clock(ST7920_DELAY)))
+                self.mcu.seconds_to_clock(self.chip_delay)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "st7920_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
