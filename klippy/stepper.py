@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging
+import math, logging, collections
 import homing, chelper
 
 # Tracking of shared stepper enable pins
@@ -172,6 +172,12 @@ class PrinterHomingStepper(PrinterStepper):
             ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
     def get_range(self):
         return self.position_min, self.position_max
+    def get_homing_info(self):
+        homing_info = collections.namedtuple('homing_info', [
+            'speed', 'position_endstop', 'retract_dist', 'positive_dir'])(
+                self.homing_speed, self.position_endstop,
+                self.homing_retract_dist, self.homing_positive_dir)
+        return homing_info
     def get_endstops(self):
         return [(self.mcu_endstop, self.get_name(short=True))]
     def get_homed_offset(self):

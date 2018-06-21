@@ -59,22 +59,23 @@ class CoreXYKinematics:
             s = self.steppers[axis]
             # Determine moves
             position_min, position_max = s.get_range()
-            if s.homing_positive_dir:
-                pos = s.position_endstop - 1.5*(
-                    s.position_endstop - position_min)
-                rpos = s.position_endstop - s.homing_retract_dist
-                r2pos = rpos - s.homing_retract_dist
+            hi = s.get_homing_info()
+            if hi.positive_dir:
+                pos = hi.position_endstop - 1.5*(
+                    hi.position_endstop - position_min)
+                rpos = hi.position_endstop - hi.retract_dist
+                r2pos = rpos - hi.retract_dist
             else:
-                pos = s.position_endstop + 1.5*(
-                    position_max - s.position_endstop)
-                rpos = s.position_endstop + s.homing_retract_dist
-                r2pos = rpos + s.homing_retract_dist
+                pos = hi.position_endstop + 1.5*(
+                    position_max - hi.position_endstop)
+                rpos = hi.position_endstop + hi.retract_dist
+                r2pos = rpos + hi.retract_dist
             # Initial homing
-            homing_speed = s.homing_speed
+            homing_speed = hi.speed
             if axis == 2:
                 homing_speed = min(homing_speed, self.max_z_velocity)
             homepos = [None, None, None, None]
-            homepos[axis] = s.position_endstop
+            homepos[axis] = hi.position_endstop
             coord = [None, None, None, None]
             coord[axis] = pos
             homing_state.home(coord, homepos, s.get_endstops(), homing_speed)
@@ -87,7 +88,7 @@ class CoreXYKinematics:
                               homing_speed/2.0, second_home=True)
             if axis == 2:
                 # Support endstop phase detection on Z axis
-                coord[axis] = s.position_endstop + s.get_homed_offset()
+                coord[axis] = hi.position_endstop + s.get_homed_offset()
                 homing_state.set_homed_position(coord)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
