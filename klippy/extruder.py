@@ -9,16 +9,16 @@ import stepper, homing, chelper
 EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
-    def __init__(self, printer, config):
-        self.printer = printer
+    def __init__(self, config):
+        self.printer = config.get_printer()
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
-        pheater = printer.lookup_object('heater')
+        pheater = self.printer.lookup_object('heater')
         if shared_heater is None:
             self.heater = pheater.setup_heater(config)
         else:
             self.heater = pheater.lookup_heater(shared_heater)
-        self.stepper = stepper.PrinterStepper(printer, config)
+        self.stepper = stepper.PrinterStepper(config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
@@ -28,7 +28,7 @@ class PrinterExtruder:
             , above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
-        toolhead = printer.lookup_object('toolhead')
+        toolhead = self.printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
@@ -236,12 +236,11 @@ def add_printer_objects(printer, config):
         section = 'extruder%d' % (i,)
         if not config.has_section(section):
             if not i and config.has_section('extruder'):
-                printer.add_object('extruder0', PrinterExtruder(
-                    printer, config.getsection('extruder')))
+                pe = PrinterExtruder(config.getsection('extruder'))
+                printer.add_object('extruder0', pe)
                 continue
             break
-        printer.add_object(section, PrinterExtruder(
-            printer, config.getsection(section)))
+        printer.add_object(section, PrinterExtruder(config.getsection(section)))
 
 def get_printer_extruders(printer):
     out = []

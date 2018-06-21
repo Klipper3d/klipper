@@ -186,10 +186,10 @@ STALL_TIME = 0.100
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
-    def __init__(self, printer, config):
-        self.printer = printer
-        self.reactor = printer.get_reactor()
-        self.all_mcus = printer.lookup_module_objects('mcu')
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
+        self.all_mcus = self.printer.lookup_module_objects('mcu')
         self.mcu = self.all_mcus[0]
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
@@ -232,10 +232,9 @@ class ToolHead:
         kintypes = {'cartesian': cartesian.CartKinematics,
                     'corexy': corexy.CoreXYKinematics,
                     'delta': delta.DeltaKinematics}
-        self.kin = config.getchoice('kinematics', kintypes)(
-            self, printer, config)
+        self.kin = config.getchoice('kinematics', kintypes)(self, config)
         # SET_VELOCITY_LIMIT command
-        gcode = printer.lookup_object('gcode')
+        gcode = self.printer.lookup_object('gcode')
         gcode.register_command('SET_VELOCITY_LIMIT', self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
@@ -443,4 +442,4 @@ class ToolHead:
         self.max_accel = min(accel, self.config_max_accel)
 
 def add_printer_objects(printer, config):
-    printer.add_object('toolhead', ToolHead(printer, config))
+    printer.add_object('toolhead', ToolHead(config))

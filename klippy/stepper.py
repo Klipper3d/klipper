@@ -34,8 +34,8 @@ def lookup_enable_pin(ppins, pin):
 
 # Code storing the definitions for a stepper motor
 class PrinterStepper:
-    def __init__(self, printer, config):
-        self.printer = printer
+    def __init__(self, config):
+        printer = config.get_printer()
         self.name = config.get_name()
         if self.name.startswith('stepper_'):
             self.name = self.name[8:]
@@ -74,11 +74,11 @@ class PrinterStepper:
 
 # Support for stepper controlled linear axis with an endstop
 class PrinterHomingStepper(PrinterStepper):
-    def __init__(self, printer, config, need_position_minmax=True,
+    def __init__(self, config, need_position_minmax=True,
                  default_position_endstop=None):
-        PrinterStepper.__init__(self, printer, config)
+        PrinterStepper.__init__(self, config)
         # Endstop and its position
-        ppins = printer.lookup_object('pins')
+        ppins = config.get_printer().lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         self.mcu_endstop.add_stepper(self.mcu_stepper)
         if default_position_endstop is None:
@@ -179,8 +179,8 @@ class PrinterHomingStepper(PrinterStepper):
 
 # Wrapper for dual stepper motor support
 class PrinterMultiStepper(PrinterHomingStepper):
-    def __init__(self, printer, config):
-        PrinterHomingStepper.__init__(self, printer, config)
+    def __init__(self, config):
+        PrinterHomingStepper.__init__(self, config)
         self.endstops = PrinterHomingStepper.get_endstops(self)
         self.extras = []
         self.all_step_itersolve = [self.step_itersolve]
@@ -188,12 +188,12 @@ class PrinterMultiStepper(PrinterHomingStepper):
             if not config.has_section(config.get_name() + str(i)):
                 break
             extraconfig = config.getsection(config.get_name() + str(i))
-            extra = PrinterStepper(printer, extraconfig)
+            extra = PrinterStepper(extraconfig)
             self.extras.append(extra)
             self.all_step_itersolve.append(extra.step_itersolve)
             extraendstop = extraconfig.get('endstop_pin', None)
             if extraendstop is not None:
-                ppins = printer.lookup_object('pins')
+                ppins = config.get_printer().lookup_object('pins')
                 mcu_endstop = ppins.setup_pin('endstop', extraendstop)
                 mcu_endstop.add_stepper(extra.mcu_stepper)
                 self.endstops.append((mcu_endstop, extra.name))
@@ -225,7 +225,7 @@ class PrinterMultiStepper(PrinterHomingStepper):
     def get_endstops(self):
         return self.endstops
 
-def LookupMultiHomingStepper(printer, config):
+def LookupMultiHomingStepper(config):
     if not config.has_section(config.get_name() + '1'):
-        return PrinterHomingStepper(printer, config)
-    return PrinterMultiStepper(printer, config)
+        return PrinterHomingStepper(config)
+    return PrinterMultiStepper(config)

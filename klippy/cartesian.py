@@ -9,10 +9,10 @@ import stepper, homing, chelper
 StepList = (0, 1, 2)
 
 class CartKinematics:
-    def __init__(self, toolhead, printer, config):
-        self.printer = printer
+    def __init__(self, toolhead, config):
+        self.printer = config.get_printer()
         self.steppers = [stepper.LookupMultiHomingStepper(
-            printer, config.getsection('stepper_' + n))
+            config.getsection('stepper_' + n))
                          for n in ['x', 'y', 'z']]
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -40,12 +40,12 @@ class CartKinematics:
             dc_config = config.getsection('dual_carriage')
             dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
-            dc_stepper = stepper.LookupMultiHomingStepper(printer, dc_config)
+            dc_stepper = stepper.LookupMultiHomingStepper(dc_config)
             dc_stepper.setup_cartesian_itersolve(dc_axis)
             dc_stepper.set_max_jerk(max_halt_velocity, max_accel)
             self.dual_carriage_steppers = [
                 self.steppers[self.dual_carriage_axis], dc_stepper]
-            printer.lookup_object('gcode').register_command(
+            self.printer.lookup_object('gcode').register_command(
                 'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
                 desc=self.cmd_SET_DUAL_CARRIAGE_help)
     def get_steppers(self, flags=""):

@@ -9,14 +9,11 @@ import stepper, homing, chelper
 StepList = (0, 1, 2)
 
 class CoreXYKinematics:
-    def __init__(self, toolhead, printer, config):
+    def __init__(self, toolhead, config):
         self.steppers = [
-            stepper.PrinterHomingStepper(
-                printer, config.getsection('stepper_x')),
-            stepper.PrinterHomingStepper(
-                printer, config.getsection('stepper_y')),
-            stepper.LookupMultiHomingStepper(
-                printer, config.getsection('stepper_z'))]
+            stepper.PrinterHomingStepper(config.getsection('stepper_x')),
+            stepper.PrinterHomingStepper(config.getsection('stepper_y')),
+            stepper.LookupMultiHomingStepper(config.getsection('stepper_z'))]
         self.steppers[0].mcu_endstop.add_stepper(self.steppers[1].mcu_stepper)
         self.steppers[1].mcu_endstop.add_stepper(self.steppers[0].mcu_stepper)
         max_velocity, max_accel = toolhead.get_max_velocity()
