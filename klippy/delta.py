@@ -93,7 +93,7 @@ class DeltaKinematics:
                 for i in StepList]
     def _actuator_to_cartesian(self, pos):
         return actuator_to_cartesian(self.towers, self.arm2, pos)
-    def get_position(self):
+    def calc_position(self):
         spos = [rail.get_commanded_position() for rail in self.rails]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):

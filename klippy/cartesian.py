@@ -51,7 +51,7 @@ class CartKinematics:
         if flags == "Z":
             return [self.rails[2]]
         return list(self.rails)
-    def get_position(self):
+    def calc_position(self):
         return [rail.get_commanded_position() for rail in self.rails]
     def set_position(self, newpos, homing_axes):
         for i in StepList:
@@ -161,7 +161,7 @@ class CartKinematics:
         dc_axis = self.dual_carriage_axis
         self.rails[dc_axis] = dc_rail
         extruder_pos = toolhead.get_position()[3]
-        toolhead.set_position(self.get_position() + [extruder_pos])
+        toolhead.set_position(self.calc_position() + [extruder_pos])
         if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
             self.limits[dc_axis] = dc_rail.get_range()
         self.need_motor_enable = True

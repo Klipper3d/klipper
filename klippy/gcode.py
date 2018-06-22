@@ -605,7 +605,7 @@ class GCodeParser:
             ["%s:%.6f" % (s.get_name(), s.get_commanded_position())
              for s in steppers])
         kinematic_pos = " ".join(["%s:%.6f"  % (a, v)
-                                  for a, v in zip("XYZE", kin.get_position())])
+                                  for a, v in zip("XYZE", kin.calc_position())])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", self.toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)

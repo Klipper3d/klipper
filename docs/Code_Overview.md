@@ -322,10 +322,10 @@ Useful steps:
 4. Implement the `set_position()` method in the python code. This also
    calculates the desired stepper positions given a cartesian
    coordinate.
-5. Implement the `get_position()` method in the new kinematics
-   class. This method is the inverse of set_position(). It does not
-   need to be efficient as it is typically only called during homing
-   and probing operations.
+5. Implement the `calc_position()` method in the new kinematics class.
+   This method is the inverse of set_position(). It does not need to
+   be efficient as it is typically only called during homing and
+   probing operations.
 6. Implement the `move()` method. This method generally invokes the
    iterative solver for each stepper.
 7. Other methods. The `home()`, `check_move()`, and other methods

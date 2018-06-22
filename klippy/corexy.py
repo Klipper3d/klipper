@@ -42,7 +42,7 @@ class CoreXYKinematics:
         if flags == "Z":
             return [self.rails[2]]
         return list(self.rails)
-    def get_position(self):
+    def calc_position(self):
         pos = [rail.get_commanded_position() for rail in self.rails]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
     def set_position(self, newpos, homing_axes):

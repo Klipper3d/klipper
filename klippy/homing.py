@@ -67,7 +67,7 @@ class Homing:
                     error = "Failed to home %s: %s" % (name, str(e))
         if probe_pos:
             self.set_homed_position(
-                list(self.toolhead.get_kinematics().get_position()) + [None])
+                list(self.toolhead.get_kinematics().calc_position()) + [None])
         else:
             self.toolhead.set_position(movepos)
         for mcu_endstop, name in endstops:
