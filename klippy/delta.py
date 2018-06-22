@@ -176,9 +176,9 @@ class DeltaKinematics:
                 for ep, s in zip(self.endstops, steppers)]
     def get_calibrate_params(self):
         return {
-            'endstop_a': self.rails[0].position_endstop,
-            'endstop_b': self.rails[1].position_endstop,
-            'endstop_c': self.rails[2].position_endstop,
+            'endstop_a': self.rails[0].get_homing_info().position_endstop,
+            'endstop_b': self.rails[1].get_homing_info().position_endstop,
+            'endstop_c': self.rails[2].get_homing_info().position_endstop,
             'angle_a': self.angles[0], 'angle_b': self.angles[1],
             'angle_c': self.angles[2], 'radius': self.radius,
             'arm_a': self.arm_lengths[0], 'arm_b': self.arm_lengths[1],
