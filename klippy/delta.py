@@ -6,8 +6,6 @@
 import math, logging
 import stepper, homing, chelper
 
-StepList = (0, 1, 2)
-
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.
 
@@ -96,7 +94,7 @@ class DeltaKinematics:
         for rail in self.rails:
             rail.set_position(newpos)
         self.limit_xy2 = -1.
-        if tuple(homing_axes) == StepList:
+        if tuple(homing_axes) == (0, 1, 2):
             self.need_home = False
     def home(self, homing_state):
         # All axes are homed simultaneously
@@ -126,8 +124,8 @@ class DeltaKinematics:
             rail.motor_enable(print_time, 0)
         self.need_motor_enable = self.need_home = True
     def _check_motor_enable(self, print_time):
-        for i in StepList:
-            self.rails[i].motor_enable(print_time, 1)
+        for rail in self.rails:
+            rail.motor_enable(print_time, 1)
         self.need_motor_enable = False
     def check_move(self, move):
         end_pos = move.end_pos
