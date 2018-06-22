@@ -6,8 +6,6 @@
 import logging, math
 import stepper, homing, chelper
 
-StepList = (0, 1, 2)
-
 class CoreXYKinematics:
     def __init__(self, toolhead, config):
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
@@ -99,12 +97,12 @@ class CoreXYKinematics:
         if move.axes_d[2]:
             self.rails[2].motor_enable(print_time, 1)
         need_motor_enable = False
-        for i in StepList:
-            need_motor_enable |= not self.rails[i].is_motor_enabled()
+        for rail in self.rails:
+            need_motor_enable |= not rail.is_motor_enabled()
         self.need_motor_enable = need_motor_enable
     def _check_endstops(self, move):
         end_pos = move.end_pos
-        for i in StepList:
+        for i in (0, 1, 2):
             if (move.axes_d[i]
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
