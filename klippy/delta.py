@@ -87,19 +87,14 @@ class DeltaKinematics:
         self.set_position([0., 0., 0.], ())
     def get_rails(self, flags=""):
         return list(self.rails)
-    def _cartesian_to_actuator(self, coord):
-        return [math.sqrt(self.arm2[i] - (self.towers[i][0] - coord[0])**2
-                          - (self.towers[i][1] - coord[1])**2) + coord[2]
-                for i in StepList]
     def _actuator_to_cartesian(self, pos):
         return actuator_to_cartesian(self.towers, self.arm2, pos)
     def calc_position(self):
         spos = [rail.get_commanded_position() for rail in self.rails]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
-        pos = self._cartesian_to_actuator(newpos)
-        for i in StepList:
-            self.rails[i].set_position(pos[i])
+        for rail in self.rails:
+            rail.set_position(newpos)
         self.limit_xy2 = -1.
         if tuple(homing_axes) == StepList:
             self.need_home = False

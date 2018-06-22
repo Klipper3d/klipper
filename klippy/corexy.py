@@ -46,10 +46,8 @@ class CoreXYKinematics:
         pos = [rail.get_commanded_position() for rail in self.rails]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
     def set_position(self, newpos, homing_axes):
-        pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
-        for i in StepList:
-            rail = self.rails[i]
-            rail.set_position(pos[i])
+        for i, rail in enumerate(self.rails):
+            rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
     def home(self, homing_state):

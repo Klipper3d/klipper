@@ -71,9 +71,11 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
-    def set_position(self, pos):
-        self._mcu_position_offset += self.get_commanded_position() - pos
-        self._ffi_lib.itersolve_set_commanded_pos(self._stepper_kinematics, pos)
+    def set_position(self, newpos):
+        orig_cmd_pos = self.get_commanded_position()
+        self._ffi_lib.itersolve_set_position(
+            self._stepper_kinematics, newpos[0], newpos[1], newpos[2])
+        self._mcu_position_offset += orig_cmd_pos - self.get_commanded_position()
     def get_commanded_position(self):
         return self._ffi_lib.itersolve_get_commanded_pos(
             self._stepper_kinematics)

@@ -54,9 +54,8 @@ class CartKinematics:
     def calc_position(self):
         return [rail.get_commanded_position() for rail in self.rails]
     def set_position(self, newpos, homing_axes):
-        for i in StepList:
-            rail = self.rails[i]
-            rail.set_position(newpos[i])
+        for i, rail in enumerate(self.rails):
+            rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
     def _home_axis(self, homing_state, axis, rail):

@@ -41,6 +41,9 @@ struct stepper_kinematics {
 int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
 void itersolve_set_stepcompress(struct stepper_kinematics *sk
                                 , struct stepcompress *sc, double step_dist);
+void itersolve_set_position(struct stepper_kinematics *sk
+                            , double x, double y, double z);
 void itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos);
+double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
 
 #endif // itersolve.h

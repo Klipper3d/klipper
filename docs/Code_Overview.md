@@ -319,19 +319,15 @@ Useful steps:
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
    cartesian coordinate.
-4. Implement the `set_position()` method in the python code. This also
-   calculates the desired stepper positions given a cartesian
-   coordinate.
-5. Implement the `calc_position()` method in the new kinematics class.
+4. Implement the `calc_position()` method in the new kinematics class.
    This method is the inverse of set_position(). It does not need to
    be efficient as it is typically only called during homing and
    probing operations.
-6. Implement the `move()` method. This method generally invokes the
-   iterative solver for each stepper.
-7. Other methods. The `home()`, `check_move()`, and other methods
-   should also be implemented. However, at the start of development
-   one can use empty code here.
-8. Implement test cases. Create a g-code file with a series of moves
+5. Other methods. The `move()`, `home()`, `check_move()`, and other
+   methods should also be implemented. These functions are typically
+   used to provide kinematic specific checks. However, at the start of
+   development one can use boiler-plate code here.
+6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file
    to micro-controller commands. This is useful to exercise corner
