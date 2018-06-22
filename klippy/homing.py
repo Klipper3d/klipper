@@ -118,13 +118,13 @@ class Homing:
 
 def query_endstops(toolhead):
     print_time = toolhead.get_last_move_time()
-    steppers = toolhead.get_kinematics().get_steppers()
+    rails = toolhead.get_kinematics().get_rails()
     out = []
-    for s in steppers:
-        for mcu_endstop, name in s.get_endstops():
+    for rail in rails:
+        for mcu_endstop, name in rail.get_endstops():
             mcu_endstop.query_endstop(print_time)
-    for s in steppers:
-        for mcu_endstop, name in s.get_endstops():
+    for rail in rails:
+        for mcu_endstop, name in rail.get_endstops():
             out.append((name, mcu_endstop.query_endstop_wait()))
     return out
 

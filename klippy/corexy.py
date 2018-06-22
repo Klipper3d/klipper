@@ -10,12 +10,11 @@ StepList = (0, 1, 2)
 
 class CoreXYKinematics:
     def __init__(self, toolhead, config):
-        self.steppers = [
-            stepper.PrinterHomingStepper(config.getsection('stepper_x')),
-            stepper.PrinterHomingStepper(config.getsection('stepper_y')),
-            stepper.LookupMultiHomingStepper(config.getsection('stepper_z'))]
-        self.steppers[0].add_to_endstop(self.steppers[1].get_endstops()[0][0])
-        self.steppers[1].add_to_endstop(self.steppers[0].get_endstops()[0][0])
+        self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
+                       stepper.PrinterRail(config.getsection('stepper_y')),
+                       stepper.LookupMultiRail(config.getsection('stepper_z')) ]
+        self.rails[0].add_to_endstop(self.rails[1].get_endstops()[0][0])
+        self.rails[1].add_to_endstop(self.rails[0].get_endstops()[0][0])
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
@@ -27,39 +26,39 @@ class CoreXYKinematics:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.move_fill = ffi_lib.move_fill
-        self.steppers[0].setup_itersolve(ffi_main.gc(
+        self.rails[0].setup_itersolve(ffi_main.gc(
             ffi_lib.corexy_stepper_alloc('+'), ffi_lib.free))
-        self.steppers[1].setup_itersolve(ffi_main.gc(
+        self.rails[1].setup_itersolve(ffi_main.gc(
             ffi_lib.corexy_stepper_alloc('-'), ffi_lib.free))
-        self.steppers[2].setup_cartesian_itersolve('z')
+        self.rails[2].setup_cartesian_itersolve('z')
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
-        self.steppers[0].set_max_jerk(max_xy_halt_velocity, max_accel)
-        self.steppers[1].set_max_jerk(max_xy_halt_velocity, max_accel)
-        self.steppers[2].set_max_jerk(
+        self.rails[0].set_max_jerk(max_xy_halt_velocity, max_accel)
+        self.rails[1].set_max_jerk(max_xy_halt_velocity, max_accel)
+        self.rails[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
-    def get_steppers(self, flags=""):
+    def get_rails(self, flags=""):
         if flags == "Z":
-            return [self.steppers[2]]
-        return list(self.steppers)
+            return [self.rails[2]]
+        return list(self.rails)
     def get_position(self):
-        pos = [s.get_commanded_position() for s in self.steppers]
+        pos = [rail.get_commanded_position() for rail in self.rails]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
     def set_position(self, newpos, homing_axes):
         pos = (newpos[0] + newpos[1], newpos[0] - newpos[1], newpos[2])
         for i in StepList:
-            s = self.steppers[i]
-            s.set_position(pos[i])
+            rail = self.rails[i]
+            rail.set_position(pos[i])
             if i in homing_axes:
-                self.limits[i] = s.get_range()
+                self.limits[i] = rail.get_range()
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            s = self.steppers[axis]
+            rail = self.rails[axis]
             # Determine moves
-            position_min, position_max = s.get_range()
-            hi = s.get_homing_info()
+            position_min, position_max = rail.get_range()
+            hi = rail.get_homing_info()
             if hi.positive_dir:
                 pos = hi.position_endstop - 1.5*(
                     hi.position_endstop - position_min)
@@ -78,32 +77,32 @@ class CoreXYKinematics:
             homepos[axis] = hi.position_endstop
             coord = [None, None, None, None]
             coord[axis] = pos
-            homing_state.home(coord, homepos, s.get_endstops(), homing_speed)
+            homing_state.home(coord, homepos, rail.get_endstops(), homing_speed)
             # Retract
             coord[axis] = rpos
             homing_state.retract(coord, homing_speed)
             # Home again
             coord[axis] = r2pos
-            homing_state.home(coord, homepos, s.get_endstops(),
+            homing_state.home(coord, homepos, rail.get_endstops(),
                               homing_speed/2.0, second_home=True)
             if axis == 2:
                 # Support endstop phase detection on Z axis
-                coord[axis] = hi.position_endstop + s.get_homed_offset()
+                coord[axis] = hi.position_endstop + rail.get_homed_offset()
                 homing_state.set_homed_position(coord)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
-        for stepper in self.steppers:
-            stepper.motor_enable(print_time, 0)
+        for rail in self.rails:
+            rail.motor_enable(print_time, 0)
         self.need_motor_enable = True
     def _check_motor_enable(self, print_time, move):
         if move.axes_d[0] or move.axes_d[1]:
-            self.steppers[0].motor_enable(print_time, 1)
-            self.steppers[1].motor_enable(print_time, 1)
+            self.rails[0].motor_enable(print_time, 1)
+            self.rails[1].motor_enable(print_time, 1)
         if move.axes_d[2]:
-            self.steppers[2].motor_enable(print_time, 1)
+            self.rails[2].motor_enable(print_time, 1)
         need_motor_enable = False
         for i in StepList:
-            need_motor_enable |= not self.steppers[i].is_motor_enabled()
+            need_motor_enable |= not self.rails[i].is_motor_enabled()
         self.need_motor_enable = need_motor_enable
     def _check_endstops(self, move):
         end_pos = move.end_pos
@@ -140,9 +139,9 @@ class CoreXYKinematics:
             move.start_pos[0], move.start_pos[1], move.start_pos[2],
             axes_d[0], axes_d[1], axes_d[2],
             move.start_v, move.cruise_v, move.accel)
-        stepper_a, stepper_b, stepper_z = self.steppers
+        rail_x, rail_y, rail_z = self.rails
         if axes_d[0] or axes_d[1]:
-            stepper_a.step_itersolve(cmove)
-            stepper_b.step_itersolve(cmove)
+            rail_x.step_itersolve(cmove)
+            rail_y.step_itersolve(cmove)
         if axes_d[2]:
-            stepper_z.step_itersolve(cmove)
+            rail_z.step_itersolve(cmove)

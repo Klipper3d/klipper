@@ -44,9 +44,9 @@ class PrinterProbe:
             'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
     def build_config(self):
         toolhead = self.printer.lookup_object('toolhead')
-        z_steppers = toolhead.get_kinematics().get_steppers("Z")
-        for s in z_steppers:
-            for mcu_endstop, name in s.get_endstops():
+        z_rails = toolhead.get_kinematics().get_rails("Z")
+        for rail in z_rails:
+            for mcu_endstop, name in rail.get_endstops():
                 for mcu_stepper in mcu_endstop.get_steppers():
                     self.mcu_probe.add_stepper(mcu_stepper)
     def setup_pin(self, pin_params):

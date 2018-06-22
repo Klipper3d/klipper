@@ -32,8 +32,7 @@ class ZTilt:
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         try:
-            z_stepper = kin.get_steppers('Z')[0]
-            z_steppers = [z_stepper] + z_stepper.extras
+            z_steppers = kin.get_rails('Z')[0].get_steppers()
         except:
             logging.exception("z_tilt stepper lookup")
             raise self.printer.config_error(
