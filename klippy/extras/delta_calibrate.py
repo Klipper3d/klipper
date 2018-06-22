@@ -30,7 +30,7 @@ class DeltaCalibrate:
     def cmd_DELTA_CALIBRATE(self, params):
         self.gcode.run_script("G28")
         self.probe_helper.start_probe()
-    def get_position(self):
+    def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_stable_position()
     def finalize(self, z_offset, positions):

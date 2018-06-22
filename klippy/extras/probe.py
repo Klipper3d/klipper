@@ -207,7 +207,7 @@ class ProbePointsHelper:
     def cmd_NEXT(self, params):
         # Record current position
         self.toolhead.wait_moves()
-        self.results.append(self.callback.get_position())
+        self.results.append(self.callback.get_probed_position())
         # Lift toolhead
         curpos = self.toolhead.get_position()
         curpos[2] = self.horizontal_move_z

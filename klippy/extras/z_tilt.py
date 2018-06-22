@@ -44,7 +44,7 @@ class ZTilt:
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
         self.probe_helper.start_probe()
-    def get_position(self):
+    def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.calc_position()
     def finalize(self, z_offset, positions):
