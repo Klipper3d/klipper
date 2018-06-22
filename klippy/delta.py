@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, chelper
+import stepper, homing, chelper, mathutil
 
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.
@@ -85,8 +85,9 @@ class DeltaKinematics:
         self.set_position([0., 0., 0.], ())
     def get_rails(self, flags=""):
         return list(self.rails)
-    def _actuator_to_cartesian(self, pos):
-        return actuator_to_cartesian(self.towers, self.arm2, pos)
+    def _actuator_to_cartesian(self, spos):
+        sphere_coords = [(t[0], t[1], sp) for t, sp in zip(self.towers, spos)]
+        return mathutil.trilateration(sphere_coords, self.arm2)
     def calc_position(self):
         spos = [rail.get_commanded_position() for rail in self.rails]
         return self._actuator_to_cartesian(spos)
@@ -183,57 +184,6 @@ class DeltaKinematics:
             'arm_a': self.arm_lengths[0], 'arm_b': self.arm_lengths[1],
             'arm_c': self.arm_lengths[2] }
 
-
-######################################################################
-# Matrix helper functions for 3x1 matrices
-######################################################################
-
-def matrix_cross(m1, m2):
-    return [m1[1] * m2[2] - m1[2] * m2[1],
-            m1[2] * m2[0] - m1[0] * m2[2],
-            m1[0] * m2[1] - m1[1] * m2[0]]
-
-def matrix_dot(m1, m2):
-    return m1[0] * m2[0] + m1[1] * m2[1] + m1[2] * m2[2]
-
-def matrix_magsq(m1):
-    return m1[0]**2 + m1[1]**2 + m1[2]**2
-
-def matrix_add(m1, m2):
-    return [m1[0] + m2[0], m1[1] + m2[1], m1[2] + m2[2]]
-
-def matrix_sub(m1, m2):
-    return [m1[0] - m2[0], m1[1] - m2[1], m1[2] - m2[2]]
-
-def matrix_mul(m1, s):
-    return [m1[0]*s, m1[1]*s, m1[2]*s]
-
-def actuator_to_cartesian(towers, arm2, pos):
-    # Find nozzle position using trilateration (see wikipedia)
-    carriage1 = list(towers[0]) + [pos[0]]
-    carriage2 = list(towers[1]) + [pos[1]]
-    carriage3 = list(towers[2]) + [pos[2]]
-
-    s21 = matrix_sub(carriage2, carriage1)
-    s31 = matrix_sub(carriage3, carriage1)
-
-    d = math.sqrt(matrix_magsq(s21))
-    ex = matrix_mul(s21, 1. / d)
-    i = matrix_dot(ex, s31)
-    vect_ey = matrix_sub(s31, matrix_mul(ex, i))
-    ey = matrix_mul(vect_ey, 1. / math.sqrt(matrix_magsq(vect_ey)))
-    ez = matrix_cross(ex, ey)
-    j = matrix_dot(ey, s31)
-
-    x = (arm2[0] - arm2[1] + d**2) / (2. * d)
-    y = (arm2[0] - arm2[2] - x**2 + (x-i)**2 + j**2) / (2. * j)
-    z = -math.sqrt(arm2[0] - x**2 - y**2)
-
-    ex_x = matrix_mul(ex, x)
-    ey_y = matrix_mul(ey, y)
-    ez_z = matrix_mul(ez, z)
-    return matrix_add(carriage1, matrix_add(ex_x, matrix_add(ey_y, ez_z)))
-
 def get_position_from_stable(spos, params):
     angles = [params['angle_a'], params['angle_b'], params['angle_c']]
     radius = params['radius']
@@ -242,6 +192,6 @@ def get_position_from_stable(spos, params):
               for angle in map(math.radians, angles)]
     arm2 = [a**2 for a in [params['arm_a'], params['arm_b'], params['arm_c']]]
     endstops = [params['endstop_a'], params['endstop_b'], params['endstop_c']]
-    pos = [es + math.sqrt(a2 - radius2) - p
-           for es, a2, p in zip(endstops, arm2, spos)]
-    return actuator_to_cartesian(towers, arm2, pos)
+    sphere_coords = [(t[0], t[1], es + math.sqrt(a2 - radius2) - p)
+                     for t, es, a2, p in zip(towers, endstops, arm2, spos)]
+    return mathutil.trilateration(sphere_coords, arm2)
