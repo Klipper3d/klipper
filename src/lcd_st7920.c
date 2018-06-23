@@ -12,7 +12,7 @@
 #include "sched.h" // DECL_SHUTDOWN
 
 struct st7920 {
-    uint32_t last_cmd_time, cmd_wait_ticks;
+    uint32_t last_cmd_time, sync_wait_ticks, cmd_wait_ticks;
     struct gpio_out sclk, sid;
 };
 
@@ -45,16 +45,31 @@ st7920_xmit_byte(struct st7920 *s, uint8_t data)
 static void
 st7920_xmit(struct st7920 *s, uint8_t count, uint8_t *cmds)
 {
-    uint32_t last_cmd_time=s->last_cmd_time, cmd_wait_ticks=s->cmd_wait_ticks;
-    while (count--) {
+    if (!count)
+        return;
+
+    // Send first byte (with longer delay)
+    uint32_t last_cmd_time = s->last_cmd_time, wait_ticks = s->sync_wait_ticks;
+    uint8_t cmd = *cmds++;
+    st7920_xmit_byte(s, cmd & 0xf0);
+    while (timer_read_time() - last_cmd_time < wait_ticks)
+        // Can't complete transfer until delay complete
+        irq_poll();
+    st7920_xmit_byte(s, cmd << 4);
+    last_cmd_time = timer_read_time();
+
+    // Send subsequent bytes
+    wait_ticks = s->cmd_wait_ticks;
+    while (--count) {
         uint8_t cmd = *cmds++;
         st7920_xmit_byte(s, cmd & 0xf0);
-        // Can't complete transfer until delay complete
-        while (timer_read_time() - last_cmd_time < cmd_wait_ticks)
+        while (timer_read_time() - last_cmd_time < wait_ticks)
+            // Can't complete transfer until delay complete
             irq_poll();
         st7920_xmit_byte(s, cmd << 4);
         last_cmd_time = timer_read_time();
     }
+
     s->last_cmd_time = last_cmd_time;
 }
 
@@ -80,13 +95,16 @@ command_config_st7920(uint32_t *args)
     uint32_t end = timer_read_time();
     irq_enable();
     s->last_cmd_time = end;
-    uint32_t diff = end - start, delay_ticks = args[4];
-    if (delay_ticks > diff)
-        s->cmd_wait_ticks = delay_ticks - diff;
+    uint32_t diff = end - start, sync_delay_ticks = args[4];
+    if (sync_delay_ticks > diff)
+        s->sync_wait_ticks = sync_delay_ticks - diff;
+    uint32_t cmd_delay_ticks = args[5];
+    if (cmd_delay_ticks > diff)
+        s->cmd_wait_ticks = cmd_delay_ticks - diff;
 }
 DECL_COMMAND(command_config_st7920,
              "config_st7920 oid=%c cs_pin=%u sclk_pin=%u sid_pin=%u"
-             " delay_ticks=%u");
+             " sync_delay_ticks=%u cmd_delay_ticks=%u");
 
 void
 command_st7920_send_cmds(uint32_t *args)
