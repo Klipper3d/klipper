@@ -800,10 +800,18 @@ def add_printer_objects(config):
     printer = config.get_printer()
     reactor = printer.get_reactor()
     mainsync = clocksync.ClockSync(reactor)
-    printer.add_object('mcu', MCU(config.getsection('mcu'), mainsync))
-    for s in config.get_prefix_sections('mcu '):
-        printer.add_object(s.section, MCU(
-            s, clocksync.SecondarySync(reactor, mainsync)))
+    s = config.getsection("printer")
+    mainsync_section = s.get("mainsync", "mcu")
+    if not config.has_section(mainsync_section):
+        raise error("mainsync section [%s] does not exist" % (mainsync_section))
+    logging.info("mainsync: [%s]", mainsync_section)
+    for s in config.get_prefix_sections('mcu'):
+        if s.section == 'mcu' or s.section.startswith('mcu '):
+            if s.section == mainsync_section:
+                sync = mainsync
+            else:
+                sync = clocksync.SecondarySync(reactor, mainsync)
+            printer.add_object(s.section, MCU(printer, s, sync))
 
 def get_printer_mcu(printer, name):
     if name == 'mcu':
