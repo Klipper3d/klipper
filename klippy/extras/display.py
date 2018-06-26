@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Aleph Objects, Inc <marcio@alephobjects.com>
+# Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -22,6 +23,8 @@ class HD44780:
     char_speed_factor = '\x02'
     char_clock = '\x03'
     char_degrees = '\x04'
+    char_usb = '\x05'
+    char_sd = '\x06'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
@@ -153,6 +156,24 @@ HD44780_chars = [
     0b00000,
     0b00000,
     0b00000,
+    0b00000,
+    # USB
+    0b01110,
+    0b01110,
+    0b01110,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b00100,
+    0b00100,
+    # SD
+    0b00000,
+    0b00111,
+    0b01111,
+    0b11111,
+    0b11111,
+    0b11111,
+    0b11111,
     0b00000,
 ]
 
@@ -424,6 +445,7 @@ feedrate_icon = [
 ######################################################################
 
 LCD_chips = { 'st7920': ST7920, 'hd44780': HD44780 }
+M73_TIMEOUT = 5.
 
 class PrinterLCD:
     def __init__(self, config):
@@ -450,6 +472,7 @@ class PrinterLCD:
             self.extruder0 = self.printer.lookup_object('extruder0', None)
             self.extruder1 = self.printer.lookup_object('extruder1', None)
             self.heater_bed = self.printer.lookup_object('heater_bed', None)
+            self.prg_time = .0
             self.progress = None
             self.gcode.register_command('M73', self.cmd_M73)
             # Load glyphs
@@ -526,13 +549,23 @@ class PrinterLCD:
         gcode_info = self.gcode.get_status(eventtime)
         lcd_chip.write_text(0, 2, lcd_chip.char_speed_factor)
         self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
-        # SD card print progress
-        if self.sdcard is not None:
-            info = self.sdcard.get_status(eventtime)
-            lcd_chip.write_text(7, 2, "SD")
-            self.draw_percent(9, 2, 4, info['progress'])
-        # Printing time and status
+        # Print progress
+        progress = None
         toolhead_info = self.toolhead.get_status(eventtime)
+        if self.progress is not None:
+            progress = self.progress / 100.
+            lcd_chip.write_text(8, 2, lcd_chip.char_usb)
+            if toolhead_info['status'] != "Printing":
+                # 5 second timeout when not printing
+                self.prg_time -= .5
+                if self.prg_time <= 0.:
+                    self.progress = None
+        elif self.sdcard is not None:
+            info = self.sdcard.get_status(eventtime)
+            progress = info['progress']
+            lcd_chip.write_text(8, 2, lcd_chip.char_sd)
+        if progress is not None:
+            self.draw_percent(9, 2, 4, progress)
         lcd_chip.write_text(14, 2, lcd_chip.char_clock)
         self.draw_time(15, 2, toolhead_info['printing_time'])
         self.draw_status(0, 3, gcode_info, toolhead_info)
@@ -561,15 +594,19 @@ class PrinterLCD:
             self.animate_glyphs(eventtime, 10, 0, self.FAN1_GLYPH,
                                 info['speed'] != 0.)
             self.draw_percent(12, 0, 4, info['speed'])
-
-        progress = None
         # SD card print progress
-        if self.sdcard is not None:
+        progress = None
+        toolhead_info = self.toolhead.get_status(eventtime)
+        if self.progress is not None:
+            progress = self.progress / 100.
+            if toolhead_info['status'] != "Printing":
+                # 5 second timeout when not printing
+                self.prg_time -= .5
+                if self.prg_time <= 0.:
+                    self.progress = None
+        elif self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = info['progress']
-        elif self.progress is not None:
-            progress = self.progress / 100.
-
         if progress is not None:
             if extruder_count == 1:
                 x, y, width = 0, 2, 10
@@ -577,20 +614,16 @@ class PrinterLCD:
                 x, y, width = 10, 1, 6
             self.draw_percent(x, y, width, progress)
             self.draw_progress_bar(x, y, width, progress)
-
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
         if extruder_count == 1:
             self.draw_icon(10, 1, feedrate_icon)
             self.draw_percent(12, 1, 4, gcode_info['speed_factor'])
-
         # Printing time and status
-        toolhead_info = self.toolhead.get_status(eventtime)
         printing_time = toolhead_info['printing_time']
         remaining_time = None
         if progress is not None and progress > 0:
             remaining_time = int(printing_time / progress) - printing_time
-
         # switch mode every 6s
         if remaining_time is not None and int(eventtime) % 12 < 6:
             self.lcd_chip.write_text(10, 2, "-")
@@ -598,7 +631,6 @@ class PrinterLCD:
         else:
             offset = 1 if printing_time < 100 * 60 * 60 else 0
             self.draw_time(10 + offset, 2, printing_time)
-
         self.draw_status(0, 3, gcode_info, toolhead_info)
     # Screen update helpers
     def draw_heater(self, x, y, info):
@@ -626,6 +658,7 @@ class PrinterLCD:
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
         self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
+        self.prg_time = M73_TIMEOUT
 
 def load_config(config):
     return PrinterLCD(config)
