@@ -474,7 +474,10 @@ class PrinterLCD:
             self.heater_bed = self.printer.lookup_object('heater_bed', None)
             self.prg_time = .0
             self.progress = None
+            self.msg_time = None
+            self.message = None
             self.gcode.register_command('M73', self.cmd_M73)
+            self.gcode.register_command('M117', self.cmd_M117, desc=self.cmd_M117_help)
             # Load glyphs
             self.load_glyph(self.BED1_GLYPH, heat1_icon)
             self.load_glyph(self.BED2_GLYPH, heat2_icon)
@@ -568,7 +571,17 @@ class PrinterLCD:
             self.draw_percent(9, 2, 4, progress)
         lcd_chip.write_text(14, 2, lcd_chip.char_clock)
         self.draw_time(15, 2, toolhead_info['printing_time'])
-        self.draw_status(0, 3, gcode_info, toolhead_info)
+        # If there is a message set by M117, display it instead of toolhead info
+        if self.message:
+            lcd_chip.write_text(0, 3, self.message)
+            if self.msg_time:
+                # Screen updates every .5 seconds
+                self.msg_time -= .5 
+                if self.msg_time <= 0.:
+                    self.message = None
+                    self.msg_time = None
+        else:
+            self.draw_status(0, 3, gcode_info, toolhead_info)
     def screen_update_st7920(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
@@ -631,7 +644,17 @@ class PrinterLCD:
         else:
             offset = 1 if printing_time < 100 * 60 * 60 else 0
             self.draw_time(10 + offset, 2, printing_time)
-        self.draw_status(0, 3, gcode_info, toolhead_info)
+        # if there is a message set by M117, display it instead of toolhaed info
+        if self.message:
+            self.lcd_chip.write_text(0, 3, self.message)
+            if self.msg_time:
+                # Screen updates every .5 seconds
+                self.msg_time -= .5 
+                if self.msg_time <= 0.:
+                    self.message = None
+                    self.msg_time = None
+        else:
+            self.draw_status(0, 3, gcode_info, toolhead_info)
     # Screen update helpers
     def draw_heater(self, x, y, info):
         temperature, target = info['temperature'], info['target']
@@ -655,10 +678,27 @@ class PrinterLCD:
             pos = self.toolhead.get_position()
             status = "X%-4.0fY%-4.0fZ%-5.2f" % (pos[0], pos[1], pos[2])
         self.lcd_chip.write_text(x, y, status)
+    def set_message(self, msg, msg_time=None):
+        self.message = msg
+        self.msg_time = msg_time
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
         self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
         self.prg_time = M73_TIMEOUT
+    cmd_M117_help = "Show Message on Display"
+    def cmd_M117(self, params):
+        if '#original' in params:
+            msg = params['#original']
+            if not msg.startswith('M117'):
+                # Parse out additional info if M117 recd during a print
+                start = msg.find('M117')
+                end = msg.rfind('*')
+                msg = msg[start:end]
+            if len(msg) > 5:
+                msg = msg[5:]
+                self.set_message(msg)
+            else:
+                self.set_message(None)
 
 def load_config(config):
     return PrinterLCD(config)
