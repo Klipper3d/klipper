@@ -6,150 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import hd44780, st7920
-
-
-######################################################################
-# Icons
-######################################################################
-
-nozzle_icon = [
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000111111110000,
-    0b0001111111111000,
-    0b0001111111111000,
-    0b0001111111111000,
-    0b0000111111110000,
-    0b0000111111110000,
-    0b0001111111111000,
-    0b0001111111111000,
-    0b0001111111111000,
-    0b0000011111100000,
-    0b0000001111000000,
-    0b0000000110000000,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-bed_icon = [
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0111111111111110,
-    0b0111111111111110,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-heat1_icon = [
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0010001000100000,
-    0b0001000100010000,
-    0b0000100010001000,
-    0b0000100010001000,
-    0b0001000100010000,
-    0b0010001000100000,
-    0b0010001000100000,
-    0b0001000100010000,
-    0b0000100010001000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-heat2_icon = [
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000100010001000,
-    0b0000100010001000,
-    0b0001000100010000,
-    0b0010001000100000,
-    0b0010001000100000,
-    0b0001000100010000,
-    0b0000100010001000,
-    0b0000100010001000,
-    0b0001000100010000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-fan1_icon = [
-    0b0000000000000000,
-    0b0111111111111110,
-    0b0111000000001110,
-    0b0110001111000110,
-    0b0100001111000010,
-    0b0100000110000010,
-    0b0101100000011010,
-    0b0101110110111010,
-    0b0101100000011010,
-    0b0100000110000010,
-    0b0100001111000010,
-    0b0110001111000110,
-    0b0111000000001110,
-    0b0111111111111110,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-fan2_icon = [
-    0b0000000000000000,
-    0b0111111111111110,
-    0b0111000000001110,
-    0b0110010000100110,
-    0b0100111001110010,
-    0b0101111001111010,
-    0b0100110000110010,
-    0b0100000110000010,
-    0b0100110000110010,
-    0b0101111001111010,
-    0b0100111001110010,
-    0b0110010000100110,
-    0b0111000000001110,
-    0b0111111111111110,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-feedrate_icon = [
-    0b0000000000000000,
-    0b0111111000000000,
-    0b0100000000000000,
-    0b0100000000000000,
-    0b0100000000000000,
-    0b0111111011111000,
-    0b0100000010000100,
-    0b0100000010000100,
-    0b0100000010000100,
-    0b0100000011111000,
-    0b0000000010001000,
-    0b0000000010000100,
-    0b0000000010000100,
-    0b0000000010000010,
-    0b0000000000000000,
-    0b0000000000000000
-]
-
-
-######################################################################
-# LCD screen updates
-######################################################################
+import hd44780, st7920, icons
 
 LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780 }
 M73_TIMEOUT = 5.
@@ -186,10 +43,10 @@ class PrinterLCD:
             self.gcode.register_command('M73', self.cmd_M73)
             self.gcode.register_command('M117', self.cmd_M117, desc=self.cmd_M117_help)
             # Load glyphs
-            self.load_glyph(self.BED1_GLYPH, heat1_icon)
-            self.load_glyph(self.BED2_GLYPH, heat2_icon)
-            self.load_glyph(self.FAN1_GLYPH, fan1_icon)
-            self.load_glyph(self.FAN2_GLYPH, fan2_icon)
+            self.load_glyph(self.BED1_GLYPH, icons.heat1_icon)
+            self.load_glyph(self.BED2_GLYPH, icons.heat2_icon)
+            self.load_glyph(self.FAN1_GLYPH, icons.fan1_icon)
+            self.load_glyph(self.FAN2_GLYPH, icons.fan2_icon)
             # Start screen update timer
             self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
     # ST7920 Glyphs
@@ -293,17 +150,17 @@ class PrinterLCD:
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            self.draw_icon(0, 0, nozzle_icon)
+            self.draw_icon(0, 0, icons.nozzle_icon)
             self.draw_heater(2, 0, info)
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            self.draw_icon(0, 1, nozzle_icon)
+            self.draw_icon(0, 1, icons.nozzle_icon)
             self.draw_heater(2, 1, info)
             extruder_count = 2
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            self.draw_icon(0, extruder_count, bed_icon)
+            self.draw_icon(0, extruder_count, icons.bed_icon)
             if info['target']:
                 self.animate_glyphs(eventtime, 0, extruder_count,
                                     self.BED1_GLYPH, True)
@@ -337,7 +194,7 @@ class PrinterLCD:
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
         if extruder_count == 1:
-            self.draw_icon(10, 1, feedrate_icon)
+            self.draw_icon(10, 1, icons.feedrate_icon)
             self.draw_percent(12, 1, 4, gcode_info['speed_factor'])
         # Printing time and status
         printing_time = toolhead_info['printing_time']
