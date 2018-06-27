@@ -47,6 +47,7 @@ TUNE_PID_DELTA = 5.0
 class ControlAutoTune:
     def __init__(self, heater):
         self.heater = heater
+        self.heater_max_power = heater.get_max_power()
         # Heating control
         self.heating = False
         self.peak = 0.
@@ -60,20 +61,21 @@ class ControlAutoTune:
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
-            self.pwm_samples.append((read_time + self.heater.pwm_delay, value))
+            self.pwm_samples.append(
+                (read_time + self.heater.get_pwm_delay(), value))
             self.last_pwm = value
         self.heater.set_pwm(read_time, value)
-    def temperature_callback(self, read_time, temp):
+    def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
-        if self.heating and temp >= self.heater.target_temp:
+        if self.heating and temp >= target_temp:
             self.heating = False
             self.check_peaks()
         elif (not self.heating
-              and temp <= self.heater.target_temp - TUNE_PID_DELTA):
+              and temp <= target_temp - TUNE_PID_DELTA):
             self.heating = True
             self.check_peaks()
         if self.heating:
-            self.set_pwm(read_time, self.heater.max_power)
+            self.set_pwm(read_time, self.heater_max_power)
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
@@ -82,7 +84,7 @@ class ControlAutoTune:
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime):
+    def check_busy(self, eventtime, last_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False
@@ -99,8 +101,7 @@ class ControlAutoTune:
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
         time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
-        max_power = self.heater.max_power
-        Ku = 4. * (2. * max_power) / (abs(temp_diff) * math.pi)
+        Ku = 4. * (2. * self.heater_max_power) / (abs(temp_diff) * math.pi)
         Tu = time_diff
 
         Ti = 0.5 * Tu
@@ -109,7 +110,7 @@ class ControlAutoTune:
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, max_power, Ku, Tu, Kp, Ki, Kd)
+                     temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
     def calc_final_pid(self):
         cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
