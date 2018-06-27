@@ -6,9 +6,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import hd44780, st7920, icons
+import hd44780, st7920, uc1701, icons
 
-LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780 }
+LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780, 'uc1701' : uc1701.UC1701 }
 M73_TIMEOUT = 5.
 
 class PrinterLCD:
@@ -49,18 +49,22 @@ class PrinterLCD:
             self.load_glyph(self.FAN2_GLYPH, icons.fan2_icon)
             # Start screen update timer
             self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
-    # ST7920 Glyphs
+    # ST7920/UC1701 Glyphs
     def load_glyph(self, glyph_id, data):
-        if self.lcd_type != 'st7920':
-            return
-        glyph = [0x00] * (len(data) * 2)
-        for i, bits in enumerate(data):
-            glyph[i*2] = (bits >> 8) & 0xff
-            glyph[i*2 + 1] = bits & 0xff
-        return self.lcd_chip.load_glyph(glyph_id, glyph)
+        if self.lcd_type == 'uc1701':
+            self.lcd_chip.load_glyph(glyph_id, data)
+        elif self.lcd_type == 'st7920':
+            glyph = [0x00] * (len(data) * 2)
+            for i, bits in enumerate(data):
+                glyph[i*2] = (bits >> 8) & 0xff
+                glyph[i*2 + 1] = bits & 0xff
+            return self.lcd_chip.load_glyph(glyph_id, glyph)
     def animate_glyphs(self, eventtime, x, y, glyph_id, do_animate):
         frame = do_animate and int(eventtime) & 1
-        self.lcd_chip.write_text(x, y, (0, (glyph_id + frame)*2))
+        if self.lcd_type == 'uc1701':
+            self.lcd_chip.write_glyph(x, y, glyph_id + frame)
+        elif self.lcd_type == 'st7920':
+            self.lcd_chip.write_text(x, y, (0, (glyph_id + frame)*2))
     # Graphics drawing
     def draw_icon(self, x, y, data):
         for i, bits in enumerate(data):
@@ -89,7 +93,7 @@ class PrinterLCD:
         if self.lcd_type == 'hd44780':
             self.screen_update_hd44780(eventtime)
         else:
-            self.screen_update_st7920(eventtime)
+            self.screen_update_128x64(eventtime)
         self.lcd_chip.flush()
         return eventtime + .500
     def screen_update_hd44780(self, eventtime):
@@ -146,7 +150,7 @@ class PrinterLCD:
                     self.msg_time = None
         else:
             self.draw_status(0, 3, gcode_info, toolhead_info)
-    def screen_update_st7920(self, eventtime):
+    def screen_update_128x64(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
@@ -170,7 +174,8 @@ class PrinterLCD:
             info = self.fan.get_status(eventtime)
             self.animate_glyphs(eventtime, 10, 0, self.FAN1_GLYPH,
                                 info['speed'] != 0.)
-            self.draw_percent(12, 0, 4, info['speed'])
+            align = '>'if self.lcd_type == 'uc1701' else '^'
+            self.draw_percent(12, 0, 4, info['speed'], align)
         # SD card print progress
         progress = None
         toolhead_info = self.toolhead.get_status(eventtime)
@@ -195,7 +200,8 @@ class PrinterLCD:
         gcode_info = self.gcode.get_status(eventtime)
         if extruder_count == 1:
             self.draw_icon(10, 1, icons.feedrate_icon)
-            self.draw_percent(12, 1, 4, gcode_info['speed_factor'])
+            align = '>'if self.lcd_type == 'uc1701' else '^'
+            self.draw_percent(12, 1, 4, gcode_info['speed_factor'], align)
         # Printing time and status
         printing_time = toolhead_info['printing_time']
         remaining_time = None
@@ -230,8 +236,8 @@ class PrinterLCD:
         if self.lcd_type == 'hd44780':
             s += self.lcd_chip.char_degrees
         self.lcd_chip.write_text(x, y, s)
-    def draw_percent(self, x, y, width, value):
-        self.lcd_chip.write_text(x, y, ("%d%%" % (value * 100.,)).center(width))
+    def draw_percent(self, x, y, width, value, align='^'):
+        self.lcd_chip.write_text(x, y, '{:{}{}.0%}'.format(value, align, width))
     def draw_time(self, x, y, seconds):
         seconds = int(seconds)
         self.lcd_chip.write_text(x, y, "%02d:%02d" % (
