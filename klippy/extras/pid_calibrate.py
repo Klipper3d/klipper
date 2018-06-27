@@ -24,7 +24,7 @@ class PIDCalibrate:
         except self.printer.config_error as e:
             raise self.gcode.error(str(e))
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater)
+        calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
         try:
             heater.set_temp(print_time, target)
@@ -45,9 +45,10 @@ class PIDCalibrate:
 TUNE_PID_DELTA = 5.0
 
 class ControlAutoTune:
-    def __init__(self, heater):
+    def __init__(self, heater, target):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
+        self.calibrate_temp = target
         # Heating control
         self.heating = False
         self.peak = 0.
@@ -70,10 +71,11 @@ class ControlAutoTune:
         if self.heating and temp >= target_temp:
             self.heating = False
             self.check_peaks()
-        elif (not self.heating
-              and temp <= target_temp - TUNE_PID_DELTA):
+            self.heater.alter_target(self.calibrate_temp - TUNE_PID_DELTA)
+        elif not self.heating and temp <= target_temp:
             self.heating = True
             self.check_peaks()
+            self.heater.alter_target(self.calibrate_temp)
         if self.heating:
             self.set_pwm(read_time, self.heater_max_power)
             if temp < self.peak:

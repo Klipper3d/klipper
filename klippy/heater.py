@@ -105,6 +105,10 @@ class Heater:
             self.control = control
             self.target_temp = 0.
         return old_control
+    def alter_target(self, target_temp):
+        if target_temp:
+            target_temp = max(self.min_temp, min(self.max_temp, target_temp))
+        self.target_temp = target_temp
     def stats(self, eventtime):
         with self.lock:
             target_temp = self.target_temp
