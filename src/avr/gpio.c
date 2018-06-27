@@ -371,7 +371,9 @@ static const uint8_t MOSI = GPIO('B', 2), MISO = GPIO('B', 3);
 static void
 spi_init(void)
 {
-    gpio_out_setup(SS, 1);
+    if (!(GPIO2REGS(SS)->mode & GPIO2BIT(SS)))
+        // The SS pin must be an output pin (but is otherwise unused)
+        gpio_out_setup(SS, 0);
     gpio_out_setup(SCK, 0);
     gpio_out_setup(MOSI, 0);
     gpio_in_setup(MISO, 0);
