@@ -69,6 +69,21 @@ DECL_COMMAND(command_schedule_digital_out,
              "schedule_digital_out oid=%c clock=%u value=%c");
 
 void
+command_update_digital_out(uint32_t *args)
+{
+    struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
+    sched_del_timer(&d->timer);
+    uint8_t value = args[1];
+    gpio_out_write(d->pin, value);
+    if (value != d->default_value && d->max_duration) {
+        d->timer.waketime = timer_read_time() + d->max_duration;
+        d->timer.func = digital_end_event;
+        sched_add_timer(&d->timer);
+    }
+}
+DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
+
+void
 digital_out_shutdown(void)
 {
     uint8_t i;
