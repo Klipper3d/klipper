@@ -8,6 +8,7 @@ set -eux
 MAIN_DIR=${PWD}
 BUILD_DIR=${PWD}/travis_build
 export PATH=${BUILD_DIR}/gcc-arm-none-eabi-7-2017-q4-major/bin:${PATH}
+export PATH=${BUILD_DIR}/pru-gcc/bin:${PATH}
 PYTHON=${BUILD_DIR}/python-env/bin/python
 
 
