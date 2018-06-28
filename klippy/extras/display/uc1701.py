@@ -29,7 +29,6 @@ class UC1701:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.spi_oid = self.mcu.create_oid()
-        self.cs_oid = self.mcu.create_oid()
         self.a0_oid = self.mcu.create_oid()
         self.mcu.add_config_object(self)
         self.glyph_buffer = []
@@ -38,11 +37,8 @@ class UC1701:
                     [bytearray('~'*128) for i in range(8)])
     def build_config(self):
         self.mcu.add_config_cmd(
-            "config_spi_without_cs oid=%d bus=%d mode=%d rate=%d shutdown_msg=" % (
-                self.spi_oid, 0, 0, 4000000))
-        self.mcu.add_config_cmd(
-            "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d" % (
-                self.cs_oid, self.pins[0], 1, 1, 0))
+            "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
+                self.spi_oid, 0, self.pins[0], 0, 10000000))
         self.mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d" % (
                 self.a0_oid, self.pins[1], 0, 0, 0))
@@ -52,13 +48,11 @@ class UC1701:
         self.update_pin_cmd = self.mcu.lookup_command(
            "update_digital_out oid=%c value=%c", cq=cmd_queue)
     def send(self, cmds, is_data=False):
-        self.update_pin_cmd.send([self.cs_oid, 0], reqclock=BACKGROUND_PRIORITY_CLOCK)
         if is_data:
             self.update_pin_cmd.send([self.a0_oid, 1], reqclock=BACKGROUND_PRIORITY_CLOCK)
         else:
             self.update_pin_cmd.send([self.a0_oid, 0], reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi_send_cmd.send([self.spi_oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.update_pin_cmd.send([self.cs_oid, 1], reqclock=BACKGROUND_PRIORITY_CLOCK)
     def init(self):
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
