@@ -10,6 +10,21 @@ PYTHON=${PWD}/python-env/bin/python
 
 
 ######################################################################
+# Check for whitespace errors
+######################################################################
+
+echo "travis_fold:start:check_whitespace"
+echo "=============== Check whitespace"
+WS_DIRS="src/ config/ klippy/ scripts/"
+WS_EXCLUDE="-path src/lib -prune -o -path scripts/kconfig -prune"
+WS_FILES="-o -name '*.[csh]' -o -name '*.py' -o -name '*.sh'"
+WS_FILES="$WS_FILES -o -name '*.md' -o -name '*.cfg'"
+WS_FILES="$WS_FILES -o -iname 'Makefile' -o -iname 'Kconfig'"
+eval find $WS_DIRS $WS_EXCLUDE $WS_FILES | xargs ./scripts/check_whitespace.py
+echo "travis_fold:end:check_whitespace"
+
+
+######################################################################
 # Run compile tests for several different MCU types
 ######################################################################
 
