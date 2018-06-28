@@ -10,7 +10,7 @@ addons:
 
 cache:
   directories:
-  - downloads
+  - travis_cache
 
 install: ./scripts/travis-install.sh
 
