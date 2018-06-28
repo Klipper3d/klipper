@@ -144,7 +144,7 @@ class PrinterLCD:
             lcd_chip.write_text(0, 3, self.message)
             if self.msg_time:
                 # Screen updates every .5 seconds
-                self.msg_time -= .5 
+                self.msg_time -= .5
                 if self.msg_time <= 0.:
                     self.message = None
                     self.msg_time = None
@@ -219,7 +219,7 @@ class PrinterLCD:
             self.lcd_chip.write_text(0, 3, self.message)
             if self.msg_time:
                 # Screen updates every .5 seconds
-                self.msg_time -= .5 
+                self.msg_time -= .5
                 if self.msg_time <= 0.:
                     self.message = None
                     self.msg_time = None

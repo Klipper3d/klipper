@@ -12,8 +12,8 @@
 # Font comes from fntcol16.zip package found at:
 # ftp://ftp.simtel.net/pub/simtelnet/msdos/screen/fntcol16.zip
 # (c) Joseph Gil
-# 
-# Indivdual fonts are public domain 
+#
+# Indivdual fonts are public domain
 ######################################################################
 
 VGA_FONT = [

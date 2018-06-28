@@ -33,7 +33,7 @@ class UC1701:
         self.mcu.add_config_object(self)
         self.glyph_buffer = []
         self.spi_xfer_cmd = self.set_pin_cmd = None
-        self.vram = ([bytearray(128) for i in range(8)], 
+        self.vram = ([bytearray(128) for i in range(8)],
                     [bytearray('~'*128) for i in range(8)])
     def build_config(self):
         self.mcu.add_config_cmd(
@@ -68,7 +68,7 @@ class UC1701:
                      0x81, # Set Electronic Volume
                      0x28, # Electronic volume value (40)
                      0xAC, # Set static indicator off
-                     0x00, # NOP 
+                     0x00, # NOP
                      0xA6, # Disable Inverse
                      0xAF] # Set display enable
         self.send(init_cmds)
@@ -122,7 +122,7 @@ class UC1701:
         self.glyph_buffer.append((glyph_id, data))
         self.glyph_buffer.sort(key=lambda x: x[0])
     def write_glyph(self, x, y, glyph_id):
-        pix_x = x*8   
+        pix_x = x*8
         pix_y = y*16
         data = self.glyph_buffer[glyph_id][1]
         for bits in data:
