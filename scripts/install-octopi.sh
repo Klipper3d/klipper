@@ -26,6 +26,7 @@ install_packages()
     # Install desired packages
     report_status "Installing packages..."
     sudo apt-get install --yes ${PKGLIST}
+    sudo apt-get install python-pip python-dev build-essential
 }
 
 # Step 2: Create python virtual environment
