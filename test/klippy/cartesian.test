@@ -1,4 +1,0 @@
-# Test case for basic cartesian movement
-CONFIG ../../config/example.cfg
-DICTIONARY atmega2560-16mhz.dict
-GCODE move.gcode
