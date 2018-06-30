@@ -18,11 +18,12 @@ class error(Exception):
     pass
 
 class TestCase:
-    def __init__(self, fname, dictdir, tempdir, verbose):
+    def __init__(self, fname, dictdir, tempdir, verbose, keepfiles):
         self.fname = fname
         self.dictdir = dictdir
         self.tempdir = tempdir
         self.verbose = verbose
+        self.keepfiles = keepfiles
     def relpath(self, fname, rel='test'):
         if rel == 'dict':
             reldir = self.dictdir
@@ -104,6 +105,8 @@ class TestCase:
                 raise error("Test failed to raise an error")
             raise error("Error during test")
         # Do cleanup
+        if self.keepfiles:
+            return
         for fname in os.listdir(self.tempdir):
             if fname.startswith(TEMP_OUTPUT_FILE):
                 os.unlink(fname)
@@ -141,6 +144,8 @@ def main():
                     help="directory for dictionary files")
     opts.add_option("-t", "--tempdir", dest="tempdir", default=".",
                     help="directory for temporary files")
+    opts.add_option("-k", action="store_true", dest="keepfiles",
+                    help="do not remove temporary files")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="show all output from tests")
     options, args = opts.parse_args()
@@ -150,7 +155,8 @@ def main():
 
     # Run each test
     for fname in args:
-        tc = TestCase(fname, options.dictdir, options.tempdir, options.verbose)
+        tc = TestCase(fname, options.dictdir, options.tempdir, options.verbose,
+                      options.keepfiles)
         res = tc.run()
         if res != 'success':
             sys.stderr.write("\n\nTest case %s FAILED (%s)!\n\n" % (fname, res))
