@@ -158,3 +158,10 @@ section is enabled:
 - `SET_DUAL_CARRIAGE CARRIAGE=[0|1]`: This command will set the active
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
+
+## TMC2130
+
+The following command is available when the "tmc2130" config section
+is enabled:
+- `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
+  registers and report their values.
