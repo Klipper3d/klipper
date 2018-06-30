@@ -241,6 +241,17 @@ class GCodeParser:
             self.process_commands(script.split('\n'), need_ack=False)
         finally:
             self.need_ack = prev_need_ack
+    def run_script(self, script):
+        curtime = self.reactor.monotonic()
+        for line in script.split('\n'):
+            while 1:
+                try:
+                    res = self.process_batch(line)
+                except:
+                    break
+                if res:
+                    break
+                curtime = self.reactor.pause(curtime + 0.100)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
