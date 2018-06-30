@@ -21,7 +21,7 @@ class GCodeMacro:
             raise self.gcode.error("Macro %s called recursively" % (self.alias,))
         self.in_script = True
         try:
-            self.gcode.run_script(self.script)
+            self.gcode.run_script_from_command(self.script)
         finally:
             self.in_script = False
 

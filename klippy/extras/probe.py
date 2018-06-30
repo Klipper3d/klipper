@@ -106,10 +106,10 @@ class ProbeEndstopWrapper:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        self.gcode.run_script(self.activate_gcode)
+        self.gcode.run_script_from_command(self.activate_gcode)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        self.gcode.run_script(self.deactivate_gcode)
+        self.gcode.run_script_from_command(self.deactivate_gcode)
         self.mcu_endstop.home_finalize()
 
 # Wrapper that records the last XY position of a virtual endstop probe
@@ -186,7 +186,7 @@ class ProbePointsHelper:
         if self.probe is not None:
             try:
                 while self.busy:
-                    self.gcode.run_script("PROBE")
+                    self.gcode.run_script_from_command("PROBE")
                     self.cmd_NEXT({})
             except:
                 self.finalize(False)
