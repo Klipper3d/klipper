@@ -8,6 +8,35 @@ import logging
 QUERY_TIME = .002
 RETRANSMIT_COUNT = 50
 
+# Rotary encoder handler https://github.com/brianlow/Rotary
+# Copyright 2011 Ben Buxton (bb@cactii.net). Licenced under the GNU GPL Version 3.
+R_START     = 0x0
+R_CW_FINAL  = 0x1
+R_CW_BEGIN  = 0x2
+R_CW_NEXT   = 0x3
+R_CCW_BEGIN = 0x4
+R_CCW_FINAL = 0x5
+R_CCW_NEXT  = 0x6
+R_DIR_CW    = 0x10
+R_DIR_CCW   = 0x20
+R_DIR_MSK   = 0x30
+# Use the full-step state table (emits a code at 00 only)
+ENCODER_STATES = (
+  # R_START
+  (R_START,    R_CW_BEGIN,  R_CCW_BEGIN, R_START),
+  # R_CW_FINAL
+  (R_CW_NEXT,  R_START,     R_CW_FINAL,  R_START | R_DIR_CW),
+  # R_CW_BEGIN
+  (R_CW_NEXT,  R_CW_BEGIN,  R_START,     R_START),
+  # R_CW_NEXT
+  (R_CW_NEXT,  R_CW_BEGIN,  R_CW_FINAL,  R_START),
+  # R_CCW_BEGIN
+  (R_CCW_NEXT, R_START,     R_CCW_BEGIN, R_START),
+  # R_CCW_FINAL
+  (R_CCW_NEXT, R_CCW_FINAL, R_START,     R_START | R_DIR_CCW),
+  # R_CCW_NEXT
+  (R_CCW_NEXT, R_CCW_FINAL, R_CCW_BEGIN, R_START)
+)
 
 ######################################################################
 # Button state tracking
@@ -89,18 +118,13 @@ class RotaryEncoder:
     def __init__(self, cw_callback, ccw_callback):
         self.cw_callback = cw_callback
         self.ccw_callback = ccw_callback
-        self.next_callback = None
+        self.encoder_state = R_START
     def encoder_callback(self, eventtime, state):
-        # XXX - do full encoder state tracking
-        if state == 3:
-            self.next_callback = None
-        elif state == 2:
-            self.next_callback = self.ccw_callback
-        elif state == 1:
-            self.next_callback = self.cw_callback
-        elif self.next_callback is not None:
-            self.next_callback(eventtime)
-            self.next_callback = None
+        self.encoder_state = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
+        if (self.encoder_state & R_DIR_MSK) == R_DIR_CW:
+            self.cw_callback(eventtime)
+        elif (self.encoder_state & R_DIR_MSK) == R_DIR_CCW:
+            self.ccw_callback(eventtime)
 
 
 ######################################################################
