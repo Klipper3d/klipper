@@ -18,7 +18,7 @@ PYTHON=${BUILD_DIR}/python-env/bin/python
 
 echo "travis_fold:start:check_whitespace"
 echo "=============== Check whitespace"
-WS_DIRS="src/ config/ klippy/ scripts/"
+WS_DIRS="config/ docs/ klippy/ scripts/ src/ test/"
 WS_EXCLUDE="-path src/lib -prune -o -path scripts/kconfig -prune"
 WS_FILES="-o -name '*.[csh]' -o -name '*.py' -o -name '*.sh'"
 WS_FILES="$WS_FILES -o -name '*.md' -o -name '*.cfg'"
