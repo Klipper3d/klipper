@@ -22,7 +22,8 @@ Fixed pins
 
 The UART used for communication with the host is fixed to pins PA9 (TX) and PA10
 (RX). SWD pins (PA13/PA14) are enabled for debugging and cannot be used for any
-I/O.
+I/O. SPI uses pins PB13/PB14/PB15, but the pins can be used as general I/O if
+SPI is not used.
 
 Digital I/O
 ===========
@@ -44,4 +45,5 @@ PC0-PC5).
 SPI
 ===
 
-SPI support is currently unimplemented.
+SPI uses pin PB13 (SCK), PB14 (MISO) and PB15 (MOSI). The clock speed range is
+0.15..18 MHz. Chip select pins do not have any restrictions.
