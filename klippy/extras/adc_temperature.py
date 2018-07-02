@@ -8,6 +8,7 @@ import logging, bisect
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
+RANGE_CHECK_COUNT = 4
 
 # Linear style conversion chips calibrated with two temp measurements
 class Linear:
@@ -50,7 +51,8 @@ class Linear:
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range))
+                                  minval=min(adc_range), maxval=max(adc_range),
+                                  range_check_count=RANGE_CHECK_COUNT)
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
