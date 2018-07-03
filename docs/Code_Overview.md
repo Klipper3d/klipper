@@ -149,7 +149,7 @@ provides further information on the mechanics of moves.
   zero duration.
   * When Move.move() is called, everything about the move is known -
   its start location, its end location, its acceleration, its
-  start/crusing/end velocity, and distance traveled during
+  start/cruising/end velocity, and distance traveled during
   acceleration/cruising/deceleration. All the information is stored in
   the Move() class and is in cartesian space in units of millimeters
   and seconds.
@@ -176,14 +176,14 @@ provides further information on the mechanics of moves.
   the stepper pulse times are generated in C code. The code flow is:
   `kin.move() -> MCU_Stepper.step_itersolve() ->
   itersolve_gen_steps()` (in klippy/chelper/itersolve.c). The goal of
-  the iterative solver is to find step times given a formula that
-  calculates a stepper position from a given time in a move. This is
-  done by repeatedly "guessing" various times until the stepper
-  position formula returns the desired position of the next step on
-  the stepper. The feedback produced from each guess is used to
-  improve future guesses so that the process rapidly converges to the
-  desired time. The kinematic stepper position formulas are located in
-  the klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
+  the iterative solver is to find step times given a function that
+  calculates a stepper position from a time. This is done by
+  repeatedly "guessing" various times until the stepper position
+  formula returns the desired position of the next step on the
+  stepper. The feedback produced from each guess is used to improve
+  future guesses so that the process rapidly converges to the desired
+  time. The kinematic stepper position formulas are located in the
+  klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
   kin_delta.c, kin_extruder.c).
 
 * After the iterative solver calculates the step times they are added
@@ -320,9 +320,10 @@ Useful steps:
    calculate the desired stepper position (in millimeters) from that
    cartesian coordinate.
 4. Implement the `calc_position()` method in the new kinematics class.
-   This method is the inverse of set_position(). It does not need to
-   be efficient as it is typically only called during homing and
-   probing operations.
+   This method calculates the position of the toolhead in cartesian
+   coordinates from the current position of each stepper. It does not
+   need to be efficient as it is typically only called during homing
+   and probing operations.
 5. Other methods. The `move()`, `home()`, `check_move()`, and other
    methods should also be implemented. These functions are typically
    used to provide kinematic specific checks. However, at the start of
