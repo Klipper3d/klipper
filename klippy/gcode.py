@@ -609,7 +609,10 @@ class GCodeParser:
             self.cmd_default(params)
             return
         kin = self.toolhead.get_kinematics()
-        steppers = kin.get_steppers()
+        steppers = []
+        rails = kin.get_rails()
+        for rail in rails:
+            steppers += rail.get_steppers()
         mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
                             for s in steppers])
         stepper_pos = " ".join(
