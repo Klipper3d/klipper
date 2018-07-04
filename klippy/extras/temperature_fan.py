@@ -70,7 +70,7 @@ class ControlBangBang:
         if self.heating:
             self.temperature_fan.set_speed(read_time, 0.)
         else:
-            self.temperature_fan.set_speed(read_time, self.temperature_fan.max_power)
+            self.temperature_fan.set_speed(read_time, self.temperature_fan.max_speed)
 
 ######################################################################
 # Proportional Integral Derivative (PID) control algo

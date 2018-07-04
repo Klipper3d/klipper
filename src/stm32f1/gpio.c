@@ -137,7 +137,7 @@ static const uint8_t adc_pins[] = {
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
     GPIO('B', 0), GPIO('B', 1), GPIO('C', 0), GPIO('C', 1),
-    GPIO('C', 2), GPIO('C', 3)
+    GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5)
 };
 
 static const uint32_t adc_channels[] = {

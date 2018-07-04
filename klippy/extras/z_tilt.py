@@ -32,8 +32,7 @@ class ZTilt:
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         try:
-            z_stepper = kin.get_steppers('Z')[0]
-            z_steppers = [z_stepper] + z_stepper.extras
+            z_steppers = kin.get_rails('Z')[0].get_steppers()
         except:
             logging.exception("z_tilt stepper lookup")
             raise self.printer.config_error(
@@ -45,9 +44,9 @@ class ZTilt:
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
         self.probe_helper.start_probe()
-    def get_position(self):
+    def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.get_position()
+        return kin.calc_position()
     def finalize(self, z_offset, positions):
         logging.info("Calculating bed tilt with: %s", positions)
         params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
@@ -69,7 +68,7 @@ class ZTilt:
         except:
             logging.exception("z_tilt adjust_steppers")
             for s in self.z_steppers:
-                z.mcu_stepper.set_ignore_move(False)
+                z.set_ignore_move(False)
             raise
     def adjust_steppers(self, x_adjust, y_adjust, z_adjust, z_offset):
         toolhead = self.printer.lookup_object('toolhead')
@@ -78,12 +77,12 @@ class ZTilt:
         # Find each stepper adjustment and disable all stepper movements
         positions = []
         for s, (x, y) in zip(self.z_steppers, self.z_positions):
-            s.mcu_stepper.set_ignore_move(True)
+            s.set_ignore_move(True)
             stepper_offset = -(x*x_adjust + y*y_adjust)
             positions.append((stepper_offset, s))
         # Report on movements
         msg = "Making the following Z tilt adjustments:\n%s\nz_offset = %.6f" % (
-            "\n".join(["%s = %.6f" % (s.name, so) for so, s in positions]),
+            "\n".join(["%s = %.6f" % (s.get_name(), so) for so, s in positions]),
             z_adjust - z_offset)
         logging.info(msg)
         self.gcode.respond_info(msg)
@@ -94,13 +93,13 @@ class ZTilt:
         for i in range(len(positions)-1):
             stepper_offset, stepper = positions[i]
             next_stepper_offset, next_stepper = positions[i+1]
-            stepper.mcu_stepper.set_ignore_move(False)
+            stepper.set_ignore_move(False)
             curpos[2] = z_low + next_stepper_offset
             toolhead.move(curpos, speed)
             toolhead.set_position(curpos)
         # Z should now be level - do final cleanup
         last_stepper_offset, last_stepper = positions[-1]
-        last_stepper.mcu_stepper.set_ignore_move(False)
+        last_stepper.set_ignore_move(False)
         curpos[2] -= z_adjust - z_offset
         toolhead.set_position(curpos)
         self.gcode.reset_last_position()

@@ -235,12 +235,23 @@ class GCodeParser:
                 self.process_pending()
             self.is_processing_data = False
         return True
-    def run_script(self, script):
+    def run_script_from_command(self, script):
         prev_need_ack = self.need_ack
         try:
             self.process_commands(script.split('\n'), need_ack=False)
         finally:
             self.need_ack = prev_need_ack
+    def run_script(self, script):
+        curtime = self.reactor.monotonic()
+        for line in script.split('\n'):
+            while 1:
+                try:
+                    res = self.process_batch(line)
+                except:
+                    break
+                if res:
+                    break
+                curtime = self.reactor.pause(curtime + 0.100)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -390,7 +401,7 @@ class GCodeParser:
         e = extruders[index]
         if self.extruder is e:
             return
-        self.run_script(self.extruder.get_activate_gcode(False))
+        self.run_script_from_command(self.extruder.get_activate_gcode(False))
         try:
             self.toolhead.set_extruder(e)
         except homing.EndstopError as e:
@@ -399,7 +410,7 @@ class GCodeParser:
         self.reset_last_position()
         self.extrude_factor = 1.
         self.base_position[3] = self.last_position[3]
-        self.run_script(self.extruder.get_activate_gcode(True))
+        self.run_script_from_command(self.extruder.get_activate_gcode(True))
     def cmd_mux(self, params):
         key, values = self.mux_commands[params['#command']]
         if None in values:
@@ -598,14 +609,17 @@ class GCodeParser:
             self.cmd_default(params)
             return
         kin = self.toolhead.get_kinematics()
-        steppers = kin.get_steppers()
-        mcu_pos = " ".join(["%s:%d" % (s.name, s.mcu_stepper.get_mcu_position())
+        steppers = []
+        rails = kin.get_rails()
+        for rail in rails:
+            steppers += rail.get_steppers()
+        mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
                             for s in steppers])
         stepper_pos = " ".join(
-            ["%s:%.6f" % (s.name, s.mcu_stepper.get_commanded_position())
+            ["%s:%.6f" % (s.get_name(), s.get_commanded_position())
              for s in steppers])
         kinematic_pos = " ".join(["%s:%.6f"  % (a, v)
-                                  for a, v in zip("XYZE", kin.get_position())])
+                                  for a, v in zip("XYZE", kin.calc_position())])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", self.toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)

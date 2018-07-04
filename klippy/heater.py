@@ -76,9 +76,13 @@ class Heater:
             self.last_temp = temp
             self.last_temp_time = read_time
             self.can_extrude = (temp >= self.min_extrude_temp)
-            self.control.temperature_callback(read_time, temp)
+            self.control.temperature_update(read_time, temp, self.target_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
+    def get_pwm_delay(self):
+        return self.pwm_delay
+    def get_max_power(self):
+        return self.max_power
     def set_temp(self, print_time, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
             raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
@@ -93,13 +97,18 @@ class Heater:
             return self.last_temp, self.target_temp
     def check_busy(self, eventtime):
         with self.lock:
-            return self.control.check_busy(eventtime)
+            return self.control.check_busy(
+                eventtime, self.last_temp, self.target_temp)
     def set_control(self, control):
         with self.lock:
             old_control = self.control
             self.control = control
             self.target_temp = 0.
         return old_control
+    def alter_target(self, target_temp):
+        if target_temp:
+            target_temp = max(self.min_temp, min(self.max_temp, target_temp))
+        self.target_temp = target_temp
     def stats(self, eventtime):
         with self.lock:
             target_temp = self.target_temp
@@ -122,19 +131,20 @@ class Heater:
 class ControlBangBang:
     def __init__(self, heater, config):
         self.heater = heater
+        self.heater_max_power = heater.get_max_power()
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
-    def temperature_callback(self, read_time, temp):
-        if self.heating and temp >= self.heater.target_temp+self.max_delta:
+    def temperature_update(self, read_time, temp, target_temp):
+        if self.heating and temp >= target_temp+self.max_delta:
             self.heating = False
-        elif not self.heating and temp <= self.heater.target_temp-self.max_delta:
+        elif not self.heating and temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, self.heater.max_power)
+            self.heater.set_pwm(read_time, self.heater_max_power)
         else:
             self.heater.set_pwm(read_time, 0.)
-    def check_busy(self, eventtime):
-        return self.heater.last_temp < self.heater.target_temp-self.max_delta
+    def check_busy(self, eventtime, last_temp, target_temp):
+        return last_temp < target_temp-self.max_delta
 
 
 ######################################################################
@@ -147,17 +157,19 @@ PID_SETTLE_SLOPE = .1
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
+        self.heater_max_power = heater.get_max_power()
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
-        imax = config.getfloat('pid_integral_max', heater.max_power, minval=0.)
+        imax = config.getfloat('pid_integral_max', self.heater_max_power,
+                               minval=0.)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
-    def temperature_callback(self, read_time, temp):
+    def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
@@ -167,14 +179,14 @@ class ControlPID:
             temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
                           + temp_diff) / self.min_deriv_time
         # Calculate accumulated temperature "error"
-        temp_err = self.heater.target_temp - temp
+        temp_err = target_temp - temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
-        bounded_co = max(0., min(self.heater.max_power, co))
+        bounded_co = max(0., min(self.heater_max_power, co))
         self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
@@ -182,8 +194,8 @@ class ControlPID:
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
-    def check_busy(self, eventtime):
-        temp_diff = self.heater.target_temp - self.heater.last_temp
+    def check_busy(self, eventtime, last_temp, target_temp):
+        temp_diff = target_temp - last_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 

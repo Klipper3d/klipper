@@ -2,11 +2,16 @@
 language: c
 
 addons:
-    apt:
-        packages:
-            - gcc-avr
-            - avr-libc
-            - wget
+  apt:
+    packages:
+      # AVR GCC packages
+      - gcc-avr avr-libc
+      # PRU GCC build packages
+      - pv libmpfr-dev libgmp-dev libmpc-dev texinfo libncurses5-dev bison flex
+
+cache:
+  directories:
+  - travis_cache
 
 install: ./scripts/travis-install.sh
 

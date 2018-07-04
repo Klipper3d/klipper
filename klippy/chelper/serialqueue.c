@@ -1,6 +1,6 @@
 // Serial port command queuing
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 //
@@ -23,6 +23,7 @@
 #include <string.h> // memset
 #include <termios.h> // tcflush
 #include <unistd.h> // pipe
+#include "compiler.h" // __visible
 #include "list.h" // list_add_tail
 #include "pyhelper.h" // get_monotonic
 #include "serialqueue.h" // struct queue_message
@@ -797,7 +798,7 @@ background_thread(void *data)
 }
 
 // Create a new 'struct serialqueue' object
-struct serialqueue *
+struct serialqueue * __visible
 serialqueue_alloc(int serial_fd, int write_only)
 {
     struct serialqueue *sq = malloc(sizeof(*sq));
@@ -859,7 +860,7 @@ fail:
 }
 
 // Request that the background thread exit
-void
+void __visible
 serialqueue_exit(struct serialqueue *sq)
 {
     pollreactor_do_exit(&sq->pr);
@@ -870,7 +871,7 @@ serialqueue_exit(struct serialqueue *sq)
 }
 
 // Free all resources associated with a serialqueue
-void
+void __visible
 serialqueue_free(struct serialqueue *sq)
 {
     if (!sq)
@@ -895,7 +896,7 @@ serialqueue_free(struct serialqueue *sq)
 }
 
 // Allocate a 'struct command_queue'
-struct command_queue *
+struct command_queue * __visible
 serialqueue_alloc_commandqueue(void)
 {
     struct command_queue *cq = malloc(sizeof(*cq));
@@ -906,7 +907,7 @@ serialqueue_alloc_commandqueue(void)
 }
 
 // Free a 'struct command_queue'
-void
+void __visible
 serialqueue_free_commandqueue(struct command_queue *cq)
 {
     if (!cq)
@@ -956,7 +957,7 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
 
 // Schedule the transmission of a message on the serial port at a
 // given time and priority.
-void
+void __visible
 serialqueue_send(struct serialqueue *sq, struct command_queue *cq
                  , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock)
 {
@@ -988,7 +989,7 @@ serialqueue_encode_and_send(struct serialqueue *sq, struct command_queue *cq
 
 // Return a message read from the serial port (or wait for one if none
 // available)
-void
+void __visible
 serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
 {
     pthread_mutex_lock(&sq->lock);
@@ -1022,7 +1023,7 @@ exit:
     pthread_mutex_unlock(&sq->lock);
 }
 
-void
+void __visible
 serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
 {
     pthread_mutex_lock(&sq->lock);
@@ -1030,7 +1031,7 @@ serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
     pthread_mutex_unlock(&sq->lock);
 }
 
-void
+void __visible
 serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
 {
     pthread_mutex_lock(&sq->lock);
@@ -1040,7 +1041,7 @@ serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
 
 // Set the estimated clock rate of the mcu on the other end of the
 // serial port
-void
+void __visible
 serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
                           , double last_clock_time, uint64_t last_clock)
 {
@@ -1052,7 +1053,7 @@ serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
 }
 
 // Return a string buffer containing statistics for the serial port
-void
+void __visible
 serialqueue_get_stats(struct serialqueue *sq, char *buf, int len)
 {
     struct serialqueue stats;
@@ -1074,7 +1075,7 @@ serialqueue_get_stats(struct serialqueue *sq, char *buf, int len)
 }
 
 // Extract old messages stored in the debug queues
-int
+int __visible
 serialqueue_extract_old(struct serialqueue *sq, int sentq
                         , struct pull_queue_message *q, int max)
 {

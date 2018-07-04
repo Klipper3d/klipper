@@ -1,6 +1,12 @@
 # Basic sanity checks on the example printer config files
 GCODE move.gcode
 
+# Example kinematic files
+DICTIONARY atmega2560-16mhz.dict
+CONFIG ../../config/example.cfg
+CONFIG ../../config/example-corexy.cfg
+CONFIG ../../config/example-delta.cfg
+
 # Printers using the atmega2560
 DICTIONARY atmega2560-16mhz.dict
 CONFIG ../../config/generic-einsy-rambo.cfg
@@ -23,6 +29,7 @@ CONFIG ../../config/printer-anet-a8-2017.cfg
 CONFIG ../../config/printer-anet-e10-2018.cfg
 CONFIG ../../config/printer-creality-cr10-2017.cfg
 CONFIG ../../config/printer-creality-cr10mini-2017.cfg
+CONFIG ../../config/printer-creality-ender2-2017.cfg
 CONFIG ../../config/printer-creality-ender3-2018.cfg
 CONFIG ../../config/printer-tronxy-x5s-2018.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg
@@ -37,4 +44,16 @@ CONFIG ../../config/generic-radds.cfg
 
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
+CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+
+# Printers using the PRU
+DICTIONARY pru.dict host=linuxprocess.dict
+CONFIG ../../config/generic-cramps.cfg
+CONFIG ../../config/generic-replicape.cfg
+
+# Tests with multiple mcus
+DICTIONARY atmega2560-16mhz.dict zboard=atmega2560-16mhz.dict auxboard=atmega2560-16mhz.dict
+CONFIG ../../config/example-multi-mcu.cfg
+DICTIONARY atmega2560-16mhz.dict z=atmega2560-16mhz.dict
+CONFIG ../../config/kit-voron2-2018.cfg

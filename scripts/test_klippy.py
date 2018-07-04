@@ -7,6 +7,7 @@ import sys, os, optparse, logging, subprocess
 
 TEMP_GCODE_FILE = "_test_.gcode"
 TEMP_LOG_FILE = "_test_.log"
+TEMP_OUTPUT_FILE = "_test_output"
 
 
 ######################################################################
@@ -17,11 +18,12 @@ class error(Exception):
     pass
 
 class TestCase:
-    def __init__(self, fname, dictdir, tempdir, verbose):
+    def __init__(self, fname, dictdir, tempdir, verbose, keepfiles):
         self.fname = fname
         self.dictdir = dictdir
         self.tempdir = tempdir
         self.verbose = verbose
+        self.keepfiles = keepfiles
     def relpath(self, fname, rel='test'):
         if rel == 'dict':
             reldir = self.dictdir
@@ -32,7 +34,7 @@ class TestCase:
         return os.path.join(reldir, fname)
     def parse_test(self):
         # Parse file into test cases
-        config_fname = gcode_fname = dict_fname = None
+        config_fname = gcode_fname = dict_fnames = None
         should_fail = multi_tests = False
         gcode = []
         f = open(self.fname, 'rb')
@@ -48,14 +50,18 @@ class TestCase:
                     # Multiple tests in same file
                     if not multi_tests:
                         multi_tests = True
-                        self.launch_test(config_fname, dict_fname,
+                        self.launch_test(config_fname, dict_fnames,
                                          gcode_fname, gcode, should_fail)
                 config_fname = self.relpath(parts[1])
                 if multi_tests:
-                    self.launch_test(config_fname, dict_fname,
+                    self.launch_test(config_fname, dict_fnames,
                                      gcode_fname, gcode, should_fail)
             elif parts[0] == "DICTIONARY":
-                dict_fname = self.relpath(parts[1], 'dict')
+                dict_fnames = [self.relpath(parts[1], 'dict')]
+                for mcu_dict in parts[2:]:
+                    mcu, fname = mcu_dict.split('=', 1)
+                    dict_fnames.append('%s=%s' % (
+                        mcu.strip(), self.relpath(fname.strip(), 'dict')))
             elif parts[0] == "GCODE":
                 gcode_fname = self.relpath(parts[1])
             elif parts[0] == "SHOULD_FAIL":
@@ -64,9 +70,9 @@ class TestCase:
                 gcode.append(line.strip())
         f.close()
         if not multi_tests:
-            self.launch_test(config_fname, dict_fname,
+            self.launch_test(config_fname, dict_fnames,
                              gcode_fname, gcode, should_fail)
-    def launch_test(self, config_fname, dict_fname, gcode_fname, gcode,
+    def launch_test(self, config_fname, dict_fnames, gcode_fname, gcode,
                     should_fail):
         gcode_is_temp = False
         if gcode_fname is None:
@@ -79,15 +85,15 @@ class TestCase:
             raise error("Can't specify both a gcode file and gcode commands")
         if config_fname is None:
             raise error("config file not specified")
-        if dict_fname is None:
+        if dict_fnames is None:
             raise error("data dictionary file not specified")
         # Call klippy
         sys.stderr.write("    Starting %s (%s)\n" % (
             self.fname, os.path.basename(config_fname)))
-        args = [sys.executable, './klippy/klippy.py', config_fname,
-                '-i', gcode_fname, '-o', '/dev/null', '-v',
-                '-d', dict_fname
-        ]
+        args = [ sys.executable, './klippy/klippy.py', config_fname,
+                 '-i', gcode_fname, '-o', TEMP_OUTPUT_FILE, '-v' ]
+        for df in dict_fnames:
+            args += ['-d', df]
         if not self.verbose:
             args += ['-l', TEMP_LOG_FILE]
         res = subprocess.call(args)
@@ -99,6 +105,11 @@ class TestCase:
                 raise error("Test failed to raise an error")
             raise error("Error during test")
         # Do cleanup
+        if self.keepfiles:
+            return
+        for fname in os.listdir(self.tempdir):
+            if fname.startswith(TEMP_OUTPUT_FILE):
+                os.unlink(fname)
         if not self.verbose:
             os.unlink(TEMP_LOG_FILE)
         else:
@@ -133,6 +144,8 @@ def main():
                     help="directory for dictionary files")
     opts.add_option("-t", "--tempdir", dest="tempdir", default=".",
                     help="directory for temporary files")
+    opts.add_option("-k", action="store_true", dest="keepfiles",
+                    help="do not remove temporary files")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="show all output from tests")
     options, args = opts.parse_args()
@@ -142,7 +155,8 @@ def main():
 
     # Run each test
     for fname in args:
-        tc = TestCase(fname, options.dictdir, options.tempdir, options.verbose)
+        tc = TestCase(fname, options.dictdir, options.tempdir, options.verbose,
+                      options.keepfiles)
         res = tc.run()
         if res != 'success':
             sys.stderr.write("\n\nTest case %s FAILED (%s)!\n\n" % (fname, res))

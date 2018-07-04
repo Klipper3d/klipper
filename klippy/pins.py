@@ -199,9 +199,10 @@ class PrinterPins:
         self.chips = {}
         self.active_pins = {}
     def lookup_pin(self, pin_type, pin_desc, share_type=None):
-        can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
-        can_pullup = pin_type == 'endstop'
-        desc = pin_desc
+        can_invert = pin_type in ['stepper', 'endstop', 'digital_in',
+                                  'digital_out', 'pwm']
+        can_pullup = pin_type in ['endstop', 'digital_in']
+        desc = pin_desc.strip()
         pullup = invert = 0
         if can_pullup and desc.startswith('^'):
             pullup = 1

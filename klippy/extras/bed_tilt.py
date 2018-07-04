@@ -46,11 +46,11 @@ class BedTiltCalibrate:
             desc=self.cmd_BED_TILT_CALIBRATE_help)
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, params):
-        self.gcode.run_script("G28")
+        self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe()
-    def get_position(self):
+    def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.get_position()
+        return kin.calc_position()
     def finalize(self, z_offset, positions):
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,

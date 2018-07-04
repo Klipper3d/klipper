@@ -54,7 +54,7 @@ class HomingOverride:
         # Perform homing
         try:
             self.in_script = True
-            self.gcode.run_script(self.script)
+            self.gcode.run_script_from_command(self.script)
         finally:
             self.in_script = False
 

@@ -1,6 +1,6 @@
 // Helper functions for C / Python interface
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -10,10 +10,11 @@
 #include <stdio.h> // fprintf
 #include <string.h> // strerror
 #include <time.h> // struct timespec
+#include "compiler.h" // __visible
 #include "pyhelper.h" // get_monotonic
 
 // Return the monotonic system time as a double
-double
+double __visible
 get_monotonic(void)
 {
     struct timespec ts;
@@ -41,7 +42,7 @@ default_logger(const char *msg)
 
 static void (*python_logging_callback)(const char *msg) = default_logger;
 
-void
+void __visible
 set_python_logging_callback(void (*func)(const char *))
 {
     python_logging_callback = func;
