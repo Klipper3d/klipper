@@ -4,13 +4,10 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stddef.h>   // NULL
-#include "autoconf.h"
+#include <sam3x8e.h> // REGPTR
 #include "command.h" // shutdown
-#include "gpio.h"
-#include "sched.h"
-#include <sam3x8e.h>
-#include <string.h>
+#include "gpio.h" // gpio_peripheral
+#include "sched.h" // sched_shutdown
 
 #define REGPTR     SPI0
 #define PERIPH_ID  ID_SPI0
@@ -109,7 +106,8 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         while (len--) {
             pSpi->SPI_TDR = *data;
             // wait for receive register
-            while (!(pSpi->SPI_SR & SPI_SR_RDRF)) { asm volatile("nop"); };
+            while (!(pSpi->SPI_SR & SPI_SR_RDRF))
+                ;
             // get data
             *data++ = pSpi->SPI_RDR;
         }
@@ -117,7 +115,10 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         while (len--) {
             pSpi->SPI_TDR = *data++;
             // wait for receive register
-            while (!(pSpi->SPI_SR & SPI_SR_RDRF)) { asm volatile("nop"); };
+            while (!(pSpi->SPI_SR & SPI_SR_RDRF))
+                ;
+            // read data (to clear RDRF)
+            pSpi->SPI_RDR;
         }
     }
 }
