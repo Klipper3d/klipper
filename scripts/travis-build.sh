@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test script for travis-ci.org continuous integration.
 
-# Stop script early on any error; check variables; be verbose
+# Stop script early on any error; check variables
 set -eu
 
 # Paths to tools installed by travis-install.sh
