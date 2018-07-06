@@ -86,7 +86,7 @@ class ControlAutoTune:
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime, last_temp, target_temp):
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False
