@@ -303,15 +303,14 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 void
 spi_prepare(struct spi_config config)
 {
+    *SPI2 = config.config;
+    LL_SPI_Enable(SPI2);
 }
 
 void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
-    *SPI2 = config.config;
-    LL_SPI_Enable(SPI2);
-
     while (len--) {
         LL_SPI_TransmitData8(SPI2, *data);
         while (!LL_SPI_IsActiveFlag_TXE(SPI2));
