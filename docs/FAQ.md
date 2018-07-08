@@ -220,7 +220,7 @@ TMC driver. Trinamic has indicated that this could occur if the driver
 is in "stealthChop mode" and an abrupt velocity change occurs. If you
 experience this problem during homing, consider using a slower homing
 speed. If you experience this problem in the middle of a print,
-consider using a lower junction_deviation setting.
+consider using a lower square_corner_velocity setting.
 
 ### When I set "restart_method=command" my AVR device just hangs on a restart
 
