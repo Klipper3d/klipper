@@ -6,8 +6,8 @@ Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host machine
 for other machines).
 
 Klipper currently supports Atmel ATmega based micro-controllers,
-Arduino Due (Atmel SAM3x8e ARM micro-controller), and
-[Beaglebone PRU](beaglebone.md) based printers.
+Arduino Due (Atmel SAM3x8e ARM micro-controller), Smoothieboard (ARM
+LPC176x), and [Beaglebone PRU](beaglebone.md) based printers.
 
 Prepping an OS image
 ====================
