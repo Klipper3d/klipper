@@ -55,6 +55,14 @@ config section is enabled:
 - Display Message: `M117 <message>`
 - Set build percentage: `M73 P<percent>`
 
+## Other available G-Code commands
+
+The following standard G-Code commands are currently available, but
+using them is not recommended:
+- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>]` (Use
+  SET_GCODE_OFFSET instead.)
+- Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
+
 # Extended G-Code Commands
 
 Klipper uses "extended" G-Code commands for general configuration and
