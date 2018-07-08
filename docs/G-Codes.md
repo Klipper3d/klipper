@@ -48,6 +48,13 @@ Klipper also supports the following standard G-Code commands if the
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
 
+## G-Code display commands
+
+The following standard G-Code commands are available if a "display"
+config section is enabled:
+- Display Message: `M117 <message>`
+- Set build percentage: `M73 P<percent>`
+
 # Extended G-Code Commands
 
 Klipper uses "extended" G-Code commands for general configuration and

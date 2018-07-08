@@ -41,7 +41,7 @@ class PrinterLCD:
             self.msg_time = None
             self.message = None
             self.gcode.register_command('M73', self.cmd_M73)
-            self.gcode.register_command('M117', self.cmd_M117, desc=self.cmd_M117_help)
+            self.gcode.register_command('M117', self.cmd_M117)
             # Load glyphs
             self.load_glyph(self.BED1_GLYPH, icons.heat1_icon)
             self.load_glyph(self.BED2_GLYPH, icons.heat2_icon)
@@ -253,7 +253,6 @@ class PrinterLCD:
     def cmd_M73(self, params):
         self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
         self.prg_time = M73_TIMEOUT
-    cmd_M117_help = "Show Message on Display"
     def cmd_M117(self, params):
         if '#original' in params:
             msg = params['#original']
