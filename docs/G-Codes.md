@@ -26,6 +26,7 @@ Klipper supports the following standard G-Code commands:
 - Emergency stop: `M112`
 - Get current position: `M114`
 - Get firmware version: `M115`
+- Probe the axis endstops: `M119`, usage is discouraged in favour of `QUERY_ENDSTOPS`.
 
 For further details on the above commands see the
 [RepRap G-Code documentation](http://reprap.org/wiki/G-code).
@@ -77,6 +78,7 @@ The following standard commands are supported:
 - `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
   "triggered" or in an "open" state. This command is typically used to
   verify that an endstop is working correctly.
+  Usage of this command is preferred over `M119`.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
