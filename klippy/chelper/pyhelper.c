@@ -18,7 +18,7 @@ double __visible
 get_monotonic(void)
 {
     struct timespec ts;
-    int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+    int ret = clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     if (ret) {
         report_errno("clock_gettime", ret);
         return 0.;
