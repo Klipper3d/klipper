@@ -11,6 +11,7 @@ SLOW_RATIO = 3.
 
 class DeltaKinematics:
     def __init__(self, toolhead, config):
+        # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + n)
                            for n in ['a', 'b', 'c']]
         rail_a = stepper.PrinterRail(
@@ -23,7 +24,7 @@ class DeltaKinematics:
             stepper_configs[2], need_position_minmax = False,
             default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
-        self.need_motor_enable = self.need_home = True
+        # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         arm_length_a = stepper_configs[0].getfloat('arm_length', above=radius)
         self.arm_lengths = arm_lengths = [
@@ -33,6 +34,8 @@ class DeltaKinematics:
         self.endstops = [(rail.get_homing_info().position_endstop
                           + math.sqrt(arm2 - radius**2))
                          for rail, arm2 in zip(self.rails, self.arm2)]
+        # Setup boundary checks
+        self.need_motor_enable = self.need_home = True
         self.limit_xy2 = -1.
         self.max_z = min([rail.get_homing_info().position_endstop
                           for rail in self.rails])
