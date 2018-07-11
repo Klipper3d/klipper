@@ -57,15 +57,15 @@ static void
 spidev_transfer(struct spidev_s *spi, uint8_t receive_data
                 , uint8_t data_len, uint8_t *data)
 {
-    if (spi->flags & SF_HAVE_PIN) {
-        spi_prepare(spi->spi_config);
+    spi_prepare(spi->spi_config);
+
+    if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 0);
-        spi_transfer(spi->spi_config, receive_data, data_len, data);
+
+    spi_transfer(spi->spi_config, receive_data, data_len, data);
+
+    if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 1);
-    } else {
-        spi_prepare(spi->spi_config);
-        spi_transfer(spi->spi_config, receive_data, data_len, data);
-    }
 }
 
 void
