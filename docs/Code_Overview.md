@@ -334,6 +334,59 @@ Useful steps:
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
 
+Porting to a new micro-controller
+=================================
+
+This section provides some tips on porting Klipper's micro-controller
+code to a new architecture. This type of activity requires good
+knowledge of embedded development and hands-on access to the target
+micro-controller.
+
+Useful steps:
+1. Start by identifying any 3rd party libraries that will be used
+   during the port. Common examples include "CMSIS" wrappers and
+   manufacturer "HAL" libraries. All 3rd party code needs to be GNU
+   GPLv3 compatible. The 3rd party code should be committed to the
+   Klipper lib/ directory. Update the lib/README file with information
+   on where and when the library was obtained. It is preferable to
+   copy the code into the Klipper repository unchanged, but if any
+   changes are required then those changes should be listed explicitly
+   in the lib/README file.
+2. Create a new architecture sub-directory in the src/ directory and
+   add initial Kconfig and Makefile support. Use the existing
+   architectures as a guide. The src/simulator provides a basic
+   example of a minimum starting point.
+3. The first main coding task is to bring up communication support to
+   the target board. This is the most difficult step in a new port.
+   Once basic communication is working, the remaining steps tend to be
+   much easier. It is typical to use an RS-232 style serial port
+   during initial development as these types of hardware devices are
+   generally easier to enable and control. During this phase, make
+   liberal use of helper code from the src/generic/ directory (check
+   how src/simulator/Makefile includes the generic C code into the
+   build). It is also necessary to define timer_read_time() (which
+   returns the current system clock) in this phase, but it is not
+   necessary to fully support timer irq handling.
+4. Get familiar with the the console.py tool (as described in the
+   [debugging document](Debugging.md)) and verify connectivity to the
+   micro-controller with it. This tool translates the low-level
+   micro-controller communication protocol to a human readable form.
+5. Add support for timer dispatch from hardware interrupts. See
+   Klipper
+   [commit 970831ee](https://github.com/KevinOConnor/klipper/commit/970831ee0d3b91897196e92270d98b2a3067427f)
+   as an example of steps 1-5 done for the LPC176x architecture.
+6. Bring up basic GPIO input and output support. See Klipper
+   [commit c78b9076](https://github.com/KevinOConnor/klipper/commit/c78b90767f19c9e8510c3155b89fb7ad64ca3c54)
+   as an example of this.
+7. Bring up additional peripherals - for example see Klipper commit
+   [65613aed](https://github.com/KevinOConnor/klipper/commit/65613aeddfb9ef86905cb1dade9e773a02ef3c27),
+   [c812a40a](https://github.com/KevinOConnor/klipper/commit/c812a40a3782415e454b04bf7bd2158a6f0ec8b5),
+   and
+   [c381d03a](https://github.com/KevinOConnor/klipper/commit/c381d03aad5c3ee761169b7c7bced519cc14da29).
+8. Create a sample Klipper config file in the config/ directory. Test
+   the micro-controller with the main klippy.py program.
+9. Consider adding build test cases in the test/ directory.
+
 Time
 ====
 
