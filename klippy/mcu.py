@@ -430,7 +430,6 @@ class MCU:
         self._config_objects = []
         self._init_cmds = []
         self._config_cmds = []
-        self._config_crc = None
         self._pin_map = config.get('pin_map', None)
         self._custom = config.get('custom', '')
         self._mcu_freq = 0.
@@ -505,14 +504,13 @@ class MCU:
             if not line:
                 continue
             self.add_config_cmd(line)
-    def _build_config(self):
+    def _send_config(self, prev_crc):
         # Build config commands
         for co in self._config_objects:
             co.build_config()
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
-
         # Resolve pin names
         mcu_type = self._serial.msgparser.get_constant('MCU')
         pin_resolver = pins.PinResolver(mcu_type)
@@ -522,44 +520,50 @@ class MCU:
             self._config_cmds[i] = pin_resolver.update_command(cmd)
         for i, cmd in enumerate(self._init_cmds):
             self._init_cmds[i] = pin_resolver.update_command(cmd)
-
         # Calculate config CRC
-        self._config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
-        self.add_config_cmd("finalize_config crc=%d" % (self._config_crc,))
-    def _send_config(self):
+        config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
+        self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
+        # Transmit config messages (if needed)
+        if prev_crc is None:
+            logging.info("Sending MCU '%s' printer configuration...", self._name)
+            for c in self._config_cmds:
+                self._serial.send(c)
+        elif config_crc != prev_crc:
+            self._check_restart("CRC mismatch")
+            raise error("MCU '%s' CRC does not match config" % (self._name,))
+        # Transmit init messages
+        for c in self._init_cmds:
+            self._serial.send(c)
+    def _send_get_config(self):
         get_config_cmd = self.lookup_command("get_config")
         if self.is_fileoutput():
-            config_params = {
-                'is_config': 0, 'move_count': 500, 'crc': self._config_crc}
-        else:
-            config_params = get_config_cmd.send_with_response(response='config')
+            return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
+        config_params = get_config_cmd.send_with_response(response='config')
+        if self._is_shutdown:
+            raise error("MCU '%s' error during config: %s" % (
+                self._name, self._shutdown_msg))
+        if config_params['is_shutdown']:
+            raise error("Can not update MCU '%s' config as it is shutdown" % (
+                self._name,))
+        return config_params
+    def _check_config(self):
+        config_params = self._send_get_config()
         if not config_params['is_config']:
             if self._restart_method == 'rpi_usb':
                 # Only configure mcu after usb power reset
                 self._check_restart("full reset before config")
-            # Send config commands
-            logging.info("Sending MCU '%s' printer configuration...",
-                         self._name)
-            for c in self._config_cmds:
-                self._serial.send(c)
-            if not self.is_fileoutput():
-                config_params = get_config_cmd.send_with_response(
-                    response='config')
-                if not config_params['is_config']:
-                    if self._is_shutdown:
-                        raise error("MCU '%s' error during config: %s" % (
-                            self._name, self._shutdown_msg))
-                    raise error("Unable to configure MCU '%s'" % (self._name,))
+            # Not configured - send config and issue get_config again
+            self._send_config(None)
+            config_params = self._send_get_config()
+            if not config_params['is_config'] and not self.is_fileoutput():
+                raise error("Unable to configure MCU '%s'" % (self._name,))
         else:
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
                 raise error("Failed automated reset of MCU '%s'" % (self._name,))
-        if self._config_crc != config_params['crc']:
-            if config_params['is_shutdown']:
-                raise error("Can not update MCU '%s' config as it is shutdown"
-                            % (self._name,))
-            self._check_restart("CRC mismatch")
-            raise error("MCU '%s' CRC does not match config" % (self._name,))
+            # Already configured - send init commands
+            self._send_config(config_params['crc'])
+        # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
         msgparser = self._serial.msgparser
         info = [
@@ -574,8 +578,6 @@ class MCU:
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
             move_count)
         self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
-        for c in self._init_cmds:
-            self._serial.send(c)
     def _connect(self):
         if self.is_fileoutput():
             self._connect_file()
@@ -600,8 +602,7 @@ class MCU:
         self.register_msg(self._handle_shutdown, 'shutdown')
         self.register_msg(self._handle_shutdown, 'is_shutdown')
         self.register_msg(self._handle_mcu_stats, 'stats')
-        self._build_config()
-        self._send_config()
+        self._check_config()
     # Config creation helpers
     def setup_pin(self, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
