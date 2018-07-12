@@ -446,7 +446,7 @@ class MCU:
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
     # Serial callbacks
-    def handle_mcu_stats(self, params):
+    def _handle_mcu_stats(self, params):
         count = params['count']
         tick_sum = params['sum']
         c = 1.0 / (count * self._mcu_freq)
@@ -454,7 +454,7 @@ class MCU:
         tick_sumsq = params['sumsq'] * self._stats_sumsq_base
         self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
         self._mcu_tick_awake = tick_sum / self._mcu_freq
-    def handle_shutdown(self, params):
+    def _handle_shutdown(self, params):
         if self._is_shutdown:
             return
         self._is_shutdown = True
@@ -597,9 +597,9 @@ class MCU:
             and self._serial.msgparser.get_constant(
                 'SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
-        self.register_msg(self.handle_shutdown, 'shutdown')
-        self.register_msg(self.handle_shutdown, 'is_shutdown')
-        self.register_msg(self.handle_mcu_stats, 'stats')
+        self.register_msg(self._handle_shutdown, 'shutdown')
+        self.register_msg(self._handle_shutdown, 'is_shutdown')
+        self.register_msg(self._handle_mcu_stats, 'stats')
         self._build_config()
         self._send_config()
     # Config creation helpers
