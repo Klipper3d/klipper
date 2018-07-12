@@ -231,11 +231,7 @@ class ToolHead:
         self.idle_flush_print_time = 0.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
-        # Motor off tracking
-        self.need_motor_off = False
-        self.motor_off_time = config.getfloat('motor_off_time', 600., above=0.)
-        self.motor_off_timer = self.reactor.register_timer(
-            self._motor_off_handler, self.reactor.NOW)
+        self.printer.try_load_module(config, "idle_timeout")
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
@@ -266,7 +262,6 @@ class ToolHead:
         if not self.sync_print_time:
             return self.print_time
         self.sync_print_time = False
-        self.need_motor_off = True
         est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
         if est_print_time + self.buffer_time_start > self.print_time:
             self.print_time = est_print_time + self.buffer_time_start
@@ -329,19 +324,6 @@ class ToolHead:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
         return self.reactor.NEVER
-    # Motor off timer
-    def _motor_off_handler(self, eventtime):
-        if not self.need_motor_off or not self.sync_print_time:
-            return eventtime + self.motor_off_time
-        elapsed_time = self.mcu.estimated_print_time(eventtime) - self.print_time
-        if elapsed_time < self.motor_off_time:
-            return eventtime + self.motor_off_time - elapsed_time
-        try:
-            self.motor_off()
-        except:
-            logging.exception("Exception in motor_off_handler")
-            self.printer.invoke_shutdown("Exception in motor_off_handler")
-        return eventtime + self.motor_off_time
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
@@ -374,7 +356,6 @@ class ToolHead:
         for ext in kinematics.extruder.get_printer_extruders(self.printer):
             ext.motor_off(last_move_time)
         self.dwell(STALL_TIME)
-        self.need_motor_off = False
         logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):
         self._flush_lookahead()
@@ -402,15 +383,17 @@ class ToolHead:
         return is_active, "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             self.print_time, max(buffer_time, 0.), self.print_stall)
     def get_status(self, eventtime):
-        buffer_time = self.print_time - self.mcu.estimated_print_time(eventtime)
+        print_time = self.print_time
+        estimated_print_time = self.mcu.estimated_print_time(eventtime)
+        last_print_start_time = self.last_print_start_time
+        buffer_time = print_time - estimated_print_time
         if buffer_time > -1. or not self.sync_print_time:
             status = "Printing"
-        elif self.need_motor_off:
-            status = "Ready"
         else:
-            status = "Idle"
-        printing_time = self.print_time - self.last_print_start_time
-        return {'status': status, 'printing_time': printing_time}
+            status = "Ready"
+        return { 'status': status, 'print_time': print_time,
+                 'estimated_print_time': estimated_print_time,
+                 'printing_time': print_time - last_print_start_time }
     def printer_state(self, state):
         if state == 'shutdown':
             try:
