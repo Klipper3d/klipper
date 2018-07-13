@@ -198,3 +198,6 @@ def get_position_from_stable(spos, params):
     sphere_coords = [(t[0], t[1], es + math.sqrt(a2 - radius2) - p)
                      for t, es, a2, p in zip(towers, endstops, arm2, spos)]
     return mathutil.trilateration(sphere_coords, arm2)
+
+def load_kinematics(toolhead, config):
+    return DeltaKinematics(toolhead, config)

@@ -141,3 +141,6 @@ class CoreXYKinematics:
             rail_y.step_itersolve(cmove)
         if axes_d[2]:
             rail_z.step_itersolve(cmove)
+
+def load_kinematics(toolhead, config):
+    return CoreXYKinematics(toolhead, config)
