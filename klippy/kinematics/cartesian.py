@@ -168,3 +168,6 @@ class CartKinematics:
         carriage = gcode.get_int('CARRIAGE', params, minval=0, maxval=1)
         self._activate_carriage(carriage)
         gcode.reset_last_position()
+
+def load_kinematics(toolhead, config):
+    return CartKinematics(toolhead, config)

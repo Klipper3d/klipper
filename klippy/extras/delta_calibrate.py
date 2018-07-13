@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import probe, delta, mathutil
+import probe, mathutil, kinematics.delta
 
 class DeltaCalibrate:
     def __init__(self, config):
@@ -40,10 +40,11 @@ class DeltaCalibrate:
         logging.info("Initial delta_calibrate parameters: %s", params)
         adj_params = ('endstop_a', 'endstop_b', 'endstop_c', 'radius',
                       'angle_a', 'angle_b')
+        get_position_from_stable = kinematics.delta.get_position_from_stable
         def delta_errorfunc(params):
             total_error = 0.
             for spos in positions:
-                x, y, z = delta.get_position_from_stable(spos, params)
+                x, y, z = get_position_from_stable(spos, params)
                 total_error += (z - z_offset)**2
             return total_error
         new_params = mathutil.coordinate_descent(
@@ -51,8 +52,8 @@ class DeltaCalibrate:
         logging.info("Calculated delta_calibrate parameters: %s", new_params)
         for spos in positions:
             logging.info("orig: %s new: %s",
-                         delta.get_position_from_stable(spos, params),
-                         delta.get_position_from_stable(spos, new_params))
+                         get_position_from_stable(spos, params),
+                         get_position_from_stable(spos, new_params))
         self.gcode.respond_info(
             "stepper_a: position_endstop: %.6f angle: %.6f\n"
             "stepper_b: position_endstop: %.6f angle: %.6f\n"
