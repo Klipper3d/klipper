@@ -6,6 +6,7 @@ DICTIONARY atmega2560-16mhz.dict
 CONFIG ../../config/example.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-delta.cfg
+CONFIG ../../config/example-winch.cfg
 
 # Printers using the atmega2560
 DICTIONARY atmega2560-16mhz.dict
