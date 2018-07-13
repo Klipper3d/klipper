@@ -4,15 +4,20 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper, homing, chelper
+import stepper, homing
 
 class CoreXYKinematics:
     def __init__(self, toolhead, config):
+        # Setup axis rails
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
                        stepper.PrinterRail(config.getsection('stepper_y')),
                        stepper.LookupMultiRail(config.getsection('stepper_z')) ]
         self.rails[0].add_to_endstop(self.rails[1].get_endstops()[0][0])
         self.rails[1].add_to_endstop(self.rails[0].get_endstops()[0][0])
+        self.rails[0].setup_itersolve('corexy_stepper_alloc', '+')
+        self.rails[1].setup_itersolve('corexy_stepper_alloc', '-')
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', 'z')
+        # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
@@ -20,13 +25,6 @@ class CoreXYKinematics:
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.rails[0].setup_itersolve(ffi_main.gc(
-            ffi_lib.corexy_stepper_alloc('+'), ffi_lib.free))
-        self.rails[1].setup_itersolve(ffi_main.gc(
-            ffi_lib.corexy_stepper_alloc('-'), ffi_lib.free))
-        self.rails[2].setup_cartesian_itersolve('z')
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)

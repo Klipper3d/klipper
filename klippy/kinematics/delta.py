@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, chelper, mathutil
+import stepper, homing, mathutil
 
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.
@@ -60,12 +60,8 @@ class DeltaKinematics:
         self.towers = [(math.cos(math.radians(angle)) * radius,
                         math.sin(math.radians(angle)) * radius)
                        for angle in self.angles]
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
         for r, a, t in zip(self.rails, self.arm2, self.towers):
-            sk = ffi_main.gc(ffi_lib.delta_stepper_alloc(a, t[0], t[1]),
-                             ffi_lib.free)
-            r.setup_itersolve(sk)
+            r.setup_itersolve('delta_stepper_alloc', a, t[0], t[1])
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([r.get_steppers()[0].get_step_dist()

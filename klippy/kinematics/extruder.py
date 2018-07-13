@@ -51,8 +51,7 @@ class PrinterExtruder:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.extruder_move_fill = ffi_lib.extruder_move_fill
-        sk = ffi_main.gc(ffi_lib.extruder_stepper_alloc(), ffi_lib.free)
-        self.stepper.setup_itersolve(sk)
+        self.stepper.setup_itersolve('extruder_stepper_alloc')
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
         if self.name in ('extruder', 'extruder0'):
