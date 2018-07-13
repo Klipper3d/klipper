@@ -231,7 +231,8 @@ class DummyExtruder:
     def lookahead(self, moves, flush_count, lazy):
         return flush_count
 
-def add_printer_objects(printer, config):
+def add_printer_objects(config):
+    printer = config.get_printer()
     for i in range(99):
         section = 'extruder%d' % (i,)
         if not config.has_section(section):

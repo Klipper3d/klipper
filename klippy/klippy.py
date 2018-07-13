@@ -213,11 +213,11 @@ class Printer:
         # Create printer components
         config = ConfigWrapper(self, fileconfig, 'printer')
         for m in [pins, heater, mcu]:
-            m.add_printer_objects(self, config)
+            m.add_printer_objects(config)
         for section in fileconfig.sections():
             self.try_load_module(config, section)
         for m in [toolhead, extruder]:
-            m.add_printer_objects(self, config)
+            m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         valid_sections = { s: 1 for s, o in self.all_config_options }
         for section_name in fileconfig.sections():

@@ -216,8 +216,8 @@ class ControlPID:
 ######################################################################
 
 class PrinterHeaters:
-    def __init__(self, printer, config):
-        self.printer = printer
+    def __init__(self, config):
+        self.printer = config.get_printer()
         self.sensors = {}
         self.heaters = {}
     def add_sensor(self, sensor_type, sensor_factory):
@@ -249,5 +249,5 @@ class PrinterHeaters:
                 sensor_type,))
         return self.sensors[sensor_type](config)
 
-def add_printer_objects(printer, config):
-    printer.add_object('heater', PrinterHeaters(printer, config))
+def add_printer_objects(config):
+    config.get_printer().add_object('heater', PrinterHeaters(config))
