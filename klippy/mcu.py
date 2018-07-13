@@ -399,10 +399,10 @@ class MCU_adc:
 
 class MCU:
     error = error
-    def __init__(self, printer, config, clocksync):
-        self._printer = printer
+    def __init__(self, config, clocksync):
+        self._printer = config.get_printer()
         self._clocksync = clocksync
-        self._reactor = printer.get_reactor()
+        self._reactor = self._printer.get_reactor()
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
@@ -425,7 +425,7 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         # Config building
-        printer.lookup_object('pins').register_chip(self._name, self)
+        self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_objects = []
         self._init_cmds = []
@@ -775,13 +775,14 @@ def error_help(msg):
                 return help_msg
     return ""
 
-def add_printer_objects(printer, config):
+def add_printer_objects(config):
+    printer = config.get_printer()
     reactor = printer.get_reactor()
     mainsync = clocksync.ClockSync(reactor)
-    printer.add_object('mcu', MCU(printer, config.getsection('mcu'), mainsync))
+    printer.add_object('mcu', MCU(config.getsection('mcu'), mainsync))
     for s in config.get_prefix_sections('mcu '):
         printer.add_object(s.section, MCU(
-            printer, s, clocksync.SecondarySync(reactor, mainsync)))
+            s, clocksync.SecondarySync(reactor, mainsync)))
 
 def get_printer_mcu(printer, name):
     if name == 'mcu':

@@ -247,5 +247,5 @@ class PrinterPins:
             raise error("Duplicate chip name '%s'" % (chip_name,))
         self.chips[chip_name] = chip
 
-def add_printer_objects(printer, config):
-    printer.add_object('pins', PrinterPins())
+def add_printer_objects(config):
+    config.get_printer().add_object('pins', PrinterPins())

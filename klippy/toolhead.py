@@ -442,5 +442,5 @@ class ToolHead:
         accel = gcode.get_float('S', params, above=0.)
         self.max_accel = min(accel, self.config_max_accel)
 
-def add_printer_objects(printer, config):
-    printer.add_object('toolhead', ToolHead(config))
+def add_printer_objects(config):
+    config.get_printer().add_object('toolhead', ToolHead(config))
