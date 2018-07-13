@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
-import homing, chelper
+import homing
 
 
 ######################################################################
@@ -62,6 +62,7 @@ class PrinterStepper:
         # Wrappers
         self.step_itersolve = self.mcu_stepper.step_itersolve
         self.setup_itersolve = self.mcu_stepper.setup_itersolve
+        self.set_stepper_kinematics = self.mcu_stepper.set_stepper_kinematics
         self.set_ignore_move = self.mcu_stepper.set_ignore_move
         self.set_position = self.mcu_stepper.set_position
         self.get_mcu_position = self.mcu_stepper.get_mcu_position
@@ -108,7 +109,6 @@ class PrinterRail:
         self.steppers = [stepper]
         self.name = stepper.get_name(short=True)
         self.step_itersolve = stepper.step_itersolve
-        self.setup_itersolve = stepper.setup_itersolve
         self.get_commanded_position = stepper.get_commanded_position
         self.is_motor_enabled = stepper.is_motor_enabled
         # Primary endstop and its position
@@ -235,11 +235,9 @@ class PrinterRail:
     def step_multi_itersolve(self, cmove):
         for stepper in self.steppers:
             stepper.step_itersolve(cmove)
-    def setup_cartesian_itersolve(self, axis):
-        ffi_main, ffi_lib = chelper.get_ffi()
+    def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
-            stepper.setup_itersolve(ffi_main.gc(
-                ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
+            stepper.setup_itersolve(alloc_func, *params)
     def set_max_jerk(self, max_halt_velocity, max_accel):
         for stepper in self.steppers:
             stepper.set_max_jerk(max_halt_velocity, max_accel)

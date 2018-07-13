@@ -45,14 +45,14 @@ class StepperBuzz:
             stepper.motor_enable(print_time, 1)
             print_time += .1
         was_ignore = stepper.set_ignore_move(False)
-        prev_sk = stepper.setup_itersolve(self.stepper_kinematics)
+        prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
         for i in range(10):
             self.manual_move(print_time, stepper, 0., 1.)
             print_time += .3
             self.manual_move(print_time, stepper, 1., -1.)
             toolhead.reset_print_time(print_time + .7)
             print_time = toolhead.get_last_move_time()
-        stepper.setup_itersolve(prev_sk)
+        stepper.set_stepper_kinematics(prev_sk)
         stepper.set_ignore_move(was_ignore)
         if need_motor_enable:
             print_time += .1

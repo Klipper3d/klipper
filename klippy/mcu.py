@@ -39,12 +39,10 @@ class MCU_stepper:
         self._min_stop_interval = min_stop_interval
     def setup_step_distance(self, step_dist):
         self._step_dist = step_dist
-    def setup_itersolve(self, sk):
-        old_sk = self._stepper_kinematics
-        self._stepper_kinematics = sk
-        self._ffi_lib.itersolve_set_stepcompress(
-            sk, self._stepqueue, self._step_dist)
-        return old_sk
+    def setup_itersolve(self, alloc_func, *params):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
+        self.set_stepper_kinematics(sk)
     def build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
@@ -85,6 +83,12 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
+    def set_stepper_kinematics(self, sk):
+        old_sk = self._stepper_kinematics
+        self._stepper_kinematics = sk
+        self._ffi_lib.itersolve_set_stepcompress(
+            sk, self._stepqueue, self._step_dist)
+        return old_sk
     def set_ignore_move(self, ignore_move):
         was_ignore = (self._itersolve_gen_steps
                       is not self._ffi_lib.itersolve_gen_steps)

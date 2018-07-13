@@ -4,13 +4,17 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, homing, chelper
+import stepper, homing
 
 class CartKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        # Setup axis rails
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in ['x', 'y', 'z']]
+        for rail, axis in zip(self.rails, 'xyz'):
+            rail.setup_itersolve('cartesian_stepper_alloc', axis)
+        # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
@@ -18,10 +22,6 @@ class CartKinematics:
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        for axis, rail in zip('xyz', self.rails):
-            rail.setup_cartesian_itersolve(axis)
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         self.rails[0].set_max_jerk(max_halt_velocity, max_accel)
@@ -36,7 +36,7 @@ class CartKinematics:
             dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             dc_rail = stepper.LookupMultiRail(dc_config)
-            dc_rail.setup_cartesian_itersolve(dc_axis)
+            dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis)
             dc_rail.set_max_jerk(max_halt_velocity, max_accel)
             self.dual_carriage_rails = [
                 self.rails[self.dual_carriage_axis], dc_rail]
