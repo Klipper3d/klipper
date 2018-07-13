@@ -20,8 +20,6 @@ class CartKinematics:
         self.limits = [(1.0, -1.0)] * 3
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
         for axis, rail in zip('xyz', self.rails):
             rail.setup_cartesian_itersolve(axis)
         # Setup stepper max halt velocity
@@ -141,15 +139,9 @@ class CartKinematics:
     def move(self, print_time, move):
         if self.need_motor_enable:
             self._check_motor_enable(print_time, move)
-        self.move_fill(
-            self.cmove, print_time,
-            move.accel_t, move.cruise_t, move.decel_t,
-            move.start_pos[0], move.start_pos[1], move.start_pos[2],
-            move.axes_d[0], move.axes_d[1], move.axes_d[2],
-            move.start_v, move.cruise_v, move.accel)
         for i, rail in enumerate(self.rails):
             if move.axes_d[i]:
-                rail.step_itersolve(self.cmove)
+                rail.step_itersolve(move.cmove)
     # Dual carriage support
     def _activate_carriage(self, carriage):
         toolhead = self.printer.lookup_object('toolhead')

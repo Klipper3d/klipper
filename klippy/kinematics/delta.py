@@ -62,8 +62,6 @@ class DeltaKinematics:
                        for angle in self.angles]
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
         for r, a, t in zip(self.rails, self.arm2, self.towers):
             sk = ffi_main.gc(ffi_lib.delta_stepper_alloc(a, t[0], t[1]),
                              ffi_lib.free)
@@ -163,14 +161,8 @@ class DeltaKinematics:
     def move(self, print_time, move):
         if self.need_motor_enable:
             self._check_motor_enable(print_time)
-        self.move_fill(
-            self.cmove, print_time,
-            move.accel_t, move.cruise_t, move.decel_t,
-            move.start_pos[0], move.start_pos[1], move.start_pos[2],
-            move.axes_d[0], move.axes_d[1], move.axes_d[2],
-            move.start_v, move.cruise_v, move.accel)
         for rail in self.rails:
-            rail.step_itersolve(self.cmove)
+            rail.step_itersolve(move.cmove)
     # Helper functions for DELTA_CALIBRATE script
     def get_stable_position(self):
         steppers = [rail.get_steppers()[0] for rail in self.rails]
