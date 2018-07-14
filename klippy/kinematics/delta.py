@@ -174,18 +174,22 @@ class DeltaKinematics:
             'angle_c': self.angles[2], 'radius': self.radius,
             'arm_a': self.arm_lengths[0], 'arm_b': self.arm_lengths[1],
             'arm_c': self.arm_lengths[2] }
-
-def get_position_from_stable(spos, params):
-    angles = [params['angle_a'], params['angle_b'], params['angle_c']]
-    radius = params['radius']
-    radius2 = radius**2
-    towers = [(math.cos(angle) * radius, math.sin(angle) * radius)
-              for angle in map(math.radians, angles)]
-    arm2 = [a**2 for a in [params['arm_a'], params['arm_b'], params['arm_c']]]
-    endstops = [params['endstop_a'], params['endstop_b'], params['endstop_c']]
-    sphere_coords = [(t[0], t[1], es + math.sqrt(a2 - radius2) - p)
-                     for t, es, a2, p in zip(towers, endstops, arm2, spos)]
-    return mathutil.trilateration(sphere_coords, arm2)
+    def get_positions_from_stable(self, stable_positions, params):
+        angle_names = ['angle_a', 'angle_b', 'angle_c']
+        angles = [math.radians(params[an]) for an in angle_names]
+        radius = params['radius']
+        radius2 = radius**2
+        towers = [(math.cos(a) * radius, math.sin(a) * radius) for a in angles]
+        arm2 = [params[an]**2 for an in ['arm_a', 'arm_b', 'arm_c']]
+        endstop_names = ['endstop_a', 'endstop_b', 'endstop_c']
+        endstops = [params[en] + math.sqrt(a2 - radius2)
+                    for en, a2 in zip(endstop_names, arm2)]
+        out = []
+        for spos in stable_positions:
+            sphere_coords = [(t[0], t[1], es - sp)
+                             for t, es, sp in zip(towers, endstops, spos)]
+            out.append(mathutil.trilateration(sphere_coords, arm2))
+        return out
 
 def load_kinematics(toolhead, config):
     return DeltaKinematics(toolhead, config)
