@@ -147,9 +147,9 @@ class ProbePointsHelper:
             except:
                 raise config.error("Unable to parse probe points in %s" % (
                     config.get_name()))
-            if len(self.probe_points) < 3:
-                raise config.error("Need at least 3 points for %s" % (
-                    config.get_name()))
+        if len(self.probe_points) < 3:
+            raise config.error("Need at least 3 probe points for %s" % (
+                config.get_name()))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
         # Lookup probe object
