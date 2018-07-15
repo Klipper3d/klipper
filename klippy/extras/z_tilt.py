@@ -18,8 +18,7 @@ class ZTilt:
         except:
             raise config.error("Unable to parse z_positions in %s" % (
                 config.get_name()))
-        self.probe_helper = probe.ProbePointsHelper(
-            config, self, default_points=self.z_positions)
+        self.probe_helper = probe.ProbePointsHelper(config, self)
         self.z_steppers = []
         # Register Z_TILT_ADJUST command
         self.gcode = self.printer.lookup_object('gcode')
