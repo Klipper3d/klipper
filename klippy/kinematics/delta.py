@@ -163,17 +163,16 @@ class DeltaKinematics:
     def get_stable_position(self):
         steppers = [rail.get_steppers()[0] for rail in self.rails]
         return [int((ep - s.get_commanded_position()) / s.get_step_dist() + .5)
-                * s.get_step_dist()
                 for ep, s in zip(self.endstops, steppers)]
     def get_calibrate_params(self):
-        return {
-            'endstop_a': self.rails[0].get_homing_info().position_endstop,
-            'endstop_b': self.rails[1].get_homing_info().position_endstop,
-            'endstop_c': self.rails[2].get_homing_info().position_endstop,
-            'angle_a': self.angles[0], 'angle_b': self.angles[1],
-            'angle_c': self.angles[2], 'radius': self.radius,
-            'arm_a': self.arm_lengths[0], 'arm_b': self.arm_lengths[1],
-            'arm_c': self.arm_lengths[2] }
+        out = { 'radius': self.radius }
+        for i, axis in enumerate('abc'):
+            rail = self.rails[i]
+            out['endstop_'+axis] = rail.get_homing_info().position_endstop
+            out['stepdist_'+axis] = rail.get_steppers()[0].get_step_dist()
+            out['angle_'+axis] = self.angles[i]
+            out['arm_'+axis] = self.arm_lengths[i]
+        return out
     def get_positions_from_stable(self, stable_positions, params):
         angle_names = ['angle_a', 'angle_b', 'angle_c']
         angles = [math.radians(params[an]) for an in angle_names]
@@ -181,13 +180,16 @@ class DeltaKinematics:
         radius2 = radius**2
         towers = [(math.cos(a) * radius, math.sin(a) * radius) for a in angles]
         arm2 = [params[an]**2 for an in ['arm_a', 'arm_b', 'arm_c']]
+        stepdist_names = ['stepdist_a', 'stepdist_b', 'stepdist_c']
+        stepdists = [params[sn] for sn in stepdist_names]
         endstop_names = ['endstop_a', 'endstop_b', 'endstop_c']
         endstops = [params[en] + math.sqrt(a2 - radius2)
                     for en, a2 in zip(endstop_names, arm2)]
         out = []
         for spos in stable_positions:
-            sphere_coords = [(t[0], t[1], es - sp)
-                             for t, es, sp in zip(towers, endstops, spos)]
+            sphere_coords = [
+                (t[0], t[1], es - sp * sd)
+                for t, es, sd, sp in zip(towers, endstops, stepdists, spos) ]
             out.append(mathutil.trilateration(sphere_coords, arm2))
         return out
 
