@@ -18,6 +18,8 @@ class ZTilt:
         except:
             raise config.error("Unable to parse z_positions in %s" % (
                 config.get_name()))
+        if len(z_positions) < 2:
+            raise config.error("z_tilt requires at least two z_positions")
         self.probe_helper = probe.ProbePointsHelper(config, self)
         self.z_steppers = []
         # Register Z_TILT_ADJUST command
@@ -30,12 +32,7 @@ class ZTilt:
             self.handle_connect()
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        try:
-            z_steppers = kin.get_rails('Z')[0].get_steppers()
-        except:
-            logging.exception("z_tilt stepper lookup")
-            raise self.printer.config_error(
-                "z_tilt requires multiple Z steppers")
+        z_steppers = kin.get_steppers('Z')
         if len(z_steppers) != len(self.z_positions):
             raise self.printer.config_error(
                 "z_tilt z_positions needs exactly %d items" % (len(z_steppers),))
