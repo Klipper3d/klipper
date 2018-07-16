@@ -32,10 +32,10 @@ class CoreXYKinematics:
         self.rails[1].set_max_jerk(max_xy_halt_velocity, max_accel)
         self.rails[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
-    def get_rails(self, flags=""):
+    def get_steppers(self, flags=""):
         if flags == "Z":
-            return [self.rails[2]]
-        return list(self.rails)
+            return self.rails[2].get_steppers()
+        return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self):
         pos = [rail.get_commanded_position() for rail in self.rails]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
