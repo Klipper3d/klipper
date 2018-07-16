@@ -112,7 +112,8 @@ class PrinterRail:
         self.get_commanded_position = stepper.get_commanded_position
         self.is_motor_enabled = stepper.is_motor_enabled
         # Primary endstop and its position
-        ppins = config.get_printer().lookup_object('pins')
+        printer = config.get_printer()
+        ppins = printer.lookup_object('pins')
         mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         self.endstops = [(mcu_endstop, self.name)]
         stepper.add_to_endstop(mcu_endstop)
@@ -121,6 +122,8 @@ class PrinterRail:
         else:
             self.position_endstop = config.getfloat(
                 'position_endstop', default_position_endstop)
+        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops.register_endstop(mcu_endstop, self.name)
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat('position_min', 0.)
@@ -225,9 +228,13 @@ class PrinterRail:
         mcu_endstop = self.endstops[0][0]
         endstop_pin = config.get('endstop_pin', None)
         if endstop_pin is not None:
-            ppins = config.get_printer().lookup_object('pins')
+            printer = config.get_printer()
+            ppins = printer.lookup_object('pins')
             mcu_endstop = ppins.setup_pin('endstop', endstop_pin)
-            self.endstops.append((mcu_endstop, stepper.get_name(short=True)))
+            name = stepper.get_name(short=True)
+            self.endstops.append((mcu_endstop, name))
+            query_endstops = printer.try_load_module(config, 'query_endstops')
+            query_endstops.register_endstop(mcu_endstop, name)
         stepper.add_to_endstop(mcu_endstop)
     def add_to_endstop(self, mcu_endstop):
         for stepper in self.steppers:

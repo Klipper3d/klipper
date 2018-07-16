@@ -116,18 +116,6 @@ class Homing:
             self.toolhead.motor_off()
             raise
 
-def query_endstops(toolhead):
-    print_time = toolhead.get_last_move_time()
-    rails = toolhead.get_kinematics().get_rails()
-    out = []
-    for rail in rails:
-        for mcu_endstop, name in rail.get_endstops():
-            mcu_endstop.query_endstop(print_time)
-    for rail in rails:
-        for mcu_endstop, name in rail.get_endstops():
-            out.append((name, mcu_endstop.query_endstop_wait()))
-    return out
-
 class EndstopError(Exception):
     pass
 
