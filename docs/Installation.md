@@ -58,6 +58,10 @@ changing). Once configured, run:
 make
 ```
 
+For LPC176x controllers (Smoothie, S-base, AZSMZ mini, Azteeg X5) you will need to 
+copy the out/klipper.bin to firmware.bin on a SD card and insert into 
+the LPC1768 based board. For other micro-controllers use below.
+
 Finally, for common micro-controllers, the code can be flashed with:
 
 ```
