@@ -64,6 +64,7 @@ class PrinterStepper:
         self.setup_itersolve = self.mcu_stepper.setup_itersolve
         self.set_stepper_kinematics = self.mcu_stepper.set_stepper_kinematics
         self.set_ignore_move = self.mcu_stepper.set_ignore_move
+        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
         self.set_position = self.mcu_stepper.set_position
         self.get_mcu_position = self.mcu_stepper.get_mcu_position
         self.get_commanded_position = self.mcu_stepper.get_commanded_position
