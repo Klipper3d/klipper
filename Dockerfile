@@ -16,7 +16,7 @@ FROM debian
 RUN apt-get update && \
     apt-get install -y sudo
 
-# Create an user
+# Create user
 RUN useradd -ms /bin/bash klippy && adduser klippy dialout
 USER klippy
 
@@ -29,7 +29,7 @@ WORKDIR /home/klippy
 
 COPY . klipper/
 USER root
-RUN mv klipper/dockersupport/klippy.sudoers /etc/sudoers.d/klippy && \
+RUN echo 'klippy ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/klippy && \
     chown klippy:klippy -R klipper
 USER klippy
 RUN ls -lha ./klipper/scripts/
