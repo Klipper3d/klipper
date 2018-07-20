@@ -1,0 +1,334 @@
+/*
+ * Copyright (C) 2013 Intelligent Agent AS	<elias@iagent.no>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+    /* identification */
+    part-number = "BB-BONE-REPLICAP";
+    version = "0B3A";
+
+    /* state the resources this cape uses */
+    exclusive-use =
+        /* the pin header P8 uses */
+        "P8.8",  /* FAULT_EXT_2	*/
+        "P8.9",  /* FAULT_Y 	*/
+        "P8.10", /* FAULT_X 	*/
+        "P8.11", /* STEP_H	*/
+        "P8.12", /* STEP_Y      */
+        "P8.13", /* STEP_Z      */
+        "P8.14", /* DIR_Z       */
+        "P8.15", /* DIR_E 	*/
+        "P8.16", /* DIR_H 	*/
+        "P8.17", /* STEP_X      */
+        "P8.18", /* FAULT_E	*/
+        "P8.19", /* DIR_Y       */
+        "P8.26", /* DIR_X       */
+        /* the pin header P9 uses */
+        "P9.11", /* END_STOP_X2	*/
+        "P9.12", /* STEP_E 	*/
+        "P9.13", /* END_STOP_Z1	*/
+        "P9.16", /* SERVO_0     */
+        "P9.17", /* SPI1_CS2"   */
+        "P9.18", /* SERVO_1	*/
+        "P9.22", /* Dallas 1W   */
+        "P9.23", /* END_STOP_Y1 */
+        "P9.24", /* FAULT_Z     */
+        "P9.25", /* END_STOP_X1	*/
+        "P9.28", /* END_STOP_Y2	*/
+        "P9.29", /* SPI1_MISO   */
+        "P9.30", /* SPI1_MOSI	*/
+        "P9.31", /* SPI1_SCLK	*/
+        "P9.33", /* AIN4        */
+        "P9.35", /* AIN6        */
+        "P9.36", /* AIN5        */
+        "P9.41", /* ENABLE_PWM  */
+        "P9.42"; /* SPI1_CS1	*/
+
+    fragment@0 {
+        target = <&am33xx_pinmux>;
+        __overlay__ {
+            bone_replicape_spi1_pins: pinmux_replicape_spi1_pins {
+                pinctrl-single,pins = <
+                    0x190 0x33	/* P9_31 = mcasp0_aclkx.spi1_sclk				 , OUTPUT_PULLUP | MODE3 */
+                    0x194 0x33	/* P9_29 = mcasp0_fsx.spi1_d0					 , INPUT_PULLUP  | MODE3 */
+                    0x198 0x13	/* P9_30 = mcasp0_axr0.spi1_d1					 , OUTPUT_PULLUP | MODE3 */
+                    0x164 0x12  /* P9_42 = GPIO0_7 =  eCAP0_in_PWM0_out.gpio0[7]                 , OUTPUT_PULLUP | MODE2 */
+                    0x19c 0x13  /* P9_28 */
+                    0x15c 0x17  /* P9_17 */
+                    /* http://www.kilobaser.com/blog/2014-07-28-beaglebone-black-devicetreeoverlay-generator  */
+                >;
+            };					
+            pruicss_stepper_pins: pinmux_pruicss_stepper_pins{
+                pinctrl-single,pins = <
+                    0x038 0x07 // P8_16 (3)  = DIR_H     	= GPIO1_14
+                    0x03C 0x07 // P8_15 (4)  = DIR_E    	= GPIO1_15
+                    0x028 0x07 // P8_14 (5)  = DIR_Z   	 	= GPIO0_26
+                    0x02C 0x07 // P8_17 (6)  = STEP_X 	 	= GPIO0_27
+                    0x034 0x07 // P8_11 (22) = step_H    	= GPIO1_13	
+                    0x030 0x07 // P8_12 (23) = Step_y	 	= GPIO1_12
+                    0x024 0x07 // P8_13 (24) = Step_z	 	= GPIO0_23
+                    0x020 0x07 // P8_19 (25) = Dir_y 	 	= GPIO0_22
+                    0x07C 0x07 // P8_26      = Dir_x		= GPIO1_29
+                    0x078 0x07 // P9_12      = step E    	= GPIO1_28
+                >;
+            };		
+
+            stepper_fault_pins: pinmux_stepper_fault_pins{
+                pinctrl-single,pins = <
+                    0x094 0x37 // P8_8  = FAULT H = GPIO2_3
+                    0x09C 0x37 // P8_9  = FAYLT Y = GPIO2_5
+                    0x098 0x37 // P8_10 = FAULT X = GPIO2_4
+                    0x08C 0x37 // P8_18 = FAULT E = GPIO2_1
+                    0x184 0x37 // P9_24 = FAULT Z = GPIO0_15
+                >;
+            };
+
+            end_stop_pins: pinmux_end_stop_pins{
+                pinctrl-single,pins = <
+                    0x1AC 0x37 // P9_25 = End stop X1  = GPIO3_21
+                    0x070 0x37 // P9_11 = End stop X2  = GPIO0_30
+                    0x044 0x37 // P9_23 = End stop Y1  = GPIO1_17
+                    0x074 0x37 // P9_13 = End stop Z1  = GPIO0_31
+                    0x158 0x37 // P9_18 = End stop Z2  = GPIO0_4
+		    /*0x19C 0x37 // P9_28 = End stop Y2  = GPIO3_17*/
+                >;
+            };
+            dallas_w1_pins: pinmux_dallas_w1_pins {
+                pinctrl-single,pins = <
+		            0x150 0x37	// Dallas 1W
+                >;
+            };
+
+            servo_pins: pinmux_servo_pins {
+                pinctrl-single,pins = <
+			0x048 0x36     // P9_14 = Servo 0 = GPIO1_18
+                        0x04C 0x36     // P9_16 = Servo 1 = GPIO1_19
+                >;
+            };
+        };
+    };
+
+/*Informacion sacada de*/
+/*https://hk.saowen.com/a/1d61431d2cabde08c6692bf0985236a93b1a6bfe7b7e1a2a39eb6f5950fc5937*/
+
+    fragment@1 {
+        target = <&spi1>;
+        __overlay__ {
+            #address-cells 	= <1>;
+            #size-cells 	= <0>;
+            status		= "okay";
+            pinctrl-names	= "default";
+            pinctrl-0		= <&bone_replicape_spi1_pins>;	
+            /*cs-gpios 		= <&gpio1 12 0>, <&gpio1 7 0>, <&gpio1 5 0>;*/
+            cs-gpios            = <0>, <0>, <&gpio0 5 0>;
+            stepper_control{
+                #address-cells 	  = <1>;
+                #size-cells 	  = <0>;
+                compatible 	  = "spidev";
+                reg 		  = <1>;
+                spi-max-frequency = <16000000>;
+            };
+            tc0_read{
+                #address-cells 	  = <1>;
+                #size-cells 	  = <0>;
+                compatible 	  = "spidev";
+                reg 		  = <0>;
+                spi-max-frequency = <16000000>;
+            };
+            tc1_read{
+                #address-cells 	  = <1>;
+                #size-cells 	  = <0>;
+                compatible 	  = "spidev";
+                reg 		  = <2>;
+                spi-max-frequency = <16000000>;
+            };
+        };
+    };
+
+    fragment@2{
+        target = <&pruss>;
+        __overlay__{
+            status = "okay";
+            pinctrl-names = "default";
+            pinctrl-0 	  = <&pruicss_stepper_pins>;
+
+            stepper_x{
+                pin-names 	= "Replic:pru-step_x", "Replic:pru-dir_x";		
+                gpios 		= <&gpio0 27 0
+		                 	   &gpio1 29 0>; 
+            };			
+            stepper_y{
+                pin-names 	= "Replic:pru-step_y", "Replic:pru-dir_y";		
+                gpios 		=<&gpio1 12 0
+		                 	  &gpio0 22 0>; 
+            };
+            stepper_z{
+                pin-names 	= "Replic:pru-step_z", "Replic:pru-dir_z";		
+                gpios 		= <&gpio0 23 0
+		                 	   &gpio0 26 0>; 
+            };
+            stepper_ext_1{
+                pin-names 	= "Replic:pru-step_ext_1", "Replic:pru-dir_ext_1";		
+                gpios 		= <&gpio1 28 0
+		                 	   &gpio1 15 0>; 
+            };
+            stepper_ext_2{
+                pin-names 	= "Replic:pru-step_ext_2", "Replic:pru-dir_ext_2";		
+                gpios 		= <&gpio1 13 0
+		                 	   &gpio1 14 0>; 
+            };
+        };
+    };
+
+    fragment@3 {
+        target = <&ocp>;
+        __overlay__ {			
+            #address-cells = <1>;
+            #size-cells = <1>;							
+
+            gpio_keys {
+                compatible = "gpio-keys";
+                pinctrl-names = "default";
+                pinctrl-0 = <&end_stop_pins>;
+                pinctrl-1 = <&stepper_fault_pins>;
+                #address-cells = <1>;
+                #size-cells = <0>;
+
+                switch_x1 {
+                    label               = "Replic:End-stop-X1";
+                    debounce_interval   = <5>;
+                    linux,code          = <112>;
+                    gpios               = <&gpio3 21 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };				
+                switch_x2 {
+                    label               = "Replic:End-stop-X2";
+                    debounce_interval   = <5>;
+                    linux,code          = <113>;
+                    gpios               = <&gpio0 30 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };
+                switch_y1 {
+                    label               = "Replic:End-stop-Y1";
+                    debounce_interval   = <5>;
+                    linux,code          = <114>;
+                    gpios               = <&gpio1 17 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };				
+                switch_y2 {
+                    label               = "Replic:End-stop-Y2";
+                    debounce_interval   = <5>;
+                    linux,code          = <115>;
+                    gpios               = <&gpio3 17 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };				
+                switch_z1 {
+                    label               = "Replic:End-stop-Z1";
+                    debounce_interval   = <5>;
+                    linux,code          = <116>;
+                    gpios               = <&gpio0 31 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };				
+                switch_z2 {
+                    label               = "Replic:End-stop-Z2";
+                    debounce_interval   = <50>;
+                    linux,code          = <117>;
+                    gpios               = <&gpio0 4 0x5>;
+                    gpio-key,wakeup;
+		    linux,can-disable;
+                };				
+                fault_x {
+                    label               = "Replic:Fault-X";
+                    debounce_interval   = <50>;
+                    linux,code          = <90>;
+                    gpios               = <&gpio2 4 0x5>;
+                    gpio-key,wakeup;	
+                };
+                fault_y {
+                    label               = "Replic:Fault-Y";
+                    debounce_interval   = <50>;
+                    linux,code          = <91>;
+                    gpios               = <&gpio2 5 0x5>;
+                    gpio-key,wakeup;	
+                };
+                fault_z {
+                    label               = "Replic:Fault-Z";
+                    debounce_interval   = <50>;
+                    linux,code          = <92>;
+                    gpios               = <&gpio0 15 0x5>;
+                    gpio-key,wakeup;	
+                };
+                fault_e {
+                    label               = "Replic:Fault-E";
+                    debounce_interval   = <50>;
+                    linux,code          = <93>;
+                    gpios               = <&gpio2 1 0x5>;
+                    gpio-key,wakeup;	
+                };
+                fault_h {
+                    label               = "Replic:Fault-H";
+                    debounce_interval   = <50>;
+                    linux,code          = <94>;
+                    gpios               = <&gpio2 3 0x5>;
+                    gpio-key,wakeup;	
+                };
+            };
+            onewire {
+               compatible      = "w1-gpio";
+               pinctrl-names   = "default";
+               pinctrl-0       = <&dallas_w1_pins>;
+               status          = "okay";
+               gpios           = <&gpio0 2 0>;
+            };
+
+	    pwm_enable {
+		compatible      = "bone-pinmux-helper";
+                status 	        = "okay";
+		pinctrl-names   = "default";
+		pinctrl-0       = <&servo_pins>;
+		/*pinctrl-0       = <&clkout2_pins>;*/
+	    };
+        };
+    };
+
+    fragment@4 {
+        target = <&tscadc>;
+        __overlay__ {			
+            status = "okay";
+            adc {
+                ti,adc-channels = <2 3 4 5 6 7>;
+            };
+        };
+    };
+    
+    fragment@5 {
+	target = <&epwmss1>;
+	__overlay__ {
+	  status = "okay";
+	};
+    };
+
+    fragment@6 {
+        target = <&ehrpwm1>;
+        __overlay__ {
+          status = "okay";
+        };
+    };
+
+};
