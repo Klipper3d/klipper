@@ -53,7 +53,7 @@ extern "C" {
         | CKGR_PLLAR_DIVA(0x1U))
 #define SYS_BOARD_MCKR      (PMC_MCKR_PRES_CLK_2 | PMC_MCKR_CSS_PLLA_CLK)
 
-#define SYS_CKGR_MOR_KEY_VALUE	CKGR_MOR_KEY_PASSWD/* Key to unlock MOR register */
+#define SYS_CKGR_MOR_KEY_VALUE  CKGR_MOR_KEY_PASSWD/* Key to unlock MOR register */
 
 uint32_t SystemCoreClock = CHIP_FREQ_MAINCK_RC_4MHZ;
 
@@ -112,7 +112,7 @@ void SystemCoreClockUpdate( void )
 {
     /* Determine clock frequency according to clock register values */
     switch (PMC->PMC_MCKR & (uint32_t) PMC_MCKR_CSS_Msk) {
-    case PMC_MCKR_CSS_SLOW_CLK:	/* Slow clock */
+    case PMC_MCKR_CSS_SLOW_CLK:  /* Slow clock */
         if ( SUPC->SUPC_SR & SUPC_SR_OSCSEL ) {
             SystemCoreClock = CHIP_FREQ_XTAL_32K;
         } else {
@@ -120,7 +120,7 @@ void SystemCoreClockUpdate( void )
         }
         break;
 
-    case PMC_MCKR_CSS_MAIN_CLK:	/* Main clock */
+    case PMC_MCKR_CSS_MAIN_CLK: /* Main clock */
         if ( PMC->CKGR_MOR & CKGR_MOR_MOSCSEL ) {
             SystemCoreClock = CHIP_FREQ_XTAL_12M;
         } else {
@@ -144,7 +144,7 @@ void SystemCoreClockUpdate( void )
         }
         break;
 
-    case PMC_MCKR_CSS_PLLA_CLK:	/* PLLA clock */
+    case PMC_MCKR_CSS_PLLA_CLK: /* PLLA clock */
         if ( PMC->CKGR_MOR & CKGR_MOR_MOSCSEL ) {
             SystemCoreClock = CHIP_FREQ_XTAL_12M ;
         } else {

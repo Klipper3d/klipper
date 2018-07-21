@@ -87,7 +87,7 @@ gpio_in_read(struct gpio_in g)
  * Analog Front-End Converter (AFEC) pins (see datasheet sec. 43.5)
  ****************************************************************/
 static const uint8_t afec0_pins[] = {
-    //remove first channel, since it offsets the channel number: GPIO('A', 8), 
+    //remove first channel, since it offsets the channel number: GPIO('A', 8),
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19),
     GPIO('A', 20), GPIO('B', 0),  GPIO('B', 1), GPIO('C', 13),
     GPIO('C', 15), GPIO('C', 12), GPIO('C', 29), GPIO('C', 30),
@@ -106,7 +106,7 @@ static const uint8_t afec1_pins[] = {
 DECL_CONSTANT(ADC_MAX, 4095);
 
 inline struct gpio_adc
-gpio_pin_to_afec(uint8_t pin) 
+gpio_pin_to_afec(uint8_t pin)
 {
     int chan;
     Afec* afec_device;
