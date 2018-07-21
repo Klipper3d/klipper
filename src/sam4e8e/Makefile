@@ -2,7 +2,7 @@
 
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
-dirs-y += src/sam4e8e src/generic 
+dirs-y += src/sam4e8e src/generic
 
 dirs-y += lib/asf/sam/drivers/pmc \
 		  lib/asf/sam/drivers/pio \

@@ -13,7 +13,7 @@
 #include "sched.h" // DECL_INIT
 
 // ASF
-#include "conf_usb.h"		// Taken from dc42 CoreNG repo
+#include "conf_usb.h"       // Taken from dc42 CoreNG repo
 #include "udi_cdc.h"
 #include "udc.h"
 
@@ -34,7 +34,7 @@ console_check_input(void)
         if (receive_pos >= sizeof(receive_buf))
             break;
         iram_size_t ret = udi_cdc_read_no_polling((void*)&receive_buf[receive_pos], (sizeof(receive_buf) - receive_pos));
-        if(!ret) 
+        if(!ret)
             break;
         receive_pos += ret;
     }
@@ -52,7 +52,7 @@ console_pop_input(uint8_t len)
 }
 
 void
-console_task(void) 
+console_task(void)
 {
     console_check_input();
     uint_fast8_t pop_count;
@@ -79,8 +79,8 @@ core_cdc_enable(uint8_t port)
     return true;
 }
 
-void 
-core_cdc_disable(uint8_t port) 
+void
+core_cdc_disable(uint8_t port)
 {
     isConnected = false;
 }

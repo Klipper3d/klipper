@@ -171,7 +171,7 @@ uint8_t active_channel_afec1 = AFEC_DUMMY;
 
 
 
-inline uint8_t 
+inline uint8_t
 get_active_afec_channel(Afec* afec) {
     if (afec == AFEC0) {
         return active_channel_afec0;
@@ -179,7 +179,7 @@ get_active_afec_channel(Afec* afec) {
     return active_channel_afec1;
 }
 
-inline void 
+inline void
 set_active_afec_channel(Afec* afec, uint8_t chan) {
     if (afec == AFEC0) {
         active_channel_afec0 = chan;
@@ -210,14 +210,14 @@ gpio_adc_sample(struct gpio_adc g)
     set_active_afec_channel(g.afec, g.chan);
 
     for (uint32_t chan = 0; chan < 16; ++chan)
-	{
-		if ((afec_get_interrupt_status(g.afec) & (1 << chan)) != 0)
-		{
-			(void)afec_channel_get_value(g.afec, chan);
-		}
-	}
+    {
+        if ((afec_get_interrupt_status(g.afec) & (1 << chan)) != 0)
+        {
+            (void)afec_channel_get_value(g.afec, chan);
+        }
+    }
     afec_start_software_conversion(g.afec);
-    
+
 need_delay:
     return ADC_FREQ_MAX * 8000ULL / CONFIG_CLOCK_FREQ; // about 400 mcu clock cycles or 40 afec cycles
 }

@@ -60,7 +60,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     usart_enable_rx(p_usart);
     usart_enable_tx(p_usart);
 
-    return (struct spi_config){ .sspi=p_usart, .cfg=p_usart->US_MR };  
+    return (struct spi_config){ .sspi=p_usart, .cfg=p_usart->US_MR };
 }
 
 void

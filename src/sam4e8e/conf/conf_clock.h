@@ -74,13 +74,13 @@
 #define CONFIG_PLL0_SOURCE          PLL_SRC_MAINCK_XTAL
 
 #if SAM4E
-# define CONFIG_PLL0_MUL			20		// (20 * 12)/2 = 120MHz
+# define CONFIG_PLL0_MUL            20      // (20 * 12)/2 = 120MHz
 #endif
 #if SAM3XA
-# define CONFIG_PLL0_MUL			14		// (14 * 12)/2 = 84MHz
+# define CONFIG_PLL0_MUL            14      // (14 * 12)/2 = 84MHz
 #endif
 
-#define CONFIG_PLL0_DIV				1
+#define CONFIG_PLL0_DIV             1
 
 // ===== UPLL (UTMI) Hardware fixed at 480 MHz.
 
