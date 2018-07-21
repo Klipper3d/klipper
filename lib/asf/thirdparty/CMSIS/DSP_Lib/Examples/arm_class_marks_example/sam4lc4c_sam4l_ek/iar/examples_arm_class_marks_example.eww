@@ -1,0 +1,6 @@
+<workspace>
+	<batchBuild></batchBuild>
+	<project>
+		<path>$WS_DIR$\examples_arm_class_marks_example_flash.ewp</path>
+	</project>
+</workspace>

@@ -1,0 +1,259 @@
+/**
+ * \file
+ *
+ * \brief Chip-specific generic clock management.
+ *
+ * Copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ *
+ * \asf_license_start
+ *
+ * \page License
+ *
+ * Subject to your compliance with these terms, you may use Microchip
+ * software and any derivatives exclusively with Microchip products.
+ * It is your responsibility to comply with third party license terms applicable
+ * to your use of third party software (including open source software) that
+ * may accompany Microchip software.
+ *
+ * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES,
+ * WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE,
+ * INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY,
+ * AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT WILL MICROCHIP BE
+ * LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, INCIDENTAL OR CONSEQUENTIAL
+ * LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER RELATED TO THE
+ * SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF THE
+ * POSSIBILITY OR THE DAMAGES ARE FORESEEABLE.  TO THE FULLEST EXTENT
+ * ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY
+ * RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
+ * THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ *
+ * \asf_license_stop
+ *
+ */
+/*
+ * Support and FAQ: visit <a href="https://www.microchip.com/support/">Microchip Support</a>
+ */
+
+#ifndef CHIP_GENCLK_H_INCLUDED
+#define CHIP_GENCLK_H_INCLUDED
+
+#include <osc.h>
+#include <pll.h>
+
+/// @cond 0
+/**INDENT-OFF**/
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**INDENT-ON**/
+/// @endcond
+
+/**
+ * \weakgroup genclk_group
+ * @{
+ */
+
+//! \name Programmable Clock Identifiers (PCK)
+//@{
+#define GENCLK_PCK_0 0 //!< PCK0 ID
+#define GENCLK_PCK_1 1 //!< PCK1 ID
+#define GENCLK_PCK_2 2 //!< PCK2 ID
+//@}
+
+//! \name Programmable Clock Sources (PCK)
+//@{
+
+enum genclk_source {
+	GENCLK_PCK_SRC_SLCK_RC       = 0,//!< Internal 32kHz RC oscillator as PCK source clock
+	GENCLK_PCK_SRC_SLCK_XTAL     = 1,//!< External 32kHz crystal oscillator as PCK source clock
+	GENCLK_PCK_SRC_SLCK_BYPASS   = 2,//!< External 32kHz bypass oscillator as PCK source clock
+	GENCLK_PCK_SRC_MAINCK_4M_RC  = 3,//!< Internal 4MHz RC oscillator as PCK source clock
+	GENCLK_PCK_SRC_MAINCK_8M_RC  = 4,//!< Internal 8MHz RC oscillator as PCK source clock
+	GENCLK_PCK_SRC_MAINCK_12M_RC = 5,//!< Internal 12MHz RC oscillator as PCK source clock
+	GENCLK_PCK_SRC_MAINCK_XTAL   = 6,//!< External crystal oscillator as PCK source clock
+	GENCLK_PCK_SRC_MAINCK_BYPASS = 7,//!< External bypass oscillator as PCK source clock
+	GENCLK_PCK_SRC_PLLACK        = 8,//!< Use PLLACK as PCK source clock
+	GENCLK_PCK_SRC_MCK           = 9,//!< Use Master Clk as PCK source clock
+};
+
+//@}
+
+//! \name Programmable Clock Prescalers (PCK)
+//@{
+
+enum genclk_divider {
+	GENCLK_PCK_PRES_1  = PMC_PCK_PRES(0), //!< Set PCK clock prescaler to 1
+	GENCLK_PCK_PRES_2  = PMC_PCK_PRES(1), //!< Set PCK clock prescaler to 2
+	GENCLK_PCK_PRES_4  = PMC_PCK_PRES(2), //!< Set PCK clock prescaler to 4
+	GENCLK_PCK_PRES_8  = PMC_PCK_PRES(3), //!< Set PCK clock prescaler to 8
+	GENCLK_PCK_PRES_16 = PMC_PCK_PRES(4), //!< Set PCK clock prescaler to 16
+	GENCLK_PCK_PRES_32 = PMC_PCK_PRES(5), //!< Set PCK clock prescaler to 32
+	GENCLK_PCK_PRES_64 = PMC_PCK_PRES(6), //!< Set PCK clock prescaler to 64
+};
+
+//@}
+
+struct genclk_config {
+	uint32_t ctrl;
+};
+
+static inline void genclk_config_defaults(struct genclk_config *p_cfg,
+		uint32_t ul_id)
+{
+	ul_id = ul_id;
+	p_cfg->ctrl = 0;
+}
+
+static inline void genclk_config_read(struct genclk_config *p_cfg,
+		uint32_t ul_id)
+{
+	p_cfg->ctrl = PMC->PMC_PCK[ul_id];
+}
+
+static inline void genclk_config_write(const struct genclk_config *p_cfg,
+		uint32_t ul_id)
+{
+	PMC->PMC_PCK[ul_id] = p_cfg->ctrl;
+}
+
+//! \name Programmable Clock Source and Prescaler configuration
+//@{
+
+static inline void genclk_config_set_source(struct genclk_config *p_cfg,
+		enum genclk_source e_src)
+{
+	p_cfg->ctrl &= (~PMC_PCK_CSS_Msk);
+
+	switch (e_src) {
+	case GENCLK_PCK_SRC_SLCK_RC:
+	case GENCLK_PCK_SRC_SLCK_XTAL:
+	case GENCLK_PCK_SRC_SLCK_BYPASS:
+		p_cfg->ctrl |= (PMC_PCK_CSS_SLOW_CLK);
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_4M_RC:
+	case GENCLK_PCK_SRC_MAINCK_8M_RC:
+	case GENCLK_PCK_SRC_MAINCK_12M_RC:
+	case GENCLK_PCK_SRC_MAINCK_XTAL:
+	case GENCLK_PCK_SRC_MAINCK_BYPASS:
+		p_cfg->ctrl |= (PMC_PCK_CSS_MAIN_CLK);
+		break;
+
+	case GENCLK_PCK_SRC_PLLACK:
+		p_cfg->ctrl |= (PMC_PCK_CSS_PLLA_CLK);
+		break;
+
+	case GENCLK_PCK_SRC_MCK:
+		p_cfg->ctrl |= (PMC_PCK_CSS_MCK);
+		break;
+
+	default:
+		break;
+	}
+}
+
+static inline void genclk_config_set_divider(struct genclk_config *p_cfg,
+		uint32_t e_divider)
+{
+	p_cfg->ctrl &= ~PMC_PCK_PRES_Msk;
+	p_cfg->ctrl |= e_divider;
+}
+
+//@}
+
+static inline void genclk_enable(const struct genclk_config *p_cfg, uint32_t ul_id)
+{
+	PMC->PMC_PCK[ul_id] = p_cfg->ctrl;
+	pmc_enable_pck(ul_id);
+}
+
+static inline void genclk_disable(uint32_t ul_id)
+{
+	pmc_disable_pck(ul_id);
+}
+
+static inline void genclk_enable_source(enum genclk_source e_src)
+{
+	switch (e_src) {
+	case GENCLK_PCK_SRC_SLCK_RC:
+		if (!osc_is_ready(OSC_SLCK_32K_RC)) {
+			osc_enable(OSC_SLCK_32K_RC);
+			osc_wait_ready(OSC_SLCK_32K_RC);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_SLCK_XTAL:
+		if (!osc_is_ready(OSC_SLCK_32K_XTAL)) {
+			osc_enable(OSC_SLCK_32K_XTAL);
+			osc_wait_ready(OSC_SLCK_32K_XTAL);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_SLCK_BYPASS:
+		if (!osc_is_ready(OSC_SLCK_32K_BYPASS)) {
+			osc_enable(OSC_SLCK_32K_BYPASS);
+			osc_wait_ready(OSC_SLCK_32K_BYPASS);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_4M_RC:
+		if (!osc_is_ready(OSC_MAINCK_4M_RC)) {
+			osc_enable(OSC_MAINCK_4M_RC);
+			osc_wait_ready(OSC_MAINCK_4M_RC);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_8M_RC:
+		if (!osc_is_ready(OSC_MAINCK_8M_RC)) {
+			osc_enable(OSC_MAINCK_8M_RC);
+			osc_wait_ready(OSC_MAINCK_8M_RC);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_12M_RC:
+		if (!osc_is_ready(OSC_MAINCK_12M_RC)) {
+			osc_enable(OSC_MAINCK_12M_RC);
+			osc_wait_ready(OSC_MAINCK_12M_RC);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_XTAL:
+		if (!osc_is_ready(OSC_MAINCK_XTAL)) {
+			osc_enable(OSC_MAINCK_XTAL);
+			osc_wait_ready(OSC_MAINCK_XTAL);
+		}
+		break;
+
+	case GENCLK_PCK_SRC_MAINCK_BYPASS:
+		if (!osc_is_ready(OSC_MAINCK_BYPASS)) {
+			osc_enable(OSC_MAINCK_BYPASS);
+			osc_wait_ready(OSC_MAINCK_BYPASS);
+		}
+		break;
+
+#ifdef CONFIG_PLL0_SOURCE
+	case GENCLK_PCK_SRC_PLLACK:
+		pll_enable_config_defaults(0);
+		break;
+#endif
+
+	case GENCLK_PCK_SRC_MCK:
+		break;
+
+	default:
+		Assert(false);
+		break;
+	}
+}
+
+//! @}
+
+/// @cond 0
+/**INDENT-OFF**/
+#ifdef __cplusplus
+}
+#endif
+/**INDENT-ON**/
+/// @endcond
+
+#endif /* CHIP_GENCLK_H_INCLUDED */
