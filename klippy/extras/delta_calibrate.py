@@ -56,7 +56,7 @@ class DeltaCalibrate:
             "stepper_a: position_endstop: %.6f angle: %.6f\n"
             "stepper_b: position_endstop: %.6f angle: %.6f\n"
             "stepper_c: position_endstop: %.6f angle: %.6f\n"
-            "radius: %.6f\n"
+            "delta_radius: %.6f\n"
             "To use these parameters, update the printer config file with\n"
             "the above and then issue a RESTART command" % (
                 new_params['endstop_a'], new_params['angle_a'],
