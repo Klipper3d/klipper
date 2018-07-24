@@ -70,14 +70,11 @@ class SensorBase:
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value))
     def _handle_spi_response(self, params):
-        last_value      = params['value']
+        temp = self.calc_temp(params['value'], params['fault'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
-        temp = self.calc_temp(last_value)
-        self.check_faults(params['fault'])
-        if self._callback is not None:
-            self._callback(last_read_time, temp)
+        self._callback(last_read_time, temp)
 
 
 ######################################################################
@@ -160,7 +157,7 @@ class MAX31856(SensorBase):
         }
         self.average_count = config.getchoice('tc_averaging_count', averages, "1")
         SensorBase.__init__(self, config)
-    def check_faults(self, fault):
+    def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
             raise self.error("Max31856: Cold Junction Range Fault")
         if fault & MAX31856_FAULT_TCRANGE:
@@ -177,7 +174,6 @@ class MAX31856(SensorBase):
             raise self.error("Max31856: Over/Under Voltage Fault")
         if fault & MAX31856_FAULT_OPEN:
             raise self.error("Max31856: Thermocouple Open Fault")
-    def calc_temp(self, adc):
         adc = adc >> MAX31856_SCALE
         # Fix sign bit:
         if adc & 0x40000:
@@ -219,9 +215,7 @@ class MAX31855(SensorBase):
     def __init__(self, config):
         self.chip_type = "MAX31855"
         SensorBase.__init__(self, config)
-    def check_faults(self, fault):
-        pass
-    def calc_temp(self, adc):
+    def calc_temp(self, adc, fault):
         if adc & 0x1:
             raise self.error("MAX31855 : Open Circuit")
         if adc & 0x2:
@@ -253,9 +247,7 @@ class MAX6675(SensorBase):
     def __init__(self, config):
         self.chip_type = "MAX6675"
         SensorBase.__init__(self, config)
-    def check_faults(self, fault):
-        pass
-    def calc_temp(self, adc):
+    def calc_temp(self, adc, fault):
         if adc & 0x02:
             raise self.error("Max6675 : Device ID error")
         if adc & 0x04:
@@ -314,7 +306,7 @@ class MAX31865(SensorBase):
         self.num_wires  = config.getint('rtd_num_of_wires', 2)
         self.use_50Hz_filter = config.getboolean('rtd_use_50Hz_filter', False)
         SensorBase.__init__(self, config)
-    def check_faults(self, fault):
+    def calc_temp(self, adc, fault):
         if fault & 0x80:
             raise self.error("Max31865 RTD input is disconnected")
         if fault & 0x40:
@@ -329,7 +321,6 @@ class MAX31865(SensorBase):
             raise self.error("Max31865 Overvoltage or undervoltage fault")
         if fault & 0x03:
             raise self.error("Max31865 Unspecified error")
-    def calc_temp(self, adc):
         adc = adc >> 1 # remove fault bit
         R_rtd = (self.reference_r * adc) / VAL_ADC_MAX
         temp = (
