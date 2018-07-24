@@ -25,16 +25,11 @@ class error(Exception):
 class SensorBase:
     error = error
     def __init__(self, config):
-        self.min_temp = config.getfloat('min_temp', minval=0., default=0.)
-        self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self._callback = None
-        sensor_pin = config.get('sensor_pin')
-        adc_range = [self.calc_adc(self.min_temp),
-                     self.calc_adc(self.max_temp)]
-        self.min_sample_value = min(adc_range)
-        self.max_sample_value = max(adc_range)
+        self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
         ppins = config.get_printer().lookup_object('pins')
+        sensor_pin = config.get('sensor_pin')
         pin_params = ppins.lookup_pin('digital_out', sensor_pin)
         self.mcu = mcu = pin_params['chip']
         pin = pin_params['pin']
@@ -58,7 +53,9 @@ class SensorBase:
             "thermocouple_result", oid)
         mcu.add_config_object(self)
     def setup_minmax(self, min_temp, max_temp):
-        pass
+        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
+        self.min_sample_value = min(adc_range)
+        self.max_sample_value = max(adc_range)
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
