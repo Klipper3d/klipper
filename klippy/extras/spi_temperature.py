@@ -24,7 +24,7 @@ class error(Exception):
 
 class SensorBase:
     error = error
-    def __init__(self, config, chip_type):
+    def __init__(self, config, chip_type, config_cmd=None):
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
@@ -41,9 +41,10 @@ class SensorBase:
             "config_spi oid=%u bus=%u pin=%s"
             " mode=%u rate=%u shutdown_msg=" % (
                 spi_oid, 0, pin, spi_mode, spi_speed))
-        config_cmd = "".join("%02x" % b for b in self.get_configs())
-        mcu.add_config_cmd("spi_send oid=%u data=%s" % (
-            spi_oid, config_cmd), is_init=True)
+        if config_cmd is not None:
+            config_cmd = "".join("%02x" % b for b in config_cmd)
+            mcu.add_config_cmd("spi_send oid=%u data=%s" % (
+                spi_oid, config_cmd), is_init=True)
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
         mcu.add_config_cmd(
@@ -134,27 +135,8 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        types = {
-            "B" : 0b0000,
-            "E" : 0b0001,
-            "J" : 0b0010,
-            "K" : 0b0011,
-            "N" : 0b0100,
-            "R" : 0b0101,
-            "S" : 0b0110,
-            "T" : 0b0111,
-        }
-        self.tc_type = config.getchoice('tc_type', types, default="K")
-        self.use_50Hz_filter = config.getboolean('tc_use_50Hz_filter', False)
-        averages = {
-            "1"  : MAX31856_CR1_AVGSEL1,
-            "2"  : MAX31856_CR1_AVGSEL2,
-            "4"  : MAX31856_CR1_AVGSEL4,
-            "8"  : MAX31856_CR1_AVGSEL8,
-            "16" : MAX31856_CR1_AVGSEL16
-        }
-        self.average_count = config.getchoice('tc_averaging_count', averages, "1")
-        SensorBase.__init__(self, config, TS_CHIP_MAX31856)
+        SensorBase.__init__(self, config, TS_CHIP_MAX31856,
+                            self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
             raise self.error("Max31856: Cold Junction Range Fault")
@@ -182,16 +164,33 @@ class MAX31856(SensorBase):
         adc = int( ( temp / MAX31856_MULT ) + 0.5 ) # convert to ADC value
         adc = adc << MAX31856_SCALE
         return adc
-    def get_configs(self):
+    def build_spi_init(self, config):
         cmds = []
         value = MAX31856_CR0_AUTOCONVERT
-        if self.use_50Hz_filter:
+        if config.getboolean('tc_use_50Hz_filter', False):
             value |= MAX31856_CR0_FILT50HZ
         cmds.append(0x80 + MAX31856_CR0_REG)
         cmds.append(value)
 
-        value  = self.tc_type
-        value |= self.average_count
+        types = {
+            "B" : 0b0000,
+            "E" : 0b0001,
+            "J" : 0b0010,
+            "K" : 0b0011,
+            "N" : 0b0100,
+            "R" : 0b0101,
+            "S" : 0b0110,
+            "T" : 0b0111,
+        }
+        value = config.getchoice('tc_type', types, default="K")
+        averages = {
+            "1"  : MAX31856_CR1_AVGSEL1,
+            "2"  : MAX31856_CR1_AVGSEL2,
+            "4"  : MAX31856_CR1_AVGSEL4,
+            "8"  : MAX31856_CR1_AVGSEL8,
+            "16" : MAX31856_CR1_AVGSEL16
+        }
+        value |= config.getchoice('tc_averaging_count', averages, "1")
         cmds.append(0x80 + MAX31856_CR1_REG)
         cmds.append(value)
 
@@ -229,8 +228,6 @@ class MAX31855(SensorBase):
         adc = int( ( temp / MAX31855_MULT ) + 0.5 ) # convert to ADC value
         adc = adc << MAX31855_SCALE
         return adc
-    def get_configs(self):
-        return []
 
 
 ######################################################################
@@ -258,8 +255,6 @@ class MAX6675(SensorBase):
         adc = int( ( temp / MAX6675_MULT ) + 0.5 ) # convert to ADC value
         adc = adc << MAX6675_SCALE
         return adc
-    def get_configs(self):
-        return []
 
 
 ######################################################################
@@ -298,9 +293,8 @@ class MAX31865(SensorBase):
     def __init__(self, config):
         self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
         self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
-        self.num_wires  = config.getint('rtd_num_of_wires', 2)
-        self.use_50Hz_filter = config.getboolean('rtd_use_50Hz_filter', False)
-        SensorBase.__init__(self, config, TS_CHIP_MAX31865)
+        SensorBase.__init__(self, config, TS_CHIP_MAX31865,
+                            self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & 0x80:
             raise self.error("Max31865 RTD input is disconnected")
@@ -333,13 +327,13 @@ class MAX31865(SensorBase):
         adc = int( ( ( R_rtd * VAL_ADC_MAX ) / self.reference_r) + 0.5 )
         adc = adc << 1 # Add fault bit
         return adc
-    def get_configs(self):
+    def build_spi_init(self, config):
         value = (MAX31865_CONFIG_BIAS |
                  MAX31865_CONFIG_MODEAUTO |
                  MAX31865_CONFIG_FAULTCLEAR)
-        if self.use_50Hz_filter:
+        if config.getboolean('rtd_use_50Hz_filter', False):
             value |= MAX31865_CONFIG_FILT50HZ
-        if self.num_wires == 3:
+        if config.getint('rtd_num_of_wires', 2) == 3:
             value |= MAX31865_CONFIG_3WIRE
         cmd = 0x80 + MAX31865_CONFIG_REG
         return [cmd, value]
