@@ -6,6 +6,12 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 
+# Sensor types defined in the micro-controller code (thermocouple.c)
+TS_CHIP_MAX31855 = 1 << 0
+TS_CHIP_MAX31856 = 1 << 1
+TS_CHIP_MAX31865 = 1 << 2
+TS_CHIP_MAX6675  = 1 << 3
+
 
 ######################################################################
 # SensorBase
@@ -13,19 +19,12 @@ import math
 
 REPORT_TIME = 0.300
 
-VALID_SPI_SENSORS = {
-    'MAX31855' : 1,
-    'MAX31856' : 2,
-    'MAX31865' : 4,
-    'MAX6675'  : 8
-}
-
 class error(Exception):
     pass
 
 class SensorBase:
     error = error
-    def __init__(self, config):
+    def __init__(self, config, chip_type):
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
@@ -49,7 +48,7 @@ class SensorBase:
         self.oid = oid = mcu.create_oid()
         mcu.add_config_cmd(
             "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
-                oid, spi_oid, VALID_SPI_SENSORS[self.chip_type]))
+                oid, spi_oid, chip_type))
         mcu.register_msg(self._handle_spi_response,
             "thermocouple_result", oid)
         mcu.add_config_object(self)
@@ -135,7 +134,6 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        self.chip_type = "MAX31856"
         types = {
             "B" : 0b0000,
             "E" : 0b0001,
@@ -156,7 +154,7 @@ class MAX31856(SensorBase):
             "16" : MAX31856_CR1_AVGSEL16
         }
         self.average_count = config.getchoice('tc_averaging_count', averages, "1")
-        SensorBase.__init__(self, config)
+        SensorBase.__init__(self, config, TS_CHIP_MAX31856)
     def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
             raise self.error("Max31856: Cold Junction Range Fault")
@@ -213,8 +211,7 @@ MAX31855_MULT = 0.25
 
 class MAX31855(SensorBase):
     def __init__(self, config):
-        self.chip_type = "MAX31855"
-        SensorBase.__init__(self, config)
+        SensorBase.__init__(self, config, TS_CHIP_MAX31855)
     def calc_temp(self, adc, fault):
         if adc & 0x1:
             raise self.error("MAX31855 : Open Circuit")
@@ -245,8 +242,7 @@ MAX6675_MULT = 0.25
 
 class MAX6675(SensorBase):
     def __init__(self, config):
-        self.chip_type = "MAX6675"
-        SensorBase.__init__(self, config)
+        SensorBase.__init__(self, config, TS_CHIP_MAX6675)
     def calc_temp(self, adc, fault):
         if adc & 0x02:
             raise self.error("Max6675 : Device ID error")
@@ -300,12 +296,11 @@ VAL_ADC_MAX = 32768.0 # 2^15
 
 class MAX31865(SensorBase):
     def __init__(self, config):
-        self.chip_type = "MAX31865"
         self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
         self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
         self.num_wires  = config.getint('rtd_num_of_wires', 2)
         self.use_50Hz_filter = config.getboolean('rtd_use_50Hz_filter', False)
-        SensorBase.__init__(self, config)
+        SensorBase.__init__(self, config, TS_CHIP_MAX31865)
     def calc_temp(self, adc, fault):
         if fault & 0x80:
             raise self.error("Max31865 RTD input is disconnected")
