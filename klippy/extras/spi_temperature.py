@@ -32,12 +32,10 @@ class SensorBase:
         pin = pin_params['pin']
         # SPI bus configuration
         spi_oid = mcu.create_oid()
-        spi_mode = config.getint('spi_mode', minval=0, maxval=3)
         spi_speed = config.getint('spi_speed', minval=0)
         mcu.add_config_cmd(
-            "config_spi oid=%u bus=%u pin=%s"
-            " mode=%u rate=%u shutdown_msg=" % (
-                spi_oid, 0, pin, spi_mode, spi_speed))
+            "config_spi oid=%u bus=0 pin=%s mode=1 rate=%u shutdown_msg=" % (
+                spi_oid, pin, spi_speed))
         if config_cmd is not None:
             config_cmd = "".join("%02x" % b for b in config_cmd)
             mcu.add_config_cmd("spi_send oid=%u data=%s" % (
