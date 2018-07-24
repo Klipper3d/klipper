@@ -10,9 +10,7 @@ import math
 # SensorBase
 ######################################################################
 
-SAMPLE_TIME_DEFAULT    = 0.001
-SAMPLE_COUNT_DEFAULT   = 8
-REPORT_TIME_DEFAULT    = 0.300
+REPORT_TIME = 0.300
 
 VALID_SPI_SENSORS = {
     'MAX31855' : 1,
@@ -24,18 +22,9 @@ VALID_SPI_SENSORS = {
 class error(Exception):
     pass
 
-class SensorBase(object):
+class SensorBase:
     error = error
-    def __init__(self,
-                 config,
-                 is_spi = False,
-                 sample_time  = SAMPLE_TIME_DEFAULT,
-                 sample_count = SAMPLE_COUNT_DEFAULT,
-                 report_time  = REPORT_TIME_DEFAULT):
-        self.is_spi = is_spi
-        self.sample_time = sample_time
-        self.sample_count = sample_count
-        self.report_time = report_time
+    def __init__(self, config):
         self.min_temp = config.getfloat('min_temp', minval=0., default=0.)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self._callback = None
@@ -46,46 +35,37 @@ class SensorBase(object):
         self.max_sample_value = max(adc_range)
         self._report_clock = 0
         ppins = config.get_printer().lookup_object('pins')
-        if is_spi:
-            pin_params = ppins.lookup_pin('digital_out', sensor_pin)
-            self.mcu = mcu = pin_params['chip']
-            pin = pin_params['pin']
-            # SPI bus configuration
-            spi_oid = mcu.create_oid()
-            spi_mode = config.getint('spi_mode', minval=0, maxval=3)
-            spi_speed = config.getint('spi_speed', minval=0)
-            mcu.add_config_cmd(
-                "config_spi oid=%u bus=%u pin=%s"
-                " mode=%u rate=%u shutdown_msg=" % (
-                    spi_oid, 0, pin, spi_mode, spi_speed))
-            config_cmd = "".join("%02x" % b for b in self.get_configs())
-            mcu.add_config_cmd("spi_send oid=%u data=%s" % (
-                spi_oid, config_cmd), is_init=True)
-            # Reader chip configuration
-            self.oid = oid = mcu.create_oid()
-            mcu.add_config_cmd(
-                "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
-                    oid, spi_oid, VALID_SPI_SENSORS[self.chip_type]))
-            mcu.register_msg(self._handle_spi_response,
-                "thermocouple_result", oid)
-            mcu.add_config_object(self)
-        else:
-            self.mcu = ppins.setup_pin('adc', sensor_pin)
-            self.mcu.setup_minmax(
-                sample_time, sample_count,
-                minval=min(adc_range), maxval=max(adc_range))
+        pin_params = ppins.lookup_pin('digital_out', sensor_pin)
+        self.mcu = mcu = pin_params['chip']
+        pin = pin_params['pin']
+        # SPI bus configuration
+        spi_oid = mcu.create_oid()
+        spi_mode = config.getint('spi_mode', minval=0, maxval=3)
+        spi_speed = config.getint('spi_speed', minval=0)
+        mcu.add_config_cmd(
+            "config_spi oid=%u bus=%u pin=%s"
+            " mode=%u rate=%u shutdown_msg=" % (
+                spi_oid, 0, pin, spi_mode, spi_speed))
+        config_cmd = "".join("%02x" % b for b in self.get_configs())
+        mcu.add_config_cmd("spi_send oid=%u data=%s" % (
+            spi_oid, config_cmd), is_init=True)
+        # Reader chip configuration
+        self.oid = oid = mcu.create_oid()
+        mcu.add_config_cmd(
+            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
+                oid, spi_oid, VALID_SPI_SENSORS[self.chip_type]))
+        mcu.register_msg(self._handle_spi_response,
+            "thermocouple_result", oid)
+        mcu.add_config_object(self)
     def setup_minmax(self, min_temp, max_temp):
         pass
     def setup_callback(self, cb):
-        if self.is_spi:
-            self._callback = cb
-        else:
-            self.mcu.setup_callback(self.report_time, cb)
+        self._callback = cb
     def get_report_time_delta(self):
-        return self.report_time
+        return REPORT_TIME
     def build_config(self):
         clock = self.mcu.get_query_slot(self.oid)
-        self._report_clock = self.mcu.seconds_to_clock(self.report_time)
+        self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
             " min_value=%u max_value=%u" % (
@@ -187,7 +167,7 @@ class Thermocouple(SensorBase):
         else:
             self.val_a = 0.25
             self.scale = 18
-        SensorBase.__init__(self, config, is_spi = True, sample_count = 1)
+        SensorBase.__init__(self, config)
     def _check_faults_simple(self, val):
         if self.chip_type == "MAX6675":
             if val & 0x02:
@@ -295,7 +275,7 @@ class RTD(SensorBase):
         self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
         self.num_wires  = config.getint('rtd_num_of_wires', 2)
         self.use_50Hz_filter = config.getboolean('rtd_use_50Hz_filter', False)
-        SensorBase.__init__(self, config, is_spi = True, sample_count = 1)
+        SensorBase.__init__(self, config)
     def check_faults(self, fault):
         if fault & 0x80:
             raise self.error("Max31865 RTD input is disconnected")
