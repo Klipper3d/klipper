@@ -79,6 +79,8 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         for (uint32_t i = 0; i < len; ++i) {
             uint32_t co = (uint32_t)*data & 0x000000FF;
             usart_putchar(config.sspi, co & 0xFF);
+            uint32_t ci = 0;
+            usart_getchar(config.sspi, &ci);
             (void)*data++;
         }
     }

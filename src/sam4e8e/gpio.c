@@ -46,9 +46,9 @@ gpio_out_toggle_noirq(struct gpio_out g)
 void
 gpio_out_toggle(struct gpio_out g)
 {
-    irqstatus_t flag = irq_save();
+    // irqstatus_t flag = irq_save();
     gpio_out_toggle_noirq(g);
-    irq_restore(flag);
+    // irq_restore(flag);
 }
 
 void
@@ -219,7 +219,7 @@ gpio_adc_sample(struct gpio_adc g)
     afec_start_software_conversion(g.afec);
 
 need_delay:
-    return ADC_FREQ_MAX * 8000ULL / CONFIG_CLOCK_FREQ; // about 400 mcu clock cycles or 40 afec cycles
+    return ADC_FREQ_MAX * 10000ULL / CONFIG_CLOCK_FREQ; // about 400 mcu clock cycles or 40 afec cycles
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero
@@ -228,7 +228,7 @@ gpio_adc_read(struct gpio_adc g)
 {
     set_active_afec_channel(g.afec, AFEC_DUMMY);
     uint32_t result = afec_channel_get_value(g.afec, g.chan);
-    return (uint16_t)(result & 0xFFF);
+    return (uint16_t)result & 0xFFF;
 }
 
 
