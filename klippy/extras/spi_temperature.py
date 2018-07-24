@@ -63,7 +63,7 @@ class SensorBase:
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
             " min_value=%u max_value=%u" % (
                 self.oid, clock, self._report_clock,
-                self.min_sample_value, self.max_sample_value))
+                self.min_sample_value, self.max_sample_value), is_init=True)
     def _handle_spi_response(self, params):
         temp = self.calc_temp(params['value'], params['fault'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
