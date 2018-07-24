@@ -17,6 +17,7 @@ def coordinate_descent(adj_params, params, error_func):
     dp = {param_name: 1. for param_name in adj_params}
     # Calculate the error
     best_err = error_func(params)
+    logging.info("Coordinate descent initial error: %s", best_err)
 
     threshold = 0.00001
     rounds = 0
