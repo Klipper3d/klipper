@@ -68,9 +68,9 @@ command_query_thermocouple(uint32_t *args)
 
     sched_del_timer(&spi->timer);
     spi->timer.waketime = args[1];
-    if (! spi->timer.waketime)
-        return;
     spi->rest_time = args[2];
+    if (! spi->rest_time)
+        return;
     spi->min_value = args[3];
     spi->max_value = args[4];
     sched_add_timer(&spi->timer);
@@ -83,12 +83,11 @@ static void
 thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
                      , uint32_t value, uint8_t fault, uint8_t oid)
 {
-    /* check the result and stop if below or above allowed range */
-    if (value < spi->min_value || value > spi->max_value) {
-        try_shutdown("Thermocouple ADC out of range");
-    }
     sendf("thermocouple_result oid=%c next_clock=%u value=%u fault=%c",
           oid, next_begin_time, value, fault);
+    /* check the result and stop if below or above allowed range */
+    if (value < spi->min_value || value > spi->max_value)
+        try_shutdown("Thermocouple ADC out of range");
 }
 
 static void
