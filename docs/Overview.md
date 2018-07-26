@@ -39,5 +39,3 @@ commands implemented in the micro-controller software.
 
 See [debugging](Debugging.md) for information on how to test and debug
 Klipper.
-
-See [todo](Todo.md) for information on possible future code features.
