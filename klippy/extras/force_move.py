@@ -1,4 +1,4 @@
-# Utility for moving a stepper back and forth to help identify it
+# Utility for manually moving a stepper for diagnostic purposes
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
@@ -8,7 +8,7 @@ import chelper
 
 BUZZ_VELOCITY = 4.
 
-class StepperBuzz:
+class ForceMove:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.steppers = {}
@@ -18,13 +18,13 @@ class StepperBuzz:
         self.move_fill = ffi_lib.move_fill
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
-    def register_stepper(self, stepper, name):
-        self.steppers[name] = stepper
         # Register STEPPER_BUZZ command
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command(
-            'STEPPER_BUZZ', 'STEPPER', name, self.cmd_STEPPER_BUZZ,
-            desc=self.cmd_STEPPER_BUZZ_help)
+        self.gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
+                                    desc=self.cmd_STEPPER_BUZZ_help)
+    def register_stepper(self, stepper):
+        name = stepper.get_name()
+        self.steppers[name] = stepper
     def manual_move(self, print_time, stepper, start_pos, dist):
         self.move_fill(
             self.cmove, print_time, 0., abs(dist / BUZZ_VELOCITY), 0.,
@@ -33,6 +33,8 @@ class StepperBuzz:
     cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
     def cmd_STEPPER_BUZZ(self, params):
         name = self.gcode.get_str('STEPPER', params)
+        if name not in self.steppers:
+            raise self.gcode.error("Unknown stepper %s" % (name,))
         logging.info("Stepper buzz %s", name)
         stepper = self.steppers[name]
         need_motor_enable = not stepper.is_motor_enabled()
@@ -60,4 +62,4 @@ class StepperBuzz:
             toolhead.reset_print_time(print_time)
 
 def load_config(config):
-    return StepperBuzz(config)
+    return ForceMove(config)
