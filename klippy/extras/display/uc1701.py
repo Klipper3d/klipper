@@ -17,15 +17,13 @@ class UC1701:
         printer = config.get_printer()
         # pin config
         ppins = printer.lookup_object('pins')
-        pins = [ppins.lookup_pin('digital_out', config.get(name + '_pin'))
+        pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['cs','a0']]
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("uc1701 all pins must be on same mcu")
             mcu = pin_params['chip']
-            if pin_params['invert']:
-                raise ppins.error("uc1701 can not invert pin")
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.spi_oid = self.mcu.create_oid()

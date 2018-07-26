@@ -26,10 +26,11 @@ class PrinterProbe:
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
-        pin_params = ppins.lookup_pin('endstop', config.get('pin'))
+        pin = config.get('pin')
+        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
         mcu.add_config_object(self)
-        self.mcu_probe = mcu.setup_pin(pin_params)
+        self.mcu_probe = mcu.setup_pin('endstop', pin_params)
         if (config.get('activate_gcode', None) is not None or
             config.get('deactivate_gcode', None) is not None):
             self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
@@ -46,9 +47,8 @@ class PrinterProbe:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self.mcu_probe)
-    def setup_pin(self, pin_params):
-        if (pin_params['pin'] != 'z_virtual_endstop'
-            or pin_params['type'] != 'endstop'):
+    def setup_pin(self, pin_type, pin_params):
+        if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")

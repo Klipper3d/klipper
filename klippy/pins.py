@@ -198,10 +198,8 @@ class PrinterPins:
     def __init__(self):
         self.chips = {}
         self.active_pins = {}
-    def lookup_pin(self, pin_type, pin_desc, share_type=None):
-        can_invert = pin_type in ['stepper', 'endstop', 'digital_in',
-                                  'digital_out', 'pwm']
-        can_pullup = pin_type in ['endstop', 'digital_in']
+    def lookup_pin(self, pin_desc, can_invert=False, can_pullup=False,
+                   share_type=None):
         desc = pin_desc.strip()
         pullup = invert = 0
         if can_pullup and desc.startswith('^'):
@@ -234,13 +232,15 @@ class PrinterPins:
                 raise error("Shared pin %s must have same polarity" % (pin,))
             return pin_params
         pin_params = {'chip': self.chips[chip_name], 'chip_name': chip_name,
-                      'type': pin_type, 'share_type': share_type,
-                      'pin': pin, 'invert': invert, 'pullup': pullup}
+                      'pin': pin, 'share_type': share_type,
+                      'invert': invert, 'pullup': pullup}
         self.active_pins[share_name] = pin_params
         return pin_params
     def setup_pin(self, pin_type, pin_desc):
-        pin_params = self.lookup_pin(pin_type, pin_desc)
-        return pin_params['chip'].setup_pin(pin_params)
+        can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
+        can_pullup = pin_type in ['endstop']
+        pin_params = self.lookup_pin(pin_desc, can_invert, can_pullup)
+        return pin_params['chip'].setup_pin(pin_type, pin_params)
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
