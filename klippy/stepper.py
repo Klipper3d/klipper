@@ -51,26 +51,27 @@ class PrinterStepper:
         self.need_motor_enable = True
         # Stepper definition
         ppins = printer.lookup_object('pins')
-        self.mcu_stepper = ppins.setup_pin('stepper', config.get('step_pin'))
+        step_pin = config.get('step_pin')
+        self.mcu_stepper = mcu_stepper = ppins.setup_pin('stepper', step_pin)
         dir_pin = config.get('dir_pin')
         dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
-        self.mcu_stepper.setup_dir_pin(dir_pin_params)
+        mcu_stepper.setup_dir_pin(dir_pin_params)
         step_dist = config.getfloat('step_distance', above=0.)
-        self.mcu_stepper.setup_step_distance(step_dist)
+        mcu_stepper.setup_step_distance(step_dist)
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
         stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
         stepper_buzz.register_stepper(self, config.get_name())
         # Wrappers
-        self.step_itersolve = self.mcu_stepper.step_itersolve
-        self.setup_itersolve = self.mcu_stepper.setup_itersolve
-        self.set_stepper_kinematics = self.mcu_stepper.set_stepper_kinematics
-        self.set_ignore_move = self.mcu_stepper.set_ignore_move
-        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
-        self.set_position = self.mcu_stepper.set_position
-        self.get_mcu_position = self.mcu_stepper.get_mcu_position
-        self.get_commanded_position = self.mcu_stepper.get_commanded_position
-        self.get_step_dist = self.mcu_stepper.get_step_dist
+        self.step_itersolve = mcu_stepper.step_itersolve
+        self.setup_itersolve = mcu_stepper.setup_itersolve
+        self.set_stepper_kinematics = mcu_stepper.set_stepper_kinematics
+        self.set_ignore_move = mcu_stepper.set_ignore_move
+        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
+        self.set_position = mcu_stepper.set_position
+        self.get_mcu_position = mcu_stepper.get_mcu_position
+        self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.get_step_dist = mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
@@ -144,7 +145,8 @@ class PrinterRail:
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., minval=0.)
-        self.homing_positive_dir = config.getboolean('homing_positive_dir', None)
+        self.homing_positive_dir = config.getboolean(
+            'homing_positive_dir', None)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
             if self.position_endstop <= self.position_min + axis_len / 4.:
@@ -171,11 +173,11 @@ class PrinterRail:
                 # Adjust the endstop position so 0.0 is always at a full step
                 micro_steps = self.homing_stepper_phases // 4
                 phase_offset = (
-                    ((self.homing_endstop_phase + micro_steps // 2) % micro_steps)
-                    - micro_steps // 2) * step_dist
+                    ((self.homing_endstop_phase + micro_steps // 2)
+                     % micro_steps) - micro_steps // 2) * step_dist
                 full_step = micro_steps * step_dist
-                es_pos = (int(self.position_endstop / full_step + .5) * full_step
-                          + phase_offset)
+                es_pos = (int(self.position_endstop / full_step + .5)
+                          * full_step + phase_offset)
                 if es_pos != self.position_endstop:
                     logging.info("Changing %s endstop position to %.3f"
                                  " (from %.3f)", self.name,
