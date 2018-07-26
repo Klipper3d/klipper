@@ -75,7 +75,8 @@ class MCU_stepper:
     def set_position(self, newpos):
         spos = self.calc_position_from_coord(newpos)
         self._mcu_position_offset += self.get_commanded_position() - spos
-        self._ffi_lib.itersolve_set_commanded_pos(self._stepper_kinematics, spos)
+        self._ffi_lib.itersolve_set_commanded_pos(
+            self._stepper_kinematics, spos)
     def get_commanded_position(self):
         return self._ffi_lib.itersolve_get_commanded_pos(
             self._stepper_kinematics)
@@ -205,7 +206,8 @@ class MCU_endstop:
                     s.note_homing_end(did_trigger=True)
                 self._homing = False
                 return False
-            last_sent_print_time = self._mcu.estimated_print_time(last_sent_time)
+            last_sent_print_time = self._mcu.estimated_print_time(
+                last_sent_time)
             if last_sent_print_time > home_end_time:
                 # Timeout - disable endstop checking
                 for s in self._steppers:
@@ -531,7 +533,8 @@ class MCU:
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         # Transmit config messages (if needed)
         if prev_crc is None:
-            logging.info("Sending MCU '%s' printer configuration...", self._name)
+            logging.info("Sending MCU '%s' printer configuration...",
+                         self._name)
             for c in self._config_cmds:
                 self._serial.send(c)
         elif config_crc != prev_crc:
@@ -566,7 +569,8 @@ class MCU:
         else:
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
-                raise error("Failed automated reset of MCU '%s'" % (self._name,))
+                raise error("Failed automated reset of MCU '%s'" % (
+                    self._name,))
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
@@ -583,7 +587,8 @@ class MCU:
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
             move_count)
-        self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
+        self._ffi_lib.steppersync_set_time(
+            self._steppersync, 0., self._mcu_freq)
     def _connect(self):
         if self.is_fileoutput():
             self._connect_file()
@@ -675,7 +680,8 @@ class MCU:
             self._ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def _shutdown(self, force=False):
-        if self._emergency_stop_cmd is None or (self._is_shutdown and not force):
+        if (self._emergency_stop_cmd is None
+            or (self._is_shutdown and not force)):
             return
         self._emergency_stop_cmd.send()
     def _restart_arduino(self):
@@ -685,7 +691,8 @@ class MCU:
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
             or not self._clocksync.is_active()):
-            logging.info("Unable to issue reset command on MCU '%s'", self._name)
+            logging.info("Unable to issue reset command on MCU '%s'",
+                         self._name)
             return
         if self._reset_cmd is None:
             # Attempt reset via config_reset command
