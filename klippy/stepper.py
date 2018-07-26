@@ -60,8 +60,8 @@ class PrinterStepper:
         mcu_stepper.setup_step_distance(step_dist)
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
-        stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
-        stepper_buzz.register_stepper(self, config.get_name())
+        force_move = printer.try_load_module(config, 'force_move')
+        force_move.register_stepper(self)
         # Wrappers
         self.step_itersolve = mcu_stepper.step_itersolve
         self.setup_itersolve = mcu_stepper.setup_itersolve
