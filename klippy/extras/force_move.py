@@ -19,10 +19,16 @@ class ForceMove:
         self.move_fill = ffi_lib.move_fill
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
-        # Register STEPPER_BUZZ command
+        # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
                                     desc=self.cmd_STEPPER_BUZZ_help)
+        if config.getboolean("enable_force_move", False):
+            self.gcode.register_command('FORCE_MOVE', self.cmd_FORCE_MOVE,
+                                        desc=self.cmd_FORCE_MOVE_help)
+            self.gcode.register_command(
+                'SET_KINEMATIC_POSITION', self.cmd_SET_KINEMATIC_POSITION,
+                desc=self.cmd_SET_KINEMATIC_POSITION_help)
     def register_stepper(self, stepper):
         name = stepper.get_name()
         self.steppers[name] = stepper
@@ -54,13 +60,15 @@ class ForceMove:
         stepper.step_itersolve(self.cmove)
         stepper.set_stepper_kinematics(prev_sk)
         toolhead.dwell(move_t)
-    cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
-    def cmd_STEPPER_BUZZ(self, params):
+    def _lookup_stepper(self, params):
         name = self.gcode.get_str('STEPPER', params)
         if name not in self.steppers:
             raise self.gcode.error("Unknown stepper %s" % (name,))
-        stepper = self.steppers[name]
-        logging.info("Stepper buzz %s", name)
+        return self.steppers[name]
+    cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
+    def cmd_STEPPER_BUZZ(self, params):
+        stepper = self._lookup_stepper(params)
+        logging.info("Stepper buzz %s", stepper.get_name())
         was_enable, was_ignore = self.force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
         for i in range(10):
@@ -69,6 +77,27 @@ class ForceMove:
             self.manual_move(stepper, -1., BUZZ_VELOCITY)
             toolhead.dwell(.450)
         self.restore_enable(stepper, was_enable, was_ignore)
+    cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"
+    def cmd_FORCE_MOVE(self, params):
+        stepper = self._lookup_stepper(params)
+        distance = self.gcode.get_float('DISTANCE', params)
+        speed = self.gcode.get_float('VELOCITY', params, above=0.)
+        logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f",
+                     stepper.get_name(), distance, speed)
+        was_enable, was_ignore = self.force_enable(stepper)
+        self.manual_move(stepper, distance, speed)
+        self.restore_enable(stepper, True, was_ignore)
+    cmd_SET_KINEMATIC_POSITION_help = "Force a low-level kinematic position"
+    def cmd_SET_KINEMATIC_POSITION(self, params):
+        x = self.gcode.get_float('X', params)
+        y = self.gcode.get_float('Y', params)
+        z = self.gcode.get_float('Z', params)
+        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.get_last_move_time()
+        curpos = toolhead.get_position()
+        toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
+        self.gcode.reset_last_position()
 
 def load_config(config):
     return ForceMove(config)

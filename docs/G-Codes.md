@@ -180,3 +180,25 @@ The following command is available when the "tmc2130" config section
 is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
   registers and report their values.
+
+## Force movement
+
+The following commands are available when the "force_move" config
+section is enabled:
+- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value>
+  VELOCITY=<value>`: This command will forcibly move the given stepper
+  the given distance (in mm) at the given constant velocity (in
+  mm/s). No acceleration is performed; no boundary checks are
+  performed; no kinematic updates are made; other parallel steppers on
+  an axis will not be moved. Use caution as an incorrect command could
+  cause damage! Using this command will almost certainly place the
+  low-level kinematics in an incorrect state; issue a G28 afterwards
+  to reset the kinematics. This command is intended for low-level
+  diagnostics and debugging.
+- `SET_KINEMATIC_POSITION X=<value> Y=<value> Z=<value>`: Force the
+  low-level kinematic code to believe the toolhead is at the given
+  position. This is a diagnostic and debugging command; use
+  SET_GCODE_OFFSET and/or G92 for regular axis transformations.
+  Setting an incorrect or invalid position may lead to internal
+  software errors. This command may invalidate future boundary checks;
+  issue a G28 afterwards to reset the kinematics.
