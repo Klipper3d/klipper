@@ -17,15 +17,13 @@ class ST7920:
         printer = config.get_printer()
         # pin config
         ppins = printer.lookup_object('pins')
-        pins = [ppins.lookup_pin('digital_out', config.get(name + '_pin'))
+        pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['cs', 'sclk', 'sid']]
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("st7920 all pins must be on same mcu")
             mcu = pin_params['chip']
-            if pin_params['invert']:
-                raise ppins.error("st7920 can not invert pin")
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()

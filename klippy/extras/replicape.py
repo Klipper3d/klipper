@@ -14,10 +14,10 @@ REPLICAPE_PCA9685_CYCLE_TIME = .001
 PIN_MIN_TIME = 0.100
 
 class pca9685_pwm:
-    def __init__(self, replicape, channel, pin_params):
+    def __init__(self, replicape, channel, pin_type, pin_params):
         self._replicape = replicape
         self._channel = channel
-        if pin_params['type'] not in ['digital_out', 'pwm']:
+        if pin_type not in ['digital_out', 'pwm']:
             raise pins.error("Pin type not supported on replicape")
         self._mcu = replicape.host_mcu
         self._mcu.add_config_object(self)
@@ -90,14 +90,14 @@ class pca9685_pwm:
             self.set_pwm(print_time, 0.)
 
 class ReplicapeDACEnable:
-    def __init__(self, replicape, channel, pin_params):
-        if pin_params['type'] != 'digital_out':
+    def __init__(self, replicape, channel, pin_type, pin_params):
+        if pin_type != 'digital_out':
             raise pins.error("Replicape virtual enable pin must be digital_out")
         if pin_params['invert']:
             raise pins.error("Replicape virtual enable pin can not be inverted")
         self.mcu = replicape.host_mcu
         self.value = replicape.stepper_dacs[channel]
-        self.pwm = pca9685_pwm(replicape, channel, pin_params)
+        self.pwm = pca9685_pwm(replicape, channel, pin_type, pin_params)
     def get_mcu(self):
         return self.mcu
     def setup_max_duration(self, max_duration):
@@ -221,12 +221,12 @@ class Replicape:
         clock = self.host_mcu.print_time_to_clock(print_time)
         # XXX - the spi_send message should be scheduled
         self.spi_send_cmd.send([self.sr_oid, sr], minclock=clock, reqclock=clock)
-    def setup_pin(self, pin_params):
+    def setup_pin(self, pin_type, pin_params):
         pin = pin_params['pin']
         if pin not in self.pins:
             raise pins.error("Unknown replicape pin %s" % (pin,))
         pclass, channel = self.pins[pin]
-        return pclass(self, channel, pin_params)
+        return pclass(self, channel, pin_type, pin_params)
 
 def load_config(config):
     return Replicape(config)

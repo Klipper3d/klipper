@@ -8,9 +8,7 @@ class ad5206:
     def __init__(self, config):
         ppins = config.get_printer().lookup_object('pins')
         enable_pin = config.get('enable_pin')
-        enable_pin_params = ppins.lookup_pin('digital_out', enable_pin)
-        if enable_pin_params['invert']:
-            raise ppins.error("ad5206 can not invert pin")
+        enable_pin_params = ppins.lookup_pin(enable_pin)
         mcu = enable_pin_params['chip']
         pin = enable_pin_params['pin']
         scale = config.getfloat('scale', 1., above=0.)

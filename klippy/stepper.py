@@ -29,10 +29,11 @@ class StepperEnablePin:
 def lookup_enable_pin(ppins, pin):
     if pin is None:
         return StepperEnablePin(None, 9999)
-    pin_params = ppins.lookup_pin('digital_out', pin, 'stepper_enable')
+    pin_params = ppins.lookup_pin(pin, can_invert=True,
+                                  share_type='stepper_enable')
     enable = pin_params.get('class')
     if enable is None:
-        mcu_enable = pin_params['chip'].setup_pin(pin_params)
+        mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
         mcu_enable.setup_max_duration(0.)
         pin_params['class'] = enable = StepperEnablePin(mcu_enable)
     return enable
@@ -51,7 +52,8 @@ class PrinterStepper:
         # Stepper definition
         ppins = printer.lookup_object('pins')
         self.mcu_stepper = ppins.setup_pin('stepper', config.get('step_pin'))
-        dir_pin_params = ppins.lookup_pin('digital_out', config.get('dir_pin'))
+        dir_pin = config.get('dir_pin')
+        dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
         self.mcu_stepper.setup_dir_pin(dir_pin_params)
         step_dist = config.getfloat('step_distance', above=0.)
         self.mcu_stepper.setup_step_distance(step_dist)
