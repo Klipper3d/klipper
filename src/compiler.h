@@ -2,10 +2,9 @@
 #define __COMPILER_H
 // Low level definitions for C languange and gcc compiler.
 
-#define barrier() __asm__ __volatile__("": : :"memory")
-
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
+#if defined(__USE_ASF__)
+  #include "utils/compiler.h"
+#endif
 
 #define noinline __attribute__((noinline))
 #ifndef __always_inline
@@ -13,6 +12,16 @@
 #endif
 #define __visible __attribute__((externally_visible))
 #define __noreturn __attribute__((noreturn))
+
+#ifndef barrier
+#define barrier() __asm__ __volatile__("": : :"memory")
+#endif
+#ifndef likely
+#define likely(x)       __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#endif
 
 #define PACKED __attribute__((packed))
 #ifndef __aligned

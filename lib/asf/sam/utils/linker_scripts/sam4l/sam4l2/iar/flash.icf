@@ -1,0 +1,41 @@
+
+/*-Memory Regions-*/
+define symbol __region_RAM_start__  = 0x20000000 ;
+define symbol __region_RAM_end__    = 0x20007FFF ;
+define symbol __region_ROM_start__  = 0x00000000 ;
+define symbol __region_ROM_end__    = 0x0001FFFF ;
+
+
+/*-Sizes-*/
+if (!isdefinedsymbol(__ICFEDIT_size_cstack__)) {
+define symbol __ICFEDIT_size_cstack__               = 0x600 ;
+}
+if (!isdefinedsymbol(__ICFEDIT_size_heap__)) {
+define symbol __ICFEDIT_size_heap__                 = 0x0 ;
+}
+define symbol __size_parameters__    = 0x200 ;
+
+define symbol __offset_parameters__  = __region_ROM_end__+1-__size_parameters__ ;
+export symbol __offset_parameters__ ;
+
+define symbol __vector_start__ = 0x000000000 ; // Add for CMSIS
+export symbol __vector_start__ ; // Add for CMSIS
+
+define memory mem with size   = 4G ;
+define region RAM_region = mem:[from __region_RAM_start__ to __region_RAM_end__] ;
+define region ROM_region = mem:[from __region_ROM_start__ to __region_ROM_end__-__size_parameters__] ;
+define region Parameters_region = mem:[from __offset_parameters__ to __region_ROM_end__] ;
+
+define block CSTACK    with alignment = 8, size = __ICFEDIT_size_cstack__ {} ;
+define block HEAP      with alignment = 8, size = __ICFEDIT_size_heap__ {} ;
+
+define block DEMO_PARAMETERS with alignment = 8, size = __size_parameters__ {} ;
+
+place at address mem:__vector_start__ { readonly section .vectors } ; // Add for CMSIS
+
+place in ROM_region { readonly } ;
+place in Parameters_region { block DEMO_PARAMETERS } ;
+place in RAM_region { readwrite, block CSTACK, block HEAP } ;
+
+initialize by copy { readwrite } ;
+do not initialize { section .noinit } ;

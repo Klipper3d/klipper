@@ -1,0 +1,9 @@
+<workspace>
+	<batchBuild></batchBuild>
+	<project>
+		<path>$WS_DIR$\examples_arm_matrix_example_flash.ewp</path>
+	</project>
+	<project>
+		<path>$WS_DIR$\examples_arm_matrix_example_sram.ewp</path>
+	</project>
+</workspace>

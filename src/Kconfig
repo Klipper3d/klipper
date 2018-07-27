@@ -8,6 +8,8 @@ choice
         bool "Atmega AVR"
     config MACH_SAM3X8E
         bool "SAM3x8e (Arduino Due)"
+    config MACH_SAM4E8E
+        bool "SAM4e8e (Duet Wifi/Eth)"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32F1
@@ -22,6 +24,7 @@ endchoice
 
 source "src/avr/Kconfig"
 source "src/sam3x8e/Kconfig"
+source "src/sam4e8e/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32f1/Kconfig"
 source "src/pru/Kconfig"
@@ -43,6 +46,9 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 config HAVE_USER_INTERFACE
+    bool
+    default n
+config HAVE_GPIO_I2C
     bool
     default n
 
