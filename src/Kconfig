@@ -8,6 +8,8 @@ choice
         bool "Atmega AVR"
     config MACH_SAM3X8E
         bool "SAM3x8e (Arduino Due)"
+    config MACH_SAMD21
+        bool "SAMD21 (Arduino Zero)"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32F1
@@ -22,6 +24,7 @@ endchoice
 
 source "src/avr/Kconfig"
 source "src/sam3x8e/Kconfig"
+source "src/samd21/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32f1/Kconfig"
 source "src/pru/Kconfig"
