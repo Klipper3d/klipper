@@ -1,0 +1,41 @@
+# Kconfig settings for SAMD21 processors
+
+if MACH_SAMD21
+
+config SAMD_SELECT
+    bool
+    default y
+
+config BOARD_DIRECTORY
+    string
+    default "samd21"
+
+config CLOCK_FREQ
+    int
+    default 48000000
+
+choice
+    prompt "Bootloader offset"
+    config FLASH_START_0000
+        bool "No bootloader"
+    config FLASH_START_2000
+        bool "2K bootloader (Arduino Zero)"
+    config FLASH_START_4000
+        bool "4K bootloader (Arduino M0)"
+endchoice
+
+config FLASH_START
+    hex
+    default 0x4000 if FLASH_START_4000
+    default 0x2000 if FLASH_START_2000
+    default 0x0000
+
+config SERIAL
+    bool
+    default y
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port"
+    default 250000
+
+endif
