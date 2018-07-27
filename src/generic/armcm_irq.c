@@ -61,9 +61,10 @@ clear_active_irq(void)
         "  push { %1 }\n"
         "  adr %0, 1f\n"
         "  push { %0 }\n"
-        "  push { r0, r1, r2, r3, r12, lr }\n"
+        "  push { r0, r1, r2, r3, r4, lr }\n"
         "  bx %2\n"
+        ".align 4\n"
         "1:\n"
-        : "=&r"(temp) : "r"(psr), "r"(0xfffffff9) : "cc");
+        : "=&r"(temp) : "r"(psr), "r"(0xfffffff9) : "r12", "cc");
 }
 DECL_SHUTDOWN(clear_active_irq);
