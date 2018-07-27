@@ -36,10 +36,9 @@ def check_file(filename):
             continue
         # Check for control characters
         for c in line:
-            oc = ord(c)
-            if oc < 32 or unicodedata.category(c).startswith('C'):
+            if unicodedata.category(c).startswith('C'):
                 char_name = repr(c)
-                if oc == 9:
+                if c == '\t':
                     if os.path.basename(filename).lower() == 'makefile':
                         continue
                     char_name = 'tab'
