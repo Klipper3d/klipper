@@ -20,7 +20,8 @@ with gcc's LTO feature. See cmsis-sam3x8e.patch for the modifications.
 The sam3x directory contains code from the
 Atmel.SAM3X_DFP.1.0.50.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.0.50 (extracted on 20180725).
+version 1.0.50 (extracted on 20180725). It has been modified to
+compile with gcc's LTO feature. See sam3x.patch for the modifications.
 
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
