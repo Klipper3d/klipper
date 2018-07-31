@@ -5,6 +5,7 @@ if MACH_SAMD21
 config SAMD_SELECT
     bool
     default y
+    select HAVE_GPIO
 
 config BOARD_DIRECTORY
     string
