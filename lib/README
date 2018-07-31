@@ -17,6 +17,11 @@ The cmsis-sam3x8e directory contains code from the Arduino project:
 version 1.5.1 (extracted on 20160608). It has been modified to compile
 with gcc's LTO feature. See cmsis-sam3x8e.patch for the modifications.
 
+The sam3x directory contains code from the
+Atmel.SAM3X_DFP.1.0.50.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.0.50 (extracted on 20180725).
+
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
 version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
