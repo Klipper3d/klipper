@@ -54,10 +54,10 @@ DICTDIR=${BUILD_DIR}/dict
 mkdir -p ${DICTDIR}
 
 for TARGET in test/configs/*.config ; do
+    start_test mcu_compile "$TARGET"
     make clean
     make distclean
     unset CC
-    start_test mcu_compile "$TARGET"
     cp ${TARGET} .config
     make olddefconfig
     make V=1
