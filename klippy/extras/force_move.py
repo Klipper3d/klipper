@@ -89,13 +89,13 @@ class ForceMove:
         self.restore_enable(stepper, True, was_ignore)
     cmd_SET_KINEMATIC_POSITION_help = "Force a low-level kinematic position"
     def cmd_SET_KINEMATIC_POSITION(self, params):
-        x = self.gcode.get_float('X', params)
-        y = self.gcode.get_float('Y', params)
-        z = self.gcode.get_float('Z', params)
-        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
         curpos = toolhead.get_position()
+        x = self.gcode.get_float('X', params, curpos[0])
+        y = self.gcode.get_float('Y', params, curpos[1])
+        z = self.gcode.get_float('Z', params, curpos[2])
+        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
         toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
         self.gcode.reset_last_position()
 
