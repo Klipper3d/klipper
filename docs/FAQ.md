@@ -157,9 +157,11 @@ the desired movement to the "custom g-code" section of your slicer.
 
 If the printer requires some additional movement as part of the homing
 process itself (or fundamentally does not have a homing process) then
-consider using a homing_override section in the config file - see
-[example-extras.cfg](../config/example-extras.cfg) for further
-details.
+consider using a homing_override section in the config file. If you
+need to move a stepper for diagnostic or debugging purposes then
+consider adding a force_move section to the config file. See
+[example-extras.cfg](../config/example-extras.cfg) for further details
+on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
 
