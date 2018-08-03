@@ -32,7 +32,6 @@ USER root
 RUN echo 'klippy ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/klippy && \
     chown klippy:klippy -R klipper
 USER klippy
-RUN ls -lha ./klipper/scripts/
 RUN ./klipper/scripts/install-octopi.sh
 
 CMD ["/home/klippy/klippy-env/bin/python", "/home/klippy/klipper/klippy/klippy.py", "/home/klippy/.config/printer.cfg"]
