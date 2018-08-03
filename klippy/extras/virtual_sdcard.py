@@ -160,6 +160,7 @@ class VirtualSD:
                 lines[0] = partial_input + lines[0]
                 partial_input = lines.pop()
                 lines.reverse()
+                self.reactor.pause(self.reactor.NOW)
                 continue
             # Dispatch command
             try:
