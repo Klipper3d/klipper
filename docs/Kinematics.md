@@ -87,6 +87,10 @@ small junction speed is permitted.
 The junction speeds are determined using "approximated centripetal
 acceleration". Best
 [described by the author](https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/).
+However, in Klipper, cornering velocities are configured by specifying
+the desired speed that a 90° corner should have (the "square corner
+velocity"), and the cornering speeds for other angles are derived from
+that.
 
 Klipper implements look-ahead between moves that have similar extruder
 flow rates. Other moves are relatively rare and implementing
