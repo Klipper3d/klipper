@@ -6,11 +6,12 @@
 
 #include <string.h> // memcpy
 #include "LPC17xx.h" // LPC_SC
-#include "board/usb_cdc.h" // usb_notify_setup
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // output
+#include "generic/usb_cdc.h" // usb_notify_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
+#include "usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 
 // Internal endpoint addresses
 #define EP0OUT 0x00
