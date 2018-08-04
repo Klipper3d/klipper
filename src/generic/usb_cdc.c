@@ -6,12 +6,13 @@
 
 #include <string.h> // memmove
 #include "board/pgm.h" // PROGMEM
-#include "board/usb_cdc.h" // usb_notify_setup
+#include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "byteorder.h" // cpu_to_le16
 #include "command.h" // output
 #include "generic/usbstd.h" // struct usb_device_descriptor
 #include "generic/usbstd_cdc.h" // struct usb_cdc_header_descriptor
 #include "sched.h" // sched_wake_task
+#include "usb_cdc.h" // usb_notify_setup
 
 // XXX - move to Kconfig
 #define CONFIG_USB_VENDOR_ID 0x2341
