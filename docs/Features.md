@@ -98,9 +98,10 @@ represent total number of steps per second on the micro-controller.
 | Arduino Due (ARM SAM3X8E)   | 382K              | 337K              |
 | Smoothieboard (ARM LPC1768) | 385K              | 385K              |
 | Smoothieboard (ARM LPC1769) | 462K              | 462K              |
+| Duet Wifi/Eth (ARM SAM4E8E) | 545K              | 545K              |
 | Beaglebone PRU              | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the STM32F103, Arduino Zero, and Due, the highest
-step rate is with two simultaneous steppers stepping. On the PRU and
+step rate is with two simultaneous steppers stepping. On the PRU, SAM4E8E and
 LPC176x, the highest step rate is with three simultaneous steppers.
