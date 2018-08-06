@@ -41,6 +41,7 @@ MCU_PINS = {
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
     "samd21g": port_pins(2, 32),
+    "sam4e8e" : port_pins(5,32),
     "stm32f103": port_pins(5, 16),
     "lpc176x": lpc_pins(),
     "pru": beaglebone_pins(),
