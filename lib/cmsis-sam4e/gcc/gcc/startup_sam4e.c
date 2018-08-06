@@ -28,7 +28,6 @@
 /* ---------------------------------------------------------------------------- */
 
 #include "sam4e.h"
-// #include "exceptions.h"
 
 /* Initialize segments */
 extern uint32_t _sfixed;
