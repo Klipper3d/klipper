@@ -18,6 +18,7 @@ src-y += samd21/main.c samd21/timer.c samd21/clock.c samd21/gpio.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
+src-$(CONFIG_USBSERIAL) += samd21/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += samd21/serial.c generic/serial_irq.c
 
 # Support bootloader offset address
