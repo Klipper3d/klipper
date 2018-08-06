@@ -28,6 +28,7 @@
 /* ---------------------------------------------------------------------------- */
 
 #include "sam4e.h"
+// #include "exceptions.h"
 
 /* Initialize segments */
 extern uint32_t _sfixed;
@@ -104,7 +105,7 @@ void GMAC_Handler   ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void UART1_Handler  ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 
 /* Exception Table */
-__attribute__ ((section(".vectors")))
+__attribute__ ((section(".vectors"))) __attribute__((externally_visible))
 const DeviceVectors exception_table = {
 
         /* Configure Initial Stack Pointer, using linker-generated symbols */
@@ -135,6 +136,7 @@ const DeviceVectors exception_table = {
         (void*) PMC_Handler,    /* 5  Power Management Controller */
         (void*) EFC_Handler,    /* 6  Enhanced Embedded Flash Controller */
         (void*) UART0_Handler,  /* 7  UART 0 */
+        (void*) Dummy_Handler,  /* 8  Dummy */
         (void*) PIOA_Handler,   /* 9  Parallel I/O Controller A */
         (void*) PIOB_Handler,   /* 10 Parallel I/O Controller B */
         (void*) PIOC_Handler,   /* 11 Parallel I/O Controller C */
@@ -166,6 +168,10 @@ const DeviceVectors exception_table = {
         (void*) CAN0_Handler,   /* 37 CAN0 */
         (void*) CAN1_Handler,   /* 38 CAN1 */
         (void*) AES_Handler,    /* 39 AES */
+        (void*) Dummy_Handler,  /* 40 Dummy */
+        (void*) Dummy_Handler,  /* 41 Dummy */
+        (void*) Dummy_Handler,  /* 42 Dummy */
+        (void*) Dummy_Handler,  /* 43 Dummy */
         (void*) GMAC_Handler,   /* 44 EMAC */
         (void*) UART1_Handler   /* 45 UART */
 };
@@ -198,7 +204,7 @@ void Reset_Handler(void)
         SCB->VTOR = ((uint32_t) pSrc & SCB_VTOR_TBLOFF_Msk);
 
         /* Initialize the C library */
-        __libc_init_array();
+        // __libc_init_array();
 
         /* Branch to main function */
         main();
