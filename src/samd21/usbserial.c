@@ -6,14 +6,11 @@
 
 #include <string.h> // memcpy
 #include "board/io.h" // readl
-#include "board/irq.h" // irq_save
 #include "board/usb_cdc.h" // usb_notify_setup
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // enable_pclock
-#include "samd21.h" // SERCOM0
+#include "samd21.h" // USB
 #include "sched.h" // DECL_INIT
-
-#include "command.h" // output
 
 
 /****************************************************************
@@ -147,9 +144,7 @@ static uint8_t set_address;
 void
 usb_set_address(uint_fast8_t addr)
 {
-    irqstatus_t flag = irq_save();
-    set_address = addr | USB_DEVICE_DADD_ADDEN;
-    irq_restore(flag);
+    writeb(&set_address, addr | USB_DEVICE_DADD_ADDEN);
     usb_send_setup(NULL, 0);
 }
 
