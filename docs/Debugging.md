@@ -188,9 +188,7 @@ The step rate benchmark is designed to find the maximum stepping rate
 that the hardware and software can reach. This benchmark stepping rate
 is not achievable in day-to-day use as Klipper needs to perform other
 tasks (eg, mcu/host communication, temperature reading, endstop
-checking) in any real-world usage. It is difficult to estimate actual
-real-world capacity, but as a general guide, one may approach 75% of
-these rates in practice.
+checking) in any real-world usage.
 
 ## Step rate benchmark test ##
 
