@@ -20,9 +20,9 @@ choice
     config FLASH_START_0000
         bool "No bootloader"
     config FLASH_START_2000
-        bool "2K bootloader (Arduino Zero)"
+        bool "8KiB bootloader (Arduino Zero)"
     config FLASH_START_4000
-        bool "4K bootloader (Arduino M0)"
+        bool "16KiB bootloader (Arduino M0)"
 endchoice
 
 config FLASH_START
