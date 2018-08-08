@@ -190,6 +190,11 @@ is not achievable in day-to-day use as Klipper needs to perform other
 tasks (eg, mcu/host communication, temperature reading, endstop
 checking) in any real-world usage.
 
+In general, the pins for the benchmark tests are chosen to flash LEDs
+or other innocuous pins. **Always verify that it is safe to drive the
+configured pins prior to running a benchmark.** It is not recommended
+to drive an actual stepper during a benchmark.
+
 ## Step rate benchmark test ##
 
 The test is performed using the console.py tool (described above). The
