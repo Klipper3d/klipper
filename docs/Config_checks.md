@@ -81,27 +81,38 @@ require a change to the pullup setting of the pin (the '^' at the
 start of the endstop_pin name - most printers will use a pullup
 resistor and the '^' should be present).
 
-### Verify stepper motor direction
+### Verify stepper motors
 
-Make sure the printer.cfg file does not have "homing_speed" set for
-any axis (or set it to a value of 5 or less).
+Use the STEPPER_BUZZ command to verify the connectivity of each
+stepper motor. Start by manually positioning the given axis to a
+midway point and then run `STEPPER_BUZZ STEPPER=stepper_x` . The
+STEPPER_BUZZ command will cause the given stepper to move one
+millimeter in a positive direction and then it will return to its
+starting position. (If the endstop is defined at position_endstop=0
+then at the start of each movement the stepper will move away from the
+endstop.) It will perform this oscillation ten times.
 
-On cartesian style printers, manually move the X axis to a midway
-point, issue a G28X0 command, and verify that the X motor moves slowly
-towards the endstop defined for that axis. If the motor moves in the
-wrong direction issue an M112 command to abort the move. A wrong
-direction generally indicates that the "dir_pin" for the axis needs to
+If the stepper does not move at all, then verify the "enable_pin" and
+"step_pin" settings for the stepper. If the stepper motor moves but
+does not return to its original position then verify the "dir_pin"
+setting. If the stepper motor oscillates in an incorrect direction,
+then it generally indicates that the "dir_pin" for the axis needs to
 be inverted. This is done by adding a '!' to the "dir_pin" in the
-printer config file (or removing it if one is already there). For
-example, change "dir_pin: xyz" to "dir_pin: !xyz". Then RESTART and
-retest the axis. If the axis does not move at all, then verify the
-"enable_pin" and "step_pin" settings for the axis. For cartesian style
-printers, repeat the test for the Y and Z axis with G28Y0 and G28Z0.
+printer config file (or removing it if one is already there). If the
+motor moves significantly more or significantly less than one
+millimeter then verify the "step_distance" setting.
 
-For delta style printers, manually move all three carriages to a
-midway point and then issue a G28 command. Verify all three motors
-move simultaneously upwards. If not, issue an M112 command and follow
-the troubleshooting steps in the preceding paragraph.
+Run the above test for each stepper motor defined in the config
+file. (Set the STEPPER parameter of the STEPPER_BUZZ command to the
+name of the config section that is to be tested.) If there is no
+filament in the extruder then one can use STEPPER_BUZZ to verify the
+extruder motor connectivity (use STEPPER=extruder). Otherwise, it's
+best to test the extruder motor separately (see the next section).
+
+After verifying all endstops and verifying all stepper motors the
+homing mechanism should be tested. Issue a G28 command to home all
+axes.  Remove power from the printer if it does not home properly.
+Rerun the endstop and stepper motor verification steps if necessary.
 
 ### Verify extruder motor
 
