@@ -158,6 +158,25 @@ section is enabled:
     command to move to the next probing point during a
     BED_TILT_CALIBRATE operation.
 
+## Mesh Bed Leveling
+
+The following commands are available when the "bed_mesh" config
+section is enabled:
+- `BED_MESH_CALIBRATE`: This command probes the bed using generated
+  points specified by the parameters in the config. After probing,
+  a mesh is generated and z-movement is adjusted according to the mesh.
+- `BED_MESH_OUTPUT`: This command outputs the current probed z values
+  and current mesh values to the terminal.
+- `BED_MESH_MAP`: This command probes the bed in a similar fashion
+  to BED_MESH_CALIBRATE, however no mesh is generated.  Instead,
+  the probed z values are serialized to json and output to the
+  terminal.  This allows octoprint plugins to easily capture the
+  data and generate maps approximating the bed's surface.  Note
+  that although no mesh is generated, any currently stored mesh
+  will be cleared as the process rehomes the printer.
+- `BED_MESH_CLEAR`: This command clears the mesh and removes all
+  z adjustment.  It is recommended to put this in your end-gcode.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
