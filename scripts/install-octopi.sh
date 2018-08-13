@@ -72,10 +72,19 @@ EOF
 # Step 5: Install newer version of bossac
 install_bossac()
 {
-    report_status "Installing bossac 1.8"
-    git clone --branch 1.8 https://github.com/shumatech/BOSSA.git /tmp/bossa
-    make -C /tmp/bossa bin/bossac
-    sudo cp /tmp/bossa/bin/bossac /usr/bin/bossac
+    if [ ! -d "${SRCDIR}/tools/bossa" ]; then
+        report_status "Installing bossac 1.8"
+        rm -rf /tmp/bossa
+        git clone --branch 1.8 https://github.com/shumatech/BOSSA.git /tmp/bossa
+        make -C /tmp/bossa bin/bossac
+        mkdir -p "${SRCDIR}/tools/bossa"
+        sudo cp /tmp/bossa/bin/bossac "${SRCDIR}/tools/bossa/bossac1.8"
+        report_status "Installing bossac 1.7-arduino"
+        git -C /tmp/bossa checkout arduino
+        make -C /tmp/bossa clean && make -C /tmp/bossa bin/bossac
+        sudo cp /tmp/bossa/bin/bossac "${SRCDIR}/tools/bossa/bossac1.7-arduino"
+    fi
+
 }
 
 # Step 6: Start host software
