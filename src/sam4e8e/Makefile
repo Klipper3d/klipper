@@ -32,6 +32,12 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
-flash: $(OUT)klipper.bin
-	@echo ""
-	@echo "  The SAM4E8E build does not currently support 'make flash'"
+# Flash rules
+lib/bossac/bin/bossac:
+	@echo "  Building bossac"
+	$(Q)make -C lib/bossac bin/bossac
+
+flash: $(OUT)klipper.bin lib/bossac/bin/bossac
+	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
+	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
+	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -e -w $(OUT)klipper.bin -v -b -R
