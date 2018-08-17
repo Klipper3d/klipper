@@ -38,14 +38,14 @@ endchoice
 
 config MCU
     string
-    default "atmega168" if MACH_atmega168
-    default "atmega328" if MACH_atmega328
-    default "atmega1284p" if MACH_atmega1284p
-    default "atmega644p" if MACH_atmega644p
+    default "atmega2560" if MACH_atmega2560
+    default "atmega1280" if MACH_atmega1280
     default "at90usb1286" if MACH_at90usb1286
     default "at90usb646" if MACH_at90usb646
-    default "atmega1280" if MACH_atmega1280
-    default "atmega2560" if MACH_atmega2560
+    default "atmega1284p" if MACH_atmega1284p
+    default "atmega644p" if MACH_atmega644p
+    default "atmega328" if MACH_atmega328
+    default "atmega168" if MACH_atmega168
 
 config AVRDUDE_PROTOCOL
     string
@@ -64,16 +64,6 @@ choice
     config AVR_FREQ_8000000
         bool "8Mhz"
 endchoice
-
-if MACH_atmega1284p
-    choice
-        prompt "Serial Port"
-        config AVR_SERIAL_UART0
-            bool "UART0"
-        config AVR_SERIAL_UART1
-            bool "UART1"
-    endchoice
-endif
 
 config CLOCK_FREQ
     int
@@ -120,6 +110,16 @@ config SERIAL_BAUD_U2X
     depends on AVR_SERIAL && !SIMULAVR
     bool
     default y
+
+if MACH_atmega1284p
+    choice
+        prompt "Serial Port"
+        config AVR_SERIAL_UART0
+            bool "UART0"
+        config AVR_SERIAL_UART1
+            bool "UART1"
+    endchoice
+endif
 
 config SERIAL_PORT
     int
