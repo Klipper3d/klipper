@@ -171,6 +171,11 @@ class ProbePointsHelper:
         self.gcode = self.toolhead = None
     def get_lift_speed(self):
         return self.lift_speed
+    def get_last_xy_home_positon(self):
+        if self.probe is not None:
+            return self.probe.last_home_position()
+        else:
+            return None
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
