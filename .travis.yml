@@ -5,9 +5,17 @@ addons:
   apt:
     packages:
       # AVR GCC packages
-      - gcc-avr avr-libc
+      - gcc-avr
+      - avr-libc
       # PRU GCC build packages
-      - pv libmpfr-dev libgmp-dev libmpc-dev texinfo libncurses5-dev bison flex
+      - pv
+      - libmpfr-dev
+      - libgmp-dev
+      - libmpc-dev
+      - texinfo
+      - libncurses5-dev
+      - bison
+      - flex
 
 cache:
   directories:
