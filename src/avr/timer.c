@@ -11,6 +11,12 @@
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_dispatch
 
+#if !defined(TIFR1) && defined(TIFR)
+// The atmega32 uses TIFR instead of TIFR1
+#define TIFR1 TIFR
+#define TIMSK1 TIMSK
+#endif
+
 
 /****************************************************************
  * Low level timer code

@@ -13,11 +13,30 @@
 #define AVR_SERIAL_REG1(prefix, id, suffix) prefix ## id ## suffix
 #define AVR_SERIAL_REG(prefix, id, suffix) AVR_SERIAL_REG1(prefix, id, suffix)
 
+#if defined(USART_RX_vect)
+// The atmega168 / atmega328 doesn't have an ID in the irq names
+#define USARTx_RX_vect USART_RX_vect
+#define USARTx_UDRE_vect USART_UDRE_vect
+#define UCSRxC_SELECT 0
+#elif defined(USART_RXC_vect)
+// The atmega32 uses slightly different names
+#define USARTx_RX_vect USART_RXC_vect
+#define USARTx_UDRE_vect USART_UDRE_vect
+#define UCSRxC_SELECT URSEL
+#undef CONFIG_SERIAL_PORT
+#define CONFIG_SERIAL_PORT
+#else
+#define USARTx_RX_vect AVR_SERIAL_REG(USART, CONFIG_SERIAL_PORT, _RX_vect)
+#define USARTx_UDRE_vect AVR_SERIAL_REG(USART, CONFIG_SERIAL_PORT, _UDRE_vect)
+#define UCSRxC_SELECT 0
+#endif
+
 // Serial port register aliases
 #define UCSRxA AVR_SERIAL_REG(UCSR, CONFIG_SERIAL_PORT, A)
 #define UCSRxB AVR_SERIAL_REG(UCSR, CONFIG_SERIAL_PORT, B)
 #define UCSRxC AVR_SERIAL_REG(UCSR, CONFIG_SERIAL_PORT, C)
-#define UBRRx AVR_SERIAL_REG(UBRR, CONFIG_SERIAL_PORT,)
+#define UBRRxL AVR_SERIAL_REG(UBRR, CONFIG_SERIAL_PORT, L)
+#define UBRRxH AVR_SERIAL_REG(UBRR, CONFIG_SERIAL_PORT, H)
 #define UDRx AVR_SERIAL_REG(UDR, CONFIG_SERIAL_PORT,)
 #define UCSZx1 AVR_SERIAL_REG(UCSZ, CONFIG_SERIAL_PORT, 1)
 #define UCSZx0 AVR_SERIAL_REG(UCSZ, CONFIG_SERIAL_PORT, 0)
@@ -27,22 +46,16 @@
 #define RXCIEx AVR_SERIAL_REG(RXCIE, CONFIG_SERIAL_PORT,)
 #define UDRIEx AVR_SERIAL_REG(UDRIE, CONFIG_SERIAL_PORT,)
 
-#if defined(USART_RX_vect)
-// The atmega168 / atmega328 doesn't have an ID in the irq names
-#define USARTx_RX_vect USART_RX_vect
-#define USARTx_UDRE_vect USART_UDRE_vect
-#else
-#define USARTx_RX_vect AVR_SERIAL_REG(USART, CONFIG_SERIAL_PORT, _RX_vect)
-#define USARTx_UDRE_vect AVR_SERIAL_REG(USART, CONFIG_SERIAL_PORT, _UDRE_vect)
-#endif
-
 void
 serial_init(void)
 {
     UCSRxA = CONFIG_SERIAL_BAUD_U2X ? (1<<U2Xx) : 0;
     uint32_t cm = CONFIG_SERIAL_BAUD_U2X ? 8 : 16;
-    UBRRx = DIV_ROUND_CLOSEST(CONFIG_CLOCK_FREQ, cm * CONFIG_SERIAL_BAUD) - 1UL;
-    UCSRxC = (1<<UCSZx1) | (1<<UCSZx0);
+    uint16_t ubrr;
+    ubrr = DIV_ROUND_CLOSEST(CONFIG_CLOCK_FREQ, cm * CONFIG_SERIAL_BAUD) - 1UL;
+    UBRRxH = ubrr >> 8;
+    UBRRxL = ubrr;
+    UCSRxC = UCSRxC_SELECT | (1<<UCSZx1) | (1<<UCSZx0);
     UCSRxB = (1<<RXENx) | (1<<TXENx) | (1<<RXCIEx) | (1<<UDRIEx);
 }
 DECL_INIT(serial_init);

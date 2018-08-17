@@ -34,6 +34,8 @@ choice
         bool "atmega328"
     config MACH_atmega168
         bool "atmega168"
+    config MACH_atmega32
+        bool "atmega32"
 endchoice
 
 config MCU
@@ -46,6 +48,7 @@ config MCU
     default "atmega644p" if MACH_atmega644p
     default "atmega328" if MACH_atmega328
     default "atmega168" if MACH_atmega168
+    default "atmega32" if MACH_atmega32
 
 config AVRDUDE_PROTOCOL
     string

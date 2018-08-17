@@ -43,12 +43,14 @@ dynmem_end(void)
 void
 prescaler_init(void)
 {
+#if defined(CLKPR)
     if (CONFIG_AVR_CLKPR != -1 && (uint8_t)CONFIG_AVR_CLKPR != CLKPR) {
         irqstatus_t flag = irq_save();
         CLKPR = 0x80;
         CLKPR = CONFIG_AVR_CLKPR;
         irq_restore(flag);
     }
+#endif
 }
 DECL_INIT(prescaler_init);
 
