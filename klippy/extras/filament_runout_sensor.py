@@ -1,4 +1,4 @@
-# Support for common SPI based thermocouple and RTD temperature sensors
+# Support for multiple filament runout sensors
 #
 # Copyright (C) 2018  Miguel Moitinho <miguel@moitinho.net>
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
