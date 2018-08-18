@@ -117,11 +117,11 @@ class ConfigWrapper:
                 if s.startswith(prefix)]
 
 class ConfigLogger():
-    def __init__(self, fileconfig, printer):
-        self.lines = ["===== Config file ====="]
+    def __init__(self, fileconfig, printer, desc="Config file", name="config"):
+        self.lines = ["===== %s =====" % desc]
         fileconfig.write(self)
-        self.lines.append("=======================")
-        printer.set_rollover_info("config", "\n".join(self.lines))
+        self.lines.append("=" * (6*2 + len(desc)))
+        printer.set_rollover_info(name, "\n".join(self.lines))
     def write(self, data):
         self.lines.append(data.strip())
 
