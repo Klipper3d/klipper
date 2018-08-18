@@ -33,7 +33,8 @@ class DeltaCalibrate:
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_stable_position()
-    def finalize(self, z_offset, positions):
+    def finalize(self, offsets, positions):
+        z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         logging.info("Calculating delta_calibrate with: %s", positions)
         params = kin.get_calibrate_params()
