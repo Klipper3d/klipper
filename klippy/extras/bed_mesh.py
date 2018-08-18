@@ -187,9 +187,6 @@ class BedMeshCalibrate:
         self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
         self.probe_params['min_y'] = min(points, key=lambda p: p[1])[1]
         self.probe_params['max_y'] = max(points, key=lambda p: p[1])[1]
-        offset = parse_pair(config, ('probe_offset',))
-        self.probe_params['x_offset'] = offset[0]
-        self.probe_params['y_offset'] = offset[1]
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
         self.probe_params['mesh_x_pps'] = pps[0]
@@ -202,9 +199,6 @@ class BedMeshCalibrate:
                 % (self.probe_params['algo']))
         self.probe_params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
-        logging.debug('bed_mesh: probe/mesh parameters:')
-        for key, value in self.probe_params.iteritems():
-            logging.debug("%s :  %s" % (key, value))
     cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
     def cmd_BED_MESH_MAP(self, params):
         self.build_map = True
@@ -230,7 +224,10 @@ class BedMeshCalibrate:
             print_func(msg)
         else:
             print_func("bed_mesh: bed has not been probed")
-    def finalize(self, z_offset, positions):
+    def finalize(self, offsets, positions):
+        self.probe_params['x_offset'] = offsets[0]
+        self.probe_params['y_offset'] = offsets[1]
+        z_offset = offsets[2]
         if self.probe_helper.get_last_xy_home_positon() is not None \
                 and self.z_endstop_pos is not None:
             # Using probe as a virtual endstop, warn user if the
@@ -271,7 +268,6 @@ class BedMeshCalibrate:
             except BedMeshError as e:
                 raise self.gcode.error(e.message)
             self.bedmesh.set_mesh(mesh)
-            self.print_probed_positions(logging.debug)
             self.gcode.respond_info("Mesh Bed Leveling Complete")
 
 
@@ -344,6 +340,9 @@ class ZMesh:
     def __init__(self, params):
         self.mesh_z_table = None
         self.probe_params = params
+        logging.debug('bed_mesh: probe/mesh parameters:')
+        for key, value in self.probe_params.iteritems():
+            logging.debug("%s :  %s" % (key, value))
         self.mesh_x_min = params['min_x'] + params['x_offset']
         self.mesh_x_max = params['max_x'] + params['x_offset']
         self.mesh_y_min = params['min_y'] + params['y_offset']

@@ -16,6 +16,8 @@ class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
+        self.x_offset = config.getfloat('x_offset', 0.)
+        self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
@@ -55,6 +57,8 @@ class PrinterProbe:
         self.z_virtual_endstop = ProbeVirtualEndstop(
             self.printer, self.mcu_probe)
         return self.z_virtual_endstop
+    def get_offsets(self):
+        return self.x_offset, self.y_offset, self.z_offset
     def last_home_position(self):
         if self.z_virtual_endstop is None:
             return None
@@ -153,7 +157,7 @@ class ProbePointsHelper:
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
         # Lookup probe object
         self.probe = None
-        self.probe_z_offset = 0.
+        self.probe_offsets = (0., 0., 0.)
         manual_probe = config.getboolean('manual_probe', None)
         if manual_probe is None:
             manual_probe = not config.has_section('probe')
@@ -161,8 +165,8 @@ class ProbePointsHelper:
             self.printer.try_load_module(config, 'probe')
             self.probe = self.printer.lookup_object('probe')
             self.lift_speed = min(self.speed, self.probe.speed)
-            self.probe_z_offset = self.probe.z_offset
-            if self.horizontal_move_z < self.probe_z_offset:
+            self.probe_offsets = self.probe.get_offsets()
+            if self.horizontal_move_z < self.probe_offsets[2]:
                 raise config.error("horizontal_move_z can't be less than probe's"
                                    " z_offset in %s" % (config.get_name()))
         # Internal probing state
@@ -229,7 +233,7 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            self.callback.finalize(self.probe_z_offset, self.results)
+            self.callback.finalize(self.probe_offsets, self.results)
 
 def load_config(config):
     return PrinterProbe(config)
