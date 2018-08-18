@@ -10,12 +10,17 @@ class FilamentRunoutSensor:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
 
+        self.name = config.get_name().split(' ')[-1]
+
         buttons = self.printer.try_load_module(config, "buttons")
 
-        buttons.register_button_push(config.get('pin'), self.runnout_callback)
+        buttons.register_buttons([config.get('pin')], self.runnout_callback)
 
-    def runnout_callback(self, eventtime):
-        self.gcode.respond_info("Filament Sensor Triggered")
+    def runnout_callback(self, eventtime, state):
+        self.gcode.respond_info("Sensor {name} state {state}".format(
+            name=self.name,
+            state=state
+        ))
 
 
 def load_config_prefix(config):
