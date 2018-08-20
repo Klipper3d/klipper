@@ -61,16 +61,23 @@ gpio_out_setup(uint8_t pin, uint8_t val)
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = digital_pins[pin % 16];
-    irqstatus_t flag = irq_save();
-    if (val)
-        LL_GPIO_SetOutputPin(regs, bit);
-    else
-        LL_GPIO_ResetOutputPin(regs, bit);
-    LL_GPIO_SetPinMode(regs, bit, LL_GPIO_MODE_OUTPUT);
-    irq_restore(flag);
-    return (struct gpio_out){ .regs = regs, .bit = bit };
+    struct gpio_out g = { .regs=regs, .bit=bit };
+    gpio_out_reset(g, val);
+    return g;
 fail:
     shutdown("Not an output pin");
+}
+
+void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    irqstatus_t flag = irq_save();
+    if (val)
+        LL_GPIO_SetOutputPin(g.regs, g.bit);
+    else
+        LL_GPIO_ResetOutputPin(g.regs, g.bit);
+    LL_GPIO_SetPinMode(g.regs, g.bit, LL_GPIO_MODE_OUTPUT);
+    irq_restore(flag);
 }
 
 void
@@ -104,17 +111,24 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = digital_pins[pin % 16];
-    irqstatus_t flag = irq_save();
-    if (pull_up) {
-        LL_GPIO_SetPinMode(regs, bit, LL_GPIO_MODE_INPUT);
-        LL_GPIO_SetPinPull(regs, bit, LL_GPIO_PULL_UP);
-    } else {
-        LL_GPIO_SetPinMode(regs, bit, LL_GPIO_MODE_FLOATING);
-    }
-    irq_restore(flag);
-    return (struct gpio_in){ .regs = regs, .bit = bit };
+    struct gpio_in g = { .regs = regs, .bit = bit };
+    gpio_in_reset(g, pull_up);
+    return g;
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    irqstatus_t flag = irq_save();
+    if (pull_up) {
+        LL_GPIO_SetPinMode(g.regs, g.bit, LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(g.regs, g.bit, LL_GPIO_PULL_UP);
+    } else {
+        LL_GPIO_SetPinMode(g.regs, g.bit, LL_GPIO_MODE_FLOATING);
+    }
+    irq_restore(flag);
 }
 
 uint8_t
