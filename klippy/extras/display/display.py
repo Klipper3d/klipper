@@ -7,6 +7,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import hd44780, st7920, uc1701, icons
+import menu
 
 LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780, 'uc1701' : uc1701.UC1701 }
 M73_TIMEOUT = 5.
@@ -17,6 +18,8 @@ class PrinterLCD:
         self.reactor = self.printer.get_reactor()
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.lcd_type = config.get('lcd_type')
+        # menu
+        self.menu = menu.MenuManager(config, self.lcd_chip)
         # printer objects
         self.gcode = self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
@@ -89,6 +92,11 @@ class PrinterLCD:
         self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
     # Screen updating
     def screen_update_event(self, eventtime):
+        # update menu component
+        ret = self.menu.screen_update_event(eventtime)
+        if ret:
+            return ret
+        # update all else
         self.lcd_chip.clear()
         if self.lcd_type == 'hd44780':
             self.screen_update_hd44780(eventtime)
