@@ -184,6 +184,9 @@ class ProbePointsHelper:
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode = self.printer.lookup_object('gcode')
+        # Unregister NEXT command in case we are starting over from an
+        # unfinalized calibration
+        self.gcode.register_command('NEXT', None)
         self.gcode.register_command(
             'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
         self.results = []
