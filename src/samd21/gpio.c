@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <string.h> // ffs
 #include "board/irq.h" // irq_save
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_out_setup
@@ -37,7 +38,6 @@ gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
 
 #define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)
-#define GPIO2NUM(PIN) ((PIN) % 32)
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 #define NUM_PORT 2
 
@@ -47,18 +47,31 @@ gpio_out_setup(uint8_t pin, uint8_t val)
     if (GPIO2PORT(pin) >= NUM_PORT)
         goto fail;
     PortGroup *pg = &PORT->Group[GPIO2PORT(pin)];
-    uint32_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
-    if (val)
-        pg->OUTSET.reg = bit;
-    else
-        pg->OUTCLR.reg = bit;
-    pg->DIRSET.reg = bit;
-    pg->PINCFG[GPIO2NUM(pin)].reg = 0;
-    irq_restore(flag);
-    return (struct gpio_out){ .regs=pg, .bit=bit };
+    struct gpio_out g = { .regs=pg, .bit=GPIO2BIT(pin) };
+    gpio_out_reset(g, val);
+    return g;
 fail:
     shutdown("Not an output pin");
+}
+
+static void
+set_pincfg(PortGroup *pg, uint32_t bit, uint8_t cfg)
+{
+    pg->PINCFG[ffs(bit)-1].reg = cfg;
+}
+
+void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    PortGroup *pg = g.regs;
+    irqstatus_t flag = irq_save();
+    if (val)
+        pg->OUTSET.reg = g.bit;
+    else
+        pg->OUTCLR.reg = g.bit;
+    pg->DIRSET.reg = g.bit;
+    set_pincfg(pg, g.bit, 0);
+    irq_restore(flag);
 }
 
 void
@@ -91,14 +104,21 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     if (GPIO2PORT(pin) >= NUM_PORT)
         goto fail;
     PortGroup *pg = &PORT->Group[GPIO2PORT(pin)];
-    uint32_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
-    pg->PINCFG[GPIO2NUM(pin)].reg = pull_up > 0 ? PORT_PINCFG_PULLEN : 0;
-    pg->DIRCLR.reg = bit;
-    irq_restore(flag);
-    return (struct gpio_in){ .regs=pg, .bit=bit };
+    struct gpio_in g = { .regs=pg, .bit=GPIO2BIT(pin) };
+    gpio_in_reset(g, pull_up);
+    return g;
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    PortGroup *pg = g.regs;
+    irqstatus_t flag = irq_save();
+    set_pincfg(pg, g.bit, pull_up > 0 ? PORT_PINCFG_PULLEN : 0);
+    pg->DIRCLR.reg = g.bit;
+    irq_restore(flag);
 }
 
 uint8_t
