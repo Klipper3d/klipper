@@ -140,8 +140,8 @@ class ProbePointsHelper:
         self.printer = config.get_printer()
         self.callback = callback
         self.probe_points = default_points
-        self.x_offset = config.getfloat('x_offset', 0.0)
-        self.y_offset = config.getfloat('y_offset', 0.0)
+        self.x_offset = self.printer.lookup_object("probe").x_offset;
+        self.y_offset = self.printer.lookup_object("probe").y_offset;
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
             points = config.get('points').split('\n')
