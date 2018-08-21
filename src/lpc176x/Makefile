@@ -4,10 +4,10 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/lpc176x src/generic
-dirs-y += lib/lpc176x/device lib/lpc176x/device/TOOLCHAIN_GCC_ARM
+dirs-y += lib/lpc176x/device/TOOLCHAIN_GCC_ARM
 
 CFLAGS += -mthumb -mcpu=cortex-m3
-CFLAGS += -Ilib/lpc176x/device -Ilib/lpc176x/device -Ilib/lpc176x/cmsis
+CFLAGS += -Ilib/lpc176x/device -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += -T $(OUT)LPC1768.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs

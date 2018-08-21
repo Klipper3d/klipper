@@ -1,0 +1,26 @@
+diff --git a/lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld b/lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld
+index c6f289e7..34dfb6ba 100644
+--- a/lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld
++++ b/lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld
+@@ -35,7 +35,7 @@ SEARCH_DIR(.)
+ /* Memory Spaces Definitions */
+ MEMORY
+ {
+-  rom      (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00040000
++  rom      (rx)  : ORIGIN = 0x00000000 + FLASH_START , LENGTH = 0x00040000 - FLASH_START
+   ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00008000
+ }
+ 
+diff --git a/lib/samd21/samd21a/gcc/gcc/startup_samd21.c b/lib/samd21/samd21a/gcc/gcc/startup_samd21.c
+index 3dce0edd..a480077f 100644
+--- a/lib/samd21/samd21a/gcc/gcc/startup_samd21.c
++++ b/lib/samd21/samd21a/gcc/gcc/startup_samd21.c
+@@ -105,7 +105,7 @@ void PTC_Handler             ( void ) __attribute__ ((weak, alias("Dummy_Handler
+ void I2S_Handler             ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
+ 
+ /* Exception Table */
+-__attribute__ ((section(".vectors")))
++__attribute__ ((section(".vectors"))) __attribute__((externally_visible))
+ const DeviceVectors exception_table = {
+ 
+         /* Configure Initial Stack Pointer, using linker-generated symbols */

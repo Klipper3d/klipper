@@ -51,7 +51,8 @@ class BedTiltCalibrate:
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.calc_position()
-    def finalize(self, z_offset, positions):
+    def finalize(self, offsets, positions):
+        z_offset = offsets[2]
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,

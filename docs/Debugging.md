@@ -171,3 +171,198 @@ The script will extract the printer config file and will extract MCU
 shutdown information. The information dumps from an MCU shutdown (if
 present) will be reordered by timestamp to assist in diagnosing cause
 and effect scenarios.
+
+Micro-controller Benchmarks
+===========================
+
+This section describes the mechanism used to generate the Klipper
+micro-controller step rate benchmarks.
+
+The primary goal of the benchmarks is to provide a consistent
+mechanism for measuring the impact of coding changes within the
+software. A secondary goal is to provide high-level metrics for
+comparing the performance between chips and between software
+platforms.
+
+The step rate benchmark is designed to find the maximum stepping rate
+that the hardware and software can reach. This benchmark stepping rate
+is not achievable in day-to-day use as Klipper needs to perform other
+tasks (eg, mcu/host communication, temperature reading, endstop
+checking) in any real-world usage.
+
+In general, the pins for the benchmark tests are chosen to flash LEDs
+or other innocuous pins. **Always verify that it is safe to drive the
+configured pins prior to running a benchmark.** It is not recommended
+to drive an actual stepper during a benchmark.
+
+## Step rate benchmark test ##
+
+The test is performed using the console.py tool (described above). The
+micro-controller is configured for the particular hardware platform
+(see below) and then the following is cut-and-paste into the
+console.py terminal window:
+```
+SET start_clock {clock+freq}
+SET ticks 1000
+
+reset_step_clock oid=0 clock={start_clock}
+set_next_step_dir oid=0 dir=0
+queue_step oid=0 interval={ticks} count=60000 add=0
+set_next_step_dir oid=0 dir=1
+queue_step oid=0 interval=3000 count=1 add=0
+
+reset_step_clock oid=1 clock={start_clock}
+set_next_step_dir oid=1 dir=0
+queue_step oid=1 interval={ticks} count=60000 add=0
+set_next_step_dir oid=1 dir=1
+queue_step oid=1 interval=3000 count=1 add=0
+
+reset_step_clock oid=2 clock={start_clock}
+set_next_step_dir oid=2 dir=0
+queue_step oid=2 interval={ticks} count=60000 add=0
+set_next_step_dir oid=2 dir=1
+queue_step oid=2 interval=3000 count=1 add=0
+```
+
+The above tests three steppers simultaneously stepping. If running the
+above results in a "Rescheduled timer in the past" or "Stepper too far
+in past" error then it indicates the `ticks` parameter is too low (it
+results in a stepping rate that is too fast). The goal is to find the
+lowest setting of the ticks parameter that reliably results in a
+successful completion of the test. It should be possible to bisect the
+ticks parameter until a stable value is found.
+
+On a failure, one can copy-and-paste the following to clear the error
+in preparation for the next test:
+```
+clear_shutdown
+```
+
+To obtain the single stepper and dual stepper benchmarks, the same
+configuration sequence is used, but only the first block (for the
+single stepper case) or first two blocks (for the dual stepper case)
+of the above test is cut-and-paste into the console.py window.
+
+To produce the benchmarks found in the Features.md document, the total
+number of steps per second is calculated by multiplying the number of
+active steppers with the nominal mcu frequency and dividing by the
+final ticks parameter. The results are rounded to the nearest K. For
+example, with three active steppers:
+```
+ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
+```
+
+### AVR step rate benchmark ###
+
+The following configuration sequence is used on AVR chips:
+```
+PINS arduino
+allocate_oids count=3
+config_stepper oid=0 step_pin=ar29 dir_pin=ar28 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=ar27 dir_pin=ar26 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=ar23 dir_pin=ar22 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `f886212b` with gcc version `avr-gcc
+(GCC) 4.8.1`. Both the 16Mhz and 20Mhz tests were run using simulavr
+configured for an atmega644p (previous tests have confirmed simulavr
+results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
+On both 16Mhz and 20Mhz the best single stepper result is `SET ticks
+106` and the best three stepper result is `SET ticks 481`.
+
+### Arduino Due step rate benchmark ###
+
+The following configuration sequence is used on the Due:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PB27 dir_pin=PA21 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PB26 dir_pin=PC30 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `d8225642` with gcc version
+`arm-none-eabi-gcc (4.8.4-1+11-1) 4.8.4 20141219 (release)`. The best
+single stepper result is `SET ticks 249`, the best dual stepper result
+is `SET ticks 220`, and the best three stepper result is `SET ticks
+374`.
+
+### Beaglebone PRU step rate benchmark ###
+
+The following configuration sequence is used on the PRU:
+```
+PINS beaglebone
+allocate_oids count=3
+config_stepper oid=0 step_pin=P8_13 dir_pin=P8_12 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=P8_15 dir_pin=P8_14 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=P8_19 dir_pin=P8_18 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `0adea120`. The best single stepper
+result is `SET ticks 909`, the best dual stepper result is `SET ticks
+859`, and the best three stepper result is `SET ticks 871`.
+
+### STM32F103 step rate benchmark ###
+
+The following configuration sequence is used on the STM32F103:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PC13 dir_pin=PB5 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PB6 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `add37023` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 44`, the best dual stepper result is `SET
+ticks 47`, and the best three stepper result is `SET ticks 80`.
+
+### LPC176x step rate benchmark ###
+
+The following configuration sequence is used on the LPC176x:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=P1.20 dir_pin=P1.18 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=P1.21 dir_pin=P1.18 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `c78b9076` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
+LPC1768, the best single stepper result is `SET ticks 136`, the best
+dual stepper result is `SET ticks 134`, and the best three stepper
+result is `SET ticks 195`. The 120Mhz LPC1769 results were obtained by
+overclocking an LPC1768 to 120Mhz - the best single stepper result is
+`SET ticks 155`, the best dual stepper result is `SET ticks 148`, and
+the best three stepper result is `SET ticks 195`.
+
+### SAMD21 step rate benchmark ###
+
+The following configuration sequence is used on the SAMD21:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA27 dir_pin=PA20 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PA21 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA17 dir_pin=PA21 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `cf2393ef` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 323`, the best dual stepper result is
+`SET ticks 410`, and the best three stepper result is `SET ticks 664`.
+
+Host Benchmarks
+===============
+
+It is possible to run timing tests on the host software using the
+"batch mode" processing mechanism described above. This is typically
+done by choosing a large and complex G-Code file and timing how long
+it takes for the host software to process it. For example:
+```
+time ~/klippy-env/bin/python ./klippy/klippy.py config/example.cfg -i something_complex.gcode -o /dev/null -d out/klipper.dict
+```
