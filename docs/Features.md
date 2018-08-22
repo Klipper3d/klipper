@@ -98,7 +98,7 @@ represent total number of steps per second on the micro-controller.
 | Arduino Due (ARM SAM3X8E)   | 382K              | 337K              |
 | Smoothieboard (ARM LPC1768) | 385K              | 385K              |
 | Smoothieboard (ARM LPC1769) | 462K              | 462K              |
-| Duet Wifi/Eth (ARM SAM4E8E) | 545K              | 545K              |
+| Duet Wifi/Eth (ARM SAM4E8E) | 475K              | 475K              |
 | Beaglebone PRU              | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one
