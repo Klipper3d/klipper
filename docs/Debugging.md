@@ -288,6 +288,23 @@ single stepper result is `SET ticks 249`, the best dual stepper result
 is `SET ticks 220`, and the best three stepper result is `SET ticks
 374`.
 
+### Duet Wifi step rate benchmark ###
+
+The following configuration sequence is used on the Duet Wifi:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PD6 dir_pin=PD11 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PD7 dir_pin=PD12 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PD8 dir_pin=PD13 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `e94f3b7` with gcc version
+`arm-none-eabi-gcc (15:5.4.1+svn241155-1) 5.4.1 20160919`. The best
+single stepper result is `SET ticks 325`, the best dual stepper result
+is `SET ticks 283`, and the best three stepper result is `SET ticks
+379`.
+
 ### Beaglebone PRU step rate benchmark ###
 
 The following configuration sequence is used on the PRU:

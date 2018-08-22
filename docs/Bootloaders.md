@@ -144,6 +144,24 @@ stty -F /dev/ttyACM0 1200
 bossac -i -p ttyACM0 -R -e -w -v -b out/klipper.bin
 ```
 
+SAM4 micro-controllers (Duet Wifi)
+====================================
+
+It is not common to use a bootloader with the SAM4 mcu. The chip
+itself has a ROM that allows the flash to be programmed from 3.3V
+serial port or from USB.
+
+To enable the ROM, the "erase" pin is held high during a reset, which
+erases the flash contents, and causes the ROM to run.
+
+The code at https://github.com/shumatech/BOSSA can be used to program
+the SAM4. It is necessary to use version `1.8.0` or higher.
+
+To flash an application use something like:
+```
+bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
+```
+
 SAMD21 micro-controllers (Arduino Zero)
 =======================================
 
