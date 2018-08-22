@@ -65,6 +65,16 @@ choice
         bool "8Mhz"
 endchoice
 
+if MACH_atmega1284p
+    choice
+        prompt "Serial Port"
+        config AVR_SERIAL_UART0
+            bool "UART0"
+        config AVR_SERIAL_UART1
+            bool "UART1"
+    endchoice
+endif
+
 config CLOCK_FREQ
     int
     default 8000000 if AVR_FREQ_8000000
@@ -110,9 +120,10 @@ config SERIAL_BAUD_U2X
     depends on AVR_SERIAL && !SIMULAVR
     bool
     default y
+
 config SERIAL_PORT
     int
-    default 1 if MACH_at90usb1286 || MACH_at90usb646
+    default 1 if MACH_at90usb1286 || MACH_at90usb646 || AVR_SERIAL_UART1
     default 0
 
 config SIMULAVR

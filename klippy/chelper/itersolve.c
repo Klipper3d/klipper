@@ -215,14 +215,14 @@ itersolve_set_stepcompress(struct stepper_kinematics *sk
     sk->step_dist = step_dist;
 }
 
-void __visible
-itersolve_set_position(struct stepper_kinematics *sk
-                       , double x, double y, double z)
+double __visible
+itersolve_calc_position_from_coord(struct stepper_kinematics *sk
+                                   , double x, double y, double z)
 {
     struct move m;
     memset(&m, 0, sizeof(m));
     move_fill(&m, 0., 0., 1., 0., x, y, z, 0., 1., 0., 0., 1., 0.);
-    sk->commanded_pos = sk->calc_position(sk, &m, 0.);
+    return sk->calc_position(sk, &m, 0.);
 }
 
 void __visible

@@ -39,12 +39,10 @@ class MCU_stepper:
         self._min_stop_interval = min_stop_interval
     def setup_step_distance(self, step_dist):
         self._step_dist = step_dist
-    def setup_itersolve(self, sk):
-        old_sk = self._stepper_kinematics
-        self._stepper_kinematics = sk
-        self._ffi_lib.itersolve_set_stepcompress(
-            sk, self._stepqueue, self._step_dist)
-        return old_sk
+    def setup_itersolve(self, alloc_func, *params):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
+        self.set_stepper_kinematics(sk)
     def build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
@@ -71,11 +69,14 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
+    def calc_position_from_coord(self, coord):
+        return self._ffi_lib.itersolve_calc_position_from_coord(
+            self._stepper_kinematics, coord[0], coord[1], coord[2])
     def set_position(self, newpos):
-        orig_cmd_pos = self.get_commanded_position()
-        self._ffi_lib.itersolve_set_position(
-            self._stepper_kinematics, newpos[0], newpos[1], newpos[2])
-        self._mcu_position_offset += orig_cmd_pos - self.get_commanded_position()
+        spos = self.calc_position_from_coord(newpos)
+        self._mcu_position_offset += self.get_commanded_position() - spos
+        self._ffi_lib.itersolve_set_commanded_pos(
+            self._stepper_kinematics, spos)
     def get_commanded_position(self):
         return self._ffi_lib.itersolve_get_commanded_pos(
             self._stepper_kinematics)
@@ -85,6 +86,12 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
+    def set_stepper_kinematics(self, sk):
+        old_sk = self._stepper_kinematics
+        self._stepper_kinematics = sk
+        self._ffi_lib.itersolve_set_stepcompress(
+            sk, self._stepqueue, self._step_dist)
+        return old_sk
     def set_ignore_move(self, ignore_move):
         was_ignore = (self._itersolve_gen_steps
                       is not self._ffi_lib.itersolve_gen_steps)
@@ -199,7 +206,8 @@ class MCU_endstop:
                     s.note_homing_end(did_trigger=True)
                 self._homing = False
                 return False
-            last_sent_print_time = self._mcu.estimated_print_time(last_sent_time)
+            last_sent_print_time = self._mcu.estimated_print_time(
+                last_sent_time)
             if last_sent_print_time > home_end_time:
                 # Timeout - disable endstop checking
                 for s in self._steppers:
@@ -399,10 +407,10 @@ class MCU_adc:
 
 class MCU:
     error = error
-    def __init__(self, printer, config, clocksync):
-        self._printer = printer
+    def __init__(self, config, clocksync):
+        self._printer = config.get_printer()
         self._clocksync = clocksync
-        self._reactor = printer.get_reactor()
+        self._reactor = self._printer.get_reactor()
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
@@ -425,12 +433,11 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         # Config building
-        printer.lookup_object('pins').register_chip(self._name, self)
+        self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_objects = []
         self._init_cmds = []
         self._config_cmds = []
-        self._config_crc = None
         self._pin_map = config.get('pin_map', None)
         self._custom = config.get('custom', '')
         self._mcu_freq = 0.
@@ -446,7 +453,7 @@ class MCU:
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
     # Serial callbacks
-    def handle_mcu_stats(self, params):
+    def _handle_mcu_stats(self, params):
         count = params['count']
         tick_sum = params['sum']
         c = 1.0 / (count * self._mcu_freq)
@@ -454,7 +461,7 @@ class MCU:
         tick_sumsq = params['sumsq'] * self._stats_sumsq_base
         self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
         self._mcu_tick_awake = tick_sum / self._mcu_freq
-    def handle_shutdown(self, params):
+    def _handle_shutdown(self, params):
         if self._is_shutdown:
             return
         self._is_shutdown = True
@@ -505,14 +512,13 @@ class MCU:
             if not line:
                 continue
             self.add_config_cmd(line)
-    def _build_config(self):
+    def _send_config(self, prev_crc):
         # Build config commands
         for co in self._config_objects:
             co.build_config()
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
-
         # Resolve pin names
         mcu_type = self._serial.msgparser.get_constant('MCU')
         pin_resolver = pins.PinResolver(mcu_type)
@@ -522,44 +528,52 @@ class MCU:
             self._config_cmds[i] = pin_resolver.update_command(cmd)
         for i, cmd in enumerate(self._init_cmds):
             self._init_cmds[i] = pin_resolver.update_command(cmd)
-
         # Calculate config CRC
-        self._config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
-        self.add_config_cmd("finalize_config crc=%d" % (self._config_crc,))
-    def _send_config(self):
-        get_config_cmd = self.lookup_command("get_config")
-        if self.is_fileoutput():
-            config_params = {
-                'is_config': 0, 'move_count': 500, 'crc': self._config_crc}
-        else:
-            config_params = get_config_cmd.send_with_response(response='config')
-        if not config_params['is_config']:
-            if self._restart_method == 'rpi_usb':
-                # Only configure mcu after usb power reset
-                self._check_restart("full reset before config")
-            # Send config commands
+        config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
+        self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
+        # Transmit config messages (if needed)
+        if prev_crc is None:
             logging.info("Sending MCU '%s' printer configuration...",
                          self._name)
             for c in self._config_cmds:
                 self._serial.send(c)
-            if not self.is_fileoutput():
-                config_params = get_config_cmd.send_with_response(
-                    response='config')
-                if not config_params['is_config']:
-                    if self._is_shutdown:
-                        raise error("MCU '%s' error during config: %s" % (
-                            self._name, self._shutdown_msg))
-                    raise error("Unable to configure MCU '%s'" % (self._name,))
+        elif config_crc != prev_crc:
+            self._check_restart("CRC mismatch")
+            raise error("MCU '%s' CRC does not match config" % (self._name,))
+        # Transmit init messages
+        for c in self._init_cmds:
+            self._serial.send(c)
+    def _send_get_config(self):
+        get_config_cmd = self.lookup_command("get_config")
+        if self.is_fileoutput():
+            return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
+        config_params = get_config_cmd.send_with_response(response='config')
+        if self._is_shutdown:
+            raise error("MCU '%s' error during config: %s" % (
+                self._name, self._shutdown_msg))
+        if config_params['is_shutdown']:
+            raise error("Can not update MCU '%s' config as it is shutdown" % (
+                self._name,))
+        return config_params
+    def _check_config(self):
+        config_params = self._send_get_config()
+        if not config_params['is_config']:
+            if self._restart_method == 'rpi_usb':
+                # Only configure mcu after usb power reset
+                self._check_restart("full reset before config")
+            # Not configured - send config and issue get_config again
+            self._send_config(None)
+            config_params = self._send_get_config()
+            if not config_params['is_config'] and not self.is_fileoutput():
+                raise error("Unable to configure MCU '%s'" % (self._name,))
         else:
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
-                raise error("Failed automated reset of MCU '%s'" % (self._name,))
-        if self._config_crc != config_params['crc']:
-            if config_params['is_shutdown']:
-                raise error("Can not update MCU '%s' config as it is shutdown"
-                            % (self._name,))
-            self._check_restart("CRC mismatch")
-            raise error("MCU '%s' CRC does not match config" % (self._name,))
+                raise error("Failed automated reset of MCU '%s'" % (
+                    self._name,))
+            # Already configured - send init commands
+            self._send_config(config_params['crc'])
+        # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
         msgparser = self._serial.msgparser
         info = [
@@ -573,9 +587,8 @@ class MCU:
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
             move_count)
-        self._ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
-        for c in self._init_cmds:
-            self._serial.send(c)
+        self._ffi_lib.steppersync_set_time(
+            self._steppersync, 0., self._mcu_freq)
     def _connect(self):
         if self.is_fileoutput():
             self._connect_file()
@@ -597,16 +610,14 @@ class MCU:
             and self._serial.msgparser.get_constant(
                 'SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
-        self.register_msg(self.handle_shutdown, 'shutdown')
-        self.register_msg(self.handle_shutdown, 'is_shutdown')
-        self.register_msg(self.handle_mcu_stats, 'stats')
-        self._build_config()
-        self._send_config()
+        self.register_msg(self._handle_shutdown, 'shutdown')
+        self.register_msg(self._handle_shutdown, 'is_shutdown')
+        self.register_msg(self._handle_mcu_stats, 'stats')
+        self._check_config()
     # Config creation helpers
-    def setup_pin(self, pin_params):
+    def setup_pin(self, pin_type, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
-        pin_type = pin_params['type']
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         co = pcs[pin_type](self, pin_params)
@@ -669,7 +680,8 @@ class MCU:
             self._ffi_lib.steppersync_free(self._steppersync)
             self._steppersync = None
     def _shutdown(self, force=False):
-        if self._emergency_stop_cmd is None or (self._is_shutdown and not force):
+        if (self._emergency_stop_cmd is None
+            or (self._is_shutdown and not force)):
             return
         self._emergency_stop_cmd.send()
     def _restart_arduino(self):
@@ -679,7 +691,8 @@ class MCU:
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
             or not self._clocksync.is_active()):
-            logging.info("Unable to issue reset command on MCU '%s'", self._name)
+            logging.info("Unable to issue reset command on MCU '%s'",
+                         self._name)
             return
         if self._reset_cmd is None:
             # Attempt reset via config_reset command
@@ -774,13 +787,14 @@ def error_help(msg):
                 return help_msg
     return ""
 
-def add_printer_objects(printer, config):
+def add_printer_objects(config):
+    printer = config.get_printer()
     reactor = printer.get_reactor()
     mainsync = clocksync.ClockSync(reactor)
-    printer.add_object('mcu', MCU(printer, config.getsection('mcu'), mainsync))
+    printer.add_object('mcu', MCU(config.getsection('mcu'), mainsync))
     for s in config.get_prefix_sections('mcu '):
         printer.add_object(s.section, MCU(
-            printer, s, clocksync.SecondarySync(reactor, mainsync)))
+            s, clocksync.SecondarySync(reactor, mainsync)))
 
 def get_printer_mcu(printer, name):
     if name == 'mcu':

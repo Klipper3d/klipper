@@ -4,7 +4,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os.path
+import sys, os.path, unicodedata
 
 HaveError = False
 
@@ -28,12 +28,17 @@ def check_file(filename):
     # Do checks
     lineno = 0
     for lineno, line in enumerate(data.split('\n')):
+        # Verify line is valid utf-8
+        try:
+            line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            report_error(filename, lineno, "Non utf-8 character")
+            continue
         # Check for control characters
         for c in line:
-            oc = ord(c)
-            if oc < 32:
+            if unicodedata.category(c).startswith('C'):
                 char_name = repr(c)
-                if oc == 9:
+                if c == '\t':
                     if os.path.basename(filename).lower() == 'makefile':
                         continue
                     char_name = 'tab'

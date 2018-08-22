@@ -4,16 +4,17 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/lpc176x src/generic
-dirs-y += lib/lpc176x/device lib/lpc176x/device/TOOLCHAIN_GCC_ARM
+dirs-y += lib/lpc176x/device/TOOLCHAIN_GCC_ARM
 
 CFLAGS += -mthumb -mcpu=cortex-m3
-CFLAGS += -Ilib/lpc176x/device -Ilib/lpc176x/device -Ilib/lpc176x/cmsis
+CFLAGS += -Ilib/lpc176x/device -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += -T $(OUT)LPC1768.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
 src-y += lpc176x/main.c lpc176x/timer.c lpc176x/gpio.c lpc176x/i2c.c
+src-$(CONFIG_HAVE_GPIO_SPI) += lpc176x/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/lpc176x/device/system_LPC17xx.c

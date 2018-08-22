@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections
-import homing, extruder
+import homing, kinematics.extruder
 
 class error(Exception):
     pass
@@ -116,7 +116,7 @@ class GCodeParser:
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
             self.position_with_transform = self.toolhead.get_position
-        extruders = extruder.get_printer_extruders(self.printer)
+        extruders = kinematics.extruder.get_printer_extruders(self.printer)
         if extruders:
             self.extruder = extruders[0]
             self.toolhead.set_extruder(self.extruder)
@@ -396,7 +396,7 @@ class GCodeParser:
         self.respond_info('Unknown command:"%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
-        extruders = extruder.get_printer_extruders(self.printer)
+        extruders = kinematics.extruder.get_printer_extruders(self.printer)
         index = self.get_int('T', params, minval=0, maxval=len(extruders)-1)
         e = extruders[index]
         if self.extruder is e:
@@ -425,7 +425,7 @@ class GCodeParser:
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'M206',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
-        'M112', 'M115', 'IGNORE', 'QUERY_ENDSTOPS', 'GET_POSITION',
+        'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -596,23 +596,13 @@ class GCodeParser:
     def cmd_IGNORE(self, params):
         # Commands that are just silently accepted
         pass
-    cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
-    cmd_QUERY_ENDSTOPS_aliases = ["M119"]
-    def cmd_QUERY_ENDSTOPS(self, params):
-        # Get Endstop Status
-        res = homing.query_endstops(self.toolhead)
-        self.respond(" ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
-                               for name, t in res]))
     cmd_GET_POSITION_when_not_ready = True
     def cmd_GET_POSITION(self, params):
         if self.toolhead is None:
             self.cmd_default(params)
             return
         kin = self.toolhead.get_kinematics()
-        steppers = []
-        rails = kin.get_rails()
-        for rail in rails:
-            steppers += rail.get_steppers()
+        steppers = kin.get_steppers()
         mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
                             for s in steppers])
         stepper_pos = " ".join(

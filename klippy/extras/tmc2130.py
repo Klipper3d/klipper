@@ -26,9 +26,7 @@ class TMC2130:
         # pin setup
         ppins = self.printer.lookup_object("pins")
         cs_pin = config.get('cs_pin')
-        cs_pin_params = ppins.lookup_pin('digital_out', cs_pin)
-        if cs_pin_params['invert']:
-            raise pins.error("tmc2130 can not invert pin")
+        cs_pin_params = ppins.lookup_pin(cs_pin)
         self.mcu = cs_pin_params['chip']
         pin = cs_pin_params['pin']
         self.oid = self.mcu.create_oid()
@@ -113,9 +111,8 @@ class TMC2130:
         step_dist = stepper_config.getfloat('step_distance')
         step_dist_256 = step_dist / (1 << self.mres)
         return int(TMC_FREQUENCY * step_dist_256 / velocity + .5)
-    def setup_pin(self, pin_params):
-        if (pin_params['pin'] != 'virtual_endstop'
-            or pin_params['type'] != 'endstop'):
+    def setup_pin(self, pin_type, pin_params):
+        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc2130 virtual endstop")

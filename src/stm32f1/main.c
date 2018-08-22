@@ -14,6 +14,7 @@
 #include "stm32f1xx_ll_iwdg.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_adc.h"
+#include "stm32f1xx_ll_spi.h"
 #include "sched.h" // sched_main
 
 DECL_CONSTANT(MCU, "stm32f103");
@@ -108,6 +109,13 @@ void adc_config(void)
     LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_DISABLE);
 }
 
+void spi_config(void)
+{
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
+    LL_SPI_SetNSSMode(SPI2, LL_SPI_NSS_SOFT);
+    LL_SPI_SetMode(SPI2, LL_SPI_MODE_MASTER);
+}
+
 void io_config(void)
 {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_AFIO);
@@ -131,6 +139,7 @@ main(void)
     clock_config();
     adc_config();
     io_config();
+    spi_config();
     sched_main();
     return 0;
 }

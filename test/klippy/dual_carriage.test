@@ -27,6 +27,8 @@ G91
 G1 X20 E.2
 G90
 
+QUERY_ENDSTOPS
+
 # Servo tests
 SET_SERVO servo=my_servo angle=160
 SET_SERVO servo=my_servo angle=130

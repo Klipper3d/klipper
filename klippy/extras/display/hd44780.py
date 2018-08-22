@@ -23,15 +23,13 @@ class HD44780:
         self.printer = config.get_printer()
         # pin config
         ppins = self.printer.lookup_object('pins')
-        pins = [ppins.lookup_pin('digital_out', config.get(name + '_pin'))
+        pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("hd44780 all pins must be on same mcu")
             mcu = pin_params['chip']
-            if pin_params['invert']:
-                raise ppins.error("hd44780 can not invert pin")
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()

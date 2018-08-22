@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
-import homing, chelper
+import homing
 
 
 ######################################################################
@@ -29,10 +29,11 @@ class StepperEnablePin:
 def lookup_enable_pin(ppins, pin):
     if pin is None:
         return StepperEnablePin(None, 9999)
-    pin_params = ppins.lookup_pin('digital_out', pin, 'stepper_enable')
+    pin_params = ppins.lookup_pin(pin, can_invert=True,
+                                  share_type='stepper_enable')
     enable = pin_params.get('class')
     if enable is None:
-        mcu_enable = pin_params['chip'].setup_pin(pin_params)
+        mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
         mcu_enable.setup_max_duration(0.)
         pin_params['class'] = enable = StepperEnablePin(mcu_enable)
     return enable
@@ -50,23 +51,27 @@ class PrinterStepper:
         self.need_motor_enable = True
         # Stepper definition
         ppins = printer.lookup_object('pins')
-        self.mcu_stepper = ppins.setup_pin('stepper', config.get('step_pin'))
-        dir_pin_params = ppins.lookup_pin('digital_out', config.get('dir_pin'))
-        self.mcu_stepper.setup_dir_pin(dir_pin_params)
+        step_pin = config.get('step_pin')
+        self.mcu_stepper = mcu_stepper = ppins.setup_pin('stepper', step_pin)
+        dir_pin = config.get('dir_pin')
+        dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
+        mcu_stepper.setup_dir_pin(dir_pin_params)
         step_dist = config.getfloat('step_distance', above=0.)
-        self.mcu_stepper.setup_step_distance(step_dist)
+        mcu_stepper.setup_step_distance(step_dist)
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command
-        stepper_buzz = printer.try_load_module(config, 'stepper_buzz')
-        stepper_buzz.register_stepper(self, config.get_name())
+        force_move = printer.try_load_module(config, 'force_move')
+        force_move.register_stepper(self)
         # Wrappers
-        self.step_itersolve = self.mcu_stepper.step_itersolve
-        self.setup_itersolve = self.mcu_stepper.setup_itersolve
-        self.set_ignore_move = self.mcu_stepper.set_ignore_move
-        self.set_position = self.mcu_stepper.set_position
-        self.get_mcu_position = self.mcu_stepper.get_mcu_position
-        self.get_commanded_position = self.mcu_stepper.get_commanded_position
-        self.get_step_dist = self.mcu_stepper.get_step_dist
+        self.step_itersolve = mcu_stepper.step_itersolve
+        self.setup_itersolve = mcu_stepper.setup_itersolve
+        self.set_stepper_kinematics = mcu_stepper.set_stepper_kinematics
+        self.set_ignore_move = mcu_stepper.set_ignore_move
+        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
+        self.set_position = mcu_stepper.set_position
+        self.get_mcu_position = mcu_stepper.get_mcu_position
+        self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.get_step_dist = mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
@@ -108,11 +113,11 @@ class PrinterRail:
         self.steppers = [stepper]
         self.name = stepper.get_name(short=True)
         self.step_itersolve = stepper.step_itersolve
-        self.setup_itersolve = stepper.setup_itersolve
         self.get_commanded_position = stepper.get_commanded_position
         self.is_motor_enabled = stepper.is_motor_enabled
         # Primary endstop and its position
-        ppins = config.get_printer().lookup_object('pins')
+        printer = config.get_printer()
+        ppins = printer.lookup_object('pins')
         mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         self.endstops = [(mcu_endstop, self.name)]
         stepper.add_to_endstop(mcu_endstop)
@@ -121,6 +126,8 @@ class PrinterRail:
         else:
             self.position_endstop = config.getfloat(
                 'position_endstop', default_position_endstop)
+        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops.register_endstop(mcu_endstop, self.name)
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat('position_min', 0.)
@@ -138,7 +145,8 @@ class PrinterRail:
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., minval=0.)
-        self.homing_positive_dir = config.getboolean('homing_positive_dir', None)
+        self.homing_positive_dir = config.getboolean(
+            'homing_positive_dir', None)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
             if self.position_endstop <= self.position_min + axis_len / 4.:
@@ -165,11 +173,11 @@ class PrinterRail:
                 # Adjust the endstop position so 0.0 is always at a full step
                 micro_steps = self.homing_stepper_phases // 4
                 phase_offset = (
-                    ((self.homing_endstop_phase + micro_steps // 2) % micro_steps)
-                    - micro_steps // 2) * step_dist
+                    ((self.homing_endstop_phase + micro_steps // 2)
+                     % micro_steps) - micro_steps // 2) * step_dist
                 full_step = micro_steps * step_dist
-                es_pos = (int(self.position_endstop / full_step + .5) * full_step
-                          + phase_offset)
+                es_pos = (int(self.position_endstop / full_step + .5)
+                          * full_step + phase_offset)
                 if es_pos != self.position_endstop:
                     logging.info("Changing %s endstop position to %.3f"
                                  " (from %.3f)", self.name,
@@ -225,9 +233,13 @@ class PrinterRail:
         mcu_endstop = self.endstops[0][0]
         endstop_pin = config.get('endstop_pin', None)
         if endstop_pin is not None:
-            ppins = config.get_printer().lookup_object('pins')
+            printer = config.get_printer()
+            ppins = printer.lookup_object('pins')
             mcu_endstop = ppins.setup_pin('endstop', endstop_pin)
-            self.endstops.append((mcu_endstop, stepper.get_name(short=True)))
+            name = stepper.get_name(short=True)
+            self.endstops.append((mcu_endstop, name))
+            query_endstops = printer.try_load_module(config, 'query_endstops')
+            query_endstops.register_endstop(mcu_endstop, name)
         stepper.add_to_endstop(mcu_endstop)
     def add_to_endstop(self, mcu_endstop):
         for stepper in self.steppers:
@@ -235,11 +247,9 @@ class PrinterRail:
     def step_multi_itersolve(self, cmove):
         for stepper in self.steppers:
             stepper.step_itersolve(cmove)
-    def setup_cartesian_itersolve(self, axis):
-        ffi_main, ffi_lib = chelper.get_ffi()
+    def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
-            stepper.setup_itersolve(ffi_main.gc(
-                ffi_lib.cartesian_stepper_alloc(axis), ffi_lib.free))
+            stepper.setup_itersolve(alloc_func, *params)
     def set_max_jerk(self, max_halt_velocity, max_accel):
         for stepper in self.steppers:
             stepper.set_max_jerk(max_halt_velocity, max_accel)

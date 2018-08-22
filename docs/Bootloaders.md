@@ -1,0 +1,203 @@
+This document provides information on common bootloaders found on
+micro-controllers that Klipper supports.
+
+The bootloader is 3rd-party software that runs on the micro-controller
+when it is first powered on. It is typically used to flash a new
+application (eg, Klipper) to the micro-controller without requiring
+specialized hardware. Unfortunately, there is no industry wide
+standard for flashing a micro-controller, nor is there a standard
+bootloader that works across all micro-controllers. Worse, it is
+common for each bootloader to require a different set of steps to
+flash an application.
+
+If one can flash a bootloader to a micro-controller than one can
+generally also use that mechanism to flash an application, but care
+should be taken when doing this as one may inadvertently remove the
+bootloader. In contrast, a bootloader will generally only permit a
+user to flash an application. It is therefore recommended to use a
+bootloader to flash an application where possible.
+
+This document attempts to describe common bootloaders, the steps
+needed to flash a bootloader, and the steps needed to flash an
+application.  This document is not an authoritative reference; it is
+intended as a collection of useful information that the Klipper
+developers have accumulated.
+
+AVR micro-controllers
+=====================
+
+In general, the Arduino project is a good reference for bootloaders
+and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
+In particular, the "boards.txt" file:
+https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt
+is a useful reference.
+
+To flash a bootloader itself, the AVR chips require an external
+hardware flashing tool (which communicates with the chip using
+SPI). This tool can be purchased (for example, do a web search for
+"avr isp", "arduino isp", or "usb tiny isp"). It is also possible to
+use another Arduino or Raspberry Pi to flash an AVR bootloader (for
+example, do a web search for "program an avr using raspberry pi"). The
+examples below are written assuming an "AVR ISP Mk2" type device is in
+use.
+
+The "avrdude" program is the most common tool used to flash atmega
+chips (both bootloader flashing and application flashing).
+
+## Atmega2560 ##
+
+This chip is typically found in the "Arduino Mega" and is very common
+in 3d printer boards.
+
+To flash the bootloader itself use something like:
+```
+wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex'
+
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U flash:w:stk500boot_v2_mega2560.hex
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+```
+
+To flash an application use something like:
+```
+avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
+## Atmega1280 ##
+
+This chip is typically found in earlier versions of the "Arduino
+Mega".
+
+To flash the bootloader itself use something like:
+```
+wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex'
+
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U flash:w:ATmegaBOOT_168_atmega1280.hex
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+```
+
+To flash an application use something like:
+```
+avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
+## Atmega1284p ##
+
+This chip is commonly found in "Melzi" style 3d printer boards.
+
+To flash the bootloader itself use something like:
+```
+wget 'https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex'
+
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega1284p.hex
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+```
+
+To flash an application use something like:
+```
+avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
+Note that a number of "Melzi" style boards come preloaded with a
+bootloader that uses a baud rate of 57600. In this case, to flash an
+application use something like this instead:
+```
+avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
+## At90usb1286 ##
+
+This document does not cover the method to flash a bootloader to the
+At90usb1286 nor does it cover general application flashing to this
+device.
+
+The Teensy++ device from pjrc.com comes with a proprietary bootloader.
+It requires a custom flashing tool from
+https://github.com/PaulStoffregen/teensy_loader_cli . One can flash an
+application with it using something like:
+```
+teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
+```
+
+SAM3 micro-controllers (Arduino Due)
+====================================
+
+It is not common to use a bootloader with the SAM3 mcu. The chip
+itself has a ROM that allows the flash to be programmed from 3.3V
+serial port or from USB.
+
+To enable the ROM, the "erase" pin is held high during a reset, which
+erases the flash contents, and causes the ROM to run. On an Arduino
+Due, this sequence can be accomplished by setting a baud rate of 1200
+on the "programming usb port" (the USB port closest to the power
+supply).
+
+The code at https://github.com/shumatech/BOSSA can be used to program
+the SAM3. It may be necessary to use the code from the `1.6.1-arduino`
+release.
+
+To flash an application use something like:
+```
+stty -F /dev/ttyACM0 1200
+bossac -i -p ttyACM0 -R -e -w -v -b out/klipper.bin
+```
+
+SAMD21 micro-controllers (Arduino Zero)
+=======================================
+
+This document does not cover the method to flash a bootloader to the
+SAMD21.
+
+Unfortunately, it appears there are two common bootloaders available
+for the SAMD21. One comes standard with the "Arduino Zero" and the
+other comes standard with the "Arduino M0".
+
+The Arduino Zero uses an 8KiB bootloader (the application must be
+compiled with a start address of 8KiB). This document does not cover
+the flashing mechanism for this bootloader.
+
+The Arduino M0 uses a 16KiB bootloader (the application must be
+compiled with a start address of 16KiB). To flash an application,
+reset the micro-controller and run the flash command within the first
+few seconds of boot - something like:
+```
+avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
+```
+
+STM32F103 micro-controllers (Blue Pill devices)
+===============================================
+
+The STM32F103 devices have a ROM that can flash a bootloader via 3.3V
+serial. To access this ROM, one should connect the "boot 0" pin to
+high and "boot 1" pin to low, and then reset the device. The
+"stm32flash" package can then be used to flash the device using
+something like:
+```
+stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
+```
+
+Note that if one is using a Raspberry Pi for the 3.3V serial, the
+stm32flash protocol uses a serial parity mode which the Raspberry Pi's
+"miniuart" does not support. See
+https://www.raspberrypi.org/documentation/configuration/uart.md for
+details on enabling the full uart on the Raspberry Pi GPIO pins.
+
+This document does not describe the method to flash an application via
+an STM32F103 bootloader.
+
+LPC176x micro-controllers (Smoothieboards)
+==========================================
+
+This document does not describe the method to flash a bootloader
+itself - see: http://smoothieware.org/flashing-the-bootloader for
+further information on that topic.
+
+It is common for Smoothieboards to come with a bootloader from:
+https://github.com/triffid/LPC17xx-DFU-Bootloader . When using this
+bootloader the application must be compiled with a start address of
+16KiB. The easiest way to flash an application with this bootloader is
+to copy the application file (eg, `out/klipper.bin`) to a file named
+`firmware.bin` on an SD card, and then to reboot the micro-controller
+with that SD card.

@@ -48,6 +48,21 @@ Klipper also supports the following standard G-Code commands if the
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
 
+## G-Code display commands
+
+The following standard G-Code commands are available if a "display"
+config section is enabled:
+- Display Message: `M117 <message>`
+- Set build percentage: `M73 P<percent>`
+
+## Other available G-Code commands
+
+The following standard G-Code commands are currently available, but
+using them is not recommended:
+- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>]` (Use
+  SET_GCODE_OFFSET instead.)
+- Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
+
 # Extended G-Code Commands
 
 Klipper uses "extended" G-Code commands for general configuration and
@@ -82,9 +97,9 @@ The following standard commands are supported:
   /tmp/heattest.txt will be created with a log of all temperature
   samples taken during the test.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-  [ACCEL_TO_DECEL=<value>] [JUNCTION_DEVIATION=<value>]`: Modify the
-  printer's velocity limits. Note that one may only set values less
-  than or equal to the limits specified in the config file.
+  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
+  the printer's velocity limits. Note that one may only set values
+  less than or equal to the limits specified in the config file.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
   Set pressure advance parameters. If EXTRUDER is not specified, it
@@ -143,6 +158,25 @@ section is enabled:
     command to move to the next probing point during a
     BED_TILT_CALIBRATE operation.
 
+## Mesh Bed Leveling
+
+The following commands are available when the "bed_mesh" config
+section is enabled:
+- `BED_MESH_CALIBRATE`: This command probes the bed using generated
+  points specified by the parameters in the config. After probing,
+  a mesh is generated and z-movement is adjusted according to the mesh.
+- `BED_MESH_OUTPUT`: This command outputs the current probed z values
+  and current mesh values to the terminal.
+- `BED_MESH_MAP`: This command probes the bed in a similar fashion
+  to BED_MESH_CALIBRATE, however no mesh is generated.  Instead,
+  the probed z values are serialized to json and output to the
+  terminal.  This allows octoprint plugins to easily capture the
+  data and generate maps approximating the bed's surface.  Note
+  that although no mesh is generated, any currently stored mesh
+  will be cleared as the process rehomes the printer.
+- `BED_MESH_CLEAR`: This command clears the mesh and removes all
+  z adjustment.  It is recommended to put this in your end-gcode.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
@@ -165,3 +199,27 @@ The following command is available when the "tmc2130" config section
 is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
   registers and report their values.
+
+## Force movement
+
+The following commands are available when the "force_move" config
+section is enabled:
+- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value>
+  VELOCITY=<value>`: This command will forcibly move the given stepper
+  the given distance (in mm) at the given constant velocity (in
+  mm/s). No acceleration is performed; no boundary checks are
+  performed; no kinematic updates are made; other parallel steppers on
+  an axis will not be moved. Use caution as an incorrect command could
+  cause damage! Using this command will almost certainly place the
+  low-level kinematics in an incorrect state; issue a G28 afterwards
+  to reset the kinematics. This command is intended for low-level
+  diagnostics and debugging.
+- `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
+  the low-level kinematic code to believe the toolhead is at the given
+  cartesian position. This is a diagnostic and debugging command; use
+  SET_GCODE_OFFSET and/or G92 for regular axis transformations. If an
+  axis is not specified then it will default to the position that the
+  head was last commanded to. Setting an incorrect or invalid position
+  may lead to internal software errors. This command may invalidate
+  future boundary checks; issue a G28 afterwards to reset the
+  kinematics.

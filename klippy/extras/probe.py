@@ -16,6 +16,8 @@ class PrinterProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.speed = config.getfloat('speed', 5.0)
+        self.x_offset = config.getfloat('x_offset', 0.)
+        self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
@@ -26,10 +28,11 @@ class PrinterProbe:
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
-        pin_params = ppins.lookup_pin('endstop', config.get('pin'))
+        pin = config.get('pin')
+        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
         mcu.add_config_object(self)
-        self.mcu_probe = mcu.setup_pin(pin_params)
+        self.mcu_probe = mcu.setup_pin('endstop', pin_params)
         if (config.get('activate_gcode', None) is not None or
             config.get('deactivate_gcode', None) is not None):
             self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
@@ -43,21 +46,19 @@ class PrinterProbe:
         self.gcode.register_command(
             'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
     def build_config(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        z_rails = toolhead.get_kinematics().get_rails("Z")
-        for rail in z_rails:
-            for mcu_endstop, name in rail.get_endstops():
-                for mcu_stepper in mcu_endstop.get_steppers():
-                    self.mcu_probe.add_stepper(mcu_stepper)
-    def setup_pin(self, pin_params):
-        if (pin_params['pin'] != 'z_virtual_endstop'
-            or pin_params['type'] != 'endstop'):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        for stepper in kin.get_steppers('Z'):
+            stepper.add_to_endstop(self.mcu_probe)
+    def setup_pin(self, pin_type, pin_params):
+        if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         self.z_virtual_endstop = ProbeVirtualEndstop(
             self.printer, self.mcu_probe)
         return self.z_virtual_endstop
+    def get_offsets(self):
+        return self.x_offset, self.y_offset, self.z_offset
     def last_home_position(self):
         if self.z_virtual_endstop is None:
             return None
@@ -149,14 +150,14 @@ class ProbePointsHelper:
             except:
                 raise config.error("Unable to parse probe points in %s" % (
                     config.get_name()))
-            if len(self.probe_points) < 3:
-                raise config.error("Need at least 3 points for %s" % (
-                    config.get_name()))
+        if len(self.probe_points) < 3:
+            raise config.error("Need at least 3 probe points for %s" % (
+                config.get_name()))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
         # Lookup probe object
         self.probe = None
-        self.probe_z_offset = 0.
+        self.probe_offsets = (0., 0., 0.)
         manual_probe = config.getboolean('manual_probe', None)
         if manual_probe is None:
             manual_probe = not config.has_section('probe')
@@ -164,8 +165,8 @@ class ProbePointsHelper:
             self.printer.try_load_module(config, 'probe')
             self.probe = self.printer.lookup_object('probe')
             self.lift_speed = min(self.speed, self.probe.speed)
-            self.probe_z_offset = self.probe.z_offset
-            if self.horizontal_move_z < self.probe_z_offset:
+            self.probe_offsets = self.probe.get_offsets()
+            if self.horizontal_move_z < self.probe_offsets[2]:
                 raise config.error("horizontal_move_z can't be less than probe's"
                                    " z_offset in %s" % (config.get_name()))
         # Internal probing state
@@ -174,6 +175,11 @@ class ProbePointsHelper:
         self.gcode = self.toolhead = None
     def get_lift_speed(self):
         return self.lift_speed
+    def get_last_xy_home_positon(self):
+        if self.probe is not None:
+            return self.probe.last_home_position()
+        else:
+            return None
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -227,7 +233,7 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            self.callback.finalize(self.probe_z_offset, self.results)
+            self.callback.finalize(self.probe_offsets, self.results)
 
 def load_config(config):
     return PrinterProbe(config)

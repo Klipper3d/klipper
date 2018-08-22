@@ -25,7 +25,7 @@ Klipper has several compelling features:
   is stored in a standard config file which can be easily edited. This
   makes it easier to setup and maintain the hardware.
 
-* Portable code. Klipper works on both ARM and AVR
+* Portable code. Klipper works on ARM, AVR, and PRU based
   micro-controllers. Existing "reprap" style printers can run Klipper
   without hardware modification - just add a Raspberry Pi. Klipper's
   internal code layout makes it easier to support other
@@ -89,17 +89,19 @@ Step Benchmarks
 Below are the results of stepper performance tests. The numbers shown
 represent total number of steps per second on the micro-controller.
 
-| Micro-controller  | Fastest step rate | 3 steppers active |
-| ----------------- | ----------------- | ----------------- |
-| 16Mhz AVR         | 151K              | 100K              |
-| 20Mhz AVR         | 189K              | 125K              |
-| STM32F103         | 340K              | 300K              |
-| Arduino Due (ARM) | 382K              | 337K              |
-| LPC1768 (100Mhz)  | 385K              | 385K              |
-| LPC1769 (120Mhz)  | 462K              | 462K              |
-| Beaglebone PRU    | 689K              | 689K              |
+| Micro-controller            | Fastest step rate | 3 steppers active |
+| --------------------------- | ----------------- | ----------------- |
+| 16Mhz AVR                   | 151K              | 100K              |
+| 20Mhz AVR                   | 189K              | 125K              |
+| Arduino Zero (ARM SAMD21)   | 234K              | 217K              |
+| STM32F103                   | 340K              | 300K              |
+| Arduino Due (ARM SAM3X8E)   | 382K              | 337K              |
+| Smoothieboard (ARM LPC1768) | 385K              | 385K              |
+| Smoothieboard (ARM LPC1769) | 462K              | 462K              |
+| Duet Wifi/Eth (ARM SAM4E8E) | 545K              | 545K              |
+| Beaglebone PRU              | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one
-stepper stepping. On the STM32F103 and Due, the highest step rate is
-with two simultaneous steppers stepping. On the PRU and LPC176x, the
-highest step rate is with three simultaneous steppers.
+stepper stepping. On the STM32F103, Arduino Zero, and Due, the highest
+step rate is with two simultaneous steppers stepping. On the PRU, SAM4E8E and
+LPC176x, the highest step rate is with three simultaneous steppers.

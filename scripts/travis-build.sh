@@ -1,8 +1,8 @@
 #!/bin/bash
 # Test script for travis-ci.org continuous integration.
 
-# Stop script early on any error; check variables; be verbose
-set -eux
+# Stop script early on any error; check variables
+set -eu
 
 # Paths to tools installed by travis-install.sh
 MAIN_DIR=${PWD}
@@ -13,19 +13,37 @@ PYTHON=${BUILD_DIR}/python-env/bin/python
 
 
 ######################################################################
+# Travis CI helpers
+######################################################################
+
+start_test()
+{
+    echo "travis_fold:start:$1"
+    echo "=============== $2"
+    set -x
+}
+
+finish_test()
+{
+    set +x
+    echo "=============== Finished $2"
+    echo "travis_fold:end:$1"
+}
+
+
+######################################################################
 # Check for whitespace errors
 ######################################################################
 
-echo "travis_fold:start:check_whitespace"
-echo "=============== Check whitespace"
 WS_DIRS="config/ docs/ klippy/ scripts/ src/ test/"
 WS_EXCLUDE="-path scripts/kconfig -prune"
 WS_FILES="-o -iname '*.[csh]' -o -name '*.py' -o -name '*.sh'"
 WS_FILES="$WS_FILES -o -name '*.md' -o -name '*.cfg'"
 WS_FILES="$WS_FILES -o -name '*.test' -o -name '*.config'"
 WS_FILES="$WS_FILES -o -iname '*.lds' -o -iname 'Makefile' -o -iname 'Kconfig'"
+start_test check_whitespace "Check whitespace"
 eval find $WS_DIRS $WS_EXCLUDE $WS_FILES | xargs ./scripts/check_whitespace.py
-echo "travis_fold:end:check_whitespace"
+finish_test check_whitespace "Check whitespace"
 
 
 ######################################################################
@@ -36,16 +54,15 @@ DICTDIR=${BUILD_DIR}/dict
 mkdir -p ${DICTDIR}
 
 for TARGET in test/configs/*.config ; do
-    echo "travis_fold:start:mcu_compile $TARGET"
-    echo "=============== Test compile $TARGET"
+    start_test mcu_compile "$TARGET"
     make clean
     make distclean
     unset CC
     cp ${TARGET} .config
     make olddefconfig
     make V=1
+    finish_test mcu_compile "$TARGET"
     cp out/klipper.dict ${DICTDIR}/$(basename ${TARGET} .config).dict
-    echo "travis_fold:end:mcu_compile $TARGET"
 done
 
 
@@ -56,7 +73,6 @@ done
 HOSTDIR=${BUILD_DIR}/hosttest
 mkdir -p ${HOSTDIR}
 
-echo "travis_fold:start:klippy"
-echo "=============== Test invoke klippy"
+start_test klippy "Test invoke klippy"
 $PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
-echo "travis_fold:end:klippy"
+finish_test klippy "Test invoke klippy"

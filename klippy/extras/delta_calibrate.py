@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import probe, delta, mathutil
+import probe, mathutil
 
 class DeltaCalibrate:
     def __init__(self, config):
@@ -33,7 +33,8 @@ class DeltaCalibrate:
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.get_stable_position()
-    def finalize(self, z_offset, positions):
+    def finalize(self, offsets, positions):
+        z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         logging.info("Calculating delta_calibrate with: %s", positions)
         params = kin.get_calibrate_params()
@@ -42,22 +43,21 @@ class DeltaCalibrate:
                       'angle_a', 'angle_b')
         def delta_errorfunc(params):
             total_error = 0.
-            for spos in positions:
-                x, y, z = delta.get_position_from_stable(spos, params)
+            for x, y, z in kin.get_positions_from_stable(positions, params):
                 total_error += (z - z_offset)**2
             return total_error
         new_params = mathutil.coordinate_descent(
             adj_params, params, delta_errorfunc)
         logging.info("Calculated delta_calibrate parameters: %s", new_params)
-        for spos in positions:
-            logging.info("orig: %s new: %s",
-                         delta.get_position_from_stable(spos, params),
-                         delta.get_position_from_stable(spos, new_params))
+        old_positions = kin.get_positions_from_stable(positions, params)
+        new_positions = kin.get_positions_from_stable(positions, new_params)
+        for oldpos, newpos in zip(old_positions, new_positions):
+            logging.info("orig: %s new: %s", oldpos, newpos)
         self.gcode.respond_info(
             "stepper_a: position_endstop: %.6f angle: %.6f\n"
             "stepper_b: position_endstop: %.6f angle: %.6f\n"
             "stepper_c: position_endstop: %.6f angle: %.6f\n"
-            "radius: %.6f\n"
+            "delta_radius: %.6f\n"
             "To use these parameters, update the printer config file with\n"
             "the above and then issue a RESTART command" % (
                 new_params['endstop_a'], new_params['angle_a'],
