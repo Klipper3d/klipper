@@ -72,9 +72,10 @@ gpio_out_setup(uint8_t pin, uint8_t val)
 {
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
-    Pio *regs = digital_regs[GPIO2PORT(pin)];
+    uint32_t port = GPIO2PORT(pin);
+    Pio *regs = digital_regs[port];
     uint32_t bit = GPIO2BIT(pin);
-    uint32_t bank_id = ID_PIOA + GPIO2BIT(pin);
+    uint32_t bank_id = ID_PIOA + port;
 
     irqstatus_t flag = irq_save();
 
@@ -129,15 +130,23 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     uint32_t port = GPIO2PORT(pin);
     Pio *regs = digital_regs[port];
     uint32_t bit = GPIO2BIT(pin);
+    uint32_t bank_id = ID_PIOA + port;
+
     regs->PIO_IDR = bit;
     irqstatus_t flag = irq_save();
-    PMC->PMC_PCER0 = 1 << (ID_PIOA + port);
+
+    if ((PMC->PMC_PCSR0 & (1u << bank_id)) == 0) {
+        PMC->PMC_PCER0 = 1 << bank_id;
+    }
+
     if (pull_up)
         regs->PIO_PUER = bit;
     else
         regs->PIO_PUDR = bit;
+
     regs->PIO_ODR = bit;
     regs->PIO_PER = bit;
+
     irq_restore(flag);
     return (struct gpio_in){ .pin=pin, .regs=regs, .bit=bit };
 fail:

@@ -33,5 +33,5 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 flash: $(OUT)klipper.bin
-	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
-	$(Q)tools/bossa/bin/bossac --port="$(FLASH_DEVICE)" -b -U -e -w -v $(OUT)klipper.bin -R
+	@echo ""
+	@echo "  The SAM4E8E build does not currently support 'make flash'"
