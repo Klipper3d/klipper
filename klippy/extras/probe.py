@@ -158,6 +158,9 @@ class ProbePointsHelper:
         # Lookup probe object
         self.probe = None
         self.probe_offsets = (0., 0., 0.)
+        self.samples = config.getint('samples', 1, minval=1)
+        self.sample_retract_dist = config.getfloat(
+            'sample_retract_dist', 2., above=0.)
         manual_probe = config.getboolean('manual_probe', None)
         if manual_probe is None:
             manual_probe = not config.has_section('probe')
@@ -180,15 +183,26 @@ class ProbePointsHelper:
             return self.probe.last_home_position()
         else:
             return None
-    def lift_z(self, z_pos):
+    def lift_z(self, z_pos, add=False):
         # Lift toolhead
         curpos = self.toolhead.get_position()
-        curpos[2] = z_pos
+        if add:
+            curpos[2] += z_pos
+        else:
+            curpos[2] = z_pos
         try:
             self.toolhead.move(curpos, self.lift_speed)
         except homing.EndstopError as e:
             self.finalize(False)
             raise self.gcode.error(str(e))
+    def probe_point(self):
+        for i in range(self.samples):
+            self.gcode.run_script_from_command("PROBE")
+            self.toolhead.wait_moves()
+            self.results.append(self.callback.get_probed_position())
+            if i < self.samples - 1:
+                # retract
+                self.lift_z(self.sample_retract_dist, add=True)
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -205,13 +219,13 @@ class ProbePointsHelper:
         if self.probe is not None:
             try:
                 while self.busy:
-                    self.gcode.run_script_from_command("PROBE")
+                    self.probe_point()
                     self.cmd_NEXT({})
             except:
                 self.finalize(False)
                 raise
     def move_next(self):
-        x, y = self.probe_points[len(self.results)]
+        x, y = self.probe_points[len(self.results)/self.samples]
         curpos = self.toolhead.get_position()
         curpos[0] = x
         curpos[1] = y
@@ -224,13 +238,14 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
     cmd_NEXT_help = "Move to the next XY position to probe"
     def cmd_NEXT(self, params):
-        # Record current position
-        self.toolhead.wait_moves()
-        self.results.append(self.callback.get_probed_position())
+        if self.probe is None:
+            # Record current position for manual probe
+            self.toolhead.wait_moves()
+            self.results.append(self.callback.get_probed_position())
         # Lift toolhead
         self.lift_z(self.horizontal_move_z)
         # Move to next position
-        if len(self.results) == len(self.probe_points):
+        if len(self.results) / self.samples == len(self.probe_points):
             self.toolhead.get_last_move_time()
             self.finalize(True)
             return

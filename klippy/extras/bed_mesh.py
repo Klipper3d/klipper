@@ -245,9 +245,15 @@ class BedMeshCalibrate:
         # create a 2-D array representing the probed z-positions.
         self.probed_z_table = [
             [0. for i in range(x_cnt)] for j in range(y_cnt)]
-        # Extract probed z-positions from probed positions and add
-        # them to organized list
-        for i, pos in enumerate(positions):
+        # Check for multi-sampled points
+        z_table_len = x_cnt * y_cnt
+        if len(positions) % z_table_len:
+            raise self.gcode.error(
+                ("bed_mesh: Invalid probe table length:\n"
+                 "Sampled table length: %d") % len(positions))
+        samples = len(positions) / z_table_len
+        # Populate the organized probed table
+        for i in range(z_table_len):
             y_position = i / x_cnt
             x_position = 0
             if y_position & 1 == 0:
@@ -256,8 +262,11 @@ class BedMeshCalibrate:
             else:
                 # Odd y count, x probed in the negative directon
                 x_position = (x_cnt - 1) - (i % x_cnt)
+            idx = i * samples
+            end = idx + samples
+            avg_z = sum(p[2] for p in positions[idx:end]) / samples
             self.probed_z_table[y_position][x_position] = \
-                pos[2] - z_offset
+                avg_z - z_offset
         if self.build_map:
             outdict = {'z_probe_offsets:': self.probed_z_table}
             self.gcode.respond(json.dumps(outdict))
