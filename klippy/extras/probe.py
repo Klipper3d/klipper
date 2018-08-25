@@ -203,9 +203,16 @@ class ProbePointsHelper:
     def move_next(self):
         x, y = self.probe_points[len(self.results)]
         curpos = self.toolhead.get_position()
+        # Lift toolhead
+        curpos[2] = self.horizontal_move_z
+        try:
+            self.toolhead.move(curpos, self.lift_speed)
+        except homing.EndstopError as e:
+            self.finalize(False)
+            raise self.gcode.error(str(e))
+        # Move to next position
         curpos[0] = x
         curpos[1] = y
-        curpos[2] = self.horizontal_move_z
         try:
             self.toolhead.move(curpos, self.speed)
         except homing.EndstopError as e:
@@ -217,15 +224,6 @@ class ProbePointsHelper:
         # Record current position
         self.toolhead.wait_moves()
         self.results.append(self.callback.get_probed_position())
-        # Lift toolhead
-        curpos = self.toolhead.get_position()
-        curpos[2] = self.horizontal_move_z
-        try:
-            self.toolhead.move(curpos, self.lift_speed)
-        except homing.EndstopError as e:
-            self.finalize(False)
-            raise self.gcode.error(str(e))
-        # Move to next position
         if len(self.results) == len(self.probe_points):
             self.toolhead.get_last_move_time()
             self.finalize(True)

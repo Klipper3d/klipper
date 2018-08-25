@@ -70,6 +70,9 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_CLEAR', self.cmd_BED_MESH_CLEAR,
             desc=self.cmd_BED_MESH_CLEAR_help)
+        self.gcode.register_command(
+            'BED_MESH_LOAD', self.cmd_BED_MESH_LOAD,
+            desc=self.cmd_BED_MESH_LOAD_help)
         self.gcode.set_move_transform(self)
     def printer_state(self, state):
         if state == 'connect':
@@ -123,6 +126,17 @@ class BedMesh:
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
     def cmd_BED_MESH_CLEAR(self, params):
         self.set_mesh(None)
+    cmd_BED_MESH_LOAD_help = "Load a mesh from a previous set of probes, requires parameter MESH"
+    def cmd_BED_MESH_LOAD(self, params):
+        payload = json.loads(params["MESH"])
+        mesh = ZMesh(payload["probe_params"])
+        try:
+            mesh.build_mesh(payload["probed_z_table"])
+        except BedMeshError as e:
+            raise self.gcode.error(e.message)
+        self.set_mesh(mesh)
+        self.gcode.respond_info("Bed mesh loaded")
+
 
 
 class BedMeshCalibrate:
@@ -269,6 +283,7 @@ class BedMeshCalibrate:
                 raise self.gcode.error(e.message)
             self.bedmesh.set_mesh(mesh)
             self.gcode.respond_info("Mesh Bed Leveling Complete")
+            self.gcode.respond_info("To restore this mesh use the command: BED_MESH_LOAD MESH=%s" % json.dumps({'probe_params': self.probe_params, 'probed_z_table': self.probed_z_table}, separators=(",",":")))
 
 
 class MoveSplitter:
