@@ -19,6 +19,8 @@ class UC1701:
         ppins = printer.lookup_object('pins')
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['cs','a0']]
+        self.contrast = config.getint('contrast',minval=0,maxval=0x3F,default=0x3F);
+        self.invert = config.getboolean('invert',default=False)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -52,6 +54,10 @@ class UC1701:
             self.update_pin_cmd.send([self.a0_oid, 0], reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi_send_cmd.send([self.spi_oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
     def init(self):
+        if (self.invert):
+            inv_flag = 0xA7
+        else:
+            inv_flag = 0xA6, # Disable Inverse
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
                      0xA0, # Set SEG direction
@@ -61,13 +67,14 @@ class UC1701:
                      0x2E, # Voltage regulator on
                      0x2F, # Voltage follower on
                      0xF8, # Set booster ratio
-                     0x00, # Booster ratio value (4x)
+                     0x20, # Booster ratio value (4x)
                      0x23, # Set resistor ratio (3)
                      0x81, # Set Electronic Volume
-                     0x28, # Electronic volume value (40)
+                    # 0x3F,  # Electronic volume value (63)
+                     self.contrast,
                      0xAC, # Set static indicator off
-                     0x00, # NOP
-                     0xA6, # Disable Inverse
+                     0x00,  # NOP
+                     inv_flag,
                      0xAF] # Set display enable
         self.send(init_cmds)
         self.send([0xA5]) # display all
