@@ -16,8 +16,10 @@ install_packages()
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
+    PKGLIST="${PKGLIST} stm32flash libnewlib-arm-none-eabi"
     PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi"
+    # latest bossac
+    PKGLIST="${PKGLIST} git usbutils"
 
     # Update system package info
     report_status "Running apt-get update..."
@@ -67,7 +69,25 @@ KLIPPY_ARGS="${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /tmp/klippy.log"
 EOF
 }
 
-# Step 5: Start host software
+# Step 5: Install newer version of bossac
+install_bossac()
+{
+    if [ ! -d "${SRCDIR}/tools/bossa" ]; then
+        report_status "Installing bossac 1.8"
+        rm -rf /tmp/bossa
+        git clone --branch 1.8 https://github.com/shumatech/BOSSA.git /tmp/bossa
+        make -C /tmp/bossa bin/bossac
+        mkdir -p "${SRCDIR}/tools/bossa"
+        sudo cp /tmp/bossa/bin/bossac "${SRCDIR}/tools/bossa/bossac1.8"
+        report_status "Installing bossac 1.7-arduino"
+        git -C /tmp/bossa checkout arduino
+        make -C /tmp/bossa clean && make -C /tmp/bossa bin/bossac
+        sudo cp /tmp/bossa/bin/bossac "${SRCDIR}/tools/bossa/bossac1.7-arduino"
+    fi
+
+}
+
+# Step 6: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
@@ -100,4 +120,5 @@ install_packages
 create_virtualenv
 install_script
 install_config
+install_bossac
 start_software
