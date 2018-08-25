@@ -180,6 +180,15 @@ class ProbePointsHelper:
             return self.probe.last_home_position()
         else:
             return None
+    def lift_z(self, z_pos):
+        # Lift toolhead
+        curpos = self.toolhead.get_position()
+        curpos[2] = z_pos
+        try:
+            self.toolhead.move(curpos, self.lift_speed)
+        except homing.EndstopError as e:
+            self.finalize(False)
+            raise self.gcode.error(str(e))
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -191,6 +200,7 @@ class ProbePointsHelper:
             'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
         self.results = []
         self.busy = True
+        self.lift_z(self.horizontal_move_z)
         self.move_next()
         if self.probe is not None:
             try:
@@ -218,13 +228,7 @@ class ProbePointsHelper:
         self.toolhead.wait_moves()
         self.results.append(self.callback.get_probed_position())
         # Lift toolhead
-        curpos = self.toolhead.get_position()
-        curpos[2] = self.horizontal_move_z
-        try:
-            self.toolhead.move(curpos, self.lift_speed)
-        except homing.EndstopError as e:
-            self.finalize(False)
-            raise self.gcode.error(str(e))
+        self.lift_z(self.horizontal_move_z)
         # Move to next position
         if len(self.results) == len(self.probe_points):
             self.toolhead.get_last_move_time()
