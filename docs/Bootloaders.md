@@ -135,13 +135,12 @@ on the "programming usb port" (the USB port closest to the power
 supply).
 
 The code at https://github.com/shumatech/BOSSA can be used to program
-the SAM3. It may be necessary to use the code from the `1.6.1-arduino`
-release.
+the SAM3. It is recommended to use version 1.9 or later.
 
 To flash an application use something like:
 ```
-stty -F /dev/ttyACM0 1200
-bossac -i -p ttyACM0 -R -e -w -v -b out/klipper.bin
+bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
+bossac -U -p /dev/ttyACM0 -R
 ```
 
 SAM4 micro-controllers (Duet Wifi)
