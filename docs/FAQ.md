@@ -266,10 +266,10 @@ details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?
 
-Short answer: There isn't an easy way to do that reliably. In some
-cases one can use Klipper's `pin_map: arduino` feature. Otherwise, for
-"digital" pins, one method is to search for the requested pin in
-Marlin's fastio header files. The Atmega2560 and Atmega1280 chips use
+Short answer: In some cases one can use Klipper's `pin_map: arduino`
+feature. Otherwise, for "digital" pins, one method is to search for
+the requested pin in Marlin's fastio header files. The Atmega2560 and
+Atmega1280 chips use
 [fastio_1280.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_1280.h),
 while the Atmega644p and Atmega1284p chips use
 [fastio_644.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_644.h).
@@ -288,12 +288,12 @@ micro-controller. On the Atmega chips these hardware pins have names
 like `PA4`, `PC7`, or `PD2`.
 
 Long ago, the Arduino project decided to avoid using the standard
-hardware names in favor of pin names based on incrementing numbers -
-these Arduino names generally look like `D23` or `A14`. This was an
-unfortunate choice that has lead to great deal of confusion. In
-particular the Arduino pin numbers frequently don't translate to the
-same hardware names. For example, `D21` is `PD0` on one common Arduino
-board, but is `PC7` on another common Arduino board.
+hardware names in favor of their own pin names based on incrementing
+numbers - these Arduino names generally look like `D23` or `A14`. This
+was an unfortunate choice that has lead to a great deal of confusion.
+In particular the Arduino pin numbers frequently don't translate to
+the same hardware names. For example, `D21` is `PD0` on one common
+Arduino board, but is `PC7` on another common Arduino board.
 
 In order to support 3d printers based on real Arduino boards, Klipper
 supports the Arduino pin aliases. This feature is enabled by adding
@@ -308,9 +308,9 @@ Marlin primarily follows the Arduino pin numbering scheme.  However,
 Marlin supports a few chips that Arduino does not support and in some
 cases it supports pins that Arduino boards do not expose. In these
 cases, Marlin chose their own pin numbering scheme. Klipper does not
-support these custom pin numbers - see the "short answer" section
-above for information on translating these pin numbers to their
-standard hardware names.
+support these custom pin numbers - check Marlin's fastio headers (see
+above) to translate these pin numbers to their standard hardware
+names.
 
 ### How do I upgrade to the latest software?
 
