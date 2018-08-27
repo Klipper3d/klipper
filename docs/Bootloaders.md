@@ -121,6 +121,25 @@ application with it using something like:
 teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 ```
 
+## Atmega168 ##
+
+The atmega168 has limited flash space. If using a bootloader, it is
+recommended to use the Optiboot bootloader. To flash that bootloader
+use something like:
+```
+wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex'
+
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega168.hex
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+```
+
+To flash an application via the Optiboot bootloader use something
+like:
+```
+avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
 SAM3 micro-controllers (Arduino Due)
 ====================================
 
