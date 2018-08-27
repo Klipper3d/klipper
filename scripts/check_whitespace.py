@@ -10,9 +10,10 @@ HaveError = False
 
 def report_error(filename, lineno, msg):
     global HaveError
+    if not HaveError:
+        sys.stderr.write("\n\nERROR:\nERROR: White space errors\nERROR:\n")
     HaveError = True
-    sys.stderr.write("Whitespace error in file %s on line %d: %s\n" % (
-        filename, lineno + 1, msg))
+    sys.stderr.write("%s:%d: %s\n" % (filename, lineno + 1, msg))
 
 def check_file(filename):
     # Open and read file
@@ -32,7 +33,7 @@ def check_file(filename):
         try:
             line = line.decode('utf-8')
         except UnicodeDecodeError:
-            report_error(filename, lineno, "Non utf-8 character")
+            report_error(filename, lineno, "Found non utf-8 character")
             continue
         # Check for control characters
         for c in line:
@@ -47,7 +48,7 @@ def check_file(filename):
                 break
         # Check for trailing space
         if line.endswith(' '):
-            report_error(filename, lineno, "Trailing space")
+            report_error(filename, lineno, "Line has trailing spaces")
     if not data.endswith('\n'):
         report_error(filename, lineno, "No newline at end of file")
     if data.endswith('\n\n'):
@@ -58,6 +59,7 @@ def main():
     for filename in files:
         check_file(filename)
     if HaveError:
+        sys.stderr.write("\n\n")
         sys.exit(-1)
 
 if __name__ == '__main__':
