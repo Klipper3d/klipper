@@ -168,7 +168,7 @@ The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
 interface. This is commonly done with a dedicated SWD hardware dongle.
 Alternatively, it appears one can use a Raspberry Pi with OpenOCD as a
 programmer (see:
-https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi/wiring-and-test
+https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi
 ).
 
 Unfortunately, there are two common bootloaders deployed on the
