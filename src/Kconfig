@@ -50,7 +50,7 @@ config HAVE_GPIO_SPI
 config HAVE_GPIO_HARD_PWM
     bool
     default n
-config HAVE_USER_INTERFACE
+config HAVE_GPIO_BITBANGING
     bool
     default n
 
