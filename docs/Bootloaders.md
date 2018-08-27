@@ -164,12 +164,16 @@ bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 SAMD21 micro-controllers (Arduino Zero)
 =======================================
 
-This document does not cover the method to flash a bootloader to the
-SAMD21.
+The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
+interface. This is commonly done with a dedicated SWD hardware dongle.
+Alternatively, it appears one can use a Raspberry Pi with OpenOCD as a
+programmer (see:
+https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi/wiring-and-test
+).
 
-Unfortunately, it appears there are two common bootloaders available
-for the SAMD21. One comes standard with the "Arduino Zero" and the
-other comes standard with the "Arduino M0".
+Unfortunately, there are two common bootloaders deployed on the
+SAMD21. One comes standard with the "Arduino Zero" and the other comes
+standard with the "Arduino M0".
 
 The Arduino Zero uses an 8KiB bootloader (the application must be
 compiled with a start address of 8KiB). This document does not cover
