@@ -10,7 +10,9 @@ settings in the config file.
 
 The Klipper configuration is stored in a simple text file on the host
 machine. The [config/example.cfg](../config/example.cfg) file serves
-as a reference for the config file. The
+as a reference for the config file. See the
+[Delta Calibrate](Delta_Calibrate.md) document for information on
+calibrating delta printers. The
 [Pressure Advance](Pressure_Advance.md) document contains information
 on tuning the pressure advance config.
 

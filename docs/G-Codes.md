@@ -152,6 +152,8 @@ section is enabled:
   - `NEXT`: If manual bed probing is enabled, then one can use this
     command to move to the next probing point during a DELTA_CALIBRATE
     operation.
+- `DELTA_ANALYZE`: This command is used during enhanced delta
+  calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
 ## Bed Tilt
 

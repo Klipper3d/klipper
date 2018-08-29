@@ -77,8 +77,10 @@ Klipper supports many standard 3d printer features:
   manipulating the Z steppers. Most Z height probes are supported,
   including servo activated probes.
 
-* Automatic delta calibration support. The calibration can be done
-  with a Z height probe or via manual probing.
+* Automatic delta calibration support. The calibration tool can
+  perform basic height calibration as well as an enhanced X and Y
+  dimension calibration. The calibration can be done with a Z height
+  probe or via manual probing.
 
 * Support for common temperature sensors (eg, common thermistors,
   AD595, PT100, MAX6675, MAX31855, MAX31856, MAX31865). Custom
