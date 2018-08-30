@@ -243,6 +243,10 @@ class ToolHead:
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
             self.kin = mod.load_kinematics(self, config)
+        except config.error as e:
+            raise
+        except self.printer.lookup_object('pins').error as e:
+            raise
         except:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
