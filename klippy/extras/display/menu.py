@@ -886,6 +886,7 @@ BLINK_SLOW_SEQUENCE = (True, True, True, True, False, False, False)
 
 
 class MenuManager:
+    error = error
     def __init__(self, config, lcd_chip):
         self.running = False
         self.menuitems = {}
@@ -964,10 +965,7 @@ class MenuManager:
         self.load_menuitems(config)
 
         # Load menu root
-        if self._root is not None:
-            self.root = self.lookup_menuitem(self._root)
-            if isinstance(self.root, MenuDeck):
-                self._autorun = True
+        self.load_root()
 
     def printer_state(self, state):
         if state == 'ready':
@@ -1016,6 +1014,23 @@ class MenuManager:
     def _timeout_autorun_root(self):
         return (self._autorun is True and self.root is not None
                 and self.stack_peek() is self.root and self.selected == 0)
+
+    def load_root(self, root=None, autorun=False):
+        root = self._root if root is None else root
+        if root is not None:
+            self.root = self.lookup_menuitem(root)
+            if isinstance(self.root, MenuDeck):
+                self._autorun = True
+            else:
+                self._autorun = autorun
+
+    def register_object(self, obj, name=None):
+        # register an object with a "get_status" callback
+        if obj is not None:
+            if name is None:
+                name = obj.__class__.__name__
+            if name not in self.objs:
+                self.objs[name] = obj
 
     def is_running(self):
         return self.running
@@ -1367,6 +1382,17 @@ class MenuManager:
             item = cfg.getchoice('type', menu_items)(self, cfg, name)
             self.add_menuitem(name, item)
 
+    def try_load_deck_menu(self):
+        container = self.stack_peek()
+        if isinstance(container, MenuDeck):
+            menu = container.menu
+            if (isinstance(menu, MenuList)
+                    and not container.is_editing()
+                    and menu is not container):
+                self.stack_push(menu)
+                self.top_row = 0
+                self.selected = 0
+
     cmd_DO_help = "Menu do things"
 
     def cmd_DO_DUMP(self, params):
@@ -1402,15 +1428,7 @@ class MenuManager:
                         # lets start and populate the menu items
                         self.begin(eventtime)
                     else:
-                        container = self.stack_peek()
-                        if isinstance(container, MenuDeck):
-                            menu = container.menu
-                            if (isinstance(menu, MenuList)
-                                    and not container.is_editing()
-                                    and menu is not container):
-                                self.stack_push(menu)
-                                self.top_row = 0
-                                self.selected = 0
+                        self.try_load_deck_menu()
                 else:
                     # short click
                     if self.is_running():

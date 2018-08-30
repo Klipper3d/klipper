@@ -158,6 +158,10 @@ class ProbePointsHelper:
         # Lookup probe object
         self.probe = None
         self.probe_offsets = (0., 0., 0.)
+        self.menu = None
+        self.menu_status = {
+            'write_enabled': False,
+            'next_pos': (0., 0., 0., 0.)}
         self.samples = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat(
             'sample_retract_dist', 2., above=0.)
@@ -172,6 +176,14 @@ class ProbePointsHelper:
             if self.horizontal_move_z < self.probe_offsets[2]:
                 raise config.error("horizontal_move_z can't be less than probe's"
                                    " z_offset in %s" % (config.get_name()))
+        else:
+            if config.has_section('display'):
+                display = self.printer.try_load_module(config, 'display')
+            else:
+                display = None
+            if display:
+                self.menu = self.printer.try_load_module(config, 'menu')
+                self.menu.register_object(self)
         # Internal probing state
         self.results = []
         self.busy = False
@@ -183,6 +195,8 @@ class ProbePointsHelper:
             return self.probe.last_home_position()
         else:
             return None
+    def get_status(self, eventtime):
+        return self.menu_status
     def lift_z(self, z_pos, add=False):
         # Lift toolhead
         curpos = self.toolhead.get_position()
@@ -214,6 +228,18 @@ class ProbePointsHelper:
             'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
         self.results = []
         self.busy = True
+        if self.menu:
+            # Setup menu if available
+            self.menu_status['write_enabled'] = False
+            self.menu.exit(force=True)
+            try:
+                self.menu.load_root('__probe_helper', True)
+            except (self.menu.error, self.printer.config_error) as e:
+                self.gcode.respond_info(
+                    ("Could not load probe menu.  This may be due to"
+                     " user changes in menu.cfg.\n%s") % e.message)
+                self.menu.load_root()
+                self.menu = None
         self.lift_z(self.horizontal_move_z)
         self.move_next()
         if self.probe is not None:
@@ -230,14 +256,22 @@ class ProbePointsHelper:
         curpos[0] = x
         curpos[1] = y
         curpos[2] = self.horizontal_move_z
+        self.menu_status['next_pos'] = curpos
         try:
             self.toolhead.move(curpos, self.speed)
         except homing.EndstopError as e:
             self.finalize(False)
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
+        if self.menu:
+            self.toolhead.wait_moves()
+            self.menu_status['write_enabled'] = True
+            self.menu.try_load_deck_menu()
     cmd_NEXT_help = "Move to the next XY position to probe"
     def cmd_NEXT(self, params):
+        if self.menu:
+            self.menu.back()
+            self.menu_status['write_enabled'] = False
         if self.probe is None:
             # Record current position for manual probe
             self.toolhead.wait_moves()
@@ -254,6 +288,11 @@ class ProbePointsHelper:
         self.busy = False
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
+        if self.menu:
+            # reset menu to the default root
+            self.menu_status['write_enabled'] = False
+            self.menu.exit(force=True)
+            self.menu.load_root()
         if success:
             self.callback.finalize(self.probe_offsets, self.results)
 
