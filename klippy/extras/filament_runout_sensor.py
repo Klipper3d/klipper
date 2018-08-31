@@ -17,10 +17,8 @@ class FilamentRunoutSensor:
         buttons.register_buttons([config.get('pin')], self.runout_callback)
 
     def runout_callback(self, eventtime, state):
-        self.gcode.respond_info("Sensor {name} state {state}".format(
-            name=self.name,
-            state=state
-        ))
+        if state:
+            self.gcode.respond_info("action:pause")
 
 
 def load_config_prefix(config):
