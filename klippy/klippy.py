@@ -136,11 +136,9 @@ class Printer:
         gc = gcode.GCodeParser(self, input_fd)
         self.objects = collections.OrderedDict({'gcode': gc})
         self.stats_timer = self.reactor.register_timer(self._stats)
-        self.connect_timer = self.reactor.register_timer(
-            self._connect, self.reactor.NOW)
+        self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.is_shutdown = False
-        self.async_shutdown_msg = ""
         self.run_result = None
         self.stats_cb = []
         self.state_cb = []
@@ -238,7 +236,6 @@ class Printer:
         self.state_cb = [o.printer_state for o in self.objects.values()
                          if hasattr(o, 'printer_state')]
     def _connect(self, eventtime):
-        self.reactor.unregister_timer(self.connect_timer)
         try:
             self._read_config()
             for cb in self.state_cb:
@@ -281,9 +278,6 @@ class Printer:
             # Check restart flags
             run_result = self.run_result
             try:
-                if run_result == 'shutdown':
-                    self.invoke_shutdown(self.async_shutdown_msg)
-                    continue
                 self._stats(self.reactor.monotonic(), force_output=True)
                 if run_result == 'firmware_restart':
                     for m in self.lookup_module_objects('mcu'):
@@ -301,8 +295,8 @@ class Printer:
         for cb in self.state_cb:
             cb('shutdown')
     def invoke_async_shutdown(self, msg):
-        self.async_shutdown_msg = msg
-        self.request_exit("shutdown")
+        self.reactor.register_async_callback(
+            (lambda e: self.invoke_shutdown(msg)))
     def request_exit(self, result):
         self.run_result = result
         self.reactor.end()
