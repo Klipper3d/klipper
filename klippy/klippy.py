@@ -135,12 +135,10 @@ class Printer:
         self.reactor = reactor.Reactor()
         gc = gcode.GCodeParser(self, input_fd)
         self.objects = collections.OrderedDict({'gcode': gc})
-        self.stats_timer = self.reactor.register_timer(self._stats)
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.is_shutdown = False
         self.run_result = None
-        self.stats_cb = []
         self.state_cb = []
     def get_start_args(self):
         return self.start_args
@@ -177,12 +175,6 @@ class Printer:
         logging.info(info)
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
-    def _stats(self, eventtime, force_output=False):
-        stats = [cb(eventtime) for cb in self.stats_cb]
-        if max([s[0] for s in stats] + [force_output]):
-            logging.info("Stats %.1f: %s", eventtime,
-                         ' '.join([s[1] for s in stats]))
-        return eventtime + 1.
     def try_load_module(self, config, section):
         if section in self.objects:
             return self.objects[section]
@@ -233,9 +225,7 @@ class Printer:
                     raise self.config_error(
                         "Option '%s' is not valid in section '%s'" % (
                             option, section))
-        # Determine which printer objects have stats/state callbacks
-        self.stats_cb = [o.stats for o in self.objects.values()
-                         if hasattr(o, 'stats')]
+        # Determine which printer objects have state callbacks
         self.state_cb = [o.printer_state for o in self.objects.values()
                          if hasattr(o, 'printer_state')]
     def _connect(self, eventtime):
@@ -250,8 +240,6 @@ class Printer:
                 if self.state_message is not message_ready:
                     return self.reactor.NEVER
                 cb('ready')
-            if self.start_args.get('debugoutput') is None:
-                self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self._set_state("%s%s" % (str(e), message_restart))
@@ -281,7 +269,6 @@ class Printer:
             # Check restart flags
             run_result = self.run_result
             try:
-                self._stats(self.reactor.monotonic(), force_output=True)
                 if run_result == 'firmware_restart':
                     for n, m in self.lookup_objects(module='mcu'):
                         m.microcontroller_restart()
