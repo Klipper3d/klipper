@@ -512,7 +512,7 @@ class MenuInput(MenuCommand):
         return self._input_value is not None
 
     def _onchange(self):
-        self._manager.run_script(self.get_gcode())
+        self._manager.queue_gcode(self.get_gcode())
 
     def init_value(self):
         self._input_value = None
@@ -901,6 +901,7 @@ class MenuManager:
         self.lcd_chip = lcd_chip
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
+        self.gcode_queue = []
         self.parameters = {}
         self.objs = {}
         self.root = None
@@ -1111,8 +1112,8 @@ class MenuManager:
             raise error("Wrong type, expected MenuContainer")
         top = self.stack_peek()
         if top is not None:
-            self.run_script(top.get_leave_gcode())
-        self.run_script(container.get_enter_gcode())
+            self.queue_gcode(top.get_leave_gcode())
+        self.queue_gcode(container.get_enter_gcode())
         if not container.is_editing():
             container.update_items()
         self.menustack.append(container)
@@ -1129,10 +1130,10 @@ class MenuManager:
                     raise error("Wrong type, expected MenuContainer")
                 if not top.is_editing():
                     top.update_items()
-                self.run_script(container.get_leave_gcode())
-                self.run_script(top.get_enter_gcode())
+                self.queue_gcode(container.get_leave_gcode())
+                self.queue_gcode(top.get_enter_gcode())
             else:
-                self.run_script(container.get_leave_gcode())
+                self.queue_gcode(container.get_leave_gcode())
         return container
 
     def stack_size(self):
@@ -1307,13 +1308,13 @@ class MenuManager:
                 self.selected = 0
             elif isinstance(current, MenuInput):
                 if current.is_editing():
-                    self.run_script(current.get_gcode())
+                    self.queue_gcode(current.get_gcode())
                     current.reset_value()
                 else:
                     current.init_value()
             elif isinstance(current, MenuCommand):
                 current()
-                self.run_script(current.get_gcode())
+                self.queue_gcode(current.get_gcode())
 
     def exit(self, force=False):
         container = self.stack_peek()
@@ -1322,7 +1323,7 @@ class MenuManager:
             if (not force and isinstance(current, (MenuInput, MenuGroup))
                     and current.is_editing()):
                 return
-            self.run_script(container.get_leave_gcode())
+            self.queue_gcode(container.get_leave_gcode())
             self.running = False
 
     def run_action(self, action, *args):
@@ -1339,12 +1340,21 @@ class MenuManager:
         except Exception:
             logging.exception("Malformed action call")
 
-    def run_script(self, script):
-        if script is not None:
+    def queue_gcode(self, script):
+        if script is None:
+            return
+        if not self.gcode_queue:
+            reactor = self.printer.get_reactor()
+            reactor.register_callback(self.dispatch_gcode)
+        self.gcode_queue.append(script)
+    def dispatch_gcode(self, eventtime):
+        while self.gcode_queue:
+            script = self.gcode_queue[0]
             try:
                 self.gcode.run_script(script)
             except Exception:
                 logging.exception("Script running error")
+            self.gcode_queue.pop(0)
 
     def add_menuitem(self, name, menu):
         if name in self.menuitems:
