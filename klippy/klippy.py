@@ -164,11 +164,14 @@ class Printer:
         if default is ConfigWrapper.sentinel:
             raise self.config_error("Unknown config object '%s'" % (name,))
         return default
-    def lookup_module_objects(self, module_name):
-        prefix = module_name + ' '
-        objs = [self.objects[n] for n in self.objects if n.startswith(prefix)]
-        if module_name in self.objects:
-            return [self.objects[module_name]] + objs
+    def lookup_objects(self, module=None):
+        if module is None:
+            return list(self.objects.items())
+        prefix = module + ' '
+        objs = [(n, self.objects[n])
+                for n in self.objects if n.startswith(prefix)]
+        if module in self.objects:
+            return [(module, self.objects[module])] + objs
         return objs
     def set_rollover_info(self, name, info):
         logging.info(info)
@@ -280,7 +283,7 @@ class Printer:
             try:
                 self._stats(self.reactor.monotonic(), force_output=True)
                 if run_result == 'firmware_restart':
-                    for m in self.lookup_module_objects('mcu'):
+                    for n, m in self.lookup_objects(module='mcu'):
                         m.microcontroller_restart()
                 for cb in self.state_cb:
                     cb('disconnect')
