@@ -448,7 +448,13 @@ class ToolHead:
         gcode.respond_info(msg)
     def cmd_M204(self, params):
         gcode = self.printer.lookup_object('gcode')
-        accel = gcode.get_float('S', params, above=0.)
+        if 'P' in params and 'T' in params and 'S' not in params:
+            # Use minimum of P and T for accel
+            accel = min(gcode.get_float('P', params, above=0.),
+                        gcode.get_float('T', params, above=0.))
+        else:
+            # Use S for accel
+            accel = gcode.get_float('S', params, above=0.)
         self.max_accel = min(accel, self.config_max_accel)
         self._calc_junction_deviation()
 
