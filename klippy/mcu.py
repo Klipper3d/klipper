@@ -452,6 +452,7 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
+        self._move_count = 0
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -581,19 +582,10 @@ class MCU:
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
-        move_count = config_params['move_count']
-        msgparser = self._serial.msgparser
-        info = [
-            "Configured MCU '%s' (%d moves)" % (self._name, move_count),
-            "Loaded MCU '%s' %d commands (%s / %s)" % (
-                self._name, len(msgparser.messages_by_id),
-                msgparser.version, msgparser.build_versions),
-            "MCU '%s' config: %s" % (self._name, " ".join(
-                ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
-        self._printer.set_rollover_info(self._name, "\n".join(info))
+        self._move_count = config_params['move_count']
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            move_count)
+            self._move_count)
         self._ffi_lib.steppersync_set_time(
             self._steppersync, 0., self._mcu_freq)
     def _connect(self):
@@ -606,6 +598,15 @@ class MCU:
                 self._check_restart("enable power")
             self._serial.connect()
             self._clocksync.connect(self._serial)
+        msgparser = self._serial.msgparser
+        name = self._name
+        log_info = [
+            "Loaded MCU '%s' %d commands (%s / %s)" % (
+                name, len(msgparser.messages_by_id),
+                msgparser.version, msgparser.build_versions),
+            "MCU '%s' config: %s" % (name, " ".join(
+                ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
+        logging.info("\n".join(log_info))
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
@@ -614,13 +615,16 @@ class MCU:
         if (self._restart_method is None
             and (self._reset_cmd is not None
                  or self._config_reset_cmd is not None)
-            and self._serial.msgparser.get_constant(
-                'SERIAL_BAUD', None) is None):
+            and msgparser.get_constant('SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
         self.register_msg(self._handle_shutdown, 'shutdown')
         self.register_msg(self._handle_shutdown, 'is_shutdown')
         self.register_msg(self._handle_mcu_stats, 'stats')
         self._check_config()
+        move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
+        logging.info(move_msg)
+        log_info.append(move_msg)
+        self._printer.set_rollover_info(name, "\n".join(log_info), log=False)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
