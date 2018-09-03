@@ -12,8 +12,7 @@ SLOW_RATIO = 3.
 class DeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
-        stepper_configs = [config.getsection('stepper_' + n)
-                           for n in ['a', 'b', 'c']]
+        stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
         rail_a = stepper.PrinterRail(
             stepper_configs[0], need_position_minmax = False)
         a_endstop = rail_a.get_homing_info().position_endstop
@@ -31,9 +30,9 @@ class DeltaKinematics:
             sconfig.getfloat('arm_length', arm_length_a, above=radius)
             for sconfig in stepper_configs]
         self.arm2 = [arm**2 for arm in arm_lengths]
-        self.endstops = [(rail.get_homing_info().position_endstop
-                          + math.sqrt(arm2 - radius**2))
-                         for rail, arm2 in zip(self.rails, self.arm2)]
+        self.abs_endstops = [(rail.get_homing_info().position_endstop
+                              + math.sqrt(arm2 - radius**2))
+                             for rail, arm2 in zip(self.rails, self.arm2)]
         # Setup boundary checks
         self.need_motor_enable = self.need_home = True
         self.limit_xy2 = -1.
@@ -41,7 +40,7 @@ class DeltaKinematics:
                           for rail in self.rails])
         self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
         self.limit_z = min([ep - arm
-                            for ep, arm in zip(self.endstops, arm_lengths)])
+                            for ep, arm in zip(self.abs_endstops, arm_lengths)])
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
                 self.max_z, self.limit_z))
@@ -115,7 +114,7 @@ class DeltaKinematics:
                           homing_speed/2.0, second_home=True)
         # Set final homed position
         spos = [ep + rail.get_homed_offset()
-                for ep, rail in zip(self.endstops, self.rails)]
+                for ep, rail in zip(self.abs_endstops, self.rails)]
         homing_state.set_homed_position(self._actuator_to_cartesian(spos))
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
@@ -160,38 +159,15 @@ class DeltaKinematics:
             self._check_motor_enable(print_time)
         for rail in self.rails:
             rail.step_itersolve(move.cmove)
-    # Helper functions for DELTA_CALIBRATE script
-    def get_stable_position(self):
-        steppers = [rail.get_steppers()[0] for rail in self.rails]
-        return [int((ep - s.get_commanded_position()) / s.get_step_dist() + .5)
-                for ep, s in zip(self.endstops, steppers)]
+    # Helper function for DELTA_CALIBRATE script
     def get_calibrate_params(self):
         out = { 'radius': self.radius }
         for i, axis in enumerate('abc'):
             rail = self.rails[i]
-            out['endstop_'+axis] = rail.get_homing_info().position_endstop
-            out['stepdist_'+axis] = rail.get_steppers()[0].get_step_dist()
             out['angle_'+axis] = self.angles[i]
             out['arm_'+axis] = self.arm_lengths[i]
-        return out
-    def get_positions_from_stable(self, stable_positions, params):
-        angle_names = ['angle_a', 'angle_b', 'angle_c']
-        angles = [math.radians(params[an]) for an in angle_names]
-        radius = params['radius']
-        radius2 = radius**2
-        towers = [(math.cos(a) * radius, math.sin(a) * radius) for a in angles]
-        arm2 = [params[an]**2 for an in ['arm_a', 'arm_b', 'arm_c']]
-        stepdist_names = ['stepdist_a', 'stepdist_b', 'stepdist_c']
-        stepdists = [params[sn] for sn in stepdist_names]
-        endstop_names = ['endstop_a', 'endstop_b', 'endstop_c']
-        endstops = [params[en] + math.sqrt(a2 - radius2)
-                    for en, a2 in zip(endstop_names, arm2)]
-        out = []
-        for spos in stable_positions:
-            sphere_coords = [
-                (t[0], t[1], es - sp * sd)
-                for t, es, sd, sp in zip(towers, endstops, stepdists, spos) ]
-            out.append(mathutil.trilateration(sphere_coords, arm2))
+            out['endstop_'+axis] = rail.get_homing_info().position_endstop
+            out['stepdist_'+axis] = rail.get_steppers()[0].get_step_dist()
         return out
 
 def load_kinematics(toolhead, config):
