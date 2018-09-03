@@ -5,6 +5,9 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
 
+class error(Exception):
+    pass
+
 
 ######################################################################
 # Hardware pin names
@@ -111,7 +114,9 @@ Arduino_from_mcu = {
 }
 
 def update_map_arduino(pins, mcu):
-    dpins, apins = Arduino_from_mcu.get(mcu, ([], []))
+    if mcu not in Arduino_from_mcu:
+        raise error("Arduino aliases not supported on mcu '%s'" % (mcu,))
+    dpins, apins = Arduino_from_mcu[mcu]
     for i in range(len(dpins)):
         pins['ar' + str(i)] = pins[dpins[i]]
     for i in range(len(apins)):
@@ -152,6 +157,8 @@ beagleboneblack_mappings = {
 }
 
 def update_map_beaglebone(pins, mcu):
+    if mcu != 'pru':
+        raise error("Beaglebone aliases not supported on mcu '%s'" % (mcu,))
     for pin, gpio in beagleboneblack_mappings.items():
         pins[pin] = pins[gpio]
 
@@ -174,6 +181,8 @@ class PinResolver:
             update_map_arduino(self.pins, self.mcu_type)
         elif mapping_name == 'beaglebone':
             update_map_beaglebone(self.pins, self.mcu_type)
+        else:
+            raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
@@ -191,9 +200,6 @@ class PinResolver:
 ######################################################################
 # Pin to chip mapping
 ######################################################################
-
-class error(Exception):
-    pass
 
 class PrinterPins:
     error = error
