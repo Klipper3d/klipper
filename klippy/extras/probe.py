@@ -31,7 +31,7 @@ class PrinterProbe:
         pin = config.get('pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
-        mcu.add_config_object(self)
+        mcu.register_config_callback(self.build_config)
         self.mcu_probe = mcu.setup_pin('endstop', pin_params)
         if (config.get('activate_gcode', None) is not None or
             config.get('deactivate_gcode', None) is not None):

@@ -28,7 +28,7 @@ class UC1701:
         self.mcu = mcu
         self.spi_oid = self.mcu.create_oid()
         self.a0_oid = self.mcu.create_oid()
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.glyph_buffer = []
         self.spi_xfer_cmd = self.set_pin_cmd = None
         self.vram = ([bytearray(128) for i in range(8)],

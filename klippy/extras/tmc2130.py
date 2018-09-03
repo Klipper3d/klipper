@@ -38,7 +38,7 @@ class TMC2130:
             "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
                 self.oid, 0, cs_pin_params['pin'], 3, 4000000))
         self.spi_send_cmd = self.spi_transfer_cmd = None
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
         ppins.register_chip("tmc2130_" + self.name, self)

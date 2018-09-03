@@ -33,7 +33,7 @@ class HD44780:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
         self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)

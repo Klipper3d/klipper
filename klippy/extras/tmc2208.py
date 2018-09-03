@@ -112,7 +112,7 @@ class TMC2208:
         self.tx_pin = tx_pin_params['pin']
         self.oid = self.mcu.create_oid()
         self.tmcuart_send_cmd = None
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         # Add DUMP_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(

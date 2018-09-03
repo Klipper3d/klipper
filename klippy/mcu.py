@@ -15,6 +15,7 @@ class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._oid = oid = self._mcu.create_oid()
+        self._mcu.register_config_callback(self._build_config)
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -43,7 +44,7 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
         self.set_stepper_kinematics(sk)
-    def build_config(self):
+    def _build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
         self._mcu.add_config_cmd(
@@ -142,6 +143,7 @@ class MCU_endstop:
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._oid = self._home_cmd = self._query_cmd = None
+        self._mcu.register_config_callback(self._build_config)
         self._homing = False
         self._min_query_time = self._next_query_time = 0.
         self._last_state = {}
@@ -155,7 +157,7 @@ class MCU_endstop:
         self._steppers.append(stepper)
     def get_steppers(self):
         return list(self._steppers)
-    def build_config(self):
+    def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
@@ -236,6 +238,7 @@ class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._oid = None
+        self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = self._invert
@@ -253,7 +256,7 @@ class MCU_digital_out:
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
         self._is_static = is_static
-    def build_config(self):
+    def _build_config(self):
         if self._is_static:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
                 self._pin, self._start_value))
@@ -282,6 +285,7 @@ class MCU_pwm:
         self._cycle_time = 0.100
         self._max_duration = 2.
         self._oid = None
+        self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
@@ -305,7 +309,7 @@ class MCU_pwm:
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
-    def build_config(self):
+    def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
@@ -363,6 +367,7 @@ class MCU_adc:
         self._sample_count = self._range_check_count = 0
         self._report_clock = 0
         self._oid = self._callback = None
+        self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
     def get_mcu(self):
         return self._mcu
@@ -376,7 +381,7 @@ class MCU_adc:
     def setup_adc_callback(self, report_time, callback):
         self._report_time = report_time
         self._callback = callback
-    def build_config(self):
+    def _build_config(self):
         if not self._sample_count:
             return
         self._oid = self._mcu.create_oid()
@@ -437,7 +442,7 @@ class MCU:
         # Config building
         self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
-        self._config_objects = []
+        self._config_callbacks = []
         self._init_cmds = []
         self._config_cmds = []
         self._pin_map = config.get('pin_map', None)
@@ -516,8 +521,8 @@ class MCU:
             self.add_config_cmd(line)
     def _send_config(self, prev_crc):
         # Build config commands
-        for co in self._config_objects:
-            co.build_config()
+        for cb in self._config_callbacks:
+            cb()
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
@@ -622,14 +627,12 @@ class MCU:
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
-        co = pcs[pin_type](self, pin_params)
-        self.add_config_object(co)
-        return co
+        return pcs[pin_type](self, pin_params)
     def create_oid(self):
         self._oid_count += 1
         return self._oid_count - 1
-    def add_config_object(self, co):
-        self._config_objects.append(co)
+    def register_config_callback(self, cb):
+        self._config_callbacks.append(cb)
     def add_config_cmd(self, cmd, is_init=False):
         if is_init:
             self._init_cmds.append(cmd)
