@@ -91,7 +91,8 @@ Klipper supports many standard 3d printer features:
   fans. No need to keep fans running when the printer is idle.
 
 * Support for run-time configuration of TMC2130, TMC2208, and TMC2224
-  stepper motor drivers.
+  stepper motor drivers. There is also support for current control of
+  traditional stepper drivers via AD5206 and MCP4451 digipots.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available.
