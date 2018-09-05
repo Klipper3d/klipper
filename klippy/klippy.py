@@ -117,13 +117,11 @@ class ConfigWrapper:
                 if s.startswith(prefix)]
 
 class ConfigLogger():
-    def __init__(self, cfg, bglogger):
+    def __init__(self, fileconfig, printer):
         self.lines = ["===== Config file ====="]
-        cfg.write(self)
+        fileconfig.write(self)
         self.lines.append("=======================")
-        data = "\n".join(self.lines)
-        logging.info(data)
-        bglogger.set_rollover_info("config", data)
+        printer.set_rollover_info("config", "\n".join(self.lines))
     def write(self, data):
         self.lines.append(data.strip())
 
@@ -203,7 +201,7 @@ class Printer:
             raise self.config_error("Unable to open config file %s" % (
                 config_file,))
         if self.bglogger is not None:
-            ConfigLogger(fileconfig, self.bglogger)
+            ConfigLogger(fileconfig, self)
         # Create printer components
         access_tracking = {}
         config = ConfigWrapper(self, fileconfig, access_tracking, 'printer')
