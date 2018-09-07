@@ -168,7 +168,7 @@ class DeltaCalibrate:
                 "distance%d_pos1" % (i,)).split(','))
             sa2, sb2, sc2 = map(float, autosave.get(
                 "distance%d_pos1" % (i,)).split(','))
-            self.last_probe_positions.append(
+            self.last_distances.append(
                 (height, (sa1, sb1, sc1), (sa2, sb2, sc2)))
     def save_state(self, probe_positions, distances, params):
         # Save main delta parameters
