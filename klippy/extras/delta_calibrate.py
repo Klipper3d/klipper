@@ -62,7 +62,7 @@ def measurements_to_distances(measured_params, delta_params):
     # Extract params
     mp = measured_params
     dp = delta_params
-    scale = mp['SCALE']
+    scale = mp['SCALE'][0]
     cpw = mp['CENTER_PILLAR_WIDTHS']
     center_widths = [cpw[0], cpw[2], cpw[1], cpw[0], cpw[2], cpw[1]]
     center_dists = [od - cw
