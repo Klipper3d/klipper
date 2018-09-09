@@ -140,6 +140,8 @@ class ProbePointsHelper:
         self.printer = config.get_printer()
         self.callback = callback
         self.probe_points = default_points
+        self.x_offset = self.printer.lookup_object("probe").x_offset;
+        self.y_offset = self.printer.lookup_object("probe").y_offset;
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
             points = config.get('points').split('\n')
@@ -229,8 +231,8 @@ class ProbePointsHelper:
     def move_next(self):
         x, y = self.probe_points[len(self.results)/self.samples]
         curpos = self.toolhead.get_position()
-        curpos[0] = x
-        curpos[1] = y
+        curpos[0] = x+self.x_offset
+        curpos[1] = y+self.y_offset
         curpos[2] = self.horizontal_move_z
         try:
             self.toolhead.move(curpos, self.speed)
