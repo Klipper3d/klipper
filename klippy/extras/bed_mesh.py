@@ -92,12 +92,13 @@ class BedMesh:
         # Return last, non-transformed position
         if self.z_mesh is None:
             # No mesh calibrated, so send toolhead position
-            return self.toolhead.get_position()
+            self.last_position[:] = self.toolhead.get_position()
         else:
             # return current position minus the current z-adjustment
             x, y, z, e = self.toolhead.get_position()
             z_adjust = self.get_z_factor(z) * self.z_mesh.get_z(x, y)
-            return [x, y, z - z_adjust, e]
+            self.last_position[:] = [x, y, z - z_adjust, e]
+        return list(self.last_position)
     def move(self, newpos, speed):
         factor = self.get_z_factor(newpos[2])
         if self.z_mesh is None or not factor:
