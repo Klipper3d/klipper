@@ -100,9 +100,9 @@ class GantryLevel:
             stepper = self.z_steppers[z_id]
             stepper.set_ignore_move(False)
             curpos[2] = curpos[2] - z_adjust[z_id]
-	    toolhead.move(curpos, speed)
+            toolhead.move(curpos, speed)
             toolhead.set_position(curpos)
-	    stepper.set_ignore_move(True)
+            stepper.set_ignore_move(True)
         for s in self.z_steppers:
             s.set_ignore_move(False)
         self.gcode.reset_last_position()
