@@ -21,8 +21,11 @@ class Move:
         self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
         self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-        if not move_d:
+        if move_d < .000000001:
             # Extrude only move
+            self.end_pos = (start_pos[0], start_pos[1], start_pos[2],
+                            end_pos[3])
+            axes_d[0] = axes_d[1] = axes_d[2] = 0.
             self.move_d = move_d = abs(axes_d[3])
             self.is_kinematic_move = False
         self.min_move_t = move_d / speed
