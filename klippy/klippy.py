@@ -260,24 +260,23 @@ class Printer:
         monotime = self.reactor.monotonic()
         logging.info("Start printer at %s (%.1f %.1f)",
                      time.asctime(time.localtime(systime)), systime, monotime)
-        while 1:
-            # Enter main reactor loop
-            try:
-                self.reactor.run()
-            except:
-                logging.exception("Unhandled exception during run")
-                return "error_exit"
-            # Check restart flags
-            run_result = self.run_result
-            try:
-                if run_result == 'firmware_restart':
-                    for n, m in self.lookup_objects(module='mcu'):
-                        m.microcontroller_restart()
-                for cb in self.state_cb:
-                    cb('disconnect')
-            except:
-                logging.exception("Unhandled exception during post run")
-            return run_result
+        # Enter main reactor loop
+        try:
+            self.reactor.run()
+        except:
+            logging.exception("Unhandled exception during run")
+            return "error_exit"
+        # Check restart flags
+        run_result = self.run_result
+        try:
+            if run_result == 'firmware_restart':
+                for n, m in self.lookup_objects(module='mcu'):
+                    m.microcontroller_restart()
+            for cb in self.state_cb:
+                cb('disconnect')
+        except:
+            logging.exception("Unhandled exception during post run")
+        return run_result
     def invoke_shutdown(self, msg):
         if self.is_shutdown:
             return
