@@ -45,7 +45,7 @@ class QuadGantryLevel:
     def squash_positions(self,positions):
         # Group multi-probe data and average out the Z readings
         # Assumes samples come in sequentially
-        grouped_pos = []    
+        grouped_pos = []
         for position in positions:
             if len(grouped_pos) > 0 and grouped_pos[-1][0] == position[0] and grouped_pos[-1][1] == position[1]:
                 grouped_pos[-1][2].append(position[2])
