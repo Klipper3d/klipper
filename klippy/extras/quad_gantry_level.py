@@ -20,7 +20,7 @@ class QuadGantryLevel:
             raise config.error("Unable to parse gantry_corners in %s" % (
                 config.get_name()))
         if len(gantry_corners) < 2:
-            raise config.error("ganry_level requires at least two gantry_corners")
+            raise config.error("quad_gantry_level requires at least two gantry_corners")
         self.z_steppers = []
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
@@ -42,7 +42,22 @@ class QuadGantryLevel:
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.calc_position()
+    def squash_positions(self,positions):
+        # Group multi-probe data and average out the Z readings
+        # Assumes samples come in sequentially
+        grouped_pos = []    
+        for position in positions:
+            if len(grouped_pos) > 0 and grouped_pos[-1][0] == position[0] and grouped_pos[-1][1] == position[1]:
+                grouped_pos[-1][2].append(position[2])
+            else:
+                grouped_pos.append(position)
+                grouped_pos[-1][2] = [grouped_pos[-1][2]]
+        for id,pos in enumerate(grouped_pos):
+            grouped_pos[id][2] = sum(grouped_pos[id][2]) / len(grouped_pos[id][2])
+        return grouped_pos
     def finalize(self, offsets, positions):
+        if len(positions) > 4:
+            positions = self.squash_positions(positions)
         logging.info("quad_gantry_level Calculating gantry geometry with: %s", positions)
         p1 = [positions[0][0] + offsets[0],positions[0][2]]
         p2 = [positions[1][0] + offsets[0],positions[1][2]]
