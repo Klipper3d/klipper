@@ -106,8 +106,11 @@ class GCodeParser:
             self.dump_debug()
             if self.is_fileinput:
                 self.printer.request_exit('error_exit')
+            self._respond_state("Shutdown")
             return
         if state != 'ready':
+            if state == 'disconnect':
+                self._respond_state("Disconnect")
             return
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
@@ -125,6 +128,7 @@ class GCodeParser:
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+        self._respond_state("Ready")
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
     def dump_debug(self):
@@ -287,6 +291,8 @@ class GCodeParser:
         self.respond('!! %s' % (lines[0].strip(),))
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
+    def _respond_state(self, state):
+        self.respond_info("Klipper state: %s" % (state,))
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str,
@@ -671,11 +677,12 @@ class GCodeParser:
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):
-        msg = self.printer.get_state_message()
         if self.is_printer_ready:
-            self.respond_info(msg)
-        else:
-            self.respond_error(msg)
+            self._respond_state("Ready")
+            return
+        msg = self.printer.get_state_message()
+        self._respond_state("Not ready")
+        self.respond_error(msg)
     cmd_HELP_when_not_ready = True
     def cmd_HELP(self, params):
         cmdhelp = []
