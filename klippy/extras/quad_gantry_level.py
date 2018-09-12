@@ -19,7 +19,7 @@ class QuadGantryLevel:
         except:
             raise config.error("Unable to parse gantry_corners in %s" % (
                 config.get_name()))
-        if len(gantry_corners) < 2:
+        if len(self.gantry_corners) < 2:
             raise config.error("quad_gantry_level requires at least two gantry_corners")
         self.z_steppers = []
         # Register QUAD_GANTRY_LEVEL command
@@ -66,19 +66,19 @@ class QuadGantryLevel:
         f1 = self.linefit(p1,p4)
         f2 = self.linefit(p2,p3)
         logging.info("quad_gantry_level f1: %s, f2: %s" % (f1,f2))
-        a1 = [positions[0][1] + offsets[1], self.plot(f1,gantry_corners[0][0])]
-        a2 = [positions[1][1] + offsets[1], self.plot(f2,gantry_corners[0][0])]
-        b1 = [positions[0][1] + offsets[1], self.plot(f1,gantry_corners[1][0])]
-        b2 = [positions[1][1] + offsets[1], self.plot(f2,gantry_corners[1][0])]
+        a1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[0][0])]
+        a2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[0][0])]
+        b1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[1][0])]
+        b2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[1][0])]
         logging.info("quad_gantry_level a1: %s a2: %s b1: %s b2: %s\n" % (a1,a2,b1,b2))
         af = self.linefit(a1,a2)
         bf = self.linefit(b1,b2)
         logging.info("quad_gantry_level af: %s, bf: %s" % (af,bf))
         z_adjust = [0,0,0,0]
-        z_adjust[0] = self.plot(af,gantry_corners[0][1])
-        z_adjust[1] = self.plot(af,gantry_corners[1][1])
-        z_adjust[2] = self.plot(bf,gantry_corners[1][1])
-        z_adjust[3] = self.plot(bf,gantry_corners[0][1])
+        z_adjust[0] = self.plot(af,self.gantry_corners[0][1])
+        z_adjust[1] = self.plot(af,self.gantry_corners[1][1])
+        z_adjust[2] = self.plot(bf,self.gantry_corners[1][1])
+        z_adjust[3] = self.plot(bf,self.gantry_corners[0][1])
         z_avg = sum(z_adjust)/len(z_adjust)
         for z_id in range(4):
             z_adjust[z_id] = z_avg - z_adjust[z_id]
