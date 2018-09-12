@@ -183,7 +183,11 @@ class GCodeParser:
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
-        data = os.read(self.fd, 4096)
+        try:
+            data = os.read(self.fd, 4096)
+        except os.error:
+            logging.exception("Read g-code")
+            return
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
@@ -256,15 +260,21 @@ class GCodeParser:
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
             return
-        if msg:
-            os.write(self.fd, "ok %s\n" % (msg,))
-        else:
-            os.write(self.fd, "ok\n")
+        try:
+            if msg:
+                os.write(self.fd, "ok %s\n" % (msg,))
+            else:
+                os.write(self.fd, "ok\n")
+        except os.error:
+            logging.exception("Write g-code ack")
         self.need_ack = False
     def respond(self, msg):
         if self.is_fileinput:
             return
-        os.write(self.fd, msg+"\n")
+        try:
+            os.write(self.fd, msg+"\n")
+        except os.error:
+            logging.exception("Write g-code response")
     def respond_info(self, msg):
         logging.debug(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
