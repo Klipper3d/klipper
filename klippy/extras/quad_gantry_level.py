@@ -99,7 +99,7 @@ class QuadGantryLevel:
     def plot(self,f,x):
         return f[0]*x + f[1]
     def adjust_steppers(self, z_adjust):
-        msg = "Making the following Z tilt adjustments:\n%s\n" % (
+        msg = "Making the following gantry adjustments:\n%s\n" % (
             "\n".join(["%s = %.6f" % (
                 self.z_steppers[z_id].get_name(), z_adjust[z_id]
                 ) for z_id in range(4)]))
