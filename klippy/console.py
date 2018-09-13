@@ -41,7 +41,7 @@ class KeyboardReader:
         self.pins = None
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
-        self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
+        reactor.register_callback(self.connect)
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
@@ -65,7 +65,6 @@ class KeyboardReader:
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
         self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
-        self.reactor.unregister_timer(self.connect_timer)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):

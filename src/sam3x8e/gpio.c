@@ -53,19 +53,27 @@ gpio_out_setup(uint8_t pin, uint8_t val)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     Pio *regs = digital_regs[GPIO2PORT(pin)];
-    uint32_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
-    if (val)
-        regs->PIO_SODR = bit;
-    else
-        regs->PIO_CODR = bit;
-    regs->PIO_OER = bit;
-    regs->PIO_OWER = bit;
-    regs->PIO_PER = bit;
-    irq_restore(flag);
-    return (struct gpio_out){ .regs=regs, .bit=bit };
+    struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
+    gpio_out_reset(g, val);
+    return g;
 fail:
     shutdown("Not an output pin");
+}
+
+void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    Pio *regs = g.regs;
+    irqstatus_t flag = irq_save();
+    if (val)
+        regs->PIO_SODR = g.bit;
+    else
+        regs->PIO_CODR = g.bit;
+    regs->PIO_OER = g.bit;
+    regs->PIO_OWER = g.bit;
+    regs->PIO_PER = g.bit;
+    regs->PIO_PUDR = g.bit;
+    irq_restore(flag);
 }
 
 void
@@ -100,20 +108,26 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     uint32_t port = GPIO2PORT(pin);
-    Pio *regs = digital_regs[port];
-    uint32_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
     PMC->PMC_PCER0 = 1 << (ID_PIOA + port);
-    if (pull_up)
-        regs->PIO_PUER = bit;
-    else
-        regs->PIO_PUDR = bit;
-    regs->PIO_ODR = bit;
-    regs->PIO_PER = bit;
-    irq_restore(flag);
-    return (struct gpio_in){ .regs=regs, .bit=bit };
+    struct gpio_in g = { .regs=digital_regs[port], .bit=GPIO2BIT(pin) };
+    gpio_in_reset(g, pull_up);
+    return g;
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    Pio *regs = g.regs;
+    irqstatus_t flag = irq_save();
+    if (pull_up)
+        regs->PIO_PUER = g.bit;
+    else
+        regs->PIO_PUDR = g.bit;
+    regs->PIO_ODR = g.bit;
+    regs->PIO_PER = g.bit;
+    irq_restore(flag);
 }
 
 uint8_t

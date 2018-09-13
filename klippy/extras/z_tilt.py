@@ -43,7 +43,8 @@ class ZTilt:
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         return kin.calc_position()
-    def finalize(self, z_offset, positions):
+    def finalize(self, offsets, positions):
+        z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
         params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
         def adjusted_height(pos, params):

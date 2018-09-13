@@ -135,15 +135,11 @@ class Printer:
         self.reactor = reactor.Reactor()
         gc = gcode.GCodeParser(self, input_fd)
         self.objects = collections.OrderedDict({'gcode': gc})
-        self.stats_timer = self.reactor.register_timer(self._stats)
-        self.connect_timer = self.reactor.register_timer(
-            self._connect, self.reactor.NOW)
+        self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.is_shutdown = False
-        self.async_shutdown_msg = ""
         self.run_result = None
-        self.stats_cb = []
-        self.state_cb = []
+        self.state_cb = [gc.printer_state]
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):
@@ -166,22 +162,20 @@ class Printer:
         if default is ConfigWrapper.sentinel:
             raise self.config_error("Unknown config object '%s'" % (name,))
         return default
-    def lookup_module_objects(self, module_name):
-        prefix = module_name + ' '
-        objs = [self.objects[n] for n in self.objects if n.startswith(prefix)]
-        if module_name in self.objects:
-            return [self.objects[module_name]] + objs
+    def lookup_objects(self, module=None):
+        if module is None:
+            return list(self.objects.items())
+        prefix = module + ' '
+        objs = [(n, self.objects[n])
+                for n in self.objects if n.startswith(prefix)]
+        if module in self.objects:
+            return [(module, self.objects[module])] + objs
         return objs
-    def set_rollover_info(self, name, info):
-        logging.info(info)
+    def set_rollover_info(self, name, info, log=True):
+        if log:
+            logging.info(info)
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
-    def _stats(self, eventtime, force_output=False):
-        stats = [cb(eventtime) for cb in self.stats_cb]
-        if max([s[0] for s in stats] + [force_output]):
-            logging.info("Stats %.1f: %s", eventtime,
-                         ' '.join([s[1] for s in stats]))
-        return eventtime + 1.
     def try_load_module(self, config, section):
         if section in self.objects:
             return self.objects[section]
@@ -232,13 +226,10 @@ class Printer:
                     raise self.config_error(
                         "Option '%s' is not valid in section '%s'" % (
                             option, section))
-        # Determine which printer objects have stats/state callbacks
-        self.stats_cb = [o.stats for o in self.objects.values()
-                         if hasattr(o, 'stats')]
+        # Determine which printer objects have state callbacks
         self.state_cb = [o.printer_state for o in self.objects.values()
                          if hasattr(o, 'printer_state')]
     def _connect(self, eventtime):
-        self.reactor.unregister_timer(self.connect_timer)
         try:
             self._read_config()
             for cb in self.state_cb:
@@ -250,8 +241,6 @@ class Printer:
                 if self.state_message is not message_ready:
                     return self.reactor.NEVER
                 cb('ready')
-            if self.start_args.get('debugoutput') is None:
-                self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self._set_state("%s%s" % (str(e), message_restart))
@@ -271,28 +260,23 @@ class Printer:
         monotime = self.reactor.monotonic()
         logging.info("Start printer at %s (%.1f %.1f)",
                      time.asctime(time.localtime(systime)), systime, monotime)
-        while 1:
-            # Enter main reactor loop
-            try:
-                self.reactor.run()
-            except:
-                logging.exception("Unhandled exception during run")
-                return "error_exit"
-            # Check restart flags
-            run_result = self.run_result
-            try:
-                if run_result == 'shutdown':
-                    self.invoke_shutdown(self.async_shutdown_msg)
-                    continue
-                self._stats(self.reactor.monotonic(), force_output=True)
-                if run_result == 'firmware_restart':
-                    for m in self.lookup_module_objects('mcu'):
-                        m.microcontroller_restart()
-                for cb in self.state_cb:
-                    cb('disconnect')
-            except:
-                logging.exception("Unhandled exception during post run")
-            return run_result
+        # Enter main reactor loop
+        try:
+            self.reactor.run()
+        except:
+            logging.exception("Unhandled exception during run")
+            return "error_exit"
+        # Check restart flags
+        run_result = self.run_result
+        try:
+            if run_result == 'firmware_restart':
+                for n, m in self.lookup_objects(module='mcu'):
+                    m.microcontroller_restart()
+            for cb in self.state_cb:
+                cb('disconnect')
+        except:
+            logging.exception("Unhandled exception during post run")
+        return run_result
     def invoke_shutdown(self, msg):
         if self.is_shutdown:
             return
@@ -301,8 +285,8 @@ class Printer:
         for cb in self.state_cb:
             cb('shutdown')
     def invoke_async_shutdown(self, msg):
-        self.async_shutdown_msg = msg
-        self.request_exit("shutdown")
+        self.reactor.register_async_callback(
+            (lambda e: self.invoke_shutdown(msg)))
     def request_exit(self, result):
         self.run_result = result
         self.reactor.end()

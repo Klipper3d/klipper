@@ -53,7 +53,7 @@ To flash the bootloader itself use something like:
 ```
 wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex'
 
-avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U flash:w:stk500boot_v2_mega2560.hex
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
@@ -72,7 +72,7 @@ To flash the bootloader itself use something like:
 ```
 wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex'
 
-avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U flash:w:ATmegaBOOT_168_atmega1280.hex
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
@@ -90,7 +90,7 @@ To flash the bootloader itself use something like:
 ```
 wget 'https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex'
 
-avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega1284p.hex
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
@@ -121,6 +121,25 @@ application with it using something like:
 teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 ```
 
+## Atmega168 ##
+
+The atmega168 has limited flash space. If using a bootloader, it is
+recommended to use the Optiboot bootloader. To flash that bootloader
+use something like:
+```
+wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex'
+
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega168.hex
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+```
+
+To flash an application via the Optiboot bootloader use something
+like:
+```
+avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+```
+
 SAM3 micro-controllers (Arduino Due)
 ====================================
 
@@ -135,24 +154,45 @@ on the "programming usb port" (the USB port closest to the power
 supply).
 
 The code at https://github.com/shumatech/BOSSA can be used to program
-the SAM3. It may be necessary to use the code from the `1.6.1-arduino`
-release.
+the SAM3. It is recommended to use version 1.9 or later.
 
 To flash an application use something like:
 ```
-stty -F /dev/ttyACM0 1200
-bossac -i -p ttyACM0 -R -e -w -v -b out/klipper.bin
+bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
+bossac -U -p /dev/ttyACM0 -R
+```
+
+SAM4 micro-controllers (Duet Wifi)
+====================================
+
+It is not common to use a bootloader with the SAM4 mcu. The chip
+itself has a ROM that allows the flash to be programmed from 3.3V
+serial port or from USB.
+
+To enable the ROM, the "erase" pin is held high during a reset, which
+erases the flash contents, and causes the ROM to run.
+
+The code at https://github.com/shumatech/BOSSA can be used to program
+the SAM4. It is necessary to use version `1.8.0` or higher.
+
+To flash an application use something like:
+```
+bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 ```
 
 SAMD21 micro-controllers (Arduino Zero)
 =======================================
 
-This document does not cover the method to flash a bootloader to the
-SAMD21.
+The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
+interface. This is commonly done with a dedicated SWD hardware dongle.
+Alternatively, it appears one can use a Raspberry Pi with OpenOCD as a
+programmer (see:
+https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi
+).
 
-Unfortunately, it appears there are two common bootloaders available
-for the SAMD21. One comes standard with the "Arduino Zero" and the
-other comes standard with the "Arduino M0".
+Unfortunately, there are two common bootloaders deployed on the
+SAMD21. One comes standard with the "Arduino Zero" and the other comes
+standard with the "Arduino M0".
 
 The Arduino Zero uses an 8KiB bootloader (the application must be
 compiled with a start address of 8KiB). This document does not cover

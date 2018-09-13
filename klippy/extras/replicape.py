@@ -20,7 +20,7 @@ class pca9685_pwm:
         if pin_type not in ['digital_out', 'pwm']:
             raise pins.error("Pin type not supported on replicape")
         self._mcu = replicape.host_mcu
-        self._mcu.add_config_object(self)
+        self._mcu.register_config_callback(self._build_config)
         self._bus = REPLICAPE_PCA9685_BUS
         self._address = REPLICAPE_PCA9685_ADDRESS
         self._cycle_time = REPLICAPE_PCA9685_CYCLE_TIME
@@ -53,7 +53,7 @@ class pca9685_pwm:
         self._is_static = is_static
         self._replicape.note_pwm_start_value(
             self._channel, self._start_value, self._shutdown_value)
-    def build_config(self):
+    def _build_config(self):
         self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._is_static:
@@ -175,7 +175,7 @@ class Replicape:
             and self.stepper_dacs):
             shift_registers[4] &= ~1
         self.sr_enabled = tuple(reversed(shift_registers))
-        self.host_mcu.add_config_object(self)
+        self.host_mcu.register_config_callback(self._build_config)
         self.sr_oid = self.host_mcu.create_oid()
         str_sr_disabled = "".join(["%02x" % (x,) for x in self.sr_disabled])
         self.host_mcu.add_config_cmd(
@@ -184,7 +184,7 @@ class Replicape:
                 self.sr_oid, REPLICAPE_SHIFT_REGISTER_BUS, str_sr_disabled))
         self.host_mcu.add_config_cmd("spi_send oid=%d data=%s" % (
             self.sr_oid, str_sr_disabled), is_init=True)
-    def build_config(self):
+    def _build_config(self):
         cmd_queue = self.host_mcu.alloc_command_queue()
         self.spi_send_cmd = self.host_mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=cmd_queue)

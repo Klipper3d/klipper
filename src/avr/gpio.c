@@ -52,14 +52,20 @@ gpio_out_setup(uint8_t pin, uint8_t val)
     struct gpio_digital_regs *regs = GPIO2REGS(pin);
     if (! regs)
         goto fail;
-    uint8_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
-    regs->out = val ? (regs->out | bit) : (regs->out & ~bit);
-    regs->mode |= bit;
-    irq_restore(flag);
-    return (struct gpio_out){ .regs=regs, .bit=bit };
+    struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
+    gpio_out_reset(g, val);
+    return g;
 fail:
     shutdown("Not an output pin");
+}
+
+void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    irqstatus_t flag = irq_save();
+    g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+    g.regs->mode |= g.bit;
+    irq_restore(flag);
 }
 
 void
@@ -90,14 +96,20 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     struct gpio_digital_regs *regs = GPIO2REGS(pin);
     if (! regs)
         goto fail;
-    uint8_t bit = GPIO2BIT(pin);
-    irqstatus_t flag = irq_save();
-    regs->out = pull_up > 0 ? (regs->out | bit) : (regs->out & ~bit);
-    regs->mode &= ~bit;
-    irq_restore(flag);
-    return (struct gpio_in){ .regs=regs, .bit=bit };
+    struct gpio_in g = { .regs=regs, .bit=GPIO2BIT(pin) };
+    gpio_in_reset(g, pull_up);
+    return g;
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    irqstatus_t flag = irq_save();
+    g.regs->out = pull_up > 0 ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+    g.regs->mode &= ~g.bit;
+    irq_restore(flag);
 }
 
 uint8_t

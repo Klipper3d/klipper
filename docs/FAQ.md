@@ -14,7 +14,8 @@ Frequently asked questions
 11. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
 12. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
 13. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-14. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+14. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
+15. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -262,6 +263,54 @@ heaters and temperature sensors are functioning correctly. See the
 "verify_heater" section of the
 [example-extras.cfg](../config/example-extras.cfg) for further
 details.
+
+### How do I convert a Marlin pin number to a Klipper pin name?
+
+Short answer: In some cases one can use Klipper's `pin_map: arduino`
+feature. Otherwise, for "digital" pins, one method is to search for
+the requested pin in Marlin's fastio header files. The Atmega2560 and
+Atmega1280 chips use
+[fastio_1280.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_1280.h),
+while the Atmega644p and Atmega1284p chips use
+[fastio_644.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_644.h).
+For example, if you are looking to translate Marlin's digital pin
+number 23 on an atmega2560 then one could find the following line in
+Marlin's fastio_1280.h file:
+```
+#define DIO23_PIN PINA1
+```
+The `DIO23` indicates the line is for Marlin's pin 23 and the `PINA1`
+indicates the pin uses the hardware name of `PA1`. Klipper uses the
+hardware names (eg, `PA1`).
+
+Long answer: Klipper uses the standard pin names defined by the
+micro-controller. On the Atmega chips these hardware pins have names
+like `PA4`, `PC7`, or `PD2`.
+
+Long ago, the Arduino project decided to avoid using the standard
+hardware names in favor of their own pin names based on incrementing
+numbers - these Arduino names generally look like `D23` or `A14`. This
+was an unfortunate choice that has lead to a great deal of confusion.
+In particular the Arduino pin numbers frequently don't translate to
+the same hardware names. For example, `D21` is `PD0` on one common
+Arduino board, but is `PC7` on another common Arduino board.
+
+In order to support 3d printers based on real Arduino boards, Klipper
+supports the Arduino pin aliases. This feature is enabled by adding
+`pin_map: arduino` to the [mcu] section of the config file. When these
+aliases are enabled, Klipper understands pin names that start with the
+prefix "ar" (eg, Arduino pin `D23` is Klipper alias `ar23`) and the
+prefix "analog" (eg, Arduino pin `A14` is Klipper alias `analog14`).
+Klipper does not use the Arduino names directly because we feel a name
+like D7 is too easily confused with the hardware name PD7.
+
+Marlin primarily follows the Arduino pin numbering scheme.  However,
+Marlin supports a few chips that Arduino does not support and in some
+cases it supports pins that Arduino boards do not expose. In these
+cases, Marlin chose their own pin numbering scheme. Klipper does not
+support these custom pin numbers - check Marlin's fastio headers (see
+above) to translate these pin numbers to their standard hardware
+names.
 
 ### How do I upgrade to the latest software?
 

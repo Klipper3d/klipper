@@ -50,9 +50,10 @@ class DeltaKinematics:
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
-        max_halt_velocity = toolhead.get_max_axis_halt()
+        max_halt_velocity = toolhead.get_max_axis_halt() * SLOW_RATIO
+        max_halt_accel = self.max_accel * SLOW_RATIO
         for rail in self.rails:
-            rail.set_max_jerk(max_halt_velocity, self.max_accel)
+            rail.set_max_jerk(max_halt_velocity, max_halt_accel)
         # Determine tower locations in cartesian space
         self.angles = [sconfig.getfloat('angle', angle)
                        for sconfig, angle in zip(stepper_configs,
