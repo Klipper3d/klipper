@@ -47,7 +47,7 @@ class QuadGantryLevel:
         # Assumes samples come in sequentially
         grouped_pos = []
         for position in positions:
-            if len(grouped_pos) > 0 and grouped_pos[-1][0] == position[0] and grouped_pos[-1][1] == position[1]:
+            if len(grouped_pos) > 0 and round(grouped_pos[-1][0],3) == round(position[0],3) and round(grouped_pos[-1][1],3) == round(position[1],3):
                 grouped_pos[-1][2].append(position[2])
             else:
                 grouped_pos.append(position)
@@ -87,7 +87,7 @@ class QuadGantryLevel:
         except:
             logging.exception("quad_gantry_level adjust_steppers")
             for s in self.z_steppers:
-                z.set_ignore_move(False)
+                s.set_ignore_move(False)
             raise
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:
