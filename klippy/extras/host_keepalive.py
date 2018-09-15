@@ -12,7 +12,7 @@ class HostKeepAlive:
         self.toolhead = None
         self.gcode = None
         self._counter = 0
-        self._interval = config.getint('interval', 5, above=0.)
+        self._interval = config.getint('interval', 5, minval=1)
 
     def printer_state(self, state):
         if state == 'ready':
