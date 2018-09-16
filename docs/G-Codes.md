@@ -114,6 +114,10 @@ The following standard commands are supported:
   [the FAQ](FAQ.md#how-do-i-upgrade-to-the-latest-software)).
 - `FIRMWARE_RESTART`: This is similar to a RESTART command, but it
   also clears any error state from the micro-controller.
+- `SAVE_CONFIG`: This command will overwrite the main printer config
+  file and restart the host software. This command is used in
+  conjunction with other calibration commands to store the results of
+  calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
 
