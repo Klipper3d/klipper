@@ -25,14 +25,14 @@ class HostKeepAlive:
         toolhead_info = self.toolhead.get_status(eventtime)
         gcode_info = self.gcode.get_status(eventtime)
 
+        if (self._counter >= self._interval):
+            self.gcode.respond("busy: processing")
+            self._counter = 0
+
         if (toolhead_info['status'] == 'Printing'
                 and gcode_info['busy'] is True):
             self._counter += 1
         else:
-            self._counter = 0
-
-        if (self._counter >= self._interval):
-            self.gcode.respond("busy: processing")
             self._counter = 0
 
         return eventtime + 1.
