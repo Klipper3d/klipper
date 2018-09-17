@@ -1347,6 +1347,7 @@ class MenuManager:
             reactor = self.printer.get_reactor()
             reactor.register_callback(self.dispatch_gcode)
         self.gcode_queue.append(script)
+
     def dispatch_gcode(self, eventtime):
         while self.gcode_queue:
             script = self.gcode_queue[0]
