@@ -20,14 +20,12 @@ class PrinterExtruder:
             self.heater = pheater.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
-        filament_diameter = config.getfloat(
-            'filament_diameter', minval=self.nozzle_diameter)
-        self.filament_area = math.pi * (filament_diameter * .5)**2
-        max_cross_section = config.getfloat(
-            'max_extrude_cross_section', 4. * self.nozzle_diameter**2
-            , above=0.)
-        self.max_extrude_ratio = max_cross_section / self.filament_area
-        logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
+
+        self.filament_diameter = config.getfloat('filament_diameter', minval=self.nozzle_diameter)
+        self._calculate_filament_area()
+        self.max_cross_section = config.getfloat('max_extrude_cross_section', 4. * self.nozzle_diameter**2, above=0.)
+        self._calculate_max_extrude_ratio()
+
         toolhead = self.printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
@@ -45,6 +43,10 @@ class PrinterExtruder:
             'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = config.getfloat(
             'pressure_advance_lookahead_time', 0.010, minval=0.)
+            
+        self.volumetric = config.getboolean('volumetric', False)
+        self.volumetric_multiplier = self._calculate_volumetric_multiplier(self.filament_diameter)
+            
         self.need_motor_enable = True
         self.extrude_pos = 0.
         # Setup iterative solver
@@ -61,6 +63,28 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", self.name,
                                    self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+
+        # Setup volumetric extrusion commands
+        if self.name in ('extruder', 'extruder0'):
+            gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER", None,
+                                   self.cmd_default_SET_FILAMENT_DIAMETER,
+                                   desc=self.cmd_SET_FILAMENT_DIAMETER_help)
+        gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER", self.name,
+                                   self.cmd_SET_FILAMENT_DIAMETER,
+                                   desc=self.cmd_SET_FILAMENT_DIAMETER_help)
+                                   
+    def _calculate_max_extrude_ratio(self):
+        self.max_extrude_ratio = self.max_cross_section / self.filament_area
+        logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
+
+    def _calculate_volumetric_multiplier(self, diameter):
+        if (self.volumetric == False): return 1.0
+        d2 = diameter * 0.5;
+        return 1.0 / (math.pi * d2 * d2);
+
+    def _calculate_filament_area(self):
+        self.filament_area = math.pi * (self.filament_diameter * .5)**2
+       
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
@@ -214,6 +238,25 @@ class PrinterExtruder:
                "pressure_advance_lookahead_time: %.6f" % (
                    pressure_advance, pressure_advance_lookahead_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
+        gcode.respond_info(msg)
+
+    cmd_SET_FILAMENT_DIAMETER_help = "Set filament diameter"
+    def cmd_default_SET_FILAMENT_DIAMETER(self, params):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_SET_FILAMENT_DIAMETER(params)
+
+    def cmd_SET_FILAMENT_DIAMETER(self, params):
+        self.printer.lookup_object('toolhead').get_last_move_time()
+        gcode = self.printer.lookup_object('gcode')
+        filament_diameter = gcode.get_float(
+            'DIAMETER', params, self.filament_diameter, minval=0.)
+        self.filament_diameter = filament_diameter
+
+        self._calculate_filament_area()
+        self._calculate_max_extrude_ratio()
+        
+        msg = ("filament_diameter: %.6f\n" % (filament_diameter))
+        #self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg)
 
 # Dummy extruder class used when a printer has no extruder at all
