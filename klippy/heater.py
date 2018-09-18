@@ -220,6 +220,10 @@ class PrinterHeaters:
         self.printer = config.get_printer()
         self.sensors = {}
         self.heaters = {}
+        # Register TURN_OFF_HEATERS command
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
+                               desc=self.cmd_TURN_OFF_HEATERS_help)
     def add_sensor(self, sensor_type, sensor_factory):
         self.sensors[sensor_type] = sensor_factory
     def setup_heater(self, config):
@@ -249,6 +253,11 @@ class PrinterHeaters:
             raise self.printer.config_error("Unknown temperature sensor '%s'" % (
                 sensor_type,))
         return self.sensors[sensor_type](config)
+    cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
+    def cmd_TURN_OFF_HEATERS(self, params):
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        for heater in self.heaters.values():
+            heater.set_temp(print_time, 0.)
 
 def add_printer_objects(config):
     config.get_printer().add_object('heater', PrinterHeaters(config))

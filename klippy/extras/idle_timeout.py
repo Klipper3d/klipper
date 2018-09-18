@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 DEFAULT_IDLE_GCODE = """
+TURN_OFF_HEATERS
 M84
 """
 
