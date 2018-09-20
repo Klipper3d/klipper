@@ -11,14 +11,6 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 HD44780_DELAY = .000037
 
 class HD44780:
-    char_right_arrow = '\x7e'
-    char_thermometer = '\x00'
-    char_heater_bed = '\x01'
-    char_speed_factor = '\x02'
-    char_clock = '\x03'
-    char_degrees = '\x04'
-    char_usb = '\x05'
-    char_sd = '\x06'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
