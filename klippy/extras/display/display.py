@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import hd44780, st7920, uc1701, icons
+import hd44780, st7920, uc1701
 import menu
 
 LCD_chips = {
@@ -30,7 +30,6 @@ class PrinterLCD:
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
     # Initialization
-    FAN1_GLYPH, FAN2_GLYPH, BED1_GLYPH, BED2_GLYPH = 0, 1, 2, 3
     def printer_state(self, state):
         if state == 'ready':
             self.lcd_chip.init()
@@ -48,34 +47,12 @@ class PrinterLCD:
             self.message = None
             self.gcode.register_command('M73', self.cmd_M73)
             self.gcode.register_command('M117', self.cmd_M117)
-            # Load glyphs
-            self.load_glyph(self.BED1_GLYPH, icons.bed_heat1_icon)
-            self.load_glyph(self.BED2_GLYPH, icons.bed_heat2_icon)
-            self.load_glyph(self.FAN1_GLYPH, icons.fan1_icon)
-            self.load_glyph(self.FAN2_GLYPH, icons.fan2_icon)
             # Start screen update timer
             self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
-    # ST7920/UC1701 Glyphs
-    def load_glyph(self, glyph_id, data):
-        if self.lcd_type == 'uc1701':
-            self.lcd_chip.load_glyph(glyph_id, data)
-        elif self.lcd_type == 'st7920':
-            glyph = [0x00] * (len(data) * 2)
-            for i, bits in enumerate(data):
-                glyph[i*2] = (bits >> 8) & 0xff
-                glyph[i*2 + 1] = bits & 0xff
-            return self.lcd_chip.load_glyph(glyph_id, glyph)
-    def animate_glyphs(self, eventtime, x, y, glyph_id, do_animate):
-        frame = do_animate and int(eventtime) & 1
-        if self.lcd_type == 'uc1701':
-            self.lcd_chip.write_glyph(x, y, glyph_id + frame)
-        elif self.lcd_type == 'st7920':
-            self.lcd_chip.write_text(x, y, (0, (glyph_id + frame)*2))
     # Graphics drawing
-    def draw_icon(self, x, y, data):
-        for i, bits in enumerate(data):
-            self.lcd_chip.write_graphics(
-                x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+    def animate_glyphs(self, eventtime, x, y, glyph_name, do_animate):
+        frame = do_animate and int(eventtime) & 1
+        self.lcd_chip.write_glyph(x, y, glyph_name + str(frame + 1))
     def draw_progress_bar(self, x, y, width, value):
         value = int(value * 100.)
         data = [0x00] * width
@@ -165,27 +142,26 @@ class PrinterLCD:
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            self.draw_icon(0, 0, icons.nozzle_icon)
+            self.lcd_chip.write_glyph(0, 0, 'nozzle')
             self.draw_heater(2, 0, info)
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            self.draw_icon(0, 1, icons.nozzle_icon)
+            self.lcd_chip.write_glyph(0, 1, 'nozzle')
             self.draw_heater(2, 1, info)
             extruder_count = 2
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
             if info['target']:
                 self.animate_glyphs(eventtime, 0, extruder_count,
-                                    self.BED1_GLYPH, True)
+                                    'bed_heat', True)
             else:
-                self.draw_icon(0, extruder_count, icons.bed_icon)
+                self.lcd_chip.write_glyph(0, extruder_count, 'bed')
             self.draw_heater(2, extruder_count, info)
         # Fan speed
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            self.animate_glyphs(eventtime, 10, 0, self.FAN1_GLYPH,
-                                info['speed'] != 0.)
+            self.animate_glyphs(eventtime, 10, 0, 'fan', info['speed'] != 0.)
             self.draw_percent(12, 0, 4, info['speed'], '>')
         # SD card print progress
         progress = None
@@ -210,7 +186,7 @@ class PrinterLCD:
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
         if extruder_count == 1:
-            self.draw_icon(10, 1, icons.feedrate_icon)
+            self.lcd_chip.write_glyph(10, 1, 'feedrate')
             self.draw_percent(12, 1, 4, gcode_info['speed_factor'], '>')
         # Printing time and status
         printing_time = toolhead_info['printing_time']
