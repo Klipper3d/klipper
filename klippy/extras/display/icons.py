@@ -136,3 +136,10 @@ feedrate_icon = [
     0b0000000000000000,
     0b0000000000000000
 ]
+
+Icons16x16 = {
+    'nozzle': nozzle_icon,
+    'bed': bed_icon, 'bed_heat1': bed_heat1_icon, 'bed_heat2': bed_heat2_icon,
+    'fan1': fan1_icon, 'fan2': fan2_icon,
+    'feedrate': feedrate_icon,
+}

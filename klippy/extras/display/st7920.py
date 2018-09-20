@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import icons
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -37,6 +38,7 @@ class ST7920:
                                       for i in range(32)]
         self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
                              + self.graphics_framebuffers)
+        self.cached_glyphs = {}
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
@@ -100,11 +102,18 @@ class ST7920:
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
         self.flush()
-    def load_glyph(self, glyph_id, data):
-        if len(data) > 32:
-            data = data[:32]
-        pos = min(glyph_id * 32, 96)
-        self.glyph_framebuffer[0][pos:pos+len(data)] = data
+        # Setup animated glyphs
+        self.cache_glyph('fan1', 0)
+        self.cache_glyph('fan2', 1)
+        self.cache_glyph('bed_heat1', 2)
+        self.cache_glyph('bed_heat2', 3)
+    def cache_glyph(self, glyph_name, glyph_id):
+        icon = icons.Icons16x16[glyph_name]
+        for i, bits in enumerate(icon):
+            pos = glyph_id*32 + i*2
+            data = [(bits >> 8) & 0xff, bits & 0xff]
+            self.glyph_framebuffer[0][pos:pos+len(data)] = data
+        self.cached_glyphs[glyph_name] = (0, glyph_id*2)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -118,6 +127,17 @@ class ST7920:
             gfx_fb -= 32
             x += 16
         self.graphics_framebuffers[gfx_fb][0][x:x+len(data)] = data
+    def write_glyph(self, x, y, glyph_name):
+        glyph_id = self.cached_glyphs.get(glyph_name)
+        if glyph_id is not None and x & 1 == 0:
+            # Render cached icon using character generator
+            self.write_text(x, y, glyph_id)
+            return
+        icon = icons.Icons16x16.get(glyph_name)
+        if icon is not None:
+            # Draw icon in graphics mode
+            for i, bits in enumerate(icon):
+                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
     def clear(self):
         self.text_framebuffer[0][:] = ' '*64
         zeros = bytearray(32)
