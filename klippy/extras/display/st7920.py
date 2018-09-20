@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import icons
+import icons, font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -13,6 +13,7 @@ ST7920_CMD_DELAY  = .000020
 ST7920_SYNC_DELAY = .000045
 
 TextGlyphs = { 'right_arrow': '\x1a' }
+CharGlyphs = { 'degrees': font8x14.VGA_FONT[0xf8] }
 
 class ST7920:
     def __init__(self, config):
@@ -144,6 +145,12 @@ class ST7920:
         if char is not None:
             # Draw character
             self.write_text(x, y, char)
+            return 1
+        font = CharGlyphs.get(glyph_name)
+        if font is not None:
+            # Draw single width character
+            for i, bits in enumerate(font):
+                self.write_graphics(x, y, i, [bits])
             return 1
         return 0
     def clear(self):
