@@ -9,6 +9,8 @@ import icons, font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
+TextGlyphs = { 'right_arrow': '\x1a' }
+
 class UC1701:
     char_right_arrow = '\x1a'
     CURRENT_BUF, OLD_BUF = 0, 1
@@ -153,6 +155,13 @@ class UC1701:
             # Draw icon in graphics mode
             for i, bits in enumerate(icon):
                 self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            return 2
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
     def clear(self):
         zeros = bytearray(128)
         for page in self.vram[self.CURRENT_BUF]:

@@ -100,11 +100,18 @@ class HD44780:
             data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
         self.text_framebuffer[0][pos:pos+len(data)] = data
+    def write_glyph(self, x, y, glyph_name):
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
     def clear(self):
         self.text_framebuffer[0][:] = ' '*80
 
 HD44780_chars = [
-    # Thermometer
+    # Extruder (a thermometer)
     0b00100,
     0b01010,
     0b01010,
@@ -122,7 +129,7 @@ HD44780_chars = [
     0b11111,
     0b00000,
     0b00000,
-    # Speed factor
+    # Feed rate
     0b11100,
     0b10000,
     0b11000,
@@ -168,3 +175,14 @@ HD44780_chars = [
     0b11111,
     0b00000,
 ]
+
+TextGlyphs = {
+    'right_arrow': '\x7e',
+    'extruder': '\x00',
+    'bed': '\x01',
+    'feedrate': '\x02',
+    'clock': '\x03',
+    'degrees': '\x04',
+    'usb': '\x05',
+    'sd': '\x06',
+}
