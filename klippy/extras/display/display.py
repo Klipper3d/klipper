@@ -89,15 +89,15 @@ class PrinterLCD:
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            lcd_chip.write_text(0, 0, lcd_chip.char_thermometer)
+            lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(1, 0, info)
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            lcd_chip.write_text(0, 1, lcd_chip.char_thermometer)
+            lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(1, 1, info)
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            lcd_chip.write_text(10, 0, lcd_chip.char_heater_bed)
+            lcd_chip.write_glyph(10, 0, 'bed')
             self.draw_heater(11, 0, info)
         # Fan speed
         if self.fan is not None:
@@ -106,14 +106,14 @@ class PrinterLCD:
             self.draw_percent(14, 1, 4, info['speed'])
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
-        lcd_chip.write_text(0, 2, lcd_chip.char_speed_factor)
+        lcd_chip.write_glyph(0, 2, 'feedrate')
         self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
         # Print progress
         progress = None
         toolhead_info = self.toolhead.get_status(eventtime)
         if self.progress is not None:
             progress = self.progress / 100.
-            lcd_chip.write_text(8, 2, lcd_chip.char_usb)
+            lcd_chip.write_glyph(8, 2, 'usb')
             if toolhead_info['status'] != "Printing":
                 # 5 second timeout when not printing
                 self.prg_time -= .5
@@ -122,10 +122,10 @@ class PrinterLCD:
         elif self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = info['progress']
-            lcd_chip.write_text(8, 2, lcd_chip.char_sd)
+            lcd_chip.write_glyph(8, 2, 'sd')
         if progress is not None:
             self.draw_percent(9, 2, 4, progress)
-        lcd_chip.write_text(14, 2, lcd_chip.char_clock)
+        lcd_chip.write_glyph(14, 2, 'clock')
         self.draw_time(15, 2, toolhead_info['printing_time'])
         # If there is a message set by M117, display it instead of toolhead info
         if self.message:
@@ -212,16 +212,23 @@ class PrinterLCD:
         else:
             self.draw_status(0, 3, gcode_info, toolhead_info)
     # Screen update helpers
+    def draw_text(self, x, y, mixed_text):
+        pos = x
+        for i, text in enumerate(mixed_text.split('~')):
+            if i & 1 == 0:
+                # write text
+                self.lcd_chip.write_text(pos, y, text)
+                pos += len(text)
+            else:
+                # write glyph
+                pos += self.lcd_chip.write_glyph(pos, y, text)
     def draw_heater(self, x, y, info):
         temperature, target = info['temperature'], info['target']
         if target and abs(temperature - target) > 2.:
-            s = "%3.0f%s%.0f" % (
-                temperature, self.lcd_chip.char_right_arrow, target)
+            self.draw_text(x, y, "%3.0f~right_arrow~%.0f~degrees~" % (
+                temperature, target))
         else:
-            s = "%3.0f" % (temperature,)
-        if self.lcd_type == 'hd44780':
-            s += self.lcd_chip.char_degrees
-        self.lcd_chip.write_text(x, y, s)
+            self.draw_text(x, y, "%3.0f~degrees~" % (temperature,))
     def draw_percent(self, x, y, width, value, align='^'):
         self.lcd_chip.write_text(x, y, '{:{}{}.0%}'.format(value, align, width))
     def draw_time(self, x, y, seconds):

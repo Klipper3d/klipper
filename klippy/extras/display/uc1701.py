@@ -12,7 +12,6 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a' }
 
 class UC1701:
-    char_right_arrow = '\x1a'
     CURRENT_BUF, OLD_BUF = 0, 1
     EMPTY_CHAR = (0, 32, 255)
     def __init__(self, config):

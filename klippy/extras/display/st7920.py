@@ -15,7 +15,6 @@ ST7920_SYNC_DELAY = .000045
 TextGlyphs = { 'right_arrow': '\x1a' }
 
 class ST7920:
-    char_right_arrow = '\x1a'
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
