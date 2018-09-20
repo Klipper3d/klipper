@@ -142,12 +142,12 @@ class PrinterLCD:
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            self.lcd_chip.write_glyph(0, 0, 'nozzle')
+            self.lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(2, 0, info)
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            self.lcd_chip.write_glyph(0, 1, 'nozzle')
+            self.lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(2, 1, info)
             extruder_count = 2
         if self.heater_bed is not None:

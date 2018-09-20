@@ -12,6 +12,8 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 ST7920_CMD_DELAY  = .000020
 ST7920_SYNC_DELAY = .000045
 
+TextGlyphs = { 'right_arrow': '\x1a' }
+
 class ST7920:
     char_right_arrow = '\x1a'
     def __init__(self, config):
@@ -132,12 +134,19 @@ class ST7920:
         if glyph_id is not None and x & 1 == 0:
             # Render cached icon using character generator
             self.write_text(x, y, glyph_id)
-            return
+            return 2
         icon = icons.Icons16x16.get(glyph_name)
         if icon is not None:
             # Draw icon in graphics mode
             for i, bits in enumerate(icon):
                 self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            return 2
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
     def clear(self):
         self.text_framebuffer[0][:] = ' '*64
         zeros = bytearray(32)

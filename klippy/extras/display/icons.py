@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-nozzle_icon = [
+extruder_icon = [
     0b0000000000000000,
     0b0000000000000000,
     0b0000111111110000,
@@ -138,7 +138,7 @@ feedrate_icon = [
 ]
 
 Icons16x16 = {
-    'nozzle': nozzle_icon,
+    'extruder': extruder_icon,
     'bed': bed_icon, 'bed_heat1': bed_heat1_icon, 'bed_heat2': bed_heat2_icon,
     'fan1': fan1_icon, 'fan2': fan2_icon,
     'feedrate': feedrate_icon,
