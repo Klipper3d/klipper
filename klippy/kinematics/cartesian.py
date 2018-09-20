@@ -68,7 +68,7 @@ class CartKinematics:
             r2pos = rpos + hi.retract_dist
         # Initial homing
         homing_speed = hi.speed
-        homing_speed_slow = hi.slow_speed
+        homing_speed_slow = hi.speed_slow
         if axis == 2:
             homing_speed = min(homing_speed, self.max_z_velocity)
         homepos = [None, None, None, None]
