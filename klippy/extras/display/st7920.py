@@ -34,12 +34,17 @@ class ST7920:
         self.send_data_cmd = self.send_cmds_cmd = None
         self.is_extended = False
         # framebuffers
-        self.text_framebuffer = (bytearray(' '*64), bytearray('~'*64), 0x80)
-        self.glyph_framebuffer = (bytearray(128), bytearray('~'*128), 0x40)
-        self.graphics_framebuffers = [(bytearray(32), bytearray('~'*32), i)
-                                      for i in range(32)]
-        self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
-                             + self.graphics_framebuffers)
+        self.text_framebuffer = bytearray(' '*64)
+        self.glyph_framebuffer = bytearray(128)
+        self.graphics_framebuffers = [bytearray(32) for i in range(32)]
+        self.all_framebuffers = [
+            # Text framebuffer
+            (self.text_framebuffer, bytearray('~'*64), 0x80),
+            # Glyph framebuffer
+            (self.glyph_framebuffer, bytearray('~'*128), 0x40),
+            # Graphics framebuffers
+            ] + [(self.graphics_framebuffers[i], bytearray('~'*32), i)
+                 for i in range(32)]
         self.cached_glyphs = {}
     def build_config(self):
         self.mcu.add_config_cmd(
@@ -67,7 +72,7 @@ class ST7920:
         #logging.debug("st7920 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for new_data, old_data, fb_id in self.framebuffers:
+        for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
@@ -114,13 +119,13 @@ class ST7920:
         for i, bits in enumerate(icon):
             pos = glyph_id*32 + i*2
             data = [(bits >> 8) & 0xff, bits & 0xff]
-            self.glyph_framebuffer[0][pos:pos+len(data)] = data
+            self.glyph_framebuffer[pos:pos+len(data)] = data
         self.cached_glyphs[glyph_name] = (0, glyph_id*2)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        self.text_framebuffer[pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -128,7 +133,7 @@ class ST7920:
         if gfx_fb >= 32:
             gfx_fb -= 32
             x += 16
-        self.graphics_framebuffers[gfx_fb][0][x:x+len(data)] = data
+        self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
     def write_glyph(self, x, y, glyph_name):
         glyph_id = self.cached_glyphs.get(glyph_name)
         if glyph_id is not None and x & 1 == 0:
@@ -154,7 +159,7 @@ class ST7920:
             return 1
         return 0
     def clear(self):
-        self.text_framebuffer[0][:] = ' '*64
+        self.text_framebuffer[:] = ' '*64
         zeros = bytearray(32)
-        for new_data, old_data, fb_id in self.graphics_framebuffers:
-            new_data[:] = zeros
+        for gfb in self.graphics_framebuffers:
+            gfb[:] = zeros
