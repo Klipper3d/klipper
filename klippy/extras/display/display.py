@@ -9,7 +9,10 @@ import logging
 import hd44780, st7920, uc1701, icons
 import menu
 
-LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780, 'uc1701' : uc1701.UC1701 }
+LCD_chips = {
+    'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
+    'uc1701' : uc1701.UC1701
+}
 M73_TIMEOUT = 5.
 
 class PrinterLCD:
@@ -46,8 +49,8 @@ class PrinterLCD:
             self.gcode.register_command('M73', self.cmd_M73)
             self.gcode.register_command('M117', self.cmd_M117)
             # Load glyphs
-            self.load_glyph(self.BED1_GLYPH, icons.heat1_icon)
-            self.load_glyph(self.BED2_GLYPH, icons.heat2_icon)
+            self.load_glyph(self.BED1_GLYPH, icons.bed_heat1_icon)
+            self.load_glyph(self.BED2_GLYPH, icons.bed_heat2_icon)
             self.load_glyph(self.FAN1_GLYPH, icons.fan1_icon)
             self.load_glyph(self.FAN2_GLYPH, icons.fan2_icon)
             # Start screen update timer
@@ -172,10 +175,11 @@ class PrinterLCD:
             extruder_count = 2
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            self.draw_icon(0, extruder_count, icons.bed_icon)
             if info['target']:
                 self.animate_glyphs(eventtime, 0, extruder_count,
                                     self.BED1_GLYPH, True)
+            else:
+                self.draw_icon(0, extruder_count, icons.bed_icon)
             self.draw_heater(2, extruder_count, info)
         # Fan speed
         if self.fan is not None:
