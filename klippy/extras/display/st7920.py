@@ -108,18 +108,19 @@ class ST7920:
                 0x06, # Set positive update direction
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
-        self.flush()
         # Setup animated glyphs
         self.cache_glyph('fan1', 0)
         self.cache_glyph('fan2', 1)
         self.cache_glyph('bed_heat1', 2)
         self.cache_glyph('bed_heat2', 3)
+        self.flush()
     def cache_glyph(self, glyph_name, glyph_id):
         icon = icons.Icons16x16[glyph_name]
         for i, bits in enumerate(icon):
             pos = glyph_id*32 + i*2
-            data = [(bits >> 8) & 0xff, bits & 0xff]
-            self.glyph_framebuffer[pos:pos+len(data)] = data
+            b1, b2 = (bits >> 8) & 0xff, bits & 0xff
+            self.glyph_framebuffer[pos:pos+2] = [b1, b2]
+            self.all_framebuffers[1][1][pos:pos+2] = [b1 ^ 1, b2 ^ 1]
         self.cached_glyphs[glyph_name] = (0, glyph_id*2)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
