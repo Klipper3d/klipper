@@ -28,9 +28,13 @@ class HD44780:
         self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
-        self.glyph_framebuffer = (bytearray(64), bytearray('~'*64), 0x40)
-        self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
+        self.text_framebuffer = bytearray(' '*80)
+        self.glyph_framebuffer = bytearray(64)
+        self.all_framebuffers = [
+            # Text framebuffer
+            (self.text_framebuffer, bytearray('~'*80), 0x80),
+            # Glyph framebuffer
+            (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
@@ -51,7 +55,7 @@ class HD44780:
         #logging.debug("hd44780 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for new_data, old_data, fb_id in self.framebuffers:
+        for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
@@ -83,15 +87,15 @@ class HD44780:
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
         # Add custom fonts
-        self.glyph_framebuffer[0][:len(HD44780_chars)] = HD44780_chars
-        for i in range(len(self.glyph_framebuffer[0])):
-            self.glyph_framebuffer[1][i] = self.glyph_framebuffer[0][i] ^ 1
+        self.glyph_framebuffer[:len(HD44780_chars)] = HD44780_chars
+        for i in range(len(self.glyph_framebuffer)):
+            self.all_framebuffers[1][1][i] = self.glyph_framebuffer[i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > 20:
             data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        self.text_framebuffer[pos:pos+len(data)] = data
     def write_glyph(self, x, y, glyph_name):
         char = TextGlyphs.get(glyph_name)
         if char is not None:
@@ -100,7 +104,7 @@ class HD44780:
             return 1
         return 0
     def clear(self):
-        self.text_framebuffer[0][:] = ' '*80
+        self.text_framebuffer[:] = ' '*80
 
 HD44780_chars = [
     # Extruder (a thermometer)
