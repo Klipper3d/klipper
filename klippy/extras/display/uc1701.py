@@ -9,7 +9,7 @@ import icons, font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
-TextGlyphs = { 'right_arrow': '\x1a' }
+TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class UC1701:
     CURRENT_BUF, OLD_BUF = 0, 1
