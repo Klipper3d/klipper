@@ -42,7 +42,7 @@ class PrinterServo:
         if initial_pwm_value > 0:
             #if we have an initial value for our servo schedule it to happen right away
             self.mcu_servo.setup_start_value(initial_pwm_value, initial_pwm_value, False)
-            
+
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
             return
