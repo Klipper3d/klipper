@@ -888,7 +888,6 @@ MENU_UPDATE_DELAY = .100
 TIMER_DELAY = .200
 BLINK_FAST_SEQUENCE = (True, True, False, False)
 BLINK_SLOW_SEQUENCE = (True, True, True, True, False, False, False)
-ENCODER_FAST_RATE = .03
 
 
 class MenuManager:
@@ -925,6 +924,8 @@ class MenuManager:
         self.down_pin = config.get('down_pin', None)
         self.kill_pin = config.get('kill_pin', None)
         self._last_press = 0
+        self._encoder_fast_rate = config.getfloat(
+            'encoder_fast_rate', .03, above=0.)
         self._last_encoder_cw_eventtime = 0
         self._last_encoder_ccw_eventtime = 0
         # printer objects
@@ -1405,16 +1406,14 @@ class MenuManager:
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = False
-        if (eventtime - self._last_encoder_cw_eventtime) <= ENCODER_FAST_RATE:
-            fast_rate = True
+        fast_rate = ((eventtime - self._last_encoder_cw_eventtime)
+                     <= self._encoder_fast_rate)
         self._last_encoder_cw_eventtime = eventtime
         self.up(fast_rate)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = False
-        if (eventtime - self._last_encoder_ccw_eventtime) <= ENCODER_FAST_RATE:
-            fast_rate = True
+        fast_rate = ((eventtime - self._last_encoder_ccw_eventtime)
+                     <= self._encoder_fast_rate)
         self._last_encoder_ccw_eventtime = eventtime
         self.down(fast_rate)
 
