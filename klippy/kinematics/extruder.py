@@ -45,7 +45,7 @@ class PrinterExtruder:
             'pressure_advance_lookahead_time', 0.010, minval=0.)
             
         self.volumetric = config.getboolean('volumetric', False)
-        self.volumetric_multiplier = self._calculate_volumetric_multiplier(self.filament_diameter)
+        self._calculate_volumetric_multiplier()
             
         self.need_motor_enable = True
         self.extrude_pos = 0.
@@ -69,18 +69,48 @@ class PrinterExtruder:
             gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER", None,
                                    self.cmd_default_SET_FILAMENT_DIAMETER,
                                    desc=self.cmd_SET_FILAMENT_DIAMETER_help)
+
+            gcode.register_mux_command("SET_VOLUMETRIC_EXTRUSION", "EXTRUDER", None,
+                                   self.cmd_default_SET_VOLUMETRIC_EXTRUSION,
+                                   desc=self.cmd_SET_VOLUMETRIC_EXTRUSION_help)
+
+            gcode.register_mux_command("GET_FILAMENT_DIAMETER", "EXTRUDER", None,
+                                   self.cmd_default_GET_FILAMENT_DIAMETER,
+                                   desc=self.cmd_GET_FILAMENT_DIAMETER_help)
+
+            gcode.register_mux_command("GET_VOLUMETRIC_EXTRUSION", "EXTRUDER", None,
+                                   self.cmd_default_GET_VOLUMETRIC_EXTRUSION,
+                                   desc=self.cmd_GET_VOLUMETRIC_EXTRUSION_help)
+
+        gcode.register_mux_command("SET_VOLUMETRIC_EXTRUSION", "EXTRUDER", self.name,
+                                   self.cmd_SET_VOLUMETRIC_EXTRUSION,
+                                   desc=self.cmd_SET_VOLUMETRIC_EXTRUSION_help)
+
         gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER", self.name,
                                    self.cmd_SET_FILAMENT_DIAMETER,
                                    desc=self.cmd_SET_FILAMENT_DIAMETER_help)
-                                   
+        
+        gcode.register_mux_command("GET_VOLUMETRIC_EXTRUSION", "EXTRUDER", self.name,
+                                   self.cmd_GET_VOLUMETRIC_EXTRUSION,
+                                   desc=self.cmd_GET_VOLUMETRIC_EXTRUSION_help)
+
+        gcode.register_mux_command("GET_FILAMENT_DIAMETER", "EXTRUDER", self.name,
+                                   self.cmd_GET_FILAMENT_DIAMETER, 
+                                   desc=self.cmd_GET_FILAMENT_DIAMETER_help)
+
     def _calculate_max_extrude_ratio(self):
         self.max_extrude_ratio = self.max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
 
-    def _calculate_volumetric_multiplier(self, diameter):
-        if (self.volumetric == False): return 1.0
-        d2 = diameter * 0.5;
-        return 1.0 / (math.pi * d2 * d2);
+    def _calculate_volumetric_multiplier(self):
+        if (self.volumetric == False):
+            self.volumetric_multiplier = 1.0
+        else:
+            d2 = self.filament_diameter * 0.5
+            self.volumetric_multiplier = (1.0 / (math.pi * d2 * d2))
+
+        logging.debug("Volumetric Multiplier calculated to %.5f",self.volumetric_multiplier)
+            
 
     def _calculate_filament_area(self):
         self.filament_area = math.pi * (self.filament_diameter * .5)**2
@@ -240,25 +270,66 @@ class PrinterExtruder:
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg)
 
-    cmd_SET_FILAMENT_DIAMETER_help = "Set filament diameter"
+    cmd_SET_FILAMENT_DIAMETER_help = "Set filament diameter (expects DIAMETER as a parameter)"
     def cmd_default_SET_FILAMENT_DIAMETER(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
         extruder.cmd_SET_FILAMENT_DIAMETER(params)
 
     def cmd_SET_FILAMENT_DIAMETER(self, params):
-        self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
-        filament_diameter = gcode.get_float(
-            'DIAMETER', params, self.filament_diameter, minval=0.)
+        filament_diameter = gcode.get_float('DIAMETER', params, self.filament_diameter, minval=0.)
+
         self.filament_diameter = filament_diameter
 
         self._calculate_filament_area()
         self._calculate_max_extrude_ratio()
+        self._calculate_volumetric_multiplier()
         
-        msg = ("filament_diameter: %.6f\n" % (filament_diameter))
-        #self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
+        self.cmd_GET_FILAMENT_DIAMETER(params)
+
+    cmd_GET_FILAMENT_DIAMETER_help = "Gets the current filament diameter"
+    def cmd_default_GET_FILAMENT_DIAMETER(self, params):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_GET_FILAMENT_DIAMETER(params)
+
+    def cmd_GET_FILAMENT_DIAMETER(self, params):
+        gcode = self.printer.lookup_object('gcode')
+
+        msg = ("Filament Diameter: %.3f" % (self.filament_diameter))
         gcode.respond_info(msg)
 
+
+    cmd_SET_VOLUMETRIC_EXTRUSION_help = "Enable or Disable volumetric extrusion (expects an ENABLED parameter that is either True or False)"
+    def cmd_default_SET_VOLUMETRIC_EXTRUSION(self, params):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_SET_VOLUMETRIC_EXTRUSION(params)
+
+    def cmd_SET_VOLUMETRIC_EXTRUSION(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        
+        if 'ENABLED' in params:
+            enabled_string = params['ENABLED']
+            if enabled_string.lower() == 'true':
+                self.volumetric = True
+            else:
+                self.volumetric = False
+            self._calculate_volumetric_multiplier()
+
+            self.cmd_GET_VOLUMETRIC_EXTRUSION(params)
+        else:
+            raise gcode.error("ENABLED parameter not provided")
+
+    def cmd_default_GET_VOLUMETRIC_EXTRUSION(self, params):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_GET_VOLUMETRIC_EXTRUSION(params)
+
+    cmd_GET_VOLUMETRIC_EXTRUSION_help = "Gets the current volumetric extrusion state"
+    def cmd_GET_VOLUMETRIC_EXTRUSION(self, params):
+        gcode = self.printer.lookup_object('gcode')
+
+        msg = ("Volumetric Extrusion: %s" % ("enabled" if self.volumetric else "disabled"))
+        gcode.respond_info(msg)
+        
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
     def set_active(self, print_time, is_active):
