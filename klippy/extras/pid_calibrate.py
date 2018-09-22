@@ -35,12 +35,19 @@ class PIDCalibrate:
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
+        # Log and report results
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
         self.gcode.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
-            "To use these parameters, update the printer config file with\n"
-            "the above and then issue a RESTART command" % (Kp, Ki, Kd))
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with these parameters and restart the printer." % (Kp, Ki, Kd))
+        # Store results for SAVE_CONFIG
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(heater_name, 'control', 'pid')
+        configfile.set(heater_name, 'pid_Kp', "%.3f" % (Kp,))
+        configfile.set(heater_name, 'pid_Ki', "%.3f" % (Ki,))
+        configfile.set(heater_name, 'pid_Kd', "%.3f" % (Kd,))
 
 TUNE_PID_DELTA = 5.0
 

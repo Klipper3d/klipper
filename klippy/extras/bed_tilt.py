@@ -11,10 +11,11 @@ class BedTilt:
         self.printer = config.get_printer()
         self.x_adjust = config.getfloat('x_adjust', 0.)
         self.y_adjust = config.getfloat('y_adjust', 0.)
-        self.z_adjust = 0.
+        self.z_adjust = config.getfloat('z_adjust', 0.)
         if config.get('points', None) is not None:
             BedTiltCalibrate(config, self)
         self.toolhead = None
+        # Register move transform with g-code class
         gcode = self.printer.lookup_object('gcode')
         gcode.set_move_transform(self)
     def printer_state(self, state):
@@ -27,6 +28,14 @@ class BedTilt:
         x, y, z, e = newpos
         self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
                             + self.z_adjust, e], speed)
+    def update_adjust(self, x_adjust, y_adjust, z_adjust):
+        self.x_adjust = x_adjust
+        self.y_adjust = y_adjust
+        self.z_adjust = z_adjust
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set('bed_tilt', 'x_adjust', "%.6f" % (x_adjust,))
+        configfile.set('bed_tilt', 'y_adjust', "%.6f" % (y_adjust,))
+        configfile.set('bed_tilt', 'z_adjust', "%.6f" % (z_adjust,))
 
 # Helper script to calibrate the bed tilt
 class BedTiltCalibrate:
@@ -74,11 +83,10 @@ class BedTiltCalibrate:
             logging.info("orig: %s new: %s", adjusted_height(pos, params),
                          adjusted_height(pos, new_params))
         # Update current bed_tilt calculations
-        bed_tilt = self.printer.lookup_object('bed_tilt')
-        bed_tilt.x_adjust = new_params['x_adjust']
-        bed_tilt.y_adjust = new_params['y_adjust']
         z_diff = new_params['z_adjust'] - z_offset
-        bed_tilt.z_adjust = z_diff
+        bed_tilt = self.printer.lookup_object('bed_tilt')
+        bed_tilt.update_adjust(new_params['x_adjust'], new_params['y_adjust'],
+                               z_diff)
         self.gcode.reset_last_position()
         # Report results back to user
         if self.z_position_endstop is not None:
@@ -103,8 +111,8 @@ class BedTiltCalibrate:
         self.printer.set_rollover_info("bed_tilt", "bed_tilt: %s" % (msg,))
         self.gcode.respond_info(
             "%s\nThe above parameters have been applied to the current\n"
-            "session. Update the printer config file with the above to\n"
-            "use these settings in future sessions." % (msg,))
+            "session. The SAVE_CONFIG command will update the printer\n"
+            "config file and restart the printer." % (msg,))
 
 def load_config(config):
     return BedTilt(config)
