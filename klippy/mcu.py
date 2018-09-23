@@ -331,6 +331,10 @@ class MCU_pwm:
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
         else:
+            if (self._start_value not in [0., 1.]
+                or self._shutdown_value not in [0., 1.]):
+                raise pins.error(
+                    "start and shutdown values must be 0.0 or 1.0 on soft pwm")
             self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
@@ -345,12 +349,6 @@ class MCU_pwm:
                     self._mcu.seconds_to_clock(self._max_duration)))
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_soft_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
-
-            if (self._start_value not in [0., 1.] ):
-                #since we have a start value that isn't straight on or off we need to spin up PWM right away
-                value = int(max(0., min(1., self._start_value)) * self._pwm_max + 0.5)
-                self._mcu.add_config_cmd("schedule_soft_pwm_out oid=%d clock=%u value=%hu" % (self._oid, self._mcu.print_time_to_clock(self._mcu._printer.lookup_object('toolhead').get_last_move_time()), value))
-
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
