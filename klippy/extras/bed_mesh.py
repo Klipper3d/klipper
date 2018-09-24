@@ -134,6 +134,9 @@ class BedMeshCalibrate:
         self.probed_z_table = None
         self.build_map = False
         self.probe_params = {}
+
+        self._bed_shape = config.get('bed_shape', 'square').lower()
+
         points = self._generate_points(config)
         self._init_probe_params(config, points)
         self.probe_helper = probe.ProbePointsHelper(config, self, points)
@@ -150,38 +153,67 @@ class BedMeshCalibrate:
             'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
             desc=self.cmd_BED_MESH_MAP_help)
     def _generate_points(self, config):
+        points = []
+
         x_cnt, y_cnt = parse_pair(
             config, ('probe_count', '3'), check=False, cast=int, minval=3)
         self.probe_params['x_count'] = x_cnt
         self.probe_params['y_count'] = y_cnt
-        min_x, min_y = parse_pair(config, ('min_point',))
-        max_x, max_y = parse_pair(config, ('max_point',))
-        if max_x <= min_x or max_y <= min_y:
-            raise config.error('bed_mesh: invalid min/max points')
-        x_dist = (max_x - min_x) / (x_cnt - 1)
-        y_dist = (max_y - min_y) / (y_cnt - 1)
-        # floor distances down to next hundredth
-        x_dist = math.floor(x_dist * 100) / 100
-        y_dist = math.floor(y_dist * 100) / 100
-        if x_dist <= 1. or y_dist <= 1.:
-            raise config.error("bed_mesh: min/max points too close together")
-        # re-calc x_max
-        max_x = min_x + x_dist * (x_cnt - 1)
-        pos_y = min_y
-        points = []
-        for i in range(y_cnt):
-            for j in range(x_cnt):
-                if not i % 2:
-                    # move in positive directon
-                    pos_x = min_x + j * x_dist
-                else:
-                    # move in negative direction
-                    pos_x = max_x - j * x_dist
-                points.append((pos_x, pos_y))
-            pos_y += y_dist
+
+        if self._bed_shape == 'square':
+            min_x, min_y = parse_pair(config, ('min_point',))
+            max_x, max_y = parse_pair(config, ('max_point',))
+            if max_x <= min_x or max_y <= min_y:
+                raise config.error('bed_mesh: invalid min/max points')
+            x_dist = (max_x - min_x) / (x_cnt - 1)
+            y_dist = (max_y - min_y) / (y_cnt - 1)
+            # floor distances down to next hundredth
+            x_dist = math.floor(x_dist * 100) / 100
+            y_dist = math.floor(y_dist * 100) / 100
+            if x_dist <= 1. or y_dist <= 1.:
+                raise config.error("bed_mesh: min/max points too close together")
+            # re-calc x_max
+            max_x = min_x + x_dist * (x_cnt - 1)
+            pos_y = min_y
+
+            for i in range(y_cnt):
+                for j in range(x_cnt):
+                    if not i % 2:
+                        # move in positive directon
+                        pos_x = min_x + j * x_dist
+                    else:
+                        # move in negative direction
+                        pos_x = max_x - j * x_dist
+                    points.append((pos_x, pos_y))
+                pos_y += y_dist
+
+        elif self._bed_shape == 'circle':
+            self._radius = config.getfloat('radius', 50.)
+
+            self._distance_y = ((self._radius * 2) / (y_cnt - 1))
+            self._distance_x = ((self._radius * 2) / (x_cnt - 1))
+
+            for i in range(y_cnt):
+                pos_y = -self._radius + self._distance_y * i
+                for j in range(x_cnt):
+                    pos_x = -self._radius + self._distance_x * j
+
+                    #Avoid probing the corners (outside the round or hexagon
+                    # print surface) on a delta printer.
+                    distance_from_center = math.sqrt(pos_x * pos_x +
+                                                     pos_y * pos_y)
+
+                    if distance_from_center <= self._radius:
+                        points.append((pos_x, pos_y))
+        else:
+            logging.error("bed_mesh: Unknown bed shape (%s)" % (self._bed_shape))
+
         logging.info('bed_mesh: generated points')
         for p in points:
             logging.info("(%.1f, %.1f)" % (p[0], p[1]))
+
+        self.probe_params['expected_point_count'] = len(points)
+
         return points
     def _init_probe_params(self, config, points):
         self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
@@ -210,7 +242,12 @@ class BedMeshCalibrate:
         self.start_calibration()
     def start_calibration(self):
         self.bedmesh.set_mesh(None)
+
+        #Home first to ensure we are all 0'ed out
         self.gcode.run_script_from_command("G28")
+
+        #Ask the probe helper to probe the points we setup previously in
+        # _generate_points
         self.probe_helper.start_probe()
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
@@ -225,6 +262,9 @@ class BedMeshCalibrate:
             print_func(msg)
         else:
             print_func("bed_mesh: bed has not been probed")
+
+    #This method is called as a callback from the ProbeHelper when probing has
+    # been completed
     def finalize(self, offsets, positions):
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]
@@ -243,31 +283,80 @@ class BedMeshCalibrate:
                 self.gcode.respond_info(z_msg)
         x_cnt = self.probe_params['x_count']
         y_cnt = self.probe_params['y_count']
+
+        expected_point_count = self.probe_params['expected_point_count']
+
         # create a 2-D array representing the probed z-positions.
         self.probed_z_table = [
             [0. for i in range(x_cnt)] for j in range(y_cnt)]
         # Check for multi-sampled points
         z_table_len = x_cnt * y_cnt
-        if len(positions) % z_table_len:
+        if len(positions) % expected_point_count:
             raise self.gcode.error(
                 ("bed_mesh: Invalid probe table length:\n"
                  "Sampled table length: %d") % len(positions))
-        samples = len(positions) / z_table_len
-        # Populate the organized probed table
-        for i in range(z_table_len):
-            y_position = i / x_cnt
-            x_position = 0
-            if y_position & 1 == 0:
-                # Even y count, x probed in positive directon
-                x_position = i % x_cnt
-            else:
-                # Odd y count, x probed in the negative directon
-                x_position = (x_cnt - 1) - (i % x_cnt)
-            idx = i * samples
-            end = idx + samples
-            avg_z = sum(p[2] for p in positions[idx:end]) / samples
-            self.probed_z_table[y_position][x_position] = \
-                avg_z - z_offset
+        samples = len(positions) / expected_point_count
+
+        if self._bed_shape == 'square':
+            # Populate the organized probed table
+            for i in range(z_table_len):
+                y_position = i / x_cnt
+                x_position = 0
+                if y_position & 1 == 0:
+                    # Even y count, x probed in positive directon
+                    x_position = i % x_cnt
+                else:
+                    # Odd y count, x probed in the negative directon
+                    x_position = (x_cnt - 1) - (i % x_cnt)
+                idx = i * samples
+                end = idx + samples
+                avg_z = sum(p[2] for p in positions[idx:end]) / samples
+                self.probed_z_table[y_position][x_position] = \
+                    avg_z - z_offset
+
+        elif self._bed_shape == 'circle':
+            #Reconcile the probed points and put them into the expected z_table
+            #To do this we need to essentually generate the points again
+            # since the points returned from the probing need to be placed
+            # in their correct spots (we need to match things up)
+
+            position_available_count = 0
+            position_total_count = 0
+
+            for i in range(y_cnt):
+                pos_y = -self._radius + self._distance_y * i
+                for j in range(x_cnt):
+                    pos_x = -self._radius + self._distance_x * j
+
+                    distance_from_center = math.floor(math.sqrt(pos_x * pos_x
+                                                        + pos_y * pos_y))
+
+                    y_position = position_total_count / x_cnt
+                    x_position = 0
+                    if y_position & 1 == 0:
+                        # Even y count, x probed in positive directon
+                        x_position = position_total_count % x_cnt
+                    else:
+                        # Odd y count, x probed in the negative directon
+                        x_position = (x_cnt - 1) - (position_total_count % x_cnt)
+
+                    if distance_from_center <= self._radius:
+                        #This is a position we will have a probed point for
+                        idx = position_available_count * samples
+                        end = idx + samples
+
+                        avg_z = sum(p[2] for p in positions[idx:end]) / samples
+                        self.probed_z_table[y_position][x_position] = \
+                            avg_z - z_offset
+
+                        position_available_count = position_available_count + 1
+                    else:
+                        #This is a position that we don't have a probed point for
+                        # we will interpolate it from its neighbours
+                        self.probed_z_table[y_position][x_position] = float('NaN')
+
+                    position_total_count = position_total_count + 1
+
         if self.build_map:
             outdict = {'z_probe_offsets:': self.probed_z_table}
             self.gcode.respond(json.dumps(outdict))

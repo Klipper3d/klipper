@@ -481,6 +481,8 @@ class GCodeParser:
                         self.last_position[pos] = v + self.base_position[pos]
             if 'E' in params:
                 v = float(params['E']) * self.extrude_factor
+                if self.extruder.volumetric:
+                    v *= self.extruder.volumetric_multiplier
                 if not self.absolutecoord or not self.absoluteextrude:
                     # value relative to position of last move
                     self.last_position[3] += v
