@@ -770,8 +770,6 @@ class MenuList(MenuContainer):
 class MenuVSDCard(MenuList):
     def __init__(self, manager, config, namespace=''):
         super(MenuVSDCard, self).__init__(manager, config, namespace)
-        self._scroll_lfns = self._asbool(
-            config.get('scroll_long_filenames', 'false'))
 
     def _populate_files(self):
         sdcard = self._manager.objs.get('virtual_sdcard')
@@ -785,9 +783,9 @@ class MenuVSDCard(MenuList):
                     'name': '%s' % str(fname),
                     'cursor': '+',
                     'gcode': "\n".join(gcode),
-                    'scroll': self._scroll_lfns,
+                    'scroll': True,
                     # mind the cursor size in width
-                    'width': (self._manager.cols-1) if self._scroll_lfns else 0
+                    'width': (self._manager.cols-1)
                 }))
 
     def populate_items(self):
