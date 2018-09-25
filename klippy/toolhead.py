@@ -187,9 +187,7 @@ class MoveQueue:
         move.calc_junction(self.queue[-2])
         self.junction_flush -= move.min_move_t
         if self.junction_flush <= 0.:
-            # There are enough queued moves to return to zero velocity
-            # from the first move's maximum possible velocity, so at
-            # least one move can be flushed.
+            # Enough moves have been queued to reach the target flush time.
             self.flush(lazy=True)
 
 STALL_TIME = 0.100
