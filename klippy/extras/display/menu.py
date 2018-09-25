@@ -780,7 +780,10 @@ class MenuVSDCard(MenuList):
                 self.append_item(MenuCommand(self._manager, {
                     'name': '%s' % str(fname),
                     'cursor': '+',
-                    'gcode': "\n".join(gcode)
+                    'gcode': "\n".join(gcode),
+                    'scroll': True,
+                    # mind the cursor size in width
+                    'width': (self._manager.cols-1)
                 }))
 
     def populate_items(self):
