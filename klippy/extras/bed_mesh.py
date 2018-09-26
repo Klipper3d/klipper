@@ -204,15 +204,15 @@ class BedMeshCalibrate:
     cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
     def cmd_BED_MESH_MAP(self, params):
         self.build_map = True
-        self.start_calibration()
+        self.start_calibration(params)
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, params):
         self.build_map = False
-        self.start_calibration()
-    def start_calibration(self):
+        self.start_calibration(params)
+    def start_calibration(self, params):
         self.bedmesh.set_mesh(None)
         self.gcode.run_script_from_command("G28")
-        self.probe_helper.start_probe()
+        self.probe_helper.start_probe(params)
     def print_probed_positions(self, print_func):
         if self.probed_z_table is not None:
             msg = "Mesh Leveling Probed Z positions:\n"

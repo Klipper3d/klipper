@@ -39,7 +39,7 @@ class ZTilt:
         self.z_steppers = z_steppers
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
-        self.probe_helper.start_probe()
+        self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
