@@ -183,9 +183,7 @@ class ProbePointsHelper:
             return self.probe.last_home_position()
         else:
             return None
-    def get_probed_position(self):
-        return self.toolhead.get_kinematics().calc_position()
-    def lift_z(self, z_pos, add=False, speed=None):
+    def _lift_z(self, z_pos, add=False, speed=None):
         # Lift toolhead
         curpos = self.toolhead.get_position()
         if add:
@@ -197,10 +195,19 @@ class ProbePointsHelper:
         try:
             self.toolhead.move(curpos, speed)
         except homing.EndstopError as e:
-            self.finalize(False)
+            self._finalize(False)
             raise self.gcode.error(str(e))
-    def move_next(self):
-        x, y = self.probe_points[len(self.results)/self.samples]
+    def _move_next(self):
+        # Lift toolhead
+        self._lift_z(self.horizontal_move_z)
+        # Check if done probing
+        point_num = len(self.results) // self.samples
+        if point_num >= len(self.probe_points):
+            self.toolhead.get_last_move_time()
+            self._finalize(True)
+            return
+        # Move to next XY probe point
+        x, y = self.probe_points[point_num]
         curpos = self.toolhead.get_position()
         curpos[0] = x
         curpos[1] = y
@@ -208,53 +215,46 @@ class ProbePointsHelper:
         try:
             self.toolhead.move(curpos, self.speed)
         except homing.EndstopError as e:
-            self.finalize(False)
+            self._finalize(False)
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
-    def probe_point(self):
+    def _automatic_probe_point(self):
         for i in range(self.samples):
-            self.gcode.run_script_from_command("PROBE")
-            self.toolhead.wait_moves()
-            self.results.append(self.get_probed_position())
+            try:
+                self.gcode.run_script_from_command("PROBE")
+            except self.gcode.error as e:
+                self._finalize(False)
+                raise
+            self.results.append(self.toolhead.get_position()[:3])
             if i < self.samples - 1:
                 # retract
-                self.lift_z(self.sample_retract_dist, add=True)
+                self._lift_z(self.sample_retract_dist, add=True)
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode = self.printer.lookup_object('gcode')
-        # Unregister NEXT command in case we are starting over from an
-        # unfinalized calibration
-        self.gcode.register_command('NEXT', None)
-        self.gcode.register_command(
-            'NEXT', self.cmd_NEXT, desc=self.cmd_NEXT_help)
         self.results = []
         self.busy = True
-        self.lift_z(self.horizontal_move_z, speed=self.speed)
-        self.move_next()
-        if self.probe is not None:
-            try:
-                while self.busy:
-                    self.probe_point()
-                    self.cmd_NEXT({})
-            except:
-                self.finalize(False)
-                raise
+        self._lift_z(self.horizontal_move_z, speed=self.speed)
+        self._move_next()
+        if self.probe is None:
+            # Setup for manual probing
+            self.gcode.register_command('NEXT', None)
+            self.gcode.register_command('NEXT', self.cmd_NEXT,
+                                        desc=self.cmd_NEXT_help)
+        else:
+            # Perform automatic probing
+            while self.busy:
+                self._automatic_probe_point()
+                self._move_next()
     cmd_NEXT_help = "Move to the next XY position to probe"
     def cmd_NEXT(self, params):
-        if self.probe is None:
-            # Record current position for manual probe
-            self.toolhead.wait_moves()
-            self.results.append(self.get_probed_position())
-        # Lift toolhead
-        self.lift_z(self.horizontal_move_z)
+        # Record current position for manual probe
+        self.toolhead.get_last_move_time()
+        self.results.append(self.toolhead.get_kinematics().calc_position())
         # Move to next position
-        if len(self.results) / self.samples == len(self.probe_points):
-            self.toolhead.get_last_move_time()
-            self.finalize(True)
-            return
-        self.move_next()
-    def finalize(self, success):
+        self._move_next()
+    def _finalize(self, success):
         self.busy = False
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
