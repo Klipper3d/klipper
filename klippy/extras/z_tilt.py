@@ -41,9 +41,11 @@ class ZTilt:
     def cmd_Z_TILT_ADJUST(self, params):
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
+        # Setup for coordinate descent analysis
         z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
         params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
+        # Perform coordinate descent
         def adjusted_height(pos, params):
             x, y, z = pos
             return (z - x*params['x_adjust'] - y*params['y_adjust']
@@ -55,16 +57,20 @@ class ZTilt:
             return total_error
         new_params = mathutil.coordinate_descent(
             params.keys(), params, errorfunc)
+        # Apply results
         logging.info("Calculated bed tilt parameters: %s", new_params)
+        x_adjust = new_params['x_adjust']
+        y_adjust = new_params['y_adjust']
+        z_adjust = (new_params['z_adjust'] - z_offset
+                    - x_adjust * offsets[0] - y_adjust * offsets[1])
         try:
-            self.adjust_steppers(new_params['x_adjust'], new_params['y_adjust'],
-                                 new_params['z_adjust'], z_offset)
+            self.adjust_steppers(x_adjust, y_adjust, z_adjust)
         except:
             logging.exception("z_tilt adjust_steppers")
             for s in self.z_steppers:
                 z.set_ignore_move(False)
             raise
-    def adjust_steppers(self, x_adjust, y_adjust, z_adjust, z_offset):
+    def adjust_steppers(self, x_adjust, y_adjust, z_adjust):
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
         speed = self.probe_helper.get_lift_speed()
@@ -75,9 +81,9 @@ class ZTilt:
             stepper_offset = -(x*x_adjust + y*y_adjust)
             positions.append((stepper_offset, s))
         # Report on movements
-        msg = "Making the following Z tilt adjustments:\n%s\nz_offset = %.6f" % (
-            "\n".join(["%s = %.6f" % (s.get_name(), so) for so, s in positions]),
-            z_adjust - z_offset)
+        stepstrs = ["%s = %.6f" % (s.get_name(), so) for so, s in positions]
+        msg = "Making the following Z adjustments:\n%s\nz_adjust = %.6f" % (
+            "\n".join(stepstrs), z_adjust)
         logging.info(msg)
         self.gcode.respond_info(msg)
         # Move each z stepper (sorted from lowest to highest) until they match
@@ -94,7 +100,7 @@ class ZTilt:
         # Z should now be level - do final cleanup
         last_stepper_offset, last_stepper = positions[-1]
         last_stepper.set_ignore_move(False)
-        curpos[2] -= z_adjust - z_offset
+        curpos[2] -= z_adjust
         toolhead.set_position(curpos)
         self.gcode.reset_last_position()
 
