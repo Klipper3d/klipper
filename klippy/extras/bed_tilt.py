@@ -73,10 +73,11 @@ class BedTiltCalibrate:
         new_params = mathutil.coordinate_descent(
             params.keys(), params, errorfunc)
         # Update current bed_tilt calculations
-        z_diff = new_params['z_adjust'] - z_offset
-        bed_tilt = self.printer.lookup_object('bed_tilt')
-        bed_tilt.update_adjust(new_params['x_adjust'], new_params['y_adjust'],
-                               z_diff)
+        x_adjust = new_params['x_adjust']
+        y_adjust = new_params['y_adjust']
+        z_adjust = (new_params['z_adjust'] - z_offset
+                    - x_adjust * offsets[0] - y_adjust * offsets[1])
+        self.bedtilt.update_adjust(x_adjust, y_adjust, z_adjust)
         self.gcode.reset_last_position()
         # Log and report results
         logging.info("Calculated bed_tilt parameters: %s", new_params)
@@ -84,7 +85,7 @@ class BedTiltCalibrate:
             logging.info("orig: %s new: %s", adjusted_height(pos, params),
                          adjusted_height(pos, new_params))
         msg = "x_adjust: %.6f y_adjust: %.6f z_adjust: %.6f" % (
-            new_params['x_adjust'], new_params['y_adjust'], z_diff)
+            x_adjust, y_adjust, z_adjust)
         self.printer.set_rollover_info("bed_tilt", "bed_tilt: %s" % (msg,))
         self.gcode.respond_info(
             "%s\nThe above parameters have been applied to the current\n"
