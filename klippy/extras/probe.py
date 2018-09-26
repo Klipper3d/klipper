@@ -155,23 +155,10 @@ class ProbePointsHelper:
                 config.get_name()))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
-        # Lookup probe object
-        self.probe = None
         self.probe_offsets = (0., 0., 0.)
         self.samples = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat(
             'sample_retract_dist', 2., above=0.)
-        manual_probe = config.getboolean('manual_probe', None)
-        if manual_probe is None:
-            manual_probe = not config.has_section('probe')
-        if not manual_probe:
-            self.printer.try_load_module(config, 'probe')
-            self.probe = self.printer.lookup_object('probe')
-            self.lift_speed = min(self.speed, self.probe.speed)
-            self.probe_offsets = self.probe.get_offsets()
-            if self.horizontal_move_z < self.probe_offsets[2]:
-                raise config.error("horizontal_move_z can't be less than probe's"
-                                   " z_offset in %s" % (config.get_name()))
         # Internal probing state
         self.results = []
         self.busy = False
@@ -179,10 +166,10 @@ class ProbePointsHelper:
     def get_lift_speed(self):
         return self.lift_speed
     def get_last_xy_home_positon(self):
-        if self.probe is not None:
-            return self.probe.last_home_position()
-        else:
+        probe = self.printer.lookup_object('probe', None)
+        if probe is None:
             return None
+        return probe.last_home_position()
     def _lift_z(self, z_pos, add=False, speed=None):
         # Lift toolhead
         curpos = self.toolhead.get_position()
@@ -232,15 +219,28 @@ class ProbePointsHelper:
         avg_pos = [sum([pos[i] for pos in positions]) / self.samples
                    for i in range(3)]
         self.results.append(avg_pos)
-    def start_probe(self):
-        # Begin probing
+    def start_probe(self, params):
+        # Lookup objects
         self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode = self.printer.lookup_object('gcode')
+        probe = self.printer.lookup_object('probe', None)
+        method = self.gcode.get_str('METHOD', params, 'automatic').lower()
+        if probe is not None and method == 'automatic':
+            self.lift_speed = min(self.speed, probe.speed)
+            self.probe_offsets = probe.get_offsets()
+            if self.horizontal_move_z < self.probe_offsets[2]:
+                raise self.gcode.error("horizontal_move_z can't be less than"
+                                       " probe's z_offset")
+        else:
+            probe = None
+            self.lift_speed = self.speed
+            self.probe_offsets = (0., 0., 0.)
+        # Start probe
         self.results = []
         self.busy = True
         self._lift_z(self.horizontal_move_z, speed=self.speed)
         self._move_next()
-        if self.probe is None:
+        if probe is None:
             # Setup for manual probing
             self.gcode.register_command('NEXT', None)
             self.gcode.register_command('NEXT', self.cmd_NEXT,

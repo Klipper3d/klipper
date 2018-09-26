@@ -38,7 +38,7 @@ class QuadGantryLevel:
         self.z_steppers = z_steppers
     cmd_QUAD_GANTRY_LEVEL_help = "Conform a moving, twistable gantry to the shape of a stationary bed"
     def cmd_QUAD_GANTRY_LEVEL(self, params):
-        self.probe_helper.start_probe()
+        self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         logging.info("quad_gantry_level Calculating gantry geometry with: %s", positions)
         p1 = [positions[0][0] + offsets[0],positions[0][2]]
