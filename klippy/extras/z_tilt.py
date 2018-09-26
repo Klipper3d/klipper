@@ -35,7 +35,8 @@ class ZTilt:
         z_steppers = kin.get_steppers('Z')
         if len(z_steppers) != len(self.z_positions):
             raise self.printer.config_error(
-                "z_tilt z_positions needs exactly %d items" % (len(z_steppers),))
+                "z_tilt z_positions needs exactly %d items" % (
+                    len(z_steppers),))
         self.z_steppers = z_steppers
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
