@@ -138,11 +138,6 @@ class BedMeshCalibrate:
         self._init_probe_params(config, points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, points)
-        self.z_endstop_pos = None
-        if config.has_section('stepper_z'):
-            zconfig = config.getsection('stepper_z')
-            self.z_endstop_pos = zconfig.getfloat(
-                'position_endstop', None)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
@@ -227,18 +222,6 @@ class BedMeshCalibrate:
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]
         z_offset = offsets[2]
-        if self.probe_helper.get_last_xy_home_positon() is not None \
-                and self.z_endstop_pos is not None:
-            # Using probe as a virtual endstop, warn user if the
-            # stepper_z position_endstop is different
-            if self.z_endstop_pos != z_offset:
-                z_msg = "bed_mesh: WARN - probe z_offset is not" \
-                        " equal to Z position_endstop\n"
-                z_msg += "[probe] z_offset: %.4f\n" % z_offset
-                z_msg += "[stepper_z] position_endstop: %.4f" \
-                    % self.z_endstop_pos
-                logging.info(z_msg)
-                self.gcode.respond_info(z_msg)
         x_cnt = self.probe_params['x_count']
         y_cnt = self.probe_params['y_count']
         # create a 2-D array representing the probed z-positions.
