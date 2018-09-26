@@ -201,13 +201,12 @@ class ProbePointsHelper:
         # Lift toolhead
         self._lift_z(self.horizontal_move_z)
         # Check if done probing
-        point_num = len(self.results) // self.samples
-        if point_num >= len(self.probe_points):
+        if len(self.results) >= len(self.probe_points):
             self.toolhead.get_last_move_time()
             self._finalize(True)
             return
         # Move to next XY probe point
-        x, y = self.probe_points[point_num]
+        x, y = self.probe_points[len(self.results)]
         curpos = self.toolhead.get_position()
         curpos[0] = x
         curpos[1] = y
@@ -219,16 +218,20 @@ class ProbePointsHelper:
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
     def _automatic_probe_point(self):
+        positions = []
         for i in range(self.samples):
             try:
                 self.gcode.run_script_from_command("PROBE")
             except self.gcode.error as e:
                 self._finalize(False)
                 raise
-            self.results.append(self.toolhead.get_position()[:3])
+            positions.append(self.toolhead.get_position())
             if i < self.samples - 1:
                 # retract
                 self._lift_z(self.sample_retract_dist, add=True)
+        avg_pos = [sum([pos[i] for pos in positions]) / self.samples
+                   for i in range(3)]
+        self.results.append(avg_pos)
     def start_probe(self):
         # Begin probing
         self.toolhead = self.printer.lookup_object('toolhead')
