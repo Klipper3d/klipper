@@ -20,7 +20,7 @@ class ZTilt:
                 config.get_name()))
         if len(z_positions) < 2:
             raise config.error("z_tilt requires at least two z_positions")
-        self.probe_helper = probe.ProbePointsHelper(config, self)
+        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.z_steppers = []
         # Register Z_TILT_ADJUST command
         self.gcode = self.printer.lookup_object('gcode')
@@ -40,10 +40,7 @@ class ZTilt:
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
         self.probe_helper.start_probe()
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
         params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }

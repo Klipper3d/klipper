@@ -42,7 +42,7 @@ class BedTiltCalibrate:
     def __init__(self, config, bedtilt):
         self.printer = config.get_printer()
         self.bedtilt = bedtilt
-        self.probe_helper = probe.ProbePointsHelper(config, self)
+        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         # Automatic probe:z_virtual_endstop XY detection
         self.z_position_endstop = None
         if config.has_section('stepper_z'):
@@ -57,10 +57,7 @@ class BedTiltCalibrate:
     def cmd_BED_TILT_CALIBRATE(self, params):
         self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe()
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         z_offset = offsets[2]
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,

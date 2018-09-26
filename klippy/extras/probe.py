@@ -136,9 +136,9 @@ class ProbeVirtualEndstop:
 # Helper code that can probe a series of points and report the
 # position at each point.
 class ProbePointsHelper:
-    def __init__(self, config, callback, default_points=None):
+    def __init__(self, config, finalize_callback, default_points=None):
         self.printer = config.get_printer()
-        self.callback = callback
+        self.finalize_callback = finalize_callback
         self.probe_points = default_points
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
@@ -183,6 +183,8 @@ class ProbePointsHelper:
             return self.probe.last_home_position()
         else:
             return None
+    def get_probed_position(self):
+        return self.toolhead.get_kinematics().calc_position()
     def lift_z(self, z_pos, add=False, speed=None):
         # Lift toolhead
         curpos = self.toolhead.get_position()
@@ -201,7 +203,7 @@ class ProbePointsHelper:
         for i in range(self.samples):
             self.gcode.run_script_from_command("PROBE")
             self.toolhead.wait_moves()
-            self.results.append(self.callback.get_probed_position())
+            self.results.append(self.get_probed_position())
             if i < self.samples - 1:
                 # retract
                 self.lift_z(self.sample_retract_dist, add=True)
@@ -243,7 +245,7 @@ class ProbePointsHelper:
         if self.probe is None:
             # Record current position for manual probe
             self.toolhead.wait_moves()
-            self.results.append(self.callback.get_probed_position())
+            self.results.append(self.get_probed_position())
         # Lift toolhead
         self.lift_z(self.horizontal_move_z)
         # Move to next position
@@ -257,7 +259,7 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         self.gcode.register_command('NEXT', None)
         if success:
-            self.callback.finalize(self.probe_offsets, self.results)
+            self.finalize_callback(self.probe_offsets, self.results)
 
 def load_config(config):
     return PrinterProbe(config)

@@ -136,7 +136,8 @@ class BedMeshCalibrate:
         self.probe_params = {}
         points = self._generate_points(config)
         self._init_probe_params(config, points)
-        self.probe_helper = probe.ProbePointsHelper(config, self, points)
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self.probe_finalize, points)
         self.z_endstop_pos = None
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -212,9 +213,6 @@ class BedMeshCalibrate:
         self.bedmesh.set_mesh(None)
         self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe()
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
     def print_probed_positions(self, print_func):
         if self.probed_z_table is not None:
             msg = "Mesh Leveling Probed Z positions:\n"
@@ -225,7 +223,7 @@ class BedMeshCalibrate:
             print_func(msg)
         else:
             print_func("bed_mesh: bed has not been probed")
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]
         z_offset = offsets[2]

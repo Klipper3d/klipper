@@ -142,7 +142,7 @@ class DeltaCalibrate:
             dist = radius * scatter[i]
             points.append((math.cos(r) * dist, math.sin(r) * dist))
         self.probe_helper = probe.ProbePointsHelper(
-            config, self, default_points=points)
+            config, self.probe_finalize, default_points=points)
         # Restore probe stable positions
         self.last_probe_positions = []
         for i in range(999):
@@ -192,10 +192,7 @@ class DeltaCalibrate:
                            "%.3f,%.3f,%.3f" % tuple(spos1))
             configfile.set(section, "distance%d_pos2" % (i,),
                            "%.3f,%.3f,%.3f" % tuple(spos2))
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         # Convert positions into (z_offset, stable_position) pairs
         z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
