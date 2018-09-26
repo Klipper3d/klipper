@@ -43,11 +43,6 @@ class BedTiltCalibrate:
         self.printer = config.get_printer()
         self.bedtilt = bedtilt
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
-        # Automatic probe:z_virtual_endstop XY detection
-        self.z_position_endstop = None
-        if config.has_section('stepper_z'):
-            zconfig = config.getsection('stepper_z')
-            self.z_position_endstop = zconfig.getfloat('position_endstop', None)
         # Register BED_TILT_CALIBRATE command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -58,12 +53,14 @@ class BedTiltCalibrate:
         self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
+        # Setup for coordinate descent analysis
         z_offset = offsets[2]
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,
                    'z_adjust': z_offset }
         logging.info("Initial bed_tilt parameters: %s", params)
+        # Perform coordinate descent
         def adjusted_height(pos, params):
             x, y, z = pos
             return (z - x*params['x_adjust'] - y*params['y_adjust']
@@ -75,36 +72,19 @@ class BedTiltCalibrate:
             return total_error
         new_params = mathutil.coordinate_descent(
             params.keys(), params, errorfunc)
-        logging.info("Calculated bed_tilt parameters: %s", new_params)
-        for pos in positions:
-            logging.info("orig: %s new: %s", adjusted_height(pos, params),
-                         adjusted_height(pos, new_params))
         # Update current bed_tilt calculations
         z_diff = new_params['z_adjust'] - z_offset
         bed_tilt = self.printer.lookup_object('bed_tilt')
         bed_tilt.update_adjust(new_params['x_adjust'], new_params['y_adjust'],
                                z_diff)
         self.gcode.reset_last_position()
-        # Report results back to user
-        if self.z_position_endstop is not None:
-            # Cartesian style robot
-            z_extra = ""
-            probe = self.printer.lookup_object('probe', None)
-            if probe is not None:
-                last_home_position = probe.last_home_position()
-                if last_home_position is not None:
-                    # Using z_virtual_endstop
-                    home_x, home_y = last_home_position[:2]
-                    z_diff -= home_x * new_params['x_adjust']
-                    z_diff -= home_y * new_params['y_adjust']
-                    z_extra = " (when Z homing at %.3f,%.3f)" % (home_x, home_y)
-            z_adjust = "stepper_z position_endstop: %.6f%s\n" % (
-                self.z_position_endstop - z_diff, z_extra)
-        else:
-            # Delta (or other) style robot
-            z_adjust = "Add %.6f to endstop position\n" % (-z_diff,)
-        msg = "%sx_adjust: %.6f y_adjust: %.6f" % (
-            z_adjust, new_params['x_adjust'], new_params['y_adjust'])
+        # Log and report results
+        logging.info("Calculated bed_tilt parameters: %s", new_params)
+        for pos in positions:
+            logging.info("orig: %s new: %s", adjusted_height(pos, params),
+                         adjusted_height(pos, new_params))
+        msg = "x_adjust: %.6f y_adjust: %.6f z_adjust: %.6f" % (
+            new_params['x_adjust'], new_params['y_adjust'], z_diff)
         self.printer.set_rollover_info("bed_tilt", "bed_tilt: %s" % (msg,))
         self.gcode.respond_info(
             "%s\nThe above parameters have been applied to the current\n"
