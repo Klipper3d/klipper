@@ -40,9 +40,12 @@ class Homing:
         dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
         ticks_per_step = math.ceil(dist_ticks / speed)
         return dist_ticks / ticks_per_step
-    def _homing_move(self, movepos, endstops, speed, probe_pos=False):
+    def _homing_move(self, movepos, endstops, speed,
+                     probe_pos=False, verify_movement=False):
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
+        start_mcu_pos = [(s, name, s.get_mcu_position())
+                         for es, name in endstops for s in es.get_steppers()]
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
                                  for s in mcu_endstop.get_steppers()])
@@ -74,10 +77,18 @@ class Homing:
             mcu_endstop.home_finalize()
         if error is not None:
             raise EndstopError(error)
-    def homing_move(self, movepos, endstops, speed, probe_pos=False):
-        for mcu_endstop, name in endstops:
-            mcu_endstop.home_prepare()
-        self._homing_move(movepos, endstops, speed, probe_pos)
+        # Check if some movement occurred
+        if verify_movement:
+            for s, name, pos in start_mcu_pos:
+                if s.get_mcu_position() == pos:
+                    if probe_pos:
+                        raise EndstopError("Probe triggered prior to movement")
+                    raise EndstopError(
+                        "Endstop %s still triggered after retract" % (name,))
+    def probing_move(self, movepos, mcu_probe, speed):
+        mcu_probe.home_prepare()
+        self._homing_move(movepos, [(mcu_probe, "probe")], speed,
+                          probe_pos=True, verify_movement=True)
     def home(self, forcepos, movepos, endstops, speed, second_home=False):
         if second_home and forcepos == movepos:
             return
@@ -96,18 +107,9 @@ class Homing:
                              for es, n in endstops for s in es.get_steppers()])
             self.toolhead.dwell(est_steps * HOMING_STEP_DELAY, check_stall=False)
             speed = self._get_homing_speed(speed, endstops)
-        # Setup for retract verification
-        self.toolhead.get_last_move_time()
-        start_mcu_pos = [(s, name, s.get_mcu_position())
-                         for es, name in endstops for s in es.get_steppers()]
         # Issue homing move
-        self._homing_move(movepos, endstops, speed)
-        # Verify retract led to some movement on second home
-        if second_home and self.verify_retract:
-            for s, name, pos in start_mcu_pos:
-                if s.get_mcu_position() == pos:
-                    raise EndstopError(
-                        "Endstop %s still triggered after retract" % (name,))
+        self._homing_move(movepos, endstops, speed,
+                          verify_movement=second_home and self.verify_retract)
     def home_axes(self, axes):
         self.changed_axes = axes
         try:
