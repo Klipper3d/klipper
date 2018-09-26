@@ -199,6 +199,18 @@ class ProbePointsHelper:
         except homing.EndstopError as e:
             self.finalize(False)
             raise self.gcode.error(str(e))
+    def move_next(self):
+        x, y = self.probe_points[len(self.results)/self.samples]
+        curpos = self.toolhead.get_position()
+        curpos[0] = x
+        curpos[1] = y
+        curpos[2] = self.horizontal_move_z
+        try:
+            self.toolhead.move(curpos, self.speed)
+        except homing.EndstopError as e:
+            self.finalize(False)
+            raise self.gcode.error(str(e))
+        self.gcode.reset_last_position()
     def probe_point(self):
         for i in range(self.samples):
             self.gcode.run_script_from_command("PROBE")
@@ -228,18 +240,6 @@ class ProbePointsHelper:
             except:
                 self.finalize(False)
                 raise
-    def move_next(self):
-        x, y = self.probe_points[len(self.results)/self.samples]
-        curpos = self.toolhead.get_position()
-        curpos[0] = x
-        curpos[1] = y
-        curpos[2] = self.horizontal_move_z
-        try:
-            self.toolhead.move(curpos, self.speed)
-        except homing.EndstopError as e:
-            self.finalize(False)
-            raise self.gcode.error(str(e))
-        self.gcode.reset_last_position()
     cmd_NEXT_help = "Move to the next XY position to probe"
     def cmd_NEXT(self, params):
         if self.probe is None:
