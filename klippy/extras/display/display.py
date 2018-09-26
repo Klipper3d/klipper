@@ -246,7 +246,7 @@ class PrinterLCD:
         self.msg_time = msg_time
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
-        self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
+        self.progress = min(100., max(0., self.gcode.get_float('P', params)))
         self.prg_time = M73_TIMEOUT
     def cmd_M117(self, params):
         if '#original' in params:
