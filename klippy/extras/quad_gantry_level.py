@@ -9,7 +9,7 @@ import probe
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.probe_helper = probe.ProbePointsHelper(config, self)
+        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
@@ -39,9 +39,6 @@ class QuadGantryLevel:
     cmd_QUAD_GANTRY_LEVEL_help = "Conform a moving, twistable gantry to the shape of a stationary bed"
     def cmd_QUAD_GANTRY_LEVEL(self, params):
         self.probe_helper.start_probe()
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
     def squash_positions(self,positions):
         # Group multi-probe data and average out the Z readings
         # Assumes samples come in sequentially
@@ -55,7 +52,7 @@ class QuadGantryLevel:
         for id,pos in enumerate(grouped_pos):
             grouped_pos[id][2] = sum(grouped_pos[id][2]) / len(grouped_pos[id][2])
         return grouped_pos
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         if len(positions) > 4:
             positions = self.squash_positions(positions)
         logging.info("quad_gantry_level Calculating gantry geometry with: %s", positions)
