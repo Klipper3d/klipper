@@ -184,7 +184,7 @@ class DeltaCalibrate:
         for i, (z_offset, spos) in enumerate(probe_positions):
             configfile.set(section, "height%d" % (i,), z_offset)
             configfile.set(section, "height%d_pos" % (i,),
-                           "%d,%d,%d" % tuple(spos))
+                           "%.3f,%.3f,%.3f" % tuple(spos))
         # Save distance measurements
         for i, (dist, spos1, spos2) in enumerate(distances):
             configfile.set(section, "distance%d" % (i,), dist)
