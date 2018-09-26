@@ -12,14 +12,16 @@ class GCodeMacro:
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
         try:
-            self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+            self.gcode.register_command(
+                self.alias, self.cmd, desc=self.cmd_desc)
         except self.gcode.error as e:
             raise config.error(str(e))
         self.in_script = False
     cmd_desc = "G-Code macro"
     def cmd(self, params):
         if self.in_script:
-            raise self.gcode.error("Macro %s called recursively" % (self.alias,))
+            raise self.gcode.error(
+                "Macro %s called recursively" % (self.alias,))
         script = ""
         try:
             script = self.script.format(**params)
