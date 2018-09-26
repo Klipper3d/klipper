@@ -49,13 +49,6 @@ def get_position_from_stable(stable_position, delta_params):
                 dp.stepdists, dp.towers, dp.abs_endstops, stable_position) ]
     return mathutil.trilateration(sphere_coords, [a**2 for a in dp.arms])
 
-# Return a stable position from the nominal delta tower positions
-def get_stable_position(stepper_position, delta_params):
-    dp = delta_params
-    return [int((ep - sp) / sd + .5)
-            for sd, ep, sp in zip(
-                    dp.stepdists, dp.abs_endstops, stepper_position)]
-
 # Return a stable position from a cartesian coordinate
 def calc_stable_position(coord, delta_params):
     dp = delta_params
@@ -201,13 +194,13 @@ class DeltaCalibrate:
                            "%.3f,%.3f,%.3f" % tuple(spos2))
     def get_probed_position(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return [s.get_commanded_position() for s in kin.get_steppers()]
+        return kin.calc_position()
     def finalize(self, offsets, positions):
         # Convert positions into (z_offset, stable_position) pairs
         z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         delta_params = build_delta_params(kin.get_calibrate_params())
-        probe_positions = [(z_offset, get_stable_position(p, delta_params))
+        probe_positions = [(z_offset, calc_stable_position(p, delta_params))
                            for p in positions]
         # Perform analysis
         self.calculate_params(probe_positions, self.last_distances)
