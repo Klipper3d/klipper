@@ -8,6 +8,7 @@ import logging
 import math
 import json
 import probe
+import collections
 
 class BedMeshError(Exception):
     pass
@@ -130,14 +131,18 @@ class BedMeshCalibrate:
     ALGOS = ['lagrange', 'bicubic']
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
+        self.name = config.get_name()
         self.bedmesh = bedmesh
         self.probed_z_table = None
         self.build_map = False
-        self.probe_params = {}
+        self.probe_params = collections.OrderedDict()
         points = self._generate_points(config)
         self._init_probe_params(config, points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, points)
+        # setup persistent storage
+        self.profiles = {}
+        self._load_storage(config)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
@@ -145,6 +150,9 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
             desc=self.cmd_BED_MESH_MAP_help)
+        self.gcode.register_command(
+            'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
+            desc=self.cmd_BED_MESH_PROFILE_help)
     def _generate_points(self, config):
         x_cnt, y_cnt = parse_pair(
             config, ('probe_count', '3'), check=False, cast=int, minval=3)
@@ -184,6 +192,8 @@ class BedMeshCalibrate:
         self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
         self.probe_params['min_y'] = min(points, key=lambda p: p[1])[1]
         self.probe_params['max_y'] = max(points, key=lambda p: p[1])[1]
+        self.probe_params['x_offset'] = 0.
+        self.probe_params['y_offset'] = 0.
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
         self.probe_params['mesh_x_pps'] = pps[0]
@@ -196,6 +206,92 @@ class BedMeshCalibrate:
                 % (self.probe_params['algo']))
         self.probe_params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
+    def _load_storage(self, config):
+        stored_profs = config.get_prefix_sections(self.name)
+        # Remove primary bed_mesh section, as it is not a stored profile
+        stored_profs = [s for s in stored_profs
+                        if s.get_name() is not self.name]
+        for profile in stored_profs:
+            name = profile.get_name().split(' ', 1)[1]
+            self.profiles[name] = {}
+            z_values = profile.get('points').split('\n')
+            self.profiles[name]['points'] = \
+                [[float(pt.strip()) for pt in line.split(',')]
+                    for line in z_values if line.strip()]
+            self.profiles[name]['probe_params'] = params = \
+                collections.OrderedDict()
+            for key, value in self.probe_params.iteritems():
+                if type(value) is int:
+                    params[key] = profile.getint(key)
+                elif type(value) is float:
+                    params[key] = profile.getfloat(key)
+                elif type(value) is str:
+                    params[key] = profile.get(key)
+    def save_profile(self, prof_name):
+        if self.probed_z_table is None:
+            self.gcode.respond_info(
+                "Unable to save to profile [%s], the bed has not been probed"
+                % (prof_name))
+            return
+        configfile = self.printer.lookup_object('configfile')
+        cfg_name = self.name + " " + prof_name
+        # set params
+        z_values = ""
+        for line in self.probed_z_table:
+            z_values += "\n  "
+            for p in line:
+                z_values += "%.6f, " % p
+            z_values = z_values[:-2]
+        configfile.set(cfg_name, 'points', z_values)
+        for key, value in self.probe_params.iteritems():
+            configfile.set(cfg_name, key, value)
+        # save copy in local storage
+        self.profiles[prof_name] = profile = {}
+        profile['points'] = list(self.probed_z_table)
+        profile['probe_params'] = collections.OrderedDict(self.probe_params)
+        self.gcode.respond_info(
+            "Bed Mesh state has been saved to profile [%s]\n"
+            "for the current session.  The SAVE_CONFIG command will\n"
+            "update the printer config file and restart the printer."
+            % (prof_name))
+    def load_profile(self, prof_name):
+        profile = self.profiles.get(prof_name, None)
+        if profile is None:
+            raise self.gcode.error(
+                "bed_mesh: Unknown profile [%s]" % prof_name)
+        self.probed_z_table = profile['points']
+        zmesh = ZMesh(profile['probe_params'])
+        try:
+            zmesh.build_mesh(self.probed_z_table)
+        except BedMeshError as e:
+            raise self.gcode.error(e.message)
+        self.bedmesh.set_mesh(zmesh)
+    def remove_profile(self, prof_name):
+        if prof_name in self.profiles:
+            configfile = self.printer.lookup_object('configfile')
+            configfile.remove_section('bed_mesh ' + prof_name)
+            del self.profiles[prof_name]
+            self.gcode.respond_info(
+                "Profile [%s] removed from storage for this session.\n"
+                "The SAVE_CONFIG command will update the printer\n"
+                "configuration and restart the printer" % (prof_name))
+        else:
+            self.gcode.respond_info(
+                "No profile named [%s] to remove" % (prof_name))
+    cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
+    def cmd_BED_MESH_PROFILE(self, params):
+        options = collections.OrderedDict({
+            'LOAD': self.load_profile,
+            'SAVE': self.save_profile,
+            'REMOVE': self.remove_profile
+        })
+        for key in options:
+            name = self.gcode.get_str(key, params, None)
+            if name is not None:
+                options[key](name)
+                return
+        self.gcode.respond_error(
+            "Invalid syntax '%s'" % (params['#original']))
     cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
     def cmd_BED_MESH_MAP(self, params):
         self.build_map = True
