@@ -26,17 +26,9 @@ class PrinterProbe:
         else:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
-        # Create an "endstop" object to handle the probe pin
+        # Create mcu_probe object and register z_virtual_endstop pin
+        self.mcu_probe = ProbeEndstopWrapper(config)
         ppins = self.printer.lookup_object('pins')
-        pin = config.get('pin')
-        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        mcu = pin_params['chip']
-        mcu.register_config_callback(self.build_config)
-        self.mcu_probe = mcu.setup_pin('endstop', pin_params)
-        if (config.get('activate_gcode', None) is not None or
-            config.get('deactivate_gcode', None) is not None):
-            self.mcu_probe = ProbeEndstopWrapper(config, self.mcu_probe)
-        # Create z_virtual_endstop pin
         ppins.register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
@@ -44,16 +36,12 @@ class PrinterProbe:
             'PROBE', self.cmd_PROBE, desc=self.cmd_PROBE_help)
         self.gcode.register_command(
             'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
-    def build_config(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers('Z'):
-            stepper.add_to_endstop(self.mcu_probe)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
-        return ProbeVirtualEndstop(self, self.mcu_probe)
+        return self.mcu_probe
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
     cmd_PROBE_help = "Probe Z-height at current XY position"
@@ -82,13 +70,20 @@ class PrinterProbe:
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
 
-# Endstop wrapper that enables running g-code scripts on setup
+# Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
-    def __init__(self, config, mcu_endstop):
-        self.mcu_endstop = mcu_endstop
-        self.gcode = config.get_printer().lookup_object('gcode')
-        self.activate_gcode = config.get('activate_gcode', "")
-        self.deactivate_gcode = config.get('deactivate_gcode', "")
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.position_endstop = config.getfloat('z_offset')
+        self.activate_gcode = config.get('activate_gcode', None)
+        self.deactivate_gcode = config.get('deactivate_gcode', None)
+        # Create an "endstop" object to handle the probe pin
+        ppins = self.printer.lookup_object('pins')
+        pin = config.get('pin')
+        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
+        mcu = pin_params['chip']
+        mcu.register_config_callback(self._build_config)
+        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -98,31 +93,22 @@ class ProbeEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
+    def _build_config(self):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        for stepper in kin.get_steppers('Z'):
+            stepper.add_to_endstop(self)
     def home_prepare(self):
-        self.gcode.run_script_from_command(self.activate_gcode)
+        if self.activate_gcode is not None:
+            gcode = self.printer.lookup_object('gcode')
+            gcode.run_script_from_command(self.activate_gcode)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        self.gcode.run_script_from_command(self.deactivate_gcode)
+        if self.deactivate_gcode is not None:
+            gcode = self.printer.lookup_object('gcode')
+            gcode.run_script_from_command(self.deactivate_gcode)
         self.mcu_endstop.home_finalize()
-
-# Wrapper for probe:z_virtual_endstop handling
-class ProbeVirtualEndstop:
-    def __init__(self, probe, mcu_endstop):
-        self.probe = probe
-        self.mcu_endstop = mcu_endstop
-        # Wrappers
-        self.get_mcu = self.mcu_endstop.get_mcu
-        self.add_stepper = self.mcu_endstop.add_stepper
-        self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
-        self.home_wait = self.mcu_endstop.home_wait
-        self.home_finalize = self.mcu_endstop.home_finalize
-        self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
-        self.home_prepare = self.mcu_endstop.home_prepare
-        self.TimeoutError = self.mcu_endstop.TimeoutError
     def get_position_endstop(self):
-        return self.probe.get_offsets()[2]
+        return self.position_endstop
 
 # Helper code that can probe a series of points and report the
 # position at each point.
