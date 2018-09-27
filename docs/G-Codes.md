@@ -189,6 +189,14 @@ section is enabled:
   will be cleared as the process rehomes the printer.
 - `BED_MESH_CLEAR`: This command clears the mesh and removes all
   z adjustment.  It is recommended to put this in your end-gcode.
+  `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This
+  command provides profile management for mesh state.  LOAD will
+  restore the mesh state from the profile matching the supplied name.
+  SAVE will save the current mesh state to a profile matching the
+  supplied name.  Remove will delete the profile matching the
+  supplied name from persistent memory.  Note that after SAVE or
+  REMOVE operations have been run the SAVE_CONFIG gcode must be run
+  to make the changes to peristent memory permanent.
 
 ## Z Tilt
 
