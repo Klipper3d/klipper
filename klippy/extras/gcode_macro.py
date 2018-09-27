@@ -8,6 +8,7 @@ import logging
 class GCodeMacro:
     def __init__(self, config):
         self.alias = config.get_name().split()[1].upper()
+        self.dp = " ".join(config.get_name().split()[2:])
         self.script = config.get('gcode')
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
@@ -17,14 +18,23 @@ class GCodeMacro:
         except self.gcode.error as e:
             raise config.error(str(e))
         self.in_script = False
+        self.kwparams = {}
+        try:
+            self.kwparams = {str(k).upper(): v for k, o, v in (map(
+                str.strip, x.partition('=')) for x in self.dp.split(',')) if k}
+        except Exception:
+            raise config.error("Unable to parse default parameter values")
     cmd_desc = "G-Code macro"
     def cmd(self, params):
         if self.in_script:
             raise self.gcode.error(
                 "Macro %s called recursively" % (self.alias,))
         script = ""
+        kwparams = {}
         try:
-            script = self.script.format(**params)
+            kwparams.update(self.kwparams)
+            kwparams.update(params)
+            script = self.script.format(**kwparams)
         except Exception:
             msg = "Macro %s script formatting failed" % (self.alias,)
             logging.exception(msg)
