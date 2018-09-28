@@ -4,7 +4,7 @@
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, re, collections
+import sys, re, collections, ast
 
 def format_comment(line_num, line):
     return "# %6d: %s" % (line_num, line)
@@ -62,7 +62,9 @@ sent_r = re.compile(r"^Sent " + count_s + " " + esttime_s + " " + time_s
 receive_dump_r = re.compile(r"^Dumping receive queue " + count_s + " messages$")
 receive_r = re.compile(r"^Receive: " + count_s + " " + time_s + " " + esttime_s
                     + " [0-9]+: seq: 1" + shortseq_s + ",")
-gcode_r = re.compile(r"^Read " + time_s + ": ['\"]")
+gcode_r = re.compile(r"^Read " + time_s + r": (?P<gcode>['\"].*)$")
+gcode_state_r = re.compile(r"^gcode state: ")
+varlist_split_r = re.compile(r"([^ ]+)=")
 clock_r = re.compile(r"^clocksync state: .* clock_est=\((?P<st>[^ ]+)"
                      + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
 repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
@@ -89,6 +91,7 @@ class GatherShutdown:
     def __init__(self, configs, line_num, recent_lines, logname):
         self.shutdown_line_num = line_num
         self.filename = "%s.shutdown%05d" % (logname, line_num)
+        self.gcode_filename = "%s.gcode%05d" % (logname, line_num)
         self.comments = []
         if configs:
             configs_by_id = {c.config_num: c for c in configs.values()}
@@ -97,6 +100,7 @@ class GatherShutdown:
             self.comments.append("# config %s" % (config.filename,))
         self.stats_stream = []
         self.gcode_stream = []
+        self.gcode_state = ''
         self.mcus = {}
         self.mcu = None
         self.first_stat_time = self.last_stat_time = None
@@ -106,6 +110,36 @@ class GatherShutdown:
     def add_comment(self, comment):
         if comment is not None:
             self.comments.append(comment)
+    def extract_params(self, line):
+        parts = varlist_split_r.split(line)
+        try:
+            return { parts[i]: ast.literal_eval(parts[i+1].strip())
+                     for i in range(1, len(parts), 2) }
+        except:
+            return {}
+    def handle_gcode_state(self, line):
+        kv = self.extract_params(line)
+        out = ['; Start g-code state restore', 'G28']
+        if not kv['absolutecoord']:
+            out.append('G91')
+        if not kv['absoluteextrude']:
+            out.append('M83')
+        lp = kv['last_position']
+        out.append('G1 X%f Y%f Z%f F%f' % (
+            lp[0], lp[1], lp[2], kv['speed'] * 60.))
+        bp = kv['base_position']
+        if bp[:3] != [0., 0., 0.]:
+            out.append('; Must manually set base position...')
+        out.append('G92 E%f' % (lp[3] - bp[3],))
+        hp = kv['homing_position']
+        if hp != [0., 0., 0., 0.]:
+            out.append('; Must manually set homing position...')
+        if abs(kv['speed_factor'] - 1. / 60.) > .000001:
+            out.append('M220 S%f' % (kv['speed_factor'] * 60. * 100.,))
+        if kv['extrude_factor'] != 1.:
+            out.append('M221 S%f' % (kv['extrude_factor'] * 100.,))
+        out.extend(['; End of state restore', '', ''])
+        self.gcode_state = '\n'.join(out)
     def check_stats_seq(self, ts, line):
         # Parse stats
         parts = line.split()
@@ -183,7 +217,11 @@ class GatherShutdown:
         m = gcode_r.match(line)
         if m is not None:
             ts = float(m.group('time'))
-            self.gcode_stream.append((ts, line_num, line))
+            self.gcode_stream.append((ts, line_num, line, m.group('gcode')))
+            return
+        m = gcode_state_r.match(line)
+        if m is not None:
+            self.handle_gcode_state(line)
             return
         m = stats_r.match(line)
         if m is not None:
@@ -248,6 +286,12 @@ class GatherShutdown:
         f = open(self.filename, 'wb')
         f.write('\n'.join(self.comments + out))
         f.close()
+        # Produce output gcode stream
+        if self.gcode_stream:
+            data = [ast.literal_eval(gc[3]) for gc in self.gcode_stream]
+            f = open(self.gcode_filename, 'wb')
+            f.write(self.gcode_state + ''.join(data))
+            f.close()
 
 
 ######################################################################
