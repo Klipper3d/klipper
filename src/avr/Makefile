@@ -3,14 +3,14 @@
 # Use the avr toolchain
 CROSS_PREFIX=avr-
 
-dirs-y += src/avr src/generic lib/pjrc_usb_serial
+dirs-y += src/avr src/generic
 
 CFLAGS += -mmcu=$(CONFIG_MCU)
 
 # Add avr source files
 src-y += avr/main.c avr/timer.c avr/gpio.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
-src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c ../lib/pjrc_usb_serial/usb_serial.c
+src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_AVR_SERIAL) += avr/serial.c generic/serial_irq.c
 
 # Suppress broken "misspelled signal handler" warnings on gcc 4.8.1
