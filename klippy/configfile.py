@@ -74,6 +74,9 @@ class ConfigWrapper:
     def get_prefix_sections(self, prefix):
         return [self.getsection(s) for s in self.fileconfig.sections()
                 if s.startswith(prefix)]
+    def get_prefix_options(self, prefix):
+        return [o for o in self.fileconfig.options(self.section)
+                if o.startswith(prefix)]
 
 AUTOSAVE_HEADER = """
 #*# <---------------------- SAVE_CONFIG ---------------------->
