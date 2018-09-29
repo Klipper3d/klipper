@@ -5,10 +5,12 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+DEFAULT_PREFIX = 'default_parameter_'
+
+
 class GCodeMacro:
     def __init__(self, config):
         self.alias = config.get_name().split()[1].upper()
-        self.dp = " ".join(config.get_name().split()[2:])
         self.script = config.get('gcode')
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
@@ -20,8 +22,10 @@ class GCodeMacro:
         self.in_script = False
         self.kwparams = {}
         try:
-            self.kwparams = {str(k).upper(): v for k, o, v in (map(
-                str.strip, x.partition('=')) for x in self.dp.split(',')) if k}
+            kvpairs = [map(str.strip, (
+                o[len(DEFAULT_PREFIX):], config.get(o, '')
+            )) for o in config.get_prefix_options(DEFAULT_PREFIX)]
+            self.kwparams = {str(k).upper(): v for (k, v) in kvpairs if k}
         except Exception:
             raise config.error("Unable to parse default parameter values")
     cmd_desc = "G-Code macro"
