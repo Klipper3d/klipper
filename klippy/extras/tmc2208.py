@@ -192,7 +192,7 @@ class TMC2208:
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
     def printer_state(self, state):
-        if state == 'ready':
+        if state == 'connect':
             for reg_name, val in self.init_regs.items():
                 self.set_register(reg_name, val)
     def get_register(self, reg_name):
@@ -225,7 +225,10 @@ class TMC2208:
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
         for reg_name in ReadRegisters:
-            val = self.get_register(reg_name)
+            try:
+                val = self.get_register(reg_name)
+            except self.printer.config_error as e:
+                raise gcode.error(str(e))
             msg = "%-15s %08x" % (reg_name + ":", val)
             logging.info(msg)
             gcode.respond_info(msg)
