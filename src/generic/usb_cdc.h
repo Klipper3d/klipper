@@ -15,6 +15,7 @@ enum {
 int_fast8_t usb_read_bulk_out(void *data, uint_fast8_t max_len);
 int_fast8_t usb_send_bulk_in(void *data, uint_fast8_t len);
 int_fast8_t usb_read_ep0(void *data, uint_fast8_t max_len);
+int_fast8_t usb_read_ep0_setup(void *data, uint_fast8_t max_len);
 int_fast8_t usb_send_ep0(const void *data, uint_fast8_t len);
 int_fast8_t usb_send_ep0_progmem(const void *data, uint_fast8_t len);
 void usb_stall_ep0(void);

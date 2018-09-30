@@ -190,6 +190,12 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
 }
 
 int_fast8_t
+usb_read_ep0_setup(void *data, uint_fast8_t max_len)
+{
+    return usb_read_ep0(data, max_len);
+}
+
+int_fast8_t
 usb_send_ep0(const void *data, uint_fast8_t len)
 {
     return usb_write_packet(EP0IN, data, len);

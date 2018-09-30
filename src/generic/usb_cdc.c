@@ -412,9 +412,8 @@ static void
 usb_state_ready(void)
 {
     struct usb_ctrlrequest req;
-    int_fast8_t ret = usb_read_ep0(&req, sizeof(req));
+    int_fast8_t ret = usb_read_ep0_setup(&req, sizeof(req));
     if (ret != sizeof(req))
-        // XXX - should verify that packet was sent with a setup token
         return;
     switch (req.bRequest) {
     case USB_REQ_GET_DESCRIPTOR: usb_req_get_descriptor(&req); break;
