@@ -290,7 +290,7 @@ static const struct descriptor_s {
 
 // State tracking
 enum {
-    UX_READ = 1<<0, UX_SEND = 1<<1, UX_SEND_ZLP = 1<<2
+    UX_READ = 1<<0, UX_SEND = 1<<1, UX_SEND_PROGMEM = 1<<2, UX_SEND_ZLP = 1<<3
 };
 
 static void *usb_xfer_data;
@@ -315,6 +315,8 @@ usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
         int_fast8_t ret;
         if (flags & UX_READ)
             ret = usb_read_ep0(data, xs);
+        else if (NEED_PROGMEM && flags & UX_SEND_PROGMEM)
+            ret = usb_send_ep0_progmem(data, xs);
         else
             ret = usb_send_ep0(data, xs);
         if (ret == xs) {
@@ -359,7 +361,8 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            uint_fast8_t size = READP(d->size), flags = UX_SEND;
+            uint_fast8_t size = READP(d->size);
+            uint_fast8_t flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
             if (size > req->wLength)
                 size = req->wLength;
             else if (size < req->wLength)
