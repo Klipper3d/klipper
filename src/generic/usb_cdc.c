@@ -290,49 +290,57 @@ static const struct descriptor_s {
 
 // State tracking
 enum {
-    US_READY, US_SEND, US_READ
+    UX_READ = 1<<0, UX_SEND = 1<<1
 };
 
-static uint_fast8_t usb_state;
-static void *usb_xfer;
-static uint_fast8_t usb_xfer_size;
+static void *usb_xfer_data;
+static uint8_t usb_xfer_size, usb_xfer_flags;
 
+// Set the USB "stall" condition
 static void
 usb_do_stall(void)
 {
     usb_stall_ep0();
-    usb_state = US_READY;
+    usb_xfer_flags = 0;
 }
 
-// Sending data from device to host
+// Transfer data on the usb endpoint 0
 static void
-usb_state_xfer(void)
+usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
 {
     for (;;) {
-        uint_fast8_t xs = usb_xfer_size;
+        uint_fast8_t xs = size;
         if (xs > USB_CDC_EP0_SIZE)
             xs = USB_CDC_EP0_SIZE;
         int_fast8_t ret;
-        if (usb_state == US_SEND)
-            ret = usb_send_ep0(usb_xfer, xs);
+        if (flags & UX_READ)
+            ret = usb_read_ep0(data, xs);
         else
-            ret = usb_read_ep0(usb_xfer, xs);
+            ret = usb_send_ep0(data, xs);
         if (ret == xs) {
             // Success
-            usb_xfer += xs;
-            usb_xfer_size -= xs;
-            if (!usb_xfer_size && xs < USB_CDC_EP0_SIZE) {
+            data += xs;
+            size -= xs;
+            if (!size && xs < USB_CDC_EP0_SIZE) {
                 // Transfer completed successfully
-                if (usb_state == US_READ)
-                    usb_send_ep0(NULL, 0);
-                usb_state = US_READY;
+                if (flags & UX_READ) {
+                    // Send status packet at end of read
+                    flags = UX_SEND;
+                    continue;
+                }
+                usb_xfer_flags = 0;
+                usb_notify_ep0();
                 return;
             }
             continue;
         }
-        if (ret == -1)
+        if (ret == -1) {
             // Interface busy - retry later
+            usb_xfer_data = data;
+            usb_xfer_size = size;
+            usb_xfer_flags = flags;
             return;
+        }
         // Error
         usb_do_stall();
         return;
@@ -348,12 +356,10 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            usb_state = US_SEND;
-            usb_xfer = (void*)READP(d->desc);
-            usb_xfer_size = READP(d->size);
-            if (usb_xfer_size > req->wLength)
-                usb_xfer_size = req->wLength;
-            usb_state_xfer();
+            uint_fast8_t size = READP(d->size);
+            if (size > req->wLength)
+                size = req->wLength;
+            usb_do_xfer((void*)READP(d->desc), size, UX_SEND);
             return;
         }
     }
@@ -370,8 +376,8 @@ static void
 usb_req_set_configuration(struct usb_ctrlrequest *req)
 {
     usb_set_configure();
-    usb_send_ep0(NULL, 0);
     usb_notify_bulk_in();
+    usb_do_xfer(NULL, 0, UX_SEND);
 }
 
 static struct usb_cdc_line_coding line_coding;
@@ -379,23 +385,19 @@ static struct usb_cdc_line_coding line_coding;
 static void
 usb_req_set_line_coding(struct usb_ctrlrequest *req)
 {
-    usb_state = US_READ;
-    usb_xfer = &line_coding;
-    usb_xfer_size = sizeof(line_coding);
+    usb_do_xfer(&line_coding, sizeof(line_coding), UX_READ);
 }
 
 static void
 usb_req_get_line_coding(struct usb_ctrlrequest *req)
 {
-    usb_state = US_SEND;
-    usb_xfer = &line_coding;
-    usb_xfer_size = sizeof(line_coding);
+    usb_do_xfer(&line_coding, sizeof(line_coding), UX_SEND);
 }
 
 static void
-usb_req_line_state(struct usb_ctrlrequest *req)
+usb_req_set_line(struct usb_ctrlrequest *req)
 {
-    usb_send_ep0(NULL, 0);
+    usb_do_xfer(NULL, 0, UX_SEND);
 }
 
 static void
@@ -412,7 +414,7 @@ usb_state_ready(void)
     case USB_REQ_SET_CONFIGURATION: usb_req_set_configuration(&req); break;
     case USB_CDC_REQ_SET_LINE_CODING: usb_req_set_line_coding(&req); break;
     case USB_CDC_REQ_GET_LINE_CODING: usb_req_get_line_coding(&req); break;
-    case USB_CDC_REQ_SET_CONTROL_LINE_STATE: usb_req_line_state(&req); break;
+    case USB_CDC_REQ_SET_CONTROL_LINE_STATE: usb_req_set_line(&req); break;
     default: usb_do_stall(); break;
     }
 }
@@ -431,11 +433,10 @@ usb_ep0_task(void)
 {
     if (!sched_check_wake(&usb_ep0_wake))
         return;
-    switch (usb_state) {
-    case US_READY: usb_state_ready(); break;
-    case US_SEND: usb_state_xfer(); break;
-    case US_READ: usb_state_xfer(); break;
-    }
+    if (usb_xfer_flags)
+        usb_do_xfer(usb_xfer_data, usb_xfer_size, usb_xfer_flags);
+    else
+        usb_state_ready();
 }
 DECL_TASK(usb_ep0_task);
 
