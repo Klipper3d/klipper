@@ -3,7 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import traceback, logging
 
 DEFAULT_PREFIX = 'default_parameter_'
 
@@ -31,8 +31,9 @@ class GCodeMacro:
         kwparams.update(params)
         try:
             script = self.script.format(**kwparams)
-        except Exception:
-            msg = "Macro %s script formatting failed" % (self.alias,)
+        except Exception as e:
+            msg = "Error evaluating %s: %s" % (
+                self.alias, traceback.format_exception_only(type(e), e)[-1])
             logging.exception(msg)
             raise self.gcode.error(msg)
         self.in_script = True
