@@ -290,7 +290,7 @@ static const struct descriptor_s {
 
 // State tracking
 enum {
-    UX_READ = 1<<0, UX_SEND = 1<<1
+    UX_READ = 1<<0, UX_SEND = 1<<1, UX_SEND_ZLP = 1<<2
 };
 
 static void *usb_xfer_data;
@@ -321,13 +321,16 @@ usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
             // Success
             data += xs;
             size -= xs;
-            if (!size && xs < USB_CDC_EP0_SIZE) {
-                // Transfer completed successfully
+            if (!size) {
+                // Entire transfer completed successfully
                 if (flags & UX_READ) {
                     // Send status packet at end of read
                     flags = UX_SEND;
                     continue;
                 }
+                if (xs == USB_CDC_EP0_SIZE && flags & UX_SEND_ZLP)
+                    // Must send zero-length-packet
+                    continue;
                 usb_xfer_flags = 0;
                 usb_notify_ep0();
                 return;
@@ -356,10 +359,12 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            uint_fast8_t size = READP(d->size);
+            uint_fast8_t size = READP(d->size), flags = UX_SEND;
             if (size > req->wLength)
                 size = req->wLength;
-            usb_do_xfer((void*)READP(d->desc), size, UX_SEND);
+            else if (size < req->wLength)
+                flags |= UX_SEND_ZLP;
+            usb_do_xfer((void*)READP(d->desc), size, flags);
             return;
         }
     }
