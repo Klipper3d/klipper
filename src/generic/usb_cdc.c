@@ -12,7 +12,7 @@
 #include "generic/usbstd.h" // struct usb_device_descriptor
 #include "generic/usbstd_cdc.h" // struct usb_cdc_header_descriptor
 #include "sched.h" // sched_wake_task
-#include "usb_cdc.h" // usb_notify_setup
+#include "usb_cdc.h" // usb_notify_ep0
 
 // XXX - move to Kconfig
 #define CONFIG_USB_VENDOR_ID 0x2341
@@ -300,7 +300,7 @@ static uint_fast8_t usb_xfer_size;
 static void
 usb_do_stall(void)
 {
-    usb_set_stall();
+    usb_stall_ep0();
     usb_state = US_READY;
 }
 
@@ -314,9 +314,9 @@ usb_state_xfer(void)
             xs = USB_CDC_EP0_SIZE;
         int_fast8_t ret;
         if (usb_state == US_SEND)
-            ret = usb_send_setup(usb_xfer, xs);
+            ret = usb_send_ep0(usb_xfer, xs);
         else
-            ret = usb_read_setup(usb_xfer, xs);
+            ret = usb_read_ep0(usb_xfer, xs);
         if (ret == xs) {
             // Success
             usb_xfer += xs;
@@ -324,7 +324,7 @@ usb_state_xfer(void)
             if (!usb_xfer_size && xs < USB_CDC_EP0_SIZE) {
                 // Transfer completed successfully
                 if (usb_state == US_READ)
-                    usb_send_setup(NULL, 0);
+                    usb_send_ep0(NULL, 0);
                 usb_state = US_READY;
                 return;
             }
@@ -370,7 +370,7 @@ static void
 usb_req_set_configuration(struct usb_ctrlrequest *req)
 {
     usb_set_configure();
-    usb_send_setup(NULL, 0);
+    usb_send_ep0(NULL, 0);
     usb_notify_bulk_in();
 }
 
@@ -395,14 +395,14 @@ usb_req_get_line_coding(struct usb_ctrlrequest *req)
 static void
 usb_req_line_state(struct usb_ctrlrequest *req)
 {
-    usb_send_setup(NULL, 0);
+    usb_send_ep0(NULL, 0);
 }
 
 static void
 usb_state_ready(void)
 {
     struct usb_ctrlrequest req;
-    int_fast8_t ret = usb_read_setup(&req, sizeof(req));
+    int_fast8_t ret = usb_read_ep0(&req, sizeof(req));
     if (ret != sizeof(req))
         // XXX - should verify that packet was sent with a setup token
         return;
@@ -418,18 +418,18 @@ usb_state_ready(void)
 }
 
 // State tracking dispatch
-static struct task_wake usb_setup_wake;
+static struct task_wake usb_ep0_wake;
 
 void
-usb_notify_setup(void)
+usb_notify_ep0(void)
 {
-    sched_wake_task(&usb_setup_wake);
+    sched_wake_task(&usb_ep0_wake);
 }
 
 void
-usb_setup_task(void)
+usb_ep0_task(void)
 {
-    if (!sched_check_wake(&usb_setup_wake))
+    if (!sched_check_wake(&usb_ep0_wake))
         return;
     switch (usb_state) {
     case US_READY: usb_state_ready(); break;
@@ -437,12 +437,12 @@ usb_setup_task(void)
     case US_READ: usb_state_xfer(); break;
     }
 }
-DECL_TASK(usb_setup_task);
+DECL_TASK(usb_ep0_task);
 
 void
 usb_shutdown(void)
 {
     usb_notify_bulk_in();
-    usb_notify_setup();
+    usb_notify_ep0();
 }
 DECL_SHUTDOWN(usb_shutdown);
