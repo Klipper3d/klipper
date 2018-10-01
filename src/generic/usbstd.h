@@ -113,7 +113,8 @@ struct usb_endpoint_descriptor {
 struct usb_string_descriptor {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t data[];
+    //uint16_t data[];
+    typeof(*u"") data[];
 } PACKED;
 
 #define USB_LANGID_ENGLISH_US 0x0409
