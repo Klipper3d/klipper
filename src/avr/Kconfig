@@ -98,8 +98,7 @@ config AVR_CLKPR
 
 config AVR_STACK_SIZE
     int
-    default 256 if MACH_atmega2560
-    default 128
+    default 256
 
 config AVR_WATCHDOG
     bool
