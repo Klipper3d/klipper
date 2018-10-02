@@ -51,6 +51,7 @@ class SerialReader:
                 hdl(params)
             except:
                 logging.exception("Exception in serial callback")
+        self.ser.close()
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
