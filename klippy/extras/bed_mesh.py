@@ -75,6 +75,7 @@ class BedMesh:
     def printer_state(self, state):
         if state == 'connect':
             self.toolhead = self.printer.lookup_object('toolhead')
+            self.calibrate.load_default_profile()
     def set_mesh(self, mesh):
         # Assign the current mesh.  If set to None, no transform
         # is applied
@@ -278,6 +279,9 @@ class BedMeshCalibrate:
         else:
             self.gcode.respond_info(
                 "No profile named [%s] to remove" % (prof_name))
+    def load_default_profile(self):
+        if "default" in self.profiles:
+            self.load_profile("default")
     cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
     def cmd_BED_MESH_PROFILE(self, params):
         options = collections.OrderedDict({
@@ -288,9 +292,14 @@ class BedMeshCalibrate:
         for key in options:
             name = self.gcode.get_str(key, params, None)
             if name is not None:
-                options[key](name)
+                if name == "default" and key is not 'LOAD':
+                    self.gcode.respond_info(
+                        "Profile 'default' is reserved, please chose"
+                        " another profile name.")
+                else:
+                    options[key](name)
                 return
-        self.gcode.respond_error(
+        self.gcode.respond_info(
             "Invalid syntax '%s'" % (params['#original']))
     cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
     def cmd_BED_MESH_MAP(self, params):
@@ -358,6 +367,7 @@ class BedMeshCalibrate:
                 raise self.gcode.error(e.message)
             self.bedmesh.set_mesh(mesh)
             self.gcode.respond_info("Mesh Bed Leveling Complete")
+            self.save_profile("default")
 
 
 class MoveSplitter:
