@@ -241,10 +241,3 @@ ISR(USB_COM_vect)
     }
     UENUM = old_uenum;
 }
-
-void
-usbserial_shutdown(void)
-{
-    UEIENX = 1<<RXSTPE;
-}
-DECL_SHUTDOWN(usbserial_shutdown);
