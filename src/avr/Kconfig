@@ -65,16 +65,6 @@ choice
         bool "8Mhz"
 endchoice
 
-if MACH_atmega1284p
-    choice
-        prompt "Serial Port"
-        config AVR_SERIAL_UART0
-            bool "UART0"
-        config AVR_SERIAL_UART1
-            bool "UART1"
-    endchoice
-endif
-
 config CLOCK_FREQ
     int
     default 8000000 if AVR_FREQ_8000000
@@ -98,8 +88,7 @@ config AVR_CLKPR
 
 config AVR_STACK_SIZE
     int
-    default 256 if MACH_atmega2560
-    default 128
+    default 256
 
 config AVR_WATCHDOG
     bool
@@ -112,6 +101,21 @@ config AVR_SERIAL
     depends on !AVR_USBSERIAL
     bool
     default y
+choice
+    depends on AVR_SERIAL
+    prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
+    help
+        Select the serial device to use on the AVR chip. This is
+        almost always UART0.
+    config AVR_SERIAL_UART0
+        bool "UART0"
+    config AVR_SERIAL_UART1
+        bool "UART1"
+    config AVR_SERIAL_UART2
+        bool "UART2" if MACH_atmega2560 || MACH_atmega1280
+    config AVR_SERIAL_UART3
+        bool "UART3" if MACH_atmega2560 || MACH_atmega1280
+endchoice
 config SERIAL_BAUD
     depends on AVR_SERIAL
     int "Baud rate for serial port"
@@ -123,6 +127,8 @@ config SERIAL_BAUD_U2X
 
 config SERIAL_PORT
     int
+    default 3 if AVR_SERIAL_UART3
+    default 2 if AVR_SERIAL_UART2
     default 1 if MACH_at90usb1286 || MACH_at90usb646 || AVR_SERIAL_UART1
     default 0
 

@@ -49,13 +49,6 @@ def get_position_from_stable(stable_position, delta_params):
                 dp.stepdists, dp.towers, dp.abs_endstops, stable_position) ]
     return mathutil.trilateration(sphere_coords, [a**2 for a in dp.arms])
 
-# Return a stable position from the nominal delta tower positions
-def get_stable_position(stepper_position, delta_params):
-    dp = delta_params
-    return [int((ep - sp) / sd + .5)
-            for sd, ep, sp in zip(
-                    dp.stepdists, dp.abs_endstops, stepper_position)]
-
 # Return a stable position from a cartesian coordinate
 def calc_stable_position(coord, delta_params):
     dp = delta_params
@@ -149,7 +142,7 @@ class DeltaCalibrate:
             dist = radius * scatter[i]
             points.append((math.cos(r) * dist, math.sin(r) * dist))
         self.probe_helper = probe.ProbePointsHelper(
-            config, self, default_points=points)
+            config, self.probe_finalize, default_points=points)
         # Restore probe stable positions
         self.last_probe_positions = []
         for i in range(999):
@@ -191,7 +184,7 @@ class DeltaCalibrate:
         for i, (z_offset, spos) in enumerate(probe_positions):
             configfile.set(section, "height%d" % (i,), z_offset)
             configfile.set(section, "height%d_pos" % (i,),
-                           "%d,%d,%d" % tuple(spos))
+                           "%.3f,%.3f,%.3f" % tuple(spos))
         # Save distance measurements
         for i, (dist, spos1, spos2) in enumerate(distances):
             configfile.set(section, "distance%d" % (i,), dist)
@@ -199,15 +192,12 @@ class DeltaCalibrate:
                            "%.3f,%.3f,%.3f" % tuple(spos1))
             configfile.set(section, "distance%d_pos2" % (i,),
                            "%.3f,%.3f,%.3f" % tuple(spos2))
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return [s.get_commanded_position() for s in kin.get_steppers()]
-    def finalize(self, offsets, positions):
+    def probe_finalize(self, offsets, positions):
         # Convert positions into (z_offset, stable_position) pairs
         z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         delta_params = build_delta_params(kin.get_calibrate_params())
-        probe_positions = [(z_offset, get_stable_position(p, delta_params))
+        probe_positions = [(z_offset, calc_stable_position(p, delta_params))
                            for p in positions]
         # Perform analysis
         self.calculate_params(probe_positions, self.last_distances)
@@ -285,7 +275,7 @@ class DeltaCalibrate:
     cmd_DELTA_CALIBRATE_help = "Delta calibration script"
     def cmd_DELTA_CALIBRATE(self, params):
         self.gcode.run_script_from_command("G28")
-        self.probe_helper.start_probe()
+        self.probe_helper.start_probe(params)
     def do_extended_calibration(self):
         # Extract distance positions
         if len(self.delta_analyze_entry) <= 1:

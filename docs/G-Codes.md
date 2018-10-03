@@ -147,8 +147,9 @@ enabled:
 
 The following commands are available when the "delta_calibrate" config
 section is enabled:
-- `DELTA_CALIBRATE`: This command will probe seven points on the bed
-  and recommend updated endstop positions, tower angles, and radius.
+- `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
+  points on the bed and recommend updated endstop positions, tower
+  angles, and radius.
   - `NEXT`: If manual bed probing is enabled, then one can use this
     command to move to the next probing point during a DELTA_CALIBRATE
     operation.
@@ -159,8 +160,9 @@ section is enabled:
 
 The following commands are available when the "bed_tilt" config
 section is enabled:
-- `BED_TILT_CALIBRATE`: This command will probe the points specified
-  in the config and then recommend updated x and y tilt adjustments.
+- `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
+  points specified in the config and then recommend updated x and y
+  tilt adjustments.
   - `NEXT`: If manual bed probing is enabled, then one can use this
     command to move to the next probing point during a
     BED_TILT_CALIBRATE operation.
@@ -169,9 +171,13 @@ section is enabled:
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE`: This command probes the bed using generated
-  points specified by the parameters in the config. After probing,
-  a mesh is generated and z-movement is adjusted according to the mesh.
+- `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
+  using generated points specified by the parameters in the
+  config. After probing, a mesh is generated and z-movement is
+  adjusted according to the mesh.
+  - `NEXT`: If manual bed probing is enabled, then one can use this
+    command to move to the next probing point during a
+    BED_MESH_CALIBRATE operation.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
@@ -183,6 +189,14 @@ section is enabled:
   will be cleared as the process rehomes the printer.
 - `BED_MESH_CLEAR`: This command clears the mesh and removes all
   z adjustment.  It is recommended to put this in your end-gcode.
+  `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This
+  command provides profile management for mesh state.  LOAD will
+  restore the mesh state from the profile matching the supplied name.
+  SAVE will save the current mesh state to a profile matching the
+  supplied name.  Remove will delete the profile matching the
+  supplied name from persistent memory.  Note that after SAVE or
+  REMOVE operations have been run the SAVE_CONFIG gcode must be run
+  to make the changes to peristent memory permanent.
 
 ## Z Tilt
 
