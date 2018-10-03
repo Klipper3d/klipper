@@ -92,8 +92,19 @@ usb_bulk_out_task(void)
 {
     if (!sched_check_wake(&usb_bulk_out_wake))
         return;
-    // Process any existing message blocks
+    // Read data
     uint_fast8_t rpos = receive_pos, pop_count;
+    if (rpos + USB_CDC_EP_BULK_OUT_SIZE <= sizeof(receive_buf)) {
+        int_fast8_t ret = usb_read_bulk_out(
+            &receive_buf[rpos], USB_CDC_EP_BULK_OUT_SIZE);
+        if (ret > 0) {
+            rpos += ret;
+            usb_notify_bulk_out();
+        }
+    } else {
+        usb_notify_bulk_out();
+    }
+    // Process a message block
     int_fast8_t ret = command_find_and_dispatch(receive_buf, rpos, &pop_count);
     if (ret) {
         // Move buffer
@@ -103,14 +114,6 @@ usb_bulk_out_task(void)
             usb_notify_bulk_out();
         }
         rpos = needcopy;
-    }
-    // Read more data
-    if (rpos + USB_CDC_EP_BULK_OUT_SIZE <= sizeof(receive_buf)) {
-        ret = usb_read_bulk_out(&receive_buf[rpos], USB_CDC_EP_BULK_OUT_SIZE);
-        if (ret > 0) {
-            rpos += ret;
-            usb_notify_bulk_out();
-        }
     }
     receive_pos = rpos;
 }
