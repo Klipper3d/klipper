@@ -919,6 +919,8 @@ class MenuManager:
         self.timer = 0
         # buttons
         self.encoder_pins = config.get('encoder_pins', None)
+        self.encoder_steps_per_detent = 
+            config.getchoice('encoder_steps_per_detent', [2, 4], 4)
         self.click_pin = config.get('click_pin', None)
         self.back_pin = config.get('back_pin', None)
         self.up_pin = config.get('up_pin', None)
@@ -942,7 +944,9 @@ class MenuManager:
                     raise config.error("Unable to parse encoder_pins")
                 self.buttons.register_rotary_encoder(
                     pin1.strip(), pin2.strip(),
-                    self.encoder_cw_callback, self.encoder_ccw_callback)
+                    self.encoder_cw_callback,
+                    self.encoder_ccw_callback,
+                    self.encoder_steps_per_detent)
             if self.click_pin:
                 self.buttons.register_buttons(
                     [self.click_pin], self.click_callback)
