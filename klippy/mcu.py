@@ -435,6 +435,7 @@ class MCU:
             rmethods = {m: m for m in [None, 'arduino', 'command', 'rpi_usb']}
             self._restart_method = config.getchoice(
                 'restart_method', rmethods, None)
+        self._restart_on_timeout = config.getboolean('restart_on_timeout', False)
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
@@ -755,9 +756,12 @@ class MCU:
         self._is_timeout = True
         logging.info("Timeout with MCU '%s' (eventtime=%f)",
                      self._name, eventtime)
-        self._disconnect()
-        self._printer.request_exit("Lost communication with MCU '%s'" % (
-            self._name,))
+        msg = "Lost communication with MCU '%s'" % (self._name,)
+        if self._restart_on_timeout:
+            self._disconnect()
+            self._printer.request_exit(msg)
+        else:
+            self._printer.invoke_shutdown(msg)
     def stats(self, eventtime):
         msg = "%s: mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
             self._name, self._mcu_tick_awake, self._mcu_tick_avg,
