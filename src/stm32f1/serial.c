@@ -29,8 +29,8 @@ serial_init(void)
     LL_USART_SetHWFlowCtrl(USART1, LL_USART_HWCONTROL_NONE);
     LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);
     LL_USART_EnableIT_RXNE(USART1);
+    NVIC_SetPriority(USART1_IRQn, 0);
     NVIC_EnableIRQ(USART1_IRQn);
-    NVIC_SetPriority(USART1_IRQn, 1);
     LL_USART_Enable(USART1);
 
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
