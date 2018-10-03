@@ -307,7 +307,11 @@ class GCodeParser:
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
     def _respond_state(self, state):
-        self.respond_info("Klipper state: %s" % (state,))
+        rsp = "Klipper state: %s" % (state,)
+        if state != 'Ready':
+            self.respond_error(rsp)
+        else:
+            self.respond_info(rsp)
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str,
