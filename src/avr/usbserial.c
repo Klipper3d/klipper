@@ -48,12 +48,14 @@ int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
     UENUM = USB_CDC_EP_BULK_OUT;
-    if (!(UEINTX & (1<<RWAL)))
+    if (!(UEINTX & (1<<RXOUTI))) {
         // No data ready
+        UEIENX = 1<<RXOUTE;
         return -1;
+    }
     uint8_t len = UEBCLX;
     usb_read_packet(data, len);
-    UEINTX = (uint8_t)~(1<<FIFOCON);
+    UEINTX = (uint8_t)~((1<<FIFOCON) | (1<<RXOUTI));
     return len;
 }
 
@@ -61,11 +63,13 @@ int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
     UENUM = USB_CDC_EP_BULK_IN;
-    if (!(UEINTX & (1<<RWAL)))
+    if (!(UEINTX & (1<<TXINI))) {
         // Buffer full
+        UEIENX = 1<<TXINE;
         return -1;
+    }
     usb_write_packet(data, len);
-    UEINTX = (uint8_t)~((1<<FIFOCON) | (1<<RXOUTI));
+    UEINTX = (uint8_t)~((1<<FIFOCON) | (1<<TXINI) | (1<<RXOUTI));
     return len;
 }
 
@@ -231,12 +235,12 @@ ISR(USB_COM_vect)
     }
     if (ueint & (1<<USB_CDC_EP_BULK_OUT)) {
         UENUM = USB_CDC_EP_BULK_OUT;
-        UEINTX = ~(1<<RXOUTI);
+        UEIENX = 0;
         usb_notify_bulk_out();
     }
     if (ueint & (1<<USB_CDC_EP_BULK_IN)) {
         UENUM = USB_CDC_EP_BULK_IN;
-        UEINTX = ~((1<<RXOUTI) | (1<<TXINI));
+        UEIENX = 0;
         usb_notify_bulk_in();
     }
     UENUM = old_uenum;
