@@ -475,6 +475,7 @@ void
 usb_shutdown(void)
 {
     usb_notify_bulk_in();
+    usb_notify_bulk_out();
     usb_notify_ep0();
 }
 DECL_SHUTDOWN(usb_shutdown);
