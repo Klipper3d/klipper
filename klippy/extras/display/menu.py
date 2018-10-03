@@ -919,8 +919,8 @@ class MenuManager:
         self.timer = 0
         # buttons
         self.encoder_pins = config.get('encoder_pins', None)
-        self.encoder_steps_per_detent = 
-            config.getchoice('encoder_steps_per_detent', [2, 4], 4)
+        self.encoder_steps_per_detent = config.getchoice(
+            'encoder_steps_per_detent', [2, 4], 4)
         self.click_pin = config.get('click_pin', None)
         self.back_pin = config.get('back_pin', None)
         self.up_pin = config.get('up_pin', None)
