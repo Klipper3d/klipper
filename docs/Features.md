@@ -132,7 +132,7 @@ represent total number of steps per second on the micro-controller.
 | 16Mhz AVR                   | 151K              | 100K              |
 | 20Mhz AVR                   | 189K              | 125K              |
 | Arduino Zero (ARM SAMD21)   | 234K              | 217K              |
-| STM32F103                   | 340K              | 300K              |
+| STM32F103                   | 364K              | 324K              |
 | Arduino Due (ARM SAM3X8E)   | 382K              | 337K              |
 | Smoothieboard (ARM LPC1768) | 385K              | 385K              |
 | Smoothieboard (ARM LPC1769) | 462K              | 462K              |

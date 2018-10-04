@@ -235,6 +235,7 @@ https://github.com/rogerclarkmelbourne/STM32duino-bootloader
 This bootloader can be flashed via 3.3V serial with something like:
 ```
 wget 'https://github.com/rogerclarkmelbourne/STM32duino-bootloader/raw/master/binaries/generic_boot20_pc13.bin'
+
 stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 ```
 
