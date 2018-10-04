@@ -17,25 +17,24 @@ CFLAGS_klipper.elf += -Llib/cmsis-stm32f1/source/
 CFLAGS_klipper.elf += -Tlib/cmsis-stm32f1/source/stm32f1.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
-# Extra build rules
-$(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
-	@echo "  Assembling $@"
-	$(Q)$(AS) $< -o $@
-
 # Add source files
 src-y += stm32f1/main.c stm32f1/timer.c stm32f1/gpio.c
 src-y += $(addprefix ../, $(wildcard lib/hal-stm32f1/source/stm32f1xx_ll_*.c))
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/cmsis-stm32f1/source/system_stm32f1xx.c
-src-ys = ../lib/cmsis-stm32f1/source/startup_stm32f103xb.s
 src-$(CONFIG_USBSERIAL) += stm32f1/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32f1/serial.c generic/serial_irq.c
+asmsrc-y = ../lib/cmsis-stm32f1/source/startup_stm32f103xb.s
 
-# Build the additional hex output file
+# Add assembler build rules
+$(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
+	@echo "  Assembling $@"
+	$(Q)$(AS) $< -o $@
+
+$(OUT)klipper.elf: $(patsubst %.s, $(OUT)src/%.o,$(asmsrc-y))
+
+# Binary output file rules
 target-y += $(OUT)klipper.bin
-
-# Add assembler objects to prerequisites list
-$(OUT)klipper.elf: $(patsubst %.s, $(OUT)src/%.o,$(src-ys))
 
 $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
