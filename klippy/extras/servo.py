@@ -29,7 +29,7 @@ class PrinterServo:
                                         self.cmd_SET_SERVO,
                                         desc=self.cmd_SET_SERVO_help)
 
-        self.initial_pwm_value = -1
+        self.initial_pwm_value = None
         #Check to see if an initial angle or pulse width is configured and
         # set it as required
         initial_angle = config.getfloat('initial_angle', -1)
@@ -43,8 +43,9 @@ class PrinterServo:
 
     def printer_state(self, state):
         if state == 'ready':
-            print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-            self._set_pwm(print_time, self.initial_pwm_value)
+            if self.initial_pwm_value != None:
+                print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+                self._set_pwm(print_time, self.initial_pwm_value)
 
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
@@ -62,7 +63,6 @@ class PrinterServo:
     def _get_pwm_from_pulse_width(self, width):
         width = max(self.min_width, min(self.max_width, width))
         return width * self.width_to_value
-
 
     cmd_SET_SERVO_help = "Set servo angle"
     def cmd_SET_SERVO(self, params):
