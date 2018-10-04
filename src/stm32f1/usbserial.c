@@ -10,6 +10,8 @@
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "sched.h" // DECL_INIT
 #include "stm32f1xx.h" // USB
+#include "stm32f1xx_ll_gpio.h" // LL_GPIO_SetOutputPin
+#include "stm32f1xx_ll_utils.h" // LL_mDelay
 
 
 /****************************************************************
@@ -218,6 +220,12 @@ usb_set_configure(void)
 void
 usb_init(void)
 {
+    // Pull the D+ pin low briefly to signal a new connection
+    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_12);
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_12, LL_GPIO_MODE_OUTPUT);
+    LL_mDelay(5);
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_12, LL_GPIO_MODE_FLOATING);
+
     // Setup USB packet memory
     btable_configure();
 
