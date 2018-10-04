@@ -18,10 +18,13 @@ config CLOCK_FREQ
     int
     default 8000000 # 72000000 / 9
 
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    default y
 config SERIAL
+    depends on !USBSERIAL
     bool
     default y
-
 config SERIAL_BAUD
     depends on SERIAL
     int "Baud rate for serial port"

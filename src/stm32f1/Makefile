@@ -28,6 +28,7 @@ src-y += $(addprefix ../, $(wildcard lib/hal-stm32f1/source/stm32f1xx_ll_*.c))
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/cmsis-stm32f1/source/system_stm32f1xx.c
 src-ys = ../lib/cmsis-stm32f1/source/startup_stm32f103xb.s
+src-$(CONFIG_USBSERIAL) += stm32f1/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32f1/serial.c generic/serial_irq.c
 
 # Build the additional hex output file

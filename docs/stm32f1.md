@@ -20,10 +20,14 @@ STM32F1 port.
 Fixed pins
 ==========
 
-The UART used for communication with the host is fixed to pins PA9 (TX) and PA10
-(RX). SWD pins (PA13/PA14) are enabled for debugging and cannot be used for any
-I/O. SPI uses pins PB13/PB14/PB15, but the pins can be used as general I/O if
-SPI is not used.
+When using serial, the UART used for communication with the host is
+fixed to pins PA9 (TX) and PA10 (RX). When using USB, the PA11 (D-)
+and PA12 (D+) pins are reserved. The USB code assumes that PA12 (D+)
+has a fixed pullup resistor attached to it.
+
+SWD pins (PA13/PA14) are enabled for debugging and cannot be used for
+any I/O. SPI uses pins PB13/PB14/PB15, but the pins can be used as
+general I/O if SPI is not used.
 
 Digital I/O
 ===========
