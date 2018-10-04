@@ -13,8 +13,7 @@ CFLAGS += -Ilib/hal-stm32f1/include
 CFLAGS += -DSTM32F103xB
 CFLAGS += -O3
 
-CFLAGS_klipper.elf += -Llib/cmsis-stm32f1/source/
-CFLAGS_klipper.elf += -Tlib/cmsis-stm32f1/source/stm32f1.ld
+CFLAGS_klipper.elf += -T $(OUT)stm32f1.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
@@ -32,6 +31,13 @@ $(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
 	$(Q)$(AS) $< -o $@
 
 $(OUT)klipper.elf: $(patsubst %.s, $(OUT)src/%.o,$(asmsrc-y))
+
+# Build the linker script
+target-y := $(OUT)stm32f1.ld $(target-y)
+
+$(OUT)stm32f1.ld: src/stm32f1/stm32f1.ld $(OUT)board-link
+	@echo "  Preprocessing $@"
+	$(Q)$(CPP) -P -MD -MT $@ -DFLASH_START=$(CONFIG_FLASH_START) $< -o $@
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin
