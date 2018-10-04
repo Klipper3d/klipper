@@ -8,8 +8,8 @@ dirs-y += lib/cmsis-stm32f1/source
 dirs-y += lib/hal-stm32f1/source
 
 CFLAGS += -mthumb -mcpu=cortex-m3
-CFLAGS += -Ilib/cmsis-stm32f1/include -Ilib/cmsis-stm32f1/cmsis-include
-CFLAGS += -Ilib/hal-stm32f1/include
+CFLAGS += -Ilib/cmsis-core
+CFLAGS += -Ilib/cmsis-stm32f1/include -Ilib/hal-stm32f1/include
 CFLAGS += -DSTM32F103xB
 CFLAGS += -O3
 
