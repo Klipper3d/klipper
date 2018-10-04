@@ -109,19 +109,19 @@ class ST7920:
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
         # Setup animated glyphs
-        self.cache_glyph('fan1', 0)
-        self.cache_glyph('fan2', 1)
-        self.cache_glyph('bed_heat1', 2)
-        self.cache_glyph('bed_heat2', 3)
+        self.cache_glyph('fan2', 'fan1', 0)
+        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
         self.flush()
-    def cache_glyph(self, glyph_name, glyph_id):
+    def cache_glyph(self, glyph_name, base_glyph_name, glyph_id):
         icon = icons.Icons16x16[glyph_name]
-        for i, bits in enumerate(icon):
+        base_icon = icons.Icons16x16[base_glyph_name]
+        for i, (bits, base_bits) in enumerate(zip(icon, base_icon)):
             pos = glyph_id*32 + i*2
             b1, b2 = (bits >> 8) & 0xff, bits & 0xff
+            b1, b2 = b1 ^ (base_bits >> 8) & 0xff, b2 ^ base_bits & 0xff
             self.glyph_framebuffer[pos:pos+2] = [b1, b2]
             self.all_framebuffers[1][1][pos:pos+2] = [b1 ^ 1, b2 ^ 1]
-        self.cached_glyphs[glyph_name] = (0, glyph_id*2)
+        self.cached_glyphs[glyph_name] = (base_glyph_name, (0, glyph_id*2))
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -139,8 +139,8 @@ class ST7920:
         glyph_id = self.cached_glyphs.get(glyph_name)
         if glyph_id is not None and x & 1 == 0:
             # Render cached icon using character generator
-            self.write_text(x, y, glyph_id)
-            return 2
+            glyph_name = glyph_id[0]
+            self.write_text(x, y, glyph_id[1])
         icon = icons.Icons16x16.get(glyph_name)
         if icon is not None:
             # Draw icon in graphics mode
