@@ -1,6 +1,7 @@
 # Common LCD icons
 #
 # Copyright (C) 2018  Aleph Objects, Inc <marcio@alephobjects.com>
+# Copyright (C) 2018  Alexander Fadeev <alfsoft@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -94,7 +95,7 @@ fan1_icon = [
     0b0011111001110000,
     0b0011110001111000,
     0b0001100001111000,
-    0b0000000000110000,
+    0b0000000001110000,
     0b0000000000000000,
     0b0000000000000000
 ]
