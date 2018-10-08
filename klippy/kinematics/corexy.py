@@ -66,6 +66,8 @@ class CoreXYKinematics:
             second_homing_speed = hi.second_homing_speed
             if axis == 2:
                 homing_speed = min(homing_speed, self.max_z_velocity)
+                second_homing_speed = min(second_homing_speed,
+                                          self.max_z_velocity)
             homepos = [None, None, None, None]
             homepos[axis] = hi.position_endstop
             coord = [None, None, None, None]
