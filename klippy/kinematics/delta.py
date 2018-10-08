@@ -75,10 +75,10 @@ class DeltaKinematics:
         self.very_slow_xy2 = (ratio_to_dist(2. * SLOW_RATIO) - radius)**2
         self.max_xy2 = min(radius, min_arm_length - radius,
                            ratio_to_dist(4. * SLOW_RATIO) - radius)**2
-        logging.info(
-            "Delta max build radius %.2fmm (moves slowed past %.2fmm and %.2fmm)"
-            % (math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
-               math.sqrt(self.very_slow_xy2)))
+        logging.info("Delta max build radius %.2fmm (moves slowed past %.2fmm"
+                     " and %.2fmm)" % (
+                         math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
+                         math.sqrt(self.very_slow_xy2)))
         self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -137,7 +137,8 @@ class DeltaKinematics:
         limit_xy2 = self.max_xy2
         if end_pos[2] > self.limit_z:
             limit_xy2 = min(limit_xy2, (self.max_z - end_pos[2])**2)
-        if xy2 > limit_xy2 or end_pos[2] < self.min_z or end_pos[2] > self.max_z:
+        if (xy2 > limit_xy2 or end_pos[2] < self.min_z
+            or end_pos[2] > self.max_z):
             raise homing.EndstopMoveError(end_pos)
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
