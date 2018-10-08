@@ -174,7 +174,7 @@ class GatherShutdown:
         if seq is not None:
             line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
         def clock_update(m):
-            return m.group(0)[:-1] + "(%.6f) " % (
+            return m.group(0).rstrip() + "(%.6f) " % (
                 self.trans_clock(int(m.group('clock')), ts),)
         line = repl_clock_r.sub(clock_update, line)
         return line
