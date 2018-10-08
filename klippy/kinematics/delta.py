@@ -54,6 +54,8 @@ class DeltaKinematics:
         # Setup boundary checks
         self.need_motor_enable = self.need_home = True
         self.limit_xy2 = -1.
+        self.home_position = tuple(
+            self._actuator_to_cartesian(self.abs_endstops))
         self.max_z = min([rail.get_homing_info().position_endstop
                           for rail in self.rails])
         self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
@@ -97,10 +99,9 @@ class DeltaKinematics:
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
-        homepos = [0., 0., self.max_z, None]
-        forcepos = list(homepos)
+        forcepos = list(self.home_position)
         forcepos[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
-        homing_state.home_rails(self.rails, forcepos, homepos,
+        homing_state.home_rails(self.rails, forcepos, self.home_position,
                                 limit_speed=self.max_z_velocity)
         # Set final homed position
         spos = [ep + rail.get_homed_offset()
@@ -127,7 +128,7 @@ class DeltaKinematics:
         if end_pos[2] > self.limit_z:
             limit_xy2 = min(limit_xy2, (self.max_z - end_pos[2])**2)
         if (xy2 > limit_xy2 or end_pos[2] < self.min_z
-            or end_pos[2] > self.max_z):
+            or end_pos[2] > self.max_z) and end_pos[:3] != self.home_position:
             raise homing.EndstopMoveError(end_pos)
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
