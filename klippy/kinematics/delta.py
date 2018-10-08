@@ -23,6 +23,15 @@ class DeltaKinematics:
             stepper_configs[2], need_position_minmax = False,
             default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
+        # Setup stepper max halt velocity
+        self.max_velocity, self.max_accel = toolhead.get_max_velocity()
+        self.max_z_velocity = config.getfloat(
+            'max_z_velocity', self.max_velocity,
+            above=0., maxval=self.max_velocity)
+        max_halt_velocity = toolhead.get_max_axis_halt() * SLOW_RATIO
+        max_halt_accel = self.max_accel * SLOW_RATIO
+        for rail in self.rails:
+            rail.set_max_jerk(max_halt_velocity, max_halt_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         arm_length_a = stepper_configs[0].getfloat('arm_length', above=radius)
@@ -33,6 +42,15 @@ class DeltaKinematics:
         self.abs_endstops = [(rail.get_homing_info().position_endstop
                               + math.sqrt(arm2 - radius**2))
                              for rail, arm2 in zip(self.rails, self.arm2)]
+        # Determine tower locations in cartesian space
+        self.angles = [sconfig.getfloat('angle', angle)
+                       for sconfig, angle in zip(stepper_configs,
+                                                 [210., 330., 90.])]
+        self.towers = [(math.cos(math.radians(angle)) * radius,
+                        math.sin(math.radians(angle)) * radius)
+                       for angle in self.angles]
+        for r, a, t in zip(self.rails, self.arm2, self.towers):
+            r.setup_itersolve('delta_stepper_alloc', a, t[0], t[1])
         # Setup boundary checks
         self.need_motor_enable = self.need_home = True
         self.limit_xy2 = -1.
@@ -44,24 +62,6 @@ class DeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
                 self.max_z, self.limit_z))
-        # Setup stepper max halt velocity
-        self.max_velocity, self.max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat(
-            'max_z_velocity', self.max_velocity,
-            above=0., maxval=self.max_velocity)
-        max_halt_velocity = toolhead.get_max_axis_halt() * SLOW_RATIO
-        max_halt_accel = self.max_accel * SLOW_RATIO
-        for rail in self.rails:
-            rail.set_max_jerk(max_halt_velocity, max_halt_accel)
-        # Determine tower locations in cartesian space
-        self.angles = [sconfig.getfloat('angle', angle)
-                       for sconfig, angle in zip(stepper_configs,
-                                                 [210., 330., 90.])]
-        self.towers = [(math.cos(math.radians(angle)) * radius,
-                        math.sin(math.radians(angle)) * radius)
-                       for angle in self.angles]
-        for r, a, t in zip(self.rails, self.arm2, self.towers):
-            r.setup_itersolve('delta_stepper_alloc', a, t[0], t[1])
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([r.get_steppers()[0].get_step_dist()
