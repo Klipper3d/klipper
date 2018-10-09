@@ -12,10 +12,11 @@ Frequently asked questions
 9. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
 10. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 11. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
-12. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-13. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-14. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-15. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+12. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
+13. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+14. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+15. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
+16. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -224,6 +225,28 @@ is in "stealthChop mode" and an abrupt velocity change occurs. If you
 experience this problem during homing, consider using a slower homing
 speed. If you experience this problem in the middle of a print,
 consider using a lower square_corner_velocity setting.
+
+### I keep getting random "Lost communication with MCU" errors
+
+This is commonly caused by hardware errors on the USB connection
+between the host machine and the micro-controller. Things to look for:
+- Use a good quality USB cable between the host machine and
+  micro-controller. Make sure the plugs are secure.
+- If using a Raspberry Pi, use a good quality power supply for the
+  Raspberry Pi and use a good quality USB cable to connect that power
+  supply to the Pi.
+- Make sure the printer's power supply is not being overloaded. (Power
+  fluctuations to the micro-controller's USB chip may result in resets
+  of that chip.)
+- There have been reports of high USB noise when both the printer's
+  power supply and the host's 5V power supply are mixed. (If you find
+  that the micro-controller powers on when either the printer's power
+  supply is on or the USB cable is plugged in, then it indicates the
+  5V power supplies are being mixed.) It may help to configure the
+  micro-controller to use power from only one source. (Alternatively,
+  if the micro-controller board can not configure its power source,
+  one may modify a USB cable so that it does not carry 5V power
+  between the host and micro-controller.)
 
 ### When I set "restart_method=command" my AVR device just hangs on a restart
 
