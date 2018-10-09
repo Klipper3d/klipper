@@ -73,17 +73,17 @@ class MCU_stepper:
     def calc_position_from_coord(self, coord):
         return self._ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
-    def set_position(self, newpos):
-        spos = self.calc_position_from_coord(newpos)
-        self._mcu_position_offset += self.get_commanded_position() - spos
-        self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, spos)
+    def set_position(self, coord):
+        self.set_commanded_position(self.calc_position_from_coord(coord))
     def get_commanded_position(self):
         return self._ffi_lib.itersolve_get_commanded_pos(
             self._stepper_kinematics)
+    def set_commanded_position(self, pos):
+        self._mcu_position_offset += self.get_commanded_position() - pos
+        self._ffi_lib.itersolve_set_commanded_pos(self._stepper_kinematics, pos)
     def get_mcu_position(self):
-        pos_delta = self.get_commanded_position() + self._mcu_position_offset
-        mcu_pos = pos_delta / self._step_dist
+        mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
+        mcu_pos = mcu_pos_dist / self._step_dist
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
@@ -122,11 +122,11 @@ class MCU_stepper:
             return
         params = self._get_position_cmd.send_with_response(
             [self._oid], response='stepper_position', response_oid=self._oid)
-        pos = params['pos'] * self._step_dist
+        mcu_pos_dist = params['pos'] * self._step_dist
         if self._invert_dir:
-            pos = -pos
+            mcu_pos_dist = -mcu_pos_dist
         self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, pos - self._mcu_position_offset)
+            self._stepper_kinematics, mcu_pos_dist - self._mcu_position_offset)
     def step_itersolve(self, cmove):
         ret = self._itersolve_gen_steps(self._stepper_kinematics, cmove)
         if ret:

@@ -69,8 +69,9 @@ class PrinterStepper:
         self.set_ignore_move = mcu_stepper.set_ignore_move
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         self.set_position = mcu_stepper.set_position
-        self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.set_commanded_position = mcu_stepper.set_commanded_position
+        self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_step_dist = mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
@@ -259,9 +260,12 @@ class PrinterRail:
     def set_max_jerk(self, max_halt_velocity, max_accel):
         for stepper in self.steppers:
             stepper.set_max_jerk(max_halt_velocity, max_accel)
-    def set_position(self, newpos):
+    def set_commanded_position(self, pos):
         for stepper in self.steppers:
-            stepper.set_position(newpos)
+            stepper.set_commanded_position(pos)
+    def set_position(self, coord):
+        for stepper in self.steppers:
+            stepper.set_position(coord)
     def motor_enable(self, print_time, enable=0):
         for stepper in self.steppers:
             stepper.motor_enable(print_time, enable)
