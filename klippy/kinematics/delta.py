@@ -97,22 +97,11 @@ class DeltaKinematics:
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
-        endstops = [es for rail in self.rails for es in rail.get_endstops()]
-        # Initial homing - assume homing speed same for all steppers
-        hi = self.rails[0].get_homing_info()
-        homing_speed = min(hi.speed, self.max_z_velocity)
-        second_homing_speed = min(hi.second_homing_speed, self.max_z_velocity)
         homepos = [0., 0., self.max_z, None]
-        coord = list(homepos)
-        coord[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
-        homing_state.home(coord, homepos, endstops, homing_speed)
-        # Retract
-        coord[2] = homepos[2] - hi.retract_dist
-        homing_state.retract(coord, homing_speed)
-        # Home again
-        coord[2] -= hi.retract_dist
-        homing_state.home(coord, homepos, endstops,
-                          second_homing_speed, second_home=True)
+        forcepos = list(homepos)
+        forcepos[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
+        homing_state.home_rails(self.rails, forcepos, homepos,
+                                limit_speed=self.max_z_velocity)
         # Set final homed position
         spos = [ep + rail.get_homed_offset()
                 for ep, rail in zip(self.abs_endstops, self.rails)]

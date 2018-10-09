@@ -50,8 +50,10 @@ class PrinterProbe:
         homing_state = homing.Homing(toolhead)
         pos = toolhead.get_position()
         pos[2] = self.z_position
+        endstops = [(self.mcu_probe, "probe")]
         try:
-            homing_state.probing_move(pos, self.mcu_probe, self.speed)
+            homing_state.homing_move(pos, endstops, self.speed,
+                                     probe_pos=True, verify_movement=True)
         except homing.EndstopError as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
