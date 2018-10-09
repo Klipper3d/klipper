@@ -63,10 +63,6 @@ class CoreXYKinematics:
             if axis == 2:
                 limit_speed = self.max_z_velocity
             homing_state.home_rails([rail], forcepos, homepos, limit_speed)
-            if axis == 2:
-                # Support endstop phase detection on Z axis
-                forcepos[axis] = hi.position_endstop + rail.get_homed_offset()
-                homing_state.set_homed_position(forcepos)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for rail in self.rails:
