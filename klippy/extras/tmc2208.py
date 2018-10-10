@@ -219,6 +219,10 @@ class TMC2208:
                 return
         raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
+    def get_microsteps(self):
+        return 256 >> self.mres
+    def get_phase(self):
+        return (self.get_register("MSCNT") & 0x3ff) >> self.mres
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
