@@ -221,6 +221,17 @@ is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
   registers and report their values.
 
+## Endstop adjustments by stepper phase
+
+The following commands are available when an "endstop_phase" config
+section is enabled:
+- `ENDSTOP_PHASE_CALIBRATE [STEPPER=<config_name>]`: If no STEPPER
+  parameter is provided then this command will reports statistics on
+  endstop stepper phases during past homing operations. When a STEPPER
+  parameter is provided it arranges for the given endstop phase
+  setting to be written to the config file (in conjunction with the
+  SAVE_CONFIG command).
+
 ## Force movement
 
 The following commands are available when the "force_move" config
