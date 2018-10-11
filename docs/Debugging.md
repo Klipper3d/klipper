@@ -332,10 +332,10 @@ config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `add37023` with gcc version
+The test was last run on commit `3c2fd6eb` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
 stepper result is `SET ticks 44`, the best dual stepper result is `SET
-ticks 47`, and the best three stepper result is `SET ticks 80`.
+ticks 44`, and the best three stepper result is `SET ticks 74`.
 
 ### LPC176x step rate benchmark ###
 
