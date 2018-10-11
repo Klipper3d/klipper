@@ -43,6 +43,7 @@ class EndstopPhase:
                                " stepper phase adjustment" % (self.name,))
         if self.printer.get_start_args().get('debugoutput') is not None:
             self.endstop_accuracy = self.phases
+        self.phase_history = [0] * self.phases
         # Register event handler
         self.printer.register_event_handler(
             "homing:homed_rails", self.handle_homed_rails)
@@ -67,6 +68,7 @@ class EndstopPhase:
                 raise homing.EndstopError(msg)
         else:
             phase = stepper.get_mcu_position() % self.phases
+        self.phase_history[phase] += 1
         if self.endstop_phase is None:
             logging.info("Setting %s endstop phase to %d", self.name, phase)
             self.endstop_phase = phase
@@ -107,7 +109,7 @@ class EndstopPhases:
         mod_name = "endstop_phase %s" % (stepper_name,)
         m = self.printer.lookup_object(mod_name, None)
         if m is not None:
-            return (m.get_phase, [0] * m.phases)
+            return (None, m.phase_history)
         for driver in TRINAMIC_DRIVERS:
             mod_name = "%s %s" % (driver, stepper_name)
             m = self.printer.lookup_object(mod_name, None)
@@ -118,14 +120,13 @@ class EndstopPhases:
         if info is None:
             return
         get_phase, phase_history = info
-        if get_phase is not None:
-            try:
-                phase = get_phase()
-            except:
-                logging.exception("Error in EndstopPhases get_phase")
-                return
-        else:
-            phase = stepper.get_mcu_position() % self.phases
+        if get_phase is None:
+            return
+        try:
+            phase = get_phase()
+        except:
+            logging.exception("Error in EndstopPhases get_phase")
+            return
         phase_history[phase] += 1
     def handle_homed_rails(self, homing_state, rails):
         for rail in rails:
