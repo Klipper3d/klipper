@@ -50,7 +50,7 @@ timer_kick(void)
 static uint32_t timer_high;
 
 // Return the current time (in absolute clock ticks).
-inline uint32_t
+__always_inline uint32_t
 timer_read_time(void)
 {
     uint32_t th = readl(&timer_high);
