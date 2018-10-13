@@ -6,7 +6,7 @@ CROSS_PREFIX=arm-none-eabi-
 dirs-y += src/sam3x8e src/generic
 dirs-y += lib/sam3x/gcc/gcc
 
-CFLAGS += -mthumb -mcpu=cortex-m3
+CFLAGS += -mthumb -mcpu=cortex-m3 -falign-loops=16
 CFLAGS += -Ilib/sam3x/include -Ilib/cmsis-core
 CFLAGS += -D__SAM3X8E__
 
