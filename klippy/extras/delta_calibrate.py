@@ -216,12 +216,7 @@ class DeltaCalibrate:
             adj_params += ('arm_a', 'arm_b', 'arm_c')
             z_weight = len(distances) / (MEASURE_WEIGHT * len(probe_positions))
         # Perform coordinate descent
-        call_count = [0]
         def delta_errorfunc(params):
-            call_count[0] += 1
-            if not call_count[0] % 1000:
-                self.gcode.respond_info("Working on calibration...")
-                self.printer.get_reactor().pause(0.)
             # Build new delta_params for params under test
             delta_params = build_delta_params(params)
             # Calculate z height errors
@@ -237,8 +232,8 @@ class DeltaCalibrate:
                 d = math.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
                 total_error += (d - dist)**2
             return total_error
-        new_params = mathutil.coordinate_descent(
-            adj_params, params, delta_errorfunc)
+        new_params = mathutil.background_coordinate_descent(
+            self.printer, adj_params, params, delta_errorfunc)
         # Log and report results
         logging.info("Calculated delta_calibrate parameters: %s", new_params)
         new_delta_params = build_delta_params(new_params)
