@@ -264,15 +264,16 @@ class ToolHead:
         flush_to_time = self.print_time - self.move_flush_time
         for m in self.all_mcus:
             m.flush_moves(flush_to_time)
-    def get_next_move_time(self):
-        if not self.sync_print_time:
-            return self.print_time
-        self.sync_print_time = False
+    def _calc_print_time(self):
         est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
         if est_print_time + self.buffer_time_start > self.print_time:
             self.print_time = est_print_time + self.buffer_time_start
             self.last_print_start_time = self.print_time
-        self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
+    def get_next_move_time(self):
+        if self.sync_print_time:
+            self.sync_print_time = False
+            self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
+            self._calc_print_time()
         return self.print_time
     def _flush_lookahead(self, must_sync=False):
         sync_print_time = self.sync_print_time
@@ -287,11 +288,13 @@ class ToolHead:
                 m.flush_moves(self.print_time)
     def get_last_move_time(self):
         self._flush_lookahead()
-        return self.get_next_move_time()
+        if self.sync_print_time:
+            self._calc_print_time()
+        return self.print_time
     def reset_print_time(self, min_print_time=0.):
         self._flush_lookahead(must_sync=True)
-        self.print_time = max(min_print_time, self.mcu.estimated_print_time(
-            self.reactor.monotonic()))
+        est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
+        self.print_time = max(min_print_time, est_print_time)
     def _check_stall(self):
         eventtime = self.reactor.monotonic()
         if self.sync_print_time:
