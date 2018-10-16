@@ -150,6 +150,14 @@ class PrinterConfig:
                 lines[lineno] = '#' + lines[lineno]
         return "\n".join(lines)
     def _build_config_wrapper(self, data):
+        # Strip trailing comments from config
+        lines = data.split('\n')
+        for i, line in enumerate(lines):
+            pos = line.find('#')
+            if pos >= 0:
+                lines[i] = line[:pos]
+        data = '\n'.join(lines)
+        # Read and process config file
         sfile = StringIO.StringIO(data)
         fileconfig = ConfigParser.RawConfigParser()
         fileconfig.readfp(sfile)
