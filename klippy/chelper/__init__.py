@@ -180,3 +180,7 @@ def run_hub_ctrl(enable_power):
     hubdir = os.path.join(srcdir, HC_SOURCE_DIR)
     check_build_code(hubdir, HC_TARGET, HC_SOURCE_FILES, HC_COMPILE_CMD)
     os.system(HC_CMD % (hubdir, enable_power))
+
+
+if __name__ == '__main__':
+    get_ffi()
