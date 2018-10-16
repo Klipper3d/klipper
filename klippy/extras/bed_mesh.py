@@ -311,7 +311,6 @@ class BedMeshCalibrate:
         self.start_calibration(params)
     def start_calibration(self, params):
         self.bedmesh.set_mesh(None)
-        self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe(params)
     def print_probed_positions(self, print_func):
         if self.probed_z_table is not None:
