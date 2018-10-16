@@ -46,6 +46,7 @@ eliminates error introduced by the probe.
 To perform the basic probe, make sure the config has a
 [delta_calibrate] section defined and run:
 ```
+G28
 DELTA_CALIBRATE METHOD=manual
 ```
 After probing the seven points new delta parameters will be
