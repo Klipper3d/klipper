@@ -186,7 +186,7 @@ section is enabled:
   terminal.  This allows octoprint plugins to easily capture the
   data and generate maps approximating the bed's surface.  Note
   that although no mesh is generated, any currently stored mesh
-  will be cleared as the process rehomes the printer.
+  will be cleared.
 - `BED_MESH_CLEAR`: This command clears the mesh and removes all
   z adjustment.  It is recommended to put this in your end-gcode.
 - `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This
