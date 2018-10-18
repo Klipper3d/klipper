@@ -127,17 +127,7 @@ class PrinterLCD:
             self.draw_percent(9, 2, 4, progress)
         lcd_chip.write_glyph(14, 2, 'clock')
         self.draw_time(15, 2, toolhead_info['printing_time'])
-        # If there is a message set by M117, display it instead of toolhead info
-        if self.message:
-            lcd_chip.write_text(0, 3, self.message)
-            if self.msg_time:
-                # Screen updates every .5 seconds
-                self.msg_time -= .5
-                if self.msg_time <= 0.:
-                    self.message = None
-                    self.msg_time = None
-        else:
-            self.draw_status(0, 3, gcode_info, toolhead_info)
+        self.draw_status(0, 3, gcode_info, toolhead_info)
     def screen_update_128x64(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
@@ -200,17 +190,7 @@ class PrinterLCD:
         else:
             offset = 1 if printing_time < 100 * 60 * 60 else 0
             self.draw_time(10 + offset, 2, printing_time)
-        # if there is a message set by M117, display it instead of toolhaed info
-        if self.message:
-            self.lcd_chip.write_text(0, 3, self.message)
-            if self.msg_time:
-                # Screen updates every .5 seconds
-                self.msg_time -= .5
-                if self.msg_time <= 0.:
-                    self.message = None
-                    self.msg_time = None
-        else:
-            self.draw_status(0, 3, gcode_info, toolhead_info)
+        self.draw_status(0, 3, gcode_info, toolhead_info)
     # Screen update helpers
     def draw_text(self, x, y, mixed_text):
         pos = x
@@ -236,6 +216,16 @@ class PrinterLCD:
         self.lcd_chip.write_text(x, y, "%02d:%02d" % (
             seconds // (60 * 60), (seconds // 60) % 60))
     def draw_status(self, x, y, gcode_info, toolhead_info):
+        # If there is a message set by M117, display it instead of toolhead info
+        if self.message:
+            self.lcd_chip.write_text(x, y, self.message)
+            if self.msg_time:
+                # Screen updates every .5 seconds
+                self.msg_time -= .5
+                if self.msg_time <= 0.:
+                    self.message = None
+                    self.msg_time = None
+            return
         status = toolhead_info['status']
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
