@@ -164,7 +164,7 @@ class VirtualSD:
                 continue
             # Dispatch command
             try:
-                res = self.gcode.process_batch(lines[-1])
+                res = self.gcode.process_batch([lines[-1]])
                 if not res:
                     self.reactor.pause(self.reactor.monotonic() + 0.100)
                     continue
