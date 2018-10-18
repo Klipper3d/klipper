@@ -15,7 +15,7 @@ class IdleTimeout:
         self.toolhead = None
         self.last_timeout = 0.
         self.idle_timeout = config.getfloat('timeout', 600., above=0.)
-        self.idle_script = config.get('gcode', DEFAULT_IDLE_GCODE)
+        self.idle_gcode = config.get('gcode', DEFAULT_IDLE_GCODE).split('\n')
     def printer_state(self, state):
         if state == 'ready':
             self.toolhead = self.printer.lookup_object('toolhead')
@@ -23,14 +23,14 @@ class IdleTimeout:
             reactor.register_timer(self.timeout_handler, reactor.NOW)
     def run_idle_script(self):
         gcode = self.printer.lookup_object('gcode')
-        for line in self.idle_script.split('\n'):
-            try:
-                res = gcode.process_batch(line)
-            except:
-                break
-            if not res:
-                # Raced with incoming g-code commands
-                return
+        try:
+            res = gcode.process_batch(self.idle_gcode)
+        except:
+            logging.exception("idle timeout gcode execution")
+            return
+        if not res:
+            # Raced with incoming g-code commands
+            return
         self.last_timeout = self.toolhead.get_last_move_time()
     def timeout_handler(self, eventtime):
         info = self.toolhead.get_status(eventtime)
