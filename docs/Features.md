@@ -133,10 +133,10 @@ represent total number of steps per second on the micro-controller.
 | 20Mhz AVR                   | 189K              | 125K              |
 | Arduino Zero (ARM SAMD21)   | 234K              | 217K              |
 | STM32F103                   | 364K              | 324K              |
-| Smoothieboard (ARM LPC1768) | 385K              | 385K              |
 | Arduino Due (ARM SAM3X8E)   | 410K              | 397K              |
-| Smoothieboard (ARM LPC1769) | 462K              | 462K              |
 | SAM4E8E ARM                 | 475K              | 475K              |
+| Smoothieboard (ARM LPC1768) | 487K              | 487K              |
+| Smoothieboard (ARM LPC1769) | 584K              | 584K              |
 | Beaglebone PRU              | 689K              | 689K              |
 
 On AVR platforms, the highest achievable step rate is with just one

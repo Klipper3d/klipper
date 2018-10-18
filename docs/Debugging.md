@@ -347,14 +347,14 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `c78b9076` with gcc version
+The test was last run on commit `8fca9084` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
-LPC1768, the best single stepper result is `SET ticks 136`, the best
-dual stepper result is `SET ticks 134`, and the best three stepper
-result is `SET ticks 195`. The 120Mhz LPC1769 results were obtained by
+LPC1768, the best single stepper result is `SET ticks 128`, the best
+dual stepper result is `SET ticks 118`, and the best three stepper
+result is `SET ticks 154`. The 120Mhz LPC1769 results were obtained by
 overclocking an LPC1768 to 120Mhz - the best single stepper result is
-`SET ticks 155`, the best dual stepper result is `SET ticks 148`, and
-the best three stepper result is `SET ticks 195`.
+`SET ticks 148`, the best dual stepper result is `SET ticks 137`, and
+the best three stepper result is `SET ticks 154`.
 
 ### SAMD21 step rate benchmark ###
 
