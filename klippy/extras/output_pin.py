@@ -9,6 +9,7 @@ PIN_MIN_TIME = 0.100
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
+        # Configure pin
         ppins = self.printer.lookup_object('pins')
         self.is_pwm = config.getboolean('pwm', False)
         if self.is_pwm:
@@ -21,32 +22,39 @@ class PrinterOutputPin:
             self.mcu_pin = ppins.setup_pin('digital_out', config.get('pin'))
             self.scale = 1.
         self.mcu_pin.setup_max_duration(0.)
-        self.last_value_time = 0.
+        # Check if pin has a static value
         static_value = config.getfloat('static_value', None,
                                        minval=0., maxval=self.scale)
         if static_value is not None:
             self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
-        else:
-            self.last_value = config.getfloat(
-                'value', 0., minval=0., maxval=self.scale) / self.scale
-            shutdown_value = config.getfloat(
-                'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
-            self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
-            pin_name = config.get_name().split()[1]
-            self.gcode = self.printer.lookup_object('gcode')
-            self.gcode.register_mux_command("SET_PIN", "PIN", pin_name,
-                                            self.cmd_SET_PIN,
-                                            desc=self.cmd_SET_PIN_help)
-    cmd_SET_PIN_help = "Set the value of an output pin"
-    def cmd_SET_PIN(self, params):
-        value = self.gcode.get_float('VALUE', params,
-                                     minval=0., maxval=self.scale)
-        value /= self.scale
+            return
+        # Configure pin output settings
+        self.value = config.getfloat(
+            'value', 0., minval=0., maxval=self.scale) / self.scale
+        shutdown_value = config.getfloat(
+            'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
+        self.mcu_pin.setup_start_value(self.value, shutdown_value)
+        self.printing_value = config.getfloat(
+            'printing_value', None, minval=0., maxval=self.scale)
+        if self.printing_value is not None:
+            self.printing_value /= self.scale
+            self.printer.register_event_handler("idle_timeout:printing",
+                                                self.handle_printing)
+            self.printer.register_event_handler("idle_timeout:ready",
+                                                self.handle_ready)
+        self.last_value = self.value
+        self.last_value_time = 0.
+        # Register SET_PIN command
+        pin_name = config.get_name().split()[1]
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_mux_command("SET_PIN", "PIN", pin_name,
+                                        self.cmd_SET_PIN,
+                                        desc=self.cmd_SET_PIN_help)
+    def set_value(self, print_time, value):
         if value == self.last_value:
             return
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         if self.is_pwm:
             self.mcu_pin.set_pwm(print_time, value)
@@ -56,6 +64,16 @@ class PrinterOutputPin:
             self.mcu_pin.set_digital(print_time, value)
         self.last_value = value
         self.last_value_time = print_time
+    cmd_SET_PIN_help = "Set the value of an output pin"
+    def cmd_SET_PIN(self, params):
+        value = self.gcode.get_float('VALUE', params,
+                                     minval=0., maxval=self.scale)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.set_value(print_time, value / self.scale)
+    def handle_printing(self, print_time):
+        self.set_value(print_time, self.printing_value)
+    def handle_ready(self, print_time):
+        self.set_value(print_time, self.value)
 
 def load_config_prefix(config):
     return PrinterOutputPin(config)
