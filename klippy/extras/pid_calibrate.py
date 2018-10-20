@@ -75,6 +75,8 @@ class ControlAutoTune:
         self.heater.set_pwm(read_time, value)
     def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
+        # Check if the temperature has crossed the target and
+        # enable/disable the heater if so.
         if self.heating and temp >= target_temp:
             self.heating = False
             self.check_peaks()
@@ -83,6 +85,7 @@ class ControlAutoTune:
             self.heating = True
             self.check_peaks()
             self.heater.alter_target(self.calibrate_temp)
+        # Check if this temperature is a peak and record it if so
         if self.heating:
             self.set_pwm(read_time, self.heater_max_power)
             if temp < self.peak:
@@ -110,9 +113,11 @@ class ControlAutoTune:
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
         time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
-        Ku = 4. * (2. * self.heater_max_power) / (abs(temp_diff) * math.pi)
+        # Use Astrom-Hagglund method to estimate Ku and Tu
+        amplitude = .5 * abs(temp_diff)
+        Ku = 4. * self.heater_max_power / (math.pi * amplitude)
         Tu = time_diff
-
+        # Use Ziegler-Nichols method to generate PID parameters
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
         Kp = 0.6 * Ku * heater.PID_PARAM_BASE
