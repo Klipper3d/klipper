@@ -54,17 +54,24 @@ def get_cpu_info():
     return "%d core %s" % (core_count, model_name)
 
 def get_git_version():
-    # Obtain version info from "git" program
-    gitdir = os.path.join(sys.path[0], '..')
-    if not os.path.exists(gitdir):
-        logging.debug("No '.git' file/directory found")
-        return "?"
-    prog = "git -C %s describe --always --tags --long --dirty" % (gitdir,)
+    klippy_src = os.path.dirname(__file__)
     try:
-        process = subprocess.Popen(shlex.split(prog), stdout=subprocess.PIPE)
-        output = process.communicate()[0]
-        retcode = process.poll()
+        with open(os.path.join(klippy_src, 'version')) as h:
+            return h.read().rstrip()
+    except IOError:
+        pass
+
+    # Obtain version info from "git" program
+    gitdir = os.path.join(klippy_src, '..')
+    prog = ('git', '-C', gitdir, 'describe', '--always', '--tags', '--long', '--dirty')
+    try:
+        process = subprocess.Popen(prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ver, err = process.communicate()
+        retcode = process.wait()
+        if retcode != 0:
+            logging.debug("Error getting git version: %s", err)
+            return "?"
     except OSError:
         logging.debug("Exception on run: %s", traceback.format_exc())
         return "?"
-    return output.strip()
+    return ver.strip()
