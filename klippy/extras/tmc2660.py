@@ -98,11 +98,14 @@ class TMC2660:
                 self.oid, self.bus, cs_pin_params['pin'], 0, self.freq))
         self.spi_send_cmd = self.spi_transfer_cmd = None
         self.mcu.register_config_callback(self.build_config)
-        # Add SET_CURRENT command
+        # Add SET_CURRENT and DUMP_TMC commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
             self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command(
+            "DUMP_TMC", "STEPPER", self.name,
+            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
         # Setup driver registers
         # DRVCTRL
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
@@ -241,6 +244,21 @@ class TMC2660:
         if 'CURRENT' in params:
             self.current = gcode.get_float('CURRENT', params, minval=CURRENT_MIN, maxval=CURRENT_MAX)
             self.set_current(self.printer.lookup_object('toolhead').get_last_move_time(), self.current)
+
+    cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
+    def cmd_DUMP_TMC(self, params):
+        self.printer.lookup_object('toolhead').get_last_move_time()
+        gcode = self.printer.lookup_object('gcode')
+        for reg_name , val in zip(["DRVCONF", "DRVCTRL", "CHOPCONF", "SGCSCONF", "SMARTEN"],
+                            [self.reg_drvconf, self.reg_drvctrl, self.reg_chopconf, self.reg_sgcsconf, self.reg_smarten]):
+            msg = "%-15s %08x" % (reg_name + " (cached):", val)
+            gcode.respond_info(msg)
+        # Send one register to get the return data
+        reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
+        params = self.spi_transfer_cmd.send_with_response([self.oid, reg_data], 'spi_transfer_response', self.oid)
+        pr = bytearray(params['response'])
+        msg = "%-15s %08x" % ("RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2])
+        gcode.respond_info(msg)
 
 def load_config_prefix(config):
     return TMC2660(config)
