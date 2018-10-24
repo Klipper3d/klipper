@@ -162,7 +162,7 @@ class TMC2660:
         self.driver_sdoff = False # since we don't support SPI mode yet, this has to be False
         vsense = {'low': 0, 'high': 1}
         self.driver_vsense = config.getchoice('driver_VSENSE', vsense, default='high')
-        self.driver_rdsel = 2  # stallguard2 and coolstep current level
+        self.driver_rdsel = 0  # Microsteps (used by endstop phase)
 
 
         # Build and send registers
@@ -247,6 +247,17 @@ class TMC2660:
             self.set_current(float(self.idle_current_percentage) * self.current / 100)
             self.is_idle = True
         return eventtime + 0.1
+
+    def get_microsteps(self):
+        return 256 >> self.driver_mres
+
+    def get_phase(self):
+        # Send DRVCTRL to get a response
+        reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
+        params = self.spi_transfer_cmd.send_with_response([self.oid, reg_data], 'spi_transfer_response', self.oid)
+        pr = bytearray(params['response'])
+        steps = (((pr[0] << 16) | (pr[1] << 8) | pr[2]) & READRSP['MSTEP'][1]) >> READRSP['MSTEP'][0]
+        return steps >> self.driver_mres
 
     def set_current(self, current):
         self.driver_cs = current_to_reg(current)

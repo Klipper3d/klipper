@@ -26,9 +26,9 @@ the endstop trigger to improve the accuracy of the endstop.
 
 In order to use this functionality it is necessary to be able to
 identify the phase of the stepper motor. If one is using Trinamic
-TMC2130, TMC2208, or TMC2224 drivers in run-time configuration mode
-(ie, not stand-alone mode) then Klipper can query the stepper phase
-from the driver. (It is also possible to use this system on
+TMC2130, TMC2208, TMC2224 or TMC2660 drivers in run-time configuration
+mode (ie, not stand-alone mode) then Klipper can query the stepper
+phase from the driver. (It is also possible to use this system on
 traditional stepper drivers if one can reliably reset the stepper
 drivers - see below for details.)
 
