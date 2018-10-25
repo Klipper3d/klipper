@@ -7,11 +7,10 @@ pin mappings either.
 General considerations
 ======================
 
-The STM32 port currently requires an 8 MHz crystal for correct operation. The
-host communication only supports a standard UART. USB serial (CDC ACM) might be
-useful for some configurations, but is unimplemented. The port is currently
-designed for and tested with STM32F103xB series MCUs, but it should work with
-any STM32F103 series MCUs with minimal changes.
+The STM32 port currently requires an 8 MHz crystal for correct
+operation. The port is currently designed for and tested with
+STM32F103xB series MCUs, but it should work with any STM32F103 series
+MCUs with minimal changes.
 
 Unlike Arduino-based boards, typically there is no automatic reset on serial
 connection with STM32 boards. Please use `restart_method: command` with the

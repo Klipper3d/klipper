@@ -50,7 +50,6 @@ class BedTiltCalibrate:
             desc=self.cmd_BED_TILT_CALIBRATE_help)
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, params):
-        self.gcode.run_script_from_command("G28")
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis

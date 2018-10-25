@@ -41,7 +41,7 @@ class GatherConfig:
             self.comments.append(comment)
     def write_file(self):
         f = open(self.filename, 'wb')
-        f.write('\n'.join(self.comments + self.config_lines))
+        f.write('\n'.join(self.comments + self.config_lines).strip() + '\n')
         f.close()
 
 

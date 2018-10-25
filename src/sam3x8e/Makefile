@@ -38,4 +38,4 @@ flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
 	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -a -e -w $(OUT)klipper.bin -v -b
-	$(Q)lib/bossac/bin/bossac -p "$(FLASH_DEVICE)" -R
+	$(Q)lib/bossac/bin/bossac -p "$(FLASH_DEVICE)" -R > /dev/null 2>&1 || true
