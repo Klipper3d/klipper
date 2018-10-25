@@ -133,3 +133,11 @@ Important Notes
   (filament pulled out of the nozzle due to the stickiness of the
   plastic). It is recommended to disable the slicer's "z-lift on
   retract" option.
+
+* Configuring pressure advance results in extra extruder movement
+  during move acceleration and deceleration. That extra movement is
+  not further constrained by any other other configuration parameter.
+  The pressure advance settings only impact extruder movement; they do
+  not alter toolhead XYZ movement or look-ahead calculations. A change
+  in pressure advance will not change the path or timing of the
+  toolhead nor will it change the overall printing time.
