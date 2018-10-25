@@ -55,11 +55,6 @@ def get_cpu_info():
 
 def get_git_version():
     klippy_src = os.path.dirname(__file__)
-    try:
-        with open(os.path.join(klippy_src, 'version')) as h:
-            return h.read().rstrip()
-    except IOError:
-        pass
 
     # Obtain version info from "git" program
     gitdir = os.path.join(klippy_src, '..')
@@ -68,10 +63,16 @@ def get_git_version():
         process = subprocess.Popen(prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         ver, err = process.communicate()
         retcode = process.wait()
-        if retcode != 0:
+        if retcode == 0:
+            return ver.strip()
+        else:
             logging.debug("Error getting git version: %s", err)
-            return "?"
     except OSError:
         logging.debug("Exception on run: %s", traceback.format_exc())
-        return "?"
-    return ver.strip()
+
+    try:
+        with open(os.path.join(klippy_src, '.version')) as h:
+            return h.read().rstrip()
+    except IOError:
+        pass
+    return "?"
