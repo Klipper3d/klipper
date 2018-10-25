@@ -97,6 +97,15 @@ Important Notes
   corner. If this occurs, then ignore that corner and tune pressure
   advance using the other three corners.
 
+* Check for warping at the corners during the test prints (the corners
+  detaching from the bed and rising a small distance upwards during
+  the print). If one corner appears warped then ignore that corner
+  when tuning. If significant warping is seen throughout the test then
+  typical solutions are to reduce the slicer's first layer speed,
+  adjust the bed temperature, and/or to use the slicer's brim feature.
+  Pressure advance itself is unlikely to impact warping, but this
+  tuning test is sensitive to it.
+
 * If a high pressure advance value (eg, over 0.200) is used then one
   may find that the extruder skips when returning to the printer's
   normal acceleration. The pressure advance system accounts for
