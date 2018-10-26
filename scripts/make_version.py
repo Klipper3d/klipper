@@ -1,3 +1,10 @@
+#!/usr/bin/env python2
+# Get the version number for klippy
+#
+# Copyright (C) 2018  Lucas Fink <software@lfcode.ca>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+
 from __future__ import print_function
 
 import argparse
@@ -16,7 +23,7 @@ def main(argv):
         help='Name of distro this package is intended for'
     )
     args = p.parse_args()
-    print(util.get_git_version(),
+    print(util.get_git_version(from_file=False),
           args.distroname.replace(' ', ''), sep='-')
 
 

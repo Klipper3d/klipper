@@ -53,7 +53,15 @@ def get_cpu_info():
     model_name = dict(lines).get("model name", "?")
     return "%d core %s" % (core_count, model_name)
 
-def get_git_version():
+def get_version_from_file(klippy_src):
+    try:
+        with open(os.path.join(klippy_src, '.version')) as h:
+            return h.read().rstrip()
+    except IOError:
+        pass
+    return "?"
+
+def get_git_version(from_file=True):
     klippy_src = os.path.dirname(__file__)
 
     # Obtain version info from "git" program
@@ -70,9 +78,6 @@ def get_git_version():
     except OSError:
         logging.debug("Exception on run: %s", traceback.format_exc())
 
-    try:
-        with open(os.path.join(klippy_src, '.version')) as h:
-            return h.read().rstrip()
-    except IOError:
-        pass
+    if from_file:
+        return get_version_from_file(klippy_src)
     return "?"
