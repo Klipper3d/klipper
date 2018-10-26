@@ -6,7 +6,7 @@ config SAM_SELECT
     bool
     default y
     select HAVE_GPIO
-#    select HAVE_GPIO_I2C
+    select HAVE_GPIO_I2C
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
     select HAVE_GPIO_BITBANGING
