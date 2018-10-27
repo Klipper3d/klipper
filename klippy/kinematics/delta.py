@@ -129,6 +129,7 @@ class DeltaKinematics:
             if (end_pos[:2] != self.home_position[:2]
                 or end_z < self.min_z or end_z > self.home_position[2]):
                 raise homing.EndstopMoveError(end_pos)
+            limit_xy2 = -1.
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
