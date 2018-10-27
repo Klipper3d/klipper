@@ -114,24 +114,27 @@ class DeltaKinematics:
         self.need_motor_enable = False
     def check_move(self, move):
         end_pos = move.end_pos
-        xy2 = end_pos[0]**2 + end_pos[1]**2
-        if xy2 <= self.limit_xy2 and not move.axes_d[2]:
+        end_xy2 = end_pos[0]**2 + end_pos[1]**2
+        if end_xy2 <= self.limit_xy2 and not move.axes_d[2]:
             # Normal XY move
             return
         if self.need_home:
             raise homing.EndstopMoveError(end_pos, "Must home first")
+        end_z = end_pos[2]
         limit_xy2 = self.max_xy2
-        if end_pos[2] > self.limit_z:
-            limit_xy2 = min(limit_xy2, (self.max_z - end_pos[2])**2)
-        if (xy2 > limit_xy2 or end_pos[2] < self.min_z
-            or end_pos[2] > self.max_z) and end_pos[:3] != self.home_position:
-            raise homing.EndstopMoveError(end_pos)
+        if end_z > self.limit_z:
+            limit_xy2 = min(limit_xy2, (self.max_z - end_z)**2)
+        if end_xy2 > limit_xy2 or end_z > self.max_z or end_z < self.min_z:
+            # Move out of range - verify not a homing move
+            if (end_pos[:2] != self.home_position[:2]
+                or end_z < self.min_z or end_z > self.home_position[2]):
+                raise homing.EndstopMoveError(end_pos)
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
-        extreme_xy2 = max(xy2, move.start_pos[0]**2 + move.start_pos[1]**2)
+        extreme_xy2 = max(end_xy2, move.start_pos[0]**2 + move.start_pos[1]**2)
         if extreme_xy2 > self.slow_xy2:
             r = 0.5
             if extreme_xy2 > self.very_slow_xy2:
