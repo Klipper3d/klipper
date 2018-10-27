@@ -111,15 +111,20 @@ class SX1509_digital_out(object):
         self._bitmask = 1 << self._sxpin
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
+        self._mcu.register_config_callback(self._build_config)
         self._start_value = self._shutdown_value = self._invert
         self._is_static = False
+        self._max_duration = 2.
         self._set_cmd = self._clear_cmd = None
         # Set direction to output
         self._sx1509.clear_bits_in_register(REG_DIR, self._bitmask)
+    def _build_config(self):
+        if self._max_duration:
+            raise pins.error("SX1509 pins are not suitable for heaters")
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
-        pass
+        self._max_duration = max_duration
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
         if is_static or shutdown_value:
             raise pins.error("SX1509 Pins should not be declared static or have a shutdown value")
@@ -167,6 +172,8 @@ class SX1509_pwm(object):
     def _build_config(self):
         if not self._hardware_pwm:
             raise pins.error("SX1509_pwm must have hardware_pwm enabled")
+        if self._max_duration:
+            raise pins.error("SX1509 pins are not suitable for heaters")
         # Send initial value
         self._sx1509.set_register(self._i_on_reg, ~int(255 * self._start_value) & 0xFF)
         self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
