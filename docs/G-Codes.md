@@ -36,6 +36,12 @@ their standard configurations. It is not a goal to support every
 possible G-Code command. Instead, Klipper prefers human readable
 ["extended G-Code commands"](#extended-g-code-commands).
 
+If one requires a less common G-Code command then it may be possible
+to implement it with a custom Klipper gcode_macro (see
+[example-extras.cfg](../config/example-extras.cfg) for details). For
+example, one might use this to implement: `G10`, `G11`, `G12`, `G29`,
+`G30`, `G31`, `M42`, `M80`, `M81`, etc.
+
 ## G-Code SD card commands
 
 Klipper also supports the following standard G-Code commands if the
