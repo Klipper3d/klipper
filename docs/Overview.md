@@ -10,7 +10,8 @@ settings in the config file.
 
 The Klipper configuration is stored in a simple text file on the host
 machine. The [config/example.cfg](../config/example.cfg) file serves
-as a reference for the config file. See the
+as a reference for the config file. See the [Slicers](Slicers.md)
+document for information on configuring a slicer with Klipper. See the
 [Endstop Phase](Endstop_Phase.md) document for information on
 Klipper's "stepper phase adjusted endstop" system. See the
 [Delta Calibrate](Delta_Calibrate.md) document for information on

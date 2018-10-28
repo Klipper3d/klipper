@@ -157,10 +157,11 @@ detailed printer calibration - a number of guides are available online
 to help with this (for example, do a web search for "3d printer
 calibration").
 
-If one is using traditional endstop switches with Trinamic stepper
-motor drivers then see the [Endstop Phase](Endstop_Phase.md)
-document. If using a delta printer, see the
-[Delta Calibrate](Delta_Calibrate.md) document.
+See the [Slicers](Slicers.md) document for information on configuring
+a slicer with Klipper. If one is using traditional endstop switches
+with Trinamic stepper motor drivers then see the
+[Endstop Phase](Endstop_Phase.md) document. If using a delta printer,
+see the [Delta Calibrate](Delta_Calibrate.md) document.
 
 After one has verified that basic printing works, it is a good idea to
 consider calibrating [pressure advance](Pressure_Advance.md).
