@@ -19,8 +19,10 @@ Klipper supports the following standard G-Code commands:
 - Get extruder temperature: `M105`
 - Set extruder temperature: `M104 [T<index>] [S<temperature>]`
 - Set extruder temperature and wait: `M109 [T<index>] S<temperature>`
+  (note: this waits for both heat and cool)
 - Set bed temperature: `M140 [S<temperature>]`
 - Set bed temperature and wait: `M190 S<temperature>`
+  (note: this waits for both heat and cool)
 - Set fan speed: `M106 S<value>`
 - Turn fan off: `M107`
 - Emergency stop: `M112`
