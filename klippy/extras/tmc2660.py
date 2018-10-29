@@ -268,7 +268,7 @@ class TMC2660:
         reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
         params = self.spi_transfer_cmd.send_with_response([self.oid, reg_data], 'spi_transfer_response', self.oid)
         pr = bytearray(params['response'])
-        msg = "%-15s %08x" % ("RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2])
+        msg = "%-15s %08x" % ("RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2]))
         gcode.respond_info(msg)
 
 def load_config_prefix(config):
