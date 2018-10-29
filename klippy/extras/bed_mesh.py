@@ -211,7 +211,7 @@ class BedMeshCalibrate:
         stored_profs = config.get_prefix_sections(self.name)
         # Remove primary bed_mesh section, as it is not a stored profile
         stored_profs = [s for s in stored_profs
-                        if s.get_name() is not self.name]
+                        if s.get_name() != self.name]
         for profile in stored_profs:
             name = profile.get_name().split(' ', 1)[1]
             self.profiles[name] = {}
@@ -292,7 +292,7 @@ class BedMeshCalibrate:
         for key in options:
             name = self.gcode.get_str(key, params, None)
             if name is not None:
-                if name == "default" and key is not 'LOAD':
+                if name == "default" and key != 'LOAD':
                     self.gcode.respond_info(
                         "Profile 'default' is reserved, please chose"
                         " another profile name.")
