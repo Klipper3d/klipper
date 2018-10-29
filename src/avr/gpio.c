@@ -159,7 +159,7 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 };
 
 static const uint8_t pwm_pins[ARRAY_SIZE(pwm_regs)] PROGMEM = {
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
     GPIO('D', 6), GPIO('D', 5),
     GPIO('B', 1), GPIO('B', 2),
     GPIO('B', 3), GPIO('D', 3),
@@ -264,7 +264,7 @@ gpio_pwm_write(struct gpio_pwm g, uint8_t val)
  ****************************************************************/
 
 static const uint8_t adc_pins[] PROGMEM = {
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
     GPIO('C', 4), GPIO('C', 5), GPIO('E', 0), GPIO('E', 1),
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
@@ -369,7 +369,7 @@ gpio_adc_cancel_sample(struct gpio_adc g)
  * Serial Peripheral Interface (SPI) hardware
  ****************************************************************/
 
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
 static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5);
 static const uint8_t MOSI = GPIO('B', 3), MISO = GPIO('B', 4);
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
