@@ -126,11 +126,11 @@ class SX1509_digital_out(object):
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static or shutdown_value:
-            raise pins.error("SX1509 Pins should not be declared static or have a shutdown value")
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = self._invert
-        self._is_static = False
+        self._is_static = is_static
         # We need to set the start value here so the register is
         # updated before the SX1509 class writes it.
         if self._start_value:
@@ -190,14 +190,14 @@ class SX1509_pwm(object):
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static or shutdown_value:
-            raise pins.error("SX1509 Pins should not be declared static or have a shutdown value")
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
-        self._is_static = False
+        self._is_static = is_static
     def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert
