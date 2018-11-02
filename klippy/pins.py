@@ -217,7 +217,7 @@ class PinResolver:
         pinmap_func = 'update_pinmap'
         pinmap_func = getattr(mod, pinmap_func, None)
         if pinmap_func is not None:
-            self.pins = pinmap_func(self.pins, self.mcu_type)
+            pinmap_func(self.pins, self.mcu_type)
 
 ######################################################################
 # Pin to chip mapping

@@ -13,4 +13,3 @@ def update_pinmap(pins, mcu_type):
             continue
         for portbit in range(32):
             pins['P%c%d' % (portchr, portbit)] = port * 32 + portbit
-    return pins

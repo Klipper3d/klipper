@@ -43,4 +43,3 @@ def update_pinmap(pins, mcu_type):
         raise error("Duet2 Wifi/Ethernet pinmap can only be used on sam4e8e boards")
     for pin, gpio in duet2_pinmap.items():
         pins[pin] = pins[gpio]
-    return pins
