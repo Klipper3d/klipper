@@ -1,9 +1,12 @@
 # Pin name to pin number definitions
 #
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018  Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
+import os
+import importlib
 
 class error(Exception):
     pass
@@ -175,7 +178,11 @@ class PinResolver:
     def __init__(self, mcu_type, validate_aliases=True):
         self.mcu_type = mcu_type
         self.validate_aliases = validate_aliases
-        self.pins = dict(MCU_PINS.get(mcu_type, {}))
+        self.pins = {}
+        if mcu_type == 'sam4e8e':
+            self.try_load_pins(self.mcu_type)
+        else:
+            self.pins = dict(MCU_PINS.get(mcu_type, {}))
         self.active_pins = {}
     def update_aliases(self, mapping_name):
         self.pins = dict(MCU_PINS.get(self.mcu_type, {}))
@@ -183,6 +190,8 @@ class PinResolver:
             update_map_arduino(self.pins, self.mcu_type)
         elif mapping_name == 'beaglebone':
             update_map_beaglebone(self.pins, self.mcu_type)
+        elif mapping_name == 'duet2':
+            self.try_load_pins(mapping_name)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
     def update_command(self, cmd):
@@ -197,7 +206,18 @@ class PinResolver:
                     name, self.active_pins[pin_id]))
             return m.group('prefix') + str(pin_id)
         return re_pin.sub(pin_fixup, cmd)
-
+    def try_load_pins(self, pinmap_name):
+        py_name = os.path.join(os.path.dirname(__file__),
+                               'pinmaps', pinmap_name + '.py')
+        py_dirname = os.path.join(os.path.dirname(__file__),
+                                  'pinmaps', pinmap_name, '__init__.py')
+        if not os.path.exists(py_name) and not os.path.exists(py_dirname):
+            return None
+        mod = importlib.import_module('pinmaps.' + pinmap_name)
+        pinmap_func = 'update_pinmap'
+        pinmap_func = getattr(mod, pinmap_func, None)
+        if pinmap_func is not None:
+            self.pins = pinmap_func(self.pins, self.mcu_type)
 
 ######################################################################
 # Pin to chip mapping
