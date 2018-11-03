@@ -408,7 +408,9 @@ software:
   *curtime*.
 * Print time. The print time is synchronized to the main
   micro-controller clock (the micro-controller defined in the "[mcu]"
-  config section). It is a floating point number stored as seconds and
+  config section or explicitly selected by the "mainsync" setting
+  in the "[printer]" section).
+  The time is a floating point number stored as seconds and
   is relative to when the main mcu was last restarted. It is possible
   to convert from a "print time" to the main micro-controller's
   hardware clock by multiplying the print time by the mcu's statically
