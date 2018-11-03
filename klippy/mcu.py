@@ -806,12 +806,12 @@ def add_printer_objects(config):
         raise error("mainsync section [%s] does not exist" % (mainsync_section))
     s = config.getsection(mainsync_section)
     logging.info("mainsync: [%s]", mainsync_section)
-    printer.add_object(s.section, MCU(printer, s, mainsync))
+    printer.add_object(s.section, MCU(s, mainsync))
     for s in config.get_prefix_sections('mcu'):
         if s.section == 'mcu' or s.section.startswith('mcu '):
             if s.section != mainsync_section:
                 sync = clocksync.SecondarySync(reactor, mainsync)
-                printer.add_object(s.section, MCU(printer, s, sync))
+                printer.add_object(s.section, MCU(s, sync))
 
 def get_printer_mcu(printer, name):
     if name == 'mcu':
