@@ -139,6 +139,7 @@ class GCodeParser:
             self.extruder = extruders[0]
             self.toolhead.set_extruder(self.extruder)
         self.heaters = [ e.get_heater() for e in extruders ]
+        self.heaters.append(self.printer.lookup_object('heater_chamber', None))
         self.heaters.append(self.printer.lookup_object('heater_bed', None))
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
@@ -367,9 +368,12 @@ class GCodeParser:
         for i, heater in enumerate(self.heaters):
             if heater is not None:
                 cur, target = heater.get_temp(eventtime)
-                name = "B"
-                if i < len(self.heaters) - 1:
+                if i < len(self.heaters) - 2:
                     name = "T%d" % (i,)
+                elif i == len(self.heaters) - 2:
+                    name = "C"
+                else:
+                    name = "B"
                 out.append("%s:%.1f /%.1f" % (name, cur, target))
         if not out:
             return "T:0"
@@ -382,11 +386,13 @@ class GCodeParser:
             print_time = self.toolhead.get_last_move_time()
             self.respond(self.get_temp(eventtime))
             eventtime = self.reactor.pause(eventtime + 1.)
-    def set_temp(self, params, is_bed=False, wait=False):
+    def set_temp(self, params, is_bed=False, wait=False, is_chamber=False):
         temp = self.get_float('S', params, 0.)
         heater = None
         if is_bed:
             heater = self.heaters[-1]
+        elif is_chamber:
+            heater = self.heaters[-2]
         elif 'T' in params:
             index = self.get_int(
                 'T', params, minval=0, maxval=len(self.heaters)-2)
@@ -461,7 +467,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'M206',
-        'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
+        'M105', 'M104', 'M109', 'M140', 'M141', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
@@ -608,6 +614,9 @@ class GCodeParser:
     def cmd_M140(self, params):
         # Set Bed Temperature
         self.set_temp(params, is_bed=True)
+    def cmd_M141(self, params):
+        # Set Chamber Temperature
+        self.set_temp(params, is_bed=False, wait=False, is_chamber=True)
     def cmd_M190(self, params):
         # Set Bed Temperature and Wait
         self.set_temp(params, is_bed=True, wait=True)
