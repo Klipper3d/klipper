@@ -304,7 +304,7 @@ sched_report_shutdown(void)
 }
 
 // Shutdown the machine if not already in the process of shutting down
-void
+void __always_inline
 sched_try_shutdown(uint_fast8_t reason)
 {
     if (!shutdown_status)

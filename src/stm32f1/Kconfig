@@ -18,10 +18,26 @@ config CLOCK_FREQ
     int
     default 8000000 # 72000000 / 9
 
+choice
+    prompt "Bootloader offset"
+    config STM_FLASH_START_0000
+        bool "No bootloader"
+    config STM_FLASH_START_2000
+        bool "8KiB bootloader (stm32duino)"
+endchoice
+
+config FLASH_START
+    hex
+    default 0x2000 if STM_FLASH_START_2000
+    default 0x0000
+
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    default y
 config SERIAL
+    depends on !USBSERIAL
     bool
     default y
-
 config SERIAL_BAUD
     depends on SERIAL
     int "Baud rate for serial port"

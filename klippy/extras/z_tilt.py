@@ -20,7 +20,7 @@ class ZTilt:
                 config.get_name()))
         if len(z_positions) < 2:
             raise config.error("z_tilt requires at least two z_positions")
-        self.probe_helper = probe.ProbePointsHelper(config, self)
+        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.z_steppers = []
         # Register Z_TILT_ADJUST command
         self.gcode = self.printer.lookup_object('gcode')
@@ -35,18 +35,18 @@ class ZTilt:
         z_steppers = kin.get_steppers('Z')
         if len(z_steppers) != len(self.z_positions):
             raise self.printer.config_error(
-                "z_tilt z_positions needs exactly %d items" % (len(z_steppers),))
+                "z_tilt z_positions needs exactly %d items" % (
+                    len(z_steppers),))
         self.z_steppers = z_steppers
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
-        self.probe_helper.start_probe()
-    def get_probed_position(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        return kin.calc_position()
-    def finalize(self, offsets, positions):
+        self.probe_helper.start_probe(params)
+    def probe_finalize(self, offsets, positions):
+        # Setup for coordinate descent analysis
         z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
         params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
+        # Perform coordinate descent
         def adjusted_height(pos, params):
             x, y, z = pos
             return (z - x*params['x_adjust'] - y*params['y_adjust']
@@ -58,16 +58,20 @@ class ZTilt:
             return total_error
         new_params = mathutil.coordinate_descent(
             params.keys(), params, errorfunc)
+        # Apply results
         logging.info("Calculated bed tilt parameters: %s", new_params)
+        x_adjust = new_params['x_adjust']
+        y_adjust = new_params['y_adjust']
+        z_adjust = (new_params['z_adjust'] - z_offset
+                    - x_adjust * offsets[0] - y_adjust * offsets[1])
         try:
-            self.adjust_steppers(new_params['x_adjust'], new_params['y_adjust'],
-                                 new_params['z_adjust'], z_offset)
+            self.adjust_steppers(x_adjust, y_adjust, z_adjust)
         except:
             logging.exception("z_tilt adjust_steppers")
             for s in self.z_steppers:
                 z.set_ignore_move(False)
             raise
-    def adjust_steppers(self, x_adjust, y_adjust, z_adjust, z_offset):
+    def adjust_steppers(self, x_adjust, y_adjust, z_adjust):
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
         speed = self.probe_helper.get_lift_speed()
@@ -78,9 +82,9 @@ class ZTilt:
             stepper_offset = -(x*x_adjust + y*y_adjust)
             positions.append((stepper_offset, s))
         # Report on movements
-        msg = "Making the following Z tilt adjustments:\n%s\nz_offset = %.6f" % (
-            "\n".join(["%s = %.6f" % (s.get_name(), so) for so, s in positions]),
-            z_adjust - z_offset)
+        stepstrs = ["%s = %.6f" % (s.get_name(), so) for so, s in positions]
+        msg = "Making the following Z adjustments:\n%s\nz_adjust = %.6f" % (
+            "\n".join(stepstrs), z_adjust)
         logging.info(msg)
         self.gcode.respond_info(msg)
         # Move each z stepper (sorted from lowest to highest) until they match
@@ -97,7 +101,7 @@ class ZTilt:
         # Z should now be level - do final cleanup
         last_stepper_offset, last_stepper = positions[-1]
         last_stepper.set_ignore_move(False)
-        curpos[2] -= z_adjust - z_offset
+        curpos[2] -= z_adjust
         toolhead.set_position(curpos)
         self.gcode.reset_last_position()
 

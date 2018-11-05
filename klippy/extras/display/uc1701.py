@@ -5,12 +5,13 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-from font8x14 import VGA_FONT as CHAR_SET
+import icons, font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
+TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
+
 class UC1701:
-    char_right_arrow = '\x1a'
     CURRENT_BUF, OLD_BUF = 0, 1
     EMPTY_CHAR = (0, 32, 255)
     def __init__(self, config):
@@ -29,7 +30,6 @@ class UC1701:
         self.spi_oid = self.mcu.create_oid()
         self.a0_oid = self.mcu.create_oid()
         self.mcu.register_config_callback(self.build_config)
-        self.glyph_buffer = []
         self.spi_xfer_cmd = self.set_pin_cmd = None
         self.vram = ([bytearray(128) for i in range(8)],
                     [bytearray('~'*128) for i in range(8)])
@@ -114,24 +114,6 @@ class UC1701:
         page_byte = ~(0x01 << (pix_y % 8))
         #set the correct pixel in the vram buffer to 0
         self.vram[self.CURRENT_BUF][page_idx][pix_x] &= page_byte
-    def load_glyph(self, glyph_id, data):
-        if len(data) > 16:
-            data = data[:16]
-        self.glyph_buffer.append((glyph_id, data))
-        self.glyph_buffer.sort(key=lambda x: x[0])
-    def write_glyph(self, x, y, glyph_id):
-        pix_x = x*8
-        pix_y = y*16
-        data = self.glyph_buffer[glyph_id][1]
-        for bits in data:
-            if bits:
-                bit_x = pix_x
-                for i in range(15, -1, -1):
-                    mask = 0x0001 << i
-                    if bits & mask:
-                        self.set_pixel(bit_x, pix_y)
-                    bit_x += 1
-            pix_y += 1
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -143,7 +125,7 @@ class UC1701:
                 # Empty char
                 pix_x += 8
                 continue
-            char = CHAR_SET[c_idx]
+            char = font8x14.VGA_FONT[c_idx]
             bit_y = pix_y
             for bits in char:
                 if bits:
@@ -166,6 +148,19 @@ class UC1701:
                 if bits & mask:
                     self.set_pixel(pix_x, pix_y)
                 pix_x += 1
+    def write_glyph(self, x, y, glyph_name):
+        icon = icons.Icons16x16.get(glyph_name)
+        if icon is not None:
+            # Draw icon in graphics mode
+            for i, bits in enumerate(icon):
+                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            return 2
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
     def clear(self):
         zeros = bytearray(128)
         for page in self.vram[self.CURRENT_BUF]:

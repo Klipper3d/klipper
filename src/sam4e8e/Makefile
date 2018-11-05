@@ -19,6 +19,7 @@ src-y +=  ../lib/cmsis-sam4e/gcc/system_sam4e.c \
 		  ../lib/cmsis-sam4e/gcc/gcc/startup_sam4e.c
 
 src-$(CONFIG_HAVE_GPIO_SPI) += sam4e8e/spi.c
+src-$(CONFIG_HAVE_GPIO_I2C) += sam4e8e/i2c.c
 src-$(CONFIG_SERIAL) += sam4e8e/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO) += sam4e8e/gpio.c
 src-y += generic/crc16_ccitt.c generic/alloc.c

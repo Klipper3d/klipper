@@ -6,7 +6,7 @@
 
 #include <string.h> // memcpy
 #include "board/io.h" // readl
-#include "board/usb_cdc.h" // usb_notify_setup
+#include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // enable_pclock
 #include "samd21.h" // USB
@@ -122,19 +122,25 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
 }
 
 int_fast8_t
-usb_read_setup(void *data, uint_fast8_t max_len)
+usb_read_ep0(void *data, uint_fast8_t max_len)
 {
     return usb_read_packet(0, 0, data, max_len);
 }
 
 int_fast8_t
-usb_send_setup(const void *data, uint_fast8_t len)
+usb_read_ep0_setup(void *data, uint_fast8_t max_len)
+{
+    return usb_read_ep0(data, max_len);
+}
+
+int_fast8_t
+usb_send_ep0(const void *data, uint_fast8_t len)
 {
     return usb_write_packet(0, 1, data, len);
 }
 
 void
-usb_set_stall(void)
+usb_stall_ep0(void)
 {
     EP0.EPSTATUSSET.reg = USB_DEVICE_EPSTATUS_STALLRQ(3);
 }
@@ -145,7 +151,7 @@ void
 usb_set_address(uint_fast8_t addr)
 {
     writeb(&set_address, addr | USB_DEVICE_DADD_ADDEN);
-    usb_send_setup(NULL, 0);
+    usb_send_ep0(NULL, 0);
 }
 
 void
@@ -212,7 +218,7 @@ USB_Handler(void)
             USB->DEVICE.DADD.reg = set_address;
             set_address = 0;
         }
-        usb_notify_setup();
+        usb_notify_ep0();
     }
     if (ep & (1<<USB_CDC_EP_BULK_OUT)) {
         uint8_t sts = EP_BULKOUT.EPINTFLAG.reg;

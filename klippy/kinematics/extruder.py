@@ -23,18 +23,19 @@ class PrinterExtruder:
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
         self.filament_area = math.pi * (filament_diameter * .5)**2
+        def_max_cross_section = 4. * self.nozzle_diameter**2
+        def_max_extrude_ratio = def_max_cross_section / self.filament_area
         max_cross_section = config.getfloat(
-            'max_extrude_cross_section', 4. * self.nozzle_diameter**2
-            , above=0.)
+            'max_extrude_cross_section', def_max_cross_section, above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
         toolhead = self.printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
-            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
+            'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
         self.max_e_accel = config.getfloat(
-            'max_extrude_only_accel', max_accel * self.max_extrude_ratio
+            'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(

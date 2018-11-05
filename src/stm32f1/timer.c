@@ -8,7 +8,6 @@
 #include "autoconf.h"
 #include "board/misc.h" // timer_from_us
 #include "stm32f1xx.h"
-#include "stm32f1xx.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_tim.h"
 #include "command.h" // shutdown
@@ -51,7 +50,7 @@ timer_kick(void)
 static uint32_t timer_high;
 
 // Return the current time (in absolute clock ticks).
-uint32_t
+__always_inline uint32_t
 timer_read_time(void)
 {
     uint32_t th = readl(&timer_high);
@@ -96,8 +95,8 @@ timer_init(void)
     LL_TIM_SetAutoReload(TIM2, 0xFFFF);
     LL_TIM_EnableIT_CC1(TIM2);
     LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1);
+    NVIC_SetPriority(TIM2_IRQn, 2);
     NVIC_EnableIRQ(TIM2_IRQn);
-    NVIC_SetPriority(TIM2_IRQn, 0);
     timer_kick();
     timer_reset();
     LL_TIM_EnableCounter(TIM2);

@@ -282,11 +282,10 @@ config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `d8225642` with gcc version
-`arm-none-eabi-gcc (4.8.4-1+11-1) 4.8.4 20141219 (release)`. The best
-single stepper result is `SET ticks 249`, the best dual stepper result
-is `SET ticks 220`, and the best three stepper result is `SET ticks
-374`.
+The test was last run on commit `67278a6d` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 250`, the best dual stepper result is
+`SET ticks 205`, and the best three stepper result is `SET ticks 317`.
 
 ### Duet Wifi step rate benchmark ###
 
@@ -299,11 +298,11 @@ config_stepper oid=2 step_pin=PD8 dir_pin=PD13 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `e94f3b7` with gcc version
+The test was last run on commit `34c3cb5c` with gcc version
 `arm-none-eabi-gcc (15:5.4.1+svn241155-1) 5.4.1 20160919`. The best
-single stepper result is `SET ticks 325`, the best dual stepper result
-is `SET ticks 283`, and the best three stepper result is `SET ticks
-379`.
+single stepper result is `SET ticks 295`, the best dual stepper result
+is `SET ticks 264`, and the best three stepper result is `SET ticks
+282`.
 
 ### Beaglebone PRU step rate benchmark ###
 
@@ -332,10 +331,10 @@ config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `add37023` with gcc version
+The test was last run on commit `7cbc44b8` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
 stepper result is `SET ticks 44`, the best dual stepper result is `SET
-ticks 47`, and the best three stepper result is `SET ticks 80`.
+ticks 44`, and the best three stepper result is `SET ticks 74`.
 
 ### LPC176x step rate benchmark ###
 
@@ -348,14 +347,14 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `c78b9076` with gcc version
+The test was last run on commit `8fca9084` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
-LPC1768, the best single stepper result is `SET ticks 136`, the best
-dual stepper result is `SET ticks 134`, and the best three stepper
-result is `SET ticks 195`. The 120Mhz LPC1769 results were obtained by
+LPC1768, the best single stepper result is `SET ticks 128`, the best
+dual stepper result is `SET ticks 118`, and the best three stepper
+result is `SET ticks 154`. The 120Mhz LPC1769 results were obtained by
 overclocking an LPC1768 to 120Mhz - the best single stepper result is
-`SET ticks 155`, the best dual stepper result is `SET ticks 148`, and
-the best three stepper result is `SET ticks 195`.
+`SET ticks 148`, the best dual stepper result is `SET ticks 137`, and
+the best three stepper result is `SET ticks 154`.
 
 ### SAMD21 step rate benchmark ###
 

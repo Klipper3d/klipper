@@ -37,6 +37,9 @@ timer_init(void)
 {
     // Disable timer
     LPC_TIM0->TCR = 0x02;
+    // Setup clock and prescaler (divide sys clock by 4)
+    LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<2)) | (0x1<<2);
+    LPC_TIM0->PR = 3;
     // Enable interrupts
     NVIC_SetPriority(TIMER0_IRQn, 2);
     NVIC_EnableIRQ(TIMER0_IRQn);
