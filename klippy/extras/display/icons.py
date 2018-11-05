@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2018  Aleph Objects, Inc <marcio@alephobjects.com>
 # Copyright (C) 2018  Alexander Fadeev <alfsoft@gmail.com>
-# James Wood helped <j@j-w.co>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
