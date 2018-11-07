@@ -96,22 +96,7 @@ class GCodeParser:
         return False, "gcodein=%d" % (self.bytes_read,)
     def get_status(self, eventtime):
         busy = self.is_processing_data
-        return {
-            'speed_factor': self.speed_factor * 60.,
-            'extrude_factor': self.extrude_factor,
-            'busy': busy,
-            'last_xpos': self.last_position[0],
-            'last_ypos': self.last_position[1],
-            'last_zpos': self.last_position[2],
-            'last_epos': self.last_position[3],
-            'base_xpos': self.base_position[0],
-            'base_ypos': self.base_position[1],
-            'base_zpos': self.base_position[2],
-            'base_epos': self.base_position[3],
-            'homing_xpos': self.homing_position[0],
-            'homing_ypos': self.homing_position[1],
-            'homing_zpos': self.homing_position[2]
-        }
+        return {'speed_factor': self.speed_factor * 60., 'busy': busy}
     def printer_state(self, state):
         if state == 'shutdown':
             if not self.is_printer_ready:
@@ -121,11 +106,8 @@ class GCodeParser:
             self.dump_debug()
             if self.is_fileinput:
                 self.printer.request_exit('error_exit')
-            self._respond_state("Shutdown")
             return
         if state != 'ready':
-            if state == 'disconnect':
-                self._respond_state("Disconnect")
             return
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
@@ -143,7 +125,6 @@ class GCodeParser:
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-        self._respond_state("Ready")
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
     def dump_debug(self):
@@ -202,11 +183,7 @@ class GCodeParser:
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
-        try:
-            data = os.read(self.fd, 4096)
-        except os.error:
-            logging.exception("Read g-code")
-            return
+        data = os.read(self.fd, 4096)
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
         lines = data.split('\n')
@@ -247,20 +224,16 @@ class GCodeParser:
             pending_commands = self.pending_commands
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-    def process_batch(self, commands):
+    def process_batch(self, command):
         if self.is_processing_data:
             return False
         self.is_processing_data = True
         try:
-            self.process_commands(commands, need_ack=False)
-        except error as e:
+            self.process_commands([command], need_ack=False)
+        finally:
             if self.pending_commands:
                 self.process_pending()
             self.is_processing_data = False
-            raise
-        if self.pending_commands:
-            self.process_pending()
-        self.is_processing_data = False
         return True
     def run_script_from_command(self, script):
         prev_need_ack = self.need_ack
@@ -269,34 +242,29 @@ class GCodeParser:
         finally:
             self.need_ack = prev_need_ack
     def run_script(self, script):
-        commands = script.split('\n')
-        curtime = None
-        while 1:
-            res = self.process_batch(commands)
-            if res:
-                break
-            if curtime is None:
-                curtime = self.reactor.monotonic()
-            curtime = self.reactor.pause(curtime + 0.100)
+        curtime = self.reactor.monotonic()
+        for line in script.split('\n'):
+            while 1:
+                try:
+                    res = self.process_batch(line)
+                except:
+                    break
+                if res:
+                    break
+                curtime = self.reactor.pause(curtime + 0.100)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
             return
-        try:
-            if msg:
-                os.write(self.fd, "ok %s\n" % (msg,))
-            else:
-                os.write(self.fd, "ok\n")
-        except os.error:
-            logging.exception("Write g-code ack")
+        if msg:
+            os.write(self.fd, "ok %s\n" % (msg,))
+        else:
+            os.write(self.fd, "ok\n")
         self.need_ack = False
     def respond(self, msg):
         if self.is_fileinput:
             return
-        try:
-            os.write(self.fd, msg+"\n")
-        except os.error:
-            logging.exception("Write g-code response")
+        os.write(self.fd, msg+"\n")
     def respond_info(self, msg):
         logging.debug(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
@@ -309,8 +277,6 @@ class GCodeParser:
         self.respond('!! %s' % (lines[0].strip(),))
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
-    def _respond_state(self, state):
-        self.respond_info("Klipper state: %s" % (state,))
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str,
@@ -516,7 +482,7 @@ class GCodeParser:
                 axes.append(self.axis2pos[axis])
         if not axes:
             axes = [0, 1, 2]
-        homing_state = homing.Homing(self.printer)
+        homing_state = homing.Homing(self.toolhead)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
         try:
@@ -670,6 +636,7 @@ class GCodeParser:
                 gcode_pos, base_pos, homing_pos))
     def request_restart(self, result):
         if self.is_printer_ready:
+            self.respond_info("Preparing to restart...")
             self.toolhead.motor_off()
             print_time = self.toolhead.get_last_move_time()
             for heater in self.heaters:
@@ -694,12 +661,11 @@ class GCodeParser:
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):
-        if self.is_printer_ready:
-            self._respond_state("Ready")
-            return
         msg = self.printer.get_state_message()
-        msg = msg.rstrip() + "\nKlipper state: Not ready"
-        self.respond_error(msg)
+        if self.is_printer_ready:
+            self.respond_info(msg)
+        else:
+            self.respond_error(msg)
     cmd_HELP_when_not_ready = True
     def cmd_HELP(self, params):
         cmdhelp = []

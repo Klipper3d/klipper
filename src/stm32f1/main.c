@@ -135,8 +135,6 @@ int
 main(void)
 {
     SystemInit();
-    SCB->VTOR += CONFIG_FLASH_START;
-
     LL_Init1msTick(SystemCoreClock);
     clock_config();
     adc_config();
