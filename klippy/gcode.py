@@ -462,7 +462,7 @@ class GCodeParser:
         values[key_param](params)
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
-        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
+        'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M118','M220', 'M221',
         'SET_GCODE_OFFSET', 'M206',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
@@ -565,6 +565,9 @@ class GCodeParser:
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+    cmd_M118_when_not_ready = True 
+    def cmd_M118(self, params): 
+        self.respond_info(params['#original'].replace("M118 ","").replace("//","",1))
     def cmd_M220(self, params):
         # Set speed factor override percentage
         value = self.get_float('S', params, 100., above=0.) / (60. * 100.)
