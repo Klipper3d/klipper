@@ -565,8 +565,8 @@ class GCodeParser:
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
-    cmd_M118_when_not_ready = True 
-    def cmd_M118(self, params): 
+    cmd_M118_when_not_ready = True
+    def cmd_M118(self, params):
         self.respond_info(params['#original'].replace("M118 ","").replace("//","",1))
     def cmd_M220(self, params):
         # Set speed factor override percentage
