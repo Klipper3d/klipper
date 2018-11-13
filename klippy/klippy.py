@@ -226,6 +226,9 @@ def main():
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
                     action="callback", callback=arg_dictionary,
                     help="file to read for mcu protocol dictionary")
+    opts.add_option("--printline", dest="printline", type="string",
+                    help='format line to display for each line of gcode'
+                    ' (try "{}" or "The print time is: {[#print_time]}")')
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
@@ -245,6 +248,7 @@ def main():
     if options.debugoutput:
         start_args['debugoutput'] = options.debugoutput
         start_args.update(options.dictionary)
+    start_args['printline'] = options.printline
     if options.logfile:
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:

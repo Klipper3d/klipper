@@ -20,10 +20,12 @@ class GCodeParser:
         self.reactor = printer.get_reactor()
         self.is_processing_data = False
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
+        self.printline = printer.get_start_args().get("printline")
         self.fd_handle = None
         if not self.is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
+        # A list of commands to process paired with the location in the file, in bytes.
         self.pending_commands = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
@@ -163,7 +165,9 @@ class GCodeParser:
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def process_commands(self, commands, need_ack=True):
-        for line in commands:
+        for line_pair in commands:
+            line = line_pair[0]
+            filepos = line_pair[1]
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
             cpos = line.find(';')
@@ -174,6 +178,7 @@ class GCodeParser:
             params = { parts[i]: parts[i+1].strip()
                        for i in range(0, len(parts), 2) }
             params['#original'] = origline
+            params['#filepos'] = filepos
             if parts and parts[0] == 'N':
                 # Skip line number at start of command
                 del parts[:2]
@@ -181,6 +186,9 @@ class GCodeParser:
                 # Treat empty line as empty command
                 parts = ['', '']
             params['#command'] = cmd = parts[0] + parts[1].strip()
+            params['#print_time'] = self.toolhead.get_last_move_time()
+            if self.printline:
+                print(self.printline).format(params, **params)
             # Invoke handler for command
             self.need_ack = need_ack
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
@@ -208,17 +216,21 @@ class GCodeParser:
             logging.exception("Read g-code")
             return
         self.input_log.append((eventtime, data))
+        current_filepos = self.bytes_read
         self.bytes_read += len(data)
         lines = data.split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
-        pending_commands.extend(lines)
+        for l in lines:
+            pending_commands.append((l, current_filepos))
+            # Add one for the newline that was split
+            current_filepos += len(l) + 1
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
             if not self.is_processing_data:
                 self.request_restart('exit')
-            pending_commands.append("")
+            pending_commands.append(("", 0))
         # Handle case where multiple commands pending
         if self.is_processing_data or len(pending_commands) > 1:
             if len(pending_commands) < 20:
