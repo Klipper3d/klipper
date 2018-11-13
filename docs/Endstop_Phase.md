@@ -76,7 +76,7 @@ Additional notes
 * This feature is most useful on delta printers and on the Z endstop
   of cartesian/corexy printers. It is possible to use this feature on
   the XY endstops of cartesian printers, but that isn't particularly
-  useful as minor differences in XY position rarely impact print
+  useful as a minor error in X/Y endstop position rarely impacts print
   quality. It is not valid to use this feature on the XY endstops of
   corexy printers (as the XY position is not determined by a single
   stepper on corexy kinematics). It is not valid to use this feature
