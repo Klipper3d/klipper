@@ -45,7 +45,11 @@ class VirtualSD:
     def get_file_list(self):
         dname = self.sdcard_dirname
         try:
-            filenames = sorted(os.listdir(self.sdcard_dirname), key=lambda x: os.path.getctime(os.path.join(self.sdcard_dirname,x)), reverse=True)
+            filenames = sorted(
+                        os.listdir(self.sdcard_dirname), 
+                        key=lambda x: os.path.getctime(
+                        os.path.join(self.sdcard_dirname,x)),
+                        reverse=True)
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
                     for fname in filenames]
         except:
