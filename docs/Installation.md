@@ -50,9 +50,9 @@ make menuconfig
 ```
 
 Select the appropriate micro-controller and review any other options
-provided. For boards with serial ports, the default baud rate is
-250000 (see the [FAQ](FAQ.md#how-do-i-change-the-serial-baud-rate) if
-changing). Once configured, run:
+provided. For boards with serial ports, the recommended baud rate is
+250000 (see the [FAQ](FAQ.md#how-do-i-change-the-serial-baud-rate)
+before changing). Once configured, run:
 
 ```
 make

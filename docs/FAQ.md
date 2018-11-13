@@ -95,16 +95,17 @@ parameters - see the avrdude documentation for further information.
 
 ### How do I change the serial baud rate?
 
-The default baud rate is 250000 in both the Klipper micro-controller
-configuration and in the Klipper host software. This works on almost
-all micro-controllers and it is the recommended setting. (Most online
-guides that refer to a baud rate of 115200 are outdated.)
+The recommended baud rate for Klipper is 250000. This baud rate works
+well on all micro-controller boards that Klipper supports. If you've
+found an online guide recommending a different baud rate, then ignore
+that part of the guide and continue with the default value of 250000.
 
-If you need to change the baud rate, then the new rate will need to be
-configured in the micro-controller (during **make menuconfig**) and
-that updated code will need to be flashed to the micro-controller. The
-Klipper printer.cfg file will also need to be updated to match that
-baud rate (see the example.cfg file for details).  For example:
+If you want to change the baud rate anyway, then the new rate will
+need to be configured in the micro-controller (during **make
+menuconfig**) and that updated code will need to be compiled and
+flashed to the micro-controller. The Klipper printer.cfg file will
+also need to be updated to match that baud rate (see the example.cfg
+file for details).  For example:
 ```
 [mcu]
 baud: 250000
@@ -113,6 +114,11 @@ baud: 250000
 The baud rate shown on the OctoPrint web page has no impact on the
 internal Klipper micro-controller baud rate. Always set the OctoPrint
 baud rate to 250000 when using Klipper.
+
+The Klipper micro-controller baud rate is not related to the baud rate
+of the micro-controller's bootloader. See the
+[bootloader document](docs/Bootloaders.md) for additional information
+on bootloaders.
 
 ### Can I run Klipper on something other than a Raspberry Pi 3?
 
