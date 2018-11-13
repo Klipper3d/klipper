@@ -10,7 +10,7 @@ bootloader that works across all micro-controllers. Worse, it is
 common for each bootloader to require a different set of steps to
 flash an application.
 
-If one can flash a bootloader to a micro-controller than one can
+If one can flash a bootloader to a micro-controller then one can
 generally also use that mechanism to flash an application, but care
 should be taken when doing this as one may inadvertently remove the
 bootloader. In contrast, a bootloader will generally only permit a
