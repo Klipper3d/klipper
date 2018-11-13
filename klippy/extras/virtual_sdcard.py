@@ -46,7 +46,7 @@ class VirtualSD:
         dname = self.sdcard_dirname
         try:
             filenames = sorted(
-                        os.listdir(self.sdcard_dirname), 
+                        os.listdir(self.sdcard_dirname),
                         key=lambda x: os.path.getctime(
                         os.path.join(self.sdcard_dirname,x)),
                         reverse=True)
