@@ -117,8 +117,8 @@ baud rate to 250000 when using Klipper.
 
 The Klipper micro-controller baud rate is not related to the baud rate
 of the micro-controller's bootloader. See the
-[bootloader document](docs/Bootloaders.md) for additional information
-on bootloaders.
+[bootloader document](Bootloaders.md) for additional information on
+bootloaders.
 
 ### Can I run Klipper on something other than a Raspberry Pi 3?
 
