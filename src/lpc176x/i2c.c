@@ -7,6 +7,7 @@
 #include "LPC17xx.h" // LPC_I2C1
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
+#include "gpio.h" // i2c_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
@@ -35,6 +36,15 @@ i2c_init(void)
     // Enable interface
     LPC_I2C1->I2CONCLR = IF_START | IF_IRQ | IF_ACK | IF_ENA;
     LPC_I2C1->I2CONSET = IF_ENA;
+}
+
+struct i2c_config
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+{
+    if (bus)
+        shutdown("Unsupported i2c bus");
+    i2c_init();
+    return (struct i2c_config){ .addr=addr };
 }
 
 static void
@@ -78,23 +88,21 @@ i2c_stop(uint32_t timeout)
     i2c_wait(IF_STOP, timeout);
 }
 
-static void
-i2c_send(uint8_t *data, int data_len)
+void
+i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
-    i2c_init();
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
 
     i2c_start(timeout);
-    while (data_len--)
-        i2c_send_byte(*data++, timeout);
+    i2c_send_byte(config.addr, timeout);
+    while (write_len--)
+        i2c_send_byte(*write++, timeout);
     i2c_stop(timeout);
 }
 
-// This provides just enough functionality to program an MCP4451 chip
 void
-command_i2c_send(uint32_t *args)
+i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+         , uint8_t read_len, uint8_t *read)
 {
-    uint8_t data_len = args[0], *data = (void*)(size_t)args[1];
-    i2c_send(data, data_len);
+    shutdown("i2c_read not supported on lpc176x");
 }
-DECL_COMMAND(command_i2c_send, "i2c_send data=%*s");
