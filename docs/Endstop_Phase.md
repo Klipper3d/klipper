@@ -76,13 +76,13 @@ Additional notes
 * This feature is most useful on delta printers and on the Z endstop
   of cartesian/corexy printers. It is possible to use this feature on
   the XY endstops of cartesian printers, but that isn't particularly
-  useful as a minor error in X/Y endstop position rarely impacts print
-  quality. It is not valid to use this feature on the XY endstops of
-  corexy printers (as the XY position is not determined by a single
-  stepper on corexy kinematics). It is not valid to use this feature
-  on a printer using a "probe:z_virtual_endstop" Z endstop (as the
-  stepper phase is only stable if the endstop is at a static location
-  on a rail).
+  useful as a minor error in X/Y endstop position is unlikely to
+  impact print quality. It is not valid to use this feature on the XY
+  endstops of corexy printers (as the XY position is not determined by
+  a single stepper on corexy kinematics). It is not valid to use this
+  feature on a printer using a "probe:z_virtual_endstop" Z endstop (as
+  the stepper phase is only stable if the endstop is at a static
+  location on a rail).
 
 * After calibrating the endstop phase, if the endstop is later moved
   or adjusted then it will be necessary to recalibrate the endstop.
