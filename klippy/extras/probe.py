@@ -102,12 +102,12 @@ class ProbeEndstopWrapper:
     def home_prepare(self):
         if self.activate_gcode is not None:
             gcode = self.printer.lookup_object('gcode')
-            gcode.run_script_from_command(self.activate_gcode)
+            gcode.run_script_from_command(self.activate_gcode, None)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         if self.deactivate_gcode is not None:
             gcode = self.printer.lookup_object('gcode')
-            gcode.run_script_from_command(self.deactivate_gcode)
+            gcode.run_script_from_command(self.deactivate_gcode, None)
         self.mcu_endstop.home_finalize()
     def get_position_endstop(self):
         return self.position_endstop
@@ -182,7 +182,7 @@ class ProbePointsHelper:
         positions = []
         for i in range(self.samples):
             try:
-                self.gcode.run_script_from_command("PROBE")
+                self.gcode.run_script_from_command("PROBE", None)
             except self.gcode.error as e:
                 self._finalize(False)
                 raise

@@ -38,7 +38,7 @@ class GCodeMacro:
             raise self.gcode.error(msg)
         self.in_script = True
         try:
-            self.gcode.run_script_from_command(script)
+            self.gcode.run_script_from_command(script, params['#filepos'])
         finally:
             self.in_script = False
 
