@@ -33,7 +33,7 @@ static uint32_t timer_repeat_until;
 #define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
 #define TIMER_REPEAT_TICKS timer_from_us(100)
 
-#define TIMER_MIN_TRY_TICKS timer_from_us(1)
+#define TIMER_MIN_TRY_TICKS timer_from_us(2)
 #define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
 // Invoke timers - called from board irq code.
