@@ -14,7 +14,7 @@ help_txt = """
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
-    SUPPRESS : Suppress a response message (eg, "SUPPRESS stats")
+    SUPPRESS : Suppress a response message (eg, "SUPPRESS analog_in_state 4")
     SET   : Create a local variable (eg, "SET myvar 123.4")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
