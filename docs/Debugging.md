@@ -374,6 +374,34 @@ The test was last run on commit `b161a69e` with gcc version
 stepper result is `SET ticks 277`, the best dual stepper result is
 `SET ticks 410`, and the best three stepper result is `SET ticks 664`.
 
+## Command dispatch benchmark ##
+
+The command dispatch benchmark tests how many "dummy" commands the
+micro-controller can process. It is primarily a test of the hardware
+communication mechanism. The test is run using the console.py tool
+(described above). The following is cut-and-paste into the console.py
+terminal window:
+```
+DELAY {clock+freq} get_uptime
+FLOOD 100000 0.0 end_group
+get_uptime
+```
+
+When the test completes, determine the difference between the clocks
+reported in the two "uptime" response messages. The total number of
+commands per second is then `100000 * mcu_frequency / clock_diff`.
+
+| MCU                 | Rate | Build    | Build compiler       |
+| ------------------- | ---- | -------- | -------------------- |
+| atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1) |
+| at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1) |
+| sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| pru (shared memory) | 4.8K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
+| stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+
 Host Benchmarks
 ===============
 
