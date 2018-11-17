@@ -396,7 +396,7 @@ commands per second is then `100000 * mcu_frequency / clock_diff`.
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1) |
 | at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1) |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| pru (shared memory) | 4.8K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
+| pru (shared memory) |   5K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
