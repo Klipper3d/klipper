@@ -391,10 +391,10 @@ When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
 
-| MCU                 | Rate | Build    | Build compiler       |
-| ------------------- | ---- | -------- | -------------------- |
-| atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1) |
-| at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1) |
+| MCU                 | Rate | Build    | Build compiler      |
+| ------------------- | ---- | -------- | ------------------- |
+| atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
+| at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | pru (shared memory) |   5K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
