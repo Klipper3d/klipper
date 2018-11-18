@@ -69,10 +69,13 @@ STATIC_STRING_MIN = 2
 class HandleStaticStrings:
     def __init__(self):
         self.static_strings = []
+        self.found_strings = {}
         self.ctr_dispatch = { '_DECL_STATIC_STR': self.decl_static_str }
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
-        self.static_strings.append(msg)
+        if msg not in self.found_strings:
+            self.found_strings[msg] = 1
+            self.static_strings.append(msg)
     def update_data_dictionary(self, data):
         data['static_strings'] = { i + STATIC_STRING_MIN: s
                                    for i, s in enumerate(self.static_strings) }
