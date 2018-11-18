@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
+import bus
 
 TMC_FREQUENCY=13200000.
 GCONF_EN_PWM_MODE=1<<2
@@ -27,20 +28,10 @@ class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
-        # pin setup
-        ppins = self.printer.lookup_object("pins")
-        cs_pin = config.get('cs_pin')
-        cs_pin_params = ppins.lookup_pin(cs_pin)
-        self.mcu = cs_pin_params['chip']
-        pin = cs_pin_params['pin']
-        self.oid = self.mcu.create_oid()
-        self.mcu.add_config_cmd(
-            "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
-                self.oid, 0, cs_pin_params['pin'], 3, 4000000))
-        self.spi_send_cmd = self.spi_transfer_cmd = None
-        self.mcu.register_config_callback(self.build_config)
+        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
+        ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc2130_" + self.name, self)
         # Add DUMP_TMC command
         gcode = self.printer.lookup_object("gcode")
@@ -113,30 +104,17 @@ class TMC2130:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc2130 virtual endstop")
         return TMC2130VirtualEndstop(self)
-    def build_config(self):
-        cmd_queue = self.mcu.alloc_command_queue()
-        self.spi_send_cmd = self.mcu.lookup_command(
-            "spi_send oid=%c data=%*s", cq=cmd_queue)
-        self.spi_transfer_cmd = self.mcu.lookup_command(
-            "spi_transfer oid=%c data=%*s", cq=cmd_queue)
     def get_register(self, reg_name):
         reg = Registers[reg_name]
-        self.spi_send_cmd.send([self.oid, [reg, 0x00, 0x00, 0x00, 0x00]])
-        params = self.spi_transfer_cmd.send_with_response(
-            [self.oid, [reg, 0x00, 0x00, 0x00, 0x00]],
-            'spi_transfer_response', self.oid)
+        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
+        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val):
         reg = Registers[reg_name]
-        if self.spi_send_cmd is None:
-            # Setup register via chip initialization
-            self.mcu.add_config_cmd("spi_send oid=%d data=%02x%08x" % (
-                self.oid, (reg | 0x80) & 0xff, val & 0xffffffff), is_init=True)
-            return
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi_send_cmd.send([self.oid, data])
+        self.spi.spi_send(data)
     def get_microsteps(self):
         return 256 >> self.mres
     def get_phase(self):
@@ -160,7 +138,7 @@ class TMC2130VirtualEndstop:
             raise pins.error("tmc2130 virtual endstop requires diag1_pin")
         ppins = tmc2130.printer.lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', tmc2130.diag1_pin)
-        if self.mcu_endstop.get_mcu() is not tmc2130.mcu:
+        if self.mcu_endstop.get_mcu() is not tmc2130.spi.get_mcu():
             raise pins.error("tmc2130 virtual endstop must be on same mcu")
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
