@@ -95,6 +95,31 @@ Handlers.append(HandleStaticStrings())
 
 
 ######################################################################
+# Constants
+######################################################################
+
+# Allow adding build time constants to the data dictionary
+class HandleConstants:
+    def __init__(self):
+        self.constants = {}
+        self.ctr_dispatch = { '_DECL_CONSTANT': self.decl_constant }
+    def decl_constant(self, req):
+        name, value = req.split()[1:]
+        value = value.strip()
+        if value.startswith('"') and value.endswith('"'):
+            value = value[1:-1]
+        if name in self.constants and self.constants[name] != value:
+            error("Conflicting definition for constant '%s'" % name)
+        self.constants[name] = value
+    def update_data_dictionary(self, data):
+        data['config'] = self.constants
+    def generate_code(self):
+        return ""
+
+Handlers.append(HandleConstants())
+
+
+######################################################################
 # Command and output parser generation
 ######################################################################
 
@@ -217,8 +242,7 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 # Identify data dictionary generation
 ######################################################################
 
-def build_identify(cmd_by_id, msg_to_id, responses
-                   , constants, version, toolstr):
+def build_identify(cmd_by_id, msg_to_id, responses, version, toolstr):
     #commands, messages
     messages = dict((msgid, msg) for msg, msgid in msg_to_id.items())
     data = {}
@@ -227,7 +251,6 @@ def build_identify(cmd_by_id, msg_to_id, responses
     data['messages'] = messages
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
-    data['config'] = constants
     data['version'] = version
     data['build_versions'] = toolstr
 
@@ -353,7 +376,6 @@ def main():
     messages_by_name = dict((m.split()[0], m)
                             for m in msgproto.DefaultMessages.values())
     encoders = []
-    constants = {}
     # Parse request file
     ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
     f = open(incmdfile, 'rb')
@@ -387,14 +409,6 @@ def main():
             encoders.append((msgname, msg))
         elif cmd == '_DECL_OUTPUT':
             encoders.append((None, msg))
-        elif cmd == '_DECL_CONSTANT':
-            name, value = parts[1:]
-            value = value.strip()
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            if name in constants and constants[name] != value:
-                error("Conflicting definition for constant '%s'" % name)
-            constants[name] = value
         else:
             error("Unknown build time command '%s'" % cmd)
     # Create unique ids for each message type
@@ -420,7 +434,7 @@ def main():
     responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
                  if msgname not in commands]
     datadict, icode = build_identify(
-        cmd_by_id, msg_to_id, responses, constants, version, toolstr)
+        cmd_by_id, msg_to_id, responses, version, toolstr)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + "".join([h.generate_code() for h in Handlers])
