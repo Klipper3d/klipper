@@ -409,7 +409,7 @@ class HandleIdentify:
         data = {}
         for h in Handlers:
             h.update_data_dictionary(data)
-        datadict = json.dumps(data)
+        datadict = json.dumps(data, separators=(',', ':'))
 
         # Write data dictionary
         if options.write_dictionary:
