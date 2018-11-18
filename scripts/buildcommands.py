@@ -120,64 +120,117 @@ Handlers.append(HandleConstants())
 
 
 ######################################################################
-# Command and output parser generation
+# Wire protocol commands and responses
 ######################################################################
 
-def build_parser(parser, iscmd, all_param_types):
-    if parser.name == "#output":
-        comment = "Output: " + parser.msgformat
-    else:
-        comment = parser.msgformat
-    params = '0'
-    types = tuple([t.__class__.__name__ for t in parser.param_types])
-    if types:
-        paramid = all_param_types.get(types)
-        if paramid is None:
-            paramid = len(all_param_types)
-            all_param_types[types] = paramid
-        params = 'command_parameters%d' % (paramid,)
-    out = """
+# Dynamic command and response registration
+class HandleCommandGeneration:
+    def __init__(self):
+        self.commands = {}
+        self.encoders = []
+        self.msg_to_id = { m: i for i, m in msgproto.DefaultMessages.items() }
+        self.messages_by_name = { m.split()[0]: m for m in self.msg_to_id }
+        self.all_param_types = {}
+        self.ctr_dispatch = {
+            '_DECL_COMMAND': self.decl_command,
+            '_DECL_ENCODER': self.decl_encoder,
+            '_DECL_OUTPUT': self.decl_output
+        }
+    def decl_command(self, req):
+        funcname, flags, msgname = req.split()[1:4]
+        if msgname in self.commands:
+            error("Multiple definitions for command '%s'" % msgname)
+        self.commands[msgname] = (funcname, flags, msgname)
+        msg = req.split(None, 3)[3]
+        m = self.messages_by_name.get(msgname)
+        if m is not None and m != msg:
+            error("Conflicting definition for command '%s'" % msgname)
+        self.messages_by_name[msgname] = msg
+    def decl_encoder(self, req):
+        msg = req.split(None, 1)[1]
+        msgname = msg.split()[0]
+        m = self.messages_by_name.get(msgname)
+        if m is not None and m != msg:
+            error("Conflicting definition for message '%s'" % msgname)
+        self.messages_by_name[msgname] = msg
+        self.encoders.append((msgname, msg))
+    def decl_output(self, req):
+        msg = req.split(None, 1)[1]
+        self.encoders.append((None, msg))
+    def create_message_ids(self):
+        # Create unique ids for each message type
+        msgid = max(self.msg_to_id.values())
+        for msgname in self.commands.keys() + [m for n, m in self.encoders]:
+            msg = self.messages_by_name.get(msgname, msgname)
+            if msg not in self.msg_to_id:
+                msgid += 1
+                self.msg_to_id[msg] = msgid
+    def update_data_dictionary(self, data):
+        self.create_message_ids()
+        messages = { msgid: msg for msg, msgid in self.msg_to_id.items() }
+        data['messages'] = messages
+        commands = [self.msg_to_id[msg]
+                    for msgname, msg in self.messages_by_name.items()
+                    if msgname in self.commands]
+        data['commands'] = sorted(commands)
+        responses = [self.msg_to_id[msg]
+                     for msgname, msg in self.messages_by_name.items()
+                     if msgname not in self.commands]
+        data['responses'] = sorted(responses)
+    def build_parser(self, parser, iscmd):
+        if parser.name == "#output":
+            comment = "Output: " + parser.msgformat
+        else:
+            comment = parser.msgformat
+        params = '0'
+        types = tuple([t.__class__.__name__ for t in parser.param_types])
+        if types:
+            paramid = self.all_param_types.get(types)
+            if paramid is None:
+                paramid = len(self.all_param_types)
+                self.all_param_types[types] = paramid
+            params = 'command_parameters%d' % (paramid,)
+        out = """
     // %s
     .msg_id=%d,
     .num_params=%d,
     .param_types = %s,
 """ % (comment, parser.msgid, len(types), params)
-    if iscmd:
-        num_args = (len(types) + types.count('PT_progmem_buffer')
-                    + types.count('PT_buffer'))
-        out += "    .num_args=%d," % (num_args,)
-    else:
-        max_size = min(msgproto.MESSAGE_MAX,
-                       (msgproto.MESSAGE_MIN + 1
-                        + sum([t.max_length for t in parser.param_types])))
-        out += "    .max_size=%d," % (max_size,)
-    return out
-
-def build_encoders(encoders, msg_to_id, all_param_types):
-    encoder_defs = []
-    output_code = []
-    encoder_code = []
-    did_output = {}
-    for msgname, msg in encoders:
-        msgid = msg_to_id[msg]
-        if msgid in did_output:
-            continue
-        s = msg
-        did_output[msgid] = True
-        code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
-                '        return &command_encoder_%s;\n' % (s, msgid))
-        if msgname is None:
-            parser = msgproto.OutputFormat(msgid, msg)
-            output_code.append(code)
+        if iscmd:
+            num_args = (len(types) + types.count('PT_progmem_buffer')
+                        + types.count('PT_buffer'))
+            out += "    .num_args=%d," % (num_args,)
         else:
-            parser = msgproto.MessageFormat(msgid, msg)
-            encoder_code.append(code)
-        parsercode = build_parser(parser, 0, all_param_types)
-        encoder_defs.append(
-            "const struct command_encoder command_encoder_%s PROGMEM = {"
-            "    %s\n};\n" % (
-                msgid, parsercode))
-    fmt = """
+            max_size = min(msgproto.MESSAGE_MAX,
+                           (msgproto.MESSAGE_MIN + 1
+                            + sum([t.max_length for t in parser.param_types])))
+            out += "    .max_size=%d," % (max_size,)
+        return out
+    def generate_responses_code(self):
+        encoder_defs = []
+        output_code = []
+        encoder_code = []
+        did_output = {}
+        for msgname, msg in self.encoders:
+            msgid = self.msg_to_id[msg]
+            if msgid in did_output:
+                continue
+            s = msg
+            did_output[msgid] = True
+            code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
+                    '        return &command_encoder_%s;\n' % (s, msgid))
+            if msgname is None:
+                parser = msgproto.OutputFormat(msgid, msg)
+                output_code.append(code)
+            else:
+                parser = msgproto.MessageFormat(msgid, msg)
+                encoder_code.append(code)
+            parsercode = self.build_parser(parser, 0)
+            encoder_defs.append(
+                "const struct command_encoder command_encoder_%s PROGMEM = {"
+                "    %s\n};\n" % (
+                    msgid, parsercode))
+        fmt = """
 %s
 
 const __always_inline struct command_encoder *
@@ -194,39 +247,32 @@ ctr_lookup_output(const char *str)
     return NULL;
 }
 """
-    return fmt % ("".join(encoder_defs).strip(), "".join(encoder_code).strip(),
-                  "".join(output_code).strip())
-
-def build_param_types(all_param_types):
-    sorted_param_types = sorted([(i, a) for a, i in all_param_types.items()])
-    params = ['']
-    for paramid, argtypes in sorted_param_types:
-        params.append(
-            'static const uint8_t command_parameters%d[] PROGMEM = {\n'
-            '    %s };' % (
-                paramid, ', '.join(argtypes),))
-    params.append('')
-    return "\n".join(params)
-
-def build_commands(cmd_by_id, messages_by_name, all_param_types):
-    max_cmd_msgid = max(cmd_by_id.keys())
-    index = []
-    externs = {}
-    for msgid in range(max_cmd_msgid+1):
-        if msgid not in cmd_by_id:
-            index.append(" {\n},")
-            continue
-        funcname, flags, msgname = cmd_by_id[msgid]
-        msg = messages_by_name[msgname]
-        externs[funcname] = 1
-        parser = msgproto.MessageFormat(msgid, msg)
-        parsercode = build_parser(parser, 1, all_param_types)
-        index.append(" {%s\n    .flags=%s,\n    .func=%s\n}," % (
-            parsercode, flags, funcname))
-    index = "".join(index).strip()
-    externs = "\n".join(["extern void "+funcname+"(uint32_t*);"
-                         for funcname in sorted(externs)])
-    fmt = """
+        return fmt % ("".join(encoder_defs).strip(),
+                      "".join(encoder_code).strip(),
+                      "".join(output_code).strip())
+    def generate_commands_code(self):
+        cmd_by_id = {
+            self.msg_to_id[self.messages_by_name.get(msgname, msgname)]: cmd
+            for msgname, cmd in self.commands.items()
+        }
+        max_cmd_msgid = max(cmd_by_id.keys())
+        index = []
+        externs = {}
+        for msgid in range(max_cmd_msgid+1):
+            if msgid not in cmd_by_id:
+                index.append(" {\n},")
+                continue
+            funcname, flags, msgname = cmd_by_id[msgid]
+            msg = self.messages_by_name[msgname]
+            externs[funcname] = 1
+            parser = msgproto.MessageFormat(msgid, msg)
+            parsercode = self.build_parser(parser, 1)
+            index.append(" {%s\n    .flags=%s,\n    .func=%s\n}," % (
+                parsercode, flags, funcname))
+        index = "".join(index).strip()
+        externs = "\n".join(["extern void "+funcname+"(uint32_t*);"
+                             for funcname in sorted(externs)])
+        fmt = """
 %s
 
 const struct command_parser command_index[] PROGMEM = {
@@ -235,22 +281,35 @@ const struct command_parser command_index[] PROGMEM = {
 
 const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 """
-    return fmt % (externs, index)
+        return fmt % (externs, index)
+    def generate_param_code(self):
+        sorted_param_types = sorted(
+            [(i, a) for a, i in self.all_param_types.items()])
+        params = ['']
+        for paramid, argtypes in sorted_param_types:
+            params.append(
+                'static const uint8_t command_parameters%d[] PROGMEM = {\n'
+                '    %s };' % (
+                    paramid, ', '.join(argtypes),))
+        params.append('')
+        return "\n".join(params)
+    def generate_code(self):
+        parsercode = self.generate_responses_code()
+        cmdcode = self.generate_commands_code()
+        paramcode = self.generate_param_code()
+        return paramcode + parsercode + cmdcode
+
+Handlers.append(HandleCommandGeneration())
 
 
 ######################################################################
 # Identify data dictionary generation
 ######################################################################
 
-def build_identify(cmd_by_id, msg_to_id, responses, version, toolstr):
-    #commands, messages
-    messages = dict((msgid, msg) for msg, msgid in msg_to_id.items())
+def build_identify(version, toolstr):
     data = {}
     for h in Handlers:
         h.update_data_dictionary(data)
-    data['messages'] = messages
-    data['commands'] = sorted(cmd_by_id.keys())
-    data['responses'] = sorted(responses)
     data['version'] = version
     data['build_versions'] = toolstr
 
@@ -371,11 +430,6 @@ def main():
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    # Setup
-    commands = {}
-    messages_by_name = dict((m.split()[0], m)
-                            for m in msgproto.DefaultMessages.values())
-    encoders = []
     # Parse request file
     ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
     f = open(incmdfile, 'rb')
@@ -383,62 +437,21 @@ def main():
     f.close()
     for req in data.split('\0'):
         req = req.lstrip()
-        parts = req.split()
-        if not parts:
+        if not req:
             continue
-        cmd = parts[0]
-        msg = req[len(cmd)+1:]
-        if cmd in ctr_dispatch:
-            ctr_dispatch[cmd](req)
-        elif cmd == '_DECL_COMMAND':
-            funcname, flags, msgname = parts[1:4]
-            if msgname in commands:
-                error("Multiple definitions for command '%s'" % msgname)
-            commands[msgname] = (funcname, flags, msgname)
-            msg = req.split(None, 3)[3]
-            m = messages_by_name.get(msgname)
-            if m is not None and m != msg:
-                error("Conflicting definition for command '%s'" % msgname)
-            messages_by_name[msgname] = msg
-        elif cmd == '_DECL_ENCODER':
-            msgname = parts[1]
-            m = messages_by_name.get(msgname)
-            if m is not None and m != msg:
-                error("Conflicting definition for message '%s'" % msgname)
-            messages_by_name[msgname] = msg
-            encoders.append((msgname, msg))
-        elif cmd == '_DECL_OUTPUT':
-            encoders.append((None, msg))
-        else:
+        cmd = req.split()[0]
+        if cmd not in ctr_dispatch:
             error("Unknown build time command '%s'" % cmd)
-    # Create unique ids for each message type
-    msgid = max(msgproto.DefaultMessages.keys())
-    msg_to_id = dict((m, i) for i, m in msgproto.DefaultMessages.items())
-    for msgname in commands.keys() + [m for n, m in encoders]:
-        msg = messages_by_name.get(msgname, msgname)
-        if msg not in msg_to_id:
-            msgid += 1
-            msg_to_id[msg] = msgid
-    # Create message definitions
-    all_param_types = {}
-    parsercode = build_encoders(encoders, msg_to_id, all_param_types)
-    # Create command definitions
-    cmd_by_id = dict((msg_to_id[messages_by_name.get(msgname, msgname)], cmd)
-                     for msgname, cmd in commands.items())
-    cmdcode = build_commands(cmd_by_id, messages_by_name, all_param_types)
-    paramcode = build_param_types(all_param_types)
+        ctr_dispatch[cmd](req)
     # Create identify information
     cleanbuild, toolstr = tool_versions(options.tools)
     version = build_version(options.extra)
     sys.stdout.write("Version: %s\n" % (version,))
-    responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
-                 if msgname not in commands]
-    datadict, icode = build_identify(
-        cmd_by_id, msg_to_id, responses, version, toolstr)
+    datadict, icode = build_identify(version, toolstr)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + "".join([h.generate_code() for h in Handlers])
-            + paramcode + parsercode + cmdcode + icode)
+            + icode)
     f.close()
 
     # Write data dictionary
