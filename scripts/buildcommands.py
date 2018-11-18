@@ -22,6 +22,42 @@ def error(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(-1)
 
+Handlers = []
+
+
+######################################################################
+# C call list generation
+######################################################################
+
+# Create dynamic C functions that call a list of other C functions
+class HandleCallList:
+    def __init__(self):
+        self.call_lists = {'ctr_run_initfuncs': []}
+        self.ctr_dispatch = { '_DECL_CALLLIST': self.decl_calllist }
+    def decl_calllist(self, req):
+        funcname, callname = req.split()[1:]
+        self.call_lists.setdefault(funcname, []).append(callname)
+    def update_data_dictionary(self, data):
+        pass
+    def generate_code(self):
+        code = []
+        for funcname, funcs in self.call_lists.items():
+            func_code = ['    extern void %s(void);\n    %s();' % (f, f)
+                         for f in funcs]
+            if funcname == 'ctr_run_taskfuncs':
+                func_code = ['    irq_poll();\n' + fc for fc in func_code]
+            fmt = """
+void
+%s(void)
+{
+    %s
+}
+"""
+            code.append(fmt % (funcname, "\n".join(func_code).strip()))
+        return "".join(code)
+
+Handlers.append(HandleCallList())
+
 
 ######################################################################
 # Command and output parser generation
@@ -117,23 +153,6 @@ ctr_lookup_static_string(const char *str)
 }
 """
     return fmt % ("".join(code).strip(),)
-
-def build_call_lists(call_lists):
-    code = []
-    for funcname, funcs in call_lists.items():
-        func_code = ['    extern void %s(void);\n    %s();' % (f, f)
-                     for f in funcs]
-        if funcname == 'ctr_run_taskfuncs':
-            func_code = ['    irq_poll();\n' + fc for fc in func_code]
-        fmt = """
-void
-%s(void)
-{
-    %s
-}
-"""
-        code.append(fmt % (funcname, "\n".join(func_code).strip()))
-    return "".join(code)
 
 def build_param_types(all_param_types):
     sorted_param_types = sorted([(i, a) for a, i in all_param_types.items()])
@@ -318,8 +337,8 @@ def main():
     encoders = []
     static_strings = []
     constants = {}
-    call_lists = {'ctr_run_initfuncs': []}
     # Parse request file
+    ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
     f = open(incmdfile, 'rb')
     data = f.read()
     f.close()
@@ -330,7 +349,9 @@ def main():
             continue
         cmd = parts[0]
         msg = req[len(cmd)+1:]
-        if cmd == '_DECL_COMMAND':
+        if cmd in ctr_dispatch:
+            ctr_dispatch[cmd](req)
+        elif cmd == '_DECL_COMMAND':
             funcname, flags, msgname = parts[1:4]
             if msgname in commands:
                 error("Multiple definitions for command '%s'" % msgname)
@@ -359,10 +380,6 @@ def main():
             if name in constants and constants[name] != value:
                 error("Conflicting definition for constant '%s'" % name)
             constants[name] = value
-        elif cmd == '_DECL_CALLLIST':
-            funcname, callname = parts[1:]
-            cl = call_lists.setdefault(funcname, [])
-            cl.append(callname)
         else:
             error("Unknown build time command '%s'" % cmd)
     # Create unique ids for each message type
@@ -377,7 +394,6 @@ def main():
     all_param_types = {}
     parsercode = build_encoders(encoders, msg_to_id, all_param_types)
     static_strings_code = build_static_strings(static_strings)
-    call_lists_code = build_call_lists(call_lists)
     # Create command definitions
     cmd_by_id = dict((msg_to_id[messages_by_name.get(msgname, msgname)], cmd)
                      for msgname, cmd in commands.items())
@@ -394,8 +410,8 @@ def main():
         static_strings, constants, version, toolstr)
     # Write output
     f = open(outcfile, 'wb')
-    f.write(FILEHEADER + call_lists_code + static_strings_code
-            + paramcode + parsercode + cmdcode + icode)
+    f.write(FILEHEADER + "".join([h.generate_code() for h in Handlers])
+            + static_strings_code + paramcode + parsercode + cmdcode + icode)
     f.close()
 
     # Write data dictionary
