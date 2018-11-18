@@ -168,6 +168,9 @@ class HandleCommandGeneration:
             if msg not in self.msg_to_id:
                 msgid += 1
                 self.msg_to_id[msg] = msgid
+        if msgid >= 96:
+            # The mcu currently assumes all message ids encode to one byte
+            error("Too many message ids")
     def update_data_dictionary(self, data):
         messages = { msgid: msg for msg, msgid in self.msg_to_id.items() }
         data['messages'] = messages
