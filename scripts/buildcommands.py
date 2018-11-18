@@ -39,7 +39,7 @@ class HandleCallList:
         self.call_lists.setdefault(funcname, []).append(callname)
     def update_data_dictionary(self, data):
         pass
-    def generate_code(self):
+    def generate_code(self, options):
         code = []
         for funcname, funcs in self.call_lists.items():
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
@@ -76,7 +76,7 @@ class HandleStaticStrings:
     def update_data_dictionary(self, data):
         data['static_strings'] = { i + STATIC_STRING_MIN: s
                                    for i, s in enumerate(self.static_strings) }
-    def generate_code(self):
+    def generate_code(self, options):
         code = []
         for i, s in enumerate(self.static_strings):
             code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
@@ -113,7 +113,7 @@ class HandleConstants:
         self.constants[name] = value
     def update_data_dictionary(self, data):
         data['config'] = self.constants
-    def generate_code(self):
+    def generate_code(self, options):
         return ""
 
 Handlers.append(HandleConstants())
@@ -166,7 +166,6 @@ class HandleCommandGeneration:
                 msgid += 1
                 self.msg_to_id[msg] = msgid
     def update_data_dictionary(self, data):
-        self.create_message_ids()
         messages = { msgid: msg for msg, msgid in self.msg_to_id.items() }
         data['messages'] = messages
         commands = [self.msg_to_id[msg]
@@ -293,7 +292,8 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
                     paramid, ', '.join(argtypes),))
         params.append('')
         return "\n".join(params)
-    def generate_code(self):
+    def generate_code(self, options):
+        self.create_message_ids()
         parsercode = self.generate_responses_code()
         cmdcode = self.generate_commands_code()
         paramcode = self.generate_param_code()
@@ -306,12 +306,10 @@ Handlers.append(HandleCommandGeneration())
 # Identify data dictionary generation
 ######################################################################
 
-def build_identify(version, toolstr):
+def build_identify():
     data = {}
     for h in Handlers:
         h.update_data_dictionary(data)
-    data['version'] = version
-    data['build_versions'] = toolstr
 
     # Format compressed info into C code
     data = json.dumps(data)
@@ -322,9 +320,6 @@ def build_identify(version, toolstr):
             out.append('\n   ')
         out.append(" 0x%02x," % (ord(zdata[i]),))
     fmt = """
-// version: %s
-// build_versions: %s
-
 const uint8_t command_identify_data[] PROGMEM = {%s
 };
 
@@ -332,7 +327,7 @@ const uint8_t command_identify_data[] PROGMEM = {%s
 const uint32_t command_identify_size PROGMEM
     = ARRAY_SIZE(command_identify_data);
 """
-    return data, fmt % (version, toolstr, ''.join(out), len(zdata), len(data))
+    return data, fmt % (''.join(out), len(zdata), len(data))
 
 
 ######################################################################
@@ -406,6 +401,23 @@ def tool_versions(tools):
     cleanbuild = versions[0] and versions[1] and success == len(tools)
     return cleanbuild, "gcc: %s binutils: %s" % (versions[0], versions[1])
 
+# Add version information to the data dictionary
+class HandleVersions:
+    def __init__(self):
+        self.ctr_dispatch = {}
+        self.toolstr = self.version = ""
+    def update_data_dictionary(self, data):
+        data['version'] = self.version
+        data['build_versions'] = self.toolstr
+    def generate_code(self, options):
+        cleanbuild, self.toolstr = tool_versions(options.tools)
+        self.version = build_version(options.extra)
+        sys.stdout.write("Version: %s\n" % (self.version,))
+        return "\n// version: %s\n// build_versions: %s\n" % (
+            self.version, self.toolstr)
+
+Handlers.append(HandleVersions())
+
 
 ######################################################################
 # Main code
@@ -444,14 +456,11 @@ def main():
             error("Unknown build time command '%s'" % cmd)
         ctr_dispatch[cmd](req)
     # Create identify information
-    cleanbuild, toolstr = tool_versions(options.tools)
-    version = build_version(options.extra)
-    sys.stdout.write("Version: %s\n" % (version,))
-    datadict, icode = build_identify(version, toolstr)
+    code = "".join([h.generate_code(options) for h in Handlers])
+    datadict, icode = build_identify()
     # Write output
     f = open(outcfile, 'wb')
-    f.write(FILEHEADER + "".join([h.generate_code() for h in Handlers])
-            + icode)
+    f.write(FILEHEADER + code + icode)
     f.close()
 
     # Write data dictionary
