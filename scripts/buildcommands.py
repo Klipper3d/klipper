@@ -60,6 +60,41 @@ Handlers.append(HandleCallList())
 
 
 ######################################################################
+# Static string generation
+######################################################################
+
+STATIC_STRING_MIN = 2
+
+# Generate a dynamic string to integer mapping
+class HandleStaticStrings:
+    def __init__(self):
+        self.static_strings = []
+        self.ctr_dispatch = { '_DECL_STATIC_STR': self.decl_static_str }
+    def decl_static_str(self, req):
+        msg = req.split(None, 1)[1]
+        self.static_strings.append(msg)
+    def update_data_dictionary(self, data):
+        data['static_strings'] = { i + STATIC_STRING_MIN: s
+                                   for i, s in enumerate(self.static_strings) }
+    def generate_code(self):
+        code = []
+        for i, s in enumerate(self.static_strings):
+            code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
+                        '        return %d;\n' % (s, i + STATIC_STRING_MIN))
+        fmt = """
+uint8_t __always_inline
+ctr_lookup_static_string(const char *str)
+{
+    %s
+    return 0xff;
+}
+"""
+        return fmt % ("".join(code).strip(),)
+
+Handlers.append(HandleStaticStrings())
+
+
+######################################################################
 # Command and output parser generation
 ######################################################################
 
@@ -137,23 +172,6 @@ ctr_lookup_output(const char *str)
     return fmt % ("".join(encoder_defs).strip(), "".join(encoder_code).strip(),
                   "".join(output_code).strip())
 
-STATIC_STRING_MIN = 2
-
-def build_static_strings(static_strings):
-    code = []
-    for i, s in enumerate(static_strings):
-        code.append('    if (__builtin_strcmp(str, "%s") == 0)\n'
-                    '        return %d;\n' % (s, i + STATIC_STRING_MIN))
-    fmt = """
-uint8_t __always_inline
-ctr_lookup_static_string(const char *str)
-{
-    %s
-    return 0xff;
-}
-"""
-    return fmt % ("".join(code).strip(),)
-
 def build_param_types(all_param_types):
     sorted_param_types = sorted([(i, a) for a, i in all_param_types.items()])
     params = ['']
@@ -199,16 +217,16 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 # Identify data dictionary generation
 ######################################################################
 
-def build_identify(cmd_by_id, msg_to_id, responses, static_strings
+def build_identify(cmd_by_id, msg_to_id, responses
                    , constants, version, toolstr):
-    #commands, messages, static_strings
+    #commands, messages
     messages = dict((msgid, msg) for msg, msgid in msg_to_id.items())
     data = {}
+    for h in Handlers:
+        h.update_data_dictionary(data)
     data['messages'] = messages
     data['commands'] = sorted(cmd_by_id.keys())
     data['responses'] = sorted(responses)
-    data['static_strings'] = { i + STATIC_STRING_MIN: static_strings[i]
-                               for i in range(len(static_strings)) }
     data['config'] = constants
     data['version'] = version
     data['build_versions'] = toolstr
@@ -335,7 +353,6 @@ def main():
     messages_by_name = dict((m.split()[0], m)
                             for m in msgproto.DefaultMessages.values())
     encoders = []
-    static_strings = []
     constants = {}
     # Parse request file
     ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
@@ -370,8 +387,6 @@ def main():
             encoders.append((msgname, msg))
         elif cmd == '_DECL_OUTPUT':
             encoders.append((None, msg))
-        elif cmd == '_DECL_STATIC_STR':
-            static_strings.append(req[17:])
         elif cmd == '_DECL_CONSTANT':
             name, value = parts[1:]
             value = value.strip()
@@ -393,7 +408,6 @@ def main():
     # Create message definitions
     all_param_types = {}
     parsercode = build_encoders(encoders, msg_to_id, all_param_types)
-    static_strings_code = build_static_strings(static_strings)
     # Create command definitions
     cmd_by_id = dict((msg_to_id[messages_by_name.get(msgname, msgname)], cmd)
                      for msgname, cmd in commands.items())
@@ -406,12 +420,11 @@ def main():
     responses = [msg_to_id[msg] for msgname, msg in messages_by_name.items()
                  if msgname not in commands]
     datadict, icode = build_identify(
-        cmd_by_id, msg_to_id, responses,
-        static_strings, constants, version, toolstr)
+        cmd_by_id, msg_to_id, responses, constants, version, toolstr)
     # Write output
     f = open(outcfile, 'wb')
     f.write(FILEHEADER + "".join([h.generate_code() for h in Handlers])
-            + static_strings_code + paramcode + parsercode + cmdcode + icode)
+            + paramcode + parsercode + cmdcode + icode)
     f.close()
 
     # Write data dictionary
