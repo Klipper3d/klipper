@@ -5,13 +5,14 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
 
+
 class error(Exception):
     pass
 
 
-######################################################################
+#
 # Hardware pin names
-######################################################################
+#
 
 def port_pins(port_count, bit_count=8):
     pins = {}
@@ -23,19 +24,30 @@ def port_pins(port_count, bit_count=8):
             pins['P%c%d' % (portchr, portbit)] = port * bit_count + portbit
     return pins
 
+
 def named_pins(fmt, port_count, bit_count=32):
-    return { fmt % (port, portbit) : port * bit_count + portbit
-             for port in range(port_count)
-             for portbit in range(bit_count) }
+    return {fmt % (port, portbit): port * bit_count + portbit
+            for port in range(port_count)
+            for portbit in range(bit_count)}
+
 
 def lpc_pins():
-    return { 'P%d.%d' % (port, pin) : port * 32 + pin
-             for port in range(5) for pin in range(32) }
+    return {'P%d.%d' % (port, pin): port * 32 + pin
+            for port in range(5) for pin in range(32)}
+
 
 def beaglebone_pins():
     gpios = named_pins("gpio%d_%d", 4)
-    gpios.update({"AIN%d" % i: i+4*32 for i in range(8)})
+    gpios.update({"AIN%d" % i: i + 4 * 32 for i in range(8)})
     return gpios
+
+
+def linux_pins():
+    linuxpins = {"analog%d" % i: i for i in range(8)}
+    linuxpins.update({"spidev0.%d" % i: i + 8 for i in range(8)})
+    linuxpins.update({"spidev1.%d" % i: i + 16 for i in range(8)})
+    return linuxpins
+
 
 MCU_PINS = {
     "atmega168": port_pins(5),
@@ -45,17 +57,17 @@ MCU_PINS = {
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
     "samd21g": port_pins(2, 32),
-    "sam4e8e" : port_pins(5,32),
+    "sam4e8e": port_pins(5, 32),
     "stm32f103": port_pins(5, 16),
     "lpc176x": lpc_pins(),
     "pru": beaglebone_pins(),
-    "linux": {"analog%d" % i: i for i in range(8)}, # XXX
+    "linux": linux_pins(),  # XXX
 }
 
 
-######################################################################
+#
 # Arduino mappings
-######################################################################
+#
 
 Arduino_standard = [
     "PD0", "PD1", "PD2", "PD3", "PD4", "PD5", "PD6", "PD7", "PB0", "PB1",
@@ -115,6 +127,7 @@ Arduino_from_mcu = {
     "sam3x8e": (Arduino_Due, Arduino_Due_analog),
 }
 
+
 def update_map_arduino(pins, mcu):
     if mcu not in Arduino_from_mcu:
         raise error("Arduino aliases not supported on mcu '%s'" % (mcu,))
@@ -125,9 +138,9 @@ def update_map_arduino(pins, mcu):
         pins['analog%d' % (i,)] = pins[apins[i]]
 
 
-######################################################################
+#
 # Beaglebone mappings
-######################################################################
+#
 
 beagleboneblack_mappings = {
     'P8_3': 'gpio1_6', 'P8_4': 'gpio1_7', 'P8_5': 'gpio1_2',
@@ -158,6 +171,7 @@ beagleboneblack_mappings = {
     'P9_38': 'AIN3', 'P9_39': 'AIN0', 'P9_40': 'AIN1',
 }
 
+
 def update_map_beaglebone(pins, mcu):
     if mcu != 'pru':
         raise error("Beaglebone aliases not supported on mcu '%s'" % (mcu,))
@@ -165,18 +179,21 @@ def update_map_beaglebone(pins, mcu):
         pins[pin] = pins[gpio]
 
 
-######################################################################
+#
 # Command translation
-######################################################################
+#
 
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
 
+
 class PinResolver:
+
     def __init__(self, mcu_type, validate_aliases=True):
         self.mcu_type = mcu_type
         self.validate_aliases = validate_aliases
         self.pins = dict(MCU_PINS.get(mcu_type, {}))
         self.active_pins = {}
+
     def update_aliases(self, mapping_name):
         self.pins = dict(MCU_PINS.get(self.mcu_type, {}))
         if mapping_name == 'arduino':
@@ -185,6 +202,7 @@ class PinResolver:
             update_map_beaglebone(self.pins, self.mcu_type)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
+
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
@@ -192,22 +210,24 @@ class PinResolver:
                 raise error("Unable to translate pin name: %s" % (cmd,))
             pin_id = self.pins[name]
             if (name != self.active_pins.setdefault(pin_id, name)
-                and self.validate_aliases):
+                    and self.validate_aliases):
                 raise error("pin %s is an alias for %s" % (
                     name, self.active_pins[pin_id]))
             return m.group('prefix') + str(pin_id)
         return re_pin.sub(pin_fixup, cmd)
 
 
-######################################################################
+#
 # Pin to chip mapping
-######################################################################
+#
 
 class PrinterPins:
     error = error
+
     def __init__(self):
         self.chips = {}
         self.active_pins = {}
+
     def lookup_pin(self, pin_desc, can_invert=False, can_pullup=False,
                    share_type=None):
         desc = pin_desc.strip()
@@ -246,16 +266,19 @@ class PrinterPins:
                       'invert': invert, 'pullup': pullup}
         self.active_pins[share_name] = pin_params
         return pin_params
+
     def setup_pin(self, pin_type, pin_desc):
         can_invert = pin_type in ['stepper', 'endstop', 'digital_out', 'pwm']
         can_pullup = pin_type in ['endstop']
         pin_params = self.lookup_pin(pin_desc, can_invert, can_pullup)
         return pin_params['chip'].setup_pin(pin_type, pin_params)
+
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
             raise error("Duplicate chip name '%s'" % (chip_name,))
         self.chips[chip_name] = chip
+
 
 def add_printer_objects(config):
     config.get_printer().add_object('pins', PrinterPins())
