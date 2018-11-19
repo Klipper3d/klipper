@@ -38,7 +38,7 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "atmega168": port_pins(5),
+    "atmega168": port_pins(5), "atmega32u4": port_pins(5),
     "atmega328": port_pins(5), "atmega328p": port_pins(5),
     "atmega644p": port_pins(4), "atmega1284p": port_pins(4),
     "at90usb1286": port_pins(6), "at90usb646": port_pins(6),
@@ -109,6 +109,7 @@ Arduino_from_mcu = {
     "atmega168": (Arduino_standard, Arduino_analog_standard),
     "atmega328": (Arduino_standard, Arduino_analog_standard),
     "atmega328p": (Arduino_standard, Arduino_analog_standard),
+    "atmega32u4": (Arduino_standard, Arduino_analog_standard),
     "atmega644p": (Sanguino, Sanguino_analog),
     "atmega1280": (Arduino_mega, Arduino_analog_mega),
     "atmega2560": (Arduino_mega, Arduino_analog_mega),

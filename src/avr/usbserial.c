@@ -6,7 +6,7 @@
 
 #include <avr/interrupt.h> // USB_COM_vect
 #include <string.h> // NULL
-#include "autoconf.h" // CONFIG_MACH_at90usb1286
+#include "autoconf.h" // CONFIG_MACH_*
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "pgm.h" // READP
@@ -182,14 +182,22 @@ void
 usbserial_init(void)
 {
     // Set USB controller to device mode
+#if CONFIG_MACH_atmega32u4
+    UHWCON = (1<<UVREGE);
+#else
     UHWCON = (1<<UIMOD) | (1<<UVREGE);
+#endif
 
     // Enable USB clock
     USBCON = (1<<USBE) | (1<<FRZCLK);
-    if (CONFIG_MACH_at90usb1286)
-        PLLCSR = (1<<PLLP2) | (1<<PLLP0) | (1<<PLLE);
-    else
-        PLLCSR = (1<<PLLP2) | (1<<PLLP1) | (1<<PLLE);
+#if CONFIG_MACH_at90usb1286
+    PLLCSR = (1<<PLLP2) | (1<<PLLP0) | (1<<PLLE);
+#elif CONFIG_MACH_atmega32u4
+    PLLCSR = (1<<PINDIV) | (1<<PLLE);
+#else
+    PLLCSR = (1<<PLLP2) | (1<<PLLP1) | (1<<PLLE);
+#endif
+
     while (!(PLLCSR & (1<<PLOCK)))
         ;
     USBCON = (1<<USBE) | (1<<OTGPADE);
