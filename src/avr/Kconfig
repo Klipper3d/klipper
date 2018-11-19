@@ -37,7 +37,7 @@ choice
     config MACH_atmega168
         bool "atmega168"
     config MACH_atmega32u4
-	    bool "atmega32u4"
+        bool "atmega32u4"
 endchoice
 
 config MCU
