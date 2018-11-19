@@ -223,7 +223,7 @@ class TMC2660:
         reg &= ~(SGCSCONF["CS"][1])
         reg |= get_bits(SGCSCONF, "CS", self.driver_cs)
         reg_data = [(reg >> 16) & 0xff, (reg >> 8) & 0xff, reg & 0xff]
-        clock = self.mcu.print_time_to_clock(print_time)
+        clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self.spi.spi_send(reg_data, minclock=clock, reqclock=clock)
 
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver (between %d and %d)" % (CURRENT_MIN, CURRENT_MAX)
