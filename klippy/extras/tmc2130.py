@@ -138,7 +138,7 @@ class TMC2130VirtualEndstop:
             raise pins.error("tmc2130 virtual endstop requires diag1_pin")
         ppins = tmc2130.printer.lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', tmc2130.diag1_pin)
-        if self.mcu_endstop.get_mcu() is not tmc2130.mcu:
+        if self.mcu_endstop.get_mcu() is not tmc2130.spi.get_mcu():
             raise pins.error("tmc2130 virtual endstop must be on same mcu")
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
