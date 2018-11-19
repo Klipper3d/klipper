@@ -19,7 +19,8 @@ the generic directory (eg, src/generic/somefile.h).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**
-directory contains some C code helpers. The **klippy/extras/**
+directory contains some C code helpers. The **klippy/kinematics/**
+directory contains the robot kinematics code. The **klippy/extras/**
 directory contains the host code extensible "modules".
 
 The **lib/** directory contains external 3rd-party library code that
@@ -159,16 +160,16 @@ provides further information on the mechanics of moves.
 
 * The goal of the kinematics classes is to translate the movement in
   cartesian space to movement on each stepper. The kinematics classes
-  are in cartesian.py, corexy.py, delta.py, and extruder.py. The
-  kinematic class is given a chance to audit the move
-  (`ToolHead.move() -> kin.check_move()`) before it goes on the
-  look-ahead queue, but once the move arrives in *kin*.move() the
-  kinematic class is required to handle the move as specified. Note
-  that the extruder is handled in its own kinematic class. Since the
-  Move() class specifies the exact movement time and since step pulses
-  are sent to the micro-controller with specific timing, stepper
-  movements produced by the extruder class will be in sync with head
-  movement even though the code is kept separate.
+  are located in the klippy/kinematics/ directory. The kinematic class
+  is given a chance to audit the move (`ToolHead.move() ->
+  kin.check_move()`) before it goes on the look-ahead queue, but once
+  the move arrives in *kin*.move() the kinematic class is required to
+  handle the move as specified. Note that the extruder is handled in
+  its own kinematic class. Since the Move() class specifies the exact
+  movement time and since step pulses are sent to the micro-controller
+  with specific timing, stepper movements produced by the extruder
+  class will be in sync with head movement even though the code is
+  kept separate.
 
 * Klipper uses an
   [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
@@ -308,9 +309,9 @@ Useful steps:
 1. Start by studying the
    "[code flow of a move](#code-flow-of-a-move-command)" section and
    the [Kinematics document](Kinematics.md).
-2. Review the existing kinematic classes in cartesian.py, corexy.py,
-   and delta.py. The kinematic classes are tasked with converting a
-   move in cartesian coordinates to the movement on each stepper. One
+2. Review the existing kinematic classes in the klippy/kinematics/
+   directory. The kinematic classes are tasked with converting a move
+   in cartesian coordinates to the movement on each stepper. One
    should be able to copy one of these files as a starting point.
 3. Implement the C stepper kinematic position functions for each
    stepper if they are not already available (see kin_cart.c,
@@ -324,10 +325,11 @@ Useful steps:
    coordinates from the current position of each stepper. It does not
    need to be efficient as it is typically only called during homing
    and probing operations.
-5. Other methods. The `move()`, `home()`, `check_move()`, and other
-   methods should also be implemented. These functions are typically
-   used to provide kinematic specific checks. However, at the start of
-   development one can use boiler-plate code here.
+5. Other methods. Implement the `move()`, `check_move()`, `home()`,
+   `motor_off()`, `set_position()`, and `get_steppers()` methods.
+   These functions are typically used to provide kinematic specific
+   checks.  However, at the start of development one can use
+   boiler-plate code here.
 6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file
