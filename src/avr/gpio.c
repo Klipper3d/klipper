@@ -139,8 +139,10 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #ifdef OCR1C
     { &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, 0 },
 #endif
+#ifdef OCR2A
     { &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GP_8BIT|GP_AFMT },
     { &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GP_8BIT|GP_AFMT },
+#endif
 #ifdef OCR3A
     { &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, 0 },
     { &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, 0 },
@@ -148,7 +150,7 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #ifdef OCR3C
     { &OCR3C, &TCCR3A, &TCCR3B, 1<<COM3C1, 0 },
 #endif
-#ifdef OCR4A
+#ifdef OCR5A
     { &OCR4A, &TCCR4A, &TCCR4B, 1<<COM4A1, 0 },
     { &OCR4B, &TCCR4A, &TCCR4B, 1<<COM4B1, 0 },
     { &OCR4C, &TCCR4A, &TCCR4B, 1<<COM4C1, 0 },
@@ -174,6 +176,10 @@ static const uint8_t pwm_pins[ARRAY_SIZE(pwm_regs)] PROGMEM = {
     GPIO('B', 7), GPIO('D', 0),
     GPIO('B', 5), GPIO('B', 6), GPIO('B', 7),
     GPIO('B', 4), GPIO('D', 1),
+    GPIO('C', 6), GPIO('C', 5), GPIO('C', 4),
+#elif CONFIG_MACH_atmega32u4
+    GPIO('B', 7), GPIO('D', 0),
+    GPIO('B', 5), GPIO('B', 6), GPIO('B', 7),
     GPIO('C', 6), GPIO('C', 5), GPIO('C', 4),
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
     GPIO('B', 7), GPIO('G', 5),
@@ -273,6 +279,10 @@ static const uint8_t adc_pins[] PROGMEM = {
 #elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646
     GPIO('F', 0), GPIO('F', 1), GPIO('F', 2), GPIO('F', 3),
     GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
+#elif CONFIG_MACH_atmega32u4
+    GPIO('F', 0), GPIO('F', 1), GPIO('F', 2), GPIO('F', 3),
+    GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
+    GPIO('D', 4), GPIO('D', 6), GPIO('D', 7), GPIO('B', 4),
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
     GPIO('F', 0), GPIO('F', 1), GPIO('F', 2), GPIO('F', 3),
     GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
@@ -375,7 +385,7 @@ static const uint8_t MOSI = GPIO('B', 3), MISO = GPIO('B', 4);
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
 static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7);
 static const uint8_t MOSI = GPIO('B', 5), MISO = GPIO('B', 6);
-#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
 static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1);
 static const uint8_t MOSI = GPIO('B', 2), MISO = GPIO('B', 3);
 #endif
