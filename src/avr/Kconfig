@@ -142,8 +142,7 @@ config SIMULAVR
     help
          Compile the code to run on simulavr software emulation
          instead of for real hardware. This disables support for "U2X
-         baud" mode and for the watchdog timer which are not supported
-         on simulavr.
+         baud" mode which is not supported on simulavr.
 
          If unsure, select "N".
 
