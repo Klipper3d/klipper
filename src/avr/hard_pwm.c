@@ -78,7 +78,7 @@ DECL_CONSTANT(PWM_MAX, 255);
 struct gpio_pwm
 gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
 {
-    // Find pin in pwm_pins table
+    // Find pin in pwm_regs table
     const struct gpio_pwm_info *p = pwm_regs;
     for (; ; p++) {
         if (p >= &pwm_regs[ARRAY_SIZE(pwm_regs)])
