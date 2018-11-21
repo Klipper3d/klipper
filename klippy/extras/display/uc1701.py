@@ -13,7 +13,6 @@ TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class UC1701:
     DATA_PIN_NAME = "a0_pin"
-    EMPTY_CHAR = (0, 32, 255)
     def __init__(self, config):
         self.spi = extras.bus.MCU_SPI_from_config(config, 0,
                                                   default_speed=10000000)
@@ -33,6 +32,13 @@ class UC1701:
         self.vram = [bytearray(128) for i in range(8)]
         self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
                                  for i in range(8)]
+        # Cache fonts and icons in display byte order
+        self.font = [self._swizzle_bits(c) for c in font8x14.VGA_FONT]
+        self.icons = {}
+        for name, icon in icons.Icons16x16.items():
+            top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
+            top2, bot2 = self._swizzle_bits(icon)
+            self.icons[name] = (top1 + top2, bot1 + bot2)
     def build_config(self):
         self.update_pin_cmd = self.spi.get_mcu().lookup_command(
             "update_digital_out oid=%c value=%c",
@@ -93,60 +99,45 @@ class UC1701:
                 # Send Data
                 self.send(new_data[col_pos:col_pos+count], is_data=True)
             old_data[:] = new_data
-    def set_pixel(self, pix_x, pix_y, exclusive=True):
-        page_idx = pix_y // 8
-        page_byte = 0x01 << (pix_y % 8)
-        if exclusive and self.vram[page_idx][pix_x] & page_byte:
-            #invert pixel if it has alread been set
-            self.vram[page_idx][pix_x] &= ~page_byte
-        else:
-            #set the correct pixel in the vram buffer to 1
-            self.vram[page_idx][pix_x] |= page_byte
-    def clear_pixel(self, pix_x, pix_y):
-        page_idx = pix_y // 8
-        page_byte = ~(0x01 << (pix_y % 8))
-        #set the correct pixel in the vram buffer to 0
-        self.vram[page_idx][pix_x] &= page_byte
+    def _swizzle_bits(self, data):
+        # Convert 8x16 data into display col/row order
+        bits_top = [0] * 8
+        bits_bot = [0] * 8
+        for row in range(8):
+            for col in range(8):
+                bits_top[col] |= ((data[row] >> (8 - col)) & 1) << row
+                bits_bot[col] |= ((data[row + 8] >> (8 - col)) & 1) << row
+        return (bits_top, bits_bot)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
-        pix_x = x*8
-        pix_y = y*16
+        pix_x = x * 8
+        page_top = self.vram[y * 2]
+        page_bot = self.vram[y * 2 + 1]
         for c in data:
-            c_idx = ord(c) & 0xFF
-            if c_idx in self.EMPTY_CHAR:
-                # Empty char
-                pix_x += 8
-                continue
-            char = font8x14.VGA_FONT[c_idx]
-            bit_y = pix_y
-            for bits in char:
-                if bits:
-                    bit_x = pix_x
-                    for i in range(7, -1, -1):
-                        mask = 0x01 << i
-                        if bits & mask:
-                            self.set_pixel(bit_x, bit_y)
-                        bit_x += 1
-                bit_y += 1
+            bits_top, bits_bot = self.font[ord(c)]
+            page_top[pix_x:pix_x+8] = bits_top
+            page_bot[pix_x:pix_x+8] = bits_bot
             pix_x += 8
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
-        pix_x = x*8
-        pix_y = y*16 + row
+        page = self.vram[y * 2 + (row >= 8)]
+        bit = 1 << (row % 8)
+        pix_x = x * 8
         for bits in data:
-            for i in range(7, -1, -1):
-                mask = 0x01 << i
-                if bits & mask:
-                    self.set_pixel(pix_x, pix_y)
+            for col in range(8):
+                if (bits << col) & 0x80:
+                    page[pix_x] ^= bit
                 pix_x += 1
     def write_glyph(self, x, y, glyph_name):
-        icon = icons.Icons16x16.get(glyph_name)
-        if icon is not None:
+        icon = self.icons.get(glyph_name)
+        if icon is not None and x < 15:
             # Draw icon in graphics mode
-            for i, bits in enumerate(icon):
-                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            pix_x = x * 8
+            page_idx = y * 2
+            self.vram[page_idx][pix_x:pix_x+16] = icon[0]
+            self.vram[page_idx + 1][pix_x:pix_x+16] = icon[1]
             return 2
         char = TextGlyphs.get(glyph_name)
         if char is not None:
