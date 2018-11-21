@@ -164,3 +164,5 @@ class ST7920:
         zeros = bytearray(32)
         for gfb in self.graphics_framebuffers:
             gfb[:] = zeros
+    def get_dimensions(self):
+        return (16, 4)
