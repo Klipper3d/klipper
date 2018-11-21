@@ -39,9 +39,11 @@ class UC1701:
             cq=self.spi.get_command_queue())
     def send(self, cmds, is_data=False):
         if is_data:
-            self.update_pin_cmd.send([self.a0_oid, 1], reqclock=BACKGROUND_PRIORITY_CLOCK)
+            self.update_pin_cmd.send([self.a0_oid, 1],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
         else:
-            self.update_pin_cmd.send([self.a0_oid, 0], reqclock=BACKGROUND_PRIORITY_CLOCK)
+            self.update_pin_cmd.send([self.a0_oid, 0],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
     def init(self):
         init_cmds = [0xE2, # System reset
