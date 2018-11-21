@@ -13,7 +13,6 @@ TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class UC1701:
     DATA_PIN_NAME = "a0_pin"
-    CURRENT_BUF, OLD_BUF = 0, 1
     EMPTY_CHAR = (0, 32, 255)
     def __init__(self, config):
         self.spi = extras.bus.MCU_SPI_from_config(config, 0,
@@ -31,8 +30,9 @@ class UC1701:
         mcu.register_config_callback(self.build_config)
         self.update_pin_cmd = None
         # framebuffers
-        self.vram = ([bytearray(128) for i in range(8)],
-                    [bytearray('~'*128) for i in range(8)])
+        self.vram = [bytearray(128) for i in range(8)]
+        self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
+                                 for i in range(8)]
     def build_config(self):
         self.update_pin_cmd = self.spi.get_mcu().lookup_command(
             "update_digital_out oid=%c value=%c",
@@ -67,14 +67,13 @@ class UC1701:
         self.flush()
         logging.info("uc1701 initialized")
     def flush(self):
-        new_data = self.vram[self.CURRENT_BUF]
-        old_data = self.vram[self.OLD_BUF]
-        for page in range(8):
-            if new_data[page] == old_data[page]:
+        # Find all differences in the framebuffers and send them to the chip
+        for new_data, old_data, page in self.all_framebuffers:
+            if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
-            diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data[page], old_data[page]))
-                     if nd != od]
+            diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
+                     if n != o]
             # Batch together changes that are close to each other
             for i in range(len(diffs)-2, -1, -1):
                 pos, count = diffs[i]
@@ -82,7 +81,7 @@ class UC1701:
                 if pos + 5 >= nextpos and nextcount < 16:
                     diffs[i][1] = nextcount + (nextpos - pos)
                     del diffs[i+1]
-            # Transmit
+            # Transmit changes
             for col_pos, count in diffs:
                 # Set Position registers
                 ra = 0xb0 | (page & 0x0F)
@@ -90,22 +89,22 @@ class UC1701:
                 ca_lsb = col_pos & 0x0F
                 self.send([ra, ca_msb, ca_lsb])
                 # Send Data
-                self.send(new_data[page][col_pos:col_pos+count], is_data=True)
-            old_data[page][:] = new_data[page]
+                self.send(new_data[col_pos:col_pos+count], is_data=True)
+            old_data[:] = new_data
     def set_pixel(self, pix_x, pix_y, exclusive=True):
         page_idx = pix_y // 8
         page_byte = 0x01 << (pix_y % 8)
-        if exclusive and self.vram[self.CURRENT_BUF][page_idx][pix_x] & page_byte:
+        if exclusive and self.vram[page_idx][pix_x] & page_byte:
             #invert pixel if it has alread been set
-            self.vram[self.CURRENT_BUF][page_idx][pix_x] &= ~page_byte
+            self.vram[page_idx][pix_x] &= ~page_byte
         else:
             #set the correct pixel in the vram buffer to 1
-            self.vram[self.CURRENT_BUF][page_idx][pix_x] |= page_byte
+            self.vram[page_idx][pix_x] |= page_byte
     def clear_pixel(self, pix_x, pix_y):
         page_idx = pix_y // 8
         page_byte = ~(0x01 << (pix_y % 8))
         #set the correct pixel in the vram buffer to 0
-        self.vram[self.CURRENT_BUF][page_idx][pix_x] &= page_byte
+        self.vram[page_idx][pix_x] &= page_byte
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -155,7 +154,7 @@ class UC1701:
         return 0
     def clear(self):
         zeros = bytearray(128)
-        for page in self.vram[self.CURRENT_BUF]:
+        for page in self.vram:
             page[:] = zeros
     def get_dimensions(self):
         return (16, 4)
