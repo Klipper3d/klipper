@@ -12,6 +12,7 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class UC1701:
+    DATA_PIN_NAME = "a0_pin"
     CURRENT_BUF, OLD_BUF = 0, 1
     EMPTY_CHAR = (0, 32, 255)
     def __init__(self, config):
@@ -20,7 +21,7 @@ class UC1701:
         mcu = self.spi.get_mcu()
         # Create a0 pin
         ppins = config.get_printer().lookup_object('pins')
-        a0_pin_params = ppins.lookup_pin(config.get('a0_pin'))
+        a0_pin_params = ppins.lookup_pin(config.get(self.DATA_PIN_NAME))
         if a0_pin_params['chip'] != mcu:
             raise ppins.error("uc1701 all pins must be on same mcu")
         self.a0_oid = mcu.create_oid()
@@ -158,3 +159,29 @@ class UC1701:
             page[:] = zeros
     def get_dimensions(self):
         return (16, 4)
+
+# The SSD1306 (in 4-wire SPI mode) differs from UC1701 only in display init
+class SSD1306(UC1701):
+    DATA_PIN_NAME = "dc_pin"
+    def init(self):
+        init_cmds = [
+            0xAE,       # Display off
+            0xD5, 0x80, # Set oscillator frequency
+            0xA8, 0x3f, # Set multiplex ratio
+            0xD3, 0x00, # Set display offset
+            0x40,       # Set display start line
+            0x8D, 0x14, # Charge pump setting
+            0x20, 0x02, # Set Memory addressing mode
+            0xA1,       # Set Segment re-map
+            0xC8,       # Set COM output scan direction
+            0xDA, 0x12, # Set COM pins hardware configuration
+            0x81, 0xEF, # Set contrast control
+            0xD9, 0xA1, # Set pre-charge period
+            0xDB, 0x00, # Set VCOMH deselect level
+            0x2E,       # Deactivate scroll
+            0xA4,       # Output ram to display
+            0xA6,       # Normal display
+            0xAF,       # Display on
+        ]
+        self.send(init_cmds)
+        self.flush()
