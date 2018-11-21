@@ -105,6 +105,8 @@ class HD44780:
         return 0
     def clear(self):
         self.text_framebuffer[:] = ' '*80
+    def get_dimensions(self):
+        return (20, 4)
 
 HD44780_chars = [
     # Extruder (a thermometer)

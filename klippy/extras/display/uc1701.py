@@ -156,3 +156,5 @@ class UC1701:
         zeros = bytearray(128)
         for page in self.vram[self.CURRENT_BUF]:
             page[:] = zeros
+    def get_dimensions(self):
+        return (16, 4)
