@@ -6,6 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, sys, ast, re
+import string
 
 
 class error(Exception):
@@ -569,7 +570,7 @@ class MenuGroup(MenuContainer):
         self._sep = sep
         self._show_back = False
         self.selected = None
-        self.items = config.get('items')
+        self.items = config.get('items', '')
 
     def is_accepted(self, item):
         return (super(MenuGroup, self).is_accepted(item)
@@ -795,6 +796,32 @@ class MenuCard(MenuGroup):
     def __init__(self, manager, config, namespace=''):
         super(MenuCard, self).__init__(manager, config, namespace)
         self.content = config.get('content')
+        if not self.items:
+            self.content = self._parse_content_items(self.content)
+
+    def _parse_content_items(self, content):
+        formatter = string.Formatter()
+        out = ""
+        items = []
+
+        try:
+            parsed_content = list(formatter.parse(content))
+        except Exception:
+            logging.exception("Card content parsing error")
+
+        for part in parsed_content:
+            # (literal_text, field_name, format_spec, conversion)
+            out += part[0]
+            if part[1]:
+                out += "{%s%s%s}" % (
+                    len(items),
+                    ("!" + part[3]) if part[3] else '',
+                    (":" + part[2]) if part[2] else '',
+                )
+                items.append(str(part[1]))
+
+        self.items = "\n".join(items)
+        return out
 
     def _names_aslist(self):
         return self._lines_aslist(self.items)
