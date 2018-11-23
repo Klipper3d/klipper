@@ -29,7 +29,8 @@ i2c_init(void)
     gpio_peripheral(0, 1, 3, 0);
 
     // Set 100Khz frequency
-    uint32_t PCLK = SystemCoreClock / 4, pulse = PCLK / (100000 * 2);
+    enable_peripheral_clock(PCLK_I2C1);
+    uint32_t pclk = SystemCoreClock, pulse = pclk / (100000 * 2);
     LPC_I2C1->I2SCLL = pulse;
     LPC_I2C1->I2SCLH = pulse;
 

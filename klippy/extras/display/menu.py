@@ -882,8 +882,6 @@ menu_items = {
     'deck': MenuDeck,
     'card': MenuCard
 }
-# Default dimensions for lcds (rows, cols)
-LCD_dims = {'st7920': (4, 16), 'hd44780': (4, 20), 'uc1701': (4, 16)}
 
 MENU_UPDATE_DELAY = .100
 TIMER_DELAY = .200
@@ -912,9 +910,7 @@ class MenuManager:
         self.objs = {}
         self.root = None
         self._root = config.get('menu_root', '__main')
-        dims = config.getchoice('lcd_type', LCD_dims)
-        self.rows = config.getint('rows', dims[0])
-        self.cols = config.getint('cols', dims[1])
+        self.cols, self.rows = lcd_chip.get_dimensions()
         self.timeout = config.getint('menu_timeout', 0)
         self.timer = 0
         # buttons

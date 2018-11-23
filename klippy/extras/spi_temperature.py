@@ -5,6 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
+import bus
 
 # Sensor types defined in the micro-controller code (thermocouple.c)
 TS_CHIP_MAX31855 = 1 << 0
@@ -25,27 +26,17 @@ class SensorBase:
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
-        ppins = config.get_printer().lookup_object('pins')
-        pin_params = ppins.lookup_pin(config.get('sensor_pin'))
-        self.mcu = mcu = pin_params['chip']
-        pin = pin_params['pin']
-        # SPI bus configuration
-        spi_oid = mcu.create_oid()
-        spi_speed = config.getint('spi_speed', 4000000, minval=1)
-        mcu.add_config_cmd(
-            "config_spi oid=%u bus=0 pin=%s mode=1 rate=%u shutdown_msg=" % (
-                spi_oid, pin, spi_speed))
+        self.spi = bus.MCU_SPI_from_config(
+            config, 1, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
-            config_cmd = "".join("%02x" % b for b in config_cmd)
-            mcu.add_config_cmd("spi_send oid=%u data=%s" % (
-                spi_oid, config_cmd), is_init=True)
+            self.spi.spi_send(config_cmd)
+        self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
         mcu.add_config_cmd(
             "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
-                oid, spi_oid, chip_type))
-        mcu.register_msg(self._handle_spi_response,
-            "thermocouple_result", oid)
+                oid, self.spi.get_oid(), chip_type))
+        mcu.register_msg(self._handle_spi_response, "thermocouple_result", oid)
         mcu.register_config_callback(self._build_config)
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
