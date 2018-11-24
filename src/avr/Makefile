@@ -12,6 +12,7 @@ src-y += avr/main.c avr/timer.c
 src-$(CONFIG_HAVE_GPIO) += avr/gpio.c
 src-$(CONFIG_HAVE_GPIO_ADC) += avr/adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += avr/spi.c
+src-$(CONFIG_HAVE_GPIO_I2C) += avr/i2c.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += avr/hard_pwm.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
 src-$(CONFIG_AVR_USBSERIAL) += avr/usbserial.c generic/usb_cdc.c

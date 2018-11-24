@@ -8,6 +8,7 @@ config AVR_SELECT
     select HAVE_GPIO
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_BITBANGING if !MACH_atmega168
     select NO_UNSTEP_DELAY
