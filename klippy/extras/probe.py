@@ -13,8 +13,9 @@ the Z axis minimum position so the probe can travel further
 """
 
 class PrinterProbe:
-    def __init__(self, config):
+    def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
+        self.mcu_probe = mcu_probe
         self.speed = config.getfloat('speed', 5.0)
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
@@ -26,10 +27,8 @@ class PrinterProbe:
         else:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
-        # Create mcu_probe object and register z_virtual_endstop pin
-        self.mcu_probe = ProbeEndstopWrapper(config)
-        ppins = self.printer.lookup_object('pins')
-        ppins.register_chip('probe', self)
+        # Register z_virtual_endstop pin
+        self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -239,4 +238,4 @@ class ProbePointsHelper:
             self.finalize_callback(self.probe_offsets, self.results)
 
 def load_config(config):
-    return PrinterProbe(config)
+    return PrinterProbe(config, ProbeEndstopWrapper(config))
