@@ -59,7 +59,7 @@ class BedMesh:
         self.toolhead = None
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.fade_start = config.getfloat('fade_start', 1.)
-        self.fade_end = config.getfloat('fade_end', 10.)
+        self.fade_end = config.getfloat('fade_end', 0.)
         self.fade_dist = self.fade_end - self.fade_start
         if self.fade_dist <= 0.:
             self.fade_start = self.fade_end = self.FADE_DISABLE
