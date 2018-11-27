@@ -174,8 +174,8 @@ usbserial_init(void)
     // configure usb clock
     enable_pclock(USB_GCLK_ID, 0);
     // configure USBD+ and USBD- pins
-    gpio_peripheral('A', 24, 'G', 0);
-    gpio_peripheral('A', 25, 'G', 0);
+    gpio_peripheral(GPIO('A', 24), 'G', 0);
+    gpio_peripheral(GPIO('A', 25), 'G', 0);
     uint16_t trim = (readl((void*)USB_FUSES_TRIM_ADDR)
                      & USB_FUSES_TRIM_Msk) >> USB_FUSES_TRIM_Pos;
     uint16_t transp = (readl((void*)USB_FUSES_TRANSP_ADDR)

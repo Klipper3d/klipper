@@ -18,10 +18,10 @@
  ****************************************************************/
 
 void
-gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
+gpio_peripheral(uint32_t gpio, char ptype, uint32_t pull_up)
 {
-    int group = bank == 'A' ? 0 : 1;
-    PortGroup *pg = &PORT->Group[group];
+    uint32_t bank = GPIO2PORT(gpio), bit = gpio % 32;
+    PortGroup *pg = &PORT->Group[bank];
     if (ptype) {
         volatile uint8_t *pmux = &pg->PMUX[bit/2].reg;
         uint8_t shift = (bit & 1) ? 4 : 0, mask = ~(0xf << shift);
@@ -36,9 +36,6 @@ gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
  * General Purpose Input Output (GPIO) pins
  ****************************************************************/
 
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
-#define GPIO2PORT(PIN) ((PIN) / 32)
-#define GPIO2BIT(PIN) (1<<((PIN) % 32))
 #define NUM_PORT 2
 
 struct gpio_out
