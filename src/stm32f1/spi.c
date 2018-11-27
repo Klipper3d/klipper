@@ -30,8 +30,6 @@ static void spi_set_mode(SPI_TypeDef *spi, uint8_t mode)
         LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_HIGH);
         LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_2EDGE);
         break;
-    default:
-        shutdown("Invalid SPI mode");
     }
 }
 
