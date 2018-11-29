@@ -47,8 +47,8 @@ timer_init(void)
     tc->CTRLA.reg = TC_CTRLA_MODE_COUNT32;
     NVIC_SetPriority(TC4_IRQn, 2);
     NVIC_EnableIRQ(TC4_IRQn);
-    TC4->COUNT32.INTENSET.reg = TC_INTENSET_MC0;
-    TC4->COUNT32.COUNT.reg = 0;
+    tc->INTENSET.reg = TC_INTENSET_MC0;
+    tc->COUNT.reg = 0;
     timer_kick();
     tc->CTRLA.reg = TC_CTRLA_MODE_COUNT32 | TC_CTRLA_ENABLE;
     irq_restore(flag);
