@@ -20,6 +20,7 @@ src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
 src-$(CONFIG_USBSERIAL) += samd21/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += samd21/serial.c generic/serial_irq.c
+src-$(CONFIG_HAVE_GPIO_I2C) += samd21/i2c.c
 
 # Support bootloader offset address
 target-y := $(OUT)samd21.ld $(target-y)
