@@ -22,6 +22,7 @@ src-$(CONFIG_USBSERIAL) += samd21/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += samd21/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_I2C) += samd21/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += samd21/spi.c
+src-$(CONFIG_HAVE_GPIO_HARD_PWM) += samd21/hard_pwm.c
 
 # Support bootloader offset address
 target-y := $(OUT)samd21.ld $(target-y)
