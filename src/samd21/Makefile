@@ -42,6 +42,12 @@ $(OUT)klipper.elf.hex: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -j .text -j .relocate -O ihex $< $@
 
-flash: $(OUT)klipper.bin
-	@echo ""
-	@echo "  The SAMD21 build does not currently support 'make flash'"
+# Flash rules
+lib/bossac/bin/bossac:
+	@echo "  Building bossac"
+	$(Q)make -C lib/bossac bin/bossac
+
+flash: $(OUT)klipper.bin lib/bossac/bin/bossac
+	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
+	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
+	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" --offset=0x2000 -w $(OUT)klipper.bin -v -b -R
