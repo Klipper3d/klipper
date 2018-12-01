@@ -9,6 +9,6 @@
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
 void enable_pclock(uint32_t clock_id, uint32_t pmask);
-void gpio_peripheral(uint32_t gpio, char ptype, uint32_t pull_up);
+void gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up);
 
 #endif // internal.h
