@@ -61,11 +61,20 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     cs_pin = config.get(pin_option)
     cs_pin_params = ppins.lookup_pin(cs_pin)
     pin = cs_pin_params['pin']
-    if pin == 'None':
+    #To allow multiple pins to be called None, None1, ...
+    if pin[:4] == 'None':
         pin = None
     # Load bus parameters
     speed = config.getint('spi_speed', default_speed, minval=100000)
-    bus = config.getint('spi_bus', 0, minval=0)
+    bus = config.get('spi_bus', 0)
+    try:
+        bus = int(bus)
+    except ValueError:
+        if "spidev" in bus:
+            b, d = bus[6:].split('.')
+            bus = int(d) + (int(b) << 8)
+        else:
+            raise ValueError("Can't understand bus value")
     # Create MCU_SPI object
     mcu = cs_pin_params['chip']
     return MCU_SPI(mcu, bus, pin, mode, speed, shutdown_seq)
