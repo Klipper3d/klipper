@@ -1,4 +1,4 @@
-# Test case for probe:z_virtual_endstop support
+# Test case for bltouch support
 CONFIG bltouch.cfg
 DICTIONARY atmega2560-16mhz.dict
 

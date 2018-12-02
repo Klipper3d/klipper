@@ -57,16 +57,23 @@ class BLTouchEndstopWrapper:
         if print_time < self.next_test_time:
             self.next_test_time = print_time + TEST_TIME
             return
+        # Raise the bltouch probe and test if probe is raised
         self.send_cmd(print_time, CMD_RESET)
         home_time = print_time + PIN_MOVE_TIME
         self.send_cmd(home_time, CMD_TOUCH_MODE)
         self.send_cmd(home_time + MIN_CMD_TIME, 0.)
+        # Perform endstop check to verify bltouch reports probe raised
+        prev_positions = [s.get_commanded_position()
+                          for s in self.mcu_endstop.get_steppers()]
         self.mcu_endstop.home_start(
             home_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT, .001)
         try:
             self.mcu_endstop.home_wait(home_time + MIN_CMD_TIME)
         except self.mcu_endstop.TimeoutError as e:
             raise homing.EndstopError("BLTouch sensor test failed")
+        for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
+            s.set_commanded_position(pos)
+        # Test was successful
         self.next_test_time = home_time + TEST_TIME
         toolhead.reset_print_time(home_time + 2. * MIN_CMD_TIME)
     def home_prepare(self):
