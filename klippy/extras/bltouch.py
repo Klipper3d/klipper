@@ -3,11 +3,10 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import math, logging
 import homing, probe
 
 SIGNAL_PERIOD = 0.025600
-PIN_MOVE_TIME = 8 * SIGNAL_PERIOD
 MIN_CMD_TIME = 4 * SIGNAL_PERIOD
 
 TEST_TIME = 5 * 60.
@@ -36,6 +35,9 @@ class BLTouchEndstopWrapper:
         mcu = pin_params['chip']
         mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        # Calculate pin move time
+        pmt = max(config.get('pin_move_time', 0.200), MIN_CMD_TIME)
+        self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -63,7 +65,7 @@ class BLTouchEndstopWrapper:
             return
         # Raise the bltouch probe and test if probe is raised
         self.send_cmd(print_time, 'reset')
-        home_time = print_time + PIN_MOVE_TIME
+        home_time = print_time + self.pin_move_time
         self.send_cmd(home_time, 'touch_mode')
         self.send_cmd(home_time + MIN_CMD_TIME, None)
         # Perform endstop check to verify bltouch reports probe raised
@@ -85,15 +87,15 @@ class BLTouchEndstopWrapper:
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self.send_cmd(print_time, 'pin_down')
-        self.send_cmd(print_time + PIN_MOVE_TIME, 'touch_mode')
-        toolhead.dwell(PIN_MOVE_TIME + MIN_CMD_TIME)
+        self.send_cmd(print_time + self.pin_move_time, 'touch_mode')
+        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self.send_cmd(print_time, 'reset')
-        self.send_cmd(print_time + PIN_MOVE_TIME, None)
-        toolhead.dwell(PIN_MOVE_TIME + MIN_CMD_TIME)
+        self.send_cmd(print_time + self.pin_move_time, None)
+        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
         self.mcu_endstop.home_finalize()
     def get_position_endstop(self):
         return self.position_endstop
@@ -110,8 +112,8 @@ class BLTouchEndstopWrapper:
         self.gcode.respond_info(msg)
         logging.info(msg)
         self.send_cmd(print_time, cmd)
-        self.send_cmd(print_time + PIN_MOVE_TIME, None)
-        toolhead.dwell(PIN_MOVE_TIME + MIN_CMD_TIME)
+        self.send_cmd(print_time + self.pin_move_time, None)
+        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
 
 def load_config(config):
     blt = BLTouchEndstopWrapper(config)
