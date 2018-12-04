@@ -36,7 +36,7 @@ class BLTouchEndstopWrapper:
         mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # Calculate pin move time
-        pmt = max(config.get('pin_move_time', 0.200), MIN_CMD_TIME)
+        pmt = max(config.getfloat('pin_move_time', 0.200), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
