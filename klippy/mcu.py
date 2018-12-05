@@ -638,6 +638,7 @@ class MCU:
     def register_config_callback(self, cb):
         self._config_callbacks.append(cb)
     def add_config_cmd(self, cmd, is_init=False):
+        logging.info("Adding %s command for mcu '%s': '%s'", "init" if is_init else "config", self._name, cmd)
         if is_init:
             self._init_cmds.append(cmd)
         else:
