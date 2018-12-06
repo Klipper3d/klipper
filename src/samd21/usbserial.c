@@ -169,6 +169,11 @@ usb_set_configure(void)
 }
 
 void
+usb_request_bootloader(void)
+{
+}
+
+void
 usbserial_init(void)
 {
     // configure usb clock
