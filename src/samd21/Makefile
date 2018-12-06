@@ -51,4 +51,4 @@ lib/bossac/bin/bossac:
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
-	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" --offset=0x2000 -w $(OUT)klipper.bin -v -b -R
+	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -a --offset=0x2000 -w $(OUT)klipper.bin -v -b -R
