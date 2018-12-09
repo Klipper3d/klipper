@@ -86,48 +86,95 @@ class PrinterLCD:
         return eventtime + .500
     def screen_update_hd44780(self, eventtime):
         lcd_chip = self.lcd_chip
-        # Heaters
-        if self.extruder0 is not None:
-            info = self.extruder0.get_heater().get_status(eventtime)
-            lcd_chip.write_glyph(0, 0, 'extruder')
-            self.draw_heater(1, 0, info)
-        if self.extruder1 is not None:
-            info = self.extruder1.get_heater().get_status(eventtime)
-            lcd_chip.write_glyph(0, 1, 'extruder')
-            self.draw_heater(1, 1, info)
-        if self.heater_bed is not None:
-            info = self.heater_bed.get_status(eventtime)
-            lcd_chip.write_glyph(10, 0, 'bed')
-            self.draw_heater(11, 0, info)
-        # Fan speed
-        if self.fan is not None:
-            info = self.fan.get_status(eventtime)
-            lcd_chip.write_text(10, 1, "Fan")
-            self.draw_percent(14, 1, 4, info['speed'])
-        # G-Code speed factor
-        gcode_info = self.gcode.get_status(eventtime)
-        lcd_chip.write_glyph(0, 2, 'feedrate')
-        self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
-        # Print progress
-        progress = None
-        toolhead_info = self.toolhead.get_status(eventtime)
-        if self.progress is not None:
-            progress = self.progress / 100.
-            lcd_chip.write_glyph(8, 2, 'usb')
-            if toolhead_info['status'] != "Printing":
-                # 5 second timeout when not printing
-                self.prg_time -= .5
-                if self.prg_time <= 0.:
-                    self.progress = None
-        elif self.sdcard is not None:
-            info = self.sdcard.get_status(eventtime)
-            progress = info['progress']
-            lcd_chip.write_glyph(8, 2, 'sd')
-        if progress is not None:
-            self.draw_percent(9, 2, 4, progress)
-        lcd_chip.write_glyph(14, 2, 'clock')
-        self.draw_time(15, 2, toolhead_info['printing_time'])
-        self.draw_status(0, 3, gcode_info, toolhead_info)
+
+        if self.extruder1 is None and self.progress is None:
+
+            # Alternative LCD information if only one extruder and no progress status (using M117 in octoprint)
+
+            #   	0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19
+            #   0	E0	x	x	x	-	x	x	x	o		B	x	x	x	-	x	x	x	o
+            #   1	X	x	x	x			Y	x	x	x				Z	x	x	x	.	x	x
+            #   2	FR	x	x	x	%				F	x	x	x	%		C	x	x	:	x	x
+            #   3	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m
+
+            # Extruder 0 Temperature
+            if self.extruder0 is not None:
+                info = self.extruder0.get_heater().get_status(eventtime)
+                lcd_chip.write_glyph(0, 0, 'extruder')
+                self.draw_heater(1, 0, info)
+
+            # Bed Temperature
+            if self.heater_bed is not None:
+                info = self.heater_bed.get_status(eventtime)
+                lcd_chip.write_glyph(10, 0, 'bed')
+                self.draw_heater(11, 0, info)
+
+            # Toolhead position
+            pos = self.toolhead.get_position()
+            status = "X%-3.0f  Y%-3.0f   Z%-5.2f" % (pos[0], pos[1], pos[2])
+            self.lcd_chip.write_text(0, 1, status)
+
+            # G-Code speed factor
+            gcode_info = self.gcode.get_status(eventtime)
+            lcd_chip.write_glyph(0, 2, 'feedrate')
+            self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
+
+            # Fan speed
+            if self.fan is not None:
+                info = self.fan.get_status(eventtime)
+                lcd_chip.write_glyph(8, 2, 'fan')
+                self.draw_percent(9, 2, 4, info['speed'])
+
+            # Printing time
+            toolhead_info = self.toolhead.get_status(eventtime)
+            lcd_chip.write_glyph(14, 2, 'clock')
+            self.draw_time(15, 2, toolhead_info['printing_time'])
+            self.draw_status(0, 3, gcode_info, toolhead_info)
+
+        else:
+            # Heaters
+            if self.extruder0 is not None:
+                info = self.extruder0.get_heater().get_status(eventtime)
+                lcd_chip.write_glyph(0, 0, 'extruder')
+                self.draw_heater(1, 0, info)
+            if self.extruder1 is not None:
+                info = self.extruder1.get_heater().get_status(eventtime)
+                lcd_chip.write_glyph(0, 1, 'extruder')
+                self.draw_heater(1, 1, info)
+            if self.heater_bed is not None:
+                info = self.heater_bed.get_status(eventtime)
+                lcd_chip.write_glyph(10, 0, 'bed')
+                self.draw_heater(11, 0, info)
+            # Fan speed
+            if self.fan is not None:
+                info = self.fan.get_status(eventtime)
+                lcd_chip.write_text(10, 1, "Fan")
+                self.draw_percent(14, 1, 4, info['speed'])
+            # G-Code speed factor
+            gcode_info = self.gcode.get_status(eventtime)
+            lcd_chip.write_glyph(0, 2, 'feedrate')
+            self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
+            # Print progress
+            progress = None
+            toolhead_info = self.toolhead.get_status(eventtime)
+            if self.progress is not None:
+                progress = self.progress / 100.
+                lcd_chip.write_glyph(8, 2, 'usb')
+                if toolhead_info['status'] != "Printing":
+                    # 5 second timeout when not printing
+                    self.prg_time -= .5
+                    if self.prg_time <= 0.:
+                        self.progress = None
+            elif self.sdcard is not None:
+                info = self.sdcard.get_status(eventtime)
+                progress = info['progress']
+                lcd_chip.write_glyph(8, 2, 'sd')
+            if progress is not None:
+                self.draw_percent(9, 2, 4, progress)
+            lcd_chip.write_glyph(14, 2, 'clock')
+            self.draw_time(15, 2, toolhead_info['printing_time'])
+            self.draw_status(0, 3, gcode_info, toolhead_info)
+
     def screen_update_128x64(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
