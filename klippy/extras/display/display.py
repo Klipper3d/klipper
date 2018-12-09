@@ -91,12 +91,6 @@ class PrinterLCD:
 
             # Alternative LCD information if only one extruder and no progress status (using M117 in octoprint)
 
-            #   	0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19
-            #   0	E0	x	x	x	-	x	x	x	o		B	x	x	x	-	x	x	x	o
-            #   1	X	x	x	x			Y	x	x	x				Z	x	x	x	.	x	x
-            #   2	FR	x	x	x	%				F	x	x	x	%		C	x	x	:	x	x
-            #   3	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m	m
-
             # Extruder 0 Temperature
             if self.extruder0 is not None:
                 info = self.extruder0.get_heater().get_status(eventtime)
