@@ -18,15 +18,22 @@
  ****************************************************************/
 
 void
-gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
+gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 {
-    int group = bank == 'A' ? 0 : 1;
-    PortGroup *pg = &PORT->Group[group];
+    uint32_t bank = GPIO2PORT(gpio), bit = gpio % 32;
+    PortGroup *pg = &PORT->Group[bank];
     if (ptype) {
         volatile uint8_t *pmux = &pg->PMUX[bit/2].reg;
         uint8_t shift = (bit & 1) ? 4 : 0, mask = ~(0xf << shift);
         *pmux = (*pmux & mask) | ((ptype - 'A') << shift);
     }
+    if (pull_up) {
+        if (pull_up > 0)
+            pg->OUTSET.reg = (1<<bit);
+        else
+            pg->OUTCLR.reg = (1<<bit);
+    }
+
     pg->PINCFG[bit].reg = ((ptype ? PORT_PINCFG_PMUXEN : 0)
                            | (pull_up ? PORT_PINCFG_PULLEN : 0));
 }
@@ -36,9 +43,6 @@ gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
  * General Purpose Input Output (GPIO) pins
  ****************************************************************/
 
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
-#define GPIO2PORT(PIN) ((PIN) / 32)
-#define GPIO2BIT(PIN) (1<<((PIN) % 32))
 #define NUM_PORT 2
 
 struct gpio_out
@@ -116,7 +120,15 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
     PortGroup *pg = g.regs;
     irqstatus_t flag = irq_save();
-    set_pincfg(pg, g.bit, pull_up > 0 ? PORT_PINCFG_PULLEN : 0);
+    uint32_t cfg = PORT_PINCFG_INEN;
+    if (pull_up) {
+        cfg |= PORT_PINCFG_PULLEN;
+        if (pull_up > 0)
+            pg->OUTSET.reg = g.bit;
+        else
+            pg->OUTCLR.reg = g.bit;
+    }
+    set_pincfg(pg, g.bit, cfg);
     pg->DIRCLR.reg = g.bit;
     irq_restore(flag);
 }

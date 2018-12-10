@@ -8,6 +8,7 @@
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
 #include "board/timer_irq.h" // timer_dispatch_many
+#include "internal.h" // enable_peripheral_clock
 #include "sched.h" // DECL_INIT
 
 // Set the next irq time
@@ -38,7 +39,7 @@ timer_init(void)
     // Disable timer
     LPC_TIM0->TCR = 0x02;
     // Setup clock and prescaler (divide sys clock by 4)
-    LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<2)) | (0x1<<2);
+    enable_peripheral_clock(PCLK_TIMER0);
     LPC_TIM0->PR = 3;
     // Enable interrupts
     NVIC_SetPriority(TIMER0_IRQn, 2);

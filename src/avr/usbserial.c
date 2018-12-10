@@ -178,18 +178,26 @@ usb_set_configure(void)
     UEIENX = 1<<TXINE;
 }
 
+#if CONFIG_MACH_at90usb1286
+#define UHWCON_Init ((1<<UIMOD) | (1<<UVREGE))
+#define PLLCSR_Init ((1<<PLLP2) | (1<<PLLP0) | (1<<PLLE))
+#elif CONFIG_MACH_at90usb646
+#define UHWCON_Init ((1<<UIMOD) | (1<<UVREGE))
+#define PLLCSR_Init ((1<<PLLP2) | (1<<PLLP1) | (1<<PLLE))
+#elif CONFIG_MACH_atmega32u4
+#define UHWCON_Init (1<<UVREGE)
+#define PLLCSR_Init ((1<<PINDIV) | (1<<PLLE))
+#endif
+
 void
 usbserial_init(void)
 {
     // Set USB controller to device mode
-    UHWCON = (1<<UIMOD) | (1<<UVREGE);
+    UHWCON = UHWCON_Init;
 
     // Enable USB clock
     USBCON = (1<<USBE) | (1<<FRZCLK);
-    if (CONFIG_MACH_at90usb1286)
-        PLLCSR = (1<<PLLP2) | (1<<PLLP0) | (1<<PLLE);
-    else
-        PLLCSR = (1<<PLLP2) | (1<<PLLP1) | (1<<PLLE);
+    PLLCSR = PLLCSR_Init;
     while (!(PLLCSR & (1<<PLOCK)))
         ;
     USBCON = (1<<USBE) | (1<<OTGPADE);

@@ -1,56 +1,157 @@
-# Support for UC1701 (128x64 graphics) LCD displays
+# Support for UC1701 (and similar) 128x64 graphics LCD displays
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import icons, font8x14
+import icons, font8x14, extras.bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
-class UC1701:
-    CURRENT_BUF, OLD_BUF = 0, 1
-    EMPTY_CHAR = (0, 32, 255)
-    def __init__(self, config):
-        printer = config.get_printer()
-        # pin config
-        ppins = printer.lookup_object('pins')
-        pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['cs','a0']]
-        mcu = None
-        for pin_params in pins:
-            if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("uc1701 all pins must be on same mcu")
-            mcu = pin_params['chip']
-        self.pins = [pin_params['pin'] for pin_params in pins]
-        self.mcu = mcu
-        self.spi_oid = self.mcu.create_oid()
-        self.a0_oid = self.mcu.create_oid()
-        self.mcu.register_config_callback(self.build_config)
-        self.spi_xfer_cmd = self.set_pin_cmd = None
-        self.vram = ([bytearray(128) for i in range(8)],
-                    [bytearray('~'*128) for i in range(8)])
+class DisplayBase:
+    def __init__(self, io):
+        self.send = io.send
+        # framebuffers
+        self.vram = [bytearray(128) for i in range(8)]
+        self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
+                                 for i in range(8)]
+        # Cache fonts and icons in display byte order
+        self.font = [self._swizzle_bits(c) for c in font8x14.VGA_FONT]
+        self.icons = {}
+        for name, icon in icons.Icons16x16.items():
+            top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
+            top2, bot2 = self._swizzle_bits(icon)
+            self.icons[name] = (top1 + top2, bot1 + bot2)
+    def flush(self):
+        # Find all differences in the framebuffers and send them to the chip
+        for new_data, old_data, page in self.all_framebuffers:
+            if new_data == old_data:
+                continue
+            # Find the position of all changed bytes in this framebuffer
+            diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
+                     if n != o]
+            # Batch together changes that are close to each other
+            for i in range(len(diffs)-2, -1, -1):
+                pos, count = diffs[i]
+                nextpos, nextcount = diffs[i+1]
+                if pos + 5 >= nextpos and nextcount < 16:
+                    diffs[i][1] = nextcount + (nextpos - pos)
+                    del diffs[i+1]
+            # Transmit changes
+            for col_pos, count in diffs:
+                # Set Position registers
+                ra = 0xb0 | (page & 0x0F)
+                ca_msb = 0x10 | ((col_pos >> 4) & 0x0F)
+                ca_lsb = col_pos & 0x0F
+                self.send([ra, ca_msb, ca_lsb])
+                # Send Data
+                self.send(new_data[col_pos:col_pos+count], is_data=True)
+            old_data[:] = new_data
+    def _swizzle_bits(self, data):
+        # Convert 8x16 data into display col/row order
+        bits_top = [0] * 8
+        bits_bot = [0] * 8
+        for row in range(8):
+            for col in range(8):
+                bits_top[col] |= ((data[row] >> (8 - col)) & 1) << row
+                bits_bot[col] |= ((data[row + 8] >> (8 - col)) & 1) << row
+        return (bits_top, bits_bot)
+    def write_text(self, x, y, data):
+        if x + len(data) > 16:
+            data = data[:16 - min(x, 16)]
+        pix_x = x * 8
+        page_top = self.vram[y * 2]
+        page_bot = self.vram[y * 2 + 1]
+        for c in data:
+            bits_top, bits_bot = self.font[ord(c)]
+            page_top[pix_x:pix_x+8] = bits_top
+            page_bot[pix_x:pix_x+8] = bits_bot
+            pix_x += 8
+    def write_graphics(self, x, y, row, data):
+        if x + len(data) > 16:
+            data = data[:16 - min(x, 16)]
+        page = self.vram[y * 2 + (row >= 8)]
+        bit = 1 << (row % 8)
+        pix_x = x * 8
+        for bits in data:
+            for col in range(8):
+                if (bits << col) & 0x80:
+                    page[pix_x] ^= bit
+                pix_x += 1
+    def write_glyph(self, x, y, glyph_name):
+        icon = self.icons.get(glyph_name)
+        if icon is not None and x < 15:
+            # Draw icon in graphics mode
+            pix_x = x * 8
+            page_idx = y * 2
+            self.vram[page_idx][pix_x:pix_x+16] = icon[0]
+            self.vram[page_idx + 1][pix_x:pix_x+16] = icon[1]
+            return 2
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
+    def clear(self):
+        zeros = bytearray(128)
+        for page in self.vram:
+            page[:] = zeros
+    def get_dimensions(self):
+        return (16, 4)
+
+# IO wrapper for "4 wire" spi bus (spi bus with an extra data/control line)
+class SPI4wire:
+    def __init__(self, config, data_pin_name):
+        self.spi = extras.bus.MCU_SPI_from_config(config, 0,
+                                                  default_speed=10000000)
+        mcu = self.spi.get_mcu()
+        # Create data/control pin
+        ppins = config.get_printer().lookup_object('pins')
+        pin_params = ppins.lookup_pin(config.get(data_pin_name))
+        if pin_params['chip'] != mcu:
+            raise ppins.error("%s: all pins must be on same mcu" % (
+                config.get_name()))
+        self.dc_oid = mcu.create_oid()
+        mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
+                           " value=%d default_value=%d max_duration=%d" % (
+                               self.dc_oid, pin_params['pin'], 0, 0, 0))
+        mcu.register_config_callback(self.build_config)
+        self.update_pin_cmd = None
     def build_config(self):
-        self.mcu.add_config_cmd(
-            "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
-                self.spi_oid, 0, self.pins[0], 0, 10000000))
-        self.mcu.add_config_cmd(
-            "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d" % (
-                self.a0_oid, self.pins[1], 0, 0, 0))
-        cmd_queue = self.mcu.alloc_command_queue()
-        self.spi_send_cmd = self.mcu.lookup_command(
-            "spi_send oid=%c data=%*s", cq=cmd_queue)
-        self.update_pin_cmd = self.mcu.lookup_command(
-           "update_digital_out oid=%c value=%c", cq=cmd_queue)
+        self.update_pin_cmd = self.spi.get_mcu().lookup_command(
+            "update_digital_out oid=%c value=%c",
+            cq=self.spi.get_command_queue())
     def send(self, cmds, is_data=False):
         if is_data:
-            self.update_pin_cmd.send([self.a0_oid, 1], reqclock=BACKGROUND_PRIORITY_CLOCK)
+            self.update_pin_cmd.send([self.dc_oid, 1],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
         else:
-            self.update_pin_cmd.send([self.a0_oid, 0], reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.spi_send_cmd.send([self.spi_oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
+            self.update_pin_cmd.send([self.dc_oid, 0],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+# IO wrapper for i2c bus
+class I2C:
+    def __init__(self, config, default_addr):
+        self.i2c = extras.bus.MCU_I2C_from_config(
+            config, default_addr=default_addr, default_speed=400000)
+    def send(self, cmds, is_data=False):
+        if is_data:
+            hdr = 0x40
+        else:
+            hdr = 0x00
+        cmds = bytearray(cmds)
+        cmds.insert(0, hdr)
+        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+# The UC1701 is a "4-wire" SPI display device
+class UC1701(DisplayBase):
+    def __init__(self, config):
+        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
     def init(self):
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
@@ -74,94 +175,35 @@ class UC1701:
         self.send([0xA4]) # normal display
         self.flush()
         logging.info("uc1701 initialized")
-    def flush(self):
-        new_data = self.vram[self.CURRENT_BUF]
-        old_data = self.vram[self.OLD_BUF]
-        for page in range(8):
-            if new_data[page] == old_data[page]:
-                continue
-            # Find the position of all changed bytes in this framebuffer
-            diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data[page], old_data[page]))
-                     if nd != od]
-            # Batch together changes that are close to each other
-            for i in range(len(diffs)-2, -1, -1):
-                pos, count = diffs[i]
-                nextpos, nextcount = diffs[i+1]
-                if pos + 5 >= nextpos and nextcount < 16:
-                    diffs[i][1] = nextcount + (nextpos - pos)
-                    del diffs[i+1]
-            # Transmit
-            for col_pos, count in diffs:
-                # Set Position registers
-                ra = 0xb0 | (page & 0x0F)
-                ca_msb = 0x10 | ((col_pos >> 4) & 0x0F)
-                ca_lsb = col_pos & 0x0F
-                self.send([ra, ca_msb, ca_lsb])
-                # Send Data
-                self.send(new_data[page][col_pos:col_pos+count], is_data=True)
-            old_data[page][:] = new_data[page]
-    def set_pixel(self, pix_x, pix_y, exclusive=True):
-        page_idx = pix_y // 8
-        page_byte = 0x01 << (pix_y % 8)
-        if exclusive and self.vram[self.CURRENT_BUF][page_idx][pix_x] & page_byte:
-            #invert pixel if it has alread been set
-            self.vram[self.CURRENT_BUF][page_idx][pix_x] &= ~page_byte
+
+# The SSD1306 supports both i2c and "4-wire" spi
+class SSD1306(UC1701):
+    def __init__(self, config):
+        cs_pin = config.get("cs_pin", None)
+        if cs_pin is None:
+            io = I2C(config, 120)
         else:
-            #set the correct pixel in the vram buffer to 1
-            self.vram[self.CURRENT_BUF][page_idx][pix_x] |= page_byte
-    def clear_pixel(self, pix_x, pix_y):
-        page_idx = pix_y // 8
-        page_byte = ~(0x01 << (pix_y % 8))
-        #set the correct pixel in the vram buffer to 0
-        self.vram[self.CURRENT_BUF][page_idx][pix_x] &= page_byte
-    def write_text(self, x, y, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        pix_x = x*8
-        pix_y = y*16
-        for c in data:
-            c_idx = ord(c) & 0xFF
-            if c_idx in self.EMPTY_CHAR:
-                # Empty char
-                pix_x += 8
-                continue
-            char = font8x14.VGA_FONT[c_idx]
-            bit_y = pix_y
-            for bits in char:
-                if bits:
-                    bit_x = pix_x
-                    for i in range(7, -1, -1):
-                        mask = 0x01 << i
-                        if bits & mask:
-                            self.set_pixel(bit_x, bit_y)
-                        bit_x += 1
-                bit_y += 1
-            pix_x += 8
-    def write_graphics(self, x, y, row, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        pix_x = x*8
-        pix_y = y*16 + row
-        for bits in data:
-            for i in range(7, -1, -1):
-                mask = 0x01 << i
-                if bits & mask:
-                    self.set_pixel(pix_x, pix_y)
-                pix_x += 1
-    def write_glyph(self, x, y, glyph_name):
-        icon = icons.Icons16x16.get(glyph_name)
-        if icon is not None:
-            # Draw icon in graphics mode
-            for i, bits in enumerate(icon):
-                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
-            return 2
-        char = TextGlyphs.get(glyph_name)
-        if char is not None:
-            # Draw character
-            self.write_text(x, y, char)
-            return 1
-        return 0
-    def clear(self):
-        zeros = bytearray(128)
-        for page in self.vram[self.CURRENT_BUF]:
-            page[:] = zeros
+            io = SPI4wire(config, "dc_pin")
+        DisplayBase.__init__(self, io)
+    def init(self):
+        init_cmds = [
+            0xAE,       # Display off
+            0xD5, 0x80, # Set oscillator frequency
+            0xA8, 0x3f, # Set multiplex ratio
+            0xD3, 0x00, # Set display offset
+            0x40,       # Set display start line
+            0x8D, 0x14, # Charge pump setting
+            0x20, 0x02, # Set Memory addressing mode
+            0xA1,       # Set Segment re-map
+            0xC8,       # Set COM output scan direction
+            0xDA, 0x12, # Set COM pins hardware configuration
+            0x81, 0xEF, # Set contrast control
+            0xD9, 0xA1, # Set pre-charge period
+            0xDB, 0x00, # Set VCOMH deselect level
+            0x2E,       # Deactivate scroll
+            0xA4,       # Output ram to display
+            0xA6,       # Normal display
+            0xAF,       # Display on
+        ]
+        self.send(init_cmds)
+        self.flush()

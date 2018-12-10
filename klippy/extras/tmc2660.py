@@ -3,6 +3,7 @@
 # Copyright (C) 2018  Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import bus
 
 CURRENT_MAX = 2.4
 CURRENT_MIN = 0.1
@@ -80,24 +81,7 @@ class TMC2660:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
-        self.toolhead = None
-
-        # Generic setup
-        ppins = self.printer.lookup_object("pins")
-        cs_pin = config.get('cs_pin')
-        cs_pin_params = ppins.lookup_pin(cs_pin)
-        self.mcu = cs_pin_params['chip']
-        if cs_pin_params['invert']:
-            raise pins.error("tmc2660 can not invert pin")
-        pin = cs_pin_params['pin']
-        self.oid = self.mcu.create_oid()
-        self.bus = config.getint('bus', minval=0, maxval=3)
-        self.freq = config.getint('freq', default=2000000, minval=1000000, maxval=4000000)
-        self.mcu.add_config_cmd(
-            "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d shutdown_msg=" % (
-                self.oid, self.bus, cs_pin_params['pin'], 0, self.freq))
-        self.spi_send_cmd = self.spi_transfer_cmd = None
-        self.mcu.register_config_callback(self.build_config)
+        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=2000000)
         # Add SET_CURRENT and DUMP_TMC commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -213,15 +197,8 @@ class TMC2660:
                                                 self.handle_ready)
 
     def add_config_cmd(self, val):
-        self.mcu.add_config_cmd("spi_send oid=%d data=%06x" % (
-            self.oid, val & 0xffffff))
-
-    def build_config(self):
-        cmd_queue = self.mcu.alloc_command_queue()
-        self.spi_send_cmd = self.mcu.lookup_command(
-            "spi_send oid=%c data=%*s", cq=cmd_queue)
-        self.spi_transfer_cmd = self.mcu.lookup_command(
-            "spi_transfer oid=%c data=%*s", cq=cmd_queue)
+        data = [(val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff]
+        self.spi.spi_send(data)
 
     def get_microsteps(self):
         return 256 >> self.driver_mres
@@ -229,7 +206,7 @@ class TMC2660:
     def get_phase(self):
         # Send DRVCTRL to get a response
         reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
-        params = self.spi_transfer_cmd.send_with_response([self.oid, reg_data], 'spi_transfer_response', self.oid)
+        params = self.spi.spi_transfer(reg_data)
         pr = bytearray(params['response'])
         steps = (((pr[0] << 16) | (pr[1] << 8) | pr[2]) & READRSP['MSTEP'][1]) >> READRSP['MSTEP'][0]
         return steps >> self.driver_mres
@@ -246,8 +223,8 @@ class TMC2660:
         reg &= ~(SGCSCONF["CS"][1])
         reg |= get_bits(SGCSCONF, "CS", self.driver_cs)
         reg_data = [(reg >> 16) & 0xff, (reg >> 8) & 0xff, reg & 0xff]
-        clock = self.mcu.print_time_to_clock(print_time)
-        params = self.spi_send_cmd.send([self.oid, reg_data], minclock=clock, reqclock=clock)
+        clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self.spi.spi_send(reg_data, minclock=clock, reqclock=clock)
 
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver (between %d and %d)" % (CURRENT_MIN, CURRENT_MAX)
     def cmd_SET_TMC_CURRENT(self, params):
@@ -266,7 +243,7 @@ class TMC2660:
             gcode.respond_info(msg)
         # Send one register to get the return data
         reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
-        params = self.spi_transfer_cmd.send_with_response([self.oid, reg_data], 'spi_transfer_response', self.oid)
+        params = self.spi.spi_transfer(reg_data)
         pr = bytearray(params['response'])
         msg = "%-15s %08x" % ("RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2]))
         gcode.respond_info(msg)
