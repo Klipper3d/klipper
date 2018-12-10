@@ -35,7 +35,7 @@ spi_init(void)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    if (bus || mode > 3)
+    if (bus)
         shutdown("Invalid spi_setup parameters");
 
     // Make sure bus is enabled

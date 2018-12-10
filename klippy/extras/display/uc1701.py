@@ -1,4 +1,4 @@
-# Support for UC1701 (128x64 graphics) LCD displays
+# Support for UC1701 (and similar) 128x64 graphics LCD displays
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
@@ -11,23 +11,9 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
-class UC1701:
-    DATA_PIN_NAME = "a0_pin"
-    def __init__(self, config):
-        self.spi = extras.bus.MCU_SPI_from_config(config, 0,
-                                                  default_speed=10000000)
-        mcu = self.spi.get_mcu()
-        # Create a0 pin
-        ppins = config.get_printer().lookup_object('pins')
-        a0_pin_params = ppins.lookup_pin(config.get(self.DATA_PIN_NAME))
-        if a0_pin_params['chip'] != mcu:
-            raise ppins.error("uc1701 all pins must be on same mcu")
-        self.a0_oid = mcu.create_oid()
-        mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
-                           " value=%d default_value=%d max_duration=%d" % (
-                               self.a0_oid, a0_pin_params['pin'], 0, 0, 0))
-        mcu.register_config_callback(self.build_config)
-        self.update_pin_cmd = None
+class DisplayBase:
+    def __init__(self, io):
+        self.send = io.send
         # framebuffers
         self.vram = [bytearray(128) for i in range(8)]
         self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
@@ -39,41 +25,6 @@ class UC1701:
             top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
             top2, bot2 = self._swizzle_bits(icon)
             self.icons[name] = (top1 + top2, bot1 + bot2)
-    def build_config(self):
-        self.update_pin_cmd = self.spi.get_mcu().lookup_command(
-            "update_digital_out oid=%c value=%c",
-            cq=self.spi.get_command_queue())
-    def send(self, cmds, is_data=False):
-        if is_data:
-            self.update_pin_cmd.send([self.a0_oid, 1],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
-        else:
-            self.update_pin_cmd.send([self.a0_oid, 0],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
-    def init(self):
-        init_cmds = [0xE2, # System reset
-                     0x40, # Set display to start at line 0
-                     0xA0, # Set SEG direction
-                     0xC8, # Set COM Direction
-                     0xA2, # Set Bias = 1/9
-                     0x2C, # Boost ON
-                     0x2E, # Voltage regulator on
-                     0x2F, # Voltage follower on
-                     0xF8, # Set booster ratio
-                     0x00, # Booster ratio value (4x)
-                     0x23, # Set resistor ratio (3)
-                     0x81, # Set Electronic Volume
-                     0x28, # Electronic volume value (40)
-                     0xAC, # Set static indicator off
-                     0x00, # NOP
-                     0xA6, # Disable Inverse
-                     0xAF] # Set display enable
-        self.send(init_cmds)
-        self.send([0xA5]) # display all
-        self.send([0xA4]) # normal display
-        self.flush()
-        logging.info("uc1701 initialized")
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, page in self.all_framebuffers:
@@ -152,9 +103,88 @@ class UC1701:
     def get_dimensions(self):
         return (16, 4)
 
-# The SSD1306 (in 4-wire SPI mode) differs from UC1701 only in display init
+# IO wrapper for "4 wire" spi bus (spi bus with an extra data/control line)
+class SPI4wire:
+    def __init__(self, config, data_pin_name):
+        self.spi = extras.bus.MCU_SPI_from_config(config, 0,
+                                                  default_speed=10000000)
+        mcu = self.spi.get_mcu()
+        # Create data/control pin
+        ppins = config.get_printer().lookup_object('pins')
+        pin_params = ppins.lookup_pin(config.get(data_pin_name))
+        if pin_params['chip'] != mcu:
+            raise ppins.error("%s: all pins must be on same mcu" % (
+                config.get_name()))
+        self.dc_oid = mcu.create_oid()
+        mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
+                           " value=%d default_value=%d max_duration=%d" % (
+                               self.dc_oid, pin_params['pin'], 0, 0, 0))
+        mcu.register_config_callback(self.build_config)
+        self.update_pin_cmd = None
+    def build_config(self):
+        self.update_pin_cmd = self.spi.get_mcu().lookup_command(
+            "update_digital_out oid=%c value=%c",
+            cq=self.spi.get_command_queue())
+    def send(self, cmds, is_data=False):
+        if is_data:
+            self.update_pin_cmd.send([self.dc_oid, 1],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
+        else:
+            self.update_pin_cmd.send([self.dc_oid, 0],
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+# IO wrapper for i2c bus
+class I2C:
+    def __init__(self, config, default_addr):
+        self.i2c = extras.bus.MCU_I2C_from_config(
+            config, default_addr=default_addr, default_speed=400000)
+    def send(self, cmds, is_data=False):
+        if is_data:
+            hdr = 0x40
+        else:
+            hdr = 0x00
+        cmds = bytearray(cmds)
+        cmds.insert(0, hdr)
+        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+# The UC1701 is a "4-wire" SPI display device
+class UC1701(DisplayBase):
+    def __init__(self, config):
+        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
+    def init(self):
+        init_cmds = [0xE2, # System reset
+                     0x40, # Set display to start at line 0
+                     0xA0, # Set SEG direction
+                     0xC8, # Set COM Direction
+                     0xA2, # Set Bias = 1/9
+                     0x2C, # Boost ON
+                     0x2E, # Voltage regulator on
+                     0x2F, # Voltage follower on
+                     0xF8, # Set booster ratio
+                     0x00, # Booster ratio value (4x)
+                     0x23, # Set resistor ratio (3)
+                     0x81, # Set Electronic Volume
+                     0x28, # Electronic volume value (40)
+                     0xAC, # Set static indicator off
+                     0x00, # NOP
+                     0xA6, # Disable Inverse
+                     0xAF] # Set display enable
+        self.send(init_cmds)
+        self.send([0xA5]) # display all
+        self.send([0xA4]) # normal display
+        self.flush()
+        logging.info("uc1701 initialized")
+
+# The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(UC1701):
-    DATA_PIN_NAME = "dc_pin"
+    def __init__(self, config):
+        cs_pin = config.get("cs_pin", None)
+        if cs_pin is None:
+            io = I2C(config, 120)
+        else:
+            io = SPI4wire(config, "dc_pin")
+        DisplayBase.__init__(self, io)
     def init(self):
         init_cmds = [
             0xAE,       # Display off

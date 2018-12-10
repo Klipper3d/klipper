@@ -17,6 +17,8 @@ CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
 src-y += stm32f1/main.c stm32f1/timer.c stm32f1/gpio.c
+src-$(CONFIG_HAVE_GPIO_ADC) += stm32f1/adc.c
+src-$(CONFIG_HAVE_GPIO_SPI) += stm32f1/spi.c
 src-y += $(addprefix ../, $(wildcard lib/hal-stm32f1/source/stm32f1xx_ll_*.c))
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/cmsis-stm32f1/source/system_stm32f1xx.c
