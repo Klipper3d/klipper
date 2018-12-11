@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import homing, probe
+import homing, probe, buttons
 
 SIGNAL_PERIOD = 0.025600
 MIN_CMD_TIME = 4 * SIGNAL_PERIOD
@@ -60,6 +60,12 @@ class BLTouchEndstopWrapper:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
                                     desc=self.cmd_BLTOUCH_DEBUG_help)
+        # Debugging code to report sensor pin state changes
+        ppins.reset_pin_sharing(pin_params)
+        buttons = self.printer.try_load_module(config, "buttons")
+        buttons.register_buttons([pin], self.sensor_debug_callback)
+    def sensor_debug_callback(self, eventtime, state):
+        logging.info("bltouch sensor @ %.6f is %s", eventtime, state)
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
