@@ -11,29 +11,29 @@
 #include "stm32f1xx_ll_rcc.h" // __LL_RCC_CALC_PCLK1_FREQ
 #include "stm32f1xx_ll_spi.h" // LL_SPI_Enable
 
-static void spi_set_mode(SPI_TypeDef *spi, uint8_t mode)
+static void spi_set_mode(LL_SPI_InitTypeDef *spi, uint8_t mode)
 {
     switch (mode) {
     case 0:
-        LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_LOW);
-        LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_1EDGE);
+        spi->ClockPolarity = LL_SPI_POLARITY_LOW;
+        spi->ClockPhase = LL_SPI_PHASE_1EDGE;
         break;
     case 1:
-        LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_LOW);
-        LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_2EDGE);
+        spi->ClockPolarity = LL_SPI_POLARITY_LOW;
+        spi->ClockPhase = LL_SPI_PHASE_2EDGE;
         break;
     case 2:
-        LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_HIGH);
-        LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_1EDGE);
+        spi->ClockPolarity = LL_SPI_POLARITY_HIGH;
+        spi->ClockPhase = LL_SPI_PHASE_1EDGE;
         break;
     case 3:
-        LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_HIGH);
-        LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_2EDGE);
+        spi->ClockPolarity = LL_SPI_POLARITY_HIGH;
+        spi->ClockPhase = LL_SPI_PHASE_2EDGE;
         break;
     }
 }
 
-static void spi_set_baudrate(SPI_TypeDef *spi, uint32_t rate)
+static void spi_set_baudrate(LL_SPI_InitTypeDef *spi, uint32_t rate)
 {
     const uint32_t pclk = __LL_RCC_CALC_PCLK1_FREQ(SystemCoreClock, LL_RCC_GetAPB1Prescaler());
     const uint32_t prescaler = pclk / rate;
@@ -54,7 +54,7 @@ static void spi_set_baudrate(SPI_TypeDef *spi, uint32_t rate)
     else if (prescaler <= 128)
         setting = LL_SPI_BAUDRATEPRESCALER_DIV128;
 
-    LL_SPI_SetBaudRatePrescaler(spi, setting);
+    spi->BaudRate = setting;
 }
 
 static void spi_init_pins(void)
@@ -70,15 +70,22 @@ static void spi_init_pins(void)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    struct spi_config config;
-    config.config = *SPI2;
 
     if (bus > 0 || !rate)
         shutdown("Invalid spi_setup parameters");
 
-    spi_init_pins();
+    struct spi_config config;
+    config.config.TransferDirection = LL_SPI_FULL_DUPLEX;
+    config.config.Mode = LL_SPI_MODE_MASTER;
+    config.config.DataWidth = LL_SPI_DATAWIDTH_8BIT;
     spi_set_mode(&config.config, mode);
+    config.config.NSS = LL_SPI_NSS_SOFT;
     spi_set_baudrate(&config.config, rate);
+    config.config.BitOrder = LL_SPI_MSB_FIRST;
+    config.config.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
+    config.config.CRCPoly = 0; // unused anyway
+
+    spi_init_pins();
 
     return config;
 }
@@ -86,7 +93,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 void
 spi_prepare(struct spi_config config)
 {
-    *SPI2 = config.config;
+    LL_SPI_Init(SPI2, &config.config);
     LL_SPI_Enable(SPI2);
 }
 

@@ -11,6 +11,7 @@ CFLAGS += -mthumb -mcpu=cortex-m3
 CFLAGS += -Ilib/cmsis-core
 CFLAGS += -Ilib/cmsis-stm32f1/include -Ilib/hal-stm32f1/include
 CFLAGS += -DSTM32F103xB
+CFLAGS += -DUSE_FULL_LL_DRIVER
 
 CFLAGS_klipper.elf += -T $(OUT)stm32f1.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs

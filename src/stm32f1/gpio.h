@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "stm32f1xx.h"
+#include "stm32f1xx_ll_spi.h" // SPI_InitTypeDef
 
 void gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up);
 
@@ -33,7 +34,7 @@ uint16_t gpio_adc_read(struct gpio_adc g);
 void gpio_adc_cancel_sample(struct gpio_adc g);
 
 struct spi_config {
-    SPI_TypeDef config;
+    LL_SPI_InitTypeDef config;
 };
 struct spi_config spi_setup(uint32_t bus, uint8_t mode, uint32_t rate);
 void spi_prepare(struct spi_config config);

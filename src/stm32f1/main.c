@@ -112,8 +112,6 @@ void adc_config(void)
 void spi_config(void)
 {
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
-    LL_SPI_SetNSSMode(SPI2, LL_SPI_NSS_SOFT);
-    LL_SPI_SetMode(SPI2, LL_SPI_MODE_MASTER);
 }
 
 void io_config(void)
