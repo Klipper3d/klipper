@@ -10,6 +10,7 @@ SIGNAL_PERIOD = 0.025600
 MIN_CMD_TIME = 4 * SIGNAL_PERIOD
 
 TEST_TIME = 5 * 60.
+ENDSTOP_REST_TIME = .001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
@@ -42,7 +43,6 @@ class BLTouchEndstopWrapper:
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
         self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
@@ -71,8 +71,8 @@ class BLTouchEndstopWrapper:
         # Perform endstop check to verify bltouch reports probe raised
         prev_positions = [s.get_commanded_position()
                           for s in self.mcu_endstop.get_steppers()]
-        self.mcu_endstop.home_start(
-            home_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT, .001)
+        self.mcu_endstop.home_start(home_time, ENDSTOP_SAMPLE_TIME,
+                                    ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME)
         try:
             self.mcu_endstop.home_wait(home_time + MIN_CMD_TIME)
         except self.mcu_endstop.TimeoutError as e:
@@ -97,6 +97,10 @@ class BLTouchEndstopWrapper:
         self.send_cmd(print_time + self.pin_move_time, None)
         toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
         self.mcu_endstop.home_finalize()
+    def home_start(self, print_time, sample_time, sample_count, rest_time):
+        rest_time = min(rest_time, ENDSTOP_REST_TIME)
+        self.mcu_endstop.home_start(
+            print_time, sample_time, sample_count, rest_time)
     def get_position_endstop(self):
         return self.position_endstop
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"
