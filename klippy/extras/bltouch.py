@@ -23,7 +23,6 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.next_test_time = 0.
         self.position_endstop = config.getfloat('z_offset')
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
@@ -36,6 +35,9 @@ class BLTouchEndstopWrapper:
         mcu = pin_params['chip']
         mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        # Setup for sensor test
+        self.next_test_time = 0.
+        self.test_sensor_pin = config.getboolean('test_sensor_pin', True)
         # Calculate pin move time
         pmt = max(config.getfloat('pin_move_time', 0.200), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
@@ -58,6 +60,8 @@ class BLTouchEndstopWrapper:
     def send_cmd(self, print_time, cmd):
         self.mcu_pwm.set_pwm(print_time, Commands[cmd] / SIGNAL_PERIOD)
     def test_sensor(self):
+        if not self.test_sensor_pin:
+            return
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         if print_time < self.next_test_time:
