@@ -90,8 +90,9 @@ class MCU_stepper:
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
-        self._ffi_lib.itersolve_set_stepcompress(
-            sk, self._stepqueue, self._step_dist)
+        if sk is not None:
+            self._ffi_lib.itersolve_set_stepcompress(
+                sk, self._stepqueue, self._step_dist)
         return old_sk
     def set_ignore_move(self, ignore_move):
         was_ignore = (self._itersolve_gen_steps
