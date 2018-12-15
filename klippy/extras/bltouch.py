@@ -78,6 +78,7 @@ class BLTouchEndstopWrapper:
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self.send_cmd(print_time, cmd)
+        self.send_cmd(print_time + MIN_CMD_TIME, None)
         toolhead.dwell(self.pin_move_time)
         toolhead.wait_moves()
         self.mcu_endstop.query_endstop(toolhead.get_last_move_time())
