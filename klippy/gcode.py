@@ -491,14 +491,14 @@ class GCodeParser:
                     # value relative to base coordinate position
                     self.last_position[3] = v + self.base_position[3]
             if 'F' in params:
-                speed = float(params['F']) * self.speed_factor
+                speed = float(params['F'])
                 if speed <= 0.:
                     raise error("Invalid speed in '%s'" % (params['#original'],))
                 self.speed = speed
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.move_with_transform(self.last_position, self.speed)
+            self.move_with_transform(self.last_position, self.speed * self.speed_factor)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):
