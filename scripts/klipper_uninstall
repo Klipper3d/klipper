@@ -1,0 +1,37 @@
+#!/bin/bash
+# Prompt user to confirm they want to uninstall
+read -p "This will uninstall Klipper from your system, are you sure? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+# Check if we're root and re-execute if we're not.
+rootcheck () {
+    if [ $(id -u) != "0" ]
+    then
+        sudo "$0" "$@"  
+        exit $?
+    fi
+}
+
+# Stop Klipper Service
+echo Stopping Klipper Service..
+service klipper stop
+
+# Remove Klipper from Startup
+echo Removing Klipper from Startup..
+update-rc.d  -f klipper remove
+
+# Remove Klipper from Services
+echo Removing Klipper Service
+rm -f /etc/init.d/klipper
+rm -f /etc/default/klipper
+
+# Remove Klipper from Home
+echo Removing Klipper... 
+rm -rf /home/pi/klippy-env
+rm -rf /home/pi/klipper
+
+echo Done!
