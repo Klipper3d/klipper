@@ -33,5 +33,6 @@ rm -f /etc/default/klipper
 echo Removing Klipper... 
 rm -rf /home/pi/klippy-env
 rm -rf /home/pi/klipper
+rm  -f /home/pi/printer*.cfg
 
 echo Done!
