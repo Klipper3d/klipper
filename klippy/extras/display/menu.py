@@ -474,8 +474,10 @@ class MenuItem(MenuElement):
 class MenuCommand(MenuItem):
     def __init__(self, manager, config, namespace=''):
         super(MenuCommand, self).__init__(manager, config, namespace)
-        self._gcode = config.get('gcode')
+        self._gcode = config.get('gcode', '')
         self._action = config.get('action', None)
+        if self._action is None and not self._gcode:
+            raise error("Missing or empty 'gcode' option")
 
     def is_readonly(self):
         return False
