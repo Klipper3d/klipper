@@ -28,6 +28,10 @@ CONFIG ../../config/printer-velleman-k8200-2013.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
 
+# Printers using the atmega1280
+DICTIONARY atmega1280.dict
+CONFIG ../../config/generic-minitronics1.cfg
+
 # Printers using the atmega1284p
 DICTIONARY atmega1284p.dict
 CONFIG ../../config/generic-melzi.cfg
