@@ -49,6 +49,9 @@ class PrinterLCD:
             self.gcode.register_command('M117', self.cmd_M117)
             # Start screen update timer
             self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
+    # Get menu instance
+    def get_menu(self):
+        return self.menu
     # Graphics drawing
     def animate_glyphs(self, eventtime, x, y, glyph_name, do_animate):
         frame = do_animate and int(eventtime) & 1
