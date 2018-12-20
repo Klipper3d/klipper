@@ -13,9 +13,9 @@ class ReactorTimer:
         self.waketime = waketime
 
 class ReactorCallback:
-    def __init__(self, reactor, callback):
+    def __init__(self, reactor, callback, waketime):
         self.reactor = reactor
-        self.timer = reactor.register_timer(self.invoke, reactor.NOW)
+        self.timer = reactor.register_timer(self.invoke, waketime)
         self.callback = callback
     def invoke(self, eventtime):
         self.reactor.unregister_timer(self.timer)
@@ -88,8 +88,8 @@ class SelectReactor:
             return 0.
         return min(1., max(.001, self._next_timer - self.monotonic()))
     # Callbacks
-    def register_callback(self, callback):
-        ReactorCallback(self, callback)
+    def register_callback(self, callback, waketime = NOW):
+        ReactorCallback(self, callback, waketime)
     def register_async_callback(self, callback):
         self._async_queue.put_nowait(callback)
         try:
@@ -106,7 +106,7 @@ class SelectReactor:
                 callback = self._async_queue.get_nowait()
             except Queue.Empty:
                 break
-            ReactorCallback(self, callback)
+            ReactorCallback(self, callback, self.NOW)
     def _setup_async_callbacks(self):
         self._pipe_fds = os.pipe()
         util.set_nonblock(self._pipe_fds[0])
