@@ -7,7 +7,7 @@ import logging
 import pins, mcu
 from snx4hc595 import SNx4HC595
 
-FLASH_DELAY = 0.2
+FLASH_DELAY = 1.1
 
 
 class MMU2:

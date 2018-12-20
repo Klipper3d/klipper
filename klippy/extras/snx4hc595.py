@@ -5,7 +5,7 @@
 
 import copy, logging
 
-PIN_MIN_TIME = 0.02
+PIN_MIN_TIME = 0.01
 
 class error(Exception):
     pass
