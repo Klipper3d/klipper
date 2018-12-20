@@ -494,6 +494,7 @@ class MenuInput(MenuCommand):
         self._input_max = config.getfloat('input_max', sys.float_info.max)
         self._input_step = config.getfloat('input_step', above=0.)
         self._input_step2 = config.getfloat('input_step2', 0, minval=0.)
+        self._longpress_gcode = config.get('longpress_gcode', '')
 
     def is_scrollable(self):
         return False
@@ -506,6 +507,9 @@ class MenuInput(MenuCommand):
 
     def get_gcode(self):
         return self._get_formatted(self._gcode, self._input_value)
+
+    def get_longpress_gcode(self):
+        return self._get_formatted(self._longpress_gcode, self._input_value)
 
     def is_editing(self):
         return self._input_value is not None
@@ -885,6 +889,7 @@ menu_items = {
 
 MENU_UPDATE_DELAY = .100
 TIMER_DELAY = .200
+LONG_PRESS_DURATION = 0.800
 BLINK_FAST_SEQUENCE = (True, True, False, False)
 BLINK_SLOW_SEQUENCE = (True, True, True, True, False, False, False)
 
@@ -920,7 +925,7 @@ class MenuManager:
         self.up_pin = config.get('up_pin', None)
         self.down_pin = config.get('down_pin', None)
         self.kill_pin = config.get('kill_pin', None)
-        self._last_press = 0
+        self._last_click_press = 0
         self._encoder_fast_rate = config.getfloat(
             'encoder_fast_rate', .03, above=0.)
         self._last_encoder_cw_eventtime = 0
@@ -1006,7 +1011,12 @@ class MenuManager:
         )
         if self.timeout_idx == 0:
             self.timeout_check(eventtime)
-
+        # check long press
+        if (self._last_click_press > 0 and (
+                eventtime - self._last_click_press) >= LONG_PRESS_DURATION):
+            # long click
+            self._last_click_press = 0
+            self._long_click_callback(eventtime)
         return eventtime + TIMER_DELAY
 
     def timeout_check(self, eventtime):
@@ -1300,7 +1310,7 @@ class MenuManager:
                 self.stack_pop()
                 self.running = False
 
-    def select(self):
+    def select(self, long_press=False):
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
@@ -1313,8 +1323,12 @@ class MenuManager:
                 self.selected = 0
             elif isinstance(current, MenuInput):
                 if current.is_editing():
-                    self.queue_gcode(current.get_gcode())
-                    current.reset_value()
+                    if long_press is True:
+                        self.queue_gcode(current.get_gcode())
+                        self.queue_gcode(current.get_longpress_gcode())
+                    else:
+                        self.queue_gcode(current.get_gcode())
+                        current.reset_value()
                 else:
                     current.init_value()
             elif isinstance(current, MenuCommand):
@@ -1416,30 +1430,37 @@ class MenuManager:
     def click_callback(self, eventtime, state):
         if self.click_pin:
             if state:
-                self._last_press = eventtime
-            else:
-                if eventtime - self._last_press > 1.0:
-                    # long click
-                    if not self.is_running():
-                        # lets start and populate the menu items
-                        self.begin(eventtime)
-                    else:
-                        container = self.stack_peek()
-                        if isinstance(container, MenuDeck):
-                            menu = container.menu
-                            if (isinstance(menu, MenuList)
-                                    and not container.is_editing()
-                                    and menu is not container):
-                                self.stack_push(menu)
-                                self.top_row = 0
-                                self.selected = 0
-                else:
+                self._last_click_press = eventtime
+            elif self._last_click_press > 0:
+                if (eventtime - self._last_click_press) < LONG_PRESS_DURATION:
                     # short click
-                    if self.is_running():
-                        self.select()
-                    else:
-                        # lets start and populate the menu items
-                        self.begin(eventtime)
+                    self._last_click_press = 0
+                    self._short_click_callback(eventtime)
+
+    def _short_click_callback(self, eventtime):
+        if self.is_running():
+            self.select()
+        else:
+            # lets start and populate the menu items
+            self.begin(eventtime)
+
+    def _long_click_callback(self, eventtime):
+        if not self.is_running():
+            # lets start and populate the menu items
+            self.begin(eventtime)
+        else:
+            container = self.stack_peek()
+            if isinstance(container, MenuDeck):
+                menu = container.menu
+                if (isinstance(menu, MenuList)
+                        and not container.is_editing()
+                        and menu is not container):
+                    self.stack_push(menu)
+                    self.top_row = 0
+                    self.selected = 0
+                    return
+            if container.is_editing():
+                self.select(True)
 
     def back_callback(self, eventtime):
         if self.back_pin:
