@@ -9,13 +9,14 @@ import stepper, homing, chelper
 EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
-    def __init__(self, config):
+    def __init__(self, config, extruder_num):
         self.printer = config.get_printer()
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
         pheater = self.printer.lookup_object('heater')
+        gcode_id = 'T%d' % (extruder_num,)
         if shared_heater is None:
-            self.heater = pheater.setup_heater(config)
+            self.heater = pheater.setup_heater(config, gcode_id)
         else:
             self.heater = pheater.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(config)
@@ -237,11 +238,11 @@ def add_printer_objects(config):
         section = 'extruder%d' % (i,)
         if not config.has_section(section):
             if not i and config.has_section('extruder'):
-                pe = PrinterExtruder(config.getsection('extruder'))
+                pe = PrinterExtruder(config.getsection('extruder'), 0)
                 printer.add_object('extruder0', pe)
                 continue
             break
-        printer.add_object(section, PrinterExtruder(config.getsection(section)))
+        printer.add_object(section, PrinterExtruder(config.getsection(section), i))
 
 def get_printer_extruders(printer):
     out = []
