@@ -27,6 +27,14 @@ struct gpio_pwm {
 struct gpio_pwm gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val);
 void gpio_pwm_write(struct gpio_pwm g, uint8_t val);
 
+struct gpio_adc {
+    uint32_t chan;
+};
+struct gpio_adc gpio_adc_setup(uint8_t pin);
+uint32_t gpio_adc_sample(struct gpio_adc g);
+uint16_t gpio_adc_read(struct gpio_adc g);
+void gpio_adc_cancel_sample(struct gpio_adc g);
+
 struct spi_config {
     uint32_t ctrla, baud;
 };
