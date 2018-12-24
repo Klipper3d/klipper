@@ -190,7 +190,7 @@ class PinResolver:
         def pin_fixup(m):
             name = m.group('name')
             if name not in self.pins:
-                raise error("Unable to translate pin name: %s" % (cmd,))
+                raise error("Unable to translate pin name: %s for cmd: %s" % (name, cmd))
             pin_id = self.pins[name]
             if (name != self.active_pins.setdefault(pin_id, name)
                 and self.validate_aliases):
