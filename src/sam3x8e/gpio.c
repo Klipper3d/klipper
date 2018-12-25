@@ -10,17 +10,9 @@
 #include "command.h" // shutdown
 #include "compiler.h" // ARRAY_SIZE
 #include "gpio.h" // gpio_out_setup
+#include "internal.h" // gpio_peripheral
 #include "sam3x8e.h" // Pio
 #include "sched.h" // sched_shutdown
-
-
-/****************************************************************
- * Pin mappings
- ****************************************************************/
-
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
-#define GPIO2PORT(PIN) ((PIN) / 32)
-#define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
 static Pio * const digital_regs[] = {
     PIOA, PIOB, PIOC, PIOD
@@ -28,7 +20,7 @@ static Pio * const digital_regs[] = {
 
 
 /****************************************************************
- * General Purpose Input Output (GPIO) pins
+ * Pin multiplexing
  ****************************************************************/
 
 void
@@ -46,6 +38,10 @@ gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
     regs->PIO_PDR = bit;
 }
 
+
+/****************************************************************
+ * General Purpose Input Output (GPIO) pins
+ ****************************************************************/
 
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)

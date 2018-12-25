@@ -6,7 +6,8 @@
 
 #include <sam3x8e.h> // REGPTR
 #include "command.h" // shutdown
-#include "gpio.h" // gpio_peripheral
+#include "gpio.h" // spi_setup
+#include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
 #define REGPTR     SPI0

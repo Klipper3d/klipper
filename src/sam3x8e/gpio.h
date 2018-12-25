@@ -1,9 +1,7 @@
 #ifndef __SAM3X8E_GPIO_H
 #define __SAM3X8E_GPIO_H
 
-#include <stdint.h>
-
-void gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up);
+#include <stdint.h> // uint32_t
 
 struct gpio_out {
     void *regs;
