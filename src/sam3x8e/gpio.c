@@ -24,14 +24,15 @@ static Pio * const digital_regs[] = {
  ****************************************************************/
 
 void
-gpio_peripheral(char bank, uint32_t bit, char ptype, uint32_t pull_up)
+gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 {
-    Pio *regs = digital_regs[bank - 'A'];
+    uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio);
+    Pio *regs = digital_regs[bank];
     if (ptype == 'A')
         regs->PIO_ABSR &= ~bit;
     else
         regs->PIO_ABSR |= bit;
-    if (pull_up)
+    if (pull_up > 0)
         regs->PIO_PUER = bit;
     else
         regs->PIO_PUDR = bit;
