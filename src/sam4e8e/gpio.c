@@ -8,7 +8,7 @@
 #include "board/irq.h" // irq_save
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_out_setup
-#include "internal.h" // gpio_set_peripheral
+#include "internal.h" // gpio_peripheral
 #include "sam4e.h" // Pio
 #include "sched.h" // sched_shutdown
 
@@ -22,9 +22,10 @@ static Pio * const digital_regs[] = {
  ****************************************************************/
 
 void
-gpio_set_peripheral(char bank, const uint32_t bit, char ptype, uint32_t pull_up) {
-
-    Pio *regs = digital_regs[bank - 'A'];
+gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
+{
+    uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio);
+    Pio *regs = digital_regs[bank];
     regs ->PIO_IDR = bit;
 
     // Enable peripheral for pin
@@ -61,7 +62,7 @@ gpio_set_peripheral(char bank, const uint32_t bit, char ptype, uint32_t pull_up)
     regs->PIO_PDR = bit;
 
     // Set pullup
-    if (pull_up) {
+    if (pull_up > 0) {
         regs->PIO_PUER = bit;
     } else {
         regs->PIO_PUDR = bit;

@@ -7,7 +7,7 @@
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
-#include "internal.h" // gpio_set_peripheral
+#include "internal.h" // gpio_peripheral
 #include "sam4e.h" // USART0
 #include "sched.h" // sched_shutdown
 
@@ -25,11 +25,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     if (bus == SSPI_USART0) {
         // DUET_USART0_SCK as per dc42 CoreNG
-        gpio_set_peripheral('B', PIO_PB13C_SCK0, 'C', 0);
+        gpio_peripheral(GPIO('B', 13), 'C', 0);
         // DUET_USART0_MOSI as per dc42 CoreNG
-        gpio_set_peripheral('B', PIO_PB1C_TXD0, 'C', 0);
+        gpio_peripheral(GPIO('B', 1), 'C', 0);
         // DUET_USART0_MISO as per dc42 CoreNG
-        gpio_set_peripheral('B', PIO_PB0C_RXD0, 'C', 1);
+        gpio_peripheral(GPIO('B', 0), 'C', 1);
 
         if ((PMC->PMC_PCSR0 & (1u << ID_USART0)) == 0) {
             PMC->PMC_PCER0 = 1 << ID_USART0;
@@ -37,11 +37,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         p_usart = USART0;
     } else if (bus == SSPI_USART1) {
         // DUET_USART1_SCK as per dc42 CoreNG
-        gpio_set_peripheral('A', PIO_PA23A_SCK1, 'A', 0);
+        gpio_peripheral(GPIO('A', 23), 'A', 0);
         // DUET_USART1_MOSI as per dc42 CoreNG
-        gpio_set_peripheral('A', PIO_PA22A_TXD1, 'A', 0);
+        gpio_peripheral(GPIO('A', 22), 'A', 0);
         // DUET_USART1_MISO as per dc42 CoreNG
-        gpio_set_peripheral('A', PIO_PA21A_RXD1, 'A', 1);
+        gpio_peripheral(GPIO('A', 21), 'A', 1);
 
         if ((PMC->PMC_PCSR0 & (1u << ID_USART1)) == 0) {
             PMC->PMC_PCER0 = 1 << ID_USART1;
