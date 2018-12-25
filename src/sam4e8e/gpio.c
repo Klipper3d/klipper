@@ -4,21 +4,22 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "gpio.h"
-#include "sam4e.h"
-
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/irq.h" // irq_save
 #include "command.h" // shutdown
+#include "gpio.h" // gpio_out_setup
+#include "internal.h" // gpio_set_peripheral
+#include "sam4e.h" // Pio
 #include "sched.h" // sched_shutdown
-
-#define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
-#define GPIO2PORT(PIN) ((PIN) / 32)
-#define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
 static Pio * const digital_regs[] = {
     PIOA, PIOB, PIOC, PIOD, PIOE
 };
+
+
+/****************************************************************
+ * Pin multiplexing
+ ****************************************************************/
 
 void
 gpio_set_peripheral(char bank, const uint32_t bit, char ptype, uint32_t pull_up) {
@@ -66,6 +67,11 @@ gpio_set_peripheral(char bank, const uint32_t bit, char ptype, uint32_t pull_up)
         regs->PIO_PUDR = bit;
     }
 }
+
+
+/****************************************************************
+ * General Purpose Input Output (GPIO) pins
+ ****************************************************************/
 
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)

@@ -4,13 +4,10 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-// CMSIS
-#include "sam4e.h" // UART
-
-// Klipper
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
-#include "board/gpio.h" // gpio_peripheral
 #include "board/serial_irq.h" // serial_rx_data
+#include "internal.h" // gpio_peripheral
+#include "sam4e.h" // UART0
 #include "sched.h" // DECL_INIT
 
 void
