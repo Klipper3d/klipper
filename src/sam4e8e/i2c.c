@@ -5,12 +5,30 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "gpio.h"
-#include "internal.h"
-#include "command.h" // shutdown
-#include "sched.h" // sched_shutdown
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
-#include "board/misc.h" //timer_from_us
+#include "board/misc.h" // timer_from_us
+#include "command.h" // shutdown
+#include "gpio.h" // i2c_setup
+#include "internal.h" // gpio_peripheral
+#include "sam4e.h" // TWI0
+#include "sched.h" // sched_shutdown
+
+// I2C pin definitions
+#define TWI0_SCL_BANK 'A'
+#define TWI0_SCL_PIN PIO_PA4A_TWCK0
+#define TWI0_SCL_PERIPH 'A'
+
+#define TWI0_SDA_BANK 'A'
+#define TWI0_SDA_PIN PIO_PA3A_TWD0
+#define TWI0_SDA_PERIPH 'A'
+
+#define TWI1_SCL_BANK 'B'
+#define TWI1_SCL_PIN PIO_PB5A_TWCK1
+#define TWI1_SCL_PERIPH 'A'
+
+#define TWI1_SDA_BANK 'B'
+#define TWI1_SDA_PIN PIO_PB4A_TWD1
+#define TWI1_SDA_PERIPH 'A'
 
 void
 i2c_init(Twi *p_twi, uint32_t rate)

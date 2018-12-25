@@ -4,14 +4,12 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-// Klipper
-#include "command.h" // shutdown
-#include "sched.h"
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
-
-// SAM4E port
-#include "sam4e.h"
-#include "gpio.h"
+#include "command.h" // shutdown
+#include "gpio.h" // spi_setup
+#include "internal.h" // gpio_set_peripheral
+#include "sam4e.h" // USART0
+#include "sched.h" // sched_shutdown
 
 #define SSPI_USART0 0
 #define SSPI_USART1 1
