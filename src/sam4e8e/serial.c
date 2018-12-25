@@ -13,8 +13,8 @@
 void
 serial_init(void)
 {
-    gpio_set_peripheral('A', PIO_PA9A_URXD0, 'A', 1);
-    gpio_set_peripheral('A', PIO_PA10A_UTXD0, 'A', 0);
+    gpio_peripheral(GPIO('A', 9), 'A', 1);
+    gpio_peripheral(GPIO('A', 10), 'A', 0);
 
     // Reset uart
     PMC->PMC_PCER0 = 1 << ID_UART0;
