@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 // CMSIS
-#include "sam.h"
+#include "sam4e.h"
 // Klipper
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time

@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 // CMSIS
-#include "sam.h" // UART
+#include "sam4e.h" // UART
 
 // Klipper
 #include "autoconf.h" // CONFIG_SERIAL_BAUD

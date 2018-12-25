@@ -10,7 +10,7 @@
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 
 // SAM4E port
-#include "sam.h"
+#include "sam4e.h"
 #include "gpio.h"
 
 #define SSPI_USART0 0
