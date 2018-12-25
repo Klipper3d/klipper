@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections
+import os, re, logging, collections, shlex
 import homing, kinematics.extruder
 
 class error(Exception):
@@ -357,7 +357,7 @@ class GCodeParser:
             return params
         eargs = m.group('args')
         try:
-            eparams = [earg.split('=', 1) for earg in eargs.split()]
+            eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]
             eparams = { k.upper(): v for k, v in eparams }
             eparams.update({k: params[k] for k in params if k.startswith('#')})
             return eparams
