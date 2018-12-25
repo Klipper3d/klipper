@@ -19,9 +19,9 @@ static void
 spi_init(void)
 {
     /* Configure SCK, MISO and MOSI */
-    gpio_peripheral('A', PIO_PA25A_SPI0_MISO, 'A', 0); // Arduino 74
-    gpio_peripheral('A', PIO_PA26A_SPI0_MOSI, 'A', 0); // Arduino 75
-    gpio_peripheral('A', PIO_PA27A_SPI0_SPCK, 'A', 0); // Arduino 76
+    gpio_peripheral(GPIO('A', 25), 'A', 0); // Arduino 74
+    gpio_peripheral(GPIO('A', 26), 'A', 0); // Arduino 75
+    gpio_peripheral(GPIO('A', 27), 'A', 0); // Arduino 76
 
     // Enable SPI clocks
     if (!(PMC->PMC_PCSR0 & (1u << PERIPH_ID))) {
