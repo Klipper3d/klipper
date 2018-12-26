@@ -1,6 +1,6 @@
-// SAM3x8e timer interrupt scheduling
+// SAM3/SAM4 timer interrupt scheduling
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -8,7 +8,7 @@
 #include "board/misc.h" // timer_read_time
 #include "board/timer_irq.h" // timer_dispatch_many
 #include "command.h" // DECL_SHUTDOWN
-#include "sam3x8e.h" // TC0
+#include "internal.h" // TC0
 #include "sched.h" // DECL_INIT
 
 // Set the next irq time

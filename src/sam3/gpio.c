@@ -1,4 +1,4 @@
-// GPIO functions on sam3x8e
+// GPIO functions on sam3/sam4
 //
 // Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -9,11 +9,14 @@
 #include "compiler.h" // ARRAY_SIZE
 #include "gpio.h" // gpio_out_setup
 #include "internal.h" // gpio_peripheral
-#include "sam3x8e.h" // Pio
 #include "sched.h" // sched_shutdown
 
 static Pio * const digital_regs[] = {
+#if CONFIG_MACH_SAM3X8E
     PIOA, PIOB, PIOC, PIOD
+#elif CONFIG_MACH_SAM4E8E
+    PIOA, PIOB, PIOC, PIOD, PIOE
+#endif
 };
 
 
@@ -24,12 +27,16 @@ static Pio * const digital_regs[] = {
 void
 gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 {
-    uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio);
+    uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio), pt = ptype - 'A';
     Pio *regs = digital_regs[bank];
-    if (ptype == 'A')
-        regs->PIO_ABSR &= ~bit;
-    else
-        regs->PIO_ABSR |= bit;
+
+#if CONFIG_MACH_SAM3X8E
+    regs->PIO_ABSR = (regs->PIO_ABSR & ~bit) | (pt & 0x01 ? bit : 0);
+#else
+    regs->PIO_ABCDSR[0] = (regs->PIO_ABCDSR[0] & ~bit) | (pt & 0x01 ? bit : 0);
+    regs->PIO_ABCDSR[1] = (regs->PIO_ABCDSR[1] & ~bit) | (pt & 0x02 ? bit : 0);
+#endif
+
     if (pull_up > 0)
         regs->PIO_PUER = bit;
     else
