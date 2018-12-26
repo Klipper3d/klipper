@@ -7,16 +7,13 @@ dirs-y += src/sam4e8e src/generic
 CFLAGS += -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS += -D__SAM4E8E__
 
-CFLAGS_klipper.elf += -L lib/cmsis-sam4e/gcc/gcc
-CFLAGS_klipper.elf += -T lib/cmsis-sam4e/gcc/gcc/sam4e8e_flash.ld
+CFLAGS_klipper.elf += -L lib/sam4e/gcc/gcc
+CFLAGS_klipper.elf += -T lib/sam4e/gcc/gcc/sam4e8e_flash.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
-dirs-y += lib/cmsis-sam4e/gcc \
-		  lib/cmsis-sam4e/gcc/gcc
-CFLAGS += -Ilib/cmsis-sam4e/include \
-		  -Ilib/cmsis-core
-src-y +=  ../lib/cmsis-sam4e/gcc/system_sam4e.c \
-		  ../lib/cmsis-sam4e/gcc/gcc/startup_sam4e.c
+dirs-y += lib/sam4e/gcc lib/sam4e/gcc/gcc
+CFLAGS += -Ilib/sam4e/include -Ilib/cmsis-core
+src-y += ../lib/sam4e/gcc/system_sam4e.c ../lib/sam4e/gcc/gcc/startup_sam4e.c
 
 src-$(CONFIG_HAVE_GPIO_SPI) += sam4e8e/spi.c
 src-$(CONFIG_HAVE_GPIO_I2C) += sam4e8e/i2c.c
