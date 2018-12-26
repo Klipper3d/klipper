@@ -24,7 +24,7 @@ src-$(CONFIG_SERIAL) += sam4e8e/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO) += sam4e8e/gpio.c sam4e8e/afec.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
-src-y += sam4e8e/main.c sam4e8e/timer.c
+src-y += sam4e8e/main.c sam4e8e/sam4_cache.c sam4e8e/timer.c
 
 # Build the additional hex output file
 target-y += $(OUT)klipper.bin

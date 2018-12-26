@@ -43,12 +43,6 @@ int
 main(void)
 {
     SystemInit();
-
-    // Enable Cache
-    if (!(CMCC->CMCC_SR & CMCC_SR_CSTS))
-        CMCC->CMCC_CTRL = CMCC_CTRL_CEN;
-
-    // Start main loop
     sched_main();
     return 0;
 }
