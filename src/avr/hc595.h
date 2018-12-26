@@ -9,17 +9,12 @@ struct hc595
 {
 	struct gpio_out data_pin, latch_pin, clock_pin;
 	uint8_t val[CONFIG_HC595_LENGTH];
-	struct hc595_pin* outputs[CONFIG_HC595_LENGTH*8];
 };
 
-struct hc595_pin
-{
-	uint8_t oid, ic, bit;
-	struct hc595* shift_reg;
-};
+struct hc595 *shift_reg;
 
-void hc595_clear(struct hc595 *shift_reg);
-void hc595_write_bits(struct hc595 *shift_reg);
-void hc595_send_bits_to_host(struct hc595 *shift_reg);
+void hc595_set_bit(uint8_t bit, uint8_t value);
+void hc595_toggle_bit(uint8_t bit);
+void hc595_flush();
 
 #endif //__HC595_H
