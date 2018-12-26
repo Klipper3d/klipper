@@ -11,45 +11,47 @@
 #include "sam4e.h" // AFEC0
 #include "sched.h" // sched_shutdown
 
-static const uint8_t afec0_pins[] = {
+static const uint8_t afec_pins[] = {
     //remove first channel, since it offsets the channel number: GPIO('A', 8),
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19),
     GPIO('A', 20), GPIO('B', 0),  GPIO('B', 1), GPIO('C', 13),
     GPIO('C', 15), GPIO('C', 12), GPIO('C', 29), GPIO('C', 30),
-    GPIO('C', 31), GPIO('C', 26), GPIO('C', 27), GPIO('C',0)
-};
-
-static const uint8_t afec1_pins[] = {
+    GPIO('C', 31), GPIO('C', 26), GPIO('C', 27), GPIO('C',0),
+    // AFEC1
     GPIO('B', 2), GPIO('B', 3), GPIO('A', 21), GPIO('A', 22),
     GPIO('C', 1), GPIO('C', 2), GPIO('C', 3), GPIO('C', 4),
-    /* Artificially pad this array so we can safely iterate over it */
-    GPIO('B', 2), GPIO('B', 2), GPIO('B', 2), GPIO('B', 2),
-    GPIO('B', 2), GPIO('B', 2), GPIO('B', 2), GPIO('B', 2)
 };
 
-#define ADC_FREQ_MAX 6000000UL
-DECL_CONSTANT(ADC_MAX, 4095);
+#define AFEC1_START 15 // The first 15 pins are on afec0
 
 static inline struct gpio_adc
-gpio_pin_to_afec(uint8_t pin)
+pin_to_gpio_adc(uint8_t pin)
 {
     int chan;
-    Afec* afec_device;
-
     for (chan=0; ; chan++) {
-        if (chan >= ARRAY_SIZE(afec0_pins))
+        if (chan >= ARRAY_SIZE(afec_pins))
             shutdown("Not a valid ADC pin");
-        if (afec0_pins[chan] == pin) {
-            afec_device = AFEC0;
-            break;
-        }
-        if (afec1_pins[chan] == pin) {
-            afec_device = AFEC1;
+        if (afec_pins[chan] == pin) {
             break;
         }
     }
-    return (struct gpio_adc){.pin=pin, .chan=chan, .afec=afec_device};
+    return (struct gpio_adc){ .chan=chan };
 }
+
+static inline Afec *
+gpio_adc_to_afec(struct gpio_adc g)
+{
+    return (g.chan >= AFEC1_START ? AFEC1 : AFEC0);
+}
+
+static inline uint32_t
+gpio_adc_to_afec_chan(struct gpio_adc g)
+{
+    return (g.chan >= AFEC1_START ? g.chan - AFEC1_START : g.chan);
+}
+
+#define ADC_FREQ_MAX 6000000UL
+DECL_CONSTANT(ADC_MAX, 4095);
 
 static int
 init_afec(Afec* afec) {
@@ -109,28 +111,29 @@ DECL_INIT(gpio_afec_init);
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
-    struct gpio_adc adc_pin = gpio_pin_to_afec(pin);
-    Afec *afec = adc_pin.afec;
+    struct gpio_adc adc_pin = pin_to_gpio_adc(pin);
+    Afec *afec = gpio_adc_to_afec(adc_pin);
+    uint32_t afec_chan = gpio_adc_to_afec_chan(adc_pin);
 
     //config channel
     uint32_t reg = afec->AFE_DIFFR;
-    reg &= ~(1u << adc_pin.chan);
+    reg &= ~(1u << afec_chan);
     afec->AFE_DIFFR = reg;
     reg = afec->AFE_CGR;
-    reg &= ~(0x03u << (2 * adc_pin.chan));
-    reg |= 1 << (2 * adc_pin.chan);
+    reg &= ~(0x03u << (2 * afec_chan));
+    reg |= 1 << (2 * afec_chan);
     afec->AFE_CGR = reg;
 
     // Configure channel
     // afec_ch_get_config_defaults(&ch_cfg);
-    // afec_ch_set_config(adc_pin.afec, adc_pin.chan, &ch_cfg);
+    // afec_ch_set_config(afec, afec_chan, &ch_cfg);
     // Remove default internal offset from channel
     // See Atmel Appnote AT03078 Section 1.5
-    afec->AFE_CSELR = adc_pin.chan;
+    afec->AFE_CSELR = afec_chan;
     afec->AFE_COCR = (0x800 & AFE_COCR_AOFF_Msk);
 
     // Enable and calibrate Channel
-    afec->AFE_CHER = 1 << adc_pin.chan;
+    afec->AFE_CHER = 1 << afec_chan;
 
     reg = afec->AFE_CHSR;
     afec->AFE_CDOR = reg;
@@ -140,25 +143,7 @@ gpio_adc_setup(uint8_t pin)
 }
 
 enum { AFE_DUMMY=0xff };
-uint8_t active_channel_afec0 = AFE_DUMMY;
-uint8_t active_channel_afec1 = AFE_DUMMY;
-
-static inline uint8_t
-get_active_afec_channel(Afec* afec) {
-    if (afec == AFEC0) {
-        return active_channel_afec0;
-    }
-    return active_channel_afec1;
-}
-
-static inline void
-set_active_afec_channel(Afec* afec, uint8_t chan) {
-    if (afec == AFEC0) {
-        active_channel_afec0 = chan;
-    } else {
-        active_channel_afec1 = chan;
-    }
-}
+uint8_t active_channel = AFE_DUMMY;
 
 // Try to sample a value. Returns zero if sample ready, otherwise
 // returns the number of clock ticks the caller should wait before
@@ -166,23 +151,25 @@ set_active_afec_channel(Afec* afec, uint8_t chan) {
 uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
-    Afec* afec = g.afec;
-    if (get_active_afec_channel(afec) == g.chan) {
-        if ((afec->AFE_ISR & AFE_ISR_DRDY) && (afec->AFE_ISR & (1 << g.chan))) {
+    Afec *afec = gpio_adc_to_afec(g);
+    uint32_t afec_chan = gpio_adc_to_afec_chan(g);
+    if (active_channel == g.chan) {
+        if ((afec->AFE_ISR & AFE_ISR_DRDY)
+            && (afec->AFE_ISR & (1 << afec_chan))) {
             // Sample now ready
             return 0;
         } else {
             // Busy
             goto need_delay;
         }
-    } else if (get_active_afec_channel(g.afec) != AFE_DUMMY) {
+    } else if (active_channel != AFE_DUMMY) {
         goto need_delay;
     }
 
     afec->AFE_CHDR = 0x803F; // Disable all channels
-    afec->AFE_CHER = 1 << g.chan;
+    afec->AFE_CHER = 1 << afec_chan;
 
-    set_active_afec_channel(afec, g.chan);
+    active_channel = g.chan;
 
     for (uint32_t chan = 0; chan < 16; ++chan)
     {
@@ -202,9 +189,10 @@ need_delay:
 uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
-    Afec *afec = g.afec;
-    set_active_afec_channel(g.afec, AFE_DUMMY);
-    afec->AFE_CSELR = g.chan;
+    Afec *afec = gpio_adc_to_afec(g);
+    uint32_t afec_chan = gpio_adc_to_afec_chan(g);
+    active_channel = AFE_DUMMY;
+    afec->AFE_CSELR = afec_chan;
     return afec->AFE_CDR;
 }
 
@@ -212,7 +200,7 @@ gpio_adc_read(struct gpio_adc g)
 void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
-    if (get_active_afec_channel(g.afec) == g.chan) {
-        set_active_afec_channel(g.afec, AFE_DUMMY);
+    if (active_channel == g.chan) {
+        active_channel = AFE_DUMMY;
     }
 }
