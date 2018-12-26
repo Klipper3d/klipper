@@ -1,9 +1,9 @@
-# Additional sam3x8e build rules
+# Additional SAM3 build rules
 
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/sam3x8e src/generic
+dirs-y += src/sam3 src/generic
 dirs-y += lib/sam3x/gcc/gcc
 
 CFLAGS += -mthumb -mcpu=cortex-m3 -falign-loops=16
@@ -15,13 +15,13 @@ CFLAGS_klipper.elf += -T lib/sam3x/gcc/gcc/sam3x8e_flash.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += sam3x8e/main.c sam3x8e/timer.c
-src-y += sam3x8e/gpio.c sam3x8e/adc.c sam3x8e/spi.c
+src-y += sam3/main.c sam3/timer.c
+src-y += sam3/gpio.c sam3/adc.c sam3/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/sam3x/gcc/system_sam3xa.c
 src-y += ../lib/sam3x/gcc/gcc/startup_sam3xa.c
-src-$(CONFIG_SERIAL) += sam3x8e/serial.c generic/serial_irq.c
+src-$(CONFIG_SERIAL) += sam3/serial.c generic/serial_irq.c
 
 # Build the additional hex output file
 target-y += $(OUT)klipper.bin

@@ -6,7 +6,7 @@ Directory Layout
 
 The **src/** directory contains the C source for the micro-controller
 code. The **src/avr/** directory contains specific code for Atmel
-ATmega micro-controllers. The **src/sam3x8e/** directory contains code
+ATmega micro-controllers. The **src/sam3/** directory contains code
 specific to the Arduino Due style ARM micro-controllers. The
 **src/pru/** directory contains code specific to the Beaglebone's
 on-board PRU micro-controller. The **src/simulator/** contains code

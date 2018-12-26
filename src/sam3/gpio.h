@@ -1,5 +1,5 @@
-#ifndef __SAM3X8E_GPIO_H
-#define __SAM3X8E_GPIO_H
+#ifndef __SAM3_GPIO_H
+#define __SAM3_GPIO_H
 
 #include <stdint.h> // uint32_t
 
