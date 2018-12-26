@@ -1,8 +1,15 @@
 #ifndef __SAM3_INTERNAL_H
 #define __SAM3_INTERNAL_H
-// Local definitions for sam3 code
+// Local definitions for sam3/sam4 code
 
 #include <stdint.h> // uint32_t
+#include "autoconf.h" // CONFIG_MACH_SAM3X8E
+
+#if CONFIG_MACH_SAM3X8E
+#include "sam3x8e.h"
+#elif CONFIG_MACH_SAM4E8E
+#include "sam4e.h"
+#endif
 
 #define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)

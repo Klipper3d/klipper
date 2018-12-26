@@ -10,7 +10,6 @@
 #include "compiler.h" // ARRAY_SIZE
 #include "gpio.h" // gpio_adc_setup
 #include "internal.h" // GPIO
-#include "sam3x8e.h" // ADC
 #include "sched.h" // sched_shutdown
 
 static const uint8_t adc_pins[] = {
@@ -43,7 +42,7 @@ gpio_adc_setup(uint8_t pin)
                        | ADC_MR_STARTUP_SUT768
                        | ADC_MR_TRANSFER(1));
     }
-    return (struct gpio_adc){ .bit = 1 << chan };
+    return (struct gpio_adc){ .chan = 1 << chan };
 }
 
 // Try to sample a value. Returns zero if sample ready, otherwise
@@ -55,11 +54,11 @@ gpio_adc_sample(struct gpio_adc g)
     uint32_t chsr = ADC->ADC_CHSR & 0xffff;
     if (!chsr) {
         // Start sample
-        ADC->ADC_CHER = g.bit;
+        ADC->ADC_CHER = g.chan;
         ADC->ADC_CR = ADC_CR_START;
         goto need_delay;
     }
-    if (chsr != g.bit)
+    if (chsr != g.chan)
         // Sampling in progress on another channel
         goto need_delay;
     if (!(ADC->ADC_ISR & ADC_ISR_DRDY))
@@ -75,7 +74,7 @@ need_delay:
 uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
-    ADC->ADC_CHDR = g.bit;
+    ADC->ADC_CHDR = g.chan;
     return ADC->ADC_LCDR;
 }
 
@@ -84,7 +83,7 @@ void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
     irqstatus_t flag = irq_save();
-    if ((ADC->ADC_CHSR & 0xffff) == g.bit)
+    if ((ADC->ADC_CHSR & 0xffff) == g.chan)
         gpio_adc_read(g);
     irq_restore(flag);
 }

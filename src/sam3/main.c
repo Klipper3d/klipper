@@ -1,14 +1,14 @@
-// Main starting point for SAM3x8e boards.
+// Main starting point for SAM3/SAM4 boards
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "command.h" // DECL_CONSTANT
-#include "sam3x8e.h" // WDT
+#include "internal.h" // WDT
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "sam3x8e");
+DECL_CONSTANT(MCU, CONFIG_MCU);
 
 
 /****************************************************************

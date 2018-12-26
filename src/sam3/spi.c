@@ -1,10 +1,9 @@
-// SPI transmissions on sam3x8e
+// SPI transmissions on sam3
 //
 // Copyright (C) 2018  Petri Honkala <cruwaller@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <sam3x8e.h> // REGPTR
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
 #include "internal.h" // gpio_peripheral

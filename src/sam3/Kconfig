@@ -1,12 +1,13 @@
-# Kconfig settings for SAM3 processors
+# Kconfig settings for SAM3/SAM4 processors
 
-if MACH_SAM3X8E
+if MACH_SAM3
 
-config SAM_SELECT
+config SAM3_SELECT
     bool
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C if MACH_SAM4E8E
     select HAVE_GPIO_SPI
     select HAVE_GPIO_BITBANGING
 
@@ -14,9 +15,23 @@ config BOARD_DIRECTORY
     string
     default "sam3"
 
+choice
+    prompt "Processor model"
+    config MACH_SAM3X8E
+        bool "SAM3x8e (Arduino Due)"
+    config MACH_SAM4E8E
+        bool "SAM4e8e (Duet Wifi/Eth)"
+endchoice
+
+config MCU
+    string
+    default "sam3x8e" if MACH_SAM3X8E
+    default "sam4e8e" if MACH_SAM4E8E
+
 config CLOCK_FREQ
     int
-    default 42000000 # 84000000/2
+    default 42000000 if MACH_SAM3X8E # 84000000/2
+    default 60000000 if MACH_SAM4E8E # 120000000/2
 
 config SERIAL
     bool
