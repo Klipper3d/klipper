@@ -1,5 +1,5 @@
---- a/lib/cmsis-sam4e/gcc/gcc/startup_sam4e.c
-+++ b/lib/cmsis-sam4e/gcc/gcc/startup_sam4e.c
+--- a/lib/sam4e/gcc/gcc/startup_sam4e.c
++++ b/lib/sam4e/gcc/gcc/startup_sam4e.c
 @@ -104,7 +105,7 @@ void GMAC_Handler   ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
  void UART1_Handler  ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 
@@ -37,10 +37,10 @@
 
          /* Branch to main function */
          main();
-diff --git a/lib/cmsis-sam4e/include/component/afec.h b/lib/cmsis-sam4e/include/component/afec.h
+diff --git a/lib/sam4e/include/component/afec.h b/lib/sam4e/include/component/afec.h
 index 34c4e61d..9a4f8f96 100644
---- a/lib/cmsis-sam4e/include/component/afec.h
-+++ b/lib/cmsis-sam4e/include/component/afec.h
+--- a/lib/sam4e/include/component/afec.h
++++ b/lib/sam4e/include/component/afec.h
 @@ -59,9 +59,9 @@ typedef struct {
    RoReg Reserved2[1];
    RwReg AFE_CDOR;      /**< \brief (Afec Offset: 0x5C) Channel DC Offset Register */
