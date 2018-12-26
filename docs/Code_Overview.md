@@ -5,17 +5,16 @@ Directory Layout
 ================
 
 The **src/** directory contains the C source for the micro-controller
-code. The **src/avr/** directory contains specific code for Atmel
-ATmega micro-controllers. The **src/sam3x8e/** directory contains code
-specific to the Arduino Due style ARM micro-controllers. The
-**src/pru/** directory contains code specific to the Beaglebone's
-on-board PRU micro-controller. The **src/simulator/** contains code
-stubs that allow the micro-controller to be test compiled on other
-architectures. The **src/generic/** directory contains helper code
-that may be useful across different host architectures. The build
-arranges for includes of "board/somefile.h" to first look in the
-current architecture directory (eg, src/avr/somefile.h) and then in
-the generic directory (eg, src/generic/somefile.h).
+code. The **src/avr/**, **src/sam3/**, **src/samd21/**,
+**src/lpc176x/**, **src/stm32f1/**, **src/pru/**, and **src/linux/**
+directories contain architecture specific micro-controller code. The
+**src/simulator/** contains code stubs that allow the micro-controller
+to be test compiled on other architectures. The **src/generic/**
+directory contains helper code that may be useful across different
+architectures. The build arranges for includes of "board/somefile.h"
+to first look in the current architecture directory (eg,
+src/avr/somefile.h) and then in the generic directory (eg,
+src/generic/somefile.h).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**

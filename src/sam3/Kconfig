@@ -1,4 +1,4 @@
-# Kconfig settings for SAM3x8e processors
+# Kconfig settings for SAM3 processors
 
 if MACH_SAM3X8E
 
@@ -12,7 +12,7 @@ config SAM_SELECT
 
 config BOARD_DIRECTORY
     string
-    default "sam3x8e"
+    default "sam3"
 
 config CLOCK_FREQ
     int

@@ -25,7 +25,7 @@ choice
 endchoice
 
 source "src/avr/Kconfig"
-source "src/sam3x8e/Kconfig"
+source "src/sam3/Kconfig"
 source "src/samd21/Kconfig"
 source "src/sam4e8e/Kconfig"
 source "src/lpc176x/Kconfig"
