@@ -26,8 +26,6 @@ void gpio_in_reset(struct gpio_in g, int8_t pull_up);
 uint8_t gpio_in_read(struct gpio_in g);
 
 struct gpio_adc {
-    uint8_t pin;
-    void *afec;
     uint32_t chan;
 };
 
