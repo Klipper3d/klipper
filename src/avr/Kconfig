@@ -149,4 +149,21 @@ config SIMULAVR
 
          If unsure, select "N".
 
+
+
+# HC595 options config, Limiting to 4 IC's so uint32 can be used for I/O
+# Prusa MMU2 rev 0.3 https://github.com/prusa3d/MM-control-2.0
+config HAVE_HC595_SHIFT_REG
+    bool "Include SNx4HC595 Support (MMU2)"
+    depends on MACH_atmega32u4
+    default n
+
+if HAVE_HC595_SHIFT_REG
+    config HC595_LENGTH
+        int "SNx4HC595 ic array length"
+        default 2
+        range 1 4
+endif
+
+
 endif
