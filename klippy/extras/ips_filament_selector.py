@@ -17,6 +17,6 @@ class IdlerPulleyFilamentSelector:
         for rail, axis in zip(self.rails, 'ips'):
             rail.setup_itersolve('cartesian_stepper_alloc', axis)
 
+
 def load_config(config):
     return IdlerPulleyFilamentSelector(config)
-    
