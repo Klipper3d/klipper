@@ -424,3 +424,7 @@ follow the full upgrade steps outlined above. Note that the RESTART
 and FIRMWARE_RESTART g-code commands do not load new software - the
 above "sudo service klipper restart" and "make flash" commands are
 needed for a software change to take effect.
+
+When upgrading the software, be sure to check the
+[config changes](Config_Changes.md) document for information on
+software changes that may require updates to your printer.cfg file.
