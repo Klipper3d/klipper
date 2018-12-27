@@ -105,18 +105,18 @@ class TMC2660:
         chm = {'spreadcycle': 0, 'constant_toff': 1}
         self.driver_chm = config.getchoice('driver_CHM', chm, default='spreadcycle')
         self.driver_rndtf = config.getboolean('driver_RNDTF', False)
-        if (self.driver_chm):
+        if self.driver_chm:
             self.driver_hend = config.getint('driver_HEND', default=7, minval=-3, maxval=12) + 3
             self.driver_hstrt = config.getint('driver_HSTRT', default=5, minval=0, maxval=15)
             self.driver_toff = config.getint('driver_TOFF', default=7, minval=0, maxval=15)
-            self.driver_hdec = config.getboolean('driver_HDEC', default=False) | ((self.hstrt & 0x8) >> 1) # if chm is 1, HDEC1 is the MSB of HSTRT
+            self.driver_hdec = config.getboolean('driver_HDEC', default=False) | ((self.driver_hstrt & 0x8) >> 1) # if chm is 1, HDEC1 is the MSB of HSTRT
         else:
             self.driver_hdec = config.getboolean('driver_HDEC', default=False)
             self.driver_hend = config.getint('driver_HEND', default=3, minval=-3, maxval=12) + 3
             self.driver_hstrt = config.getint('driver_HSTRT', default=4, minval=1, maxval=8) - 1
             self.driver_toff = config.getint('driver_TOFF', default=4, minval=0, maxval=15)
-            if (self.driver_hstrt + self.driver_hend > 15):
-                raise pins.error("driver_HEND + HSTRT must be <= 15")
+            if self.driver_hstrt + self.driver_hend > 15:
+                raise config.error("driver_HEND + HSTRT must be <= 15")
 
         # SMARTEN
         csc = {'quarter': 1, 'half': 0}
