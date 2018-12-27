@@ -105,7 +105,7 @@ class TMC2208:
         else:
             tx_pin_params = ppins.lookup_pin(tx_pin_desc)
         if rx_pin_params['chip'] is not tx_pin_params['chip']:
-            raise pins.error("TMC2208 rx and tx pins must be on the same mcu")
+            raise ppins.error("TMC2208 rx and tx pins must be on the same mcu")
         self.mcu = rx_pin_params['chip']
         self.pullup = rx_pin_params['pullup']
         self.rx_pin = rx_pin_params['pin']
