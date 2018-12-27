@@ -7,8 +7,8 @@
 
 struct hc595
 {
-	struct gpio_out data_pin, latch_pin, clock_pin;
-	uint8_t val[CONFIG_HC595_LENGTH];
+    struct gpio_out data_pin, latch_pin, clock_pin;
+    uint8_t val[CONFIG_HC595_LENGTH];
 };
 
 struct hc595 *shift_reg;

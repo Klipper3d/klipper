@@ -19,3 +19,4 @@ class IdlerPulleyFilamentSelector:
 
 def load_config(config):
     return IdlerPulleyFilamentSelector(config)
+    
