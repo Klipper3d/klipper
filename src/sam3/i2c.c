@@ -5,7 +5,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "gpio.h" // i2c_setup
@@ -18,7 +17,7 @@
 #define TWI0_SDA_GPIO GPIO('A', 17)
 #define TWI1_SCL_GPIO GPIO('B', 13)
 #define TWI1_SDA_GPIO GPIO('B', 12)
-#elif CONFIG_MACH_SAM4E8E
+#elif CONFIG_MACH_SAM4S8C || CONFIG_MACH_SAM4E8E
 #define TWI0_SCL_GPIO GPIO('A', 4)
 #define TWI0_SDA_GPIO GPIO('A', 3)
 #define TWI1_SCL_GPIO GPIO('B', 5)
@@ -48,7 +47,7 @@ i2c_init(Twi *p_twi, uint32_t rate)
     uint32_t chdiv = 0;
     uint32_t ckdiv = 0;
 
-    cldiv = CONFIG_CLOCK_FREQ / ((rate > 384000 ? 384000 : rate) * 2) - 4;
+    cldiv = SystemCoreClock / ((rate > 384000 ? 384000 : rate) * 4) - 4;
 
     while((cldiv > 255) && (ckdiv < 7)) {
         ckdiv++;
@@ -56,7 +55,7 @@ i2c_init(Twi *p_twi, uint32_t rate)
     }
 
     if (rate > 348000) {
-        chdiv = CONFIG_CLOCK_FREQ / ((2 * rate - 384000) * 2) - 4;
+        chdiv = SystemCoreClock / ((2 * rate - 384000) * 4) - 4;
         while((chdiv > 255) && (ckdiv < 7)) {
             ckdiv++;
             chdiv /= 2;

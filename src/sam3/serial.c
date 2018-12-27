@@ -16,6 +16,12 @@ static Uart * const Port = UART;
 static const uint32_t Pmc_id = ID_UART, Irq_id = UART_IRQn;
 static const uint32_t rx_pin = GPIO('A', 8);
 static const uint32_t tx_pin = GPIO('A', 9);
+#elif CONFIG_MACH_SAM4S8C
+#define Serial_IRQ_Handler UART1_Handler
+static Uart * const Port = UART1;
+static const uint32_t Pmc_id = ID_UART1, Irq_id = UART1_IRQn;
+static const uint32_t rx_pin = GPIO('B', 2);
+static const uint32_t tx_pin = GPIO('B', 3);
 #elif CONFIG_MACH_SAM4E8E
 #define Serial_IRQ_Handler UART0_Handler
 static Uart * const Port = UART0;

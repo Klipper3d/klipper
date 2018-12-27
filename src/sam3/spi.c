@@ -29,6 +29,10 @@ static const struct spi_info spi_bus[] = {
     { USART1, ID_USART1, GPIO('A', 12), GPIO('A', 13), GPIO('A', 16), 'A', 'A'},
     { USART2, ID_USART2, GPIO('B', 21), GPIO('B', 20), GPIO('B', 24), 'A', 'A'},
     { USART3, ID_USART3, GPIO('D', 5), GPIO('D', 4), GPIO('E', 16), 'B', 'B'},
+#elif CONFIG_MACH_SAM4S8C
+    { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
+    { USART0, ID_USART0, GPIO('A', 5), GPIO('A', 6), GPIO('A', 2), 'A', 'B' },
+    { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
 #elif CONFIG_MACH_SAM4E8E
     { USART0, ID_USART0, GPIO('B', 0), GPIO('B', 1), GPIO('B', 13), 'C', 'C' },
     { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},

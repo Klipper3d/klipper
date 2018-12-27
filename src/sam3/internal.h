@@ -7,6 +7,8 @@
 
 #if CONFIG_MACH_SAM3X8E
 #include "sam3x8e.h"
+#elif CONFIG_MACH_SAM4S8C
+#include "sam4s.h"
 #elif CONFIG_MACH_SAM4E8E
 #include "sam4e.h"
 #endif
