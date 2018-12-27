@@ -5,7 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_FLASH_START
 #include "board/io.h" // readl
+#include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // enable_pclock
@@ -169,13 +171,24 @@ usb_set_configure(void)
 }
 
 void
+usb_request_bootloader(void)
+{
+    if (CONFIG_FLASH_START) {
+        // Arduino Zero bootloader hack
+        irq_disable();
+        writel((void*)0x20007FFC, 0x07738135);
+        NVIC_SystemReset();
+    }
+}
+
+void
 usbserial_init(void)
 {
     // configure usb clock
     enable_pclock(USB_GCLK_ID, 0);
     // configure USBD+ and USBD- pins
-    gpio_peripheral('A', 24, 'G', 0);
-    gpio_peripheral('A', 25, 'G', 0);
+    gpio_peripheral(GPIO('A', 24), 'G', 0);
+    gpio_peripheral(GPIO('A', 25), 'G', 0);
     uint16_t trim = (readl((void*)USB_FUSES_TRIM_ADDR)
                      & USB_FUSES_TRIM_Msk) >> USB_FUSES_TRIM_Pos;
     uint16_t transp = (readl((void*)USB_FUSES_TRANSP_ADDR)

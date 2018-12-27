@@ -43,7 +43,7 @@ def parse_log(logname, mcu):
             if name in apply_prefix:
                 name = prefix + name
             keyparts[name] = val
-        if keyparts.get('bytes_write', '0') == '0':
+        if 'print_time' not in keyparts:
             continue
         keyparts['#sampletime'] = float(parts[1][:-1])
         out.append(keyparts)

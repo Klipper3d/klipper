@@ -21,7 +21,7 @@ struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
     Usart *p_usart = USART0;
-    if (bus > 2 || mode  > 3) {
+    if (bus > 2) {
         shutdown("Invalid spi_setup parameters");
     }
 

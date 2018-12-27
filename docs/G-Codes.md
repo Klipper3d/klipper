@@ -153,6 +153,14 @@ enabled:
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
 
+## BLTouch
+
+The following command is available when a "bltouch" config section is
+enabled:
+- `BLTOUCH_DEBUG COMMAND=<command>`: This sends a command to the
+  BLTouch. It may be useful for debugging. Available commands are:
+  pin_down, touch_mode, pin_up, self_test, reset.
+
 ## Delta Calibration
 
 The following commands are available when the "delta_calibrate" config

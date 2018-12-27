@@ -12,6 +12,26 @@ DECL_CONSTANT(MCU, "samd21g");
 
 
 /****************************************************************
+ * watchdog handler
+ ****************************************************************/
+
+void
+watchdog_reset(void)
+{
+    WDT->CLEAR.reg = 0xa5;
+}
+DECL_TASK(watchdog_reset);
+
+void
+watchdog_init(void)
+{
+    WDT->CONFIG.reg = WDT_CONFIG_PER_16K; // 500ms timeout
+    WDT->CTRL.reg = WDT_CTRL_ENABLE;
+}
+DECL_INIT(watchdog_init);
+
+
+/****************************************************************
  * misc functions
  ****************************************************************/
 

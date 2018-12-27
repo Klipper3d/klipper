@@ -195,8 +195,12 @@ SAMD21. One comes standard with the "Arduino Zero" and the other comes
 standard with the "Arduino M0".
 
 The Arduino Zero uses an 8KiB bootloader (the application must be
-compiled with a start address of 8KiB). This document does not cover
-the flashing mechanism for this bootloader.
+compiled with a start address of 8KiB). One can enter the bootloader
+by double clicking the reset button. To flash an application use
+something like:
+```
+bossac -U -p "$(FLASH_DEVICE)" --offset=0x2000 -w out/klipper.bin -v -b -R
+```
 
 The Arduino M0 uses a 16KiB bootloader (the application must be
 compiled with a start address of 16KiB). To flash an application,

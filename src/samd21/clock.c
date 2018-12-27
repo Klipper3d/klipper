@@ -9,21 +9,23 @@
 #include "internal.h" // enable_pclock
 #include "samd21.h" // GCLK
 
+// The "generic clock generators" that are configured
+#define CLKGEN_MAIN 0
+#define CLKGEN_32K 1
+#define CLKGEN_ULP32K 2
+
+// Enable a peripheral clock and power to that peripheral
 void
 enable_pclock(uint32_t clock_id, uint32_t pmask)
 {
-    GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_ID(clock_id) | GCLK_CLKCTRL_GEN_GCLK0
-                         | GCLK_CLKCTRL_CLKEN);
+    GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_ID(clock_id)
+                         | GCLK_CLKCTRL_GEN(CLKGEN_MAIN) | GCLK_CLKCTRL_CLKEN);
     while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY)
         ;
     PM->APBCMASK.reg |= pmask;
 }
 
-#define CLK_MAIN 0
-#define CLK_32K 1
-#define MCLK_DFLL48M 0
-
-#define CLK_32K_FREQ 32768
+#define FREQ_XOSC32K 32768
 
 void
 SystemInit(void)
@@ -44,16 +46,18 @@ SystemInit(void)
     while (GCLK->CTRL.reg & GCLK_CTRL_SWRST)
         ;
 
-    // Route 32Khz clock to DFLL48M
-    GCLK->GENDIV.reg = GCLK_GENDIV_ID(CLK_32K);
-    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(CLK_32K)
+    // Route external 32Khz clock to DFLL48M (via CLKGEN_32K)
+    GCLK->GENDIV.reg = GCLK_GENDIV_ID(CLKGEN_32K);
+    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(CLKGEN_32K)
                          | GCLK_GENCTRL_SRC_XOSC32K | GCLK_GENCTRL_GENEN);
-    GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_ID(MCLK_DFLL48M)
-                         | GCLK_CLKCTRL_GEN(CLK_32K) | GCLK_CLKCTRL_CLKEN);
+    GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_ID(SYSCTRL_GCLK_ID_DFLL48)
+                         | GCLK_CLKCTRL_GEN(CLKGEN_32K) | GCLK_CLKCTRL_CLKEN);
+    while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY)
+        ;
 
     // Configure DFLL48M clock
     SYSCTRL->DFLLCTRL.reg = 0;
-    uint32_t mul = DIV_ROUND_CLOSEST(CONFIG_CLOCK_FREQ, CLK_32K_FREQ);
+    uint32_t mul = DIV_ROUND_CLOSEST(CONFIG_CLOCK_FREQ, FREQ_XOSC32K);
     SYSCTRL->DFLLMUL.reg = (SYSCTRL_DFLLMUL_CSTEP(31)
                             | SYSCTRL_DFLLMUL_FSTEP(511)
                             | SYSCTRL_DFLLMUL_MUL(mul));
@@ -66,8 +70,8 @@ SystemInit(void)
         ;
 
     // Switch main clock to DFLL48M clock
-    GCLK->GENDIV.reg = GCLK_GENDIV_ID(CLK_MAIN);
-    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(CLK_MAIN)
+    GCLK->GENDIV.reg = GCLK_GENDIV_ID(CLKGEN_MAIN);
+    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(CLKGEN_MAIN)
                          | GCLK_GENCTRL_SRC_DFLL48M
                          | GCLK_GENCTRL_IDC | GCLK_GENCTRL_GENEN);
 }
