@@ -14,8 +14,9 @@
 
 #if CONFIG_HAVE_HC595_SHIFT_REG
 #include "hc595.h"
-struct gpio_digital_regs fake_reg = {};
 #endif
+
+struct gpio_digital_regs oob_shift_regs = {};
 
 volatile uint8_t * const digital_regs[] PROGMEM = {
 #ifdef PINA
@@ -46,7 +47,7 @@ gpio_out_setup(uint8_t pin, uint8_t val)
 fail:
     if (CONFIG_HAVE_HC595_SHIFT_REG && GPIO2PORT(pin) < ARRAY_SIZE(digital_regs) + CONFIG_HC595_LENGTH)
     {
-        struct gpio_out sg = {.regs=&fake_reg, .bit=pin};
+        struct gpio_out sg = {.regs=&oob_shift_regs, .bit=pin};
         gpio_out_reset(sg, val);
         return sg;
     }
@@ -57,7 +58,7 @@ void
 gpio_out_reset(struct gpio_out g, uint8_t val)
 {
     irqstatus_t flag = irq_save();
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &fake_reg) {
+    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs) {
         hc595_set_bit(g.bit - (ARRAY_SIZE(digital_regs)*8), val);
     }
     else
@@ -71,7 +72,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
 void
 gpio_out_toggle_noirq(struct gpio_out g)
 {
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &fake_reg)
+    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs)
         hc595_toggle_bit(g.bit - (ARRAY_SIZE(digital_regs)*8));
     else
         g.regs->in = g.bit;
@@ -87,7 +88,7 @@ void
 gpio_out_write(struct gpio_out g, uint8_t val)
 {
     irqstatus_t flag = irq_save();
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &fake_reg)
+    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs)
         hc595_set_bit(g.bit - (ARRAY_SIZE(digital_regs)*8), val);
     else
         g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
