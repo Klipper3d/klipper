@@ -59,7 +59,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     irqstatus_t flag = irq_save();
     if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &fake_reg) {
         hc595_set_bit(g.bit - (ARRAY_SIZE(digital_regs)*8), val);
-	}
+    }
     else
     {
         g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
