@@ -10,23 +10,22 @@
 #include "command.h" // shutdown
 #include "gpio.h" // i2c_setup
 #include "internal.h" // gpio_peripheral
-#include "sam4e.h" // TWI0
 #include "sched.h" // sched_shutdown
 
 // I2C pin definitions
+#if CONFIG_MACH_SAM3X8E
+#define TWI0_SCL_GPIO GPIO('A', 18)
+#define TWI0_SDA_GPIO GPIO('A', 17)
+#define TWI1_SCL_GPIO GPIO('B', 13)
+#define TWI1_SDA_GPIO GPIO('B', 12)
+#elif CONFIG_MACH_SAM4E8E
 #define TWI0_SCL_GPIO GPIO('A', 4)
-#define TWI0_SCL_PERIPH 'A'
-
 #define TWI0_SDA_GPIO GPIO('A', 3)
-#define TWI0_SDA_PERIPH 'A'
-
 #define TWI1_SCL_GPIO GPIO('B', 5)
-#define TWI1_SCL_PERIPH 'A'
-
 #define TWI1_SDA_GPIO GPIO('B', 4)
-#define TWI1_SDA_PERIPH 'A'
+#endif
 
-void
+static void
 i2c_init(Twi *p_twi, uint32_t rate)
 {
     uint32_t twi_id = (p_twi == TWI0) ? ID_TWI0 : ID_TWI1;
@@ -34,11 +33,11 @@ i2c_init(Twi *p_twi, uint32_t rate)
         PMC->PMC_PCER0 = 1 << twi_id;
     }
     if (p_twi == TWI0) {
-        gpio_peripheral(TWI0_SCL_GPIO, TWI0_SCL_PERIPH, 0);
-        gpio_peripheral(TWI0_SDA_GPIO, TWI0_SDA_PERIPH, 0);
+        gpio_peripheral(TWI0_SCL_GPIO, 'A', 0);
+        gpio_peripheral(TWI0_SDA_GPIO, 'A', 0);
     } else {
-        gpio_peripheral(TWI1_SCL_GPIO, TWI1_SCL_PERIPH, 0);
-        gpio_peripheral(TWI1_SDA_GPIO, TWI1_SDA_PERIPH, 0);
+        gpio_peripheral(TWI1_SCL_GPIO, 'A', 0);
+        gpio_peripheral(TWI1_SDA_GPIO, 'A', 0);
     }
     p_twi->TWI_IDR = 0xFFFFFFFF;
     (void)p_twi->TWI_SR;
@@ -73,7 +72,7 @@ i2c_init(Twi *p_twi, uint32_t rate)
                       TWI_CWGR_CKDIV(ckdiv);
 }
 
-uint32_t
+static uint32_t
 addr_to_u32(uint8_t addr_len, uint8_t *addr)
 {
     uint32_t address = addr[0];
