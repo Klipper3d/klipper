@@ -14,9 +14,8 @@
 
 #if CONFIG_HAVE_HC595_SHIFT_REG
 #include "hc595.h"
-#endif
-
 struct gpio_digital_regs oob_shift_regs = {};
+#endif
 
 volatile uint8_t * const digital_regs[] PROGMEM = {
 #ifdef PINA
@@ -45,12 +44,14 @@ gpio_out_setup(uint8_t pin, uint8_t val)
     gpio_out_reset(g, val);
     return g;
 fail:
-    if (CONFIG_HAVE_HC595_SHIFT_REG && GPIO2PORT(pin) < ARRAY_SIZE(digital_regs) + CONFIG_HC595_LENGTH)
+#if CONFIG_HAVE_HC595_SHIFT_REG
+    if (GPIO2PORT(pin) < ARRAY_SIZE(digital_regs) + CONFIG_HC595_LENGTH)
     {
         struct gpio_out sg = {.regs=&oob_shift_regs, .bit=pin};
         gpio_out_reset(sg, val);
         return sg;
     }
+#endif
     shutdown("Not an output pin");
 }
 
@@ -58,7 +59,8 @@ void
 gpio_out_reset(struct gpio_out g, uint8_t val)
 {
     irqstatus_t flag = irq_save();
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs) {
+#if CONFIG_HAVE_HC595_SHIFT_REG
+    if (g.regs == &oob_shift_regs) {
         hc595_set_bit(g.bit - (ARRAY_SIZE(digital_regs)*8), val);
     }
     else
@@ -66,16 +68,24 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
         g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
         g.regs->mode |= g.bit;
     }
+#else
+    g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+    g.regs->mode |= g.bit;
+#endif
     irq_restore(flag);
 }
 
 void
 gpio_out_toggle_noirq(struct gpio_out g)
 {
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs)
+#if CONFIG_HAVE_HC595_SHIFT_REG
+    if (g.regs == &oob_shift_regs)
         hc595_toggle_bit(g.bit - (ARRAY_SIZE(digital_regs)*8));
     else
         g.regs->in = g.bit;
+#else
+    g.regs->in = g.bit;
+#endif
 }
 
 void
@@ -88,10 +98,14 @@ void
 gpio_out_write(struct gpio_out g, uint8_t val)
 {
     irqstatus_t flag = irq_save();
-    if (CONFIG_HAVE_HC595_SHIFT_REG && g.regs == &oob_shift_regs)
+#if CONFIG_HAVE_HC595_SHIFT_REG
+    if (g.regs == &oob_shift_regs)
         hc595_set_bit(g.bit - (ARRAY_SIZE(digital_regs)*8), val);
     else
         g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+#else
+    g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+#endif
     irq_restore(flag);
 }
 
