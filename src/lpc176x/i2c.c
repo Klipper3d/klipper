@@ -45,7 +45,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     if (bus)
         shutdown("Unsupported i2c bus");
     i2c_init();
-    return (struct i2c_config){ .addr=addr };
+    return (struct i2c_config){ .addr=addr<<1 };
 }
 
 static void
