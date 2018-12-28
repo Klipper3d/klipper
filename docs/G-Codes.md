@@ -69,8 +69,9 @@ config section is enabled:
 
 The following standard G-Code commands are currently available, but
 using them is not recommended:
-- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>]` (Use
+- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>] [FORCE]` (Use
   SET_GCODE_OFFSET instead.)
+  When "FORCE" is used the command is executed immediately.
 - Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
 
 # Extended G-Code Commands
@@ -90,7 +91,7 @@ The following standard commands are supported:
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
-  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]`: Set a
+  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>] [FORCE]`: Set a
   positional offset to apply to future G-Code commands. This is
   commonly used to virtually change the Z bed offset or to set nozzle
   XY offsets when switching extruders. For example, if
@@ -99,6 +100,7 @@ The following standard commands are supported:
   are used, then the adjustment will be added to any existing offset
   (eg, "SET_GCODE_OFFSET Z=-0.2" followed by "SET_GCODE_OFFSET
   Z_ADJUST=0.3" would result in a total Z offset of 0.1).
+  When "FORCE" is used the command is executed immediately.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is

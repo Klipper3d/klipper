@@ -165,41 +165,44 @@ class GCodeParser:
     def process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
-            line = origline = line.strip()
-            cpos = line.find(';')
-            if cpos >= 0:
-                line = line[:cpos]
-            # Break command into parts
-            parts = self.args_r.split(line.upper())[1:]
-            params = { parts[i]: parts[i+1].strip()
-                       for i in range(0, len(parts), 2) }
-            params['#original'] = origline
-            if parts and parts[0] == 'N':
-                # Skip line number at start of command
-                del parts[:2]
-            if not parts:
-                # Treat empty line as empty command
-                parts = ['', '']
-            params['#command'] = cmd = parts[0] + parts[1].strip()
-            # Invoke handler for command
-            self.need_ack = need_ack
-            handler = self.gcode_handlers.get(cmd, self.cmd_default)
-            try:
-                handler(params)
-            except error as e:
-                self.respond_error(str(e))
-                self.reset_last_position()
-                if not need_ack:
-                    raise
-            except:
-                msg = 'Internal error on command:"%s"' % (cmd,)
-                logging.exception(msg)
-                self.printer.invoke_shutdown(msg)
-                self.respond_error(msg)
-                if not need_ack:
-                    raise
-            self.ack()
+            self.process_command(line.strip(), need_ack)
+    def process_command(self, line, need_ack=True):
+        origline = line
+        cpos = line.find(';')
+        if cpos >= 0:
+            line = line[:cpos]
+        # Break command into parts
+        parts = self.args_r.split(line.upper())[1:]
+        params = { parts[i]: parts[i+1].strip()
+                   for i in range(0, len(parts), 2) }
+        params['#original'] = origline
+        if parts and parts[0] == 'N':
+            # Skip line number at start of command
+            del parts[:2]
+        if not parts:
+            # Treat empty line as empty command
+            parts = ['', '']
+        params['#command'] = cmd = parts[0] + parts[1].strip()
+        # Invoke handler for command
+        self.need_ack = need_ack
+        handler = self.gcode_handlers.get(cmd, self.cmd_default)
+        try:
+            handler(params)
+        except error as e:
+            self.respond_error(str(e))
+            self.reset_last_position()
+            if not need_ack:
+                raise
+        except:
+            msg = 'Internal error on command:"%s"' % (cmd,)
+            logging.exception(msg)
+            self.printer.invoke_shutdown(msg)
+            self.respond_error(msg)
+            if not need_ack:
+                raise
+        self.ack()
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
+    force_r = re.compile('^(?:[N][0-9]+)?\s*(SET_GCODE_OFFSET|M206){1}[A-Z0-9_=\s]*\s*(FORCE){1}\s*[A-Z0-9_=\s]*(?:\s|$)')
     def process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
@@ -213,7 +216,17 @@ class GCodeParser:
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
-        pending_commands.extend(lines)
+        for line in lines:
+            # If received "M112" execute asap
+            if self.m112_r.match(line) is not None:
+                self.cmd_M112({})
+            # If "FORCE" exists in SET_GCODE_OFFSET or M206 execute asap
+            elif self.force_r.match(line.upper()) is not None:
+                pattern = re.compile("FORCE", re.IGNORECASE)
+                line = pattern.sub("", line)
+                self.process_command(line)
+            else:
+                pending_commands.append(line)
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
             if not self.is_processing_data:
@@ -221,11 +234,6 @@ class GCodeParser:
             pending_commands.append("")
         # Handle case where multiple commands pending
         if self.is_processing_data or len(pending_commands) > 1:
-            if len(pending_commands) < 20:
-                # Check for M112 out-of-order
-                for line in lines:
-                    if self.m112_r.match(line) is not None:
-                        self.cmd_M112({})
             if self.is_processing_data:
                 if len(pending_commands) >= 20:
                     # Stop reading input
