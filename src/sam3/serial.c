@@ -31,7 +31,7 @@ serial_init(void)
     gpio_peripheral(tx_pin, 'A', 0);
 
     // Reset uart
-    PMC->PMC_PCER0 = 1 << Pmc_id;
+    enable_pclock(Pmc_id);
     Port->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
     Port->UART_CR = (UART_CR_RSTRX | UART_CR_RSTTX
                      | UART_CR_RXDIS | UART_CR_TXDIS);
