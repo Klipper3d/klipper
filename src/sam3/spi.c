@@ -23,9 +23,7 @@ spi_init(void)
     gpio_peripheral(GPIO('A', 27), 'A', 0); // Arduino 76
 
     // Enable SPI clocks
-    if (!(PMC->PMC_PCSR0 & (1u << PERIPH_ID))) {
-        PMC->PMC_PCER0 = (1 << PERIPH_ID);
-    }
+    enable_pclock(PERIPH_ID);
 
     /* Disable SPI */
     REGPTR->SPI_CR  = SPI_CR_SPIDIS;

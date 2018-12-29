@@ -110,7 +110,7 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     uint32_t port = GPIO2PORT(pin);
-    PMC->PMC_PCER0 = 1 << (ID_PIOA + port);
+    enable_pclock(ID_PIOA + port);
     struct gpio_in g = { .regs=digital_regs[port], .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;

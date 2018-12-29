@@ -28,10 +28,7 @@
 static void
 i2c_init(Twi *p_twi, uint32_t rate)
 {
-    uint32_t twi_id = (p_twi == TWI0) ? ID_TWI0 : ID_TWI1;
-    if ((PMC->PMC_PCSR0 & (1u << twi_id)) == 0) {
-        PMC->PMC_PCER0 = 1 << twi_id;
-    }
+    enable_pclock(p_twi == TWI0 ? ID_TWI0 : ID_TWI1);
     if (p_twi == TWI0) {
         gpio_peripheral(TWI0_SCL_GPIO, 'A', 0);
         gpio_peripheral(TWI0_SDA_GPIO, 'A', 0);

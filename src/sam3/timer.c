@@ -41,7 +41,7 @@ timer_init(void)
     tc->TC_CCR = TC_CCR_CLKDIS;
     tc->TC_IDR = 0xFFFFFFFF;
     // Enable it
-    PMC->PMC_PCER0 = 1 << ID_TC0;
+    enable_pclock(ID_TC0);
     tc->TC_CMR = TC_CMR_WAVE | TC_CMR_WAVSEL_UP | TC_CMR_TCCLKS_TIMER_CLOCK1;
     tc->TC_IER = TC_IER_CPAS;
     NVIC_SetPriority(TC0_IRQn, 1);

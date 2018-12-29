@@ -35,6 +35,26 @@ DECL_INIT(watchdog_init);
  * misc functions
  ****************************************************************/
 
+// Check if a peripheral clock has been enabled
+int
+is_enabled_pclock(uint32_t id)
+{
+    if (id < 32)
+        return !!(PMC->PMC_PCSR0 & (1 << id));
+    else
+        return !!(PMC->PMC_PCSR1 & (1 << (id - 32)));
+}
+
+// Enable a peripheral clock
+void
+enable_pclock(uint32_t id)
+{
+    if (id < 32)
+        PMC->PMC_PCER0 = 1 << id;
+    else
+        PMC->PMC_PCER1 = 1 << (id - 32);
+}
+
 void
 command_reset(uint32_t *args)
 {

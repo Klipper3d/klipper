@@ -57,10 +57,7 @@ static int
 init_afec(Afec* afec) {
 
     // Enable PMC
-    if (afec == AFEC0)
-        PMC->PMC_PCER0 = 1 << ID_AFEC0;
-    else
-        PMC->PMC_PCER0 = 1 << ID_AFEC1;
+    enable_pclock(afec == AFEC0 ? ID_AFEC0 : ID_AFEC1);
 
     // If busy, return busy
     if ((afec->AFE_ISR & AFE_ISR_DRDY) == AFE_ISR_DRDY) {

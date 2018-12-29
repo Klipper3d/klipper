@@ -31,9 +31,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         // DUET_USART0_MISO as per dc42 CoreNG
         gpio_peripheral(GPIO('B', 0), 'C', 1);
 
-        if ((PMC->PMC_PCSR0 & (1u << ID_USART0)) == 0) {
-            PMC->PMC_PCER0 = 1 << ID_USART0;
-        }
+        enable_pclock(ID_USART0);
         p_usart = USART0;
     } else if (bus == SSPI_USART1) {
         // DUET_USART1_SCK as per dc42 CoreNG
@@ -43,9 +41,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         // DUET_USART1_MISO as per dc42 CoreNG
         gpio_peripheral(GPIO('A', 21), 'A', 1);
 
-        if ((PMC->PMC_PCSR0 & (1u << ID_USART1)) == 0) {
-            PMC->PMC_PCER0 = 1 << ID_USART1;
-        }
+        enable_pclock(ID_USART1);
         p_usart = USART1;
     }
 
