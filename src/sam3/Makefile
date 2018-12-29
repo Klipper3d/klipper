@@ -20,15 +20,14 @@ eflags-$(CONFIG_MACH_SAM4E8E) += -T lib/sam4e/gcc/gcc/sam4e8e_flash.ld
 CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += sam3/main.c sam3/timer.c sam3/gpio.c sam3/i2c.c
+src-y += sam3/main.c sam3/timer.c sam3/gpio.c sam3/i2c.c sam3/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
 src-$(CONFIG_SERIAL) += sam3/serial.c generic/serial_irq.c
-src-$(CONFIG_MACH_SAM3X8E) += sam3/adc.c sam3/spi.c
+src-$(CONFIG_MACH_SAM3X8E) += sam3/adc.c
 src-$(CONFIG_MACH_SAM3X8E) += ../lib/sam3x/gcc/system_sam3xa.c
 src-$(CONFIG_MACH_SAM3X8E) += ../lib/sam3x/gcc/gcc/startup_sam3xa.c
-src-$(CONFIG_MACH_SAM4E8E) += sam3/sam4e_afec.c sam3/sam4e_spi.c
-src-$(CONFIG_MACH_SAM4E8E) += sam3/sam4_cache.c
+src-$(CONFIG_MACH_SAM4E8E) += sam3/sam4e_afec.c sam3/sam4_cache.c
 src-$(CONFIG_MACH_SAM4E8E) += ../lib/sam4e/gcc/system_sam4e.c
 src-$(CONFIG_MACH_SAM4E8E) += ../lib/sam4e/gcc/gcc/startup_sam4e.c
 
