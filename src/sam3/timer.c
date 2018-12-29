@@ -44,7 +44,7 @@ timer_init(void)
     enable_pclock(ID_TC0);
     tc->TC_CMR = TC_CMR_WAVE | TC_CMR_WAVSEL_UP | TC_CMR_TCCLKS_TIMER_CLOCK1;
     tc->TC_IER = TC_IER_CPAS;
-    NVIC_SetPriority(TC0_IRQn, 1);
+    NVIC_SetPriority(TC0_IRQn, 2);
     NVIC_EnableIRQ(TC0_IRQn);
     timer_kick();
     tc->TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;

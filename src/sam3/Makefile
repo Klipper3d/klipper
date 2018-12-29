@@ -28,6 +28,7 @@ CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 src-y += sam3/main.c sam3/gpio.c sam3/i2c.c sam3/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
+src-$(CONFIG_USBSERIAL) += sam3/sam4_usb.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += sam3/serial.c generic/serial_irq.c
 src-$(CONFIG_MACH_SAM3X8E) += sam3/adc.c sam3/timer.c
 src-$(CONFIG_MACH_SAM3X8E) += ../lib/sam3x/gcc/system_sam3xa.c
