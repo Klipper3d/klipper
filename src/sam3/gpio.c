@@ -33,10 +33,10 @@ gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
     Pio *regs = digital_regs[bank];
 
 #if CONFIG_MACH_SAM3X8E
-    regs->PIO_ABSR = (regs->PIO_ABSR & ~bit) | (pt & 0x01);
+    regs->PIO_ABSR = (regs->PIO_ABSR & ~bit) | (pt & 0x01 ? bit : 0);
 #else
-    regs->PIO_ABCDSR[0] = (regs->PIO_ABCDSR[0] & ~bit) | (pt & 0x01);
-    regs->PIO_ABCDSR[1] = (regs->PIO_ABCDSR[1] & ~bit) | (pt & 0x02);
+    regs->PIO_ABCDSR[0] = (regs->PIO_ABCDSR[0] & ~bit) | (pt & 0x01 ? bit : 0);
+    regs->PIO_ABCDSR[1] = (regs->PIO_ABCDSR[1] & ~bit) | (pt & 0x02 ? bit : 0);
 #endif
 
     if (pull_up > 0)
