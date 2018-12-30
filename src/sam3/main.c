@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
@@ -58,7 +59,11 @@ enable_pclock(uint32_t id)
 void
 command_reset(uint32_t *args)
 {
-    NVIC_SystemReset();
+    irq_disable();
+    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
+                     | RSTC_CR_PERRST);
+    for (;;)
+        ;
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
