@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 respond_types = {
-    'echo': 'echo:', 
+    'echo': 'echo:',
     'command': '//',
     'error' : '!!',
 }
@@ -41,7 +41,7 @@ class HostResponder:
             respond_type = respond_type.lower()
             if(respond_type in respond_types):
                 prefix = respond_types[respond_type]
-            else: 
+            else:
                 raise self.gcode.error("RESPOND TYPE '%s' is invalid. Must be one of 'echo', 'command', or 'error'" % respond_type)
         prefix = self.gcode.get_str('PREFIX', params, prefix)
         msg = self.gcode.get_str('MSG', params, '')

@@ -283,8 +283,8 @@ enabled.
   - `RESPOND MSG="<message>"`: echo the message prepended with the configured default
     prefix (or `echo: ` if no prefix is configured).
   - `RESPOND TYPE=echo MSG="<message>"`: echo the message prepended with `echo: `.
-  - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended with `// `. 
-    Octopint can be configured to respond to these messages (e.g. 
+  - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended with `// `.
+    Octopint can be configured to respond to these messages (e.g.
     `RESPOND TYPE=command MSG=action:pause`).
   - `RESPOND TYPE=error MSG="<message>"`: echo the message prepended with `!! `.
   - `RESPOND PREFIX=<prefix> MSG="<message>"`: echo the message prepended with `<prefix>`
