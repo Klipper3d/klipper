@@ -60,6 +60,10 @@ CONFIG ../../config/generic-printrboard.cfg
 DICTIONARY sam3x8e.dict
 CONFIG ../../config/generic-radds.cfg
 
+# Printers using the sam4s8c
+DICTIONARY sam4s8c.dict
+CONFIG ../../config/generic-duet2-maestro.cfg
+
 # Printers using the sam4e8e
 DICTIONARY sam4e8e.dict
 CONFIG ../../config/generic-duet2.cfg
