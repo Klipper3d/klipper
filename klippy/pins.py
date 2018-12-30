@@ -252,6 +252,9 @@ class PrinterPins:
         can_pullup = pin_type in ['endstop']
         pin_params = self.lookup_pin(pin_desc, can_invert, can_pullup)
         return pin_params['chip'].setup_pin(pin_type, pin_params)
+    def reset_pin_sharing(self, pin_params):
+        share_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
+        del self.active_pins[share_name]
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
