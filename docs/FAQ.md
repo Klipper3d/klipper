@@ -240,11 +240,15 @@ This is commonly caused by hardware errors on the USB connection
 between the host machine and the micro-controller. Things to look for:
 - Use a good quality USB cable between the host machine and
   micro-controller. Make sure the plugs are secure.
-- If using a Raspberry Pi, use a good quality power supply for the
-  Raspberry Pi and use a good quality USB cable to connect that power
-  supply to the Pi. Try to run `dmesg -w`, if the kernel prints
-  `Under-voltage detected!` this is clearly the case. When using
-  a DC/DC converter dialing the voltage to 5.2V may solve the situation.
+- If using a Raspberry Pi, make sure it has a stable power source.
+  If you get "under voltage" warnings from OctoPrint, or the Unix command
+  `dmesg -w` reports `Under-voltage detected!`, these are symptoms of
+  voltage issues that need to be fixed.
+  [Use at least a 5.1V / 2.5A power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
+  and make sure
+  [the USB cable is proper](https://www.raspberrypi.org/forums/viewtopic.php?p=589877#p589877).
+  When using a DC/DC converter dialing the voltage to 5.2V may solve
+  the situation.
 - Make sure the printer's power supply is not being overloaded. (Power
   fluctuations to the micro-controller's USB chip may result in resets
   of that chip.)
