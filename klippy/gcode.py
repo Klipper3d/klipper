@@ -466,7 +466,7 @@ class GCodeParser:
         'SET_GCODE_OFFSET', 'M206',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
-        'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+        'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP', 'RPI_SHUTDOWN']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
@@ -710,3 +710,8 @@ class GCodeParser:
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         self.respond_info("\n".join(cmdhelp))
+    cmd_RPI_SHUTDOWN_when_not_ready = True
+    cmd_RPI_SHUTDOWN_help = "Turn octoprint and the raspberry off"
+    def cmd_RPI_SHUTDOWN(self, params):
+        os.system("sudo shutdown -h now")
+        self.respond_info("Shutdown system due to RPI_SHUTDOWN command")
