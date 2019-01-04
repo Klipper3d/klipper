@@ -242,9 +242,10 @@ class PrinterLCD:
     def cmd_M117(self, params):
         if '#original' in params:
             msg = params['#original']
-            if not msg.startswith('M117'):
+            umsg = msg.upper()
+            if not umsg.startswith('M117'):
                 # Parse out additional info if M117 recd during a print
-                start = msg.find('M117')
+                start = umsg.find('M117')
                 end = msg.rfind('*')
                 msg = msg[start:end]
             if len(msg) > 5:

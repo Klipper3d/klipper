@@ -75,6 +75,8 @@ class Thermistor:
         temp = 1.0/inv_t + KELVIN_TO_CELCIUS
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def calc_adc(self, temp):
+        if temp <= KELVIN_TO_CELCIUS:
+            return 1.
         inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
         if self.c3:
             # Solve for ln_r using Cardano's formula

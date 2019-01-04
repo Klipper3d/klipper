@@ -13,7 +13,9 @@ CFLAGS_klipper.elf += -T $(OUT)LPC1768.ld
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += lpc176x/main.c lpc176x/timer.c lpc176x/gpio.c lpc176x/i2c.c
+src-y += lpc176x/main.c lpc176x/timer.c lpc176x/gpio.c
+src-$(CONFIG_HAVE_GPIO_ADC) += lpc176x/adc.c
+src-$(CONFIG_HAVE_GPIO_I2C) += lpc176x/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += lpc176x/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
