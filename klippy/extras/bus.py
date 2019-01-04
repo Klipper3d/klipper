@@ -62,6 +62,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     cs_pin_params = ppins.lookup_pin(cs_pin)
     pin = cs_pin_params['pin']
     if pin == 'None':
+        ppins.reset_pin_sharing(cs_pin_params)
         pin = None
     # Load bus parameters
     speed = config.getint('spi_speed', default_speed, minval=100000)

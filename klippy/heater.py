@@ -20,9 +20,10 @@ class error(Exception):
 
 class Heater:
     error = error
-    def __init__(self, config, sensor):
+    def __init__(self, config, sensor, gcode_id):
         printer = config.get_printer()
         self.name = config.get_name()
+        self.gcode_id = gcode_id
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
@@ -220,13 +221,14 @@ class PrinterHeaters:
         self.printer = config.get_printer()
         self.sensors = {}
         self.heaters = {}
+        self.heaters_gcode_id = {}
         # Register TURN_OFF_HEATERS command
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
     def add_sensor(self, sensor_type, sensor_factory):
         self.sensors[sensor_type] = sensor_factory
-    def setup_heater(self, config):
+    def setup_heater(self, config, gcode_id):
         heater_name = config.get_name()
         if heater_name == 'extruder':
             heater_name = 'extruder0'
@@ -235,7 +237,8 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        self.heaters[heater_name] = heater = Heater(config, sensor, gcode_id)
+        self.heaters_gcode_id[heater.gcode_id] = heater_name
         return heater
     def lookup_heater(self, heater_name):
         if heater_name == 'extruder':
@@ -258,6 +261,13 @@ class PrinterHeaters:
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         for heater in self.heaters.values():
             heater.set_temp(print_time, 0.)
+    def get_all_heaters(self):
+        return self.heaters.values()
+    def get_heater_by_gcode_id(self, gcode_id):
+        if gcode_id in self.heaters_gcode_id:
+            heater_name = self.heaters_gcode_id[gcode_id]
+            return self.heaters[heater_name]
+        return None
 
 def add_printer_objects(config):
     config.get_printer().add_object('heater', PrinterHeaters(config))

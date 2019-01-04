@@ -38,6 +38,27 @@ DECL_INIT(watchdog_init);
  * misc functions
  ****************************************************************/
 
+// Check if a peripheral clock has been enabled
+int
+is_enabled_pclock(uint32_t pclk)
+{
+    return !!(LPC_SC->PCONP & (1<<pclk));
+}
+
+// Enable a peripheral clock
+void
+enable_pclock(uint32_t pclk)
+{
+    LPC_SC->PCONP |= 1<<pclk;
+    if (pclk < 16) {
+        uint32_t shift = pclk * 2;
+        LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<shift)) | (0x1<<shift);
+    } else {
+        uint32_t shift = (pclk - 16) * 2;
+        LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
+    }
+}
+
 void
 command_reset(uint32_t *args)
 {
