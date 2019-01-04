@@ -24,7 +24,7 @@ spi_init(void)
     gpio_peripheral(0, 18, 2, 0);
 
     // Setup clock
-    enable_peripheral_clock(PCLK_SSP0);
+    enable_pclock(PCLK_SSP0);
 
     // Set initial registers
     LPC_SSP0->CR0 = 0x07;

@@ -26,20 +26,6 @@ static LPC_GPIO_TypeDef * const digital_regs[] = {
  * General Purpose Input Output (GPIO) pins
  ****************************************************************/
 
-// Enable a peripheral clock
-void
-enable_peripheral_clock(uint32_t pclk)
-{
-    LPC_SC->PCONP |= 1<<pclk;
-    if (pclk < 16) {
-        uint32_t shift = pclk * 2;
-        LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<shift)) | (0x1<<shift);
-    } else {
-        uint32_t shift = (pclk - 16) * 2;
-        LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
-    }
-}
-
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(int bank, int pin, int func, int pullup)

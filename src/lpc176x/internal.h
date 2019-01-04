@@ -11,7 +11,9 @@
 #define PCLK_ADC 12
 #define PCLK_I2C1 19
 #define PCLK_SSP0 21
-void enable_peripheral_clock(uint32_t pclk);
+#define PCLK_USB 31
+int is_enabled_pclock(uint32_t pclk);
+void enable_pclock(uint32_t pclk);
 void gpio_peripheral(int bank, int pin, int func, int pullup);
 
 #endif // internal.h

@@ -251,7 +251,7 @@ usbserial_init(void)
 {
     usb_irq_disable();
     // enable power
-    LPC_SC->PCONP |= (1<<31);
+    enable_pclock(PCLK_USB);
     // enable clock
     LPC_USB->USBClkCtrl = 0x12;
     while (LPC_USB->USBClkSt != 0x12)

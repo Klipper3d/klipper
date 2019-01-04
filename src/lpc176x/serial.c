@@ -16,7 +16,7 @@ serial_init(void)
 {
     // Setup baud
     LPC_UART0->LCR = (1<<7); // set DLAB bit
-    enable_peripheral_clock(PCLK_UART0);
+    enable_pclock(PCLK_UART0);
     uint32_t pclk = SystemCoreClock;
     uint32_t div = pclk / (CONFIG_SERIAL_BAUD * 16);
     LPC_UART0->DLL = div & 0xff;

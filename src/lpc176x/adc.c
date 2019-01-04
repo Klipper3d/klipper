@@ -38,9 +38,9 @@ gpio_adc_setup(uint8_t pin)
 
     uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX) - 1;
     uint32_t adcr = (1<<21) | ((prescal & 0xff) << 8);
-    if (!(LPC_SC->PCONP & (1<<PCLK_ADC))) {
+    if (!is_enabled_pclock(PCLK_ADC)) {
         // Power up ADC
-        enable_peripheral_clock(PCLK_ADC);
+        enable_pclock(PCLK_ADC);
         LPC_ADC->ADCR = adcr;
     }
 
