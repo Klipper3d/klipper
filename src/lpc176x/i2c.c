@@ -25,8 +25,8 @@ i2c_init(void)
     have_run_init = 1;
 
     // Init i2c bus 1 pins
-    gpio_peripheral(0, 0, 3, 0);
-    gpio_peripheral(0, 1, 3, 0);
+    gpio_peripheral(GPIO(0, 0), 3, 0);
+    gpio_peripheral(GPIO(0, 1), 3, 0);
 
     // Set 100Khz frequency
     enable_pclock(PCLK_I2C1);

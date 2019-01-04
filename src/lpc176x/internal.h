@@ -14,6 +14,6 @@
 #define PCLK_USB 31
 int is_enabled_pclock(uint32_t pclk);
 void enable_pclock(uint32_t pclk);
-void gpio_peripheral(int bank, int pin, int func, int pullup);
+void gpio_peripheral(uint32_t gpio, int func, int pullup);
 
 #endif // internal.h

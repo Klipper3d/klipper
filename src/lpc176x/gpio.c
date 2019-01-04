@@ -21,16 +21,11 @@ static LPC_GPIO_TypeDef * const digital_regs[] = {
     LPC_GPIO0, LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4
 };
 
-
-/****************************************************************
- * General Purpose Input Output (GPIO) pins
- ****************************************************************/
-
 // Set the mode and extended function of a pin
 void
-gpio_peripheral(int bank, int pin, int func, int pullup)
+gpio_peripheral(uint32_t gpio, int func, int pullup)
 {
-    uint32_t bank_pos = bank * 2, pin_pos = pin * 2;
+    uint32_t bank_pos = GPIO2PORT(gpio) * 2, pin_pos = (gpio % 32) * 2;
     if (pin_pos >= 32) {
         pin_pos -= 32;
         bank_pos++;
@@ -56,6 +51,11 @@ regs_to_pin(LPC_GPIO_TypeDef *regs, uint32_t bit)
     return 0;
 }
 
+
+/****************************************************************
+ * General Purpose Input Output (GPIO) pins
+ ****************************************************************/
+
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)
 {
@@ -80,7 +80,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     else
         regs->FIOCLR = g.bit;
     regs->FIODIR |= g.bit;
-    gpio_peripheral(GPIO2PORT(pin), pin % 32, 0, 0);
+    gpio_peripheral(pin, 0, 0);
     irq_restore(flag);
 }
 
@@ -129,7 +129,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     LPC_GPIO_TypeDef *regs = g.regs;
     int pin = regs_to_pin(regs, g.bit);
     irqstatus_t flag = irq_save();
-    gpio_peripheral(GPIO2PORT(pin), pin % 32, 0, pull_up);
+    gpio_peripheral(pin, 0, pull_up);
     regs->FIODIR &= ~g.bit;
     irq_restore(flag);
 }

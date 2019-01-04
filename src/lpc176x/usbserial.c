@@ -257,9 +257,9 @@ usbserial_init(void)
     while (LPC_USB->USBClkSt != 0x12)
         ;
     // configure USBD+, USBD-, and USB Connect pins
-    gpio_peripheral(0, 29, 1, 0);
-    gpio_peripheral(0, 30, 1, 0);
-    gpio_peripheral(2, 9, 1, 0);
+    gpio_peripheral(GPIO(0, 29), 1, 0);
+    gpio_peripheral(GPIO(0, 30), 1, 0);
+    gpio_peripheral(GPIO(2, 9), 1, 0);
     // setup endpoints
     realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
     realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);

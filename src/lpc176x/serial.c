@@ -27,8 +27,8 @@ serial_init(void)
     LPC_UART0->FCR = 0x01;
 
     // Setup pins
-    gpio_peripheral(0, 2, 1, 0);
-    gpio_peripheral(0, 3, 1, 0);
+    gpio_peripheral(GPIO(0, 2), 1, 0);
+    gpio_peripheral(GPIO(0, 3), 1, 0);
 
     // Enable receive irq
     NVIC_SetPriority(UART0_IRQn, 0);

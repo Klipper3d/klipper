@@ -44,7 +44,7 @@ gpio_adc_setup(uint8_t pin)
         LPC_ADC->ADCR = adcr;
     }
 
-    gpio_peripheral(GPIO2PORT(pin), pin % 32, adc_pin_funcs[chan], 0);
+    gpio_peripheral(pin, adc_pin_funcs[chan], 0);
 
     return (struct gpio_adc){ .cmd = adcr | (1 << chan) | (1 << 24) };
 }
