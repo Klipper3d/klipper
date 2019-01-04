@@ -19,7 +19,7 @@ class FilamentRunoutSensor:
 
         toolhead = self.printer.lookup_object('toolhead')
         gcode = self.printer.lookup_object('gcode')
-        
+
         if toolhead.get_status(eventtime)['status'] == "Printing":
             gcode.respond_info("Filament run out sensor triggered! Pausing print job.")
             gcode.respond_info("action:pause")
