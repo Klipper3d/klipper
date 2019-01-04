@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import math, logging, threading
 
 
 ######################################################################
@@ -37,11 +37,15 @@ class Heater:
         is_fileoutput = printer.get_start_args().get('debugoutput') is not None
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
-        self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
-        self.last_temp = self.smoothed_temp = self.target_temp = 0.
+        self.last_temp = self.target_temp = 0.
         self.last_temp_time = 0.
+        # median filter
+        self.smoothed_temp = 0.
+        smooth_time = config.getfloat('smooth_time', 1.5, above=0.)
+        num_temps = int(math.ceil(smooth_time / self.pwm_delay))
+        self.max_filter_temps = num_temps + ((num_temps + 1) & 1)
+        self.filter_temps = []
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
@@ -82,19 +86,22 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
-            temp_diff = temp - self.smoothed_temp
-            adj_time = min(time_diff * self.inv_smooth_time, 1.)
-            self.smoothed_temp += temp_diff * adj_time
-            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+            # Determine smoothed temperature using median filter
+            filter_temps = self.filter_temps
+            filter_temps.insert(0, temp)
+            del filter_temps[self.max_filter_temps:]
+            smoothed_temp = sorted(filter_temps)[len(filter_temps) // 2]
+            self.smoothed_temp = smoothed_temp
+            # Update control algorithm with new temperature
+            self.control.temperature_update(read_time, temp, smoothed_temp,
+                                            self.target_temp)
+            self.can_extrude = (smoothed_temp >= self.min_extrude_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def get_pwm_delay(self):
         return self.pwm_delay
     def get_max_power(self):
         return self.max_power
-    def get_smooth_time(self):
-        return self.smooth_time
     def set_temp(self, print_time, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
             raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
@@ -146,10 +153,10 @@ class ControlBangBang:
         self.heater_max_power = heater.get_max_power()
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
-    def temperature_update(self, read_time, temp, target_temp):
-        if self.heating and temp >= target_temp+self.max_delta:
+    def temperature_update(self, read_time, temp, smoothed_temp, target_temp):
+        if self.heating and smoothed_temp >= target_temp+self.max_delta:
             self.heating = False
-        elif not self.heating and temp <= target_temp-self.max_delta:
+        elif not self.heating and smoothed_temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
             self.heater.set_pwm(read_time, self.heater_max_power)
@@ -173,7 +180,6 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
-        self.min_deriv_time = heater.get_smooth_time()
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
         self.temp_integ_max = imax / self.Ki
@@ -181,27 +187,24 @@ class ControlPID:
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
-    def temperature_update(self, read_time, temp, target_temp):
+    def temperature_update(self, read_time, temp, smoothed_temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
-        temp_diff = temp - self.prev_temp
-        if time_diff >= self.min_deriv_time:
-            temp_deriv = temp_diff / time_diff
-        else:
-            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
-                          + temp_diff) / self.min_deriv_time
+        temp_diff = smoothed_temp - self.prev_temp
+        temp_deriv = temp_diff / time_diff
         # Calculate accumulated temperature "error"
-        temp_err = target_temp - temp
+        temp_err = target_temp - smoothed_temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        raw_temp_err = target_temp - temp
+        co = self.Kp*raw_temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
         self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
-        self.prev_temp = temp
+        self.prev_temp = smoothed_temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
