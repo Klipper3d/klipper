@@ -97,9 +97,10 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
     while (len--) {
         LL_SPI_TransmitData8(SPI2, *data);
         while (!LL_SPI_IsActiveFlag_TXE(SPI2));
+        while (!LL_SPI_IsActiveFlag_RXNE(SPI2));
+        uint8_t rdata = LL_SPI_ReceiveData8(SPI2);
         if (receive_data) {
-            while (!LL_SPI_IsActiveFlag_RXNE(SPI2));
-            *data = LL_SPI_ReceiveData8(SPI2);
+            *data = rdata;
         }
         data++;
     }

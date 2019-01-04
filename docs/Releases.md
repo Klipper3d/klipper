@@ -1,6 +1,40 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.7.0
+=============
+
+Available on 20181220. Major changes in this release:
+* Klipper now supports "mesh" bed leveling
+* New support for "enhanced" delta calibration (calibrates print x/y
+  dimensions on delta printers)
+* Support for run-time configuration of Trinamic stepper motor drivers
+  (tmc2130, tmc2208, tmc2660)
+* Improved temperature sensor support: MAX6675, MAX31855, MAX31856,
+  MAX31865, custom thermistors, common pt100 style sensors
+* Several new modules: temperature_fan, sx1509, force_move, mcp4451,
+  z_tilt, quad_gantry_level, endstop_phase, bltouch
+* Several new commands added: SAVE_CONFIG, SET_PRESSURE_ADVANCE,
+  SET_GCODE_OFFSET, SET_VELOCITY_LIMIT, STEPPER_BUZZ, TURN_OFF_HEATERS,
+  M204, custom g-code macros
+* Expanded LCD display support:
+  * Support for run-time menus
+  * New display icons
+  * Support for "uc1701" and "ssd1306" displays
+* Additional micro-controller support:
+  * Klipper ported to: LPC176x (Smoothieboards), SAM4E8E (Duet2),
+    SAMD21 (Arduino Zero), STM32F103 ("Blue pill" devices), atmega32u4
+  * New Generic USB CDC driver implemented on AVR, LPC176x, SAMD21, and
+    STM32F103
+  * Performance improvements on ARM processors
+* The kinematics code was rewritten to use an "iterative solver"
+* New automatic test cases for the Klipper host software
+* Many new example config files for common off-the-shelf printers
+* Documentation updates for bootloaders, benchmarking,
+    micro-controller porting, config checks, pin mapping, slicer
+    settings, packaging, and more
+* Several bug fixes and code cleanups
+
 Klipper 0.6.0
 =============
 

@@ -211,6 +211,11 @@ usb_set_configure(void)
 {
 }
 
+void
+usb_request_bootloader(void)
+{
+}
+
 
 /****************************************************************
  * Setup and interrupts

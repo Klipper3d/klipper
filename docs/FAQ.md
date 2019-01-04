@@ -13,10 +13,12 @@ Frequently asked questions
 10. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
 11. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
 12. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
-13. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-14. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-15. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-16. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+13. [My Raspberry Pi keeps rebooting during prints](#my-raspberry-pi-keeps-rebooting-during-prints)
+14. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+15. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+16. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
+17. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
+18. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -254,6 +256,13 @@ between the host machine and the micro-controller. Things to look for:
   one may modify a USB cable so that it does not carry 5V power
   between the host and micro-controller.)
 
+### My Raspberry Pi keeps rebooting during prints
+
+This is most likely do to voltage fluctuations. Follow the same
+troubleshooting steps for a
+["Lost communication with MCU"](#i-keep-getting-random-lost-communication-with-mcu-errors)
+error.
+
 ### When I set "restart_method=command" my AVR device just hangs on a restart
 
 Some old versions of the AVR bootloader have a known bug in watchdog
@@ -340,6 +349,17 @@ cases, Marlin chose their own pin numbering scheme. Klipper does not
 support these custom pin numbers - check Marlin's fastio headers (see
 above) to translate these pin numbers to their standard hardware
 names.
+
+### How do I cancel an M109/M190 "wait for temperature" request?
+
+Navigate to the OctoPrint terminal tab and issue an M112 command in
+the terminal box. The M112 command will cause Klipper to enter into a
+"shutdown" state, and it will cause OctoPrint to disconnect from
+Klipper. Navigate to the OctoPrint connection area and click on
+"Connect" to cause OctoPrint to reconnect. Navigate back to the
+terminal tab and issue a FIRMWARE_RESTART command to clear the Klipper
+error state.  After completing this sequence, the previous heating
+request will be canceled and a new print may be started.
 
 ### How do I upgrade to the latest software?
 

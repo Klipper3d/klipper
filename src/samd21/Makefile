@@ -20,6 +20,7 @@ src-y += generic/armcm_irq.c generic/timer_irq.c
 src-y += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
 src-$(CONFIG_USBSERIAL) += samd21/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += samd21/serial.c generic/serial_irq.c
+src-$(CONFIG_HAVE_GPIO_ADC) += samd21/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += samd21/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += samd21/spi.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += samd21/hard_pwm.c
@@ -50,4 +51,4 @@ lib/bossac/bin/bossac:
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
-	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" --offset=0x2000 -w $(OUT)klipper.bin -v -b -R
+	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -a --offset=0x2000 -w $(OUT)klipper.bin -v -b -R

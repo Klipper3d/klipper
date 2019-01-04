@@ -6,6 +6,7 @@ DICTIONARY atmega2560-16mhz.dict
 CONFIG ../../config/example.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-delta.cfg
+CONFIG ../../config/example-winch.cfg
 
 # Printers using the atmega2560
 DICTIONARY atmega2560-16mhz.dict
@@ -19,12 +20,18 @@ CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
+CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
 CONFIG ../../config/printer-makergear-m2-2012.cfg
+CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
+
+# Printers using the atmega1280
+DICTIONARY atmega1280.dict
+CONFIG ../../config/generic-minitronics1.cfg
 
 # Printers using the atmega1284p
 DICTIONARY atmega1284p.dict

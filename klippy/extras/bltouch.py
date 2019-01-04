@@ -10,6 +10,7 @@ SIGNAL_PERIOD = 0.025600
 MIN_CMD_TIME = 4 * SIGNAL_PERIOD
 
 TEST_TIME = 5 * 60.
+ENDSTOP_REST_TIME = .001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
@@ -22,7 +23,6 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.next_test_time = 0.
         self.position_endstop = config.getfloat('z_offset')
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
@@ -35,6 +35,9 @@ class BLTouchEndstopWrapper:
         mcu = pin_params['chip']
         mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        # Setup for sensor test
+        self.next_test_time = 0.
+        self.test_sensor_pin = config.getboolean('test_sensor_pin', True)
         # Calculate pin move time
         pmt = max(config.getfloat('pin_move_time', 0.200), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
@@ -42,7 +45,6 @@ class BLTouchEndstopWrapper:
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
         self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
@@ -58,6 +60,8 @@ class BLTouchEndstopWrapper:
     def send_cmd(self, print_time, cmd):
         self.mcu_pwm.set_pwm(print_time, Commands[cmd] / SIGNAL_PERIOD)
     def test_sensor(self):
+        if not self.test_sensor_pin:
+            return
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         if print_time < self.next_test_time:
@@ -71,8 +75,8 @@ class BLTouchEndstopWrapper:
         # Perform endstop check to verify bltouch reports probe raised
         prev_positions = [s.get_commanded_position()
                           for s in self.mcu_endstop.get_steppers()]
-        self.mcu_endstop.home_start(
-            home_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT, .001)
+        self.mcu_endstop.home_start(home_time, ENDSTOP_SAMPLE_TIME,
+                                    ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME)
         try:
             self.mcu_endstop.home_wait(home_time + MIN_CMD_TIME)
         except self.mcu_endstop.TimeoutError as e:
@@ -94,9 +98,14 @@ class BLTouchEndstopWrapper:
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self.send_cmd(print_time, 'reset')
-        self.send_cmd(print_time + self.pin_move_time, None)
+        self.send_cmd(print_time + MIN_CMD_TIME, 'pin_up')
+        self.send_cmd(print_time + MIN_CMD_TIME + self.pin_move_time, None)
         toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
         self.mcu_endstop.home_finalize()
+    def home_start(self, print_time, sample_time, sample_count, rest_time):
+        rest_time = min(rest_time, ENDSTOP_REST_TIME)
+        self.mcu_endstop.home_start(
+            print_time, sample_time, sample_count, rest_time)
     def get_position_endstop(self):
         return self.position_endstop
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"

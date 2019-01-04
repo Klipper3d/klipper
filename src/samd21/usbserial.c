@@ -5,7 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_FLASH_START
 #include "board/io.h" // readl
+#include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // enable_pclock
@@ -166,6 +168,17 @@ usb_set_configure(void)
     EP_BULKIN.EPCFG.reg = USB_DEVICE_EPCFG_EPTYPE1(3);
     EP_BULKIN.EPINTENSET.reg = (
         USB_DEVICE_EPINTENSET_TRCPT0 | USB_DEVICE_EPINTENSET_TRCPT1);
+}
+
+void
+usb_request_bootloader(void)
+{
+    if (CONFIG_FLASH_START) {
+        // Arduino Zero bootloader hack
+        irq_disable();
+        writel((void*)0x20007FFC, 0x07738135);
+        NVIC_SystemReset();
+    }
 }
 
 void

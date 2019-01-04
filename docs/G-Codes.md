@@ -273,3 +273,19 @@ section is enabled:
   may lead to internal software errors. This command may invalidate
   future boundary checks; issue a G28 afterwards to reset the
   kinematics.
+
+## Send message (respond) to host
+
+The following commands are availabe when the "respond" config section is
+enabled.
+  - `M118 <message>`: echo the message prepended with the configured default
+    prefix (or `echo: ` if no prefix is configured).
+  - `RESPOND MSG="<message>"`: echo the message prepended with the configured default
+    prefix (or `echo: ` if no prefix is configured).
+  - `RESPOND TYPE=echo MSG="<message>"`: echo the message prepended with `echo: `.
+  - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended with `// `.
+    Octopint can be configured to respond to these messages (e.g.
+    `RESPOND TYPE=command MSG=action:pause`).
+  - `RESPOND TYPE=error MSG="<message>"`: echo the message prepended with `!! `.
+  - `RESPOND PREFIX=<prefix> MSG="<message>"`: echo the message prepended with `<prefix>`
+    (The `PREFIX` parameter will take priority over the `TYPE` parameter)

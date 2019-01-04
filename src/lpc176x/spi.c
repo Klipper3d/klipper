@@ -19,12 +19,12 @@ spi_init(void)
     have_run_init = 1;
 
     // Configure SCK0, MISO0, MOSI0 pins
-    gpio_peripheral(0, 15, 2, 0);
-    gpio_peripheral(0, 17, 2, 0);
-    gpio_peripheral(0, 18, 2, 0);
+    gpio_peripheral(GPIO(0, 15), 2, 0);
+    gpio_peripheral(GPIO(0, 17), 2, 0);
+    gpio_peripheral(GPIO(0, 18), 2, 0);
 
     // Setup clock
-    enable_peripheral_clock(PCLK_SSP0);
+    enable_pclock(PCLK_SSP0);
 
     // Set initial registers
     LPC_SSP0->CR0 = 0x07;
