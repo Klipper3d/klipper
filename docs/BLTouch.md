@@ -1,6 +1,7 @@
 Connecting BL-Touch
 ===================
-Once you've hooked up the BL-Touch to a PWM enabled pin, yo need to configure these pins with Klipper:
+Once you've hooked up the BL-Touch servo connector to a `control_pin` that your MCU can do PWM on,
+you need to configure these pins with Klipper:
 
     [bltouch]
     sensor_pin: P1.24
@@ -8,36 +9,39 @@ Once you've hooked up the BL-Touch to a PWM enabled pin, yo need to configure th
     #   provided.
     control_pin: P1.26
 
-Callibrating the BL-Touch
-=========================
+Calibrating the BL-Touch
+========================
 
 ### Z Offset
 In order to make klipper work properly you need to tell it in which relation to the nozzle
 the probe is exactly located. Lets start with the `z_offset` - the height of the probe when
 its expanded:
 
-Make sure the probe is above the bed by setting an appropriate x/y position:
+Make sure the probe is above the bed by moving the head into an appropriate x/y position:
 
     g0 x0 y0
 
-Now aproach the bed and make the BL-Touch lower the pin:
+Now make klipper aproach the bed until the probe triggers using:
 
-    g0 z5
-    BLTOUCH_DEBUG COMMAND=pin_down
+    PROBE
 
-It should be able to freely do that, the bed shouldn't be touched yet. Now you need to slowly
-lower the probe until it triggers using commands like `g0 z2.5`. Once the probe lights up red,
-you've found the propper `z_offset` - its right above.
+This should deploy the BL-Touch probe, stop the run when it triggers by touching the bed.
+Now acquire the current position from the reached `z_offset` using:
+
+    GET_POSITION
+
+In the output lines the `toolhead` line with the `Z:` contains the required value.
 
 ### X/Y Offset
 In order to find the propper vertical offset of the probe you need to know a certain point of
-your bed. Use a piece of paper you fix to the bed using duct tape. X/Y = 0 may be a good point
-for this.
-Create a mark on it by lowering the nozzle into it using `g0 z0.5` and heat it up. Either you
-should have a small dot of filament on the paper, or see it being burnt a little.
+your bed. X/Y = 0 may be a good point for this, any other will do as long as you know it.
+Find it by lowering the nozzle next to it using `g0 z0.5`. Create a removeable mark on your
+bed by i.e. using a non permanent marker. 
 
-Now move the probe over that point i.e. using `g0 x15 y10` - once its exactly over the point,
-this is your `x_offset` and `y_offset` to configure.
+Now move the tip of the BL-Touch over that point by jogging there with the conrols in the `control` tab of
+OctoPrint. Once the BL-Touch is roughly over the point acquire it using the `GET_POSITION` command.
+The difference to your marked point is your `x_offset` and `y_offset` to configure in the `printer.cfg`.
+
 
 BL-Touch gone bad
 =================
