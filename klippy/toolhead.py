@@ -436,20 +436,18 @@ class ToolHead:
     def cmd_SET_VELOCITY_LIMIT(self, params):
         print_time = self.get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
-        max_velocity = gcode.get_float(
-            'VELOCITY', params, self.max_velocity,
-            above=0., maxval=self.config_max_velocity)
-        max_accel = gcode.get_float(
-            'ACCEL', params, self.max_accel,
-            above=0., maxval=self.config_max_accel)
+        max_velocity = gcode.get_float('VELOCITY', params, self.max_velocity,
+                                       above=0.)
+        max_accel = gcode.get_float('ACCEL', params, self.max_accel, above=0.)
         square_corner_velocity = gcode.get_float(
             'SQUARE_CORNER_VELOCITY', params, self.square_corner_velocity,
-            minval=0., maxval=self.config_square_corner_velocity)
+            minval=0.)
         self.requested_accel_to_decel = gcode.get_float(
             'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
-        self.max_velocity = max_velocity
-        self.max_accel = max_accel
-        self.square_corner_velocity = square_corner_velocity
+        self.max_velocity = min(max_velocity, self.config_max_velocity)
+        self.max_accel = min(max_accel, self.config_max_accel)
+        self.square_corner_velocity = min(square_corner_velocity,
+                                          self.config_square_corner_velocity)
         self._calc_junction_deviation()
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
