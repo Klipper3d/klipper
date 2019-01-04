@@ -36,7 +36,7 @@ In the output lines the `toolhead` line with the `Z:` contains the required valu
 In order to find the propper vertical offset of the probe you need to know a certain point of
 your bed. X/Y = 0 may be a good point for this, any other will do as long as you know it.
 Find it by lowering the nozzle next to it using `g0 z0.5`. Create a removeable mark on your
-bed by i.e. using a non permanent marker. 
+bed by i.e. using a non permanent marker.
 
 Now move the tip of the BL-Touch over that point by jogging there with the conrols in the `control` tab of
 OctoPrint. Once the BL-Touch is roughly over the point acquire it using the `GET_POSITION` command.
