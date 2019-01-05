@@ -38,6 +38,8 @@ class BLTouchEndstopWrapper:
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # Setup for sensor test
         self.next_test_time = 0.
+        self.pin_up_not_triggered = config.getboolean(
+            'pin_up_reports_not_triggered', True)
         self.test_sensor_pin = config.getboolean('test_sensor_pin', True)
         self.start_mcu_pos = []
         # Calculate pin move time
@@ -74,6 +76,19 @@ class BLTouchEndstopWrapper:
         self.mcu_pwm.set_pwm(self.next_cmd_time, Commands[cmd] / SIGNAL_PERIOD)
         self.next_cmd_time += max(duration, MIN_CMD_TIME)
         return self.next_cmd_time
+    def verify_state(self, check_start_time, check_end_time, triggered, msg):
+        # Perform endstop check to verify bltouch reports desired state
+        prev_positions = [s.get_commanded_position()
+                          for s in self.mcu_endstop.get_steppers()]
+        self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
+                                    ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
+                                    triggered=triggered)
+        try:
+            self.mcu_endstop.home_wait(check_end_time)
+        except self.mcu_endstop.TimeoutError as e:
+            raise homing.EndstopError("BLTouch failed to %s" % (msg,))
+        for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
+            s.set_commanded_position(pos)
     def test_sensor(self):
         if not self.test_sensor_pin:
             return
@@ -87,17 +102,8 @@ class BLTouchEndstopWrapper:
         check_start_time = self.send_cmd('reset', duration=self.pin_move_time)
         check_end_time = self.send_cmd('touch_mode')
         self.send_cmd(None)
-        # Perform endstop check to verify bltouch reports probe raised
-        prev_positions = [s.get_commanded_position()
-                          for s in self.mcu_endstop.get_steppers()]
-        self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
-                                    ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME)
-        try:
-            self.mcu_endstop.home_wait(check_end_time)
-        except self.mcu_endstop.TimeoutError as e:
-            raise homing.EndstopError("BLTouch sensor test failed")
-        for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
-            s.set_commanded_position(pos)
+        self.verify_state(check_start_time, check_end_time, True,
+                          "verify sensor state")
         # Test was successful
         self.next_test_time = check_end_time + TEST_TIME
         self.sync_print_time()
@@ -113,8 +119,11 @@ class BLTouchEndstopWrapper:
     def home_finalize(self):
         self.sync_mcu_print_time()
         self.send_cmd('reset')
-        self.send_cmd('pin_up', duration=self.pin_move_time - MIN_CMD_TIME)
-        self.send_cmd(None)
+        check_start_time = self.send_cmd('pin_up', duration=self.pin_move_time)
+        check_end_time = self.send_cmd(None)
+        if self.pin_up_not_triggered:
+            self.verify_state(check_start_time, check_end_time,
+                              False, "raise probe")
         self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
