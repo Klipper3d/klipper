@@ -23,6 +23,8 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.position_endstop = config.getfloat('z_offset')
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
@@ -61,6 +63,12 @@ class BLTouchEndstopWrapper:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
+    def handle_connect(self):
+        self.sync_mcu_print_time()
+        try:
+            self.raise_probe()
+        except homing.EndstopError as e:
+            raise self.printer.config_error(str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
         est_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
@@ -89,6 +97,13 @@ class BLTouchEndstopWrapper:
             raise homing.EndstopError("BLTouch failed to %s" % (msg,))
         for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
             s.set_commanded_position(pos)
+    def raise_probe(self):
+        self.send_cmd('reset')
+        check_start_time = self.send_cmd('pin_up', duration=self.pin_move_time)
+        check_end_time = self.send_cmd(None)
+        if self.pin_up_not_triggered:
+            self.verify_state(check_start_time, check_end_time,
+                              False, "raise probe")
     def test_sensor(self):
         if not self.test_sensor_pin:
             return
@@ -118,12 +133,7 @@ class BLTouchEndstopWrapper:
                               for s in self.mcu_endstop.get_steppers()]
     def home_finalize(self):
         self.sync_mcu_print_time()
-        self.send_cmd('reset')
-        check_start_time = self.send_cmd('pin_up', duration=self.pin_move_time)
-        check_end_time = self.send_cmd(None)
-        if self.pin_up_not_triggered:
-            self.verify_state(check_start_time, check_end_time,
-                              False, "raise probe")
+        self.raise_probe()
         self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
