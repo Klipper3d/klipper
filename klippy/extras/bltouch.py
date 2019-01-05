@@ -29,6 +29,7 @@ class BLTouchEndstopWrapper:
         self.mcu_pwm = ppins.setup_pin('pwm', config.get('control_pin'))
         self.mcu_pwm.setup_max_duration(0.)
         self.mcu_pwm.setup_cycle_time(SIGNAL_PERIOD)
+        self.next_cmd_time = 0.
         # Create an "endstop" object to handle the sensor pin
         pin = config.get('sensor_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
@@ -58,8 +59,17 @@ class BLTouchEndstopWrapper:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
-    def send_cmd(self, print_time, cmd):
-        self.mcu_pwm.set_pwm(print_time, Commands[cmd] / SIGNAL_PERIOD)
+    def sync_print_time(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        print_time = toolhead.get_last_move_time()
+        if self.next_cmd_time > print_time:
+            toolhead.dwell(self.next_cmd_time - print_time)
+        else:
+            self.next_cmd_time = print_time
+    def send_cmd(self, cmd, duration=MIN_CMD_TIME):
+        self.mcu_pwm.set_pwm(self.next_cmd_time, Commands[cmd] / SIGNAL_PERIOD)
+        self.next_cmd_time += max(duration, MIN_CMD_TIME)
+        return self.next_cmd_time
     def test_sensor(self):
         if not self.test_sensor_pin:
             return
@@ -69,41 +79,39 @@ class BLTouchEndstopWrapper:
             self.next_test_time = print_time + TEST_TIME
             return
         # Raise the bltouch probe and test if probe is raised
-        self.send_cmd(print_time, 'reset')
-        home_time = print_time + self.pin_move_time
-        self.send_cmd(home_time, 'touch_mode')
-        self.send_cmd(home_time + MIN_CMD_TIME, None)
+        self.sync_print_time()
+        check_start_time = self.send_cmd('reset', duration=self.pin_move_time)
+        check_end_time = self.send_cmd('touch_mode')
+        self.send_cmd(None)
         # Perform endstop check to verify bltouch reports probe raised
         prev_positions = [s.get_commanded_position()
                           for s in self.mcu_endstop.get_steppers()]
-        self.mcu_endstop.home_start(home_time, ENDSTOP_SAMPLE_TIME,
+        self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME)
         try:
-            self.mcu_endstop.home_wait(home_time + MIN_CMD_TIME)
+            self.mcu_endstop.home_wait(check_end_time)
         except self.mcu_endstop.TimeoutError as e:
             raise homing.EndstopError("BLTouch sensor test failed")
         for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
             s.set_commanded_position(pos)
         # Test was successful
-        self.next_test_time = home_time + TEST_TIME
-        toolhead.reset_print_time(home_time + 2. * MIN_CMD_TIME)
+        self.next_test_time = check_end_time + TEST_TIME
+        self.sync_print_time()
     def home_prepare(self):
         self.test_sensor()
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        self.send_cmd(print_time, 'pin_down')
-        self.send_cmd(print_time + self.pin_move_time, 'touch_mode')
-        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
+        self.sync_print_time()
+        self.send_cmd('pin_down', duration=self.pin_move_time)
+        self.send_cmd('touch_mode')
+        self.sync_print_time()
         self.mcu_endstop.home_prepare()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
     def home_finalize(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        self.send_cmd(print_time, 'reset')
-        self.send_cmd(print_time + MIN_CMD_TIME, 'pin_up')
-        self.send_cmd(print_time + MIN_CMD_TIME + self.pin_move_time, None)
-        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
+        self.sync_print_time()
+        self.send_cmd('reset')
+        self.send_cmd('pin_up', duration=self.pin_move_time - MIN_CMD_TIME)
+        self.send_cmd(None)
+        self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
             if s.get_mcu_position() == mcu_pos:
@@ -122,14 +130,13 @@ class BLTouchEndstopWrapper:
             self.gcode.respond_info("BLTouch commands: %s" % (
                 ", ".join(sorted([c for c in Commands if c is not None]))))
             return
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
         msg = "Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,)
         self.gcode.respond_info(msg)
         logging.info(msg)
-        self.send_cmd(print_time, cmd)
-        self.send_cmd(print_time + self.pin_move_time, None)
-        toolhead.dwell(self.pin_move_time + MIN_CMD_TIME)
+        self.sync_print_time()
+        self.send_cmd(cmd, duration=self.pin_move_time)
+        self.send_cmd(None)
+        self.sync_print_time()
 
 def load_config(config):
     blt = BLTouchEndstopWrapper(config)
