@@ -1,7 +1,7 @@
 Connecting BL-Touch
 ===================
-Once you've hooked up the BL-Touch servo connector to a `control_pin` that your MCU can do PWM on,
-you need to configure these pins with Klipper:
+Once you've hooked up the BL-Touch servo connector to a `control_pin` according to the BL-Touch
+documentation or of your MCU, you need to configure these pins with Klipper:
 
     [bltouch]
     sensor_pin: P1.24
