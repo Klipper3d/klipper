@@ -59,6 +59,10 @@ class BLTouchEndstopWrapper:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
+    def sync_mcu_print_time(self):
+        curtime = self.printer.get_reactor().monotonic()
+        est_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
+        self.next_cmd_time = max(self.next_cmd_time, est_time + MIN_CMD_TIME)
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -100,14 +104,14 @@ class BLTouchEndstopWrapper:
     def home_prepare(self):
         self.test_sensor()
         self.sync_print_time()
-        self.send_cmd('pin_down', duration=self.pin_move_time)
-        self.send_cmd('touch_mode')
+        self.send_cmd('pin_down', duration=self.pin_move_time - MIN_CMD_TIME)
+        self.send_cmd(None)
         self.sync_print_time()
         self.mcu_endstop.home_prepare()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
     def home_finalize(self):
-        self.sync_print_time()
+        self.sync_mcu_print_time()
         self.send_cmd('reset')
         self.send_cmd('pin_up', duration=self.pin_move_time - MIN_CMD_TIME)
         self.send_cmd(None)
