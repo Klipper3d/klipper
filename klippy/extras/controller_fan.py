@@ -8,7 +8,7 @@ import fan
 PIN_MIN_TIME = 0.100
 
 class ControllerFan:
-    def __init__(self, config, default_shutdown_speed=0.):
+    def __init__(self, config):
         self.printer = config.get_printer()
         self.steppers = []
         self.fan = fan.PrinterFan(config)
@@ -17,8 +17,6 @@ class ControllerFan:
             'max_power', 1., minval=0., maxval=1.)
         self.idle_speed = config.getfloat(
             'idle_speed', self.max_power, minval=0., maxval=self.max_power)
-        self.shutdown_speed = config.getfloat(
-            'shutdown_speed', default_shutdown_speed, minval=0., maxval=1.)
         self.idle_timeout = config.getint("idle_timeout", 30, minval=0)
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
@@ -32,7 +30,7 @@ class ControllerFan:
             reactor = self.printer.get_reactor()
             reactor.register_timer(self.callback, reactor.NOW)
     def callback(self, eventtime):
-        power = self.shutdown_speed
+        power = 0.
         active = False
         for stepper in self.steppers:
             active |= stepper.is_motor_enabled()
