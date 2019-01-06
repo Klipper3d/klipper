@@ -1,7 +1,9 @@
 Connecting BL-Touch
 ===================
 Once you've hooked up the BL-Touch servo connector to a `control_pin` according to the BL-Touch
-documentation or of your MCU, you need to configure these pins with Klipper:
+documentation or of your MCU. Using the original wiring, the yellow wire from the tripple is
+the `control_pin`, the white wire from the pair is the `sensor_pin`. You need to configure
+these pins according to your wiring with Klipper:
 
     [bltouch]
     sensor_pin: P1.24
