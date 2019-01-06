@@ -243,8 +243,8 @@ between the host machine and the micro-controller. Things to look for:
 - If using a Raspberry Pi, [good quality power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
   and use a [good quality USB cable](https://www.raspberrypi.org/forums/viewtopic.php?p=589877#p589877).
   for connecting the Pi.
-  If you get "under voltage" warnings from OctoPrint, this may be
-  related to these communication issues.
+  If you get "under voltage" warnings from OctoPrint, this is related to
+  the power supply, and you should fix it first.
 - Make sure the printer's power supply is not being overloaded. (Power
   fluctuations to the micro-controller's USB chip may result in resets
   of that chip.)
