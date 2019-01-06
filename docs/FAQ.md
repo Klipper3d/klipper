@@ -240,9 +240,9 @@ This is commonly caused by hardware errors on the USB connection
 between the host machine and the micro-controller. Things to look for:
 - Use a good quality USB cable between the host machine and
   micro-controller. Make sure the plugs are secure.
-- If using a Raspberry Pi, [good quality power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
+- If using a Raspberry Pi, use a [good quality power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
   and use a [good quality USB cable](https://www.raspberrypi.org/forums/viewtopic.php?p=589877#p589877).
-  for connecting the Pi.
+  for connecting it to the Pi.
   If you get "under voltage" warnings from OctoPrint, this is related to
   the power supply, and you should fix it first.
 - Make sure the printer's power supply is not being overloaded. (Power
