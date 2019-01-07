@@ -240,12 +240,19 @@ This is commonly caused by hardware errors on the USB connection
 between the host machine and the micro-controller. Things to look for:
 - Use a good quality USB cable between the host machine and
   micro-controller. Make sure the plugs are secure.
-- If using a Raspberry Pi, use a good quality power supply for the
-  Raspberry Pi and use a good quality USB cable to connect that power
-  supply to the Pi.
+- If using a Raspberry Pi, use a
+  [good quality power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
+  for the Raspberry Pi and use a
+  [good quality USB cable](https://www.raspberrypi.org/forums/viewtopic.php?p=589877#p589877)
+  to connect that power supply to the Pi. If you get "under voltage"
+  warnings from OctoPrint, this is related to the power supply and it
+  must be fixed.
 - Make sure the printer's power supply is not being overloaded. (Power
   fluctuations to the micro-controller's USB chip may result in resets
   of that chip.)
+- Verify stepper, heater, and other printer wires are not crimped or
+  frayed. (Printer movement may place stress on a faulty wire causing
+  it to lose contact, briefly short, or generate excessive noise.)
 - There have been reports of high USB noise when both the printer's
   power supply and the host's 5V power supply are mixed. (If you find
   that the micro-controller powers on when either the printer's power

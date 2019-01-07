@@ -161,6 +161,8 @@ enabled:
   BLTouch. It may be useful for debugging. Available commands are:
   pin_down, touch_mode, pin_up, self_test, reset.
 
+See [Working with the BL-Touch](BLTouch.md) for more details.
+
 ## Delta Calibration
 
 The following commands are available when the "delta_calibrate" config
