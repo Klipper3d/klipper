@@ -1,7 +1,7 @@
 # Sensorless Homing
 Sensorless homing allows to home an axis without the need for a physical limit switch. Instead, the carriage on the axis is moved into the mechanical limit making the stepper motor lose steps. The stepper driver senses the lost steps and indicates this to the controlling MCU (Klipper) by toggling a pin. This information can be used by Klipper as end stop for the axis.
 
-This guide covers the setup of sensorless homing for the X axis of your printer. However, it works the same with all other axes (that require an end stop). You should configure and tune it for one axis at a time.
+This guide covers the setup of sensorless homing for the X axis of your (cartesian) printer. However, it works the same with all other axes (that require an end stop). You should configure and tune it for one axis at a time.
 
 ## Prerequisites
 A few prerequisites are needed to use sensorless homing:
@@ -14,11 +14,12 @@ A few prerequisites are needed to use sensorless homing:
 ## Limitations
 Be sure that your mechanical components are able to handle the load of the carriage bumping into the limit of the axis repeatedly. Especially spindles (on the Z axis) might generate a lot of force. Homing a Z axis by bumping the nozzle into the printing surface might not be a good idea.
 
-Further, sensorless homing might not be accurate enough for you printer. While homing X and Y axes on a cartesian machine can work well, homing a delta printer this way can lead to problems.
+Further, sensorless homing might not be accurate enough for you printer. While homing X and Y axes on a cartesian machine can work well, homing the Z axis is generally not accurate enough and results in inconsistent first layer height. Homing a delta printer sensorless is not advisable due to missing accuracy.
 
-Also the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
+Further, the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
 
-Sensorless homing works best at low motor speeds.
+Sensorless homing works best at medium motor speeds. For very slow speeds (less than 10 RPM) the motor does not generate significant back EMF and the TMC2130 cannot reliably detect motor stalls. Further, at very high speeds, the back EMF of the motor approaches the supply voltage of the motor, so the TMC2130 cannot detect stalls anymore. For more details on limitations refer to section 14 (stallGuard2
+Load Measurement) in the TMC2130 datasheet.
 
 ## Configuration
 To enable sensorless homing add a section to configure the TMC2130 stepper driver to your `printer.cfg`:
@@ -33,6 +34,8 @@ driver_SGT: 0  # tuning value for sensorless homing, set to 0 as a start
 ```
 
 The above snippet configures a TMC2130 for the stepper on the X axis. Make sure to fill in the missing values based on your configuration.
+
+If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer.
 
 The `diag1_pin` of the TMC2130 is configured as open-collector pin. This means, the stepper driver pulls the pin low to indicate a stalled motor (active low) and the pin must be inverted by adding a `!` in front of the pin name. Further, you need a pull-up resistor on the connection. If your PCB has no external pull-up, you can enable the internal pull-up of your MCU by adding a `^` in front of the pin name. The resulting line might look like this:
 
@@ -57,7 +60,7 @@ ATTENTION: This guide only mentions the mandatory parameters and the ones needed
 Now that the stepper driver is configured, let's make sure that Klipper can communicate with the TMC2130 by sending the following extended G-Code command to the printer:
 
 ```
-TMC_DUMP stepper=stepper_x
+DUMP_TMC stepper=stepper_x
 ```
 
 This command tells Klipper to read a few registers via SPI from the TMC2130. If everything works correctly, the output should look similar to this (in OctoPrint terminal tab):
@@ -77,7 +80,7 @@ Recv: // PWM_SCALE:      00000000
 Recv: // LOST_STEPS:     00000000
 ```
 
-The acual register values might differ based the configuration of your TMC2130. If the register values are all `ffffffff` or look otherwise bogus (for example, `LOST_STEPS` should be always `00000000` here) make sure that the SPI is wired and configured correctly.
+The actual register values might differ based the configuration of your TMC2130. If the register values are all `ffffffff` or look otherwise bogus (for example, `LOST_STEPS` should be always `00000000` here) make sure that the SPI is wired and configured correctly.
 
 ## Homing and Tuning
 
