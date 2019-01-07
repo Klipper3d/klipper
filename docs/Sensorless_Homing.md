@@ -35,7 +35,7 @@ driver_SGT: 0  # tuning value for sensorless homing, set to 0 as a start
 
 The above snippet configures a TMC2130 for the stepper on the X axis. Make sure to fill in the missing values based on your configuration.
 
-If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer.
+If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer. Be aware that Klipper needs both `DIAG1` pins connected to the MCU. It is not sufficient to use only one signal from one of the stepper drivers (as it is possible on e.g. Marlin).
 
 The `diag1_pin` of the TMC2130 is configured as open-collector pin. This means, the stepper driver pulls the pin low to indicate a stalled motor (active low) and the pin must be inverted by adding a `!` in front of the pin name. Further, you need a pull-up resistor on the connection. If your PCB has no external pull-up, you can enable the internal pull-up of your MCU by adding a `^` in front of the pin name. The resulting line might look like this:
 
