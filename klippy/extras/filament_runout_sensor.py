@@ -15,10 +15,10 @@ class FilamentRunoutSensor:
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.pin], self.runout_callback)
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("QUERY_FILAMENT_SENSOR",None)
-        gcode.register_command("QUERY_FILAMENT_SENSOR", self.cmd_QUERY_FILAMENT_SENSOR,
-                               desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
-    cmd_QUERY_FILAMENT_SENSOR_help = "Report on the status of filament runout sensors"
+        gcode.register_mux_command("QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
+                                        self.cmd_QUERY_FILAMENT_SENSOR,
+                                        desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
+    cmd_QUERY_FILAMENT_SENSOR_help = "Report on the status of filament runout sensor"
     def cmd_QUERY_FILAMENT_SENSOR(self, params):
         gcode = self.printer.lookup_object('gcode')
         response = self.name+": "
