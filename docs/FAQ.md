@@ -250,6 +250,9 @@ between the host machine and the micro-controller. Things to look for:
 - Make sure the printer's power supply is not being overloaded. (Power
   fluctuations to the micro-controller's USB chip may result in resets
   of that chip.)
+- Verify stepper, heater, and other printer wires are not crimped or
+  frayed. (Printer movement may place stress on a faulty wire causing
+  it to lose contact, briefly short, or generate excessive noise.)
 - There have been reports of high USB noise when both the printer's
   power supply and the host's 5V power supply are mixed. (If you find
   that the micro-controller powers on when either the printer's power
