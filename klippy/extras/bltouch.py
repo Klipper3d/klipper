@@ -83,7 +83,11 @@ class BLTouchEndstopWrapper:
             self.next_cmd_time = print_time
     def send_cmd(self, cmd, duration=MIN_CMD_TIME):
         self.mcu_pwm.set_pwm(self.next_cmd_time, Commands[cmd] / SIGNAL_PERIOD)
-        self.next_cmd_time += max(duration, MIN_CMD_TIME)
+        # Translate duration to ticks to avoid any secondary mcu clock skew
+        mcu = self.mcu_pwm.get_mcu()
+        cmd_clock = mcu.print_time_to_clock(self.next_cmd_time)
+        cmd_clock += mcu.seconds_to_clock(max(duration, MIN_CMD_TIME))
+        self.next_cmd_time = mcu.clock_to_print_time(cmd_clock)
         return self.next_cmd_time
     def verify_state(self, check_start_time, check_end_time, triggered, msg):
         # Perform endstop check to verify bltouch reports desired state
