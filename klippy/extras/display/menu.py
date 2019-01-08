@@ -1049,13 +1049,11 @@ class MenuManager:
 
     def handle_ready(self):
         # Load all available printer objects
-        for cfg_name in self.printer.objects:
-            obj = self.printer.lookup_object(cfg_name, None)
-            if obj is not None:
-                name = ".".join(str(cfg_name).split())
-                self.objs[name] = obj
-                logging.debug("Load module '%s' -> %s" % (
-                    str(name), str(obj.__class__)))
+        for cfg_name, obj in self.printer.lookup_objects():
+            name = ".".join(str(cfg_name).split())
+            self.objs[name] = obj
+            logging.debug("Load module '%s' -> %s" % (
+                str(name), str(obj.__class__)))
         # start timer
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.timer_event, reactor.NOW)
