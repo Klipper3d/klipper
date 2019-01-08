@@ -17,6 +17,8 @@ class GCodeParser:
         self.printer = printer
         self.fd = fd
         printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        printer.register_event_handler("klippy:disconnect",
+                                       self.handle_disconnect)
         # Input handling
         self.reactor = printer.get_reactor()
         self.is_processing_data = False
@@ -122,10 +124,10 @@ class GCodeParser:
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
         self._respond_state("Shutdown")
+    def handle_disconnect(self):
+        self._respond_state("Disconnect")
     def printer_state(self, state):
         if state != 'ready':
-            if state == 'disconnect':
-                self._respond_state("Disconnect")
             return
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
