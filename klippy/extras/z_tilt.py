@@ -69,7 +69,7 @@ class ZTilt:
         except:
             logging.exception("z_tilt adjust_steppers")
             for s in self.z_steppers:
-                z.set_ignore_move(False)
+                s.set_ignore_move(False)
             raise
     def adjust_steppers(self, x_adjust, y_adjust, z_adjust):
         toolhead = self.printer.lookup_object('toolhead')
