@@ -18,7 +18,7 @@ version 1.1.57 (extracted on 20180806). It has been modified to
 compile with gcc's LTO feature. Also, some AFEC register RW accesses
 have been modified to comply with the SAM4E datasheet. Finally, the
 interrupt vector table has been slightly modified to allow the code to
-run. See cmsis-sam4e8e.patch for the modifications.
+run. See sam4e.patch for the modifications.
 
 The sam4s directory contains code from the
 Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
