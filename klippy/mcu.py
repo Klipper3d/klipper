@@ -422,6 +422,7 @@ class MCU:
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
+        self._printer.register_event_handler("klippy:shutdown", self._shutdown)
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
         baud = 0
@@ -769,8 +770,6 @@ class MCU:
             self._connect()
         elif state == 'disconnect':
             self._disconnect()
-        elif state == 'shutdown':
-            self._shutdown()
     def __del__(self):
         self._disconnect()
 

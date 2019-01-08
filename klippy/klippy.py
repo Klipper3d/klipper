@@ -51,14 +51,14 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = reactor.Reactor()
-        gc = gcode.GCodeParser(self, input_fd)
-        self.objects = collections.OrderedDict({'gcode': gc})
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.is_shutdown = False
         self.run_result = None
-        self.state_cb = [gc.printer_state]
         self.event_handlers = {}
+        gc = gcode.GCodeParser(self, input_fd)
+        self.objects = collections.OrderedDict({'gcode': gc})
+        self.state_cb = [gc.printer_state]
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):
@@ -183,8 +183,11 @@ class Printer:
             return
         self.is_shutdown = True
         self._set_state("%s%s" % (msg, message_shutdown))
-        for cb in self.state_cb:
-            cb('shutdown')
+        for cb in self.event_handlers.get("klippy:shutdown", []):
+            try:
+                cb()
+            except:
+                logging.exception("Exception during shutdown handler")
     def invoke_async_shutdown(self, msg):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg)))

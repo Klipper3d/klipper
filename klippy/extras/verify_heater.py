@@ -13,6 +13,8 @@ for the parameters that control this check.
 class HeaterCheck:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self.handle_shutdown)
         self.heater_name = config.get_name().split()[1]
         self.heater = None
         self.hysteresis = config.getfloat('hysteresis', 5., minval=0.)
@@ -38,7 +40,8 @@ class HeaterCheck:
             reactor = self.printer.get_reactor()
             self.check_timer = reactor.register_timer(self.check_event,
                                                       reactor.NOW)
-        elif state == 'shutdown' and self.check_timer is not None:
+    def handle_shutdown(self):
+        if self.check_timer is not None:
             reactor = self.printer.get_reactor()
             reactor.update_timer(self.check_timer, reactor.NEVER)
     def check_event(self, eventtime):
