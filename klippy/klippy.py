@@ -138,11 +138,6 @@ class Printer:
                 if self.state_message is not message_startup:
                     return
                 cb('connect')
-            self._set_state(message_ready)
-            for cb in self.state_cb:
-                if self.state_message is not message_ready:
-                    return
-                cb('ready')
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self._set_state("%s%s" % (str(e), message_restart))
@@ -156,6 +151,15 @@ class Printer:
             logging.exception("Unhandled exception during connect")
             self._set_state("Internal error during connect.%s" % (
                 message_restart,))
+        try:
+            self._set_state(message_ready)
+            for cb in self.event_handlers.get("klippy:ready", []):
+                if self.state_message is not message_ready:
+                    return
+                cb()
+        except:
+            logging.exception("Unhandled exception during ready callback")
+            self.invoke_shutdown("Internal error during ready callback")
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
@@ -173,8 +177,7 @@ class Printer:
             if run_result == 'firmware_restart':
                 for n, m in self.lookup_objects(module='mcu'):
                     m.microcontroller_restart()
-            for cb in self.state_cb:
-                cb('disconnect')
+            self.send_event("klippy:disconnect")
         except:
             logging.exception("Unhandled exception during post run")
         return run_result

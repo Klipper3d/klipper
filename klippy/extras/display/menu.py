@@ -1007,8 +1007,9 @@ class MenuManager:
         self._last_encoder_ccw_eventtime = 0
         # printer objects
         self.buttons = self.printer.try_load_module(config, "buttons")
-        # register itself for a printer_state callback
-        config.get_printer().add_object('menu', self)
+        # register itself for printer callbacks
+        self.printer.add_object('menu', self)
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # register buttons & encoder
         if self.buttons:
             if self.encoder_pins:
@@ -1046,19 +1047,18 @@ class MenuManager:
         # Load menu root
         self.load_root()
 
-    def printer_state(self, state):
-        if state == 'ready':
-            # Load all available printer objects
-            for cfg_name in self.printer.objects:
-                obj = self.printer.lookup_object(cfg_name, None)
-                if obj is not None:
-                    name = ".".join(str(cfg_name).split())
-                    self.objs[name] = obj
-                    logging.debug("Load module '%s' -> %s" % (
-                        str(name), str(obj.__class__)))
-            # start timer
-            reactor = self.printer.get_reactor()
-            reactor.register_timer(self.timer_event, reactor.NOW)
+    def handle_ready(self):
+        # Load all available printer objects
+        for cfg_name in self.printer.objects:
+            obj = self.printer.lookup_object(cfg_name, None)
+            if obj is not None:
+                name = ".".join(str(cfg_name).split())
+                self.objs[name] = obj
+                logging.debug("Load module '%s' -> %s" % (
+                    str(name), str(obj.__class__)))
+        # start timer
+        reactor = self.printer.get_reactor()
+        reactor.register_timer(self.timer_event, reactor.NOW)
 
     def timer_event(self, eventtime):
         # take next from sequence
