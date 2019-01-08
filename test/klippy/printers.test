@@ -11,6 +11,7 @@ CONFIG ../../config/example-winch.cfg
 # Printers using the atmega2560
 DICTIONARY atmega2560-16mhz.dict
 CONFIG ../../config/generic-einsy-rambo.cfg
+CONFIG ../../config/generic-fysetc-f6.cfg
 CONFIG ../../config/generic-mini-rambo.cfg
 CONFIG ../../config/generic-rambo.cfg
 CONFIG ../../config/generic-ramps.cfg
