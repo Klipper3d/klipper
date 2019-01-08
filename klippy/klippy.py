@@ -58,7 +58,6 @@ class Printer:
         self.event_handlers = {}
         gc = gcode.GCodeParser(self, input_fd)
         self.objects = collections.OrderedDict({'gcode': gc})
-        self.state_cb = [gc.printer_state]
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):
@@ -128,16 +127,13 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-        # Determine which printer objects have state callbacks
-        self.state_cb = [o.printer_state for o in self.objects.values()
-                         if hasattr(o, 'printer_state')]
     def _connect(self, eventtime):
         try:
             self._read_config()
-            for cb in self.state_cb:
+            for cb in self.event_handlers.get("klippy:connect", []):
                 if self.state_message is not message_startup:
                     return
-                cb('connect')
+                cb()
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
             self._set_state("%s%s" % (str(e), message_restart))

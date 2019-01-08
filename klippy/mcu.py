@@ -422,6 +422,7 @@ class MCU:
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
+        self._printer.register_event_handler("klippy:connect", self._connect)
         self._printer.register_event_handler("klippy:shutdown", self._shutdown)
         self._printer.register_event_handler("klippy:disconnect",
                                              self._disconnect)
@@ -767,9 +768,6 @@ class MCU:
             self._mcu_tick_stddev)
         return False, ' '.join([msg, self._serial.stats(eventtime),
                                 self._clocksync.stats(eventtime)])
-    def printer_state(self, state):
-        if state == 'connect':
-            self._connect()
     def __del__(self):
         self._disconnect()
 

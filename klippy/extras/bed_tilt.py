@@ -9,6 +9,8 @@ import probe, mathutil
 class BedTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.x_adjust = config.getfloat('x_adjust', 0.)
         self.y_adjust = config.getfloat('y_adjust', 0.)
         self.z_adjust = config.getfloat('z_adjust', 0.)
@@ -18,9 +20,8 @@ class BedTilt:
         # Register move transform with g-code class
         gcode = self.printer.lookup_object('gcode')
         gcode.set_move_transform(self)
-    def printer_state(self, state):
-        if state == 'connect':
-            self.toolhead = self.printer.lookup_object('toolhead')
+    def handle_connect(self):
+        self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
         x, y, z, e = self.toolhead.get_position()
         return [x, y, z - x*self.x_adjust - y*self.y_adjust - self.z_adjust, e]

@@ -95,6 +95,8 @@ class TMC2208:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         # pin setup
         ppins = self.printer.lookup_object("pins")
         rx_pin_params = ppins.lookup_pin(
@@ -191,10 +193,9 @@ class TMC2208:
         cmd_queue = self.mcu.alloc_command_queue()
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
-    def printer_state(self, state):
-        if state == 'connect':
-            for reg_name, val in self.init_regs.items():
-                self.set_register(reg_name, val)
+    def handle_connect(self):
+        for reg_name, val in self.init_regs.items():
+            self.set_register(reg_name, val)
     def get_register(self, reg_name):
         reg = Registers[reg_name]
         msg = encode_tmc2208_read(0xf5, 0x00, reg)
