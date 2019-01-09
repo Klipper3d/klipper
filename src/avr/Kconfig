@@ -11,7 +11,9 @@ config AVR_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_BITBANGING if !MACH_atmega168
-    select NO_UNSTEP_DELAY
+
+config STEP_DELAY
+    default 0
 
 config BOARD_DIRECTORY
     string
