@@ -36,5 +36,8 @@ class FilamentRunoutSensor:
         if toolhead.get_status(eventtime)['status'] == "Printing":
             gcode.respond_info("Filament runout sensor triggered! Pausing print job.")
             gcode.respond_info("action:pause")
+            virtual_sdcard = self.printer.lookup_object("virtual_sdcard", None)
+            if virtual_sdcard != None:
+                virtual_sdcard.cmd_M25()
 def load_config_prefix(config):
     return FilamentRunoutSensor(config)
