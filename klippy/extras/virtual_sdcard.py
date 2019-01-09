@@ -8,6 +8,7 @@ import os, logging
 class VirtualSD:
     def __init__(self, config):
         printer = config.get_printer()
+        printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
@@ -24,8 +25,8 @@ class VirtualSD:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
             self.gcode.register_command(cmd, self.cmd_error)
-    def printer_state(self, state):
-        if state == 'shutdown' and self.work_timer is not None:
+    def handle_shutdown(self):
+        if self.work_timer is not None:
             self.must_pause_work = True
             try:
                 readpos = max(self.file_position - 1024, 0)

@@ -16,15 +16,13 @@ struct i2cdev_s {
 void
 command_config_i2c(uint32_t *args)
 {
-    uint8_t addr = args[3];
-    if (addr & 1)
-        shutdown("Invalid I2C address");
+    uint8_t addr = args[3] & 0x7f;
     struct i2cdev_s *i2c = oid_alloc(args[0], command_config_i2c
                                      , sizeof(*i2c));
     i2c->i2c_config = i2c_setup(args[1], args[2], addr);
 }
 DECL_COMMAND(command_config_i2c,
-             "config_i2c oid=%c bus=%u rate=%u addr=%u");
+             "config_i2c oid=%c bus=%u rate=%u address=%u");
 
 void
 command_i2c_write(uint32_t *args)

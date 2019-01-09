@@ -177,11 +177,11 @@ class UC1701(DisplayBase):
         logging.info("uc1701 initialized")
 
 # The SSD1306 supports both i2c and "4-wire" spi
-class SSD1306(UC1701):
+class SSD1306(DisplayBase):
     def __init__(self, config):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
-            io = I2C(config, 120)
+            io = I2C(config, 60)
         else:
             io = SPI4wire(config, "dc_pin")
         DisplayBase.__init__(self, io)

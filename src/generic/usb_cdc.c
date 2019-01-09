@@ -398,6 +398,7 @@ usb_req_set_configuration(struct usb_ctrlrequest *req)
     }
     usb_set_configure();
     usb_notify_bulk_in();
+    usb_notify_bulk_out();
     usb_do_xfer(NULL, 0, UX_SEND);
 }
 
