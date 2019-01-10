@@ -1,8 +1,8 @@
-# Kconfig settings for SAM3/SAM4 processors
+# Kconfig settings for Atmel SAM processors
 
-if MACH_SAM3
+if MACH_ATSAM
 
-config SAM3_SELECT
+config ATSAM_SELECT
     bool
     default y
     select HAVE_GPIO
@@ -13,7 +13,7 @@ config SAM3_SELECT
 
 config BOARD_DIRECTORY
     string
-    default "sam3"
+    default "atsam"
 
 choice
     prompt "Processor model"
