@@ -16,6 +16,12 @@ config BOARD_DIRECTORY
     string
     default "atsamd"
 
+choice
+    prompt "Processor model"
+    config MACH_SAMD21A
+        bool "SAMD21G18A (Arduino Zero)"
+endchoice
+
 config CLOCK_FREQ
     int
     default 48000000

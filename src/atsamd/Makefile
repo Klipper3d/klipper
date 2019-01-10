@@ -1,34 +1,34 @@
-# Additional samd21 build rules
+# Additional atsamd build rules
 
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/samd21 src/generic
-dirs-y += lib/samd21/samd21a/gcc/gcc/
+dirs-y += src/atsamd src/generic
+dirs-$(CONFIG_MACH_SAMD21A) += lib/samd21/samd21a/gcc/gcc/
 
-CFLAGS += -mthumb -mcpu=cortex-m0plus
-CFLAGS += -Ilib/cmsis-core -Ilib/samd21/samd21a/include
-CFLAGS += -D__SAMD21G18A__
+CFLAGS-$(CONFIG_MACH_SAMD21A) += -mcpu=cortex-m0plus
+CFLAGS-$(CONFIG_MACH_SAMD21A) += -Ilib/samd21/samd21a/include -D__SAMD21G18A__
+CFLAGS += $(CFLAGS-y) -mthumb -Ilib/cmsis-core
 
-CFLAGS_klipper.elf += -T $(OUT)samd21.ld
-CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
+eflags-$(CONFIG_MACH_SAMD21A) += -T $(OUT)samd21a.ld
+CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += samd21/main.c samd21/timer.c samd21/clock.c samd21/gpio.c
+src-y += atsamd/main.c atsamd/timer.c atsamd/clock.c atsamd/gpio.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
-src-y += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
-src-$(CONFIG_USBSERIAL) += samd21/usbserial.c generic/usb_cdc.c
-src-$(CONFIG_SERIAL) += samd21/serial.c generic/serial_irq.c
-src-$(CONFIG_HAVE_GPIO_ADC) += samd21/adc.c
-src-$(CONFIG_HAVE_GPIO_I2C) += samd21/i2c.c
-src-$(CONFIG_HAVE_GPIO_SPI) += samd21/spi.c
-src-$(CONFIG_HAVE_GPIO_HARD_PWM) += samd21/hard_pwm.c
+src-$(CONFIG_USBSERIAL) += atsamd/usbserial.c generic/usb_cdc.c
+src-$(CONFIG_SERIAL) += atsamd/serial.c generic/serial_irq.c
+src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
+src-$(CONFIG_HAVE_GPIO_I2C) += atsamd/i2c.c
+src-$(CONFIG_HAVE_GPIO_SPI) += atsamd/spi.c
+src-$(CONFIG_HAVE_GPIO_HARD_PWM) += atsamd/hard_pwm.c
+src-$(CONFIG_MACH_SAMD21A) += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
 
 # Support bootloader offset address
-target-y := $(OUT)samd21.ld $(target-y)
+target-$(CONFIG_MACH_SAMD21A) := $(OUT)samd21a.ld $(target-y)
 
-$(OUT)samd21.ld: lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld $(OUT)board-link
+$(OUT)samd21a.ld: lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld $(OUT)board-link
 	@echo "  Preprocessing $@"
 	$(Q)$(CPP) -P -MD -MT $@ -DFLASH_START=$(CONFIG_FLASH_START) $< -o $@
 
