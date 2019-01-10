@@ -288,6 +288,22 @@ The test was last run on commit `b161a69e` with gcc version
 stepper result is `SET ticks 207`, the best dual stepper result is
 `SET ticks 205`, and the best three stepper result is `SET ticks 317`.
 
+### Duet Maestro step rate benchmark ###
+
+The following configuration sequence is used on the Duet Maestro:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PC26 dir_pin=PC18 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PC26 dir_pin=PA8 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PC26 dir_pin=PB4 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `8e0eb0d5` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 72`, the best dual stepper result is `SET
+ticks 73`, and the best three stepper result is `SET ticks 99`.
+
 ### Duet Wifi step rate benchmark ###
 
 The following configuration sequence is used on the Duet Wifi:
@@ -401,6 +417,7 @@ commands per second is then `100000 * mcu_frequency / clock_diff`.
 | lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| sam4s8c (USB)       | 579K | 8e0eb0d5 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 
 Host Benchmarks
 ===============

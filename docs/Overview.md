@@ -25,8 +25,11 @@ some common questions. The [G-Codes](G-Codes.md) document lists
 currently supported run-time commands.
 
 The history of Klipper releases is available at
-[releases](Releases.md). See [contact](Contact.md) for information on
-bug reporting and general communication with the developers.
+[releases](Releases.md). The [config changes](Config_Changes.md)
+document describes recent software changes that may require users to
+update their printer config file. See [contact](Contact.md) for
+information on bug reporting and general communication with the
+developers.
 
 Developer Documentation
 =======================

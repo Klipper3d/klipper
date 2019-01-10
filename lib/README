@@ -11,20 +11,27 @@ Atmel.SAM3X_DFP.1.0.50.atpack zip file found at:
 version 1.0.50 (extracted on 20180725). It has been modified to
 compile with gcc's LTO feature. See sam3x.patch for the modifications.
 
+The sam4e directory contains code from the
+Atmel.SAM4E_DFP.1.1.57.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.57 (extracted on 20180806). It has been modified to
+compile with gcc's LTO feature. Also, some AFEC register RW accesses
+have been modified to comply with the SAM4E datasheet. Finally, the
+interrupt vector table has been slightly modified to allow the code to
+run. See sam4e.patch for the modifications.
+
+The sam4s directory contains code from the
+Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.0.56 (extracted on 20181220). It has been modified to
+compile with gcc's LTO feature. See sam4s.patch for the modifications.
+
 The samd21 directory contains code from the
 Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.3.304 (extracted on 20180725). It has been modified to
 compile with gcc's LTO feature and to work with chips that have a
 bootloader. See samd21.patch for the modifications.
-
-The cmsis-sam4e8e directory contains code from the
-Atmel.SAM4E_DFP.1.1.57.atpack zip file found at:
-  http://packs.download.atmel.com/
-version 1.1.57 (extracted on 20180806). It has been modified to compile
-with gcc's LTO feature. Also, some AFEC register RW accesses have been modified
-to comply with the SAM4E datasheet. Finally, the interrupt vector table has
-been slightly modified to allow the code to run. See cmsis-sam4e8e.patch for the modifications.
 
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os

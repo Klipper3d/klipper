@@ -25,11 +25,11 @@ i2c_init(void)
     have_run_init = 1;
 
     // Init i2c bus 1 pins
-    gpio_peripheral(0, 0, 3, 0);
-    gpio_peripheral(0, 1, 3, 0);
+    gpio_peripheral(GPIO(0, 0), 3, 0);
+    gpio_peripheral(GPIO(0, 1), 3, 0);
 
     // Set 100Khz frequency
-    enable_peripheral_clock(PCLK_I2C1);
+    enable_pclock(PCLK_I2C1);
     uint32_t pclk = SystemCoreClock, pulse = pclk / (100000 * 2);
     LPC_I2C1->I2SCLL = pulse;
     LPC_I2C1->I2SCLH = pulse;
@@ -45,7 +45,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     if (bus)
         shutdown("Unsupported i2c bus");
     i2c_init();
-    return (struct i2c_config){ .addr=addr };
+    return (struct i2c_config){ .addr=addr<<1 };
 }
 
 static void

@@ -9,6 +9,8 @@ import probe
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
@@ -27,9 +29,6 @@ class QuadGantryLevel:
         self.gcode.register_command(
             'QUAD_GANTRY_LEVEL', self.cmd_QUAD_GANTRY_LEVEL,
             desc=self.cmd_QUAD_GANTRY_LEVEL_help)
-    def printer_state(self, state):
-        if state == 'connect':
-            self.handle_connect()
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         z_steppers = kin.get_steppers('Z')

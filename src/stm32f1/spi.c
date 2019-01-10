@@ -70,24 +70,24 @@ static void spi_init_pins(void)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    struct spi_config config;
-    config.config = *SPI2;
-
     if (bus > 0 || !rate)
         shutdown("Invalid spi_setup parameters");
 
     spi_init_pins();
-    spi_set_mode(&config.config, mode);
-    spi_set_baudrate(&config.config, rate);
+    SPI_TypeDef spi_hw = { };
+    LL_SPI_SetNSSMode(&spi_hw, LL_SPI_NSS_SOFT);
+    LL_SPI_SetMode(&spi_hw, LL_SPI_MODE_MASTER);
+    spi_set_mode(&spi_hw, mode);
+    spi_set_baudrate(&spi_hw, rate);
+    LL_SPI_Enable(&spi_hw);
 
-    return config;
+    return (struct spi_config){ .spi_cr1 = spi_hw.CR1 };
 }
 
 void
 spi_prepare(struct spi_config config)
 {
-    *SPI2 = config.config;
-    LL_SPI_Enable(SPI2);
+    SPI2->CR1 = config.spi_cr1;
 }
 
 void

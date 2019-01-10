@@ -17,6 +17,7 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
+        velocity = min(speed, toolhead.max_velocity)
         self.cmove = toolhead.cmove
         self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
@@ -27,13 +28,15 @@ class Move:
                             end_pos[3])
             axes_d[0] = axes_d[1] = axes_d[2] = 0.
             self.move_d = move_d = abs(axes_d[3])
+            self.accel = 99999999.9
+            velocity = speed
             self.is_kinematic_move = False
-        self.min_move_t = move_d / speed
+        self.min_move_t = move_d / velocity
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
         # can change in this move.
         self.max_start_v2 = 0.
-        self.max_cruise_v2 = speed**2
+        self.max_cruise_v2 = velocity**2
         self.delta_v2 = 2.0 * move_d * self.accel
         self.max_smoothed_v2 = 0.
         self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
@@ -202,6 +205,8 @@ class ToolHead:
         self.mcu = self.all_mcus[0]
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self._handle_shutdown)
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
@@ -344,7 +349,6 @@ class ToolHead:
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
     def move(self, newpos, speed):
-        speed = min(speed, self.max_velocity)
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
@@ -410,13 +414,9 @@ class ToolHead:
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
                  'printing_time': print_time - last_print_start_time }
-    def printer_state(self, state):
-        if state == 'shutdown':
-            try:
-                self.move_queue.reset()
-                self.reset_print_time()
-            except:
-                logging.exception("Exception in toolhead shutdown")
+    def _handle_shutdown(self):
+        self.move_queue.reset()
+        self.reset_print_time()
     def get_kinematics(self):
         return self.kin
     def get_max_velocity(self):
@@ -436,20 +436,18 @@ class ToolHead:
     def cmd_SET_VELOCITY_LIMIT(self, params):
         print_time = self.get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
-        max_velocity = gcode.get_float(
-            'VELOCITY', params, self.max_velocity,
-            above=0., maxval=self.config_max_velocity)
-        max_accel = gcode.get_float(
-            'ACCEL', params, self.max_accel,
-            above=0., maxval=self.config_max_accel)
+        max_velocity = gcode.get_float('VELOCITY', params, self.max_velocity,
+                                       above=0.)
+        max_accel = gcode.get_float('ACCEL', params, self.max_accel, above=0.)
         square_corner_velocity = gcode.get_float(
             'SQUARE_CORNER_VELOCITY', params, self.square_corner_velocity,
-            minval=0., maxval=self.config_square_corner_velocity)
+            minval=0.)
         self.requested_accel_to_decel = gcode.get_float(
             'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
-        self.max_velocity = max_velocity
-        self.max_accel = max_accel
-        self.square_corner_velocity = square_corner_velocity
+        self.max_velocity = min(max_velocity, self.config_max_velocity)
+        self.max_accel = min(max_accel, self.config_max_accel)
+        self.square_corner_velocity = min(square_corner_velocity,
+                                          self.config_square_corner_velocity)
         self._calc_junction_deviation()
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"

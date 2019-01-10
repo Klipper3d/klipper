@@ -45,8 +45,8 @@ MCU_PINS = {
     "atmega32u4": port_pins(6),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32),
+    "sam4s8c": port_pins(3, 32), "sam4e8e" : port_pins(5, 32),
     "samd21g": port_pins(2, 32),
-    "sam4e8e" : port_pins(5,32),
     "stm32f103": port_pins(5, 16),
     "lpc176x": lpc_pins(),
     "pru": beaglebone_pins(),
@@ -252,6 +252,9 @@ class PrinterPins:
         can_pullup = pin_type in ['endstop']
         pin_params = self.lookup_pin(pin_desc, can_invert, can_pullup)
         return pin_params['chip'].setup_pin(pin_type, pin_params)
+    def reset_pin_sharing(self, pin_params):
+        share_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
+        del self.active_pins[share_name]
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
