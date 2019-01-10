@@ -10,6 +10,7 @@ PIN_MIN_TIME = 0.100
 class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.steppers = []
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
@@ -20,15 +21,14 @@ class ControllerFan:
         self.idle_timeout = config.getint("idle_timeout", 30, minval=0)
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
-    def printer_state(self, state):
-        if state == 'ready':
-            pheater = self.printer.lookup_object('heater')
-            self.heaters = [pheater.lookup_heater(n.strip())
-                            for n in self.heater_name.split(',')]
-            kin = self.printer.lookup_object('toolhead').get_kinematics()
-            self.steppers = kin.get_steppers()
-            reactor = self.printer.get_reactor()
-            reactor.register_timer(self.callback, reactor.NOW)
+    def handle_ready(self):
+		pheater = self.printer.lookup_object('heater')
+        self.heaters = [pheater.lookup_heater(n.strip())
+                        for n in self.heater_name.split(',')]
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        self.steppers = kin.get_steppers()
+        reactor = self.printer.get_reactor()
+        reactor.register_timer(self.callback, reactor.NOW)
     def callback(self, eventtime):
         power = 0.
         active = False
