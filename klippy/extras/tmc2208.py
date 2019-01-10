@@ -209,6 +209,8 @@ class TMC2208:
             "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
     def set_register(self, reg_name, val):
         msg = encode_tmc2208_write(0xf5, 0x00, Registers[reg_name] | 0x80, val)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
         for retry in range(5):
             ifcnt = self.ifcnt
             if ifcnt is None:
