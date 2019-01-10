@@ -77,24 +77,24 @@ class ControlAutoTune:
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
         # enable/disable the heater if so.
-        if self.heating and temp >= target_temp:
+        if self.heating and smoothed_temp >= target_temp:
             self.heating = False
             self.check_peaks()
             self.heater.alter_target(self.calibrate_temp - TUNE_PID_DELTA)
-        elif not self.heating and temp <= target_temp:
+        elif not self.heating and smoothed_temp <= target_temp:
             self.heating = True
             self.check_peaks()
             self.heater.alter_target(self.calibrate_temp)
         # Check if this temperature is a peak and record it if so
         if self.heating:
             self.set_pwm(read_time, self.heater_max_power)
-            if temp < self.peak:
-                self.peak = temp
+            if smoothed_temp < self.peak:
+                self.peak = smoothed_temp
                 self.peak_time = read_time
         else:
             self.set_pwm(read_time, 0.)
-            if temp > self.peak:
-                self.peak = temp
+            if smoothed_temp > self.peak:
+                self.peak = smoothed_temp
                 self.peak_time = read_time
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
