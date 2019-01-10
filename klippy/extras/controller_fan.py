@@ -22,7 +22,7 @@ class ControllerFan:
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
     def handle_ready(self):
-		pheater = self.printer.lookup_object('heater')
+        pheater = self.printer.lookup_object('heater')
         self.heaters = [pheater.lookup_heater(n.strip())
                         for n in self.heater_name.split(',')]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
