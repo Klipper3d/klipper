@@ -65,7 +65,8 @@ class Printer:
     def get_state_message(self):
         return self.state_message
     def _set_state(self, msg):
-        self.state_message = msg
+        if self.state_message in (message_ready, message_startup):
+            self.state_message = msg
         if (msg != message_ready
             and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
