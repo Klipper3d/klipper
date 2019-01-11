@@ -86,7 +86,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
         } else {
             s->time.waketime = s->next_step_time;
         }
-        s->count = m->count * 2;
+        s->count = (uint32_t)m->count * 2;
     }
     if (m->flags & MF_DIR) {
         s->position = -s->position + m->count;
