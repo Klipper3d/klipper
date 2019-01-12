@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
-import homing, kinematics.extruder
+import homing, kinematics.extruder, mcu
 
 class error(Exception):
     pass
@@ -189,6 +189,13 @@ class GCodeParser:
             except error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
+                if not need_ack:
+                    raise
+            except mcu.error as e:
+                msg = 'MCU error:"%s" when running command: "%s"' % (str(e), cmd)
+                logging.exception(msg)
+                self.printer.invoke_shutdown(msg)
+                self.respond_error(msg)
                 if not need_ack:
                     raise
             except:
