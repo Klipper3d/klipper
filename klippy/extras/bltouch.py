@@ -39,7 +39,7 @@ class BLTouchEndstopWrapper:
         self.next_test_time = 0.
         self.test_sensor_pin = config.getboolean('test_sensor_pin', True)
         # Calculate pin move time
-        pmt = max(config.getfloat('pin_move_time', 0.200), MIN_CMD_TIME)
+        pmt = max(config.getfloat('pin_move_time', 1.0), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
