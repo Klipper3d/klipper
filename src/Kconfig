@@ -13,9 +13,9 @@ choice
     prompt "Micro-controller Architecture"
     config MACH_AVR
         bool "Atmega AVR"
-    config MACH_SAM3
+    config MACH_ATSAM
         bool "SAM3/SAM4 (Due and Duet)"
-    config MACH_SAMD21
+    config MACH_ATSAMD
         bool "SAMD21 (Arduino Zero)"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
@@ -30,8 +30,8 @@ choice
 endchoice
 
 source "src/avr/Kconfig"
-source "src/sam3/Kconfig"
-source "src/samd21/Kconfig"
+source "src/atsam/Kconfig"
+source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32f1/Kconfig"
 source "src/pru/Kconfig"

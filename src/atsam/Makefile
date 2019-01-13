@@ -1,9 +1,9 @@
-# Additional SAM3/SAM4 build rules
+# Additional ATSAM build rules
 
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/sam3 src/generic
+dirs-y += src/atsam src/generic
 dirs-$(CONFIG_MACH_SAM3X8E) += lib/sam3x/gcc/gcc
 dirs-$(CONFIG_MACH_SAM4S8C) += lib/sam4s/gcc/gcc
 dirs-$(CONFIG_MACH_SAM4E8E) += lib/sam4e/gcc/gcc
@@ -25,17 +25,17 @@ eflags-$(CONFIG_MACH_SAM4E8E) += -T lib/sam4e/gcc/gcc/sam4e8e_flash.ld
 CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += sam3/main.c sam3/gpio.c sam3/i2c.c sam3/spi.c
+src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/timer_irq.c
-src-$(CONFIG_USBSERIAL) += sam3/sam4_usb.c generic/usb_cdc.c
-src-$(CONFIG_SERIAL) += sam3/serial.c generic/serial_irq.c
-src-$(CONFIG_MACH_SAM3X8E) += sam3/adc.c sam3/timer.c
+src-$(CONFIG_USBSERIAL) += atsam/sam4_usb.c generic/usb_cdc.c
+src-$(CONFIG_SERIAL) += atsam/serial.c generic/serial_irq.c
+src-$(CONFIG_MACH_SAM3X8E) += atsam/adc.c atsam/timer.c
 src-$(CONFIG_MACH_SAM3X8E) += ../lib/sam3x/gcc/system_sam3xa.c
 src-$(CONFIG_MACH_SAM3X8E) += ../lib/sam3x/gcc/gcc/startup_sam3xa.c
-src-$(CONFIG_MACH_SAM4S8C) += sam3/adc.c sam3/sam4s_timer.c sam3/sam4s_sysinit.c
+src-$(CONFIG_MACH_SAM4S8C) += atsam/adc.c atsam/sam4s_timer.c atsam/sam4s_sysinit.c
 src-$(CONFIG_MACH_SAM4S8C) += ../lib/sam4s/gcc/gcc/startup_sam4s.c
-src-$(CONFIG_MACH_SAM4E8E) += sam3/sam4e_afec.c sam3/timer.c sam3/sam4_cache.c
+src-$(CONFIG_MACH_SAM4E8E) += atsam/sam4e_afec.c atsam/timer.c atsam/sam4_cache.c
 src-$(CONFIG_MACH_SAM4E8E) += ../lib/sam4e/gcc/system_sam4e.c
 src-$(CONFIG_MACH_SAM4E8E) += ../lib/sam4e/gcc/gcc/startup_sam4e.c
 

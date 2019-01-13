@@ -1,8 +1,8 @@
-# Kconfig settings for SAMD21 processors
+# Kconfig settings for Atmel SAMD processors
 
-if MACH_SAMD21
+if MACH_ATSAMD
 
-config SAMD_SELECT
+config ATSAMD_SELECT
     bool
     default y
     select HAVE_GPIO
@@ -14,7 +14,13 @@ config SAMD_SELECT
 
 config BOARD_DIRECTORY
     string
-    default "samd21"
+    default "atsamd"
+
+choice
+    prompt "Processor model"
+    config MACH_SAMD21A
+        bool "SAMD21G18A (Arduino Zero)"
+endchoice
 
 config CLOCK_FREQ
     int
