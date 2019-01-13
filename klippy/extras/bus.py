@@ -83,9 +83,11 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
 class MCU_I2C:
     def __init__(self, mcu, bus, addr, speed):
         self.mcu = mcu
+        self.i2c_address = addr
         self.oid = self.mcu.create_oid()
-        self.mcu.add_config_cmd("config_i2c oid=%d bus=%d rate=%d addr=%d" % (
-            self.oid, bus, speed, addr))
+        self.mcu.add_config_cmd(
+            "config_i2c oid=%d bus=%d rate=%d address=%d" % (
+                self.oid, bus, speed, addr))
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.i2c_write_cmd = self.i2c_read_cmd = self.i2c_modify_bits_cmd = None
@@ -93,6 +95,8 @@ class MCU_I2C:
         return self.oid
     def get_mcu(self):
         return self.mcu
+    def get_i2c_address(self):
+        return self.i2c_address
     def get_command_queue(self):
         return self.cmd_queue
     def build_config(self):
@@ -136,8 +140,8 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     speed = config.getint('i2c_speed', default_speed, minval=100000)
     bus = config.getint('i2c_bus', 0, minval=0)
     if default_addr is None:
-        addr = config.getint('i2c_address')
+        addr = config.getint('i2c_address', minval=0, maxval=127)
     else:
-        addr = config.getint('i2c_address', default_addr)
+        addr = config.getint('i2c_address', default_addr, minval=0, maxval=127)
     # Create MCU_I2C object
     return MCU_I2C(i2c_mcu, bus, addr, speed)

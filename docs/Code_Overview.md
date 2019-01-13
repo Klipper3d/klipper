@@ -5,17 +5,16 @@ Directory Layout
 ================
 
 The **src/** directory contains the C source for the micro-controller
-code. The **src/avr/** directory contains specific code for Atmel
-ATmega micro-controllers. The **src/sam3x8e/** directory contains code
-specific to the Arduino Due style ARM micro-controllers. The
-**src/pru/** directory contains code specific to the Beaglebone's
-on-board PRU micro-controller. The **src/simulator/** contains code
-stubs that allow the micro-controller to be test compiled on other
-architectures. The **src/generic/** directory contains helper code
-that may be useful across different host architectures. The build
-arranges for includes of "board/somefile.h" to first look in the
-current architecture directory (eg, src/avr/somefile.h) and then in
-the generic directory (eg, src/generic/somefile.h).
+code. The **src/avr/**, **src/sam3/**, **src/samd21/**,
+**src/lpc176x/**, **src/stm32f1/**, **src/pru/**, and **src/linux/**
+directories contain architecture specific micro-controller code. The
+**src/simulator/** contains code stubs that allow the micro-controller
+to be test compiled on other architectures. The **src/generic/**
+directory contains helper code that may be useful across different
+architectures. The build arranges for includes of "board/somefile.h"
+to first look in the current architecture directory (eg,
+src/avr/somefile.h) and then in the generic directory (eg,
+src/generic/somefile.h).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**
@@ -263,16 +262,26 @@ The following may also be useful:
   will have been instantiated. The "gcode" and "pins" modules will
   always be available, but for other modules it is a good idea to
   defer the lookup.
-* Define a `printer_state()` method if the code needs to be called
-  during printer setup and/or shutdown. This method is called twice
-  during setup (with "connect" and then "ready") and may also be
-  called at run-time (with "shutdown" or "disconnect"). It is common
-  to perform "printer object" lookup during the "connect" and "ready"
-  phases.
+* Register event handlers using the `printer.register_event_handler()`
+  method if the code needs to be called during "events" raised by
+  other printer objects. Each event name is a string, and by
+  convention it is the name of the main source module that raises the
+  event along with a short name for the action that is occurring (eg,
+  "klippy:connect"). The parameters passed to each event handler are
+  specific to the given event (as are exception handling and execution
+  context). Two common startup events are:
+  * klippy:connect - This event is generated after all printer objects
+    are instantiated. It is commonly used to lookup other printer
+    objects, to verify config settings, and to perform an initial
+    "handshake" with printer hardware.
+  * klippy:ready - This event is generated after all connect handlers
+    have completed successfully. It indicates the printer is
+    transitioning to a state ready to handle normal operations. Do not
+    raise an error in this callback.
 * If there is an error in the user's config, be sure to raise it
-  during the `load_config()` or `printer_state("connect")` phases. Use
-  either `raise config.error("my error")` or `raise
-  printer.config_error("my error")` to report the error.
+  during the `load_config()` or "connect event" phases. Use either
+  `raise config.error("my error")` or `raise printer.config_error("my
+  error")` to report the error.
 * Use the "pins" module to configure a pin on a micro-controller. This
   is typically done with something similar to
   `printer.lookup_object("pins").setup_pin("pwm",
@@ -287,8 +296,8 @@ The following may also be useful:
   printer object returned from the `load_config()` function. This is
   important as otherwise the RESTART command may not perform as
   expected. Also, for similar reasons, if any external files (or
-  sockets) are opened then be sure to close them from the
-  `printer_state("disconnect")` callback.
+  sockets) are opened then be sure to register a "klippy:disconnect"
+  event handler and close them from that callback.
 * Avoid accessing the internal member variables (or calling methods
   that start with an underscore) of other printer objects. Observing
   this convention makes it easier to manage future changes.

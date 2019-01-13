@@ -16,6 +16,10 @@ class GCodeParser:
     def __init__(self, printer, fd):
         self.printer = printer
         self.fd = fd
+        printer.register_event_handler("klippy:ready", self.handle_ready)
+        printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        printer.register_event_handler("klippy:disconnect",
+                                       self.handle_disconnect)
         # Input handling
         self.reactor = printer.get_reactor()
         self.is_processing_data = False
@@ -112,21 +116,18 @@ class GCodeParser:
             'homing_ypos': self.homing_position[1],
             'homing_zpos': self.homing_position[2]
         }
-    def printer_state(self, state):
-        if state == 'shutdown':
-            if not self.is_printer_ready:
-                return
-            self.is_printer_ready = False
-            self.gcode_handlers = self.base_gcode_handlers
-            self.dump_debug()
-            if self.is_fileinput:
-                self.printer.request_exit('error_exit')
-            self._respond_state("Shutdown")
+    def handle_shutdown(self):
+        if not self.is_printer_ready:
             return
-        if state != 'ready':
-            if state == 'disconnect':
-                self._respond_state("Disconnect")
-            return
+        self.is_printer_ready = False
+        self.gcode_handlers = self.base_gcode_handlers
+        self.dump_debug()
+        if self.is_fileinput:
+            self.printer.request_exit('error_exit')
+        self._respond_state("Shutdown")
+    def handle_disconnect(self):
+        self._respond_state("Disconnect")
+    def handle_ready(self):
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components

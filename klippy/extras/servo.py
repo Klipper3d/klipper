@@ -44,12 +44,12 @@ class PrinterServo:
             if initial_pulse_width is not None:
                 self.initial_pwm_value = self._get_pwm_from_pulse_width(
                     initial_pulse_width)
-    def printer_state(self, state):
-        if state == 'ready':
-            if self.initial_pwm_value is not None:
-                toolhead = self.printer.lookup_object('toolhead')
-                print_time = toolhead.get_last_move_time()
-                self._set_pwm(print_time, self.initial_pwm_value)
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+    def handle_ready(self):
+        if self.initial_pwm_value is not None:
+            toolhead = self.printer.lookup_object('toolhead')
+            print_time = toolhead.get_last_move_time()
+            self._set_pwm(print_time, self.initial_pwm_value)
     def _set_pwm(self, print_time, value):
         if value == self.last_value and self.enable == self.last_enable:
             return

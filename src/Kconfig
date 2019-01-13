@@ -2,16 +2,21 @@
 
 mainmenu "Klipper Firmware Configuration"
 
+config LOW_LEVEL_OPTIONS
+    bool "Enable extra low-level configuration options"
+    default n
+    help
+        Enable low-level configuration options that (if modified) may
+        result in a build that does not function correctly.
+
 choice
     prompt "Micro-controller Architecture"
     config MACH_AVR
         bool "Atmega AVR"
-    config MACH_SAM3X8E
-        bool "SAM3x8e (Arduino Due)"
-    config MACH_SAMD21
+    config MACH_ATSAM
+        bool "SAM3/SAM4 (Due and Duet)"
+    config MACH_ATSAMD
         bool "SAMD21 (Arduino Zero)"
-    config MACH_SAM4E8E
-        bool "SAM4e8e (Duet Wifi/Eth)"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32F1
@@ -25,9 +30,8 @@ choice
 endchoice
 
 source "src/avr/Kconfig"
-source "src/sam3x8e/Kconfig"
-source "src/samd21/Kconfig"
-source "src/sam4e8e/Kconfig"
+source "src/atsam/Kconfig"
+source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32f1/Kconfig"
 source "src/pru/Kconfig"
@@ -35,6 +39,29 @@ source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
 
+# Step timing customization
+config CUSTOM_STEP_DELAY
+    bool "Specify a custom step pulse duration"
+    depends on LOW_LEVEL_OPTIONS
+config STEP_DELAY
+    int
+    default 2
+config STEP_DELAY
+    int "Step pulse duration (in microseconds)"
+    depends on CUSTOM_STEP_DELAY
+    help
+        Specify the duration of the stepper step pulse time. This
+        setting applies to all stepper drivers controlled by the
+        micro-controller. If this value is set to zero then the code
+        will "step" and "unstep" in the same C function.
+
+        The default is zero for 8-bit AVR based micro-controllers, as
+        it takes a little over 2us to step and unstep with this
+        setting.
+
+        The default for all other micro-controllers is 2us.
+
+        CUSTOMIZING THIS VALUE DOES NOT IMPROVE PERFORMANCE!
 
 # The HAVE_GPIO_x options allow boards to disable support for some
 # commands if the hardware does not support the feature.
@@ -54,13 +81,6 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 config HAVE_GPIO_BITBANGING
-    bool
-    default n
-
-config NO_UNSTEP_DELAY
-    # Slow micro-controllers do not require a delay before returning a
-    # stepper step pin to its default level.  A board can enable this
-    # option to optimize the stepper_event() handler in this case.
     bool
     default n
 

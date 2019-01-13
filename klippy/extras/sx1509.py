@@ -41,8 +41,9 @@ class SX1509(object):
                          REG_INPUT_DISABLE : 0, REG_ANALOG_DRIVER_ENABLE : 0}
         self.reg_i_on_dict = {reg : 0 for reg in REG_I_ON}
     def _build_config(self):
-        self._mcu.add_config_cmd("config_i2c oid=%d bus=%d rate=%d addr=%d" % (
-            self._oid, self._bus, self._freq, self._chip_address))
+        self._mcu.add_config_cmd(
+            "config_i2c oid=%d bus=%d rate=%d address=%d" % (
+                self._oid, self._bus, self._freq, self._chip_address))
         # Reset the chip
         self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
             self._oid, REG_RESET, 0x12))

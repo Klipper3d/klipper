@@ -13,6 +13,8 @@
 #include "sched.h" // struct timer
 #include "stepper.h" // command_config_stepper
 
+DECL_CONSTANT(STEP_DELAY, CONFIG_STEP_DELAY);
+
 
 /****************************************************************
  * Steppers
@@ -32,7 +34,7 @@ struct stepper {
     struct timer time;
     uint32_t interval;
     int16_t add;
-#if CONFIG_NO_UNSTEP_DELAY
+#if !CONFIG_STEP_DELAY
     uint16_t count;
 #define next_step_time time.waketime
 #else
@@ -68,7 +70,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     s->next_step_time += m->interval;
     s->add = m->add;
     s->interval = m->interval + m->add;
-    if (CONFIG_NO_UNSTEP_DELAY) {
+    if (!CONFIG_STEP_DELAY) {
         // On slow mcus see if the add can be optimized away
         s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
@@ -84,7 +86,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
         } else {
             s->time.waketime = s->next_step_time;
         }
-        s->count = m->count * 2;
+        s->count = (uint32_t)m->count * 2;
     }
     if (m->flags & MF_DIR) {
         s->position = -s->position + m->count;
@@ -98,14 +100,12 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     return SF_RESCHEDULE;
 }
 
-#define UNSTEP_TIME timer_from_us(2)
-
 // Timer callback - step the given stepper.
 uint_fast8_t
 stepper_event(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
-    if (CONFIG_NO_UNSTEP_DELAY) {
+    if (!CONFIG_STEP_DELAY) {
         // On slower mcus it is possible to simply step and unstep in
         // the same timer event.
         gpio_out_toggle_noirq(s->step_pin);
@@ -124,7 +124,8 @@ stepper_event(struct timer *t)
     }
 
     // On faster mcus, it is necessary to schedule the unstep event
-    uint32_t min_next_time = timer_read_time() + UNSTEP_TIME;
+    uint32_t step_delay = timer_from_us(CONFIG_STEP_DELAY);
+    uint32_t min_next_time = timer_read_time() + step_delay;
     gpio_out_toggle_noirq(s->step_pin);
     s->count--;
     if (likely(s->count & 1))
@@ -242,7 +243,7 @@ static uint32_t
 stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
-    if (CONFIG_NO_UNSTEP_DELAY)
+    if (!CONFIG_STEP_DELAY)
         position -= s->count;
     else
         position -= s->count / 2;

@@ -205,6 +205,8 @@ class ToolHead:
         self.mcu = self.all_mcus[0]
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self._handle_shutdown)
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
@@ -412,13 +414,9 @@ class ToolHead:
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
                  'printing_time': print_time - last_print_start_time }
-    def printer_state(self, state):
-        if state == 'shutdown':
-            try:
-                self.move_queue.reset()
-                self.reset_print_time()
-            except:
-                logging.exception("Exception in toolhead shutdown")
+    def _handle_shutdown(self):
+        self.move_queue.reset()
+        self.reset_print_time()
     def get_kinematics(self):
         return self.kin
     def get_max_velocity(self):
