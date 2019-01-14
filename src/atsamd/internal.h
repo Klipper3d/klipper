@@ -1,8 +1,15 @@
-#ifndef __SAMD21_INTERNAL_H
-#define __SAMD21_INTERNAL_H
-// Local definitions for samd21 code
+#ifndef __ATSAMD_INTERNAL_H
+#define __ATSAMD_INTERNAL_H
+// Local definitions for atsamd code
 
 #include <stdint.h> // uint32_t
+#include "autoconf.h" // CONFIG_MACH_SAMD21A
+
+#if CONFIG_MACH_SAMD21
+#include "samd21.h"
+#elif CONFIG_MACH_SAMD51
+#include "samd51.h"
+#endif
 
 #define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)

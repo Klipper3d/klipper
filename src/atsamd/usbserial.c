@@ -1,6 +1,6 @@
-// Hardware interface to USB on samd21
+// Hardware interface to USB on samd
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,7 +11,6 @@
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // enable_pclock
-#include "samd21.h" // USB
 #include "sched.h" // DECL_INIT
 
 
@@ -173,12 +172,16 @@ usb_set_configure(void)
 void
 usb_request_bootloader(void)
 {
-    if (CONFIG_FLASH_START) {
-        // Arduino Zero bootloader hack
-        irq_disable();
-        writel((void*)0x20007FFC, 0x07738135);
-        NVIC_SystemReset();
-    }
+    if (!CONFIG_FLASH_START)
+        return;
+    // Bootloader hack
+    irq_disable();
+#if CONFIG_MACH_SAMD21
+    writel((void*)0x20007FFC, 0x07738135);
+#elif CONFIG_MACH_SAMD51
+    writel((void*)(HSRAM_ADDR + HSRAM_SIZE - 4), 0xf01669ef);
+#endif
+    NVIC_SystemReset();
 }
 
 void
@@ -187,8 +190,9 @@ usbserial_init(void)
     // configure usb clock
     enable_pclock(USB_GCLK_ID, ID_USB);
     // configure USBD+ and USBD- pins
-    gpio_peripheral(GPIO('A', 24), 'G', 0);
-    gpio_peripheral(GPIO('A', 25), 'G', 0);
+    uint32_t ptype = CONFIG_MACH_SAMD21 ? 'G' : 'H';
+    gpio_peripheral(GPIO('A', 24), ptype, 0);
+    gpio_peripheral(GPIO('A', 25), ptype, 0);
     uint16_t trim = (readl((void*)USB_FUSES_TRIM_ADDR)
                      & USB_FUSES_TRIM_Msk) >> USB_FUSES_TRIM_Pos;
     uint16_t transp = (readl((void*)USB_FUSES_TRANSP_ADDR)
@@ -205,8 +209,19 @@ usbserial_init(void)
     USB->DEVICE.CTRLB.reg = 0;
     // enable irqs
     USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
+#if CONFIG_MACH_SAMD21
     NVIC_SetPriority(USB_IRQn, 1);
     NVIC_EnableIRQ(USB_IRQn);
+#elif CONFIG_MACH_SAMD51
+    NVIC_SetPriority(USB_0_IRQn, 1);
+    NVIC_SetPriority(USB_1_IRQn, 1);
+    NVIC_SetPriority(USB_2_IRQn, 1);
+    NVIC_SetPriority(USB_3_IRQn, 1);
+    NVIC_EnableIRQ(USB_0_IRQn);
+    NVIC_EnableIRQ(USB_1_IRQn);
+    NVIC_EnableIRQ(USB_2_IRQn);
+    NVIC_EnableIRQ(USB_3_IRQn);
+#endif
 }
 DECL_INIT(usbserial_init);
 
@@ -244,3 +259,9 @@ USB_Handler(void)
         usb_notify_bulk_in();
     }
 }
+
+// Aliases for irq handeler on SAMD51
+void USB_0_Handler(void) __visible __attribute__((alias("USB_Handler")));
+void USB_1_Handler(void) __visible __attribute__((alias("USB_Handler")));
+void USB_2_Handler(void) __visible __attribute__((alias("USB_Handler")));
+void USB_3_Handler(void) __visible __attribute__((alias("USB_Handler")));

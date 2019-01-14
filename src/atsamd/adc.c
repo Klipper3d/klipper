@@ -7,7 +7,6 @@
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_adc_read
 #include "internal.h" // GPIO
-#include "samd21.h" // ADC
 #include "sched.h" // sched_shutdown
 
 static const uint8_t adc_pins[] = {

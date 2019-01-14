@@ -1,13 +1,12 @@
-// spi support on samd21
+// spi support on samd
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "internal.h" // enable_pclock
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
-#include "samd21.h" // SERCOM4
 #include "sched.h" // sched_shutdown
 
 static void
@@ -41,7 +40,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     if (bus)
         shutdown("Invalid spi bus");
 
-    uint32_t ctrla = (SERCOM_SPI_CTRLA_MODE_SPI_MASTER
+    uint32_t ctrla = (SERCOM_SPI_CTRLA_MODE(3)
                       | (mode << SERCOM_SPI_CTRLA_CPHA_Pos)
                       | SERCOM_SPI_CTRLA_DIPO(0)
                       | SERCOM_SPI_CTRLA_DOPO(1)

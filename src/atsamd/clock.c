@@ -6,7 +6,6 @@
 
 #include "compiler.h" // DIV_ROUND_CLOSEST
 #include "internal.h" // enable_pclock
-#include "samd21.h" // GCLK
 
 // The "generic clock generators" that are configured
 #define CLKGEN_MAIN 0

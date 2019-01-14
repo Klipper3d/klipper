@@ -7,7 +7,6 @@
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_pwm_write
 #include "internal.h" // GPIO
-#include "samd21.h" // TCC0
 #include "sched.h" // sched_shutdown
 
 struct gpio_pwm_info {

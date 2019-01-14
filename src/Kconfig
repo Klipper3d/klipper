@@ -16,7 +16,7 @@ choice
     config MACH_ATSAM
         bool "SAM3/SAM4 (Due and Duet)"
     config MACH_ATSAMD
-        bool "SAMD21 (Arduino Zero)"
+        bool "SAMD21/SAMD51"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32F1
