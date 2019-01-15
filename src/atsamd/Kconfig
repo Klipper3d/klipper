@@ -28,12 +28,12 @@ config CLOCK_FREQ
 
 choice
     prompt "Bootloader offset"
-    config FLASH_START_0000
-        bool "No bootloader"
     config FLASH_START_2000
         bool "8KiB bootloader (Arduino Zero)"
     config FLASH_START_4000
         bool "16KiB bootloader (Arduino M0)"
+    config FLASH_START_0000
+        bool "No bootloader"
 endchoice
 
 config FLASH_START
