@@ -235,7 +235,7 @@ void SDHC1_Handler           ( void ) __attribute__ ((weak, alias("Dummy_Handler
 #endif
 
 /* Exception Table */
-__attribute__ ((section(".vectors")))
+__attribute__ ((section(".vectors"))) __attribute__((externally_visible))
 const DeviceVectors exception_table = {
 
         /* Configure Initial Stack Pointer, using linker-generated symbols */

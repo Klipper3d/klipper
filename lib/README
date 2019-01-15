@@ -36,7 +36,9 @@ bootloader. See samd21.patch for the modifications.
 The samd51 directory contains code from the
 Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.1.96 (extracted on 20190110).
+version 1.1.96 (extracted on 20190110). It has been modified to
+compile with gcc's LTO feature and to work with chips that have a
+bootloader. See samd51.patch for the modifications.
 
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
