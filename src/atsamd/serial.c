@@ -14,7 +14,7 @@ void
 serial_init(void)
 {
     // Enable serial clock
-    enable_pclock(SERCOM0_GCLK_ID_CORE, PM_APBCMASK_SERCOM0);
+    enable_pclock(SERCOM0_GCLK_ID_CORE, ID_SERCOM0);
     // Enable pins
     gpio_peripheral(GPIO('A', 10), 'C', 0);
     gpio_peripheral(GPIO('A', 11), 'C', 0);

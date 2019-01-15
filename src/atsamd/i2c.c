@@ -23,7 +23,7 @@ i2c_init(void)
     have_run_init = 1;
 
     // Setup clock
-    enable_pclock(SERCOM3_GCLK_ID_CORE, PM_APBCMASK_SERCOM3);
+    enable_pclock(SERCOM3_GCLK_ID_CORE, ID_SERCOM3);
 
     // Configure SDA, SCL pins
     gpio_peripheral(GPIO('A', 22), 'C', 0);

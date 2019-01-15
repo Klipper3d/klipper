@@ -28,7 +28,7 @@ adc_init(void)
     have_run_init = 1;
 
     // Enable adc clock
-    enable_pclock(ADC_GCLK_ID, PM_APBCMASK_ADC);
+    enable_pclock(ADC_GCLK_ID, ID_ADC);
 
     // Load calibraiton info
     uint32_t v = *((uint32_t*)ADC_FUSES_BIASCAL_ADDR);

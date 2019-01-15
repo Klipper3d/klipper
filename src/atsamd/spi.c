@@ -20,7 +20,7 @@ spi_init(uint32_t ctrla, uint32_t baud)
     have_run_init = 1;
 
     // Setup clock
-    enable_pclock(SERCOM4_GCLK_ID_CORE, PM_APBCMASK_SERCOM4);
+    enable_pclock(SERCOM4_GCLK_ID_CORE, ID_SERCOM4);
 
     // Configure MISO, MOSI, SCK pins
     gpio_peripheral(GPIO('A', 12), 'D', 0);

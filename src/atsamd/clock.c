@@ -36,10 +36,11 @@ route_pclock(uint32_t pclk_id, uint32_t clkgen_id)
 
 // Enable a peripheral clock and power to that peripheral
 void
-enable_pclock(uint32_t pclk_id, uint32_t pmask)
+enable_pclock(uint32_t pclk_id, uint32_t pm_id)
 {
     route_pclock(pclk_id, CLKGEN_MAIN);
-    PM->APBCMASK.reg |= pmask;
+    uint32_t pm_port = pm_id / 32, pm_bit = 1 << (pm_id % 32);
+    (&PM->APBAMASK.reg)[pm_port] |= pm_bit;
 }
 
 void

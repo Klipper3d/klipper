@@ -13,31 +13,31 @@
 struct gpio_pwm_info {
     uint32_t gpio;
     Tcc *tcc;
-    uint32_t clock_id, power_id, channel;
+    uint32_t pclk_id, pm_id, channel;
     char ptype;
 };
 
 static const struct gpio_pwm_info pwm_regs[] = {
-    { GPIO('A', 4), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 0, 'E' },
-    { GPIO('A', 5), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 1, 'E' },
-    { GPIO('A', 6), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 0, 'E' },
-    { GPIO('A', 7), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 1, 'E' },
-    { GPIO('A', 8), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 0, 'E' },
-    { GPIO('A', 9), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 1, 'E' },
-    { GPIO('A', 10), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 0, 'E' },
-    { GPIO('A', 11), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 1, 'E' },
-    { GPIO('A', 12), TCC2, TCC2_GCLK_ID, PM_APBCMASK_TCC2, 0, 'E' },
-    { GPIO('A', 13), TCC2, TCC2_GCLK_ID, PM_APBCMASK_TCC2, 1, 'E' },
-    { GPIO('A', 16), TCC2, TCC2_GCLK_ID, PM_APBCMASK_TCC2, 0, 'E' },
-    { GPIO('A', 17), TCC2, TCC2_GCLK_ID, PM_APBCMASK_TCC2, 1, 'E' },
-    { GPIO('A', 18), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 2, 'F' },
-    { GPIO('A', 19), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 3, 'F' },
-    { GPIO('A', 24), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 2, 'F' },
-    { GPIO('A', 25), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 3, 'F' },
-    { GPIO('A', 30), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 0, 'E' },
-    { GPIO('A', 31), TCC1, TCC1_GCLK_ID, PM_APBCMASK_TCC1, 1, 'E' },
-    { GPIO('B', 30), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 0, 'E' },
-    { GPIO('B', 31), TCC0, TCC0_GCLK_ID, PM_APBCMASK_TCC0, 1, 'E' },
+    { GPIO('A', 4), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
+    { GPIO('A', 5), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
+    { GPIO('A', 6), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
+    { GPIO('A', 7), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
+    { GPIO('A', 8), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
+    { GPIO('A', 9), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
+    { GPIO('A', 10), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
+    { GPIO('A', 11), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
+    { GPIO('A', 12), TCC2, TCC2_GCLK_ID, ID_TCC2, 0, 'E' },
+    { GPIO('A', 13), TCC2, TCC2_GCLK_ID, ID_TCC2, 1, 'E' },
+    { GPIO('A', 16), TCC2, TCC2_GCLK_ID, ID_TCC2, 0, 'E' },
+    { GPIO('A', 17), TCC2, TCC2_GCLK_ID, ID_TCC2, 1, 'E' },
+    { GPIO('A', 18), TCC0, TCC0_GCLK_ID, ID_TCC0, 2, 'F' },
+    { GPIO('A', 19), TCC0, TCC0_GCLK_ID, ID_TCC0, 3, 'F' },
+    { GPIO('A', 24), TCC1, TCC1_GCLK_ID, ID_TCC1, 2, 'F' },
+    { GPIO('A', 25), TCC1, TCC1_GCLK_ID, ID_TCC1, 3, 'F' },
+    { GPIO('A', 30), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
+    { GPIO('A', 31), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
+    { GPIO('B', 30), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
+    { GPIO('B', 31), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
 };
 
 #define MAX_PWM 255
@@ -57,7 +57,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     }
 
     // Enable timer clock
-    enable_pclock(p->clock_id, p->power_id);
+    enable_pclock(p->pclk_id, p->pm_id);
 
     // Map cycle_time to pwm clock divisor
     uint32_t cs;

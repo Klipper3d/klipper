@@ -185,7 +185,7 @@ void
 usbserial_init(void)
 {
     // configure usb clock
-    enable_pclock(USB_GCLK_ID, 0);
+    enable_pclock(USB_GCLK_ID, ID_USB);
     // configure USBD+ and USBD- pins
     gpio_peripheral(GPIO('A', 24), 'G', 0);
     gpio_peripheral(GPIO('A', 25), 'G', 0);

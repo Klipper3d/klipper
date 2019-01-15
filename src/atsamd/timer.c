@@ -37,8 +37,8 @@ void
 timer_init(void)
 {
     // Supply power and clock to the timer
-    enable_pclock(TC3_GCLK_ID, PM_APBCMASK_TC3);
-    enable_pclock(TC4_GCLK_ID, PM_APBCMASK_TC4);
+    enable_pclock(TC3_GCLK_ID, ID_TC3);
+    enable_pclock(TC4_GCLK_ID, ID_TC4);
 
     // Configure the timer
     TcCount32 *tc = &TC4->COUNT32;
