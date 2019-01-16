@@ -1,0 +1,258 @@
+# This file contains common pin mappings for Einsy Rambo boards. To use
+# this config, the firmware should be compiled for the AVR atmega2560.
+# See the example.cfg file for a description of available parameters.
+
+[mcu]
+serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_75535313630351C04232-if00
+baud: 250000
+pin_map: arduino
+
+[mcu eux]
+serial: /dev/serial/by-id/usb-Klipper_Klipper_firmware_12345-if00
+baud: 250000
+
+[stepper_x]
+step_pin: PC0
+dir_pin: PL0
+enable_pin: !PA7
+step_distance: 0.00625
+endstop_pin: tmc2130_stepper_x:virtual_endstop
+position_endstop: 0
+position_max: 171
+homing_speed: 50.0
+homing_retract_dist: 0
+homing_positive_dir: false
+
+[tmc2130 stepper_x]
+cs_pin: PG0
+microsteps: 32
+run_current: .9
+sense_resistor: 0.220
+diag1_pin: !PK2
+driver_SGT: 9
+interpolate: true
+
+[stepper_y]
+step_pin: PC1
+dir_pin: PL1
+enable_pin: !PA6
+step_distance: 0.00625
+endstop_pin: tmc2130_stepper_y:virtual_endstop
+position_endstop: 220
+position_max: 220
+position_min: 0
+homing_speed: 50.0
+homing_retract_dist: 0
+homing_positive_dir: true
+
+[tmc2130 stepper_y]
+cs_pin: PG2
+microsteps: 32
+run_current: .9
+hold_current: .5
+sense_resistor: 0.220
+diag1_pin: !PK7
+driver_SGT: 8
+
+[stepper_z]
+step_pin: PC2
+dir_pin: PL2
+enable_pin: !PA5
+step_distance: .0025
+endstop_pin: probe:z_virtual_endstop
+position_max: 190
+homing_positive_dir: false
+homing_speed: 8
+
+[homing_override]
+set_position_z: 0
+axes: z
+gcode:
+    G90 ; Uncomment these 2 lines to blindly lift the Z 2mm at start
+    G1 Z2 F600
+    G28 X0 Y0
+    G1 X100 Y100 F3600
+    G28 Z0
+
+[probe]
+x_offset: 20
+z_offset: 1.93
+pin: ^PB4
+speed: 10
+
+[bed_mesh]
+#horizontal_move_z: 1
+samples: 2
+sample_retract_dist: 4
+min_point: 0,20
+max_point: 130,175
+probe_count: 4,4
+bicubic_tension: .2
+mesh_pps: 2,2
+algorithm: bicubic
+
+[gcode_macro G29]
+gcode:
+ BED_MESH_CALIBRATE
+
+[tmc2130 stepper_z]
+cs_pin: PK5
+microsteps: 16
+run_current: .9
+sense_resistor: 0.220
+diag1_pin: !PK6
+interpolate: true
+
+
+#extruder 1 output X on eux
+
+[extruder]
+step_pin: eux:PA0
+dir_pin: !eux:PA1
+#enable_pin: !eux:PE7
+#endstop_pin: eux:^PE3
+step_distance: 0.007781
+nozzle_diameter: 0.500
+filament_diameter: 1.750
+max_extrude_cross_section: 4.0
+max_extrude_only_distance: 50.0
+#max_extrude_only_velocity:
+#max_extrude_only_accel:
+pressure_advance: 0.025
+pressure_advance_lookahead_time: 0.010
+heater_pin: PE5
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PF0
+smooth_time: 2.0
+control = pid
+pid_kp = 29.852
+pid_ki = 2.843
+pid_kd = 78.361
+#min_extrude_temp: 165
+min_temp: 0
+max_temp: 275
+deactivate_gcode: T0D
+activate_gcode: T0A
+
+[verify_heater extruder]
+heating_gain: 2
+check_gain_time:25
+hysteresis: 5
+max_error: 140
+[idle_timeout]
+gcode: M84
+timeout: 600
+
+
+
+#extruder 2 output Y on eux
+
+[extruder1]
+step_pin: eux:PA2
+dir_pin: eux:PA3
+enable_pin: !eux:PE6
+#endstop_pin: !eux:^PB0
+step_distance: 0.007781
+shared_heater: extruder
+nozzle_diameter: 0.500
+filament_diameter: 1.750
+max_extrude_cross_section: 4.0
+max_extrude_only_distance: 50.0
+#max_extrude_only_velocity:
+#max_extrude_only_accel:
+pressure_advance: 0.025
+pressure_advance_lookahead_time: 0.010
+deactivate_gcode: T1D
+activate_gcode: T1A
+
+#extruder 3 output Z on eux
+
+[extruder2]
+step_pin: eux:PA4
+dir_pin: eux:PA5
+enable_pin: !eux:PC7
+#endstop_pin: !eux:^PE4
+step_distance: 0.007781
+shared_heater: extruder
+nozzle_diameter: 0.500
+filament_diameter: 1.750
+max_extrude_cross_section: 4.0
+max_extrude_only_distance: 50.0
+#max_extrude_only_velocity:
+#max_extrude_only_accel:
+pressure_advance: 0.025
+pressure_advance_lookahead_time: 0.010
+deactivate_gcode: T2D
+activate_gcode: T2A
+
+#extruder 4 output E on eux
+
+[extruder3]
+step_pin: eux:PA6
+dir_pin: eux:PA7
+enable_pin: !eux:PC3
+#endstop_pin: !eux:^PB0 need to map?
+step_distance: 0.007781
+shared_heater: extruder
+nozzle_diameter: 0.500
+filament_diameter: 1.750
+max_extrude_cross_section: 4.0
+max_extrude_only_distance: 50.0
+#max_extrude_only_velocity:
+#max_extrude_only_accel:
+pressure_advance: 0.025
+pressure_advance_lookahead_time: 0.010
+deactivate_gcode: T3D
+activate_gcode: T3A
+
+[heater_bed]
+heater_pin: PG5
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PF2
+control: watermark
+min_temp: 0
+max_temp: 110
+
+[heater_fan my_nozzle_fan]
+pin: PH3
+heater: extruder
+heater_temp: 50.0
+fan_speed: 1.0
+
+[fan]
+pin: PH5
+
+#12v fan on eux
+#pin: eux:PC6
+
+
+[virtual_sdcard]
+path: ~/.octoprint/uploads/
+
+[printer]
+kinematics: cartesian
+max_velocity: 300
+max_accel: 2500
+max_z_velocity: 15
+max_z_accel: 30
+square_corner_velocity: 5.0
+#max_accel_to_decel:The default is half of max_accel.
+
+
+[endstop_phase stepper_z]
+endstop_align_zero: False
+
+#[display]
+#lcd_type:hd44780
+
+[static_digital_output yellow_led]
+pins: !PB7
+
+# Use the following on a Printrboard RevF to control stepper current.
+[mcp4728 stepper_current_dac]
+i2c_mcu: eux
+scale: 2.327
+channel_a: 1.3 # extruder_4
+channel_b: 1.1 # extruder_3
+channel_c: 1.1 # extruder_2
+channel_d: 1.1 # extruder_1
