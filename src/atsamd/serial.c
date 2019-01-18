@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/serial_irq.h" // serial_rx_data
 #include "internal.h" // enable_pclock
 #include "samd21.h" // SERCOM0
@@ -28,7 +27,8 @@ serial_init(void)
                      | SERCOM_USART_CTRLA_RXPO(3));
     su->CTRLA.reg = areg;
     su->CTRLB.reg = SERCOM_USART_CTRLB_TXEN | SERCOM_USART_CTRLB_RXEN;
-    uint32_t baud8 = CONFIG_CLOCK_FREQ / (2 * CONFIG_SERIAL_BAUD);
+    uint32_t freq = get_pclock_frequency(SERCOM0_GCLK_ID_CORE);
+    uint32_t baud8 = freq / (2 * CONFIG_SERIAL_BAUD);
     su->BAUD.reg = (SERCOM_USART_BAUD_FRAC_BAUD(baud8 / 8)
                     | SERCOM_USART_BAUD_FRAC_FP(baud8 % 8));
     NVIC_SetPriority(SERCOM0_IRQn, 0);

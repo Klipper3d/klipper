@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "internal.h" // enable_pclock
 #include "command.h" // shutdown
 #include "gpio.h" // i2c_setup
@@ -38,8 +37,8 @@ i2c_init(void)
                      | SERCOM_I2CM_STATUS_MEXTTOUT
                      | SERCOM_I2CM_CTRLA_MODE_I2C_MASTER);
     si->CTRLA.reg = areg;
-    uint32_t baud = (CONFIG_CLOCK_FREQ / I2C_FREQ
-                     - 10 - CONFIG_CLOCK_FREQ*TIME_RISE/1000000000) / 2;
+    uint32_t freq = get_pclock_frequency(SERCOM3_GCLK_ID_CORE);
+    uint32_t baud = (freq/I2C_FREQ - 10 - freq*TIME_RISE/1000000000) / 2;
     si->BAUD.reg = baud;
     si->CTRLA.reg = areg | SERCOM_I2CM_CTRLA_ENABLE;
     while (si->SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_ENABLE)

@@ -43,6 +43,13 @@ enable_pclock(uint32_t pclk_id, uint32_t pm_id)
     (&PM->APBAMASK.reg)[pm_port] |= pm_bit;
 }
 
+// Return the frequency of the given peripheral clock
+uint32_t
+get_pclock_frequency(uint32_t pclk_id)
+{
+    return FREQ_MAIN;
+}
+
 void
 SystemInit(void)
 {

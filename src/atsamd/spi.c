@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "internal.h" // enable_pclock
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
@@ -47,7 +46,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
                       | SERCOM_SPI_CTRLA_DIPO(0)
                       | SERCOM_SPI_CTRLA_DOPO(1)
                       | SERCOM_SPI_CTRLA_ENABLE);
-    uint32_t baud = CONFIG_CLOCK_FREQ / (2 * rate) - 1;
+    uint32_t baud = get_pclock_frequency(SERCOM4_GCLK_ID_CORE) / (2 * rate) - 1;
     spi_init(ctrla, baud);
     return (struct spi_config){ .ctrla = ctrla, .baud = baud };
 }
