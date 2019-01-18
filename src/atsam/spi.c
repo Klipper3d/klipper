@@ -23,16 +23,16 @@ struct spi_info {
 };
 
 static const struct spi_info spi_bus[] = {
-#if CONFIG_MACH_SAM3X8E
+#if CONFIG_MACH_SAM3X
     { SPI0, ID_SPI0, GPIO('A', 25), GPIO('A', 26), GPIO('A', 27), 'A', 'A' },
     { USART0, ID_USART0, GPIO('A', 10), GPIO('A', 11), GPIO('A', 17), 'A', 'B'},
     { USART1, ID_USART1, GPIO('A', 12), GPIO('A', 13), GPIO('A', 16), 'A', 'A'},
     { USART2, ID_USART2, GPIO('B', 21), GPIO('B', 20), GPIO('B', 24), 'A', 'A'},
-#elif CONFIG_MACH_SAM4S8C
+#elif CONFIG_MACH_SAM4S
     { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
     { USART0, ID_USART0, GPIO('A', 5), GPIO('A', 6), GPIO('A', 2), 'A', 'B' },
     { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
-#elif CONFIG_MACH_SAM4E8E
+#elif CONFIG_MACH_SAM4E
     { USART0, ID_USART0, GPIO('B', 0), GPIO('B', 1), GPIO('B', 13), 'C', 'C' },
     { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
     { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
@@ -42,7 +42,7 @@ static const struct spi_info spi_bus[] = {
 static int
 is_spihw(void *dev)
 {
-#if CONFIG_MACH_SAM3X8E
+#if CONFIG_MACH_SAM3X
     return dev == SPI0;
 #else
     return dev == SPI;

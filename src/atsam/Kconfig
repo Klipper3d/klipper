@@ -19,11 +19,25 @@ choice
     prompt "Processor model"
     config MACH_SAM3X8E
         bool "SAM3x8e (Arduino Due)"
+        select MACH_SAM3X
     config MACH_SAM4S8C
         bool "SAM4s8c (Duet Maestro)"
+        select MACH_SAM4S
     config MACH_SAM4E8E
         bool "SAM4e8e (Duet Wifi/Eth)"
+        select MACH_SAM4E
 endchoice
+
+config MACH_SAM3X
+    bool
+config MACH_SAM4
+    bool
+config MACH_SAM4S
+    bool
+    select MACH_SAM4
+config MACH_SAM4E
+    bool
+    select MACH_SAM4
 
 config MCU
     string
@@ -33,12 +47,12 @@ config MCU
 
 config CLOCK_FREQ
     int
-    default 42000000 if MACH_SAM3X8E # 84000000/2
-    default 15000000 if MACH_SAM4S8C # 120000000/8
-    default 60000000 if MACH_SAM4E8E # 120000000/2
+    default 42000000 if MACH_SAM3X # 84000000/2
+    default 15000000 if MACH_SAM4S # 120000000/8
+    default 60000000 if MACH_SAM4E # 120000000/2
 
 config USBSERIAL
-    depends on MACH_SAM4S8C || MACH_SAM4E8E
+    depends on MACH_SAM4
     bool "Use USB for communication (instead of serial)"
     default y
 config SERIAL

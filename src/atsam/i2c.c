@@ -12,12 +12,12 @@
 #include "sched.h" // sched_shutdown
 
 // I2C pin definitions
-#if CONFIG_MACH_SAM3X8E
+#if CONFIG_MACH_SAM3X
 #define TWI0_SCL_GPIO GPIO('A', 18)
 #define TWI0_SDA_GPIO GPIO('A', 17)
 #define TWI1_SCL_GPIO GPIO('B', 13)
 #define TWI1_SDA_GPIO GPIO('B', 12)
-#elif CONFIG_MACH_SAM4S8C || CONFIG_MACH_SAM4E8E
+#elif CONFIG_MACH_SAM4
 #define TWI0_SCL_GPIO GPIO('A', 4)
 #define TWI0_SDA_GPIO GPIO('A', 3)
 #define TWI1_SCL_GPIO GPIO('B', 5)
