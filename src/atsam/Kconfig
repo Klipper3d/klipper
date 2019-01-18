@@ -20,6 +20,9 @@ choice
     config MACH_SAM3X8E
         bool "SAM3x8e (Arduino Due)"
         select MACH_SAM3X
+    config MACH_SAM3X8C
+        bool "SAM3x8c (Printrboard G2)"
+        select MACH_SAM3X
     config MACH_SAM4S8C
         bool "SAM4s8c (Duet Maestro)"
         select MACH_SAM4S
@@ -42,6 +45,7 @@ config MACH_SAM4E
 config MCU
     string
     default "sam3x8e" if MACH_SAM3X8E
+    default "sam3x8c" if MACH_SAM3X8C
     default "sam4s8c" if MACH_SAM4S8C
     default "sam4e8e" if MACH_SAM4E8E
 

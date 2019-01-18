@@ -14,6 +14,8 @@
 static Pio * const digital_regs[] = {
 #if CONFIG_MACH_SAM3X8E
     PIOA, PIOB, PIOC, PIOD
+#elif CONFIG_MACH_SAM3X8C
+    PIOA, PIOB
 #elif CONFIG_MACH_SAM4S8C
     PIOA, PIOB, PIOC
 #elif CONFIG_MACH_SAM4E8E

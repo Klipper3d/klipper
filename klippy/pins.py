@@ -44,7 +44,7 @@ MCU_PINS = {
     "at90usb1286": port_pins(6), "at90usb646": port_pins(6),
     "atmega32u4": port_pins(6),
     "atmega1280": port_pins(12), "atmega2560": port_pins(12),
-    "sam3x8e": port_pins(4, 32),
+    "sam3x8e": port_pins(4, 32), "sam3x8c": port_pins(2, 32),
     "sam4s8c": port_pins(3, 32), "sam4e8e" : port_pins(5, 32),
     "samd21g": port_pins(2, 32),
     "stm32f103": port_pins(5, 16),
