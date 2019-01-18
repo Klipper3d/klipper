@@ -15,8 +15,11 @@ MAXBUFFER=2.
 STATS_INTERVAL=5.
 TASK_MAX=0.0025
 
-APPLY_PREFIX = ['mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
-                'bytes_read', 'bytes_retransmit', 'freq', 'adj']
+APPLY_PREFIX = [
+    'mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
+    'bytes_read', 'bytes_retransmit', 'freq', 'adj',
+    'target', 'temp', 'pwm'
+]
 
 def parse_log(logname, mcu):
     if mcu is None:
@@ -139,7 +142,6 @@ def plot_frequency(data, outname, mcu):
     graph_keys = { key: ([], []) for key in all_keys
                    if (key in ("freq", "adj") or (not one_mcu and (
                            key.endswith(":freq") or key.endswith(":adj")))) }
-    basetime = lasttime = data[0]['#sampletime']
     for d in data:
         st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
         for key, (times, values) in graph_keys.items():
@@ -168,11 +170,47 @@ def plot_frequency(data, outname, mcu):
     fig.set_size_inches(8, 6)
     fig.savefig(outname)
 
+def plot_temperature(data, outname, heater):
+    temp_key = heater + ':' + 'temp'
+    target_key = heater + ':' + 'target'
+    pwm_key = heater + ':' + 'pwm'
+    times = []
+    temps = []
+    targets = []
+    pwm = []
+    for d in data:
+        temp = d.get(temp_key)
+        if temp is None:
+            continue
+        times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
+        temps.append(float(temp))
+        pwm.append(float(d[pwm_key]))
+        targets.append(float(d[target_key]))
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("Temperature of heater %s" % (heater,))
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Temperature')
+    ax1.plot_date(times, temps, 'r', label='Measured temp', alpha=0.8)
+    ax1.plot_date(times, targets, 'g', label='Target', alpha=0.8)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('pwm')
+    ax2.plot_date(times, pwm, 'y', label='pwm', alpha=0.8)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.grid(True)
+    fig.set_size_inches(8, 6)
+    fig.savefig(outname)
+
 def main():
     usage = "%prog [options] <logfile> <outname>"
     opts = optparse.OptionParser(usage)
     opts.add_option("-f", "--frequency", action="store_true",
                     help="graph mcu frequency")
+    opts.add_option("-t", "--temperature", type="string", dest="heater",
+                    default=None, help="graph heater temperature")
     opts.add_option("-m", "--mcu", type="string", dest="mcu", default=None,
                     help="limit stats to the given mcu")
     options, args = opts.parse_args()
@@ -181,6 +219,9 @@ def main():
     logname, outname = args
     data = parse_log(logname, options.mcu)
     if not data:
+        return
+    if options.heater is not None:
+        plot_temperature(data, outname, options.heater)
         return
     if options.frequency:
         plot_frequency(data, outname, options.mcu)

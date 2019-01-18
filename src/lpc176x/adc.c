@@ -6,6 +6,7 @@
 
 #include "LPC17xx.h" // LPC_PINCON
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_adc_setup
@@ -24,6 +25,17 @@ static const uint8_t adc_pin_funcs[] = {
 #define ADC_FREQ_MAX 13000000
 DECL_CONSTANT(ADC_MAX, 4095);
 
+// The lpc176x adc is extremely noisy. Implement a 5 entry median
+// filter to weed out obviously incorrect readings.
+static struct {
+    uint32_t adcr;
+    uint16_t pos;
+    uint16_t chan;
+    uint16_t samples[5];
+} adc_status;
+
+enum { ADC_DONE=0x0100 };
+
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
@@ -36,20 +48,37 @@ gpio_adc_setup(uint8_t pin)
             break;
     }
 
-    uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX) - 1;
-    uint32_t adcr = (1<<21) | ((prescal & 0xff) << 8);
     if (!is_enabled_pclock(PCLK_ADC)) {
         // Power up ADC
         enable_pclock(PCLK_ADC);
-        LPC_ADC->ADCR = adcr;
+        uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX) - 1;
+        LPC_ADC->ADCR = adc_status.adcr = (1<<21) | ((prescal & 0xff) << 8);
+        LPC_ADC->ADINTEN = 0xff;
+        adc_status.chan = ADC_DONE;
+        NVIC_SetPriority(ADC_IRQn, 0);
+        NVIC_EnableIRQ(ADC_IRQn);
     }
 
     gpio_peripheral(pin, adc_pin_funcs[chan], 0);
 
-    return (struct gpio_adc){ .cmd = adcr | (1 << chan) | (1 << 24) };
+    return (struct gpio_adc){ .chan = chan };
 }
 
-static uint32_t adc_status;
+// ADC hardware irq handler
+void __visible
+ADC_IRQHandler(void)
+{
+    uint32_t pos = adc_status.pos, chan = adc_status.chan & 0xff;
+    uint32_t result = (&LPC_ADC->ADDR0)[chan];
+    if (pos >= ARRAY_SIZE(adc_status.samples))
+        // All samples complete
+        return;
+    if (pos >= ARRAY_SIZE(adc_status.samples) - 2)
+        // Turn off burst mode
+        LPC_ADC->ADCR = adc_status.adcr | (1 << chan);
+    adc_status.samples[pos++] = (result >> 4) & 0x0fff;
+    adc_status.pos = pos;
+}
 
 // Try to sample a value. Returns zero if sample ready, otherwise
 // returns the number of clock ticks the caller should wait before
@@ -57,40 +86,61 @@ static uint32_t adc_status;
 uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
-    uint32_t status = adc_status;
-    if (status == g.cmd) {
+    uint32_t chan = adc_status.chan;
+    if (chan == g.chan) {
         // Sample already underway - check if it is ready
-        uint32_t val = LPC_ADC->ADGDR;
-        if (val & (1<<31))
+        if (adc_status.pos >= ARRAY_SIZE(adc_status.samples))
             // Sample ready
             return 0;
         goto need_delay;
     }
-    if (status)
+    if (!(chan & ADC_DONE))
         // ADC busy on some other channel
         goto need_delay;
 
     // Start new sample
-    adc_status = g.cmd;
-    LPC_ADC->ADCR = g.cmd;
+    adc_status.pos = 0;
+    adc_status.chan = g.chan;
+    LPC_ADC->ADCR = adc_status.adcr | (1 << g.chan) | (1<<16);
 
 need_delay:
-    return (65 * DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX)
-            + timer_from_us(10));
+    return ((64 * DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX)
+             * ARRAY_SIZE(adc_status.samples)) / 4 + timer_from_us(10));
 }
+
+#define ORDER(r1, r2) do {                                      \
+        if (r1 > r2) { uint32_t t = r1; r1 = r2; r2 = t; }      \
+    } while (0)
 
 // Read a value; use only after gpio_adc_sample() returns zero
 uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
-    adc_status = 0;
-    return (LPC_ADC->ADGDR >> 4) & 0x0fff;
+    adc_status.chan |= ADC_DONE;
+    // Perform median filter on 5 read samples
+    uint16_t *p = adc_status.samples;
+    uint32_t v0 = p[0], v4 = p[1], v1 = p[2], v3 = p[3], v2 = p[4];
+    ORDER(v0, v4);
+    ORDER(v1, v3);
+    ORDER(v0, v1);
+    ORDER(v3, v4);
+    ORDER(v1, v3);
+    ORDER(v1, v2);
+    ORDER(v2, v3);
+    return v2;
 }
 
 // Cancel a sample that may have been started with gpio_adc_sample()
 void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
-    if (adc_status == g.cmd)
-        adc_status = 0;
+    uint32_t chan = adc_status.chan;
+    if (chan != g.chan)
+        return;
+    irqstatus_t flag = irq_save();
+    LPC_ADC->ADCR = adc_status.adcr;
+    adc_status.chan = chan | ADC_DONE;
+    adc_status.pos = ARRAY_SIZE(adc_status.samples);
+    (&LPC_ADC->ADDR0)[chan & 0xff];
+    irq_restore(flag);
 }
