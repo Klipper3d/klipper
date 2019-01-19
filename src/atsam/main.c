@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/irq.h" // irq_disable
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
@@ -33,7 +34,7 @@ DECL_INIT(watchdog_init);
 
 
 /****************************************************************
- * misc functions
+ * Peripheral clocks
  ****************************************************************/
 
 // Check if a peripheral clock has been enabled
@@ -56,6 +57,11 @@ enable_pclock(uint32_t id)
         PMC->PMC_PCER1 = 1 << (id - 32);
 }
 
+
+/****************************************************************
+ * Resets
+ ****************************************************************/
+
 void
 command_reset(uint32_t *args)
 {
@@ -66,6 +72,35 @@ command_reset(uint32_t *args)
         ;
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
+
+#if CONFIG_MACH_SAM3X || CONFIG_MACH_SAM4S
+#define EFC_HW EFC0
+#elif CONFIG_MACH_SAM4E
+#define EFC_HW EFC
+#endif
+
+void noinline __aligned(16) // align for predictable flash code access
+usb_request_bootloader(void)
+{
+    irq_disable();
+    // Request boot from ROM (instead of boot from flash)
+    while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
+        ;
+    EFC_HW->EEFC_FCR = (EEFC_FCR_FCMD_CGPB | EEFC_FCR_FARG(1)
+                        | EEFC_FCR_FKEY_PASSWD);
+    while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
+        ;
+    // Reboot
+    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
+                     | RSTC_CR_PERRST);
+    for (;;)
+        ;
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
 
 // Main entry point
 int

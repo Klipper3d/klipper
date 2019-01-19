@@ -52,7 +52,6 @@ config CLOCK_FREQ
     default 60000000 if MACH_SAM4E # 120000000/2
 
 config USBSERIAL
-    depends on MACH_SAM4
     bool "Use USB for communication (instead of serial)"
     default y
 config SERIAL

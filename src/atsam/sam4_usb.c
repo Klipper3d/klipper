@@ -159,29 +159,6 @@ usb_set_configure(void)
     UDP->UDP_GLB_STAT |= UDP_GLB_STAT_CONFG;
 }
 
-#if CONFIG_MACH_SAM4S8C
-#define EFC_HW EFC0
-#elif CONFIG_MACH_SAM4E8E
-#define EFC_HW EFC
-#endif
-
-void noinline __aligned(16) // align for predictable flash code access
-usb_request_bootloader(void)
-{
-    irq_disable();
-    // Request boot from ROM (instead of boot from flash)
-    while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
-        ;
-    EFC_HW->EEFC_FCR = (EEFC_FCR_FCMD_CGPB | EEFC_FCR_FARG(1)
-                        | EEFC_FCR_FKEY_PASSWD);
-    while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
-        ;
-    // Reboot
-    RSTC->RSTC_CR = RSTC_CR_KEY(0xA5) | RSTC_CR_PROCRST | RSTC_CR_PERRST;
-    for (;;)
-        ;
-}
-
 void
 usbserial_init(void)
 {
