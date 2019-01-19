@@ -137,11 +137,12 @@ represent total number of steps per second on the micro-controller.
 | SAM4S8C ARM                 | 455K              | 455K              |
 | Smoothieboard (ARM LPC1768) | 487K              | 487K              |
 | Smoothieboard (ARM LPC1769) | 584K              | 584K              |
+| SAMD51 ARM                  | 630K              | 630K              |
 | SAM4E8E ARM                 | 638K              | 638K              |
 | Beaglebone PRU              | 680K              | 680K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the STM32F103, Arduino Zero, and Due, the highest
 step rate is with two simultaneous steppers stepping. On the PRU,
-SAM4S8C, SAM4E8E, and LPC176x the highest step rate is with three
-simultaneous steppers.
+SAMD51, SAM4S8C, SAM4E8E, and LPC176x the highest step rate is with
+three simultaneous steppers.

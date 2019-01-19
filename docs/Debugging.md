@@ -390,6 +390,23 @@ The test was last run on commit `b161a69e` with gcc version
 stepper result is `SET ticks 277`, the best dual stepper result is
 `SET ticks 410`, and the best three stepper result is `SET ticks 664`.
 
+### SAMD51 step rate benchmark ###
+
+The following configuration sequence is used on the SAMD51:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA22 dir_pin=PA20 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PA22 dir_pin=PA21 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA22 dir_pin=PA19 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `8cd83b4c` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD51G19A
+micro-controller. The best single stepper result is `SET ticks 114`,
+the best dual stepper result is `SET ticks 114`, and the best three
+stepper result is `SET ticks 119`.
+
 ## Command dispatch benchmark ##
 
 The command dispatch benchmark tests how many "dummy" commands the
@@ -419,6 +436,7 @@ commands per second is then `100000 * mcu_frequency / clock_diff`.
 | lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | sam4s8c (USB)       | 579K | 8e0eb0d5 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| samd51 (USB)        | 620K | 8cd83b4c | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 
 Host Benchmarks
 ===============
