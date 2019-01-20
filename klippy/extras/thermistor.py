@@ -1,6 +1,6 @@
 # Temperature measurements with thermistors
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -13,27 +13,18 @@ RANGE_CHECK_COUNT = 4
 
 # Analog voltage to temperature converter for thermistors
 class Thermistor:
-    def __init__(self, config, params):
-        self.name = config.get_name()
-        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        ppins = config.get_printer().lookup_object('pins')
-        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        self.temperature_callback = None
+    def __init__(self, pullup):
+        self.pullup = pullup
         self.c1 = self.c2 = self.c3 = 0.
-        if 'beta' in params:
-            self.calc_coefficients_beta(params, params['beta'])
-        else:
-            self.calc_coefficients(params)
-    def calc_coefficients(self, params):
+    def setup_coefficients(self, t1, r1, t2, r2, t3, r3, name=""):
         # Calculate Steinhart-Hart coefficents from temp measurements.
         # Arrange samples as 3 linear equations and solve for c1, c2, and c3.
-        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
-        inv_t2 = 1. / (params['t2'] - KELVIN_TO_CELCIUS)
-        inv_t3 = 1. / (params['t3'] - KELVIN_TO_CELCIUS)
-        ln_r1 = math.log(params['r1'])
-        ln_r2 = math.log(params['r2'])
-        ln_r3 = math.log(params['r3'])
+        inv_t1 = 1. / (t1 - KELVIN_TO_CELCIUS)
+        inv_t2 = 1. / (t2 - KELVIN_TO_CELCIUS)
+        inv_t3 = 1. / (t3 - KELVIN_TO_CELCIUS)
+        ln_r1 = math.log(r1)
+        ln_r2 = math.log(r2)
+        ln_r3 = math.log(r3)
         ln3_r1, ln3_r2, ln3_r3 = ln_r1**3, ln_r2**3, ln_r3**3
 
         inv_t12, inv_t13 = inv_t1 - inv_t2, inv_t1 - inv_t3
@@ -44,37 +35,27 @@ class Thermistor:
                    / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
         if self.c3 <= 0.:
             beta = ln_r13 / inv_t13
-            logging.warn("Using thermistor beta %.3f in heater %s",
-                         beta, self.name)
-            self.calc_coefficients_beta(params, beta)
+            logging.warn("Using thermistor beta %.3f in heater %s", beta, name)
+            self.setup_coefficients_beta(t1, r1, beta)
             return
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
         self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
-    def calc_coefficients_beta(self, params, beta):
+    def setup_coefficients_beta(self, t1, r1, beta):
         # Calculate equivalent Steinhart-Hart coefficents from beta
-        inv_t1 = 1. / (params['t1'] - KELVIN_TO_CELCIUS)
-        ln_r1 = math.log(params['r1'])
+        inv_t1 = 1. / (t1 - KELVIN_TO_CELCIUS)
+        ln_r1 = math.log(r1)
         self.c3 = 0.
         self.c2 = 1. / beta
         self.c1 = inv_t1 - self.c2 * ln_r1
-    def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
-    def setup_callback(self, temperature_callback):
-        self.temperature_callback = temperature_callback
-    def get_report_time_delta(self):
-        return REPORT_TIME
-    def adc_callback(self, read_time, read_value):
+    def calc_temp(self, adc):
         # Calculate temperature from adc
-        adc = max(.00001, min(.99999, read_value))
+        adc = max(.00001, min(.99999, adc))
         r = self.pullup * adc / (1.0 - adc)
         ln_r = math.log(r)
         inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
-        temp = 1.0/inv_t + KELVIN_TO_CELCIUS
-        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
+        return 1.0/inv_t + KELVIN_TO_CELCIUS
     def calc_adc(self, temp):
+        # Calculate adc reading from a temperature
         if temp <= KELVIN_TO_CELCIUS:
             return 1.
         inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
@@ -87,6 +68,34 @@ class Thermistor:
             ln_r = (inv_t - self.c1) / self.c2
         r = math.exp(ln_r)
         return r / (self.pullup + r)
+
+# Thermistor interface for heater temperature callbacks
+class PrinterThermistor:
+    def __init__(self, config, params):
+        ppins = config.get_printer().lookup_object('pins')
+        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
+        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        self.thermistor = Thermistor(pullup)
+        if 'beta' in params:
+            self.thermistor.setup_coefficients_beta(
+                params['t1'], params['r1'], params['beta'])
+        else:
+            self.thermistor.setup_coefficients(
+                params['t1'], params['r1'], params['t2'], params['r2'],
+                params['t3'], params['r3'], name=config.get_name())
+    def setup_callback(self, temperature_callback):
+        self.temperature_callback = temperature_callback
+    def get_report_time_delta(self):
+        return REPORT_TIME
+    def adc_callback(self, read_time, read_value):
+        temp = self.thermistor.calc_temp(read_value)
+        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
+    def setup_minmax(self, min_temp, max_temp):
+        adc_range = [self.thermistor.calc_adc(t) for t in [min_temp, max_temp]]
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range),
+                                  range_check_count=RANGE_CHECK_COUNT)
 
 # Custom defined thermistors from the config file
 class CustomThermistor:
@@ -106,7 +115,7 @@ class CustomThermistor:
         self.params = {'t1': t1, 'r1': r1, 't2': t2, 'r2': r2,
                        't3': t3, 'r3': r3}
     def create(self, config):
-        return Thermistor(config, self.params)
+        return PrinterThermistor(config, self.params)
 
 # Default sensors
 Sensors = {
@@ -125,7 +134,7 @@ def load_config(config):
     # Register default thermistor types
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in Sensors.items():
-        func = (lambda config, params=params: Thermistor(config, params))
+        func = (lambda config, params=params: PrinterThermistor(config, params))
         pheater.add_sensor(sensor_type, func)
 
 def load_config_prefix(config):
