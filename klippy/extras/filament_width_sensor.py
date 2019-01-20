@@ -44,7 +44,7 @@ class FilamentWidthSensor:
 
         # Start extrude factor update timer
         self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
-        
+
     def adc_callback(self, read_time, read_value):
         # read sensor value
         self.lastFilamentWidthReading = float("{0:.2f}".format(max(.00001, min(.99999, read_value)) * 5))
@@ -89,6 +89,6 @@ class FilamentWidthSensor:
         else:
             response += "Filament NOT present"
         self.gcode.respond(response)
-        
+
 def load_config(config):
     return FilamentWidthSensor(config)
