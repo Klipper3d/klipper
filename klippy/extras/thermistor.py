@@ -69,33 +69,38 @@ class Thermistor:
         r = math.exp(ln_r)
         return r / (self.pullup + r)
 
-# Thermistor interface for heater temperature callbacks
-class PrinterThermistor:
-    def __init__(self, config, params):
+# Interface between ADC and heater temperature callbacks
+class PrinterADCtoTemperature:
+    def __init__(self, config, adc_convert):
+        self.adc_convert = adc_convert
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-        self.thermistor = Thermistor(pullup)
-        if 'beta' in params:
-            self.thermistor.setup_coefficients_beta(
-                params['t1'], params['r1'], params['beta'])
-        else:
-            self.thermistor.setup_coefficients(
-                params['t1'], params['r1'], params['t2'], params['r2'],
-                params['t3'], params['r3'], name=config.get_name())
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
         return REPORT_TIME
     def adc_callback(self, read_time, read_value):
-        temp = self.thermistor.calc_temp(read_value)
+        temp = self.adc_convert.calc_temp(read_value)
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.thermistor.calc_adc(t) for t in [min_temp, max_temp]]
+        adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
         self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
                                   minval=min(adc_range), maxval=max(adc_range),
                                   range_check_count=RANGE_CHECK_COUNT)
+
+# Create an ADC converter with a thermistor
+def PrinterThermistor(config, params):
+    pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+    thermistor = Thermistor(pullup)
+    if 'beta' in params:
+        thermistor.setup_coefficients_beta(
+            params['t1'], params['r1'], params['beta'])
+    else:
+        thermistor.setup_coefficients(
+            params['t1'], params['r1'], params['t2'], params['r2'],
+            params['t3'], params['r3'], name=config.get_name())
+    return PrinterADCtoTemperature(config, thermistor)
 
 # Custom defined thermistors from the config file
 class CustomThermistor:
