@@ -5,18 +5,44 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
 
+
+######################################################################
+# Interface between MCU adc and heater temperature callbacks
+######################################################################
+
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
 
-# Linear style conversion chips calibrated with two temp measurements
-class Linear:
-    def __init__(self, config, params):
+# Interface between ADC and heater temperature callbacks
+class PrinterADCtoTemperature:
+    def __init__(self, config, adc_convert):
+        self.adc_convert = adc_convert
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        self.temperature_callback = None
+    def setup_callback(self, temperature_callback):
+        self.temperature_callback = temperature_callback
+    def get_report_time_delta(self):
+        return REPORT_TIME
+    def adc_callback(self, read_time, read_value):
+        temp = self.adc_convert.calc_temp(read_value)
+        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
+    def setup_minmax(self, min_temp, max_temp):
+        adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range),
+                                  range_check_count=RANGE_CHECK_COUNT)
+
+
+######################################################################
+# Linear voltage sensors
+######################################################################
+
+# Linear style conversion chips calibrated with two temp measurements
+class Linear:
+    def __init__(self, config, params):
         self.adc_samples = []
         self.slope_samples = []
         self.calc_coefficients(config, params)
@@ -48,20 +74,10 @@ class Linear:
             raise config.error(
                 "adc_temperature needs two volt and temperature measurements")
         self.adc_samples[-1] = 1.
-    def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
-    def setup_callback(self, temperature_callback):
-        self.temperature_callback = temperature_callback
-    def get_report_time_delta(self):
-        return REPORT_TIME
-    def adc_callback(self, read_time, read_value):
-        pos = bisect.bisect(self.adc_samples, read_value)
+    def calc_temp(self, adc):
+        pos = bisect.bisect(self.adc_samples, adc)
         gain, offset = self.slope_samples[pos]
-        temp = read_value * gain + offset
-        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
+        return read_value * gain + offset
     def calc_adc(self, temp):
         temps = [adc * gain + offset for adc, (gain, offset) in zip(
             self.adc_samples, self.slope_samples)]
@@ -86,7 +102,8 @@ class CustomLinear:
             v = config.getfloat("voltage%d" % (i,))
             self.params.append((t, v))
     def create(self, config):
-        return Linear(config, self.params)
+        lv = Linear(config, self.params)
+        return PrinterADCtoTemperature(config, lv)
 
 AD595 = [
     (0., .0027), (10., .101), (20., .200), (25., .250), (30., .300),
@@ -114,7 +131,8 @@ def load_config(config):
     # Register default sensors
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in [("AD595", AD595), ("PT100 INA826", PT100)]:
-        func = (lambda config, params=params: Linear(config, params))
+        func = (lambda config, params=params:
+                PrinterADCtoTemperature(config, Linear(config, params)))
         pheater.add_sensor(sensor_type, func)
 
 def load_config_prefix(config):
