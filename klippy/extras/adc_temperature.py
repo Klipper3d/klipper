@@ -119,6 +119,50 @@ class CustomLinearVoltage:
         lv = LinearVoltage(config, self.params)
         return PrinterADCtoTemperature(config, lv)
 
+
+######################################################################
+# Linear resistance to temperature converter
+######################################################################
+
+# Linear resistance calibrated with two temp measurements
+class LinearResistance:
+    def __init__(self, config, samples):
+        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        try:
+            self.li = LinearInterpolate(samples)
+        except ValueError as e:
+            raise config.error("adc_temperature %s in heater %s" % (
+                str(e), config.get_name()))
+    def calc_temp(self, adc):
+        # Calculate temperature from adc
+        adc = max(.00001, min(.99999, adc))
+        r = self.pullup * adc / (1.0 - adc)
+        return self.li.interpolate(r)
+    def calc_adc(self, temp):
+        # Calculate adc reading from a temperature
+        r = self.li.reverse_interpolate(temp)
+        return r / (self.pullup + r)
+
+# Custom defined sensors from the config file
+class CustomLinearResistance:
+    def __init__(self, config):
+        self.name = " ".join(config.get_name().split()[1:])
+        self.samples = []
+        for i in range(1, 1000):
+            t = config.getfloat("temperature%d" % (i,), None)
+            if t is None:
+                break
+            r = config.getfloat("resistance%d" % (i,))
+            self.samples.append((r, t))
+    def create(self, config):
+        lr = LinearResistance(config, self.samples)
+        return PrinterADCtoTemperature(config, lr)
+
+
+######################################################################
+# Default sensors
+######################################################################
+
 AD595 = [
     (0., .0027), (10., .101), (20., .200), (25., .250), (30., .300),
     (40., .401), (50., .503), (60., .605), (80., .810), (100., 1.015),
@@ -150,6 +194,9 @@ def load_config(config):
         pheater.add_sensor(sensor_type, func)
 
 def load_config_prefix(config):
-    linear = CustomLinearVoltage(config)
+    if config.get("resistance1", None) is None:
+        custom_sensor = CustomLinearVoltage(config)
+    else:
+        custom_sensor = CustomLinearResistance(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(linear.name, linear.create)
+    pheater.add_sensor(custom_sensor.name, custom_sensor.create)
