@@ -29,6 +29,7 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
         self.pending_commands = []
+        self.script_queue = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -238,20 +239,27 @@ class GCodeParser:
                     self.fd_handle = None
                 return
         # Process commands
-        self.is_processing_data = True
-        self.pending_commands = []
-        self.process_commands(pending_commands)
-        if self.pending_commands:
-            self.process_pending()
-        self.is_processing_data = False
+        self.process_pending()
     def process_pending(self):
-        pending_commands = self.pending_commands
-        while pending_commands:
-            self.pending_commands = []
-            self.process_commands(pending_commands)
-            pending_commands = self.pending_commands
+        if self.is_processing_data:
+            return
+        self.is_processing_data = True
+        while 1:
+            if self.pending_commands:
+                cmds = self.pending_commands
+                self.pending_commands = []
+                self.process_commands(cmds)
+            elif self.script_queue:
+                script = self.script_queue.pop(0)
+                try:
+                    self.process_commands(script.split('\n'), need_ack=False)
+                except Exception:
+                    logging.exception("Script Running Error")
+            else:
+                break
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+        self.is_processing_data = False
     def process_batch(self, commands):
         if self.is_processing_data:
             return False
@@ -259,13 +267,14 @@ class GCodeParser:
         try:
             self.process_commands(commands, need_ack=False)
         except error as e:
-            if self.pending_commands:
-                self.process_pending()
             self.is_processing_data = False
+            if self.pending_commands or self.script_queue:
+                # process pending tty commands
+                self.process_pending()
             raise
-        if self.pending_commands:
-            self.process_pending()
         self.is_processing_data = False
+        if self.pending_commands or self.script_queue:
+            self.process_pending()
         return True
     def run_script_from_command(self, script):
         prev_need_ack = self.need_ack
@@ -274,15 +283,8 @@ class GCodeParser:
         finally:
             self.need_ack = prev_need_ack
     def run_script(self, script):
-        commands = script.split('\n')
-        curtime = None
-        while 1:
-            res = self.process_batch(commands)
-            if res:
-                break
-            if curtime is None:
-                curtime = self.reactor.monotonic()
-            curtime = self.reactor.pause(curtime + 0.100)
+        self.script_queue.append(script)
+        self.process_pending()
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
