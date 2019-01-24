@@ -12,6 +12,7 @@ CONFIG ../../config/example-winch.cfg
 DICTIONARY atmega2560-16mhz.dict
 CONFIG ../../config/generic-einsy-rambo.cfg
 CONFIG ../../config/generic-fysetc-f6.cfg
+CONFIG ../../config/generic-gt2560.cfg
 CONFIG ../../config/generic-mini-rambo.cfg
 CONFIG ../../config/generic-rambo.cfg
 CONFIG ../../config/generic-ramps.cfg
