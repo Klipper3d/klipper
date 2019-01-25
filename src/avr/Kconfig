@@ -80,7 +80,7 @@ config CLOCK_FREQ
     default 20000000 if AVR_FREQ_20000000
 
 config CLEAR_PRESCALER
-    bool "Manually clear the CPU prescaler field at startup"
+    bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
     depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
     help
@@ -138,7 +138,7 @@ config SERIAL_PORT
 
 config SIMULAVR
     depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
-    bool "Compile for simulavr software emulation"
+    bool "Compile for simulavr software emulation" if LOW_LEVEL_OPTIONS
     default n
     help
          Compile the code to run on simulavr software emulation
