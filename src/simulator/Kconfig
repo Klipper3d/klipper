@@ -15,6 +15,9 @@ config SIMULATOR_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM
 
+config SERIAL
+    default y
+
 config CLOCK_FREQ
     int
     default 20000000
