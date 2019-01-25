@@ -101,16 +101,16 @@ config AVR_STACK_SIZE
 config AVR_WATCHDOG
     bool
     default y
-config AVR_USBSERIAL
+config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
-config AVR_SERIAL
-    depends on !AVR_USBSERIAL
+config SERIAL
+    depends on !USBSERIAL
     bool
     default y
 choice
-    depends on AVR_SERIAL
+    depends on SERIAL
     prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
     help
         Select the serial device to use on the AVR chip. This is
@@ -125,11 +125,11 @@ choice
         bool "UART3" if MACH_atmega2560 || MACH_atmega1280
 endchoice
 config SERIAL_BAUD
-    depends on AVR_SERIAL
+    depends on SERIAL
     int "Baud rate for serial port"
     default 250000
 config SERIAL_BAUD_U2X
-    depends on AVR_SERIAL && !SIMULAVR
+    depends on SERIAL && !SIMULAVR
     bool
     default y
 
