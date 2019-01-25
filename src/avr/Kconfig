@@ -124,10 +124,6 @@ choice
     config AVR_SERIAL_UART3
         bool "UART3" if MACH_atmega2560 || MACH_atmega1280
 endchoice
-config SERIAL_BAUD
-    depends on SERIAL
-    int "Baud rate for serial port"
-    default 250000
 config SERIAL_BAUD_U2X
     depends on SERIAL && !SIMULAVR
     bool

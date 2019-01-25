@@ -62,9 +62,5 @@ config SERIAL
     depends on !USBSERIAL
     bool
     default y
-config SERIAL_BAUD
-    depends on SERIAL
-    int "Baud rate for serial port"
-    default 250000
 
 endif

@@ -38,6 +38,14 @@ source "src/pru/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
+# Generic configuration options for serial ports
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 250000
+    help
+        Specify the baud rate of the serial port. This should be set
+        to 250000. Read the FAQ before changing this value.
 
 # Step timing customization
 config CUSTOM_STEP_DELAY

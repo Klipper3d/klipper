@@ -19,8 +19,4 @@ config CLOCK_FREQ
     int
     default 20000000
 
-config SERIAL_BAUD
-    int
-    default 250000
-
 endif
