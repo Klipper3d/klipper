@@ -274,6 +274,7 @@ class ToolHead:
         self.printer.try_load_module(config, "idle_timeout")
         self.printer.try_load_module(config, "statistics")
         self.printer.try_load_module(config, "manual_probe")
+        self.printer.try_load_module(config, "tuning_tower")
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
