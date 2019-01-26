@@ -160,6 +160,14 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
+  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
+  each Z height during a print. The tool will run the given COMMAND
+  with the given PARAMETER assigned to the value using the formula
+  `value = start + factor * z_height`. If BAND is provided then the
+  adjustment will only be made every BAND millimeters of z height - in
+  that case the formula used is `value = start + factor *
+  ((floor(z_height / band) + .5) * band)`.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
