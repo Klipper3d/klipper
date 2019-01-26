@@ -65,6 +65,7 @@ class BedMesh:
         self.fade_dist = self.fade_end - self.fade_start
         if self.fade_dist <= 0.:
             self.fade_start = self.fade_end = self.FADE_DISABLE
+        self.log_fade_complete = False
         self.base_fade_target = config.getfloat('fade_target', None)
         self.fade_target = 0.
         self.gcode = self.printer.lookup_object('gcode')
@@ -81,6 +82,7 @@ class BedMesh:
         self.calibrate.load_default_profile()
     def set_mesh(self, mesh):
         if mesh is not None:
+            self.log_fade_complete = True
             if self.base_fade_target is None:
                 self.fade_target = mesh.avg_z
             else:
@@ -128,6 +130,11 @@ class BedMesh:
         if self.z_mesh is None or not factor:
             # No mesh calibrated, or mesh leveling phased out.
             x, y, z, e = newpos
+            if self.log_fade_complete:
+                self.log_fade_complete = False
+                logging.info(
+                    "bed_mesh fade complete: Current Z: %.4f fade_target: %.4f "
+                    % (z, self.fade_target))
             self.toolhead.move([x, y, z + self.fade_target, e], speed)
         else:
             self.splitter.build_move(self.last_position, newpos, factor)
@@ -479,21 +486,19 @@ class ZMesh:
         mesh_y_pps = params['mesh_y_pps']
         px_cnt = params['x_count']
         py_cnt = params['y_count']
-        mesh_x_mult = mesh_x_pps + 1
-        mesh_y_mult = mesh_y_pps + 1
         if px_cnt == 3 or py_cnt == 3:
             # a mesh with 3 points on either axis defaults to legrange
             # upsampling
             self._sample = self._sample_lagrange
             self.probe_params['algo'] = 'lagrange'
-        if mesh_x_mult == 1 and mesh_y_mult == 1:
+        if mesh_x_pps == 0 and mesh_y_pps == 0:
             # No interpolation, sample the probed points directly
             self._sample = self._sample_direct
             self.probe_params['algo'] = 'direct'
-        self.mesh_x_count = px_cnt * mesh_x_mult - (mesh_x_mult - 1)
-        self.mesh_y_count = py_cnt * mesh_y_mult - (mesh_y_mult - 1)
-        self.x_mult = mesh_x_mult
-        self.y_mult = mesh_y_mult
+        self.mesh_x_count = (px_cnt - 1) * mesh_x_pps + px_cnt
+        self.mesh_y_count = (py_cnt - 1) * mesh_y_pps + py_cnt
+        self.x_mult = mesh_x_pps + 1
+        self.y_mult = mesh_y_pps + 1
         logging.debug("bed_mesh: Mesh grid size - X:%d, Y:%d"
                       % (self.mesh_x_count, self.mesh_y_count))
         self.mesh_x_dist = (self.mesh_x_max - self.mesh_x_min) / \
