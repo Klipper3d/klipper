@@ -46,7 +46,7 @@ class VirtualSD:
     def get_file_list(self):
         dname = self.sdcard_dirname
         try:
-            filenames = os.listdir(self.sdcard_dirname)
+            filenames = [f for f in os.listdir(self.sdcard_dirname) if not f.startswith('.') and (f.endswith('.g') or f.endswith('.gco') or f.endswith('.gcode'))]
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
                     for fname in filenames]
         except:
