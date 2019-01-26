@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memmove
+#include "autoconf.h" // CONFIG_USB_VENDOR_ID
 #include "board/pgm.h" // PROGMEM
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "byteorder.h" // cpu_to_le16
@@ -13,10 +14,6 @@
 #include "generic/usbstd_cdc.h" // struct usb_cdc_header_descriptor
 #include "sched.h" // sched_wake_task
 #include "usb_cdc.h" // usb_notify_ep0
-
-// XXX - move to Kconfig
-#define CONFIG_USB_VENDOR_ID 0x2341
-#define CONFIG_USB_PRODUCT_ID 0xabcd
 
 
 /****************************************************************
@@ -124,10 +121,11 @@ DECL_TASK(usb_bulk_out_task);
  * USB descriptors
  ****************************************************************/
 
-// XXX - move to Kconfig
+#define CONCAT1(a, b) a ## b
+#define CONCAT(a, b) CONCAT1(a, b)
 #define USB_STR_MANUFACTURER u"Klipper"
 #define USB_STR_PRODUCT u"Klipper firmware"
-#define USB_STR_SERIAL u"12345"
+#define USB_STR_SERIAL CONCAT(u,CONFIG_USB_SERIAL_NUMBER)
 
 // String descriptors
 enum {
@@ -177,7 +175,7 @@ static const struct usb_device_descriptor cdc_device_descriptor PROGMEM = {
     .bDeviceClass = USB_CLASS_COMM,
     .bMaxPacketSize0 = USB_CDC_EP0_SIZE,
     .idVendor = cpu_to_le16(CONFIG_USB_VENDOR_ID),
-    .idProduct = cpu_to_le16(CONFIG_USB_PRODUCT_ID),
+    .idProduct = cpu_to_le16(CONFIG_USB_DEVICE_ID),
     .bcdDevice = cpu_to_le16(0x0100),
     .iManufacturer = USB_STR_ID_MANUFACTURER,
     .iProduct = USB_STR_ID_PRODUCT,
