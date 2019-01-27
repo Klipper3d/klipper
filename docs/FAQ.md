@@ -41,7 +41,7 @@ search for "calculate steps per mm" to find an online calculator.
 Klipper uses step_distance instead of steps_per_mm in order to use
 consistent units of measurement in the config file. (The config uses
 millimeters for all distance measurements.) It is believed that
-steps_per_mm originates from a micro-optimization on old 8-bit
+steps_per_mm originated as an optimization on old 8-bit
 micro-controllers (the desire to use a multiply instead of a divide in
 some low-level code). Continuing to configure this one distance in
 units of "inverse millimeters" is felt to be quirky and unnecessary.
