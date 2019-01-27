@@ -24,6 +24,29 @@ ReadRegisters = [
     "CHOPCONF", "DRV_STATUS", "PWM_SCALE", "LOST_STEPS",
 ]
 
+Fields = {}
+
+
+######################################################################
+# Field helpers
+######################################################################
+
+# Return the position of the first bit set in a mask
+def ffs(mask):
+    return (mask & -mask).bit_length() - 1
+
+# Provide a string description of a register
+def pretty_format(all_fields, reg_name, value):
+    fields = [ " %s=%d" % (field_name, (value & mask) >> ffs(mask))
+               for field_name, mask in all_fields.get(reg_name, {}).items()
+               if value & mask ]
+    return "%-15s %08x%s" % (reg_name + ":", value, "".join(fields))
+
+
+######################################################################
+# TMC2130 printer object
+######################################################################
+
 class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -126,7 +149,7 @@ class TMC2130:
         logging.info("DUMP_TMC %s", self.name)
         for reg_name in ReadRegisters:
             val = self.get_register(reg_name)
-            msg = "%-15s %08x" % (reg_name + ":", val)
+            msg = pretty_format(Fields, reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 

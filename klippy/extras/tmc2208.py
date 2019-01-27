@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
+import tmc2130
 
 TMC_FREQUENCY=12000000.
 GCONF_PDN_DISABLE = 1<<6
@@ -23,6 +24,16 @@ ReadRegisters = [
     "MSCNT", "MSCURACT", "CHOPCONF", "DRV_STATUS",
     "PWMCONF", "PWM_SCALE", "PWM_AUTO"
 ]
+
+Fields = {}
+Fields["GCONF"] = {
+    "I_scale_analog": 0x01, "internal_Rsense": 0x02, "en_spreadCycle": 0x04,
+    "shaft": 0x08, "index_otpw": 0x10, "index_step": 0x20, "pdn_disable": 0x40,
+    "mstep_reg_select": 0x80, "multistep_filt": 0x100, "test_mode": 0x200 }
+Fields["GSTAT"] = { "reset": 0x01, "drv_err": 0x02, "uv_cp": 0x04 }
+Fields["IOIN"] = {
+    "ENN": 0x01, "PDN_UART": 0x02, "MS1": 0x04, "MS2": 0x08, "DIAG": 0x10,
+    "STEP": 0x80, "SEL_A": 0x100, "VERSION": 0xff000000 }
 
 
 ######################################################################
@@ -236,7 +247,7 @@ class TMC2208:
                 val = self.get_register(reg_name)
             except self.printer.config_error as e:
                 raise gcode.error(str(e))
-            msg = "%-15s %08x" % (reg_name + ":", val)
+            msg = tmc2130.pretty_format(Fields, reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 
