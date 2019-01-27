@@ -38,6 +38,14 @@ each motor driver pulse. It can also be calculated from the axis
 pitch, motor step angle, and driver microstepping. If unsure, do a web
 search for "calculate steps per mm" to find an online calculator.
 
+Klipper uses step_distance instead of steps_per_mm in order to use
+consistent units of measurement in the config file. (The config uses
+millimeters for all distance measurements.) It is believed that
+steps_per_mm originates from a micro-optimization on old 8-bit
+micro-controllers (the desire to use a multiply instead of a divide in
+some low-level code). Continuing to configure this one distance in
+units of "inverse millimeters" is felt to be quirky and unnecessary.
+
 ### Where's my serial port?
 
 The general way to find a USB serial port is to run `ls -l
