@@ -26,15 +26,150 @@ ReadRegisters = [
 ]
 
 Fields = {}
-Fields["GCONF"] = {
-    "I_scale_analog": 0x01, "internal_Rsense": 0x02, "en_spreadCycle": 0x04,
-    "shaft": 0x08, "index_otpw": 0x10, "index_step": 0x20, "pdn_disable": 0x40,
-    "mstep_reg_select": 0x80, "multistep_filt": 0x100, "test_mode": 0x200 }
-Fields["GSTAT"] = { "reset": 0x01, "drv_err": 0x02, "uv_cp": 0x04 }
-Fields["IOIN"] = {
-    "ENN": 0x01, "PDN_UART": 0x02, "MS1": 0x04, "MS2": 0x08, "DIAG": 0x10,
-    "STEP": 0x80, "SEL_A": 0x100, "VERSION": 0xff000000 }
 
+Fields["GCONF"] = {
+    "I_scale_analog":      0x01,
+    "internal_Rsense":     0x01 << 1,
+    "en_spreadCycle":      0x01 << 2,
+    "shaft":               0x01 << 3,
+    "index_otpw":          0x01 << 4,
+    "index_step":          0x01 << 5,
+    "pdn_disable":         0x01 << 6,
+    "mstep_reg_select":    0x01 << 7,
+    "multistep_filt":      0x01 << 8,
+    "test_mode":           0x01 << 9
+}
+Fields["GSTAT"] = {
+    "reset":               0x01,
+    "drv_err":             0x01 << 1,
+    "uv_cp":               0x01 << 2
+}
+Fields["IFCNT"] = {
+    "IFCNT":               0xff
+}
+Fields["SLAVECONF"] = {
+    "SENDDELAY":           0x0f << 8
+}
+Fields["OTP_PROG"] = {
+    "OTPBIT":              0x07,
+    "OTPBYTE":             0x03 << 4,
+    "OTPMAGIC":            0xff << 8
+}
+Fields["OTP_READ"] = {
+    "OTP_FCLKTRIM":        0x1f,
+    "otp_OTTRIM":          0x01 << 5,
+    "otp_internalRsense":  0x01 << 6,
+    "otp_TBL":             0x01 << 7,
+    "OTP_PWM_GRAD":        0x0f << 8,
+    "otp_pwm_autograd":    0x01 << 12,
+    "OTP_TPWMTHRS":        0x07 << 13,
+    "otp_PWM_OFS":         0x01 << 16,
+    "otp_PWM_REG":         0x01 << 17,
+    "otp_PWM_FREQ":        0x01 << 18,
+    "OTP_IHOLDDELAY":      0x03 << 19,
+    "OTP_IHOLD":           0x03 << 21,
+    "otp_en_spreadCycle":  0x01 << 23
+}
+# IOIN mapping depends on the driver type (SEL_A field)
+# TMC222x (SEL_A == 0)
+Fields["IOIN@TMC222x"] = {
+    "PDN_UART":            0x01 << 1,
+    "SPREAD":              0x01 << 2,
+    "DIR":                 0x01 << 3,
+    "ENN":                 0x01 << 4,
+    "STEP":                0x01 << 5,
+    "MS1":                 0x01 << 6,
+    "MS2":                 0x01 << 7,
+    "SEL_A":               0x01 << 8,
+    "VERSION":             0xff << 24
+}
+# TMC220x (SEL_A == 1)
+Fields["IOIN@TMC220x"] = {
+    "ENN":                 0x01,
+    "MS1":                 0x01 << 2,
+    "MS2":                 0x01 << 3,
+    "DIAG":                0x01 << 4,
+    "PDN_UART":            0x01 << 6,
+    "STEP":                0x01 << 7,
+    "SEL_A":               0x01 << 8,
+    "DIR":                 0x01 << 9,
+    "VERSION":             0xff << 24,
+}
+Fields["FACTORY_CONF"] = {
+    "FCLKTRIM":            0x1f,
+    "OTTRIM":              0x03 << 8
+}
+Fields["IHOLD_IRUN"] = {
+    "IHOLD":               0x1f,
+    "IRUN":                0x1f << 8,
+    "IHOLDDELAY":          0x0f << 16
+}
+Fields["TPOWERDOWN"] = {
+    "TPOWERDOWN":          0xff
+}
+Fields["TSTEP"] = {
+    "TSTEP":               0xfffff
+}
+Fields["TPWMTHRS"] = {
+    "TPWMTHRS":            0xfffff
+}
+Fields["VACTUAL"] = {
+    "VACTUAL":             0xffffff
+}
+Fields["MSCNT"] = {
+    "MSCNT":               0x3ff
+}
+Fields["MSCURACT"] = {
+    "CUR_A":               0x1ff,
+    "CUR_B":               0x1ff << 16
+}
+Fields["CHOPCONF"] = {
+    "toff":                0x0f,
+    "hstrt":               0x07 << 4,
+    "hend":                0x0f << 7,
+    "TBL":                 0x03 << 15,
+    "vsense":              0x01 << 17,
+    "MRES":                0x0f << 24,
+    "intpol":              0x01 << 28,
+    "dedge":               0x01 << 29,
+    "diss2g":              0x01 << 30,
+    "diss2vs":             0x01 << 31
+}
+Fields["DRV_STATUS"] = {
+    "otpw":                0x01,
+    "ot":                  0x01 << 1,
+    "s2ga":                0x01 << 2,
+    "s2gb":                0x01 << 3,
+    "s2vsa":               0x01 << 4,
+    "s2vsb":               0x01 << 5,
+    "ola":                 0x01 << 6,
+    "olb":                 0x01 << 7,
+    "t120":                0x01 << 8,
+    "t143":                0x01 << 9,
+    "t150":                0x01 << 10,
+    "t157":                0x01 << 11,
+    "CS_ACTUAL":           0x1f << 16,
+    "stealth":             0x01 << 30,
+    "stst":                0x01 << 31
+}
+Fields["PWMCONF"] = {
+    "PWM_OFS":             0xff,
+    "PWM_GRAD":            0xff << 8,
+    "pwm_freq":            0x03 << 16,
+    "pwm_autoscale":       0x01 << 18,
+    "pwm_autograd":        0x01 << 19,
+    "freewheel":           0x03 << 20,
+    "PWM_REG":             0xf << 24,
+    "PWM_LIM":             0xf << 28
+}
+Fields["PWM_SCALE"] = {
+    "PWM_SCALE_SUM":       0xff,
+    "PWM_SCALE_AUTO":      0x1ff << 16
+}
+Fields["PWM_AUTO"] = {
+    "PWM_OFS_AUTO":        0xff,
+    "PWM_GRAD_AUTO":       0xff << 16
+}
 
 ######################################################################
 # TMC2208 communication
@@ -210,6 +345,8 @@ class TMC2208:
     def get_register(self, reg_name):
         reg = Registers[reg_name]
         msg = encode_tmc2208_read(0xf5, 0x00, reg)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
         for retry in range(5):
             params = self.tmcuart_send_cmd.send_with_response(
                 [self.oid, msg, 10], 'tmcuart_response', self.oid)
@@ -247,6 +384,11 @@ class TMC2208:
                 val = self.get_register(reg_name)
             except self.printer.config_error as e:
                 raise gcode.error(str(e))
+            # IOIN has different mappings depending on the driver type
+            # (SEL_A field of IOIN reg)
+            if reg_name is "IOIN":
+                drv_type = tmc2130.get_field(Fields, "IOIN@TMC222x", "SEL_A", val)
+                reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
             msg = tmc2130.pretty_format(Fields, reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)

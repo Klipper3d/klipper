@@ -38,9 +38,20 @@ def ffs(mask):
 # Provide a string description of a register
 def pretty_format(all_fields, reg_name, value):
     fields = [ " %s=%d" % (field_name, (value & mask) >> ffs(mask))
-               for field_name, mask in all_fields.get(reg_name, {}).items()
+               for field_name, mask in sorted(all_fields.get(
+                   reg_name, {}).items(), key = lambda f: f[1])
                if value & mask ]
     return "%-15s %08x%s" % (reg_name + ":", value, "".join(fields))
+
+# Returns value of the register field
+def get_field(all_fields, reg_name, field_name, reg_value):
+    mask = all_fields.get(reg_name, {})[field_name]
+    return (reg_value & mask) >> ffs(mask)
+
+# Returns register value with field bits filled with supplied field value
+def set_field(all_fields, reg_name, field_name, reg_value, field_value):
+    mask = all_fields.get(reg_name, {})[field_name]
+    return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
 
 
 ######################################################################
