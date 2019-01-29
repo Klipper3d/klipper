@@ -69,7 +69,7 @@ class BLTouchEndstopWrapper:
         try:
             self.raise_probe()
         except homing.EndstopError as e:
-            raise self.printer.config_error(str(e))
+            logging.warning("BLTouch raise probe error: %s", str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
         est_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
