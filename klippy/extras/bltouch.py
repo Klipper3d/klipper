@@ -10,6 +10,7 @@ SIGNAL_PERIOD = 0.025600
 MIN_CMD_TIME = 4 * SIGNAL_PERIOD
 
 TEST_TIME = 5 * 60.
+RETRY_RESET_TIME = 1.
 ENDSTOP_REST_TIME = .001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
@@ -65,7 +66,6 @@ class BLTouchEndstopWrapper:
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
     def handle_connect(self):
-        self.sync_mcu_print_time()
         try:
             self.raise_probe()
         except homing.EndstopError as e:
@@ -103,12 +103,25 @@ class BLTouchEndstopWrapper:
         for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
             s.set_commanded_position(pos)
     def raise_probe(self):
-        self.send_cmd('reset')
-        check_start_time = self.send_cmd('pin_up', duration=self.pin_move_time)
-        check_end_time = self.send_cmd(None)
-        if self.pin_up_not_triggered:
-            self.verify_state(check_start_time, check_end_time,
-                              False, "raise probe")
+        for retry in range(3):
+            self.sync_mcu_print_time()
+            self.send_cmd('reset')
+            check_start_time = self.send_cmd('pin_up',
+                                             duration=self.pin_move_time)
+            check_end_time = self.send_cmd(None)
+            if self.pin_up_not_triggered:
+                try:
+                    self.verify_state(check_start_time, check_end_time,
+                                      False, "raise probe")
+                except homing.EndstopError as e:
+                    if retry >= 2:
+                        raise
+                    msg = "Failed to verify BLTouch probe is raised; retrying."
+                    logging.warning(msg)
+                    self.gcode.respond_info(msg)
+                    self.next_cmd_time += RETRY_RESET_TIME
+                    continue
+            break
     def test_sensor(self):
         if not self.pin_up_touch_triggered:
             # Nothing to test
@@ -138,7 +151,6 @@ class BLTouchEndstopWrapper:
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
     def home_finalize(self):
-        self.sync_mcu_print_time()
         self.raise_probe()
         self.sync_print_time()
         # Verify the probe actually deployed during the attempt
