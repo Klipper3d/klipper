@@ -105,7 +105,8 @@ class BLTouchEndstopWrapper:
     def raise_probe(self):
         for retry in range(3):
             self.sync_mcu_print_time()
-            self.send_cmd('reset')
+            if retry or not self.pin_up_not_triggered:
+                self.send_cmd('reset')
             check_start_time = self.send_cmd('pin_up',
                                              duration=self.pin_move_time)
             check_end_time = self.send_cmd(None)
