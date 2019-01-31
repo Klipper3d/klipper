@@ -7,7 +7,6 @@
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_adc_read
 #include "internal.h" // GPIO
-#include "samd21.h" // ADC
 #include "sched.h" // sched_shutdown
 
 static const uint8_t adc_pins[] = {
@@ -28,7 +27,7 @@ adc_init(void)
     have_run_init = 1;
 
     // Enable adc clock
-    enable_pclock(ADC_GCLK_ID, PM_APBCMASK_ADC);
+    enable_pclock(ADC_GCLK_ID, ID_ADC);
 
     // Load calibraiton info
     uint32_t v = *((uint32_t*)ADC_FUSES_BIASCAL_ADDR);

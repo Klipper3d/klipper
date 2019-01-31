@@ -78,7 +78,11 @@ class Homing:
         else:
             self.toolhead.set_position(movepos)
         for mcu_endstop, name in endstops:
-            mcu_endstop.home_finalize()
+            try:
+                mcu_endstop.home_finalize()
+            except EndstopError as e:
+                if error is None:
+                    error = str(e)
         if error is not None:
             raise EndstopError(error)
         # Check if some movement occurred

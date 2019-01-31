@@ -1,14 +1,14 @@
-// Main starting point for SAMD21 boards
+// Main starting point for SAMD boards
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "command.h" // DECL_CONSTANT
-#include "samd21.h" // SystemInit
+#include "internal.h" // WDT
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "samd21g");
+DECL_CONSTANT(MCU, CONFIG_MCU);
 
 
 /****************************************************************
@@ -25,8 +25,13 @@ DECL_TASK(watchdog_reset);
 void
 watchdog_init(void)
 {
+#if CONFIG_MACH_SAMD21
     WDT->CONFIG.reg = WDT_CONFIG_PER_16K; // 500ms timeout
     WDT->CTRL.reg = WDT_CTRL_ENABLE;
+#elif CONFIG_MACH_SAMD51
+    WDT->CONFIG.reg = WDT_CONFIG_PER(6); // 500ms timeout
+    WDT->CTRLA.reg = WDT_CTRLA_ENABLE;
+#endif
 }
 DECL_INIT(watchdog_init);
 

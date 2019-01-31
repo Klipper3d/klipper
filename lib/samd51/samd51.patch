@@ -1,0 +1,68 @@
+diff --git a/lib/samd51/samd51.patch b/lib/samd51/samd51.patch
+new file mode 100644
+index 00000000..e69de29b
+diff --git a/lib/samd51/samd51a/gcc/gcc/samd51g19a_flash.ld b/lib/samd51/samd51a/gcc/gcc/samd51g19a_flash.ld
+index bee9c68d..551597dc 100644
+--- a/lib/samd51/samd51a/gcc/gcc/samd51g19a_flash.ld
++++ b/lib/samd51/samd51a/gcc/gcc/samd51g19a_flash.ld
+@@ -35,7 +35,7 @@ SEARCH_DIR(.)
+ /* Memory Spaces Definitions */
+ MEMORY
+ {
+-  rom      (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00080000
++  rom      (rx)  : ORIGIN = 0x00000000 + FLASH_START, LENGTH = 0x00080000 - FLASH_START
+   ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00030000
+   bkupram  (rwx) : ORIGIN = 0x47000000, LENGTH = 0x00002000
+   qspi     (rwx) : ORIGIN = 0x04000000, LENGTH = 0x01000000
+diff --git a/lib/samd51/samd51a/gcc/gcc/samd51j19a_flash.ld b/lib/samd51/samd51a/gcc/gcc/samd51j19a_flash.ld
+index 3dfbe0d4..07ee9864 100644
+--- a/lib/samd51/samd51a/gcc/gcc/samd51j19a_flash.ld
++++ b/lib/samd51/samd51a/gcc/gcc/samd51j19a_flash.ld
+@@ -35,7 +35,7 @@ SEARCH_DIR(.)
+ /* Memory Spaces Definitions */
+ MEMORY
+ {
+-  rom      (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00080000
++  rom      (rx)  : ORIGIN = 0x00000000 + FLASH_START, LENGTH = 0x00080000 - FLASH_START
+   ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00030000
+   bkupram  (rwx) : ORIGIN = 0x47000000, LENGTH = 0x00002000
+   qspi     (rwx) : ORIGIN = 0x04000000, LENGTH = 0x01000000
+diff --git a/lib/samd51/samd51a/gcc/gcc/samd51n19a_flash.ld b/lib/samd51/samd51a/gcc/gcc/samd51n19a_flash.ld
+index ae77ba71..1c595648 100644
+--- a/lib/samd51/samd51a/gcc/gcc/samd51n19a_flash.ld
++++ b/lib/samd51/samd51a/gcc/gcc/samd51n19a_flash.ld
+@@ -35,7 +35,7 @@ SEARCH_DIR(.)
+ /* Memory Spaces Definitions */
+ MEMORY
+ {
+-  rom      (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00080000
++  rom      (rx)  : ORIGIN = 0x00000000 + FLASH_START, LENGTH = 0x00080000 - FLASH_START
+   ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00030000
+   bkupram  (rwx) : ORIGIN = 0x47000000, LENGTH = 0x00002000
+   qspi     (rwx) : ORIGIN = 0x04000000, LENGTH = 0x01000000
+diff --git a/lib/samd51/samd51a/gcc/gcc/samd51p20a_flash.ld b/lib/samd51/samd51a/gcc/gcc/samd51p20a_flash.ld
+index 60f73b47..4d8ad695 100644
+--- a/lib/samd51/samd51a/gcc/gcc/samd51p20a_flash.ld
++++ b/lib/samd51/samd51a/gcc/gcc/samd51p20a_flash.ld
+@@ -35,7 +35,7 @@ SEARCH_DIR(.)
+ /* Memory Spaces Definitions */
+ MEMORY
+ {
+-  rom      (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00100000
++  rom      (rx)  : ORIGIN = 0x00000000 + FLASH_START, LENGTH = 0x00100000 - FLASH_START
+   ram      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00040000
+   bkupram  (rwx) : ORIGIN = 0x47000000, LENGTH = 0x00002000
+   qspi     (rwx) : ORIGIN = 0x04000000, LENGTH = 0x01000000
+diff --git a/lib/samd51/samd51a/gcc/gcc/startup_samd51.c b/lib/samd51/samd51a/gcc/gcc/startup_samd51.c
+index d00bd7a2..42575901 100644
+--- a/lib/samd51/samd51a/gcc/gcc/startup_samd51.c
++++ b/lib/samd51/samd51a/gcc/gcc/startup_samd51.c
+@@ -235,7 +235,7 @@ void SDHC1_Handler           ( void ) __attribute__ ((weak, alias("Dummy_Handler
+ #endif
+ 
+ /* Exception Table */
+-__attribute__ ((section(".vectors")))
++__attribute__ ((section(".vectors"))) __attribute__((externally_visible))
+ const DeviceVectors exception_table = {
+ 
+         /* Configure Initial Stack Pointer, using linker-generated symbols */

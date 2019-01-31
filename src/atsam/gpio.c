@@ -14,6 +14,8 @@
 static Pio * const digital_regs[] = {
 #if CONFIG_MACH_SAM3X8E
     PIOA, PIOB, PIOC, PIOD
+#elif CONFIG_MACH_SAM3X8C
+    PIOA, PIOB
 #elif CONFIG_MACH_SAM4S8C
     PIOA, PIOB, PIOC
 #elif CONFIG_MACH_SAM4E8E
@@ -32,7 +34,7 @@ gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
     uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio), pt = ptype - 'A';
     Pio *regs = digital_regs[bank];
 
-#if CONFIG_MACH_SAM3X8E
+#if CONFIG_MACH_SAM3X
     regs->PIO_ABSR = (regs->PIO_ABSR & ~bit) | (pt & 0x01 ? bit : 0);
 #else
     regs->PIO_ABCDSR[0] = (regs->PIO_ABCDSR[0] & ~bit) | (pt & 0x01 ? bit : 0);

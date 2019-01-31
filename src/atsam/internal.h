@@ -1,15 +1,15 @@
-#ifndef __SAM3_INTERNAL_H
-#define __SAM3_INTERNAL_H
+#ifndef __ATSAM_INTERNAL_H
+#define __ATSAM_INTERNAL_H
 // Local definitions for sam3/sam4 code
 
 #include <stdint.h> // uint32_t
-#include "autoconf.h" // CONFIG_MACH_SAM3X8E
+#include "autoconf.h" // CONFIG_MACH_SAM3X
 
-#if CONFIG_MACH_SAM3X8E
-#include "sam3x8e.h"
-#elif CONFIG_MACH_SAM4S8C
+#if CONFIG_MACH_SAM3X
+#include "sam3xa.h"
+#elif CONFIG_MACH_SAM4S
 #include "sam4s.h"
-#elif CONFIG_MACH_SAM4E8E
+#elif CONFIG_MACH_SAM4E
 #include "sam4e.h"
 #endif
 

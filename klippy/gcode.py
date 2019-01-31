@@ -102,6 +102,7 @@ class GCodeParser:
         busy = self.is_processing_data
         return {
             'speed_factor': self.speed_factor * 60.,
+            'speed': self.speed,
             'extrude_factor': self.extrude_factor,
             'busy': busy,
             'last_xpos': self.last_position[0],

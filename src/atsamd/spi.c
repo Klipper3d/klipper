@@ -1,14 +1,12 @@
-// spi support on samd21
+// spi support on samd
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "internal.h" // enable_pclock
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
-#include "samd21.h" // SERCOM4
 #include "sched.h" // sched_shutdown
 
 static void
@@ -20,7 +18,7 @@ spi_init(uint32_t ctrla, uint32_t baud)
     have_run_init = 1;
 
     // Setup clock
-    enable_pclock(SERCOM4_GCLK_ID_CORE, PM_APBCMASK_SERCOM4);
+    enable_pclock(SERCOM4_GCLK_ID_CORE, ID_SERCOM4);
 
     // Configure MISO, MOSI, SCK pins
     gpio_peripheral(GPIO('A', 12), 'D', 0);
@@ -42,12 +40,12 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     if (bus)
         shutdown("Invalid spi bus");
 
-    uint32_t ctrla = (SERCOM_SPI_CTRLA_MODE_SPI_MASTER
+    uint32_t ctrla = (SERCOM_SPI_CTRLA_MODE(3)
                       | (mode << SERCOM_SPI_CTRLA_CPHA_Pos)
                       | SERCOM_SPI_CTRLA_DIPO(0)
                       | SERCOM_SPI_CTRLA_DOPO(1)
                       | SERCOM_SPI_CTRLA_ENABLE);
-    uint32_t baud = CONFIG_CLOCK_FREQ / (2 * rate) - 1;
+    uint32_t baud = get_pclock_frequency(SERCOM4_GCLK_ID_CORE) / (2 * rate) - 1;
     spi_init(ctrla, baud);
     return (struct spi_config){ .ctrla = ctrla, .baud = baud };
 }

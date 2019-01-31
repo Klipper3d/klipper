@@ -291,3 +291,13 @@ enabled.
   - `RESPOND TYPE=error MSG="<message>"`: echo the message prepended with `!! `.
   - `RESPOND PREFIX=<prefix> MSG="<message>"`: echo the message prepended with `<prefix>`
     (The `PREFIX` parameter will take priority over the `TYPE` parameter)
+
+## Pause Resume
+
+The following commands are available when the "pause_resume" config section
+is enabled:
+  - `PAUSE`:  Pauses the current print.  The current position is captured for
+  restoration upon resume.
+  - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
+  the previously captured position.  The VELOCITY parameter determines the speed
+  at which the tool should return to the original captured position.

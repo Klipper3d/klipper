@@ -1,6 +1,6 @@
-// samd21 gpio functions
+// samd gpio functions
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -9,7 +9,6 @@
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_out_setup
 #include "internal.h" // gpio_peripheral
-#include "samd21.h" // PORT
 #include "sched.h" // sched_shutdown
 
 
@@ -43,7 +42,11 @@ gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
  * General Purpose Input Output (GPIO) pins
  ****************************************************************/
 
+#if CONFIG_MACH_SAMD21
 #define NUM_PORT 2
+#elif CONFIG_MACH_SAMD51
+#define NUM_PORT 4
+#endif
 
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)

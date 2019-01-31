@@ -16,7 +16,7 @@ choice
     config MACH_ATSAM
         bool "SAM3/SAM4 (Due and Duet)"
     config MACH_ATSAMD
-        bool "SAMD21 (Arduino Zero)"
+        bool "SAMD21/SAMD51"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32F1
@@ -38,6 +38,30 @@ source "src/pru/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
+# Generic configuration options for serial ports
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 250000
+    help
+        Specify the baud rate of the serial port. This should be set
+        to 250000. Read the FAQ before changing this value.
+
+# Generic configuration options for USB
+menu "USB ids"
+    depends on USBSERIAL
+
+config USB_VENDOR_ID
+    hex "USB vendor ID"
+    default 0x2341
+config USB_DEVICE_ID
+    hex "USB device ID"
+    default 0xabcd
+config USB_SERIAL_NUMBER
+    string "USB serial number"
+    default "12345"
+
+endmenu
 
 # Step timing customization
 config CUSTOM_STEP_DELAY

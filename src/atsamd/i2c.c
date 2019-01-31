@@ -1,14 +1,12 @@
-// i2c support on samd21
+// i2c support on samd
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "internal.h" // enable_pclock
 #include "command.h" // shutdown
 #include "gpio.h" // i2c_setup
-#include "samd21.h" // SERCOM3
 #include "sched.h" // sched_shutdown
 
 #define TIME_RISE 125ULL // 125 nanoseconds
@@ -23,7 +21,7 @@ i2c_init(void)
     have_run_init = 1;
 
     // Setup clock
-    enable_pclock(SERCOM3_GCLK_ID_CORE, PM_APBCMASK_SERCOM3);
+    enable_pclock(SERCOM3_GCLK_ID_CORE, ID_SERCOM3);
 
     // Configure SDA, SCL pins
     gpio_peripheral(GPIO('A', 22), 'C', 0);
@@ -36,10 +34,10 @@ i2c_init(void)
                      | SERCOM_I2CM_CTRLA_INACTOUT(3)
                      | SERCOM_I2CM_STATUS_SEXTTOUT
                      | SERCOM_I2CM_STATUS_MEXTTOUT
-                     | SERCOM_I2CM_CTRLA_MODE_I2C_MASTER);
+                     | SERCOM_I2CM_CTRLA_MODE(5));
     si->CTRLA.reg = areg;
-    uint32_t baud = (CONFIG_CLOCK_FREQ / I2C_FREQ
-                     - 10 - CONFIG_CLOCK_FREQ*TIME_RISE/1000000000) / 2;
+    uint32_t freq = get_pclock_frequency(SERCOM3_GCLK_ID_CORE);
+    uint32_t baud = (freq/I2C_FREQ - 10 - freq*TIME_RISE/1000000000) / 2;
     si->BAUD.reg = baud;
     si->CTRLA.reg = areg | SERCOM_I2CM_CTRLA_ENABLE;
     while (si->SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_ENABLE)
