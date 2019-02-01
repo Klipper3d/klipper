@@ -21,17 +21,16 @@ CFLAGS_klipper.elf += -T $(OUT)samd.ld --specs=nano.specs --specs=nosys.specs
 
 # Add source files
 src-y += atsamd/main.c atsamd/gpio.c
-src-y += generic/crc16_ccitt.c generic/alloc.c
-src-y += generic/armcm_irq.c generic/timer_irq.c
+src-y += generic/crc16_ccitt.c generic/alloc.c generic/armcm_irq.c
 src-$(CONFIG_USBSERIAL) += atsamd/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsamd/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += atsamd/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += atsamd/spi.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += atsamd/hard_pwm.c
-src-$(CONFIG_MACH_SAMD21) += atsamd/clock.c atsamd/timer.c
+src-$(CONFIG_MACH_SAMD21) += atsamd/clock.c atsamd/timer.c generic/timer_irq.c
 src-$(CONFIG_MACH_SAMD21) += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
-src-$(CONFIG_MACH_SAMD51) += atsamd/samd51_clock.c atsamd/samd51_timer.c
+src-$(CONFIG_MACH_SAMD51) += atsamd/samd51_clock.c generic/armcm_timer.c
 src-$(CONFIG_MACH_SAMD51) += ../lib/samd51/samd51a/gcc/gcc/startup_samd51.c
 
 # Support bootloader offset address

@@ -51,7 +51,7 @@ config MCU
 config CLOCK_FREQ
     int
     default 48000000 if MACH_SAMD21
-    default 25000000 if MACH_SAMD51 # 200000000/8
+    default 120000000 if MACH_SAMD51
 
 choice
     depends on MACH_SAMD51
