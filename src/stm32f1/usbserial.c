@@ -5,13 +5,13 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
+#include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
+#include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 #include "stm32f1xx.h" // USB
-#include "stm32f1xx_ll_gpio.h" // LL_GPIO_SetOutputPin
-#include "stm32f1xx_ll_utils.h" // LL_mDelay
 
 
 /****************************************************************
@@ -226,10 +226,9 @@ void
 usb_init(void)
 {
     // Pull the D+ pin low briefly to signal a new connection
-    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_12);
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_12, LL_GPIO_MODE_OUTPUT);
-    LL_mDelay(5);
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_12, LL_GPIO_MODE_FLOATING);
+    gpio_out_setup(GPIO('A', 12), 0);
+    udelay(5000);
+    gpio_in_setup(GPIO('A', 12), 0);
 
     // Setup USB packet memory
     btable_configure();
