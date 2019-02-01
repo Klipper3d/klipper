@@ -8,4 +8,6 @@
 extern GPIO_TypeDef *const digital_regs[];
 extern uint32_t const digital_pins[];
 
+void udelay(uint32_t usecs);
+
 #endif // internal.h
