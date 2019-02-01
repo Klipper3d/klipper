@@ -132,17 +132,18 @@ represent total number of steps per second on the micro-controller.
 | 16Mhz AVR                   | 151K              | 100K              |
 | 20Mhz AVR                   | 189K              | 125K              |
 | Arduino Zero (ARM SAMD21)   | 234K              | 217K              |
-| STM32F103                   | 333K              | 300K              |
-| Arduino Due (ARM SAM3X8E)   | 410K              | 397K              |
-| SAM4S8C ARM                 | 455K              | 455K              |
-| Smoothieboard (ARM LPC1768) | 487K              | 487K              |
-| Smoothieboard (ARM LPC1769) | 584K              | 584K              |
-| SAMD51 ARM                  | 630K              | 630K              |
+| "Blue Pill" (STM32F103)     | 395K              | 356K              |
+| Arduino Due (ARM SAM3X8E)   | 397K              | 396K              |
+| SAM4S8C ARM                 | 527K              | 527K              |
+| Smoothieboard (ARM LPC1768) | 574K              | 574K              |
 | SAM4E8E ARM                 | 638K              | 638K              |
+| Smoothieboard (ARM LPC1769) | 661K              | 661K              |
 | Beaglebone PRU              | 680K              | 680K              |
+| SAMD51 ARM                  | 733K              | 733K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the STM32F103, Arduino Zero, and Due, the highest
 step rate is with two simultaneous steppers stepping. On the PRU,
-SAMD51, SAM4S8C, SAM4E8E, and LPC176x the highest step rate is with
-three simultaneous steppers.
+SAM4S8C, SAM4E8E, and LPC176x the highest step rate is with three
+simultaneous steppers. On the SAMD51, the highest step rate is with
+four simultaneous steppers.
