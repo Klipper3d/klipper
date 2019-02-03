@@ -285,66 +285,52 @@ class TMC2208:
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
-        # Get config for initial driver settings
+        # Setup basic register values
+        self.ifcnt = None
         self.field_helper = tmc2130.FieldHelper(Fields, FieldFormatters)
+        self.regs = collections.OrderedDict()
+        self.set_field("pdn_disable", True)
+        self.set_field("mstep_reg_select", True)
+        self.set_field("multistep_filt", True)
+        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
+                 '8': 5, '4': 6, '2': 7, '1': 8}
+        mres = config.getchoice('microsteps', steps)
+        self.set_field("MRES", mres)
+        # Calculate current
+        vsense = False
         run_current = config.getfloat('run_current', above=0., maxval=2.)
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=2.)
         sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        mres = config.getchoice('microsteps', steps)
-        interpolate = config.getboolean('interpolate', True)
-        sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-        sc_threshold = self.velocity_to_clock(config, sc_velocity, mres)
-        iholddelay = config.getint('driver_IHOLDDELAY', 8, minval=0, maxval=15)
-        tpowerdown = config.getint('driver_TPOWERDOWN', 20, minval=0, maxval=255)
-        blank_time_select = config.getint('driver_BLANK_TIME_SELECT', 2,
-                                          minval=0, maxval=3)
-        toff = config.getint('driver_TOFF', 3, minval=1, maxval=15)
-        hend = config.getint('driver_HEND', 0, minval=0, maxval=15)
-        hstrt = config.getint('driver_HSTRT', 5, minval=0, maxval=7)
-        pwm_autograd = config.getboolean('driver_PWM_AUTOGRAD', True)
-        pwm_autoscale = config.getboolean('driver_PWM_AUTOSCALE', True)
-        pwm_lim = config.getint('driver_PWM_LIM', 12, minval=0, maxval=15)
-        pwm_reg = config.getint('driver_PWM_REG', 8, minval=0, maxval=15)
-        pwm_freq = config.getint('driver_PWM_FREQ', 1, minval=0, maxval=3)
-        pwm_grad = config.getint('driver_PWM_GRAD', 14, minval=0, maxval=255)
-        pwm_ofs = config.getint('driver_PWM_OFS', 36, minval=0, maxval=255)
-        # calculate current
-        vsense = False
         irun = self.current_bits(run_current, sense_resistor, vsense)
         ihold = self.current_bits(hold_current, sense_resistor, vsense)
         if irun < 16 and ihold < 16:
             vsense = True
             irun = self.current_bits(run_current, sense_resistor, vsense)
             ihold = self.current_bits(hold_current, sense_resistor, vsense)
-        # Configure registers
-        self.ifcnt = None
-        self.regs = collections.OrderedDict()
-        self.set_field("en_spreadCycle", not sc_velocity)
-        self.set_field("pdn_disable", True)
-        self.set_field("mstep_reg_select", True)
-        self.set_field("multistep_filt", True)
-        self.set_field("toff", toff)
-        self.set_field("hstrt", hstrt)
-        self.set_field("hend", hend)
-        self.set_field("TBL", blank_time_select)
         self.set_field("vsense", vsense)
-        self.set_field("MRES", mres)
-        self.set_field("intpol", interpolate)
         self.set_field("IHOLD", ihold)
         self.set_field("IRUN", irun)
-        self.set_field("IHOLDDELAY", iholddelay)
-        self.set_field("TPOWERDOWN", tpowerdown)
+        # Setup stealthchop
+        sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
+        sc_threshold = self.velocity_to_clock(config, sc_velocity, mres)
+        self.set_field("en_spreadCycle", not sc_velocity)
         self.set_field("TPWMTHRS", max(0, min(0xfffff, sc_threshold)))
-        self.set_field("PWM_OFS", pwm_ofs)
-        self.set_field("PWM_GRAD", pwm_grad)
-        self.set_field("pwm_freq", pwm_freq)
-        self.set_field("pwm_autoscale", pwm_autoscale)
-        self.set_field("pwm_autograd", pwm_autograd)
-        self.set_field("PWM_REG", pwm_reg)
-        self.set_field("PWM_LIM", pwm_lim)
+        # Allow other registers to be set from the config
+        self.set_config_field(config, "toff", 3)
+        self.set_config_field(config, "hstrt", 5)
+        self.set_config_field(config, "hend", 0)
+        self.set_config_field(config, "TBL", 2, "driver_BLANK_TIME_SELECT")
+        self.set_config_field(config, "intpol", True, "interpolate")
+        self.set_config_field(config, "IHOLDDELAY", 8)
+        self.set_config_field(config, "TPOWERDOWN", 20)
+        self.set_config_field(config, "PWM_OFS", 36)
+        self.set_config_field(config, "PWM_GRAD", 14)
+        self.set_config_field(config, "pwm_freq", 1)
+        self.set_config_field(config, "pwm_autoscale", True)
+        self.set_config_field(config, "pwm_autograd", True)
+        self.set_config_field(config, "PWM_REG", 8)
+        self.set_config_field(config, "PWM_LIM", 12)
     def current_bits(self, current, sense_resistor, vsense_on):
         sense_resistor += 0.020
         vsense = 0.32
@@ -379,6 +365,17 @@ class TMC2208:
         reg_name = self.field_helper.lookup_register(field_name)
         self.regs[reg_name] = self.field_helper.set_field(
             reg_name, field_name, self.regs.get(reg_name, 0), field_value)
+    def set_config_field(self, config, field_name, default, config_name=None):
+        # Allow a field to be set from the config file
+        reg_name = self.field_helper.lookup_register(field_name)
+        if config_name is None:
+            config_name = "driver_" + field_name.upper()
+        maxval = self.field_helper.get_field(reg_name, field_name, 0xffffffff)
+        if maxval == 1:
+            val = config.getboolean(config_name, default)
+        else:
+            val = config.getint(config_name, default, minval=0, maxval=maxval)
+        self.set_field(field_name, val)
     def handle_connect(self):
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
