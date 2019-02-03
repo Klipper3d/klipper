@@ -35,6 +35,12 @@ Fields = {}
 def ffs(mask):
     return (mask & -mask).bit_length() - 1
 
+# Decode two's complement signed integer
+def decode_signed_int(val, bits):
+    if ((val >> (bits - 1)) & 1):
+        return val - (1 << bits)
+    return val
+
 class FieldHelper:
     def __init__(self, all_fields, field_formatters={}):
         self.all_fields = all_fields
