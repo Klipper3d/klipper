@@ -42,22 +42,44 @@ def decode_signed_int(val, bits):
     return val
 
 class FieldHelper:
-    def __init__(self, all_fields, field_formatters={}):
+    def __init__(self, all_fields, field_formatters={}, registers=None):
         self.all_fields = all_fields
         self.field_formatters = field_formatters
+        self.registers = registers
+        if self.registers is None:
+            self.registers = {}
         self.field_to_register = { f: r for r, fields in self.all_fields.items()
                                    for f in fields }
-    def lookup_register(self, field_name):
-        # Return the name of the register containing the given field
-        return self.field_to_register[field_name]
-    def get_field(self, reg_name, field_name, reg_value):
+    def get_field(self, field_name, reg_value=None, reg_name=None):
         # Returns value of the register field
+        if reg_name is None:
+            reg_name = self.field_to_register[field_name]
+        if reg_value is None:
+            reg_value = self.registers[reg_name]
         mask = self.all_fields[reg_name][field_name]
         return (reg_value & mask) >> ffs(mask)
-    def set_field(self, reg_name, field_name, reg_value, field_value):
+    def set_field(self, field_name, field_value, reg_value=None, reg_name=None):
         # Returns register value with field bits filled with supplied value
+        if reg_name is None:
+            reg_name = self.field_to_register[field_name]
+        if reg_value is None:
+            reg_value = self.registers.get(reg_name, 0)
         mask = self.all_fields[reg_name][field_name]
-        return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
+        new_value = (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
+        self.registers[reg_name] = new_value
+        return new_value
+    def set_config_field(self, config, field_name, default, config_name=None):
+        # Allow a field to be set from the config file
+        if config_name is None:
+            config_name = "driver_" + field_name.upper()
+        reg_name = self.field_to_register[field_name]
+        mask = self.all_fields[reg_name][field_name]
+        maxval = mask >> ffs(mask)
+        if maxval == 1:
+            val = config.getboolean(config_name, default)
+        else:
+            val = config.getint(config_name, default, minval=0, maxval=maxval)
+        return self.set_field(field_name, val)
     def pretty_format(self, reg_name, value):
         # Provide a string description of a register
         reg_fields = self.all_fields.get(reg_name, {})
