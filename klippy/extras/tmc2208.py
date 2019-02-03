@@ -288,15 +288,14 @@ class TMC2208:
         # Setup basic register values
         self.ifcnt = None
         self.regs = collections.OrderedDict()
-        self.field_helper = tmc2130.FieldHelper(
-            Fields, FieldFormatters, self.regs)
-        self.field_helper.set_field("pdn_disable", True)
-        self.field_helper.set_field("mstep_reg_select", True)
-        self.field_helper.set_field("multistep_filt", True)
+        self.fields = tmc2130.FieldHelper(Fields, FieldFormatters, self.regs)
+        self.fields.set_field("pdn_disable", True)
+        self.fields.set_field("mstep_reg_select", True)
+        self.fields.set_field("multistep_filt", True)
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
                  '8': 5, '4': 6, '2': 7, '1': 8}
         mres = config.getchoice('microsteps', steps)
-        self.field_helper.set_field("MRES", mres)
+        self.fields.set_field("MRES", mres)
         # Calculate current
         vsense = False
         run_current = config.getfloat('run_current', above=0., maxval=2.)
@@ -309,16 +308,16 @@ class TMC2208:
             vsense = True
             irun = self.current_bits(run_current, sense_resistor, vsense)
             ihold = self.current_bits(hold_current, sense_resistor, vsense)
-        self.field_helper.set_field("vsense", vsense)
-        self.field_helper.set_field("IHOLD", ihold)
-        self.field_helper.set_field("IRUN", irun)
+        self.fields.set_field("vsense", vsense)
+        self.fields.set_field("IHOLD", ihold)
+        self.fields.set_field("IRUN", irun)
         # Setup stealthchop
         sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
         sc_threshold = self.velocity_to_clock(config, sc_velocity, mres)
-        self.field_helper.set_field("en_spreadCycle", not sc_velocity)
-        self.field_helper.set_field("TPWMTHRS", sc_threshold)
+        self.fields.set_field("en_spreadCycle", not sc_velocity)
+        self.fields.set_field("TPWMTHRS", sc_threshold)
         # Allow other registers to be set from the config
-        set_config_field = self.field_helper.set_config_field
+        set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
@@ -390,10 +389,10 @@ class TMC2208:
         raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
     def get_microsteps(self):
-        return 256 >> self.field_helper.get_field("MRES")
+        return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
-        mscnt = self.field_helper.get_field("MSCNT", self.get_register("MSCNT"))
-        return mscnt >> self.field_helper.get_field("MRES")
+        mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
+        return mscnt >> self.fields.get_field("MRES")
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
@@ -407,9 +406,9 @@ class TMC2208:
             # IOIN has different mappings depending on the driver type
             # (SEL_A field of IOIN reg)
             if reg_name == "IOIN":
-                drv_type = self.field_helper.get_field("SEL_A", val)
+                drv_type = self.fields.get_field("SEL_A", val)
                 reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            msg = self.field_helper.pretty_format(reg_name, val)
+            msg = self.fields.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 
