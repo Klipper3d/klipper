@@ -6,6 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, sys, ast, re, string
+import probe_menu
 
 
 class error(Exception):
@@ -1160,6 +1161,8 @@ class MenuManager:
             'encoder_fast_rate', .03, above=0.)
         self._last_encoder_cw_eventtime = 0
         self._last_encoder_ccw_eventtime = 0
+        # probe menu
+        self.probe_menu = probe_menu.ProbeHelperMenu(config, self)
         # printer objects
         self.buttons = self.printer.try_load_module(config, "buttons")
         # register itself for printer callbacks
