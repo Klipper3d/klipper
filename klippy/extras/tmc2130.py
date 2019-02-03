@@ -36,8 +36,9 @@ def ffs(mask):
     return (mask & -mask).bit_length() - 1
 
 class FieldHelper:
-    def __init__(self, all_fields):
+    def __init__(self, all_fields, field_formatters={}):
         self.all_fields = all_fields
+        self.field_formatters = field_formatters
     def get_field(self, reg_name, field_name, reg_value):
         # Returns value of the register field
         mask = self.all_fields.get(reg_name, {})[field_name]
@@ -48,11 +49,15 @@ class FieldHelper:
         return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
     def pretty_format(self, reg_name, value):
         # Provide a string description of a register
-        fields = [ " %s=%d" % (field_name, (value & mask) >> ffs(mask))
-                   for field_name, mask in sorted(self.all_fields.get(
-                       reg_name, {}).items(), key = lambda f: f[1])
-                   if value & mask ]
-        return "%-15s %08x%s" % (reg_name + ":", value, "".join(fields))
+        reg_fields = self.all_fields.get(reg_name, {})
+        reg_fields = sorted([(mask, name) for name, mask in reg_fields.items()])
+        fields = []
+        for mask, field_name in reg_fields:
+            fval = (value & mask) >> ffs(mask)
+            sval = self.field_formatters.get(field_name, str)(fval)
+            if sval and sval != "0":
+                fields.append(" %s=%s" % (field_name, sval))
+        return "%-11s %08x%s" % (reg_name + ":", value, "".join(fields))
 
 
 ######################################################################

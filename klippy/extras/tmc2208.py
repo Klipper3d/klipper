@@ -171,6 +171,12 @@ Fields["PWM_AUTO"] = {
     "PWM_GRAD_AUTO":       0xff << 16
 }
 
+FieldFormatters = {
+    "VERSION": hex,
+    "s2vsb": (lambda v: "SHORT!" if v else ""),
+}
+
+
 ######################################################################
 # TMC2208 communication
 ######################################################################
@@ -267,7 +273,7 @@ class TMC2208:
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
         # Get config for initial driver settings
-        self.field_helper = tmc2130.FieldHelper(Fields)
+        self.field_helper = tmc2130.FieldHelper(Fields, FieldFormatters)
         run_current = config.getfloat('run_current', above=0., maxval=2.)
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=2.)
