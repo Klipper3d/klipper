@@ -3,7 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, collections
+import logging, collections
 import tmc2130
 
 TMC_FREQUENCY=12000000.
@@ -292,30 +292,14 @@ class TMC2208:
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        mres = config.getchoice('microsteps', steps)
-        self.fields.set_field("MRES", mres)
-        # Calculate current
-        vsense = False
-        run_current = config.getfloat('run_current', above=0., maxval=2.)
-        hold_current = config.getfloat('hold_current', run_current,
-                                       above=0., maxval=2.)
-        sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
-        irun = self.current_bits(run_current, sense_resistor, vsense)
-        ihold = self.current_bits(hold_current, sense_resistor, vsense)
-        if irun < 16 and ihold < 16:
-            vsense = True
-            irun = self.current_bits(run_current, sense_resistor, vsense)
-            ihold = self.current_bits(hold_current, sense_resistor, vsense)
+        vsense, irun, ihold = tmc2130.get_config_current(config)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
-        # Setup stealthchop
-        sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-        sc_threshold = self.velocity_to_clock(config, sc_velocity, mres)
-        self.fields.set_field("en_spreadCycle", not sc_velocity)
-        self.fields.set_field("TPWMTHRS", sc_threshold)
+        mres, en, thresh = tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
+        self.fields.set_field("MRES", mres)
+        self.fields.set_field("en_spreadCycle", not en)
+        self.fields.set_field("TPWMTHRS", thresh)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
@@ -332,23 +316,6 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
-    def current_bits(self, current, sense_resistor, vsense_on):
-        sense_resistor += 0.020
-        vsense = 0.32
-        if vsense_on:
-            vsense = 0.18
-        cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense
-                 - 1. + .5)
-        return max(0, min(31, cs))
-    def velocity_to_clock(self, config, velocity, mres):
-        if not velocity:
-            return 0
-        stepper_name = config.get_name().split()[1]
-        stepper_config = config.getsection(stepper_name)
-        step_dist = stepper_config.getfloat('step_distance')
-        step_dist_256 = step_dist / (1 << mres)
-        threshold = int(TMC_FREQUENCY * step_dist_256 / velocity + .5)
-        return max(0, min(0xfffff, threshold))
     def build_config(self):
         bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
         self.mcu.add_config_cmd(

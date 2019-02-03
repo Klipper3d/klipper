@@ -94,6 +94,50 @@ class FieldHelper:
 
 
 ######################################################################
+# Config reading helpers
+######################################################################
+
+def current_bits(current, sense_resistor, vsense_on):
+    sense_resistor += 0.020
+    vsense = 0.32
+    if vsense_on:
+        vsense = 0.18
+    cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
+    return max(0, min(31, cs))
+
+def get_config_current(config):
+    vsense = False
+    run_current = config.getfloat('run_current', above=0., maxval=2.)
+    hold_current = config.getfloat('hold_current', run_current,
+                                   above=0., maxval=2.)
+    sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+    irun = current_bits(run_current, sense_resistor, vsense)
+    ihold = current_bits(hold_current, sense_resistor, vsense)
+    if irun < 16 and ihold < 16:
+        vsense = True
+        irun = current_bits(run_current, sense_resistor, vsense)
+        ihold = current_bits(hold_current, sense_resistor, vsense)
+    return vsense, irun, ihold
+
+def get_config_microsteps(config):
+    steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
+             '8': 5, '4': 6, '2': 7, '1': 8}
+    return config.getchoice('microsteps', steps)
+
+def get_config_stealthchop(config, tmc_freq):
+    mres = get_config_microsteps(config)
+    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
+    if not velocity:
+        return mres, False, 0
+    stepper_name = config.get_name().split()[1]
+    stepper_config = config.getsection(stepper_name)
+    step_dist = stepper_config.getfloat('step_distance')
+    step_dist_256 = step_dist / (1 << mres)
+    threshold = int(tmc_freq * step_dist_256 / velocity + .5)
+    return mres, True, max(0, min(0xfffff, threshold))
+
+
+######################################################################
 # TMC2130 printer object
 ######################################################################
 
@@ -112,17 +156,10 @@ class TMC2130:
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
         # Get config for initial driver settings
-        self.field_helper = FieldHelper(Fields)
-        run_current = config.getfloat('run_current', above=0., maxval=2.)
-        hold_current = config.getfloat('hold_current', run_current,
-                                       above=0., maxval=2.)
-        sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        self.mres = config.getchoice('microsteps', steps)
+        self.fields = FieldHelper(Fields)
         interpolate = config.getboolean('interpolate', True)
-        sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-        sc_threshold = self.velocity_to_clock(config, sc_velocity)
+        self.mres, en_pwm, sc_threshold = get_config_stealthchop(
+            config, TMC_FREQUENCY)
         iholddelay = config.getint('driver_IHOLDDELAY', 8, minval=0, maxval=15)
         tpowerdown = config.getint('driver_TPOWERDOWN', 0, minval=0, maxval=255)
         blank_time_select = config.getint('driver_BLANK_TIME_SELECT', 1,
@@ -135,16 +172,9 @@ class TMC2130:
         pwm_freq = config.getint('driver_PWM_FREQ', 1, minval=0, maxval=3)
         pwm_grad = config.getint('driver_PWM_GRAD', 4, minval=0, maxval=255)
         pwm_ampl = config.getint('driver_PWM_AMPL', 128, minval=0, maxval=255)
-        # calculate current
-        vsense = False
-        irun = self.current_bits(run_current, sense_resistor, vsense)
-        ihold = self.current_bits(hold_current, sense_resistor, vsense)
-        if irun < 16 and ihold < 16:
-            vsense = True
-            irun = self.current_bits(run_current, sense_resistor, vsense)
-            ihold = self.current_bits(hold_current, sense_resistor, vsense)
+        vsense, irun, ihold = get_config_current(config)
         # Configure registers
-        self.reg_GCONF = (sc_velocity > 0.) << 2
+        self.reg_GCONF = en_pwm << 2
         self.set_register("GCONF", self.reg_GCONF)
         self.set_register("CHOPCONF", (
             toff | (hstrt << 4) | (hend << 7) | (blank_time_select << 15)
@@ -152,26 +182,10 @@ class TMC2130:
         self.set_register("IHOLD_IRUN",
                           ihold | (irun << 8) | (iholddelay << 16))
         self.set_register("TPOWERDOWN", tpowerdown)
-        self.set_register("TPWMTHRS", max(0, min(0xfffff, sc_threshold)))
+        self.set_register("TPWMTHRS", sc_threshold)
         self.set_register("COOLCONF", sgt << 16)
         self.set_register("PWMCONF", (
             pwm_ampl | (pwm_grad << 8) | (pwm_freq << 16) | (pwm_scale << 18)))
-    def current_bits(self, current, sense_resistor, vsense_on):
-        sense_resistor += 0.020
-        vsense = 0.32
-        if vsense_on:
-            vsense = 0.18
-        cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense
-                 - 1. + .5)
-        return max(0, min(31, cs))
-    def velocity_to_clock(self, config, velocity):
-        if not velocity:
-            return 0
-        stepper_name = config.get_name().split()[1]
-        stepper_config = config.getsection(stepper_name)
-        step_dist = stepper_config.getfloat('step_distance')
-        step_dist_256 = step_dist / (1 << self.mres)
-        return int(TMC_FREQUENCY * step_dist_256 / velocity + .5)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
@@ -200,7 +214,7 @@ class TMC2130:
         logging.info("DUMP_TMC %s", self.name)
         for reg_name in ReadRegisters:
             val = self.get_register(reg_name)
-            msg = self.field_helper.pretty_format(reg_name, val)
+            msg = self.fields.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 
