@@ -167,7 +167,11 @@ scripts ultimately cause the following Unix command to be run:
 ~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
 ```
 One can run multiple instances of the above command as long as each
-instance has its own printer config file and its own log file.
+instance has its own printer config file, its own log file, and its
+own pseudo-tty. For example:
+```
+~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
+```
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
