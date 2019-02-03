@@ -35,23 +35,24 @@ Fields = {}
 def ffs(mask):
     return (mask & -mask).bit_length() - 1
 
-# Provide a string description of a register
-def pretty_format(all_fields, reg_name, value):
-    fields = [ " %s=%d" % (field_name, (value & mask) >> ffs(mask))
-               for field_name, mask in sorted(all_fields.get(
-                   reg_name, {}).items(), key = lambda f: f[1])
-               if value & mask ]
-    return "%-15s %08x%s" % (reg_name + ":", value, "".join(fields))
-
-# Returns value of the register field
-def get_field(all_fields, reg_name, field_name, reg_value):
-    mask = all_fields.get(reg_name, {})[field_name]
-    return (reg_value & mask) >> ffs(mask)
-
-# Returns register value with field bits filled with supplied field value
-def set_field(all_fields, reg_name, field_name, reg_value, field_value):
-    mask = all_fields.get(reg_name, {})[field_name]
-    return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
+class FieldHelper:
+    def __init__(self, all_fields):
+        self.all_fields = all_fields
+    def get_field(self, reg_name, field_name, reg_value):
+        # Returns value of the register field
+        mask = self.all_fields.get(reg_name, {})[field_name]
+        return (reg_value & mask) >> ffs(mask)
+    def set_field(self, reg_name, field_name, reg_value, field_value):
+        # Returns register value with field bits filled with supplied value
+        mask = self.all_fields.get(reg_name, {})[field_name]
+        return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
+    def pretty_format(self, reg_name, value):
+        # Provide a string description of a register
+        fields = [ " %s=%d" % (field_name, (value & mask) >> ffs(mask))
+                   for field_name, mask in sorted(self.all_fields.get(
+                       reg_name, {}).items(), key = lambda f: f[1])
+                   if value & mask ]
+        return "%-15s %08x%s" % (reg_name + ":", value, "".join(fields))
 
 
 ######################################################################
@@ -73,6 +74,7 @@ class TMC2130:
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
         # Get config for initial driver settings
+        self.field_helper = FieldHelper(Fields)
         run_current = config.getfloat('run_current', above=0., maxval=2.)
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=2.)
@@ -160,7 +162,7 @@ class TMC2130:
         logging.info("DUMP_TMC %s", self.name)
         for reg_name in ReadRegisters:
             val = self.get_register(reg_name)
-            msg = pretty_format(Fields, reg_name, val)
+            msg = self.field_helper.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 

@@ -267,6 +267,7 @@ class TMC2208:
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
         # Get config for initial driver settings
+        self.field_helper = tmc2130.FieldHelper(Fields)
         run_current = config.getfloat('run_current', above=0., maxval=2.)
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=2.)
@@ -386,10 +387,11 @@ class TMC2208:
                 raise gcode.error(str(e))
             # IOIN has different mappings depending on the driver type
             # (SEL_A field of IOIN reg)
-            if reg_name is "IOIN":
-                drv_type = tmc2130.get_field(Fields, "IOIN@TMC222x", "SEL_A", val)
+            if reg_name == "IOIN":
+                drv_type = self.field_helper.get_field("IOIN@TMC222x", "SEL_A",
+                                                       val)
                 reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            msg = tmc2130.pretty_format(Fields, reg_name, val)
+            msg = self.field_helper.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
 
