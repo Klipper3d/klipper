@@ -45,13 +45,18 @@ class FieldHelper:
     def __init__(self, all_fields, field_formatters={}):
         self.all_fields = all_fields
         self.field_formatters = field_formatters
+        self.field_to_register = { f: r for r, fields in self.all_fields.items()
+                                   for f in fields }
+    def lookup_register(self, field_name):
+        # Return the name of the register containing the given field
+        return self.field_to_register[field_name]
     def get_field(self, reg_name, field_name, reg_value):
         # Returns value of the register field
-        mask = self.all_fields.get(reg_name, {})[field_name]
+        mask = self.all_fields[reg_name][field_name]
         return (reg_value & mask) >> ffs(mask)
     def set_field(self, reg_name, field_name, reg_value, field_value):
         # Returns register value with field bits filled with supplied value
-        mask = self.all_fields.get(reg_name, {})[field_name]
+        mask = self.all_fields[reg_name][field_name]
         return (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
     def pretty_format(self, reg_name, value):
         # Provide a string description of a register

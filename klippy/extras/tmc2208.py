@@ -7,9 +7,6 @@ import math, logging, collections
 import tmc2130
 
 TMC_FREQUENCY=12000000.
-GCONF_PDN_DISABLE = 1<<6
-GCONF_MSTEP_REG_SELECT = 1<<7
-GCONF_MULTISTEP_FILT = 1<<8
 
 Registers = {
     "GCONF": 0x00, "GSTAT": 0x01, "IFCNT": 0x02, "SLAVECONF": 0x03,
@@ -296,10 +293,10 @@ class TMC2208:
         sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
                  '8': 5, '4': 6, '2': 7, '1': 8}
-        self.mres = config.getchoice('microsteps', steps)
+        mres = config.getchoice('microsteps', steps)
         interpolate = config.getboolean('interpolate', True)
         sc_velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-        sc_threshold = self.velocity_to_clock(config, sc_velocity)
+        sc_threshold = self.velocity_to_clock(config, sc_velocity, mres)
         iholddelay = config.getint('driver_IHOLDDELAY', 8, minval=0, maxval=15)
         tpowerdown = config.getint('driver_TPOWERDOWN', 20, minval=0, maxval=255)
         blank_time_select = config.getint('driver_BLANK_TIME_SELECT', 2,
@@ -324,20 +321,30 @@ class TMC2208:
             ihold = self.current_bits(hold_current, sense_resistor, vsense)
         # Configure registers
         self.ifcnt = None
-        self.init_regs = collections.OrderedDict()
-        self.init_regs['GCONF'] = (
-            ((sc_velocity == 0.) << 2) | GCONF_PDN_DISABLE
-            | GCONF_MSTEP_REG_SELECT | GCONF_MULTISTEP_FILT)
-        self.init_regs['CHOPCONF'] = (
-            toff | (hstrt << 4) | (hend << 7) | (blank_time_select << 15)
-            | (vsense << 17) | (self.mres << 24) | (interpolate << 28))
-        self.init_regs['IHOLD_IRUN'] = ihold | (irun << 8) | (iholddelay << 16)
-        self.init_regs['TPOWERDOWN'] = tpowerdown
-        self.init_regs['TPWMTHRS'] = max(0, min(0xfffff, sc_threshold))
-        self.init_regs['PWMCONF'] = (
-            pwm_ofs | (pwm_grad << 8) | (pwm_freq << 16)
-            | (pwm_autoscale << 18) | (pwm_autograd << 19)
-            | (pwm_reg << 24) | (pwm_lim << 28))
+        self.regs = collections.OrderedDict()
+        self.set_field("en_spreadCycle", not sc_velocity)
+        self.set_field("pdn_disable", True)
+        self.set_field("mstep_reg_select", True)
+        self.set_field("multistep_filt", True)
+        self.set_field("toff", toff)
+        self.set_field("hstrt", hstrt)
+        self.set_field("hend", hend)
+        self.set_field("TBL", blank_time_select)
+        self.set_field("vsense", vsense)
+        self.set_field("MRES", mres)
+        self.set_field("intpol", interpolate)
+        self.set_field("IHOLD", ihold)
+        self.set_field("IRUN", irun)
+        self.set_field("IHOLDDELAY", iholddelay)
+        self.set_field("TPOWERDOWN", tpowerdown)
+        self.set_field("TPWMTHRS", max(0, min(0xfffff, sc_threshold)))
+        self.set_field("PWM_OFS", pwm_ofs)
+        self.set_field("PWM_GRAD", pwm_grad)
+        self.set_field("pwm_freq", pwm_freq)
+        self.set_field("pwm_autoscale", pwm_autoscale)
+        self.set_field("pwm_autograd", pwm_autograd)
+        self.set_field("PWM_REG", pwm_reg)
+        self.set_field("PWM_LIM", pwm_lim)
     def current_bits(self, current, sense_resistor, vsense_on):
         sense_resistor += 0.020
         vsense = 0.32
@@ -346,13 +353,13 @@ class TMC2208:
         cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense
                  - 1. + .5)
         return max(0, min(31, cs))
-    def velocity_to_clock(self, config, velocity):
+    def velocity_to_clock(self, config, velocity, mres):
         if not velocity:
             return 0
         stepper_name = config.get_name().split()[1]
         stepper_config = config.getsection(stepper_name)
         step_dist = stepper_config.getfloat('step_distance')
-        step_dist_256 = step_dist / (1 << self.mres)
+        step_dist_256 = step_dist / (1 << mres)
         return int(TMC_FREQUENCY * step_dist_256 / velocity + .5)
     def build_config(self):
         bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
@@ -362,8 +369,18 @@ class TMC2208:
         cmd_queue = self.mcu.alloc_command_queue()
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
+    def get_field(self, field_name):
+        # Return a field from the local cache of register values
+        reg_name = self.field_helper.lookup_register(field_name)
+        return self.field_helper.get_field(
+            reg_name, field_name, self.regs.get(reg_name, 0))
+    def set_field(self, field_name, field_value):
+        # Set a field in the local cache of register values
+        reg_name = self.field_helper.lookup_register(field_name)
+        self.regs[reg_name] = self.field_helper.set_field(
+            reg_name, field_name, self.regs.get(reg_name, 0), field_value)
     def handle_connect(self):
-        for reg_name, val in self.init_regs.items():
+        for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
     def get_register(self, reg_name):
         reg = Registers[reg_name]
@@ -394,9 +411,11 @@ class TMC2208:
         raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
     def get_microsteps(self):
-        return 256 >> self.mres
+        return 256 >> self.get_field("MRES")
     def get_phase(self):
-        return (self.get_register("MSCNT") & 0x3ff) >> self.mres
+        mscnt = self.get_register("MSCNT")
+        mscnt = self.field_helper.get_field("MSCNT", "MSCNT", mscnt)
+        return mscnt >> self.get_field("MRES")
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
