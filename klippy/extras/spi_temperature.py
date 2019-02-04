@@ -23,6 +23,7 @@ REPORT_TIME = 0.300
 class SensorBase:
     def __init__(self, config, chip_type, config_cmd=None):
         self.printer = config.get_printer()
+        self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
@@ -33,9 +34,6 @@ class SensorBase:
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        mcu.add_config_cmd(
-            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
-                oid, self.spi.get_oid(), chip_type))
         mcu.register_msg(self._handle_spi_response, "thermocouple_result", oid)
         mcu.register_config_callback(self._build_config)
     def setup_minmax(self, min_temp, max_temp):
@@ -47,6 +45,9 @@ class SensorBase:
     def get_report_time_delta(self):
         return REPORT_TIME
     def _build_config(self):
+        self.mcu.add_config_cmd(
+            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
+                self.oid, self.spi.get_oid(), self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
