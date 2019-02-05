@@ -57,7 +57,7 @@ class GCodeParser:
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heater = None
-        self.speed = 25.0
+        self.speed = 25. * 60.
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
