@@ -29,6 +29,7 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
         self.pending_commands = []
+        self.respond_callbacks = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -248,12 +249,12 @@ class GCodeParser:
             pending_commands = self.pending_commands
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
-    def process_batch(self, commands):
+    def process_batch(self, commands, need_ack=False):
         if self.is_processing_data:
             return False
         self.is_processing_data = True
         try:
-            self.process_commands(commands, need_ack=False)
+            self.process_commands(commands, need_ack=need_ack)
         except error as e:
             if self.pending_commands:
                 self.process_pending()
@@ -269,11 +270,11 @@ class GCodeParser:
             self.process_commands(script.split('\n'), need_ack=False)
         finally:
             self.need_ack = prev_need_ack
-    def run_script(self, script):
+    def run_script(self, script, need_ack=False):
         commands = script.split('\n')
         curtime = None
         while 1:
-            res = self.process_batch(commands)
+            res = self.process_batch(commands, need_ack=need_ack)
             if res:
                 break
             if curtime is None:
@@ -285,17 +286,24 @@ class GCodeParser:
             return
         try:
             if msg:
-                os.write(self.fd, "ok %s\n" % (msg,))
+                output = "ok %s\n" % (msg,)
             else:
-                os.write(self.fd, "ok\n")
+                output = "ok\n"      
+            os.write(self.fd, output)
+            for callback in self.respond_callbacks:
+                callback(output)
         except os.error:
             logging.exception("Write g-code ack")
         self.need_ack = False
+    def register_respond_callback(self, callback):
+        self.respond_callbacks.append(callback)
     def respond(self, msg):
         if self.is_fileinput:
             return
         try:
             os.write(self.fd, msg+"\n")
+            for callback in self.respond_callbacks:
+                callback(msg)
         except os.error:
             logging.exception("Write g-code response")
     def respond_info(self, msg):
