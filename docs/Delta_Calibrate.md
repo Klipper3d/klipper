@@ -9,6 +9,11 @@ them manually. In contrast, the software calibration code can provide
 excellent results with just a few minutes of time. No special probing
 hardware is necessary to get good results.
 
+Ultimately, the delta calibration is dependent on the precision of the
+tower endstop switches. If one is using Trinamic stepper motor drivers
+then consider enabling [endstop phase](Endstop_Phase.md) detection to
+improve the accuracy of those switches.
+
 Basic delta calibration
 =======================
 
@@ -35,13 +40,14 @@ calibration completes, one can remove this setting from the config.)
 There are two ways to perform the probing - manual probing and
 automatic probing. Automatic probing utilizes a hardware device
 capable of triggering when the toolhead is at a set distance from the
-bed. Manual probing involves using the "paper test" to determine the
-height at each probe point. It is recommended to use manual probing
-for delta calibration. A number of common printer kits come with
-probes that are not sufficiently accurate (specifically, small
-differences in arm length can cause effector tilt which can skew an
-automatic probe). Manual probing only takes a few minutes and it
-eliminates error introduced by the probe.
+bed. Manual probing involves using the
+["paper test"](Bed_Level.md#the-paper-test) to determine the height at
+each probe point. It is recommended to use manual probing for delta
+calibration. A number of common printer kits come with probes that are
+not sufficiently accurate (specifically, small differences in arm
+length can cause effector tilt which can skew an automatic
+probe). Manual probing only takes a few minutes and it eliminates
+error introduced by the probe.
 
 To perform the basic probe, make sure the config has a
 [delta_calibrate] section defined and run:
@@ -56,7 +62,7 @@ SAVE_CONFIG
 ```
 
 The basic calibration should provide delta parameters that are
-accurate enough for basic printing.  If this is a new printer, this is
+accurate enough for basic printing. If this is a new printer, this is
 a good time to print some basic objects and verify general
 functionality.
 
