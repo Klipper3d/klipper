@@ -102,11 +102,22 @@ usb_request_bootloader(void)
  * Startup
  ****************************************************************/
 
+static void
+matrix_init(void)
+{
+    // The ATSAM sram is in a "no default master" state at reset
+    // (despite the specs).  That typically adds 1 wait cycle to every
+    // memory access.  Set it to "last access master" to avoid that.
+    MATRIX->MATRIX_SCFG[0] = (MATRIX_SCFG_SLOT_CYCLE(64)
+                              | MATRIX_SCFG_DEFMSTR_TYPE(1));
+}
+
 // Main entry point
 int
 main(void)
 {
     SystemInit();
+    matrix_init();
     sched_main();
     return 0;
 }
