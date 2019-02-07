@@ -283,10 +283,10 @@ config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
+The test was last run on commit `74c21654` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
 stepper result is `SET ticks 388`, the best dual stepper result is
-`SET ticks 423`, and the best three stepper result is `SET ticks 636`.
+`SET ticks 405`, and the best three stepper result is `SET ticks 576`.
 
 ### Duet Maestro step rate benchmark ###
 
@@ -299,10 +299,10 @@ config_stepper oid=2 step_pin=PC26 dir_pin=PB4 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
+The test was last run on commit `74c21654` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 563`, the best dual stepper result is
-`SET ticks 543`, and the best three stepper result is `SET ticks 683`.
+stepper result is `SET ticks 553`, the best dual stepper result is
+`SET ticks 563`, and the best three stepper result is `SET ticks 623`.
 
 ### Duet Wifi step rate benchmark ###
 

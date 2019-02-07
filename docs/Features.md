@@ -133,17 +133,17 @@ represent total number of steps per second on the micro-controller.
 | 20Mhz AVR                   | 189K              | 125K              |
 | Arduino Zero (SAMD21)       | 234K              | 217K              |
 | "Blue Pill" (STM32F103)     | 395K              | 356K              |
-| Arduino Due (SAM3X8E)       | 397K              | 396K              |
-| SAM4S8C                     | 527K              | 527K              |
+| Arduino Due (SAM3X8E)       | 438K              | 438K              |
 | Smoothieboard (LPC1768)     | 574K              | 574K              |
+| SAM4S8C                     | 578K              | 578K              |
 | Duet2 Wifi/Eth (SAM4E8E)    | 652K              | 652K              |
 | Smoothieboard (LPC1769)     | 661K              | 661K              |
 | Beaglebone PRU              | 680K              | 680K              |
 | Adafruit Metro M4 (SAMD51)  | 733K              | 733K              |
 
 On AVR platforms, the highest achievable step rate is with just one
-stepper stepping. On the SAMD21, STM32F103, and SAM3X8E, the highest
-step rate is with two simultaneous steppers stepping. On the SAM4S8C,
+stepper stepping. On the SAMD21 and STM32F103 the highest step rate is
+with two simultaneous steppers stepping. On the SAM3X8E, SAM4S8C,
 SAM4E8E, LPC176x, and PRU the highest step rate is with three
 simultaneous steppers. On the SAMD51, the highest step rate is with
 four simultaneous steppers.
