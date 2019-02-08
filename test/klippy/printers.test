@@ -65,6 +65,7 @@ DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
