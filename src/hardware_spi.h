@@ -14,11 +14,9 @@ enum {
     SF_HAVE_PIN = 1,
 };
 
-struct spidev_s *spidev_oid_lookup(uint8_t oid);
-
 void hardware_spi_transfer(struct spidev_s *spi, uint8_t receive_data
         , uint8_t data_len, uint8_t *data);
 
-hardware_spi_shutdown(spidev_s *spi);
+hardware_spi_shutdown(struct spidev_s *spi);
 
 #endif // hardware_spi.h

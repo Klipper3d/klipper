@@ -12,38 +12,38 @@
 #include "software_spi.h"
 
 void software_spi_setup(struct software_spi_config *spi_config) {
-    gpio_out_setup(spi_config->pins->mosi, PIN_HIGH);
-    gpio_in_setup(spi_config->pins->miso, PIN_HIGH);
+    gpio_out_setup(spi_config->pins.mosi, PIN_HIGH);
+    gpio_in_setup(spi_config->pins.miso, PIN_HIGH);
 
-    if (spi_config->pins->slave_select > 0) {
-        gpio_out_setup(spi_config->pins->slave_select, PIN_HIGH);
+    if (spi_config->pins.slave_select > 0) {
+        gpio_out_setup(spi_config->pins.slave_select, PIN_HIGH);
     }
 
-    if (spi_device->mode < 2) {
-        gpio_in_setup(spi_config->pins->sysclock, PIN_LOW);
+    if (spi_device.mode < 2) {
+        gpio_in_setup(spi_config->pins.sysclock, PIN_LOW);
     } else {
-        gpio_in_setup(spi_config->pins->sysclock, PIN_HIGH);
+        gpio_in_setup(spi_config->pins.sysclock, PIN_HIGH);
     }
 }
 
 uint8_t spi_read_bit(struct software_spi_config *spi_config) {
-    return gpio_in_read(spi_config->pins->miso) ? 1 : 0;
+    return gpio_in_read(spi_config->pins.miso) ? 1 : 0;
 }
 
 void spi_write_bit(struct software_spi_config *spi_config, uint8_t data) {
-    gpio_out_write(spi_config->pins->mosi, data);
+    gpio_out_write(spi_config->pins.mosi, data);
 }
 
 void spi_clock_high(struct software_spi_config *spi_config) {
-    gpio_out_write(spi_config->pins->sysclock, PIN_HIGH);
+    gpio_out_write(spi_config->pins.sysclock, PIN_HIGH);
 }
 
 void spi_clock_low(struct software_spi_config *spi_config) {
-    gpio_out_write(spi_config->pins->sysclock, PIN_LOW);
+    gpio_out_write(spi_config->pins.sysclock, PIN_LOW);
 }
 
 void spi_clock_toggle(struct software_spi_config *spi_config) {
-    gpio_out_toggle(spi_config->pins->sysclock);
+    gpio_out_toggle(spi_config->pins.sysclock);
 }
 
 void
@@ -52,31 +52,31 @@ software_spi_transfer(struct software_spi_config *spi_config, uint8_t receive_da
 {
     software_spi_setup(*spi_config);
 
-    if (spi_config->pins->slave_select > 0) {
-        gpio_out_toggle(spi_config->pins->slave_select);
+    if (spi_config->pins.slave_select > 0) {
+        gpio_out_toggle(spi_config->pins.slave_select);
     }
 
     while (len--) {
         uint8_t outbuf = *data;
         uint8_t inbuf = 0;
         for (uint_fast8_t i = 0; i < 8; i++) {
-            if (config->mode % 2 == 0) {
+            if (config.mode % 2 == 0) {
                 // MODE 0 & 2
-                spi_write_bit(spi_config->pins->mosi, outbuf | 0x80);
+                spi_write_bit(spi_config->pins.mosi, outbuf | 0x80);
                 outbuf <<= 1;
                 spi_clock_toggle(); // mode 0 high - mode 2 low
                 inbuf <<= 1;
-                inbuf |= spi_read_bit(spi_config->pins->miso);
+                inbuf |= spi_read_bit(spi_config->pins.miso);
                 spi_clock_toggle(); // mode 0 low - mode 2 high
                 break;
             } else {
                 // MODE 1 & 3
                 spi_clock_toggle(); // mode 1 high - mode 3 low
-                spi_write_bit(spi_config->pins->mosi, outbuf | 0x80);
+                spi_write_bit(spi_config->pins.mosi, outbuf | 0x80);
                 outbuf <<= 1;
                 spi_clock_toggle(); // mode 1 low - mode 3 high
                 inbuf <<= 1;
-                inbuf |= spi_read_bit(spi_config->pins->miso);
+                inbuf |= spi_read_bit(spi_config->pins.miso);
             }
         }
 
@@ -84,8 +84,8 @@ software_spi_transfer(struct software_spi_config *spi_config, uint8_t receive_da
         *data++;
     }
 
-    if (spi_config->pins->slave_select > 0) {
-        gpio_out_toggle(spi_config->pins->slave_select);
+    if (spi_config->pins.slave_select > 0) {
+        gpio_out_toggle(spi_config->pins.slave_select);
     }
 }
 
@@ -94,11 +94,11 @@ software_spi_shutdown(struct software_spi_config *spi_config)
 {
     software_spi_transfer(spi_config, 0, spi_config->shutdown_msg_len, spi_config->shutdown_msg);
 
-    gpio_in_setup(spi_config->pins->mosi, PIN_LOW);
-    gpio_in_setup(spi_config->pins->miso, PIN_LOW);
-    gpio_in_setup(spi_config->pins->sysclock, PIN_LOW);
+    gpio_in_setup(spi_config->pins.mosi, PIN_LOW);
+    gpio_in_setup(spi_config->pins.miso, PIN_LOW);
+    gpio_in_setup(spi_config->pins.sysclock, PIN_LOW);
 
-    if (spi_config->pins->slave_select > 0) {
-        gpio_in_setup(spi_config->pins->slave_select, PIN_LOW);
+    if (spi_config->pins.slave_select > 0) {
+        gpio_in_setup(spi_config->pins.slave_select, PIN_LOW);
     }
 }

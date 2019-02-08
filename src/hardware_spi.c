@@ -33,7 +33,7 @@ hardware_spi_transfer(struct spidev_s *spi, uint8_t receive_data
 }
 
 void
-hardware_spi_shutdown(spidev_s *spi) {
+hardware_spi_shutdown(struct spidev_s *spi) {
     gpio_out_write(spi->pin, 1);
     hardware_spi_transfer(spi, 0, spi->shutdown_msg_len, spi->shutdown_msg);
 }

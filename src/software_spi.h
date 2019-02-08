@@ -22,8 +22,8 @@ void
 software_spi_transfer(struct software_spi_config *config, uint8_t receive_data
 , uint8_t len, uint8_t *data);
 
-void software_spi_setup(struct software_spi_config spi_config);
+void software_spi_setup(struct software_spi_config *spi_config);
 
-void software_spi_shutdown(struct software_spi_config spi_config);
+void software_spi_shutdown(struct software_spi_config *spi_config);
 
 #endif // software_spi.h

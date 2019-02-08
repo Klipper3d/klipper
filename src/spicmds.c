@@ -9,14 +9,9 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
+#include "spicmds.h"
 #include "software_spi.h" // spidev_transfer
 #include "hardware_spi.h" // spidev_transfer
-
-struct spi_command_device {
-    struct spidev_s *hardware_spi;
-    struct software_spi_config *software_spi;
-    uint8_t is_hardware;
-};
 
 
 void
@@ -80,10 +75,10 @@ command_config_software_spi(uint32_t *args)
             , sizeof(*spi_device) + shutdown_msg_len);
 
     spi_device->is_hardware = 0;
-    spi_device->software_spi->pins->mosi = mosi;
-    spi_device->software_spi->pins->miso = miso;
-    spi_device->software_spi->pins->slave_select = ss;
-    spi_device->software_spi->pins->sysclock = sck;
+    spi_device->software_spi->pins.mosi = mosi;
+    spi_device->software_spi->pins.miso = miso;
+    spi_device->software_spi->pins.slave_select = ss;
+    spi_device->software_spi->pins.sysclock = sck;
     spi_device->software_spi->shutdown_msg_len = shutdown_msg_len;
 
     memcpy(spi_device->software_spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
@@ -92,7 +87,7 @@ DECL_COMMAND(command_config_spi,
              "config_software_spi oid=%c mosi=%u miso=%u ss=%u sck=%u mode=%u shutdown_msg=%*s");
 
 void
-command_config_spi_without_cs(uint32_t *args)
+command_config_software_spi_without_cs(uint32_t *args)
 {
     uint8_t
             oid = args[0],
@@ -112,15 +107,23 @@ command_config_spi_without_cs(uint32_t *args)
             , sizeof(*spi_device) + shutdown_msg_len);
 
 
-    spi_device->software_spi->pins->mosi = mosi;
-    spi_device->software_spi->pins->miso = miso;
-    spi_device->software_spi->pins->sysclock = sck;
+    spi_device->software_spi->pins.mosi = mosi;
+    spi_device->software_spi->pins.miso = miso;
+    spi_device->software_spi->pins.sysclock = sck;
     spi_device->software_spi->shutdown_msg_len = shutdown_msg_len;
 
     memcpy(spi_device->software_spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
 }
 DECL_COMMAND(command_config_spi,
              "config_software_spi_without_cs oid=%c mosi=%u miso=%u sck=%u mode=%u shutdown_msg=%*s");
+
+
+// @todo need to figure this out
+struct spidev_s *
+spidev_oid_lookup(uint8_t oid)
+{
+    return oid_lookup(oid, command_config_spi);
+}
 
 void
 command_spi_transfer(uint32_t *args)
@@ -153,7 +156,6 @@ command_spi_send(uint32_t *args)
     } else {
         software_spi_transfer(spi_device->software_spi, 0, data_len, data);
     }
-
 }
 DECL_COMMAND(command_spi_send, "spi_send oid=%c data=%*s");
 
@@ -162,7 +164,7 @@ spidev_shutdown(void)
 {
     uint8_t oid;
     struct spi_command_device *spi_device;
-    foreach_oid(oid, spi_device, spi_command_device) {
+    foreach_oid(oid, spi_device, command_spi_config) {
         if (spi_device->is_hardware == 1) {
             hardware_spi_shutdown(spi_device->hardware_spi);
         } else {
