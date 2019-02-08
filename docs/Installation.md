@@ -50,9 +50,7 @@ make menuconfig
 ```
 
 Select the appropriate micro-controller and review any other options
-provided. For boards with serial ports, the default baud rate is
-250000 (see the [FAQ](FAQ.md#how-do-i-change-the-serial-baud-rate) if
-changing). Once configured, run:
+provided. Once configured, run:
 
 ```
 make
@@ -147,7 +145,7 @@ In addition to common g-code commands, Klipper supports a few extended
 commands - "status" and "restart" are examples of these commands. Use
 the "help" command to get a list of other extended commands.
 
-After Klipper reports that the "printer is ready" go on to the
+After Klipper reports that the printer is ready go on to the
 [config check document](Config_checks.md) to perform some basic checks
 on the pin definitions in the config file.
 

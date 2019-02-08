@@ -6,10 +6,13 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import hd44780, st7920, uc1701, icons
+import hd44780, st7920, uc1701
 import menu
 
-LCD_chips = { 'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780, 'uc1701' : uc1701.UC1701 }
+LCD_chips = {
+    'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
+    'uc1701' : uc1701.UC1701, 'ssd1306': uc1701.SSD1306,
+}
 M73_TIMEOUT = 5.
 
 class PrinterLCD:
@@ -23,56 +26,36 @@ class PrinterLCD:
         # printer objects
         self.gcode = self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # screen updating
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
     # Initialization
-    FAN1_GLYPH, FAN2_GLYPH, BED1_GLYPH, BED2_GLYPH = 0, 1, 2, 3
-    def printer_state(self, state):
-        if state == 'ready':
-            self.lcd_chip.init()
-            # Load printer objects
-            self.gcode = self.printer.lookup_object('gcode')
-            self.toolhead = self.printer.lookup_object('toolhead')
-            self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
-            self.fan = self.printer.lookup_object('fan', None)
-            self.extruder0 = self.printer.lookup_object('extruder0', None)
-            self.extruder1 = self.printer.lookup_object('extruder1', None)
-            self.heater_bed = self.printer.lookup_object('heater_bed', None)
-            self.prg_time = .0
-            self.progress = None
-            self.msg_time = None
-            self.message = None
-            self.gcode.register_command('M73', self.cmd_M73)
-            self.gcode.register_command('M117', self.cmd_M117)
-            # Load glyphs
-            self.load_glyph(self.BED1_GLYPH, icons.heat1_icon)
-            self.load_glyph(self.BED2_GLYPH, icons.heat2_icon)
-            self.load_glyph(self.FAN1_GLYPH, icons.fan1_icon)
-            self.load_glyph(self.FAN2_GLYPH, icons.fan2_icon)
-            # Start screen update timer
-            self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
-    # ST7920/UC1701 Glyphs
-    def load_glyph(self, glyph_id, data):
-        if self.lcd_type == 'uc1701':
-            self.lcd_chip.load_glyph(glyph_id, data)
-        elif self.lcd_type == 'st7920':
-            glyph = [0x00] * (len(data) * 2)
-            for i, bits in enumerate(data):
-                glyph[i*2] = (bits >> 8) & 0xff
-                glyph[i*2 + 1] = bits & 0xff
-            return self.lcd_chip.load_glyph(glyph_id, glyph)
-    def animate_glyphs(self, eventtime, x, y, glyph_id, do_animate):
-        frame = do_animate and int(eventtime) & 1
-        if self.lcd_type == 'uc1701':
-            self.lcd_chip.write_glyph(x, y, glyph_id + frame)
-        elif self.lcd_type == 'st7920':
-            self.lcd_chip.write_text(x, y, (0, (glyph_id + frame)*2))
+    def handle_ready(self):
+        self.lcd_chip.init()
+        # Load printer objects
+        self.gcode = self.printer.lookup_object('gcode')
+        self.toolhead = self.printer.lookup_object('toolhead')
+        self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
+        self.fan = self.printer.lookup_object('fan', None)
+        self.extruder0 = self.printer.lookup_object('extruder0', None)
+        self.extruder1 = self.printer.lookup_object('extruder1', None)
+        self.heater_bed = self.printer.lookup_object('heater_bed', None)
+        self.prg_time = .0
+        self.progress = None
+        self.msg_time = None
+        self.message = None
+        self.gcode.register_command('M73', self.cmd_M73)
+        self.gcode.register_command('M117', self.cmd_M117)
+        # Start screen update timer
+        self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
+    # Get menu instance
+    def get_menu(self):
+        return self.menu
     # Graphics drawing
-    def draw_icon(self, x, y, data):
-        for i, bits in enumerate(data):
-            self.lcd_chip.write_graphics(
-                x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+    def animate_glyphs(self, eventtime, x, y, glyph_name, do_animate):
+        frame = do_animate and int(eventtime) & 1
+        self.lcd_chip.write_glyph(x, y, glyph_name + str(frame + 1))
     def draw_progress_bar(self, x, y, width, value):
         value = int(value * 100.)
         data = [0x00] * width
@@ -109,15 +92,15 @@ class PrinterLCD:
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            lcd_chip.write_text(0, 0, lcd_chip.char_thermometer)
+            lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(1, 0, info)
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            lcd_chip.write_text(0, 1, lcd_chip.char_thermometer)
+            lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(1, 1, info)
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            lcd_chip.write_text(10, 0, lcd_chip.char_heater_bed)
+            lcd_chip.write_glyph(10, 0, 'bed')
             self.draw_heater(11, 0, info)
         # Fan speed
         if self.fan is not None:
@@ -126,14 +109,14 @@ class PrinterLCD:
             self.draw_percent(14, 1, 4, info['speed'])
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
-        lcd_chip.write_text(0, 2, lcd_chip.char_speed_factor)
+        lcd_chip.write_glyph(0, 2, 'feedrate')
         self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
         # Print progress
         progress = None
         toolhead_info = self.toolhead.get_status(eventtime)
         if self.progress is not None:
             progress = self.progress / 100.
-            lcd_chip.write_text(8, 2, lcd_chip.char_usb)
+            lcd_chip.write_glyph(8, 2, 'usb')
             if toolhead_info['status'] != "Printing":
                 # 5 second timeout when not printing
                 self.prg_time -= .5
@@ -142,46 +125,36 @@ class PrinterLCD:
         elif self.sdcard is not None:
             info = self.sdcard.get_status(eventtime)
             progress = info['progress']
-            lcd_chip.write_text(8, 2, lcd_chip.char_sd)
+            lcd_chip.write_glyph(8, 2, 'sd')
         if progress is not None:
             self.draw_percent(9, 2, 4, progress)
-        lcd_chip.write_text(14, 2, lcd_chip.char_clock)
+        lcd_chip.write_glyph(14, 2, 'clock')
         self.draw_time(15, 2, toolhead_info['printing_time'])
-        # If there is a message set by M117, display it instead of toolhead info
-        if self.message:
-            lcd_chip.write_text(0, 3, self.message)
-            if self.msg_time:
-                # Screen updates every .5 seconds
-                self.msg_time -= .5
-                if self.msg_time <= 0.:
-                    self.message = None
-                    self.msg_time = None
-        else:
-            self.draw_status(0, 3, gcode_info, toolhead_info)
+        self.draw_status(0, 3, gcode_info, toolhead_info)
     def screen_update_128x64(self, eventtime):
         # Heaters
         if self.extruder0 is not None:
             info = self.extruder0.get_heater().get_status(eventtime)
-            self.draw_icon(0, 0, icons.nozzle_icon)
+            self.lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(2, 0, info)
         extruder_count = 1
         if self.extruder1 is not None:
             info = self.extruder1.get_heater().get_status(eventtime)
-            self.draw_icon(0, 1, icons.nozzle_icon)
+            self.lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(2, 1, info)
             extruder_count = 2
         if self.heater_bed is not None:
             info = self.heater_bed.get_status(eventtime)
-            self.draw_icon(0, extruder_count, icons.bed_icon)
             if info['target']:
                 self.animate_glyphs(eventtime, 0, extruder_count,
-                                    self.BED1_GLYPH, True)
+                                    'bed_heat', True)
+            else:
+                self.lcd_chip.write_glyph(0, extruder_count, 'bed')
             self.draw_heater(2, extruder_count, info)
         # Fan speed
         if self.fan is not None:
             info = self.fan.get_status(eventtime)
-            self.animate_glyphs(eventtime, 10, 0, self.FAN1_GLYPH,
-                                info['speed'] != 0.)
+            self.animate_glyphs(eventtime, 10, 0, 'fan', info['speed'] != 0.)
             self.draw_percent(12, 0, 4, info['speed'], '>')
         # SD card print progress
         progress = None
@@ -206,7 +179,7 @@ class PrinterLCD:
         # G-Code speed factor
         gcode_info = self.gcode.get_status(eventtime)
         if extruder_count == 1:
-            self.draw_icon(10, 1, icons.feedrate_icon)
+            self.lcd_chip.write_glyph(10, 1, 'feedrate')
             self.draw_percent(12, 1, 4, gcode_info['speed_factor'], '>')
         # Printing time and status
         printing_time = toolhead_info['printing_time']
@@ -220,28 +193,25 @@ class PrinterLCD:
         else:
             offset = 1 if printing_time < 100 * 60 * 60 else 0
             self.draw_time(10 + offset, 2, printing_time)
-        # if there is a message set by M117, display it instead of toolhaed info
-        if self.message:
-            self.lcd_chip.write_text(0, 3, self.message)
-            if self.msg_time:
-                # Screen updates every .5 seconds
-                self.msg_time -= .5
-                if self.msg_time <= 0.:
-                    self.message = None
-                    self.msg_time = None
-        else:
-            self.draw_status(0, 3, gcode_info, toolhead_info)
+        self.draw_status(0, 3, gcode_info, toolhead_info)
     # Screen update helpers
+    def draw_text(self, x, y, mixed_text):
+        pos = x
+        for i, text in enumerate(mixed_text.split('~')):
+            if i & 1 == 0:
+                # write text
+                self.lcd_chip.write_text(pos, y, text)
+                pos += len(text)
+            else:
+                # write glyph
+                pos += self.lcd_chip.write_glyph(pos, y, text)
     def draw_heater(self, x, y, info):
         temperature, target = info['temperature'], info['target']
         if target and abs(temperature - target) > 2.:
-            s = "%3.0f%s%.0f" % (
-                temperature, self.lcd_chip.char_right_arrow, target)
+            self.draw_text(x, y, "%3.0f~right_arrow~%.0f~degrees~" % (
+                temperature, target))
         else:
-            s = "%3.0f" % (temperature,)
-        if self.lcd_type == 'hd44780':
-            s += self.lcd_chip.char_degrees
-        self.lcd_chip.write_text(x, y, s)
+            self.draw_text(x, y, "%3.0f~degrees~" % (temperature,))
     def draw_percent(self, x, y, width, value, align='^'):
         self.lcd_chip.write_text(x, y, '{:{}{}.0%}'.format(value, align, width))
     def draw_time(self, x, y, seconds):
@@ -249,6 +219,16 @@ class PrinterLCD:
         self.lcd_chip.write_text(x, y, "%02d:%02d" % (
             seconds // (60 * 60), (seconds // 60) % 60))
     def draw_status(self, x, y, gcode_info, toolhead_info):
+        # If there is a message set by M117, display it instead of toolhead info
+        if self.message:
+            self.lcd_chip.write_text(x, y, self.message)
+            if self.msg_time:
+                # Screen updates every .5 seconds
+                self.msg_time -= .5
+                if self.msg_time <= 0.:
+                    self.message = None
+                    self.msg_time = None
+            return
         status = toolhead_info['status']
         if status == 'Printing' or gcode_info['busy']:
             pos = self.toolhead.get_position()
@@ -259,14 +239,16 @@ class PrinterLCD:
         self.msg_time = msg_time
     # print progress: M73 P<percent>
     def cmd_M73(self, params):
-        self.progress = self.gcode.get_int('P', params, minval=0, maxval=100)
+        self.progress = min(100., max(0., self.gcode.get_float(
+            'P', params, 0.)))
         self.prg_time = M73_TIMEOUT
     def cmd_M117(self, params):
         if '#original' in params:
             msg = params['#original']
-            if not msg.startswith('M117'):
+            umsg = msg.upper()
+            if not umsg.startswith('M117'):
                 # Parse out additional info if M117 recd during a print
-                start = msg.find('M117')
+                start = umsg.find('M117')
                 end = msg.rfind('*')
                 msg = msg[start:end]
             if len(msg) > 5:

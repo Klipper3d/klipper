@@ -5,21 +5,21 @@ Directory Layout
 ================
 
 The **src/** directory contains the C source for the micro-controller
-code. The **src/avr/** directory contains specific code for Atmel
-ATmega micro-controllers. The **src/sam3x8e/** directory contains code
-specific to the Arduino Due style ARM micro-controllers. The
-**src/pru/** directory contains code specific to the Beaglebone's
-on-board PRU micro-controller. The **src/simulator/** contains code
-stubs that allow the micro-controller to be test compiled on other
-architectures. The **src/generic/** directory contains helper code
-that may be useful across different host architectures. The build
-arranges for includes of "board/somefile.h" to first look in the
-current architecture directory (eg, src/avr/somefile.h) and then in
-the generic directory (eg, src/generic/somefile.h).
+code. The **src/avr/**, **src/sam3/**, **src/samd21/**,
+**src/lpc176x/**, **src/stm32f1/**, **src/pru/**, and **src/linux/**
+directories contain architecture specific micro-controller code. The
+**src/simulator/** contains code stubs that allow the micro-controller
+to be test compiled on other architectures. The **src/generic/**
+directory contains helper code that may be useful across different
+architectures. The build arranges for includes of "board/somefile.h"
+to first look in the current architecture directory (eg,
+src/avr/somefile.h) and then in the generic directory (eg,
+src/generic/somefile.h).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**
-directory contains some C code helpers. The **klippy/extras/**
+directory contains some C code helpers. The **klippy/kinematics/**
+directory contains the robot kinematics code. The **klippy/extras/**
 directory contains the host code extensible "modules".
 
 The **lib/** directory contains external 3rd-party library code that
@@ -159,16 +159,16 @@ provides further information on the mechanics of moves.
 
 * The goal of the kinematics classes is to translate the movement in
   cartesian space to movement on each stepper. The kinematics classes
-  are in cartesian.py, corexy.py, delta.py, and extruder.py. The
-  kinematic class is given a chance to audit the move
-  (`ToolHead.move() -> kin.check_move()`) before it goes on the
-  look-ahead queue, but once the move arrives in *kin*.move() the
-  kinematic class is required to handle the move as specified. Note
-  that the extruder is handled in its own kinematic class. Since the
-  Move() class specifies the exact movement time and since step pulses
-  are sent to the micro-controller with specific timing, stepper
-  movements produced by the extruder class will be in sync with head
-  movement even though the code is kept separate.
+  are located in the klippy/kinematics/ directory. The kinematic class
+  is given a chance to audit the move (`ToolHead.move() ->
+  kin.check_move()`) before it goes on the look-ahead queue, but once
+  the move arrives in *kin*.move() the kinematic class is required to
+  handle the move as specified. Note that the extruder is handled in
+  its own kinematic class. Since the Move() class specifies the exact
+  movement time and since step pulses are sent to the micro-controller
+  with specific timing, stepper movements produced by the extruder
+  class will be in sync with head movement even though the code is
+  kept separate.
 
 * Klipper uses an
   [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
@@ -262,16 +262,26 @@ The following may also be useful:
   will have been instantiated. The "gcode" and "pins" modules will
   always be available, but for other modules it is a good idea to
   defer the lookup.
-* Define a `printer_state()` method if the code needs to be called
-  during printer setup and/or shutdown. This method is called twice
-  during setup (with "connect" and then "ready") and may also be
-  called at run-time (with "shutdown" or "disconnect"). It is common
-  to perform "printer object" lookup during the "connect" and "ready"
-  phases.
+* Register event handlers using the `printer.register_event_handler()`
+  method if the code needs to be called during "events" raised by
+  other printer objects. Each event name is a string, and by
+  convention it is the name of the main source module that raises the
+  event along with a short name for the action that is occurring (eg,
+  "klippy:connect"). The parameters passed to each event handler are
+  specific to the given event (as are exception handling and execution
+  context). Two common startup events are:
+  * klippy:connect - This event is generated after all printer objects
+    are instantiated. It is commonly used to lookup other printer
+    objects, to verify config settings, and to perform an initial
+    "handshake" with printer hardware.
+  * klippy:ready - This event is generated after all connect handlers
+    have completed successfully. It indicates the printer is
+    transitioning to a state ready to handle normal operations. Do not
+    raise an error in this callback.
 * If there is an error in the user's config, be sure to raise it
-  during the `load_config()` or `printer_state("connect")` phases. Use
-  either `raise config.error("my error")` or `raise
-  printer.config_error("my error")` to report the error.
+  during the `load_config()` or "connect event" phases. Use either
+  `raise config.error("my error")` or `raise printer.config_error("my
+  error")` to report the error.
 * Use the "pins" module to configure a pin on a micro-controller. This
   is typically done with something similar to
   `printer.lookup_object("pins").setup_pin("pwm",
@@ -286,8 +296,8 @@ The following may also be useful:
   printer object returned from the `load_config()` function. This is
   important as otherwise the RESTART command may not perform as
   expected. Also, for similar reasons, if any external files (or
-  sockets) are opened then be sure to close them from the
-  `printer_state("disconnect")` callback.
+  sockets) are opened then be sure to register a "klippy:disconnect"
+  event handler and close them from that callback.
 * Avoid accessing the internal member variables (or calling methods
   that start with an underscore) of other printer objects. Observing
   this convention makes it easier to manage future changes.
@@ -308,9 +318,9 @@ Useful steps:
 1. Start by studying the
    "[code flow of a move](#code-flow-of-a-move-command)" section and
    the [Kinematics document](Kinematics.md).
-2. Review the existing kinematic classes in cartesian.py, corexy.py,
-   and delta.py. The kinematic classes are tasked with converting a
-   move in cartesian coordinates to the movement on each stepper. One
+2. Review the existing kinematic classes in the klippy/kinematics/
+   directory. The kinematic classes are tasked with converting a move
+   in cartesian coordinates to the movement on each stepper. One
    should be able to copy one of these files as a starting point.
 3. Implement the C stepper kinematic position functions for each
    stepper if they are not already available (see kin_cart.c,
@@ -324,10 +334,11 @@ Useful steps:
    coordinates from the current position of each stepper. It does not
    need to be efficient as it is typically only called during homing
    and probing operations.
-5. Other methods. The `move()`, `home()`, `check_move()`, and other
-   methods should also be implemented. These functions are typically
-   used to provide kinematic specific checks. However, at the start of
-   development one can use boiler-plate code here.
+5. Other methods. Implement the `move()`, `check_move()`, `home()`,
+   `motor_off()`, `set_position()`, and `get_steppers()` methods.
+   These functions are typically used to provide kinematic specific
+   checks.  However, at the start of development one can use
+   boiler-plate code here.
 6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file

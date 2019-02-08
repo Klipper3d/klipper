@@ -1,6 +1,6 @@
 // Definitions for irq enable/disable on ARM Cortex-M processors
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -63,7 +63,7 @@ clear_active_irq(void)
         "  push { %0 }\n"
         "  push { r0, r1, r2, r3, r4, lr }\n"
         "  bx %2\n"
-        ".align 4\n"
+        ".balign 4\n"
         "1:\n"
         : "=&r"(temp) : "r"(psr), "r"(0xfffffff9) : "r12", "cc");
 }

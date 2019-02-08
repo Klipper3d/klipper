@@ -1,0 +1,13 @@
+diff --git a/lib/sam4s/gcc/gcc/startup_sam4s.c b/lib/sam4s/gcc/gcc/startup_sam4s.c
+index 3792319e..ae19328a 100644
+--- a/lib/sam4s/gcc/gcc/startup_sam4s.c
++++ b/lib/sam4s/gcc/gcc/startup_sam4s.c
+@@ -111,7 +111,7 @@ void ACC_Handler    ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
+ void UDP_Handler    ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
+ 
+ /* Exception Table */
+-__attribute__ ((section(".vectors")))
++__attribute__ ((section(".vectors"))) __attribute__((externally_visible))
+ const DeviceVectors exception_table = {
+ 
+         /* Configure Initial Stack Pointer, using linker-generated symbols */

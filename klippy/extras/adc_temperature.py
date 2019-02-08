@@ -5,77 +5,107 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
 
+
+######################################################################
+# Interface between MCU adc and heater temperature callbacks
+######################################################################
+
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
 
-# Linear style conversion chips calibrated with two temp measurements
-class Linear:
-    def __init__(self, config, params):
+# Interface between ADC and heater temperature callbacks
+class PrinterADCtoTemperature:
+    def __init__(self, config, adc_convert):
+        self.adc_convert = adc_convert
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        self.temperature_callback = None
-        self.adc_samples = []
-        self.slope_samples = []
-        self.calc_coefficients(config, params)
-    def calc_coefficients(self, config, params):
-        adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
-        last_volt = last_temp = None
-        for volt, temp in sorted([(v, t) for t, v in params]):
-            adc = volt / adc_voltage
-            if adc < 0. or adc > 1.:
-                logging.warn("Ignoring adc sample %.3f/%.3f in heater %s",
-                             temp, volt, config.get_name())
-                continue
-            if last_volt is None:
-                last_volt = volt
-                last_temp = temp
-                continue
-            if volt <= last_volt:
-                raise config.error("adc_temperature duplicate voltage")
-            slope = (temp - last_temp) / (volt - last_volt)
-            gain = adc_voltage * slope
-            offset = last_temp - last_volt * slope
-            if self.slope_samples and self.slope_samples[-1] == (gain, offset):
-                continue
-            last_temp = temp
-            last_volt = volt
-            self.adc_samples.append(adc)
-            self.slope_samples.append((gain, offset))
-        if not self.adc_samples:
-            raise config.error(
-                "adc_temperature needs two volt and temperature measurements")
-        self.adc_samples[-1] = 1.
-    def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
         return REPORT_TIME
     def adc_callback(self, read_time, read_value):
-        pos = bisect.bisect(self.adc_samples, read_value)
-        gain, offset = self.slope_samples[pos]
-        temp = read_value * gain + offset
+        temp = self.adc_convert.calc_temp(read_value)
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
-    def calc_adc(self, temp):
-        temps = [adc * gain + offset for adc, (gain, offset) in zip(
-            self.adc_samples, self.slope_samples)]
-        if temps[0] < temps[-1]:
-            pos = min([i for i in range(len(temps)) if temps[i] >= temp]
-                      + [len(temps) - 1])
+    def setup_minmax(self, min_temp, max_temp):
+        adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
+        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
+                                  minval=min(adc_range), maxval=max(adc_range),
+                                  range_check_count=RANGE_CHECK_COUNT)
+
+
+######################################################################
+# Linear interpolation
+######################################################################
+
+# Helper code to perform linear interpolation
+class LinearInterpolate:
+    def __init__(self, samples):
+        self.keys = []
+        self.slopes = []
+        last_key = last_value = None
+        for key, value in sorted(samples):
+            if last_key is None:
+                last_key = key
+                last_value = value
+                continue
+            if key <= last_key:
+                raise ValueError("duplicate value")
+            gain = (value - last_value) / (key - last_key)
+            offset = last_value - last_key * gain
+            if self.slopes and self.slopes[-1] == (gain, offset):
+                continue
+            last_value = value
+            last_key = key
+            self.keys.append(key)
+            self.slopes.append((gain, offset))
+        if not self.keys:
+            raise ValueError("need at least two samples")
+        self.keys.append(9999999999999.)
+        self.slopes.append(self.slopes[-1])
+    def interpolate(self, key):
+        pos = bisect.bisect(self.keys, key)
+        gain, offset = self.slopes[pos]
+        return key * gain + offset
+    def reverse_interpolate(self, value):
+        values = [key * gain + offset for key, (gain, offset) in zip(
+            self.keys, self.slopes)]
+        if values[0] < values[-2]:
+            valid = [i for i in range(len(values)) if values[i] >= value]
         else:
-            pos = min([i for i in range(len(temps)) if temps[i] <= temp]
-                      + [len(temps) - 1])
-        gain, offset = self.slope_samples[pos]
-        return (temp - offset) / gain
+            valid = [i for i in range(len(values)) if values[i] <= value]
+        gain, offset = self.slopes[min(valid + [len(values) - 1])]
+        return (value - offset) / gain
+
+
+######################################################################
+# Linear voltage to temperature converter
+######################################################################
+
+# Linear style conversion chips calibrated with two temp measurements
+class LinearVoltage:
+    def __init__(self, config, params):
+        adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
+        samples = []
+        for temp, volt in params:
+            adc = volt / adc_voltage
+            if adc < 0. or adc > 1.:
+                logging.warn("Ignoring adc sample %.3f/%.3f in heater %s",
+                             temp, volt, config.get_name())
+                continue
+            samples.append((adc, temp))
+        try:
+            li = LinearInterpolate(samples)
+        except ValueError as e:
+            raise config.error("adc_temperature %s in heater %s" % (
+                str(e), config.get_name()))
+        self.calc_temp = li.interpolate
+        self.calc_adc = li.reverse_interpolate
 
 # Custom defined sensors from the config file
-class CustomLinear:
+class CustomLinearVoltage:
     def __init__(self, config):
         self.name = " ".join(config.get_name().split()[1:])
         self.params = []
@@ -86,7 +116,52 @@ class CustomLinear:
             v = config.getfloat("voltage%d" % (i,))
             self.params.append((t, v))
     def create(self, config):
-        return Linear(config, self.params)
+        lv = LinearVoltage(config, self.params)
+        return PrinterADCtoTemperature(config, lv)
+
+
+######################################################################
+# Linear resistance to temperature converter
+######################################################################
+
+# Linear resistance calibrated with two temp measurements
+class LinearResistance:
+    def __init__(self, config, samples):
+        self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
+        try:
+            self.li = LinearInterpolate(samples)
+        except ValueError as e:
+            raise config.error("adc_temperature %s in heater %s" % (
+                str(e), config.get_name()))
+    def calc_temp(self, adc):
+        # Calculate temperature from adc
+        adc = max(.00001, min(.99999, adc))
+        r = self.pullup * adc / (1.0 - adc)
+        return self.li.interpolate(r)
+    def calc_adc(self, temp):
+        # Calculate adc reading from a temperature
+        r = self.li.reverse_interpolate(temp)
+        return r / (self.pullup + r)
+
+# Custom defined sensors from the config file
+class CustomLinearResistance:
+    def __init__(self, config):
+        self.name = " ".join(config.get_name().split()[1:])
+        self.samples = []
+        for i in range(1, 1000):
+            t = config.getfloat("temperature%d" % (i,), None)
+            if t is None:
+                break
+            r = config.getfloat("resistance%d" % (i,))
+            self.samples.append((r, t))
+    def create(self, config):
+        lr = LinearResistance(config, self.samples)
+        return PrinterADCtoTemperature(config, lr)
+
+
+######################################################################
+# Default sensors
+######################################################################
 
 AD595 = [
     (0., .0027), (10., .101), (20., .200), (25., .250), (30., .300),
@@ -114,10 +189,14 @@ def load_config(config):
     # Register default sensors
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in [("AD595", AD595), ("PT100 INA826", PT100)]:
-        func = (lambda config, params=params: Linear(config, params))
+        func = (lambda config, params=params:
+                PrinterADCtoTemperature(config, LinearVoltage(config, params)))
         pheater.add_sensor(sensor_type, func)
 
 def load_config_prefix(config):
-    linear = CustomLinear(config)
+    if config.get("resistance1", None) is None:
+        custom_sensor = CustomLinearVoltage(config)
+    else:
+        custom_sensor = CustomLinearResistance(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(linear.name, linear.create)
+    pheater.add_sensor(custom_sensor.name, custom_sensor.create)

@@ -174,20 +174,20 @@ message block:
 set_digital_out pin=86 value=1
 set_digital_out pin=85 value=0
 get_config
-get_status
+get_clock
 ```
 
 and encoded into the following eight VLQ integers:
 
 ```
-<id_set_digital_out><86><1><id_set_digital_out><85><0><id_get_config><id_get_status>
+<id_set_digital_out><86><1><id_set_digital_out><85><0><id_get_config><id_get_clock>
 ```
 
 In order to encode and parse the message contents, both the host and
 micro-controller must agree on the command ids and the number of
 parameters each command has. So, in the above example, both the host
 and micro-controller would know that "id_set_digital_out" is always
-followed by two parameters, and "id_get_config" and "id_get_status"
+followed by two parameters, and "id_get_config" and "id_get_clock"
 have zero parameters. The host and micro-controller share a "data
 dictionary" that maps the command descriptions (eg, "set_digital_out
 pin=%u value=%c") to their integer command-ids. When processing the

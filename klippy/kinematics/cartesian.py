@@ -55,36 +55,21 @@ class CartKinematics:
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
     def _home_axis(self, homing_state, axis, rail):
-        # Determine moves
+        # Determine movement
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
-        if hi.positive_dir:
-            pos = hi.position_endstop - 1.5*(hi.position_endstop - position_min)
-            rpos = hi.position_endstop - hi.retract_dist
-            r2pos = rpos - hi.retract_dist
-        else:
-            pos = hi.position_endstop + 1.5*(position_max - hi.position_endstop)
-            rpos = hi.position_endstop + hi.retract_dist
-            r2pos = rpos + hi.retract_dist
-        # Initial homing
-        homing_speed = hi.speed
-        if axis == 2:
-            homing_speed = min(homing_speed, self.max_z_velocity)
         homepos = [None, None, None, None]
         homepos[axis] = hi.position_endstop
-        coord = [None, None, None, None]
-        coord[axis] = pos
-        homing_state.home(coord, homepos, rail.get_endstops(), homing_speed)
-        # Retract
-        coord[axis] = rpos
-        homing_state.retract(coord, homing_speed)
-        # Home again
-        coord[axis] = r2pos
-        homing_state.home(coord, homepos, rail.get_endstops(),
-                          homing_speed/2.0, second_home=True)
-        # Set final homed position
-        coord[axis] = hi.position_endstop + rail.get_homed_offset()
-        homing_state.set_homed_position(coord)
+        forcepos = list(homepos)
+        if hi.positive_dir:
+            forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
+        else:
+            forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
+        # Perform homing
+        limit_speed = None
+        if axis == 2:
+            limit_speed = self.max_z_velocity
+        homing_state.home_rails([rail], forcepos, homepos, limit_speed)
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():

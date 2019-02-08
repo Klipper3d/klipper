@@ -26,12 +26,14 @@ enum {
 void
 command_config_spi(uint32_t *args)
 {
-    uint8_t shutdown_msg_len = args[5];
+    uint8_t mode = args[3], shutdown_msg_len = args[5];
+    if (mode > 3)
+        shutdown("Invalid spi mode");
     struct spidev_s *spi = oid_alloc(args[0], command_config_spi
                                      , sizeof(*spi) + shutdown_msg_len);
     spi->pin = gpio_out_setup(args[2], 1);
     spi->flags = SF_HAVE_PIN;
-    spi->spi_config = spi_setup(args[1], args[3], args[4]);
+    spi->spi_config = spi_setup(args[1], mode, args[4]);
     spi->shutdown_msg_len = shutdown_msg_len;
     uint8_t *shutdown_msg = (void*)(size_t)args[6];
     memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
@@ -42,10 +44,12 @@ DECL_COMMAND(command_config_spi,
 void
 command_config_spi_without_cs(uint32_t *args)
 {
-    uint8_t shutdown_msg_len = args[4];
+    uint8_t mode = args[2], shutdown_msg_len = args[4];
+    if (mode > 3)
+        shutdown("Invalid spi mode");
     struct spidev_s *spi = oid_alloc(args[0], command_config_spi
                                      , sizeof(*spi) + shutdown_msg_len);
-    spi->spi_config = spi_setup(args[1], args[2], args[3]);
+    spi->spi_config = spi_setup(args[1], mode, args[3]);
     spi->shutdown_msg_len = shutdown_msg_len;
     uint8_t *shutdown_msg = (void*)(size_t)args[5];
     memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);

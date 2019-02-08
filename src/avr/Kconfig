@@ -8,9 +8,12 @@ config AVR_SELECT
     select HAVE_GPIO
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
-    select HAVE_USER_INTERFACE
-    select NO_UNSTEP_DELAY
+    select HAVE_GPIO_BITBANGING if !MACH_atmega168
+
+config STEP_DELAY
+    default 0
 
 config BOARD_DIRECTORY
     string
@@ -26,10 +29,14 @@ choice
         bool "at90usb1286"
     config MACH_at90usb646
         bool "at90usb646"
+    config MACH_atmega32u4
+        bool "atmega32u4"
     config MACH_atmega1284p
         bool "atmega1284p"
     config MACH_atmega644p
         bool "atmega644p"
+    config MACH_atmega328p
+        bool "atmega328p"
     config MACH_atmega328
         bool "atmega328"
     config MACH_atmega168
@@ -40,40 +47,31 @@ config MCU
     string
     default "atmega168" if MACH_atmega168
     default "atmega328" if MACH_atmega328
+    default "atmega328p" if MACH_atmega328p
     default "atmega1284p" if MACH_atmega1284p
     default "atmega644p" if MACH_atmega644p
     default "at90usb1286" if MACH_at90usb1286
     default "at90usb646" if MACH_at90usb646
+    default "atmega32u4" if MACH_atmega32u4
     default "atmega1280" if MACH_atmega1280
     default "atmega2560" if MACH_atmega2560
 
 config AVRDUDE_PROTOCOL
     string
     default "wiring" if MACH_atmega2560
-    default "avr109" if MACH_at90usb1286
-    default "avr109" if MACH_at90usb646
+    default "avr109" if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default "arduino"
 
 choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
         bool "20Mhz"
-        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
+        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
     config AVR_FREQ_16000000
         bool "16Mhz"
     config AVR_FREQ_8000000
         bool "8Mhz"
 endchoice
-
-if MACH_atmega1284p
-    choice
-        prompt "Serial Port"
-        config AVR_SERIAL_UART0
-            bool "UART0"
-        config AVR_SERIAL_UART1
-            bool "UART1"
-    endchoice
-endif
 
 config CLOCK_FREQ
     int
@@ -82,8 +80,8 @@ config CLOCK_FREQ
     default 20000000 if AVR_FREQ_20000000
 
 config CLEAR_PRESCALER
-    bool "Manually clear the CPU prescaler field at startup"
-    depends on MACH_at90usb1286 || MACH_at90usb646
+    bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
+    depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
     help
          Some AVR chips ship with a "clock prescaler" that causes the
@@ -98,43 +96,54 @@ config AVR_CLKPR
 
 config AVR_STACK_SIZE
     int
-    default 256 if MACH_atmega2560
-    default 128
+    default 256
 
 config AVR_WATCHDOG
     bool
     default y
-config AVR_USBSERIAL
+config USBSERIAL
     bool "Use USB for communication (instead of serial)"
-    depends on MACH_at90usb1286 || MACH_at90usb646
+    depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
-config AVR_SERIAL
-    depends on !AVR_USBSERIAL
+config SERIAL
+    depends on !USBSERIAL
     bool
     default y
-config SERIAL_BAUD
-    depends on AVR_SERIAL
-    int "Baud rate for serial port"
-    default 250000
+choice
+    depends on SERIAL
+    prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
+    help
+        Select the serial device to use on the AVR chip. This is
+        almost always UART0.
+    config AVR_SERIAL_UART0
+        bool "UART0"
+    config AVR_SERIAL_UART1
+        bool "UART1"
+    config AVR_SERIAL_UART2
+        bool "UART2" if MACH_atmega2560 || MACH_atmega1280
+    config AVR_SERIAL_UART3
+        bool "UART3" if MACH_atmega2560 || MACH_atmega1280
+endchoice
 config SERIAL_BAUD_U2X
-    depends on AVR_SERIAL && !SIMULAVR
+    depends on SERIAL && !SIMULAVR
     bool
     default y
 
 config SERIAL_PORT
     int
-    default 1 if MACH_at90usb1286 || MACH_at90usb646 || AVR_SERIAL_UART1
+    default 3 if AVR_SERIAL_UART3
+    default 2 if AVR_SERIAL_UART2
+    default 1 if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4 || AVR_SERIAL_UART1
     default 0
 
 config SIMULAVR
-    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
-    bool "Compile for simulavr software emulation"
+    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
+    bool "Compile for simulavr software emulation" if LOW_LEVEL_OPTIONS
     default n
     help
          Compile the code to run on simulavr software emulation
          instead of for real hardware. This disables support for "U2X
-         baud" mode and for the watchdog timer which are not supported
-         on simulavr.
+         baud" mode which is not supported on simulavr.
 
          If unsure, select "N".
 

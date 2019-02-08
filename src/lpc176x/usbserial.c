@@ -6,9 +6,11 @@
 
 #include <string.h> // memcpy
 #include "LPC17xx.h" // LPC_SC
+#include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
+#include "board/irq.h" // irq_disable
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // output
-#include "generic/usb_cdc.h" // usb_notify_setup
+#include "generic/usb_cdc.h" // usb_notify_ep0
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
 #include "usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -184,19 +186,25 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
 }
 
 int_fast8_t
-usb_read_setup(void *data, uint_fast8_t max_len)
+usb_read_ep0(void *data, uint_fast8_t max_len)
 {
     return usb_read_packet(EP0OUT, data, max_len);
 }
 
 int_fast8_t
-usb_send_setup(const void *data, uint_fast8_t len)
+usb_read_ep0_setup(void *data, uint_fast8_t max_len)
+{
+    return usb_read_ep0(data, max_len);
+}
+
+int_fast8_t
+usb_send_ep0(const void *data, uint_fast8_t len)
 {
     return usb_write_packet(EP0IN, data, len);
 }
 
 void
-usb_set_stall(void)
+usb_stall_ep0(void)
 {
     usb_irq_disable();
     sie_cmd_write(SIE_CMD_SET_ENDPOINT_STATUS | 0, (1<<7));
@@ -209,7 +217,7 @@ usb_set_address(uint_fast8_t addr)
     usb_irq_disable();
     sie_cmd_write(SIE_CMD_SET_ADDRESS, addr | (1<<7));
     usb_irq_enable();
-    usb_send_setup(NULL, 0);
+    usb_send_ep0(NULL, 0);
 }
 
 static void
@@ -236,19 +244,31 @@ usb_set_configure(void)
 }
 
 void
+usb_request_bootloader(void)
+{
+    if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
+        return;
+    // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
+    // watchdog timeout flag is set.
+    irq_disable();
+    LPC_WDT->WDMOD = 0x07;
+    NVIC_SystemReset();
+}
+
+void
 usbserial_init(void)
 {
     usb_irq_disable();
     // enable power
-    LPC_SC->PCONP |= (1<<31);
+    enable_pclock(PCLK_USB);
     // enable clock
     LPC_USB->USBClkCtrl = 0x12;
     while (LPC_USB->USBClkSt != 0x12)
         ;
     // configure USBD+, USBD-, and USB Connect pins
-    gpio_peripheral(0, 29, 1, 0);
-    gpio_peripheral(0, 30, 1, 0);
-    gpio_peripheral(2, 9, 1, 0);
+    gpio_peripheral(GPIO(0, 29), 1, 0);
+    gpio_peripheral(GPIO(0, 30), 1, 0);
+    gpio_peripheral(GPIO(2, 9), 1, 0);
     // setup endpoints
     realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
     realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);
@@ -279,11 +299,11 @@ USB_IRQHandler(void)
         uint32_t ueis = LPC_USB->USBEpIntSt;
         if (ueis & (1<<EP0OUT)) {
             sie_select_and_clear(EP0OUT);
-            usb_notify_setup();
+            usb_notify_ep0();
         }
         if (ueis & (1<<EP0IN)) {
             sie_select_and_clear(EP0IN);
-            usb_notify_setup();
+            usb_notify_ep0();
         }
         if (ueis & (1<<EP2OUT)) {
             sie_select_and_clear(EP2OUT);

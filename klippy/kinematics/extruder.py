@@ -9,13 +9,14 @@ import stepper, homing, chelper
 EXTRUDE_DIFF_IGNORE = 1.02
 
 class PrinterExtruder:
-    def __init__(self, config):
+    def __init__(self, config, extruder_num):
         self.printer = config.get_printer()
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
         pheater = self.printer.lookup_object('heater')
+        gcode_id = 'T%d' % (extruder_num,)
         if shared_heater is None:
-            self.heater = pheater.setup_heater(config)
+            self.heater = pheater.setup_heater(config, gcode_id)
         else:
             self.heater = pheater.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(config)
@@ -23,18 +24,19 @@ class PrinterExtruder:
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
         self.filament_area = math.pi * (filament_diameter * .5)**2
+        def_max_cross_section = 4. * self.nozzle_diameter**2
+        def_max_extrude_ratio = def_max_cross_section / self.filament_area
         max_cross_section = config.getfloat(
-            'max_extrude_cross_section', 4. * self.nozzle_diameter**2
-            , above=0.)
+            'max_extrude_cross_section', def_max_cross_section, above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
         toolhead = self.printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
-            'max_extrude_only_velocity', max_velocity * self.max_extrude_ratio
+            'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
         self.max_e_accel = config.getfloat(
-            'max_extrude_only_accel', max_accel * self.max_extrude_ratio
+            'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
@@ -236,11 +238,11 @@ def add_printer_objects(config):
         section = 'extruder%d' % (i,)
         if not config.has_section(section):
             if not i and config.has_section('extruder'):
-                pe = PrinterExtruder(config.getsection('extruder'))
+                pe = PrinterExtruder(config.getsection('extruder'), 0)
                 printer.add_object('extruder0', pe)
                 continue
             break
-        printer.add_object(section, PrinterExtruder(config.getsection(section)))
+        printer.add_object(section, PrinterExtruder(config.getsection(section), i))
 
 def get_printer_extruders(printer):
     out = []

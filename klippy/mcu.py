@@ -15,6 +15,7 @@ class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._oid = oid = self._mcu.create_oid()
+        self._mcu.register_config_callback(self._build_config)
         self._step_pin = pin_params['pin']
         self._invert_step = pin_params['invert']
         self._dir_pin = self._invert_dir = None
@@ -43,7 +44,7 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
         self.set_stepper_kinematics(sk)
-    def build_config(self):
+    def _build_config(self):
         max_error = self._mcu.get_max_stepper_error()
         min_stop_interval = max(0., self._min_stop_interval - max_error)
         self._mcu.add_config_cmd(
@@ -72,25 +73,26 @@ class MCU_stepper:
     def calc_position_from_coord(self, coord):
         return self._ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
-    def set_position(self, newpos):
-        spos = self.calc_position_from_coord(newpos)
-        self._mcu_position_offset += self.get_commanded_position() - spos
-        self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, spos)
+    def set_position(self, coord):
+        self.set_commanded_position(self.calc_position_from_coord(coord))
     def get_commanded_position(self):
         return self._ffi_lib.itersolve_get_commanded_pos(
             self._stepper_kinematics)
+    def set_commanded_position(self, pos):
+        self._mcu_position_offset += self.get_commanded_position() - pos
+        self._ffi_lib.itersolve_set_commanded_pos(self._stepper_kinematics, pos)
     def get_mcu_position(self):
-        pos_delta = self.get_commanded_position() + self._mcu_position_offset
-        mcu_pos = pos_delta / self._step_dist
+        mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
+        mcu_pos = mcu_pos_dist / self._step_dist
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
-        self._ffi_lib.itersolve_set_stepcompress(
-            sk, self._stepqueue, self._step_dist)
+        if sk is not None:
+            self._ffi_lib.itersolve_set_stepcompress(
+                sk, self._stepqueue, self._step_dist)
         return old_sk
     def set_ignore_move(self, ignore_move):
         was_ignore = (self._itersolve_gen_steps
@@ -121,11 +123,11 @@ class MCU_stepper:
             return
         params = self._get_position_cmd.send_with_response(
             [self._oid], response='stepper_position', response_oid=self._oid)
-        pos = params['pos'] * self._step_dist
+        mcu_pos_dist = params['pos'] * self._step_dist
         if self._invert_dir:
-            pos = -pos
+            mcu_pos_dist = -mcu_pos_dist
         self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, pos - self._mcu_position_offset)
+            self._stepper_kinematics, mcu_pos_dist - self._mcu_position_offset)
     def step_itersolve(self, cmove):
         ret = self._itersolve_gen_steps(self._stepper_kinematics, cmove)
         if ret:
@@ -142,18 +144,22 @@ class MCU_endstop:
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._oid = self._home_cmd = self._query_cmd = None
+        self._mcu.register_config_callback(self._build_config)
         self._homing = False
-        self._min_query_time = self._next_query_time = 0.
+        self._min_query_time = 0.
+        self._next_query_print_time = 0.
         self._last_state = {}
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
         if stepper.get_mcu() is not self._mcu:
             raise pins.error("Endstop and stepper must be on the same mcu")
+        if stepper in self._steppers:
+            return
         self._steppers.append(stepper)
     def get_steppers(self):
         return list(self._steppers)
-    def build_config(self):
+    def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
@@ -175,15 +181,17 @@ class MCU_endstop:
                                , self._oid)
     def home_prepare(self):
         pass
-    def home_start(self, print_time, sample_time, sample_count, rest_time):
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
         self._homing = True
         self._min_query_time = self._mcu.monotonic()
-        self._next_query_time = self._min_query_time + self.RETRY_QUERY
+        self._next_query_print_time = print_time + self.RETRY_QUERY
         self._home_cmd.send(
             [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
-             sample_count, rest_ticks, 1 ^ self._invert], reqclock=clock)
+             sample_count, rest_ticks, triggered ^ self._invert],
+            reqclock=clock)
         for s in self._steppers:
             s.note_homing_start(clock)
     def home_wait(self, home_end_time):
@@ -217,13 +225,15 @@ class MCU_endstop:
                 raise self.TimeoutError("Timeout during endstop homing")
         if self._mcu.is_shutdown():
             raise error("MCU is shutdown")
-        if eventtime >= self._next_query_time:
-            self._next_query_time = eventtime + self.RETRY_QUERY
+        est_print_time = self._mcu.estimated_print_time(eventtime)
+        if est_print_time >= self._next_query_print_time:
+            self._next_query_print_time = est_print_time + self.RETRY_QUERY
             self._query_cmd.send([self._oid])
         return True
     def query_endstop(self, print_time):
         self._homing = False
-        self._min_query_time = self._next_query_time = self._mcu.monotonic()
+        self._min_query_time = self._mcu.monotonic()
+        self._next_query_print_time = print_time
     def query_endstop_wait(self):
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
@@ -234,6 +244,7 @@ class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._oid = None
+        self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = self._invert
@@ -251,7 +262,7 @@ class MCU_digital_out:
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
         self._is_static = is_static
-    def build_config(self):
+    def _build_config(self):
         if self._is_static:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
                 self._pin, self._start_value))
@@ -280,6 +291,7 @@ class MCU_pwm:
         self._cycle_time = 0.100
         self._max_duration = 2.
         self._oid = None
+        self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
@@ -303,7 +315,7 @@ class MCU_pwm:
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
-    def build_config(self):
+    def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
@@ -361,6 +373,7 @@ class MCU_adc:
         self._sample_count = self._range_check_count = 0
         self._report_clock = 0
         self._oid = self._callback = None
+        self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
     def get_mcu(self):
         return self._mcu
@@ -374,7 +387,7 @@ class MCU_adc:
     def setup_adc_callback(self, report_time, callback):
         self._report_time = report_time
         self._callback = callback
-    def build_config(self):
+    def _build_config(self):
         if not self._sample_count:
             return
         self._oid = self._mcu.create_oid()
@@ -414,6 +427,10 @@ class MCU:
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
+        self._printer.register_event_handler("klippy:connect", self._connect)
+        self._printer.register_event_handler("klippy:shutdown", self._shutdown)
+        self._printer.register_event_handler("klippy:disconnect",
+                                             self._disconnect)
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
         baud = 0
@@ -435,7 +452,7 @@ class MCU:
         # Config building
         self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
-        self._config_objects = []
+        self._config_callbacks = []
         self._init_cmds = []
         self._config_cmds = []
         self._pin_map = config.get('pin_map', None)
@@ -445,6 +462,7 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
+        self._move_count = 0
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -514,8 +532,8 @@ class MCU:
             self.add_config_cmd(line)
     def _send_config(self, prev_crc):
         # Build config commands
-        for co in self._config_objects:
-            co.build_config()
+        for cb in self._config_callbacks:
+            cb()
         self._add_custom()
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
@@ -574,19 +592,10 @@ class MCU:
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
-        move_count = config_params['move_count']
-        msgparser = self._serial.msgparser
-        info = [
-            "Configured MCU '%s' (%d moves)" % (self._name, move_count),
-            "Loaded MCU '%s' %d commands (%s / %s)" % (
-                self._name, len(msgparser.messages_by_id),
-                msgparser.version, msgparser.build_versions),
-            "MCU '%s' config: %s" % (self._name, " ".join(
-                ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
-        self._printer.set_rollover_info(self._name, "\n".join(info))
+        self._move_count = config_params['move_count']
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            move_count)
+            self._move_count)
         self._ffi_lib.steppersync_set_time(
             self._steppersync, 0., self._mcu_freq)
     def _connect(self):
@@ -599,6 +608,15 @@ class MCU:
                 self._check_restart("enable power")
             self._serial.connect()
             self._clocksync.connect(self._serial)
+        msgparser = self._serial.msgparser
+        name = self._name
+        log_info = [
+            "Loaded MCU '%s' %d commands (%s / %s)" % (
+                name, len(msgparser.messages_by_id),
+                msgparser.version, msgparser.build_versions),
+            "MCU '%s' config: %s" % (name, " ".join(
+                ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
+        logging.info("\n".join(log_info))
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
@@ -607,27 +625,28 @@ class MCU:
         if (self._restart_method is None
             and (self._reset_cmd is not None
                  or self._config_reset_cmd is not None)
-            and self._serial.msgparser.get_constant(
-                'SERIAL_BAUD', None) is None):
+            and msgparser.get_constant('SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
         self.register_msg(self._handle_shutdown, 'shutdown')
         self.register_msg(self._handle_shutdown, 'is_shutdown')
         self.register_msg(self._handle_mcu_stats, 'stats')
         self._check_config()
+        move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
+        logging.info(move_msg)
+        log_info.append(move_msg)
+        self._printer.set_rollover_info(name, "\n".join(log_info), log=False)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
-        co = pcs[pin_type](self, pin_params)
-        self.add_config_object(co)
-        return co
+        return pcs[pin_type](self, pin_params)
     def create_oid(self):
         self._oid_count += 1
         return self._oid_count - 1
-    def add_config_object(self, co):
-        self._config_objects.append(co)
+    def register_config_callback(self, cb):
+        self._config_callbacks.append(cb)
     def add_config_cmd(self, cmd, is_init=False):
         if is_init:
             self._init_cmds.append(cmd)
@@ -754,13 +773,6 @@ class MCU:
             self._mcu_tick_stddev)
         return False, ' '.join([msg, self._serial.stats(eventtime),
                                 self._clocksync.stats(eventtime)])
-    def printer_state(self, state):
-        if state == 'connect':
-            self._connect()
-        elif state == 'disconnect':
-            self._disconnect()
-        elif state == 'shutdown':
-            self._shutdown()
     def __del__(self):
         self._disconnect()
 

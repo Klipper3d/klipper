@@ -101,6 +101,7 @@ command_buttons_query(uint32_t *args)
     sched_del_timer(&b->time);
     b->time.waketime = args[1];
     b->rest_ticks = args[2];
+    b->pressed = b->last_pressed = 0;
     b->ack_count = b->report_count = 0;
     b->retransmit_state = BF_ACKED;
     b->retransmit_count = args[3];

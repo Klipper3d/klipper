@@ -11,14 +11,6 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 HD44780_DELAY = .000037
 
 class HD44780:
-    char_right_arrow = '\x7e'
-    char_thermometer = '\x00'
-    char_heater_bed = '\x01'
-    char_speed_factor = '\x02'
-    char_clock = '\x03'
-    char_degrees = '\x04'
-    char_usb = '\x05'
-    char_sd = '\x06'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
@@ -33,12 +25,16 @@ class HD44780:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
-        self.glyph_framebuffer = (bytearray(64), bytearray('~'*64), 0x40)
-        self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
+        self.text_framebuffer = bytearray(' '*80)
+        self.glyph_framebuffer = bytearray(64)
+        self.all_framebuffers = [
+            # Text framebuffer
+            (self.text_framebuffer, bytearray('~'*80), 0x80),
+            # Glyph framebuffer
+            (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
@@ -59,7 +55,7 @@ class HD44780:
         #logging.debug("hd44780 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for new_data, old_data, fb_id in self.framebuffers:
+        for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
@@ -91,20 +87,29 @@ class HD44780:
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
         # Add custom fonts
-        self.glyph_framebuffer[0][:len(HD44780_chars)] = HD44780_chars
-        for i in range(len(self.glyph_framebuffer[0])):
-            self.glyph_framebuffer[1][i] = self.glyph_framebuffer[0][i] ^ 1
+        self.glyph_framebuffer[:len(HD44780_chars)] = HD44780_chars
+        for i in range(len(self.glyph_framebuffer)):
+            self.all_framebuffers[1][1][i] = self.glyph_framebuffer[i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > 20:
             data = data[:20 - min(x, 20)]
         pos = [0, 40, 20, 60][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        self.text_framebuffer[pos:pos+len(data)] = data
+    def write_glyph(self, x, y, glyph_name):
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
     def clear(self):
-        self.text_framebuffer[0][:] = ' '*80
+        self.text_framebuffer[:] = ' '*80
+    def get_dimensions(self):
+        return (20, 4)
 
 HD44780_chars = [
-    # Thermometer
+    # Extruder (a thermometer)
     0b00100,
     0b01010,
     0b01010,
@@ -122,7 +127,7 @@ HD44780_chars = [
     0b11111,
     0b00000,
     0b00000,
-    # Speed factor
+    # Feed rate
     0b11100,
     0b10000,
     0b11000,
@@ -167,4 +172,25 @@ HD44780_chars = [
     0b11111,
     0b11111,
     0b00000,
+    # Fan
+    0b00000,
+    0b10011,
+    0b11010,
+    0b00100,
+    0b01011,
+    0b11001,
+    0b00000,
+    0b00000,
 ]
+
+TextGlyphs = {
+    'right_arrow': '\x7e',
+    'extruder': '\x00',
+    'bed': '\x01',
+    'feedrate': '\x02',
+    'clock': '\x03',
+    'degrees': '\x04',
+    'usb': '\x05',
+    'sd': '\x06',
+    'fan': '\x07',
+}

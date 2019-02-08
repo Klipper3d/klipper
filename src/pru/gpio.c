@@ -104,6 +104,12 @@ fail:
 }
 
 void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    shutdown("PRU does not support push/pull pins");
+}
+
+void
 gpio_out_toggle_noirq(struct gpio_out g)
 {
     gpio_out_write(g, !(*g.reg & g.bit));
@@ -140,6 +146,12 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     return (struct gpio_in){ .reg=&regs->datain, .bit=bit };
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    shutdown("PRU does not support push/pull pins");
 }
 
 uint8_t
