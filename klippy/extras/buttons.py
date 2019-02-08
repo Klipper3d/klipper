@@ -46,7 +46,7 @@ class MCU_buttons:
     def __init__(self, printer, mcu):
         self.reactor = printer.get_reactor()
         self.mcu = mcu
-        mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.pin_list = []
         self.callbacks = []
         self.invert = self.last_button = 0

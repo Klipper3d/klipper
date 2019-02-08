@@ -3,6 +3,7 @@
 // This header provides wrappers for the AVR specific "PROGMEM"
 // declarations on non-avr platforms.
 
+#define NEED_PROGMEM 0
 #define PROGMEM
 #define PSTR(S) S
 #define READP(VAR) VAR

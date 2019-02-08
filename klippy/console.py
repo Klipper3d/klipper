@@ -14,7 +14,7 @@ help_txt = """
     PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
-    SUPPRESS : Suppress a response message (eg, "SUPPRESS stats")
+    SUPPRESS : Suppress a response message (eg, "SUPPRESS analog_in_state 4")
     SET   : Create a local variable (eg, "SET myvar 123.4")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
@@ -41,7 +41,7 @@ class KeyboardReader:
         self.pins = None
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
-        self.connect_timer = reactor.register_timer(self.connect, reactor.NOW)
+        reactor.register_callback(self.connect)
         self.local_commands = {
             "PINS": self.command_PINS, "SET": self.command_SET,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
@@ -65,7 +65,6 @@ class KeyboardReader:
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
         self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
-        self.reactor.unregister_timer(self.connect_timer)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):

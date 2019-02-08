@@ -264,12 +264,13 @@ config_stepper oid=2 step_pin=ar23 dir_pin=ar22 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `f886212b` with gcc version `avr-gcc
+The test was last run on commit `b161a69e` with gcc version `avr-gcc
 (GCC) 4.8.1`. Both the 16Mhz and 20Mhz tests were run using simulavr
 configured for an atmega644p (previous tests have confirmed simulavr
 results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 On both 16Mhz and 20Mhz the best single stepper result is `SET ticks
-106` and the best three stepper result is `SET ticks 481`.
+106`, the best dual stepper result is `SET ticks 276`, and the best
+three stepper result is `SET ticks 481`.
 
 ### Arduino Due step rate benchmark ###
 
@@ -282,11 +283,43 @@ config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `d8225642` with gcc version
-`arm-none-eabi-gcc (4.8.4-1+11-1) 4.8.4 20141219 (release)`. The best
-single stepper result is `SET ticks 249`, the best dual stepper result
-is `SET ticks 220`, and the best three stepper result is `SET ticks
-374`.
+The test was last run on commit `74c21654` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 388`, the best dual stepper result is
+`SET ticks 405`, and the best three stepper result is `SET ticks 576`.
+
+### Duet Maestro step rate benchmark ###
+
+The following configuration sequence is used on the Duet Maestro:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PC26 dir_pin=PC18 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PC26 dir_pin=PA8 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PC26 dir_pin=PB4 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `74c21654` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
+stepper result is `SET ticks 553`, the best dual stepper result is
+`SET ticks 563`, and the best three stepper result is `SET ticks 623`.
+
+### Duet Wifi step rate benchmark ###
+
+The following configuration sequence is used on the Duet Wifi:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PD6 dir_pin=PD11 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PD7 dir_pin=PD12 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PD8 dir_pin=PD13 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `9f3517fd` with gcc version
+`arm-none-eabi-gcc 7.3.1 20180622 (release)
+[ARM/embedded-7-branch revision 261907]`. The best single stepper
+result is `SET ticks 526`, the best dual stepper result is `SET ticks
+524`, and the best three stepper result is `SET ticks 552`.
 
 ### Beaglebone PRU step rate benchmark ###
 
@@ -300,9 +333,10 @@ config_stepper oid=2 step_pin=P8_19 dir_pin=P8_18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `0adea120`. The best single stepper
-result is `SET ticks 909`, the best dual stepper result is `SET ticks
-859`, and the best three stepper result is `SET ticks 871`.
+The test was last run on commit `b161a69e` with gcc version `pru-gcc
+(GCC) 8.0.0 20170530 (experimental)`. The best single stepper result
+is `SET ticks 861`, the best dual stepper result is `SET ticks 853`,
+and the best three stepper result is `SET ticks 883`.
 
 ### STM32F103 step rate benchmark ###
 
@@ -315,10 +349,10 @@ config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `add37023` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 44`, the best dual stepper result is `SET
-ticks 47`, and the best three stepper result is `SET ticks 80`.
+stepper result is `SET ticks 345`, the best dual stepper result is
+`SET ticks 365`, and the best three stepper result is `SET ticks 606`.
 
 ### LPC176x step rate benchmark ###
 
@@ -331,14 +365,14 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `c78b9076` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
-LPC1768, the best single stepper result is `SET ticks 136`, the best
-dual stepper result is `SET ticks 134`, and the best three stepper
-result is `SET ticks 195`. The 120Mhz LPC1769 results were obtained by
+LPC1768, the best single stepper result is `SET ticks 448`, the best
+dual stepper result is `SET ticks 450`, and the best three stepper
+result is `SET ticks 523`. The 120Mhz LPC1769 results were obtained by
 overclocking an LPC1768 to 120Mhz - the best single stepper result is
-`SET ticks 155`, the best dual stepper result is `SET ticks 148`, and
-the best three stepper result is `SET ticks 195`.
+`SET ticks 525`, the best dual stepper result is `SET ticks 526`, and
+the best three stepper result is `SET ticks 545`.
 
 ### SAMD21 step rate benchmark ###
 
@@ -351,10 +385,60 @@ config_stepper oid=2 step_pin=PA17 dir_pin=PA21 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `cf2393ef` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 323`, the best dual stepper result is
+stepper result is `SET ticks 277`, the best dual stepper result is
 `SET ticks 410`, and the best three stepper result is `SET ticks 664`.
+
+### SAMD51 step rate benchmark ###
+
+The following configuration sequence is used on the SAMD51:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA22 dir_pin=PA20 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PA22 dir_pin=PA21 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA22 dir_pin=PA19 min_stop_interval=0 invert_step=0
+config_stepper oid=3 step_pin=PA22 dir_pin=PA18 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `9f3517fd` with gcc version
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD51G19A
+micro-controller. The best single stepper result is `SET ticks 516`,
+the best dual stepper result is `SET ticks 520`, the best three
+stepper result is `SET ticks 519`, and the best four stepper result is
+`SET ticks 655`.
+
+## Command dispatch benchmark ##
+
+The command dispatch benchmark tests how many "dummy" commands the
+micro-controller can process. It is primarily a test of the hardware
+communication mechanism. The test is run using the console.py tool
+(described above). The following is cut-and-paste into the console.py
+terminal window:
+```
+DELAY {clock+freq} get_uptime
+FLOOD 100000 0.0 end_group
+get_uptime
+```
+
+When the test completes, determine the difference between the clocks
+reported in the two "uptime" response messages. The total number of
+commands per second is then `100000 * mcu_frequency / clock_diff`.
+
+| MCU                 | Rate | Build    | Build compiler      |
+| ------------------- | ---- | -------- | ------------------- |
+| pru (shared memory) |   5K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
+| atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
+| sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1 |
+| samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| sam3x8e (USB)       | 413K | efd1bf5e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| sam4s8c (USB)       | 579K | 8e0eb0d5 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| samd51 (USB)        | 620K | 8cd83b4c | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 
 Host Benchmarks
 ===============

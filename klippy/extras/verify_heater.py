@@ -13,6 +13,10 @@ for the parameters that control this check.
 class HeaterCheck:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self.handle_shutdown)
         self.heater_name = config.get_name().split()[1]
         self.heater = None
         self.hysteresis = config.getfloat('hysteresis', 5., minval=0.)
@@ -26,16 +30,20 @@ class HeaterCheck:
         self.met_target = False
         self.last_target = self.goal_temp = self.error = 0.
         self.fault_systime = self.printer.get_reactor().NEVER
-    def printer_state(self, state):
-        if state == 'connect':
-            if self.printer.get_start_args().get('debugoutput') is not None:
-                # Disable verify_heater if outputting to a debug file
-                return
-            pheater = self.printer.lookup_object('heater')
-            self.heater = pheater.lookup_heater(self.heater_name)
-            logging.info("Starting heater checks for %s", self.heater_name)
+        self.check_timer = None
+    def handle_connect(self):
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            # Disable verify_heater if outputting to a debug file
+            return
+        pheater = self.printer.lookup_object('heater')
+        self.heater = pheater.lookup_heater(self.heater_name)
+        logging.info("Starting heater checks for %s", self.heater_name)
+        reactor = self.printer.get_reactor()
+        self.check_timer = reactor.register_timer(self.check_event, reactor.NOW)
+    def handle_shutdown(self):
+        if self.check_timer is not None:
             reactor = self.printer.get_reactor()
-            reactor.register_timer(self.check_event, reactor.NOW)
+            reactor.update_timer(self.check_timer, reactor.NEVER)
     def check_event(self, eventtime):
         temp, target = self.heater.get_temp(eventtime)
         if temp >= target - self.hysteresis:

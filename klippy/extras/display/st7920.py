@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import icons, font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -11,8 +12,10 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 ST7920_CMD_DELAY  = .000020
 ST7920_SYNC_DELAY = .000045
 
+TextGlyphs = { 'right_arrow': '\x1a' }
+CharGlyphs = { 'degrees': font8x14.VGA_FONT[0xf8] }
+
 class ST7920:
-    char_right_arrow = '\x1a'
     def __init__(self, config):
         printer = config.get_printer()
         # pin config
@@ -27,16 +30,22 @@ class ST7920:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
         self.is_extended = False
         # framebuffers
-        self.text_framebuffer = (bytearray(' '*64), bytearray('~'*64), 0x80)
-        self.glyph_framebuffer = (bytearray(128), bytearray('~'*128), 0x40)
-        self.graphics_framebuffers = [(bytearray(32), bytearray('~'*32), i)
-                                      for i in range(32)]
-        self.framebuffers = ([self.text_framebuffer, self.glyph_framebuffer]
-                             + self.graphics_framebuffers)
+        self.text_framebuffer = bytearray(' '*64)
+        self.glyph_framebuffer = bytearray(128)
+        self.graphics_framebuffers = [bytearray(32) for i in range(32)]
+        self.all_framebuffers = [
+            # Text framebuffer
+            (self.text_framebuffer, bytearray('~'*64), 0x80),
+            # Glyph framebuffer
+            (self.glyph_framebuffer, bytearray('~'*128), 0x40),
+            # Graphics framebuffers
+            ] + [(self.graphics_framebuffers[i], bytearray('~'*32), i)
+                 for i in range(32)]
+        self.cached_glyphs = {}
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
@@ -63,7 +72,7 @@ class ST7920:
         #logging.debug("st7920 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for new_data, old_data, fb_id in self.framebuffers:
+        for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
@@ -99,17 +108,25 @@ class ST7920:
                 0x06, # Set positive update direction
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
+        # Setup animated glyphs
+        self.cache_glyph('fan2', 'fan1', 0)
+        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
         self.flush()
-    def load_glyph(self, glyph_id, data):
-        if len(data) > 32:
-            data = data[:32]
-        pos = min(glyph_id * 32, 96)
-        self.glyph_framebuffer[0][pos:pos+len(data)] = data
+    def cache_glyph(self, glyph_name, base_glyph_name, glyph_id):
+        icon = icons.Icons16x16[glyph_name]
+        base_icon = icons.Icons16x16[base_glyph_name]
+        for i, (bits, base_bits) in enumerate(zip(icon, base_icon)):
+            pos = glyph_id*32 + i*2
+            b1, b2 = (bits >> 8) & 0xff, bits & 0xff
+            b1, b2 = b1 ^ (base_bits >> 8) & 0xff, b2 ^ base_bits & 0xff
+            self.glyph_framebuffer[pos:pos+2] = [b1, b2]
+            self.all_framebuffers[1][1][pos:pos+2] = [b1 ^ 1, b2 ^ 1]
+        self.cached_glyphs[glyph_name] = (base_glyph_name, (0, glyph_id*2))
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        self.text_framebuffer[pos:pos+len(data)] = data
     def write_graphics(self, x, y, row, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -117,9 +134,35 @@ class ST7920:
         if gfx_fb >= 32:
             gfx_fb -= 32
             x += 16
-        self.graphics_framebuffers[gfx_fb][0][x:x+len(data)] = data
+        self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
+    def write_glyph(self, x, y, glyph_name):
+        glyph_id = self.cached_glyphs.get(glyph_name)
+        if glyph_id is not None and x & 1 == 0:
+            # Render cached icon using character generator
+            glyph_name = glyph_id[0]
+            self.write_text(x, y, glyph_id[1])
+        icon = icons.Icons16x16.get(glyph_name)
+        if icon is not None:
+            # Draw icon in graphics mode
+            for i, bits in enumerate(icon):
+                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            return 2
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        font = CharGlyphs.get(glyph_name)
+        if font is not None:
+            # Draw single width character
+            for i, bits in enumerate(font):
+                self.write_graphics(x, y, i, [bits])
+            return 1
+        return 0
     def clear(self):
-        self.text_framebuffer[0][:] = ' '*64
+        self.text_framebuffer[:] = ' '*64
         zeros = bytearray(32)
-        for new_data, old_data, fb_id in self.graphics_framebuffers:
-            new_data[:] = zeros
+        for gfb in self.graphics_framebuffers:
+            gfb[:] = zeros
+    def get_dimensions(self):
+        return (16, 4)

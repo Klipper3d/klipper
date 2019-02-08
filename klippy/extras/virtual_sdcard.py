@@ -8,6 +8,7 @@ import os, logging
 class VirtualSD:
     def __init__(self, config):
         printer = config.get_printer()
+        printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
@@ -24,8 +25,8 @@ class VirtualSD:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
             self.gcode.register_command(cmd, self.cmd_error)
-    def printer_state(self, state):
-        if state == 'shutdown' and self.work_timer is not None:
+    def handle_shutdown(self):
+        if self.work_timer is not None:
             self.must_pause_work = True
             try:
                 readpos = max(self.file_position - 1024, 0)
@@ -47,7 +48,8 @@ class VirtualSD:
         try:
             filenames = os.listdir(self.sdcard_dirname)
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                    for fname in filenames]
+                    for fname in filenames
+                    if not fname.startswith('.')]
         except:
             logging.exception("virtual_sdcard get_file_list")
             raise self.gcode.error("Unable to get file list")
@@ -56,6 +58,8 @@ class VirtualSD:
         if self.work_timer is not None and self.file_size:
             progress = float(self.file_position) / self.file_size
         return {'progress': progress}
+    def is_active(self):
+        return self.work_timer is not None
     # G-Code commands
     def cmd_error(self, params):
         raise self.gcode.error("SD write not supported")
@@ -122,7 +126,7 @@ class VirtualSD:
         self.file_position = pos
     def cmd_M27(self, params):
         # Report SD print status
-        if self.current_file is None or self.work_timer is None:
+        if self.current_file is None:
             self.gcode.respond("Not SD printing.")
             return
         self.gcode.respond("SD printing byte %d/%d" % (
@@ -164,7 +168,7 @@ class VirtualSD:
                 continue
             # Dispatch command
             try:
-                res = self.gcode.process_batch(lines[-1])
+                res = self.gcode.process_batch([lines[-1]])
                 if not res:
                     self.reactor.pause(self.reactor.monotonic() + 0.100)
                     continue

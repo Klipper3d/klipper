@@ -1,9 +1,10 @@
 // Debugging commands.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/io.h" // readl
 #include "board/irq.h" // irq_save
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
@@ -44,44 +45,39 @@ DECL_COMMAND(command_end_group, "end_group");
  ****************************************************************/
 
 void
-command_debug_read8(uint32_t *args)
+command_debug_read(uint32_t *args)
 {
-    uint8_t *ptr = (void*)(size_t)args[0];
-    uint16_t v = *ptr;
-    sendf("debug_result val=%hu", v);
-}
-DECL_COMMAND_FLAGS(command_debug_read8, HF_IN_SHUTDOWN, "debug_read8 addr=%u");
-
-void
-command_debug_read16(uint32_t *args)
-{
-    uint16_t *ptr = (void*)(size_t)args[0];
+    uint8_t order = args[0];
+    void *ptr = (void*)(size_t)args[1];
+    uint32_t v;
     irqstatus_t flag = irq_save();
-    uint16_t v = *ptr;
+    switch (order) {
+    default: case 0: v = readb(ptr); break;
+    case 1:          v = readw(ptr); break;
+    case 2:          v = readl(ptr); break;
+    }
     irq_restore(flag);
-    sendf("debug_result val=%hu", v);
+    sendf("debug_result val=%u", v);
 }
-DECL_COMMAND_FLAGS(command_debug_read16, HF_IN_SHUTDOWN, "debug_read16 addr=%u");
+DECL_COMMAND_FLAGS(command_debug_read, HF_IN_SHUTDOWN,
+                   "debug_read order=%c addr=%u");
 
 void
-command_debug_write8(uint32_t *args)
+command_debug_write(uint32_t *args)
 {
-    uint8_t *ptr = (void*)(size_t)args[0];
-    *ptr = args[1];
-}
-DECL_COMMAND_FLAGS(command_debug_write8, HF_IN_SHUTDOWN,
-                   "debug_write8 addr=%u val=%u");
-
-void
-command_debug_write16(uint32_t *args)
-{
-    uint16_t *ptr = (void*)(size_t)args[0];
+    uint8_t order = args[0];
+    void *ptr = (void*)(size_t)args[1];
+    uint32_t v = args[2];
     irqstatus_t flag = irq_save();
-    *ptr = args[1];
+    switch (order) {
+    default: case 0: writeb(ptr, v); break;
+    case 1:          writew(ptr, v); break;
+    case 2:          writel(ptr, v); break;
+    }
     irq_restore(flag);
 }
-DECL_COMMAND_FLAGS(command_debug_write16, HF_IN_SHUTDOWN,
-                   "debug_write16 addr=%u val=%u");
+DECL_COMMAND_FLAGS(command_debug_write, HF_IN_SHUTDOWN,
+                   "debug_write order=%c addr=%u val=%u");
 
 void
 command_debug_ping(uint32_t *args)

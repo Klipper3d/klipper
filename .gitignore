@@ -3,3 +3,4 @@ out
 *.pyc
 .config
 .config.old
+klippy/.version

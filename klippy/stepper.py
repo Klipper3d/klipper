@@ -69,8 +69,9 @@ class PrinterStepper:
         self.set_ignore_move = mcu_stepper.set_ignore_move
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         self.set_position = mcu_stepper.set_position
-        self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.set_commanded_position = mcu_stepper.set_commanded_position
+        self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_step_dist = mcu_stepper.get_step_dist
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
@@ -121,7 +122,9 @@ class PrinterRail:
         mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         self.endstops = [(mcu_endstop, self.name)]
         stepper.add_to_endstop(mcu_endstop)
-        if default_position_endstop is None:
+        if hasattr(mcu_endstop, "get_position_endstop"):
+            self.position_endstop = mcu_endstop.get_position_endstop()
+        elif default_position_endstop is None:
             self.position_endstop = config.getfloat('position_endstop')
         else:
             self.position_endstop = config.getfloat(
@@ -143,6 +146,8 @@ class PrinterRail:
                 " position_min and position_max" % config.get_name())
         # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
+        self.second_homing_speed = config.getfloat(
+            'second_homing_speed', self.homing_speed/2., above=0.)
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., minval=0.)
         self.homing_positive_dir = config.getboolean(
@@ -157,70 +162,15 @@ class PrinterRail:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.get_name(),))
-        # Endstop stepper phase position tracking
-        self.homing_stepper_phases = config.getint(
-            'homing_stepper_phases', None, minval=0)
-        endstop_accuracy = config.getfloat(
-            'homing_endstop_accuracy', None, above=0.)
-        self.homing_endstop_accuracy = self.homing_endstop_phase = None
-        if self.homing_stepper_phases:
-            self.homing_step_dist = step_dist = stepper.get_step_dist()
-            self.homing_endstop_phase = config.getint(
-                'homing_endstop_phase', None, minval=0
-                , maxval=self.homing_stepper_phases-1)
-            if (self.homing_endstop_phase is not None
-                and config.getboolean('homing_endstop_align_zero', False)):
-                # Adjust the endstop position so 0.0 is always at a full step
-                micro_steps = self.homing_stepper_phases // 4
-                phase_offset = (
-                    ((self.homing_endstop_phase + micro_steps // 2)
-                     % micro_steps) - micro_steps // 2) * step_dist
-                full_step = micro_steps * step_dist
-                es_pos = (int(self.position_endstop / full_step + .5)
-                          * full_step + phase_offset)
-                if es_pos != self.position_endstop:
-                    logging.info("Changing %s endstop position to %.3f"
-                                 " (from %.3f)", self.name,
-                                 es_pos, self.position_endstop)
-                    self.position_endstop = es_pos
-            if endstop_accuracy is None:
-                self.homing_endstop_accuracy = self.homing_stepper_phases//2 - 1
-            elif self.homing_endstop_phase is not None:
-                self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy * .5 / step_dist))
-            else:
-                self.homing_endstop_accuracy = int(math.ceil(
-                    endstop_accuracy / step_dist))
-            if self.homing_endstop_accuracy >= self.homing_stepper_phases // 2:
-                logging.info("Endstop for %s is not accurate enough for stepper"
-                             " phase adjustment", self.name)
-                self.homing_stepper_phases = None
-            if mcu_endstop.get_mcu().is_fileoutput():
-                self.homing_endstop_accuracy = self.homing_stepper_phases
-    def get_homed_offset(self):
-        if not self.homing_stepper_phases:
-            return 0.
-        pos = self.steppers[0].get_mcu_position()
-        pos %= self.homing_stepper_phases
-        if self.homing_endstop_phase is None:
-            logging.info("Setting %s endstop phase to %d", self.name, pos)
-            self.homing_endstop_phase = pos
-            return 0.
-        delta = (pos - self.homing_endstop_phase) % self.homing_stepper_phases
-        if delta >= self.homing_stepper_phases - self.homing_endstop_accuracy:
-            delta -= self.homing_stepper_phases
-        elif delta > self.homing_endstop_accuracy:
-            raise homing.EndstopError(
-                "Endstop %s incorrect phase (got %d vs %d)" % (
-                    self.name, pos, self.homing_endstop_phase))
-        return delta * self.homing_step_dist
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
         homing_info = collections.namedtuple('homing_info', [
-            'speed', 'position_endstop', 'retract_dist', 'positive_dir'])(
+            'speed', 'position_endstop', 'retract_dist', 'positive_dir',
+            'second_homing_speed'])(
                 self.homing_speed, self.position_endstop,
-                self.homing_retract_dist, self.homing_positive_dir)
+                self.homing_retract_dist, self.homing_positive_dir,
+                self.second_homing_speed)
         return homing_info
     def get_steppers(self):
         return list(self.steppers)
@@ -253,9 +203,12 @@ class PrinterRail:
     def set_max_jerk(self, max_halt_velocity, max_accel):
         for stepper in self.steppers:
             stepper.set_max_jerk(max_halt_velocity, max_accel)
-    def set_position(self, newpos):
+    def set_commanded_position(self, pos):
         for stepper in self.steppers:
-            stepper.set_position(newpos)
+            stepper.set_commanded_position(pos)
+    def set_position(self, coord):
+        for stepper in self.steppers:
+            stepper.set_position(coord)
     def motor_enable(self, print_time, enable=0):
         for stepper in self.steppers:
             stepper.motor_enable(print_time, enable)
