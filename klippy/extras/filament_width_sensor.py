@@ -14,12 +14,13 @@ class FilamentWidthSensor:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.pin = config.get('pin')
-        self.nominal_filament_dia = config.getfloat('default_nominal_filament_dia', above=1.0)
+        self.nominal_filament_dia = config.getfloat('default_nominal_filament_diameter', above=1.0)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
         self.measurement_max_difference = config.getfloat('max_difference', above=0.)
         self.max_diameter = self.nominal_filament_dia + self.measurement_max_difference
         self.min_diameter = self.nominal_filament_dia - self.measurement_max_difference
-        #Filament array [position, filamentWidth]
+        self.is_active = True
+        # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
         # printer objects
@@ -41,16 +42,18 @@ class FilamentWidthSensor:
         self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode.register_command('QUERY_FILAMENT_WIDTH', self.cmd_M407)
         self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR', self.cmd_ClearFilamentArray)
+        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M406)
+        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M405)
 
         # Start extrude factor update timer
         self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
 
     def adc_callback(self, read_time, read_value):
         # read sensor value
-        self.lastFilamentWidthReading = round (read_value * 5, 2)
+        self.lastFilamentWidthReading = round(read_value * 5, 2)
 
-    def update_filament_array(self,last_epos):
-        #fill array
+    def update_filament_array(self, last_epos):
+        # Fill array
         if len(self.filament_array) > 0:
             # Get last reading position in array & calculate next reading position
             next_reading_position = self.filament_array[-1][0] + MEASUREMENT_INTERVAL_MM
@@ -69,6 +72,7 @@ class FilamentWidthSensor:
         # Does filament exists
         if self.lastFilamentWidthReading > 0.5:
             if len(self.filament_array) > 0:
+                # Get first position in filament array
                 pending_position = self.filament_array[0][0]
                 if pending_position <= last_epos:
                     # Get first item in filament_array queue
@@ -76,7 +80,7 @@ class FilamentWidthSensor:
                     filament_width = item[1]
                     if (filament_width <= self.max_diameter) and (filament_width >= self.min_diameter):
                         percentage = round(self.nominal_filament_dia / filament_width * 100)
-                        self.gcode.run_script("M221 S"+str(percentage))
+                        self.gcode.run_script("M221 S" + str(percentage))
                     else:
                         self.gcode.run_script("M221 S100")
         else:
@@ -91,9 +95,36 @@ class FilamentWidthSensor:
         else:
             response += "Filament NOT present"
         self.gcode.respond(response)
+
     def cmd_ClearFilamentArray(self, params):
         self.filament_array = []
         self.gcode.respond("Filament width measurements cleared!")
+        # Set extrude multiplier to 100%
+        self.gcode.run_script_from_command("M221 S100")
+
+    def cmd_M405(self, params):
+        response = "Filament width sensor Turned On"
+        if self.is_active:
+            response = "Filament width sensor is already On"
+        else:
+            self.is_active = True
+            # Start extrude factor update timer
+            self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
+        self.gcode.respond(response)
+
+    def cmd_M406(self, params):
+        response = "Filament width sensor Turned Off"
+        if not self.is_active:
+            response = "Filament width sensor is already Off"
+        else:
+            self.is_active = False
+            # Stop extrude factor update timer
+            self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NEVER)
+            # Clear filament array
+            self.filament_array = []
+            # Set extrude multiplier to 100%
+            self.gcode.run_script_from_command("M221 S100")
+        self.gcode.respond(response)
 
 def load_config(config):
     return FilamentWidthSensor(config)
