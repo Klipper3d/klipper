@@ -52,11 +52,14 @@ software_spi_transfer(struct software_spi_config *spi_config, uint8_t receive_da
 {
     software_spi_setup(*spi_config);
 
+    if (spi_config->pins->slave_select > 0) {
+        gpio_out_toggle(spi_config->pins->slave_select);
+    }
+
     while (len--) {
         uint8_t outbuf = *data;
         uint8_t inbuf = 0;
         for (uint_fast8_t i = 0; i < 8; i++) {
-
             if (config->mode % 2 == 0) {
                 // MODE 0 & 2
                 spi_write_bit(spi_config->pins->mosi, outbuf | 0x80);
@@ -80,10 +83,14 @@ software_spi_transfer(struct software_spi_config *spi_config, uint8_t receive_da
         if (receive_data) *data = inbuf;
         *data++;
     }
+
+    if (spi_config->pins->slave_select > 0) {
+        gpio_out_toggle(spi_config->pins->slave_select);
+    }
 }
 
 void
-software_spi_shutdown(struct software_spi_config spi_config)
+software_spi_shutdown(struct software_spi_config *spi_config)
 {
     software_spi_transfer(spi_config, 0, spi_config->shutdown_msg_len, spi_config->shutdown_msg);
 
