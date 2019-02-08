@@ -11,7 +11,7 @@
 #include "sched.h" // DECL_SHUTDOWN
 #include "software_spi.h"
 
-void software_spi_setup(struct software_spi_config spi_config) {
+void software_spi_setup(struct software_spi_config *spi_config) {
     gpio_out_setup(spi_config->pins->mosi, PIN_HIGH);
     gpio_in_setup(spi_config->pins->miso, PIN_HIGH);
 
@@ -26,32 +26,31 @@ void software_spi_setup(struct software_spi_config spi_config) {
     }
 }
 
-uint8_t spi_read_bit(struct software_spi_config spi_device) {
-    return gpio_in_read(spi_device->pins->miso) ? 1 : 0;
+uint8_t spi_read_bit(struct software_spi_config *spi_config) {
+    return gpio_in_read(spi_config->pins->miso) ? 1 : 0;
 }
 
-void spi_write_bit(struct software_spi_config spi_config, uint8_t data) {
+void spi_write_bit(struct software_spi_config *spi_config, uint8_t data) {
     gpio_out_write(spi_config->pins->mosi, data);
 }
 
-void spi_clock_high(struct software_spi_config spi_config) {
+void spi_clock_high(struct software_spi_config *spi_config) {
     gpio_out_write(spi_config->pins->sysclock, PIN_HIGH);
 }
 
-void spi_clock_low(struct software_spi_config spi_config) {
+void spi_clock_low(struct software_spi_config *spi_config) {
     gpio_out_write(spi_config->pins->sysclock, PIN_LOW);
 }
 
-void spi_clock_toggle(struct software_spi_config spi_config) {
+void spi_clock_toggle(struct software_spi_config *spi_config) {
     gpio_out_toggle(spi_config->pins->sysclock);
 }
 
 void
-software_spi_transfer(struct software_spi_config *config, uint8_t receive_data
+software_spi_transfer(struct software_spi_config *spi_config, uint8_t receive_data
         , uint8_t len, uint8_t *data)
 {
-    software_spi_setup(*config);
-
+    software_spi_setup(*spi_config);
 
     while (len--) {
         uint8_t outbuf = *data;
@@ -60,21 +59,21 @@ software_spi_transfer(struct software_spi_config *config, uint8_t receive_data
 
             if (config->mode % 2 == 0) {
                 // MODE 0 & 2
-                spi_write_bit(config->pins->mosi, outbuf | 0x80);
+                spi_write_bit(spi_config->pins->mosi, outbuf | 0x80);
                 outbuf <<= 1;
                 spi_clock_toggle(); // mode 0 high - mode 2 low
                 inbuf <<= 1;
-                inbuf |= spi_read_bit(config->pins->miso);
+                inbuf |= spi_read_bit(spi_config->pins->miso);
                 spi_clock_toggle(); // mode 0 low - mode 2 high
                 break;
             } else {
                 // MODE 1 & 3
                 spi_clock_toggle(); // mode 1 high - mode 3 low
-                spi_write_bit(config->pins->mosi, outbuf | 0x80);
+                spi_write_bit(spi_config->pins->mosi, outbuf | 0x80);
                 outbuf <<= 1;
                 spi_clock_toggle(); // mode 1 low - mode 3 high
                 inbuf <<= 1;
-                inbuf |= spi_read_bit(config->pins->miso);
+                inbuf |= spi_read_bit(spi_config->pins->miso);
             }
         }
 
