@@ -9,7 +9,10 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
+
 #if CONFIG_MACH_SAMD21
+
+#define SAMD51_ADC_SYNC(ADC, BIT)
 static const uint8_t adc_pins[] = {
     GPIO('A', 2), GPIO('A', 3), GPIO('B', 8), GPIO('B', 9), GPIO('A', 4),
     GPIO('A', 5), GPIO('A', 6), GPIO('A', 7), GPIO('B', 0), GPIO('B', 1),
@@ -17,6 +20,8 @@ static const uint8_t adc_pins[] = {
     GPIO('B', 7), GPIO('A', 8), GPIO('A', 9), GPIO('A', 10), GPIO('A', 11)
 };
 #elif CONFIG_MACH_SAMD51
+
+#define SAMD51_ADC_SYNC(ADC, BIT) while(ADC->SYNCBUSY.reg & ADC_SYNCBUSY_ ## BIT)
 static const uint8_t adc_pins[] = {
     /* ADC0 */
     GPIO('A', 2), GPIO('A', 3), GPIO('B', 8), GPIO('B', 9), GPIO('A', 4),
@@ -33,6 +38,26 @@ static const uint8_t adc_pins[] = {
 
 DECL_CONSTANT(ADC_MAX, 4095);
 
+static struct gpio_adc gpio_adc_pin_to_struct(uint8_t pin)
+{
+    // Find pin in adc_pins table
+    uint8_t chan;
+    for (chan=0; ; chan++) {
+        if (chan >= ARRAY_SIZE(adc_pins))
+            shutdown("Not a valid ADC pin");
+        if (adc_pins[chan] == pin)
+            break;
+    }
+#if CONFIG_MACH_SAMD21
+    Adc* reg = ADC;
+#elif CONFIG_MACH_SAMD51
+    Adc* reg = (chan < 16 ? ADC0 : ADC1);
+    chan %= 16;
+#endif
+    return (struct gpio_adc){ .regs=reg, .chan=chan };
+}
+
+
 static void
 adc_init(void)
 {
@@ -41,15 +66,9 @@ adc_init(void)
         return;
     have_run_init = 1;
 
+#if CONFIG_MACH_SAMD21
     // Enable adc clock
-#if CONFIG_MACH_SAMD21
     enable_pclock(ADC_GCLK_ID, ID_ADC);
-#elif CONFIG_MACH_SAMD51
-    enable_pclock(ADC0_GCLK_ID, ID_ADC0);
-    enable_pclock(ADC1_GCLK_ID, ID_ADC1);
-#endif
-
-#if CONFIG_MACH_SAMD21
     // Load calibraiton info
     uint32_t v = *((uint32_t*)ADC_FUSES_BIASCAL_ADDR);
     uint32_t bias = (v & ADC_FUSES_BIASCAL_Msk) >> ADC_FUSES_BIASCAL_Pos;
@@ -67,6 +86,10 @@ adc_init(void)
     ADC->CTRLA.reg = ADC_CTRLA_ENABLE;
 
 #elif CONFIG_MACH_SAMD51
+    // Enable adc clock
+    enable_pclock(ADC0_GCLK_ID, ID_ADC0);
+    enable_pclock(ADC1_GCLK_ID, ID_ADC1);
+
     // Load calibration info
     // ADC0
     uint32_t v = *((uint32_t*)ADC0_FUSES_BIASREFBUF_ADDR);
@@ -106,27 +129,13 @@ adc_init(void)
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
-    // Find pin in adc_pins table
-    uint8_t chan;
-    for (chan=0; ; chan++) {
-        if (chan >= ARRAY_SIZE(adc_pins))
-            shutdown("Not a valid ADC pin");
-        if (adc_pins[chan] == pin)
-            break;
-    }
-#if CONFIG_MACH_SAMD21
-    Adc* reg = ADC;
-#elif CONFIG_MACH_SAMD51
-    Adc* reg = (chan < 16 ? ADC0 : ADC1);
-    chan %= 16;
-#endif
     // Enable ADC
     adc_init();
 
     // Set pin in ADC mode
     gpio_peripheral(pin, 'B', 0);
 
-    return (struct gpio_adc){ .regs=reg, .chan=chan };
+    return gpio_adc_pin_to_struct(pin);
 }
 
 enum { ADC_DUMMY=0xff };
@@ -152,20 +161,17 @@ gpio_adc_sample(struct gpio_adc g)
     last_analog_read = g.chan;
 
     // Set the channel to sample
-    reg->INPUTCTRL.reg = (ADC_INPUTCTRL_MUXPOS(g.chan) |
-                          ADC_INPUTCTRL_MUXNEG_GND |
+    reg->INPUTCTRL.reg = (ADC_INPUTCTRL_MUXPOS(g.chan)
+                          | ADC_INPUTCTRL_MUXNEG_GND
 #if CONFIG_MACH_SAMD21
-                          ADC_INPUTCTRL_GAIN_DIV2);
-#elif CONFIG_MACH_SAMD51
-                          0);
-    while(reg->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL);
+                          | ADC_INPUTCTRL_GAIN_DIV2
 #endif
+                          );
 
+    SAMD51_ADC_SYNC(reg, INPUTCTRL);
     // Start the sample
     reg->SWTRIG.reg = ADC_SWTRIG_START;
-#if CONFIG_MACH_SAMD51
-    while(reg->SYNCBUSY.reg & ADC_SYNCBUSY_SWTRIG);
-#endif
+    SAMD51_ADC_SYNC(reg, SWTRIG);
 
     // Schedule next attempt after sample is likely to be complete
 need_delay:
@@ -187,9 +193,7 @@ gpio_adc_cancel_sample(struct gpio_adc g)
     Adc * reg = g.regs;
     if (last_analog_read == g.chan) {
         reg->SWTRIG.reg = ADC_SWTRIG_FLUSH;
-#if CONFIG_MACH_SAMD51
-        while(reg->SYNCBUSY.reg & ADC_SYNCBUSY_SWTRIG);
-#endif
+        SAMD51_ADC_SYNC(reg, SWTRIG);
         reg->INTFLAG.reg = ADC_INTFLAG_RESRDY;
         last_analog_read = ADC_DUMMY;
     }
