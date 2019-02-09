@@ -169,6 +169,10 @@ enabled:
 - `PROBE`: Move the nozzle downwards until the probe triggers.
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
+- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
+  calibrating the probe's z_offset. See the MANUAL_PROBE command for
+  details on the parameters and the additional commands available
+  while the tool is active.
 
 ## BLTouch
 

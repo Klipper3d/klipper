@@ -1,9 +1,9 @@
 # Z-Probe support
 #
-# Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins, homing
+import pins, homing, manual_probe
 
 HINT_TIMEOUT = """
 Make sure to home the printer before probing. If the probe
@@ -15,6 +15,7 @@ the Z axis minimum position so the probe can travel further
 class PrinterProbe:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
+        self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat('speed', 5.0)
         self.x_offset = config.getfloat('x_offset', 0.)
@@ -31,10 +32,12 @@ class PrinterProbe:
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command(
-            'PROBE', self.cmd_PROBE, desc=self.cmd_PROBE_help)
-        self.gcode.register_command(
-            'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
+        self.gcode.register_command('PROBE', self.cmd_PROBE,
+                                    desc=self.cmd_PROBE_help)
+        self.gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
+                                    desc=self.cmd_QUERY_PROBE_help)
+        self.gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
+                                    desc=self.cmd_PROBE_CALIBRATE_help)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
@@ -50,9 +53,10 @@ class PrinterProbe:
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]
+        verify = self.printer.get_start_args().get('debugoutput') is None
         try:
             homing_state.homing_move(pos, endstops, self.speed,
-                                     probe_pos=True, verify_movement=True)
+                                     probe_pos=True, verify_movement=verify)
         except homing.EndstopError as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -70,6 +74,32 @@ class PrinterProbe:
         res = self.mcu_probe.query_endstop_wait()
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
+    def probe_calibrate_finalize(self, kin_pos):
+        if kin_pos is None:
+            return
+        z_pos = self.z_offset - kin_pos[2]
+        self.gcode.respond_info(
+            "%s: z_offset: %.3f\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer." % (self.name, z_pos))
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, 'z_offset', "%.3f" % (z_pos,))
+    cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
+    def cmd_PROBE_CALIBRATE(self, params):
+        # Perform initial probe
+        self.cmd_PROBE(params)
+        # Move away from the bed
+        toolhead = self.printer.lookup_object('toolhead')
+        curpos = toolhead.get_position()
+        curpos[2] += 5.
+        toolhead.move(curpos, self.speed)
+        # Move the nozzle over the probe point
+        curpos[0] += self.x_offset
+        curpos[1] += self.y_offset
+        toolhead.move(curpos, self.speed)
+        # Start manual probe
+        manual_probe.ManualProbeHelper(self.printer, params,
+                                       self.probe_calibrate_finalize)
 
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
