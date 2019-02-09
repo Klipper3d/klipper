@@ -162,6 +162,21 @@ enabled:
 - `SET_SERVO SERVO=config_name [WIDTH=<seconds>] [ENABLE=<0|1>]`
 - `SET_SERVO SERVO=config_name [ANGLE=<degrees>] [ENABLE=<0|1>]`
 
+## Manual stepper Commands
+
+The following command is available when a "manual_stepper" config
+section is enabled:
+- `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
+  [SET_POSITION=<pos>]
+  [MOVE=<pos> SPEED=<speed> [STOP_ON_ENDSTOP=1]]`: This command will
+  alter the state of the stepper. Use the ENABLE parameter to
+  enable/disable the stepper. Use the SET_POSITION parameter to force
+  the stepper to think it is at the given position. Use the MOVE
+  parameter to request a movement to the given position at the given
+  SPEED. If STOP_ON_ENDSTOP is specified then the move will end early
+  should the endstop report as triggered (use STOP_ON_ENDSTOP=-1 to
+  stop early should the endstop report not triggered).
+
 ## Probe
 
 The following commands are available when a "probe" config section is

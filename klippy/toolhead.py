@@ -372,6 +372,7 @@ class ToolHead:
         self.kin.motor_off(last_move_time)
         for ext in kinematics.extruder.get_printer_extruders(self.printer):
             ext.motor_off(last_move_time)
+        self.printer.send_event("toolhead:motor_off", last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):

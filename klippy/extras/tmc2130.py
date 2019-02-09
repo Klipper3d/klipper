@@ -129,7 +129,7 @@ def get_config_stealthchop(config, tmc_freq):
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
     if not velocity:
         return mres, False, 0
-    stepper_name = config.get_name().split()[1]
+    stepper_name = " ".join(config.get_name().split()[1:])
     stepper_config = config.getsection(stepper_name)
     step_dist = stepper_config.getfloat('step_distance')
     step_dist_256 = step_dist / (1 << mres)
@@ -144,7 +144,7 @@ def get_config_stealthchop(config, tmc_freq):
 class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[1]
+        self.name = config.get_name().split()[-1]
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
