@@ -24,8 +24,8 @@ printer's own motion system.
 
 Different types of printers use different methods for performing bed
 leveling. All of them ultimately depend on the "paper test" (described
-below). However, the actual process for a particular printer is
-described in other documents.
+below). However, the actual process for a particular type of printer
+is described in other documents.
 
 Prior to running any of these calibration tools, be sure to run the
 checks described in the [config check document](Config_checks.md). It
@@ -153,7 +153,7 @@ Then a `TESTZ Z=-` would move the nozzle to a Z position of 0.180
 (half way between 0.130 and 0.230). One can use this feature to help
 rapidly narrow down to a consistent friction. It is also possible to
 use `Z=++` and `Z=--` to return directly to a past measurement - for
-example, after the above prompt a `TEST Z=--` command would move the
+example, after the above prompt a `TESTZ Z=--` command would move the
 nozzle to a Z position of 0.130.
 
 After finding a small amount of friction run the ACCEPT command:

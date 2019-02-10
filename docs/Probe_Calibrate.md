@@ -37,8 +37,9 @@ to report that position. This is the nozzle position.
 
 The x_offset is then the `nozzle_x_position - probe_x_position` and
 y_offset is similarly the `nozzle_y_position - probe_y_position`.
-Update the printer.cfg file with the given values and then issue a
-`RESTART` command so that the new values take effect.
+Update the printer.cfg file with the given values, remove the
+tape/marks from the bed, and then issue a `RESTART` command so that
+the new values take effect.
 
 # Calibrating probe Z offset
 
