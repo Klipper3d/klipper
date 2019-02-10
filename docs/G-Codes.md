@@ -354,3 +354,11 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+
+## Filament Sensor
+
+The following command is available when the "filament_switch_sensor" config
+section is enabled.
+ - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
+  the filament sensor.  The data displayed on the terminal will depend on the
+  sensor type defined in the confguration.
