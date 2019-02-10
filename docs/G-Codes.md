@@ -190,10 +190,10 @@ The following commands are available when the "delta_calibrate" config
 section is enabled:
 - `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
   points on the bed and recommend updated endstop positions, tower
-  angles, and radius.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a DELTA_CALIBRATE
-    operation.
+  angles, and radius. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -203,10 +203,10 @@ The following commands are available when the "bed_tilt" config
 section is enabled:
 - `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
   points specified in the config and then recommend updated x and y
-  tilt adjustments.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_TILT_CALIBRATE operation.
+  tilt adjustments. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 
 ## Mesh Bed Leveling
 
@@ -215,10 +215,10 @@ section is enabled:
 - `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
   using generated points specified by the parameters in the
   config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_MESH_CALIBRATE operation.
+  adjusted according to the mesh. If METHOD=manual is specified then
+  the manual probing tool is activated - see the MANUAL_PROBE command
+  above for details on the additional commands available while this
+  tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
