@@ -152,6 +152,7 @@ enabled:
 - `PROBE`: Move the nozzle downwards until the probe triggers.
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
+- `PROBE_ACCURACY`: Calculate the maximum, minimum, average and standard deviation.
 
 ## BLTouch
 
