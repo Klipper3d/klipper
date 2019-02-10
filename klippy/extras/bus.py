@@ -26,7 +26,7 @@ class MCU_SPI:
                     software_spi_oid, sw_pins[0], sw_pins[1], sw_pins[2]),
                 "config_spi_from_software oid=%d sw_oid=%d pin=%s"
                 " mode=%d rate=%d shutdown_msg=%s" % (
-                    self.oid, software_spi_oid, mode, speed, shutdown_msg)]
+                    self.oid, software_spi_oid, pin, mode, speed, shutdown_msg)]
         elif pin is None:
             self.config_msgs = [
                 "config_spi_without_cs oid=%d bus=%d mode=%d rate=%d"
