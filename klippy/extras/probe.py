@@ -169,7 +169,7 @@ class ProbePointsHelper:
             'sample_retract_dist', 2., above=0.)
         # Internal probing state
         self.results = []
-        self.busy = False
+        self.busy = self.manual_probe = False
         self.gcode = self.toolhead = None
     def get_lift_speed(self):
         return self.lift_speed
@@ -207,6 +207,9 @@ class ProbePointsHelper:
             self._finalize(False)
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
+        if self.manual_probe:
+            manual_probe.ManualProbeHelper(self.printer, {},
+                                           self._manual_probe_finalize)
     def _automatic_probe_point(self):
         positions = []
         for i in range(self.samples):
@@ -229,13 +232,14 @@ class ProbePointsHelper:
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
         if probe is not None and method == 'automatic':
+            self.manual_probe = False
             self.lift_speed = min(self.speed, probe.speed)
             self.probe_offsets = probe.get_offsets()
             if self.horizontal_move_z < self.probe_offsets[2]:
                 raise self.gcode.error("horizontal_move_z can't be less than"
                                        " probe's z_offset")
         else:
-            probe = None
+            self.manual_probe = True
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
         # Start probe
@@ -243,27 +247,20 @@ class ProbePointsHelper:
         self.busy = True
         self._lift_z(self.horizontal_move_z, speed=self.speed)
         self._move_next()
-        if probe is None:
-            # Setup for manual probing
-            self.gcode.register_command('NEXT', None)
-            self.gcode.register_command('NEXT', self.cmd_NEXT,
-                                        desc=self.cmd_NEXT_help)
-        else:
+        if not self.manual_probe:
             # Perform automatic probing
             while self.busy:
                 self._automatic_probe_point()
                 self._move_next()
-    cmd_NEXT_help = "Move to the next XY position to probe"
-    def cmd_NEXT(self, params):
-        # Record current position for manual probe
-        self.toolhead.get_last_move_time()
-        self.results.append(self.toolhead.get_kinematics().calc_position())
-        # Move to next position
+    def _manual_probe_finalize(self, kin_pos):
+        if kin_pos is None:
+            self._finalize(False)
+            return
+        self.results.append(kin_pos)
         self._move_next()
     def _finalize(self, success):
         self.busy = False
         self.gcode.reset_last_position()
-        self.gcode.register_command('NEXT', None)
         if success:
             self.finalize_callback(self.probe_offsets, self.results)
 
