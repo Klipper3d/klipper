@@ -53,11 +53,12 @@ void
 spi_software_transfer(struct spi_software *ss, uint8_t receive_data
                       , uint8_t len, uint8_t *data)
 {
-    uint8_t outbuf = *data;
-    uint8_t inbuf = 0;
     while (len--) {
+        uint8_t outbuf = *data;
+        uint8_t inbuf = 0;
+
         for (uint_fast8_t i = 0; i < 8; i++) {
-            if (ss->mode % 2 == 0) {
+            if (!(ss->mode & 0x01)) {
                 // MODE 0 & 2
                 gpio_out_write(ss->mosi, outbuf | 0x80);
                 outbuf <<= 1;
@@ -75,7 +76,9 @@ spi_software_transfer(struct spi_software *ss, uint8_t receive_data
                 inbuf |= gpio_in_read(ss->miso);
             }
         }
+
+        if (receive_data) *data = inbuf;
+        *data++;
     }
 
-    if (receive_data) *data = inbuf;
 }
