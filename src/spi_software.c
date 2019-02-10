@@ -65,7 +65,6 @@ spi_software_transfer(struct spi_software *ss, uint8_t receive_data
                 inbuf <<= 1;
                 inbuf |= gpio_in_read(ss->miso);
                 gpio_out_toggle(ss->sclk); // mode 0 low - mode 2 high
-                break;
             } else {
                 // MODE 1 & 3
                 gpio_out_toggle(ss->sclk); // mode 1 high - mode 3 low
