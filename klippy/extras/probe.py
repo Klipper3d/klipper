@@ -52,13 +52,16 @@ class PrinterProbe:
     cmd_PROBE_help = "Probe Z-height at current XY position"
 
     def cmd_PROBE(self, params):
+        self._probe(self.speed)
+
+    def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         homing_state = homing.Homing(self.printer)
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]
         try:
-            homing_state.homing_move(pos, endstops, self.speed,
+            homing_state.homing_move(pos, endstops, speed,
                                      probe_pos=True, verify_movement=True)
         except homing.EndstopError as e:
             reason = str(e)
@@ -74,28 +77,26 @@ class PrinterProbe:
 
     def cmd_PROBE_ACCURACY(self, params):
         toolhead = self.printer.lookup_object('toolhead')
-        homing_state = homing.Homing(self.printer)
-        pos = toolhead.get_position()
-        endstops = [(self.mcu_probe, "probe")]
         probes = []
+        pos = toolhead.get_position()
+        number_of_reads = self.gcode.get_int('REPEAT', params, 10, 4, 50)
+        speed = self.gcode.get_int('SPEED', params, self.speed, 1, 30)
+        z_start_position = self.gcode.get_float('Z', params, 10., 10., 70.)
+        x_start_position = self.gcode.get_float('X', params, pos[0])
+        y_start_position = self.gcode.get_float('Y', params, pos[1])
 
-        number_of_reads = 10
-        z_start_position = 10
-
-        # Move Z to start reading position
-        pos[2] = z_start_position
-        self.gcode.move_with_transform(pos, self.speed)
-
-        self.gcode.respond_info("probe accuracy at %.3f,%.3f" % (pos[0], pos[1]))
+        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f read %d times with speed of %d mm/s" % (
+            number_of_reads, speed, x_start_position, y_start_position, z_start_position))
 
         # Probe bed "number_of_reads" times
         sum_reads = 0
         for i in range(number_of_reads):
             try:
-                # Read Z position, moving until reach Z low position
-                pos[2] = self.z_position
-                homing_state.homing_move(pos, endstops, self.speed,
-                                         probe_pos=True, verify_movement=True)
+                # Move Z to start reading position
+                self._move_position(x_start_position, y_start_position, z_start_position, speed)
+
+                # Probe
+                self._probe(speed)
 
             except homing.EndstopError as e:
                 reason = str(e)
@@ -104,17 +105,12 @@ class PrinterProbe:
                 raise self.gcode.error(reason)
 
             # Get Z value, accumulate value to calculate average and save it to calculate standard deviation
-            pos_read = toolhead.get_position()
-            sum_reads += pos_read[2]
-            probes.append(pos_read[2])
+            pos = toolhead.get_position()
+            sum_reads += pos[2]
+            probes.append(pos[2])
 
-            # Show current Z read value
-            self.gcode.respond_info(" - read nr. %d/%d is z=%.6f" % (
-                i+1, number_of_reads, probes[i]))
-
-            # Move Z to start reading position
-            pos[2] = z_start_position
-            self.gcode.move_with_transform(pos, self.speed)
+        # Move Z to start reading position
+        self._move_position(x_start_position, y_start_position, z_start_position, speed)
 
         # Calculate maximum, minimum and average values
         max_value = max(probes)
@@ -126,11 +122,21 @@ class PrinterProbe:
         for i in range(number_of_reads):
             deviation_sum += pow(probes[i] - avg_value, 2)
 
-        sigma = (deviation_sum / number_of_reads)**0.5
+        sigma = (deviation_sum / number_of_reads) ** 0.5
 
         # Show information
-        self.gcode.respond_info("probe accuracy results: maximum %.6f, minimum %.6f, average %.6f, standard deviation %.6f" % (
-            max_value, min_value, avg_value, sigma))
+        self.gcode.respond_info(
+            "probe accuracy results: maximum %.6f, minimum %.6f, average %.6f, standard deviation %.6f" % (
+                max_value, min_value, avg_value, sigma))
+
+    def _move_position(self, x, y, z, speed):
+        toolhead = self.printer.lookup_object('toolhead')
+        # Move to start reading position
+        pos = toolhead.get_position()
+        pos[0] = x
+        pos[1] = y
+        pos[2] = z
+        toolhead.move(pos, speed)
 
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
 
