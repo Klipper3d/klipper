@@ -420,7 +420,7 @@ communication mechanism. The test is run using the console.py tool
 (described above). The following is cut-and-paste into the console.py
 terminal window:
 ```
-DELAY {clock+freq} get_uptime
+DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 end_group
 get_uptime
 ```
@@ -428,6 +428,10 @@ get_uptime
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
+
+Note that this test may saturate the USB/CPU capacity of a Raspberry
+Pi. The benchmarks below are with console.py running on a desktop
+class machine.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |
