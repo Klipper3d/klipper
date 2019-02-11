@@ -84,7 +84,7 @@ class PrinterProbe:
         x_start_position = self.gcode.get_float('X', params, pos[0])
         y_start_position = self.gcode.get_float('Y', params, pos[1])
 
-        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f and read %d times with speed of %d mm/s" % (
+        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n                and read %d times with speed of %d mm/s" % (
             x_start_position, y_start_position, z_start_position, number_of_reads, speed))
 
         # Probe bed "number_of_reads" times
@@ -114,7 +114,7 @@ class PrinterProbe:
         # Calculate maximum, minimum and average values
         max_value = max(probes)
         min_value = min(probes)
-        avg_value = sum(probes) / len(probes)
+        avg_value = sum(probes) / number_of_reads
 
         # calculate the standard deviation
         deviation_sum = 0
@@ -123,10 +123,20 @@ class PrinterProbe:
 
         sigma = (deviation_sum / number_of_reads) ** 0.5
 
+        # Median
+        sorted_probes = sorted(probes)
+        middle = number_of_reads//2
+        if (number_of_reads & 1) == 1:
+            # odd number of reads
+            median = sorted_probes[middle]
+        else:
+            # even number of reads
+            median = (sorted_probes[middle]+sorted_probes[middle-1])/2
+
         # Show information
         self.gcode.respond_info(
-            "probe accuracy results: maximum %.6f, minimum %.6f, average %.6f, standard deviation %.6f" % (
-                max_value, min_value, avg_value, sigma))
+            "probe accuracy results: maximum %.6f, minimum %.6f, average %.6f, median %.6f, standard deviation %.6f" % (
+                max_value, min_value, avg_value, median, sigma))
 
     def _move_position(self, x, y, z, speed):
         toolhead = self.printer.lookup_object('toolhead')
