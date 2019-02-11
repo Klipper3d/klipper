@@ -84,8 +84,8 @@ class PrinterProbe:
         x_start_position = self.gcode.get_float('X', params, pos[0])
         y_start_position = self.gcode.get_float('Y', params, pos[1])
 
-        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f read %d times with speed of %d mm/s" % (
-            number_of_reads, speed, x_start_position, y_start_position, z_start_position))
+        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f and read %d times with speed of %d mm/s" % (
+            x_start_position, y_start_position, z_start_position, number_of_reads, speed))
 
         # Probe bed "number_of_reads" times
         sum_reads = 0
