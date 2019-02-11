@@ -152,9 +152,9 @@ enabled:
 - `PROBE`: Move the nozzle downwards until the probe triggers.
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
-- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>] [Y=<y pos] [Z=<z height>] `: 
-   Calculate the maximum, minimum, average and standard deviation.
-   The default values are: REPEAT=10, SPEED=<probe speed>, X=current X, Y=current Y and Z=10.
+- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>] [Y=<y pos] [Z=<z height>]`:
+Calculate the maximum, minimum, average and standard deviation.
+The default values are: REPEAT=10, SPEED=<probe speed>, X=current X, Y=current Y and Z=10.
 
 ## BLTouch
 
