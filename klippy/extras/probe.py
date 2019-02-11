@@ -12,7 +12,6 @@ the Z axis minimum position so the probe can travel further
 (the Z minimum position can be negative).
 """
 
-
 class PrinterProbe:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
@@ -193,7 +192,6 @@ class ProbeEndstopWrapper:
     def get_position_endstop(self):
         return self.position_endstop
 
-
 # Helper code that can probe a series of points and report the
 # position at each point.
 class ProbePointsHelper:
@@ -327,7 +325,6 @@ class ProbePointsHelper:
         self.gcode.register_command('NEXT', None)
         if success:
             self.finalize_callback(self.probe_offsets, self.results)
-
 
 def load_config(config):
     return PrinterProbe(config, ProbeEndstopWrapper(config))
