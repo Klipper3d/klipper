@@ -100,10 +100,12 @@ class BedMesh:
                         "bed_mesh: ERROR, fade_target lies outside of mesh z "
                         "range\nmin: %.4f, max: %.4f, fade_target: %.4f"
                         % (mesh_min, mesh_max, err_target))
+            if self.fade_target:
+                mesh.offset_mesh(self.fade_target)
         else:
             self.fade_target = 0.
         self.z_mesh = mesh
-        self.splitter.initialize(mesh, self.fade_target)
+        self.splitter.initialize(mesh)
         # cache the current position before a transform takes place
         self.gcode.reset_last_position()
     def get_z_factor(self, z_pos):
@@ -123,8 +125,7 @@ class BedMesh:
             # return current position minus the current z-adjustment
             x, y, z, e = self.toolhead.get_position()
             z_adj = self.z_mesh.calc_z(x, y)
-            z_adj = (self.get_z_factor(z) * (z_adj - self.fade_target) +
-                     self.fade_target)
+            z_adj = self.get_z_factor(z) * z_adj + self.fade_target
             self.last_position[:] = [x, y, z - z_adj, e]
         return list(self.last_position)
     def move(self, newpos, speed):
@@ -471,9 +472,8 @@ class MoveSplitter:
             'move_check_distance', 5., minval=3.)
         self.z_mesh = None
         self.gcode = gcode
-    def initialize(self, mesh, fade_offset):
+    def initialize(self, mesh):
         self.z_mesh = mesh
-        self.fade_offset = fade_offset
     def build_move(self, prev_pos, next_pos, factor):
         self.prev_pos = tuple(prev_pos)
         self.next_pos = tuple(next_pos)
@@ -487,7 +487,7 @@ class MoveSplitter:
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
         z = self.z_mesh.calc_z(pos[0], pos[1])
-        return self.z_factor * (z - self.fade_offset) + self.fade_offset
+        return self.z_factor * z + self.z_mesh.mesh_offset
     def _set_next_move(self, distance_from_prev):
         t = distance_from_prev / self.total_move_length
         if t > 1. or t < 0.:
@@ -530,6 +530,7 @@ class ZMesh:
         self.mesh_z_table = None
         self.probe_params = params
         self.avg_z = 0.
+        self.mesh_offset = 0.
         logging.debug('bed_mesh: probe/mesh parameters:')
         for key, value in self.probe_params.iteritems():
             logging.debug("%s :  %s" % (key, value))
@@ -582,7 +583,7 @@ class ZMesh:
             msg += "Measured points:\n"
             for y_line in range(self.mesh_y_count - 1, -1, -1):
                 for z in self.mesh_z_table[y_line]:
-                    msg += "  %f" % (z)
+                    msg += "  %f" % (z + self.mesh_offset)
                 msg += "\n"
             print_func(msg)
         else:
@@ -596,6 +597,12 @@ class ZMesh:
         # z step distances
         self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
+    def offset_mesh(self, offset):
+        if self.mesh_z_table:
+            self.mesh_offset = offset
+            for y_line in self.mesh_z_table:
+                for idx, z in enumerate(y_line):
+                    y_line[idx] = z - self.mesh_offset
     def get_x_coordinate(self, index):
         return self.mesh_x_min + self.mesh_x_dist * index
     def get_y_coordinate(self, index):
