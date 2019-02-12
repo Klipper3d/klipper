@@ -42,6 +42,7 @@ class TestPressureAdvance:
         self.last_postition = list(pos)
         return pos
     def move(self, newpos, speed):
+        normal_transform = self.normal_transform
         if (newpos[3] > self.last_position[3] and newpos[2] != self.last_z
             and newpos[:3] != self.last_position[:3]):
             # Extrusion move at new z height
@@ -57,7 +58,7 @@ class TestPressureAdvance:
                     "SET_PRESSURE_ADVANCE ADVANCE=%.6f" % (pa,))
         # Forward move to actual handler
         self.last_position[:] = newpos
-        self.normal_transform.move(newpos, speed)
+        normal_transform.move(newpos, speed)
     def end_test(self):
         msg = "Ending TEST_PRESSURE_ADVANCE mode"
         logging.info(msg)
