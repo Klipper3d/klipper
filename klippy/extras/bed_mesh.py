@@ -83,7 +83,7 @@ class BedMesh:
         self.toolhead = self.printer.lookup_object('toolhead')
         self.calibrate.load_default_profile()
     def set_mesh(self, mesh):
-        if mesh is not None:
+        if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
             if self.base_fade_target is None:
                 self.fade_target = mesh.avg_z
@@ -102,6 +102,15 @@ class BedMesh:
                         % (mesh_min, mesh_max, err_target))
             if self.fade_target:
                 mesh.offset_mesh(self.fade_target)
+            mesh_min, mesh_max = mesh.get_z_range()
+            if self.fade_dist <= max(abs(mesh_min), abs(mesh_max)):
+                self.z_mesh = None
+                self.fade_target = 0.
+                raise self.gcode.error(
+                    "bed_mesh:  Mesh extends outside of the fade range, "
+                    "please see the fade_start and fade_end options in"
+                    "example-extras.cfg. fade distance: %.2f mesh min: %.4f"
+                    "mesh max: %.4f" % (self.fade_dist, mesh_min, mesh_max))
         else:
             self.fade_target = 0.
         self.z_mesh = mesh
@@ -125,8 +134,20 @@ class BedMesh:
             # return current position minus the current z-adjustment
             x, y, z, e = self.toolhead.get_position()
             z_adj = self.z_mesh.calc_z(x, y)
-            z_adj = self.get_z_factor(z) * z_adj + self.fade_target
-            self.last_position[:] = [x, y, z - z_adj, e]
+            factor = 1.
+            max_adj = z_adj + self.fade_target
+            if min(z, (z - max_adj)) >= self.fade_end:
+                # Fade out is complete, no factor
+                factor = 0.
+            elif max(z, (z - max_adj)) >= self.fade_start:
+                # Likely in the process of fading out adjustment.
+                # Because we don't yet know the gcode z position, use
+                # algebra to calculate the factor from the toolhead pos
+                factor = ((self.fade_end + self.fade_target - z) /
+                          (self.fade_dist - z_adj))
+                factor = constrain(factor, 0., 1.)
+            final_z_adj = factor * z_adj + self.fade_target
+            self.last_position[:] = [x, y, z - final_z_adj, e]
         return list(self.last_position)
     def move(self, newpos, speed):
         factor = self.get_z_factor(newpos[2])
