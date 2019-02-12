@@ -4,7 +4,7 @@ This document describes Filament Width Sensor host module. Hardware used for dev
 Sensor generates analog output based on calculated filament width. Output voltage always equals to detected filament width (Ex. 1.65v, 1.70v, 3.0v). Host module monitors voltage changes and adjusts extrusion multiplier.
 
 ## Configuration
-    [filament_width_sensor]
+    [tsl1401cl_filament_width_sensor]
     pin: analog5
     # Analog input pin for sensor output on Ramps board
 
