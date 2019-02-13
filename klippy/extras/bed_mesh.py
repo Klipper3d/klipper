@@ -10,8 +10,6 @@ import json
 import probe
 import collections
 
-BED_SHAPES = {'rectangular': 0, 'round': 1}
-
 class BedMeshError(Exception):
     pass
 
@@ -210,14 +208,13 @@ class BedMeshCalibrate:
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
     def _generate_points(self, config):
-        shape = config.getchoice('bed_shape', BED_SHAPES, 'rectangular')
-        if shape == BED_SHAPES['round']:
-            x_cnt = y_cnt = config.getint('probe_count', 5)
+        self.radius = config.getfloat('bed_radius', None, above=0.)
+        if self.radius is not None:
+            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
                 raise config.error(
                     "bed_mesh: probe_count must be odd for round beds")
-            self.radius = config.getfloat('radius', above=0.)
             # radius may have precision to .1mm
             self.radius = math.floor(self.radius * 10) / 10
             min_x = min_y = -self.radius

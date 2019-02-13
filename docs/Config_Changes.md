@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190224: The bed_shape option has been removed from bed_mesh.  The
+radius option has been renamed to bed_radius.  Users with round beds
+should supply the bed_radius and round_probe_count options.
+
 20190107: The i2c_address parameter in the mcp4451 config section
 changed. This is a common setting on Smoothieboards. The new value is
 half the old value (88 should be changed to 44, and 90 should be
