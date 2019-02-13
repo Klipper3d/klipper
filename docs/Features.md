@@ -95,7 +95,7 @@ Klipper supports many standard 3d printer features:
 * Support for run-time configuration of TMC2130, TMC2208, TMC2224, and
   TMC2660 stepper motor drivers. There is also support for current
   control of traditional stepper drivers via AD5206, MCP4451, MCP4728,
-  and PWM pins.
+  MCP4018, and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available.
