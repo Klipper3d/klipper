@@ -71,7 +71,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     // Map cycle_time to pwm clock divisor
     uint32_t div;
     for (div=0; div<10; div++)
-        if (cycle_time < (MAX_PWM << div) / 2)
+        if (cycle_time < ((MAX_PWM << (div + 1)) + (MAX_PWM << div)) / 2)
             break;
 
     // Enable clock
