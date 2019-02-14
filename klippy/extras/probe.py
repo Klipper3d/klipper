@@ -51,7 +51,7 @@ class PrinterProbe:
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         self._probe(self.speed)
-    def _probe(self, speed):							
+    def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         homing_state = homing.Homing(self.printer)
         pos = toolhead.get_position()
