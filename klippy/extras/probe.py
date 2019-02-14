@@ -37,22 +37,17 @@ class PrinterProbe:
             'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
         self.gcode.register_command(
             'PROBE_ACCURACY', self.cmd_PROBE_ACCURACY, desc=self.cmd_PROBE_ACCURACY_help)
-
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
-
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-
     cmd_PROBE_help = "Probe Z-height at current XY position"
-
     def cmd_PROBE(self, params):
         self._probe(self.speed)
-
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         homing_state = homing.Homing(self.printer)
@@ -71,58 +66,56 @@ class PrinterProbe:
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f" % (
             pos[0], pos[1], pos[2]))
         self.gcode.reset_last_position()
-
-    cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
-
+    cmd_QUERY_PROBE_help = "Return the status of the z-probe"
+    def cmd_QUERY_PROBE(self, params):
+        toolhead = self.printer.lookup_object('toolhead')
+        print_time = toolhead.get_last_move_time()
+        self.mcu_probe.query_endstop(print_time)
+        res = self.mcu_probe.query_endstop_wait()
+        self.gcode.respond_info(
+            "probe: %s" % (["open", "TRIGGERED"][not not res],))
     def cmd_PROBE_ACCURACY(self, params):
         toolhead = self.printer.lookup_object('toolhead')
         probes = []
         pos = toolhead.get_position()
-        number_of_reads = self.gcode.get_int('REPEAT', params, 10, 4, 50)
-        speed = self.gcode.get_int('SPEED', params, self.speed, 1, 30)
-        z_start_position = self.gcode.get_float('Z', params, 10., 10., 70.)
-        x_start_position = self.gcode.get_float('X', params, pos[0])
-        y_start_position = self.gcode.get_float('Y', params, pos[1])
-
-        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n                and read %d times with speed of %d mm/s" % (
-            x_start_position, y_start_position, z_start_position, number_of_reads, speed))
-
+        number_of_reads = self.gcode.get_int('REPEAT', params, default=10,
+                                                       minval=4, maxval=50)
+        speed = self.gcode.get_int('SPEED', params, default=self.speed,
+                                            minval=1, maxval=30)
+        z_start_position = self.gcode.get_float('Z', params, default=10.,
+                                                     minval=10., maxval=70.)
+        x_start_position = self.gcode.get_float('X', params, default=pos[0])
+        y_start_position = self.gcode.get_float('Y', params, default=pos[1])
+        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n"
+                                "                "
+                                "and read %d times with speed of %d mm/s" % (
+                                x_start_position, y_start_position,
+                                z_start_position, number_of_reads, speed))
         # Probe bed "number_of_reads" times
         sum_reads = 0
         for i in range(number_of_reads):
-            try:
-                # Move Z to start reading position
-                self._move_position(x_start_position, y_start_position, z_start_position, speed)
-
-                # Probe
-                self._probe(speed)
-
-            except homing.EndstopError as e:
-                reason = str(e)
-                if "Timeout during endstop homing" in reason:
-                    reason += HINT_TIMEOUT
-                raise self.gcode.error(reason)
-
-            # Get Z value, accumulate value to calculate average and save it to calculate standard deviation
+            # Move Z to start reading position
+            self._move_position(x_start_position, y_start_position,
+                                z_start_position, speed)
+            # Probe
+            self._probe(speed)
+            # Get Z value, accumulate value to calculate average
+            # and save it to calculate standard deviation
             pos = toolhead.get_position()
             sum_reads += pos[2]
             probes.append(pos[2])
-
         # Move Z to start reading position
-        self._move_position(x_start_position, y_start_position, z_start_position, speed)
-
+        self._move_position(x_start_position, y_start_position,
+                            z_start_position, speed)
         # Calculate maximum, minimum and average values
         max_value = max(probes)
         min_value = min(probes)
         avg_value = sum(probes) / number_of_reads
-
         # calculate the standard deviation
         deviation_sum = 0
         for i in range(number_of_reads):
             deviation_sum += pow(probes[i] - avg_value, 2)
-
         sigma = (deviation_sum / number_of_reads) ** 0.5
-
         # Median
         sorted_probes = sorted(probes)
         middle = number_of_reads//2
@@ -132,32 +125,23 @@ class PrinterProbe:
         else:
             # even number of reads
             median = (sorted_probes[middle]+sorted_probes[middle-1])/2
-
         # Show information
         self.gcode.respond_info(
-            "probe accuracy results: maximum %.6f, minimum %.6f, average %.6f, median %.6f, standard deviation %.6f" % (
+            "probe accuracy results: maximum %.6f, minimum %.6f, "
+			"average %.6f, median %.6f, standard deviation %.6f" % (
                 max_value, min_value, avg_value, median, sigma))
-
     def _move_position(self, x, y, z, speed):
         toolhead = self.printer.lookup_object('toolhead')
-        # Move to start reading position
         pos = toolhead.get_position()
+        # set new position
         pos[0] = x
         pos[1] = y
         pos[2] = z
-        toolhead.move(pos, speed)
-
-    cmd_QUERY_PROBE_help = "Return the status of the z-probe"
-
-    def cmd_QUERY_PROBE(self, params):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        self.mcu_probe.query_endstop(print_time)
-        res = self.mcu_probe.query_endstop_wait()
-        self.gcode.respond_info(
-            "probe: %s" % (["open", "TRIGGERED"][not not res],))
-
-
+        # Move to position
+        try:
+            toolhead.move(pos, speed)
+        except Exception as e:
+            raise self.gcode.error(str(e))
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
     def __init__(self, config):
@@ -181,24 +165,20 @@ class ProbeEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
-
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
-
     def home_prepare(self):
         if self.activate_gcode is not None:
             gcode = self.printer.lookup_object('gcode')
             gcode.run_script_from_command(self.activate_gcode)
         self.mcu_endstop.home_prepare()
-
     def home_finalize(self):
         if self.deactivate_gcode is not None:
             gcode = self.printer.lookup_object('gcode')
             gcode.run_script_from_command(self.deactivate_gcode)
         self.mcu_endstop.home_finalize()
-
     def get_position_endstop(self):
         return self.position_endstop
 
@@ -232,10 +212,8 @@ class ProbePointsHelper:
         self.results = []
         self.busy = False
         self.gcode = self.toolhead = None
-
     def get_lift_speed(self):
         return self.lift_speed
-
     def _lift_z(self, z_pos, add=False, speed=None):
         # Lift toolhead
         curpos = self.toolhead.get_position()
@@ -250,7 +228,6 @@ class ProbePointsHelper:
         except homing.EndstopError as e:
             self._finalize(False)
             raise self.gcode.error(str(e))
-
     def _move_next(self):
         # Lift toolhead
         self._lift_z(self.horizontal_move_z)
@@ -271,7 +248,6 @@ class ProbePointsHelper:
             self._finalize(False)
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
-
     def _automatic_probe_point(self):
         positions = []
         for i in range(self.samples):
@@ -287,7 +263,6 @@ class ProbePointsHelper:
         avg_pos = [sum([pos[i] for pos in positions]) / self.samples
                    for i in range(3)]
         self.results.append(avg_pos)
-
     def start_probe(self, params):
         # Lookup objects
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -319,16 +294,13 @@ class ProbePointsHelper:
             while self.busy:
                 self._automatic_probe_point()
                 self._move_next()
-
     cmd_NEXT_help = "Move to the next XY position to probe"
-
     def cmd_NEXT(self, params):
         # Record current position for manual probe
         self.toolhead.get_last_move_time()
         self.results.append(self.toolhead.get_kinematics().calc_position())
         # Move to next position
         self._move_next()
-
     def _finalize(self, success):
         self.busy = False
         self.gcode.reset_last_position()
