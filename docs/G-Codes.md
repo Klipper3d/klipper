@@ -111,6 +111,9 @@ The following standard commands are supported:
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
   the printer's velocity limits. Note that one may only set values
   less than or equal to the limits specified in the config file.
+- `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
+  Sets the target temperature for a heater. If a target temperature is
+  not supplied, the target is 0.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
   Set pressure advance parameters. If EXTRUDER is not specified, it
