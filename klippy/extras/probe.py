@@ -1,9 +1,9 @@
 # Z-Probe support
 #
-# Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins, homing
+import pins, homing, manual_probe
 
 HINT_TIMEOUT = """
 Make sure to home the printer before probing. If the probe
@@ -15,6 +15,7 @@ the Z axis minimum position so the probe can travel further
 class PrinterProbe:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
+        self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat('speed', 5.0)
         self.x_offset = config.getfloat('x_offset', 0.)
@@ -31,12 +32,14 @@ class PrinterProbe:
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command(
-            'PROBE', self.cmd_PROBE, desc=self.cmd_PROBE_help)
-        self.gcode.register_command(
-            'QUERY_PROBE', self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help)
-        self.gcode.register_command(
-            'PROBE_ACCURACY', self.cmd_PROBE_ACCURACY, desc=self.cmd_PROBE_ACCURACY_help)
+        self.gcode.register_command('PROBE', self.cmd_PROBE,
+                                    desc=self.cmd_PROBE_help)
+        self.gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
+                                    desc=self.cmd_QUERY_PROBE_help)
+        self.gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
+                                    desc=self.cmd_PROBE_CALIBRATE_help)
+        self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
+                                    desc=self.cmd_PROBE_ACCURACY_help)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
@@ -48,15 +51,16 @@ class PrinterProbe:
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         self._probe(self.speed)
-    def _probe(self, speed):
+    def _probe(self, speed):							
         toolhead = self.printer.lookup_object('toolhead')
         homing_state = homing.Homing(self.printer)
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]
+        verify = self.printer.get_start_args().get('debugoutput') is None
         try:
             homing_state.homing_move(pos, endstops, speed,
-                                     probe_pos=True, verify_movement=True)
+                                     probe_pos=True, verify_movement=verify)
         except homing.EndstopError as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -142,6 +146,33 @@ class PrinterProbe:
             toolhead.move(pos, speed)
         except Exception as e:
             raise self.gcode.error(str(e))
+    def probe_calibrate_finalize(self, kin_pos):
+        if kin_pos is None:
+            return
+        z_pos = self.z_offset - kin_pos[2]
+        self.gcode.respond_info(
+            "%s: z_offset: %.3f\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer." % (self.name, z_pos))
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, 'z_offset', "%.3f" % (z_pos,))
+    cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
+    def cmd_PROBE_CALIBRATE(self, params):
+        # Perform initial probe
+        self.cmd_PROBE(params)
+        # Move away from the bed
+        toolhead = self.printer.lookup_object('toolhead')
+        curpos = toolhead.get_position()
+        curpos[2] += 5.
+        toolhead.move(curpos, self.speed)
+        # Move the nozzle over the probe point
+        curpos[0] += self.x_offset
+        curpos[1] += self.y_offset
+        toolhead.move(curpos, self.speed)
+        # Start manual probe
+        manual_probe.ManualProbeHelper(self.printer, params,
+                                       self.probe_calibrate_finalize)
+
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
     def __init__(self, config):
@@ -210,7 +241,7 @@ class ProbePointsHelper:
             'sample_retract_dist', 2., above=0.)
         # Internal probing state
         self.results = []
-        self.busy = False
+        self.busy = self.manual_probe = False
         self.gcode = self.toolhead = None
     def get_lift_speed(self):
         return self.lift_speed
@@ -248,6 +279,9 @@ class ProbePointsHelper:
             self._finalize(False)
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
+        if self.manual_probe:
+            manual_probe.ManualProbeHelper(self.printer, {},
+                                           self._manual_probe_finalize)
     def _automatic_probe_point(self):
         positions = []
         for i in range(self.samples):
@@ -270,13 +304,14 @@ class ProbePointsHelper:
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
         if probe is not None and method == 'automatic':
+            self.manual_probe = False
             self.lift_speed = min(self.speed, probe.speed)
             self.probe_offsets = probe.get_offsets()
             if self.horizontal_move_z < self.probe_offsets[2]:
                 raise self.gcode.error("horizontal_move_z can't be less than"
                                        " probe's z_offset")
         else:
-            probe = None
+            self.manual_probe = True
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
         # Start probe
@@ -284,27 +319,20 @@ class ProbePointsHelper:
         self.busy = True
         self._lift_z(self.horizontal_move_z, speed=self.speed)
         self._move_next()
-        if probe is None:
-            # Setup for manual probing
-            self.gcode.register_command('NEXT', None)
-            self.gcode.register_command('NEXT', self.cmd_NEXT,
-                                        desc=self.cmd_NEXT_help)
-        else:
+        if not self.manual_probe:
             # Perform automatic probing
             while self.busy:
                 self._automatic_probe_point()
                 self._move_next()
-    cmd_NEXT_help = "Move to the next XY position to probe"
-    def cmd_NEXT(self, params):
-        # Record current position for manual probe
-        self.toolhead.get_last_move_time()
-        self.results.append(self.toolhead.get_kinematics().calc_position())
-        # Move to next position
+    def _manual_probe_finalize(self, kin_pos):
+        if kin_pos is None:
+            self._finalize(False)
+            return
+        self.results.append(kin_pos)
         self._move_next()
     def _finalize(self, success):
         self.busy = False
         self.gcode.reset_last_position()
-        self.gcode.register_command('NEXT', None)
         if success:
             self.finalize_callback(self.probe_offsets, self.results)
 
