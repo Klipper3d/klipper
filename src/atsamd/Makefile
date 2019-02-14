@@ -52,7 +52,7 @@ $(OUT)samd.ld: $(ldfile-y) $(OUT)board-link
 target-y += $(OUT)klipper.bin $(OUT)klipper.elf.hex
 
 $(OUT)klipper.bin: $(OUT)klipper.elf
-	@echo "  Creating hex file $@"
+	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 $(OUT)klipper.elf.hex: $(OUT)klipper.elf
