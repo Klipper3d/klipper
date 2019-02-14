@@ -56,10 +56,10 @@ config CLOCK_FREQ
 choice
     depends on MACH_SAMD51
     prompt "Clock Reference"
+    config CLOCK_REF_INTERNAL
+        bool "Internal clock"
     config CLOCK_REF_X32K
         bool "32.768Khz crystal"
-    config CLOCK_REF_INTERNAL
-        bool "Factory calibration"
 endchoice
 
 choice
