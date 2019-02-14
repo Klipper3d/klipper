@@ -78,6 +78,7 @@ class PrinterProbe:
         res = self.mcu_probe.query_endstop_wait()
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
+    cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, params):
         toolhead = self.printer.lookup_object('toolhead')
         probes = []
