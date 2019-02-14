@@ -308,18 +308,21 @@ stepper result is `SET ticks 553`, the best dual stepper result is
 
 The following configuration sequence is used on the Duet Wifi:
 ```
-allocate_oids count=3
+allocate_oids count=4
 config_stepper oid=0 step_pin=PD6 dir_pin=PD11 min_stop_interval=0 invert_step=0
 config_stepper oid=1 step_pin=PD7 dir_pin=PD12 min_stop_interval=0 invert_step=0
 config_stepper oid=2 step_pin=PD8 dir_pin=PD13 min_stop_interval=0 invert_step=0
+config_stepper oid=3 step_pin=PD5 dir_pin=PA1 min_stop_interval=0 invert_step=0
 finalize_config crc=0
+
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
+The test was last run on commit `59a60d68` with gcc version
 `arm-none-eabi-gcc 7.3.1 20180622 (release)
 [ARM/embedded-7-branch revision 261907]`. The best single stepper
-result is `SET ticks 526`, the best dual stepper result is `SET ticks
-524`, and the best three stepper result is `SET ticks 552`.
+result is `SET ticks 519`, the best dual stepper result is `SET ticks
+520`, and the best three stepper result is `SET ticks 525`, and the
+best four stepper result is `SET ticks 703`.
 
 ### Beaglebone PRU step rate benchmark ###
 
@@ -417,7 +420,7 @@ communication mechanism. The test is run using the console.py tool
 (described above). The following is cut-and-paste into the console.py
 terminal window:
 ```
-DELAY {clock+freq} get_uptime
+DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 end_group
 get_uptime
 ```
@@ -425,6 +428,10 @@ get_uptime
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
+
+Note that this test may saturate the USB/CPU capacity of a Raspberry
+Pi. The benchmarks below are with console.py running on a desktop
+class machine.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |

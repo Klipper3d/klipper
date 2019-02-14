@@ -1,5 +1,5 @@
-#ifndef __SAM3X8E_GPIO_H
-#define __SAM3X8E_GPIO_H
+#ifndef __ATSAMD_GPIO_H
+#define __ATSAMD_GPIO_H
 
 #include <stdint.h>
 

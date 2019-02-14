@@ -259,7 +259,7 @@ def decode_tmc2208_read(reg, data):
 class TMC2208:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[1]
+        self.name = config.get_name().split()[-1]
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         # pin setup

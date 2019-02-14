@@ -76,4 +76,4 @@ CONFIG ../../config/generic-replicape.cfg
 DICTIONARY atmega2560-16mhz.dict zboard=atmega2560-16mhz.dict auxboard=atmega2560-16mhz.dict
 CONFIG ../../config/example-multi-mcu.cfg
 DICTIONARY atmega2560-16mhz.dict z=atmega2560-16mhz.dict
-CONFIG ../../config/kit-voron2-2018.cfg
+CONFIG ../../config/kit-voron2-250mm.cfg

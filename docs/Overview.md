@@ -14,6 +14,9 @@ as a reference for the config file. See the [Slicers](Slicers.md)
 document for information on configuring a slicer with Klipper. See the
 [Endstop Phase](Endstop_Phase.md) document for information on
 Klipper's "stepper phase adjusted endstop" system. See the
+[Bed Level](Bed_Level.md) document for information on bed leveling
+with Klipper. See the [Probe Calibrate](Probe_Calibrate.md) document
+for information on calibrating automatic Z probes. See the
 [Delta Calibrate](Delta_Calibrate.md) document for information on
 calibrating delta printers. The
 [Pressure Advance](Pressure_Advance.md) document contains information

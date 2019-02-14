@@ -94,8 +94,8 @@ Klipper supports many standard 3d printer features:
 
 * Support for run-time configuration of TMC2130, TMC2208, TMC2224, and
   TMC2660 stepper motor drivers. There is also support for current
-  control of traditional stepper drivers via AD5206 and MCP4451
-  digipots.
+  control of traditional stepper drivers via AD5206, MCP4451, MCP4728,
+  and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available.
@@ -136,10 +136,10 @@ represent total number of steps per second on the micro-controller.
 | Arduino Due (SAM3X8E)       | 438K              | 438K              |
 | Smoothieboard (LPC1768)     | 574K              | 574K              |
 | SAM4S8C                     | 578K              | 578K              |
-| Duet2 Wifi/Eth (SAM4E8E)    | 652K              | 652K              |
 | Smoothieboard (LPC1769)     | 661K              | 661K              |
 | Beaglebone PRU              | 680K              | 680K              |
-| Adafruit Metro M4 (SAMD51)  | 733K              | 733K              |
+| Duet2 Wifi/Eth (SAM4E8E)    | 686K              | 686K              |
+| Adafruit Metro M4 (SAMD51)  | 733K              | 694K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the SAMD21 and STM32F103 the highest step rate is

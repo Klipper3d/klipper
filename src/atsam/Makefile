@@ -29,7 +29,7 @@ eflags-$(CONFIG_MACH_SAM4E) += -T lib/sam4e/gcc/gcc/sam4e8e_flash.ld
 CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c
+src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c atsam/hard_pwm.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
 src-y += generic/armcm_irq.c generic/armcm_timer.c
 usbserial-$(CONFIG_MACH_SAM3X) := atsam/sam3_usb.c
