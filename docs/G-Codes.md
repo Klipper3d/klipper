@@ -261,6 +261,16 @@ section is enabled:
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
 
+## Bed Screws Helper
+
+The following commands are available when the "bed_screws" config
+section is enabled:
+- `BED_SCREWS_ADJUST`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) and allow one to make adjustments to
+  the bed screws so that the bed is a constant distance from the
+  nozzle.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
