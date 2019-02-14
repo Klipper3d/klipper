@@ -21,7 +21,7 @@ class HeaterCheck:
         self.heater = None
         self.hysteresis = config.getfloat('hysteresis', 5., minval=0.)
         self.max_error = config.getfloat('max_error', 120., minval=0.)
-        self.heating_gain = config.getfloat('heating_gain', 2., above=0.)
+        self.heating_gain = config.getfloat('heating_gain', 2., notzero=True)
         default_gain_time = 20.
         if self.heater_name == 'heater_bed':
             default_gain_time = 60.
@@ -46,7 +46,9 @@ class HeaterCheck:
             reactor.update_timer(self.check_timer, reactor.NEVER)
     def check_event(self, eventtime):
         temp, target = self.heater.get_temp(eventtime)
-        if temp >= target - self.hysteresis:
+        adjusted_target = target - self.hysteresis if self.heating_gain > 0 else target + self.hysteresis
+        if (self.heating_gain > 0 and temp >= adjusted_target) \
+                or (self.heating_gain < 0 and temp <= adjusted_target):
             # Temperature near target - reset checks
             if not self.met_target and target:
                 logging.info("Heater %s within range of %.3f",
@@ -54,7 +56,7 @@ class HeaterCheck:
             self.met_target = True
             self.error = 0.
         elif self.met_target:
-            self.error += (target - self.hysteresis) - temp
+            self.error += adjusted_target - temp if self.heating_gain > 0 else temp - adjusted_target
             if target != self.last_target:
                 # Target changed - reset checks
                 logging.info("Heater %s approaching new target of %.3f",
@@ -65,7 +67,7 @@ class HeaterCheck:
             elif self.error >= self.max_error:
                 # Failure due to inability to maintain target temperature
                 return self.heater_fault()
-        elif temp >= self.goal_temp:
+        elif temp >= self.goal_temp if self.heating_gain > 0 else temp < self.goal_temp:
             # Temperature approaching target - reset checks
             self.goal_temp = temp + self.heating_gain
             self.fault_systime = eventtime + self.check_gain_time

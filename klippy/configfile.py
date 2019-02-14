@@ -22,7 +22,7 @@ class ConfigWrapper:
     def get_name(self):
         return self.section
     def _get_wrapper(self, parser, option, default,
-                     minval=None, maxval=None, above=None, below=None):
+                     minval=None, maxval=None, above=None, below=None, notzero=False):
         if (default is not sentinel
             and not self.fileconfig.has_option(self.section, option)):
             return default
@@ -48,6 +48,9 @@ class ConfigWrapper:
         if below is not None and v >= below:
             raise self.error("Option '%s' in section '%s' must be below %s" % (
                 option, self.section, below))
+        if notzero is not False and v == 0.:
+            raise self.error("Option '%s' in section '%s' must not be 0" % (
+                option, self.section))
         return v
     def get(self, option, default=sentinel):
         return self._get_wrapper(self.fileconfig.get, option, default)
@@ -55,9 +58,9 @@ class ConfigWrapper:
         return self._get_wrapper(
             self.fileconfig.getint, option, default, minval, maxval)
     def getfloat(self, option, default=sentinel,
-                 minval=None, maxval=None, above=None, below=None):
+                 minval=None, maxval=None, above=None, below=None, notzero=False):
         return self._get_wrapper(self.fileconfig.getfloat, option, default,
-                                 minval, maxval, above, below)
+                                 minval, maxval, above, below, notzero)
     def getboolean(self, option, default=sentinel):
         return self._get_wrapper(self.fileconfig.getboolean, option, default)
     def getchoice(self, option, choices, default=sentinel):

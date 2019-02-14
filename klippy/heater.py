@@ -29,6 +29,7 @@ class Heater:
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.target_temp = config.getfloat('target_temp', 0, above=self.min_temp, below=self.max_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
@@ -41,7 +42,7 @@ class Heater:
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
-        self.last_temp = self.smoothed_temp = self.target_temp = 0.
+        self.last_temp = self.smoothed_temp = 0.
         self.last_temp_time = 0.
         # pwm caching
         self.next_pwm_time = 0.
