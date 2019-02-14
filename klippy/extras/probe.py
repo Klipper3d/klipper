@@ -132,8 +132,8 @@ class PrinterProbe:
         # Show information
         self.gcode.respond_info(
             "probe accuracy results: maximum %.6f, minimum %.6f, "
-			"average %.6f, median %.6f, standard deviation %.6f" % (
-                max_value, min_value, avg_value, median, sigma))
+            "average %.6f, median %.6f, standard deviation %.6f" % (
+            max_value, min_value, avg_value, median, sigma))
     def _move_position(self, x, y, z, speed):
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
