@@ -52,7 +52,6 @@ install_script()
 install_config()
 {
     DEFAULTS_FILE=/etc/default/klipper
-    [ -f $DEFAULTS_FILE ] && return
 
     report_status "Installing system start configuration..."
     sudo /bin/sh -c "cat > $DEFAULTS_FILE" <<EOF
