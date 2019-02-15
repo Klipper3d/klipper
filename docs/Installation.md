@@ -41,34 +41,53 @@ minutes to complete.
 Building and flashing the micro-controller
 ==========================================
 
+First, make sure that OctoPrint is not connected directly to the printer
+Fom the OctoPrint web page, under the "Connection" section, click "Disconnect"
+
 To compile the micro-controller code, start by running these commands
-on the Raspberry Pi:
+on the Raspberry Pi via a command line SSH session:
 
 ```
 cd ~/klipper/
 make menuconfig
 ```
 
-Select the appropriate micro-controller and review any other options
-provided. Once configured, run:
+Manually select the appropriate Micro-controller, Processor Speed (mhz), and Baurdrate. 
+Review any other options provided. After choosing the correct settings for your printer board, you will exit the configuration
+window by choosing 'Exit'. Then select 'Yes' to save your new configuration.  
+
+Once configured, run:
 
 ```
 make
 ```
 
-Finally, for common micro-controllers, the code can be flashed with:
+Ensure that the Klipper service is not currently by entering
 
 ```
 sudo service klipper stop
-make flash FLASH_DEVICE=/dev/ttyACM0
-sudo service klipper start
+``` 
+
+Identify the communications port that will be used to upload the file to your microncontroller
+using the following command. The most common communication device ports are **/dev/ttyUSB0** or **/dev/ttyACM0**
+
+Please see the [FAQ](FAQ.md#wheres-my-serial-port) for other possibilities.
+
+```
+ls -l /dev/serial/by-id/
 ```
 
-When flashing for the first time, make sure that OctoPrint is not
-connected directly to the printer (from the OctoPrint web page, under
-the "Connection" section, click "Disconnect"). The most common
-communication device is **/dev/ttyACM0** - see the
-[FAQ](FAQ.md#wheres-my-serial-port) for other possibilities.
+Use the port info gathered to flash the klipper firmware to your device using the following command.
+
+```
+make flash FLASH_DEVICE=/dev/ttyACM0
+```
+
+Once the firmware is flashed successfully. you will then restart the Klipper service.
+
+```
+sudo service klipper start
+```
 
 Configuring OctoPrint to use Klipper
 ====================================
