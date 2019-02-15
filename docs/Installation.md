@@ -62,7 +62,7 @@ Once configured, run:
 make
 ```
 
-Ensure that the Klipper service is not currently by entering
+Ensure that the Klipper service is not currently by entering:
 
 ```
 sudo service klipper stop
@@ -71,19 +71,19 @@ sudo service klipper stop
 Identify the communications port that will be used to upload the file to your microncontroller
 using the following command. The most common communication device ports are **/dev/ttyUSB0** or **/dev/ttyACM0**
 
-Please see the [FAQ](FAQ.md#wheres-my-serial-port) for other possibilities.
+Please see the [FAQ](FAQ.md#wheres-my-serial-port) for other possibilities:
 
 ```
 ls -l /dev/serial/by-id/
 ```
 
-Use the port info gathered to flash the klipper firmware to your device using the following command.
+Use the port info gathered to flash the klipper firmware to your device using the following command:
 
 ```
 make flash FLASH_DEVICE=/dev/ttyACM0
 ```
 
-Once the firmware is flashed successfully. you will then restart the Klipper service.
+Once the firmware is flashed successfully. you will then restart the Klipper service:
 
 ```
 sudo service klipper start
