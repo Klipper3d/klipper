@@ -10,7 +10,8 @@
 void
 watchdog_reset(void)
 {
-    WDT->CLEAR.reg = 0xa5;
+    if (!(WDT->SYNCBUSY.reg & WDT_SYNCBUSY_CLEAR))
+        WDT->CLEAR.reg = 0xa5;
 }
 DECL_TASK(watchdog_reset);
 
