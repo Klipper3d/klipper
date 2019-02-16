@@ -23,7 +23,7 @@ static inline void
 gen_clock(uint32_t clkgen_id, uint32_t flags)
 {
     GCLK->GENCTRL[clkgen_id].reg = flags | GCLK_GENCTRL_GENEN;
-    while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(clkgen_id))
+    while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(1 << clkgen_id))
         ;
 }
 
