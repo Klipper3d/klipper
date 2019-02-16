@@ -1,8 +1,7 @@
 These instructions assume the software will run on a Raspberry Pi
 computer in conjunction with OctoPrint. It is recommended that a
 Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host machine
-(see the
-[FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
+(see the [FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
 for other machines).
 
 Klipper currently supports Atmel ATmega based micro-controllers,
@@ -41,22 +40,23 @@ minutes to complete.
 Building and flashing the micro-controller
 ==========================================
 
-First, make sure that OctoPrint is not connected directly to the printer
+Via Octoprint, make sure that there is no active serial connection to the printer.
 Fom the OctoPrint web page, under the "Connection" section, click "Disconnect"
 
 To compile the micro-controller code, start by running these commands
-on the Raspberry Pi via a command line SSH session:
+on the Raspberry Pi via an SSH command line session:
 
 ```
 cd ~/klipper/
 make menuconfig
 ```
 
-Manually select the appropriate Micro-controller, Processor Speed (mhz), and Baurdrate. 
-Review any other options provided. After choosing the correct settings for your printer board, you will exit the configuration
-window by choosing 'Exit'. Then select 'Yes' to save your new configuration.  
+Manually select the appropriate micro-controller, processor speed (mhz), and baurdrate. 
+Review any other options provided. After choosing the correct settings for your printers
+micro-controller, you will exit the configuration window by choosing 'Exit'. Then select
+'Yes' to save your new configuration.  
 
-Once configured, run:
+Compile the Klipper firmware by entering:
 
 ```
 make
@@ -69,18 +69,19 @@ sudo service klipper stop
 ``` 
 
 Identify the communications port that will be used to upload the file to your microncontroller
-using the following command. The most common communication device ports are **/dev/ttyUSB0** or **/dev/ttyACM0**
-
-Please see the [FAQ](FAQ.md#wheres-my-serial-port) for other possibilities:
+using the following command. 
 
 ```
 ls -l /dev/serial/by-id/
 ```
 
-Use the port info gathered to flash the klipper firmware to your device using the following command:
+The most common communication device ports are **/dev/ttyUSB0** or **/dev/ttyACM0**
+Please see the [FAQ](FAQ.md#wheres-my-serial-port) if you are unable to identify the specific port exists.
+
+Next, use the serial port info gathered to flash the klipper firmware to your device using the following command:
 
 ```
-make flash FLASH_DEVICE=/dev/ttyACM0
+make flash FLASH_DEVICE=/dev/ttyACM0 or, make flash FLASH_DEVICE=/dev/ttyUSB0
 ```
 
 Once the firmware is flashed successfully. you will then restart the Klipper service:
