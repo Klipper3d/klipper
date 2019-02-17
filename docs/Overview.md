@@ -12,15 +12,12 @@ The Klipper configuration is stored in a simple text file on the host
 machine. The [config/example.cfg](../config/example.cfg) file serves
 as a reference for the config file. See the [Slicers](Slicers.md)
 document for information on configuring a slicer with Klipper. See the
-[Endstop Phase](Endstop_Phase.md) document for information on
-Klipper's "stepper phase adjusted endstop" system. See the
-[Bed Level](Bed_Level.md) document for information on bed leveling
-with Klipper. See the [Probe Calibrate](Probe_Calibrate.md) document
-for information on calibrating automatic Z probes. See the
-[Delta Calibrate](Delta_Calibrate.md) document for information on
-calibrating delta printers. The
-[Pressure Advance](Pressure_Advance.md) document contains information
-on tuning the pressure advance config.
+[Bed Level](Bed_Level.md), [Endstop Phase](Endstop_Phase.md),
+[Probe Calibrate](Probe_Calibrate.md),
+[Delta Calibrate](Delta_Calibrate.md), and
+[Manual Level](Manual_Level.md) documents for information on bed
+leveling with Klipper. The [Pressure Advance](Pressure_Advance.md)
+document contains information on tuning the pressure advance config.
 
 The [kinematics](Kinematics.md) document provides some technical
 details on how Klipper implements motion. The [FAQ](FAQ.md) answers
