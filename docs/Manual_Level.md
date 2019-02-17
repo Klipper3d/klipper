@@ -77,9 +77,10 @@ This tool will move the printer's nozzle to each screw XY location and
 then move the nozzle to a Z=0 height. At this point one can use the
 "paper test" to adjust the bed screw directly under the nozzle. See
 the information described in
-["the paper test"](Bed_Level.md#the-paper-test), but one should not
-use the TESTZ command - instead adjust the bed screw until there is a
-small amount of friction when pushing the paper back and forth.
+["the paper test"](Bed_Level.md#the-paper-test), but adjust the bed
+screw instead of commanding the nozzle to different heights. Adjust
+the bed screw until there is a small amount of friction when pushing
+the paper back and forth.
 
 Once the screw is adjusted so that a small amount of friction is felt,
 run either the `ACCEPT` or `ADJUSTED` command. Use the `ADJUSTED`
