@@ -1,0 +1,164 @@
+# This file contains common pin mappings for Einsy Rambo boards. To use
+# this config, the firmware should be compiled for the AVR atmega2560.
+# See the example.cfg file for a description of available parameters.
+# Board - Einsy Rambo Atmega2560
+# Printrbot Play V2 170x200 or if you wish to use this on a Simple Pro 150x200 change swap the x and y axis values.
+
+[stepper_x]
+step_pin: PC0
+dir_pin: !PL0
+enable_pin: !PA7
+step_distance: 0.0125
+endstop_pin: tmc2130_stepper_x:virtual_endstop
+position_endstop: 0
+position_max: 171
+homing_speed: 50.0
+homing_retract_dist: 0
+homing_positive_dir: false
+
+[tmc2130 stepper_x]
+cs_pin: PG0
+microsteps: 16
+run_current: .9
+sense_resistor: 0.22
+diag1_pin: !PK2
+driver_SGT: 4
+interpolate: true
+
+[stepper_y]
+step_pin: PC1
+dir_pin: !PL1
+enable_pin: !PA6
+step_distance: 0.0125
+endstop_pin: tmc2130_stepper_y:virtual_endstop
+position_endstop: 200
+position_max: 200
+position_min: 0
+homing_speed: 50.0
+homing_retract_dist: 0
+homing_positive_dir: true
+
+[tmc2130 stepper_y]
+cs_pin: PG2
+microsteps: 16
+run_current: .9
+hold_current: .5
+sense_resistor: 0.22
+diag1_pin: !PK7
+driver_SGT: 5
+
+[stepper_z]
+step_pin: PC2
+dir_pin: !PL2
+enable_pin: !PA5
+step_distance: .0025
+endstop_pin: probe:z_virtual_endstop
+position_min: -4
+position_max: 190
+homing_positive_dir: false
+homing_speed: 12
+
+[homing_override]
+set_position_z: 0
+axes: z
+gcode:
+    G90 ; Uncomment these 2 lines to blindly lift the Z 4mm at start
+    G1 Z4 F600
+    G28 X0 Y0
+    G1 X100 Y100 F3600
+    G28 Z0
+
+[probe]
+x_offset: 20
+z_offset: 0
+pin: ^PB4
+speed: 12
+
+[bed_mesh]
+#horizontal_move_z: 1
+samples: 3
+sample_retract_dist: 4
+min_point: 0,20
+max_point: 130,175
+probe_count: 3,5
+bicubic_tension: .2
+mesh_pps: 2
+algorithm: bicubic
+
+[gcode_macro G29]
+gcode:
+ BED_MESH_CALIBRATE
+
+[tmc2130 stepper_z]
+cs_pin: PK5
+microsteps: 16
+run_current: .9
+sense_resistor: 0.22
+diag1_pin: !PK6
+interpolate: true
+
+[extruder]
+step_pin: PC3
+dir_pin: PL6
+enable_pin: !PA4
+step_distance: 0.007874
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+max_extrude_cross_section: 20
+pressure_advance: 0.025
+pressure_advance_lookahead_time: 0.010
+#max_extrude_only_distance: 50.0
+#max_extrude_only_velocity:
+#max_extrude_only_accel:
+heater_pin: PE5
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PF0
+control = pid
+pid_kp = 29.852
+pid_ki = 2.843
+pid_kd = 78.361
+min_extrude_temp: 165
+min_temp: 0
+max_temp: 275
+
+[idle_timeout]
+gcode: M84
+timeout: 600
+
+[tmc2130 extruder]
+cs_pin: PK4
+microsteps: 16
+run_current: .9
+sense_resistor: 0.22
+diag1_pin: !PK3
+interpolate: true
+
+[heater_bed]
+heater_pin: PG5
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PF2
+control: watermark
+min_temp: 0
+max_temp: 110
+
+[heater_fan my_nozzle_fan]
+pin: PH3
+heater: extruder
+heater_temp: 45
+fan_speed: 1
+
+[fan]
+pin: PH5
+#pin:PH6 use this if you want to use PWM signal from EXP1 
+
+[mcu]
+serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_75535313630351C04232-if00
+
+[printer]
+kinematics: cartesian
+max_velocity: 400
+max_accel: 3000
+max_accel_to_decel:2000
+max_z_velocity: 10
+max_z_accel: 300
+square_corner_velocity: 5.0
