@@ -58,7 +58,7 @@ class ManualProbeHelper:
         try:
             self.gcode.register_command('ACCEPT', self.cmd_ACCEPT,
                                         desc=self.cmd_ACCEPT_help)
-        except self.gcode.error as e:
+        except self.printer.config_error as e:
             self.gcode.respond_error(
                 "Already in a manual Z probe. Use ABORT to abort it.")
             self.finalize_callback(None)

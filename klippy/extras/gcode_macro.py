@@ -13,11 +13,7 @@ class GCodeMacro:
         self.script = config.get('gcode')
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
-        try:
-            self.gcode.register_command(
-                self.alias, self.cmd, desc=self.cmd_desc)
-        except self.gcode.error as e:
-            raise config.error(str(e))
+        self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
         self.in_script = False
         self.kwparams = { o[len(DEFAULT_PREFIX):].upper(): config.get(o)
                           for o in config.get_prefix_options(DEFAULT_PREFIX) }

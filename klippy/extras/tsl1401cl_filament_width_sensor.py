@@ -24,7 +24,7 @@ class FilamentWidthSensor:
         self.filament_array = []
         self.lastFilamentWidthReading = 0
         # printer objects
-        self.gcode = self.toolhead = self.ppins = self.mcu_adc = None
+        self.toolhead = self.ppins = self.mcu_adc = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # Start adc
         self.ppins = self.printer.lookup_object('pins')
@@ -34,16 +34,17 @@ class FilamentWidthSensor:
         # extrude factor updating
         self.extrude_factor_update_timer = self.reactor.register_timer(
             self.extrude_factor_update_event)
-
-    # Initialization
-    def handle_ready(self):
-        # Load printer objects
+        # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.toolhead = self.printer.lookup_object('toolhead')
         self.gcode.register_command('QUERY_FILAMENT_WIDTH', self.cmd_M407)
         self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR', self.cmd_ClearFilamentArray)
         self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M406)
         self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M405)
+
+    # Initialization
+    def handle_ready(self):
+        # Load printer objects
+        self.toolhead = self.printer.lookup_object('toolhead')
 
         # Start extrude factor update timer
         self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)

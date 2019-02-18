@@ -67,7 +67,8 @@ class GCodeParser:
                 del self.base_gcode_handlers[cmd]
             return
         if cmd in self.ready_gcode_handlers:
-            raise error("gcode command %s already registered" % (cmd,))
+            raise self.printer.config_error(
+                "gcode command %s already registered" % (cmd,))
         if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
             origfunc = func
             func = lambda params: origfunc(self.get_extended_params(params))
@@ -83,11 +84,13 @@ class GCodeParser:
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev
         if prev_key != key:
-            raise error("mux command %s %s %s may have only one key (%s)" % (
-                cmd, key, value, prev_key))
+            raise self.printer.config_error(
+                "mux command %s %s %s may have only one key (%s)" % (
+                    cmd, key, value, prev_key))
         if value in prev_values:
-            raise error("mux command %s %s %s already registered (%s)" % (
-                cmd, key, value, prev_values))
+            raise self.printer.config_error(
+                "mux command %s %s %s already registered (%s)" % (
+                    cmd, key, value, prev_values))
         prev_values[value] = func
     def set_move_transform(self, transform):
         if self.move_transform is not None:
@@ -328,16 +331,16 @@ class GCodeParser:
             raise error("Error on '%s': unable to parse %s" % (
                 params['#original'], params[name]))
         if minval is not None and value < minval:
-            raise self.error("Error on '%s': %s must have minimum of %s" % (
+            raise error("Error on '%s': %s must have minimum of %s" % (
                 params['#original'], name, minval))
         if maxval is not None and value > maxval:
-            raise self.error("Error on '%s': %s must have maximum of %s" % (
+            raise error("Error on '%s': %s must have maximum of %s" % (
                 params['#original'], name, maxval))
         if above is not None and value <= above:
-            raise self.error("Error on '%s': %s must be above %s" % (
+            raise error("Error on '%s': %s must be above %s" % (
                 params['#original'], name, above))
         if below is not None and value >= below:
-            raise self.error("Error on '%s': %s must be below %s" % (
+            raise error("Error on '%s': %s must be below %s" % (
                 params['#original'], name, below))
         return value
     def get_int(self, name, params, default=sentinel, minval=None, maxval=None):
