@@ -21,6 +21,7 @@ Frequently asked questions
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
 19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
 20. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
 
 ### How can I donate to the project?
 
@@ -452,3 +453,21 @@ needed for a software change to take effect.
 When upgrading the software, be sure to check the
 [config changes](Config_Changes.md) document for information on
 software changes that may require updates to your printer.cfg file.
+
+### Can I find out whether the printer has lost steps?
+
+In a way, yes. Home the printer, issue a `GET_POSITION` command, run
+your print, home again and issue another `GET_POSITION`. Then compare
+the values in the `mcu:` line.
+
+This might be helpful to tune settings like stepper motor currents,
+accelerations and speeds without needing to actually print something
+and waste filament: just run some high-speed moves in between the
+`GET_POSITION` commands.
+
+Note that endstop switches themselves tend to trigger at slightly
+different positions, so a difference of a couple of microsteps is
+likely the result of endstop inaccuracies. A stepper motor itself can
+only lose steps in increments of 4 full steps. (So, if one is using 16
+microsteps, then a lost step on the stepper would result in the "mcu:"
+step counter being off by a multiple of 64 microsteps.)
