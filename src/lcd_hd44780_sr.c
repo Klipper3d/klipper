@@ -28,10 +28,10 @@ hd44780_sr_xmit_bits(uint8_t toggle, struct gpio_out sclk_pin, struct gpio_out d
                   , struct gpio_out strobe_pin)
 {
     for (int8_t i = 7; i >= 0; i--) {
-        gpio_out_write(sclk, 0)
+        gpio_out_write(sclk_pin, 0);
         uint8_t data = (toggle >> i) & 0x01 ? 1 : 0;
 
-        gpio_out_write(data_pin, data)
+        gpio_out_write(data_pin, data);
 
         gpio_out_write(sclk_pin, 1);
 

@@ -15,8 +15,14 @@ class HD44780:
         self.printer = config.get_printer()
         # pin config
         ppins = self.printer.lookup_object('pins')
-        pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+
+        if config.get('sclk_pin'):
+            pins = [ppins.lookup_pin(config.get(name + '_pin'))
+                    for name in ['sclk', 'data', 'strobe']]
+        else:
+            pins = [ppins.lookup_pin(config.get(name + '_pin'))
+                    for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -25,7 +31,12 @@ class HD44780:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
-        self.mcu.register_config_callback(self.build_config)
+
+        if config.get('sclk_pin'):
+            self.mcu.register_config_callback(self.build_config_sr)
+        else:
+            self.mcu.register_config_callback(self.build_config)
+
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
         self.text_framebuffers = [bytearray(' '*40), bytearray(' '*40)]
@@ -48,6 +59,18 @@ class HD44780:
             "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
         self.send_data_cmd = self.mcu.lookup_command(
             "hd44780_send_data oid=%c data=%*s", cq=cmd_queue)
+    def build_config_sr(self):
+        self.mcu.add_config_cmd(
+            "config_hd44780_sr oid=%d sclk_pin=%s data_pin=%s"
+            " strobe_pin=%s delay_ticks=%d" % (
+                self.oid, self.pins[0], self.pins[1],
+                self.pins[2], self.mcu.seconds_to_clock(HD44780_DELAY)))
+        cmd_queue = self.mcu.alloc_command_queue()
+        self.send_cmds_cmd = self.mcu.lookup_command(
+            "hd44780_sr_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
+        self.send_data_cmd = self.mcu.lookup_command(
+            "hd44780_sr_send_data oid=%c data=%*s", cq=cmd_queue)
+
     def send(self, cmds, is_data=False):
         cmd_type = self.send_cmds_cmd
         if is_data:
