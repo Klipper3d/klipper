@@ -27,6 +27,7 @@ src-$(CONFIG_SERIAL) += atsamd/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += atsamd/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += atsamd/spi.c
+src-$(CONFIG_HAVE_SERCOM) += atsamd/sercom.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += atsamd/hard_pwm.c
 src-$(CONFIG_MACH_SAMD21) += atsamd/watchdog.c
 src-$(CONFIG_MACH_SAMD21) += atsamd/clock.c atsamd/timer.c generic/timer_irq.c

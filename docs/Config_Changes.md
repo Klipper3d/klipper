@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20190228: Users of SPI or I2C on SAMD21 boards must now specify the
+bus pins via a [samd_sercom] config section.
+
 20190224: The bed_shape option has been removed from bed_mesh.  The
 radius option has been renamed to bed_radius.  Users with round beds
 should supply the bed_radius and round_probe_count options.
