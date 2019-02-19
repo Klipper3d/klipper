@@ -194,6 +194,9 @@ sercom_spi_pins(uint32_t sercom_id)
     const struct sercom_pad *clk_sp = sercom_lookup_pad(sercom_id, clk_pin);
 
     uint8_t dopo = sercom_lookup_spi_dopo(tx_sp->pad, clk_sp->pad);
+    if (rx_sp->pad == tx_sp->pad || rx_sp->pad == clk_sp->pad)
+            shutdown("Not a valid sercom pin");
+
     gpio_peripheral(tx_pin, tx_sp->ptype, 0);
     gpio_peripheral(rx_pin, rx_sp->ptype, 0);
     gpio_peripheral(clk_pin, clk_sp->ptype, 0);
