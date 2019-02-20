@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 import bus
+import collections
 
 TMC_FREQUENCY=13200000.
 GCONF_EN_PWM_MODE=1<<2
@@ -145,6 +146,8 @@ class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
@@ -173,19 +176,30 @@ class TMC2130:
         pwm_grad = config.getint('driver_PWM_GRAD', 4, minval=0, maxval=255)
         pwm_ampl = config.getint('driver_PWM_AMPL', 128, minval=0, maxval=255)
         vsense, irun, ihold = get_config_current(config)
-        # Configure registers
-        self.reg_GCONF = en_pwm << 2
-        self.set_register("GCONF", self.reg_GCONF)
-        self.set_register("CHOPCONF", (
+        self.init_event = config.get('init_event', None)
+        # build registers
+        self.regs = collections.OrderedDict()
+        self.regs['GCONF'] = en_pwm << 2
+        self.regs['CHOPCONF'] = (
             toff | (hstrt << 4) | (hend << 7) | (blank_time_select << 15)
-            | (vsense << 17) | (self.mres << 24) | (interpolate << 28)))
-        self.set_register("IHOLD_IRUN",
-                          ihold | (irun << 8) | (iholddelay << 16))
-        self.set_register("TPOWERDOWN", tpowerdown)
-        self.set_register("TPWMTHRS", sc_threshold)
-        self.set_register("COOLCONF", sgt << 16)
-        self.set_register("PWMCONF", (
-            pwm_ampl | (pwm_grad << 8) | (pwm_freq << 16) | (pwm_scale << 18)))
+            | (vsense << 17) | (self.mres << 24) | (interpolate << 28))
+        self.regs['IHOLD_IRUN'] = ihold | (irun << 8) | (iholddelay << 16)
+        self.regs['TPOWERDOWN'] = tpowerdown
+        self.regs['TPWMTHRS'] = sc_threshold
+        self.regs['COOLCONF'] = sgt << 16
+        self.regs['PWMCONF'] = (pwm_ampl | (pwm_grad << 8) | (pwm_freq << 16) | (pwm_scale << 18))
+    def _init_registers(self):
+        logging.info("TMC2130 %s initialization", self.name)
+        for reg_name, val in self.regs.items():
+            self.set_register(reg_name, val)
+    def handle_connect(self):
+        if self.init_event is not None:
+            self.printer.register_event_handler(self.init_event, self.handle_init_event)
+        else:
+            self._init_registers()
+    def handle_init_event(self, value):
+        if value > 0.:
+            self._init_registers()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
@@ -238,14 +252,14 @@ class TMC2130VirtualEndstop:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        gconf = self.tmc2130.reg_GCONF
+        gconf = self.tmc2130.regs['GCONF']
         gconf &= ~GCONF_EN_PWM_MODE
         gconf |= GCONF_DIAG1_STALL
         self.tmc2130.set_register("GCONF", gconf)
         self.tmc2130.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        self.tmc2130.set_register("GCONF", self.tmc2130.reg_GCONF)
+        self.tmc2130.set_register("GCONF", self.tmc2130.regs['GCONF'])
         self.tmc2130.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
 

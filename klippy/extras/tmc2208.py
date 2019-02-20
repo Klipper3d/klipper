@@ -316,6 +316,8 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
+
+        self.init_event = config.get('init_event', None)
     def build_config(self):
         bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
         self.mcu.add_config_cmd(
@@ -325,8 +327,17 @@ class TMC2208:
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
     def handle_connect(self):
-        for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val)
+        if self.init_event is not None:
+            self.printer.register_event_handler(self.init_event, self.handle_init_event)
+        else:
+            self._init_registers()
+    def _init_registers(self):
+      logging.info("TMC2208 %s initialization", self.name)
+      for reg_name, val in self.regs.items():
+        self.set_register(reg_name, val)
+    def handle_init_event(self, value):
+        if value > 0.:
+            self._init_registers()
     def get_register(self, reg_name):
         reg = Registers[reg_name]
         msg = encode_tmc2208_read(0xf5, 0x00, reg)
