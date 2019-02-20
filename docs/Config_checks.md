@@ -152,16 +152,13 @@ command is: `PID_CALIBRATE HEATER=heater_bed TARGET=60`
 ### Next steps
 
 This guide is intended to help with basic verification of pin settings
-in the Klipper configuration file. It may be necessary to perform
-detailed printer calibration - a number of guides are available online
-to help with this (for example, do a web search for "3d printer
-calibration").
-
-See the [Slicers](Slicers.md) document for information on configuring
-a slicer with Klipper. If one is using traditional endstop switches
-with Trinamic stepper motor drivers then see the
-[Endstop Phase](Endstop_Phase.md) document. If using a delta printer,
-see the [Delta Calibrate](Delta_Calibrate.md) document.
+in the Klipper configuration file. Be sure to read the
+[bed leveling](Bed_Level.md) guide. Also see the [Slicers](Slicers.md)
+document for information on configuring a slicer with Klipper.
 
 After one has verified that basic printing works, it is a good idea to
 consider calibrating [pressure advance](Pressure_Advance.md).
+
+It may be necessary to perform other types of detailed printer
+calibration - a number of guides are available online to help with
+this (for example, do a web search for "3d printer calibration").

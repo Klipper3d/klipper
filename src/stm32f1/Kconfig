@@ -16,7 +16,7 @@ config BOARD_DIRECTORY
 
 config CLOCK_FREQ
     int
-    default 8000000 # 72000000 / 9
+    default 72000000
 
 choice
     prompt "Bootloader offset"

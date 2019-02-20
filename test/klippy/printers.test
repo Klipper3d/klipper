@@ -65,6 +65,7 @@ DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
@@ -75,4 +76,4 @@ CONFIG ../../config/generic-replicape.cfg
 DICTIONARY atmega2560-16mhz.dict zboard=atmega2560-16mhz.dict auxboard=atmega2560-16mhz.dict
 CONFIG ../../config/example-multi-mcu.cfg
 DICTIONARY atmega2560-16mhz.dict z=atmega2560-16mhz.dict
-CONFIG ../../config/kit-voron2-2018.cfg
+CONFIG ../../config/kit-voron2-250mm.cfg

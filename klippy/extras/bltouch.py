@@ -47,7 +47,7 @@ class BLTouchEndstopWrapper:
             'pin_up_touch_mode_reports_triggered', True)
         self.start_mcu_pos = []
         # Calculate pin move time
-        pmt = max(config.getfloat('pin_move_time', 0.200), MIN_CMD_TIME)
+        pmt = max(config.getfloat('pin_move_time', 0.675), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
@@ -105,7 +105,8 @@ class BLTouchEndstopWrapper:
     def raise_probe(self):
         for retry in range(3):
             self.sync_mcu_print_time()
-            self.send_cmd('reset')
+            if retry or not self.pin_up_not_triggered:
+                self.send_cmd('reset')
             check_start_time = self.send_cmd('pin_up',
                                              duration=self.pin_move_time)
             check_end_time = self.send_cmd(None)

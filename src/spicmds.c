@@ -5,14 +5,19 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_HAVE_GPIO_BITBANGING
 #include "board/gpio.h" // gpio_out_write
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
+#include "spi_software.h" // spi_software_setup
 #include "spicmds.h" // spidev_transfer
 
 struct spidev_s {
-    struct spi_config spi_config;
+    union {
+        struct spi_config spi_config;
+        struct spi_software *spi_software;
+    };
     struct gpio_out pin;
     uint8_t flags;
     uint8_t shutdown_msg_len;
@@ -20,7 +25,7 @@ struct spidev_s {
 };
 
 enum {
-    SF_HAVE_PIN = 1,
+    SF_HAVE_PIN = 1, SF_SOFTWARE = 2,
 };
 
 void
@@ -58,6 +63,26 @@ DECL_COMMAND(command_config_spi_without_cs,
              "config_spi_without_cs oid=%c bus=%u mode=%u rate=%u"
              " shutdown_msg=%*s");
 
+void
+command_config_spi_from_software(uint32_t *args)
+{
+    uint8_t shutdown_msg_len = args[3];
+    struct spi_software *sspi = spi_software_oid_lookup(args[1]);
+    struct spidev_s *spi = oid_alloc(args[0], command_config_spi
+                                     , sizeof(*spi) + shutdown_msg_len);
+    spi->pin = gpio_out_setup(args[2], 1);
+    spi->flags = SF_HAVE_PIN | SF_SOFTWARE;
+    spi->spi_software = sspi;
+    spi->shutdown_msg_len = shutdown_msg_len;
+    uint8_t *shutdown_msg = (void*)(size_t)args[4];
+    memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
+}
+#if CONFIG_HAVE_GPIO_BITBANGING
+DECL_COMMAND(command_config_spi_from_software,
+             "config_spi_from_software oid=%c sw_oid=%u pin=%u"
+             " shutdown_msg=%*s");
+#endif
+
 struct spidev_s *
 spidev_oid_lookup(uint8_t oid)
 {
@@ -68,12 +93,18 @@ void
 spidev_transfer(struct spidev_s *spi, uint8_t receive_data
                 , uint8_t data_len, uint8_t *data)
 {
-    spi_prepare(spi->spi_config);
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
+        spi_software_prepare(spi->spi_software);
+    else
+        spi_prepare(spi->spi_config);
 
     if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 0);
 
-    spi_transfer(spi->spi_config, receive_data, data_len, data);
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
+        spi_software_transfer(spi->spi_software, receive_data, data_len, data);
+    else
+        spi_transfer(spi->spi_config, receive_data, data_len, data);
 
     if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 1);

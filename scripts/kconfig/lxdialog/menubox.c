@@ -154,14 +154,12 @@ static void print_arrows(WINDOW * win, int item_no, int scroll, int y, int x,
  */
 static void print_buttons(WINDOW * win, int height, int width, int selected)
 {
-	int x = width / 2 - 28;
+	int x = width / 2 - 18;
 	int y = height - 2;
 
 	print_button(win, gettext("Select"), y, x, selected == 0);
 	print_button(win, gettext(" Exit "), y, x + 12, selected == 1);
 	print_button(win, gettext(" Help "), y, x + 24, selected == 2);
-	print_button(win, gettext(" Save "), y, x + 36, selected == 3);
-	print_button(win, gettext(" Load "), y, x + 48, selected == 4);
 
 	wmove(win, y, x + 1 + 12 * selected);
 	wrefresh(win);
@@ -375,7 +373,7 @@ do_resize:
 		case TAB:
 		case KEY_RIGHT:
 			button = ((key == KEY_LEFT ? --button : ++button) < 0)
-			    ? 4 : (button > 4 ? 0 : button);
+			    ? 2 : (button > 2 ? 0 : button);
 
 			print_buttons(dialog, height, width, button);
 			wrefresh(menu);

@@ -239,6 +239,7 @@ class ToolHead:
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.printer.try_load_module(config, "idle_timeout")
         self.printer.try_load_module(config, "statistics")
+        self.printer.try_load_module(config, "manual_probe")
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
@@ -371,6 +372,7 @@ class ToolHead:
         self.kin.motor_off(last_move_time)
         for ext in kinematics.extruder.get_printer_extruders(self.printer):
             ext.motor_off(last_move_time)
+        self.printer.send_event("toolhead:motor_off", last_move_time)
         self.dwell(STALL_TIME)
         logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):

@@ -63,7 +63,7 @@ config AVRDUDE_PROTOCOL
     default "arduino"
 
 choice
-    prompt "Processor speed"
+    prompt "Processor speed" if LOW_LEVEL_OPTIONS
     config AVR_FREQ_20000000
         bool "20Mhz"
         depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
@@ -76,8 +76,8 @@ endchoice
 config CLOCK_FREQ
     int
     default 8000000 if AVR_FREQ_8000000
-    default 16000000 if AVR_FREQ_16000000
     default 20000000 if AVR_FREQ_20000000
+    default 16000000
 
 config CLEAR_PRESCALER
     bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
@@ -111,7 +111,7 @@ config SERIAL
     default y
 choice
     depends on SERIAL
-    prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p)
     help
         Select the serial device to use on the AVR chip. This is
         almost always UART0.

@@ -2,6 +2,8 @@
 #define __LPC176X_INTERNAL_H
 // Local definitions for lpc176x code
 
+#include "LPC17xx.h"
+
 #define GPIO(PORT, NUM) ((PORT) * 32 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 32)
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))

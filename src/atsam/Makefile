@@ -29,16 +29,16 @@ eflags-$(CONFIG_MACH_SAM4E) += -T lib/sam4e/gcc/gcc/sam4e8e_flash.ld
 CFLAGS_klipper.elf += $(eflags-y) --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c
+src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c atsam/hard_pwm.c
 src-y += generic/crc16_ccitt.c generic/alloc.c
-src-y += generic/armcm_irq.c generic/timer_irq.c
+src-y += generic/armcm_irq.c generic/armcm_timer.c
 usbserial-$(CONFIG_MACH_SAM3X) := atsam/sam3_usb.c
 usbserial-$(CONFIG_MACH_SAM4) := atsam/sam4_usb.c
 src-$(CONFIG_USBSERIAL) += $(usbserial-y) generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsam/serial.c generic/serial_irq.c
-src-$(CONFIG_MACH_SAM3X) += atsam/adc.c atsam/timer.c
-src-$(CONFIG_MACH_SAM4S) += atsam/adc.c atsam/sam4s_timer.c
-src-$(CONFIG_MACH_SAM4E) += atsam/sam4e_afec.c atsam/timer.c atsam/sam4_cache.c
+src-$(CONFIG_MACH_SAM3X) += atsam/adc.c
+src-$(CONFIG_MACH_SAM4S) += atsam/adc.c
+src-$(CONFIG_MACH_SAM4E) += atsam/sam4e_afec.c atsam/sam4_cache.c
 src-$(CONFIG_MACH_SAM3X) += ../lib/sam3x/gcc/system_sam3xa.c
 src-$(CONFIG_MACH_SAM3X) += ../lib/sam3x/gcc/gcc/startup_sam3xa.c
 src-$(CONFIG_MACH_SAM4S) += atsam/sam4s_sysinit.c

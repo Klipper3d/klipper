@@ -283,10 +283,10 @@ config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version
+The test was last run on commit `74c21654` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 207`, the best dual stepper result is
-`SET ticks 205`, and the best three stepper result is `SET ticks 317`.
+stepper result is `SET ticks 388`, the best dual stepper result is
+`SET ticks 405`, and the best three stepper result is `SET ticks 576`.
 
 ### Duet Maestro step rate benchmark ###
 
@@ -299,27 +299,30 @@ config_stepper oid=2 step_pin=PC26 dir_pin=PB4 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8e0eb0d5` with gcc version
+The test was last run on commit `74c21654` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 72`, the best dual stepper result is `SET
-ticks 73`, and the best three stepper result is `SET ticks 99`.
+stepper result is `SET ticks 553`, the best dual stepper result is
+`SET ticks 563`, and the best three stepper result is `SET ticks 623`.
 
 ### Duet Wifi step rate benchmark ###
 
 The following configuration sequence is used on the Duet Wifi:
 ```
-allocate_oids count=3
+allocate_oids count=4
 config_stepper oid=0 step_pin=PD6 dir_pin=PD11 min_stop_interval=0 invert_step=0
 config_stepper oid=1 step_pin=PD7 dir_pin=PD12 min_stop_interval=0 invert_step=0
 config_stepper oid=2 step_pin=PD8 dir_pin=PD13 min_stop_interval=0 invert_step=0
+config_stepper oid=3 step_pin=PD5 dir_pin=PA1 min_stop_interval=0 invert_step=0
 finalize_config crc=0
+
 ```
 
-The test was last run on commit `34c3cb5c` with gcc version
-`arm-none-eabi-gcc (15:5.4.1+svn241155-1) 5.4.1 20160919`. The best
-single stepper result is `SET ticks 295`, the best dual stepper result
-is `SET ticks 264`, and the best three stepper result is `SET ticks
-282`.
+The test was last run on commit `59a60d68` with gcc version
+`arm-none-eabi-gcc 7.3.1 20180622 (release)
+[ARM/embedded-7-branch revision 261907]`. The best single stepper
+result is `SET ticks 519`, the best dual stepper result is `SET ticks
+520`, and the best three stepper result is `SET ticks 525`, and the
+best four stepper result is `SET ticks 703`.
 
 ### Beaglebone PRU step rate benchmark ###
 
@@ -349,10 +352,10 @@ config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 41`, the best dual stepper result is `SET
-ticks 48`, and the best three stepper result is `SET ticks 80`.
+stepper result is `SET ticks 345`, the best dual stepper result is
+`SET ticks 365`, and the best three stepper result is `SET ticks 606`.
 
 ### LPC176x step rate benchmark ###
 
@@ -365,14 +368,14 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
-LPC1768, the best single stepper result is `SET ticks 119`, the best
-dual stepper result is `SET ticks 118`, and the best three stepper
-result is `SET ticks 154`. The 120Mhz LPC1769 results were obtained by
+LPC1768, the best single stepper result is `SET ticks 448`, the best
+dual stepper result is `SET ticks 450`, and the best three stepper
+result is `SET ticks 523`. The 120Mhz LPC1769 results were obtained by
 overclocking an LPC1768 to 120Mhz - the best single stepper result is
-`SET ticks 140`, the best dual stepper result is `SET ticks 137`, and
-the best three stepper result is `SET ticks 154`.
+`SET ticks 525`, the best dual stepper result is `SET ticks 526`, and
+the best three stepper result is `SET ticks 545`.
 
 ### SAMD21 step rate benchmark ###
 
@@ -385,7 +388,7 @@ config_stepper oid=2 step_pin=PA17 dir_pin=PA21 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
 stepper result is `SET ticks 277`, the best dual stepper result is
 `SET ticks 410`, and the best three stepper result is `SET ticks 664`.
@@ -398,14 +401,16 @@ allocate_oids count=3
 config_stepper oid=0 step_pin=PA22 dir_pin=PA20 min_stop_interval=0 invert_step=0
 config_stepper oid=1 step_pin=PA22 dir_pin=PA21 min_stop_interval=0 invert_step=0
 config_stepper oid=2 step_pin=PA22 dir_pin=PA19 min_stop_interval=0 invert_step=0
+config_stepper oid=3 step_pin=PA22 dir_pin=PA18 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8cd83b4c` with gcc version
+The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD51G19A
-micro-controller. The best single stepper result is `SET ticks 114`,
-the best dual stepper result is `SET ticks 114`, and the best three
-stepper result is `SET ticks 119`.
+micro-controller. The best single stepper result is `SET ticks 516`,
+the best dual stepper result is `SET ticks 520`, the best three
+stepper result is `SET ticks 519`, and the best four stepper result is
+`SET ticks 655`.
 
 ## Command dispatch benchmark ##
 
@@ -415,7 +420,7 @@ communication mechanism. The test is run using the console.py tool
 (described above). The following is cut-and-paste into the console.py
 terminal window:
 ```
-DELAY {clock+freq} get_uptime
+DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 end_group
 get_uptime
 ```
@@ -423,6 +428,10 @@ get_uptime
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
+
+Note that this test may saturate the USB/CPU capacity of a Raspberry
+Pi. The benchmarks below are with console.py running on a desktop
+class machine.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |

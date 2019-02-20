@@ -111,6 +111,9 @@ The following standard commands are supported:
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
   the printer's velocity limits. Note that one may only set values
   less than or equal to the limits specified in the config file.
+- `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
+  Sets the target temperature for a heater. If a target temperature is
+  not supplied, the target is 0.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
   Set pressure advance parameters. If EXTRUDER is not specified, it
@@ -118,6 +121,23 @@ The following standard commands are supported:
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.
+- `MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
+  measuring the height of the nozzle at a given location. If SPEED is
+  specified, it sets the speed of TESTZ commands (the default is
+  5mm/s). During a manual probe, the following additional commands are
+  available:
+  - `ACCEPT`: This command accepts the current Z position and
+  concludes the manual probing tool.
+  - `ABORT`: This command terminates the manual probing tool.
+  - `TESTZ Z=<value>`: This command moves the nozzle up or down by the
+    amount specified in "value". For example, `TESTZ Z=-.1` would move
+    the nozzle down .1mm while `TESTZ Z=.1` would move the nozzle up
+    .1mm. The value may also be `+`, `-`, `++`, or `--` to move the
+    nozzle up or down an amount relative to previous attempts.
+- `Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful
+  for calibrating a Z position_endstop config setting. See the
+  MANUAL_PROBE command for details on the parameters and the
+  additional commands available while the tool is active.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -145,6 +165,21 @@ enabled:
 - `SET_SERVO SERVO=config_name [WIDTH=<seconds>] [ENABLE=<0|1>]`
 - `SET_SERVO SERVO=config_name [ANGLE=<degrees>] [ENABLE=<0|1>]`
 
+## Manual stepper Commands
+
+The following command is available when a "manual_stepper" config
+section is enabled:
+- `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
+  [SET_POSITION=<pos>]
+  [MOVE=<pos> SPEED=<speed> [STOP_ON_ENDSTOP=1]]`: This command will
+  alter the state of the stepper. Use the ENABLE parameter to
+  enable/disable the stepper. Use the SET_POSITION parameter to force
+  the stepper to think it is at the given position. Use the MOVE
+  parameter to request a movement to the given position at the given
+  SPEED. If STOP_ON_ENDSTOP is specified then the move will end early
+  should the endstop report as triggered (use STOP_ON_ENDSTOP=-1 to
+  stop early should the endstop report not triggered).
+
 ## Probe
 
 The following commands are available when a "probe" config section is
@@ -152,6 +187,14 @@ enabled:
 - `PROBE`: Move the nozzle downwards until the probe triggers.
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
+- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
+  [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
+  median and standard deviation. The default values are: REPEAT=10,
+  SPEED=probe config speed, X=current X, Y=current Y and Z=10.
+- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
+  calibrating the probe's z_offset. See the MANUAL_PROBE command for
+  details on the parameters and the additional commands available
+  while the tool is active.
 
 ## BLTouch
 
@@ -169,10 +212,10 @@ The following commands are available when the "delta_calibrate" config
 section is enabled:
 - `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
   points on the bed and recommend updated endstop positions, tower
-  angles, and radius.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a DELTA_CALIBRATE
-    operation.
+  angles, and radius. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -182,10 +225,10 @@ The following commands are available when the "bed_tilt" config
 section is enabled:
 - `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
   points specified in the config and then recommend updated x and y
-  tilt adjustments.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_TILT_CALIBRATE operation.
+  tilt adjustments. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 
 ## Mesh Bed Leveling
 
@@ -194,10 +237,10 @@ section is enabled:
 - `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
   using generated points specified by the parameters in the
   config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_MESH_CALIBRATE operation.
+  adjusted according to the mesh. If METHOD=manual is specified then
+  the manual probing tool is activated - see the MANUAL_PROBE command
+  above for details on the additional commands available while this
+  tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion

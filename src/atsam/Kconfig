@@ -9,6 +9,7 @@ config ATSAM_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
+    select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_BITBANGING
 
 config BOARD_DIRECTORY
@@ -51,9 +52,8 @@ config MCU
 
 config CLOCK_FREQ
     int
-    default 42000000 if MACH_SAM3X # 84000000/2
-    default 15000000 if MACH_SAM4S # 120000000/8
-    default 60000000 if MACH_SAM4E # 120000000/2
+    default 84000000 if MACH_SAM3X
+    default 120000000 if MACH_SAM4
 
 config USBSERIAL
     bool "Use USB for communication (instead of serial)"

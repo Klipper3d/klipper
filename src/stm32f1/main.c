@@ -5,6 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h"
+#include "board/internal.h" // udelay
+#include "board/misc.h" // timer_read_time
 #include "command.h" // DECL_CONSTANT
 #include "stm32f1xx.h"
 #include "stm32f1xx_ll_system.h"
@@ -18,6 +20,7 @@
 #include "sched.h" // sched_main
 
 DECL_CONSTANT(MCU, "stm32f103");
+
 
 /****************************************************************
  * dynamic memory pool
@@ -126,6 +129,20 @@ void io_config(void)
     LL_GPIO_AF_Remap_SWJ_NOJTAG();
     /* Likewise, we don't need PB3 for TRACESWO output */
     LL_DBGMCU_SetTracePinAssignment(LL_DBGMCU_TRACE_NONE);
+}
+
+// Implement simple early-boot delay mechanism
+void
+udelay(uint32_t usecs)
+{
+    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    }
+
+    uint32_t end = timer_read_time() + timer_from_us(usecs);
+    while (timer_is_before(timer_read_time(), end))
+        ;
 }
 
 // Main entry point
