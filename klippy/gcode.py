@@ -29,6 +29,7 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
         self.partial_input = ""
         self.pending_commands = []
+        self.respond_callbacks = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -295,11 +296,15 @@ class GCodeParser:
         except os.error:
             logging.exception("Write g-code ack")
         self.need_ack = False
+    def register_respond_callback(self, callback):
+        self.respond_callbacks.append(callback)
     def respond(self, msg):
         if self.is_fileinput:
             return
         try:
             os.write(self.fd, msg+"\n")
+            for callback in self.respond_callbacks:
+                callback(msg+"\n")
         except os.error:
             logging.exception("Write g-code response")
     def respond_info(self, msg):
