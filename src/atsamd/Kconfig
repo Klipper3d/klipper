@@ -54,7 +54,6 @@ config CLOCK_FREQ
     default 120000000 if MACH_SAMD51
 
 choice
-    depends on MACH_SAMD51
     prompt "Clock Reference"
     config CLOCK_REF_INTERNAL
         bool "Internal clock"
