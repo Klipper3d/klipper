@@ -65,6 +65,7 @@ endchoice
 choice
     prompt "Bootloader offset"
     config FLASH_START_2000
+        depends on MACH_SAMD21
         bool "8KiB bootloader (Arduino Zero)"
     config FLASH_START_4000
         bool "16KiB bootloader (Arduino M0)"
