@@ -70,12 +70,9 @@ adc_init(void)
     // Enable adc clock
     enable_pclock(ADC_GCLK_ID, ID_ADC);
     // Load calibraiton info
-    uint32_t v = *((uint32_t*)ADC_FUSES_BIASCAL_ADDR);
-    uint32_t bias = (v & ADC_FUSES_BIASCAL_Msk) >> ADC_FUSES_BIASCAL_Pos;
-    v = *((uint32_t*)ADC_FUSES_LINEARITY_0_ADDR);
-    uint32_t li0 = (v & ADC_FUSES_LINEARITY_0_Msk) >> ADC_FUSES_LINEARITY_0_Pos;
-    v = *((uint32_t*)ADC_FUSES_LINEARITY_1_ADDR);
-    uint32_t li5 = (v & ADC_FUSES_LINEARITY_1_Msk) >> ADC_FUSES_LINEARITY_1_Pos;
+    uint32_t bias = GET_FUSE(ADC_FUSES_BIASCAL);
+    uint32_t li0 = GET_FUSE(ADC_FUSES_LINEARITY_0);
+    uint32_t li5 = GET_FUSE(ADC_FUSES_LINEARITY_1);
     uint32_t lin = li0 | (li5 << 5);
     ADC->CALIB.reg = ADC_CALIB_BIAS_CAL(bias) | ADC_CALIB_LINEARITY_CAL(lin);
 
@@ -92,22 +89,18 @@ adc_init(void)
 
     // Load calibration info
     // ADC0
-    uint32_t v = *((uint32_t*)ADC0_FUSES_BIASREFBUF_ADDR);
-    uint32_t refbuf = (v & ADC0_FUSES_BIASREFBUF_Msk) >> ADC0_FUSES_BIASREFBUF_Pos;
-    v = *((uint32_t*)ADC0_FUSES_BIASR2R_ADDR);
-    uint32_t r2r = (v & ADC0_FUSES_BIASR2R_Msk) >> ADC0_FUSES_BIASR2R_Pos;
-    v = *((uint32_t*)ADC0_FUSES_BIASCOMP_ADDR);
-    uint32_t comp = (v & ADC0_FUSES_BIASCOMP_Msk) >> ADC0_FUSES_BIASCOMP_Pos;
-    ADC0->CALIB.reg = ADC0_FUSES_BIASREFBUF(refbuf) | ADC0_FUSES_BIASR2R(r2r) | ADC0_FUSES_BIASCOMP(comp);
+    uint32_t refbuf = GET_FUSE(ADC0_FUSES_BIASREFBUF);
+    uint32_t r2r = GET_FUSE(ADC0_FUSES_BIASR2R);
+    uint32_t comp = GET_FUSE(ADC0_FUSES_BIASCOMP);
+    ADC0->CALIB.reg = (ADC0_FUSES_BIASREFBUF(refbuf)
+                       | ADC0_FUSES_BIASR2R(r2r) | ADC0_FUSES_BIASCOMP(comp));
 
     // ADC1
-    v = *((uint32_t*)ADC1_FUSES_BIASREFBUF_ADDR);
-    refbuf = (v & ADC1_FUSES_BIASREFBUF_Msk) >> ADC1_FUSES_BIASREFBUF_Pos;
-    v = *((uint32_t*)ADC1_FUSES_BIASR2R_ADDR);
-    r2r = (v & ADC1_FUSES_BIASR2R_Msk) >> ADC1_FUSES_BIASR2R_Pos;
-    v = *((uint32_t*)ADC1_FUSES_BIASCOMP_ADDR);
-    comp = (v & ADC1_FUSES_BIASCOMP_Msk) >> ADC1_FUSES_BIASCOMP_Pos;
-    ADC1->CALIB.reg = ADC1_FUSES_BIASREFBUF(refbuf) | ADC1_FUSES_BIASR2R(r2r) | ADC1_FUSES_BIASCOMP(comp);
+    refbuf = GET_FUSE(ADC1_FUSES_BIASREFBUF);
+    r2r = GET_FUSE(ADC1_FUSES_BIASR2R);
+    comp = GET_FUSE(ADC1_FUSES_BIASCOMP);
+    ADC1->CALIB.reg = (ADC0_FUSES_BIASREFBUF(refbuf)
+                       | ADC0_FUSES_BIASR2R(r2r) | ADC0_FUSES_BIASCOMP(comp));
 
     // Setup and enable
     // ADC0

@@ -15,6 +15,9 @@
 #define GPIO2PORT(PIN) ((PIN) / 32)
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
+#define GET_FUSE(REG)                                           \
+    ((*((uint32_t*)(REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
+
 void enable_pclock(uint32_t pclk_id, uint32_t pm_id);
 uint32_t get_pclock_frequency(uint32_t pclk_id);
 void gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up);
