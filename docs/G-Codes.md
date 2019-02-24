@@ -277,12 +277,15 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130
+## TMC2130 and TMC2208
 
-The following command is available when the "tmc2130" config section
-is enabled:
-- `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
+The following command is available when the "tmc2130" or "tmc2208"
+config section is enabled:
+- `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
+- `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
+  registers. Needed to re-enable the driver if power to the chip is
+  turned off then back on.
 
 ## Endstop adjustments by stepper phase
 

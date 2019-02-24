@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
 import bus
-import collections
 
 TMC_FREQUENCY=13200000.
 
@@ -206,6 +205,7 @@ def get_config_stealthchop(config, tmc_freq):
 class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -214,12 +214,14 @@ class TMC2130:
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc2130_" + self.name, self)
-        self.init_event = config.get('init_event', None)
-        # Add DUMP_TMC command
+        # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
         self.fields = FieldHelper(Fields, FieldFormatters, self.regs)
@@ -246,19 +248,21 @@ class TMC2130:
         set_config_field(config, "pwm_autoscale", True)
         sgt = config.getint('driver_SGT', 0, minval=-64, maxval=63) & 0x7f
         self.fields.set_field("sgt", sgt)
+        self.init_delay_time = config.getfloat('init_delay_time', None, minval=0.)
+    def handle_connect(self):
+        self.do_init()
+    def do_init(self):
+        if self.init_delay_time is None:
+             self._init_registers()
+        else:
+             self.reactor.register_callback(self._init_callback, self.reactor.monotonic() + self.init_delay_time)
+    def _init_callback(self, eventtime):
+        self._init_registers()
     def _init_registers(self):
         # Send registers
-        logging.info("TMC2130 %s initialization", self.name)
+        logging.info("INIT_TMC 2130 %s", self.name)
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
-    def handle_connect(self):
-        if self.init_event is not None:
-            self.printer.register_event_handler(self.init_event, self.handle_init_event)
-        else:
-            self._init_registers()
-    def handle_init_event(self, value):
-        if value > 0.:
-            self._init_registers()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
@@ -291,6 +295,9 @@ class TMC2130:
             msg = self.fields.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
+    def cmd_INIT_TMC(self, params):
+        self.do_init()
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:

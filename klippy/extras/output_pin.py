@@ -3,16 +3,12 @@
 # Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 
 PIN_MIN_TIME = 0.100
 
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.reactor = self.printer.get_reactor()
-        self.name = config.get_name().split()[-1]
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         ppins = self.printer.lookup_object('pins')
         self.is_pwm = config.getboolean('pwm', False)
         if self.is_pwm:
@@ -24,7 +20,6 @@ class PrinterOutputPin:
         else:
             self.mcu_pin = ppins.setup_pin('digital_out', config.get('pin'))
             self.scale = 1.
-        self.emit_event_time = config.getfloat('emit_event_time', None, minval=0.)
         self.mcu_pin.setup_max_duration(0.)
         self.last_value_time = 0.
         static_value = config.getfloat('static_value', None,
@@ -45,8 +40,6 @@ class PrinterOutputPin:
                                             self.cmd_SET_PIN,
                                             desc=self.cmd_SET_PIN_help)
     cmd_SET_PIN_help = "Set the value of an output pin"
-    def handle_ready(self):
-        self._do_event()
     def cmd_SET_PIN(self, params):
         value = self.gcode.get_float('VALUE', params,
                                      minval=0., maxval=self.scale)
@@ -63,16 +56,6 @@ class PrinterOutputPin:
             self.mcu_pin.set_digital(print_time, value)
         self.last_value = value
         self.last_value_time = print_time
-        self._do_event()
-    def _do_event(self):
-        if not self.emit_event_time is None:
-            if self.emit_event_time > 0.:
-                self.reactor.register_callback(self._delay_callback, self.reactor.monotonic() + self.emit_event_time)
-            else:
-                self.printer.send_event("output_pin:" + self.name, self.last_value)
-                logging.info("output_pin:%s immediate emit event value=%f", self.name, self.last_value)
-    def _delay_callback(self, eventtime):
-        self.printer.send_event("output_pin:" + self.name, self.last_value)
-        logging.info("output_pin:%s delay emit event value=%f", self.name, self.last_value)
+
 def load_config_prefix(config):
     return PrinterOutputPin(config)
