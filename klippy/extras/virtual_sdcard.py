@@ -60,6 +60,9 @@ class VirtualSD:
         return {'progress': progress}
     def is_active(self):
         return self.work_timer is not None
+    def do_pause(self):
+        if self.work_timer is not None:
+            self.must_pause_work = True
     # G-Code commands
     def cmd_error(self, params):
         raise self.gcode.error("SD write not supported")
@@ -116,8 +119,7 @@ class VirtualSD:
             self.work_handler, self.reactor.NOW)
     def cmd_M25(self, params):
         # Pause SD print
-        if self.work_timer is not None:
-            self.must_pause_work = True
+        self.do_pause()
     def cmd_M26(self, params):
         # Set SD position
         if self.work_timer is not None:
