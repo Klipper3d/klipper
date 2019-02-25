@@ -8,7 +8,7 @@ config ATSAMD_SELECT
     select HAVE_GPIO
     select HAVE_GPIO_ADC
     select HAVE_GPIO_I2C
-    select HAVE_GPIO_SPI if MACH_SAMD21
+    select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if MACH_SAMD21
     select HAVE_GPIO_BITBANGING
 
