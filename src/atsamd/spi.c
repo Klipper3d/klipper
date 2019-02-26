@@ -28,7 +28,11 @@ spi_init(uint32_t bus, SercomSpi *ss, uint32_t ctrla, uint32_t baud)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    if (bus)
+#ifdef SERCOM7
+    if (bus > 7)
+#else
+    if (bus > 5)
+#endif
         shutdown("Invalid spi bus");
 
     uint32_t dipo_dopo = sercom_spi_pins(bus);

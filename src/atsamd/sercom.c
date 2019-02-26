@@ -276,7 +276,7 @@ sercom_lookup_pad(uint32_t sercom_id, uint8_t pin)
     const struct sercom_pad *sp = sercom_pads;
     for (; ; sp++) {
         if (sp >= &sercom_pads[ARRAY_SIZE(sercom_pads)])
-            shutdown("Pin not connected to any SERCOM peripheral");
+            shutdown("Invalid SERCOM configuration");
         if (sp->sercom_id == sercom_id && sp->gpio == pin)
             return sp;
     }
