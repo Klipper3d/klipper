@@ -85,5 +85,8 @@ config SERIAL
     depends on !USBSERIAL
     bool
     default y
-
+config HAVE_SERCOM
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    bool
+    default y
 endif
