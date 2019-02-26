@@ -39,11 +39,15 @@ class BedScrews:
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z = config.getfloat('probe_height', 0.)
+        self.thread = config.getfloat('screw_thread', default=3, minval=3, maxval=5)
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BED_SCREWS_ADJUST",
                                     self.cmd_BED_SCREWS_ADJUST,
                                     desc=self.cmd_BED_SCREWS_ADJUST_help)
+        self.gcode.register_command("BED_SCREWS_CALCULATE",
+                                    self.cmd_BED_SCREWS_CALCULATE,
+                                    desc=self.cmd_BED_SCREWS_CALCULATE_help)
     def move(self, coord, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
@@ -114,6 +118,19 @@ class BedScrews:
     def cmd_ABORT(self, params):
         self.unregister_commands()
         self.state = None
+    cmd_BED_SCREWS_CALCULATE_help = "Tool to help adjust bed leveling screws by " \
+                                    "calculating the number of turns to level it."
+    def cmd_BED_SCREWS_CALCULATE(self, params):
+        if self.state is not None:
+            raise self.gcode.error(
+                "Already in bed_screws helper; use ABORT to exit before using this command")
+        toolhead = self.printer.lookup_object('toolhead')
+        z_hights = []
+        for coord, name in self.screws:
+            self.move((coord[0], coord[1], self.horizontal_move_z), self.speed)
+            self.gcode.cmd_PROBE({})
+            pos = toolhead.get_position()
+            z_hights.append((pos[2], coord, name))
 
 def load_config(config):
     return BedScrews(config)
