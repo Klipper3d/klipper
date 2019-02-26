@@ -389,22 +389,18 @@ class GCodeParser:
             eventtime = self.reactor.pause(eventtime + 1.)
     def set_temp(self, params, is_bed=False, wait=False):
         temp = self.get_float('S', params, 0.)
-        heater = None
         if is_bed:
-            heater = self.heaters.get_heater_by_gcode_id('B')
-        elif 'T' in params:
-            index = self.get_int('T', params, minval=0)
-            heater = self.heaters.get_heater_by_gcode_id('T%d' % (index,))
+            heater_name = 'heater_bed'
         else:
-            heater = self.heaters.get_heater_by_gcode_id('T0')
-        if heater is None:
-            if temp > 0.:
-                self.respond_error("Heater not configured")
-            return
+            index = self.get_int('T', params, 0, minval=0)
+            heater_name = 'extruder%d' % (index,)
         print_time = self.toolhead.get_last_move_time()
         try:
+            heater = self.heaters.lookup_heater(heater_name)
             heater.set_temp(print_time, temp)
         except heater.error as e:
+            if not temp:
+                return
             raise error(str(e))
         if wait and temp:
             self.bg_temp(heater)

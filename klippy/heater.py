@@ -265,18 +265,13 @@ class PrinterHeaters:
             raise self.printer.config_error("Unknown temperature sensor '%s'" % (
                 sensor_type,))
         return self.sensors[sensor_type](config)
+    def get_all_heaters(self):
+        return self.heaters.values()
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
     def cmd_TURN_OFF_HEATERS(self, params):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         for heater in self.heaters.values():
             heater.set_temp(print_time, 0.)
-    def get_all_heaters(self):
-        return self.heaters.values()
-    def get_heater_by_gcode_id(self, gcode_id):
-        if gcode_id in self.heaters_gcode_id:
-            heater_name = self.heaters_gcode_id[gcode_id]
-            return self.heaters[heater_name]
-        return None
 
 def add_printer_objects(config):
     config.get_printer().add_object('heater', PrinterHeaters(config))
