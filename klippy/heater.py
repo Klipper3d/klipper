@@ -228,15 +228,15 @@ class ControlPID:
 class PrinterHeaters:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.sensors = {}
+        self.sensor_factories = {}
         self.heaters = {}
         self.heaters_gcode_id = {}
         # Register TURN_OFF_HEATERS command
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
-    def add_sensor(self, sensor_type, sensor_factory):
-        self.sensors[sensor_type] = sensor_factory
+    def add_sensor_factory(self, sensor_type, sensor_factory):
+        self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id):
         heater_name = config.get_name().split()[-1]
         if heater_name == 'extruder':
@@ -261,10 +261,10 @@ class PrinterHeaters:
         self.printer.try_load_module(config, "adc_temperature")
         self.printer.try_load_module(config, "spi_temperature")
         sensor_type = config.get('sensor_type')
-        if sensor_type not in self.sensors:
-            raise self.printer.config_error("Unknown temperature sensor '%s'" % (
-                sensor_type,))
-        return self.sensors[sensor_type](config)
+        if sensor_type not in self.sensor_factories:
+            raise self.printer.config_error(
+                "Unknown temperature sensor '%s'" % (sensor_type,))
+        return self.sensor_factories[sensor_type](config)
     def get_all_heaters(self):
         return self.heaters.values()
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"

@@ -117,9 +117,9 @@ def load_config(config):
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: PrinterThermistor(config, params))
-        pheater.add_sensor(sensor_type, func)
+        pheater.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     thermistor = CustomThermistor(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(thermistor.name, thermistor.create)
+    pheater.add_sensor_factory(thermistor.name, thermistor.create)
