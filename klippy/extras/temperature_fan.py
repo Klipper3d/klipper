@@ -52,9 +52,6 @@ class TemperatureFan:
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
         self.control.temperature_callback(read_time, temp)
-    def stats(self, eventtime):
-        return False, '%s: temp=%.1f fan_speed=%.3f' % (
-            self.name, self.last_temp, self.last_speed_value)
     def get_temp(self, eventtime):
         return self.last_temp, self.target_temp
 
