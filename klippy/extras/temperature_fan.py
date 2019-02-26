@@ -21,6 +21,7 @@ class TemperatureFan:
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
+        self.printer.lookup_object('heater').register_sensor(config, self)
         self.speed_delay = self.sensor.get_report_time_delta()
         self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
         self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
@@ -49,9 +50,8 @@ class TemperatureFan:
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
         self.control.temperature_callback(read_time, temp)
-    def stats(self, eventtime):
-        return False, '%s: temp=%.1f fan_speed=%.3f' % (
-            self.name, self.last_temp, self.last_speed_value)
+    def get_temp(self, eventtime):
+        return self.last_temp, self.target_temp
 
 ######################################################################
 # Bang-bang control algo
