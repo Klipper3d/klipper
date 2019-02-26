@@ -56,7 +56,7 @@ class GCodeParser:
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
-        self.heater = None
+        self.heaters = None
         self.speed = 25. * 60.
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
@@ -136,7 +136,7 @@ class GCodeParser:
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
-        self.heater = self.printer.lookup_object('heater')
+        self.heaters = self.printer.lookup_object('heater')
         self.toolhead = self.printer.lookup_object('toolhead')
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
@@ -372,11 +372,10 @@ class GCodeParser:
     def get_temp(self, eventtime):
         # Tn:XXX /YYY B:XXX /YYY
         out = []
-        if self.heater is not None:
-            for heater in self.heater.get_all_heaters():
-                if heater is not None:
-                    cur, target = heater.get_temp(eventtime)
-                    out.append("%s:%.1f /%.1f" % (heater.gcode_id, cur, target))
+        if self.heaters is not None:
+            for heater in self.heaters.get_all_heaters():
+                cur, target = heater.get_temp(eventtime)
+                out.append("%s:%.1f /%.1f" % (heater.gcode_id, cur, target))
         if not out:
             return "T:0"
         return " ".join(out)
@@ -392,12 +391,12 @@ class GCodeParser:
         temp = self.get_float('S', params, 0.)
         heater = None
         if is_bed:
-            heater = self.heater.get_heater_by_gcode_id('B')
+            heater = self.heaters.get_heater_by_gcode_id('B')
         elif 'T' in params:
             index = self.get_int('T', params, minval=0)
-            heater = self.heater.get_heater_by_gcode_id('T%d' % (index,))
+            heater = self.heaters.get_heater_by_gcode_id('T%d' % (index,))
         else:
-            heater = self.heater.get_heater_by_gcode_id('T0')
+            heater = self.heaters.get_heater_by_gcode_id('T0')
         if heater is None:
             if temp > 0.:
                 self.respond_error("Heater not configured")
@@ -674,10 +673,9 @@ class GCodeParser:
         if self.is_printer_ready:
             self.toolhead.motor_off()
             print_time = self.toolhead.get_last_move_time()
-            if self.heater is not None:
-                for heater in self.heater.get_all_heaters():
-                    if heater is not None:
-                        heater.set_temp(print_time, 0.)
+            if self.heaters is not None:
+                for heater in self.heaters.get_all_heaters():
+                    heater.set_temp(print_time, 0.)
             if self.fan is not None:
                 self.fan.set_speed(print_time, 0.)
             self.toolhead.dwell(0.500)
