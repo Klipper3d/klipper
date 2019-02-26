@@ -21,7 +21,7 @@ class BedScrews:
         self.current_screw = 0
         self.adjust_again = False
         # Read config
-        screws = []
+        self.screws = []
         fine_adjust = []
         for i in range(99):
             prefix = "screw%d" % (i + 1,)
@@ -30,18 +30,19 @@ class BedScrews:
             screw_coord = parse_coord(config, prefix)
             screw_name = "screw at %.3f,%.3f" % screw_coord
             screw_name = config.get(prefix + "_name", screw_name)
-            screws.append((screw_coord, screw_name))
+            self.screws.append((screw_coord, screw_name))
             if config.get(prefix + "_fine_adjust", None) is not None:
                 fine_coord = parse_coord(config, prefix + "_fine_adjust")
                 fine_adjust.append((fine_coord, screw_name))
-        if len(screws) < 3:
+        if len(self.screws) < 3:
             raise config.error("bed_screws: Must have at least three screws")
-        self.states = {'adjust': screws, 'fine': fine_adjust}
+        self.states = {'adjust': self.screws, 'fine': fine_adjust}
         self.speed = config.getfloat('speed', 50., above=0.)
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z = config.getfloat('probe_height', 0.)
-        self.thread = config.getfloat('screw_thread', default=3, minval=3, maxval=5)
+        self.screw_thread = config.getfloat('screw_thread', default=3, minval=3, maxval=5)
+        self.knob_direction = config.getfloat('knob_direction', default=1, minval=0, maxval=1)
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BED_SCREWS_ADJUST",
@@ -129,16 +130,22 @@ class BedScrews:
         threads_factor = {3: 0.5, 4: 0.7, 5: 0.8}
         toolhead = self.printer.lookup_object('toolhead')
         screws_info = []
+        self.gcode.run_script_from_command("G28")
         for coord, name in self.screws:
+            pos = toolhead.get_position()
+            self.move((pos[0], pos[1], self.horizontal_move_z), self.speed)
             self.move((coord[0], coord[1], self.horizontal_move_z), self.speed)
-            self.gcode.cmd_PROBE({})
+            self.gcode.run_script_from_command("PROBE")
             pos = toolhead.get_position()
             screws_info.append((pos[2], coord, name))
+
+        pos = toolhead.get_position()
+        self.move((pos[0], pos[1], self.horizontal_move_z), self.speed)
 
         for i, screw_info in enumerate(screws_info):
             if i == 0:
                 z_base, coord_base, name_base = screw_info
-                self.gcode.respond_info("%s (Base): X %.6f, Y %.6f, Z %.6f" %
+                self.gcode.respond_info("%s (Base): X %.1f, Y %.1f, Z %.5f" %
                                         (name_base, coord_base[0], coord_base[1], z_base))
             else:
                 z, coord, name = screw_info
@@ -147,15 +154,17 @@ class BedScrews:
                 if abs(diff) < 0.001:
                     adjust = 0
                 else:
-                    adjust = diff / threads_factor.get(self.thread, 0.5)
-                sign = "+" if adjust < 0 else "-"
+                    adjust = diff / threads_factor.get(self.screw_thread, 0.5)
+                if self.knob_direction == 1:
+                    sign = "O>" if adjust < 0 else "<O"
+                else:
+                    sign = "<O" if adjust < 0 else "O>"
                 full_turns = math.trunc(adjust)
                 decimal_part = adjust - full_turns
                 minutes = round(decimal_part * 60, 0)
-                turn = sign + full_turns + ":" + minutes
 
-                self.gcode.respond_info("%s : X %.6f, Y %.6f, Z %.6f : Adjust -> %s" % (
-                      name, coord[0], coord[1], z, turn))
+                self.gcode.respond_info("%s : X %.1f, Y %.1f, Z %.5f : Adjust -> %s %02d:%02d" % (
+                      name, coord[0], coord[1], z, sign, abs(full_turns), abs(minutes)))
 
 def load_config(config):
     return BedScrews(config)
