@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+import math
+
 def parse_coord(config, param):
     pair = config.get(param).strip().split(',', 1)
     try:
@@ -124,13 +126,36 @@ class BedScrews:
         if self.state is not None:
             raise self.gcode.error(
                 "Already in bed_screws helper; use ABORT to exit before using this command")
+        threads_factor = {3: 0.5, 4: 0.7, 5: 0.8}
         toolhead = self.printer.lookup_object('toolhead')
-        z_hights = []
+        screws_info = []
         for coord, name in self.screws:
             self.move((coord[0], coord[1], self.horizontal_move_z), self.speed)
             self.gcode.cmd_PROBE({})
             pos = toolhead.get_position()
-            z_hights.append((pos[2], coord, name))
+            screws_info.append((pos[2], coord, name))
+
+        for i, screw_info in enumerate(screws_info):
+            if i == 0:
+                z_base, coord_base, name_base = screw_info
+                self.gcode.respond_info("%s (Base): X %.6f, Y %.6f, Z %.6f" %
+                                        (name_base, coord_base[0], coord_base[1], z_base))
+            else:
+                z, coord, name = screw_info
+
+                diff = z_base - z
+                if abs(diff) < 0.001:
+                    adjust = 0
+                else:
+                    adjust = diff / threads_factor.get(self.thread, 0.5)
+                sign = "+" if adjust < 0 else "-"
+                full_turns = math.trunc(adjust)
+                decimal_part = adjust - full_turns
+                minutes = round(decimal_part * 60, 0)
+                turn = sign + full_turns + ":" + minutes
+
+                self.gcode.respond_info("%s : X %.6f, Y %.6f, Z %.6f : Adjust -> %s" % (
+                      name, coord[0], coord[1], z, turn))
 
 def load_config(config):
     return BedScrews(config)
