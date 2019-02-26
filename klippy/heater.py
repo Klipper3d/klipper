@@ -248,8 +248,7 @@ class PrinterHeaters:
         sensor = self.setup_sensor(config)
         # Create heater
         self.heaters[heater_name] = heater = Heater(config, sensor)
-        if gcode_id is not None:
-            self.gcode_id_to_sensor[gcode_id] = heater
+        self.register_sensor(config, heater, gcode_id)
         return heater
     def lookup_heater(self, heater_name):
         if heater_name == 'extruder':
@@ -269,6 +268,15 @@ class PrinterHeaters:
         return self.sensor_factories[sensor_type](config)
     def get_gcode_sensors(self):
         return self.gcode_id_to_sensor.items()
+    def register_sensor(self, config, psensor, gcode_id=None):
+        if gcode_id is None:
+            gcode_id = config.get('gcode_id', None)
+            if gcode_id is None:
+                return
+        if gcode_id in self.gcode_id_to_sensor:
+            raise self.printer.config_error(
+                "G-Code sensor id %s already registered" % (gcode_id,))
+        self.gcode_id_to_sensor[gcode_id] = psensor
     def turn_off_all_heaters(self, print_time):
         for heater in self.heaters.values():
             heater.set_temp(print_time, 0.)
