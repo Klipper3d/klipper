@@ -20,11 +20,10 @@ class error(Exception):
 
 class Heater:
     error = error
-    def __init__(self, config, sensor, gcode_id):
+    def __init__(self, config, sensor):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
         self.name = config.get_name().split()[-1]
-        self.gcode_id = gcode_id
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
@@ -230,14 +229,14 @@ class PrinterHeaters:
         self.printer = config.get_printer()
         self.sensor_factories = {}
         self.heaters = {}
-        self.heaters_gcode_id = {}
+        self.gcode_id_to_sensor = {}
         # Register TURN_OFF_HEATERS command
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
-    def setup_heater(self, config, gcode_id):
+    def setup_heater(self, config, gcode_id=None):
         heater_name = config.get_name().split()[-1]
         if heater_name == 'extruder':
             heater_name = 'extruder0'
@@ -246,8 +245,9 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor, gcode_id)
-        self.heaters_gcode_id[heater.gcode_id] = heater_name
+        self.heaters[heater_name] = heater = Heater(config, sensor)
+        if gcode_id is not None:
+            self.gcode_id_to_sensor[gcode_id] = heater
         return heater
     def lookup_heater(self, heater_name):
         if heater_name == 'extruder':
@@ -267,6 +267,8 @@ class PrinterHeaters:
         return self.sensor_factories[sensor_type](config)
     def get_all_heaters(self):
         return self.heaters.values()
+    def get_gcode_sensors(self):
+        return self.gcode_id_to_sensor.items()
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
     def cmd_TURN_OFF_HEATERS(self, params):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()

@@ -373,9 +373,9 @@ class GCodeParser:
         # Tn:XXX /YYY B:XXX /YYY
         out = []
         if self.heaters is not None:
-            for heater in self.heaters.get_all_heaters():
-                cur, target = heater.get_temp(eventtime)
-                out.append("%s:%.1f /%.1f" % (heater.gcode_id, cur, target))
+            for gcode_id, sensor in sorted(self.heaters.get_gcode_sensors()):
+                cur, target = sensor.get_temp(eventtime)
+                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
         if not out:
             return "T:0"
         return " ".join(out)
