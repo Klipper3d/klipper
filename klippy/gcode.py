@@ -673,13 +673,8 @@ class GCodeParser:
                 gcode_pos, base_pos, homing_pos))
     def request_restart(self, result):
         if self.is_printer_ready:
-            self.toolhead.motor_off()
             print_time = self.toolhead.get_last_move_time()
-            if self.heaters is not None:
-                for heater in self.heaters.get_all_heaters():
-                    heater.set_temp(print_time, 0.)
-            if self.fan is not None:
-                self.fan.set_speed(print_time, 0.)
+            self.printer.send_event("gcode:request_restart", print_time)
             self.toolhead.dwell(0.500)
             self.toolhead.wait_moves()
         self.printer.request_exit(result)
