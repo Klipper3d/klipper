@@ -133,3 +133,58 @@ prompt for coarse adjustments directly above each screw position, and
 once those are accepted, it will prompt for fine adjustments at the
 additional locations. Continue to use `ACCEPT` and `ADJUSTED` at each
 position.
+
+# Adjusting bed leveling screws using the bed probe
+
+This is another way to calibrate the bed level using the bed probe. To
+use it you must have a Z probe (BL Touch, Inductive sensor, etc).
+
+To enable this feature, one would determine the additional nozzle
+coordinates near the screws and add them to the config file. For example,
+it might look like:
+
+```
+[bed_screws]
+screw1: -5,30
+screw1_name: front left screw
+screw2: 155,30
+screw2_name: front right screw
+screw3: 155,190
+screw3_name: rear right screw
+screw4: -5,190
+screw4_name: rear left screw
+horizontal_move_z: 10
+screw_thread: CW-M3
+```
+
+The screw1 is always the reference point for the others, so the system
+assumes that screw1 is in the correct height.
+Then to use this feature you must preform every time `G28` before `BED_SCREWS_ADJUST`
+and after bed is probed you get an output like this:
+
+```
+Send: G28
+Recv: ok
+Send: BED_SCREWS_CALCULATE
+Recv: // probe at -5.000,30.000 is z=2.487500
+Recv: // probe at 155.000,30.000 is z=2.460000
+Recv: // probe at 155.000,190.000 is z=2.515000
+Recv: // probe at -5.000,190.000 is z=2.472500
+Recv: // front left screw (Base): X -5.0, Y 30.0, Z 2.48750
+Recv: // front right screw : X 155.0, Y 30.0, Z 2.36000 : Adjust -> <O 01:15
+Recv: // rear right screw : X 155.0, Y 190.0, Z 2.71500 : Adjust -> O> 00:50
+Recv: // read left screw : X -5.0, Y 190.0, Z 2.47250 : Adjust -> <O 00:02
+Recv: ok
+```
+This means that:
+
+    * front left screw is the reference point you must not change it.
+
+    * front right screw must be turned clockwise 1 full turn and a quarter turn
+
+    * rear right screw must be turned counter-clockwise 50 minutes
+
+    * read left screw must be turned clockwise 2 minutes (not need it's ok)
+    
+Repeat the process several times until you get a good level bed, normally when
+all adjusts are below 6 minutes.

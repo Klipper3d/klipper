@@ -21,7 +21,7 @@ class BedScrews:
         self.current_screw = 0
         self.adjust_again = False
         # Read config
-        self.screws = []
+        screws = []
         fine_adjust = []
         for i in range(99):
             prefix = "screw%d" % (i + 1,)
@@ -30,19 +30,22 @@ class BedScrews:
             screw_coord = parse_coord(config, prefix)
             screw_name = "screw at %.3f,%.3f" % screw_coord
             screw_name = config.get(prefix + "_name", screw_name)
-            self.screws.append((screw_coord, screw_name))
+            screws.append((screw_coord, screw_name))
             if config.get(prefix + "_fine_adjust", None) is not None:
                 fine_coord = parse_coord(config, prefix + "_fine_adjust")
                 fine_adjust.append((fine_coord, screw_name))
-        if len(self.screws) < 3:
+        if len(screws) < 3:
             raise config.error("bed_screws: Must have at least three screws")
-        self.states = {'adjust': self.screws, 'fine': fine_adjust}
+        self.states = {'adjust': screws, 'fine': fine_adjust}
         self.speed = config.getfloat('speed', 50., above=0.)
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z = config.getfloat('probe_height', 0.)
-        self.screw_thread = config.getfloat('screw_thread', default=3, minval=3, maxval=5)
-        self.knob_direction = config.getfloat('knob_direction', default=1, minval=0, maxval=1)
+        threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
+                   'CW-M5': 4, 'CCW-M5': 5}
+        self.thread = config.getchoice('screw_thread', threads)
+        if self.thread is None:
+            self.thread = 0
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BED_SCREWS_ADJUST",
@@ -121,22 +124,27 @@ class BedScrews:
     def cmd_ABORT(self, params):
         self.unregister_commands()
         self.state = None
-    cmd_BED_SCREWS_CALCULATE_help = "Tool to help adjust bed leveling screws by " \
-                                    "calculating the number of turns to level it."
+    cmd_BED_SCREWS_CALCULATE_help = "Tool to help adjust bed leveling " \
+                                    "screws by calculating the number " \
+                                    "of turns to level it."
     def cmd_BED_SCREWS_CALCULATE(self, params):
         # Don't execute this command if BED_SCREWS_ADJUST is running
         if self.state is not None:
-            raise self.gcode.error(
-                "Already in bed_screws helper; use ABORT to exit before using this command")
+            raise self.gcode.error("Already in BED_SCREWS_ADJUST; "
+                                   "use ABORT to exit before using "
+                                   "this command.")
+        # Don't execute this command if no probe
+        probe = self.printer.lookup_object("probe")
+        if probe is None:
+            raise self.gcode.error("Error you must have a probe on "
+                                   "your config file.")
         toolhead = self.printer.lookup_object('toolhead')
-        # Factor used for M3, M4 and M5 bed screws
-        threads_factor = {3: 0.5, 4: 0.7, 5: 0.8}
+        # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5
+        threads_factor = {0: 0.5, 1: 0.5, 2: 0.7, 3: 0.7, 4: 0.8, 5: 0.8}
         # Prepare a place to save the Z read values
         screws_info = []
-        # Perform a G28
-        self.gcode.run_script_from_command("G28")
         # Probe the bed in the screw define points
-        for coord, name in self.screws:
+        for coord, name in self.states['adjust']:
             pos = toolhead.get_position()
             # First move Z up
             self.move((pos[0], pos[1], self.horizontal_move_z), self.speed)
@@ -157,7 +165,8 @@ class BedScrews:
                 z_base, coord_base, name_base = screw_info
                 # Show the results
                 self.gcode.respond_info("%s (Base): X %.1f, Y %.1f, Z %.5f" %
-                                        (name_base, coord_base[0], coord_base[1], z_base))
+                                        (name_base, coord_base[0],
+                                         coord_base[1], z_base))
             else:
                 # Calculate how knob must me adjusted for other positions
                 z, coord, name = screw_info
@@ -165,17 +174,19 @@ class BedScrews:
                 if abs(diff) < 0.001:
                     adjust = 0
                 else:
-                    adjust = diff / threads_factor.get(self.screw_thread, 0.5)
-                if self.knob_direction == 1:
-                    sign = "O>" if adjust < 0 else "<O"
-                else:
+                    adjust = diff / threads_factor.get(self.thread, 0.5)
+                if (self.thread & 1) == 1:
                     sign = "<O" if adjust < 0 else "O>"
+                else:
+                    sign = "O>" if adjust < 0 else "<O"
                 full_turns = math.trunc(adjust)
                 decimal_part = adjust - full_turns
                 minutes = round(decimal_part * 60, 0)
                 # Show the results
-                self.gcode.respond_info("%s : X %.1f, Y %.1f, Z %.5f : Adjust -> %s %02d:%02d" % (
-                      name, coord[0], coord[1], z, sign, abs(full_turns), abs(minutes)))
+                self.gcode.respond_info("%s : X %.1f, Y %.1f, Z %.5f : " 
+                                         "Adjust -> %s %02d:%02d" % (
+                                         name, coord[0], coord[1], z, sign,
+                                         abs(full_turns), abs(minutes)))
 
 def load_config(config):
     return BedScrews(config)

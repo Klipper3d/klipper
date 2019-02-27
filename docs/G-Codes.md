@@ -270,6 +270,11 @@ section is enabled:
   (as defined in the config file) and allow one to make adjustments to
   the bed screws so that the bed is a constant distance from the
   nozzle.
+- `BED_SCREWS_CALCULATE`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) probing the z height and calculate
+  the number of knob turns to adjust the bed level.
+  IMPORTANT: MUST always do a G28 before using this command.
 
 ## Z Tilt
 
