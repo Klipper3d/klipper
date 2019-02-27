@@ -162,8 +162,8 @@ def main():
                     default="atmega644", help="type of AVR machine to simulate")
     opts.add_option("-s", "--speed", type="int", dest="speed", default=8000000,
                     help="machine speed")
-    opts.add_option("-r", "--rate", type="float", dest="pacing_rate", default=0.,
-                    help="real-time pacing rate")
+    opts.add_option("-r", "--rate", type="float", dest="pacing_rate",
+                    default=0., help="real-time pacing rate")
     opts.add_option("-b", "--baud", type="int", dest="baud", default=38400,
                     help="baud rate of the emulated serial port")
     opts.add_option("-t", "--trace", type="string", dest="trace",
