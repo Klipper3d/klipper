@@ -272,6 +272,13 @@ class TMC2130:
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
+        gcode.respond_info("========== Write-only registers ==========")
+        for reg_name, val in self.regs.items():
+            if reg_name not in ReadRegisters:
+                msg = self.fields.pretty_format(reg_name, val)
+                logging.info(msg)
+                gcode.respond_info(msg)
+        gcode.respond_info("========== Queried registers ==========")
         for reg_name in ReadRegisters:
             val = self.get_register(reg_name)
             msg = self.fields.pretty_format(reg_name, val)
