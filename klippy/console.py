@@ -144,8 +144,8 @@ class KeyboardReader:
         out += "\nAvailable artificial commands:"
         out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
         out += "\nAvailable local variables:"
-        out += "\n  ".join([""] + ["%s: %s" % (k, v)
-                                   for k, v in sorted(self.eval_globals.items())])
+        lvars = sorted(self.eval_globals.items())
+        out += "\n  ".join([""] + ["%s: %s" % (k, v) for k, v in lvars])
         self.output(out)
     def command_HELP(self, parts):
         self.output(help_txt)
