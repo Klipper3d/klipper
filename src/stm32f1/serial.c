@@ -17,7 +17,8 @@
 void
 serial_init(void)
 {
-    const uint32_t pclk = __LL_RCC_CALC_PCLK2_FREQ(SystemCoreClock, LL_RCC_GetAPB2Prescaler());
+    const uint32_t pclk = __LL_RCC_CALC_PCLK2_FREQ(SystemCoreClock
+                                                   , LL_RCC_GetAPB2Prescaler());
 
     LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_USART1);
     LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_USART1);
