@@ -96,41 +96,55 @@ class TMC2660:
                  '8': 5, '4': 6, '2': 7, '1': 8}
         self.driver_mres = config.getchoice('microsteps', steps)
         self.driver_intpol = config.getboolean('interpolate', default=True)
-        self.current = config.getfloat('run_current',  minval=CURRENT_MIN, maxval=CURRENT_MAX)
+        self.current = config.getfloat('run_current',  minval=CURRENT_MIN,
+                                       maxval=CURRENT_MAX)
         self.driver_dedge = config.getboolean('driver_DEDGE', default=False)
 
         # CHOPCONF
         btime = {'16': 0, '24': 1, '36': 2, '54': 3}
         self.driver_tbl = config.getchoice('driver_TBL', btime, default='36')
         chm = {'spreadcycle': 0, 'constant_toff': 1}
-        self.driver_chm = config.getchoice('driver_CHM', chm, default='spreadcycle')
+        self.driver_chm = config.getchoice('driver_CHM', chm,
+                                           default='spreadcycle')
         self.driver_rndtf = config.getboolean('driver_RNDTF', False)
         if self.driver_chm:
-            self.driver_hend = config.getint('driver_HEND', default=7, minval=-3, maxval=12) + 3
-            self.driver_hstrt = config.getint('driver_HSTRT', default=5, minval=0, maxval=15)
-            self.driver_toff = config.getint('driver_TOFF', default=7, minval=0, maxval=15)
-            self.driver_hdec = config.getboolean('driver_HDEC', default=False) | ((self.driver_hstrt & 0x8) >> 1) # if chm is 1, HDEC1 is the MSB of HSTRT
+            self.driver_hend = config.getint('driver_HEND', default=7,
+                                             minval=-3, maxval=12) + 3
+            self.driver_hstrt = config.getint('driver_HSTRT', default=5,
+                                              minval=0, maxval=15)
+            self.driver_toff = config.getint('driver_TOFF', default=7,
+                                             minval=0, maxval=15)
+            # if chm is 1, HDEC1 is the MSB of HSTRT
+            self.driver_hdec = (config.getboolean('driver_HDEC', default=False)
+                                | ((self.driver_hstrt & 0x8) >> 1))
         else:
             self.driver_hdec = config.getboolean('driver_HDEC', default=False)
-            self.driver_hend = config.getint('driver_HEND', default=3, minval=-3, maxval=12) + 3
-            self.driver_hstrt = config.getint('driver_HSTRT', default=4, minval=1, maxval=8) - 1
-            self.driver_toff = config.getint('driver_TOFF', default=4, minval=0, maxval=15)
+            self.driver_hend = config.getint('driver_HEND', default=3,
+                                             minval=-3, maxval=12) + 3
+            self.driver_hstrt = config.getint('driver_HSTRT', default=4,
+                                              minval=1, maxval=8) - 1
+            self.driver_toff = config.getint('driver_TOFF', default=4,
+                                             minval=0, maxval=15)
             if self.driver_hstrt + self.driver_hend > 15:
                 raise config.error("driver_HEND + HSTRT must be <= 15")
 
         # SMARTEN
         csc = {'quarter': 1, 'half': 0}
-        self.driver_seimin = config.getchoice('driver_SEIMIN', csc, default='half')
+        self.driver_seimin = config.getchoice('driver_SEIMIN', csc,
+                                              default='half')
         cds = {'32': 0, '8': 1, '2': 2, '1': 3}
         self.driver_sedn = config.getchoice('driver_SEDN', cds, default='32')
-        self.driver_semax = config.getint('driver_SEMAX', default=0, minval=0, maxval=15)
+        self.driver_semax = config.getint('driver_SEMAX', default=0,
+                                          minval=0, maxval=15)
         cis = {'1': 0, '2': 1, '4': 2, '8': 3}
         self.driver_seup = config.getchoice('driver_SEUP', cis, default='1')
-        self.driver_semin = config.getint('driver_SEMIN', default=0, minval=0, maxval=15)
+        self.driver_semin = config.getint('driver_SEMIN', default=0,
+                                          minval=0, maxval=15)
 
         # SGSCONF
         self.driver_sfilt = config.getboolean('driver_SFILT', default=True)
-        self.driver_sgt = config.getint('driver_sgt', default=-64, minval=-64, maxval=63) + 64
+        self.driver_sgt = config.getint('driver_sgt', default=-64,
+                                        minval=-64, maxval=63) + 64
         self.driver_cs = current_to_reg(self.current)
 
         # DRVCONF
@@ -141,9 +155,11 @@ class TMC2660:
         self.driver_diss2g = config.getboolean('driver_DISS2G', default=False)
         ts2g = {'3.2': 0, '1.6': 1, '1.2': 2, '0.8': 3}
         self.driver_ts2g = config.getchoice('driver_TS2G', ts2g, default='0.8')
-        self.driver_sdoff = False # since we don't support SPI mode yet, this has to be False
+        # since we don't support SPI mode yet, this has to be False
+        self.driver_sdoff = False
         vsense = {'low': 0, 'high': 1}
-        self.driver_vsense = config.getchoice('driver_VSENSE', vsense, default='high')
+        self.driver_vsense = config.getchoice('driver_VSENSE', vsense,
+                                              default='high')
         self.driver_rdsel = 0  # Microsteps (used by endstop phase)
 
         # Build and send registers
@@ -189,7 +205,8 @@ class TMC2660:
         self.add_config_cmd(self.reg_smarten)
 
         # Idle timeout
-        self.idle_current_percentage = config.getint('idle_current_percent', default=100, minval=0, maxval=100)
+        self.idle_current_percentage = config.getint(
+            'idle_current_percent', default=100, minval=0, maxval=100)
         if self.idle_current_percentage < 100:
             self.printer.register_event_handler("idle_timeout:printing",
                                                 self.handle_printing)
@@ -205,17 +222,20 @@ class TMC2660:
 
     def get_phase(self):
         # Send DRVCTRL to get a response
-        reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
+        reg_data = [(self.reg_drvctrl >> 16) & 0xff,
+                    (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
         params = self.spi.spi_transfer(reg_data)
         pr = bytearray(params['response'])
-        steps = (((pr[0] << 16) | (pr[1] << 8) | pr[2]) & READRSP['MSTEP'][1]) >> READRSP['MSTEP'][0]
+        steps = (((pr[0] << 16) | (pr[1] << 8) | pr[2])
+                 & READRSP['MSTEP'][1]) >> READRSP['MSTEP'][0]
         return steps >> self.driver_mres
 
     def handle_printing(self, print_time):
         self.set_current(print_time, self.current)
 
     def handle_ready(self, print_time):
-        self.set_current(print_time, float(self.idle_current_percentage) * self.current / 100)
+        self.set_current(print_time, (float(self.idle_current_percentage)
+                                      * self.current / 100))
 
     def set_current(self, print_time, current):
         self.driver_cs = current_to_reg(current)
@@ -226,26 +246,36 @@ class TMC2660:
         clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self.spi.spi_send(reg_data, minclock=clock, reqclock=clock)
 
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver (between %d and %d)" % (CURRENT_MIN, CURRENT_MAX)
+    cmd_SET_TMC_CURRENT_help = (
+        "Set the current of a TMC2660 driver (between %d and %d)" % (
+            CURRENT_MIN, CURRENT_MAX))
     def cmd_SET_TMC_CURRENT(self, params):
         gcode = self.printer.lookup_object('gcode')
         if 'CURRENT' in params:
-            self.current = gcode.get_float('CURRENT', params, minval=CURRENT_MIN, maxval=CURRENT_MAX)
-            self.set_current(self.printer.lookup_object('toolhead').get_last_move_time(), self.current)
+            self.current = gcode.get_float(
+                'CURRENT', params, minval=CURRENT_MIN, maxval=CURRENT_MAX)
+            self.set_current(
+                self.printer.lookup_object('toolhead').get_last_move_time(),
+                self.current)
 
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
-        for reg_name , val in zip(["DRVCONF", "DRVCTRL", "CHOPCONF", "SGCSCONF", "SMARTEN"],
-                            [self.reg_drvconf, self.reg_drvctrl, self.reg_chopconf, self.reg_sgcsconf, self.reg_smarten]):
+        for reg_name , val in zip(["DRVCONF", "DRVCTRL", "CHOPCONF",
+                                   "SGCSCONF", "SMARTEN"],
+                            [self.reg_drvconf, self.reg_drvctrl,
+                             self.reg_chopconf, self.reg_sgcsconf,
+                             self.reg_smarten]):
             msg = "%-15s %08x" % (reg_name + " (cached):", val)
             gcode.respond_info(msg)
         # Send one register to get the return data
-        reg_data = [(self.reg_drvctrl >> 16) & 0xff, (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
+        reg_data = [(self.reg_drvctrl >> 16) & 0xff,
+                    (self.reg_drvctrl >> 8) & 0xff, self.reg_drvctrl & 0xff]
         params = self.spi.spi_transfer(reg_data)
         pr = bytearray(params['response'])
-        msg = "%-15s %08x" % ("RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2]))
+        msg = "%-15s %08x" % (
+            "RESPONSE:", ((pr[0] << 16) | (pr[1] << 8) | pr[2]))
         gcode.respond_info(msg)
 
 def load_config_prefix(config):
