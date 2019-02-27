@@ -14,10 +14,12 @@ class HostResponder:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.default_prefix = config.getchoice('default_type', respond_types, 'echo')
+        self.default_prefix = config.getchoice('default_type', respond_types,
+                                               'echo')
         self.default_prefix = config.get('default_prefix', self.default_prefix)
         self.gcode = self.printer.lookup_object('gcode')
-        self.cmd_M118_help = "Send a message to the host prefixed with '%s'" % self.default_prefix
+        self.cmd_M118_help = "Send a message to the host prefixed with '%s'" % (
+            self.default_prefix,)
         self.gcode.register_command(
             'M118', self.cmd_M118, True, desc=self.cmd_M118_help)
         self.gcode.register_command('RESPOND', self.cmd_RESPOND, True)
@@ -42,7 +44,9 @@ class HostResponder:
             if(respond_type in respond_types):
                 prefix = respond_types[respond_type]
             else:
-                raise self.gcode.error("RESPOND TYPE '%s' is invalid. Must be one of 'echo', 'command', or 'error'" % respond_type)
+                raise self.gcode.error(
+                    "RESPOND TYPE '%s' is invalid. Must be one"
+                    " of 'echo', 'command', or 'error'" % (respond_type,))
         prefix = self.gcode.get_str('PREFIX', params, prefix)
         msg = self.gcode.get_str('MSG', params, '')
         self.gcode.respond("%s %s" %(prefix, msg))
