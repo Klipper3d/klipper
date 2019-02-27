@@ -53,9 +53,7 @@ class Move:
             return
         # Allow extruder to calculate its maximum junction
         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
-        # Find max velocity using approximated centripetal velocity as
-        # described at:
-        # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
+        # Find max velocity using "approximated centripetal velocity"
         axes_d = self.axes_d
         prev_axes_d = prev_move.axes_d
         junction_cos_theta = -((axes_d[0] * prev_axes_d[0]
@@ -66,7 +64,8 @@ class Move:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
-        R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
+        R = (self.toolhead.junction_deviation * sin_theta_d2
+             / (1. - sin_theta_d2))
         tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
         move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * self.accel
         prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
@@ -263,7 +262,8 @@ class ToolHead:
             raise config.error(msg)
         # SET_VELOCITY_LIMIT command
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('SET_VELOCITY_LIMIT', self.cmd_SET_VELOCITY_LIMIT,
+        gcode.register_command('SET_VELOCITY_LIMIT',
+                               self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
     # Print time tracking
