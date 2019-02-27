@@ -344,7 +344,7 @@ class TMC2208:
             params = self.tmcuart_send_cmd.send_with_response(
                 [self.oid, msg, 0], 'tmcuart_response', self.oid)
             self.ifcnt = self.get_register("IFCNT")
-            if self.ifcnt is not None and self.ifcnt == (ifcnt + 1) & 0xff:
+            if self.ifcnt == (ifcnt + 1) & 0xff:
                 return
         raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
