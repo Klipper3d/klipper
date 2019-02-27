@@ -13,7 +13,7 @@ ST7920_CMD_DELAY  = .000020
 ST7920_SYNC_DELAY = .000045
 
 TextGlyphs = { 'right_arrow': '\x1a' }
-CharGlyphs = { 'degrees': font8x14.VGA_FONT[0xf8] }
+CharGlyphs = { 'degrees': bytearray(font8x14.VGA_FONT[0xf8]) }
 
 class ST7920:
     def __init__(self, config):

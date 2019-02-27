@@ -19,7 +19,8 @@ class DisplayBase:
         self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
-        self.font = [self._swizzle_bits(c) for c in font8x14.VGA_FONT]
+        self.font = [self._swizzle_bits(bytearray(c))
+                     for c in font8x14.VGA_FONT]
         self.icons = {}
         for name, icon in icons.Icons16x16.items():
             top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
