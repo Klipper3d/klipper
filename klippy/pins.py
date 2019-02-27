@@ -215,8 +215,10 @@ class PrinterPins:
                    share_type=None):
         desc = pin_desc.strip()
         pullup = invert = 0
-        if can_pullup and desc.startswith('^'):
+        if can_pullup and (desc.startswith('^') or desc.startswith('~')):
             pullup = 1
+            if desc.startswith('~'):
+                pullup = -1
             desc = desc[1:].strip()
         if can_invert and desc.startswith('!'):
             invert = 1
@@ -227,7 +229,7 @@ class PrinterPins:
             chip_name, pin = [s.strip() for s in desc.split(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
-        if [c for c in '^!: ' if c in pin]:
+        if [c for c in '^~!: ' if c in pin]:
             format = ""
             if can_pullup:
                 format += "[^] "

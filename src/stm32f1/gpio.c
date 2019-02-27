@@ -114,7 +114,8 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     irqstatus_t flag = irq_save();
     if (pull_up) {
         LL_GPIO_SetPinMode(g.regs, g.bit, LL_GPIO_MODE_INPUT);
-        LL_GPIO_SetPinPull(g.regs, g.bit, LL_GPIO_PULL_UP);
+        uint32_t p = pull_up > 0 ? LL_GPIO_PULL_UP : LL_GPIO_PULL_DOWN;
+        LL_GPIO_SetPinPull(g.regs, g.bit, p);
     } else {
         LL_GPIO_SetPinMode(g.regs, g.bit, LL_GPIO_MODE_FLOATING);
     }
