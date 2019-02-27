@@ -246,7 +246,6 @@ def decode_tmc2208_read(reg, data):
 class TMC2208:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -307,7 +306,6 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
-        self.init_delay_time = config.getfloat('init_delay_time', None, minval=0.)
     def build_config(self):
         bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
         self.mcu.add_config_cmd(
@@ -317,17 +315,9 @@ class TMC2208:
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
     def handle_connect(self):
-        self.do_init()
-    def do_init(self):
-        if self.init_delay_time is None:
-             self._init_registers()
-        else:
-             self.reactor.register_callback(self._init_callback, self.reactor.monotonic() + self.init_delay_time)
-    def _init_callback(self, eventttime):
         self._init_registers()
     def _init_registers(self):
         # Send registers
-        logging.info("INIT_TMC 2208 %s", self.name)
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
     def get_register(self, reg_name):
@@ -341,7 +331,7 @@ class TMC2208:
             val = decode_tmc2208_read(reg, params['read'])
             if val is not None:
                 return val
-        logging.info(
+        raise self.printer.config_error(
             "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
     def set_register(self, reg_name, val):
         msg = encode_tmc2208_write(0xf5, 0x00, Registers[reg_name] | 0x80, val)
@@ -356,7 +346,7 @@ class TMC2208:
             self.ifcnt = self.get_register("IFCNT")
             if self.ifcnt is not None and self.ifcnt == (ifcnt + 1) & 0xff:
                 return
-        logging.info(
+        raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
@@ -382,7 +372,9 @@ class TMC2208:
             logging.info(msg)
             gcode.respond_info(msg)
     def cmd_INIT_TMC(self, params):
-        self.do_init()
+        logging.info("INIT_TMC 2208 %s", self.name)
+        self.printer.lookup_object('toolhead').wait_moves()
+        self._init_registers()
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
 
 def load_config_prefix(config):

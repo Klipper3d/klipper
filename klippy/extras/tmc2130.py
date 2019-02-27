@@ -205,10 +205,7 @@ def get_config_stealthchop(config, tmc_freq):
 class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
@@ -248,21 +245,11 @@ class TMC2130:
         set_config_field(config, "pwm_autoscale", True)
         sgt = config.getint('driver_SGT', 0, minval=-64, maxval=63) & 0x7f
         self.fields.set_field("sgt", sgt)
-        self.init_delay_time = config.getfloat('init_delay_time', None, minval=0.)
-    def handle_connect(self):
-        self.do_init()
-    def do_init(self):
-        if self.init_delay_time is None:
-             self._init_registers()
-        else:
-             self.reactor.register_callback(self._init_callback, self.reactor.monotonic() + self.init_delay_time)
-    def _init_callback(self, eventtime):
         self._init_registers()
-    def _init_registers(self):
+    def _init_registers(self, min_clock = 0):
         # Send registers
-        logging.info("INIT_TMC 2130 %s", self.name)
         for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val)
+            self.set_register(reg_name, val, min_clock)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
@@ -275,11 +262,11 @@ class TMC2130:
         params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
-    def set_register(self, reg_name, val):
+    def set_register(self, reg_name, val, min_clock = 0):
         reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data)
+        self.spi.spi_send(data, min_clock)
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
@@ -296,7 +283,10 @@ class TMC2130:
             logging.info(msg)
             gcode.respond_info(msg)
     def cmd_INIT_TMC(self, params):
-        self.do_init()
+        logging.info("INIT_TMC 2130 %s", self.name)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time();
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self._init_registers(min_clock)
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
