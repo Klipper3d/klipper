@@ -42,7 +42,8 @@ def coordinate_descent(adj_params, params, error_func):
                 continue
             params[param_name] = orig
             dp[param_name] *= 0.9
-    logging.info("Coordinate descent best_err: %s  rounds: %d", best_err, rounds)
+    logging.info("Coordinate descent best_err: %s  rounds: %d",
+                 best_err, rounds)
     return params
 
 # Helper to run the coordinate descent function in a background
