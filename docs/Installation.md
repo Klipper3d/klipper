@@ -97,16 +97,18 @@ Configuring OctoPrint to use Klipper
 
 The OctoPrint web server needs to be configured to communicate with
 the Klipper host software. Using a web browser, login to the OctoPrint
-web page, and navigate to the Settings tab. Then configure the
-following items:
+web page and then configure the following items:
 
-Under "Serial Connection" in "Additional serial ports" add
+Navigate to the Settings tab (the wrench icon at the top of the
+page). Under "Serial Connection" in "Additional serial ports" add
 "/tmp/printer". Then click "Save".
 
 Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer". Navigate to the "Behavior"
-sub-tab and select the "Cancel any ongoing prints but stay connected
-to the printer" option. Click "Save".
+"Serial Port" setting to "/tmp/printer".
+
+In the Settings tab, navigate to the "Behavior" sub-tab and select the
+"Cancel any ongoing prints but stay connected to the printer"
+option. Click "Save".
 
 From the main page, under the "Connection" section (at the top left of
 the page) make sure the "Serial Port" is set to "/tmp/printer" and
