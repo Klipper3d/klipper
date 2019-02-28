@@ -45,7 +45,8 @@ class BedScrews:
                    'CW-M5': 4, 'CCW-M5': 5}
         # 'screw_thread' is optional
         try:
-            self.thread = config.getchoice('screw_thread', threads, default="CW-M3")
+            self.thread = config.getchoice('screw_thread', threads,
+                                           default="CW-M3")
         except Exception as e:
             self.thread = 0
         # Register command
