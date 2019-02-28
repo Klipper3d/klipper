@@ -183,7 +183,7 @@ class BedScrews:
                 decimal_part = adjust - full_turns
                 minutes = round(decimal_part * 60, 0)
                 # Show the results
-                self.gcode.respond_info("%s : X %.1f, Y %.1f, Z %.5f : " 
+                self.gcode.respond_info("%s : X %.1f, Y %.1f, Z %.5f : "
                                          "Adjust -> %s %02d:%02d" % (
                                          name, coord[0], coord[1], z, sign,
                                          abs(full_turns), abs(minutes)))

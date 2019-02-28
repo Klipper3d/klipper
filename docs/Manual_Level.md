@@ -161,7 +161,6 @@ The screw1 is always the reference point for the others, so the system
 assumes that screw1 is in the correct height.
 Then to use this feature you must preform every time `G28` before `BED_SCREWS_ADJUST`
 and after bed is probed you get an output like this:
-
 ```
 Send: G28
 Recv: ok
@@ -178,13 +177,10 @@ Recv: ok
 ```
 This means that:
 
-    * front left screw is the reference point you must not change it.
-
-    * front right screw must be turned clockwise 1 full turn and a quarter turn
-
-    * rear right screw must be turned counter-clockwise 50 minutes
-
-    * read left screw must be turned clockwise 2 minutes (not need it's ok)
+    - front left screw is the reference point you must not change it.
+    - front right screw must be turned clockwise 1 full turn and a quarter turn
+    - rear right screw must be turned counter-clockwise 50 minutes
+    - read left screw must be turned clockwise 2 minutes (not need it's ok)
     
 Repeat the process several times until you get a good level bed, normally when
 all adjusts are below 6 minutes.
