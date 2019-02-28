@@ -52,7 +52,8 @@ class HeaterCheck:
                 logging.info("Heater %s within range of %.3f",
                              self.heater_name, target)
             self.met_target = True
-            self.error = 0.
+            if temp <= target + self.hysteresis:
+                self.error = 0.
         elif self.met_target:
             self.error += (target - self.hysteresis) - temp
             if target != self.last_target:
