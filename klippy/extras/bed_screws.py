@@ -43,9 +43,7 @@ class BedScrews:
         self.probe_z = config.getfloat('probe_height', 0.)
         threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
                    'CW-M5': 4, 'CCW-M5': 5}
-        self.thread = config.getchoice('screw_thread', threads)
-        if self.thread is None:
-            self.thread = 0
+        self.thread = config.getchoice('screw_thread', threads, default="CW-M3")
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BED_SCREWS_ADJUST",
