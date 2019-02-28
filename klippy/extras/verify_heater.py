@@ -27,7 +27,7 @@ class HeaterCheck:
             default_gain_time = 60.
         self.check_gain_time = config.getfloat(
             'check_gain_time', default_gain_time, minval=1.)
-        self.met_target = False
+        self.met_target = self.starting_approach = False
         self.last_target = self.goal_temp = self.error = 0.
         self.fault_systime = self.printer.get_reactor().NEVER
         self.check_timer = None
@@ -61,6 +61,7 @@ class HeaterCheck:
                 logging.info("Heater %s approaching new target of %.3f",
                              self.heater_name, target)
                 self.met_target = False
+                self.starting_approach = True
                 self.goal_temp = temp + self.heating_gain
                 self.fault_systime = eventtime + self.check_gain_time
             elif self.error >= self.max_error:
@@ -68,11 +69,14 @@ class HeaterCheck:
                 return self.heater_fault()
         elif temp >= self.goal_temp:
             # Temperature approaching target - reset checks
+            self.starting_approach = False
             self.goal_temp = temp + self.heating_gain
             self.fault_systime = eventtime + self.check_gain_time
         elif eventtime >= self.fault_systime:
             # Failure due to inability to approach target temperature
             return self.heater_fault()
+        elif self.starting_approach:
+            self.goal_temp = min(self.goal_temp, temp + self.heating_gain)
         self.last_target = target
         return eventtime + 1.
     def heater_fault(self):
