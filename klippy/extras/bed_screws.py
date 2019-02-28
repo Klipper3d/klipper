@@ -41,14 +41,11 @@ class BedScrews:
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z = config.getfloat('probe_height', 0.)
+        # 'screw_thread' is optional
         threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
                    'CW-M5': 4, 'CCW-M5': 5}
-        # 'screw_thread' is optional
-        try:
-            self.thread = config.getchoice('screw_thread', threads,
-                                           default="CW-M3")
-        except Exception as e:
-            self.thread = 0
+        self.thread = config.getchoice('screw_thread', threads,
+                                       default=0)
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BED_SCREWS_ADJUST",
