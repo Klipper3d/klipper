@@ -42,11 +42,11 @@ config MACH_SAMD51
 
 config MCU
     string
-    default "samd21g" if MACH_SAMD21G18
-    default "samd51g19" if MACH_SAMD51G19
-    default "samd51j19" if MACH_SAMD51J19
-    default "samd51n19" if MACH_SAMD51N19
-    default "samd51p20" if MACH_SAMD51P20
+    default "samd21g18a" if MACH_SAMD21G18
+    default "samd51g19a" if MACH_SAMD51G19
+    default "samd51j19a" if MACH_SAMD51J19
+    default "samd51n19a" if MACH_SAMD51N19
+    default "samd51p20a" if MACH_SAMD51P20
 
 config CLOCK_FREQ
     int
