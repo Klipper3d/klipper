@@ -53,6 +53,22 @@ config CLOCK_FREQ
     default 48000000 if MACH_SAMD21
     default 120000000 if MACH_SAMD51
 
+config FLASH_SIZE
+    hex
+    default 0x40000 if MACH_SAMD21G18
+    default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
+    default 0x100000 if MACH_SAMD51P20
+
+config RAM_SIZE
+    hex
+    default 0x8000 if MACH_SAMD21G18
+    default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
+    default 0x40000 if MACH_SAMD51P20
+
+config STACK_SIZE
+    int
+    default 512
+
 choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K

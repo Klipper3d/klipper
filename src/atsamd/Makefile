@@ -37,17 +37,13 @@ src-$(CONFIG_MACH_SAMD51) += atsamd/samd51_clock.c generic/armcm_timer.c
 src-$(CONFIG_MACH_SAMD51) += ../lib/samd51/samd51a/gcc/gcc/startup_samd51.c
 
 # Support bootloader offset address
-target-y := $(OUT)samd.ld $(target-y)
+target-y := $(target-y)
 
-ldfile-$(CONFIG_MACH_SAMD21G18) := lib/samd21/samd21a/gcc/gcc/samd21g18a_flash.ld
-ldfile-$(CONFIG_MACH_SAMD51G19) := lib/samd51/samd51a/gcc/gcc/samd51g19a_flash.ld
-ldfile-$(CONFIG_MACH_SAMD51J19) := lib/samd51/samd51a/gcc/gcc/samd51j19a_flash.ld
-ldfile-$(CONFIG_MACH_SAMD51N19) := lib/samd51/samd51a/gcc/gcc/samd51n19a_flash.ld
-ldfile-$(CONFIG_MACH_SAMD51P20) := lib/samd51/samd51a/gcc/gcc/samd51p20a_flash.ld
-
-$(OUT)samd.ld: $(ldfile-y) $(OUT)board-link
+$(OUT)samd.ld: src/atsamd/samd.lds.S $(OUT)board-link
 	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -P -MD -MT $@ -DFLASH_START=$(CONFIG_FLASH_START) $< -o $@
+	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
+
+$(OUT)klipper.elf: $(OUT)samd.ld
 
 # Build the additional hex and bin output files
 target-y += $(OUT)klipper.bin $(OUT)klipper.elf.hex
