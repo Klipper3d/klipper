@@ -292,7 +292,7 @@ class TMC2130:
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, params):
         logging.info("INIT_TMC 2130 %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time();
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self._init_registers(min_clock)
 
