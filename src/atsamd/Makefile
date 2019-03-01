@@ -17,8 +17,7 @@ CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 CFLAGS_klipper.elf += -T $(OUT)samd.ld --specs=nano.specs --specs=nosys.specs
 
 # Add source files
-src-y += atsamd/main.c atsamd/gpio.c
-src-y += generic/crc16_ccitt.c generic/alloc.c generic/armcm_irq.c
+src-y += atsamd/main.c atsamd/gpio.c generic/crc16_ccitt.c generic/armcm_irq.c
 src-$(CONFIG_USBSERIAL) += atsamd/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsamd/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
