@@ -7,15 +7,12 @@ dirs-y += src/atsamd src/generic
 dirs-$(CONFIG_MACH_SAMD21) += lib/samd21/samd21a/gcc/gcc/
 dirs-$(CONFIG_MACH_SAMD51) += lib/samd51/samd51a/gcc/gcc/
 
+MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
+
 CFLAGS-$(CONFIG_MACH_SAMD21) += -mcpu=cortex-m0plus -Ilib/samd21/samd21a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -mcpu=cortex-m4 -Ilib/samd51/samd51a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-CFLAGS-$(CONFIG_MACH_SAMD21G18) += -D__SAMD21G18A__
-CFLAGS-$(CONFIG_MACH_SAMD51G19) += -D__SAMD51G19A__
-CFLAGS-$(CONFIG_MACH_SAMD51J19) += -D__SAMD51J19A__
-CFLAGS-$(CONFIG_MACH_SAMD51N19) += -D__SAMD51N19A__
-CFLAGS-$(CONFIG_MACH_SAMD51P20) += -D__SAMD51P20A__
-CFLAGS += $(CFLAGS-y) -mthumb -Ilib/cmsis-core
+CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += -T $(OUT)samd.ld --specs=nano.specs --specs=nosys.specs
 
