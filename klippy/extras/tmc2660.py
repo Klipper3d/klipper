@@ -1,12 +1,10 @@
 # TMC2660 configuration
 #
-# Copyright (C) 2018  Florian Heilmann <Florian.Heilmann@gmx.net>
+# Copyright (C) 2018-2019  Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import math
 import bus
-
-CURRENT_MAX = 2.4
-CURRENT_MIN = 0.1
 
 REG_DRVCONF = 0xe << 16
 REG_SGCSCONF = 0xc  << 16
@@ -20,9 +18,10 @@ def get_bits(reg, field, value):
 def read_field(bits, reg, field):
     return (bits & reg[field][1]) >> reg[field][0]
 
-def current_to_reg(current):
-    current_constrained = min(CURRENT_MAX, max(CURRENT_MIN, current))
-    return int((32 * 1000 * current_constrained - 1600)/3236) # Taken from RRF
+def current_to_reg(current, sense_resistor, vsense_on):
+    vsense = 0.165 if vsense_on else 0.310
+    cs = int(32 * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
+    return max(0, min(31, cs))
 
 DRVCTRL = {
     "INTPOL" : (9, 0x00100),
@@ -96,8 +95,8 @@ class TMC2660:
                  '8': 5, '4': 6, '2': 7, '1': 8}
         self.driver_mres = config.getchoice('microsteps', steps)
         self.driver_intpol = config.getboolean('interpolate', default=True)
-        self.current = config.getfloat('run_current',  minval=CURRENT_MIN,
-                                       maxval=CURRENT_MAX)
+        self.current = config.getfloat('run_current',  minval=0.1,
+                                       maxval=2.4)
         self.driver_dedge = config.getboolean('driver_DEDGE', default=False)
 
         # CHOPCONF
@@ -141,12 +140,6 @@ class TMC2660:
         self.driver_semin = config.getint('driver_SEMIN', default=0,
                                           minval=0, maxval=15)
 
-        # SGSCONF
-        self.driver_sfilt = config.getboolean('driver_SFILT', default=True)
-        self.driver_sgt = config.getint('driver_sgt', default=-64,
-                                        minval=-64, maxval=63) + 64
-        self.driver_cs = current_to_reg(self.current)
-
         # DRVCONF
         slph = {'min': 0, 'min_tc': 1, 'med_tc': 2, 'max': 3}
         self.driver_slph = config.getchoice('driver_SLPH', slph, default='min')
@@ -160,7 +153,14 @@ class TMC2660:
         vsense = {'low': 0, 'high': 1}
         self.driver_vsense = config.getchoice('driver_VSENSE', vsense,
                                               default='high')
+        self.sense_resistor = config.getfloat('sense_resistor', default=0.051)
         self.driver_rdsel = 0  # Microsteps (used by endstop phase)
+
+        # SGSCONF
+        self.driver_sfilt = config.getboolean('driver_SFILT', default=True)
+        self.driver_sgt = config.getint('driver_sgt', default=-64,
+                                        minval=-64, maxval=63) + 64
+        self.driver_cs = current_to_reg(self.current, self.sense_resistor, self.driver_vsense)
 
         # Build and send registers
         self.reg_drvconf =  REG_DRVCONF | \
@@ -238,7 +238,7 @@ class TMC2660:
                                       * self.current / 100))
 
     def set_current(self, print_time, current):
-        self.driver_cs = current_to_reg(current)
+        self.driver_cs = current_to_reg(self.current, self.sense_resistor, self.driver_vsense)
         reg = self.reg_sgcsconf
         reg &= ~(SGCSCONF["CS"][1])
         reg |= get_bits(SGCSCONF, "CS", self.driver_cs)
@@ -248,12 +248,12 @@ class TMC2660:
 
     cmd_SET_TMC_CURRENT_help = (
         "Set the current of a TMC2660 driver (between %d and %d)" % (
-            CURRENT_MIN, CURRENT_MAX))
+            0.1, 2.4))
     def cmd_SET_TMC_CURRENT(self, params):
         gcode = self.printer.lookup_object('gcode')
         if 'CURRENT' in params:
             self.current = gcode.get_float(
-                'CURRENT', params, minval=CURRENT_MIN, maxval=CURRENT_MAX)
+                'CURRENT', params, minval=0.1, maxval=2.4)
             self.set_current(
                 self.printer.lookup_object('toolhead').get_last_move_time(),
                 self.current)
