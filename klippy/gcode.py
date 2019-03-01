@@ -224,6 +224,8 @@ class GCodeParser:
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
             if not self.is_processing_data:
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
                 self.request_restart('exit')
             pending_commands.append("")
         # Handle case where multiple commands pending
