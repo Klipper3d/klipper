@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import homing
-
 import math
 
 def parse_coord(config, param):
