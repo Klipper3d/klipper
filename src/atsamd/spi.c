@@ -13,10 +13,10 @@
 void
 spi_init(uint32_t bus, SercomSpi *ss, uint32_t ctrla, uint32_t baud)
 {
-    static int have_run_init[8];
-    if (have_run_init[bus])
+    static uint8_t have_run_init;
+    if (have_run_init & (1<<bus))
         return;
-    have_run_init[bus] = 1;
+    have_run_init |= 1<<bus;
 
     ss->CTRLA.reg = 0;
     ss->CTRLA.reg = ctrla & ~SERCOM_SPI_CTRLA_ENABLE;

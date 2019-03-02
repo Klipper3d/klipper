@@ -16,10 +16,10 @@
 static void
 i2c_init(uint32_t bus, SercomI2cm *si)
 {
-    static int have_run_init[8];
-    if (have_run_init[bus])
+    static uint8_t have_run_init;
+    if (have_run_init & (1<<bus))
         return;
-    have_run_init[bus] = 1;
+    have_run_init |= 1<<bus;
 
     // Configure i2c
     si->CTRLA.reg = 0;
