@@ -270,11 +270,11 @@ section is enabled:
   (as defined in the config file) and allow one to make adjustments to
   the bed screws so that the bed is a constant distance from the
   nozzle.
-  
+
 ## Bed Screws Tilt adjust Helper
 
-The following commands are available when the "screws_tilt_adjust" 
-config section is enabled:  
+The following commands are available when the "screws_tilt_adjust"
+config section is enabled:
 - `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
   adjustment tool. It will command the nozzle to different locations
   (as defined in the config file) probing the z height and calculate

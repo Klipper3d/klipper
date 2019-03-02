@@ -159,7 +159,7 @@ screw_thread: CW-M3
 
 The screw1 is always the reference point for the others, so the system
 assumes that screw1 is in the correct height.
-Then to use this feature you must preform every time `G28` before 
+Then to use this feature you must preform every time `G28` before
 `SCREWS_TILT_CALCULATE` and after bed is probed you get an output like this:
 ```
 Send: G28
