@@ -47,5 +47,5 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 flash: $(OUT)klipper.bin
-	@echo "  Flashing $^ to $(FLASH_DEVICE) via stm32flash"
-	$(Q)stm32flash -w $(OUT)klipper.bin -v -g 0 $(FLASH_DEVICE)
+	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
+	$(Q)stm32flash -w $< -v -g 0 $(FLASH_DEVICE)

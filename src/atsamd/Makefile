@@ -61,6 +61,6 @@ BOSSAC_OFFSET-$(CONFIG_MACH_SAMD21) := 0x2000
 BOSSAC_OFFSET-$(CONFIG_MACH_SAMD51) := 0x4000
 
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
-	@echo "  Flashing $^ to $(FLASH_DEVICE) via bossac"
+	@echo "  Flashing $< to $(FLASH_DEVICE) via bossac"
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
-	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -a --offset=$(BOSSAC_OFFSET-y) -w $(OUT)klipper.bin -v -b -R
+	$(Q)lib/bossac/bin/bossac -U -p "$(FLASH_DEVICE)" -a --offset=$(BOSSAC_OFFSET-y) -w $< -v -b -R
