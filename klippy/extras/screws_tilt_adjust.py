@@ -28,7 +28,8 @@ class ScrewsTiltAdjust:
             screw_name = config.get(prefix + "_name", screw_name)
             self.screws.append((screw_coord, screw_name))
         if len(self.screws) < 2:
-            raise config.error("screws_tilt_adjust: Must have at least two screws")
+            raise config.error("screws_tilt_adjust: Must have "
+                               "at least two screws")
         self.speed = config.getfloat('speed', 50., above=0.)
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
         self.probe_z_start = config.getfloat('probe_z_start', 10.)
