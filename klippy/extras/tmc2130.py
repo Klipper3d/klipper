@@ -211,11 +211,14 @@ class TMC2130:
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc2130_" + self.name, self)
-        # Add DUMP_TMC command
+        # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
         self.fields = FieldHelper(Fields, FieldFormatters, self.regs)
@@ -242,9 +245,11 @@ class TMC2130:
         set_config_field(config, "pwm_autoscale", True)
         sgt = config.getint('driver_SGT', 0, minval=-64, maxval=63) & 0x7f
         self.fields.set_field("sgt", sgt)
+        self._init_registers()
+    def _init_registers(self, min_clock = 0):
         # Send registers
         for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val)
+            self.set_register(reg_name, val, min_clock)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
@@ -257,11 +262,11 @@ class TMC2130:
         params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
-    def set_register(self, reg_name, val):
+    def set_register(self, reg_name, val, min_clock = 0):
         reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data)
+        self.spi.spi_send(data, min_clock)
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
@@ -272,11 +277,24 @@ class TMC2130:
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
+        gcode.respond_info("========== Write-only registers ==========")
+        for reg_name, val in self.regs.items():
+            if reg_name not in ReadRegisters:
+                msg = self.fields.pretty_format(reg_name, val)
+                logging.info(msg)
+                gcode.respond_info(msg)
+        gcode.respond_info("========== Queried registers ==========")
         for reg_name in ReadRegisters:
             val = self.get_register(reg_name)
             msg = self.fields.pretty_format(reg_name, val)
             logging.info(msg)
             gcode.respond_info(msg)
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
+    def cmd_INIT_TMC(self, params):
+        logging.info("INIT_TMC 2130 %s", self.name)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self._init_registers(min_clock)
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:

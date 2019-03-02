@@ -56,35 +56,59 @@ provided. Once configured, run:
 make
 ```
 
-Finally, for common micro-controllers, the code can be flashed with:
+It is necessary to determine the serial port connected to the
+micro-controller. For micro-controllers that connect via USB, run the
+following:
+
+```
+ls /dev/serial/by-id/*
+```
+
+It should report something similar to the following:
+
+```
+/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+```
+
+It's common for each printer to have its own unique serial port name.
+This unique name will be used when flashing the micro-controller. It's
+possible there may be multiple lines in the above output - if so,
+choose the line corresponding to the micro-controller (see the
+[FAQ](FAQ.md#wheres-my-serial-port) for more information).
+
+For common micro-controllers, the code can be flashed with something
+similar to:
 
 ```
 sudo service klipper stop
-make flash FLASH_DEVICE=/dev/ttyACM0
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 ```
 
+Be sure to update the FLASH_DEVICE with the printer's unique serial
+port name.
+
 When flashing for the first time, make sure that OctoPrint is not
 connected directly to the printer (from the OctoPrint web page, under
-the "Connection" section, click "Disconnect"). The most common
-communication device is **/dev/ttyACM0** - see the
-[FAQ](FAQ.md#wheres-my-serial-port) for other possibilities.
+the "Connection" section, click "Disconnect").
 
 Configuring OctoPrint to use Klipper
 ====================================
 
 The OctoPrint web server needs to be configured to communicate with
 the Klipper host software. Using a web browser, login to the OctoPrint
-web page, and navigate to the Settings tab. Then configure the
-following items:
+web page and then configure the following items:
 
-Under "Serial Connection" in "Additional serial ports" add
+Navigate to the Settings tab (the wrench icon at the top of the
+page). Under "Serial Connection" in "Additional serial ports" add
 "/tmp/printer". Then click "Save".
 
 Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer". Navigate to the "Behavior"
-sub-tab and select the "Cancel any ongoing prints but stay connected
-to the printer" option. Click "Save".
+"Serial Port" setting to "/tmp/printer".
+
+In the Settings tab, navigate to the "Behavior" sub-tab and select the
+"Cancel any ongoing prints but stay connected to the printer"
+option. Click "Save".
 
 From the main page, under the "Connection" section (at the top left of
 the page) make sure the "Serial Port" is set to "/tmp/printer" and
@@ -126,6 +150,17 @@ nano ~/printer.cfg
 
 Make sure to review and update each setting that is appropriate for
 the hardware.
+
+It's common for each printer to have its own unique name for the
+micro-controller. The name may change after flashing Klipper, so rerun
+the `ls /dev/serial/by-id/*` command and then update the config file
+with the unique name. For example, update the `[mcu]` section to look
+something similar to:
+
+```
+[mcu]
+serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+```
 
 After creating and editing the file it will be necessary to issue a
 "restart" command in the OctoPrint web terminal to load the config. A

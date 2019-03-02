@@ -51,8 +51,8 @@ struct stepper {
 
 enum { POSITION_BIAS=0x40000000 };
 
-enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-       SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
+enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2,
+       SF_HAVE_ADD=1<<3, SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t

@@ -14,7 +14,8 @@ class PrinterFan:
         printer.register_event_handler("gcode:request_restart",
                                        self.handle_request_restart)
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.kick_start_time = config.getfloat('kick_start_time', 0.1, minval=0.)
+        self.kick_start_time = config.getfloat('kick_start_time', 0.1,
+                                               minval=0.)
         ppins = printer.lookup_object('pins')
         self.mcu_fan = ppins.setup_pin('pwm', config.get('pin'))
         self.mcu_fan.setup_max_duration(0.)

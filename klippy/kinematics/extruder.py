@@ -60,8 +60,8 @@ class PrinterExtruder:
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
-        gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", self.name,
-                                   self.cmd_SET_PRESSURE_ADVANCE,
+        gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
+                                   self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
     def get_heater(self):
         return self.heater
@@ -242,7 +242,8 @@ def add_printer_objects(config):
                 printer.add_object('extruder0', pe)
                 continue
             break
-        printer.add_object(section, PrinterExtruder(config.getsection(section), i))
+        pe = PrinterExtruder(config.getsection(section), i)
+        printer.add_object(section, pe)
 
 def get_printer_extruders(printer):
     out = []

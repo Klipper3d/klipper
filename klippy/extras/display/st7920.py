@@ -13,7 +13,7 @@ ST7920_CMD_DELAY  = .000020
 ST7920_SYNC_DELAY = .000045
 
 TextGlyphs = { 'right_arrow': '\x1a' }
-CharGlyphs = { 'degrees': font8x14.VGA_FONT[0xf8] }
+CharGlyphs = { 'degrees': bytearray(font8x14.VGA_FONT[0xf8]) }
 
 class ST7920:
     def __init__(self, config):
@@ -76,8 +76,8 @@ class ST7920:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
-            diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
-                     if nd != od]
+            diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
+                     if n != o]
             # Batch together changes that are close to each other
             for i in range(len(diffs)-2, -1, -1):
                 pos, count = diffs[i]

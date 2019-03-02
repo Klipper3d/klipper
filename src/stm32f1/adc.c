@@ -75,7 +75,8 @@ gpio_adc_sample(struct gpio_adc g)
     /* ADC not busy, start conversion */
     if (!readb(&adc_busy)) {
         LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, g.bit);
-        LL_ADC_SetChannelSamplingTime(ADC1, g.bit, LL_ADC_SAMPLINGTIME_239CYCLES_5);
+        LL_ADC_SetChannelSamplingTime(ADC1, g.bit
+                                      , LL_ADC_SAMPLINGTIME_239CYCLES_5);
         LL_ADC_REG_StartConversionSWStart(ADC1);
         adc_busy = true;
         adc_current_channel = g.bit;

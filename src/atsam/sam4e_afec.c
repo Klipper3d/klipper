@@ -179,7 +179,8 @@ gpio_adc_sample(struct gpio_adc g)
     afec->AFE_CR = AFE_CR_START;
 
 need_delay:
-    return ADC_FREQ_MAX * 10000ULL / CONFIG_CLOCK_FREQ; // about 400 mcu clock cycles or 40 afec cycles
+    // about 400 mcu clock cycles or 40 afec cycles
+    return ADC_FREQ_MAX * 10000ULL / CONFIG_CLOCK_FREQ;
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero

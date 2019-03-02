@@ -26,7 +26,8 @@ class GCodeParser:
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
         self.fd_handle = None
         if not self.is_fileinput:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
         self.partial_input = ""
         self.pending_commands = []
         self.bytes_read = 0
@@ -147,7 +148,8 @@ class GCodeParser:
             self.toolhead.set_extruder(self.extruder)
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
         self._respond_state("Ready")
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
@@ -222,6 +224,8 @@ class GCodeParser:
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
             if not self.is_processing_data:
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
                 self.request_restart('exit')
             pending_commands.append("")
         # Handle case where multiple commands pending
@@ -251,7 +255,8 @@ class GCodeParser:
             self.process_commands(pending_commands)
             pending_commands = self.pending_commands
         if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
     def process_batch(self, commands):
         if self.is_processing_data:
             return False
@@ -496,12 +501,14 @@ class GCodeParser:
             if 'F' in params:
                 speed = float(params['F'])
                 if speed <= 0.:
-                    raise error("Invalid speed in '%s'" % (params['#original'],))
+                    raise error("Invalid speed in '%s'" % (
+                        params['#original'],))
                 self.speed = speed
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.move_with_transform(self.last_position, self.speed * self.speed_factor)
+            self.move_with_transform(self.last_position,
+                                     self.speed * self.speed_factor)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):

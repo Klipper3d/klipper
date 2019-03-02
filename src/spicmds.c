@@ -44,7 +44,8 @@ command_config_spi(uint32_t *args)
     memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
 }
 DECL_COMMAND(command_config_spi,
-             "config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s");
+             "config_spi oid=%c bus=%u pin=%u mode=%u rate=%u"
+             " shutdown_msg=%*s");
 
 void
 command_config_spi_without_cs(uint32_t *args)

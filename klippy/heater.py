@@ -33,8 +33,10 @@ class Heater:
         self.pwm_delay = self.sensor.get_report_time_delta()
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat(
-            'min_extrude_temp', 170., minval=self.min_temp, maxval=self.max_temp)
-        is_fileoutput = self.printer.get_start_args().get('debugoutput') is not None
+            'min_extrude_temp', 170.,
+            minval=self.min_temp, maxval=self.max_temp)
+        is_fileoutput = (self.printer.get_start_args().get('debugoutput')
+                         is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
@@ -63,9 +65,10 @@ class Heater:
         # Load additional modules
         self.printer.try_load_module(config, "verify_heater %s" % (self.name,))
         self.printer.try_load_module(config, "pid_calibrate")
-        self.gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER", self.name,
-                                    self.cmd_SET_HEATER_TEMPERATURE,
-                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
+        self.gcode.register_mux_command(
+            "SET_HEATER_TEMPERATURE", "HEATER", self.name,
+            self.cmd_SET_HEATER_TEMPERATURE,
+            desc=self.cmd_SET_HEATER_TEMPERATURE_help)
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.

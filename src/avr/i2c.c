@@ -16,7 +16,9 @@
 static const uint8_t SCL = GPIO('C', 5), SDA = GPIO('C', 4);
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
 static const uint8_t SCL = GPIO('C', 0), SDA = GPIO('C', 1);
-#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 \
+      || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 \
+      || CONFIG_MACH_atmega2560
 static const uint8_t SCL = GPIO('D', 0), SDA = GPIO('D', 1);
 #endif
 

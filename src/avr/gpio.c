@@ -74,7 +74,7 @@ gpio_out_write(struct gpio_out g, uint8_t val)
 struct gpio_in
 gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
-    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
+    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs) || pull_up < 0)
         goto fail;
     struct gpio_digital_regs *regs = GPIO2REGS(pin);
     if (! regs)
@@ -83,7 +83,7 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     gpio_in_reset(g, pull_up);
     return g;
 fail:
-    shutdown("Not an input pin");
+    shutdown("Not a valid input pin");
 }
 
 void
