@@ -18,6 +18,12 @@ class ScrewsTiltAdjust:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.screws = []
+        # Verify that a probe exists
+        try:
+            self.printer.lookup_object("probe")
+        except:
+            raise self.gcode.error("Error: you must have a probe on "
+                                   "your config file.")
         # Read config
         for i in range(99):
             prefix = "screw%d" % (i + 1,)
@@ -60,11 +66,6 @@ class ScrewsTiltAdjust:
                                      "screws by calculating the number " \
                                      "of turns to level it."
     def cmd_SCREWS_TILT_CALCULATE(self, params):
-        # Don't execute this command if no probe
-        probe = self.printer.lookup_object("probe")
-        if probe is None:
-            raise self.gcode.error("Error: you must have a probe on "
-                                   "your config file.")
         toolhead = self.printer.lookup_object('toolhead')
         # Give feedback of parameters
         self.gcode.respond_info("Screw thread: %s, calculate: %s " %
