@@ -30,14 +30,17 @@ class ScrewsTiltAdjust:
         if len(self.screws) < 2:
             raise config.error("screws_tilt_adjust: Must have "
                                "at least two screws")
-        self.speed = config.getfloat('speed', 50., above=0.)
-        self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
+        self.move_speed = config.getfloat('move_speed', 50., above=0.)
         self.probe_z_start = config.getfloat('probe_z_start', 10.)
+        self.probes = config.getint('num_probes', 3, minval=1)
         # 'screw_thread' is optional
-        threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
-                   'CW-M5': 4, 'CCW-M5': 5}
-        self.thread = config.getchoice('screw_thread', threads,
+        self.threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
+                        'CW-M5': 4, 'CCW-M5': 5}
+        self.calculations = {'median': 0, 'average': 1}
+        self.thread = config.getchoice('screw_thread', self.threads,
                                        default='CW-M3')
+        self.calculation = config.getchoice('calculate', self.calculations,
+                                            default='median')
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("SCREWS_TILT_CALCULATE",
@@ -60,28 +63,59 @@ class ScrewsTiltAdjust:
         # Don't execute this command if no probe
         probe = self.printer.lookup_object("probe")
         if probe is None:
-            raise self.gcode.error("Error you must have a probe on "
+            raise self.gcode.error("Error: you must have a probe on "
                                    "your config file.")
         toolhead = self.printer.lookup_object('toolhead')
+        # Give feedback of parameters
+        self.gcode.respond_info("Screw thread: %s, calculate: %s " %
+                                (self.threads.keys()[
+                                     self.threads.values().index(
+                                         self.thread)],
+                                 self.calculations.keys()[
+                                     self.calculations.values().index(
+                                         self.calculation)]))
         # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5
         threads_factor = {0: 0.5, 1: 0.5, 2: 0.7, 3: 0.7, 4: 0.8, 5: 0.8}
         # Prepare a place to save the Z read values
         screws_info = []
         # Probe the bed in the screw define points
         for coord, name in self.screws:
-            pos = toolhead.get_position()
-            # First move Z up
-            self.move((pos[0], pos[1], self.probe_z_start), self.speed)
-            # Move to probe position
-            self.move((coord[0], coord[1], self.probe_z_start), self.speed)
-            # Probe the bed
-            self.gcode.run_script_from_command("PROBE")
-            pos = toolhead.get_position()
-            # Save read Z value
-            screws_info.append((pos[2], coord, name))
+            self.gcode.respond_info("Screw: %s, probes: %d" %
+                                    (name, self.probes))
+            probes = []
+            for i in range(self.probes):
+                pos = toolhead.get_position()
+                # First move Z up
+                self.move((pos[0], pos[1], self.probe_z_start),
+                          self.move_speed)
+                # Move to probe position
+                self.move((coord[0], coord[1], self.probe_z_start),
+                          self.move_speed)
+                # Probe the bed
+                self.gcode.run_script_from_command("PROBE")
+                pos = toolhead.get_position()
+                probes.append(pos[2])
+
+            if self.probes > 1:
+                if self.calculation == 0:
+                    sorted_probes = sorted(probes)
+                    middle = self.probes // 2
+                    if (self.probes & 1) == 1:
+                        # odd number of reads
+                        value = sorted_probes[middle]
+                    else:
+                        # even number of reads
+                        value = (sorted_probes[middle] +
+                                 sorted_probes[middle - 1]) / 2
+                else:
+                    value = sum(probes) / self.probes
+            else:
+                value = probes[0]
+                # Save read Z value
+            screws_info.append((value, coord, name))
         # When finish move Z up
         pos = toolhead.get_position()
-        self.move((pos[0], pos[1], self.probe_z_start), self.speed)
+        self.move((pos[0], pos[1], self.probe_z_start), self.move_speed)
         # Process the read Z values and
         for i, screw_info in enumerate(screws_info):
             if i == 0:

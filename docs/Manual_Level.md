@@ -155,7 +155,12 @@ screw4: -5,190
 screw4_name: rear left screw
 probe_z_start: 10
 screw_thread: CW-M3
+number_probes: 3
+calculate: median
 ```
+
+One can indicate the number of times to repeat probe on each screw and
+if the value is the median or the average read probe.
 
 The screw1 is always the reference point for the others, so the system
 assumes that screw1 is in the correct height.
