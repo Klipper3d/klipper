@@ -1,5 +1,5 @@
 # Test case for bed screws tilt helper tool
-CONFIG bed_screws.cfg
+CONFIG screws_tilt_adjust.cfg
 DICTIONARY atmega2560-16mhz.dict
 
 # Start helper script
