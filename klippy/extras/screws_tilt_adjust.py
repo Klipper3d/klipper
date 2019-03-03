@@ -113,6 +113,13 @@ class ScrewsTiltAdjust:
                 else:
                     # Calculate Average
                     value = sum(probes) / self.probes
+                # Give calculations feeback
+                self.gcode.respond_info("%s: %.5f" %
+                                        (self.calculations.keys()[
+                                             self.calculations.values().index(
+                                                 self.calculation)],
+                                         value
+                                         ))
             else:
                 # Only one probe
                 value = probes[0]
