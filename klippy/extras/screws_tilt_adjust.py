@@ -98,7 +98,9 @@ class ScrewsTiltAdjust:
                 probes.append(pos[2])
 
             if self.probes > 1:
+                # More than one probe
                 if self.calculation == 0:
+                    # Calculate Median
                     sorted_probes = sorted(probes)
                     middle = self.probes // 2
                     if (self.probes & 1) == 1:
@@ -109,10 +111,12 @@ class ScrewsTiltAdjust:
                         value = (sorted_probes[middle] +
                                  sorted_probes[middle - 1]) / 2
                 else:
+                    # Calculate Average
                     value = sum(probes) / self.probes
             else:
+                # Only one probe
                 value = probes[0]
-                # Save read Z value
+            # Save read Z value
             screws_info.append((value, coord, name))
         # When finish move Z up
         pos = toolhead.get_position()
