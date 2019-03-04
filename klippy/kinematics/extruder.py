@@ -216,7 +216,7 @@ class PrinterExtruder:
                "pressure_advance_lookahead_time: %.6f" % (
                    pressure_advance, pressure_advance_lookahead_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcode.respond_info(msg)
+        gcode.respond_info(msg, log=False)
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
