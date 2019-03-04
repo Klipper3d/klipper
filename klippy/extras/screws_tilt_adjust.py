@@ -65,7 +65,7 @@ class ScrewsTiltAdjust:
         for i, screw in enumerate(self.screws):
             if i == 0:
                 # First screw is the base position used for comparison
-                z_base = positions[i]
+                z_base = positions[i][2]
                 coord_base, name_base = screw
                 # Show the results
                 self.gcode.respond_info("%s (Base): X %.1f, Y %.1f, Z %.5f" %
@@ -73,7 +73,7 @@ class ScrewsTiltAdjust:
                                          coord_base[1], z_base))
             else:
                 # Calculate how knob must me adjusted for other positions
-                z = positions[i]
+                z = positions[i][2]
                 coord, name = screw
                 diff = z_base - z
                 if abs(diff) < 0.001:

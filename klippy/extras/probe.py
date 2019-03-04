@@ -294,25 +294,28 @@ class ProbePointsHelper:
             except self.gcode.error as e:
                 self._finalize(False)
                 raise
-            read_position = self.toolhead.get_position()
-            positions.append(read_position[2])
+            positions.append(self.toolhead.get_position())
             if i < self.samples - 1:
                 # retract
                 self._lift_z(self.sample_retract_dist, add=True)
         if self.samples_result == 1:
             # Calculate Average
-            calculated_value = sum(positions) / self.samples
+            calculated_value = [sum([pos[i] for pos in positions]) / self.samples
+                                for i in range(3)]
         else:
             # Calculate Median
-            sorted_positions = sorted(positions)
+            sorted_z_positions = sorted([position[2] for position in positions])
             middle = self.samples // 2
             if (self.samples & 1) == 1:
                 # odd number of samples
-                calculated_value = sorted_positions[middle]
+                median = sorted_z_positions[middle]
             else:
                 # even number of samples
-                calculated_value = (sorted_positions[middle] +
-                                    sorted_positions[middle - 1]) / 2
+                median = (sorted_z_positions[middle] +
+                          sorted_z_positions[middle - 1]) / 2
+            calculated_value = (position[0][0],
+                                position[0][1],
+                                median)
         self.results.append(calculated_value)
     def start_probe(self, params):
         # Lookup objects
