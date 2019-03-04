@@ -314,9 +314,9 @@ class ProbePointsHelper:
                 # even number of samples
                 median = (sorted_z_positions[middle] +
                           sorted_z_positions[middle - 1]) / 2
-            calculated_value = (position[0][0],
+            calculated_value = [position[0][0],
                                 position[0][1],
-                                median)
+                                median]
         self.results.append(calculated_value)
     def start_probe(self, params):
         # Lookup objects
