@@ -65,7 +65,7 @@ def background_coordinate_descent(printer, adj_params, params, error_func):
     while calc_proc.is_alive():
         if eventtime > last_report_time + 5.:
             last_report_time = eventtime
-            gcode.respond_info("Working on calibration...")
+            gcode.respond_info("Working on calibration...", log=False)
         eventtime = reactor.pause(eventtime + .1)
     # Return results
     res = parent_conn.recv()

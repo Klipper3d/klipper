@@ -118,7 +118,6 @@ class BLTouchEndstopWrapper:
                     if retry >= 2:
                         raise
                     msg = "Failed to verify BLTouch probe is raised; retrying."
-                    logging.warning(msg)
                     self.gcode.respond_info(msg)
                     self.next_cmd_time += RETRY_RESET_TIME
                     continue
@@ -172,9 +171,7 @@ class BLTouchEndstopWrapper:
             self.gcode.respond_info("BLTouch commands: %s" % (
                 ", ".join(sorted([c for c in Commands if c is not None]))))
             return
-        msg = "Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,)
-        self.gcode.respond_info(msg)
-        logging.info(msg)
+        self.gcode.respond_info("Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,))
         self.sync_print_time()
         self.send_cmd(cmd, duration=self.pin_move_time)
         self.send_cmd(None)
