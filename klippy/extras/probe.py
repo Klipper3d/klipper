@@ -240,6 +240,9 @@ class ProbePointsHelper:
         self.samples = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat(
             'sample_retract_dist', 2., above=0.)
+        self.samples_result = config.getchoice('samples_result',
+                                               {'median': 0, 'average': 1},
+                                               default='average')
         # Internal probing state
         self.results = []
         self.busy = self.manual_probe = False
@@ -291,13 +294,26 @@ class ProbePointsHelper:
             except self.gcode.error as e:
                 self._finalize(False)
                 raise
-            positions.append(self.toolhead.get_position())
+            read_position = self.toolhead.get_position()
+            positions.append(read_position[2])
             if i < self.samples - 1:
                 # retract
                 self._lift_z(self.sample_retract_dist, add=True)
-        avg_pos = [sum([pos[i] for pos in positions]) / self.samples
-                   for i in range(3)]
-        self.results.append(avg_pos)
+        if self.samples_result == 1:
+            # Calculate Average
+            calculated_value = sum(positions) / self.samples
+        else:
+            # Calculate Median
+            sorted_positions = sorted(positions)
+            middle = self.samples // 2
+            if (self.samples & 1) == 1:
+                # odd number of samples
+                calculated_value = sorted_positions[middle]
+            else:
+                # even number of samples
+                calculated_value = (sorted_positions[middle] +
+                                    sorted_positions[middle - 1]) / 2
+        self.results.append(calculated_value)
     def start_probe(self, params):
         # Lookup objects
         self.toolhead = self.printer.lookup_object('toolhead')
