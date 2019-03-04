@@ -300,11 +300,12 @@ class ProbePointsHelper:
                 self._lift_z(self.sample_retract_dist, add=True)
         if self.samples_result == 1:
             # Calculate Average
-            calculated_value = [sum([pos[i] for pos in positions]) / self.samples
-                                for i in range(3)]
+            calculated_value = [sum([pos[i] for pos in positions]) /
+                                self.samples for i in range(3)]
         else:
             # Calculate Median
-            sorted_z_positions = sorted([position[2] for position in positions])
+            sorted_z_positions = sorted([position[2]
+                                         for position in positions])
             middle = self.samples // 2
             if (self.samples & 1) == 1:
                 # odd number of samples
