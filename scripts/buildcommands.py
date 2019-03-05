@@ -60,25 +60,45 @@ Handlers.append(HandleCallList())
 
 
 ######################################################################
-# Static string generation
+# Enumeration and static string generation
 ######################################################################
 
 STATIC_STRING_MIN = 2
 
 # Generate a dynamic string to integer mapping
-class HandleStaticStrings:
+class HandleEnumerations:
     def __init__(self):
         self.static_strings = []
-        self.found_strings = {}
-        self.ctr_dispatch = { '_DECL_STATIC_STR': self.decl_static_str }
+        self.enumerations = {}
+        self.ctr_dispatch = {
+            '_DECL_STATIC_STR': self.decl_static_str,
+            '_DECL_ENUMERATION': self.decl_enumeration,
+            '_DECL_ENUMERATION_RANGE': self.decl_enumeration_range
+        }
+    def add_enumeration(self, enum, name, value):
+        enums = self.enumerations.setdefault(enum, {})
+        if name in enums and enums[name] != value:
+            error("Conflicting definition for enumeration '%s %s'" % (
+                enum, name))
+        enums[name] = value
+    def decl_enumeration(self, req):
+        enum, name, value = req.split()[1:]
+        self.add_enumeration(enum, name, decode_integer(value))
+    def decl_enumeration_range(self, req):
+        enum, name, count, value = req.split()[1:]
+        try:
+            count = int(count, 0)
+        except ValueError as e:
+            error("Invalid enumeration count in '%s'" % (req,))
+        self.add_enumeration(enum, name, (decode_integer(value), count))
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
-        if msg not in self.found_strings:
-            self.found_strings[msg] = 1
+        if msg not in self.static_strings:
             self.static_strings.append(msg)
     def update_data_dictionary(self, data):
-        data['static_strings'] = { i + STATIC_STRING_MIN: s
-                                   for i, s in enumerate(self.static_strings) }
+        for i, s in enumerate(self.static_strings):
+            self.add_enumeration("static_string_id", s, i + STATIC_STRING_MIN)
+        data['enumerations'] = self.enumerations
     def generate_code(self, options):
         code = []
         for i, s in enumerate(self.static_strings):
@@ -94,7 +114,7 @@ ctr_lookup_static_string(const char *str)
 """
         return fmt % ("".join(code).strip(),)
 
-Handlers.append(HandleStaticStrings())
+Handlers.append(HandleEnumerations())
 
 
 ######################################################################

@@ -483,7 +483,7 @@ class MCU:
         if self._is_shutdown:
             return
         self._is_shutdown = True
-        self._shutdown_msg = msg = params['#msg']
+        self._shutdown_msg = msg = params['static_string_id']
         logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, params['#name'],
                      self._shutdown_msg, self._clocksync.dump_debug(),
                      self._serial.dump_debug())

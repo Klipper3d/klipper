@@ -21,6 +21,13 @@
 #define DECL_CONSTANT_STR(NAME, VALUE)                  \
     DECL_CTR("_DECL_CONSTANT_STR " NAME " " VALUE)
 
+// Declare an enumeration
+#define DECL_ENUMERATION(ENUM, NAME, VALUE)                     \
+    DECL_CTR_INT("_DECL_ENUMERATION " ENUM " " NAME, (VALUE))
+#define DECL_ENUMERATION_RANGE(ENUM, NAME, VALUE, COUNT)        \
+    DECL_CTR_INT("_DECL_ENUMERATION_RANGE " ENUM " " NAME       \
+                 " " __stringify(COUNT), (VALUE))
+
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
     command_sendf(_DECL_OUTPUT(FMT) , ##args )
