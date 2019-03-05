@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2019  Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, collections
+import math, collections, logging
 import bus, tmc2130
 
 def current_to_reg(current, sense_resistor, vsense_on):
@@ -134,6 +134,12 @@ class TMC2660:
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "SET_TMC_FIELD", "STEPPER", self.name,
+            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
+        gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup driver registers
         self.regs = collections.OrderedDict()
         self.fields = tmc2130.FieldHelper(Fields, FieldFormatters, self.regs)
@@ -178,7 +184,7 @@ class TMC2660:
         # SGSCONF
         set_config_field(config, "SFILT", 1)
         set_config_field(config, "SGT", 0)
-        self.current = config.getfloat('run_current',  minval=0.1,
+        self.current = config.getfloat('run_current', minval=0.1,
                                        maxval=2.4)
         self.driver_cs = current_to_reg(self.current,
         self.sense_resistor, self.fields.get_field("VSENSE"))
@@ -258,6 +264,29 @@ class TMC2660:
         return_format = "READRSP@RDSEL" + str(self.fields.get_field("RDSEL"))
         msg = self.fields.pretty_format(return_format, self.get_response())
         gcode.respond_info(msg)
+
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
+    def cmd_INIT_TMC(self, params):
+        logging.info("INIT_TMC 2660 %s", self.name)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self._init_registers(min_clock)
+
+    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2660 driver"
+    def cmd_SET_TMC_FIELD(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        if ('FIELD' not in params or
+            'VALUE' not in params):
+            raise gcode.error("Invalid command format")
+        field = gcode.get_str('FIELD', params)
+        if field == "CS":
+            raise gcode.error("Use SET_TMC_CURRENT to set CS")
+        reg = self.fields.field_to_register[field]
+        value = gcode.get_int('VALUE', params)
+        self.fields.set_field(field, value)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self.set_register(reg, self.regs[reg], min_clock=clock)
 
 def load_config_prefix(config):
     return TMC2660(config)
