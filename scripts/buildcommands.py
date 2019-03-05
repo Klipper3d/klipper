@@ -101,19 +101,36 @@ Handlers.append(HandleStaticStrings())
 # Constants
 ######################################################################
 
+def decode_integer(value):
+    value = value.strip()
+    if len(value) != 7 or value[0] not in '-+':
+        error("Invalid encoded integer '%s'" % (value,))
+    out = sum([(ord(c) - 48) << (i*6) for i, c in enumerate(value[1:])])
+    if value[0] == '-':
+        out -= 1<<32
+    return out
+
 # Allow adding build time constants to the data dictionary
 class HandleConstants:
     def __init__(self):
         self.constants = {}
-        self.ctr_dispatch = { '_DECL_CONSTANT': self.decl_constant }
+        self.ctr_dispatch = {
+            '_DECL_CONSTANT': self.decl_constant,
+            '_DECL_CONSTANT_STR': self.decl_constant_str,
+        }
+    def set_value(self, name, value):
+        if name in self.constants and self.constants[name] != value:
+            error("Conflicting definition for constant '%s'" % name)
+        self.constants[name] = value
     def decl_constant(self, req):
+        name, value = req.split()[1:]
+        self.set_value(name, decode_integer(value))
+    def decl_constant_str(self, req):
         name, value = req.split()[1:]
         value = value.strip()
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
-        if name in self.constants and self.constants[name] != value:
-            error("Conflicting definition for constant '%s'" % name)
-        self.constants[name] = value
+        self.set_value(name, value)
     def update_data_dictionary(self, data):
         data['config'] = self.constants
     def generate_code(self, options):

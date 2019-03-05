@@ -7,17 +7,19 @@
 #include "ctr.h" // DECL_CTR
 
 // Declare a function to run when the specified command is received
+#define DECL_COMMAND_FLAGS(FUNC, FLAGS, MSG)                            \
+    DECL_CTR("_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG)
 #define DECL_COMMAND(FUNC, MSG)                 \
-    _DECL_COMMAND(FUNC, 0, MSG)
-#define DECL_COMMAND_FLAGS(FUNC, FLAGS, MSG)    \
-    _DECL_COMMAND(FUNC, FLAGS, MSG)
+    DECL_COMMAND_FLAGS(FUNC, 0, MSG)
 
 // Flags for command handler declarations.
 #define HF_IN_SHUTDOWN   0x01   // Handler can run even when in emergency stop
 
 // Declare a constant exported to the host
-#define DECL_CONSTANT(NAME, VALUE) _DECL_CONSTANT(NAME, __stringify(VALUE))
-#define DECL_CONSTANT_STR(NAME, VALUE) _DECL_CONSTANT(NAME, VALUE)
+#define DECL_CONSTANT(NAME, VALUE)                      \
+    DECL_CTR_INT("_DECL_CONSTANT " NAME, (VALUE))
+#define DECL_CONSTANT_STR(NAME, VALUE)                  \
+    DECL_CTR("_DECL_CONSTANT_STR " NAME " " VALUE)
 
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
@@ -84,12 +86,6 @@ extern const uint32_t command_identify_size;
 const struct command_encoder *ctr_lookup_encoder(const char *str);
 const struct command_encoder *ctr_lookup_output(const char *str);
 uint8_t ctr_lookup_static_string(const char *str);
-
-#define _DECL_COMMAND(FUNC, FLAGS, MSG)                                 \
-    DECL_CTR("_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG)
-
-#define _DECL_CONSTANT(NAME, VALUE)             \
-    DECL_CTR("_DECL_CONSTANT " NAME " " VALUE)
 
 #define _DECL_ENCODER(FMT) ({                   \
     DECL_CTR("_DECL_ENCODER " FMT);             \
