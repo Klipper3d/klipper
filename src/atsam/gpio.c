@@ -28,6 +28,28 @@ static Pio * const digital_regs[] = {
  * Pin multiplexing
  ****************************************************************/
 
+static void
+set_pull_up(Pio *regs, uint32_t bit, int32_t pull_up)
+{
+#if CONFIG_MACH_SAM3X
+    if (pull_up > 0)
+        regs->PIO_PUER = bit;
+    else
+        regs->PIO_PUDR = bit;
+#else
+    if (pull_up > 0) {
+        regs->PIO_PPDDR = bit;
+        regs->PIO_PUER = bit;
+    } else if (pull_up < 0) {
+        regs->PIO_PUDR = bit;
+        regs->PIO_PPDER = bit;
+    } else {
+        regs->PIO_PUDR = bit;
+        regs->PIO_PPDDR = bit;
+    }
+#endif
+}
+
 void
 gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 {
@@ -40,11 +62,7 @@ gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
     regs->PIO_ABCDSR[0] = (regs->PIO_ABCDSR[0] & ~bit) | (pt & 0x01 ? bit : 0);
     regs->PIO_ABCDSR[1] = (regs->PIO_ABCDSR[1] & ~bit) | (pt & 0x02 ? bit : 0);
 #endif
-
-    if (pull_up > 0)
-        regs->PIO_PUER = bit;
-    else
-        regs->PIO_PUDR = bit;
+    set_pull_up(regs, bit, pull_up);
     regs->PIO_PDR = bit;
 }
 
@@ -78,7 +96,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     regs->PIO_OER = g.bit;
     regs->PIO_OWER = g.bit;
     regs->PIO_PER = g.bit;
-    regs->PIO_PUDR = g.bit;
+    set_pull_up(regs, g.bit, 0);
     irq_restore(flag);
 }
 
@@ -113,13 +131,15 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
+    if (CONFIG_MACH_SAM3X && pull_up < 0)
+        goto fail;
     uint32_t port = GPIO2PORT(pin);
     enable_pclock(ID_PIOA + port);
     struct gpio_in g = { .regs=digital_regs[port], .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;
 fail:
-    shutdown("Not an input pin");
+    shutdown("Not a valid input pin");
 }
 
 void
@@ -127,10 +147,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
     Pio *regs = g.regs;
     irqstatus_t flag = irq_save();
-    if (pull_up)
-        regs->PIO_PUER = g.bit;
-    else
-        regs->PIO_PUDR = g.bit;
+    set_pull_up(regs, g.bit, pull_up);
     regs->PIO_ODR = g.bit;
     regs->PIO_PER = g.bit;
     irq_restore(flag);

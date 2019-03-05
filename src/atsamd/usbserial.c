@@ -193,12 +193,9 @@ usbserial_init(void)
     uint32_t ptype = CONFIG_MACH_SAMD21 ? 'G' : 'H';
     gpio_peripheral(GPIO('A', 24), ptype, 0);
     gpio_peripheral(GPIO('A', 25), ptype, 0);
-    uint16_t trim = (readl((void*)USB_FUSES_TRIM_ADDR)
-                     & USB_FUSES_TRIM_Msk) >> USB_FUSES_TRIM_Pos;
-    uint16_t transp = (readl((void*)USB_FUSES_TRANSP_ADDR)
-                       & USB_FUSES_TRANSP_Msk) >> USB_FUSES_TRANSP_Pos;
-    uint16_t transn = (readl((void*)USB_FUSES_TRANSN_ADDR)
-                       & USB_FUSES_TRANSN_Msk) >> USB_FUSES_TRANSN_Pos;
+    uint32_t trim = GET_FUSE(USB_FUSES_TRIM);
+    uint32_t transp = GET_FUSE(USB_FUSES_TRANSP);
+    uint32_t transn = GET_FUSE(USB_FUSES_TRANSN);
     USB->DEVICE.PADCAL.reg = (USB_PADCAL_TRIM(trim) | USB_PADCAL_TRANSP(transp)
                               | USB_PADCAL_TRANSN(transn));
     // Enable USB in device mode

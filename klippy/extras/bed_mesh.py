@@ -10,8 +10,6 @@ import json
 import probe
 import collections
 
-BED_SHAPES = {'rectangular': 0, 'round': 1}
-
 class BedMeshError(Exception):
     pass
 
@@ -83,7 +81,7 @@ class BedMesh:
         self.toolhead = self.printer.lookup_object('toolhead')
         self.calibrate.load_default_profile()
     def set_mesh(self, mesh):
-        if mesh is not None:
+        if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
             if self.base_fade_target is None:
                 self.fade_target = mesh.avg_z
@@ -100,10 +98,21 @@ class BedMesh:
                         "bed_mesh: ERROR, fade_target lies outside of mesh z "
                         "range\nmin: %.4f, max: %.4f, fade_target: %.4f"
                         % (mesh_min, mesh_max, err_target))
+            if self.fade_target:
+                mesh.offset_mesh(self.fade_target)
+            mesh_min, mesh_max = mesh.get_z_range()
+            if self.fade_dist <= max(abs(mesh_min), abs(mesh_max)):
+                self.z_mesh = None
+                self.fade_target = 0.
+                raise self.gcode.error(
+                    "bed_mesh:  Mesh extends outside of the fade range, "
+                    "please see the fade_start and fade_end options in"
+                    "example-extras.cfg. fade distance: %.2f mesh min: %.4f"
+                    "mesh max: %.4f" % (self.fade_dist, mesh_min, mesh_max))
         else:
             self.fade_target = 0.
         self.z_mesh = mesh
-        self.splitter.initialize(mesh, self.fade_target)
+        self.splitter.initialize(mesh)
         # cache the current position before a transform takes place
         self.gcode.reset_last_position()
     def get_z_factor(self, z_pos):
@@ -123,9 +132,20 @@ class BedMesh:
             # return current position minus the current z-adjustment
             x, y, z, e = self.toolhead.get_position()
             z_adj = self.z_mesh.calc_z(x, y)
-            z_adj = (self.get_z_factor(z) * (z_adj - self.fade_target) +
-                     self.fade_target)
-            self.last_position[:] = [x, y, z - z_adj, e]
+            factor = 1.
+            max_adj = z_adj + self.fade_target
+            if min(z, (z - max_adj)) >= self.fade_end:
+                # Fade out is complete, no factor
+                factor = 0.
+            elif max(z, (z - max_adj)) >= self.fade_start:
+                # Likely in the process of fading out adjustment.
+                # Because we don't yet know the gcode z position, use
+                # algebra to calculate the factor from the toolhead pos
+                factor = ((self.fade_end + self.fade_target - z) /
+                          (self.fade_dist - z_adj))
+                factor = constrain(factor, 0., 1.)
+            final_z_adj = factor * z_adj + self.fade_target
+            self.last_position[:] = [x, y, z - final_z_adj, e]
         return list(self.last_position)
     def move(self, newpos, speed):
         factor = self.get_z_factor(newpos[2])
@@ -188,14 +208,13 @@ class BedMeshCalibrate:
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
     def _generate_points(self, config):
-        shape = config.getchoice('bed_shape', BED_SHAPES, 'rectangular')
-        if shape == BED_SHAPES['round']:
-            x_cnt = y_cnt = config.getint('probe_count', 5)
+        self.radius = config.getfloat('bed_radius', None, above=0.)
+        if self.radius is not None:
+            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
                 raise config.error(
                     "bed_mesh: probe_count must be odd for round beds")
-            self.radius = config.getfloat('radius', above=0.)
             # radius may have precision to .1mm
             self.radius = math.floor(self.radius * 10) / 10
             min_x = min_y = -self.radius
@@ -471,9 +490,8 @@ class MoveSplitter:
             'move_check_distance', 5., minval=3.)
         self.z_mesh = None
         self.gcode = gcode
-    def initialize(self, mesh, fade_offset):
+    def initialize(self, mesh):
         self.z_mesh = mesh
-        self.fade_offset = fade_offset
     def build_move(self, prev_pos, next_pos, factor):
         self.prev_pos = tuple(prev_pos)
         self.next_pos = tuple(next_pos)
@@ -487,7 +505,7 @@ class MoveSplitter:
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
         z = self.z_mesh.calc_z(pos[0], pos[1])
-        return self.z_factor * (z - self.fade_offset) + self.fade_offset
+        return self.z_factor * z + self.z_mesh.mesh_offset
     def _set_next_move(self, distance_from_prev):
         t = distance_from_prev / self.total_move_length
         if t > 1. or t < 0.:
@@ -530,6 +548,7 @@ class ZMesh:
         self.mesh_z_table = None
         self.probe_params = params
         self.avg_z = 0.
+        self.mesh_offset = 0.
         logging.debug('bed_mesh: probe/mesh parameters:')
         for key, value in self.probe_params.iteritems():
             logging.debug("%s :  %s" % (key, value))
@@ -582,7 +601,7 @@ class ZMesh:
             msg += "Measured points:\n"
             for y_line in range(self.mesh_y_count - 1, -1, -1):
                 for z in self.mesh_z_table[y_line]:
-                    msg += "  %f" % (z)
+                    msg += "  %f" % (z + self.mesh_offset)
                 msg += "\n"
             print_func(msg)
         else:
@@ -596,6 +615,12 @@ class ZMesh:
         # z step distances
         self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
+    def offset_mesh(self, offset):
+        if self.mesh_z_table:
+            self.mesh_offset = offset
+            for y_line in self.mesh_z_table:
+                for idx, z in enumerate(y_line):
+                    y_line[idx] = z - self.mesh_offset
     def get_x_coordinate(self, index):
         return self.mesh_x_min + self.mesh_x_dist * index
     def get_y_coordinate(self, index):

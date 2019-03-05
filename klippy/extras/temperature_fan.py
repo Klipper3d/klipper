@@ -21,13 +21,15 @@ class TemperatureFan:
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
+        self.printer.lookup_object('heater').register_sensor(config, self)
         self.speed_delay = self.sensor.get_report_time_delta()
         self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
         self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
         self.last_temp = 0.
         self.last_temp_time = 0.
-        self.target_temp = config.getfloat('target_temp', 40. if self.max_temp > 40. else self.max_temp,
-                                           minval=self.min_temp, maxval=self.max_temp)
+        self.target_temp = config.getfloat(
+            'target_temp', 40. if self.max_temp > 40. else self.max_temp,
+            minval=self.min_temp, maxval=self.max_temp)
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
@@ -49,9 +51,8 @@ class TemperatureFan:
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
         self.control.temperature_callback(read_time, temp)
-    def stats(self, eventtime):
-        return False, '%s: temp=%.1f fan_speed=%.3f' % (
-            self.name, self.last_temp, self.last_speed_value)
+    def get_temp(self, eventtime):
+        return self.last_temp, self.target_temp
 
 ######################################################################
 # Bang-bang control algo
@@ -63,14 +64,17 @@ class ControlBangBang:
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
     def temperature_callback(self, read_time, temp):
-        if self.heating and temp >= self.temperature_fan.target_temp+self.max_delta:
+        if (self.heating
+            and temp >= self.temperature_fan.target_temp+self.max_delta):
             self.heating = False
-        elif not self.heating and temp <= self.temperature_fan.target_temp-self.max_delta:
+        elif (not self.heating
+              and temp <= self.temperature_fan.target_temp-self.max_delta):
             self.heating = True
         if self.heating:
             self.temperature_fan.set_speed(read_time, 0.)
         else:
-            self.temperature_fan.set_speed(read_time, self.temperature_fan.max_speed)
+            self.temperature_fan.set_speed(read_time,
+                                           self.temperature_fan.max_speed)
 
 ######################################################################
 # Proportional Integral Derivative (PID) control algo
@@ -86,7 +90,8 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
-        imax = config.getfloat('pid_integral_max', temperature_fan.max_speed, minval=0.)
+        imax = config.getfloat('pid_integral_max', temperature_fan.max_speed,
+                               minval=0.)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
@@ -108,7 +113,8 @@ class ControlPID:
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         bounded_co = max(0., min(self.temperature_fan.max_speed, co))
-        self.temperature_fan.set_speed(read_time, self.temperature_fan.max_speed - bounded_co)
+        self.temperature_fan.set_speed(
+            read_time, self.temperature_fan.max_speed - bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time

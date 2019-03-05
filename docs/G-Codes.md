@@ -170,15 +170,18 @@ enabled:
 The following command is available when a "manual_stepper" config
 section is enabled:
 - `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
-  [SET_POSITION=<pos>]
-  [MOVE=<pos> SPEED=<speed> [STOP_ON_ENDSTOP=1]]`: This command will
-  alter the state of the stepper. Use the ENABLE parameter to
-  enable/disable the stepper. Use the SET_POSITION parameter to force
-  the stepper to think it is at the given position. Use the MOVE
-  parameter to request a movement to the given position at the given
-  SPEED. If STOP_ON_ENDSTOP is specified then the move will end early
-  should the endstop report as triggered (use STOP_ON_ENDSTOP=-1 to
-  stop early should the endstop report not triggered).
+  [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
+  [MOVE=<pos> [STOP_ON_ENDSTOP=1]]`: This command will alter the state
+  of the stepper. Use the ENABLE parameter to enable/disable the
+  stepper. Use the SET_POSITION parameter to force the stepper to
+  think it is at the given position. Use the MOVE parameter to request
+  a movement to the given position. If SPEED and/or ACCEL is specified
+  then the given values will be used instead of the defaults specified
+  in the config file. If an ACCEL of zero is specified then no
+  acceleration will be preformed. If STOP_ON_ENDSTOP is specified then
+  the move will end early should the endstop report as triggered (use
+  STOP_ON_ENDSTOP=-1 to stop early should the endstop report not
+  triggered).
 
 ## Probe
 
@@ -261,6 +264,16 @@ section is enabled:
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
 
+## Bed Screws Helper
+
+The following commands are available when the "bed_screws" config
+section is enabled:
+- `BED_SCREWS_ADJUST`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) and allow one to make adjustments to
+  the bed screws so that the bed is a constant distance from the
+  nozzle.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
@@ -277,12 +290,15 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130
+## TMC2130 and TMC2208
 
-The following command is available when the "tmc2130" config section
-is enabled:
-- `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
+The following command is available when the "tmc2130" or "tmc2208"
+config section is enabled:
+- `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
+- `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
+  registers. Needed to re-enable the driver if power to the chip is
+  turned off then back on.
 
 ## Endstop adjustments by stepper phase
 
@@ -299,16 +315,18 @@ section is enabled:
 
 The following commands are available when the "force_move" config
 section is enabled:
-- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value>
-  VELOCITY=<value>`: This command will forcibly move the given stepper
+- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value> VELOCITY=<value>
+  [ACCEL=<value>]`: This command will forcibly move the given stepper
   the given distance (in mm) at the given constant velocity (in
-  mm/s). No acceleration is performed; no boundary checks are
-  performed; no kinematic updates are made; other parallel steppers on
-  an axis will not be moved. Use caution as an incorrect command could
-  cause damage! Using this command will almost certainly place the
-  low-level kinematics in an incorrect state; issue a G28 afterwards
-  to reset the kinematics. This command is intended for low-level
-  diagnostics and debugging.
+  mm/s). If ACCEL is specified and is greater than zero, then the
+  given acceleration (in mm/s^2) will be used; otherwise no
+  acceleration is performed. No boundary checks are performed; no
+  kinematic updates are made; other parallel steppers on an axis will
+  not be moved. Use caution as an incorrect command could cause
+  damage! Using this command will almost certainly place the low-level
+  kinematics in an incorrect state; issue a G28 afterwards to reset
+  the kinematics. This command is intended for low-level diagnostics
+  and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
@@ -344,3 +362,11 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+
+## Filament Sensor
+
+The following command is available when the "filament_switch_sensor" config
+section is enabled.
+ - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
+  the filament sensor.  The data displayed on the terminal will depend on the
+  sensor type defined in the confguration.

@@ -87,8 +87,8 @@ class PrinterProbe:
                                                        minval=4, maxval=50)
         speed = self.gcode.get_int('SPEED', params, default=self.speed,
                                             minval=1, maxval=30)
-        z_start_position = self.gcode.get_float('Z', params, default=10.,
-                                                     minval=10., maxval=70.)
+        z_start_position = self.gcode.get_float(
+            'Z', params, default=10., minval=self.z_offset, maxval=70.)
         x_start_position = self.gcode.get_float('X', params, default=pos[0])
         y_start_position = self.gcode.get_float('Y', params, default=pos[1])
         self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n"

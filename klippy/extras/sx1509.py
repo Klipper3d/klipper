@@ -37,7 +37,8 @@ class SX1509(object):
         self._last_clock = 0
         self._freq = 400000 # Fixed frequency for SX1509
         # Set up registers default values
-        self.reg_dict = {REG_DIR : 0xFFFF, REG_DATA : 0, REG_PULLUP : 0, REG_PULLDOWN : 0,
+        self.reg_dict = {REG_DIR : 0xFFFF, REG_DATA : 0,
+                         REG_PULLUP : 0, REG_PULLDOWN : 0,
                          REG_INPUT_DISABLE : 0, REG_ANALOG_DRIVER_ENABLE : 0}
         self.reg_i_on_dict = {reg : 0 for reg in REG_I_ON}
     def _build_config(self):
@@ -50,11 +51,13 @@ class SX1509(object):
         self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
             self._oid, REG_RESET, 0x34))
         # Enable Oscillator
-        self._mcu.add_config_cmd("i2c_modify_bits oid=%d reg=%02x clear_set_bits=%02x%02x" % (
-            self._oid, REG_CLOCK, 0, (1 << 6)))
+        self._mcu.add_config_cmd("i2c_modify_bits oid=%d reg=%02x"
+                                 " clear_set_bits=%02x%02x" % (
+                                     self._oid, REG_CLOCK, 0, (1 << 6)))
         # Setup Clock Divider
-        self._mcu.add_config_cmd("i2c_modify_bits oid=%d reg=%02x clear_set_bits=%02x%02x" % (
-            self._oid, REG_MISC, 0, (1 << 4)))
+        self._mcu.add_config_cmd("i2c_modify_bits oid=%d reg=%02x"
+                                 " clear_set_bits=%02x%02x" % (
+                                     self._oid, REG_MISC, 0, (1 << 4)))
         # Transfer all regs with their initial cached state
         for _reg, _data in self.reg_dict.iteritems():
             self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%04x" % (
@@ -95,7 +98,8 @@ class SX1509(object):
         data = [reg & 0xFF]
         if reg in self.reg_dict:
             # Word
-            data += [(self.reg_dict[reg] >> 8) & 0xFF, self.reg_dict[reg] & 0xFF]
+            data += [(self.reg_dict[reg] >> 8) & 0xFF,
+                     self.reg_dict[reg] & 0xFF]
         elif reg in self.reg_i_on_dict:
             # Byte
             data += [self.reg_i_on_dict[reg] & 0xFF]
@@ -168,7 +172,8 @@ class SX1509_pwm(object):
         self._sx1509.set_bits_in_register(REG_INPUT_DISABLE, self._bitmask)
         self._sx1509.clear_bits_in_register(REG_PULLUP, self._bitmask)
         self._sx1509.clear_bits_in_register(REG_DIR, self._bitmask)
-        self._sx1509.set_bits_in_register(REG_ANALOG_DRIVER_ENABLE, self._bitmask)
+        self._sx1509.set_bits_in_register(REG_ANALOG_DRIVER_ENABLE,
+                                          self._bitmask)
         self._sx1509.clear_bits_in_register(REG_DATA, self._bitmask)
     def _build_config(self):
         if not self._hardware_pwm:
@@ -176,7 +181,8 @@ class SX1509_pwm(object):
         if self._max_duration:
             raise pins.error("SX1509 pins are not suitable for heaters")
         # Send initial value
-        self._sx1509.set_register(self._i_on_reg, ~int(255 * self._start_value) & 0xFF)
+        self._sx1509.set_register(self._i_on_reg,
+                                  ~int(255 * self._start_value) & 0xFF)
         self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
             self._sx1509.get_oid(),
             self._i_on_reg,

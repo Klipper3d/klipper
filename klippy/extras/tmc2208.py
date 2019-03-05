@@ -168,26 +168,13 @@ Fields["PWM_AUTO"] = {
     "PWM_GRAD_AUTO":       0xff << 16
 }
 
-FieldFormatters = {
-    "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
-    "shaft":            (lambda v: "1(Reverse)" if v else ""),
-    "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
-    "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
+FieldFormatters = dict(tmc2130.FieldFormatters)
+FieldFormatters.update({
     "SEL_A":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
-    "VERSION":          (lambda v: "%#x" % v),
-    "CUR_A":            (lambda v: str(tmc2130.decode_signed_int(v, 9))),
-    "CUR_B":            (lambda v: str(tmc2130.decode_signed_int(v, 9))),
-    "MRES":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
-    "otpw":             (lambda v: "1(OvertempWarning!)" if v else ""),
-    "ot":               (lambda v: "1(OvertempError!)" if v else ""),
-    "s2ga":             (lambda v: "1(ShortToGND_A!)" if v else ""),
-    "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
     "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
-    "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
-    "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
-    "PWM_SCALE_AUTO":   (lambda v: str(tmc2130.decode_signed_int(v, 9)))
-}
+    "PWM_SCALE_AUTO":   (lambda v: tmc2130.decode_signed_int(v, 9))
+})
 
 
 ######################################################################
@@ -261,7 +248,7 @@ class TMC2208:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
+                                            self._init_registers)
         # pin setup
         ppins = self.printer.lookup_object("pins")
         rx_pin_params = ppins.lookup_pin(
@@ -280,11 +267,14 @@ class TMC2208:
         self.oid = self.mcu.create_oid()
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
-        # Add DUMP_TMC command
+        # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.ifcnt = None
         self.regs = collections.OrderedDict()
@@ -324,7 +314,8 @@ class TMC2208:
         cmd_queue = self.mcu.alloc_command_queue()
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
-    def handle_connect(self):
+    def _init_registers(self):
+        # Send registers
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
     def get_register(self, reg_name):
@@ -365,6 +356,11 @@ class TMC2208:
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
+        gcode.respond_info("========== Write-only registers ==========")
+        for reg_name, val in self.regs.items():
+            if reg_name not in ReadRegisters:
+                gcode.respond_info(self.fields.pretty_format(reg_name, val))
+        gcode.respond_info("========== Queried registers ==========")
         for reg_name in ReadRegisters:
             try:
                 val = self.get_register(reg_name)
@@ -375,9 +371,12 @@ class TMC2208:
             if reg_name == "IOIN":
                 drv_type = self.fields.get_field("SEL_A", val)
                 reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            msg = self.fields.pretty_format(reg_name, val)
-            logging.info(msg)
-            gcode.respond_info(msg)
+            gcode.respond_info(self.fields.pretty_format(reg_name, val))
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
+    def cmd_INIT_TMC(self, params):
+        logging.info("INIT_TMC 2208 %s", self.name)
+        self.printer.lookup_object('toolhead').wait_moves()
+        self._init_registers()
 
 def load_config_prefix(config):
     return TMC2208(config)

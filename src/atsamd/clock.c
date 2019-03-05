@@ -9,7 +9,6 @@
 
 // The "generic clock generators" that are configured
 #define CLKGEN_MAIN 0
-#define CLKGEN_32K 1
 #define CLKGEN_ULP32K 2
 
 #define FREQ_MAIN 48000000
@@ -49,6 +48,60 @@ get_pclock_frequency(uint32_t pclk_id)
     return FREQ_MAIN;
 }
 
+// Initialize the clocks using an external 32K crystal
+static void
+clock_init_32k(void)
+{
+    // Enable external 32Khz crystal
+    uint32_t val = (SYSCTRL_XOSC32K_STARTUP(6)
+                    | SYSCTRL_XOSC32K_XTALEN | SYSCTRL_XOSC32K_EN32K);
+    SYSCTRL->XOSC32K.reg = val;
+    SYSCTRL->XOSC32K.reg = val | SYSCTRL_XOSC32K_ENABLE;
+    while (!(SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_XOSC32KRDY))
+        ;
+
+    // Generate 48Mhz clock on DPLL (with XOSC32K as reference)
+    SYSCTRL->DPLLCTRLA.reg = 0;
+    uint32_t mul = DIV_ROUND_CLOSEST(FREQ_MAIN, FREQ_32K);
+    SYSCTRL->DPLLRATIO.reg = SYSCTRL_DPLLRATIO_LDR(mul - 1);
+    SYSCTRL->DPLLCTRLB.reg = SYSCTRL_DPLLCTRLB_LBYPASS;
+    SYSCTRL->DPLLCTRLA.reg = SYSCTRL_DPLLCTRLA_ENABLE;
+    uint32_t mask = SYSCTRL_DPLLSTATUS_CLKRDY | SYSCTRL_DPLLSTATUS_LOCK;
+    while ((SYSCTRL->DPLLSTATUS.reg & mask) != mask)
+        ;
+
+    // Switch main clock to DPLL clock
+    gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_DPLL96M);
+}
+
+// Initialize clocks from factory calibrated internal clock
+static void
+clock_init_internal(void)
+{
+    // Configure DFLL48M clock in open loop mode
+    SYSCTRL->DFLLCTRL.reg = 0;
+    uint32_t coarse = GET_FUSE(FUSES_DFLL48M_COARSE_CAL);
+    uint32_t fine = GET_FUSE(FUSES_DFLL48M_FINE_CAL);
+    SYSCTRL->DFLLVAL.reg = (SYSCTRL_DFLLVAL_COARSE(coarse)
+                            | SYSCTRL_DFLLVAL_FINE(fine));
+    if (CONFIG_USBSERIAL) {
+        // Enable USB clock recovery mode
+        uint32_t mul = DIV_ROUND_CLOSEST(FREQ_MAIN, 1000);
+        SYSCTRL->DFLLMUL.reg = (SYSCTRL_DFLLMUL_FSTEP(10)
+                                | SYSCTRL_DFLLMUL_MUL(mul));
+        SYSCTRL->DFLLCTRL.reg = (SYSCTRL_DFLLCTRL_MODE | SYSCTRL_DFLLCTRL_USBCRM
+                                 | SYSCTRL_DFLLCTRL_CCDIS
+                                 | SYSCTRL_DFLLCTRL_ENABLE);
+    } else {
+        SYSCTRL->DFLLCTRL.reg = SYSCTRL_DFLLCTRL_ENABLE;
+    }
+    while (!(SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY))
+        ;
+
+    // Switch main clock to DFLL48M clock
+    gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_DFLL48M);
+}
+
 void
 SystemInit(void)
 {
@@ -60,30 +113,9 @@ SystemInit(void)
     while (GCLK->CTRL.reg & GCLK_CTRL_SWRST)
         ;
 
-    // Enable external 32Khz crystal and route to CLKGEN_32K
-    uint32_t val = (SYSCTRL_XOSC32K_STARTUP(6)
-                    | SYSCTRL_XOSC32K_XTALEN | SYSCTRL_XOSC32K_EN32K);
-    SYSCTRL->XOSC32K.reg = val;
-    SYSCTRL->XOSC32K.reg = val | SYSCTRL_XOSC32K_ENABLE;
-    while (!(SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_XOSC32KRDY))
-        ;
-    gen_clock(CLKGEN_32K, GCLK_GENCTRL_SRC_XOSC32K);
-
-    // Configure DFLL48M clock (with CLKGEN_32K as reference)
-    route_pclock(SYSCTRL_GCLK_ID_DFLL48, CLKGEN_32K);
-    SYSCTRL->DFLLCTRL.reg = 0;
-    uint32_t mul = DIV_ROUND_CLOSEST(FREQ_MAIN, FREQ_32K);
-    SYSCTRL->DFLLMUL.reg = (SYSCTRL_DFLLMUL_CSTEP(31)
-                            | SYSCTRL_DFLLMUL_FSTEP(511)
-                            | SYSCTRL_DFLLMUL_MUL(mul));
-    SYSCTRL->DFLLCTRL.reg = (SYSCTRL_DFLLCTRL_MODE | SYSCTRL_DFLLCTRL_WAITLOCK
-                             | SYSCTRL_DFLLCTRL_QLDIS
-                             | SYSCTRL_DFLLCTRL_ENABLE);
-    uint32_t ready = (SYSCTRL_PCLKSR_DFLLRDY | SYSCTRL_PCLKSR_DFLLLCKC
-                      | SYSCTRL_PCLKSR_DFLLLCKF);
-    while ((SYSCTRL->PCLKSR.reg & ready) != ready)
-        ;
-
-    // Switch main clock to DFLL48M clock
-    gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_DFLL48M | GCLK_GENCTRL_IDC);
+    // Init clocks
+    if (CONFIG_CLOCK_REF_X32K)
+        clock_init_32k();
+    else
+        clock_init_internal();
 }

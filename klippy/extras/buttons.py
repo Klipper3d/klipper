@@ -9,7 +9,8 @@ QUERY_TIME = .002
 RETRANSMIT_COUNT = 50
 
 # Rotary encoder handler https://github.com/brianlow/Rotary
-# Copyright 2011 Ben Buxton (bb@cactii.net). Licenced under the GNU GPL Version 3.
+# Copyright 2011 Ben Buxton (bb@cactii.net).
+# Licenced under the GNU GPL Version 3.
 R_START     = 0x0
 R_CW_FINAL  = 0x1
 R_CW_BEGIN  = 0x2
@@ -77,7 +78,8 @@ class MCU_buttons:
         clock = self.mcu.get_query_slot(self.oid)
         rest_ticks = self.mcu.seconds_to_clock(QUERY_TIME)
         self.mcu.add_config_cmd(
-            "buttons_query oid=%d clock=%d rest_ticks=%d retransmit_count=%d" % (
+            "buttons_query oid=%d clock=%d"
+            " rest_ticks=%d retransmit_count=%d" % (
                 self.oid, clock, rest_ticks, RETRANSMIT_COUNT), is_init=True)
         self.mcu.register_msg(
             self.handle_buttons_state, "buttons_state", self.oid)
@@ -120,10 +122,11 @@ class RotaryEncoder:
         self.ccw_callback = ccw_callback
         self.encoder_state = R_START
     def encoder_callback(self, eventtime, state):
-        self.encoder_state = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
-        if (self.encoder_state & R_DIR_MSK) == R_DIR_CW:
+        es = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
+        self.encoder_state = es
+        if es & R_DIR_MSK == R_DIR_CW:
             self.cw_callback(eventtime)
-        elif (self.encoder_state & R_DIR_MSK) == R_DIR_CCW:
+        elif es & R_DIR_MSK == R_DIR_CCW:
             self.ccw_callback(eventtime)
 
 

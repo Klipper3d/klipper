@@ -14,11 +14,15 @@ class FilamentWidthSensor:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.pin = config.get('pin')
-        self.nominal_filament_dia = config.getfloat('default_nominal_filament_diameter', above=1.0)
+        self.nominal_filament_dia = config.getfloat(
+            'default_nominal_filament_diameter', above=1.0)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
-        self.measurement_max_difference = config.getfloat('max_difference', above=0.)
-        self.max_diameter = self.nominal_filament_dia + self.measurement_max_difference
-        self.min_diameter = self.nominal_filament_dia - self.measurement_max_difference
+        self.measurement_max_difference = config.getfloat('max_difference',
+                                                          above=0.)
+        self.max_diameter = (self.nominal_filament_dia
+                             + self.measurement_max_difference)
+        self.min_diameter = (self.nominal_filament_dia
+                             - self.measurement_max_difference)
         self.is_active = True
         # filament array [position, filamentWidth]
         self.filament_array = []
@@ -37,9 +41,12 @@ class FilamentWidthSensor:
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('QUERY_FILAMENT_WIDTH', self.cmd_M407)
-        self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR', self.cmd_ClearFilamentArray)
-        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M406)
-        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR', self.cmd_M405)
+        self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR',
+                                    self.cmd_ClearFilamentArray)
+        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR',
+                                    self.cmd_M406)
+        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR',
+                                    self.cmd_M405)
 
     # Initialization
     def handle_ready(self):
@@ -47,7 +54,8 @@ class FilamentWidthSensor:
         self.toolhead = self.printer.lookup_object('toolhead')
 
         # Start extrude factor update timer
-        self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
+        self.reactor.update_timer(self.extrude_factor_update_timer,
+                                  self.reactor.NOW)
 
     def adc_callback(self, read_time, read_value):
         # read sensor value
@@ -56,13 +64,17 @@ class FilamentWidthSensor:
     def update_filament_array(self, last_epos):
         # Fill array
         if len(self.filament_array) > 0:
-            # Get last reading position in array & calculate next reading position
-            next_reading_position = self.filament_array[-1][0] + MEASUREMENT_INTERVAL_MM
+            # Get last reading position in array & calculate next
+            # reading position
+            next_reading_position = (self.filament_array[-1][0]
+                                     + MEASUREMENT_INTERVAL_MM)
             if next_reading_position <= (last_epos + self.measurement_delay):
-                self.filament_array.append([last_epos + self.measurement_delay, self.lastFilamentWidthReading])
+                self.filament_array.append([last_epos + self.measurement_delay,
+                                            self.lastFilamentWidthReading])
         else:
             # add first item to array
-            self.filament_array.append([self.measurement_delay + last_epos, self.lastFilamentWidthReading])
+            self.filament_array.append([self.measurement_delay + last_epos,
+                                        self.lastFilamentWidthReading])
 
     def extrude_factor_update_event(self, eventtime):
         # Update extrude factor
@@ -79,8 +91,10 @@ class FilamentWidthSensor:
                     # Get first item in filament_array queue
                     item = self.filament_array.pop(0)
                     filament_width = item[1]
-                    if (filament_width <= self.max_diameter) and (filament_width >= self.min_diameter):
-                        percentage = round(self.nominal_filament_dia / filament_width * 100)
+                    if ((filament_width <= self.max_diameter)
+                        and (filament_width >= self.min_diameter)):
+                        percentage = round(self.nominal_filament_dia
+                                           / filament_width * 100)
                         self.gcode.run_script("M221 S" + str(percentage))
                     else:
                         self.gcode.run_script("M221 S100")
@@ -92,7 +106,8 @@ class FilamentWidthSensor:
     def cmd_M407(self, params):
         response = ""
         if self.lastFilamentWidthReading > 0:
-            response += "Filament dia (measured mm): " + str(self.lastFilamentWidthReading)
+            response += ("Filament dia (measured mm): "
+                         + str(self.lastFilamentWidthReading))
         else:
             response += "Filament NOT present"
         self.gcode.respond(response)
@@ -110,7 +125,8 @@ class FilamentWidthSensor:
         else:
             self.is_active = True
             # Start extrude factor update timer
-            self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
+            self.reactor.update_timer(self.extrude_factor_update_timer,
+                                      self.reactor.NOW)
         self.gcode.respond(response)
 
     def cmd_M406(self, params):
@@ -120,7 +136,8 @@ class FilamentWidthSensor:
         else:
             self.is_active = False
             # Stop extrude factor update timer
-            self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NEVER)
+            self.reactor.update_timer(self.extrude_factor_update_timer,
+                                      self.reactor.NEVER)
             # Clear filament array
             self.filament_array = []
             # Set extrude multiplier to 100%

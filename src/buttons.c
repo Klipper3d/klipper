@@ -92,7 +92,8 @@ command_buttons_add(uint32_t *args)
         shutdown("Set button past maximum button count");
     b->pins[pos] = gpio_in_setup(args[2], args[3]);
 }
-DECL_COMMAND(command_buttons_add, "buttons_add oid=%c pos=%c pin=%u pull_up=%c");
+DECL_COMMAND(command_buttons_add,
+             "buttons_add oid=%c pos=%c pin=%u pull_up=%c");
 
 void
 command_buttons_query(uint32_t *args)

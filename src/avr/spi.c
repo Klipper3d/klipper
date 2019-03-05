@@ -17,7 +17,9 @@ static const uint8_t MOSI = GPIO('B', 3), MISO = GPIO('B', 4);
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
 static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7);
 static const uint8_t MOSI = GPIO('B', 5), MISO = GPIO('B', 6);
-#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 \
+      || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 \
+      || CONFIG_MACH_atmega2560
 static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1);
 static const uint8_t MOSI = GPIO('B', 2), MISO = GPIO('B', 3);
 #endif

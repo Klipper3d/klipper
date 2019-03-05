@@ -22,7 +22,8 @@ class QuadGantryLevel:
             raise config.error("Unable to parse gantry_corners in %s" % (
                 config.get_name()))
         if len(self.gantry_corners) < 2:
-            raise config.error("quad_gantry_level requires at least two gantry_corners")
+            raise config.error(
+                "quad_gantry_level requires at least two gantry_corners")
         self.z_steppers = []
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
@@ -33,13 +34,16 @@ class QuadGantryLevel:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         z_steppers = kin.get_steppers('Z')
         if len(z_steppers) != 4:
-            raise self.printer.config_error("quad_gantry_level needs exactly 4 z steppers")
+            raise self.printer.config_error(
+                "quad_gantry_level needs exactly 4 z steppers")
         self.z_steppers = z_steppers
-    cmd_QUAD_GANTRY_LEVEL_help = "Conform a moving, twistable gantry to the shape of a stationary bed"
+    cmd_QUAD_GANTRY_LEVEL_help = (
+        "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, params):
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
-        logging.info("quad_gantry_level Calculating gantry geometry with: %s", positions)
+        logging.info("quad_gantry_level Calculating gantry geometry with: %s",
+                     positions)
         p1 = [positions[0][0] + offsets[0],positions[0][2]]
         p2 = [positions[1][0] + offsets[0],positions[1][2]]
         p3 = [positions[2][0] + offsets[0],positions[2][2]]
@@ -47,11 +51,16 @@ class QuadGantryLevel:
         f1 = self.linefit(p1,p4)
         f2 = self.linefit(p2,p3)
         logging.info("quad_gantry_level f1: %s, f2: %s" % (f1,f2))
-        a1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[0][0])]
-        a2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[0][0])]
-        b1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[1][0])]
-        b2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[1][0])]
-        logging.info("quad_gantry_level a1: %s a2: %s b1: %s b2: %s\n" % (a1,a2,b1,b2))
+        a1 = [positions[0][1] + offsets[1],
+              self.plot(f1,self.gantry_corners[0][0])]
+        a2 = [positions[1][1] + offsets[1],
+              self.plot(f2,self.gantry_corners[0][0])]
+        b1 = [positions[0][1] + offsets[1],
+              self.plot(f1,self.gantry_corners[1][0])]
+        b2 = [positions[1][1] + offsets[1],
+              self.plot(f2,self.gantry_corners[1][0])]
+        logging.info("quad_gantry_level a1: %s a2: %s b1: %s b2: %s\n" % (
+            a1,a2,b1,b2))
         af = self.linefit(a1,a2)
         bf = self.linefit(b1,b2)
         logging.info("quad_gantry_level af: %s, bf: %s" % (af,bf))

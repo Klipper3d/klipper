@@ -94,7 +94,7 @@ gpio_out_setup(uint8_t pin, uint8_t val)
         goto fail;
     struct gpio_regs *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = GPIO2BIT(pin);
-    struct gpio_out rv = (struct gpio_out){ .reg=&regs->cleardataout, .bit=bit };
+    struct gpio_out rv = (struct gpio_out){.reg=&regs->cleardataout, .bit=bit};
     gpio_out_write(rv, val);
     regs->oe &= ~bit;
     *MUXREG(mux_offset) = 0x0f;

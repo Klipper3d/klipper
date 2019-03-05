@@ -289,7 +289,8 @@ class MAX31865(SensorBase):
         if fault & 0x40:
             self.fault("Max31865 RTD input is shorted")
         if fault & 0x20:
-            self.fault("Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
+            self.fault(
+                "Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
         if fault & 0x10:
             self.fault("Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x08:
@@ -300,16 +301,16 @@ class MAX31865(SensorBase):
             self.fault("Max31865 Unspecified error")
         adc = adc >> 1 # remove fault bit
         R_rtd = (self.reference_r * adc) / VAL_ADC_MAX
-        temp = (
-            (( ( -1 * self.rtd_nominal_r ) * VAL_A ) +
-             math.sqrt( ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) -
-                        ( 4 * self.rtd_nominal_r * VAL_B * ( self.rtd_nominal_r - R_rtd ) )))
-            / (2 * self.rtd_nominal_r * VAL_B))
+        temp = ((( ( -1 * self.rtd_nominal_r ) * VAL_A )
+                 + math.sqrt( ( self.rtd_nominal_r**2 * VAL_A * VAL_A )
+                              - ( 4 * self.rtd_nominal_r * VAL_B
+                                  * ( self.rtd_nominal_r - R_rtd ) )))
+                / (2 * self.rtd_nominal_r * VAL_B))
         return temp
     def calc_adc(self, temp):
         R_rtd = temp * ( 2 * self.rtd_nominal_r * VAL_B )
         R_rtd = math.pow( ( R_rtd + ( self.rtd_nominal_r * VAL_A ) ), 2)
-        R_rtd = -1 * ( R_rtd - ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) )
+        R_rtd = -1 * ( R_rtd - (self.rtd_nominal_r**2 * VAL_A * VAL_A ) )
         R_rtd = R_rtd / ( 4 * self.rtd_nominal_r * VAL_B )
         R_rtd = ( -1 * R_rtd ) + self.rtd_nominal_r
         adc = int( ( ( R_rtd * VAL_ADC_MAX ) / self.reference_r) + 0.5 )
@@ -342,4 +343,4 @@ def load_config(config):
     # Register sensors
     pheater = config.get_printer().lookup_object("heater")
     for name, klass in Sensors.items():
-        pheater.add_sensor(name, klass)
+        pheater.add_sensor_factory(name, klass)

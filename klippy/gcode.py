@@ -26,7 +26,8 @@ class GCodeParser:
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
         self.fd_handle = None
         if not self.is_fileinput:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
         self.partial_input = ""
         self.pending_commands = []
         self.bytes_read = 0
@@ -56,7 +57,7 @@ class GCodeParser:
         # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
-        self.heater = None
+        self.heaters = None
         self.speed = 25. * 60.
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
@@ -136,7 +137,7 @@ class GCodeParser:
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
-        self.heater = self.printer.lookup_object('heater')
+        self.heaters = self.printer.lookup_object('heater')
         self.toolhead = self.printer.lookup_object('toolhead')
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
@@ -147,7 +148,8 @@ class GCodeParser:
             self.toolhead.set_extruder(self.extruder)
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
         self._respond_state("Ready")
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
@@ -222,6 +224,8 @@ class GCodeParser:
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
             if not self.is_processing_data:
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
                 self.request_restart('exit')
             pending_commands.append("")
         # Handle case where multiple commands pending
@@ -251,7 +255,8 @@ class GCodeParser:
             self.process_commands(pending_commands)
             pending_commands = self.pending_commands
         if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self.process_data)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self.process_data)
     def process_batch(self, commands):
         if self.is_processing_data:
             return False
@@ -302,20 +307,21 @@ class GCodeParser:
             os.write(self.fd, msg+"\n")
         except os.error:
             logging.exception("Write g-code response")
-    def respond_info(self, msg):
-        logging.debug(msg)
+    def respond_info(self, msg, log=True):
+        if log:
+            logging.info(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
         self.respond("// " + "\n// ".join(lines))
     def respond_error(self, msg):
         logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
-            self.respond_info("\n".join(lines))
+            self.respond_info("\n".join(lines), log=False)
         self.respond('!! %s' % (lines[0].strip(),))
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
     def _respond_state(self, state):
-        self.respond_info("Klipper state: %s" % (state,))
+        self.respond_info("Klipper state: %s" % (state,), log=False)
     # Parameter parsing helpers
     class sentinel: pass
     def get_str(self, name, params, default=sentinel, parser=str,
@@ -372,11 +378,10 @@ class GCodeParser:
     def get_temp(self, eventtime):
         # Tn:XXX /YYY B:XXX /YYY
         out = []
-        if self.heater is not None:
-            for heater in self.heater.get_all_heaters():
-                if heater is not None:
-                    cur, target = heater.get_temp(eventtime)
-                    out.append("%s:%.1f /%.1f" % (heater.gcode_id, cur, target))
+        if self.heaters is not None:
+            for gcode_id, sensor in sorted(self.heaters.get_gcode_sensors()):
+                cur, target = sensor.get_temp(eventtime)
+                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
         if not out:
             return "T:0"
         return " ".join(out)
@@ -392,12 +397,14 @@ class GCodeParser:
         temp = self.get_float('S', params, 0.)
         heater = None
         if is_bed:
-            heater = self.heater.get_heater_by_gcode_id('B')
+            heater = self.printer.lookup_object('heater_bed', None)
         elif 'T' in params:
             index = self.get_int('T', params, minval=0)
-            heater = self.heater.get_heater_by_gcode_id('T%d' % (index,))
-        else:
-            heater = self.heater.get_heater_by_gcode_id('T0')
+            extruder = self.printer.lookup_object('extruder%d' % (index,), None)
+            if extruder is not None:
+                heater = extruder.get_heater()
+        elif self.extruder is not None:
+            heater = self.extruder.get_heater()
         if heater is None:
             if temp > 0.:
                 self.respond_error("Heater not configured")
@@ -495,12 +502,14 @@ class GCodeParser:
             if 'F' in params:
                 speed = float(params['F'])
                 if speed <= 0.:
-                    raise error("Invalid speed in '%s'" % (params['#original'],))
+                    raise error("Invalid speed in '%s'" % (
+                        params['#original'],))
                 self.speed = speed
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.move_with_transform(self.last_position, self.speed * self.speed_factor)
+            self.move_with_transform(self.last_position,
+                                     self.speed * self.speed_factor)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):
@@ -672,14 +681,8 @@ class GCodeParser:
                 gcode_pos, base_pos, homing_pos))
     def request_restart(self, result):
         if self.is_printer_ready:
-            self.toolhead.motor_off()
             print_time = self.toolhead.get_last_move_time()
-            if self.heater is not None:
-                for heater in self.heater.get_all_heaters():
-                    if heater is not None:
-                        heater.set_temp(print_time, 0.)
-            if self.fan is not None:
-                self.fan.set_speed(print_time, 0.)
+            self.printer.send_event("gcode:request_restart", print_time)
             self.toolhead.dwell(0.500)
             self.toolhead.wait_moves()
         self.printer.request_exit(result)
@@ -693,7 +696,7 @@ class GCodeParser:
         self.request_restart('firmware_restart')
     cmd_ECHO_when_not_ready = True
     def cmd_ECHO(self, params):
-        self.respond_info(params['#original'])
+        self.respond_info(params['#original'], log=False)
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):
@@ -712,4 +715,4 @@ class GCodeParser:
         for cmd in sorted(self.gcode_handlers):
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
-        self.respond_info("\n".join(cmdhelp))
+        self.respond_info("\n".join(cmdhelp), log=False)
