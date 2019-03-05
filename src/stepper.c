@@ -13,7 +13,7 @@
 #include "sched.h" // struct timer
 #include "stepper.h" // command_config_stepper
 
-DECL_CONSTANT(STEP_DELAY, CONFIG_STEP_DELAY);
+DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
 
 
 /****************************************************************

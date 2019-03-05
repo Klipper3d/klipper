@@ -41,7 +41,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
 
 #define MAX_PWM 255
 
-DECL_CONSTANT(PWM_MAX, MAX_PWM);
+DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm
 gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)

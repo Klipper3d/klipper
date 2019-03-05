@@ -107,7 +107,7 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
  ****************************************************************/
 
 #define MAX_SOFT_PWM 256
-DECL_CONSTANT(SOFT_PWM_MAX, MAX_SOFT_PWM);
+DECL_CONSTANT("SOFT_PWM_MAX", MAX_SOFT_PWM);
 
 struct soft_pwm_s {
     struct timer timer;
