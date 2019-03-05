@@ -125,7 +125,7 @@ class TMC2660:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
-        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=2000000)
+        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=4000000)
         # Add SET_CURRENT and DUMP_TMC commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
