@@ -131,7 +131,7 @@ class HandleCommandGeneration:
     def __init__(self):
         self.commands = {}
         self.encoders = []
-        self.msg_to_id = { m: i for i, m in msgproto.DefaultMessages.items() }
+        self.msg_to_id = dict(msgproto.DefaultMessages)
         self.messages_by_name = { m.split()[0]: m for m in self.msg_to_id }
         self.all_param_types = {}
         self.ctr_dispatch = {
@@ -172,16 +172,20 @@ class HandleCommandGeneration:
             # The mcu currently assumes all message ids encode to one byte
             error("Too many message ids")
     def update_data_dictionary(self, data):
-        messages = { msgid: msg for msg, msgid in self.msg_to_id.items() }
-        data['messages'] = messages
-        commands = [self.msg_to_id[msg]
-                    for msgname, msg in self.messages_by_name.items()
-                    if msgname in self.commands]
-        data['commands'] = sorted(commands)
-        responses = [self.msg_to_id[msg]
-                     for msgname, msg in self.messages_by_name.items()
-                     if msgname not in self.commands]
-        data['responses'] = sorted(responses)
+        command_ids = [self.msg_to_id[msg]
+                       for msgname, msg in self.messages_by_name.items()
+                       if msgname in self.commands]
+        response_ids = [self.msg_to_id[msg]
+                        for msgname, msg in self.messages_by_name.items()
+                        if msgname not in self.commands]
+        data['commands'] = { msg: msgid for msg, msgid in self.msg_to_id.items()
+                             if msgid in command_ids }
+        data['responses'] = {msg: msgid for msg, msgid in self.msg_to_id.items()
+                             if msgid in response_ids }
+        output = { msg: msgid for msg, msgid in self.msg_to_id.items()
+                   if msgid not in command_ids and msgid not in response_ids }
+        if output:
+            data['output'] = output
     def build_parser(self, parser, iscmd):
         if parser.name == "#output":
             comment = "Output: " + parser.msgformat
@@ -412,7 +416,7 @@ class HandleIdentify:
         data = {}
         for h in Handlers:
             h.update_data_dictionary(data)
-        datadict = json.dumps(data, separators=(',', ':'))
+        datadict = json.dumps(data, separators=(',', ':'), sort_keys=True)
 
         # Write data dictionary
         if options.write_dictionary:

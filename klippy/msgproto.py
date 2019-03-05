@@ -6,8 +6,8 @@
 import json, zlib, logging
 
 DefaultMessages = {
-    0: "identify_response offset=%u data=%.*s",
-    1: "identify offset=%u count=%c",
+    "identify_response offset=%u data=%.*s": 0,
+    "identify offset=%u count=%c": 1,
 }
 
 MESSAGE_MIN = 5
@@ -190,7 +190,7 @@ class MessageParser:
         self.config = {}
         self.version = self.build_versions = ""
         self.raw_identify_data = ""
-        self._init_messages(DefaultMessages, DefaultMessages.keys())
+        self._init_messages(DefaultMessages)
     def check_packet(self, s):
         if len(s) < MESSAGE_MIN:
             return 0
@@ -296,10 +296,10 @@ class MessageParser:
             #traceback.print_exc()
             raise error("Unable to encode: %s" % (msgname,))
         return cmd
-    def _init_messages(self, messages, parsers):
-        for msgid, msgformat in messages.items():
+    def _init_messages(self, messages, output_ids=[]):
+        for msgformat, msgid in messages.items():
             msgid = int(msgid)
-            if msgid not in parsers:
+            if msgid in output_ids:
                 self.messages_by_id[msgid] = OutputFormat(msgid, msgformat)
                 continue
             msg = MessageFormat(msgid, msgformat)
@@ -311,11 +311,14 @@ class MessageParser:
                 data = zlib.decompress(data)
             self.raw_identify_data = data
             data = json.loads(data)
-            messages = data.get('messages')
             commands = data.get('commands')
-            self.command_ids = commands
             responses = data.get('responses')
-            self._init_messages(messages, commands+responses)
+            output = data.get('output', {})
+            all_messages = dict(commands)
+            all_messages.update(responses)
+            all_messages.update(output)
+            self.command_ids = sorted(commands.values())
+            self._init_messages(all_messages, output.values())
             static_strings = data.get('static_strings', {})
             self.static_strings = {int(k): v for k, v in static_strings.items()}
             self.config.update(data.get('config', {}))
