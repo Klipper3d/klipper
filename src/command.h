@@ -16,8 +16,8 @@
 #define HF_IN_SHUTDOWN   0x01   // Handler can run even when in emergency stop
 
 // Declare a constant exported to the host
-#define DECL_CONSTANT(NAME, VALUE)              \
-    _DECL_CONSTANT(NAME, VALUE)
+#define DECL_CONSTANT(NAME, VALUE) _DECL_CONSTANT(NAME, __stringify(VALUE))
+#define DECL_CONSTANT_STR(NAME, VALUE) _DECL_CONSTANT(NAME, VALUE)
 
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
@@ -88,8 +88,8 @@ uint8_t ctr_lookup_static_string(const char *str);
 #define _DECL_COMMAND(FUNC, FLAGS, MSG)                                 \
     DECL_CTR("_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG)
 
-#define _DECL_CONSTANT(NAME, VALUE)                                     \
-    DECL_CTR("_DECL_CONSTANT " __stringify(NAME) " " __stringify(VALUE))
+#define _DECL_CONSTANT(NAME, VALUE)             \
+    DECL_CTR("_DECL_CONSTANT " NAME " " VALUE)
 
 #define _DECL_ENCODER(FMT) ({                   \
     DECL_CTR("_DECL_ENCODER " FMT);             \

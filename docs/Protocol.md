@@ -115,7 +115,7 @@ Declaring constants
 Constants can also be exported. For example, the following:
 
 ```
-DECL_CONSTANT(SERIAL_BAUD, 250000);
+DECL_CONSTANT("SERIAL_BAUD", 250000);
 ```
 
 would export a constant named "SERIAL_BAUD" with a value of 250000

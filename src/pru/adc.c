@@ -16,7 +16,7 @@
  * Analog to Digital Converter (ADC) pins
  ****************************************************************/
 
-DECL_CONSTANT(ADC_MAX, 4095);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 static void
 adc_full_reset(void)
