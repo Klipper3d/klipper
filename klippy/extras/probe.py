@@ -21,6 +21,7 @@ class PrinterProbe:
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
+        self.probe_calibrate_z = 0.
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -147,13 +148,13 @@ class PrinterProbe:
     def probe_calibrate_finalize(self, kin_pos):
         if kin_pos is None:
             return
-        z_pos = self.z_offset - kin_pos[2]
+        z_offset = self.probe_calibrate_z - kin_pos[2]
         self.gcode.respond_info(
             "%s: z_offset: %.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
-            "with the above and restart the printer." % (self.name, z_pos))
+            "with the above and restart the printer." % (self.name, z_offset))
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, 'z_offset', "%.3f" % (z_pos,))
+        configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
     def cmd_PROBE_CALIBRATE(self, params):
         # Perform initial probe
@@ -161,6 +162,7 @@ class PrinterProbe:
         # Move away from the bed
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
+        self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
         self._move(curpos, self.speed)
         # Move the nozzle over the probe point
