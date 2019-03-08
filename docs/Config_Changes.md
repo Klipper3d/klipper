@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190308: The [tmc2660] config section has changed. A new
+sense_resistor config parameter must now be provided. The meaning of
+several of the driver_XXX parameters has changed.
+
 20190228: Users of SPI or I2C on SAMD21 boards must now specify the
 bus pins via a [samd_sercom] config section.
 
