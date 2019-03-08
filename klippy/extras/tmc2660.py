@@ -186,8 +186,8 @@ class TMC2660:
         set_config_field(config, "SGT", 0)
         self.current = config.getfloat('run_current', minval=0.1,
                                        maxval=2.4)
-        self.driver_cs = current_to_reg(self.current,
-        self.sense_resistor, self.fields.get_field("VSENSE"))
+        self.driver_cs = current_to_reg(self.current, self.sense_resistor,
+                                        self.fields.get_field("VSENSE"))
         self.fields.set_field("CS", self.driver_cs)
 
         # Init Registers
