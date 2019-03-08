@@ -235,7 +235,7 @@ class TMC2130:
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
-        set_config_field(config, "TBL", 1, "driver_BLANK_TIME_SELECT")
+        set_config_field(config, "TBL", 1)
         set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "IHOLDDELAY", 8)
         set_config_field(config, "TPOWERDOWN", 0)

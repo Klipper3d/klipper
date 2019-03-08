@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20190308: The "driver_BLANK_TIME_SELECT" field in [tmc2130] and
+[tmc2208] config sections has been renamed to "driver_TBL".
+
 20190308: The [tmc2660] config section has changed. A new
 sense_resistor config parameter must now be provided. The meaning of
 several of the driver_XXX parameters has changed.
