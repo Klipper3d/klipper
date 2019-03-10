@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20190310: The [controller_fan] config section now always takes a name
+(such as [controller_fan my_controller_fan]).
+
 20190308: The "driver_BLANK_TIME_SELECT" field in [tmc2130] and
 [tmc2208] config sections has been renamed to "driver_TBL".
 
