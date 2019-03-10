@@ -16,14 +16,14 @@ config BOARD_DIRECTORY
 
 config CLOCK_FREQ
     int
-    default 8000000 # 72000000 / 9
+    default 72000000
 
 choice
     prompt "Bootloader offset"
-    config STM_FLASH_START_0000
-        bool "No bootloader"
     config STM_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)"
+    config STM_FLASH_START_0000
+        bool "No bootloader"
 endchoice
 
 config FLASH_START
@@ -38,9 +38,5 @@ config SERIAL
     depends on !USBSERIAL
     bool
     default y
-config SERIAL_BAUD
-    depends on SERIAL
-    int "Baud rate for serial port"
-    default 250000
 
 endif

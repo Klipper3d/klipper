@@ -9,17 +9,19 @@ Frequently asked questions
 6. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
 7. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
 8. [Can I run multiple instances of Klipper on the same host machine?](#can-i-run-multiple-instances-of-klipper-on-the-same-host-machine)
-9. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
-10. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
-11. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
-12. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
-13. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
-14. [My Raspberry Pi keeps rebooting during prints](#my-raspberry-pi-keeps-rebooting-during-prints)
-15. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-16. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-17. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-18. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-19. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+9. [Do I have to use OctoPrint?](#do-i-have-to-use-octoprint)
+10. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
+12. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
+12. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
+13. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
+14. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
+15. [My Raspberry Pi keeps rebooting during prints](#my-raspberry-pi-keeps-rebooting-during-prints)
+16. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
+18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
+19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
+20. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
 
 ### How can I donate to the project?
 
@@ -36,6 +38,14 @@ The step_distance defines the distance that the axis will travel on
 each motor driver pulse. It can also be calculated from the axis
 pitch, motor step angle, and driver microstepping. If unsure, do a web
 search for "calculate steps per mm" to find an online calculator.
+
+Klipper uses step_distance instead of steps_per_mm in order to use
+consistent units of measurement in the config file. (The config uses
+millimeters for all distance measurements.) It is believed that
+steps_per_mm originated as an optimization on old 8-bit
+micro-controllers (the desire to use a multiply instead of a divide in
+some low-level code). Continuing to configure this one distance in
+units of "inverse millimeters" is felt to be quirky and unnecessary.
 
 ### Where's my serial port?
 
@@ -158,13 +168,28 @@ scripts ultimately cause the following Unix command to be run:
 ~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
 ```
 One can run multiple instances of the above command as long as each
-instance has its own printer config file and its own log file.
+instance has its own printer config file, its own log file, and its
+own pseudo-tty. For example:
+```
+~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
+```
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
 [install-octopi.sh](../scripts/install-octopi.sh) script and the
 [klipper-start.sh](../scripts/klipper-start.sh) script may be useful
 as examples.
+
+### Do I have to use OctoPrint?
+
+The Klipper software is not dependent on OctoPrint. It is possible to
+use alternative software to send commands to Klipper, but doing so
+requires Linux admin knowledge.
+
+Klipper creates a "virtual serial port" via the "/tmp/printer" file,
+and it emulates a classic 3d-printer serial interface via that file.
+In general, alternative software may work with Klipper as long as it
+can be configured to use "/tmp/printer" for the printer serial port.
 
 ### Why can't I move the stepper before homing the printer?
 
@@ -240,17 +265,46 @@ configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
-There have been reports of some TMC drivers being disabled in the
-middle of a print. (In particular, with the TMC2208 driver.) When this
-issue occurs, the stepper associated with the driver moves freely,
-while the print continues.
+Short answer: Do not use the TMC2208 driver in "standalone mode" with
+Klipper! Do not use the TMC2224 driver in "stealthchop standalone
+mode" with Klipper!
 
-It is believed this may be due to "over current" detection within the
-TMC driver. Trinamic has indicated that this could occur if the driver
-is in "stealthChop mode" and an abrupt velocity change occurs. If you
-experience this problem during homing, consider using a slower homing
-speed. If you experience this problem in the middle of a print,
-consider using a lower square_corner_velocity setting.
+Long answer: Klipper implements very precise timing.
+
+![tmc2208](img/tmc2208.svg.png)
+
+In the above picture, if Klipper is requested to move along the red
+line and if each black line represents the nominal location to step a
+stepper, then in the middle of that movement Klipper will arrange to
+take a step, change the step direction, and then step back. Klipper
+can perform this step, direction change, and step back in a very small
+amount of time.
+
+It is our current understanding that the TMC2208 and TMC2224 will
+react poorly to this when they are in "stealthchop" mode. (It is not
+believed any other TMC drivers are impacted.) It is believed that when
+the driver sees the two step requests in a small time frame that it
+dramatically increases current in anticipation of high acceleration.
+That high current can trip the driver's internal "over current"
+detection which causes the driver to disable itself.
+
+This pattern of steps can occur on all stepper motors and on all
+robot kinematics.
+
+The TMC2208 and TMC2224 do work well with Klipper when run-time
+configuration mode is used (that is, when a wire is routed from the
+micro-controller to the PDN-UART pin and the printer config file has a
+corresponding [tmc2208] config section). When using run-time
+configuration, either configure the drivers to use "spreadcycle mode"
+or configure them to use "stealthchop mode" with a reasonable
+"stealthchop threshold". If one wishes to exclusively use
+"stealthchop" mode with run-time UART configuration then make sure the
+stealthchop_threshold is no more than about 10% greater than the
+maximum velocity of the given axis. It is speculated that with a
+reasonable stealthchop threshold, then if Klipper sends a "step,
+direction change, step back" sequence, the driver will briefly
+transition from stealthchop mode, to spreadcycle mode, and back to
+stealthchop mode, which should be harmless.
 
 ### I keep getting random "Lost communication with MCU" errors
 
@@ -428,3 +482,21 @@ needed for a software change to take effect.
 When upgrading the software, be sure to check the
 [config changes](Config_Changes.md) document for information on
 software changes that may require updates to your printer.cfg file.
+
+### Can I find out whether the printer has lost steps?
+
+In a way, yes. Home the printer, issue a `GET_POSITION` command, run
+your print, home again and issue another `GET_POSITION`. Then compare
+the values in the `mcu:` line.
+
+This might be helpful to tune settings like stepper motor currents,
+accelerations and speeds without needing to actually print something
+and waste filament: just run some high-speed moves in between the
+`GET_POSITION` commands.
+
+Note that endstop switches themselves tend to trigger at slightly
+different positions, so a difference of a couple of microsteps is
+likely the result of endstop inaccuracies. A stepper motor itself can
+only lose steps in increments of 4 full steps. (So, if one is using 16
+microsteps, then a lost step on the stepper would result in the "mcu:"
+step counter being off by a multiple of 64 microsteps.)

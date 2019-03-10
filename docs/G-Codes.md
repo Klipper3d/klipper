@@ -111,6 +111,9 @@ The following standard commands are supported:
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
   the printer's velocity limits. Note that one may only set values
   less than or equal to the limits specified in the config file.
+- `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
+  Sets the target temperature for a heater. If a target temperature is
+  not supplied, the target is 0.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
   Set pressure advance parameters. If EXTRUDER is not specified, it
@@ -118,6 +121,23 @@ The following standard commands are supported:
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.
+- `MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
+  measuring the height of the nozzle at a given location. If SPEED is
+  specified, it sets the speed of TESTZ commands (the default is
+  5mm/s). During a manual probe, the following additional commands are
+  available:
+  - `ACCEPT`: This command accepts the current Z position and
+  concludes the manual probing tool.
+  - `ABORT`: This command terminates the manual probing tool.
+  - `TESTZ Z=<value>`: This command moves the nozzle up or down by the
+    amount specified in "value". For example, `TESTZ Z=-.1` would move
+    the nozzle down .1mm while `TESTZ Z=.1` would move the nozzle up
+    .1mm. The value may also be `+`, `-`, `++`, or `--` to move the
+    nozzle up or down an amount relative to previous attempts.
+- `Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful
+  for calibrating a Z position_endstop config setting. See the
+  MANUAL_PROBE command for details on the parameters and the
+  additional commands available while the tool is active.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -145,6 +165,24 @@ enabled:
 - `SET_SERVO SERVO=config_name [WIDTH=<seconds>] [ENABLE=<0|1>]`
 - `SET_SERVO SERVO=config_name [ANGLE=<degrees>] [ENABLE=<0|1>]`
 
+## Manual stepper Commands
+
+The following command is available when a "manual_stepper" config
+section is enabled:
+- `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
+  [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
+  [MOVE=<pos> [STOP_ON_ENDSTOP=1]]`: This command will alter the state
+  of the stepper. Use the ENABLE parameter to enable/disable the
+  stepper. Use the SET_POSITION parameter to force the stepper to
+  think it is at the given position. Use the MOVE parameter to request
+  a movement to the given position. If SPEED and/or ACCEL is specified
+  then the given values will be used instead of the defaults specified
+  in the config file. If an ACCEL of zero is specified then no
+  acceleration will be preformed. If STOP_ON_ENDSTOP is specified then
+  the move will end early should the endstop report as triggered (use
+  STOP_ON_ENDSTOP=-1 to stop early should the endstop report not
+  triggered).
+
 ## Probe
 
 The following commands are available when a "probe" config section is
@@ -152,6 +190,14 @@ enabled:
 - `PROBE`: Move the nozzle downwards until the probe triggers.
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
+- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
+  [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
+  median and standard deviation. The default values are: REPEAT=10,
+  SPEED=probe config speed, X=current X, Y=current Y and Z=10.
+- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
+  calibrating the probe's z_offset. See the MANUAL_PROBE command for
+  details on the parameters and the additional commands available
+  while the tool is active.
 
 ## BLTouch
 
@@ -169,10 +215,10 @@ The following commands are available when the "delta_calibrate" config
 section is enabled:
 - `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
   points on the bed and recommend updated endstop positions, tower
-  angles, and radius.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a DELTA_CALIBRATE
-    operation.
+  angles, and radius. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -182,10 +228,10 @@ The following commands are available when the "bed_tilt" config
 section is enabled:
 - `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
   points specified in the config and then recommend updated x and y
-  tilt adjustments.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_TILT_CALIBRATE operation.
+  tilt adjustments. If METHOD=manual is specified then the manual
+  probing tool is activated - see the MANUAL_PROBE command above for
+  details on the additional commands available while this tool is
+  active.
 
 ## Mesh Bed Leveling
 
@@ -194,10 +240,10 @@ section is enabled:
 - `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
   using generated points specified by the parameters in the
   config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh.
-  - `NEXT`: If manual bed probing is enabled, then one can use this
-    command to move to the next probing point during a
-    BED_MESH_CALIBRATE operation.
+  adjusted according to the mesh. If METHOD=manual is specified then
+  the manual probing tool is activated - see the MANUAL_PROBE command
+  above for details on the additional commands available while this
+  tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
@@ -218,6 +264,26 @@ section is enabled:
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
 
+## Bed Screws Helper
+
+The following commands are available when the "bed_screws" config
+section is enabled:
+- `BED_SCREWS_ADJUST`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) and allow one to make adjustments to
+  the bed screws so that the bed is a constant distance from the
+  nozzle.
+
+## Bed Screws Tilt adjust Helper
+
+The following commands are available when the "screws_tilt_adjust"
+config section is enabled:
+- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) probing the z height and calculate
+  the number of knob turns to adjust the bed level.
+  IMPORTANT: You MUST always do a G28 before using this command.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
@@ -234,12 +300,26 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130
+## TMC2130, TMC2660 and TMC2208
 
-The following command is available when the "tmc2130" config section
-is enabled:
-- `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
+The following command is available when the "tmc2130", "tmc2660"
+or "tmc2208" config section is enabled:
+- `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
+- `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
+  registers. Needed to re-enable the driver if power to the chip is
+  turned off then back on.
+The following commands are additionally available when the "tmc2660"
+config section is enabled:
+- `SET_TMC_CURRENT STEPPER=<name> CURRENT=<current>`: This will adjust
+  the run_current of the TMC driver.
+- `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
+  alter the value of the specified register field of the TMC driver.
+  This command is intended for low-level diagnostics and debugging only because
+  changing the fields during run-time can lead to undesired and potentially
+  dangerous behavior of your printer. Permanent changes should be made using
+  the printer configuration file instead. No sanity checks are performed for the
+  given values.
 
 ## Endstop adjustments by stepper phase
 
@@ -256,16 +336,18 @@ section is enabled:
 
 The following commands are available when the "force_move" config
 section is enabled:
-- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value>
-  VELOCITY=<value>`: This command will forcibly move the given stepper
+- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value> VELOCITY=<value>
+  [ACCEL=<value>]`: This command will forcibly move the given stepper
   the given distance (in mm) at the given constant velocity (in
-  mm/s). No acceleration is performed; no boundary checks are
-  performed; no kinematic updates are made; other parallel steppers on
-  an axis will not be moved. Use caution as an incorrect command could
-  cause damage! Using this command will almost certainly place the
-  low-level kinematics in an incorrect state; issue a G28 afterwards
-  to reset the kinematics. This command is intended for low-level
-  diagnostics and debugging.
+  mm/s). If ACCEL is specified and is greater than zero, then the
+  given acceleration (in mm/s^2) will be used; otherwise no
+  acceleration is performed. No boundary checks are performed; no
+  kinematic updates are made; other parallel steppers on an axis will
+  not be moved. Use caution as an incorrect command could cause
+  damage! Using this command will almost certainly place the low-level
+  kinematics in an incorrect state; issue a G28 afterwards to reset
+  the kinematics. This command is intended for low-level diagnostics
+  and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
@@ -291,3 +373,21 @@ enabled.
   - `RESPOND TYPE=error MSG="<message>"`: echo the message prepended with `!! `.
   - `RESPOND PREFIX=<prefix> MSG="<message>"`: echo the message prepended with `<prefix>`
     (The `PREFIX` parameter will take priority over the `TYPE` parameter)
+
+## Pause Resume
+
+The following commands are available when the "pause_resume" config section
+is enabled:
+  - `PAUSE`:  Pauses the current print.  The current position is captured for
+  restoration upon resume.
+  - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
+  the previously captured position.  The VELOCITY parameter determines the speed
+  at which the tool should return to the original captured position.
+
+## Filament Sensor
+
+The following command is available when the "filament_switch_sensor" config
+section is enabled.
+ - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
+  the filament sensor.  The data displayed on the terminal will depend on the
+  sensor type defined in the confguration.

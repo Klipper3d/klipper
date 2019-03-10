@@ -317,7 +317,7 @@ class MessageParser:
             responses = data.get('responses')
             self._init_messages(messages, commands+responses)
             static_strings = data.get('static_strings', {})
-            self.static_strings = { int(k): v for k, v in static_strings.items() }
+            self.static_strings = {int(k): v for k, v in static_strings.items()}
             self.config.update(data.get('config', {}))
             self.version = data.get('version', '')
             self.build_versions = data.get('build_versions', '')

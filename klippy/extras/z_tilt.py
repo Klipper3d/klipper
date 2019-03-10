@@ -84,7 +84,6 @@ class ZTilt:
         stepstrs = ["%s = %.6f" % (s.get_name(), so) for so, s in positions]
         msg = "Making the following Z adjustments:\n%s\nz_adjust = %.6f" % (
             "\n".join(stepstrs), z_adjust)
-        logging.info(msg)
         self.gcode.respond_info(msg)
         # Move each z stepper (sorted from lowest to highest) until they match
         positions.sort()

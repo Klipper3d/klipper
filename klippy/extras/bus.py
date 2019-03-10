@@ -12,22 +12,33 @@ import mcu
 
 # Helper code for working with devices connected to an MCU via an SPI bus
 class MCU_SPI:
-    def __init__(self, mcu, bus, pin, mode, speed, shutdown_seq):
+    def __init__(self, mcu, bus, pin, mode, speed, shutdown_seq, sw_pins=None):
         self.mcu = mcu
         shutdown_msg = "".join(["%02x" % (x,) for x in shutdown_seq])
         self.oid = self.mcu.create_oid()
-        if pin is None:
-            self.config_msg = (
-                "config_spi_without_cs oid=%d bus=%d mode=%d rate=%d"
-                " shutdown_msg=%s" % (
-                    self.oid, bus, mode, speed, shutdown_msg))
-        else:
+        if pin is not None:
             # Set all CS pins high before first config_spi
             self.mcu.add_config_cmd("set_digital_out pin=%s value=1" % (pin,))
-            self.config_msg = (
+        if sw_pins is not None:
+            software_spi_oid = self.mcu.create_oid()
+            self.config_msgs = [
+                "config_software_spi oid=%d sclk_pin=%s mosi_pin=%s miso_pin=%s"
+                " mode=%d rate=%d" % (
+                    software_spi_oid, sw_pins[0], sw_pins[1], sw_pins[2],
+                    mode, speed),
+                "config_spi_from_software oid=%d sw_oid=%d pin=%s"
+                " shutdown_msg=%s" % (
+                    self.oid, software_spi_oid, pin, shutdown_msg)]
+        elif pin is None:
+            self.config_msgs = [
+                "config_spi_without_cs oid=%d bus=%d mode=%d rate=%d"
+                " shutdown_msg=%s" % (
+                    self.oid, bus, mode, speed, shutdown_msg)]
+        else:
+            self.config_msgs = [
                 "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d"
                 " shutdown_msg=%s" % (
-                    self.oid, bus, pin, mode, speed, shutdown_msg))
+                    self.oid, bus, pin, mode, speed, shutdown_msg)]
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.spi_send_cmd = self.spi_transfer_cmd = None
@@ -38,7 +49,8 @@ class MCU_SPI:
     def get_command_queue(self):
         return self.cmd_queue
     def build_config(self):
-        self.mcu.add_config_cmd(self.config_msg)
+        for msg in self.config_msgs:
+            self.mcu.add_config_cmd(msg)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
         self.spi_transfer_cmd = self.mcu.lookup_command(
@@ -68,11 +80,24 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
         ppins.reset_pin_sharing(cs_pin_params)
         pin = None
     # Load bus parameters
-    speed = config.getint('spi_speed', default_speed, minval=100000)
-    bus = config.getint('spi_bus', 0, minval=0)
-    # Create MCU_SPI object
     mcu = cs_pin_params['chip']
-    return MCU_SPI(mcu, bus, pin, mode, speed, shutdown_seq)
+    speed = config.getint('spi_speed', default_speed, minval=100000)
+    if config.get('spi_software_sclk_pin', None) is not None:
+        sw_pin_names = ['spi_software_%s_pin' % (name,)
+                        for name in ['sclk', 'mosi', 'miso']]
+        sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
+                         for name in sw_pin_names]
+        for pin_params in sw_pin_params:
+            if pin_params['chip'] != mcu:
+                raise ppins.error("%s: spi pins must be on same mcu" % (
+                    config.get_name(),))
+        sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
+        bus = None
+    else:
+        bus = config.getint('spi_bus', 0, minval=0)
+        sw_pins = None
+    # Create MCU_SPI object
+    return MCU_SPI(mcu, bus, pin, mode, speed, shutdown_seq, sw_pins)
 
 
 ######################################################################

@@ -6,6 +6,8 @@
 
 #include <string.h> // memcpy
 #include "LPC17xx.h" // LPC_SC
+#include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
+#include "board/irq.h" // irq_disable
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // output
 #include "generic/usb_cdc.h" // usb_notify_ep0
@@ -244,6 +246,13 @@ usb_set_configure(void)
 void
 usb_request_bootloader(void)
 {
+    if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
+        return;
+    // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
+    // watchdog timeout flag is set.
+    irq_disable();
+    LPC_WDT->WDMOD = 0x07;
+    NVIC_SystemReset();
 }
 
 void

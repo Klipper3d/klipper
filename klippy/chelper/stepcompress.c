@@ -300,7 +300,8 @@ static int
 stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
 {
     uint32_t msg[5] = {
-        sc->queue_step_msgid, sc->oid, abs_step_clock - sc->last_step_clock, 1, 0
+        sc->queue_step_msgid, sc->oid, abs_step_clock - sc->last_step_clock,
+        1, 0
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 5);
     qm->min_clock = sc->last_step_clock;
@@ -438,7 +439,8 @@ queue_append_slow(struct stepcompress *sc, double rel_sc)
 
     if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
-        uint32_t flush = *(sc->queue_next-65535) - (uint32_t)sc->last_step_clock;
+        uint32_t flush = (*(sc->queue_next-65535)
+                          - (uint32_t)sc->last_step_clock);
         int ret = stepcompress_flush(sc, sc->last_step_clock + flush);
         if (ret)
             return ret;
@@ -566,7 +568,8 @@ steppersync_free(struct steppersync *ss)
 
 // Set the conversion rate of 'print_time' to mcu clock
 void __visible
-steppersync_set_time(struct steppersync *ss, double time_offset, double mcu_freq)
+steppersync_set_time(struct steppersync *ss, double time_offset
+                     , double mcu_freq)
 {
     int i;
     for (i=0; i<ss->sc_num; i++) {

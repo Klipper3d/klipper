@@ -11,7 +11,9 @@ config AVR_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_BITBANGING if !MACH_atmega168
-    select NO_UNSTEP_DELAY
+
+config STEP_DELAY
+    default 0
 
 config BOARD_DIRECTORY
     string
@@ -61,7 +63,7 @@ config AVRDUDE_PROTOCOL
     default "arduino"
 
 choice
-    prompt "Processor speed"
+    prompt "Processor speed" if LOW_LEVEL_OPTIONS
     config AVR_FREQ_20000000
         bool "20Mhz"
         depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
@@ -74,11 +76,11 @@ endchoice
 config CLOCK_FREQ
     int
     default 8000000 if AVR_FREQ_8000000
-    default 16000000 if AVR_FREQ_16000000
     default 20000000 if AVR_FREQ_20000000
+    default 16000000
 
 config CLEAR_PRESCALER
-    bool "Manually clear the CPU prescaler field at startup"
+    bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
     depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
     help
@@ -99,17 +101,17 @@ config AVR_STACK_SIZE
 config AVR_WATCHDOG
     bool
     default y
-config AVR_USBSERIAL
+config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
     default y
-config AVR_SERIAL
-    depends on !AVR_USBSERIAL
+config SERIAL
+    depends on !USBSERIAL
     bool
     default y
 choice
-    depends on AVR_SERIAL
-    prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
+    depends on SERIAL
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p)
     help
         Select the serial device to use on the AVR chip. This is
         almost always UART0.
@@ -122,12 +124,8 @@ choice
     config AVR_SERIAL_UART3
         bool "UART3" if MACH_atmega2560 || MACH_atmega1280
 endchoice
-config SERIAL_BAUD
-    depends on AVR_SERIAL
-    int "Baud rate for serial port"
-    default 250000
 config SERIAL_BAUD_U2X
-    depends on AVR_SERIAL && !SIMULAVR
+    depends on SERIAL && !SIMULAVR
     bool
     default y
 
@@ -140,7 +138,7 @@ config SERIAL_PORT
 
 config SIMULAVR
     depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
-    bool "Compile for simulavr software emulation"
+    bool "Compile for simulavr software emulation" if LOW_LEVEL_OPTIONS
     default n
     help
          Compile the code to run on simulavr software emulation

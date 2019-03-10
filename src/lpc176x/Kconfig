@@ -25,8 +25,8 @@ endchoice
 
 config CLOCK_FREQ
     int
-    default 25000000 if MACH_LPC1768 # 100000000 / 4
-    default 30000000 if MACH_LPC1769 # 120000000 / 4
+    default 100000000 if MACH_LPC1768
+    default 120000000 if MACH_LPC1769
 
 config SMOOTHIEWARE_BOOTLOADER
     bool "Target board uses Smoothieware bootloader"
@@ -44,9 +44,5 @@ config SERIAL
     depends on !USBSERIAL
     bool
     default y
-config SERIAL_BAUD
-    depends on SERIAL
-    int "Baud rate for serial port"
-    default 250000
 
 endif

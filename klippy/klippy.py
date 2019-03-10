@@ -65,7 +65,8 @@ class Printer:
     def get_state_message(self):
         return self.state_message
     def _set_state(self, msg):
-        self.state_message = msg
+        if self.state_message in (message_ready, message_startup):
+            self.state_message = msg
         if (msg != message_ready
             and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
@@ -221,7 +222,8 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-i", "--debuginput", dest="debuginput",
                     help="read commands from file instead of from tty port")
-    opts.add_option("-I", "--input-tty", dest="inputtty", default='/tmp/printer',
+    opts.add_option("-I", "--input-tty", dest="inputtty",
+                    default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")

@@ -99,7 +99,7 @@ invoked, and it may invoke sendf() at any time from a task handler.
 
 ### Output responses
 
-To simplify debugging, there is also has an output() C function. For
+To simplify debugging, there is also an output() C function. For
 example:
 
 ```

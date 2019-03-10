@@ -43,7 +43,7 @@ def get_cpu_info():
         f = open('/proc/cpuinfo', 'rb')
         data = f.read()
         f.close()
-    except OSError:
+    except IOError, OSError:
         logging.debug("Exception on read /proc/cpuinfo: %s",
                       traceback.format_exc())
         return "?"
@@ -66,9 +66,11 @@ def get_git_version(from_file=True):
 
     # Obtain version info from "git" program
     gitdir = os.path.join(klippy_src, '..')
-    prog = ('git', '-C', gitdir, 'describe', '--always', '--tags', '--long', '--dirty')
+    prog = ('git', '-C', gitdir, 'describe', '--always',
+            '--tags', '--long', '--dirty')
     try:
-        process = subprocess.Popen(prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         ver, err = process.communicate()
         retcode = process.wait()
         if retcode == 0:

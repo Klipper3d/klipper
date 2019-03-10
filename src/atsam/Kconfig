@@ -1,0 +1,66 @@
+# Kconfig settings for Atmel SAM processors
+
+if MACH_ATSAM
+
+config ATSAM_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_GPIO_BITBANGING
+
+config BOARD_DIRECTORY
+    string
+    default "atsam"
+
+choice
+    prompt "Processor model"
+    config MACH_SAM3X8E
+        bool "SAM3x8e (Arduino Due)"
+        select MACH_SAM3X
+    config MACH_SAM3X8C
+        bool "SAM3x8c (Printrboard G2)"
+        select MACH_SAM3X
+    config MACH_SAM4S8C
+        bool "SAM4s8c (Duet Maestro)"
+        select MACH_SAM4S
+    config MACH_SAM4E8E
+        bool "SAM4e8e (Duet Wifi/Eth)"
+        select MACH_SAM4E
+endchoice
+
+config MACH_SAM3X
+    bool
+config MACH_SAM4
+    bool
+config MACH_SAM4S
+    bool
+    select MACH_SAM4
+config MACH_SAM4E
+    bool
+    select MACH_SAM4
+
+config MCU
+    string
+    default "sam3x8e" if MACH_SAM3X8E
+    default "sam3x8c" if MACH_SAM3X8C
+    default "sam4s8c" if MACH_SAM4S8C
+    default "sam4e8e" if MACH_SAM4E8E
+
+config CLOCK_FREQ
+    int
+    default 84000000 if MACH_SAM3X
+    default 120000000 if MACH_SAM4
+
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    default y
+config SERIAL
+    depends on !USBSERIAL
+    bool
+    default y
+
+endif
