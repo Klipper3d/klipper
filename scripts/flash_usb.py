@@ -54,16 +54,18 @@ def flash_bossac(device, binfile, extra_flags=[]):
     if os.path.exists(ttyname) and not os.path.exists(pathname):
         pathname = ttyname
     baseargs = ["lib/bossac/bin/bossac", "-U", "-p", pathname]
-    args = baseargs + extra_flags + ["-w", binfile, "-v", "-b"]
+    args = baseargs + extra_flags + ["-w", binfile, "-v"]
     sys.stderr.write(" ".join(args) + '\n\n')
     res = subprocess.call(args)
     if res != 0:
         raise error("Error running bossac")
     if "-R" not in extra_flags:
-        time.sleep(0.500)
         args = baseargs + ["-b", "-R"]
         try:
             subprocess.check_output(args, stderr=subprocess.STDOUT)
+            if "-b" not in extra_flags:
+                time.sleep(1.)
+                subprocess.check_output(args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             pass
 
@@ -90,7 +92,15 @@ def flash_dfuutil(device, binfile, extra_flags=[]):
 # Device specific helpers
 ######################################################################
 
-def flash_atsam(options, binfile):
+def flash_atsam3(options, binfile):
+    try:
+        flash_bossac(options.device, binfile, ["-e", "-b"])
+    except error as e:
+        sys.stderr.write("Failed to flash to %s: %s\n" % (
+            options.device, str(e)))
+        sys.exit(-1)
+
+def flash_atsam4(options, binfile):
     try:
         flash_bossac(options.device, binfile, ["-e"])
     except error as e:
@@ -99,7 +109,7 @@ def flash_atsam(options, binfile):
         sys.exit(-1)
 
 def flash_atsamd(options, binfile):
-    extra_flags = ["--offset=" + options.offset, "-R"]
+    extra_flags = ["--offset=" + options.offset, "-b", "-R"]
     try:
         flash_bossac(options.device, binfile, extra_flags)
     except error as e:
@@ -153,7 +163,7 @@ def flash_stm32f1(options, binfile):
         sys.exit(-1)
 
 MCUTYPES = {
-    'atsam': flash_atsam, 'atsamd': flash_atsamd,
+    'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
     'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1
 }
 
