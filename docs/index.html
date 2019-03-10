@@ -47,15 +47,27 @@ window.$docsify = {
     // Change to /Overview.md
   homepage: 'Overview.md',
   name: 'Klipper',
-  search: 'auto', // default
   mergeNavbar: true
+  search: 'auto', // default
 
+    search : [
+      '/',            // => /README.md
+    ],
 
-};
+   // complete configuration parameters
+    search: {
+      maxAge: 86400000, // Expiration time, the default one day
+      paths: [auto], // or 'auto'
+      placeholder: 'Type to search',
 
+      // Headline depth, 1 - 6
+      depth: 6,
+
+      hideOtherSidebarContent: false, // whether or not to hide other sidebar content
+    }
+  }
 
  </script>
-
 	<script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
   <script src="//unpkg.com/docsify/lib/plugins/search.min.js"></script>
 </body>
