@@ -5,8 +5,10 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
+#include "autoconf.h" // CONFIG_STM_FLASH_START_2000
 #include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
+#include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // GPIO
@@ -214,6 +216,15 @@ usb_set_configure(void)
 void
 usb_request_bootloader(void)
 {
+    if (!CONFIG_STM_FLASH_START_2000)
+        return;
+    // Enter "stm32duino" bootloader
+    irq_disable();
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+    PWR->CR |= PWR_CR_DBP;
+    BKP->DR10 = 0x01;
+    PWR->CR &=~ PWR_CR_DBP;
+    NVIC_SystemReset();
 }
 
 

@@ -295,7 +295,7 @@ class TMC2208:
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
-        set_config_field(config, "TBL", 2, "driver_BLANK_TIME_SELECT")
+        set_config_field(config, "TBL", 2)
         set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "IHOLDDELAY", 8)
         set_config_field(config, "TPOWERDOWN", 20)

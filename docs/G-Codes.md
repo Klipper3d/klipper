@@ -274,6 +274,16 @@ section is enabled:
   the bed screws so that the bed is a constant distance from the
   nozzle.
 
+## Bed Screws Tilt adjust Helper
+
+The following commands are available when the "screws_tilt_adjust"
+config section is enabled:
+- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) probing the z height and calculate
+  the number of knob turns to adjust the bed level.
+  IMPORTANT: You MUST always do a G28 before using this command.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
@@ -290,15 +300,26 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130 and TMC2208
+## TMC2130, TMC2660 and TMC2208
 
-The following command is available when the "tmc2130" or "tmc2208"
-config section is enabled:
+The following command is available when the "tmc2130", "tmc2660"
+or "tmc2208" config section is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
 - `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
   registers. Needed to re-enable the driver if power to the chip is
   turned off then back on.
+The following commands are additionally available when the "tmc2660"
+config section is enabled:
+- `SET_TMC_CURRENT STEPPER=<name> CURRENT=<current>`: This will adjust
+  the run_current of the TMC driver.
+- `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
+  alter the value of the specified register field of the TMC driver.
+  This command is intended for low-level diagnostics and debugging only because
+  changing the fields during run-time can lead to undesired and potentially
+  dangerous behavior of your printer. Permanent changes should be made using
+  the printer configuration file instead. No sanity checks are performed for the
+  given values.
 
 ## Endstop adjustments by stepper phase
 

@@ -34,8 +34,8 @@ struct stepper {
     struct timer time;
     uint32_t interval;
     int16_t add;
-#if !CONFIG_STEP_DELAY
-    uint16_t count;
+#if CONFIG_STEP_DELAY <= 0
+    uint_fast16_t count;
 #define next_step_time time.waketime
 #else
     uint32_t count;
@@ -70,9 +70,10 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     s->next_step_time += m->interval;
     s->add = m->add;
     s->interval = m->interval + m->add;
-    if (!CONFIG_STEP_DELAY) {
-        // On slow mcus see if the add can be optimized away
-        s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
+    if (CONFIG_STEP_DELAY <= 0) {
+        if (CONFIG_MACH_AVR)
+            // On AVR see if the add can be optimized away
+            s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
     } else {
         // On faster mcus, it is necessary to schedule unstep events
@@ -100,30 +101,54 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     return SF_RESCHEDULE;
 }
 
+// AVR optimized step function
+static uint_fast8_t
+stepper_event_avr(struct stepper *s)
+{
+    gpio_out_toggle_noirq(s->step_pin);
+    uint_fast16_t count = s->count - 1;
+    if (likely(count)) {
+        s->count = count;
+        s->time.waketime += s->interval;
+        gpio_out_toggle_noirq(s->step_pin);
+        if (s->flags & SF_HAVE_ADD)
+            s->interval += s->add;
+        return SF_RESCHEDULE;
+    }
+    uint_fast8_t ret = stepper_load_next(s, 0);
+    gpio_out_toggle_noirq(s->step_pin);
+    return ret;
+}
+
+// Optimized step function for stepping and unstepping in same function
+static uint_fast8_t
+stepper_event_nodelay(struct stepper *s)
+{
+    gpio_out_toggle_noirq(s->step_pin);
+    uint_fast16_t count = s->count - 1;
+    if (likely(count)) {
+        s->count = count;
+        s->time.waketime += s->interval;
+        s->interval += s->add;
+        gpio_out_toggle_noirq(s->step_pin);
+        return SF_RESCHEDULE;
+    }
+    uint_fast8_t ret = stepper_load_next(s, 0);
+    gpio_out_toggle_noirq(s->step_pin);
+    return ret;
+}
+
 // Timer callback - step the given stepper.
 uint_fast8_t
 stepper_event(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
-    if (!CONFIG_STEP_DELAY) {
-        // On slower mcus it is possible to simply step and unstep in
-        // the same timer event.
-        gpio_out_toggle_noirq(s->step_pin);
-        uint16_t count = s->count - 1;
-        if (likely(count)) {
-            s->count = count;
-            s->time.waketime += s->interval;
-            gpio_out_toggle_noirq(s->step_pin);
-            if (s->flags & SF_HAVE_ADD)
-                s->interval += s->add;
-            return SF_RESCHEDULE;
-        }
-        uint_fast8_t ret = stepper_load_next(s, 0);
-        gpio_out_toggle_noirq(s->step_pin);
-        return ret;
-    }
+    if (CONFIG_STEP_DELAY <= 0 && CONFIG_MACH_AVR)
+        return stepper_event_avr(s);
+    if (CONFIG_STEP_DELAY <= 0)
+        return stepper_event_nodelay(s);
 
-    // On faster mcus, it is necessary to schedule the unstep event
+    // Normal step code - schedule the unstep event
     uint32_t step_delay = timer_from_us(CONFIG_STEP_DELAY);
     uint32_t min_next_time = timer_read_time() + step_delay;
     gpio_out_toggle_noirq(s->step_pin);
@@ -243,7 +268,7 @@ static uint32_t
 stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
-    if (!CONFIG_STEP_DELAY)
+    if (CONFIG_STEP_DELAY <= 0)
         position -= s->count;
     else
         position -= s->count / 2;
