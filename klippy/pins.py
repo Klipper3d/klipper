@@ -37,6 +37,11 @@ def beaglebone_pins():
     gpios.update({"AIN%d" % i: i+4*32 for i in range(8)})
     return gpios
 
+def stm32f0_pins():
+    return {"PA0":0, "PA1":1, "PA2":2, "PA3":3, "PA4":4,
+            "PA5":5, "PA6":6, "PA7":7, "PA9":9, "PA10":10,
+            "PB1":0x11, "PB8":0x18, "PF0":0x30, "PF1":0x31}
+
 MCU_PINS = {
     "atmega168": port_pins(5),
     "atmega328": port_pins(5), "atmega328p": port_pins(5),
@@ -49,6 +54,7 @@ MCU_PINS = {
     "samd21g18a": port_pins(2, 32), "samd21e18a": port_pins(2, 32),
     "samd51g19a": port_pins(2, 32), "samd51j19a": port_pins(3, 32),
     "samd51n19a": port_pins(3, 32), "samd51p20a": port_pins(4, 32),
+    "stm32f042": stm32f0_pins(),
     "stm32f103": port_pins(5, 16),
     "lpc176x": lpc_pins(),
     "pru": beaglebone_pins(),
