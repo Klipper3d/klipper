@@ -1,0 +1,29 @@
+# Kconfig settings for STM32F4 processors
+
+if MACH_STM32F4
+
+config STM32F4_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_BITBANGING
+
+config BOARD_DIRECTORY
+    string
+    default "stm32f4"
+
+config CLOCK_FREQ
+    int
+    default 84000000
+
+config FLASH_START
+    hex
+    default 0x0000
+
+config SERIAL
+    bool
+    default y
+
+endif
