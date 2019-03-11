@@ -441,9 +441,9 @@ class machine.
 | at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| sam3x8e (USB)       | 413K | efd1bf5e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| sam3x8e (USB)       | 450K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| sam4s8c (USB)       | 579K | 8e0eb0d5 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| sam4s8c (USB)       | 619K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | samd51 (USB)        | 620K | 8cd83b4c | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 
