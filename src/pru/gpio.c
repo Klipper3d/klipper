@@ -29,6 +29,11 @@ struct gpio_regs {
     volatile uint32_t setdataout;
 };
 
+DECL_ENUMERATION_RANGE("pin", "gpio0_0", GPIO(0, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio1_0", GPIO(1, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio2_0", GPIO(2, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio3_0", GPIO(3, 0), 32);
+
 static struct gpio_regs *digital_regs[] = {
     (void*)0x44e07000, (void*)0x4804c000, (void*)0x481ac000, (void*)0x481ae000
 };
