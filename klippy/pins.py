@@ -13,16 +13,6 @@ class error(Exception):
 # Hardware pin names
 ######################################################################
 
-def port_pins(port_count, bit_count=8):
-    pins = {}
-    for port in range(port_count):
-        portchr = chr(65 + port)
-        if portchr == 'I':
-            continue
-        for portbit in range(bit_count):
-            pins['P%c%d' % (portchr, portbit)] = port * bit_count + portbit
-    return pins
-
 def named_pins(fmt, port_count, bit_count=32):
     return { fmt % (port, portbit) : port * bit_count + portbit
              for port in range(port_count)
@@ -34,7 +24,6 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "stm32f103": port_pins(5, 16),
     "pru": beaglebone_pins(),
     "linux": {"analog%d" % i: i for i in range(8)}, # XXX
 }
