@@ -38,8 +38,6 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "sam3x8e": port_pins(4, 32), "sam3x8c": port_pins(2, 32),
-    "sam4s8c": port_pins(3, 32), "sam4e8e" : port_pins(5, 32),
     "samd21g18a": port_pins(2, 32), "samd21e18a": port_pins(2, 32),
     "samd51g19a": port_pins(2, 32), "samd51j19a": port_pins(3, 32),
     "samd51n19a": port_pins(3, 32), "samd51p20a": port_pins(4, 32),
