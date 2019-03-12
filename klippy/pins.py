@@ -38,12 +38,6 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "atmega168": port_pins(5),
-    "atmega328": port_pins(5), "atmega328p": port_pins(5),
-    "atmega644p": port_pins(4), "atmega1284p": port_pins(4),
-    "at90usb1286": port_pins(6), "at90usb646": port_pins(6),
-    "atmega32u4": port_pins(6),
-    "atmega1280": port_pins(12), "atmega2560": port_pins(12),
     "sam3x8e": port_pins(4, 32), "sam3x8c": port_pins(2, 32),
     "sam4s8c": port_pins(3, 32), "sam4e8e" : port_pins(5, 32),
     "samd21g18a": port_pins(2, 32), "samd21e18a": port_pins(2, 32),
@@ -122,10 +116,14 @@ def update_map_arduino(pins, mcu):
     if mcu not in Arduino_from_mcu:
         raise error("Arduino aliases not supported on mcu '%s'" % (mcu,))
     dpins, apins = Arduino_from_mcu[mcu]
+    aliases = {}
     for i in range(len(dpins)):
-        pins['ar' + str(i)] = pins[dpins[i]]
+        aliases['ar' + str(i)] = dpins[i]
     for i in range(len(apins)):
-        pins['analog%d' % (i,)] = pins[apins[i]]
+        aliases['analog%d' % (i,)] = apins[i]
+    if pins:
+        aliases = {a: pins[v] for a, v in aliases.items()}
+    pins.update(aliases)
 
 
 ######################################################################
@@ -191,9 +189,12 @@ class PinResolver:
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
-            if name not in self.pins:
+            if name in self.pins:
+                pin_id = self.pins[name]
+            elif not self.pins:
+                pin_id = name
+            else:
                 raise error("Unable to translate pin name: %s" % (cmd,))
-            pin_id = self.pins[name]
             if (name != self.active_pins.setdefault(pin_id, name)
                 and self.validate_aliases):
                 raise error("pin %s is an alias for %s" % (
