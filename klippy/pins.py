@@ -38,9 +38,6 @@ def beaglebone_pins():
     return gpios
 
 MCU_PINS = {
-    "samd21g18a": port_pins(2, 32), "samd21e18a": port_pins(2, 32),
-    "samd51g19a": port_pins(2, 32), "samd51j19a": port_pins(3, 32),
-    "samd51n19a": port_pins(3, 32), "samd51p20a": port_pins(4, 32),
     "stm32f103": port_pins(5, 16),
     "lpc176x": lpc_pins(),
     "pru": beaglebone_pins(),
