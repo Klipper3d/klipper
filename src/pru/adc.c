@@ -51,6 +51,8 @@ adc_full_reset(void)
     have_done_reset = 1;
 }
 
+DECL_ENUMERATION_RANGE("pin", "AIN0", 4 * 32, 8);
+
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
