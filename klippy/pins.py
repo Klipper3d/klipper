@@ -14,7 +14,6 @@ class error(Exception):
 ######################################################################
 
 MCU_PINS = {
-    "linux": {"analog%d" % i: i for i in range(8)}, # XXX
 }
 
 
