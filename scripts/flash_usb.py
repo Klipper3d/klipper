@@ -70,22 +70,24 @@ def flash_bossac(device, binfile, extra_flags=[]):
             pass
 
 # Invoke the dfu-util program
-def call_dfuutil(flags, binfile):
+def call_dfuutil(flags, binfile, sudo):
     args = ["dfu-util"] + flags + ["-D", binfile]
+    if sudo:
+        args.insert(0, "sudo")
     sys.stderr.write(" ".join(args) + '\n\n')
     res = subprocess.call(args)
     if res != 0:
         raise error("Error running dfu-util")
 
 # Flash via a call to dfu-util
-def flash_dfuutil(device, binfile, extra_flags=[]):
+def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
     if hexfmt_r.match(device.strip()):
-        call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile)
+        call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)
         return
     buspath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
-    call_dfuutil(["-p", buspath] + extra_flags, binfile)
+    call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
 
 ######################################################################
@@ -137,7 +139,7 @@ and then restart the Smoothieboard with that SD card.
 
 def flash_lpc176x(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile)
+        flash_dfuutil(options.device, binfile, [], options.sudo)
     except error as e:
         sys.stderr.write(SMOOTHIE_HELP % (options.device, str(e)))
         sys.exit(-1)
@@ -156,7 +158,7 @@ If attempting to flash via 3.3V serial, then use:
 
 def flash_stm32f1(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"])
+        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"], options.sudo)
     except error as e:
         sys.stderr.write(STM32F1_HELP % (
             options.device, str(e), options.device))
@@ -181,6 +183,8 @@ def main():
                     help="serial port device")
     opts.add_option("-o", "--offset", type="string", dest="offset",
                     help="flash offset")
+    opts.add_option("--no-sudo", action="store_false", dest="sudo",
+                    default=True, help="do not run sudo")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
