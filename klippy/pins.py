@@ -1,20 +1,12 @@
 # Pin name to pin number definitions
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import re
 
 class error(Exception):
     pass
-
-
-######################################################################
-# Hardware pin names
-######################################################################
-
-MCU_PINS = {
-}
 
 
 ######################################################################
@@ -79,7 +71,7 @@ Arduino_from_mcu = {
     "sam3x8e": (Arduino_Due, Arduino_Due_analog),
 }
 
-def update_map_arduino(pins, mcu):
+def get_aliases_arduino(mcu):
     if mcu not in Arduino_from_mcu:
         raise error("Arduino aliases not supported on mcu '%s'" % (mcu,))
     dpins, apins = Arduino_from_mcu[mcu]
@@ -88,9 +80,7 @@ def update_map_arduino(pins, mcu):
         aliases['ar' + str(i)] = dpins[i]
     for i in range(len(apins)):
         aliases['analog%d' % (i,)] = apins[i]
-    if pins:
-        aliases = {a: pins[v] for a, v in aliases.items()}
-    pins.update(aliases)
+    return aliases
 
 
 ######################################################################
@@ -126,10 +116,10 @@ beagleboneblack_mappings = {
     'P9_38': 'AIN3', 'P9_39': 'AIN0', 'P9_40': 'AIN1',
 }
 
-def update_map_beaglebone(pins, mcu):
+def get_aliases_beaglebone(mcu):
     if mcu != 'pru':
         raise error("Beaglebone aliases not supported on mcu '%s'" % (mcu,))
-    pins.update(beagleboneblack_mappings)
+    return beagleboneblack_mappings
 
 
 ######################################################################
@@ -142,25 +132,19 @@ class PinResolver:
     def __init__(self, mcu_type, validate_aliases=True):
         self.mcu_type = mcu_type
         self.validate_aliases = validate_aliases
-        self.pins = dict(MCU_PINS.get(mcu_type, {}))
+        self.aliases = {}
         self.active_pins = {}
     def update_aliases(self, mapping_name):
-        self.pins = dict(MCU_PINS.get(self.mcu_type, {}))
         if mapping_name == 'arduino':
-            update_map_arduino(self.pins, self.mcu_type)
+            self.aliases = get_aliases_arduino(self.mcu_type)
         elif mapping_name == 'beaglebone':
-            update_map_beaglebone(self.pins, self.mcu_type)
+            self.aliases = get_aliases_beaglebone(self.mcu_type)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
-            if name in self.pins:
-                pin_id = self.pins[name]
-            elif not self.pins:
-                pin_id = name
-            else:
-                raise error("Unable to translate pin name: %s" % (cmd,))
+            pin_id = self.aliases.get(name, name)
             if (name != self.active_pins.setdefault(pin_id, name)
                 and self.validate_aliases):
                 raise error("pin %s is an alias for %s" % (
