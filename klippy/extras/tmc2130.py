@@ -206,7 +206,29 @@ class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        (self.spi, self.cs_pin) = bus.MCU_SPI_from_config(config, 3,
+            default_speed=4000000, share_type="tmc2130_cs")
+        chain = config.get('spi_chain', None)
+        if chain:
+            chain_pos, chain_len = chain.split("/")
+            chain_pos = int(chain_pos)
+            chain_len = int(chain_len)
+            if chain_pos <= 0 or chain_pos > chain_len:
+                raise config.error("%s: chain position out of range" %
+                    self.name)
+            self.chain_pos = chain_pos - 1
+            self.chain_len = chain_len
+        else:
+            self.chain_pos = 0
+            self.chain_len = 1
+        for (_, t) in self.printer.lookup_objects(module='tmc2130'):
+            if t.cs_pin == self.cs_pin:
+                if t.chain_len != self.chain_len:
+                    raise config.error("%s: differing chain lenghts" %
+                        self.name)
+                if t.chain_pos == self.chain_pos:
+                    raise config.error("%s: chain position already "\
+                        "assigned to different driver" % self.name)
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
@@ -256,17 +278,24 @@ class TMC2130:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc2130 virtual endstop")
         return TMC2130VirtualEndstop(self)
+    def _build_cmd(self, data):
+        return ([0x00] * ((self.chain_len - self.chain_pos - 1) * 5) +
+                data +
+                [0x00] * (self.chain_pos * 5))
     def get_register(self, reg_name):
         reg = Registers[reg_name]
-        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
+        cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00])
+        self.spi.spi_send(cmd)
+        params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - self.chain_pos - 1) * 5 :
+                (self.chain_len - self.chain_pos) * 5]
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val, min_clock = 0):
         reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data, min_clock)
+        self.spi.spi_send(self._build_cmd(data), min_clock)
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):

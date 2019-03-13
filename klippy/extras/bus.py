@@ -70,11 +70,12 @@ class MCU_SPI:
 
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
-                        default_speed=100000, shutdown_seq=()):
+                        default_speed=100000, shutdown_seq=(),
+                        share_type=None):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
-    cs_pin_params = ppins.lookup_pin(cs_pin)
+    cs_pin_params = ppins.lookup_pin(cs_pin, share_type=share_type)
     pin = cs_pin_params['pin']
     if pin == 'None':
         ppins.reset_pin_sharing(cs_pin_params)
@@ -97,7 +98,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
         bus = config.getint('spi_bus', 0, minval=0)
         sw_pins = None
     # Create MCU_SPI object
-    return MCU_SPI(mcu, bus, pin, mode, speed, shutdown_seq, sw_pins)
+    return (MCU_SPI(mcu, bus, pin, mode, speed, shutdown_seq, sw_pins), cs_pin)
 
 
 ######################################################################
