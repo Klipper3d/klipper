@@ -827,6 +827,32 @@ class MenuVSDCard(MenuList):
         self._populate_files()
 
 
+class MenuOctoprint(MenuList):
+    def __init__(self, manager, config, namespace=''):
+        super(MenuOctoprint, self).__init__(manager, config, namespace)
+
+    def _populate_files(self):
+        octoprint = self._manager.objs.get('octoprint')
+        if octoprint is None:
+            return
+        if self._manager.parameters['toolhead']['is_printing']:
+            return
+        files = octoprint.list_files()
+        for name, resource in files:
+            self.append_item(MenuCommand(self._manager, {
+                    'name': '%s' % name,
+                    'gcode': 'OCTOPRINT PRINT_FILE=%s' % resource,
+                    'action': 'exit',
+                    'scroll': True,
+                    # mind the cursor size in width
+                    'width': (self._manager.cols-1)
+                }))
+
+    def populate_items(self):
+        super(MenuOctoprint, self).populate_items()
+        self._populate_files()
+
+
 class MenuCard(MenuGroup):
     def __init__(self, manager, config, namespace=''):
         super(MenuCard, self).__init__(manager, config, namespace)
@@ -957,6 +983,7 @@ menu_items = {
     'input': MenuInput,
     'list': MenuList,
     'vsdcard': MenuVSDCard,
+    'octoprint': MenuOctoprint,
     'deck': MenuDeck,
     'card': MenuCard
 }
