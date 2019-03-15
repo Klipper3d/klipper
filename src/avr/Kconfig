@@ -13,7 +13,7 @@ config AVR_SELECT
     select HAVE_GPIO_BITBANGING if !MACH_atmega168
 
 config STEP_DELAY
-    default 0
+    default -1
 
 config BOARD_DIRECTORY
     string
