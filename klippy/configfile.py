@@ -171,7 +171,7 @@ class PrinterConfig:
             self._parse_config(include_data, include_filename, fileconfig,
                                visited)
         return include_filenames
-    def _parse_config(self, data, filename, fileconfig, visited = set()):
+    def _parse_config(self, data, filename, fileconfig, visited):
         path = os.path.abspath(filename)
         if path in visited:
             raise error("Recursive include of config file '%s'" % (filename))
@@ -199,7 +199,7 @@ class PrinterConfig:
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
         fileconfig = ConfigParser.RawConfigParser()
-        self._parse_config(data, filename, fileconfig)
+        self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
         sfile = StringIO.StringIO()
@@ -258,8 +258,7 @@ class PrinterConfig:
             for option in self.autosave.fileconfig.options(section):
                 if config.fileconfig.has_option(section, option):
                     msg = "SAVE_CONFIG section '%s' option '%s' conflicts " \
-                          " with included value" % (section, option)
-                    logging.exception(msg)
+                          "with included value" % (section, option)
                     raise gcode.error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
     def cmd_SAVE_CONFIG(self, params):
