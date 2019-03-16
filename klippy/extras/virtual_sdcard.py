@@ -15,12 +15,6 @@ class VirtualSD:
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
-        # file sort config
-        sort_choices = {'name': self._sort_by_name,
-                        'date': self._sort_by_date,
-                        'size': self._sort_by_size}
-        self.sort = config.getchoice('sort_by', sort_choices, 'name')
-        self.sort_reverse = config.getboolean('sort_reverse', False)
         # Work timer
         self.reactor = printer.get_reactor()
         self.must_pause_work = False
@@ -59,22 +53,12 @@ class VirtualSD:
                               and fname.endswith('.gcode')
                               and os.path.isfile(os.path.join(dname, fname)),
                 raw_dir_list)
-            sorted_files = sorted(filtered,
-                               key=lambda fname: self.sort(dname, fname),
-                               reverse=self.sort_reverse)
+            sorted_files = sorted(filtered)
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
                     for fname in sorted_files]
         except:
             logging.exception("virtual_sdcard get_file_list")
             raise self.gcode.error("Unable to get file list")
-    def _sort_by_name(self, dname, fname):
-        return fname
-    def _sort_by_date(self, dname, fname):
-        #negate mtime so that default is descending
-        return os.path.getmtime(os.path.join(dname, fname)) * -1
-    def _sort_by_size(self, dname, fname):
-        #negate size so that default is descending
-        return os.path.getsize(os.path.join(dname, fname)) * -1
     def get_status(self, eventtime):
         progress = 0.
         if self.work_timer is not None and self.file_size:
