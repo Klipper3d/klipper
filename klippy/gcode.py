@@ -102,7 +102,12 @@ class GCodeParser:
         self.position_with_transform = transform.get_position
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
+    def get_current_position(self):
+        p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
+        p[3] /= self.extrude_factor
+        return p
     def get_status(self, eventtime):
+        move_position = self.get_current_position()
         busy = self.is_processing_data
         return {
             'speed_factor': self.speed_factor * 60.,
@@ -110,6 +115,10 @@ class GCodeParser:
             'extrude_factor': self.extrude_factor,
             'abs_extrude': self.absoluteextrude,
             'busy': busy,
+            'move_xpos': move_position[0],
+            'move_ypos': move_position[1],
+            'move_zpos': move_position[2],
+            'move_epos': move_position[3],
             'last_xpos': self.last_position[0],
             'last_ypos': self.last_position[1],
             'last_zpos': self.last_position[2],
@@ -573,8 +582,7 @@ class GCodeParser:
     cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position
-        p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
-        p[3] /= self.extrude_factor
+        p = self.get_current_position()
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M220(self, params):
         # Set speed factor override percentage
