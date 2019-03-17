@@ -36,8 +36,10 @@ class TemperatureFan:
         self.next_speed_time = 0.
         self.last_speed_value = 0.
     def set_speed(self, read_time, value):
-        if value < self.min_speed:
+        if value <= 0.:
             value = 0.
+        elif value < self.min_speed:
+            value = self.min_speed
         if self.target_temp <= 0.:
             value = 0.
         if ((read_time < self.next_speed_time or not self.last_speed_value)
@@ -114,7 +116,7 @@ class ControlPID:
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         bounded_co = max(0., min(self.temperature_fan.max_speed, co))
         self.temperature_fan.set_speed(
-            read_time, self.temperature_fan.max_speed - bounded_co)
+            read_time, max(self.temperature_fan.min_speed, self.temperature_fan.max_speed - bounded_co))
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
