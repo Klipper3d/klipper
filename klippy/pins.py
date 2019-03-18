@@ -183,7 +183,7 @@ class PrinterPins:
         if [c for c in '^~!: ' if c in pin]:
             format = ""
             if can_pullup:
-                format += "[^] "
+                format += "[^~] "
             if can_invert:
                 format += "[!] "
             raise error("Invalid pin description '%s'\n"
