@@ -16,6 +16,7 @@ FILEHEADER = """
 #include "board/pgm.h"
 #include "command.h"
 #include "compiler.h"
+#include "initial_pins.h"
 """
 
 def error(msg):
@@ -114,7 +115,8 @@ ctr_lookup_static_string(const char *str)
 """
         return fmt % ("".join(code).strip(),)
 
-Handlers.append(HandleEnumerations())
+HandlerEnumerations = HandleEnumerations()
+Handlers.append(HandlerEnumerations)
 
 
 ######################################################################
@@ -146,7 +148,7 @@ class HandleConstants:
         name, value = req.split()[1:]
         self.set_value(name, decode_integer(value))
     def decl_constant_str(self, req):
-        name, value = req.split()[1:]
+        name, value = req.split(None, 2)[1:]
         value = value.strip()
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
@@ -156,7 +158,55 @@ class HandleConstants:
     def generate_code(self, options):
         return ""
 
-Handlers.append(HandleConstants())
+HandlerConstants = HandleConstants()
+Handlers.append(HandlerConstants)
+
+
+######################################################################
+# Initial pins
+######################################################################
+
+class HandleInitialPins:
+    def __init__(self):
+        self.initial_pins = []
+        self.ctr_dispatch = { 'DECL_INITIAL_PINS': self.decl_initial_pins }
+    def decl_initial_pins(self, req):
+        pins = req.split(None, 1)[1].strip()
+        if pins.startswith('"') and pins.endswith('"'):
+            pins = pins[1:-1]
+        if pins:
+            self.initial_pins = [p.strip() for p in pins.split(',')]
+            HandlerConstants.decl_constant_str(
+                "_DECL_CONSTANT_STR INITIAL_PINS "
+                + ','.join(self.initial_pins))
+    def update_data_dictionary(self, data):
+        pass
+    def map_pins(self):
+        if not self.initial_pins:
+            return []
+        mp = msgproto.MessageParser()
+        mp._fill_enumerations(HandlerEnumerations.enumerations)
+        pinmap = mp.enumerations.get('pin', {})
+        out = []
+        for p in self.initial_pins:
+            flag = "IP_OUT_HIGH"
+            if p.startswith('!'):
+                flag = "0"
+                p = p[1:].strip()
+            if p not in pinmap:
+                error("Unknown initial pin '%s'" % (p,))
+            out.append("\n    {%d, %s}, // %s" % (pinmap[p], flag, p))
+        return out
+    def generate_code(self, options):
+        out = self.map_pins()
+        fmt = """
+const struct initial_pin_s initial_pins[] PROGMEM = {%s
+};
+const int initial_pins_size PROGMEM = ARRAY_SIZE(initial_pins);
+"""
+        return fmt % (''.join(out),)
+
+Handlers.append(HandleInitialPins())
 
 
 ######################################################################

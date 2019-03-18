@@ -88,6 +88,15 @@ config STEP_DELAY
         The default for AVR is -1, for all other micro-controllers it
         is 2us.
 
+config INITIAL_PINS
+    string "GPIO pins to set at micro-controller startup"
+    depends on LOW_LEVEL_OPTIONS
+    help
+        One may specify a comma separated list of gpio pins to set
+        during the micro-controller startup sequence. By default the
+        pins will be set to output high - preface a pin with a '!'
+        character to set that pin to output low.
+
 # The HAVE_GPIO_x options allow boards to disable support for some
 # commands if the hardware does not support the feature.
 config HAVE_GPIO
