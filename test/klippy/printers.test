@@ -18,6 +18,7 @@ CONFIG ../../config/generic-rambo.cfg
 CONFIG ../../config/generic-ramps.cfg
 CONFIG ../../config/generic-rumba.cfg
 CONFIG ../../config/printer-adimlab-2018.cfg
+CONFIG ../../config/printer-anycubic-4max-2018.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
@@ -63,10 +64,10 @@ CONFIG ../../config/generic-duet2.cfg
 
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
+CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
-CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
