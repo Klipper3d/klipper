@@ -166,12 +166,16 @@ def current_bits(current, sense_resistor, vsense_on):
     cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
     return max(0, min(31, cs))
 
-def get_config_current(config):
+def bits_to_current(bits, sense_resistor, vsense_on):
+    sense_resistor += 0.020
+    vsense = 0.32
+    if vsense_on:
+        vsense = 0.18
+    current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
+    return round(current, 2)
+
+def calc_current_config(run_current, hold_current, sense_resistor):
     vsense = False
-    run_current = config.getfloat('run_current', above=0., maxval=2.)
-    hold_current = config.getfloat('hold_current', run_current,
-                                   above=0., maxval=2.)
-    sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
     irun = current_bits(run_current, sense_resistor, vsense)
     ihold = current_bits(hold_current, sense_resistor, vsense)
     if irun < 16 and ihold < 16:
@@ -179,6 +183,15 @@ def get_config_current(config):
         irun = current_bits(run_current, sense_resistor, vsense)
         ihold = current_bits(hold_current, sense_resistor, vsense)
     return vsense, irun, ihold
+
+def get_config_current(config):
+    run_current = config.getfloat('run_current', above=0., maxval=2.)
+    hold_current = config.getfloat('hold_current', run_current,
+                                   above=0., maxval=2.)
+    sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+    vsense, irun, ihold = calc_current_config(
+                              run_current, hold_current, sense_resistor)
+    return vsense, irun, ihold, sense_resistor
 
 def get_config_microsteps(config):
     steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
@@ -214,15 +227,21 @@ class TMC2130:
         # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
+            "SET_TMC_CURRENT", "STEPPER", self.name,
+            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "SET_TMC_FIELD", "STEPPER", self.name,
+            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
         gcode.register_mux_command(
             "INIT_TMC", "STEPPER", self.name,
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
         self.fields = FieldHelper(Fields, FieldFormatters, self.regs)
-        vsense, irun, ihold = get_config_current(config)
+        vsense, irun, ihold, self.sense_resistor = get_config_current(config)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
@@ -272,6 +291,42 @@ class TMC2130:
     def get_phase(self):
         mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
         return mscnt >> self.fields.get_field("MRES")
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2130 driver"
+    def cmd_SET_TMC_CURRENT(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        vsense = bool(self.fields.get_field("vsense"))
+        if 'HOLDCURRENT' in params:
+            hold_current = gcode.get_float(
+                'HOLDCURRENT', params, above=0., maxval=2.)
+        else:
+            hold_current = bits_to_current(
+                    self.fields.get_field("IHOLD"),
+                    self.sense_resistor,
+                    vsense)
+        if 'CURRENT' in params:
+            run_current = gcode.get_float(
+                'CURRENT', params, minval=hold_current, maxval=2.)
+        else:
+            run_current = bits_to_current(
+                    self.fields.get_field("IRUN"),
+                    self.sense_resistor,
+                    vsense)
+        if 'HOLDCURRENT' in params or 'CURRENT' in params:
+            print_time = self.printer.lookup_object('toolhead')\
+                             .get_last_move_time()
+            min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+            vsense_calc, irun, ihold = calc_current_config(run_current,
+                                            hold_current, self.sense_resistor)
+            if (vsense_calc != vsense):
+                self.fields.set_field("vsense", vsense_calc)
+                self.set_register("CHOPCONF", self.regs["CHOPCONF"], min_clock)
+            self.fields.set_field("IHOLD", ihold)
+            self.fields.set_field("IRUN", irun)
+            self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"], min_clock)
+        else:
+            gcode.respond_info(
+                "Run Current: %0.2fA Hold Current: %0.2fA"
+                % (run_current, hold_current))
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
@@ -291,6 +346,19 @@ class TMC2130:
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self._init_registers(min_clock)
+    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2130 driver"
+    def cmd_SET_TMC_FIELD(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        if ('FIELD' not in params or
+            'VALUE' not in params):
+            raise gcode.error("Invalid command format")
+        field = gcode.get_str('FIELD', params)
+        reg = self.fields.field_to_register[field]
+        value = gcode.get_int('VALUE', params)
+        self.fields.set_field(field, value)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        self.set_register(reg, self.regs[reg], min_clock)
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:
