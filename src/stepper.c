@@ -262,7 +262,7 @@ command_reset_step_clock(uint32_t *args)
     if (s->count)
         shutdown("Can't reset time when stepper active");
     s->next_step_time = waketime;
-    s->flags = (s->flags & !SF_NEED_RESET) | SF_LAST_RESET;
+    s->flags = (s->flags & ~SF_NEED_RESET) | SF_LAST_RESET;
     irq_enable();
 }
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
