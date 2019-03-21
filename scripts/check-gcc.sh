@@ -4,8 +4,8 @@
 f1="$1"
 f2="$2"
 
-s1=`readelf -A "$f1" | grep "Tag_ARM_ISA_use"`
-s2=`readelf -A "$f2" | grep "Tag_ARM_ISA_use"`
+s1=`arm-none-eabi-readelf -A "$f1" | grep "Tag_ARM_ISA_use"`
+s2=`arm-none-eabi-readelf -A "$f2" | grep "Tag_ARM_ISA_use"`
 
 if [ "$s1" != "$s2" ]; then
     echo ""
