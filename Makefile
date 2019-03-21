@@ -72,9 +72,11 @@ $(OUT)board-link: $(KCONFIG_CONFIG)
 	@echo "  Creating symbolic link $(OUT)board"
 	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
 	$(Q)touch $@
-	$(Q)ln -Tsf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)rm -f $(OUT)board
+	$(Q)ln -sf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
-	$(Q)ln -Tsf $(PWD)/src/generic $(OUT)board-generic/board
+	$(Q)rm -f $(OUT)board-generic/board
+	$(Q)ln -sf $(PWD)/src/generic $(OUT)board-generic/board
 
 $(OUT)%.o.ctr: $(OUT)%.o
 	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
