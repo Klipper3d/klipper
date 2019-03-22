@@ -8,7 +8,7 @@
 #include "internal.h" // NVIC_SystemReset
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, CONFIG_MCU);
+DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 // Return the start of memory available for dynamic allocations
 void *

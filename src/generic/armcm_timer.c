@@ -11,7 +11,7 @@
 #include "command.h" // shutdown
 #include "sched.h" // sched_timer_dispatch
 
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t

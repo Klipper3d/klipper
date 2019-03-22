@@ -11,15 +11,28 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
+#ifdef PIOC
+DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 32);
+#endif
+#ifdef PIOD
+DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 32);
+#endif
+#ifdef PIOE
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 32);
+#endif
+
 static Pio * const digital_regs[] = {
-#if CONFIG_MACH_SAM3X8E
-    PIOA, PIOB, PIOC, PIOD
-#elif CONFIG_MACH_SAM3X8C
-    PIOA, PIOB
-#elif CONFIG_MACH_SAM4S8C
-    PIOA, PIOB, PIOC
-#elif CONFIG_MACH_SAM4E8E
-    PIOA, PIOB, PIOC, PIOD, PIOE
+    PIOA, PIOB,
+#ifdef PIOC
+    PIOC,
+#endif
+#ifdef PIOD
+    PIOD,
+#endif
+#ifdef PIOE
+    PIOE,
 #endif
 };
 

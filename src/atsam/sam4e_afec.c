@@ -51,7 +51,7 @@ gpio_adc_to_afec_chan(struct gpio_adc g)
 }
 
 #define ADC_FREQ_MAX 6000000UL
-DECL_CONSTANT(ADC_MAX, 4095);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 static int
 init_afec(Afec* afec) {
