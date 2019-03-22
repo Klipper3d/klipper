@@ -94,7 +94,7 @@ digital_out_shutdown(void)
 }
 DECL_SHUTDOWN(digital_out_shutdown);
 
-void
+__attribute__((weak)) void
 command_set_digital_out(uint32_t *args)
 {
     gpio_out_setup(args[0], args[1]);
