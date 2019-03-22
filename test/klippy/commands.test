@@ -1,5 +1,5 @@
 # Tests for miscellaneous g-code commands
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 CONFIG ../../config/example.cfg
 
 # Simple status commands
