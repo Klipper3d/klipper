@@ -50,7 +50,6 @@ class VirtualSD:
             raw_dir_list = os.listdir(self.sdcard_dirname)
             filtered = filter(
                 lambda fname: not fname.startswith('.')
-                              and fname.endswith('.gcode')
                               and os.path.isfile(os.path.join(dname, fname)),
                 raw_dir_list)
             sorted_files = sorted(filtered)
