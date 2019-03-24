@@ -48,6 +48,11 @@ It has been modified to compile with gcc's LTO feature and to use
 appropriate clock speeds on the LPC1768 and LPC1769. See lpc176x.patch
 for the modifications.
 
+The cmsis-stm32f0 and the hal-stm32f0 directories contain code from
+STMicroelectronics:
+  http://www.st.com/en/embedded-software/stm32cubef0.html
+version 1.9.0 (extracted 20190116).
+
 The cmsis-stm32f1 and the hal-stm32f1 directories contain code from
 STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
