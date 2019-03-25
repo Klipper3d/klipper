@@ -55,6 +55,10 @@ class TemperatureFan:
         self.control.temperature_callback(read_time, temp)
     def get_temp(self, eventtime):
         return self.last_temp, self.target_temp
+    def get_min_speed(self):
+        return self.min_speed
+    def get_max_speed(self):
+        return self.max_speed
 
 ######################################################################
 # Bang-bang control algo
@@ -66,17 +70,18 @@ class ControlBangBang:
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
     def temperature_callback(self, read_time, temp):
+        current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         if (self.heating
-            and temp >= self.temperature_fan.target_temp+self.max_delta):
+            and temp >= target_temp+self.max_delta):
             self.heating = False
         elif (not self.heating
-              and temp <= self.temperature_fan.target_temp-self.max_delta):
+              and temp <= target_temp-self.max_delta):
             self.heating = True
         if self.heating:
             self.temperature_fan.set_speed(read_time, 0.)
         else:
             self.temperature_fan.set_speed(read_time,
-                                           self.temperature_fan.max_speed)
+                                           self.temperature_fan.get_max_speed())
 
 ######################################################################
 # Proportional Integral Derivative (PID) control algo
@@ -92,7 +97,7 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
-        imax = config.getfloat('pid_integral_max', temperature_fan.max_speed,
+        imax = config.getfloat('pid_integral_max', self.temperature_fan.get_max_speed(),
                                minval=0.)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
@@ -100,6 +105,7 @@ class ControlPID:
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
     def temperature_callback(self, read_time, temp):
+        current_temp, target_temp = self.temperature_fan.get_temp()
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
@@ -109,14 +115,14 @@ class ControlPID:
             temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
                           + temp_diff) / self.min_deriv_time
         # Calculate accumulated temperature "error"
-        temp_err = self.temperature_fan.target_temp - temp
+        temp_err = target_temp - temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        bounded_co = max(0., min(self.temperature_fan.max_speed, co))
+        bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
         self.temperature_fan.set_speed(
-            read_time, max(self.temperature_fan.min_speed, self.temperature_fan.max_speed - bounded_co))
+            read_time, max(self.temperature_fan.get_min_speed(), self.temperature_fan.get_max_speed() - bounded_co))
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
