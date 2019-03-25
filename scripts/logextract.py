@@ -184,7 +184,8 @@ class GatherShutdown:
             and self.last_stat_time > self.first_stat_time + 5.):
             self.finalize()
             return False
-        if (line.startswith('Git version') or line.startswith('Start printer at')
+        if (line.startswith('Git version')
+            or line.startswith('Start printer at')
             or line == '===== Config file ====='):
             self.finalize()
             return False
@@ -268,7 +269,8 @@ class GatherShutdown:
         for i, (ts, line_num, line) in enumerate(self.stats_stream):
             if ts is not None:
                 last_ts = self.check_stats_seq(ts, line)
-            elif line_num >= self.shutdown_line_num and last_ts <= max_stream_ts:
+            elif (line_num >= self.shutdown_line_num
+                  and last_ts <= max_stream_ts):
                 last_ts = max_stream_ts + 0.00000001
             self.stats_stream[i] = (last_ts, line_num, line)
         # Make sure no timestamp goes backwards

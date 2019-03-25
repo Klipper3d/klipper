@@ -23,7 +23,7 @@ static const uint8_t adc_pin_funcs[] = {
 };
 
 #define ADC_FREQ_MAX 13000000
-DECL_CONSTANT(ADC_MAX, 4095);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 // The lpc176x adc is extremely noisy. Implement a 5 entry median
 // filter to weed out obviously incorrect readings.

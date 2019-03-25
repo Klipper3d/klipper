@@ -1,0 +1,44 @@
+# Kconfig settings for STM32F0 processors
+
+if MACH_STM32F0
+
+config STM32F0_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_BITBANGING
+
+config BOARD_DIRECTORY
+    string
+    default "stm32f0"
+
+config CLOCK_FREQ
+    int
+    default 48000000
+
+config CANSERIAL
+    bool "Use CAN bus for communication (instead of serial)"
+    default y
+config SERIAL
+    depends on !CANSERIAL
+    bool
+    default y
+
+config SERIAL_BAUD
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000 if CANSERIAL
+
+config DEBUG_OUT
+    bool "Use debug output to UART TX pin"
+    depends on CANSERIAL
+    default y
+
+config USE_LOG
+    string
+    default "USE_LOG" if DEBUG_OUT
+    default "NO_LOG" if !DEBUG_OUT
+
+endif

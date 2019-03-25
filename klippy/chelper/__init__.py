@@ -32,7 +32,8 @@ defs_stepcompress = """
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
-    int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
+    int stepcompress_queue_msg(struct stepcompress *sc
+        , uint32_t *data, int len);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
@@ -105,7 +106,8 @@ defs_serialqueue = """
         , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock);
     void serialqueue_pull(struct serialqueue *sq
         , struct pull_queue_message *pqm);
-    void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
+    void serialqueue_set_baud_adjust(struct serialqueue *sq
+        , double baud_adjust);
     void serialqueue_set_receive_window(struct serialqueue *sq
         , int receive_window);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
@@ -125,7 +127,8 @@ defs_std = """
 """
 
 defs_all = [
-    defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress, defs_itersolve,
+    defs_pyhelper, defs_serialqueue, defs_std,
+    defs_stepcompress, defs_itersolve,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
     defs_kin_winch, defs_kin_extruder
 ]

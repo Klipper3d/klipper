@@ -176,7 +176,7 @@ command_config_tmcuart(uint32_t *args)
                                     , sizeof(*t));
     uint8_t pull_up = args[2];
     uint32_t rx_pin = args[1], tx_pin = args[3];
-    t->rx_pin = gpio_in_setup(rx_pin, pull_up);
+    t->rx_pin = gpio_in_setup(rx_pin, !!pull_up);
     t->tx_pin = gpio_out_setup(tx_pin, 1);
     t->cfg_bit_time = args[4];
     t->flags = (TU_LINE_HIGH | (pull_up ? TU_PULLUP : 0)

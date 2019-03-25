@@ -222,7 +222,8 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-i", "--debuginput", dest="debuginput",
                     help="read commands from file instead of from tty port")
-    opts.add_option("-I", "--input-tty", dest="inputtty", default='/tmp/printer',
+    opts.add_option("-I", "--input-tty", dest="inputtty",
+                    default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")

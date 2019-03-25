@@ -1457,7 +1457,8 @@ class MenuManager:
             elif action == 'exit':
                 self.exit()
             elif action == 'respond':
-                self.gcode.respond_info("{}".format(' '.join(map(str, args))))
+                self.gcode.respond_info("{}".format(' '.join(map(str, args))),
+                                        log=False)
             elif action == 'event' and len(args) > 0:
                 if len(str(args[0])) > 0:
                     self.printer.send_event(
@@ -1530,11 +1531,9 @@ class MenuManager:
                         key1, key2,
                         self.parameters[key1].get(key2)
                     )
-                    logging.info(msg)
                     self.gcode.respond_info(msg)
             else:
                 msg = "{0} = {1}".format(key1, self.parameters.get(key1))
-                logging.info(msg)
                 self.gcode.respond_info(msg)
 
     # buttons & encoder callbacks

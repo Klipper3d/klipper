@@ -31,7 +31,6 @@ class SerialReader:
         # Message handlers
         handlers = {
             '#unknown': self.handle_unknown, '#output': self.handle_output,
-            'shutdown': self.handle_output, 'is_shutdown': self.handle_output
         }
         self.handlers = { (k, None): v for k, v in handlers.items() }
     def _bg_thread(self):

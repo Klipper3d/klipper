@@ -191,7 +191,7 @@ def load_config(config):
     for sensor_type, params in [("AD595", AD595), ("PT100 INA826", PT100)]:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config, LinearVoltage(config, params)))
-        pheater.add_sensor(sensor_type, func)
+        pheater.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     if config.get("resistance1", None) is None:
@@ -199,4 +199,4 @@ def load_config_prefix(config):
     else:
         custom_sensor = CustomLinearResistance(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(custom_sensor.name, custom_sensor.create)
+    pheater.add_sensor_factory(custom_sensor.name, custom_sensor.create)

@@ -13,6 +13,7 @@ class PauseResume:
         self.captured_speed = 0.
         self.captured_epos = None
         self.toolhead = self.v_sd = None
+        self.pause_command_sent = False
         self.sd_paused = False
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.gcode.register_command("PAUSE", self.cmd_PAUSE)
@@ -25,17 +26,22 @@ class PauseResume:
         return {
             'is_paused': paused
         }
+    def send_pause_command(self):
+        # This sends the appropriate pause command from an event.
+        if not self.pause_command_sent:
+            if self.v_sd is not None and self.v_sd.is_active():
+                # Printing from virtual sd, run pause command
+                self.sd_paused = True
+                self.v_sd.do_pause()
+            else:
+                self.sd_paused = False
+                self.gcode.respond_info("action:pause")
+            self.pause_command_sent = True
     def cmd_PAUSE(self, params):
         if self.captured_position is not None:
             self.gcode.respond_info("Print already paused")
             return
-        if self.v_sd is not None and self.v_sd.is_active():
-            # Printing from virtual sd, run pause command
-            self.sd_paused = True
-            self.v_sd.cmd_M25({})
-        else:
-            self.sd_paused = False
-            self.gcode.respond_info("action:pause")
+        self.send_pause_command()
         self.toolhead.wait_moves()
         self.captured_position = self.toolhead.get_position()
         reactor = self.printer.get_reactor()
@@ -62,6 +68,7 @@ class PauseResume:
             self.gcode.run_script_from_command(
                 "G92 E%.6f" % (self.captured_epos))
         self.captured_position = self.captured_epos = None
+        self.pause_command_sent = False
         if self.sd_paused:
             # Printing from virtual sd, run pause command
             self.v_sd.cmd_M24({})

@@ -2,14 +2,14 @@
 GCODE move.gcode
 
 # Example kinematic files
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 CONFIG ../../config/example.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-delta.cfg
 CONFIG ../../config/example-winch.cfg
 
 # Printers using the atmega2560
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 CONFIG ../../config/generic-einsy-rambo.cfg
 CONFIG ../../config/generic-fysetc-f6.cfg
 CONFIG ../../config/generic-gt2560.cfg
@@ -18,6 +18,7 @@ CONFIG ../../config/generic-rambo.cfg
 CONFIG ../../config/generic-ramps.cfg
 CONFIG ../../config/generic-rumba.cfg
 CONFIG ../../config/printer-adimlab-2018.cfg
+CONFIG ../../config/printer-anycubic-4max-2018.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
@@ -27,6 +28,7 @@ CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
 CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
+CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
@@ -62,10 +64,10 @@ CONFIG ../../config/generic-duet2.cfg
 
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
+CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
-CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
@@ -73,7 +75,7 @@ CONFIG ../../config/generic-cramps.cfg
 CONFIG ../../config/generic-replicape.cfg
 
 # Tests with multiple mcus
-DICTIONARY atmega2560-16mhz.dict zboard=atmega2560-16mhz.dict auxboard=atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict zboard=atmega2560.dict auxboard=atmega2560.dict
 CONFIG ../../config/example-multi-mcu.cfg
-DICTIONARY atmega2560-16mhz.dict z=atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict z=atmega2560.dict
 CONFIG ../../config/kit-voron2-250mm.cfg

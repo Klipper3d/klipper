@@ -8,7 +8,23 @@
 #include "internal.h" // NVIC_SystemReset
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, CONFIG_MCU);
+DECL_CONSTANT_STR("MCU", CONFIG_MCU);
+
+// Return the start of memory available for dynamic allocations
+void *
+dynmem_start(void)
+{
+    extern uint32_t _ezero;
+    return &_ezero;
+}
+
+// Return the end of memory available for dynamic allocations
+void *
+dynmem_end(void)
+{
+    extern uint32_t _sstack;
+    return &_sstack;
+}
 
 void
 command_reset(uint32_t *args)

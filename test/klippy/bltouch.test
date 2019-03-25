@@ -1,6 +1,6 @@
 # Test case for bltouch support
 CONFIG bltouch.cfg
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 
 # Start by homing the printer.
 G28

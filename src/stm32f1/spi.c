@@ -35,7 +35,8 @@ static void spi_set_mode(SPI_TypeDef *spi, uint8_t mode)
 
 static void spi_set_baudrate(SPI_TypeDef *spi, uint32_t rate)
 {
-    const uint32_t pclk = __LL_RCC_CALC_PCLK1_FREQ(SystemCoreClock, LL_RCC_GetAPB1Prescaler());
+    const uint32_t pclk = __LL_RCC_CALC_PCLK1_FREQ(SystemCoreClock
+                                                   , LL_RCC_GetAPB1Prescaler());
     const uint32_t prescaler = pclk / rate;
 
     uint32_t setting = LL_SPI_BAUDRATEPRESCALER_DIV256;

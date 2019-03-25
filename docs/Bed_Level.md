@@ -35,7 +35,9 @@ leveling.
 For printers with an "automatic Z probe" be sure to calibrate the
 probe following the directions in the
 [Probe Calibrate](Probe_Calibrate.md) document. For delta printers,
-see the [Delta Calibrate](Delta_Calibrate.md) document.
+see the [Delta Calibrate](Delta_Calibrate.md) document. For printers
+with bed screws and traditional Z endstops, see the
+[Manual Level](Manual_Level.md) document.
 
 During calibration it may be necessary to set the printer's Z
 `position_min` to a negative number (eg, `position_min = -2`). The

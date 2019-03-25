@@ -17,7 +17,7 @@
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "pru");
+DECL_CONSTANT_STR("MCU", "pru");
 
 
 /****************************************************************

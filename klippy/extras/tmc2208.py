@@ -248,7 +248,7 @@ class TMC2208:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
+                                            self._init_registers)
         # pin setup
         ppins = self.printer.lookup_object("pins")
         rx_pin_params = ppins.lookup_pin(
@@ -267,11 +267,20 @@ class TMC2208:
         self.oid = self.mcu.create_oid()
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
-        # Add DUMP_TMC command
+        # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_TMC_CURRENT", "STEPPER", self.name,
+            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
         gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command(
+            "SET_TMC_FIELD", "STEPPER", self.name,
+            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
+        gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.ifcnt = None
         self.regs = collections.OrderedDict()
@@ -279,7 +288,8 @@ class TMC2208:
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        vsense, irun, ihold = tmc2130.get_config_current(config)
+        vsense, irun, ihold, self.sense_resistor = \
+            tmc2130.get_config_current(config)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
@@ -292,7 +302,7 @@ class TMC2208:
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
-        set_config_field(config, "TBL", 2, "driver_BLANK_TIME_SELECT")
+        set_config_field(config, "TBL", 2)
         set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "IHOLDDELAY", 8)
         set_config_field(config, "TPOWERDOWN", 20)
@@ -311,7 +321,8 @@ class TMC2208:
         cmd_queue = self.mcu.alloc_command_queue()
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
-    def handle_connect(self):
+    def _init_registers(self):
+        # Send registers
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val)
     def get_register(self, reg_name):
@@ -347,11 +358,50 @@ class TMC2208:
     def get_phase(self):
         mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
         return mscnt >> self.fields.get_field("MRES")
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2208 driver"
+    def cmd_SET_TMC_CURRENT(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        vsense = bool(self.fields.get_field("vsense"))
+        if 'HOLDCURRENT' in params:
+            hold_current = gcode.get_float(
+                'HOLDCURRENT', params, above=0., maxval=2.)
+        else:
+            hold_current = tmc2130.bits_to_current(
+                    self.fields.get_field("IHOLD"),
+                    self.sense_resistor,
+                    vsense)
+        if 'CURRENT' in params:
+            run_current = gcode.get_float(
+                'CURRENT', params, minval=hold_current, maxval=2.)
+        else:
+            run_current = tmc2130.bits_to_current(
+                    self.fields.get_field("IRUN"),
+                    self.sense_resistor,
+                    vsense)
+        if 'HOLDCURRENT' in params or 'CURRENT' in params:
+            vsense_calc, irun, ihold = tmc2130.calc_current_config(run_current,
+                                              hold_current, self.sense_resistor)
+            self.printer.lookup_object('toolhead').wait_moves()
+            if (vsense_calc != vsense):
+                self.fields.set_field("vsense", vsense_calc)
+                self.set_register("CHOPCONF", self.regs["CHOPCONF"])
+            self.fields.set_field("IHOLD", ihold)
+            self.fields.set_field("IRUN", irun)
+            self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"])
+        else:
+            gcode.respond_info(
+                "Run Current: %0.2fA Hold Current: %0.2fA"
+                % (run_current, hold_current))
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
+        gcode.respond_info("========== Write-only registers ==========")
+        for reg_name, val in self.regs.items():
+            if reg_name not in ReadRegisters:
+                gcode.respond_info(self.fields.pretty_format(reg_name, val))
+        gcode.respond_info("========== Queried registers ==========")
         for reg_name in ReadRegisters:
             try:
                 val = self.get_register(reg_name)
@@ -362,9 +412,24 @@ class TMC2208:
             if reg_name == "IOIN":
                 drv_type = self.fields.get_field("SEL_A", val)
                 reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            msg = self.fields.pretty_format(reg_name, val)
-            logging.info(msg)
-            gcode.respond_info(msg)
+            gcode.respond_info(self.fields.pretty_format(reg_name, val))
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
+    def cmd_INIT_TMC(self, params):
+        logging.info("INIT_TMC 2208 %s", self.name)
+        self.printer.lookup_object('toolhead').wait_moves()
+        self._init_registers()
+    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2208 driver"
+    def cmd_SET_TMC_FIELD(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        if ('FIELD' not in params or
+            'VALUE' not in params):
+            raise gcode.error("Invalid command format")
+        field = gcode.get_str('FIELD', params)
+        reg = self.fields.field_to_register[field]
+        value = gcode.get_int('VALUE', params)
+        self.fields.set_field(field, value)
+        self.printer.lookup_object('toolhead').wait_moves()
+        self.set_register(reg, self.regs[reg])
 
 def load_config_prefix(config):
     return TMC2208(config)
