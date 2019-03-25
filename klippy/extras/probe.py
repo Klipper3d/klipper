@@ -261,8 +261,8 @@ class ProbePointsHelper:
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
+        self.lift_speed = config.getfloat('lift_speed', 0., above=0.)
         # Internal probing state
-        self.lift_speed = self.speed
         self.probe_offsets = (0., 0., 0.)
         self.results = []
     def minimum_points(self,n):
@@ -302,12 +302,14 @@ class ProbePointsHelper:
         self.results = []
         if probe is None or method != 'automatic':
             # Manual probe
-            self.lift_speed = self.speed
+            if self.lift_speed is None:
+                self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
             self._manual_probe_start()
             return
         # Perform automatic probing
-        self.lift_speed = min(self.speed, probe.speed)
+        if self.lift_speed is None:
+            self.lift_speed = min(self.speed, probe.speed)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"
