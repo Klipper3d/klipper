@@ -77,8 +77,8 @@ void i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_AF) {
              shutdown("Buffer error");
          }
+         i2c_to_check(timeout);
      }
-    i2c_to_check(timeout);
 }
 
 /**
