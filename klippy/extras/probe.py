@@ -261,7 +261,7 @@ class ProbePointsHelper:
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
-        self.lift_speed = config.getfloat('lift_speed', 0., above=0.)
+        self.lift_speed = config.getfloat('lift_speed', None, above=0.)
         # Internal probing state
         self.probe_offsets = (0., 0., 0.)
         self.results = []
