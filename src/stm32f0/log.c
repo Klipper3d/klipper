@@ -3,8 +3,8 @@
  * This file not required for regular Klipper usage, but hw/sw developer
  * can use USART TX pin instead SWO for debugging purposes
  *
- *  Created on: Jan 17, 2019
- *      Author: eug
+ *  Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
+ *  This file may be distributed under the terms of the GNU GPLv3 license.
  */
 
 #include "string.h"

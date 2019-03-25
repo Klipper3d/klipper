@@ -143,6 +143,7 @@ void gpio_init(void)
 
 void gpio_check_busy(uint8_t pin)
 {
+#ifdef DO_BUSY_CHECK
     // Increase to uint32_t and assert <32 on bigger chips
     static uint16_t pinmap;
     assert_param(sizeof(avail_pins)<16);
@@ -158,4 +159,5 @@ void gpio_check_busy(uint8_t pin)
         }
     }
     shutdown("GPIO check failed");
+#endif
 }

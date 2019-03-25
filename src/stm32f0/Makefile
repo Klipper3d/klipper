@@ -18,6 +18,8 @@ CFLAGS += -Ilib/cmsis-core -Iout/board
 CFLAGS += -Ilib/cmsis-stm32f0/include -Ilib/cmsis-stm32f0
 CFLAGS += -Ilib/hal-stm32f0/include
 CFLAGS += -DSTM32F042x6 -DUSE_HAL_DRIVER
+# Enable this flag after fixing #1436
+#CFLAGS += -DDO_BUSY_CHECK
 
 # Add source files
 src-y += stm32f0/main.c stm32f0/timer.c stm32f0/gpio.c
@@ -25,6 +27,7 @@ src-$(CONFIG_CANSERIAL) += stm32f0/can.c
 src-$(CONFIG_DEBUG_OUT) += stm32f0/log.c
 src-$(CONFIG_SERIAL) += stm32f0/serial.c
 src-y += generic/serial_irq.c
+src-y += generic/timer_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f0/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += stm32f0/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f0/spi.c
