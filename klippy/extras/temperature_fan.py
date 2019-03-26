@@ -97,15 +97,15 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
-        imax = config.getfloat('pid_integral_max', self.temperature_fan.get_max_speed(),
-                               minval=0.)
+        imax = config.getfloat('pid_integral_max',
+                               self.temperature_fan.get_max_speed(), minval=0.)
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
     def temperature_callback(self, read_time, temp):
-        current_temp, target_temp = self.temperature_fan.get_temp()
+        current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
@@ -122,7 +122,8 @@ class ControlPID:
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
         self.temperature_fan.set_speed(
-            read_time, max(self.temperature_fan.get_min_speed(), self.temperature_fan.get_max_speed() - bounded_co))
+            read_time, max(self.temperature_fan.get_min_speed(),
+                           self.temperature_fan.get_max_speed() - bounded_co))
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
