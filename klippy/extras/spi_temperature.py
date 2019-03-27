@@ -7,12 +7,6 @@
 import math
 import bus
 
-# Sensor types defined in the micro-controller code (thermocouple.c)
-TS_CHIP_MAX31855 = 1 << 0
-TS_CHIP_MAX31856 = 1 << 1
-TS_CHIP_MAX31865 = 1 << 2
-TS_CHIP_MAX6675  = 1 << 3
-
 
 ######################################################################
 # SensorBase
@@ -46,7 +40,7 @@ class SensorBase:
         return REPORT_TIME
     def _build_config(self):
         self.mcu.add_config_cmd(
-            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
+            "config_thermocouple oid=%u spi_oid=%u thermocouple_type=%s" % (
                 self.oid, self.spi.get_oid(), self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
@@ -123,7 +117,7 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31856,
+        SensorBase.__init__(self, config, "MAX31856",
                             self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
@@ -198,7 +192,7 @@ MAX31855_MULT = 0.25
 
 class MAX31855(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31855)
+        SensorBase.__init__(self, config, "MAX31855")
     def calc_temp(self, adc, fault):
         if adc & 0x1:
             self.fault("MAX31855 : Open Circuit")
@@ -227,7 +221,7 @@ MAX6675_MULT = 0.25
 
 class MAX6675(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX6675)
+        SensorBase.__init__(self, config, "MAX6675")
     def calc_temp(self, adc, fault):
         if adc & 0x02:
             self.fault("Max6675 : Device ID error")
@@ -281,7 +275,7 @@ class MAX31865(SensorBase):
     def __init__(self, config):
         self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
         self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
-        SensorBase.__init__(self, config, TS_CHIP_MAX31865,
+        SensorBase.__init__(self, config, "MAX31865",
                             self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & 0x80:

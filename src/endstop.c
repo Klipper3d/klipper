@@ -1,6 +1,6 @@
 // Handling of end stops.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -134,18 +134,18 @@ end_stop_report(uint8_t oid, struct end_stop *e)
     e->flags &= ~ESF_REPORT;
     irq_enable();
 
-    sendf("end_stop_state oid=%c homing=%c pin=%c"
+    sendf("end_stop_state oid=%c homing=%c pin_value=%c"
           , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin));
 }
 
 void
-command_end_stop_query(uint32_t *args)
+command_end_stop_query_state(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct end_stop *e = oid_lookup(oid, command_config_end_stop);
     end_stop_report(oid, e);
 }
-DECL_COMMAND(command_end_stop_query, "end_stop_query oid=%c");
+DECL_COMMAND(command_end_stop_query_state, "end_stop_query_state oid=%c");
 
 void
 end_stop_task(void)

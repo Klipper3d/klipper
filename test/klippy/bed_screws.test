@@ -1,6 +1,6 @@
 # Test case for bed screws helper tool
 CONFIG bed_screws.cfg
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 
 # Start helper script and then abort it
 G28

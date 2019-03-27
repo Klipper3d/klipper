@@ -19,7 +19,7 @@
 #include "stm32f1xx_ll_spi.h"
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "stm32f103");
+DECL_CONSTANT_STR("MCU", "stm32f103");
 
 
 /****************************************************************

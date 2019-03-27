@@ -175,8 +175,8 @@ class MCU_endstop:
         self._home_cmd = self._mcu.lookup_command(
             "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
-        self._query_cmd = self._mcu.lookup_command("end_stop_query oid=%c",
-                                                   cq=cmd_queue)
+        self._query_cmd = self._mcu.lookup_command(
+            "end_stop_query_state oid=%c", cq=cmd_queue)
         self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
                                , self._oid)
     def home_prepare(self):
@@ -238,7 +238,7 @@ class MCU_endstop:
         eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
             eventtime = self._mcu.pause(eventtime + 0.1)
-        return self._last_state.get('pin', self._invert) ^ self._invert
+        return self._last_state.get('pin_value', self._invert) ^ self._invert
 
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
@@ -483,7 +483,7 @@ class MCU:
         if self._is_shutdown:
             return
         self._is_shutdown = True
-        self._shutdown_msg = msg = params['#msg']
+        self._shutdown_msg = msg = params['static_string_id']
         logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, params['#name'],
                      self._shutdown_msg, self._clocksync.dump_debug(),
                      self._serial.dump_debug())

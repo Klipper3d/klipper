@@ -13,7 +13,9 @@
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
 
-DECL_CONSTANT(ADC_MAX, 4095); // Assume 12bit adc
+DECL_CONSTANT("ADC_MAX", 4095); // Assume 12bit adc
+
+DECL_ENUMERATION_RANGE("pin", "analog0", 0, 8);
 
 #define IIO_PATH "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw"
 

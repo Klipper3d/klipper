@@ -1,5 +1,5 @@
 # Tests for various temperature sensors
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 CONFIG temperature.cfg
 
 # Set various temperatures

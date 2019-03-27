@@ -186,6 +186,7 @@ class BedMeshCalibrate:
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.radius = None
+        self.relative_reference_index = None
         self.bedmesh = bedmesh
         self.probed_z_table = None
         self.build_map = False
@@ -267,8 +268,17 @@ class BedMeshCalibrate:
                         points.append((pos_x, pos_y))
             pos_y += y_dist
         logging.info('bed_mesh: generated points')
-        for p in points:
-            logging.info("(%.1f, %.1f)" % (p[0], p[1]))
+        for i, p in enumerate(points):
+            logging.info("%d: (%.1f, %.1f)" % (i, p[0], p[1]))
+        rref_index = config.get('relative_reference_index', None)
+        if rref_index is not None:
+            rref_index = int(rref_index)
+            if rref_index < 0 or rref_index >= len(points):
+                raise config.error("bed_mesh: relative reference index %d "
+                    "is out of bounds" % (rref_index))
+            logging.info("bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
+                % (rref_index, points[rref_index][0], points[rref_index][1]))
+            self.relative_reference_index = rref_index
         return points
     def _init_probe_params(self, config, points):
         self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
@@ -410,6 +420,11 @@ class BedMeshCalibrate:
         z_offset = offsets[2]
         x_cnt = self.probe_params['x_count']
         y_cnt = self.probe_params['y_count']
+
+        if self.relative_reference_index is not None:
+            # zero out probe z offset and
+            # set offset relative to reference index
+            z_offset = positions[self.relative_reference_index][2]
 
         self.probed_z_table = []
         row = []

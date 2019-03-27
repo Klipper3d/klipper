@@ -21,6 +21,7 @@ class PrinterProbe:
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
+        self.probe_calibrate_z = 0.
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -91,6 +92,7 @@ class PrinterProbe:
             'Z', params, default=10., minval=self.z_offset, maxval=70.)
         x_start_position = self.gcode.get_float('X', params, default=pos[0])
         y_start_position = self.gcode.get_float('Y', params, default=pos[1])
+        start_pos = [x_start_position, y_start_position, z_start_position]
         self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n"
                                 "                "
                                 "and read %d times with speed of %d mm/s" % (
@@ -100,8 +102,7 @@ class PrinterProbe:
         sum_reads = 0
         for i in range(number_of_reads):
             # Move Z to start reading position
-            self._move_position(x_start_position, y_start_position,
-                                z_start_position, speed)
+            self._move(start_pos, speed)
             # Probe
             self._probe(speed)
             # Get Z value, accumulate value to calculate average
@@ -110,8 +111,7 @@ class PrinterProbe:
             sum_reads += pos[2]
             probes.append(pos[2])
         # Move Z to start reading position
-        self._move_position(x_start_position, y_start_position,
-                            z_start_position, speed)
+        self._move(start_pos, speed)
         # Calculate maximum, minimum and average values
         max_value = max(probes)
         min_value = min(probes)
@@ -135,41 +135,40 @@ class PrinterProbe:
             "probe accuracy results: maximum %.6f, minimum %.6f, "
             "average %.6f, median %.6f, standard deviation %.6f" % (
             max_value, min_value, avg_value, median, sigma))
-    def _move_position(self, x, y, z, speed):
+    def _move(self, coord, speed):
         toolhead = self.printer.lookup_object('toolhead')
-        pos = toolhead.get_position()
-        # set new position
-        pos[0] = x
-        pos[1] = y
-        pos[2] = z
-        # Move to position
+        curpos = toolhead.get_position()
+        for i in range(len(coord)):
+            if coord[i] is not None:
+                curpos[i] = coord[i]
         try:
-            toolhead.move(pos, speed)
+            toolhead.move(curpos, speed)
         except homing.EndstopError as e:
             raise self.gcode.error(str(e))
     def probe_calibrate_finalize(self, kin_pos):
         if kin_pos is None:
             return
-        z_pos = self.z_offset - kin_pos[2]
+        z_offset = self.probe_calibrate_z - kin_pos[2]
         self.gcode.respond_info(
             "%s: z_offset: %.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
-            "with the above and restart the printer." % (self.name, z_pos))
+            "with the above and restart the printer." % (self.name, z_offset))
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, 'z_offset', "%.3f" % (z_pos,))
+        configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
     def cmd_PROBE_CALIBRATE(self, params):
         # Perform initial probe
-        self.cmd_PROBE(params)
+        self._probe(self.speed)
         # Move away from the bed
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
+        self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
-        toolhead.move(curpos, self.speed)
+        self._move(curpos, self.speed)
         # Move the nozzle over the probe point
         curpos[0] += self.x_offset
         curpos[1] += self.y_offset
-        toolhead.move(curpos, self.speed)
+        self._move(curpos, self.speed)
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, params,
                                        self.probe_calibrate_finalize)
@@ -240,6 +239,9 @@ class ProbePointsHelper:
         self.samples = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat(
             'sample_retract_dist', 2., above=0.)
+        self.samples_result = config.getchoice('samples_result',
+                                               {'median': 0, 'average': 1},
+                                               default='average')
         # Internal probing state
         self.results = []
         self.busy = self.manual_probe = False
@@ -295,9 +297,26 @@ class ProbePointsHelper:
             if i < self.samples - 1:
                 # retract
                 self._lift_z(self.sample_retract_dist, add=True)
-        avg_pos = [sum([pos[i] for pos in positions]) / self.samples
-                   for i in range(3)]
-        self.results.append(avg_pos)
+        if self.samples_result == 1:
+            # Calculate Average
+            calculated_value = [sum([pos[i] for pos in positions]) /
+                                self.samples for i in range(3)]
+        else:
+            # Calculate Median
+            sorted_z_positions = sorted([position[2]
+                                         for position in positions])
+            middle = self.samples // 2
+            if (self.samples & 1) == 1:
+                # odd number of samples
+                median = sorted_z_positions[middle]
+            else:
+                # even number of samples
+                median = (sorted_z_positions[middle] +
+                          sorted_z_positions[middle - 1]) / 2
+            calculated_value = [positions[0][0],
+                                positions[0][1],
+                                median]
+        self.results.append(calculated_value)
     def start_probe(self, params):
         # Lookup objects
         self.toolhead = self.printer.lookup_object('toolhead')
