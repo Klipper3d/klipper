@@ -14,7 +14,7 @@
 #include "stm32f1xx_ll_gpio.h" // LL_GPIO_SetPinMode
 #include "sched.h" // sched_shutdown
 
-DECL_CONSTANT(ADC_MAX, 4095);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 #define ADC_DELAY (240 * 8)
 

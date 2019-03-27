@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190322: The default value for "driver_HEND" in [tmc2660] config
+sections was changed from 6 to 3. The "driver_VSENSE" field was
+removed (it is now automatically calculated from run_current).
+
 20190310: The [controller_fan] config section now always takes a name
 (such as [controller_fan my_controller_fan]).
 

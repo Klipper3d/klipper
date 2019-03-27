@@ -17,12 +17,12 @@ def enter_bootloader(device):
         fcntl.ioctl(fd, termios.TIOCMBIS, struct.pack('I', termios.TIOCM_DTR))
         t = termios.tcgetattr(fd)
         t[4] = t[5] = termios.B1200
+        sys.stderr.write("Entering bootloader on %s\n" % (device,))
         termios.tcsetattr(fd, termios.TCSANOW, t)
         fcntl.ioctl(fd, termios.TIOCMBIC, struct.pack('I', termios.TIOCM_DTR))
         f.close()
     except (IOError, OSError) as e:
         pass
-    time.sleep(1.0)
 
 # Translate a serial device name to a stable serial name in /dev/serial/by-path/
 def translate_serial_to_tty(device):
@@ -45,14 +45,37 @@ def translate_serial_to_usb_path(device):
     m = ttypath_r.match(lname)
     if m is None:
         raise error("Unable to find tty usb device")
-    return m.group("path")
+    devpath = os.path.realpath("/sys/class/tty/%s/device" % (fname,))
+    return m.group("path"), devpath
+
+# Wait for a given path to appear
+def wait_path(path, alt_path=None):
+    time.sleep(.100)
+    start_alt_path = None
+    end_time = time.time() + 4.0
+    while 1:
+        time.sleep(0.100)
+        cur_time = time.time()
+        if os.path.exists(path):
+            sys.stderr.write("Device reconnect on %s\n" % (path,))
+            time.sleep(0.100)
+            return path
+        if alt_path is not None and os.path.exists(alt_path):
+            if start_alt_path is None:
+                start_alt_path = cur_time
+                continue
+            if cur_time >= start_alt_path + 0.300:
+                sys.stderr.write("Device reconnect on alt path %s\n" % (
+                    alt_path,))
+                return alt_path
+        if cur_time > end_time:
+            return path
 
 # Flash via a call to bossac
 def flash_bossac(device, binfile, extra_flags=[]):
     ttyname, pathname = translate_serial_to_tty(device)
     enter_bootloader(pathname)
-    if os.path.exists(ttyname) and not os.path.exists(pathname):
-        pathname = ttyname
+    pathname = wait_path(pathname, ttyname)
     baseargs = ["lib/bossac/bin/bossac", "-U", "-p", pathname]
     args = baseargs + extra_flags + ["-w", binfile, "-v"]
     sys.stderr.write(" ".join(args) + '\n\n')
@@ -64,28 +87,31 @@ def flash_bossac(device, binfile, extra_flags=[]):
         try:
             subprocess.check_output(args, stderr=subprocess.STDOUT)
             if "-b" not in extra_flags:
-                time.sleep(1.)
+                wait_path(pathname)
                 subprocess.check_output(args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             pass
 
 # Invoke the dfu-util program
-def call_dfuutil(flags, binfile):
+def call_dfuutil(flags, binfile, sudo):
     args = ["dfu-util"] + flags + ["-D", binfile]
+    if sudo:
+        args.insert(0, "sudo")
     sys.stderr.write(" ".join(args) + '\n\n')
     res = subprocess.call(args)
     if res != 0:
         raise error("Error running dfu-util")
 
 # Flash via a call to dfu-util
-def flash_dfuutil(device, binfile, extra_flags=[]):
+def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
     if hexfmt_r.match(device.strip()):
-        call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile)
+        call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)
         return
-    buspath = translate_serial_to_usb_path(device)
+    buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
-    call_dfuutil(["-p", buspath] + extra_flags, binfile)
+    pathname = wait_path(devpath)
+    call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
 
 ######################################################################
@@ -137,7 +163,7 @@ and then restart the Smoothieboard with that SD card.
 
 def flash_lpc176x(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile)
+        flash_dfuutil(options.device, binfile, [], options.sudo)
     except error as e:
         sys.stderr.write(SMOOTHIE_HELP % (options.device, str(e)))
         sys.exit(-1)
@@ -156,7 +182,7 @@ If attempting to flash via 3.3V serial, then use:
 
 def flash_stm32f1(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"])
+        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"], options.sudo)
     except error as e:
         sys.stderr.write(STM32F1_HELP % (
             options.device, str(e), options.device))
@@ -181,6 +207,8 @@ def main():
                     help="serial port device")
     opts.add_option("-o", "--offset", type="string", dest="offset",
                     help="flash offset")
+    opts.add_option("--no-sudo", action="store_false", dest="sudo",
+                    default=True, help="do not run sudo")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")

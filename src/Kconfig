@@ -19,6 +19,8 @@ choice
         bool "SAMD21/SAMD51"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
+    config MACH_STM32F0
+        bool "STMicroelectronics STM32F042"
     config MACH_STM32F1
         bool "STMicroelectronics STM32F103"
     config MACH_PRU
@@ -33,6 +35,7 @@ source "src/avr/Kconfig"
 source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
+source "src/stm32f0/Kconfig"
 source "src/stm32f1/Kconfig"
 source "src/pru/Kconfig"
 source "src/linux/Kconfig"
@@ -87,6 +90,15 @@ config STEP_DELAY
 
         The default for AVR is -1, for all other micro-controllers it
         is 2us.
+
+config INITIAL_PINS
+    string "GPIO pins to set at micro-controller startup"
+    depends on LOW_LEVEL_OPTIONS
+    help
+        One may specify a comma separated list of gpio pins to set
+        during the micro-controller startup sequence. By default the
+        pins will be set to output high - preface a pin with a '!'
+        character to set that pin to output low.
 
 # The HAVE_GPIO_x options allow boards to disable support for some
 # commands if the hardware does not support the feature.

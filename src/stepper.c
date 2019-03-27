@@ -1,6 +1,6 @@
 // Handling of stepper drivers.
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,7 +13,7 @@
 #include "sched.h" // struct timer
 #include "stepper.h" // command_config_stepper
 
-DECL_CONSTANT(STEP_DELAY, CONFIG_STEP_DELAY);
+DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
 
 
 /****************************************************************
@@ -51,8 +51,10 @@ struct stepper {
 
 enum { POSITION_BIAS=0x40000000 };
 
-enum { SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2,
-       SF_HAVE_ADD=1<<3, SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5 };
+enum {
+    SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
+    SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5, SF_NEED_RESET=1<<6
+};
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
@@ -226,6 +228,8 @@ command_queue_step(uint32_t *args)
         else
             s->first = m;
         s->plast = &m->next;
+    } else if (flags & SF_NEED_RESET) {
+        move_free(m);
     } else {
         s->first = m;
         stepper_load_next(s, s->next_step_time + m->interval);
@@ -258,7 +262,7 @@ command_reset_step_clock(uint32_t *args)
     if (s->count)
         shutdown("Can't reset time when stepper active");
     s->next_step_time = waketime;
-    s->flags |= SF_LAST_RESET;
+    s->flags = (s->flags & ~SF_NEED_RESET) | SF_LAST_RESET;
     irq_enable();
 }
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
@@ -299,7 +303,7 @@ stepper_stop(struct stepper *s)
     s->next_step_time = 0;
     s->position = -stepper_get_position(s);
     s->count = 0;
-    s->flags &= SF_INVERT_STEP;
+    s->flags = (s->flags & SF_INVERT_STEP) | SF_NEED_RESET;
     gpio_out_write(s->dir_pin, 0);
     gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
     while (s->first) {

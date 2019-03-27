@@ -302,17 +302,16 @@ section is enabled:
 
 ## TMC2130, TMC2660 and TMC2208
 
-The following command is available when the "tmc2130", "tmc2660"
+The following commands are available when the "tmc2130", "tmc2660"
 or "tmc2208" config section is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
 - `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
   registers. Needed to re-enable the driver if power to the chip is
   turned off then back on.
-The following commands are additionally available when the "tmc2660"
-config section is enabled:
-- `SET_TMC_CURRENT STEPPER=<name> CURRENT=<current>`: This will adjust
-  the run_current of the TMC driver.
+- `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
+  This will adjust the run and hold currents of the TMC driver.
+  HOLDCURRENT is applicable only to the tmc2130 and tmc2208.
 - `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
   alter the value of the specified register field of the TMC driver.
   This command is intended for low-level diagnostics and debugging only because

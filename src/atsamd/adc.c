@@ -37,7 +37,7 @@ static const uint8_t adc_pins[] = {
 };
 #endif
 
-DECL_CONSTANT(ADC_MAX, 4095);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 static struct gpio_adc gpio_adc_pin_to_struct(uint8_t pin)
 {

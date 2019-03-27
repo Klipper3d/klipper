@@ -6,10 +6,18 @@
 import math, collections, logging
 import bus, tmc2130
 
-def current_to_reg(current, sense_resistor, vsense_on):
+def current_bits(current, sense_resistor, vsense_on):
     vsense = 0.165 if vsense_on else 0.310
     cs = int(32 * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
     return max(0, min(cs, 31))
+
+def get_config_current(run_current, sense_resistor):
+    vsense = False
+    cs = current_bits(run_current, sense_resistor, vsense)
+    if cs < 16:
+        vsense = True
+        cs = current_bits(run_current, sense_resistor, vsense)
+    return cs, vsense
 
 Registers = {
     "DRVCONF": 0xE, "SGCSCONF": 0xC, "SMARTEN": 0xA,
@@ -157,7 +165,7 @@ class TMC2660:
         set_config_field(config, "RNDTF", 0)
         set_config_field(config, "HDEC", 0)
         set_config_field(config, "CHM", 0)
-        set_config_field(config, "HEND", 6)
+        set_config_field(config, "HEND", 3)
         set_config_field(config, "HSTRT", 3)
         set_config_field(config, "TOFF", 4)
         if not self.fields.get_field("CHM"):
@@ -171,24 +179,25 @@ class TMC2660:
         set_config_field(config, "SEUP", 0)
         set_config_field(config, "SEMIN", 0)
 
-        # DRVCONF
-        set_config_field(config, "SLPH", 0)
-        set_config_field(config, "SLPL", 0)
-        set_config_field(config, "DISS2G", 0)
-        set_config_field(config, "TS2G", 3)
-        set_config_field(config, "VSENSE", 1)
-        self.fields.set_field("RDSEL", 0) # needed for phase calculations
-        self.fields.set_field("SDOFF", 0) # only step/dir mode supported
-        self.sense_resistor = config.getfloat('sense_resistor')
-
         # SGSCONF
         set_config_field(config, "SFILT", 1)
         set_config_field(config, "SGT", 0)
         self.current = config.getfloat('run_current', minval=0.1,
                                        maxval=2.4)
-        self.driver_cs = current_to_reg(self.current, self.sense_resistor,
-                                        self.fields.get_field("VSENSE"))
+        self.sense_resistor = config.getfloat('sense_resistor')
+        (self.driver_cs,
+         self.driver_vsense) = get_config_current(self.current,
+                                                  self.sense_resistor)
         self.fields.set_field("CS", self.driver_cs)
+
+        # DRVCONF
+        set_config_field(config, "SLPH", 0)
+        set_config_field(config, "SLPL", 0)
+        set_config_field(config, "DISS2G", 0)
+        set_config_field(config, "TS2G", 3)
+        self.fields.set_field("VSENSE", self.driver_vsense)
+        self.fields.set_field("RDSEL", 0) # needed for phase calculations
+        self.fields.set_field("SDOFF", 0) # only step/dir mode supported
 
         # Init Registers
         self._init_registers(self)
@@ -234,11 +243,15 @@ class TMC2660:
                                       * self.current / 100))
 
     def set_current(self, print_time, current):
-        self.driver_cs = current_to_reg(current, self.sense_resistor,
-            self.fields.get_field("VSENSE"))
+        (self.driver_cs,
+         self.driver_vsense) = get_config_current(current, self.sense_resistor)
         self.fields.set_field("CS", self.driver_cs)
         clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self.set_register("SGCSCONF", self.regs["SGCSCONF"], min_clock=clock)
+        # Only update VSENSE if we need to
+        if self.driver_vsense != self.fields.get_field("VSENSE"):
+            self.fields.set_field("VSENSE", self.driver_vsense)
+            self.set_register("DRVCONF", self.regs["DRVCONF"], min_clock=clock)
 
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
     def cmd_SET_TMC_CURRENT(self, params):
@@ -268,8 +281,8 @@ class TMC2660:
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, params):
         logging.info("INIT_TMC 2660 %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        pt = self.printer.lookup_object('toolhead').get_last_move_time()
+        min_clock = self.spi.get_mcu().print_time_to_clock(pt)
         self._init_registers(min_clock)
 
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2660 driver"
@@ -279,13 +292,11 @@ class TMC2660:
             'VALUE' not in params):
             raise gcode.error("Invalid command format")
         field = gcode.get_str('FIELD', params)
-        if field == "CS":
-            raise gcode.error("Use SET_TMC_CURRENT to set CS")
         reg = self.fields.field_to_register[field]
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        pt = self.printer.lookup_object('toolhead').get_last_move_time()
+        clock = self.spi.get_mcu().print_time_to_clock(pt)
         self.set_register(reg, self.regs[reg], min_clock=clock)
 
 def load_config_prefix(config):

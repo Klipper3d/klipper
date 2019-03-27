@@ -8,7 +8,7 @@
 #include "command.h" // DECL_CONSTANT
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "lpc176x");
+DECL_CONSTANT_STR("MCU", "lpc176x");
 
 
 /****************************************************************
