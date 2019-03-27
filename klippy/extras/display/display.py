@@ -244,19 +244,7 @@ class PrinterLCD:
             'P', params, 0.)))
         self.prg_time = M73_TIMEOUT
     def cmd_M117(self, params):
-        if '#original' in params:
-            msg = params['#original']
-            umsg = msg.upper()
-            if not umsg.startswith('M117'):
-                # Parse out additional info if M117 recd during a print
-                start = umsg.find('M117')
-                end = msg.rfind('*')
-                msg = msg[start:end]
-            if len(msg) > 5:
-                msg = msg[5:]
-                self.set_message(msg)
-            else:
-                self.set_message(None)
+        self.set_message(params['*'])
 
 def load_config(config):
     return PrinterLCD(config)

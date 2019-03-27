@@ -3,10 +3,13 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections, shlex
+import os, re, logging, collections, gcode_bridge
 import homing, kinematics.extruder
 
 class error(Exception):
+    pass
+
+class fatal(Exception):
     pass
 
 # Parse and handle G-Code commands
@@ -28,8 +31,8 @@ class GCodeParser:
         if not self.is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self.process_data)
-        self.partial_input = ""
-        self.pending_commands = []
+        self.executor = gcode_bridge.Executor(printer)
+        self.main_queue = self.executor.create_queue()
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
         # Command handling
@@ -70,9 +73,6 @@ class GCodeParser:
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(
                 "gcode command %s already registered" % (cmd,))
-        if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
-            origfunc = func
-            func = lambda params: origfunc(self.get_extended_params(params))
         self.ready_gcode_handlers[cmd] = func
         if when_not_ready:
             self.base_gcode_handlers[cmd] = func
@@ -176,39 +176,28 @@ class GCodeParser:
                 self.base_position, self.last_position, self.homing_position,
                 self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
-    # Parse input into commands
-    args_r = re.compile('([A-Z_]+|[A-Z*/])')
+    # Execute commands
     def process_commands(self, commands, need_ack=True):
-        for line in commands:
-            # Ignore comments and leading/trailing spaces
-            line = origline = line.strip()
-            cpos = line.find(';')
-            if cpos >= 0:
-                line = line[:cpos]
-            # Break command into parts
-            parts = self.args_r.split(line.upper())[1:]
-            params = { parts[i]: parts[i+1].strip()
-                       for i in range(0, len(parts), 2) }
-            params['#original'] = origline
-            if parts and parts[0] == 'N':
-                # Skip line number at start of command
-                del parts[:2]
-            if not parts:
-                # Treat empty line as empty command
-                parts = ['', '']
-            params['#command'] = cmd = parts[0] + parts[1].strip()
-            # Invoke handler for command
-            self.need_ack = need_ack
-            handler = self.gcode_handlers.get(cmd, self.cmd_default)
+        while commands.has_next():
+            cmd = '?'
             try:
+                # Evaluate command
+                (cmd, params) = commands.next()
+                params['#command'] = cmd
+
+                # Invoke handler for command
+                self.need_ack = need_ack
+                handler = self.gcode_handlers.get(cmd, self.cmd_default)
                 handler(params)
             except error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
                 if not need_ack:
                     raise
-            except:
-                msg = 'Internal error on command:"%s"' % (cmd,)
+            except fatal:
+                raise
+            except Exception as e:
+                msg = 'Internal error on command "%s": "%s"' % (cmd, e)
                 logging.exception(msg)
                 self.printer.invoke_shutdown(msg)
                 self.respond_error(msg)
@@ -217,7 +206,7 @@ class GCodeParser:
             self.ack()
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def process_data(self, eventtime):
-        # Read input, separate by newline, and add to pending_commands
+        # Read input, separate by newline, and add to main command queue
         try:
             data = os.read(self.fd, 4096)
         except os.error:
@@ -225,73 +214,68 @@ class GCodeParser:
             return
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
-        lines = data.split('\n')
-        lines[0] = self.partial_input + lines[0]
-        self.partial_input = lines.pop()
-        pending_commands = self.pending_commands
-        pending_commands.extend(lines)
-        # Special handling for debug file input EOF
-        if not data and self.is_fileinput:
-            if not self.is_processing_data:
-                self.reactor.unregister_fd(self.fd_handle)
-                self.fd_handle = None
-                self.request_restart('exit')
-            pending_commands.append("")
+        if data:
+            self.main_queue.parse(data)
+        else:
+            # Special handling for debug file input EOF
+            if self.is_fileinput:
+                if not self.is_processing_data:
+                    self.reactor.unregister_fd(self.fd_handle)
+                    self.fd_handle = None
+                    self.request_restart('exit')
+                self.main_queue.parse_finish()
         # Handle case where multiple commands pending
-        if self.is_processing_data or len(pending_commands) > 1:
-            if len(pending_commands) < 20:
+        if self.is_processing_data or self.main_queue.size > 1:
+            if self.main_queue.size < 20:
                 # Check for M112 out-of-order
-                for line in lines:
-                    if self.m112_r.match(line) is not None:
-                        self.cmd_M112({})
+                if self.executor.check_m112():
+                    self.cmd_M112({})
             if self.is_processing_data:
-                if len(pending_commands) >= 20:
+                if self.main_queue.size >= 20:
                     # Stop reading input
                     self.reactor.unregister_fd(self.fd_handle)
                     self.fd_handle = None
                 return
         # Process commands
         self.is_processing_data = True
-        self.pending_commands = []
-        self.process_commands(pending_commands)
-        if self.pending_commands:
-            self.process_pending()
+        self.process_commands(self.main_queue)
         self.is_processing_data = False
+    def has_pending(self):
+        return self.main_queue.has_next()
     def process_pending(self):
-        pending_commands = self.pending_commands
-        while pending_commands:
-            self.pending_commands = []
-            self.process_commands(pending_commands)
-            pending_commands = self.pending_commands
+        self.process_commands(self.main_queue)
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self.process_data)
-    def process_batch(self, commands):
+    def process_batch(self, script):
         if self.is_processing_data:
             return False
         self.is_processing_data = True
+        commands = self.executor.parse(script)
         try:
             self.process_commands(commands, need_ack=False)
         except error as e:
-            if self.pending_commands:
+            if self.has_pending():
                 self.process_pending()
             self.is_processing_data = False
             raise
-        if self.pending_commands:
+        if self.has_pending():
             self.process_pending()
         self.is_processing_data = False
         return True
-    def run_script_from_command(self, script):
+    def run_script_from_command(self, script, params = {}):
         prev_need_ack = self.need_ack
+        commands = self.executor.parse(script)
+        self.executor.expose_inputs(params)
         try:
-            self.process_commands(script.split('\n'), need_ack=False)
+            self.process_commands(commands, need_ack=False)
         finally:
+            self.executor.remove_inputs()
             self.need_ack = prev_need_ack
     def run_script(self, script):
-        commands = script.split('\n')
         curtime = None
         while 1:
-            res = self.process_batch(commands)
+            res = self.process_batch(script)
             if res:
                 break
             if curtime is None:
@@ -329,6 +313,8 @@ class GCodeParser:
         self.respond('!! %s' % (lines[0].strip(),))
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
+    def expose_config(self, config):
+        self.executor.expose_config(config)
     def _respond_state(self, state):
         self.respond_info("Klipper state: %s" % (state,), log=False)
     # Parameter parsing helpers
@@ -337,26 +323,28 @@ class GCodeParser:
                 minval=None, maxval=None, above=None, below=None):
         if name not in params:
             if default is self.sentinel:
-                raise error("Error on '%s': missing %s" % (
-                    params['#original'], name))
+                self.command_error("Error on '{cmd}': missing {name}", params,
+                                   name = name)
             return default
         try:
             value = parser(params[name])
         except:
-            raise error("Error on '%s': unable to parse %s" % (
-                params['#original'], params[name]))
+            self.command_error("Error on '{cmd}': unable to parse {val}",
+                params, val = params[name])
         if minval is not None and value < minval:
-            raise error("Error on '%s': %s must have minimum of %s" % (
-                params['#original'], name, minval))
+            self.command_error(
+                "Error on '{cmd}': {name} must have minimum of {minval}",
+                params, name = name, minval = minval)
         if maxval is not None and value > maxval:
-            raise error("Error on '%s': %s must have maximum of %s" % (
-                params['#original'], name, maxval))
+            raise error(
+                "Error on '{cmd}': {name} must have maximum of {maxval}",
+                params, name = name, maxval = maxval)
         if above is not None and value <= above:
-            raise error("Error on '%s': %s must be above %s" % (
-                params['#original'], name, above))
+            self.command_error("Error on '{cmd}': {name} must be above {above}",
+                params, name = name, above = above)
         if below is not None and value >= below:
-            raise error("Error on '%s': %s must be below %s" % (
-                params['#original'], name, below))
+            self.command_error("Error on '{cmd}': {name} must be below {below}",
+                params, name = name, below = below)
         return value
     def get_int(self, name, params, default=sentinel, minval=None, maxval=None):
         return self.get_str(name, params, default, parser=int,
@@ -365,24 +353,6 @@ class GCodeParser:
                   minval=None, maxval=None, above=None, below=None):
         return self.get_str(name, params, default, parser=float, minval=minval,
                             maxval=maxval, above=above, below=below)
-    extended_r = re.compile(
-        r'^\s*(?:N[0-9]+\s*)?'
-        r'(?P<cmd>[a-zA-Z_][a-zA-Z_]+)(?:\s+|$)'
-        r'(?P<args>[^#*;]*?)'
-        r'\s*(?:[#*;].*)?$')
-    def get_extended_params(self, params):
-        m = self.extended_r.match(params['#original'])
-        if m is None:
-            # Not an "extended" command
-            return params
-        eargs = m.group('args')
-        try:
-            eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]
-            eparams = { k.upper(): v for k, v in eparams }
-            eparams.update({k: params[k] for k in params if k.startswith('#')})
-            return eparams
-        except ValueError as e:
-            raise error("Malformed command '%s'" % (params['#original'],))
     # Temperature wrappers
     def get_temp(self, eventtime):
         # Tn:XXX /YYY B:XXX /YYY
@@ -439,19 +409,13 @@ class GCodeParser:
             return
         cmd = params.get('#command')
         if not cmd:
-            logging.debug(params['#original'])
             return
         if cmd[0] == 'T' and len(cmd) > 1 and cmd[1].isdigit():
             # Tn command has to be handled specially
+            params['T'] = int(cmd[1:])
             self.cmd_Tn(params)
             return
-        elif cmd.startswith("M117 "):
-            # Handle M117 gcode with numeric and special characters
-            handler = self.gcode_handlers.get("M117", None)
-            if handler is not None:
-                handler(params)
-                return
-        self.respond_info('Unknown command:"%s"' % (cmd,))
+        self.respond_info('Unknown command "%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
         extruders = kinematics.extruder.get_printer_extruders(self.printer)
@@ -478,6 +442,24 @@ class GCodeParser:
         if key_param not in values:
             raise error("The value '%s' is not valid for %s" % (key_param, key))
         values[key_param](params)
+    traditional_cmd_re = re.compile("[A-Z][0-9]+\Z")
+    def describe_command(self, params):
+        cmd = params['#command'] or '?'
+        params = { k: v for k, v in params.items() if k[0] != '#' }
+        if '*' in params and len(params) == 1:
+            params = params['*']
+        else:
+            extended = not self.traditional_cmd_re.match(cmd)
+            sep = '=' if extended else ''
+            params = [
+                "%s%s%s" % (key, sep, val)
+                    for (key, val) in params.items()
+            ]
+            params = ' '.join(params)
+        return "%s %s" % (cmd, params)
+    def command_error(self, message, params, **kwargs):
+        raise error(message.format(cmd = self.describe_command(params),
+                                   **kwargs))
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
@@ -511,11 +493,10 @@ class GCodeParser:
             if 'F' in params:
                 speed = float(params['F'])
                 if speed <= 0.:
-                    raise error("Invalid speed in '%s'" % (
-                        params['#original'],))
+                    self.command_error("Invalid speed in '{cmd}'", params)
                 self.speed = speed
         except ValueError as e:
-            raise error("Unable to parse move '%s'" % (params['#original'],))
+            self.command_error("Unable to parse move '{cmd}'", params)
         try:
             self.move_with_transform(self.last_position,
                                      self.speed * self.speed_factor)
@@ -704,7 +685,7 @@ class GCodeParser:
         self.request_restart('firmware_restart')
     cmd_ECHO_when_not_ready = True
     def cmd_ECHO(self, params):
-        self.respond_info(params['#original'], log=False)
+        self.respond_info(params['*'], log=False)
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
     def cmd_STATUS(self, params):

@@ -126,6 +126,7 @@ class Printer:
             self.try_load_module(config, section_config.get_name())
         for m in [toolhead]:
             m.add_printer_objects(config)
+        self.objects['gcode'].expose_config(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
     def _connect(self, eventtime):

@@ -391,8 +391,7 @@ class BedMeshCalibrate:
                 else:
                     options[key](name)
                 return
-        self.gcode.respond_info(
-            "Invalid syntax '%s'" % (params['#original']))
+        self.gcode.command_error("Invalid syntax '{cmd}'", params)
     cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
     def cmd_BED_MESH_MAP(self, params):
         self.build_map = True

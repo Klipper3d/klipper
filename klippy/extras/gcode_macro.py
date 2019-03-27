@@ -15,26 +15,19 @@ class GCodeMacro:
         self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
         self.in_script = False
-        self.kwparams = { o[len(DEFAULT_PREFIX):].upper(): config.get(o)
+        self.kwparams = { o[len(DEFAULT_PREFIX):].lower(): config.get(o)
                           for o in config.get_prefix_options(DEFAULT_PREFIX) }
     cmd_desc = "G-Code macro"
     def cmd(self, params):
         if self.in_script:
             raise self.gcode.error(
                 "Macro %s called recursively" % (self.alias,))
-        script = ""
+        params = { k.lower(): v for k, v in params.items() }
         kwparams = dict(self.kwparams)
         kwparams.update(params)
-        try:
-            script = self.script.format(**kwparams)
-        except Exception as e:
-            msg = "Error evaluating %s: %s" % (
-                self.alias, traceback.format_exception_only(type(e), e)[-1])
-            logging.exception(msg)
-            raise self.gcode.error(msg)
         self.in_script = True
         try:
-            self.gcode.run_script_from_command(script)
+            self.gcode.run_script_from_command(self.script, kwparams)
         finally:
             self.in_script = False
 
