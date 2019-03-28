@@ -13,8 +13,6 @@
 #include "sched.h" // sched_shutdown
 #include "log.h"
 
-//static SPI_HandleTypeDef hspi1;
-
 void spi_hw_setup(uint32_t rate)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -28,9 +26,6 @@ void spi_hw_setup(uint32_t rate)
     PA6     ------> SPI1_MISO
     PA7     ------> SPI1_MOSI
     */
-    gpio_check_busy(0x05); //PA5
-    gpio_check_busy(0x06); //PA6
-    gpio_check_busy(0x07); //PA7
     GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -52,22 +47,6 @@ void spi_hw_setup(uint32_t rate)
             SPI_RXFIFO_THRESHOLD_QF;
 
     SPI1->CR1 |= SPI_CR1_SPE; // Enable
-
-    //hspi1.Instance = SPI1;
-    //hspi1.Init.Mode = SPI_MODE_MASTER;
-    //hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-    //hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-    //hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    //hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-    //hspi1.Init.NSS = SPI_NSS_SOFT;
-    //hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-    //hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    //hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-    //hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    //hspi1.Init.CRCPolynomial = 7;
-    //hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-    //hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-    //HAL_SPI_Init(&hspi1);
 }
 
 struct spi_config

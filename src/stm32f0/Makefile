@@ -25,6 +25,7 @@ src-$(CONFIG_CANSERIAL) += stm32f0/can.c
 src-$(CONFIG_DEBUG_OUT) += stm32f0/log.c
 src-$(CONFIG_SERIAL) += stm32f0/serial.c
 src-y += generic/serial_irq.c
+src-y += generic/timer_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f0/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += stm32f0/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f0/spi.c

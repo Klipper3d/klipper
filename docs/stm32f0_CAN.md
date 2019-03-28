@@ -7,6 +7,8 @@ Required components
 #### MCP2515 module
 
 ![MCP2515](img/mcp2515.jpg)
+or this
+![CAN/RS485 hat](img/canhat.jpg)
 
 #### St-link dongle
 
@@ -17,7 +19,7 @@ Adding CAN bus to Raspberry Pi
 ==============================
 (Based on Quick Guide https://www.raspberrypi.org/forums/viewtopic.php?f=44&t=141052)
 
-First of all, it’s necessary to modify the CAN-module from ebay, because it has
+First of all, (only if you have small CAN module) it’s necessary to modify the CAN-module from ebay, because it has
 only one VCC pin, but the MCP2515 needs to be powered from 3V3 and the TJA1050
 CAN-transceiver needs to be powered from 5V. Powering both chips from 5V would
 work, but then a level-shifter for the SPI would be needed. The Pi's GPIO pins
@@ -135,5 +137,6 @@ Now "make flash" command can upload HEX into connected board
 Pins allocation
 ===============
 
-Configurations with CAN and Serial port uses different pins, and firmware contains only
-actual pins initialization.
+Configurations with CAN and Serial port uses different pins, and during enumeration
+process firmware reports all possible pin names. But actually you can use only
+existing pins, not involved in communication. Wrong pins will generate shutdown.
