@@ -249,7 +249,7 @@ def build_extension(srcdir, target, sources):
         ffi.cdef(d)
     libdir = os.path.dirname(os.path.abspath(__file__))
     ffi.set_source("_chelper", ffi_source, sources = SOURCE_FILES
-                   , extra_compile_args = [ "-Werror" ])
+                   , extra_compile_args = [ "-Werror", "-std=gnu11" ])
     ffi.compile(tmpdir = libdir)
 
 # Return the Foreign Function Interface api to the caller
