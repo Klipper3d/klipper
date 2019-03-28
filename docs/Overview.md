@@ -46,6 +46,7 @@ protocol between host and micro-controller. See also
 commands implemented in the micro-controller software.
 
 See [debugging](Debugging.md) for information on how to test and debug
-Klipper. See [stm32f1](stm32f1.md) for information on the STM32F1
+Klipper. See [benchmarks](Benchmarks.md) for information on
+benchmarking. See [stm32f1](stm32f1.md) for information on the STM32F1
 micro-controller port. See [bootloaders](Bootloaders.md) for developer
 information on micro-controller flashing.
