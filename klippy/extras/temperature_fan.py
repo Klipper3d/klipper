@@ -15,7 +15,6 @@ class TemperatureFan:
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
-        self.mcu = self.fan.mcu_fan.get_mcu()
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
