@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190328: The min_speed value in [temperature_fan] config
+will now be respected and the fan will always run at this
+speed or higher in PID mode.
+
 20190322: The default value for "driver_HEND" in [tmc2660] config
 sections was changed from 6 to 3. The "driver_VSENSE" field was
 removed (it is now automatically calculated from run_current).
