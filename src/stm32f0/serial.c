@@ -15,7 +15,7 @@
 UART_HandleTypeDef huart2;
 static uint8_t rxbuf, txbuf;
 
-void USART2_IRQHandler(void)
+void __visible USART2_IRQHandler(void)
 {
   HAL_UART_IRQHandler(&huart2);
 }

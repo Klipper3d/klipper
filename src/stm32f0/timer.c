@@ -77,7 +77,7 @@ SysTick_Handler(void)
     irq_enable();
 }
 
-void TIM2_IRQHandler(void)
+void __visible TIM2_IRQHandler(void)
 {
     if(TIM2->SR & TIM_SR_UIF) {
         TIM2->SR &= ~TIM_SR_UIF; // clear UIF flag

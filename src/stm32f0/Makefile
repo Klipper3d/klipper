@@ -8,11 +8,7 @@ CROSS_PREFIX=arm-none-eabi-
 dirs-y += src/stm32f0 src/generic
 dirs-y += lib/stm32f0 lib/stm32f0/gcc lib/stm32f0/hal/source
 
-CFLAGS = -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
-    -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
-    -ffunction-sections -fdata-sections
-CFLAGS += -flto -fno-use-linker-plugin
-CFLAGS += -mthumb -mcpu=cortex-m0 -g3
+CFLAGS += -mthumb -mcpu=cortex-m0
 CFLAGS += -Ilib/cmsis-core -Iout/board
 CFLAGS += -Ilib/stm32f0/include -Ilib/stm32f0/hal/include
 CFLAGS += -DSTM32F042x6 -DUSE_HAL_DRIVER

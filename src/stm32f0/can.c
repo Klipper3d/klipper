@@ -149,7 +149,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *h)
   * @brief This function handles HDMI-CEC and CAN global interrupts /
   *  HDMI-CEC wake-up interrupt through EXTI line 27.
   */
-void CEC_CAN_IRQHandler(void)
+void __visible CEC_CAN_IRQHandler(void)
 {
     HAL_CAN_IRQHandler(&hcan);
 }
