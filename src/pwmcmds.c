@@ -13,7 +13,7 @@ struct pwm_out_s {
     struct timer timer;
     struct gpio_pwm pin;
     uint32_t max_duration;
-    uint8_t value, default_value;
+    uint16_t value, default_value;
 };
 
 static uint_fast8_t
