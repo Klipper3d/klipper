@@ -169,6 +169,22 @@ The test was last run on commit `b161a69e` with gcc version `pru-gcc
 is `SET ticks 861`, the best dual stepper result is `SET ticks 853`,
 and the best three stepper result is `SET ticks 883`.
 
+### STM32F042 step rate benchmark ###
+
+The following configuration sequence is used on the STM32F042:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA0 dir_pin=PA1 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PA2 dir_pin=PA3 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PA6 dir_pin=PA7 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `c105adc8` with gcc version
+`arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1`. The best single
+stepper result is `SET ticks 308`, the best dual stepper result is
+`SET ticks 638`, and the best three stepper result is `SET ticks 1021`.
+
 ### STM32F103 step rate benchmark ###
 
 The following configuration sequence is used on the STM32F103:
@@ -268,6 +284,7 @@ class machine.
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | sam3x8e (USB)       | 450K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
