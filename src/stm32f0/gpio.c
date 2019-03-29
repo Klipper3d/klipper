@@ -19,7 +19,7 @@ DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 9);
 DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 2);
 
 GPIO_TypeDef *const digital_regs[] = {
-    GPIOA, GPIOB, GPIOC, GPIOF
+    GPIOA, GPIOB, GPIOC, 0, 0, GPIOF
 };
 
 // <port:4><pin:4>
