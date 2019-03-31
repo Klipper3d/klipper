@@ -56,6 +56,8 @@ irq_wait(void)
 static void
 timer_set(uint32_t value)
 {
+    if (!value)
+        value = 1;
     CT_IEP.TMR_CMP0 = value;
 }
 
