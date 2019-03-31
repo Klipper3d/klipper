@@ -22,7 +22,7 @@ command_config_i2c(uint32_t *args)
     i2c->i2c_config = i2c_setup(args[1], args[2], addr);
 }
 DECL_COMMAND(command_config_i2c,
-             "config_i2c oid=%c bus=%u rate=%u address=%u");
+             "config_i2c oid=%c i2c_bus=%u rate=%u address=%u");
 
 void
 command_i2c_write(uint32_t *args)
