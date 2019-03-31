@@ -77,7 +77,8 @@ def add_high_bits(val, ref, mask):
 
 class GatherShutdown:
     class mcu_info:
-        def __init__(self):
+        def __init__(self, name):
+            self.name = name
             self.sent_stream = []
             self.receive_stream = []
             self.sent_stream = []
@@ -170,13 +171,15 @@ class GatherShutdown:
         exp_clock = int(sample_clock + (ts - sample_time) * freq)
         ext_clock = add_high_bits(clock, exp_clock, 0xffffffff)
         return sample_time + (ext_clock - sample_clock) / freq
-    def annotate(self, line, seq, ts):
+    def annotate(self, line, mcu_name, seq, ts):
         if seq is not None:
             line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
         def clock_update(m):
             return m.group(0).rstrip() + "(%.6f) " % (
                 self.trans_clock(int(m.group('clock')), ts),)
         line = repl_clock_r.sub(clock_update, line)
+        if mcu_name != 'mcu':
+            line = "mcu '%s': %s" % (mcu_name, line)
         return line
     def add_line(self, line_num, line):
         self.parse_line(line_num, line)
@@ -201,7 +204,7 @@ class GatherShutdown:
             esttime = float(m.group('esttime'))
             self.mcu.sent_time_to_seq[(esttime, seq & 0xf)] = seq
             self.mcu.sent_seq_to_time[seq] = ts
-            line = self.annotate(line, seq, ts)
+            line = self.annotate(line, self.mcu.name, seq, ts)
             self.mcu.sent_stream.append((ts, line_num, line))
             return
         m = receive_r.match(line)
@@ -212,7 +215,7 @@ class GatherShutdown:
             seq = self.mcu.sent_time_to_seq.get((esttime, (shortseq - 1) & 0xf))
             if seq is not None:
                 self.mcu.receive_seq_to_time[seq + 1] = ts
-            line = self.annotate(line, seq, ts)
+            line = self.annotate(line, self.mcu.name, seq, ts)
             self.mcu.receive_stream.append((ts, line_num, line))
             return
         m = gcode_r.match(line)
@@ -235,7 +238,7 @@ class GatherShutdown:
         m = mcu_r.match(line)
         if m is not None:
             mcu = m.group('mcu')
-            self.mcu = self.mcus.setdefault(mcu, self.mcu_info())
+            self.mcu = self.mcus.setdefault(mcu, self.mcu_info(mcu))
         m = clock_r.match(line)
         if m is not None:
             st = float(m.group('st'))
