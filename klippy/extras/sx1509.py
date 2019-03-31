@@ -3,9 +3,8 @@
 # Copyright (C) 2018  Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-import mcu
 import pins
+import bus
 
 # Word registers
 REG_RESET = 0x7D
@@ -26,25 +25,19 @@ class SX1509(object):
     def __init__(self, config):
         self._printer = config.get_printer()
         self._name = config.get_name().split()[1]
-        self._chip_address = int(config.get('address'), 0)
-        self._bus = config.getint('bus', minval=0, default=0)
+        self._i2c = bus.MCU_I2C_from_config(config, default_speed=400000)
         self._ppins = self._printer.lookup_object("pins")
         self._ppins.register_chip("sx1509_" + self._name, self)
-        self._mcu = mcu.get_printer_mcu(self._printer, config.get('mcu', 'mcu'))
+        self._mcu = self._i2c.get_mcu()
         self._mcu.register_config_callback(self._build_config)
-        self._oid = self._mcu.create_oid()
-        self._i2c_write_cmd = self._i2c_modify_cmd = None
+        self._oid = self._i2c.get_oid()
         self._last_clock = 0
-        self._freq = 400000 # Fixed frequency for SX1509
         # Set up registers default values
         self.reg_dict = {REG_DIR : 0xFFFF, REG_DATA : 0,
                          REG_PULLUP : 0, REG_PULLDOWN : 0,
                          REG_INPUT_DISABLE : 0, REG_ANALOG_DRIVER_ENABLE : 0}
         self.reg_i_on_dict = {reg : 0 for reg in REG_I_ON}
     def _build_config(self):
-        self._mcu.add_config_cmd(
-            "config_i2c oid=%d bus=%d rate=%d address=%d" % (
-                self._oid, self._bus, self._freq, self._chip_address))
         # Reset the chip
         self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
             self._oid, REG_RESET, 0x12))
@@ -62,12 +55,6 @@ class SX1509(object):
         for _reg, _data in self.reg_dict.iteritems():
             self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%04x" % (
                 self._oid, _reg, _data), is_init=True)
-        # Build commands
-        cmd_queue = self._mcu.alloc_command_queue()
-        self._i2c_write_cmd = self._mcu.lookup_command(
-            "i2c_write oid=%c data=%*s", cq=cmd_queue)
-        self._i2c_modify_cmd = self._mcu.lookup_command(
-            "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s", cq=cmd_queue)
     def setup_pin(self, pin_type, pin_params):
         if pin_type == 'digital_out' and pin_params['pin'][0:4] == "PIN_":
             return SX1509_digital_out(self, pin_params)
@@ -104,8 +91,7 @@ class SX1509(object):
             # Byte
             data += [self.reg_i_on_dict[reg] & 0xFF]
         clock = self._mcu.print_time_to_clock(print_time)
-        self._i2c_write_cmd.send([self._oid, data],
-                                 minclock=self._last_clock, reqclock=clock)
+        self._i2c.i2c_write(data, minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
 
 class SX1509_digital_out(object):

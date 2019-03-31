@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190331: The sx1509 config parameters have changed. The 'address'
+parameter is now 'i2c_address' and it must be specified as a decimal
+number. Where 0x3E was previously used, specify 62.
+
 20190328: The min_speed value in [temperature_fan] config
 will now be respected and the fan will always run at this
 speed or higher in PID mode.
