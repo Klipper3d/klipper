@@ -47,7 +47,7 @@ class VirtualSD:
         dname = self.sdcard_dirname
         try:
             filenames = [os.path.relpath(os.path.join(root, file), dname)
-                         for root, dirs, files in os.walk(dname) 
+                         for root, dirs, files in os.walk(dname)
                          for file in files
                          if not file.startswith('.')]
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
