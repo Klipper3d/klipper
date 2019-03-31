@@ -31,12 +31,12 @@ class MCU_SPI:
                     self.oid, software_spi_oid, pin, shutdown_msg)]
         elif pin is None:
             self.config_msgs = [
-                "config_spi_without_cs oid=%d bus=%d mode=%d rate=%d"
+                "config_spi_without_cs oid=%d spi_bus=%d mode=%d rate=%d"
                 " shutdown_msg=%s" % (
                     self.oid, bus, mode, speed, shutdown_msg)]
         else:
             self.config_msgs = [
-                "config_spi oid=%d bus=%d pin=%s mode=%d rate=%d"
+                "config_spi oid=%d spi_bus=%d pin=%s mode=%d rate=%d"
                 " shutdown_msg=%s" % (
                     self.oid, bus, pin, mode, speed, shutdown_msg)]
         self.cmd_queue = self.mcu.alloc_command_queue()
@@ -111,7 +111,7 @@ class MCU_I2C:
         self.i2c_address = addr
         self.oid = self.mcu.create_oid()
         self.mcu.add_config_cmd(
-            "config_i2c oid=%d bus=%d rate=%d address=%d" % (
+            "config_i2c oid=%d i2c_bus=%d rate=%d address=%d" % (
                 self.oid, bus, speed, addr))
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
