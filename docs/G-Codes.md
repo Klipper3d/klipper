@@ -391,3 +391,11 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+
+## Octoprint REST API integration
+
+The following command is available when the "octoprint" config
+section is enabled.
+- `OCTOPRINT PRINT_FILE=<resource>`: Starts printing the file with the given
+  handle. The handle is returned by Octoprint in `refs/resource` key when
+  querying the file list.

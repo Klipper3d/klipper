@@ -11,15 +11,14 @@ GET_FILES = '/api/files'
 
 class Octoprint:
     def __init__(self, config):
-        self.api_key = config.get('api_key')
-        self.host = config.get('host', DEFAULT_HOST)
-        self._headers = {'X-Api-Key': self.api_key}
-        self.gcode = config.get_printer().lookup_object('gcode')
-        self.gcode.register_command('OCTOPRINT', self.cmd_OCTOPRINT)
+        self._host = config.get('host', DEFAULT_HOST)
+        self._headers = {'X-Api-Key': config.get('api_key')}
+        self._gcode = config.get_printer().lookup_object('gcode')
+        self._gcode.register_command('OCTOPRINT', self.cmd_OCTOPRINT)
 
     def list_files(self):
         try:
-            r = requests.get(self.host + GET_FILES, headers=self._headers)
+            r = requests.get(self._host + GET_FILES, headers=self._headers)
             r.raise_for_status()
         except requests.exceptions.RequestException:
             logging.exception('Octoprint: '
@@ -39,10 +38,10 @@ class Octoprint:
     def cmd_OCTOPRINT(self, params):
         print_file = params.get('PRINT_FILE')
         if print_file is None:
-            self.gcode.respond_info('Required parameter PRINT_FILE missing.')
+            self._gcode.respond_info('Required parameter PRINT_FILE missing.')
             return
         self._print_file(print_file)
-        self.gcode.respond_info('Printing %s' % print_file)
+        self._gcode.respond_info('Printing %s' % print_file)
 
 
 def load_config(config):
