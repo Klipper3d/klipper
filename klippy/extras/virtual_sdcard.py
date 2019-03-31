@@ -46,10 +46,11 @@ class VirtualSD:
     def get_file_list(self):
         dname = self.sdcard_dirname
         try:
-            filenames = os.listdir(self.sdcard_dirname)
+            filenames = [os.path.relpath(os.path.join(root, file), dname)
+                         for root, dirs, files in os.walk(dname) for file in files
+                         if not file.startswith('.')]
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                    for fname in filenames
-                    if not fname.startswith('.')]
+                    for fname in filenames]
         except:
             logging.exception("virtual_sdcard get_file_list")
             raise self.gcode.error("Unable to get file list")
