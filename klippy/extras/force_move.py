@@ -12,7 +12,7 @@ STALL_TIME = 0.100
 # Calculate a move's accel_t, cruise_t, and cruise_v
 def calc_move_time(dist, speed, accel):
     dist = abs(dist)
-    if not accel:
+    if not accel or not dist:
         return 0., dist / speed, speed
     max_cruise_v2 = dist * accel
     if max_cruise_v2 < speed**2:
