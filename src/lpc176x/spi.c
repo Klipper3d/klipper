@@ -10,6 +10,9 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+DECL_ENUMERATION("spi_bus", "ssp0", 0);
+DECL_CONSTANT_STR("BUS_PINS_ssp0", "P0.17,P0.18,P0.15");
+
 static void
 spi_init(void)
 {
@@ -18,10 +21,10 @@ spi_init(void)
         return;
     have_run_init = 1;
 
-    // Configure SCK0, MISO0, MOSI0 pins
-    gpio_peripheral(GPIO(0, 15), 2, 0);
+    // Configure MISO0, MOSI0, SCK0 pins
     gpio_peripheral(GPIO(0, 17), 2, 0);
     gpio_peripheral(GPIO(0, 18), 2, 0);
+    gpio_peripheral(GPIO(0, 15), 2, 0);
 
     // Setup clock
     enable_pclock(PCLK_SSP0);
