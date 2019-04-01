@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20190331: The i2c_bus and spi_bus parameters (in various config
+sections) now take a bus name instead of a number.
+
 20190331: The sx1509 config parameters have changed. The 'address'
 parameter is now 'i2c_address' and it must be specified as a decimal
 number. Where 0x3E was previously used, specify 62.
