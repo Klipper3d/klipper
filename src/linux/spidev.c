@@ -15,6 +15,15 @@
 #include "internal.h" // report_errno
 #include "sched.h" // shutdown
 
+#define SPIBUS(chip, pin) (((chip)<<8) + (pin))
+#define SPIBUS_TO_BUS(spi_bus) ((spi_bus) >> 8)
+#define SPIBUS_TO_DEV(spi_bus) ((spi_bus) & 0xff)
+
+DECL_ENUMERATION_RANGE("spi_bus", "spidev0.0", SPIBUS(0, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev1.0", SPIBUS(1, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev2.0", SPIBUS(2, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev3.0", SPIBUS(3, 0), 16);
+
 struct spi_s {
     uint32_t bus, dev;
     int fd;
@@ -54,7 +63,7 @@ spi_open(uint32_t bus, uint32_t dev)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    int bus_id = (bus >> 8) & 0xff, dev_id = bus & 0xff;
+    int bus_id = SPIBUS_TO_BUS(bus), dev_id = SPIBUS_TO_DEV(bus);
     int fd = spi_open(bus_id, dev_id);
     int ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &rate);
     if (ret < 0) {
