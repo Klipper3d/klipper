@@ -15,6 +15,8 @@
  * Available sercom blocks
  ****************************************************************/
 
+DECL_ENUMERATION_RANGE("bus", "sercom0", 0, 8);
+
 struct sercom_bus {
     Sercom *sercom;
     uint32_t pclk_id, pm_id;
@@ -39,7 +41,7 @@ Sercom *
 sercom_enable_pclock(uint32_t sercom_id)
 {
     if (sercom_id >= ARRAY_SIZE(sercoms))
-        shutdown("Invalid sercom bus");
+        shutdown("Invalid SERCOM bus");
     const struct sercom_bus *sb = &sercoms[sercom_id];
     enable_pclock(sb->pclk_id, sb->pm_id);
     return sb->sercom;
@@ -290,6 +292,9 @@ sercom_lookup_pad(uint32_t sercom_id, uint8_t pin)
  ****************************************************************/
 
 enum { TX_PIN, RX_PIN, CLK_PIN };
+DECL_ENUMERATION("sercom_pin_type", "tx", TX_PIN);
+DECL_ENUMERATION("sercom_pin_type", "rx", RX_PIN);
+DECL_ENUMERATION("sercom_pin_type", "clk", CLK_PIN);
 
 // Runtime configuration
 struct sercom_pin {
@@ -308,7 +313,7 @@ command_set_sercom_pin(uint32_t *args)
     sercom_pins[sercom_id].pins[pin_type] = pin;
 }
 DECL_COMMAND(command_set_sercom_pin,
-             "set_sercom_pin sercom_id=%u pin_type=%u pin=%u");
+             "set_sercom_pin bus=%u sercom_pin_type=%u pin=%u");
 
 
 /****************************************************************
@@ -349,6 +354,8 @@ sercom_lookup_spi_dopo(uint8_t tx_pad, uint8_t clk_pad)
 uint32_t
 sercom_spi_pins(uint32_t sercom_id)
 {
+    if (sercom_id >= ARRAY_SIZE(sercom_pins))
+        shutdown("Invalid SERCOM bus");
     uint8_t tx_pin = sercom_pins[sercom_id].pins[TX_PIN];
     const struct sercom_pad *tx_sp = sercom_lookup_pad(sercom_id, tx_pin);
     uint8_t rx_pin = sercom_pins[sercom_id].pins[RX_PIN];
