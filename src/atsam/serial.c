@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/serial_irq.h" // serial_rx_data
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
 
@@ -16,18 +17,21 @@ static Uart * const Port = UART;
 static const uint32_t Pmc_id = ID_UART, Irq_id = UART_IRQn;
 static const uint32_t rx_pin = GPIO('A', 8);
 static const uint32_t tx_pin = GPIO('A', 9);
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA8,PA9");
 #elif CONFIG_MACH_SAM4S
 #define Serial_IRQ_Handler UART1_Handler
 static Uart * const Port = UART1;
 static const uint32_t Pmc_id = ID_UART1, Irq_id = UART1_IRQn;
 static const uint32_t rx_pin = GPIO('B', 2);
 static const uint32_t tx_pin = GPIO('B', 3);
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB2,PB3");
 #elif CONFIG_MACH_SAM4E
 #define Serial_IRQ_Handler UART0_Handler
 static Uart * const Port = UART0;
 static const uint32_t Pmc_id = ID_UART0, Irq_id = UART0_IRQn;
 static const uint32_t rx_pin = GPIO('A', 9);
 static const uint32_t tx_pin = GPIO('A', 10);
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA9,PA10");
 #endif
 
 void

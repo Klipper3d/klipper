@@ -12,16 +12,21 @@
 #include "sched.h" // sched_shutdown
 
 // I2C pin definitions
+DECL_ENUMERATION_RANGE("i2c_bus", "twi0", 0, 2);
 #if CONFIG_MACH_SAM3X
 #define TWI0_SCL_GPIO GPIO('A', 18)
 #define TWI0_SDA_GPIO GPIO('A', 17)
 #define TWI1_SCL_GPIO GPIO('B', 13)
 #define TWI1_SDA_GPIO GPIO('B', 12)
+DECL_CONSTANT_STR("BUS_PINS_twi0", "PA18,PA17");
+DECL_CONSTANT_STR("BUS_PINS_twi1", "PB13,PB12");
 #elif CONFIG_MACH_SAM4
 #define TWI0_SCL_GPIO GPIO('A', 4)
 #define TWI0_SDA_GPIO GPIO('A', 3)
 #define TWI1_SCL_GPIO GPIO('B', 5)
 #define TWI1_SDA_GPIO GPIO('B', 4)
+DECL_CONSTANT_STR("BUS_PINS_twi0", "PA4,PA3");
+DECL_CONSTANT_STR("BUS_PINS_twi1", "PB5,PB4");
 #endif
 
 static void
@@ -89,7 +94,7 @@ addr_to_u32(uint8_t addr_len, uint8_t *addr)
 struct i2c_config
 i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
-    if ((bus > 1) | (rate > 400000))
+    if (bus > 1 || rate > 400000)
         shutdown("Invalid i2c_setup parameters!");
     Twi *p_twi = (bus == 0) ? TWI0 : TWI1;
     i2c_init(p_twi, rate);
