@@ -63,7 +63,6 @@ struct sercom_pad {
     uint8_t sercom_id, gpio, pad, ptype;
 };
 
-
 static const struct sercom_pad sercom_pads[] = {
 #if CONFIG_MACH_SAMD21
     { 0, GPIO('A', 8), 0, 'C'},
@@ -324,7 +323,6 @@ struct sercom_spi_map {
     uint8_t tx_pad, clk_pad, dopo;
 };
 
-
 static const struct sercom_spi_map sercom_spi[] = {
     { 0, 1, 0 },
     { 3, 1, 2 },
@@ -365,7 +363,7 @@ sercom_spi_pins(uint32_t sercom_id)
 
     uint8_t dopo = sercom_lookup_spi_dopo(tx_sp->pad, clk_sp->pad);
     if (rx_sp->pad == tx_sp->pad || rx_sp->pad == clk_sp->pad)
-            shutdown("Sercom RX pad collides with TX or CLK pad");
+        shutdown("Sercom RX pad collides with TX or CLK pad");
 
     gpio_peripheral(tx_pin, tx_sp->ptype, 0);
     gpio_peripheral(rx_pin, rx_sp->ptype, 0);
