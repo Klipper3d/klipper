@@ -45,12 +45,6 @@ i2c_init(uint32_t bus, SercomI2cm *si)
 struct i2c_config
 i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
-#ifdef SERCOM7
-    if (bus > 7)
-#else
-    if (bus > 5)
-#endif
-        shutdown("Unsupported i2c bus");
     Sercom *sercom = sercom_enable_pclock(bus);
     sercom_i2c_pins(bus);
     SercomI2cm *si = &sercom->I2CM;

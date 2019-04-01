@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "command.h" // DECL_CONSTANT_STR
 #include "compiler.h" // DIV_ROUND_CLOSEST
 #include "internal.h" // enable_pclock
 
@@ -47,6 +48,10 @@ get_pclock_frequency(uint32_t pclk_id)
 {
     return FREQ_MAIN;
 }
+
+#if CONFIG_CLOCK_REF_X32K
+DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PA0,PA1");
+#endif
 
 // Initialize the clocks using an external 32K crystal
 static void
