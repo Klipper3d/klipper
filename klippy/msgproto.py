@@ -384,6 +384,10 @@ class MessageParser:
         except Exception as e:
             logging.exception("process_identify error")
             raise error("Error during identify: %s" % (str(e),))
+    def get_enumerations(self):
+        return dict(self.enumerations)
+    def get_constants(self):
+        return dict(self.config)
     class sentinel: pass
     def get_constant(self, name, default=sentinel, parser=str):
         if name not in self.config:
