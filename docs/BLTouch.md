@@ -65,18 +65,42 @@ Calibrating the BL-Touch
 
 ### X/Y Offset
 
-In order to make klipper work properly you need to tell it in which relation to the nozzle
-the probe is exactly located. Lets start with the `x_offset` and the `y_offset`
+To calibrate the X and Y offset, navigate to the OctoPrint "Control"
+tab, home the printer, and then use the OctoPrint jogging buttons to
+move the head to a position near the center of the bed.
 
-In order to find the proper vertical offset of the probe you need to know a certain point of
-your bed. X/Y = 0 may be a good point for this, any other will do as long as you know it.
-Find it by lowering the nozzle next to it using `g0 z0.5`. Create a removable mark on your
-bed by i.e. using a non permanent marker.
+Place a piece of blue painters tape (or similar) on the bed underneath
+the probe. Navigate to the OctoPrint "Terminal" tab and issue a PROBE
+command:
+```
+PROBE
+```
+Place a mark on the tape directly under where the probe is (or use a
+similar method to note the location on the bed).
 
-Now move the tip of the BL-Touch over that point by jogging there with the controls in the `control` tab of
-OctoPrint. Once the BL-Touch is roughly over the point acquire it using the `GET_POSITION` command.
-The difference to your marked point is your `x_offset` and `y_offset` to configure in the `printer.cfg`.
+Issue a `GET_POSITION` command and record the toolhead XY location
+reported by that command. For example if one sees:
+```
+Recv: // toolhead: X:46.500000 Y:27.000000 Z:15.000000 E:0.000000
+```
+then one would record a probe X position of 46.5 and probe Y position
+of 27.
 
+After recording the probe position, issue a series of G1 commands
+until the nozzle is directly above the mark on the bed. For example,
+one might issue:
+```
+G1 F300 X57 Y30 Z15
+```
+to move the nozzle to an X position of 57 and Y of 30. Once one finds
+the position directly above the mark, use the `GET_POSITION` command
+to report that position. This is the nozzle position.
+
+The x_offset is then the `nozzle_x_position - probe_x_position` and
+y_offset is similarly the `nozzle_y_position - probe_y_position`.
+Update the printer.cfg file with the given values, remove the
+tape/marks from the bed, and then issue a `RESTART` command so that
+the new values take effect.
 
 ### Z Offset
 
