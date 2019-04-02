@@ -2,6 +2,6 @@
 # the Klipper host software (Klippy).  These package requirements are
 # typically installed via the command:
 #   pip install -r virtualenv-requirements.txt
-cffi==1.6.0
-pyserial==3.2.1
-greenlet==0.4.10
+cffi==1.12.2
+pyserial==3.4
+greenlet==0.4.15
