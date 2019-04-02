@@ -153,6 +153,7 @@ class I2C:
 class UC1701(DisplayBase):
     def __init__(self, config):
         DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
+        self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
     def init(self):
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
@@ -166,7 +167,7 @@ class UC1701(DisplayBase):
                      0x00, # Booster ratio value (4x)
                      0x23, # Set resistor ratio (3)
                      0x81, # Set Electronic Volume
-                     0x28, # Electronic volume value (40)
+                     self.contrast, # Electronic Volume value
                      0xAC, # Set static indicator off
                      0x00, # NOP
                      0xA6, # Disable Inverse
