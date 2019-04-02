@@ -62,4 +62,4 @@ fi
 echo "=============== Install python virtualenv"
 cd ${MAIN_DIR}
 virtualenv ${BUILD_DIR}/python-env
-${BUILD_DIR}/python-env/bin/pip install cffi==1.6.0 pyserial==3.2.1 greenlet==0.4.10
+${BUILD_DIR}/python-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
