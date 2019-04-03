@@ -835,21 +835,6 @@ class MenuVSDCard(MenuList):
                         'width': (self._manager.cols-1)
                     }))
 
-
-            files = sdcard.get_file_list()
-            for fname, fsize in files:
-                gcode = [
-                    'M23 /%s' % str(fname)
-                ]
-                self.append_item(MenuCommand(self._manager, {
-                    'name': '%s' % str(fname),
-                    'cursor': '+',
-                    'gcode': "\n".join(gcode),
-                    'scroll': True,
-                    # mind the cursor size in width
-                    'width': (self._manager.cols-1)
-                }))
-
     def populate_items(self):
         super(MenuVSDCard, self).populate_items()
         self._populate_files()
