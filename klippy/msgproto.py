@@ -321,11 +321,15 @@ class MessageParser:
                 else:
                     tval = value
                 argparts[name] = tval
+        except error as e:
+            raise
         except:
             #logging.exception("Unable to extract params")
             raise error("Unable to extract params from: %s" % (msgname,))
         try:
             cmd = mp.encode_by_name(**argparts)
+        except error as e:
+            raise
         except:
             #logging.exception("Unable to encode")
             raise error("Unable to encode: %s" % (msgname,))

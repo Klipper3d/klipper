@@ -1,0 +1,7 @@
+# This file describes the Python virtualenv package requirements for
+# the Klipper host software (Klippy).  These package requirements are
+# typically installed via the command:
+#   pip install -r virtualenv-requirements.txt
+cffi==1.6.0
+pyserial==3.2.1
+greenlet==0.4.10

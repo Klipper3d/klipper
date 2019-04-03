@@ -19,7 +19,7 @@ DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 9);
 DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 2);
 
 GPIO_TypeDef *const digital_regs[] = {
-    GPIOA, GPIOB, GPIOC, GPIOF
+    GPIOA, GPIOB, GPIOC, 0, 0, GPIOF
 };
 
 // <port:4><pin:4>
@@ -51,7 +51,6 @@ uint8_t const avail_pins[] = {
 static uint8_t
 gpio_check_pin(uint8_t pin)
 {
-    gpio_check_busy(pin);
     int i;
     for(i=0; i<ARRAY_SIZE(avail_pins); i++) {
         if (avail_pins[i] == pin)
@@ -139,23 +138,4 @@ void gpio_init(void)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
-}
-
-void gpio_check_busy(uint8_t pin)
-{
-    // Increase to uint32_t and assert <32 on bigger chips
-    static uint16_t pinmap;
-    assert_param(sizeof(avail_pins)<16);
-
-    for (int i = 0; i<sizeof(avail_pins); i++) {
-        if(avail_pins[i]==pin) {
-            if(pinmap&(1<<i)) {
-                break;
-            } else {
-                pinmap |= 1<<i;
-                return;
-            }
-        }
-    }
-    shutdown("GPIO check failed");
 }

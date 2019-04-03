@@ -11,6 +11,7 @@
 #include "board/gpio.h" // i2c_setup
 #include "sched.h" // sched_shutdown
 #include "command.h" // shutdown
+#include "board/misc.h" // timer_is_before
 
 I2C_HandleTypeDef hi2c1;
 
@@ -21,9 +22,6 @@ struct i2c_config i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     PF0-OSC_IN     ------> I2C1_SDA
     PF1-OSC_OUT     ------> I2C1_SCL
     */
-    gpio_check_busy(0x30); //PF0
-    gpio_check_busy(0x31); //PF1
-
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -50,25 +48,36 @@ struct i2c_config i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     return (struct i2c_config){ .addr = addr };
 }
 
+static void
+i2c_to_check(uint32_t timeout)
+{
+    if (!timer_is_before(timer_read_time(), timeout))
+        shutdown("i2c timeout");
+}
+
 void i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
     while(HAL_I2C_Master_Transmit(&hi2c1, config.addr, write,
             (uint16_t)write_len, (uint32_t)1000)!= HAL_OK) {
          if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_AF) {
              shutdown("Buffer error");
          }
+         i2c_to_check(timeout);
      }
 }
 
 void i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
               , uint8_t read_len, uint8_t *read)
 {
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
     i2c_write(config, reg_len, reg);
     while(HAL_I2C_Master_Receive(&hi2c1, config.addr, read,
             (uint16_t)read_len, (uint32_t)1000)!= HAL_OK) {
          if (HAL_I2C_GetError(&hi2c1) != HAL_I2C_ERROR_AF) {
              shutdown("Buffer error");
          }
+         i2c_to_check(timeout);
      }
 }
 
