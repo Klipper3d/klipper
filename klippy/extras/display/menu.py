@@ -808,6 +808,34 @@ class MenuVSDCard(MenuList):
     def _populate_files(self):
         sdcard = self._manager.objs.get('virtual_sdcard')
         if sdcard is not None:
+            root_directory = sdcard.sdcard_dirname
+            for root, dirs, files in os.walk(root_directory):
+                parents_dirs = os.path.relpath(root, root_directory)
+                parent_menu_container = self
+                for parent in parents_dirs.split(os.sep):
+                    parent_menu_container = self._manager.lookup_menuitem(parent)
+                for dname in dirs:
+                    parent_menu_container.append_item(MenuContainer(self._manager, {
+                        'name': '%s' % str(dname),
+                        'curson': '>',
+                        'scroll': True,
+                        # mind the cursor size in width
+                        'width': (self._manager.cols-1)
+                    }))
+                for fname in files:
+                    gcode = [
+                        'M23 /%s' % str(fname)
+                    ]
+                    parent_menu_container.append_item(MenuCommand(self._manager, {
+                        'name': '%s' % str(fname),
+                        'cursor': '+',
+                        'gcode': "\n".join(gcode),
+                        'scroll': True,
+                        # mind the cursor size in width
+                        'width': (self._manager.cols-1)
+                    }))
+
+
             files = sdcard.get_file_list()
             for fname, fsize in files:
                 gcode = [
