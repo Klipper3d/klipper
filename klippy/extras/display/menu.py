@@ -811,13 +811,15 @@ class MenuVSDCard(MenuList):
             root_directory = sdcard.sdcard_dirname
             for root, dirs, files in os.walk(root_directory):
                 parents_dirs = os.path.relpath(root, root_directory)
-                parent_menu_container = self
                 for parent in parents_dirs.split(os.sep):
-                    parent_menu_container = self._manager.lookup_menuitem(parent)
+                    if parent == ".":
+                        parent_menu_container = self
+                    else:
+                        parent_menu_container = self._manager.lookup_menuitem(parent)
                 for dname in dirs:
                     parent_menu_container.append_item(MenuContainer(self._manager, {
                         'name': '%s' % str(dname),
-                        'curson': '>',
+                        'cursor': '>',
                         'scroll': True,
                         # mind the cursor size in width
                         'width': (self._manager.cols-1)
