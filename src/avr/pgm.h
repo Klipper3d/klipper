@@ -5,8 +5,6 @@
 
 #include <avr/pgmspace.h>
 
-#define NEED_PROGMEM 1
-
 #define READP(VAR) ({                                                   \
     _Pragma("GCC diagnostic push");                                     \
     _Pragma("GCC diagnostic ignored \"-Wint-to-pointer-cast\"");        \

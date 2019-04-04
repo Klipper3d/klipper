@@ -30,8 +30,6 @@ choice
         bool "atmega1284p"
     config MACH_atmega644p
         bool "atmega644p"
-    config MACH_atmega328p
-        bool "atmega328p"
     config MACH_atmega328
         bool "atmega328"
     config MACH_atmega168
@@ -42,7 +40,6 @@ config MCU
     string
     default "atmega168" if MACH_atmega168
     default "atmega328" if MACH_atmega328
-    default "atmega328p" if MACH_atmega328p
     default "atmega1284p" if MACH_atmega1284p
     default "atmega644p" if MACH_atmega644p
     default "at90usb1286" if MACH_at90usb1286
@@ -61,12 +58,22 @@ choice
     prompt "Processor speed"
     config AVR_FREQ_20000000
         bool "20Mhz"
-        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
+        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
     config AVR_FREQ_16000000
         bool "16Mhz"
     config AVR_FREQ_8000000
         bool "8Mhz"
 endchoice
+
+if MACH_atmega1284p
+    choice
+        prompt "Serial Port"
+        config AVR_SERIAL_UART0
+            bool "UART0"
+        config AVR_SERIAL_UART1
+            bool "UART1"
+    endchoice
+endif
 
 config CLOCK_FREQ
     int
@@ -91,7 +98,8 @@ config AVR_CLKPR
 
 config AVR_STACK_SIZE
     int
-    default 256
+    default 256 if MACH_atmega2560
+    default 128
 
 config AVR_WATCHDOG
     bool
@@ -104,21 +112,6 @@ config AVR_SERIAL
     depends on !AVR_USBSERIAL
     bool
     default y
-choice
-    depends on AVR_SERIAL
-    prompt "Serial Port" if MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p
-    help
-        Select the serial device to use on the AVR chip. This is
-        almost always UART0.
-    config AVR_SERIAL_UART0
-        bool "UART0"
-    config AVR_SERIAL_UART1
-        bool "UART1"
-    config AVR_SERIAL_UART2
-        bool "UART2" if MACH_atmega2560 || MACH_atmega1280
-    config AVR_SERIAL_UART3
-        bool "UART3" if MACH_atmega2560 || MACH_atmega1280
-endchoice
 config SERIAL_BAUD
     depends on AVR_SERIAL
     int "Baud rate for serial port"
@@ -130,13 +123,11 @@ config SERIAL_BAUD_U2X
 
 config SERIAL_PORT
     int
-    default 3 if AVR_SERIAL_UART3
-    default 2 if AVR_SERIAL_UART2
     default 1 if MACH_at90usb1286 || MACH_at90usb646 || AVR_SERIAL_UART1
     default 0
 
 config SIMULAVR
-    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
+    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega644p || MACH_atmega1284p
     bool "Compile for simulavr software emulation"
     default n
     help

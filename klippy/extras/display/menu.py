@@ -5,7 +5,9 @@
 # Copyright (C) 2018  Janar Sööt <janar.soot@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, sys, ast, re
+import os, ConfigParser, logging
+import sys, ast, re
+import klippy
 
 
 class error(Exception):
@@ -493,7 +495,6 @@ class MenuInput(MenuCommand):
         self._input_min = config.getfloat('input_min', sys.float_info.min)
         self._input_max = config.getfloat('input_max', sys.float_info.max)
         self._input_step = config.getfloat('input_step', above=0.)
-        self._input_step2 = config.getfloat('input_step2', 0, minval=0.)
 
     def is_scrollable(self):
         return False
@@ -528,34 +529,30 @@ class MenuInput(MenuCommand):
     def reset_value(self):
         self._input_value = None
 
-    def inc_value(self, fast_rate=False):
+    def inc_value(self):
         last_value = self._input_value
-        input_step = (self._input_step2 if fast_rate and self._input_step2 > 0
-                      else self._input_step)
         if self._input_value is None:
             return
 
         if(self._reverse is True):
-            self._input_value -= abs(input_step)
+            self._input_value -= abs(self._input_step)
         else:
-            self._input_value += abs(input_step)
+            self._input_value += abs(self._input_step)
         self._input_value = min(self._input_max, max(
             self._input_min, self._input_value))
 
         if self._realtime and last_value != self._input_value:
             self._onchange()
 
-    def dec_value(self, fast_rate=False):
+    def dec_value(self):
         last_value = self._input_value
-        input_step = (self._input_step2 if fast_rate and self._input_step2 > 0
-                      else self._input_step)
         if self._input_value is None:
             return
 
         if(self._reverse is True):
-            self._input_value += abs(input_step)
+            self._input_value += abs(self._input_step)
         else:
-            self._input_value -= abs(input_step)
+            self._input_value -= abs(self._input_step)
         self._input_value = min(self._input_max, max(
             self._input_min, self._input_value))
 
@@ -610,14 +607,14 @@ class MenuGroup(MenuContainer):
             s += self._render_item(item, (i == self.selected), True)
         return s
 
-    def _call_selected(self, method=None, *args):
+    def _call_selected(self, method=None):
         res = None
         if self.selected is not None:
             try:
                 if method is None:
                     res = self[self.selected]
                 else:
-                    res = getattr(self[self.selected], method)(*args)
+                    res = getattr(self[self.selected], method)()
             except Exception:
                 logging.exception("Call selected error")
         return res
@@ -625,11 +622,11 @@ class MenuGroup(MenuContainer):
     def is_editing(self):
         return self._call_selected('is_editing')
 
-    def inc_value(self, fast_rate=False):
-        self._call_selected('inc_value', fast_rate)
+    def inc_value(self):
+        self._call_selected('inc_value')
 
-    def dec_value(self, fast_rate=False):
-        self._call_selected('dec_value', fast_rate)
+    def dec_value(self):
+        self._call_selected('dec_value')
 
     def selected_item(self):
         return self._call_selected()
@@ -780,10 +777,7 @@ class MenuVSDCard(MenuList):
                 self.append_item(MenuCommand(self._manager, {
                     'name': '%s' % str(fname),
                     'cursor': '+',
-                    'gcode': "\n".join(gcode),
-                    'scroll': True,
-                    # mind the cursor size in width
-                    'width': (self._manager.cols-1)
+                    'gcode': "\n".join(gcode)
                 }))
 
     def populate_items(self):
@@ -924,11 +918,7 @@ class MenuManager:
         self.up_pin = config.get('up_pin', None)
         self.down_pin = config.get('down_pin', None)
         self.kill_pin = config.get('kill_pin', None)
-        self._last_press = 0
-        self._encoder_fast_rate = config.getfloat(
-            'encoder_fast_rate', .03, above=0.)
-        self._last_encoder_cw_eventtime = 0
-        self._last_encoder_ccw_eventtime = 0
+        self._last_click_press = 0
         # printer objects
         self.buttons = self.printer.try_load_module(config, "buttons")
         # register itself for a printer_state callback
@@ -964,9 +954,10 @@ class MenuManager:
                                         desc=self.cmd_DO_help)
 
         # Parse local config file in same directory as current module
-        pconfig = self.printer.lookup_object('configfile')
+        fileconfig = ConfigParser.RawConfigParser()
         localname = os.path.join(os.path.dirname(__file__), 'menu.cfg')
-        localconfig = pconfig.read_config(localname)
+        fileconfig.read(localname)
+        localconfig = klippy.ConfigWrapper(self.printer, fileconfig, {}, None)
 
         # Load items from local config
         self.load_menuitems(localconfig)
@@ -1224,14 +1215,14 @@ class MenuManager:
         else:
             return 0
 
-    def up(self, fast_rate=False):
+    def up(self):
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container[self.selected]
             if (isinstance(current, (MenuInput, MenuGroup))
                     and current.is_editing()):
-                current.dec_value(fast_rate)
+                current.dec_value()
             elif (isinstance(current, MenuGroup)
                     and current.find_prev_item() is not None):
                 pass
@@ -1250,14 +1241,14 @@ class MenuManager:
                 if isinstance(container[self.selected], MenuGroup):
                     container[self.selected].find_prev_item()
 
-    def down(self, fast_rate=False):
+    def down(self):
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container[self.selected]
             if (isinstance(current, (MenuInput, MenuGroup))
                     and current.is_editing()):
-                current.inc_value(fast_rate)
+                current.inc_value()
             elif (isinstance(current, MenuGroup)
                     and current.find_next_item() is not None):
                 pass
@@ -1356,7 +1347,6 @@ class MenuManager:
             reactor = self.printer.get_reactor()
             reactor.register_callback(self.dispatch_gcode)
         self.gcode_queue.append(script)
-
     def dispatch_gcode(self, eventtime):
         while self.gcode_queue:
             script = self.gcode_queue[0]
@@ -1406,16 +1396,10 @@ class MenuManager:
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_cw_eventtime)
-                     <= self._encoder_fast_rate)
-        self._last_encoder_cw_eventtime = eventtime
-        self.up(fast_rate)
+        self.up()
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_ccw_eventtime)
-                     <= self._encoder_fast_rate)
-        self._last_encoder_ccw_eventtime = eventtime
-        self.down(fast_rate)
+        self.down()
 
     def click_callback(self, eventtime, state):
         if self.click_pin:

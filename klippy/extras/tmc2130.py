@@ -137,10 +137,6 @@ class TMC2130:
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
         self.spi_send_cmd.send([self.oid, data])
-    def get_microsteps(self):
-        return 256 >> self.mres
-    def get_phase(self):
-        return (self.get_register("MSCNT") & 0x3ff) >> self.mres
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()

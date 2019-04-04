@@ -192,7 +192,7 @@ class TMC2208:
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
     def printer_state(self, state):
-        if state == 'connect':
+        if state == 'ready':
             for reg_name, val in self.init_regs.items():
                 self.set_register(reg_name, val)
     def get_register(self, reg_name):
@@ -219,20 +219,13 @@ class TMC2208:
                 return
         raise self.printer.config_error(
             "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
-    def get_microsteps(self):
-        return 256 >> self.mres
-    def get_phase(self):
-        return (self.get_register("MSCNT") & 0x3ff) >> self.mres
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, params):
         self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         logging.info("DUMP_TMC %s", self.name)
         for reg_name in ReadRegisters:
-            try:
-                val = self.get_register(reg_name)
-            except self.printer.config_error as e:
-                raise gcode.error(str(e))
+            val = self.get_register(reg_name)
             msg = "%-15s %08x" % (reg_name + ":", val)
             logging.info(msg)
             gcode.respond_info(msg)
