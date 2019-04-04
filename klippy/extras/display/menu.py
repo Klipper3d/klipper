@@ -805,37 +805,31 @@ class MenuVSDCard(MenuList):
     def __init__(self, manager, config, namespace=''):
         super(MenuVSDCard, self).__init__(manager, config, namespace)
 
-    def _populate_files(self):
-        sdcard = self._manager.objs.get('virtual_sdcard')
-        if sdcard is not None:
-            root_directory = sdcard.sdcard_dirname
-            for root, dirs, files in os.walk(root_directory):
-                parents_dirs = os.path.relpath(root, root_directory)
-                for parent in parents_dirs.split(os.sep):
-                    if parent == ".":
-                        parent_menu_container = self
-                    else:
-                        parent_menu_container = self._manager.lookup_menuitem(parent)
-                for dname in dirs:
-                    parent_menu_container.append_item(MenuContainer(self._manager, {
-                        'name': '%s' % str(dname),
-                        'cursor': '>',
-                        'scroll': True,
-                        # mind the cursor size in width
-                        'width': (self._manager.cols-1)
-                    }))
-                for fname in files:
-                    gcode = [
-                        'M23 /%s' % str(fname)
-                    ]
-                    parent_menu_container.append_item(MenuCommand(self._manager, {
-                        'name': '%s' % str(fname),
-                        'cursor': '+',
-                        'gcode': "\n".join(gcode),
-                        'scroll': True,
-                        # mind the cursor size in width
-                        'width': (self._manager.cols-1)
-                    }))
+    def _populate_files(self, root_directory = self._manager.objs.get('virtual_sdcard').sdcard_dirname, parent_menu_container = this):
+    for item in os.listdir(root_directory):
+        item_path = os.path.join(root_directory, item)
+        if os.path.isdir(item_path):
+            folder = MenuContainer(self._manager, {
+                'name': '%s' % str(item),
+                'cursor': '>',
+                'scroll': True,
+                # mind the cursor size in width
+                'width': (self._manager.cols-1)
+            })
+            parent_menu_container.append_item(folder)
+            self._populate_files(item_path, folder)
+        if os.path.isfile(item_path):
+            gcode = [
+                'M23 /%s' % str(item_path)
+            ]
+            parent_menu_container.append_item(MenuCommand(self._manager, {
+                'name': '%s' % str(item),
+                'cursor': '+',
+                'gcode': "\n".join(gcode),
+                'scroll': True,
+                # mind the cursor size in width
+                'width': (self._manager.cols-1)
+            }))
 
     def populate_items(self):
         super(MenuVSDCard, self).populate_items()
