@@ -25,6 +25,7 @@ and y-axis, and finally move to the center and home the z-axis. Like this:
 ```
     [homing_override]
     gcode:
+        G90  ; Force the gcode parser into absolute position mode
         G1 Z10 ; Move up 10mm
         G28 X Y
         G1 X166 Y120 F6000 ; Change the X and Y coordinates to the center of your print bed
