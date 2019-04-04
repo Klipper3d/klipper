@@ -147,10 +147,10 @@ class Printer:
             logging.exception("MCU error during connect")
             self._set_state("%s%s" % (str(e), message_mcu_connect_error))
             return
-        except:
+        except Exception as e:
             logging.exception("Unhandled exception during connect")
-            self._set_state("Internal error during connect.%s" % (
-                message_restart,))
+            self._set_state("Internal error during connect: %s\n%s" % (
+                str(e), message_restart,))
             return
         try:
             self._set_state(message_ready)
@@ -158,9 +158,10 @@ class Printer:
                 if self.state_message is not message_ready:
                     return
                 cb()
-        except:
+        except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback")
+            self.invoke_shutdown("Internal error during ready callback: %s" % (
+                str(e),))
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
