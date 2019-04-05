@@ -1,28 +1,28 @@
 Connecting BL-Touch
 ===================
 
-A **warning** before you start: Avoid touching the BLTouch pin with
+A **warning** before you start: Avoid touching the BL-Touch pin with
 your bare fingers, since it is quite sensitive to finger grease. And
 if you do touch it, be very gentle, in order to not bend or push
 anything.
 
-Once you've hooked up the BL-Touch servo connector to a `control_pin`
-according to the BL-Touch documentation or of your MCU. Using the
-original wiring, the yellow wire from the triple is the `control_pin`,
-the white wire from the pair is the `sensor_pin`. You need to
-configure these pins according to your wiring with Klipper:
+Hook up the BL-Touch "servo" connector to a `control_pin` according to
+the BL-Touch documentation or your MCU documentation. Using the
+original wiring, the yellow wire from the triple is the `control_pin`
+and the white wire from the pair is the `sensor_pin`. You need to
+configure these pins according to your wiring. For example:
 
 ```
 [bltouch]
 sensor_pin: P1.24
-#   Pin connected to the BL-Touch sensor pin. This parameter must be
-#   provided.
 control_pin: P1.26
 ```
 
-You also most likely need to configure a homing override to first
-raise the z-axis, then home the x- and y-axis, and finally move to the
-center and home the z-axis. Like this:
+If the BL-Touch will be used to home the Z axis then set `endstop_pin:
+probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
+`[homing_override]` config section to raise the z-axis, home the
+x/y-axis, move to the center of the bed, and home the z-axis. For
+example:
 
 ```
 [homing_override]
@@ -35,17 +35,17 @@ gcode:
 set_position_z: 0.0
 ```
 
-It's important that the upwards movement is high enough, so that the
-probe or the nozzle don't hit any binder clips, even if the probe pin
-happens to be in it's lowest state.
+It's important that the initial Z upwards movement in the
+homing_override is high enough that the probe doesn't hit anything
+even if the probe pin happens to be in its lowest state.
 
 Initial tests
 =============
 
-Before moving on, verify that the BLTouch is mounted at the correct
+Before moving on, verify that the BL-Touch is mounted at the correct
 height, the pin should be roughly 2 mm above the nozzle when retracted
 
-When you turn on the printer, the BLTouch probe should perform a
+When you turn on the printer, the BL-Touch probe should perform a
 self-test and move the pin up and down a couple of times. Once the
 self-test is completed, the pin should be retracted and the red LED on
 the probe should be lit. If there are any errors, for example the
@@ -57,8 +57,8 @@ responds to commands from the firmware. First run `BLTOUCH_DEBUG
 COMMAND=pin_down` in your printer terminal. Verify that the pin moves
 down, and that the red LED on the probe turns off. If not, check your
 wiring and configuration again. Next issue a `BLTOUCH_DEBUG
-COMMAND=pin_up` and verify that the pin moves up, and that the red
-light turns on again. If it's flashing then there's some problem.
+COMMAND=pin_up`, verify that the pin moves up, and that the red light
+turns on again. If it's flashing then there's some problem.
 
 Now, it's time to test homing with a twist. Instead of letting the
 probe pin touch the print bed, let it touch the nail on your
@@ -76,7 +76,7 @@ Calibrating the BL-Touch
 
 ### X/Y Offset
 
-In order to make klipper work properly you need to tell it in which
+In order to make Klipper work properly you need to tell it in which
 relation to the nozzle the probe is exactly located. Lets start with
 the `x_offset` and the `y_offset`
 
@@ -122,7 +122,7 @@ before. If not, then repeat step 2. and 3. until you are satisfied.
 5. At this point it's a good idea to verify that the offset is close
 to 1mm, if not, then you probably want to move the probe up or down to
 fix this. You want it to trigger well before the nozzle hits the bed,
-so that possible stuck filament or a warped bed don't affect any
+so that possible stuck filament or a warped bed doesn't affect any
 probing action. But at the same time, you want that the retracted
 position is as far above the nozzle as possible, to avoid damage by
 touching printed parts.
@@ -163,13 +163,13 @@ This may happen if its calibration is interrupted by the probe being
 blocked from being extracted.
 
 However, the BL-Touch may also not be able to calibrate itself
-anymore. This happenes if the screw on its top is in the wrong
-position, or the magnetic core inside the probe pin has moved.  If its
-moved that way up that it sticks to the screw, it may not be able to
-lower its pin anymore.  With this behaviour you need to open the
-screw, pick i.e. a ball-pen and push it gently back in place.
-Re-Insert the pin into the BL-Touch so that it falls into extracted
+anymore. This happens if the screw on its top is in the wrong position
+or the magnetic core inside the probe pin has moved. If it has moved
+up so that it sticks to the screw, it may not be able to lower its pin
+anymore. With this behavior you need to open the screw and use a
+ball-point pen to push it gently back into place. Re-Insert the pin
+into the BL-Touch so that it falls into the extracted
 position. Carefully readjust the headless screw into place. You need
-to find the right position so it is able to lower and raise the pin,
+to find the right position so it is able to lower and raise the pin
 and the red light turns on and of. Use the `reset`, `pin_up` and
 `pin_down` commands to achieve this.
