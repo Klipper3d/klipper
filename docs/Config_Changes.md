@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20190404: The Python host software packages were updated. Users will
+need to rerun the ~/klipper/scripts/install-octopi.sh script (or
+otherwise upgrade the python dependencies if not using a standard
+OctoPi installation).
+
 20190404: The i2c_bus and spi_bus parameters (in various config
 sections) now take a bus name instead of a number.
 
