@@ -71,85 +71,20 @@ if it doesn't stop when you touch the pin.
 If that was successful, do another `G28` but this time let it touch
 the bed as it should.
 
-Calibrating the BL-Touch
-========================
+Calibrating the BL-Touch offsets
+================================
 
-### X/Y Offset
+Follow the directions in the [Probe Calibrate](Probe_Calibrate.md)
+guide to set the x_offset, y_offset, and z_offset config parameters.
 
-In order to make Klipper work properly you need to tell it in which
-relation to the nozzle the probe is exactly located. Lets start with
-the `x_offset` and the `y_offset`
-
-In order to find the proper vertical offset of the probe you need to
-know a certain point of your bed. X/Y = 0 may be a good point for
-this, any other will do as long as you know it.  Find it by lowering
-the nozzle next to it using `g0 z0.5`. Create a removable mark on your
-bed by i.e. using a non permanent marker.
-
-Now move the tip of the BL-Touch over that point by jogging there with
-the controls in the `control` tab of OctoPrint. Once the BL-Touch is
-roughly over the point acquire it using the `GET_POSITION` command.
-The difference to your marked point is your `x_offset` and `y_offset`
-to configure in the `printer.cfg`.
-
-
-### Z Offset
-
-1. We start by changing the `z_offset` in the `bltouch` section of the
-configuration to 10. This setting is very wrong, but it will make it
-possible to move down to the right height using the menus. Run
-`RESTART` after changing it to reload the configuration.
-
-2. Now run `G28`, to home the printer. Take a note of the point where
-the pin hits the bed and use the menu to move the nozzle to that
-point. Now take a *folded* paper and put it under the nozzle.  Move
-the nozzle down using the menu, in 0.1mm steps, until it grabs the
-paper. It doesn't matter how much it grabs, you are searching for the
-higest position that grabs the paper. The nozzle should now be
-between 0.1mm and 0.2mm above the printbed. If you wonder why we used
-a folded paper, the answer is that the granularity of the movement is
-only 0.1mm, or the same as a normal paper thickness, that means that
-you could easily move too far and hit the bed.
-
-3. Now update the `z_offset` to reflect this, by substracting the
-current offset (10) by the reading on the printer display. So if it
-says 8.2, then `10-8.2` = 1.8
-
-4. Restart the printer, issue a `G28`, move to the pin location, then
-`G1 Z0`, and verify that it's still grabbing the paper as it was
-before. If not, then repeat step 2. and 3. until you are satisfied.
-
-5. At this point it's a good idea to verify that the offset is close
-to 1mm, if not, then you probably want to move the probe up or down to
-fix this. You want it to trigger well before the nozzle hits the bed,
-so that possible stuck filament or a warped bed doesn't affect any
-probing action. But at the same time, you want that the retracted
-position is as far above the nozzle as possible, to avoid damage by
-touching printed parts.
-
-6. Now it's time to fine tune with a real print. First make sure that
-your flow rate and steps are calibrated properly, so that wrongly
-configured flow rates don't affect the calibration. Then slice a one
-layer thick object, located close to where you are homing. I recommend
-a simple 50x50 mm square.
-
-7. While the object is printing, use the tune menu to adjust the
-"Offset Z", until it looks good.  With some practice, it's possible to
-find the exact point where it goes from underextrusion to
-overextrusion, but some filaments are harder to see than others. Also
-notice that the tune command does not have any effect immediately, it
-takes a couple of movements until the printer uses the new value. It
-might also be hard to see exactly what's happening while it's
-printing, so you can adjust for example every cm, and then find the
-best setting when the print is done.
-
-8. Update the `z_offset` configuration again by using subtraction. So
-if the display shows that you tuned the z-offset to -0.100, then it's
-calculated like this `1.8 -(-0.100) = 1.9`, notice the double minus
-sign.
-
-9. Issue a `RESTART`, and test printing the same thing, this time
-without adjusting anything.  Perform steps 7-9 until you are happy.
+It's a good idea to verify that the Z offset is close to 1mm. If not,
+then you probably want to move the probe up or down to fix this. You
+want it to trigger well before the nozzle hits the bed, so that
+possible stuck filament or a warped bed doesn't affect any probing
+action. But at the same time, you want the retracted position to be as
+far above the nozzle as possible to avoid it touching printed parts.
+If an adjustment is made to the probe position, then rerun the probe
+calibration steps.
 
 BL-Touch gone bad
 =================
