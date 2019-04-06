@@ -47,7 +47,7 @@ class QuadGantryLevel:
         # from the perspective of the gantry
         z_positions = [self.horizontal_move_z - p[2] for p in positions]
         points_message = "Gantry-relative probe points:\n%s\n" % (
-            "\n".join(["z%s = %.6f" % (z_id, z_positions[z_id])
+            " ".join(["%s: %.6f" % (z_id, z_positions[z_id])
                 for z_id in range(len(z_positions))]))
         self.gcode.respond_info(points_message)
         p1 = [positions[0][0] + offsets[0],z_positions[0]]
@@ -73,9 +73,11 @@ class QuadGantryLevel:
         z_height[1] = self.plot(af,self.gantry_corners[1][1])
         z_height[2] = self.plot(bf,self.gantry_corners[1][1])
         z_height[3] = self.plot(bf,self.gantry_corners[0][1])
-        self.gcode.respond_info("Actuator Positions:\n z1: %0.6f\n z2: %0.6f\
-            \n z3: %0.6f\n z4: %0.6f\n" % (
-                z_height[0],z_height[1],z_height[2],z_height[3]))
+
+        ainfo = zip(["z","z1","z2","z3"], z_height[0:4])
+        apos = " ".join(["%s: %06f" % (x) for x in ainfo])
+        self.gcode.respond_info("Actuator Positions:\n" + apos)
+
         z_ave = sum(z_height) / len(z_height)
         self.gcode.respond_info("Average: %0.6f" % z_ave)
         z_adjust = []
