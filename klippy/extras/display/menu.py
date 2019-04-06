@@ -1000,7 +1000,21 @@ class MenuManager:
         self.up_pin = config.get('up_pin', None)
         self.down_pin = config.get('down_pin', None)
         self.kill_pin = config.get('kill_pin', None)
+        # analog button ranges
+        self.analog_range_click_pin = config.get(
+            'analog_range_click_pin', None)
+        self.analog_range_back_pin = config.get(
+            'analog_range_back_pin', None)
+        self.analog_range_up_pin = config.get(
+            'analog_range_up_pin', None)
+        self.analog_range_down_pin = config.get(
+            'analog_range_down_pin', None)
+        self.analog_range_kill_pin = config.get(
+            'analog_range_kill_pin', None)
         self._last_click_press = 0
+        self.analog_pullup = config.getfloat(
+            'analog_pullup_resistor', 4700., above=0.)
+        self.analog_pin_debug = config.getboolean('analog_pin_debug', False)
         self._encoder_fast_rate = config.getfloat(
             'encoder_fast_rate', .03, above=0.)
         self._last_encoder_cw_eventtime = 0
@@ -1012,6 +1026,7 @@ class MenuManager:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # register buttons & encoder
         if self.buttons:
+            # digital buttons
             if self.encoder_pins:
                 try:
                     pin1, pin2 = self.encoder_pins.split(',')
@@ -1021,20 +1036,75 @@ class MenuManager:
                     pin1.strip(), pin2.strip(),
                     self.encoder_cw_callback, self.encoder_ccw_callback)
             if self.click_pin:
-                self.buttons.register_buttons(
-                    [self.click_pin], self.click_callback)
+                if self.analog_range_click_pin is not None:
+                    try:
+                        p_min, p_max = map(
+                            float, self.analog_range_click_pin.split(','))
+                    except Exception:
+                        raise config.error(
+                            "Unable to parse analog_range_click_pin")
+                    self.buttons.register_adc_button(
+                        self.click_pin, p_min, p_max, self.analog_pullup,
+                        self.click_callback, self.analog_pin_debug)
+                else:
+                    self.buttons.register_buttons(
+                        [self.click_pin], self.click_callback)
             if self.back_pin:
-                self.buttons.register_button_push(
-                    self.back_pin, self.back_callback)
+                if self.analog_range_back_pin is not None:
+                    try:
+                        p_min, p_max = map(
+                            float, self.analog_range_back_pin.split(','))
+                    except Exception:
+                        raise config.error(
+                            "Unable to parse analog_range_back_pin")
+                    self.buttons.register_adc_button_push(
+                        self.back_pin, p_min, p_max, self.analog_pullup,
+                        self.back_callback, self.analog_pin_debug)
+                else:
+                    self.buttons.register_button_push(
+                        self.back_pin, self.back_callback)
             if self.up_pin:
-                self.buttons.register_button_push(
-                    self.up_pin, self.up_callback)
+                if self.analog_range_up_pin is not None:
+                    try:
+                        p_min, p_max = map(
+                            float, self.analog_range_up_pin.split(','))
+                    except Exception:
+                        raise config.error(
+                            "Unable to parse analog_range_up_pin")
+                    self.buttons.register_adc_button_push(
+                        self.up_pin, p_min, p_max, self.analog_pullup,
+                        self.up_callback, self.analog_pin_debug)
+                else:
+                    self.buttons.register_button_push(
+                        self.up_pin, self.up_callback)
             if self.down_pin:
-                self.buttons.register_button_push(
-                    self.down_pin, self.down_callback)
+                if self.analog_range_down_pin is not None:
+                    try:
+                        p_min, p_max = map(
+                            float, self.analog_range_down_pin.split(','))
+                    except Exception:
+                        raise config.error(
+                            "Unable to parse analog_range_down_pin")
+                    self.buttons.register_adc_button_push(
+                        self.down_pin, p_min, p_max, self.analog_pullup,
+                        self.down_callback, self.analog_pin_debug)
+                else:
+                    self.buttons.register_button_push(
+                        self.down_pin, self.down_callback)
             if self.kill_pin:
-                self.buttons.register_button_push(
-                    self.kill_pin, self.kill_callback)
+                if self.analog_range_kill_pin is not None:
+                    try:
+                        p_min, p_max = map(
+                            float, self.analog_range_kill_pin.split(','))
+                    except Exception:
+                        raise config.error(
+                            "Unable to parse analog_range_kill_pin")
+                    self.buttons.register_adc_button_push(
+                        self.kill_pin, p_min, p_max, self.analog_pullup,
+                        self.kill_callback, self.analog_pin_debug)
+                else:
+                    self.buttons.register_button_push(
+                        self.kill_pin, self.kill_callback)
 
         # Add MENU commands
         self.gcode.register_mux_command("MENU", "DO", 'dump', self.cmd_DO_DUMP,
