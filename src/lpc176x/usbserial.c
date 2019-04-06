@@ -277,6 +277,8 @@ usbserial_init(void)
     gpio_peripheral(GPIO(0, 30), 1, 0);
     gpio_peripheral(GPIO(0, 29), 1, 0);
     gpio_peripheral(GPIO(2, 9), 1, 0);
+    // enforce a minimum time bus is disconnected before connecting
+    udelay(5000);
     // setup endpoints
     realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
     realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);
