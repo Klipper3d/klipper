@@ -10,6 +10,8 @@ class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.default_retries = config.getint("retries", 0)
+        self.default_retry_tolerance = config.getfloat("retry_tolerance", 0)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
@@ -41,6 +43,13 @@ class QuadGantryLevel:
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, params):
+        self.retries = self.gcode.get_int(
+            'RETRIES', params, default=self.default_retries,
+            minval=1, maxval=30)
+        self.retry_tolerance = self.gcode.get_float(
+            'RETRY_TOLERANCE', params, default=self.default_retry_tolerance,
+            minval=0, maxval=1.0)
+        self.params = params
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         # Mirror our perspective so the adjustments make sense
@@ -88,6 +97,16 @@ class QuadGantryLevel:
             for s in self.z_steppers:
                 s.set_ignore_move(False)
             raise
+
+        delta = max(z_positions) - min(z_positions)
+        if self.retries > 0 and delta > self.retry_tolerance:
+            self.gcode.respond_info(
+                "retries %d delta: %0.6f retry_tolerance: %0.6f" %
+                (self.retries, delta, self.retry_tolerance))
+            self.retries -= 1
+            self.probe_helper.start_probe(self.params)
+
+
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:
             # Straight line
