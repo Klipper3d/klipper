@@ -50,6 +50,7 @@ class QuadGantryLevel:
             'RETRY_TOLERANCE', params, default=self.default_retry_tolerance,
             minval=0, maxval=1.0)
         self.params = params
+        self.previous_delta = None
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         # Mirror our perspective so the adjustments make sense
@@ -99,6 +100,15 @@ class QuadGantryLevel:
             raise
 
         delta = max(z_positions) - min(z_positions)
+
+        if self.previous_delta and delta > self.previous_delta:
+            self.gcode.respond_error(
+                  "Probe points delta of %0.6f is worse than previous %0.6f " %
+                  (delta, self.previous_delta) +
+                  "Possibly Z motor numbering is wrong")
+
+        self.previous_delta = delta
+
         if self.retries > 0 and delta > self.retry_tolerance:
             self.gcode.respond_info(
                 "retries %d delta: %0.6f retry_tolerance: %0.6f" %
