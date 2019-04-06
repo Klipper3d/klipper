@@ -9,6 +9,7 @@ import probe
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.max_adjust = config.getfloat("max_adjust", 4, above=0)
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -83,6 +84,15 @@ class QuadGantryLevel:
         z_adjust = []
         for z in z_height:
             z_adjust.append(z_ave - z)
+
+        adjust_max = max(z_adjust)
+        if adjust_max > self.max_adjust:
+            self.gcode.respond_error(
+                "Aborting quad_gantry_level " +
+                "required adjustment %0.6f " % ( adjust_max ) +
+                "is greater than max_adjust %0.6f" % (self.max_adjust))
+            return
+
         try:
             self.adjust_steppers(z_adjust)
         except:
