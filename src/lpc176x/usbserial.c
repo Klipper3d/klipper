@@ -252,9 +252,7 @@ usb_request_bootloader(void)
     // Disable USB and pause for 5ms so host recognizes a disconnect
     irq_disable();
     sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 0);
-    uint32_t end = timer_read_time() + timer_from_us(5000);
-    while (timer_is_before(timer_read_time(), end))
-        ;
+    udelay(5000);
     // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
     // watchdog timeout flag is set.
     LPC_WDT->WDMOD = 0x07;
