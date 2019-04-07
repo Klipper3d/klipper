@@ -47,14 +47,11 @@ class VirtualSD:
     def get_file_list(self):
         dname = self.sdcard_dirname
         try:
-            raw_dir_list = os.listdir(self.sdcard_dirname)
-            filtered = filter(
-                lambda fname: not fname.startswith('.')
-                              and os.path.isfile(os.path.join(dname, fname)),
-                raw_dir_list)
-            sorted_files = sorted(filtered)
+            filenames = os.listdir(self.sdcard_dirname)
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                    for fname in sorted_files]
+                    for fname in sorted(filenames, key=str.lower)
+                    if not fname.startswith('.')
+                    and os.path.isfile((os.path.join(dname, fname)))]
         except:
             logging.exception("virtual_sdcard get_file_list")
             raise self.gcode.error("Unable to get file list")
