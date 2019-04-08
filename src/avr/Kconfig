@@ -111,7 +111,7 @@ config SERIAL
     default y
 choice
     depends on SERIAL
-    prompt "Serial Port" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280 || MACH_atmega1284p)
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280 || MACH_atmega644p || MACH_atmega1284p)
     help
         Select the serial device to use on the AVR chip. This is
         almost always UART0.

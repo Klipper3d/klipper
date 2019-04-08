@@ -3,6 +3,10 @@
 // Local definitions for micro-controllers running on linux
 
 #include <time.h> // struct timespec
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
+
+#define NSECS 1000000000
+#define NSECS_PER_TICK (NSECS / CONFIG_CLOCK_FREQ)
 
 // console.c
 void report_errno(char *where, int rc);

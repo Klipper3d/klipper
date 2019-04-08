@@ -539,7 +539,9 @@ class MCU:
             self._oid_count,))
         # Resolve pin names
         mcu_type = self._serial.msgparser.get_constant('MCU')
-        pin_resolver = pins.PinResolver(mcu_type)
+        ppins = self._printer.lookup_object('pins')
+        reserved_pins = ppins.get_reserved_pins(self._name)
+        pin_resolver = pins.PinResolver(mcu_type, reserved_pins)
         if self._pin_map is not None:
             pin_resolver.update_aliases(self._pin_map)
         for i, cmd in enumerate(self._config_cmds):
@@ -615,8 +617,13 @@ class MCU:
                 name, len(msgparser.messages_by_id),
                 msgparser.version, msgparser.build_versions),
             "MCU '%s' config: %s" % (name, " ".join(
-                ["%s=%s" % (k, v) for k, v in msgparser.config.items()]))]
+                ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
+        ppins = self._printer.lookup_object('pins')
+        for name, value in self.get_constants().items():
+            if name.startswith("RESERVE_PINS_"):
+                for pin in value.split(','):
+                    ppins.reserve_pin(name, pin, name[14:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
@@ -663,6 +670,10 @@ class MCU:
     def get_max_stepper_error(self):
         return self._max_stepper_error
     # Wrapper functions
+    def get_printer(self):
+        return self._printer
+    def get_name(self):
+        return self._name
     def register_msg(self, cb, msg, oid=None):
         self._serial.register_callback(cb, msg, oid)
     def alloc_command_queue(self):
@@ -676,6 +687,10 @@ class MCU:
             return None
     def lookup_command_id(self, msgformat):
         return self._serial.msgparser.lookup_command(msgformat).msgid
+    def get_enumerations(self):
+        return self._serial.msgparser.get_enumerations()
+    def get_constants(self):
+        return self._serial.msgparser.get_constants()
     def get_constant_float(self, name):
         return self._serial.msgparser.get_constant_float(name)
     def print_time_to_clock(self, print_time):

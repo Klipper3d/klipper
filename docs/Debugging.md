@@ -152,6 +152,9 @@ Then graphs can be produced with:
 
 One can then view the resulting **loadgraph.png** file.
 
+Different graphs can be produced. For more information run:
+`~/klipper/scripts/graphstats.py --help`
+
 Extracting information from the klippy.log file
 ===============================================
 

@@ -8,8 +8,9 @@
 #include "LPC17xx.h" // LPC_SC
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // timer_read_time
 #include "byteorder.h" // cpu_to_le32
-#include "command.h" // output
+#include "command.h" // DECL_CONSTANT_STR
 #include "generic/usb_cdc.h" // usb_notify_ep0
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
@@ -248,12 +249,17 @@ usb_request_bootloader(void)
 {
     if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
         return;
+    // Disable USB and pause for 5ms so host recognizes a disconnect
+    irq_disable();
+    sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 0);
+    udelay(5000);
     // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
     // watchdog timeout flag is set.
-    irq_disable();
     LPC_WDT->WDMOD = 0x07;
     NVIC_SystemReset();
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
 
 void
 usbserial_init(void)
@@ -265,10 +271,12 @@ usbserial_init(void)
     LPC_USB->USBClkCtrl = 0x12;
     while (LPC_USB->USBClkSt != 0x12)
         ;
-    // configure USBD+, USBD-, and USB Connect pins
-    gpio_peripheral(GPIO(0, 29), 1, 0);
+    // configure USBD-, USBD+, and USB Connect pins
     gpio_peripheral(GPIO(0, 30), 1, 0);
+    gpio_peripheral(GPIO(0, 29), 1, 0);
     gpio_peripheral(GPIO(2, 9), 1, 0);
+    // enforce a minimum time bus is disconnected before connecting
+    udelay(5000);
     // setup endpoints
     realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
     realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);

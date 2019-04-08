@@ -64,7 +64,7 @@ class KeyboardReader:
         self.ser.register_callback(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
-        self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
+        self.pins = pins.PinResolver(mcu_type, {}, validate_aliases=False)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):
