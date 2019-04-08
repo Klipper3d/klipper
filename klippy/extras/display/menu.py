@@ -813,7 +813,7 @@ class MenuVSDCard(MenuList):
         for item in os.listdir(directory):
             item_path = os.path.join(directory, item)
             if os.path.isdir(item_path):
-                folder = MenuContainer(self._manager, {
+                folder = MenuList(self._manager, {
                     'name': '%s' % str(item),
                     'cursor': '>',
                     'scroll': True,
