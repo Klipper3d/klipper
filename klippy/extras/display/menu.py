@@ -806,12 +806,14 @@ class MenuVSDCard(MenuList):
         super(MenuVSDCard, self).__init__(manager, config, namespace)
 
     def _populate_files(self, directory = None, parent = None):
+        root = self._manager.objs.get('virtual_sdcard').sdcard_dirname
         if directory == None:
-            directory = self._manager.objs.get('virtual_sdcard').sdcard_dirname
+            directory = root
         if parent == None:
             parent = self
         for item in os.listdir(directory):
             item_path = os.path.join(directory, item)
+            item_rel_path = os.path.relpath(item_path, root)
             if os.path.isdir(item_path):
                 folder = MenuList(self._manager, {
                     'name': '%s' % str(item),
@@ -824,7 +826,7 @@ class MenuVSDCard(MenuList):
                 self._populate_files(item_path, folder)
             if os.path.isfile(item_path):
                 gcode = [
-                    'M23 /%s' % str(item_path)
+                    'M23 /%s' % str(item_rel_path)
                 ]
                 parent.append_item(MenuCommand(self._manager, {
                     'name': '%s' % str(item),
