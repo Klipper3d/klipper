@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import fan, threading
+import fan
 
 KELVIN_TO_CELCIUS = -273.15
 MAX_FAN_TIME = 5.0
@@ -20,7 +20,6 @@ class TemperatureFan:
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
         self.gcode = self.printer.lookup_object('gcode')
-        self.lock = threading.Lock()
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
@@ -41,10 +40,10 @@ class TemperatureFan:
         self.next_speed_time = 0.
         self.last_speed_value = 0.
         self.gcode.register_mux_command(
-			"SET_TEMPERATURE_FAN_TARGET", "TEMPERATURE_FAN", self.name,
-			self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP,
-			desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help)
-		
+            "SET_TEMPERATURE_FAN_TARGET", "TEMPERATURE_FAN", self.name,
+            self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP,
+            desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help)
+
     def set_speed(self, read_time, value):
         if value <= 0.:
             value = 0.
@@ -77,8 +76,7 @@ class TemperatureFan:
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
             raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
-        with self.lock:
-            self.target_temp = degrees
+        self.target_temp = degrees
 
 ######################################################################
 # Bang-bang control algo
