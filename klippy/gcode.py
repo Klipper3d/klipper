@@ -523,6 +523,7 @@ class GCodeParser:
             raise error(str(e))
     def cmd_G4(self, params):
         # Dwell
+        delay = 0.
         if 'S' in params:
             delay = self.get_float('S', params, minval=0.)
         else:
