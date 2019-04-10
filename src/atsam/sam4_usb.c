@@ -8,6 +8,7 @@
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // UDP
 #include "sched.h" // DECL_INIT
 
@@ -158,6 +159,8 @@ usb_set_configure(void)
     UDP->UDP_CSR[USB_CDC_EP_BULK_IN] = CSR_BULK_IN;
     UDP->UDP_GLB_STAT |= UDP_GLB_STAT_CONFG;
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PB10,PB11");
 
 void
 usbserial_init(void)

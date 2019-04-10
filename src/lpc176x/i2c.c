@@ -11,6 +11,9 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+DECL_ENUMERATION("i2c_bus", "i2c1", 0);
+DECL_CONSTANT_STR("BUS_PINS_i2c1", "P0.1,P0.0");
+
 // i2c connection status flags
 enum {
     IF_START = 1<<5, IF_STOP = 1<<4, IF_IRQ = 1<<3, IF_ACK = 1<<2, IF_ENA = 1<<6
@@ -25,8 +28,8 @@ i2c_init(void)
     have_run_init = 1;
 
     // Init i2c bus 1 pins
-    gpio_peripheral(GPIO(0, 0), 3, 0);
     gpio_peripheral(GPIO(0, 1), 3, 0);
+    gpio_peripheral(GPIO(0, 0), 3, 0);
 
     // Set 100Khz frequency
     enable_pclock(PCLK_I2C1);

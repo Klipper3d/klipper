@@ -177,9 +177,13 @@ class PrinterProbe:
 class ProbeEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
         self.position_endstop = config.getfloat('z_offset')
-        self.activate_gcode = config.get('activate_gcode', None)
-        self.deactivate_gcode = config.get('deactivate_gcode', None)
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.activate_gcode = gcode_macro.load_template(
+            config, 'activate_gcode')
+        self.deactivate_gcode = gcode_macro.load_template(
+            config, 'deactivate_gcode')
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
         pin = config.get('pin')
@@ -201,14 +205,16 @@ class ProbeEndstopWrapper:
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
     def home_prepare(self):
-        if self.activate_gcode is not None:
-            gcode = self.printer.lookup_object('gcode')
-            gcode.run_script_from_command(self.activate_gcode)
+        try:
+            self.activate_gcode.run_gcode_from_command()
+        except self.gcode.error as e:
+            raise homing.EndstopError(str(e))
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        if self.deactivate_gcode is not None:
-            gcode = self.printer.lookup_object('gcode')
-            gcode.run_script_from_command(self.deactivate_gcode)
+        try:
+            self.deactivate_gcode.run_gcode_from_command()
+        except self.gcode.error as e:
+            raise homing.EndstopError(str(e))
         self.mcu_endstop.home_finalize()
     def get_position_endstop(self):
         return self.position_endstop

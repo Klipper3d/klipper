@@ -5,9 +5,10 @@ Raspberry Pi 2 or Raspberry Pi 3 computer be used as the host machine
 [FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
 for other machines).
 
-Klipper currently supports Atmel ATmega based micro-controllers,
-Arduino Due (Atmel SAM3x8e ARM micro-controller), Smoothieboard (ARM
-LPC176x), and [Beaglebone PRU](beaglebone.md) based printers.
+Klipper currently supports a number of Atmel ATmega based
+micro-controllers,
+[ARM based micro-controllers](Features.md#step-benchmarks), and
+[Beaglebone PRU](beaglebone.md) based printers.
 
 Prepping an OS image
 ====================

@@ -6,6 +6,18 @@ All dates in this document are approximate.
 
 # Changes
 
+20190404: The Python host software packages were updated. Users will
+need to rerun the ~/klipper/scripts/install-octopi.sh script (or
+otherwise upgrade the python dependencies if not using a standard
+OctoPi installation).
+
+20190404: The i2c_bus and spi_bus parameters (in various config
+sections) now take a bus name instead of a number.
+
+20190404: The sx1509 config parameters have changed. The 'address'
+parameter is now 'i2c_address' and it must be specified as a decimal
+number. Where 0x3E was previously used, specify 62.
+
 20190328: The min_speed value in [temperature_fan] config
 will now be respected and the fan will always run at this
 speed or higher in PID mode.

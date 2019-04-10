@@ -10,6 +10,7 @@
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
@@ -183,6 +184,8 @@ usb_request_bootloader(void)
 #endif
     NVIC_SystemReset();
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA24,PA25");
 
 void
 usbserial_init(void)
