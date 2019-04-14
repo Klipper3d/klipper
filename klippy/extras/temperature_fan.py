@@ -75,7 +75,8 @@ class TemperatureFan:
         self.set_temp(temp)
     def set_temp(self, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
-            raise self.gcode.error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
+            raise self.gcode.error(
+                "Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
         self.target_temp = degrees
 
