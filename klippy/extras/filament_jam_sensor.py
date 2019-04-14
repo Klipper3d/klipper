@@ -53,7 +53,8 @@ class JamSensor:
             self.enable = False
         elif self.base_usage >= self.slow_usage or self.slow_usage \
             >= self.jam_usage:
-            logging.exception('base_usage must < slow_usage / slow_usage must < jam_usage'
+            logging.exception(
+              'base_usage must < slow_usage / slow_usage must < jam_usage'
                               )
             self.enable = False
         else:
@@ -79,7 +80,8 @@ class JamSensor:
                          % (self.mname, self.name, delta_usage
                         / self.base_usage * 100., delta_usage,
                         self.base_usage))
-                logging.debug('%s(%s): _signal_handler triggered | delta_usage = %s'
+                logging.debug(
+                  '%s(%s): _signal_handler triggered | delta_usage = %s'
                               , self.mname, self.name, delta_usage)
             self.check_jam(eventtime, delta_usage)
 
@@ -88,7 +90,8 @@ class JamSensor:
             new_usage = self.get_filament_usage()
             delta_usage = abs(new_usage - self.filament_usage_last)
             if self.debug:
-                logging.debug('%s(%s): _timer_handler triggered | delta_usage = %s'
+                logging.debug(
+                  '%s(%s): _timer_handler triggered | delta_usage = %s'
                               , self.mname, self.name, delta_usage)
             self.check_jam(eventtime, delta_usage)
             if self.timer_usage_last != new_usage:  # ignore when it's not move
@@ -100,7 +103,7 @@ class JamSensor:
         if delta_usage > self.jam_usage:
             # detect jam
             # restart the last value avoid trigger when pause
-            self.filament_usage_last = self.get_filament_usage()  
+            self.filament_usage_last = self.get_filament_usage()
             self.gcode.respond_info('%s(%s): detect jam' % (self.mname,
                                     self.name))
             if self.action and self.pause_resume.captured_position \
@@ -151,8 +154,10 @@ class JamSensor:
                       (1 if self.debug else 0)) == 1 else False)
         self.action = (True if self.gcode.get_int('ACTION', params,
                        (1 if self.action else 0)) == 1 else False)
-        self.gcode.respond_info('%s(%s): timer = %.2f | base_usage = %.2f | slow_usage = %.2f | jam_usage = %.2f | enable = %s | debug = %s | action = %s'
-                                 % (
+        self.gcode.respond_info(
+          '%s(%s): timer = %.2f | base_usage = %.2f | slow_usage = %.2f '
+          '| jam_usage = %.2f | enable = %s | debug = %s | action = %s'
+            % (
             self.mname,
             self.name,
             self.timer,
