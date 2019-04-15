@@ -10,11 +10,7 @@ MAX_FAN_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 
-class error(Exception):
-    pass
-
 class TemperatureFan:
-    error = error
     def __init__(self, config):
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
