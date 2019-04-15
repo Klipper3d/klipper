@@ -42,9 +42,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](../config/example-extras.cfg) for details). For
-example, one might use this to implement: `G10`, `G11`, `G12`, `G29`,
-`G30`, `G31`, `M42`, `M80`, `M81`, etc.
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for details). For example, one might use this to implement: `G10`,
+`G11`, `G12`, `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
 
 ## G-Code SD card commands
 

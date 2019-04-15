@@ -9,10 +9,12 @@ chips. Read [features](Features.md) for reasons to use Klipper. See
 settings in the config file.
 
 The Klipper configuration is stored in a simple text file on the host
-machine. The [config/example.cfg](../config/example.cfg) file serves
-as a reference for the config file. See the [Slicers](Slicers.md)
-document for information on configuring a slicer with Klipper. See the
-[Bed Level](Bed_Level.md), [Endstop Phase](Endstop_Phase.md),
+machine. The
+[config/example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
+file serves as a reference for the config file. See the
+[Slicers](Slicers.md) document for information on configuring a slicer
+with Klipper. See the [Bed Level](Bed_Level.md),
+[Endstop Phase](Endstop_Phase.md),
 [Probe Calibrate](Probe_Calibrate.md),
 [Delta Calibrate](Delta_Calibrate.md), and
 [Manual Level](Manual_Level.md) documents for information on bed
