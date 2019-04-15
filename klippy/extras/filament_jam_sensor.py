@@ -1,6 +1,6 @@
 # Generic Filament Jam Sensor Module
 #
-# Copyright (C) 2019  Eric Callahan <arksine.code@gmail.com> - Windo.AC
+# Copyright (C) 2019 Windo.AC
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
