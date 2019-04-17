@@ -15,6 +15,7 @@ class TemperatureFan:
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
+        self.gcode = self.printer.lookup_object('gcode')
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
@@ -26,14 +27,20 @@ class TemperatureFan:
         self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
         self.last_temp = 0.
         self.last_temp_time = 0.
-        self.target_temp = config.getfloat(
+        self.target_temp_conf = config.getfloat(
             'target_temp', 40. if self.max_temp > 40. else self.max_temp,
             minval=self.min_temp, maxval=self.max_temp)
+        self.target_temp = self.target_temp_conf
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         self.next_speed_time = 0.
         self.last_speed_value = 0.
+        self.gcode.register_mux_command(
+            "SET_TEMPERATURE_FAN_TARGET", "TEMPERATURE_FAN", self.name,
+            self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP,
+            desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help)
+
     def set_speed(self, read_time, value):
         if value <= 0.:
             value = 0.
@@ -58,6 +65,16 @@ class TemperatureFan:
         return self.min_speed
     def get_max_speed(self):
         return self.max_speed
+    cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help = "Sets a temperature fan target"
+    def cmd_SET_TEMPERATURE_FAN_TARGET_TEMP(self, params):
+        temp = self.gcode.get_float('TARGET', params, self.target_temp_conf)
+        self.set_temp(temp)
+    def set_temp(self, degrees):
+        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
+            raise self.gcode.error(
+                "Requested temperature (%.1f) out of range (%.1f:%.1f)"
+                % (degrees, self.min_temp, self.max_temp))
+        self.target_temp = degrees
 
 ######################################################################
 # Bang-bang control algo

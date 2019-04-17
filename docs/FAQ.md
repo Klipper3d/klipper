@@ -99,12 +99,13 @@ and make sure FLASH_DEVICE is set correctly for your board (see the
 
 However, if "make flash" just doesn't work for your board, then you
 will need to manually flash. See if there is a config file in the
-[config directory](../config) with specific instructions for flashing
-the device. Also, check the board manufacturer's documentation to see
-if it describes how to flash the device. Finally, on AVR devices, it
-may be possible to manually flash the device using
-[avrdude](http://www.nongnu.org/avrdude/) with custom command-line
-parameters - see the avrdude documentation for further information.
+[config directory](https://github.com/KevinOConnor/klipper/tree/master/config)
+with specific instructions for flashing the device. Also, check the
+board manufacturer's documentation to see if it describes how to flash
+the device. Finally, on AVR devices, it may be possible to manually
+flash the device using [avrdude](http://www.nongnu.org/avrdude/) with
+custom command-line parameters - see the avrdude documentation for
+further information.
 
 ### How do I change the serial baud rate?
 
@@ -145,8 +146,8 @@ machines (the printer may move faster than OctoPrint can send movement
 commands) when printing directly from OctoPrint. If you wish to run on
 one one of these slower boards anyway, consider using the
 "virtual_sdcard" feature (see
-[config/example-extras.cfg](../config/example-extras.cfg) for details)
-when printing.
+[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for details) when printing.
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
@@ -156,8 +157,8 @@ only requires Python running on a Linux (or similar)
 computer. However, if you wish to run it on a different machine you
 will need Linux admin knowledge to install the system prerequisites
 for that particular machine. See the
-[install-octopi.sh](../scripts/install-octopi.sh) script for further
-information on the necessary Linux admin steps.
+[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
+script for further information on the necessary Linux admin steps.
 
 ### Can I run multiple instances of Klipper on the same host machine?
 
@@ -176,9 +177,10 @@ own pseudo-tty. For example:
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
-[install-octopi.sh](../scripts/install-octopi.sh) script and the
-[klipper-start.sh](../scripts/klipper-start.sh) script may be useful
-as examples.
+[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
+script and the
+[klipper-start.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/klipper-start.sh)
+script may be useful as examples.
 
 ### Do I have to use OctoPrint?
 
@@ -213,8 +215,8 @@ process itself (or fundamentally does not have a homing process) then
 consider using a homing_override section in the config file. If you
 need to move a stepper for diagnostic or debugging purposes then
 consider adding a force_move section to the config file. See
-[example-extras.cfg](../config/example-extras.cfg) for further details
-on these options.
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for further details on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
 
@@ -371,15 +373,16 @@ See the "config_digital_out" command in the
 In addition, the micro-controller software is configured with a
 minimum and maximum temperature range for each heater at startup (see
 the min_temp and max_temp parameters in the
-[example.cfg](../config/example.cfg) file for details). If the
-micro-controller detects that the temperature is outside of that range
-then it will also enter a "shutdown" state.
+[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
+file for details). If the micro-controller detects that the
+temperature is outside of that range then it will also enter a
+"shutdown" state.
 
 Separately, the host software also implements code to check that
 heaters and temperature sensors are functioning correctly. See the
 "verify_heater" section of the
-[example-extras.cfg](../config/example-extras.cfg) for further
-details.
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for further details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?
 
