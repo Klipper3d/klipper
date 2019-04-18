@@ -5,3 +5,4 @@ out
 .config.old
 klippy/.version
 .vs/
+.vscode/
