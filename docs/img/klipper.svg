@@ -14,7 +14,7 @@
    xml:space="preserve"
    style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;"
    id="svg40"
-   sodipodi:docname="klipper6.svg"
+   sodipodi:docname="klipper.svg"
    inkscape:version="0.92.4 (unknown)"
    inkscape:export-filename="/home/kevin/src/reprap/firmware/klipper/logs/logo-20190416/klipper6.svg.png"
    inkscape:export-xdpi="96"
@@ -36,9 +36,9 @@
    inkscape:window-height="1030"
    id="namedview42"
    showgrid="false"
-   inkscape:zoom="1.45"
-   inkscape:cx="310.89242"
-   inkscape:cy="126.60097"
+   inkscape:zoom="1.18"
+   inkscape:cx="366.40872"
+   inkscape:cy="266.02938"
    inkscape:window-x="0"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
@@ -48,26 +48,25 @@
      type="xygrid"
      id="grid905" /></sodipodi:namedview>
     <path
-   d="M 30,174 V 34 l 330,325 v 65 h -75 z"
    style="fill:#3c4b5a"
+   d="m 30,34 v 140 l 260,255 95,-5 H 485 L 730,174 V 34 H 720 L 385,374 40,34 Z"
    id="path2"
    inkscape:connector-curvature="0"
-   sodipodi:nodetypes="cccccc" /><path
-   d="M 410,359 730,34 V 174 L 485,424 h -75 z"
-   style="fill:#3c4b5a"
-   id="path4"
-   inkscape:connector-curvature="0"
-   sodipodi:nodetypes="cccccc" /><path
-   d="m 83,519 v -18 h 11 l 73,75 h -27 z"
+   sodipodi:nodetypes="ccccccccccc" /><path
    style="fill:#3c4b5a;stroke-width:1.03280997"
+   d="m 140,418 -58,57 1,22 v 22 l 57,57 h 27 v -1 L 91,496.5 167,419 v -1 z"
    id="path8"
    inkscape:connector-curvature="0"
-   sodipodi:nodetypes="cccccc" /><path
-   d="m 83,474 57,-56 h 27 L 94,492 H 83 Z"
-   style="fill:#3c4b5a;stroke-width:1.03280997"
-   id="path10"
+   sodipodi:nodetypes="ccccccccccc" /><g
+   transform="translate(-1.08348e-4,0.048)"
+   id="g17">
+                <path
+   d="m 83.041215,464.92108 h 0.001 l -0.04211,27.03092 h 11 l 73.000005,-74 v 14.301 l -63,64.199 63,65.5 v 14 l -73.000002,-75 h -13 c -2,0 -4,-2 -4,-4 h -2 v -33 h 2 c 0,-1 1,-2 3.00004,-2 1.99996,0 2.99996,1 2.99996,2 z"
+   style="fill:#b12f35"
+   id="path15"
    inkscape:connector-curvature="0"
-   sodipodi:nodetypes="cccccc" /><g
+   sodipodi:nodetypes="cccccccccccccccccc" />
+            </g><g
    id="path839"
    transform="matrix(1.03281,0,0,1.0326797,24.31099,-21.921569)">
                 <rect
@@ -77,15 +76,6 @@
    height="153"
    style="fill:#3c4b5a;fill-rule:nonzero"
    id="rect12" />
-            </g><g
-   transform="translate(-1.08348e-4,0.048)"
-   id="g17">
-                <path
-   d="m 83.041215,464.92108 h 0.001 l -0.04211,27.03092 h 11 l 73.000005,-74 v 14.301 l -63,64.199 63,65.5 v 14 l -73.000002,-75 h -13 c -2,0 -4,-2 -4,-4 v -33 c 0,-1 1,-2 3.00004,-2 1.99996,0 2.99996,1 2.99996,2 z"
-   style="fill:#b12f35"
-   id="path15"
-   inkscape:connector-curvature="0"
-   sodipodi:nodetypes="cccccccccccccccc" />
             </g><rect
    x="247"
    y="469"
