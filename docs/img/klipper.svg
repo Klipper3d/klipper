@@ -36,9 +36,9 @@
    inkscape:window-height="1030"
    id="namedview42"
    showgrid="false"
-   inkscape:zoom="1.18"
-   inkscape:cx="366.40872"
-   inkscape:cy="266.02938"
+   inkscape:zoom="0.95"
+   inkscape:cx="327.89418"
+   inkscape:cy="289.76441"
    inkscape:window-x="0"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
@@ -49,12 +49,12 @@
      id="grid905" /></sodipodi:namedview>
     <path
    style="fill:#3c4b5a"
-   d="m 30,34 v 140 l 260,255 95,-5 H 485 L 730,174 V 34 H 720 L 385,374 40,34 Z"
+   d="m 30,34 v 140 l 260,255 115,-5 h 80 L 730,174 V 34 H 720 L 385,374 40,34 Z"
    id="path2"
    inkscape:connector-curvature="0"
    sodipodi:nodetypes="ccccccccccc" /><path
    style="fill:#3c4b5a;stroke-width:1.03280997"
-   d="m 140,418 -58,57 1,22 v 22 l 57,57 h 27 v -1 L 91,496.5 167,419 v -1 z"
+   d="m 140,418 -58,57 1,25 v 19 l 57,57 h 27 v -1 L 91,496.5 167,419 v -1 z"
    id="path8"
    inkscape:connector-curvature="0"
    sodipodi:nodetypes="ccccccccccc" /><g
