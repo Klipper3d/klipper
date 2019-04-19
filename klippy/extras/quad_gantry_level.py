@@ -45,7 +45,7 @@ class QuadGantryLevel:
     def cmd_QUAD_GANTRY_LEVEL(self, params):
         self.retries = self.gcode.get_int(
             'RETRIES', params, default=self.default_retries,
-            minval=1, maxval=30)
+            minval=0, maxval=30)
         self.retry_tolerance = self.gcode.get_float(
             'RETRY_TOLERANCE', params, default=self.default_retry_tolerance,
             minval=0, maxval=1.0)
