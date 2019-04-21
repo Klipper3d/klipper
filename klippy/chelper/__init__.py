@@ -232,7 +232,7 @@ def get_ffi():
         def logging_callback(msg):
             logging.error(FFI_main.string(msg))
         pyhelper_logging_callback = FFI_main.callback(
-            "void(const char *)", logging_callback)
+            "void func(const char *)", logging_callback)
         FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
 
