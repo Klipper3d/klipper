@@ -28,13 +28,30 @@
         padding: 0;
         background: transparent;
     }
+
+    .markdown-body table td, .markdown-body table th {
+        border: 1px solid #dfe2e5;
+        padding: 6px 13px;
+    }
+    .markdown-body table tr {
+        background-color: #fff;
+        border-top: 1px solid #c6cbd1;
+    }
+    .markdown-body table tr:nth-child(2n) {
+        background-color: #f6f8fa;
+    }
+    .markdown-body table {
+        margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
 
   <!-- Navbar at top of page -->
   <nav class="navbar navbar-expand-md navbar-light bg-light">
-    <a class="navbar-brand" href="/">Klipper</a>
+    <a class="navbar-brand" href="/">
+      <img src="img/klipper-logo-small.png" alt="Klipper">
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
