@@ -15,7 +15,6 @@
 #additionl command:
 #PROBE_TEMP
 # gives temperature of P.I.N.D.A. sensor
-
 import pins, homing, manual_probe, adc_temperature, probe
 
 class Pinda2Probe (probe.PrinterProbe):
@@ -49,10 +48,12 @@ class Pinda2EndstopWrapper(probe.ProbeEndstopWrapper):
             self.z_offset_calibration_samples= eval(s)
         except SyntaxError:
             raise config.error(
-                "Syntax error in z_offset_calibration. Should be [(t1, e1), (t2, e2),...(tn, en)] "
-                "where t is temperature, e is offset correction. There is z_offset_calibration: " + s)
+                "Syntax error in z_offset_calibration. Should be [(t1, e1), (t"
+                "2, e2),...(tn, en)] where t is temperature, e is offset corre"
+                "ction. There is z_offset_calibration: " + s)
         try:
-            li = adc_temperature.LinearInterpolate(self.z_offset_calibration_samples)
+            li = adc_temperature.LinearInterpolate(
+                self.z_offset_calibration_samples)
         except ValueError as e:
             raise config.error("Error in z_offset_calibration %s, %s" % (
                 str(e), config.get_name()))
