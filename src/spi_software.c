@@ -30,6 +30,7 @@ command_config_software_spi(uint32_t *args)
     spi->sclk = gpio_out_setup(sclk_pin, 0);
     spi->mosi = gpio_out_setup(mosi_pin, 0);
     spi->miso = gpio_in_setup(miso_pin, 1);
+    spi->mode = mode;
 }
 DECL_COMMAND(command_config_software_spi,
              "config_software_spi oid=%c sclk_pin=%u mosi_pin=%u miso_pin=%u"
