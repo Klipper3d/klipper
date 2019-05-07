@@ -9,9 +9,11 @@ class FirmwareRetraction:
         self.printer = config.get_printer()
         self.retract_length = config.getfloat('retract_length', minval=0.)
         self.retract_speed = config.getint('retract_speed', minval=1)
-        self.unretract_extra_length = config.getfloat('unretract_extra_length', minval=0.)
+        self.unretract_extra_length = config.getfloat(
+            'unretract_extra_length', minval=0.)
         self.unretract_speed = config.getint('unretract_speed', minval=1)
-        self.unretract_length = self.retract_length + self.unretract_extra_length
+        self.unretract_length = self.retract_length
+        + self.unretract_extra_length
         self.is_retracted = False
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('SET_RETRACTION', self.cmd_SET_RETRACTION)
@@ -20,27 +22,42 @@ class FirmwareRetraction:
         self.gcode.register_command('G11', self.cmd_G11)
 
     def cmd_SET_RETRACTION(self, params):
-        self.retract_length = self.gcode.get_float('RETRACT_LENGTH', params, self.retract_length, minval=0.)
-        self.retract_speed = self.gcode.get_int('RETRACT_SPEED', params, self.retract_speed, minval=1)
-        self.unretract_extra_length = self.gcode.get_float('UNRETRACT_EXTRA_LENGTH', params, self.unretract_extra_length, minval=0.)
-        self.unretract_speed = self.gcode.get_int('UNRETRACT_SPEED', params, self.unretract_speed, minval=1)
-        self.unretract_length = self.retract_length + self.unretract_extra_length
+        self.retract_length = self.gcode.get_float(
+            'RETRACT_LENGTH',
+            params, self.retract_length, minval=0.)
+        self.retract_speed = self.gcode.get_int(
+            'RETRACT_SPEED',
+            params, self.retract_speed, minval=1)
+        self.unretract_extra_length = self.gcode.get_float(
+            'UNRETRACT_EXTRA_LENGTH',
+            params, self.unretract_extra_length, minval=0.)
+        self.unretract_speed = self.gcode.get_int(
+            'UNRETRACT_SPEED',
+            params, self.unretract_speed, minval=1)
+        self.unretract_length = self.retract_length
+        + self.unretract_extra_length
         self.is_retracted = False
         #self.cmd_GET_RETRACTION(params)
 
     def cmd_GET_RETRACTION(self, params):
-        msg = ("RETRACT_LENGTH=%.1f RETRACT_SPEED=%d UNRETRACT_EXTRA_LENGTH=%.1f UNRETRACT_SPEED=%d"
-               % (self.retract_length, self.retract_speed, self.unretract_extra_length, self.unretract_speed))
+        msg = ("RETRACT_LENGTH=%.1f RETRACT_SPEED=%d "
+               "UNRETRACT_EXTRA_LENGTH=%.1f UNRETRACT_SPEED=%d"
+               % (self.retract_length, self.retract_speed,
+                  self.unretract_extra_length, self.unretract_speed))
         self.gcode.respond_info(msg)
 
     def cmd_G10(self, params):
         if not self.is_retracted:
-            self.gcode.run_script_from_command("G91\nG1 E-%d F%d\nG90" % (self.retract_length, self.retract_speed))
+            self.gcode.run_script_from_command(
+                "G91\nG1 E-%d F%d\nG90"
+                % (self.retract_length, self.retract_speed))
             self.is_retracted = True
 
     def cmd_G11(self, params):
         if self.is_retracted:
-            self.gcode.run_script_from_command("G91\nG1 E%d F%d\nG90" % (self.unretract_length, self.unretract_speed))
+            self.gcode.run_script_from_command(
+                "G91\nG1 E%d F%d\nG90"
+                % (self.unretract_length, self.unretract_speed))
             self.is_retracted = False
 
 
