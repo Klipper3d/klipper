@@ -356,8 +356,7 @@ power is removed).
 The workaround is to use a restart_method other than "command" or to
 flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
-programmer - search the web to find the instructions for your
-particular device.
+programmer - see [Bootloaders](Bootloaders.md) for further details.
 
 ### Will the heaters be left on if the Raspberry Pi crashes?
 
