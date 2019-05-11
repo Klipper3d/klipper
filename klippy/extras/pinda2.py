@@ -1,4 +1,9 @@
 # P.I.N.D.A. 2 support
+#
+# Copyright (C) 2019  Rafal Jastrzebski <r2@jastrzebscy.org>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+
 # configuration example:
 #[pinda2]
 #pin: PB4
