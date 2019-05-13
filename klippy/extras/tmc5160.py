@@ -433,7 +433,7 @@ class TMC5160:
                 if adr_ == reg:
                     reg_name = name
         val = hex_ & 0xffffff
-        logging.error(self.fields.pretty_format(reg_name, val))
+        logging.debug(self.fields.pretty_format(reg_name, val))
     def _init_registers(self, min_clock = 0):
         for reg_name, val in self.regs.items():
             self.set_register(reg_name, val, min_clock)
