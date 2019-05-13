@@ -104,15 +104,6 @@ fields["CHOPCONF"] = {
     "diss2g":                   0x01 << 30,
     "diss2vs":                  0x01 << 31
 }
-fields["COOLCONF"] = {
-    "semin":                    0x0F << 0,
-    "seup":                     0x03 << 5,
-    "semax":                    0x0F << 8,
-    "sedn":                     0x03 << 13,
-    "seimin":                   0x01 << 15,
-    "sgt":                      0x7F << 16,
-    "sfilt":                    0x01 << 24
-}
 fields["DRV_STATUS"] = {
     "SG_RESULT":                0x3FF << 0,
     "s2vsa":                    0x01 << 12,
