@@ -73,8 +73,9 @@ registers = {
 }
 
 ReadRegisters = [
-    "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN", "LOST_STEPS",
-    "MSCNT", "MSCURACT", "OTP_READ", "PWMCONF", "PWM_SCALE", "PWM_AUTO", "TSTEP"
+    "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN",
+    "LOST_STEPS", "MSCNT", "MSCURACT", "OTP_READ", "PWMCONF", "PWM_SCALE",
+    "PWM_AUTO", "TSTEP"
 ]
 
 fields = {}
@@ -306,15 +307,19 @@ def bits_to_current(bits, sense_resistor, vsense_on):
 def calc_current_config(run_current, hold_current, sense_resistor):
     vsense = 0.325
     GLOBAL_SCALER = 256
-    irun = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * run_current * sense_resistor) / (GLOBAL_SCALER * vsense) -1 )
-    ihold = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * hold_current * sense_resistor) / (GLOBAL_SCALER * vsense) -1 )
+    irun = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * run_current * \
+        sense_resistor) / (GLOBAL_SCALER * vsense) -1 )
+    ihold = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * hold_current * \
+        sense_resistor) / (GLOBAL_SCALER * vsense) -1 )
     return irun, ihold
 
 def get_config_current(config):
     run_current = config.getfloat('run_current', above=0., maxval=3.)
-    hold_current = config.getfloat('hold_current', run_current, above=0., maxval=3.)
-    sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.) # watterott default
-    irun, ihold = calc_current_config(run_current, hold_current, sense_resistor)
+    hold_current = config.getfloat('hold_current', run_current, above=0.,\
+        maxval=3.)
+    sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
+    irun, ihold = calc_current_config(run_current, hold_current,\
+        sense_resistor)
     return irun, ihold, sense_resistor
 
 def get_config_microsteps(config):
@@ -369,12 +374,12 @@ class TMC5160:
         msteps, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
-        set_config_field(config, "toff", 3)         # marlin 4              # tridoku 3
-        set_config_field(config, "hstrt", 4)        # marlin 0 (1-1)        # tridoku 4
-        set_config_field(config, "hend", 1)         # marlin 2 (-2+3)       # tridoku 1
+        set_config_field(config, "toff", 3)
+        set_config_field(config, "hstrt", 4)
+        set_config_field(config, "hend", 1)
         set_config_field(config, "fd3", 0)
         set_config_field(config, "disfdcc", 0)
-        set_config_field(config, "chm", 0)          # marlin 0 (1-1)        # tridoku 0
+        set_config_field(config, "chm", 0)
         set_config_field(config, "tbl", 2)
         set_config_field(config, "vhighfs", 0)
         set_config_field(config, "vhighchm", 0)
@@ -395,22 +400,22 @@ class TMC5160:
         #   GCONF
         self.fields.set_field("en_pwm_mode", en_pwm)
         #   IHOLDIRUN
-        self.fields.set_field("IHOLD", ihold)       # currents in 0..31     # page 37
-        self.fields.set_field("IRUN", irun)         # currents in 0..31     # page 37
-        set_config_field(config, "IHOLDDELAY", 6)  # marlin 10             # tridoku 6
+        self.fields.set_field("IHOLD", ihold)
+        self.fields.set_field("IRUN", irun)
+        set_config_field(config, "IHOLDDELAY", 6)
         #   PWMCONF
-        set_config_field(config, "PWM_OFS", 0)    # Marlin 180    # tridoku page 54
-        set_config_field(config, "PWM_GRAD", 0)     # Marlin 5      # 54
-        set_config_field(config, "pwm_freq", 1)     # Marlin 2      # 53 + 59
-        set_config_field(config, "pwm_autoscale", True)# Marlin 1      # 53
-        set_config_field(config, "pwm_autograd", True) # Marlin 1      # 53
-        set_config_field(config, "freewheel", 0)    # Marlin 0      # 53
-        set_config_field(config, "PWM_REG", 0)      # Marlin 0      # 53
-        set_config_field(config, "PWM_LIM", 0)      # Marlin 0      # 53
+        set_config_field(config, "PWM_OFS", 0)
+        set_config_field(config, "PWM_GRAD", 0)
+        set_config_field(config, "pwm_freq", 1)
+        set_config_field(config, "pwm_autoscale", True)
+        set_config_field(config, "pwm_autograd", True)
+        set_config_field(config, "freewheel", 0)
+        set_config_field(config, "PWM_REG", 0)
+        set_config_field(config, "PWM_LIM", 0)
         #   TPWMTHRS
         self.fields.set_field("TPWMTHRS", thresh)
         #   TPOWERDOWN
-        set_config_field(config, "TPOWERDOWN", 10)  # marlin 128!           # tridoku 10?
+        set_config_field(config, "TPOWERDOWN", 10)
 
         self._init_registers()
     def decode_hex(self, hex_, reg_name=False):
@@ -442,7 +447,8 @@ class TMC5160:
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val, min_clock = 0):
         reg = registers[reg_name]
-        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff]
+        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
+            (val >> 8) & 0xff, val & 0xff]
         self.decode_hex( val, reg_name=reg_name )
         self.spi.spi_send(data, min_clock)
     def set_adress(self, val, min_clock=0):
