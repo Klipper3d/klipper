@@ -73,12 +73,11 @@ registers = {
 }
 
 ReadRegisters = [
-    "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN", "LOST_STEPS", 
+    "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN", "LOST_STEPS",
     "MSCNT", "MSCURACT", "OTP_READ", "PWMCONF", "PWM_SCALE", "PWM_AUTO", "TSTEP"
 ]
 
 fields = {}
-
 fields["COOLCONF"] = {
     "semin":                    0x0F << 0,
     "seup":                     0x03 << 5,
@@ -88,7 +87,6 @@ fields["COOLCONF"] = {
     "sgt":                      0x7F << 16,
     "sfilt":                    0x01 << 24
 }
-
 fields["CHOPCONF"] = {
     "toff":                     0x0F << 0,
     "hstrt":                    0x07 << 4,
@@ -106,7 +104,6 @@ fields["CHOPCONF"] = {
     "diss2g":                   0x01 << 30,
     "diss2vs":                  0x01 << 31
 }
-
 fields["COOLCONF"] = {
     "semin":                    0x0F << 0,
     "seup":                     0x03 << 5,
@@ -116,7 +113,6 @@ fields["COOLCONF"] = {
     "sgt":                      0x7F << 16,
     "sfilt":                    0x01 << 24
 }
-
 fields["DRV_STATUS"] = {
     "SG_RESULT":                0x3FF << 0,
     "s2vsa":                    0x01 << 12,
@@ -133,11 +129,9 @@ fields["DRV_STATUS"] = {
     "olb":                      0x01 << 30,
     "stst":                     0x01 << 31
 }
-
 fields["FACTORY_CONF"] = {
     "FACTORY_CONF":             0x1F << 0
 }
-
 fields["GCONF"] = {
     "recalibrate":              0x01 << 0,
     "faststandstill":           0x01 << 1,
@@ -158,19 +152,16 @@ fields["GCONF"] = {
     "direct_mode":              0x01 << 16,
     "test_mode":                0x01 << 17
 }
-
 fields["GSTAT"] = {
     "reset":                    0x01 << 0,
     "drv_err":                  0x01 << 1,
     "uv_cp":                    0x01 << 2
 }
-
 fields["IHOLD_IRUN"] = {
     "IHOLD":                    0x1F << 0,
     "IRUN":                     0x1F << 8,
     "IHOLDDELAY":               0x0F << 16
 }
-
 fields["IOIN"] = {
     "REFL_STEP":                0x01 << 0,
     "REFR_DIR":                 0x01 << 1,
@@ -182,32 +173,26 @@ fields["IOIN"] = {
     "SWCOMP_IN":                0x01 << 7,
     "VERSION":                  0xFF << 24
 }
-
-fields["LOST_STEPS"] = { 
+fields["LOST_STEPS"] = {
     "LOST_STEPS":               0xfffff << 0
 }
-
 fields["MSCNT"] = {
     "MSCNT":                    0x3ff << 0
 }
-
 fields["MSCURACT"] = {
     "CUR_A":                    0x1ff << 0,
     "CUR_B":                    0x1ff << 16
 }
-
 fields["OTP_READ"] = {
     "OTP_FCLKTRIM":             0x1f << 0,
     "otp_S2_LEVEL":             0x01 << 5,
     "otp_BBM":                  0x01 << 6,
     "otp_TBL":                  0x01 << 7
 }
-
 fields["PWM_AUTO"] = {
     "PWM_OFS_AUTO":             0xff << 0,
     "PWM_GRAD_AUTO":            0xff << 16
 }
-
 fields["PWMCONF"] = {
     "PWM_OFS":                  0xFF << 0,
     "PWM_GRAD":                 0xFF << 8,
@@ -218,34 +203,24 @@ fields["PWMCONF"] = {
     "PWM_REG":                  0x0F << 24,
     "PWM_LIM":                  0x0F << 28
 }
-
 fields["PWM_SCALE"] = {
     "PWM_SCALE_SUM":            0xff << 0,
     "PWM_SCALE_AUTO":           0x1ff << 16
 }
-
 fields["TPOWERDOWN"] = {
     "TPOWERDOWN":               0xff << 0
 }
-
-fields["TPWMTHRS"] = { 
+fields["TPWMTHRS"] = {
     "TPWMTHRS":                 0xfffff << 0
 }
-
 fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
 
-#
-
 FieldFormatters = {
-    #   GSTAT
     "reset":            (lambda v: "1(reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
-    #
-    #   GCONF
-    #
     "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
     "VERSION":          (lambda v: "%#x" % v),
@@ -260,7 +235,6 @@ FieldFormatters = {
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
     "sgt":              (lambda v: decode_signed_int(v, 7)),
 }
-
 
 ######################################################################
 # Field helpers
@@ -333,7 +307,6 @@ class FieldHelper:
 ######################################################################
 
 def bits_to_current(bits, sense_resistor, vsense_on):
-    #   needs fix
     sense_resistor += 0.020
     vsense = 0.325
     current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
@@ -404,7 +377,6 @@ class TMC5160:
         irun, ihold, self.sense_resistor = get_config_current(config)
         msteps, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
-
         #   CHOPCONF
         set_config_field(config, "toff", 3)         # marlin 4              # tridoku 3
         set_config_field(config, "hstrt", 4)        # marlin 0 (1-1)        # tridoku 4
@@ -483,11 +455,8 @@ class TMC5160:
         self.decode_hex( val, reg_name=reg_name )
         self.spi.spi_send(data, min_clock)
     def set_adress(self, val, min_clock=0):
-        data = [(val >> 32) & 0xff,
-                (val >> 24) & 0xff,
-                (val >> 16) & 0xff,
-                (val >> 8) & 0xff,
-                val & 0xff]
+        data = [(val >> 32) & 0xff, (val >> 24) & 0xff,
+                (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff]
         self.spi.spi_send(data, min_clock)
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
