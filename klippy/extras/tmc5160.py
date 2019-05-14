@@ -428,7 +428,7 @@ class TMC5160:
             for name, adr_ in registers.items():
                 if adr_ == reg:
                     reg_name = name
-        val = hex_ & 0xffffff
+        val = hex_ & 0xFFFFFFFF
         logging.debug(self.fields.pretty_format(reg_name, val))
     def _init_registers(self, min_clock = 0):
         for reg_name, val in self.regs.items():
