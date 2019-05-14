@@ -374,16 +374,16 @@ class TMC5160:
         msteps, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
-        set_config_field(config, "toff", 3)
-        set_config_field(config, "hstrt", 4)
-        set_config_field(config, "hend", 1)
+        set_config_field(config, "toff", 0)
+        set_config_field(config, "hstrt", 5)
+        set_config_field(config, "hend", 2)
         set_config_field(config, "fd3", 0)
         set_config_field(config, "disfdcc", 0)
         set_config_field(config, "chm", 0)
         set_config_field(config, "tbl", 2)
         set_config_field(config, "vhighfs", 0)
         set_config_field(config, "vhighchm", 0)
-        set_config_field(config, "tpfd", 0)
+        set_config_field(config, "tpfd", 4)
         self.fields.set_field("mres", msteps)       # microsteps
         set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "dedge", 0)
@@ -404,14 +404,14 @@ class TMC5160:
         self.fields.set_field("IRUN", irun)
         set_config_field(config, "IHOLDDELAY", 6)
         #   PWMCONF
-        set_config_field(config, "PWM_OFS", 0)
+        set_config_field(config, "PWM_OFS", 30)
         set_config_field(config, "PWM_GRAD", 0)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "freewheel", 0)
-        set_config_field(config, "PWM_REG", 0)
-        set_config_field(config, "PWM_LIM", 0)
+        set_config_field(config, "PWM_REG", 4)
+        set_config_field(config, "PWM_LIM", 12)
         #   TPWMTHRS
         self.fields.set_field("TPWMTHRS", thresh)
         #   TPOWERDOWN
