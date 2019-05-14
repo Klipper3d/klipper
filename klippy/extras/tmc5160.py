@@ -4,8 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
-import bus
+import bus, tmc2130
 
+vsense = 0.325
+GLOBAL_SCALER = 256
 TMC_FREQUENCY=12000000.
 
 registers = {
@@ -209,104 +211,24 @@ fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
 
-FieldFormatters = {
+FieldFormatters = tmc2130.FieldFormatters
+
+FieldFormatters.update({
     "reset":            (lambda v: "1(reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
-    "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
-    "shaft":            (lambda v: "1(Reverse)" if v else ""),
-    "VERSION":          (lambda v: "%#x" % v),
-    "CUR_A":            (lambda v: decode_signed_int(v, 9)),
-    "CUR_B":            (lambda v: decode_signed_int(v, 9)),
-    "MRES":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
-    "otpw":             (lambda v: "1(OvertempWarning!)" if v else ""),
-    "ot":               (lambda v: "1(OvertempError!)" if v else ""),
-    "s2ga":             (lambda v: "1(ShortToGND_A!)" if v else ""),
-    "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
-    "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
-    "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
-    "sgt":              (lambda v: decode_signed_int(v, 7)),
-}
-
-######################################################################
-# Field helpers
-######################################################################
-
-# Return the position of the first bit set in a mask
-def ffs(mask):
-    return (mask & -mask).bit_length() - 1
-
-# Decode two's complement signed integer
-def decode_signed_int(val, bits):
-    if ((val >> (bits - 1)) & 1):
-        return val - (1 << bits)
-    return val
-
-class FieldHelper:
-    def __init__(self, all_fields, field_formatters={}, registers=None):
-        self.all_fields = all_fields
-        self.field_formatters = field_formatters
-        self.registers = registers
-        if self.registers is None:
-            self.registers = {}
-        self.field_to_register = { f: r for r, fields in self.all_fields.items()
-                                   for f in fields }
-    def get_field(self, field_name, reg_value=None, reg_name=None):
-        # Returns value of the register field
-        if reg_name is None:
-            reg_name = self.field_to_register[field_name]
-        if reg_value is None:
-            reg_value = self.registers[reg_name]
-        mask = self.all_fields[reg_name][field_name]
-        return (reg_value & mask) >> ffs(mask)
-    def set_field(self, field_name, field_value, reg_value=None, reg_name=None):
-        # Returns register value with field bits filled with supplied value
-        if reg_name is None:
-            reg_name = self.field_to_register[field_name]
-        if reg_value is None:
-            reg_value = self.registers.get(reg_name, 0)
-        mask = self.all_fields[reg_name][field_name]
-        new_value = (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
-        self.registers[reg_name] = new_value
-        return new_value
-    def set_config_field(self, config, field_name, default, config_name=None):
-        # Allow a field to be set from the config file
-        if config_name is None:
-            config_name = "driver_" + field_name.upper()
-        reg_name = self.field_to_register[field_name]
-        mask = self.all_fields[reg_name][field_name]
-        maxval = mask >> ffs(mask)
-        if maxval == 1:
-            val = config.getboolean(config_name, default)
-        else:
-            val = config.getint(config_name, default, minval=0, maxval=maxval)
-        return self.set_field(field_name, val)
-    def pretty_format(self, reg_name, value):
-        # Provide a string description of a register
-        reg_fields = self.all_fields.get(reg_name, {})
-        reg_fields = sorted([(mask, name) for name, mask in reg_fields.items()])
-        fields = []
-        for mask, field_name in reg_fields:
-            fval = (value & mask) >> ffs(mask)
-            sval = self.field_formatters.get(field_name, str)(fval)
-            if not sval:
-                sval = 0
-            fields.append(" %s=%s" % (field_name, sval))
-        return "%-13s %08x%s" % (reg_name + ":", value, "".join(fields))
+})
 
 ######################################################################
 # Config reading helpers
 ######################################################################
 
 def bits_to_current(bits, sense_resistor, vsense_on):
-    sense_resistor += 0.020
-    vsense = 0.325
-    current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
+    #current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
+    current = (bits + 1) * (GLOBAL_SCALER *vsense) /(32*GLOBAL_SCALER*math.sqrt(2.)*sense_resistor)
     return round(current, 2)
 
 def calc_current_config(run_current, hold_current, sense_resistor):
-    vsense = 0.325
-    GLOBAL_SCALER = 256
     irun = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * run_current * \
         sense_resistor) / (GLOBAL_SCALER * vsense) -1 )
     ihold = int( (32 * GLOBAL_SCALER * math.sqrt(2.) * hold_current * \
@@ -322,24 +244,6 @@ def get_config_current(config):
         sense_resistor)
     return irun, ihold, sense_resistor
 
-def get_config_microsteps(config):
-    steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-             '8': 5, '4': 6, '2': 7, '1': 8}
-    return config.getchoice('microsteps', steps)
-
-def get_config_stealthchop(config, tmc_freq):
-    mres = get_config_microsteps(config)
-    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-    if not velocity:
-        return mres, False, 0
-    stepper_name = " ".join(config.get_name().split()[1:])
-    stepper_config = config.getsection(stepper_name)
-    step_dist = stepper_config.getfloat('step_distance')
-    step_dist_256 = step_dist / (1 << mres)
-    threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-    return mres, True, min( max(0, min(0xfffff, threshold)), 1048575)
-
-
 ######################################################################
 # TMC5160 printer object
 ######################################################################
@@ -353,7 +257,7 @@ class TMC5160:
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc5160_" + self.name, self)
-        # Add DUMP_TMC, INIT_TMC command
+        # Add DUMP_TMC, INIT_TMC commandself.fields.get_field
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
@@ -369,9 +273,9 @@ class TMC5160:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
-        self.fields = FieldHelper(fields, FieldFormatters, self.regs)
+        self.fields = tmc2130.FieldHelper(fields, FieldFormatters, self.regs)
         irun, ihold, self.sense_resistor = get_config_current(config)
-        msteps, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
+        msteps, en_pwm, thresh = tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
         set_config_field(config, "toff", 0)
@@ -438,7 +342,7 @@ class TMC5160:
             raise pins.error("tmc5160 virtual endstop only useful as endstop")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc5160 virtual endstop")
-        return TMC5160VirtualEndstop(self)
+        return tmc2130.TMC2130VirtualEndstop(self)
     def get_register(self, reg_name):
         reg = registers[reg_name]
         self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
@@ -463,10 +367,10 @@ class TMC5160:
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC5160 driver"
     def cmd_SET_TMC_CURRENT(self, params):
         gcode = self.printer.lookup_object('gcode')
-        vsense = bool(self.fields.get_field("vsense"))
+        vsense = True
         if 'HOLDCURRENT' in params:
             hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=2.)
+                'HOLDCURRENT', params, above=0., maxval=3.)
         else:
             hold_current = bits_to_current(
                     self.fields.get_field("IHOLD"),
@@ -484,11 +388,9 @@ class TMC5160:
             print_time = self.printer.lookup_object('toolhead')\
                              .get_last_move_time()
             min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
-            vsense_calc, irun, ihold = calc_current_config(run_current,
+            irun, ihold = calc_current_config(run_current,
                                             hold_current, self.sense_resistor)
-            if (vsense_calc != vsense):
-                self.fields.set_field("vsense", vsense_calc)
-                self.set_register("CHOPCONF", self.regs["CHOPCONF"], min_clock)
+            self.set_register("CHOPCONF", self.regs["CHOPCONF"], min_clock)
             self.fields.set_field("IHOLD", ihold)
             self.fields.set_field("IRUN", irun)
             self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"], min_clock)
@@ -528,39 +430,6 @@ class TMC5160:
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
         self.set_register(reg, self.regs[reg], min_clock)
-
-# Endstop wrapper that enables tmc5160 "sensorless homing"
-class TMC5160VirtualEndstop:
-    def __init__(self, tmc5160):
-        self.tmc5160 = tmc5160
-        if tmc5160.diag1_pin is None:
-            raise pins.error("tmc5160 virtual endstop requires diag1_pin")
-        ppins = tmc5160.printer.lookup_object('pins')
-        self.mcu_endstop = ppins.setup_pin('endstop', tmc5160.diag1_pin)
-        if self.mcu_endstop.get_mcu() is not tmc5160.spi.get_mcu():
-            raise pins.error("tmc5160 virtual endstop must be on same mcu")
-        self.en_pwm = tmc5160.fields.get_field("en_pwm_mode")
-        # Wrappers
-        self.get_mcu = self.mcu_endstop.get_mcu
-        self.add_stepper = self.mcu_endstop.add_stepper
-        self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
-        self.home_wait = self.mcu_endstop.home_wait
-        self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
-        self.TimeoutError = self.mcu_endstop.TimeoutError
-    def home_prepare(self):
-        self.tmc5160.fields.set_field("en_pwm_mode", 0)
-        self.tmc5160.fields.set_field("diag1_stall", 1)
-        self.tmc5160.set_register("GCONF", self.tmc5160.regs['GCONF'])
-        self.tmc5160.set_register("TCOOLTHRS", 0xfffff)
-        self.mcu_endstop.home_prepare()
-    def home_finalize(self):
-        self.tmc5160.fields.set_field("en_pwm_mode", self.en_pwm)
-        self.tmc5160.fields.set_field("diag1_stall", 0)
-        self.tmc5160.set_register("GCONF", self.tmc5160.regs['GCONF'])
-        self.tmc5160.set_register("TCOOLTHRS", 0)
-        self.mcu_endstop.home_finalize()
 
 def load_config_prefix(config):
     return TMC5160(config)
