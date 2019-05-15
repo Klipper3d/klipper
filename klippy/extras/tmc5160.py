@@ -280,7 +280,7 @@ class TMC5160:
             tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
-        set_config_field(config, "toff", 0)
+        set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 2)
         set_config_field(config, "fd3", 0)
