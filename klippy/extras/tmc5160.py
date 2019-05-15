@@ -225,7 +225,8 @@ FieldFormatters.update({
 
 def bits_to_current(bits, sense_resistor, vsense_on):
     #current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
-    current = (bits + 1) * (GLOBAL_SCALER *vsense) /(32*GLOBAL_SCALER*math.sqrt(2.)*sense_resistor)
+    current = (bits + 1) * (GLOBAL_SCALER *vsense) \
+        / (32*GLOBAL_SCALER*math.sqrt(2.)*sense_resistor)
     return round(current, 2)
 
 def calc_current_config(run_current, hold_current, sense_resistor):
@@ -257,7 +258,7 @@ class TMC5160:
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc5160_" + self.name, self)
-        # Add DUMP_TMC, INIT_TMC commandself.fields.get_field
+        # Add DUMP_TMC, INIT_TMC command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
@@ -275,7 +276,8 @@ class TMC5160:
         self.regs = collections.OrderedDict()
         self.fields = tmc2130.FieldHelper(fields, FieldFormatters, self.regs)
         irun, ihold, self.sense_resistor = get_config_current(config)
-        msteps, en_pwm, thresh = tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
+        msteps, en_pwm, thresh = \
+            tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
         set_config_field(config, "toff", 0)
