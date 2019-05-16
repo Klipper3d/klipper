@@ -21,6 +21,14 @@ class FirmwareRetraction:
         self.gcode.register_command('G10', self.cmd_G10)
         self.gcode.register_command('G11', self.cmd_G11)
 
+    def get_status(self, eventtime):
+        return {
+            "retract_length": self.retract_length,
+            "retract_speed": self.retract_speed,
+            "unretract_extra_length": self.unretract_extra_length,
+            "unretract_speed": self.unretract_speed
+        }
+
     def cmd_SET_RETRACTION(self, params):
         self.retract_length = self.gcode.get_float(
             'RETRACT_LENGTH',
