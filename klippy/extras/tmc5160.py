@@ -211,7 +211,7 @@ fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
 
-FieldFormatters = tmc2130.FieldFormatters
+FieldFormatters = dict(tmc2130.FieldFormatters)
 
 FieldFormatters.update({
     "reset":            (lambda v: "1(reset)" if v else ""),
