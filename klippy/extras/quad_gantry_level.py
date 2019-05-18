@@ -14,7 +14,9 @@ class QuadGantryLevel:
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
-        self.probe_helper.minimum_points(3)
+        if len(self.probe_helper.probe_points) != 4:
+            raise config.error(
+                "Need exactly 4 probe points for quad_gantry_level")
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
