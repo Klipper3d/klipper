@@ -108,3 +108,27 @@ position. Carefully readjust the headless screw into place. You need
 to find the right position so it is able to lower and raise the pin
 and the red light turns on and of. Use the `reset`, `pin_up` and
 `pin_down` commands to achieve this.
+
+Troubleshooting
+===============
+
+* If you are sure the wiring of the BL-Touch is correct and every
+  attempt to probe with the BL-Touch reports "BLTouch failed to verify
+  sensor state" then it may be necessary to add
+  `pin_up_touch_mode_reports_triggered: False` to the bltouch config
+  section. The BL-Touch v3 and many clones require this setting.
+
+* A BL-Touch v3 may not work correctly when its signal wire is
+  connected to the Z end-stop pin on some printer boards. The symptoms
+  of this problem are: the BL-Touch probe deploys, the printer
+  descends, the probe contacts a surface, the BL-Touch raises the
+  probe, the BL-Touch does not successfully notify the
+  micro-controller, and the printer continues to descend. The Z
+  end-stop pin on some printer boards have a capacitor to filter the
+  signal which the BL-Touch v3 may not support. The simplest solution
+  is to connect the BL-Touch v3 sensor wire to an available pin on the
+  printer board that is not associated with an end-stop (and thus is
+  unlikely to have a capacitor). An alternative solution is to
+  physically alter the printer board to disable the given end-stop
+  capacitor or to add a hardware "pull up resistor" to the BL-Touch v3
+  sensor wire.
