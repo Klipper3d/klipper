@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20190520: The SET_GCODE_OFFSET command has changed; update any g-code
+macros accordingly. The command will no longer apply the requested
+offset to the next G1 command. The old behavior may be approximated by
+using the new "MOVE=1" parameter.
+
 20190404: The Python host software packages were updated. Users will
 need to rerun the ~/klipper/scripts/install-octopi.sh script (or
 otherwise upgrade the python dependencies if not using a standard

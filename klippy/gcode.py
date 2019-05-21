@@ -601,6 +601,7 @@ class GCodeParser:
         self.extrude_factor = new_extrude_factor
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
     def cmd_SET_GCODE_OFFSET(self, params):
+        move_delta = [0., 0., 0., 0.]
         for axis, pos in self.axis2pos.items():
             if axis in params:
                 offset = self.get_float(axis, params)
@@ -610,9 +611,19 @@ class GCodeParser:
             else:
                 continue
             delta = offset - self.homing_position[pos]
-            self.last_position[pos] += delta
+            move_delta[pos] = delta
             self.base_position[pos] += delta
             self.homing_position[pos] = offset
+        # Move the toolhead the given offset if requested
+        if self.get_int('MOVE', params, 0):
+            speed = self.get_float('MOVE_SPEED', params,
+                                   self.speed * self.speed_factor, above=0.)
+            for pos, delta in enumerate(move_delta):
+                self.last_position[pos] += delta
+            try:
+                self.move_with_transform(self.last_position, speed)
+            except homing.EndstopError as e:
+                raise error(str(e))
     def cmd_M206(self, params):
         # Offset axes
         offsets = { self.axis2pos[a]: self.get_float(a, params)
