@@ -620,10 +620,10 @@ class MCU:
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
         ppins = self._printer.lookup_object('pins')
-        for name, value in self.get_constants().items():
-            if name.startswith("RESERVE_PINS_"):
+        for cname, value in self.get_constants().items():
+            if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
-                    ppins.reserve_pin(name, pin, name[14:])
+                    ppins.reserve_pin(name, pin, cname[13:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
