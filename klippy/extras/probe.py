@@ -250,6 +250,11 @@ class ProbePointsHelper:
         self.results = []
         self.busy = self.manual_probe = False
         self.gcode = self.toolhead = None
+        
+        # New configuration options for probe retries:
+        self.probe_accuracy_threshold = config.getfloat('probe_accuracy_threshold', 0.1)
+        self.probe_accuracy_retry = config.getint('probe_accuracy_retry', 1)
+        
     def minimum_points(self,n):
         if len(self.probe_points) < n:
             raise self.printer.config_error(
@@ -294,17 +299,66 @@ class ProbePointsHelper:
             manual_probe.ManualProbeHelper(self.printer, {},
                                            self._manual_probe_finalize)
     def _automatic_probe_point(self):
+        # Modified function to allow probe retries when probe threshold is reached
         positions = []
-        for i in range(self.samples):
-            try:
-                self.gcode.run_script_from_command("PROBE")
-            except self.gcode.error as e:
-                self._finalize(False)
-                raise
-            positions.append(self.toolhead.get_position())
-            if i < self.samples - 1:
-                # retract
-                self._lift_z(self.sample_retract_dist, add=True)
+        pos_min = float(0.0)
+        pos_max = float(0.0)
+        pos_dif = float(0.0)
+        probe_accuracy_retry_left = self.probe_accuracy_retry      
+        probe_until_done = True
+        
+
+# STARTING MODIFICATIONS        
+        
+        while probe_until_done:
+            #self.gcode.respond_info("GB: Clear positions")
+            positions = [] # Clear the measurement result before the for loop to start fresh
+            for i in range(self.samples):
+                try:
+                    #Probe the bed
+                    #self.gcode.respond_info("GB: Probe Bed")
+                    self.gcode.run_script_from_command("PROBE")
+                except self.gcode.error as e:
+                    self._finalize(False)
+                    raise
+                
+                #Add the position of the toolhead in a list
+                #self.gcode.respond_info("GB: Add position to list")
+                positions.append(self.toolhead.get_position())
+                
+                if len(positions) >= 2 and i == self.samples - 1:
+                    #self.gcode.respond_info("GB: Max samples reached. Time to measure")
+                    pos_min = min([position[2] for position in positions])
+                    pos_max = max([position[2] for position in positions])
+                    pos_dif = float(pos_max) - float(pos_min)
+
+                    if pos_dif >= self.probe_accuracy_threshold:
+                        #self.gcode.respond_info("GB: Threshold reached")
+                        probe_accuracy_retry_left -= 1
+                        self.gcode.respond_info(
+                             "probe_accuracy_threshold exceeded : %.3f\n"
+                             "min = %.3f     max = %.3f     retries left: %d \n" % (pos_dif, pos_min, pos_max, probe_accuracy_retry_left))
+                        if probe_accuracy_retry_left == 0:
+                            self.gcode.respond_info("No more retries. Measurement not accurate, but accepted\n")                             
+                            probe_until_done = False
+                        
+                    else:
+                        self.gcode.respond_info(
+                        "probe_accuracy_threshold within margin : %.3f\n"
+                        "min = %.3f     max = %.3f" % (pos_dif, pos_min, pos_max))
+                        probe_until_done = False
+
+                if probe_until_done:
+                    # retract between the probes
+                    #self.gcode.respond_info("GB: Retract")
+                    self._lift_z(self.sample_retract_dist, add=True) 
+                    
+                    
+# ENDING MODIFICATIONS                    
+
+        
+        
+        
         if self.samples_result == 1:
             # Calculate Average
             calculated_value = [sum([pos[i] for pos in positions]) /
