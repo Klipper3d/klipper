@@ -160,6 +160,8 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
+  idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
