@@ -34,11 +34,11 @@ i2c_init(Twi *p_twi, uint32_t rate)
 {
     enable_pclock(p_twi == TWI0 ? ID_TWI0 : ID_TWI1);
     if (p_twi == TWI0) {
-        gpio_peripheral(TWI0_SCL_GPIO, 'A', 0);
-        gpio_peripheral(TWI0_SDA_GPIO, 'A', 0);
+        gpio_peripheral(TWI0_SCL_GPIO, 'A', 1);
+        gpio_peripheral(TWI0_SDA_GPIO, 'A', 1);
     } else {
-        gpio_peripheral(TWI1_SCL_GPIO, 'A', 0);
-        gpio_peripheral(TWI1_SDA_GPIO, 'A', 0);
+        gpio_peripheral(TWI1_SCL_GPIO, 'A', 1);
+        gpio_peripheral(TWI1_SDA_GPIO, 'A', 1);
     }
     p_twi->TWI_IDR = 0xFFFFFFFF;
     (void)p_twi->TWI_SR;
