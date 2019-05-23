@@ -285,8 +285,10 @@ class ProbePointsHelper:
         if len(self.results) >= len(self.probe_points):
             self.gcode.reset_last_position()
             toolhead.get_last_move_time()
-            self.finalize_callback(self.probe_offsets, self.results)
-            return True
+            res = self.finalize_callback(self.probe_offsets, self.results)
+            if res != "retry":
+                return True
+            self.results = []
         # Move to next XY probe point
         curpos[:2] = self.probe_points[len(self.results)]
         toolhead.move(curpos, self.speed)
