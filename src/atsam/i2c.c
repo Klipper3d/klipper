@@ -101,14 +101,18 @@ void
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     Twi *p_twi = config.twi;
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = write_len;
     p_twi->TWI_MMR = TWI_MMR_DADR(config.addr);
     for (;;) {
         status = p_twi->TWI_SR;
         if (status & TWI_SR_NACK)
             shutdown("I2C NACK error encountered!");
-        if (!(status & TWI_SR_TXRDY))
+        if (!(status & TWI_SR_TXRDY)) {
+            if (!timer_is_before(timer_read_time(), timeout))
+                shutdown("I2C timeout occured");
             continue;
+        }
         if (!bytes_to_send)
             break;
         p_twi->TWI_THR = *write++;
@@ -119,23 +123,12 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
         ;
 }
 
-static void
-i2c_wait(Twi* p_twi, uint32_t bit, uint32_t timeout)
-{
-    for (;;) {
-        uint32_t flags = p_twi->TWI_SR;
-        if (flags & bit)
-            break;
-        if (!timer_is_before(timer_read_time(), timeout))
-            shutdown("I2C timeout occured");
-    }
-}
-
 void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
     Twi *p_twi = config.twi;
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = read_len;
     uint8_t stop = 0;
     p_twi->TWI_MMR = 0;
@@ -159,9 +152,11 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
             p_twi->TWI_CR = TWI_CR_STOP;
             stop = 1;
         }
-        i2c_wait(p_twi, TWI_SR_RXRDY, timer_read_time() + timer_from_us(5000));
-        if (!(status & TWI_SR_RXRDY))
+        if (!(status & TWI_SR_RXRDY)) {
+            if (!timer_is_before(timer_read_time(), timeout))
+                shutdown("I2C timeout occured");
             continue;
+        }
         *read++ = p_twi->TWI_RHR;
         bytes_to_send--;
     }
