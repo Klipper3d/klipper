@@ -306,10 +306,7 @@ class ProbePointsHelper:
         pos_dif = float(0.0)
         probe_accuracy_retry_left = self.probe_accuracy_retry      
         probe_until_done = True
-        
-
-# STARTING MODIFICATIONS        
-        
+               
         while probe_until_done:
             #self.gcode.respond_info("GB: Clear positions")
             positions = [] # Clear the measurement result before the for loop to start fresh
@@ -351,7 +348,11 @@ class ProbePointsHelper:
                 if probe_until_done:
                     # retract between the probes
                     #self.gcode.respond_info("GB: Retract")
-                    self._lift_z(self.sample_retract_dist, add=True) 
+                    self._lift_z(self.sample_retract_dist, add=True)                                
+
+            if self.samples == 1:
+              # If there's only one sample needed, we don't need the accuracy checks loop
+              probe_until_done = False
                     
                     
 # ENDING MODIFICATIONS                    
