@@ -226,6 +226,7 @@ class ProbePointsHelper:
         self.printer = config.get_printer()
         self.finalize_callback = finalize_callback
         self.probe_points = default_points
+        self.name = config.get_name()
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
             points = config.get('points').split('\n')
@@ -235,10 +236,7 @@ class ProbePointsHelper:
                                      for p in points]
             except:
                 raise config.error("Unable to parse probe points in %s" % (
-                    config.get_name()))
-        if len(self.probe_points) < 3:
-            raise config.error("Need at least 3 probe points for %s" % (
-                config.get_name()))
+                    self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
         self.probe_offsets = (0., 0., 0.)
@@ -255,6 +253,10 @@ class ProbePointsHelper:
         # Probe accuracy checks:
         self.probe_ac_thresh = config.getfloat('probe_ac_thresh', 0.1)
         self.probe_ac_retry = config.getint('probe_ac_retry', 1)
+    def minimum_points(self,n):
+        if len(self.probe_points) < n:
+            raise self.printer.config_error(
+                "Need at least %d probe points for %s" % (n, self.name))
     def get_lift_speed(self):
         return self.lift_speed
     def _lift_z(self, z_pos, add=False, speed=None):
