@@ -313,7 +313,7 @@ class ProbePointsHelper:
                     self._finalize(False)
                     raise
                 #Add the xyz position of the toolhead in a list
-                positions.append(self.toolhead.get_position()) 
+                positions.append(self.toolhead.get_position())
                 if len(positions) >= 2 and i == self.samples - 1:
                     #Max configured samples reached. Time to measure those
                     pos_min = min([position[2] for position in positions])
@@ -325,7 +325,7 @@ class ProbePointsHelper:
                         self.gcode.respond_info(
                              "probe_ac_thresh exceeded : %.3f\n"
                              "min = %.3f     max = %.3f     "
-                             "retries left: %d \n" % (pos_dif, pos_min, 
+                             "retries left: %d \n" % (pos_dif, pos_min,
                              pos_max, probe_ac_retry_left))
                         if probe_ac_retry_left == 0:
                             self.gcode.respond_info("No more retries. "
@@ -340,7 +340,7 @@ class ProbePointsHelper:
                         probe_until_done = False
                 if probe_until_done:
                     # retract between the probes
-                    self._lift_z(self.sample_retract_dist, add=True) 
+                    self._lift_z(self.sample_retract_dist, add=True)
             if self.samples == 1:
               # no accuracy checks needed if 1 sample: Break loop
               probe_until_done = False
