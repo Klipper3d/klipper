@@ -1,6 +1,6 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
@@ -50,6 +50,7 @@ class GCodeParser:
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_position = [0.0, 0.0, 0.0, 0.0]
+        self.speed = 25.
         self.speed_factor = 1. / 60.
         self.extrude_factor = 1.
         self.move_transform = self.move_with_transform = None
@@ -58,7 +59,6 @@ class GCodeParser:
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heaters = None
-        self.speed = 25. * 60.
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
@@ -102,16 +102,20 @@ class GCodeParser:
         self.position_with_transform = transform.get_position
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
-    def _get_current_position(self):
+    def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
         return p
+    def _get_gcode_speed(self):
+        return self.speed / self.speed_factor
+    def _get_gcode_speed_override(self):
+        return self.speed_factor * 60.
     def get_status(self, eventtime):
-        move_position = self._get_current_position()
+        move_position = self._get_gcode_position()
         busy = self.is_processing_data
         return {
-            'speed_factor': self.speed_factor * 60.,
-            'speed': self.speed,
+            'speed_factor': self._get_gcode_speed_override(),
+            'speed': self._get_gcode_speed(),
             'extrude_factor': self.extrude_factor,
             'abs_extrude': self.absoluteextrude,
             'busy': busy,
@@ -509,16 +513,15 @@ class GCodeParser:
                     # value relative to base coordinate position
                     self.last_position[3] = v + self.base_position[3]
             if 'F' in params:
-                speed = float(params['F'])
-                if speed <= 0.:
+                gcode_speed = float(params['F'])
+                if gcode_speed <= 0.:
                     raise error("Invalid speed in '%s'" % (
                         params['#original'],))
-                self.speed = speed
+                self.speed = gcode_speed * self.speed_factor
         except ValueError as e:
             raise error("Unable to parse move '%s'" % (params['#original'],))
         try:
-            self.move_with_transform(self.last_position,
-                                     self.speed * self.speed_factor)
+            self.move_with_transform(self.last_position, self.speed)
         except homing.EndstopError as e:
             raise error(str(e))
     def cmd_G4(self, params):
@@ -582,11 +585,12 @@ class GCodeParser:
     cmd_M114_when_not_ready = True
     def cmd_M114(self, params):
         # Get Current Position
-        p = self._get_current_position()
+        p = self._get_gcode_position()
         self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M220(self, params):
         # Set speed factor override percentage
         value = self.get_float('S', params, 100., above=0.) / (60. * 100.)
+        self.speed = self._get_gcode_speed() * value
         self.speed_factor = value
     def cmd_M221(self, params):
         # Set extrude factor override percentage
