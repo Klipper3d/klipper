@@ -255,7 +255,6 @@ class ProbePointsHelper:
         # Probe accuracy checks:
         self.probe_accuracy_threshold = config.getfloat('probe_accuracy_threshold', 0.1)
         self.probe_accuracy_retry = config.getint('probe_accuracy_retry', 1)
-        
     def get_lift_speed(self):
         return self.lift_speed
     def _lift_z(self, z_pos, add=False, speed=None):
