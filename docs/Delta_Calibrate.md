@@ -42,13 +42,14 @@ There are two ways to perform the probing - manual probing
 (`DELTA_CALIBRATE`). Automatic probing utilizes a hardware device
 capable of triggering when the toolhead is at a set distance from the
 bed. The manual probing method will move the head near the bed and
-then wait for the user to follow the
-["paper test"](Bed_Level.md#the-paper-test) steps. It is recommended
-to use manual probing for delta calibration. A number of common
-printer kits come with probes that are not sufficiently accurate
-(specifically, small differences in arm length can cause effector tilt
-which can skew an automatic probe). Manual probing only takes a few
-minutes and it eliminates error introduced by the probe.
+then wait for the user to follow the steps described at
+["the paper test"](Bed_Level.md#the-paper-test) to determine the
+actual distance between the nozzle and bed at the given location. It
+is recommended to use manual probing for delta calibration. A number
+of common printer kits come with probes that are not sufficiently
+accurate (specifically, small differences in arm length can cause
+effector tilt which can skew an automatic probe). Manual probing only
+takes a few minutes and it eliminates error introduced by the probe.
 
 To perform the basic probe, make sure the config has a
 [delta_calibrate] section defined and run:
