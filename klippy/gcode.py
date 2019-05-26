@@ -53,9 +53,10 @@ class GCodeParser:
         self.speed = 25.
         self.speed_factor = 1. / 60.
         self.extrude_factor = 1.
+        # G-Code state
+        self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
-        # G-Code state
         self.need_ack = False
         self.toolhead = self.fan = self.extruder = None
         self.heaters = None
@@ -485,7 +486,7 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'SET_GCODE_OFFSET', 'M206',
+        'SET_GCODE_OFFSET', 'M206', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -631,6 +632,43 @@ class GCodeParser:
             delta = offset - self.homing_position[pos]
             self.base_position[pos] += delta
             self.homing_position[pos] = offset
+    cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
+    def cmd_SAVE_GCODE_STATE(self, params):
+        state_name = self.get_str('NAME', params, 'default')
+        self.saved_states[state_name] = {
+            'absolute_coord': self.absolute_coord,
+            'absolute_extrude': self.absolute_extrude,
+            'base_position': list(self.base_position),
+            'last_position': list(self.last_position),
+            'homing_position': list(self.homing_position),
+            'speed': self.speed, 'speed_factor': self.speed_factor,
+            'extrude_factor': self.extrude_factor,
+        }
+    cmd_RESTORE_GCODE_STATE_help = "Restore a previously saved G-Code state"
+    def cmd_RESTORE_GCODE_STATE(self, params):
+        state_name = self.get_str('NAME', params, 'default')
+        state = self.saved_states.get(state_name)
+        if state is None:
+            raise error("Unknown g-code state: %s" % (state_name,))
+        # Restore state
+        self.absolute_coord = state['absolute_coord']
+        self.absolute_extrude = state['absolute_extrude']
+        self.base_position = list(state['base_position'])
+        self.homing_position = list(state['homing_position'])
+        self.speed = state['speed']
+        self.speed_factor = state['speed_factor']
+        self.extrude_factor = state['extrude_factor']
+        # Restore the relative E position
+        e_diff = self.last_position[3] - state['last_position'][3]
+        self.base_position[3] += e_diff
+        # Move the toolhead back if requested
+        if self.get_int('MOVE', params, 0):
+            speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
+            self.last_position[:3] = state['last_position'][:3]
+            try:
+                self.move_with_transform(self.last_position, speed)
+            except homing.EndstopError as e:
+                raise error(str(e))
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
