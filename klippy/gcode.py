@@ -626,11 +626,12 @@ class GCodeParser:
                 raise error(str(e))
     def cmd_M206(self, params):
         # Offset axes
-        offsets = { self.axis2pos[a]: self.get_float(a, params)
+        offsets = { self.axis2pos[a]: -self.get_float(a, params)
                     for a in 'XYZ' if a in params }
-        for p, offset in offsets.items():
-            self.base_position[p] -= self.homing_position[p] + offset
-            self.homing_position[p] = -offset
+        for pos, offset in offsets.items():
+            delta = offset - self.homing_position[pos]
+            self.base_position[pos] += delta
+            self.homing_position[pos] = offset
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
