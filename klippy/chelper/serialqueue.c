@@ -667,7 +667,8 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
     // Fill header / trailer
     out->len += MESSAGE_TRAILER_SIZE;
     out->msg[MESSAGE_POS_LEN] = out->len;
-    out->msg[MESSAGE_POS_SEQ] = MESSAGE_DEST | (sq->send_seq & MESSAGE_SEQ_MASK);
+    out->msg[MESSAGE_POS_SEQ] = (MESSAGE_DEST
+                                 | (sq->send_seq & MESSAGE_SEQ_MASK));
     uint16_t crc = crc16_ccitt(out->msg, out->len - MESSAGE_TRAILER_SIZE);
     out->msg[out->len - MESSAGE_TRAILER_CRC] = crc >> 8;
     out->msg[out->len - MESSAGE_TRAILER_CRC+1] = crc & 0xff;
@@ -958,8 +959,8 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
 // Schedule the transmission of a message on the serial port at a
 // given time and priority.
 void __visible
-serialqueue_send(struct serialqueue *sq, struct command_queue *cq
-                 , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock)
+serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
+                 , int len, uint64_t min_clock, uint64_t req_clock)
 {
     struct queue_message *qm = message_fill(msg, len);
     qm->min_clock = min_clock;

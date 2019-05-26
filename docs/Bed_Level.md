@@ -35,7 +35,9 @@ leveling.
 For printers with an "automatic Z probe" be sure to calibrate the
 probe following the directions in the
 [Probe Calibrate](Probe_Calibrate.md) document. For delta printers,
-see the [Delta Calibrate](Delta_Calibrate.md) document.
+see the [Delta Calibrate](Delta_Calibrate.md) document. For printers
+with bed screws and traditional Z endstops, see the
+[Manual Level](Manual_Level.md) document.
 
 During calibration it may be necessary to set the printer's Z
 `position_min` to a negative number (eg, `position_min = -2`). The
@@ -103,8 +105,10 @@ it is easily accounted for later in the calibration process.
 **Use an automated tool to determine precise Z heights!**
 
 Klipper has several helper scripts available (eg, MANUAL_PROBE,
-Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). Choose one of
-them and follow the directions in the documents described above.
+Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). See the
+documents
+[described above](#choose-the-appropriate-calibration-mechanism) to
+choose one of them.
 
 Run the appropriate command in the OctoPrint terminal window. The
 script will prompt for user interaction in the OctoPrint terminal

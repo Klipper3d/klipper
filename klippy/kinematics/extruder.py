@@ -60,8 +60,8 @@ class PrinterExtruder:
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
-        gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", self.name,
-                                   self.cmd_SET_PRESSURE_ADVANCE,
+        gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
+                                   self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
     def get_heater(self):
         return self.heater
@@ -216,7 +216,7 @@ class PrinterExtruder:
                "pressure_advance_lookahead_time: %.6f" % (
                    pressure_advance, pressure_advance_lookahead_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcode.respond_info(msg)
+        gcode.respond_info(msg, log=False)
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
@@ -242,7 +242,8 @@ def add_printer_objects(config):
                 printer.add_object('extruder0', pe)
                 continue
             break
-        printer.add_object(section, PrinterExtruder(config.getsection(section), i))
+        pe = PrinterExtruder(config.getsection(section), i)
+        printer.add_object(section, pe)
 
 def get_printer_extruders(printer):
     out = []

@@ -29,6 +29,11 @@ struct gpio_regs {
     volatile uint32_t setdataout;
 };
 
+DECL_ENUMERATION_RANGE("pin", "gpio0_0", GPIO(0, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio1_0", GPIO(1, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio2_0", GPIO(2, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio3_0", GPIO(3, 0), 32);
+
 static struct gpio_regs *digital_regs[] = {
     (void*)0x44e07000, (void*)0x4804c000, (void*)0x481ac000, (void*)0x481ae000
 };
@@ -94,7 +99,7 @@ gpio_out_setup(uint8_t pin, uint8_t val)
         goto fail;
     struct gpio_regs *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = GPIO2BIT(pin);
-    struct gpio_out rv = (struct gpio_out){ .reg=&regs->cleardataout, .bit=bit };
+    struct gpio_out rv = (struct gpio_out){.reg=&regs->cleardataout, .bit=bit};
     gpio_out_write(rv, val);
     regs->oe &= ~bit;
     *MUXREG(mux_offset) = 0x0f;

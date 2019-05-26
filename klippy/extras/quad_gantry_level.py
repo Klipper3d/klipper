@@ -1,6 +1,6 @@
 # Mechanicaly conforms a moving gantry to the bed with 4 Z steppers
 #
-# Copyright (C) 2018  Maks Zolin <mzolin@mzbot.us>
+# Copyright (C) 2018  Maks Zolin <mzolin@vorondesign.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -9,9 +9,14 @@ import probe
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.max_adjust = config.getfloat("max_adjust", 4, above=0)
+        self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        if len(self.probe_helper.probe_points) != 4:
+            raise config.error(
+                "Need exactly 4 probe points for quad_gantry_level")
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
@@ -22,7 +27,8 @@ class QuadGantryLevel:
             raise config.error("Unable to parse gantry_corners in %s" % (
                 config.get_name()))
         if len(self.gantry_corners) < 2:
-            raise config.error("quad_gantry_level requires at least two gantry_corners")
+            raise config.error(
+                "quad_gantry_level requires at least two gantry_corners")
         self.z_steppers = []
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
@@ -33,36 +39,63 @@ class QuadGantryLevel:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         z_steppers = kin.get_steppers('Z')
         if len(z_steppers) != 4:
-            raise self.printer.config_error("quad_gantry_level needs exactly 4 z steppers")
+            raise self.printer.config_error(
+                "quad_gantry_level needs exactly 4 z steppers")
         self.z_steppers = z_steppers
-    cmd_QUAD_GANTRY_LEVEL_help = "Conform a moving, twistable gantry to the shape of a stationary bed"
+    cmd_QUAD_GANTRY_LEVEL_help = (
+        "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, params):
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
-        logging.info("quad_gantry_level Calculating gantry geometry with: %s", positions)
-        p1 = [positions[0][0] + offsets[0],positions[0][2]]
-        p2 = [positions[1][0] + offsets[0],positions[1][2]]
-        p3 = [positions[2][0] + offsets[0],positions[2][2]]
-        p4 = [positions[3][0] + offsets[0],positions[3][2]]
+        # Mirror our perspective so the adjustments make sense
+        # from the perspective of the gantry
+        z_positions = [self.horizontal_move_z - p[2] for p in positions]
+        points_message = "Gantry-relative probe points:\n%s\n" % (
+            " ".join(["%s: %.6f" % (z_id, z_positions[z_id])
+                for z_id in range(len(z_positions))]))
+        self.gcode.respond_info(points_message)
+        p1 = [positions[0][0] + offsets[0],z_positions[0]]
+        p2 = [positions[1][0] + offsets[0],z_positions[1]]
+        p3 = [positions[2][0] + offsets[0],z_positions[2]]
+        p4 = [positions[3][0] + offsets[0],z_positions[3]]
         f1 = self.linefit(p1,p4)
         f2 = self.linefit(p2,p3)
         logging.info("quad_gantry_level f1: %s, f2: %s" % (f1,f2))
-        a1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[0][0])]
-        a2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[0][0])]
-        b1 = [positions[0][1] + offsets[1], self.plot(f1,self.gantry_corners[1][0])]
-        b2 = [positions[1][1] + offsets[1], self.plot(f2,self.gantry_corners[1][0])]
-        logging.info("quad_gantry_level a1: %s a2: %s b1: %s b2: %s\n" % (a1,a2,b1,b2))
+        a1 = [positions[0][1] + offsets[1],
+              self.plot(f1,self.gantry_corners[0][0])]
+        a2 = [positions[1][1] + offsets[1],
+              self.plot(f2,self.gantry_corners[0][0])]
+        b1 = [positions[0][1] + offsets[1],
+              self.plot(f1,self.gantry_corners[1][0])]
+        b2 = [positions[1][1] + offsets[1],
+              self.plot(f2,self.gantry_corners[1][0])]
         af = self.linefit(a1,a2)
         bf = self.linefit(b1,b2)
         logging.info("quad_gantry_level af: %s, bf: %s" % (af,bf))
-        z_adjust = [0,0,0,0]
-        z_adjust[0] = self.plot(af,self.gantry_corners[0][1])
-        z_adjust[1] = self.plot(af,self.gantry_corners[1][1])
-        z_adjust[2] = self.plot(bf,self.gantry_corners[1][1])
-        z_adjust[3] = self.plot(bf,self.gantry_corners[0][1])
-        z_avg = sum(z_adjust)/len(z_adjust)
-        for z_id in range(4):
-            z_adjust[z_id] = z_avg - z_adjust[z_id]
+        z_height = [0,0,0,0]
+        z_height[0] = self.plot(af,self.gantry_corners[0][1])
+        z_height[1] = self.plot(af,self.gantry_corners[1][1])
+        z_height[2] = self.plot(bf,self.gantry_corners[1][1])
+        z_height[3] = self.plot(bf,self.gantry_corners[0][1])
+
+        ainfo = zip(["z","z1","z2","z3"], z_height[0:4])
+        apos = " ".join(["%s: %06f" % (x) for x in ainfo])
+        self.gcode.respond_info("Actuator Positions:\n" + apos)
+
+        z_ave = sum(z_height) / len(z_height)
+        self.gcode.respond_info("Average: %0.6f" % z_ave)
+        z_adjust = []
+        for z in z_height:
+            z_adjust.append(z_ave - z)
+
+        adjust_max = max(z_adjust)
+        if adjust_max > self.max_adjust:
+            self.gcode.respond_error(
+                "Aborting quad_gantry_level " +
+                "required adjustment %0.6f " % ( adjust_max ) +
+                "is greater than max_adjust %0.6f" % (self.max_adjust))
+            return
+
         try:
             self.adjust_steppers(z_adjust)
         except:
@@ -87,16 +120,18 @@ class QuadGantryLevel:
         self.gcode.respond_info(msg)
         toolhead = self.printer.lookup_object('toolhead')
         cur_pos = toolhead.get_position()
-        speed = self.probe_helper.get_lift_speed() / 2
+        speed = self.probe_helper.get_lift_speed()
+        # Disable moves on all Z steppers
         for s in self.z_steppers:
             s.set_ignore_move(True)
         for z_id in range(len(z_adjust)):
             stepper = self.z_steppers[z_id]
             stepper.set_ignore_move(False)
-            cur_pos[2] = cur_pos[2] - z_adjust[z_id]
+            cur_pos[2] = cur_pos[2] + z_adjust[z_id]
             toolhead.move(cur_pos, speed)
             toolhead.set_position(cur_pos)
             stepper.set_ignore_move(True)
+        # Re-enable moves on all Z steppers
         for s in self.z_steppers:
             s.set_ignore_move(False)
         self.gcode.reset_last_position()

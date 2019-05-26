@@ -17,13 +17,19 @@
  * Pin mappings
  ****************************************************************/
 
+DECL_ENUMERATION_RANGE("pin", "P0.0", GPIO(0, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "P1.0", GPIO(1, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "P2.0", GPIO(2, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "P3.0", GPIO(3, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "P4.0", GPIO(4, 0), 32);
+
 static LPC_GPIO_TypeDef * const digital_regs[] = {
     LPC_GPIO0, LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4
 };
 
 // Set the mode and extended function of a pin
 void
-gpio_peripheral(uint32_t gpio, int func, int pullup)
+gpio_peripheral(uint32_t gpio, int func, int pull_up)
 {
     uint32_t bank_pos = GPIO2PORT(gpio) * 2, pin_pos = (gpio % 32) * 2;
     if (pin_pos >= 32) {
@@ -31,12 +37,12 @@ gpio_peripheral(uint32_t gpio, int func, int pullup)
         bank_pos++;
     }
     uint32_t sel_bits = (func & 0x03) << pin_pos, mask = ~(0x03 << pin_pos);
-    uint32_t mode_bits = (pullup ? 0x00 : 0x02) << pin_pos;
+    uint32_t mode = (pull_up ? (pull_up > 0 ? 0x00 : 0x03) : 0x02) << pin_pos;
     volatile uint32_t *pinsel = &LPC_PINCON->PINSEL0;
     volatile uint32_t *pinmode = &LPC_PINCON->PINMODE0;
     irqstatus_t flag = irq_save();
     pinsel[bank_pos] = (pinsel[bank_pos] & mask) | sel_bits;
-    pinmode[bank_pos] = (pinmode[bank_pos] & mask) | mode_bits;
+    pinmode[bank_pos] = (pinmode[bank_pos] & mask) | mode;
     irq_restore(flag);
 }
 

@@ -108,7 +108,7 @@ Sensors = {
         't1': 20., 'r1': 126800., 't2': 150., 'r2': 1360.,
         't3': 300., 'r3': 80.65 },
     "NTC 100K beta 3950": { 't1': 25., 'r1': 100000., 'beta': 3950. },
-    "Honeywell 100K 135-104LAG-J01": { 't1': 25., 'r1': 100000., 'beta': 3974. },
+    "Honeywell 100K 135-104LAG-J01": { 't1': 25., 'r1': 100000., 'beta': 3974.},
     "NTC 100K MGB18-104F39050L32": { 't1': 25., 'r1': 100000., 'beta': 4100. },
 }
 
@@ -117,9 +117,9 @@ def load_config(config):
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: PrinterThermistor(config, params))
-        pheater.add_sensor(sensor_type, func)
+        pheater.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     thermistor = CustomThermistor(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(thermistor.name, thermistor.create)
+    pheater.add_sensor_factory(thermistor.name, thermistor.create)

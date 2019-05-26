@@ -8,8 +8,11 @@
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/irq.h" // irq_save
 #include "board/serial_irq.h" // serial_rx_data
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
+
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "P0.3,P0.2");
 
 void
 serial_init(void)
@@ -27,8 +30,8 @@ serial_init(void)
     LPC_UART0->FCR = 0x01;
 
     // Setup pins
-    gpio_peripheral(GPIO(0, 2), 1, 0);
     gpio_peripheral(GPIO(0, 3), 1, 0);
+    gpio_peripheral(GPIO(0, 2), 1, 0);
 
     // Enable receive irq
     NVIC_SetPriority(UART0_IRQn, 0);

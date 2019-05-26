@@ -31,7 +31,6 @@ class SerialReader:
         # Message handlers
         handlers = {
             '#unknown': self.handle_unknown, '#output': self.handle_output,
-            'shutdown': self.handle_output, 'is_shutdown': self.handle_output
         }
         self.handlers = { (k, None): v for k, v in handlers.items() }
     def _bg_thread(self):
@@ -59,7 +58,7 @@ class SerialReader:
             try:
                 if self.baud:
                     self.ser = serial.Serial(
-                        self.serialport, self.baud, timeout=0)
+                        self.serialport, self.baud, timeout=0, exclusive=True)
                 else:
                     self.ser = open(self.serialport, 'rb+')
             except (OSError, IOError, serial.SerialException) as e:
@@ -285,7 +284,7 @@ def stk500v2_leave(ser, reactor):
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
     # First try opening the port at a different baud
-    ser = serial.Serial(serialport, 2400, timeout=0)
+    ser = serial.Serial(serialport, 2400, timeout=0, exclusive=True)
     ser.read(1)
     reactor.pause(reactor.monotonic() + 0.100)
     # Then toggle DTR

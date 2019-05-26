@@ -29,7 +29,7 @@ AVR micro-controllers
 In general, the Arduino project is a good reference for bootloaders
 and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
 In particular, the "boards.txt" file:
-https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt
+[https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt](https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt)
 is a useful reference.
 
 To flash a bootloader itself, the AVR chips require an external
@@ -115,8 +115,9 @@ device.
 
 The Teensy++ device from pjrc.com comes with a proprietary bootloader.
 It requires a custom flashing tool from
-https://github.com/PaulStoffregen/teensy_loader_cli . One can flash an
-application with it using something like:
+[https://github.com/PaulStoffregen/teensy_loader_cli](https://github.com/PaulStoffregen/teensy_loader_cli).
+One can flash an application with it using something like:
+
 ```
 teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 ```
@@ -153,8 +154,10 @@ Due, this sequence can be accomplished by setting a baud rate of 1200
 on the "programming usb port" (the USB port closest to the power
 supply).
 
-The code at https://github.com/shumatech/BOSSA can be used to program
-the SAM3. It is recommended to use version 1.9 or later.
+The code at
+[https://github.com/shumatech/BOSSA](https://github.com/shumatech/BOSSA)
+can be used to program the SAM3. It is recommended to use version 1.9
+or later.
 
 To flash an application use something like:
 ```
@@ -172,8 +175,10 @@ serial port or from USB.
 To enable the ROM, the "erase" pin is held high during a reset, which
 erases the flash contents, and causes the ROM to run.
 
-The code at https://github.com/shumatech/BOSSA can be used to program
-the SAM4. It is necessary to use version `1.8.0` or higher.
+The code at
+[https://github.com/shumatech/BOSSA](https://github.com/shumatech/BOSSA)
+can be used to program the SAM4. It is necessary to use version
+`1.8.0` or higher.
 
 To flash an application use something like:
 ```
@@ -187,7 +192,7 @@ The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
 interface. This is commonly done with a dedicated SWD hardware dongle.
 Alternatively, it appears one can use a Raspberry Pi with OpenOCD as a
 programmer (see:
-https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi
+[https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi](https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi)
 ).
 
 Unfortunately, there are two common bootloaders deployed on the
@@ -225,8 +230,8 @@ stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 Note that if one is using a Raspberry Pi for the 3.3V serial, the
 stm32flash protocol uses a serial parity mode which the Raspberry Pi's
 "miniuart" does not support. See
-https://www.raspberrypi.org/documentation/configuration/uart.md for
-details on enabling the full uart on the Raspberry Pi GPIO pins.
+[https://www.raspberrypi.org/documentation/configuration/uart.md](https://www.raspberrypi.org/documentation/configuration/uart.md)
+for details on enabling the full uart on the Raspberry Pi GPIO pins.
 
 After flashing, set both "boot 0" and "boot 1" back to low so that
 future resets boot from flash.
@@ -234,7 +239,7 @@ future resets boot from flash.
 ## STM32F103 with stm32duino bootloader ##
 
 The "stm32duino" project has a USB capable bootloader - see:
-https://github.com/rogerclarkmelbourne/STM32duino-bootloader
+[https://github.com/rogerclarkmelbourne/STM32duino-bootloader](https://github.com/rogerclarkmelbourne/STM32duino-bootloader)
 
 This bootloader can be flashed via 3.3V serial with something like:
 ```
@@ -260,13 +265,14 @@ LPC176x micro-controllers (Smoothieboards)
 ==========================================
 
 This document does not describe the method to flash a bootloader
-itself - see: http://smoothieware.org/flashing-the-bootloader for
-further information on that topic.
+itself - see:
+[http://smoothieware.org/flashing-the-bootloader](http://smoothieware.org/flashing-the-bootloader)
+for further information on that topic.
 
 It is common for Smoothieboards to come with a bootloader from:
-https://github.com/triffid/LPC17xx-DFU-Bootloader . When using this
-bootloader the application must be compiled with a start address of
-16KiB. The easiest way to flash an application with this bootloader is
-to copy the application file (eg, `out/klipper.bin`) to a file named
-`firmware.bin` on an SD card, and then to reboot the micro-controller
-with that SD card.
+[https://github.com/triffid/LPC17xx-DFU-Bootloader](https://github.com/triffid/LPC17xx-DFU-Bootloader).
+When using this bootloader the application must be compiled with a
+start address of 16KiB. The easiest way to flash an application with
+this bootloader is to copy the application file (eg,
+`out/klipper.bin`) to a file named `firmware.bin` on an SD card, and
+then to reboot the micro-controller with that SD card.

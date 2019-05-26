@@ -53,9 +53,7 @@ class Move:
             return
         # Allow extruder to calculate its maximum junction
         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
-        # Find max velocity using approximated centripetal velocity as
-        # described at:
-        # https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
+        # Find max velocity using "approximated centripetal velocity"
         axes_d = self.axes_d
         prev_axes_d = prev_move.axes_d
         junction_cos_theta = -((axes_d[0] * prev_axes_d[0]
@@ -66,7 +64,8 @@ class Move:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
-        R = self.toolhead.junction_deviation * sin_theta_d2 / (1. - sin_theta_d2)
+        R = (self.toolhead.junction_deviation * sin_theta_d2
+             / (1. - sin_theta_d2))
         tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
         move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * self.accel
         prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
@@ -205,6 +204,8 @@ class ToolHead:
         self.mcu = self.all_mcus[0]
         self.move_queue = MoveQueue()
         self.commanded_pos = [0., 0., 0., 0.]
+        self.printer.register_event_handler("gcode:request_restart",
+                                            self._handle_request_restart)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
         # Velocity and acceleration control
@@ -261,7 +262,8 @@ class ToolHead:
             raise config.error(msg)
         # SET_VELOCITY_LIMIT command
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('SET_VELOCITY_LIMIT', self.cmd_SET_VELOCITY_LIMIT,
+        gcode.register_command('SET_VELOCITY_LIMIT',
+                               self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
     # Print time tracking
@@ -416,6 +418,8 @@ class ToolHead:
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
                  'printing_time': print_time - last_print_start_time }
+    def _handle_request_restart(self, print_time):
+        self.motor_off()
     def _handle_shutdown(self):
         self.move_queue.reset()
         self.reset_print_time()
@@ -458,7 +462,7 @@ class ToolHead:
                    max_velocity, max_accel, self.requested_accel_to_decel,
                    square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        gcode.respond_info(msg)
+        gcode.respond_info(msg, log=False)
     def cmd_M204(self, params):
         gcode = self.printer.lookup_object('gcode')
         if 'P' in params and 'T' in params and 'S' not in params:

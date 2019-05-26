@@ -12,7 +12,7 @@
 #include "irq.h" // irq_enable
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, CONFIG_MCU);
+DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 
 /****************************************************************

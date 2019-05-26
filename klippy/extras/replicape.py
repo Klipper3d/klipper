@@ -7,7 +7,7 @@ import logging
 import pins, mcu, bus
 
 REPLICAPE_MAX_CURRENT = 3.84
-REPLICAPE_SHIFT_REGISTER_BUS = 0x0101
+REPLICAPE_SHIFT_REGISTER_BUS = "spidev1.1"
 REPLICAPE_PCA9685_BUS = 2
 REPLICAPE_PCA9685_ADDRESS = 0x70
 REPLICAPE_PCA9685_CYCLE_TIME = .001
@@ -108,6 +108,32 @@ class ReplicapeDACEnable:
         else:
             self.pwm.set_pwm(print_time, 0.)
 
+SERVO_PINS = {
+    "servo0": ("pwmchip0/pwm0", "gpio0_30", "gpio1_18"), # P9_11, P9_14
+    "servo1": ("pwmchip0/pwm1", "gpio3_17", "gpio1_19"), # P9_28, P9_16
+}
+
+class servo_pwm:
+    def __init__(self, replicape, pin_params):
+        config_name = pin_params['pin']
+        pwm_pin, resv1, resv2 = SERVO_PINS[config_name]
+        pin_params = dict(pin_params)
+        pin_params['pin'] = pwm_pin
+        # Setup actual pwm pin using linux hardware pwm on host
+        self.mcu_pwm = replicape.host_mcu.setup_pin("pwm", pin_params)
+        self.get_mcu = self.mcu_pwm.get_mcu
+        self.setup_max_duration = self.mcu_pwm.setup_max_duration
+        self.setup_start_value = self.mcu_pwm.setup_start_value
+        self.set_pwm = self.mcu_pwm.set_pwm
+        # Reserve pins to warn user of conflicts
+        pru_mcu = replicape.mcu_pwm_enable.get_mcu()
+        printer = pru_mcu.get_printer()
+        ppins = printer.lookup_object('pins')
+        ppins.reserve_pin(pru_mcu.get_name(), resv1, config_name)
+        ppins.reserve_pin(pru_mcu.get_name(), resv2, config_name)
+    def setup_cycle_time(self, cycle_time, hardware_pwm=False):
+        self.mcu_pwm.setup_cycle_time(cycle_time, True);
+
 ReplicapeStepConfig = {
     'disable': None,
     '1': (1<<7)|(1<<5), '2': (1<<7)|(1<<5)|(1<<6), 'spread2': (1<<5),
@@ -135,6 +161,8 @@ class Replicape:
             "power_hotbed": (pca9685_pwm, 4),
             "power_fan0": (pca9685_pwm, 7), "power_fan1": (pca9685_pwm, 8),
             "power_fan2": (pca9685_pwm, 9), "power_fan3": (pca9685_pwm, 10) }
+        self.servo_pins = {
+            "servo0": 3, "servo1": 2 }
         # Setup stepper config
         self.last_stepper_time = 0.
         self.stepper_dacs = {}
@@ -159,11 +187,7 @@ class Replicape:
             self.stepper_dacs[channel] = cur / REPLICAPE_MAX_CURRENT
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
         self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
-        if config.getboolean('servo0_enable', False):
-            shift_registers[1] |= 1
-        if config.getboolean('servo1_enable', False):
-            shift_registers[2] |= 1
-        self.sr_disabled = tuple(reversed(shift_registers))
+        self.sr_disabled = list(reversed(shift_registers))
         if [i for i in [0, 1, 2] if 11+i in self.stepper_dacs]:
             # Enable xyz steppers
             shift_registers[0] &= ~1
@@ -173,7 +197,7 @@ class Replicape:
         if (config.getboolean('standstill_power_down', False)
             and self.stepper_dacs):
             shift_registers[4] &= ~1
-        self.sr_enabled = tuple(reversed(shift_registers))
+        self.sr_enabled = list(reversed(shift_registers))
         self.sr_spi = bus.MCU_SPI(self.host_mcu, REPLICAPE_SHIFT_REGISTER_BUS,
                                   None, 0, 50000000, self.sr_disabled)
         self.sr_spi.spi_send(self.sr_disabled)
@@ -211,10 +235,17 @@ class Replicape:
         self.sr_spi.spi_send(sr, minclock=clock, reqclock=clock)
     def setup_pin(self, pin_type, pin_params):
         pin = pin_params['pin']
-        if pin not in self.pins:
-            raise pins.error("Unknown replicape pin %s" % (pin,))
-        pclass, channel = self.pins[pin]
-        return pclass(self, channel, pin_type, pin_params)
+        if pin in self.pins:
+            pclass, channel = self.pins[pin]
+            return pclass(self, channel, pin_type, pin_params)
+        elif pin in self.servo_pins:
+            # enable servo pins via shift registers
+            index = self.servo_pins[pin]
+            self.sr_enabled[index] |= 1
+            self.sr_disabled[index] |= 1
+            self.sr_spi.spi_send(self.sr_disabled)
+            return servo_pwm(self, pin_params)
+        raise pins.error("Unknown replicape pin %s" % (pin,))
 
 def load_config(config):
     return Replicape(config)

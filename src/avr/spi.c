@@ -11,15 +11,22 @@
 #include "pgm.h" // READP
 #include "sched.h" // sched_shutdown
 
+DECL_ENUMERATION("spi_bus", "spi", 0);
+
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
-static const uint8_t SS = GPIO('B', 2), SCK = GPIO('B', 5);
-static const uint8_t MOSI = GPIO('B', 3), MISO = GPIO('B', 4);
+static const uint8_t MISO = GPIO('B', 4), MOSI = GPIO('B', 3);
+static const uint8_t SCK = GPIO('B', 5), SS = GPIO('B', 2);
+DECL_CONSTANT_STR("BUS_PINS_spi", "PB4,PB3,PB5");
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
-static const uint8_t SS = GPIO('B', 4), SCK = GPIO('B', 7);
-static const uint8_t MOSI = GPIO('B', 5), MISO = GPIO('B', 6);
-#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
-static const uint8_t SS = GPIO('B', 0), SCK = GPIO('B', 1);
-static const uint8_t MOSI = GPIO('B', 2), MISO = GPIO('B', 3);
+static const uint8_t MISO = GPIO('B', 6), MOSI = GPIO('B', 5);
+static const uint8_t SCK = GPIO('B', 7), SS = GPIO('B', 4);
+DECL_CONSTANT_STR("BUS_PINS_spi", "PB6,PB5,PB7");
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 \
+      || CONFIG_MACH_atmega32u4 || CONFIG_MACH_atmega1280 \
+      || CONFIG_MACH_atmega2560
+static const uint8_t MISO = GPIO('B', 3), MOSI = GPIO('B', 2);
+static const uint8_t SCK = GPIO('B', 1), SS = GPIO('B', 0);
+DECL_CONSTANT_STR("BUS_PINS_spi", "PB3,PB2,PB1");
 #endif
 
 static void
@@ -66,28 +73,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     }
 
     // Setup mode
-    config.spcr |= (1<<SPE) | (1<<MSTR);
-    switch(mode) {
-        case 0: {
-            // MODE 0 - CPOL=0, CPHA=0
-            break;
-        }
-        case 1: {
-            // MODE 1 - CPOL=0, CPHA=1
-            config.spcr |= (1<<CPHA);
-            break;
-        }
-        case 2: {
-            // MODE 2 - CPOL=1, CPHA=0
-            config.spcr |= (1<<CPOL);
-            break;
-        }
-        case 3: {
-            // MODE 3 - CPOL=1, CPHA=1
-            config.spcr |= (1<<CPOL) | (1<<CPHA);
-            break;
-        }
-    }
+    config.spcr |= (1<<SPE) | (1<<MSTR) | (mode << CPHA);
 
     return config;
 }

@@ -33,10 +33,15 @@ static const uint8_t adc_pins[] PROGMEM = {
 #endif
 };
 
+// The atmega168/328 have two analog only pins
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 2);
+#endif
+
 enum { ADMUX_DEFAULT = 0x40 };
 enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };
 
-DECL_CONSTANT(ADC_MAX, 1023);
+DECL_CONSTANT("ADC_MAX", 1023);
 
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)

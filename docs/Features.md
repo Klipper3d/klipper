@@ -116,7 +116,9 @@ Klipper supports many standard 3d printer features:
   document for more information.
 
 * Sample configuration files are available for many common printers.
-  Check the [config directory](../config/) for a list.
+  Check the
+  [config directory](https://github.com/KevinOConnor/klipper/tree/master/config/)
+  for a list.
 
 To get started with Klipper, read the [installation](Installation.md)
 guide.
@@ -146,4 +148,5 @@ stepper stepping. On the SAMD21 and STM32F103 the highest step rate is
 with two simultaneous steppers stepping. On the SAM3X8E, SAM4S8C,
 SAM4E8E, LPC176x, and PRU the highest step rate is with three
 simultaneous steppers. On the SAMD51, the highest step rate is with
-four simultaneous steppers.
+four simultaneous steppers. (Further details on the benchmarks are
+available in the [Benchmarks document](Benchmarks.md).)
