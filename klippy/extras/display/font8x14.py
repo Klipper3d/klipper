@@ -7,11 +7,10 @@
 
 
 ######################################################################
-# Font - VGA 8x14, Row Major, MSB, 2 bytes padding
+# Terminus Font 8x14
 #
-# Font comes from fntcol16.zip package found at:
-# ftp://ftp.simtel.net/pub/simtelnet/msdos/screen/fntcol16.zip
-# (c) Joseph Gil
+# http://terminus-font.sourceforge.net
+# (c) Dimitar Zhekov
 #
 # Indivdual fonts are public domain
 ######################################################################
