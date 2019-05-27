@@ -616,8 +616,7 @@ class GCodeParser:
             self.homing_position[pos] = offset
         # Move the toolhead the given offset if requested
         if self.get_int('MOVE', params, 0):
-            speed = self.get_float('MOVE_SPEED', params,
-                                   self.speed * self.speed_factor, above=0.)
+            speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             for pos, delta in enumerate(move_delta):
                 self.last_position[pos] += delta
             try:
