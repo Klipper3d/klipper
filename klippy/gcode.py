@@ -46,7 +46,7 @@ class GCodeParser:
             for a in getattr(self, 'cmd_' + cmd + '_aliases', []):
                 self.register_command(a, func, wnr)
         # G-Code coordinate manipulation
-        self.absolutecoord = self.absoluteextrude = True
+        self.absolute_coord = self.absolute_extrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_position = [0.0, 0.0, 0.0, 0.0]
@@ -117,7 +117,7 @@ class GCodeParser:
             'speed_factor': self._get_gcode_speed_override(),
             'speed': self._get_gcode_speed(),
             'extrude_factor': self.extrude_factor,
-            'abs_extrude': self.absoluteextrude,
+            'abs_extrude': self.absolute_extrude,
             'busy': busy,
             'move_xpos': move_position[0],
             'move_ypos': move_position[1],
@@ -173,10 +173,10 @@ class GCodeParser:
         for eventtime, data in self.input_log:
             out.append("Read %f: %s" % (eventtime, repr(data)))
         out.append(
-            "gcode state: absolutecoord=%s absoluteextrude=%s"
+            "gcode state: absolute_coord=%s absolute_extrude=%s"
             " base_position=%s last_position=%s homing_position=%s"
             " speed_factor=%s extrude_factor=%s speed=%s" % (
-                self.absolutecoord, self.absoluteextrude,
+                self.absolute_coord, self.absolute_extrude,
                 self.base_position, self.last_position, self.homing_position,
                 self.speed_factor, self.extrude_factor, self.speed))
         logging.info("\n".join(out))
@@ -498,7 +498,7 @@ class GCodeParser:
                 if axis in params:
                     v = float(params[axis])
                     pos = self.axis2pos[axis]
-                    if not self.absolutecoord:
+                    if not self.absolute_coord:
                         # value relative to position of last move
                         self.last_position[pos] += v
                     else:
@@ -506,7 +506,7 @@ class GCodeParser:
                         self.last_position[pos] = v + self.base_position[pos]
             if 'E' in params:
                 v = float(params['E']) * self.extrude_factor
-                if not self.absolutecoord or not self.absoluteextrude:
+                if not self.absolute_coord or not self.absolute_extrude:
                     # value relative to position of last move
                     self.last_position[3] += v
                 else:
@@ -562,16 +562,16 @@ class GCodeParser:
         self.respond_error('Machine does not support G20 (inches) command')
     def cmd_M82(self, params):
         # Use absolute distances for extrusion
-        self.absoluteextrude = True
+        self.absolute_extrude = True
     def cmd_M83(self, params):
         # Use relative distances for extrusion
-        self.absoluteextrude = False
+        self.absolute_extrude = False
     def cmd_G90(self, params):
         # Use absolute coordinates
-        self.absolutecoord = True
+        self.absolute_coord = True
     def cmd_G91(self, params):
         # Use relative coordinates
-        self.absolutecoord = False
+        self.absolute_coord = False
     def cmd_G92(self, params):
         # Set position
         offsets = { p: self.get_float(a, params)
