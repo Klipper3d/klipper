@@ -174,6 +174,14 @@ The following standard commands are supported:
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
 
+## G-Code Macro Commands
+
+The following command is available when a "gcode_macro" config section
+is enabled:
+- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
+  VALUE=<value>`: This command allows one to change the value of a
+  gcode_macro variable at run-time.
+
 ## Custom Pin Commands
 
 The following command is available when an "output_pin" config section
