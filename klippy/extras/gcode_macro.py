@@ -77,17 +77,37 @@ def load_config(config):
 
 class GCodeMacro:
     def __init__(self, config):
-        self.alias = config.get_name().split()[1].upper()
+        name = config.get_name().split()[1]
+        self.alias = name.upper()
         printer = config.get_printer()
         config.get('gcode')
         gcode_macro = printer.try_load_module(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+        self.gcode.register_mux_command("SET_GCODE_VARIABLE", "MACRO",
+                                        name, self.cmd_SET_GCODE_VARIABLE,
+                                        desc=self.cmd_SET_GCODE_VARIABLE_help)
         self.in_script = False
         prefix = 'default_parameter_'
         self.kwparams = { o[len(prefix):].upper(): config.get(o)
                           for o in config.get_prefix_options(prefix) }
+        prefix = 'variable_'
+        self.variables = { o[len(prefix):]: config.get(o)
+                           for o in config.get_prefix_options(prefix) }
+    def get_status(self, eventtime):
+        return dict(self.variables)
+    cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
+    def cmd_SET_GCODE_VARIABLE(self, params):
+        variable = self.gcode.get_str('VARIABLE', params)
+        value = self.gcode.get_str('VALUE', params)
+        if variable not in self.variables:
+            if variable in self.kwparams:
+                self.kwparams[variable] = value
+                return
+            raise self.gcode.error("Unknown gcode_macro variable '%s'" % (
+                variable,))
+        self.variables[variable] = value
     cmd_desc = "G-Code macro"
     def cmd(self, params):
         if self.in_script:
@@ -95,6 +115,7 @@ class GCodeMacro:
                 "Macro %s called recursively" % (self.alias,))
         kwparams = dict(self.kwparams)
         kwparams.update(params)
+        kwparams.update(self.variables)
         kwparams['printer'] = self.template.create_status_wrapper()
         kwparams['params'] = params
         self.in_script = True
