@@ -144,6 +144,7 @@ class GCodeParser:
             'homing_xpos': self.homing_position[0],
             'homing_ypos': self.homing_position[1],
             'homing_zpos': self.homing_position[2],
+            'gcode_position': homing.Coord(*move_position),
             'action_respond_info': self._action_respond_info,
             'action_respond_error': self._action_respond_error,
             'action_emergency_stop': self._action_emergency_stop,
