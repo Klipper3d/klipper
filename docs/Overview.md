@@ -32,6 +32,8 @@ communication with the Klipper developers.
 - [Pressure advance](Pressure_Advance.md): Calibrate extruder
   pressure.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
+- [Command Templates](Command_Templates.md): G-Code macros and
+  conditional evaluation.
 - [Sensorless homing](Sensorless_Homing.md): Configuring tmc2130
   sensorless homing.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
