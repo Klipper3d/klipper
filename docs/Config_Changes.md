@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20190528: The magic "status" variable in gcode_macro template
+evaluation has been renamed to "printer".
+
 20190520: The SET_GCODE_OFFSET command has changed; update any g-code
 macros accordingly. The command will no longer apply the requested
 offset to the next G1 command. The old behavior may be approximated by
