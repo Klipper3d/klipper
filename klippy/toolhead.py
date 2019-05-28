@@ -417,6 +417,7 @@ class ToolHead:
             status = "Ready"
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
+                 'position': homing.Coord(*self.commanded_pos),
                  'printing_time': print_time - last_print_start_time }
     def _handle_request_restart(self, print_time):
         self.motor_off()
