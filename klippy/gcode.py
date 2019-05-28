@@ -103,6 +103,15 @@ class GCodeParser:
         self.position_with_transform = transform.get_position
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
+    def _action_emergency_stop(self, msg="action_emergency_stop"):
+        self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
+        return ""
+    def _action_respond_info(self, msg):
+        self.respond_info(msg)
+        return ""
+    def _action_respond_error(self, msg):
+        self.respond_error(msg)
+        return ""
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
@@ -134,7 +143,10 @@ class GCodeParser:
             'base_epos': self.base_position[3],
             'homing_xpos': self.homing_position[0],
             'homing_ypos': self.homing_position[1],
-            'homing_zpos': self.homing_position[2]
+            'homing_zpos': self.homing_position[2],
+            'action_respond_info': self._action_respond_info,
+            'action_respond_error': self._action_respond_error,
+            'action_emergency_stop': self._action_emergency_stop,
         }
     def _handle_shutdown(self):
         if not self.is_printer_ready:
