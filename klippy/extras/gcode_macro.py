@@ -11,8 +11,8 @@ import jinja2
 # Template handling
 ######################################################################
 
-# Wrapper for "status" access to printer object get_status() methods
-class StatusWrapper:
+# Wrapper for access to printer object get_status() methods
+class GetStatusWrapper:
     def __init__(self, printer, eventtime=None):
         self.printer = printer
         self.eventtime = eventtime
@@ -43,10 +43,10 @@ class TemplateWrapper:
             logging.exception(msg)
             raise printer.config_error(msg)
     def create_status_wrapper(self, eventtime=None):
-        return StatusWrapper(self.printer, eventtime)
+        return GetStatusWrapper(self.printer, eventtime)
     def render(self, context=None):
         if context is None:
-            context = {'status': self.create_status_wrapper()}
+            context = {'printer': self.create_status_wrapper()}
         try:
             return str(self.template.render(context))
         except Exception as e:
@@ -95,7 +95,7 @@ class GCodeMacro:
                 "Macro %s called recursively" % (self.alias,))
         kwparams = dict(self.kwparams)
         kwparams.update(params)
-        kwparams['status'] = self.template.create_status_wrapper()
+        kwparams['printer'] = self.template.create_status_wrapper()
         kwparams['params'] = params
         self.in_script = True
         try:
