@@ -105,8 +105,10 @@ it is easily accounted for later in the calibration process.
 **Use an automated tool to determine precise Z heights!**
 
 Klipper has several helper scripts available (eg, MANUAL_PROBE,
-Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). Choose one of
-them and follow the directions in the documents described above.
+Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). See the
+documents
+[described above](#choose-the-appropriate-calibration-mechanism) to
+choose one of them.
 
 Run the appropriate command in the OctoPrint terminal window. The
 script will prompt for user interaction in the OctoPrint terminal

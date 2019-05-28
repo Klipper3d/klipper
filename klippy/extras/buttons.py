@@ -5,47 +5,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
-QUERY_TIME = .002
-RETRANSMIT_COUNT = 50
-ADC_REPORT_TIME = 0.015
-ADC_DEBOUNCE_TIME = 0.025
-ADC_SAMPLE_TIME = 0.001
-ADC_SAMPLE_COUNT = 6
-
-# Rotary encoder handler https://github.com/brianlow/Rotary
-# Copyright 2011 Ben Buxton (bb@cactii.net).
-# Licenced under the GNU GPL Version 3.
-R_START     = 0x0
-R_CW_FINAL  = 0x1
-R_CW_BEGIN  = 0x2
-R_CW_NEXT   = 0x3
-R_CCW_BEGIN = 0x4
-R_CCW_FINAL = 0x5
-R_CCW_NEXT  = 0x6
-R_DIR_CW    = 0x10
-R_DIR_CCW   = 0x20
-R_DIR_MSK   = 0x30
-# Use the full-step state table (emits a code at 00 only)
-ENCODER_STATES = (
-  # R_START
-  (R_START,    R_CW_BEGIN,  R_CCW_BEGIN, R_START),
-  # R_CW_FINAL
-  (R_CW_NEXT,  R_START,     R_CW_FINAL,  R_START | R_DIR_CW),
-  # R_CW_BEGIN
-  (R_CW_NEXT,  R_CW_BEGIN,  R_START,     R_START),
-  # R_CW_NEXT
-  (R_CW_NEXT,  R_CW_BEGIN,  R_CW_FINAL,  R_START),
-  # R_CCW_BEGIN
-  (R_CCW_NEXT, R_START,     R_CCW_BEGIN, R_START),
-  # R_CCW_FINAL
-  (R_CCW_NEXT, R_CCW_FINAL, R_START,     R_START | R_DIR_CCW),
-  # R_CCW_NEXT
-  (R_CCW_NEXT, R_CCW_FINAL, R_CCW_BEGIN, R_START)
-)
 
 ######################################################################
 # Button state tracking
 ######################################################################
+
+QUERY_TIME = .002
+RETRANSMIT_COUNT = 50
 
 class MCU_buttons:
     def __init__(self, printer, mcu):
@@ -115,6 +81,15 @@ class MCU_buttons:
                 callback(eventtime, (button & mask) >> shift)
         self.last_button = button
 
+
+######################################################################
+# ADC button tracking
+######################################################################
+
+ADC_REPORT_TIME = 0.015
+ADC_DEBOUNCE_TIME = 0.025
+ADC_SAMPLE_TIME = 0.001
+ADC_SAMPLE_COUNT = 6
 
 class MCU_ADC_buttons:
     def __init__(self, printer, pin, pullup, debug=False):
@@ -192,6 +167,37 @@ class MCU_ADC_buttons:
 ######################################################################
 # Rotary Encoders
 ######################################################################
+
+# Rotary encoder handler https://github.com/brianlow/Rotary
+# Copyright 2011 Ben Buxton (bb@cactii.net).
+# Licenced under the GNU GPL Version 3.
+R_START     = 0x0
+R_CW_FINAL  = 0x1
+R_CW_BEGIN  = 0x2
+R_CW_NEXT   = 0x3
+R_CCW_BEGIN = 0x4
+R_CCW_FINAL = 0x5
+R_CCW_NEXT  = 0x6
+R_DIR_CW    = 0x10
+R_DIR_CCW   = 0x20
+R_DIR_MSK   = 0x30
+# Use the full-step state table (emits a code at 00 only)
+ENCODER_STATES = (
+  # R_START
+  (R_START,    R_CW_BEGIN,  R_CCW_BEGIN, R_START),
+  # R_CW_FINAL
+  (R_CW_NEXT,  R_START,     R_CW_FINAL,  R_START | R_DIR_CW),
+  # R_CW_BEGIN
+  (R_CW_NEXT,  R_CW_BEGIN,  R_START,     R_START),
+  # R_CW_NEXT
+  (R_CW_NEXT,  R_CW_BEGIN,  R_CW_FINAL,  R_START),
+  # R_CCW_BEGIN
+  (R_CCW_NEXT, R_START,     R_CCW_BEGIN, R_START),
+  # R_CCW_FINAL
+  (R_CCW_NEXT, R_CCW_FINAL, R_START,     R_START | R_DIR_CCW),
+  # R_CCW_NEXT
+  (R_CCW_NEXT, R_CCW_FINAL, R_CCW_BEGIN, R_START)
+)
 
 class RotaryEncoder:
     def __init__(self, cw_callback, ccw_callback):

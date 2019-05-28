@@ -47,9 +47,8 @@ create_virtualenv()
 install_script()
 {
 # Create systemd service file
-    KLIPPER_LOG=/var/log/klippy.log
+    KLIPPER_LOG=/tmp/klippy.log
     report_status "Installing system start script..."
-    sudo touch $KLIPPER_LOG && sudo chown $KLIPPER_USER:$KLIPPER_GROUP $KLIPPER_LOG
     sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper.service" << EOF
 #Systemd service file for klipper
 [Unit]

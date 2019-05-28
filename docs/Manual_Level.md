@@ -17,9 +17,11 @@ terminal tab, and run:
 ```
 Z_ENDSTOP_CALIBRATE
 ```
-Then perform the ["paper test"](Bed_Level.md#the-paper-test) steps to
-determine the actual height at the given position. One can then
-`ACCEPT` the position and save the results to the config file with:
+Then follow the steps described at
+["the paper test"](Bed_Level.md#the-paper-test) to determine the
+actual distance between the nozzle and bed at the given location. Once
+those steps are complete one can `ACCEPT` the position and save the
+results to the config file with:
 ```
 SAVE_CONFIG
 ```
