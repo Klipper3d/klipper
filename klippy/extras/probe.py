@@ -261,8 +261,9 @@ class ProbePointsHelper:
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
-        self.lift_speed = config.getfloat('lift_speed', None, above=0.)
+        self.config_lift_speed = config.getfloat('lift_speed', None, above=0.)
         # Internal probing state
+        self.lift_speed = self.config_lift_speed
         self.probe_offsets = (0., 0., 0.)
         self.results = []
     def minimum_points(self,n):
@@ -300,6 +301,7 @@ class ProbePointsHelper:
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
         self.results = []
+        self.lift_speed = self.config_lift_speed
         if probe is None or method != 'automatic':
             # Manual probe
             if self.lift_speed is None:
