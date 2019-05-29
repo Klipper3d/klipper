@@ -104,6 +104,8 @@ Fields["READRSP@RDSEL2"] = {
     "SE": 0x1f << 10
 }
 
+SignedFields = ["SGT"]
+
 FieldFormatters = {
     "MRES": (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
     "DEDGE": (lambda v:
@@ -111,7 +113,6 @@ FieldFormatters = {
     "INTPOL": (lambda v: "1(On)" if v else "0(Off)"),
     "TOFF": (lambda v: ("%d" % v) if v else "0(Driver Disabled!)"),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
-    "SGT": (lambda v: "%d" % (v)),
     "SFILT": (lambda v: "1(Filtered mode)" if v else "0(Standard mode)"),
     "VSENSE": (lambda v: "%d(%dmV)" % (v, 165 if v else 305)),
     "SDOFF": (lambda v: "1(Step/Dir disabled" if v else "0(Step/dir enabled)"),
@@ -150,7 +151,8 @@ class TMC2660:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup driver registers
         self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(Fields, FieldFormatters, self.regs)
+        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
+                                          self.regs)
         set_config_field = self.fields.set_config_field
 
         # DRVCTRL
