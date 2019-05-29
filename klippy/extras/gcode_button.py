@@ -16,9 +16,10 @@ class GCodeButton:
         self.last_state = 0
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.pin], self.button_callback)
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.press_template = gcode_macro.load_template(config, 'press_gcode')
+        self.release_template = gcode_macro.load_template(config, 'release_gcode')
         gcode = self.printer.lookup_object('gcode')
-        self.press_gcode = config.get('press_gcode', '')
-        self.release_gcode = config.get('release_gcode', '')
         gcode.register_mux_command("QUERY_BUTTON", "BUTTON", self.name,
                                         self.cmd_QUERY_BUTTON,
                                         desc=self.cmd_QUERY_BUTTON_help)
@@ -27,21 +28,19 @@ class GCodeButton:
 
     def cmd_QUERY_BUTTON(self, params):
         gcode = self.printer.lookup_object('gcode')
-        response = self.name+": "
-        if self.last_state:
-            response += "PRESSED"
-        else:
-            response += "RELEASED"
-        gcode.respond(response)
+        gcode.respond(self.name + ": " + self.get_status()['state'])
 
     def button_callback(self, eventtime, state):
-        toolhead = self.printer.lookup_object('toolhead')
-        gcode = self.printer.lookup_object('gcode')
         self.last_state = state
-        if state and bool(self.press_gcode):
-           gcode.run_script_from_command(self.press_gcode)
-        if (not state) and bool(self.release_gcode):
-            gcode.run_script_from_command(self.release_gcode)
+        if state and bool(self.press_template):
+           self.press_template.run_gcode_from_command()
+        if (not state) and bool(self.release_template):
+           self.release_template.run_gcode_from_command()
+
+    def get_status(self, eventtime=None):
+        if self.last_state:
+            return {'state': "PRESSED"}
+        return {'state': "RELEASED"}
 
 def load_config_prefix(config):
     return GCodeButton(config)
