@@ -116,31 +116,20 @@ class Homing:
         dwell_t = est_steps * HOMING_STEP_DELAY
         # Perform first home
         self.homing_move(movepos, endstops, homing_speed, dwell_t=dwell_t)
-        # Perform second homes now
-        for x in range(5):
-            self.gcode.respond_info(
-                 "home nr : %d\n" % (x))
-            if hi.retract_dist:
-                # Retract
-                move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-                retract_r = min(1., hi.retract_dist / move_d)
-                retractpos = [mp - ad * retract_r
-                              for mp, ad in zip(movepos, axes_d)]
-                self.toolhead.move(retractpos, homing_speed)
-                z_position = self.toolhead.get_position()[2]
-                self.gcode.respond_info(
-                     "z_position after retract : %.3f\n" % (z_position))
-
-                # Home again
-                forcepos = [rp - ad * retract_r
-                            for rp, ad in zip(retractpos, axes_d)]
-                self.toolhead.set_position(forcepos)
-                self.homing_move(movepos, endstops, second_homing_speed,
-                                 verify_movement=self.verify_retract)
-                z_position = self.toolhead.get_position()[2]
-                self.gcode.respond_info(
-                     "z_position after z home : %.3f\n" % (z_position))
-
+        # Perform second home
+        if hi.retract_dist:
+            # Retract
+            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+            retract_r = min(1., hi.retract_dist / move_d)
+            retractpos = [mp - ad * retract_r
+                          for mp, ad in zip(movepos, axes_d)]
+            self.toolhead.move(retractpos, homing_speed)
+            # Home again
+            forcepos = [rp - ad * retract_r
+                        for rp, ad in zip(retractpos, axes_d)]
+            self.toolhead.set_position(forcepos)
+            self.homing_move(movepos, endstops, second_homing_speed,
+                             verify_movement=self.verify_retract)
         # Signal home operation complete
         ret = self.printer.send_event("homing:homed_rails", self, rails)
         if any(ret):
