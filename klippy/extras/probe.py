@@ -33,9 +33,9 @@ class PrinterProbe:
         self.samples = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat(
             'sample_retract_dist', 2., above=0.)
-        self.samples_result = config.getchoice('samples_result',
-                                               {'median': 0, 'average': 1},
-                                               default='average')
+        atypes = {'median': 'median', 'average': 'average'}
+        self.samples_result = config.getchoice('samples_result', atypes,
+                                               'average')
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
@@ -86,6 +86,18 @@ class PrinterProbe:
             toolhead.move(curpos, speed)
         except homing.EndstopError as e:
             raise self.gcode.error(str(e))
+    def _calc_mean(self, positions):
+        count = float(len(positions))
+        return [sum([pos[i] for pos in positions]) / count
+                for i in range(3)]
+    def _calc_median(self, positions):
+        z_sorted = sorted(positions, key=(lambda p: p[2]))
+        middle = len(positions) // 2
+        if (len(positions) & 1) == 1:
+            # odd number of samples
+            return z_sorted[middle]
+        # even number of samples
+        return self._calc_mean(z_sorted[middle-1:middle+1])
     def run_probe(self):
         positions = []
         for i in range(self.samples):
@@ -95,26 +107,9 @@ class PrinterProbe:
                 # retract
                 liftpos = [None, None, pos[2] + self.sample_retract_dist]
                 self._move(liftpos, self.speed)
-        if self.samples_result == 1:
-            # Calculate Average
-            calculated_value = [sum([pos[i] for pos in positions]) /
-                                self.samples for i in range(3)]
-        else:
-            # Calculate Median
-            sorted_z_positions = sorted([position[2]
-                                         for position in positions])
-            middle = self.samples // 2
-            if (self.samples & 1) == 1:
-                # odd number of samples
-                median = sorted_z_positions[middle]
-            else:
-                # even number of samples
-                median = (sorted_z_positions[middle] +
-                          sorted_z_positions[middle - 1]) / 2
-            calculated_value = [positions[0][0],
-                                positions[0][1],
-                                median]
-        return calculated_value
+        if self.samples_result == 'median':
+            return self._calc_median(positions)
+        return self._calc_mean(positions)
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
         pos = self.run_probe()
@@ -130,7 +125,6 @@ class PrinterProbe:
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, params):
         toolhead = self.printer.lookup_object('toolhead')
-        probes = []
         pos = toolhead.get_position()
         number_of_reads = self.gcode.get_int('REPEAT', params, default=10,
                                                        minval=4, maxval=50)
@@ -147,36 +141,25 @@ class PrinterProbe:
                                 x_start_position, y_start_position,
                                 z_start_position, number_of_reads, speed))
         # Probe bed "number_of_reads" times
-        sum_reads = 0
+        positions = []
         for i in range(number_of_reads):
             # Move Z to start reading position
             self._move(start_pos, speed)
             # Probe
             pos = self._probe(speed)
-            # Get Z value, accumulate value to calculate average
-            # and save it to calculate standard deviation
-            sum_reads += pos[2]
-            probes.append(pos[2])
+            positions.append(pos)
         # Move Z to start reading position
         self._move(start_pos, speed)
         # Calculate maximum, minimum and average values
-        max_value = max(probes)
-        min_value = min(probes)
-        avg_value = sum(probes) / number_of_reads
+        max_value = max([p[2] for p in positions])
+        min_value = min([p[2] for p in positions])
+        avg_value = self._calc_mean(positions)[2]
+        median = self._calc_median(positions)[2]
         # calculate the standard deviation
         deviation_sum = 0
         for i in range(number_of_reads):
-            deviation_sum += pow(probes[i] - avg_value, 2)
+            deviation_sum += pow(positions[i][2] - avg_value, 2)
         sigma = (deviation_sum / number_of_reads) ** 0.5
-        # Median
-        sorted_probes = sorted(probes)
-        middle = number_of_reads//2
-        if (number_of_reads & 1) == 1:
-            # odd number of reads
-            median = sorted_probes[middle]
-        else:
-            # even number of reads
-            median = (sorted_probes[middle]+sorted_probes[middle-1])/2
         # Show information
         self.gcode.respond_info(
             "probe accuracy results: maximum %.6f, minimum %.6f, "
