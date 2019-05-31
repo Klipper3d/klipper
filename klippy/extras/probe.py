@@ -29,6 +29,13 @@ class PrinterProbe:
         else:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
+        # Multi-sample support (for improved accuracy)
+        self.samples = config.getint('samples', 1, minval=1)
+        self.sample_retract_dist = config.getfloat(
+            'sample_retract_dist', 2., above=0.)
+        self.samples_result = config.getchoice('samples_result',
+                                               {'median': 0, 'average': 1},
+                                               default='average')
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
@@ -49,9 +56,6 @@ class PrinterProbe:
         return self.mcu_probe
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-    cmd_PROBE_help = "Probe Z-height at current XY position"
-    def cmd_PROBE(self, params):
-        self._probe(self.speed)
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         homing_state = homing.Homing(self.printer)
@@ -71,6 +75,50 @@ class PrinterProbe:
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f" % (
             pos[0], pos[1], pos[2]))
         self.gcode.reset_last_position()
+        return pos
+    def _move(self, coord, speed):
+        toolhead = self.printer.lookup_object('toolhead')
+        curpos = toolhead.get_position()
+        for i in range(len(coord)):
+            if coord[i] is not None:
+                curpos[i] = coord[i]
+        try:
+            toolhead.move(curpos, speed)
+        except homing.EndstopError as e:
+            raise self.gcode.error(str(e))
+    def run_probe(self):
+        positions = []
+        for i in range(self.samples):
+            pos = self._probe(self.speed)
+            positions.append(pos)
+            if i < self.samples - 1:
+                # retract
+                liftpos = [None, None, pos[2] + self.sample_retract_dist]
+                self._move(liftpos, self.speed)
+        if self.samples_result == 1:
+            # Calculate Average
+            calculated_value = [sum([pos[i] for pos in positions]) /
+                                self.samples for i in range(3)]
+        else:
+            # Calculate Median
+            sorted_z_positions = sorted([position[2]
+                                         for position in positions])
+            middle = self.samples // 2
+            if (self.samples & 1) == 1:
+                # odd number of samples
+                median = sorted_z_positions[middle]
+            else:
+                # even number of samples
+                median = (sorted_z_positions[middle] +
+                          sorted_z_positions[middle - 1]) / 2
+            calculated_value = [positions[0][0],
+                                positions[0][1],
+                                median]
+        return calculated_value
+    cmd_PROBE_help = "Probe Z-height at current XY position"
+    def cmd_PROBE(self, params):
+        pos = self.run_probe()
+        self.gcode.respond_info("Result is z=%.6f" % (pos[2],))
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, params):
         toolhead = self.printer.lookup_object('toolhead')
@@ -104,10 +152,9 @@ class PrinterProbe:
             # Move Z to start reading position
             self._move(start_pos, speed)
             # Probe
-            self._probe(speed)
+            pos = self._probe(speed)
             # Get Z value, accumulate value to calculate average
             # and save it to calculate standard deviation
-            pos = toolhead.get_position()
             sum_reads += pos[2]
             probes.append(pos[2])
         # Move Z to start reading position
@@ -135,16 +182,6 @@ class PrinterProbe:
             "probe accuracy results: maximum %.6f, minimum %.6f, "
             "average %.6f, median %.6f, standard deviation %.6f" % (
             max_value, min_value, avg_value, median, sigma))
-    def _move(self, coord, speed):
-        toolhead = self.printer.lookup_object('toolhead')
-        curpos = toolhead.get_position()
-        for i in range(len(coord)):
-            if coord[i] is not None:
-                curpos[i] = coord[i]
-        try:
-            toolhead.move(curpos, speed)
-        except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
     def probe_calibrate_finalize(self, kin_pos):
         if kin_pos is None:
             return
@@ -158,10 +195,8 @@ class PrinterProbe:
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
     def cmd_PROBE_CALIBRATE(self, params):
         # Perform initial probe
-        self._probe(self.speed)
+        curpos = self.run_probe()
         # Move away from the bed
-        toolhead = self.printer.lookup_object('toolhead')
-        curpos = toolhead.get_position()
         self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
         self._move(curpos, self.speed)
@@ -240,12 +275,6 @@ class ProbePointsHelper:
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
         self.probe_offsets = (0., 0., 0.)
-        self.samples = config.getint('samples', 1, minval=1)
-        self.sample_retract_dist = config.getfloat(
-            'sample_retract_dist', 2., above=0.)
-        self.samples_result = config.getchoice('samples_result',
-                                               {'median': 0, 'average': 1},
-                                               default='average')
         # Internal probing state
         self.results = []
         self.busy = self.manual_probe = False
@@ -256,15 +285,10 @@ class ProbePointsHelper:
                 "Need at least %d probe points for %s" % (n, self.name))
     def get_lift_speed(self):
         return self.lift_speed
-    def _lift_z(self, z_pos, add=False, speed=None):
+    def _lift_z(self, z_pos, speed):
         # Lift toolhead
         curpos = self.toolhead.get_position()
-        if add:
-            curpos[2] += z_pos
-        else:
-            curpos[2] = z_pos
-        if speed is None:
-            speed = self.lift_speed
+        curpos[2] = z_pos
         try:
             self.toolhead.move(curpos, speed)
         except homing.EndstopError as e:
@@ -272,7 +296,7 @@ class ProbePointsHelper:
             raise self.gcode.error(str(e))
     def _move_next(self):
         # Lift toolhead
-        self._lift_z(self.horizontal_move_z)
+        self._lift_z(self.horizontal_move_z, self.lift_speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             self.toolhead.get_last_move_time()
@@ -293,38 +317,6 @@ class ProbePointsHelper:
         if self.manual_probe:
             manual_probe.ManualProbeHelper(self.printer, {},
                                            self._manual_probe_finalize)
-    def _automatic_probe_point(self):
-        positions = []
-        for i in range(self.samples):
-            try:
-                self.gcode.run_script_from_command("PROBE")
-            except self.gcode.error as e:
-                self._finalize(False)
-                raise
-            positions.append(self.toolhead.get_position())
-            if i < self.samples - 1:
-                # retract
-                self._lift_z(self.sample_retract_dist, add=True)
-        if self.samples_result == 1:
-            # Calculate Average
-            calculated_value = [sum([pos[i] for pos in positions]) /
-                                self.samples for i in range(3)]
-        else:
-            # Calculate Median
-            sorted_z_positions = sorted([position[2]
-                                         for position in positions])
-            middle = self.samples // 2
-            if (self.samples & 1) == 1:
-                # odd number of samples
-                median = sorted_z_positions[middle]
-            else:
-                # even number of samples
-                median = (sorted_z_positions[middle] +
-                          sorted_z_positions[middle - 1]) / 2
-            calculated_value = [positions[0][0],
-                                positions[0][1],
-                                median]
-        self.results.append(calculated_value)
     def start_probe(self, params):
         # Lookup objects
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -345,12 +337,17 @@ class ProbePointsHelper:
         # Start probe
         self.results = []
         self.busy = True
-        self._lift_z(self.horizontal_move_z, speed=self.speed)
+        self._lift_z(self.horizontal_move_z, self.speed)
         self._move_next()
         if not self.manual_probe:
             # Perform automatic probing
             while self.busy:
-                self._automatic_probe_point()
+                try:
+                    pos = probe.run_probe()
+                except self.gcode.error as e:
+                    self._finalize(False)
+                    raise
+                self.results.append(pos)
                 self._move_next()
     def _manual_probe_finalize(self, kin_pos):
         if kin_pos is None:
