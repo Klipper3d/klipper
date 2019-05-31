@@ -71,6 +71,7 @@ class ManualProbeHelper:
         self.gcode.respond_info(
             "Starting manual Z probe. Use TESTZ to adjust position.\n"
             "Finish with ACCEPT or ABORT command.")
+        self.start_z_position = self.toolhead.get_position()[2]
         self.report_z_status()
     def get_kinematics_pos(self):
         toolhead_pos = self.toolhead.get_position()
@@ -115,6 +116,12 @@ class ManualProbeHelper:
             prev_str, z_pos, next_str))
     cmd_ACCEPT_help = "Accept the current Z position"
     def cmd_ACCEPT(self, params):
+        if self.toolhead.get_position()[2] >= self.start_z_position:
+            self.gcode.respond_info(
+                "Manual probe failed! Use TESTZ commands to position the\n"
+                "nozzle prior to running ACCEPT.")
+            self.finalize(False)
+            return
         self.finalize(True)
     cmd_ABORT_help = "Abort manual Z probing tool"
     def cmd_ABORT(self, params):

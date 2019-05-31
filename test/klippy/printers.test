@@ -17,6 +17,7 @@ CONFIG ../../config/generic-mini-rambo.cfg
 CONFIG ../../config/generic-rambo.cfg
 CONFIG ../../config/generic-ramps.cfg
 CONFIG ../../config/generic-rumba.cfg
+CONFIG ../../config/kit-zav3d-2019.cfg
 CONFIG ../../config/printer-adimlab-2018.cfg
 CONFIG ../../config/printer-anycubic-4max-2018.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
@@ -46,6 +47,7 @@ CONFIG ../../config/printer-creality-cr10-2017.cfg
 CONFIG ../../config/printer-creality-cr10mini-2017.cfg
 CONFIG ../../config/printer-creality-ender2-2017.cfg
 CONFIG ../../config/printer-creality-ender3-2018.cfg
+CONFIG ../../config/printer-creality-ender5-2019.cfg
 CONFIG ../../config/printer-tronxy-x5s-2018.cfg
 CONFIG ../../config/printer-tronxy-x8-2018.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg

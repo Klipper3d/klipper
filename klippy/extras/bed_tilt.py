@@ -44,6 +44,7 @@ class BedTiltCalibrate:
         self.printer = config.get_printer()
         self.bedtilt = bedtilt
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe_helper.minimum_points(3)
         # Register BED_TILT_CALIBRATE command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(

@@ -1,52 +1,67 @@
-Welcome to the Klipper documentation. There are two parts to Klipper -
-code that runs on a micro-controller and code that runs on a "host"
-machine. The host code is intended to run on a low-cost
-general-purpose machine such as a Raspberry Pi, while the
-micro-controller code is intended to run on commodity micro-controller
-chips. Read [features](Features.md) for reasons to use Klipper. See
-[installation](Installation.md) to get started with Klipper. See
-[config checks](Config_checks.md) for a guide to verify basic pin
-settings in the config file.
+Welcome to the Klipper documentation. If new to Klipper, start with
+the [features](Features.md) and [installation](Installation.md)
+documents.
 
-The Klipper configuration is stored in a simple text file on the host
-machine. The [config/example.cfg](../config/example.cfg) file serves
-as a reference for the config file. See the [Slicers](Slicers.md)
-document for information on configuring a slicer with Klipper. See the
-[Bed Level](Bed_Level.md), [Endstop Phase](Endstop_Phase.md),
-[Probe Calibrate](Probe_Calibrate.md),
-[Delta Calibrate](Delta_Calibrate.md), and
-[Manual Level](Manual_Level.md) documents for information on bed
-leveling with Klipper. The [Pressure Advance](Pressure_Advance.md)
-document contains information on tuning the pressure advance config.
+# Overview information
 
-The [kinematics](Kinematics.md) document provides some technical
-details on how Klipper implements motion. The [FAQ](FAQ.md) answers
-some common questions. The [G-Codes](G-Codes.md) document lists
-currently supported run-time commands.
+- [Features](Features.md): A high-level list of features in Klipper.
+- [FAQ](FAQ.md): Frequently asked questions.
+- [Releases](Releases.md): The history of Klipper releases.
+- [Config changes](Config_Changes.md): Recent software changes that
+may require users to update their printer config file.
+- [Contact](Contact.md): Information on bug reporting and general
+communication with the Klipper developers.
 
-The history of Klipper releases is available at
-[releases](Releases.md). The [config changes](Config_Changes.md)
-document describes recent software changes that may require users to
-update their printer config file. See [contact](Contact.md) for
-information on bug reporting and general communication with the
-developers.
+# Configuration and Tuning Guides
 
-Developer Documentation
-=======================
+- [Installation](Installation.md): Guide to installing Klipper.
+  - [config/example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
+    a reference for the config file.
+- [Config checks](Config_checks.md): Verify basic pin settings in the
+  config file.
+- [Bed level](Bed_Level.md): Information on "bed leveling" in Klipper.
+  - [Delta calibrate](Delta_Calibrate.md): Calibration of delta
+    kinematics.
+  - [Probe calibrate](Probe_Calibrate.md): Calibration of automatic Z
+    probes.
+  - [BL-Touch](BLTouch.md): Configure a "BL-Touch" Z probe.
+  - [Manual level](Manual_Level.md): Calibration of Z endstops (and
+    similar).
+  - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
+    positioning.
+- [Pressure advance](Pressure_Advance.md): Calibrate extruder
+  pressure.
+- [Slicers](Slicers.md): Configure "slicer" software for Klipper.
+- [Sensorless homing](Sensorless_Homing.md): Configuring tmc2130
+  sensorless homing.
+- [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
-There are also several documents available for developers interested
-in understanding how Klipper works. Start with the
-[code overview](Code_Overview.md) document - it provides information
-on the structure and layout of the Klipper code. See the
-[contributing](CONTRIBUTING.md) document to submit improvements to Klipper.
+# Developer Documentation
 
-See [protocol](Protocol.md) for information on the low-level messaging
-protocol between host and micro-controller. See also
-[MCU commands](MCU_Commands.md) for a description of low-level
-commands implemented in the micro-controller software.
+- [Code overview](Code_Overview.md): Developers should read this
+  first.
+- [Kinematics](Kinematics.md): Technical details on how Klipper
+  implements motion.
+- [Protocol](Protocol.md): Information on the low-level messaging
+  protocol between host and micro-controller.
+- [MCU commands](MCU_Commands.md): A description of low-level commands
+  implemented in the micro-controller software.
+- [Debugging](Debugging.md): Information on how to test and debug
+  Klipper.
+- [Benchmarks](Benchmarks.md): Information on the Klipper benchmark
+  method.
+- [Contributing](CONTRIBUTING.md): Information on how to submit
+  improvements to Klipper.
+- [Packaging](Packaging.md): Information on building OS packages.
 
-See [debugging](Debugging.md) for information on how to test and debug
-Klipper. See [benchmarks](Benchmarks.md) for information on
-benchmarking. See [stm32f1](stm32f1.md) for information on the STM32F1
-micro-controller port. See [bootloaders](Bootloaders.md) for developer
-information on micro-controller flashing.
+# Device Specific Documents
+
+- [Bootloaders](Bootloaders.md): Developer information on
+  micro-controller flashing.
+- [stm32f1](stm32f1.md): Information on the STM32F1 micro-controller
+  port.
+- [Beaglebone](beaglebone.md): Details for running Klipper on the
+  Beaglebone PRU.
+- [stm32f0](stm32f0_CAN.md): Information on the STM32F0 micro-controller
+  port.
+- [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)

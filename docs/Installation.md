@@ -18,7 +18,7 @@ Raspberry Pi computer. Use OctoPi v0.16.0 or later - see the
 [octopi releases](https://github.com/guysoft/OctoPi/releases) for
 release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
-page, if prompted, upgrade OctoPrint to v1.3.10 or later.
+page, follow the prompt to upgrade OctoPrint to v1.3.11 or later.
 
 After installing OctoPi and upgrading OctoPrint, it will be necessary
 to ssh into the target machine to run a handful of system commands. If
@@ -127,11 +127,11 @@ Configuring Klipper
 
 The Klipper configuration is stored in a text file on the Raspberry
 Pi. Take a look at the example config files in the
-[config directory](../config/). The
-[example.cfg](../config/example.cfg) file contains documentation on
-command parameters and it can also be used as an initial config file
-template. However, for most printers, one of the other config files
-may be a more concise starting point.
+[config directory](https://github.com/KevinOConnor/klipper/tree/master/config/). The
+[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
+file contains documentation on command parameters and it can also be
+used as an initial config file template. However, for most printers,
+one of the other config files may be a more concise starting point.
 
 Arguably the easiest way to update the Klipper configuration file is
 to use a desktop editor that supports editing files over the "scp"

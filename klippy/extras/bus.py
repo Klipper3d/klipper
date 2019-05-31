@@ -25,9 +25,10 @@ def resolve_bus_name(mcu, param, bus):
         raise ppins.error("Unknown %s '%s'" % (param, bus))
     # Check for reserved bus pins
     constants = mcu.get_constants()
-    reserve_pins = constants.get('BUS_PINS_%s' % (bus,), '')
-    for pin in reserve_pins.split(','):
-        ppins.reserve_pin(mcu_name, pin, bus)
+    reserve_pins = constants.get('BUS_PINS_%s' % (bus,), None)
+    if reserve_pins is not None:
+        for pin in reserve_pins.split(','):
+            ppins.reserve_pin(mcu_name, pin, bus)
     return bus
 
 

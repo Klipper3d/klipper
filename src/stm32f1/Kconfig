@@ -22,6 +22,8 @@ choice
     prompt "Bootloader offset"
     config STM_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)"
+    config STM_FLASH_START_7000
+        bool "28KiB bootloader"
     config STM_FLASH_START_0000
         bool "No bootloader"
 endchoice
@@ -29,6 +31,7 @@ endchoice
 config FLASH_START
     hex
     default 0x2000 if STM_FLASH_START_2000
+    default 0x7000 if STM_FLASH_START_7000
     default 0x0000
 
 config USBSERIAL
