@@ -246,6 +246,7 @@ class ProbePointsHelper:
         self.finalize_callback = finalize_callback
         self.probe_points = default_points
         self.name = config.get_name()
+        self.gcode = self.printer.lookup_object('gcode')
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
             points = config.get('points').split('\n')
@@ -257,93 +258,77 @@ class ProbePointsHelper:
                 raise config.error("Unable to parse probe points in %s" % (
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
-        self.speed = self.lift_speed = config.getfloat('speed', 50., above=0.)
-        self.probe_offsets = (0., 0., 0.)
+        self.speed = config.getfloat('speed', 50., above=0.)
         # Internal probing state
+        self.lift_speed = self.speed
+        self.probe_offsets = (0., 0., 0.)
         self.results = []
-        self.busy = self.manual_probe = False
-        self.gcode = self.toolhead = None
     def minimum_points(self,n):
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
     def get_lift_speed(self):
         return self.lift_speed
-    def _lift_z(self, z_pos, speed):
-        # Lift toolhead
-        curpos = self.toolhead.get_position()
-        curpos[2] = z_pos
-        try:
-            self.toolhead.move(curpos, speed)
-        except homing.EndstopError as e:
-            self._finalize(False)
-            raise self.gcode.error(str(e))
-        self.gcode.reset_last_position()
     def _move_next(self):
+        toolhead = self.printer.lookup_object('toolhead')
         # Lift toolhead
-        self._lift_z(self.horizontal_move_z, self.lift_speed)
-        # Check if done probing
-        if len(self.results) >= len(self.probe_points):
-            self.toolhead.get_last_move_time()
-            self._finalize(True)
-            return
-        # Move to next XY probe point
-        x, y = self.probe_points[len(self.results)]
-        curpos = self.toolhead.get_position()
-        curpos[0] = x
-        curpos[1] = y
+        speed = self.lift_speed
+        if not self.results:
+            # Use full speed to first probe position
+            speed = self.speed
+        curpos = toolhead.get_position()
         curpos[2] = self.horizontal_move_z
         try:
-            self.toolhead.move(curpos, self.speed)
+            toolhead.move(curpos, speed)
         except homing.EndstopError as e:
-            self._finalize(False)
+            raise self.gcode.error(str(e))
+        # Check if done probing
+        if len(self.results) >= len(self.probe_points):
+            self.gcode.reset_last_position()
+            toolhead.get_last_move_time()
+            self.finalize_callback(self.probe_offsets, self.results)
+            return True
+        # Move to next XY probe point
+        curpos[:2] = self.probe_points[len(self.results)]
+        try:
+            toolhead.move(curpos, self.speed)
+        except homing.EndstopError as e:
             raise self.gcode.error(str(e))
         self.gcode.reset_last_position()
-        if self.manual_probe:
-            manual_probe.ManualProbeHelper(self.printer, {},
-                                           self._manual_probe_finalize)
+        return False
     def start_probe(self, params):
         # Lookup objects
-        self.toolhead = self.printer.lookup_object('toolhead')
-        self.gcode = self.printer.lookup_object('gcode')
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
-        if probe is not None and method == 'automatic':
-            self.manual_probe = False
-            self.lift_speed = min(self.speed, probe.speed)
-            self.probe_offsets = probe.get_offsets()
-            if self.horizontal_move_z < self.probe_offsets[2]:
-                raise self.gcode.error("horizontal_move_z can't be less than"
-                                       " probe's z_offset")
-        else:
-            self.manual_probe = True
+        self.results = []
+        if probe is None or method != 'automatic':
+            # Manual probe
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
-        # Start probe
-        self.results = []
-        self.busy = True
-        self._lift_z(self.horizontal_move_z, self.speed)
-        self._move_next()
-        if not self.manual_probe:
-            # Perform automatic probing
-            while self.busy:
-                try:
-                    pos = probe.run_probe()
-                except self.gcode.error as e:
-                    self._finalize(False)
-                    raise
-                self.results.append(pos)
-                self._move_next()
+            self._manual_probe_start()
+            return
+        # Perform automatic probing
+        self.lift_speed = min(self.speed, probe.speed)
+        self.probe_offsets = probe.get_offsets()
+        if self.horizontal_move_z < self.probe_offsets[2]:
+            raise self.gcode.error("horizontal_move_z can't be less than"
+                                   " probe's z_offset")
+        while 1:
+            done = self._move_next()
+            if done:
+                break
+            pos = probe.run_probe()
+            self.results.append(pos)
+    def _manual_probe_start(self):
+        done = self._move_next()
+        if not done:
+            manual_probe.ManualProbeHelper(self.printer, {},
+                                           self._manual_probe_finalize)
     def _manual_probe_finalize(self, kin_pos):
         if kin_pos is None:
-            self._finalize(False)
             return
         self.results.append(kin_pos)
-        self._move_next()
-    def _finalize(self, success):
-        self.busy = False
-        if success:
-            self.finalize_callback(self.probe_offsets, self.results)
+        self._manual_probe_start()
 
 def load_config(config):
     return PrinterProbe(config, ProbeEndstopWrapper(config))
