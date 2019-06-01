@@ -7,12 +7,12 @@
 class FirmwareRetraction:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.retract_length = config.getfloat('retract_length', minval=0.)
-        self.retract_speed = config.getint('retract_speed', minval=1)
+        self.retract_length = config.getfloat('retract_length', 0., minval=0.)
+        self.retract_speed = config.getint('retract_speed', 2000, minval=1)
         self.unretract_extra_length = config.getfloat(
-            'unretract_extra_length', minval=0.)
-        self.unretract_speed = config.getint('unretract_speed', minval=1)
-        self.z_hop = config.getfloat('z_hop', minval=0.)
+            'unretract_extra_length', 0., minval=0.)
+        self.unretract_speed = config.getint('unretract_speed', 500, minval=1)
+        self.z_hop = config.getfloat('z_hop', 0., minval=0.)
         self.unretract_length = self.retract_length
         + self.unretract_extra_length
         self.is_retracted = False
