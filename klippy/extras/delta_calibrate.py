@@ -143,6 +143,7 @@ class DeltaCalibrate:
             points.append((math.cos(r) * dist, math.sin(r) * dist))
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, default_points=points)
+        self.probe_helper.minimum_points(3)
         # Restore probe stable positions
         self.last_probe_positions = []
         for i in range(999):

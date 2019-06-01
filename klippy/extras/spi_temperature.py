@@ -15,14 +15,14 @@ import bus
 REPORT_TIME = 0.300
 
 class SensorBase:
-    def __init__(self, config, chip_type, config_cmd=None):
+    def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
         self.printer = config.get_printer()
         self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
         self.spi = bus.MCU_SPI_from_config(
-            config, 1, pin_option="sensor_pin", default_speed=4000000)
+            config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
             self.spi.spi_send(config_cmd)
         self.mcu = mcu = self.spi.get_mcu()
@@ -192,7 +192,7 @@ MAX31855_MULT = 0.25
 
 class MAX31855(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, "MAX31855")
+        SensorBase.__init__(self, config, "MAX31855", spi_mode=0)
     def calc_temp(self, adc, fault):
         if adc & 0x1:
             self.fault("MAX31855 : Open Circuit")
@@ -221,7 +221,7 @@ MAX6675_MULT = 0.25
 
 class MAX6675(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, "MAX6675")
+        SensorBase.__init__(self, config, "MAX6675", spi_mode=0)
     def calc_temp(self, adc, fault):
         if adc & 0x02:
             self.fault("Max6675 : Device ID error")

@@ -20,7 +20,10 @@ def set_nonblock(fd):
 def clear_hupcl(fd):
     attrs = termios.tcgetattr(fd)
     attrs[2] = attrs[2] & ~termios.HUPCL
-    termios.tcsetattr(fd, termios.TCSADRAIN, attrs)
+    try:
+        termios.tcsetattr(fd, termios.TCSADRAIN, attrs)
+    except termios.error:
+        pass
 
 # Support for creating a pseudo-tty for emulating a serial port
 def create_pty(ptyname):

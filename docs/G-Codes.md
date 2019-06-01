@@ -90,15 +90,37 @@ The following standard commands are supported:
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
-  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]`: Set a
-  positional offset to apply to future G-Code commands. This is
-  commonly used to virtually change the Z bed offset or to set nozzle
-  XY offsets when switching extruders. For example, if
-  "SET_GCODE_OFFSET Z=0.2" is sent, then future G-Code moves will
-  have 0.2mm added to their Z height. If the X_ADJUST style parameters
-  are used, then the adjustment will be added to any existing offset
-  (eg, "SET_GCODE_OFFSET Z=-0.2" followed by "SET_GCODE_OFFSET
-  Z_ADJUST=0.3" would result in a total Z offset of 0.1).
+  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
+  future G-Code commands. This is commonly used to virtually change
+  the Z bed offset or to set nozzle XY offsets when switching
+  extruders. For example, if "SET_GCODE_OFFSET Z=0.2" is sent, then
+  future G-Code moves will have 0.2mm added to their Z height. If the
+  X_ADJUST style parameters are used, then the adjustment will be
+  added to any existing offset (eg, "SET_GCODE_OFFSET Z=-0.2" followed
+  by "SET_GCODE_OFFSET Z_ADJUST=0.3" would result in a total Z offset
+  of 0.1). If "MOVE=1" is specified then a toolhead move will be
+  issued to apply the given offset (otherwise the offset will take
+  effect on the next absolute G-Code move that specifies the given
+  axis). If "MOVE_SPEED" is specified then the toolhead move will be
+  performed with the given speed (in mm/s); otherwise the toolhead
+  move will use the last specified G-Code speed.
+- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
+  g-code coordinate parsing state. Saving and restoring the g-code
+  state is useful in scripts and macros. This command saves the
+  current g-code absolute coordinate mode (G90/G91), absolute extrude
+  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
+  override (M220), extruder override (M221), move speed, current XYZ
+  position, and relative extruder "E" position. If NAME is provided it
+  allows one to name the saved state to the given string. If NAME is
+  not provided it defaults to "default".
+- `RESTORE_GCODE_STATE [NAME=<state_name>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
+  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
+  is specified then the toolhead move will be performed with the given
+  speed (in mm/s); otherwise the toolhead move will use the restored
+  g-code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
