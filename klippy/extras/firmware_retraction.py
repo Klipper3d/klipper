@@ -66,7 +66,7 @@ class FirmwareRetraction:
             self.gcode.run_script_from_command(
                 "SAVE_GCODE_STATE NAME=_retract_state\n"
                 "G91\n"
-                "G1 E-%d F%d Z%d\n"
+                "G1 E-%.1f F%d Z%.1f\n"
                 "RESTORE_GCODE_STATE NAME=_retract_state"
                 % (self.retract_length, self.retract_speed, self.z_hop))
             self.is_retracted = True
@@ -76,7 +76,7 @@ class FirmwareRetraction:
             self.gcode.run_script_from_command(
                 "SAVE_GCODE_STATE NAME=_retract_state\n"
                 "G91\n"
-                "G1 E%d F%d Z-%d\n"
+                "G1 E%.1f F%d Z-%.1f\n"
                 "RESTORE_GCODE_STATE NAME=_retract_state"
                 % (self.unretract_length, self.unretract_speed, self.z_hop))
             self.is_retracted = False
