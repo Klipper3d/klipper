@@ -1,8 +1,8 @@
-Bed leveling (sometimes also referred to as "bed tramming") is
-critical to getting high quality prints. If a bed is not properly
-"leveled" it can lead to poor bed adhesion, "warping", and subtle
-problems throughout the print. This document serves as a guide to
-performing bed leveling in Klipper.
+Выравнивание стола (иногда также называемое "траммингом стола") имеет решающее 
+значение для получения отпечатков высокого качества. Если стол не выровнять 
+надлежащим образом, это может привести к плохой адгезии стола, "деформации" 
+и незначительным проблемам в процессе печати. Данный документ служит руководством 
+по выравниванию уровня стола в Klipper.
 
 It's important to understand the goal of bed leveling. If the printer
 is commanded to a position `X0 Y0 Z10` during a print, then the goal
