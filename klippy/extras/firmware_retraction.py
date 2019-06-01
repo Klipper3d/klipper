@@ -64,14 +64,20 @@ class FirmwareRetraction:
     def cmd_G10(self, params):
         if not self.is_retracted:
             self.gcode.run_script_from_command(
-                "SAVE_GCODE_STATE\nG91\nG1 E-%d F%d Z%d\nRESTORE_GCODE_STATE"
+                "SAVE_GCODE_STATE NAME=_retract_state\n"
+                "G91\n"
+                "G1 E-%d F%d Z%d\n"
+                "RESTORE_GCODE_STATE NAME=_retract_state"
                 % (self.retract_length, self.retract_speed, self.z_hop))
             self.is_retracted = True
 
     def cmd_G11(self, params):
         if self.is_retracted:
             self.gcode.run_script_from_command(
-                "SAVE_GCODE_STATE\nG91\nG1 E%d F%d Z-%d\nRESTORE_GCODE_STATE"
+                "SAVE_GCODE_STATE NAME=_retract_state\n"
+                "G91\n"
+                "G1 E%d F%d Z-%d\n"
+                "RESTORE_GCODE_STATE NAME=_retract_state"
                 % (self.unretract_length, self.unretract_speed, self.z_hop))
             self.is_retracted = False
 
