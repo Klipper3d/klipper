@@ -412,3 +412,34 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+
+## Firmware Retraction
+
+The following commands are available when the "firmware_retraction"
+config section is enabled.  These commands allow you to utilise the
+firmware retraction feature available in many slicers, to reduce
+stringing during non-extrusion moves from one part of the print to
+another.  Appropriately configuring pressure advance reduces the length
+of retraction required.
+ - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP=<mm>]`:
+   Adjust the parameters used by firmware retraction.  RETRACT_LENGTH
+   determines the length of filament to retract and unretract.  The
+   speed of retraction is adjusted via RETRACT_SPEED, and is typically
+   set relatively high.  The speed of unretraction is adjusted via
+   UNRETRACT_SPEED, and is not particularly critical, although often
+   lower than RETRACT_SPEED.  In some cases it is useful to add a small
+   amount of additional length on unretraction, and this is set via
+   UNRETRACT_EXTRA_LENGTH.  It is possible to lift the Z axis by a small
+   amount when in retracted state by setting Z_HOP, although this is
+   more commonly used for printers where fast Z movements are supported,
+   such as delta printers. SET_RETRACTION is commonly set as part of
+   slicer per-filament configuration, as different filaments require
+   different parameter settings.
+ - `GET_RETRACTION`: Queries the current parameters used by firmware
+   retraction and displays them on the terminal.
+ - `G10`: Retracts the extruder using the currently configured
+   parameters.
+ - `G11`: Unretracts the extruder using the currently configured
+   parameters.
+
