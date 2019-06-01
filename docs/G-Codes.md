@@ -442,4 +442,3 @@ of retraction required.
    parameters.
  - `G11`: Unretracts the extruder using the currently configured
    parameters.
-
