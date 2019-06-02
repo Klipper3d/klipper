@@ -33,7 +33,7 @@ class PauseResume:
                 self.v_sd.do_pause()
             else:
                 self.sd_paused = False
-                self.gcode.respond_info("action:pause")
+                self.gcode.respond_info("action:paused")
             self.pause_command_sent = True
     def cmd_PAUSE(self, params):
         if self.is_paused:
@@ -58,7 +58,7 @@ class PauseResume:
             # Printing from virtual sd, run pause command
             self.v_sd.cmd_M24({})
         else:
-            self.gcode.respond_info("action:resume")
+            self.gcode.respond_info("action:resumed")
 
 def load_config(config):
     return PauseResume(config)
