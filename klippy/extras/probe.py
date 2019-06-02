@@ -86,6 +86,7 @@ class PrinterProbe:
             toolhead.move(curpos, speed)
         except homing.EndstopError as e:
             raise self.gcode.error(str(e))
+        self.gcode.reset_last_position()
     def _calc_mean(self, positions):
         count = float(len(positions))
         return [sum([pos[i] for pos in positions]) / count
@@ -277,6 +278,7 @@ class ProbePointsHelper:
         except homing.EndstopError as e:
             self._finalize(False)
             raise self.gcode.error(str(e))
+        self.gcode.reset_last_position()
     def _move_next(self):
         # Lift toolhead
         self._lift_z(self.horizontal_move_z, self.lift_speed)
@@ -340,7 +342,6 @@ class ProbePointsHelper:
         self._move_next()
     def _finalize(self, success):
         self.busy = False
-        self.gcode.reset_last_position()
         if success:
             self.finalize_callback(self.probe_offsets, self.results)
 
