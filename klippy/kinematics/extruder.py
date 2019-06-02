@@ -63,6 +63,12 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+    def get_status(self, eventtime):
+        return dict(
+            self.get_heater().get_status(eventtime),
+            pressure_advance=self.pressure_advance,
+            lookahead_time=self.pressure_advance_lookahead_time
+        )
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
