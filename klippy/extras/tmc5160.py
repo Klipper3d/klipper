@@ -428,7 +428,9 @@ class TMC5160:
             'VALUE' not in params):
             raise gcode.error("Invalid command format")
         field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register[field]
+        reg = self.fields.field_to_register.get(field)
+        if reg is None:
+            raise gcode.error("Unknown field name '%s'" % field)
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
