@@ -66,11 +66,11 @@ class PrinterProbe:
         try:
             homing_state.homing_move(pos, endstops, speed,
                                      probe_pos=True, verify_movement=verify)
-        except homing.EndstopError as e:
+        except homing.CommandError as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
-            raise self.gcode.error(reason)
+            raise homing.CommandError(reason)
         pos = toolhead.get_position()
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f" % (
             pos[0], pos[1], pos[2]))
@@ -82,10 +82,7 @@ class PrinterProbe:
         for i in range(len(coord)):
             if coord[i] is not None:
                 curpos[i] = coord[i]
-        try:
-            toolhead.move(curpos, speed)
-        except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
+        toolhead.move(curpos, speed)
         self.gcode.reset_last_position()
     def _calc_mean(self, positions):
         count = float(len(positions))
@@ -224,16 +221,10 @@ class ProbeEndstopWrapper:
         for stepper in kin.get_steppers('Z'):
             stepper.add_to_endstop(self)
     def home_prepare(self):
-        try:
-            self.activate_gcode.run_gcode_from_command()
-        except self.gcode.error as e:
-            raise homing.EndstopError(str(e))
+        self.activate_gcode.run_gcode_from_command()
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        try:
-            self.deactivate_gcode.run_gcode_from_command()
-        except self.gcode.error as e:
-            raise homing.EndstopError(str(e))
+        self.deactivate_gcode.run_gcode_from_command()
         self.mcu_endstop.home_finalize()
     def get_position_endstop(self):
         return self.position_endstop
@@ -278,10 +269,7 @@ class ProbePointsHelper:
             speed = self.speed
         curpos = toolhead.get_position()
         curpos[2] = self.horizontal_move_z
-        try:
-            toolhead.move(curpos, speed)
-        except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
+        toolhead.move(curpos, speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             self.gcode.reset_last_position()
@@ -290,10 +278,7 @@ class ProbePointsHelper:
             return True
         # Move to next XY probe point
         curpos[:2] = self.probe_points[len(self.results)]
-        try:
-            toolhead.move(curpos, self.speed)
-        except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
+        toolhead.move(curpos, self.speed)
         self.gcode.reset_last_position()
         return False
     def start_probe(self, params):
