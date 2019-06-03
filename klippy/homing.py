@@ -146,7 +146,10 @@ class Homing:
             self.toolhead.motor_off()
             raise
 
-class EndstopError(Exception):
+class CommandError(Exception):
+    pass
+
+class EndstopError(CommandError):
     pass
 
 def EndstopMoveError(pos, msg="Move out of range"):
