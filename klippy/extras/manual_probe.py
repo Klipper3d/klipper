@@ -90,9 +90,9 @@ class ManualProbeHelper:
                 self.toolhead.move(curpos, self.speed)
             curpos[2] = z_pos
             self.toolhead.move(curpos, self.speed)
-        except homing.EndstopError as e:
+        except homing.CommandError as e:
             self.finalize(False)
-            raise self.gcode.error(str(e))
+            raise
     def report_z_status(self, warn_no_change=False, prev_pos=None):
         # Get position
         kin_pos = self.get_kinematics_pos()
