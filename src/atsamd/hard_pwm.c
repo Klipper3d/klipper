@@ -1,6 +1,6 @@
 // Hardware PWM support on samd21
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -9,38 +9,45 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-struct gpio_pwm_info {
-    uint32_t gpio;
+// Available TCC devices
+struct tcc_info_s {
     Tcc *tcc;
-    uint32_t pclk_id, pm_id, channel;
-    char ptype;
+    uint32_t pclk_id, pm_id;
+};
+static const struct tcc_info_s tcc_info[] = {
+    { TCC0, TCC0_GCLK_ID, ID_TCC0 },
+    { TCC1, TCC1_GCLK_ID, ID_TCC1 },
+    { TCC2, TCC2_GCLK_ID, ID_TCC2 },
 };
 
+// PWM pins and their TCC device/channel
+struct gpio_pwm_info {
+    uint8_t gpio, ptype, tcc, channel;
+};
 static const struct gpio_pwm_info pwm_regs[] = {
-    { GPIO('A', 4), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
-    { GPIO('A', 5), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
-    { GPIO('A', 6), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
-    { GPIO('A', 7), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
-    { GPIO('A', 8), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
-    { GPIO('A', 9), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
-    { GPIO('A', 10), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
-    { GPIO('A', 11), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
-    { GPIO('A', 12), TCC2, TCC2_GCLK_ID, ID_TCC2, 0, 'E' },
-    { GPIO('A', 13), TCC2, TCC2_GCLK_ID, ID_TCC2, 1, 'E' },
-    { GPIO('A', 16), TCC2, TCC2_GCLK_ID, ID_TCC2, 0, 'E' },
-    { GPIO('A', 17), TCC2, TCC2_GCLK_ID, ID_TCC2, 1, 'E' },
-    { GPIO('A', 18), TCC0, TCC0_GCLK_ID, ID_TCC0, 2, 'F' },
-    { GPIO('A', 19), TCC0, TCC0_GCLK_ID, ID_TCC0, 3, 'F' },
-    { GPIO('A', 24), TCC1, TCC1_GCLK_ID, ID_TCC1, 2, 'F' },
-    { GPIO('A', 25), TCC1, TCC1_GCLK_ID, ID_TCC1, 3, 'F' },
-    { GPIO('A', 30), TCC1, TCC1_GCLK_ID, ID_TCC1, 0, 'E' },
-    { GPIO('A', 31), TCC1, TCC1_GCLK_ID, ID_TCC1, 1, 'E' },
-    { GPIO('B', 30), TCC0, TCC0_GCLK_ID, ID_TCC0, 0, 'E' },
-    { GPIO('B', 31), TCC0, TCC0_GCLK_ID, ID_TCC0, 1, 'E' },
+    { GPIO('A', 4),  'E', 0, 0 },
+    { GPIO('A', 5),  'E', 0, 1 },
+    { GPIO('A', 6),  'E', 1, 0 },
+    { GPIO('A', 7),  'E', 1, 1 },
+    { GPIO('A', 8),  'E', 0, 0 },
+    { GPIO('A', 9),  'E', 0, 1 },
+    { GPIO('A', 10), 'E', 1, 0 },
+    { GPIO('A', 11), 'E', 1, 1 },
+    { GPIO('A', 12), 'E', 2, 0 },
+    { GPIO('A', 13), 'E', 2, 1 },
+    { GPIO('A', 16), 'E', 2, 0 },
+    { GPIO('A', 17), 'E', 2, 1 },
+    { GPIO('A', 18), 'F', 0, 2 },
+    { GPIO('A', 19), 'F', 0, 3 },
+    { GPIO('A', 24), 'F', 1, 2 },
+    { GPIO('A', 25), 'F', 1, 3 },
+    { GPIO('A', 30), 'E', 1, 0 },
+    { GPIO('A', 31), 'E', 1, 1 },
+    { GPIO('B', 30), 'E', 0, 0 },
+    { GPIO('B', 31), 'E', 0, 1 },
 };
 
 #define MAX_PWM 255
-
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm
@@ -56,7 +63,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     }
 
     // Enable timer clock
-    enable_pclock(p->pclk_id, p->pm_id);
+    enable_pclock(tcc_info[p->tcc].pclk_id, tcc_info[p->tcc].pm_id);
 
     // Map cycle_time to pwm clock divisor
     uint32_t cs;
@@ -73,7 +80,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     uint32_t ctrla = TCC_CTRLA_ENABLE | TCC_CTRLA_PRESCALER(cs);
 
     // Enable timer
-    Tcc *tcc = p->tcc;
+    Tcc *tcc = tcc_info[p->tcc].tcc;
     uint32_t old_ctrla = tcc->CTRLA.reg;
     if (old_ctrla != ctrla) {
         if (old_ctrla & TCC_CTRLA_ENABLE)

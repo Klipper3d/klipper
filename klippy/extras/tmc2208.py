@@ -168,12 +168,13 @@ Fields["PWM_AUTO"] = {
     "PWM_GRAD_AUTO":       0xff << 16
 }
 
+SignedFields = ["CUR_A", "CUR_B", "PWM_SCALE_AUTO"]
+
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "SEL_A":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
     "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
     "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
-    "PWM_SCALE_AUTO":   (lambda v: tmc2130.decode_signed_int(v, 9))
 })
 
 
@@ -284,7 +285,8 @@ class TMC2208:
         # Setup basic register values
         self.ifcnt = None
         self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(Fields, FieldFormatters, self.regs)
+        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
+                                          self.regs)
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
@@ -425,7 +427,9 @@ class TMC2208:
             'VALUE' not in params):
             raise gcode.error("Invalid command format")
         field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register[field]
+        reg = self.fields.field_to_register.get(field)
+        if reg is None:
+            raise gcode.error("Unknown field name '%s'" % field)
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
         self.printer.lookup_object('toolhead').wait_moves()

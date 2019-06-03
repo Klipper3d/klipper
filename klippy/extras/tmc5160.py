@@ -211,8 +211,9 @@ fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
 
-FieldFormatters = dict(tmc2130.FieldFormatters)
+SignedFields = ["CUR_A", "CUR_B", "sgt", "XACTUAL", "VACTUAL", "PWM_SCALE_AUTO"]
 
+FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "reset":            (lambda v: "1(reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
@@ -274,7 +275,8 @@ class TMC5160:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(fields, FieldFormatters, self.regs)
+        self.fields = tmc2130.FieldHelper(fields, SignedFields, FieldFormatters,
+                                          self.regs)
         irun, ihold, self.sense_resistor = get_config_current(config)
         msteps, en_pwm, thresh = \
             tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
@@ -426,7 +428,9 @@ class TMC5160:
             'VALUE' not in params):
             raise gcode.error("Invalid command format")
         field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register[field]
+        reg = self.fields.field_to_register.get(field)
+        if reg is None:
+            raise gcode.error("Unknown field name '%s'" % field)
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()

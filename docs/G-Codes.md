@@ -105,6 +105,22 @@ The following standard commands are supported:
   axis). If "MOVE_SPEED" is specified then the toolhead move will be
   performed with the given speed (in mm/s); otherwise the toolhead
   move will use the last specified G-Code speed.
+- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
+  g-code coordinate parsing state. Saving and restoring the g-code
+  state is useful in scripts and macros. This command saves the
+  current g-code absolute coordinate mode (G90/G91), absolute extrude
+  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
+  override (M220), extruder override (M221), move speed, current XYZ
+  position, and relative extruder "E" position. If NAME is provided it
+  allows one to name the saved state to the given string. If NAME is
+  not provided it defaults to "default".
+- `RESTORE_GCODE_STATE [NAME=<state_name>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
+  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
+  is specified then the toolhead move will be performed with the given
+  speed (in mm/s); otherwise the toolhead move will use the restored
+  g-code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
