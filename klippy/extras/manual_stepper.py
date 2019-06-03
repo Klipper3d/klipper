@@ -89,12 +89,12 @@ class ManualStepper:
         for mcu_endstop, name in endstops:
             try:
                 mcu_endstop.home_finalize()
-            except homing.EndstopError as e:
+            except homing.CommandError as e:
                 if error is None:
                     error = str(e)
         self.sync_print_time()
         if error is not None:
-            raise self.gcode.error(error)
+            raise homing.CommandError(error)
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
     def cmd_MANUAL_STEPPER(self, params):
         if 'ENABLE' in params:
