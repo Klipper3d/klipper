@@ -14,6 +14,22 @@ tower endstop switches. If one is using Trinamic stepper motor drivers
 then consider enabling [endstop phase](Endstop_Phase.md) detection to
 improve the accuracy of those switches.
 
+Automatic vs manual probing
+===========================
+
+Klipper supports calibrating the delta parameters via a manual probing
+method or via an automatic Z probe.
+
+A number of delta printer kits come with automatic Z probes that are
+not sufficiently accurate (specifically, small differences in arm
+length can cause effector tilt which can skew an automatic probe). If
+using an automatic probe then first
+[calibrate the probe](Probe_Calibrate.md) and then check for a
+[probe location bias](Probe_Calibrate.md#location-bias-check). If the
+automatic probe has a bias of more than 25 microns (.025mm) then use
+manual probing instead. Manual probing only takes a few minutes and it
+eliminates error introduced by the probe.
+
 Basic delta calibration
 =======================
 
@@ -39,20 +55,13 @@ calibration completes, one can remove this setting from the config.)
 
 There are two ways to perform the probing - manual probing
 (`DELTA_CALIBRATE METHOD=manual`) and automatic probing
-(`DELTA_CALIBRATE`). Automatic probing utilizes a hardware device
-capable of triggering when the toolhead is at a set distance from the
-bed. The manual probing method will move the head near the bed and
-then wait for the user to follow the steps described at
+(`DELTA_CALIBRATE`). The manual probing method will move the head near
+the bed and then wait for the user to follow the steps described at
 ["the paper test"](Bed_Level.md#the-paper-test) to determine the
-actual distance between the nozzle and bed at the given location. It
-is recommended to use manual probing for delta calibration. A number
-of common printer kits come with probes that are not sufficiently
-accurate (specifically, small differences in arm length can cause
-effector tilt which can skew an automatic probe). Manual probing only
-takes a few minutes and it eliminates error introduced by the probe.
+actual distance between the nozzle and bed at the given location.
 
 To perform the basic probe, make sure the config has a
-[delta_calibrate] section defined and run:
+[delta_calibrate] section defined and then run the tool:
 ```
 G28
 DELTA_CALIBRATE METHOD=manual
