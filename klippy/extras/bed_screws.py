@@ -51,10 +51,7 @@ class BedScrews:
         for i in range(len(coord)):
             if coord[i] is not None:
                 curpos[i] = coord[i]
-        try:
-            toolhead.move(curpos, speed)
-        except homing.EndstopError as e:
-            raise self.gcode.error(str(e))
+        toolhead.move(curpos, speed)
         self.gcode.reset_last_position()
     def move_to_screw(self, state, screw):
         # Move up, over, and then down
