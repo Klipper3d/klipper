@@ -55,6 +55,7 @@ class BedScrews:
             toolhead.move(curpos, speed)
         except homing.EndstopError as e:
             raise self.gcode.error(str(e))
+        self.gcode.reset_last_position()
     def move_to_screw(self, state, screw):
         # Move up, over, and then down
         self.move((None, None, self.horizontal_move_z), self.lift_speed)
