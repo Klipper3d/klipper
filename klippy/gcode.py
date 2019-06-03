@@ -475,10 +475,7 @@ class GCodeParser:
         if self.extruder is e:
             return
         self.run_script_from_command(self.extruder.get_activate_gcode(False))
-        try:
-            self.toolhead.set_extruder(e)
-        except homing.EndstopError as e:
-            raise self.error(str(e))
+        self.toolhead.set_extruder(e)
         self.extruder = e
         self.reset_last_position()
         self.extrude_factor = 1.
@@ -533,10 +530,7 @@ class GCodeParser:
         except ValueError as e:
             raise self.error("Unable to parse move '%s'" % (
                 params['#original'],))
-        try:
-            self.move_with_transform(self.last_position, self.speed)
-        except homing.EndstopError as e:
-            raise self.error(str(e))
+        self.move_with_transform(self.last_position, self.speed)
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
@@ -555,10 +549,7 @@ class GCodeParser:
         homing_state = homing.Homing(self.printer)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
-        try:
-            homing_state.home_axes(axes)
-        except homing.EndstopError as e:
-            raise self.error(str(e))
+        homing_state.home_axes(axes)
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
         self.reset_last_position()
@@ -632,10 +623,7 @@ class GCodeParser:
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             for pos, delta in enumerate(move_delta):
                 self.last_position[pos] += delta
-            try:
-                self.move_with_transform(self.last_position, speed)
-            except homing.EndstopError as e:
-                raise self.error(str(e))
+            self.move_with_transform(self.last_position, speed)
     def cmd_M206(self, params):
         # Offset axes
         offsets = { self.axis2pos[a]: -self.get_float(a, params)
@@ -677,10 +665,7 @@ class GCodeParser:
         if self.get_int('MOVE', params, 0):
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
-            try:
-                self.move_with_transform(self.last_position, speed)
-            except homing.EndstopError as e:
-                raise self.error(str(e))
+            self.move_with_transform(self.last_position, speed)
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
