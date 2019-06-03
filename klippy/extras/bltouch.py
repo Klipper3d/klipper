@@ -68,7 +68,7 @@ class BLTouchEndstopWrapper:
     def handle_connect(self):
         try:
             self.raise_probe()
-        except homing.EndstopError as e:
+        except homing.CommandError as e:
             logging.warning("BLTouch raise probe error: %s", str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
@@ -114,7 +114,7 @@ class BLTouchEndstopWrapper:
                 try:
                     self.verify_state(check_start_time, check_end_time,
                                       False, "raise probe")
-                except homing.EndstopError as e:
+                except homing.CommandError as e:
                     if retry >= 2:
                         raise
                     msg = "Failed to verify BLTouch probe is raised; retrying."
