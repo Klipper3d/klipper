@@ -154,9 +154,9 @@ The following are common printer attributes:
   position (eg, `printer.toolhead.position.x`).
 
 The above list is subject to change - if using an attribute be sure to
-review the [Config Changes document](Config_Changes.md) document when
-upgrading the Klipper software. The above list is not exhaustive.
-Other attributes may be available (via `get_status()` calls in the
+review the [Config Changes document](Config_Changes.md) when upgrading
+the Klipper software. The above list is not exhaustive.  Other
+attributes may be available (via `get_status()` methods defined in the
 software). However, undocumented attributes may change without notice
 in future Klipper releases.
 
