@@ -49,6 +49,7 @@ it was prior to entering the macro. Be sure to specify an explicit
 speed (via the `F` parameter) on the first `G1` command.
 
 ### Template expansion
+<!-- {% raw %} -->
 
 The gcode_macro `gcode:` config section is evaluated using the Jinja2
 template language. One can evaluate expressions at run-time by
@@ -86,6 +87,7 @@ gcode:
   {% endfor %}
   RESTORE_GCODE_STATE NAME=clean_nozzle_state
 ```
+<!-- {% endraw %} -->
 
 #### The "printer" Variable
 
