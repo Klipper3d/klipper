@@ -28,6 +28,12 @@ class GetStatusWrapper:
             self.eventtime = self.printer.get_reactor().monotonic()
         self.cache[sval] = res = dict(po.get_status(self.eventtime))
         return res
+    def __contains__(self, val):
+        try:
+            self.__getitem__(val)
+        except KeyError as e:
+            return False
+        return True
 
 # Wrapper around a Jinja2 template
 class TemplateWrapper:
