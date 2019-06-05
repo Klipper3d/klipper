@@ -24,6 +24,8 @@ Registers = {
     "CHOPCONF": 0x8, "DRVCTRL": 0x0
 }
 
+ReadRegisters = [ "READRSP@RDSEL0", "READRSP@RDSEL1", "READRSP@RDSEL2" ]
+
 Fields = {}
 
 Fields["DRVCTRL"] = {
@@ -156,10 +158,8 @@ class TMC2660:
         set_config_field = self.fields.set_config_field
 
         # DRVCTRL
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        self.driver_mres = config.getchoice('microsteps', steps)
-        self.fields.set_field("MRES", self.driver_mres)
+        mres = tmc2130.get_config_microsteps(config)
+        self.fields.set_field("MRES", mres)
         set_config_field(config, "DEDGE", 0)
         set_config_field(config, "INTPOL", True, 'interpolate')
         # CHOPCONF
@@ -222,13 +222,13 @@ class TMC2660:
         self.spi.spi_send([((val >> 16) | reg) & 0xff,
                             (val >> 8) & 0xff, val & 0xff], min_clock)
 
-    def get_response(self):
-        reg = Registers["DRVCTRL"]
-        val = self.regs["DRVCTRL"]
+    def get_register(self, reg_name):
+        reg = Registers["DRVCONF"]
+        val = self.fields.set_field("RDSEL", ReadRegisters.index(reg_name))
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
         params = self.spi.spi_transfer([((val >> 16) | reg) & 0xff,
-                            (val >> 8) & 0xff, val & 0xff])
+                                        (val >> 8) & 0xff, val & 0xff])
         pr = bytearray(params['response'])
         return (pr[0] << 16) | (pr[1] << 8) | pr[2]
 
@@ -236,8 +236,9 @@ class TMC2660:
         return 256 >> self.fields.get_field("MRES")
 
     def get_phase(self):
-        mscnt =  self.fields.get_field("MSTEP", self.get_response())
-        return mscnt >> self.driver_mres
+        reg = self.get_register("READRSP@RDSEL0")
+        mscnt = self.fields.get_field("MSTEP", reg)
+        return mscnt >> self.fields.get_field("MRES")
 
     def handle_printing(self, print_time):
         self.set_current(0., self.current) # workaround
@@ -278,9 +279,9 @@ class TMC2660:
 
         # Send one register to get the return data
         gcode.respond_info("========== Queried registers ==========")
-        return_format = "READRSP@RDSEL" + str(self.fields.get_field("RDSEL"))
-        msg = self.fields.pretty_format(return_format, self.get_response())
-        gcode.respond_info(msg)
+        for reg_name in ReadRegisters:
+            val = self.get_register(reg_name)
+            gcode.respond_info(self.fields.pretty_format(reg_name, val))
 
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, params):
