@@ -320,8 +320,6 @@ class TMC5160:
         self.fields.set_field("TPWMTHRS", thresh)
         #   TPOWERDOWN
         set_config_field(config, "TPOWERDOWN", 10)
-
-        cmdhelper.init_registers()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc5160 virtual endstop only useful as endstop")

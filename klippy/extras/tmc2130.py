@@ -175,15 +175,22 @@ class TMCCommandHelper:
         self.gcode.register_mux_command(
             "INIT_TMC", "STEPPER", self.name,
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
-    def init_registers(self, print_time=0.):
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
+    def _init_registers(self, print_time):
         # Send registers
         for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
+    def _handle_connect(self):
+        try:
+            self._init_registers(0.)
+        except self.printer.command_error as e:
+            raise self.printer.config_error(str(e))
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, params):
         logging.info("INIT_TMC %s", self.name)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.init_registers(print_time)
+        self._init_registers(print_time)
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC driver"
     def cmd_SET_TMC_FIELD(self, params):
         if 'FIELD' not in params or 'VALUE' not in params:
@@ -353,7 +360,6 @@ class TMC2130:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
-        cmdhelper.init_registers()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")

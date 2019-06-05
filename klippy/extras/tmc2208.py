@@ -309,8 +309,6 @@ class TMC2208:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.printer.register_event_handler("klippy:connect",
-                                            self._handle_connect)
         # Setup mcu communication
         self.regs = collections.OrderedDict()
         self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
@@ -354,15 +352,6 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
-    def _init_registers(self):
-        # Send registers
-        for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val)
-    def _handle_connect(self):
-        try:
-            self._init_registers()
-        except self.printer.command_error as e:
-            raise self.printer.config_error(str(e))
     def query_registers(self, print_time=0.):
         out = []
         for reg_name in ReadRegisters:

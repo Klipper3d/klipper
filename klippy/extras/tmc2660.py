@@ -231,9 +231,6 @@ class TMC2660:
         self.fields.set_field("RDSEL", 0) # needed for phase calculations
         self.fields.set_field("SDOFF", 0) # only step/dir mode supported
 
-        # Init Registers
-        cmdhelper.init_registers()
-
         # Register ready/printing handlers
         self.idle_current_percentage = config.getint(
             'idle_current_percent', default=100, minval=0, maxval=100)
