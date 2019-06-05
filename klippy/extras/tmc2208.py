@@ -318,20 +318,13 @@ class TMC2208:
         self.mcu_tmc = MCU_TMC_uart(config, Registers, self.fields)
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
-        # Add DUMP_TMC, INIT_TMC command
+        # Register commands
+        cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
+        cmdhelper.setup_register_dump(self.query_registers)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
             self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
-        gcode.register_mux_command(
-            "DUMP_TMC", "STEPPER", self.name,
-            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
-        gcode.register_mux_command(
-            "SET_TMC_FIELD", "STEPPER", self.name,
-            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
-        gcode.register_mux_command(
-            "INIT_TMC", "STEPPER", self.name,
-            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
@@ -370,6 +363,17 @@ class TMC2208:
             self._init_registers()
         except self.printer.command_error as e:
             raise self.printer.config_error(str(e))
+    def query_registers(self, print_time=0.):
+        out = []
+        for reg_name in ReadRegisters:
+            val = self.get_register(reg_name)
+            # IOIN has different mappings depending on the driver type
+            # (SEL_A field of IOIN reg)
+            if reg_name == "IOIN":
+                drv_type = self.fields.get_field("SEL_A", val)
+                reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
+            out.append((reg_name, val))
+        return out
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
@@ -409,43 +413,6 @@ class TMC2208:
             gcode.respond_info(
                 "Run Current: %0.2fA Hold Current: %0.2fA"
                 % (run_current, hold_current))
-    cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
-    def cmd_DUMP_TMC(self, params):
-        self.printer.lookup_object('toolhead').get_last_move_time()
-        gcode = self.printer.lookup_object('gcode')
-        logging.info("DUMP_TMC %s", self.name)
-        gcode.respond_info("========== Write-only registers ==========")
-        for reg_name, val in self.regs.items():
-            if reg_name not in ReadRegisters:
-                gcode.respond_info(self.fields.pretty_format(reg_name, val))
-        gcode.respond_info("========== Queried registers ==========")
-        for reg_name in ReadRegisters:
-            val = self.get_register(reg_name)
-            # IOIN has different mappings depending on the driver type
-            # (SEL_A field of IOIN reg)
-            if reg_name == "IOIN":
-                drv_type = self.fields.get_field("SEL_A", val)
-                reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            gcode.respond_info(self.fields.pretty_format(reg_name, val))
-    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
-    def cmd_INIT_TMC(self, params):
-        logging.info("INIT_TMC 2208 %s", self.name)
-        self.printer.lookup_object('toolhead').wait_moves()
-        self._init_registers()
-    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2208 driver"
-    def cmd_SET_TMC_FIELD(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if ('FIELD' not in params or
-            'VALUE' not in params):
-            raise gcode.error("Invalid command format")
-        field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register.get(field)
-        if reg is None:
-            raise gcode.error("Unknown field name '%s'" % field)
-        value = gcode.get_int('VALUE', params)
-        self.fields.set_field(field, value)
-        self.printer.lookup_object('toolhead').wait_moves()
-        self.set_register(reg, self.regs[reg])
 
 def load_config_prefix(config):
     return TMC2208(config)
