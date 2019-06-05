@@ -279,6 +279,8 @@ class TMC2130:
     def get_register(self, reg_name):
         reg = Registers[reg_name]
         self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
         params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
