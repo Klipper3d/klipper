@@ -177,20 +177,13 @@ class TMC2660:
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
-        # Add SET_CURRENT and DUMP_TMC commands
+        # Register commands
+        cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
+        cmdhelper.setup_register_dump(self.query_registers)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
             self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
-        gcode.register_mux_command(
-            "DUMP_TMC", "STEPPER", self.name,
-            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
-        gcode.register_mux_command(
-            "SET_TMC_FIELD", "STEPPER", self.name,
-            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
-        gcode.register_mux_command(
-            "INIT_TMC", "STEPPER", self.name,
-            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup driver registers
         set_config_field = self.fields.set_config_field
 
@@ -239,7 +232,7 @@ class TMC2660:
         self.fields.set_field("SDOFF", 0) # only step/dir mode supported
 
         # Init Registers
-        self._init_registers(self)
+        cmdhelper.init_registers()
 
         # Register ready/printing handlers
         self.idle_current_percentage = config.getint(
@@ -250,9 +243,9 @@ class TMC2660:
             self.printer.register_event_handler("idle_timeout:ready",
                                                 self.handle_ready)
 
-    def _init_registers(self, print_time=0.):
-        for reg_name in Registers:
-            self.set_register(reg_name, self.regs[reg_name])
+    def query_registers(self, print_time=0.):
+        return [(reg_name, self.get_register(reg_name))
+                for reg_name in ReadRegisters]
 
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
@@ -288,42 +281,6 @@ class TMC2660:
             self.set_current(
                 self.printer.lookup_object('toolhead').get_last_move_time(),
                 self.current)
-
-    cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
-    def cmd_DUMP_TMC(self, params):
-        self.printer.lookup_object('toolhead').get_last_move_time()
-        gcode = self.printer.lookup_object('gcode')
-        gcode.respond_info("========== Write-only registers ==========")
-        for reg_name in Registers:
-            msg = self.fields.pretty_format(reg_name, self.regs[reg_name])
-            gcode.respond_info(msg)
-
-        # Send one register to get the return data
-        gcode.respond_info("========== Queried registers ==========")
-        for reg_name in ReadRegisters:
-            val = self.get_register(reg_name)
-            gcode.respond_info(self.fields.pretty_format(reg_name, val))
-
-    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
-    def cmd_INIT_TMC(self, params):
-        logging.info("INIT_TMC 2660 %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self._init_registers(print_time)
-
-    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2660 driver"
-    def cmd_SET_TMC_FIELD(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if ('FIELD' not in params or
-            'VALUE' not in params):
-            raise gcode.error("Invalid command format")
-        field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register.get(field)
-        if reg is None:
-            raise gcode.error("Unknown field name '%s'" % field)
-        value = gcode.get_int('VALUE', params)
-        self.fields.set_field(field, value)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.set_register(reg, self.regs[reg], print_time)
 
 def load_config_prefix(config):
     return TMC2660(config)
