@@ -132,11 +132,51 @@ FieldFormatters = {
     "STST": (lambda v: "1(Standstill detected!)" if v else ""),
 }
 
+
+######################################################################
+# TMC2660 SPI
+######################################################################
+
+# Helper code for working with TMC2660 devices via SPI
+class MCU_TMC2660_SPI:
+    def __init__(self, config, name_to_reg, fields):
+        self.printer = config.get_printer()
+        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=4000000)
+        self.name_to_reg = name_to_reg
+        self.fields = fields
+    def get_fields(self):
+        return self.fields
+    def get_register(self, reg_name):
+        reg = self.name_to_reg["DRVCONF"]
+        val = self.fields.set_field("RDSEL", ReadRegisters.index(reg_name))
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
+        params = self.spi.spi_transfer([((val >> 16) | reg) & 0xff,
+                                        (val >> 8) & 0xff, val & 0xff])
+        pr = bytearray(params['response'])
+        return (pr[0] << 16) | (pr[1] << 8) | pr[2]
+    def set_register(self, reg_name, val, print_time=0.):
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        reg = self.name_to_reg[reg_name]
+        self.spi.spi_send([((val >> 16) | reg) & 0xff,
+                            (val >> 8) & 0xff, val & 0xff], min_clock)
+
+
+######################################################################
+# TMC2660 printer object
+######################################################################
+
 class TMC2660:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
-        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=4000000)
+        # Setup mcu communication
+        self.regs = collections.OrderedDict()
+        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
+                                          self.regs)
+        self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
+        self.get_register = self.mcu_tmc.get_register
+        self.set_register = self.mcu_tmc.set_register
         # Add SET_CURRENT and DUMP_TMC commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -152,9 +192,6 @@ class TMC2660:
             "INIT_TMC", "STEPPER", self.name,
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup driver registers
-        self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
-                                          self.regs)
         set_config_field = self.fields.set_config_field
 
         # DRVCTRL
@@ -213,24 +250,9 @@ class TMC2660:
             self.printer.register_event_handler("idle_timeout:ready",
                                                 self.handle_ready)
 
-    def _init_registers(self, min_clock=0):
+    def _init_registers(self, print_time=0.):
         for reg_name in Registers:
             self.set_register(reg_name, self.regs[reg_name])
-
-    def set_register(self, reg_name, val, min_clock=0):
-        reg = Registers[reg_name]
-        self.spi.spi_send([((val >> 16) | reg) & 0xff,
-                            (val >> 8) & 0xff, val & 0xff], min_clock)
-
-    def get_register(self, reg_name):
-        reg = Registers["DRVCONF"]
-        val = self.fields.set_field("RDSEL", ReadRegisters.index(reg_name))
-        if self.printer.get_start_args().get('debugoutput') is not None:
-            return 0
-        params = self.spi.spi_transfer([((val >> 16) | reg) & 0xff,
-                                        (val >> 8) & 0xff, val & 0xff])
-        pr = bytearray(params['response'])
-        return (pr[0] << 16) | (pr[1] << 8) | pr[2]
 
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
@@ -251,12 +273,11 @@ class TMC2660:
         (self.driver_cs,
          self.driver_vsense) = get_config_current(current, self.sense_resistor)
         self.fields.set_field("CS", self.driver_cs)
-        clock = self.spi.get_mcu().print_time_to_clock(print_time)
-        self.set_register("SGCSCONF", self.regs["SGCSCONF"], min_clock=clock)
+        self.set_register("SGCSCONF", self.regs["SGCSCONF"], print_time)
         # Only update VSENSE if we need to
         if self.driver_vsense != self.fields.get_field("VSENSE"):
             self.fields.set_field("VSENSE", self.driver_vsense)
-            self.set_register("DRVCONF", self.regs["DRVCONF"], min_clock=clock)
+            self.set_register("DRVCONF", self.regs["DRVCONF"], print_time)
 
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
     def cmd_SET_TMC_CURRENT(self, params):
@@ -286,9 +307,8 @@ class TMC2660:
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, params):
         logging.info("INIT_TMC 2660 %s", self.name)
-        pt = self.printer.lookup_object('toolhead').get_last_move_time()
-        min_clock = self.spi.get_mcu().print_time_to_clock(pt)
-        self._init_registers(min_clock)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self._init_registers(print_time)
 
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2660 driver"
     def cmd_SET_TMC_FIELD(self, params):
@@ -302,9 +322,8 @@ class TMC2660:
             raise gcode.error("Unknown field name '%s'" % field)
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
-        pt = self.printer.lookup_object('toolhead').get_last_move_time()
-        clock = self.spi.get_mcu().print_time_to_clock(pt)
-        self.set_register(reg, self.regs[reg], min_clock=clock)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.set_register(reg, self.regs[reg], print_time)
 
 def load_config_prefix(config):
     return TMC2660(config)
