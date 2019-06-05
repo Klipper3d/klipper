@@ -106,6 +106,8 @@ class FieldHelper:
             self.registers = {}
         self.field_to_register = { f: r for r, fields in self.all_fields.items()
                                    for f in fields }
+    def lookup_register(self, field_name, default=None):
+        return self.field_to_register.get(field_name, default)
     def get_field(self, field_name, reg_value=None, reg_name=None):
         # Returns value of the register field
         if reg_name is None:
@@ -153,6 +155,67 @@ class FieldHelper:
             if sval and sval != "0":
                 fields.append(" %s=%s" % (field_name, sval))
         return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
+
+
+######################################################################
+# G-Code command helpers
+######################################################################
+
+class TMCCommandHelper:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        self.query_registers = None
+        self.gcode = self.printer.lookup_object("gcode")
+        self.gcode.register_mux_command(
+            "SET_TMC_FIELD", "STEPPER", self.name,
+            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
+        self.gcode.register_mux_command(
+            "INIT_TMC", "STEPPER", self.name,
+            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
+    def init_registers(self, print_time=0.):
+        # Send registers
+        for reg_name, val in self.fields.registers.items():
+            self.mcu_tmc.set_register(reg_name, val, print_time)
+    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
+    def cmd_INIT_TMC(self, params):
+        logging.info("INIT_TMC %s", self.name)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.init_registers(print_time)
+    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC driver"
+    def cmd_SET_TMC_FIELD(self, params):
+        if 'FIELD' not in params or 'VALUE' not in params:
+            raise self.gcode.error("Invalid command format")
+        field_name = self.gcode.get_str('FIELD', params)
+        reg_name = self.fields.lookup_register(field_name, None)
+        if reg_name is None:
+            raise self.gcode.error("Unknown field name '%s'" % (field_name,))
+        value = self.gcode.get_int('VALUE', params)
+        reg_val = self.fields.set_field(field_name, value)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.mcu_tmc.set_register(reg_name, reg_val, print_time)
+    # DUMP_TMC support
+    def setup_register_dump(self, query_registers):
+        self.query_registers = query_registers
+        self.gcode.register_mux_command(
+            "DUMP_TMC", "STEPPER", self.name,
+            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+    cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
+    def cmd_DUMP_TMC(self, params):
+        logging.info("DUMP_TMC %s", self.name)
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        read_regs = self.query_registers(print_time)
+        read_regs_by_name = { reg_name: val for reg_name, val in read_regs }
+        self.gcode.respond_info("========== Write-only registers ==========")
+        for reg_name, val in self.fields.registers.items():
+            if reg_name not in read_regs_by_name:
+                self.gcode.respond_info(
+                    self.fields.pretty_format(reg_name, val))
+        self.gcode.respond_info("========== Queried registers ==========")
+        for reg_name, val in read_regs:
+            self.gcode.respond_info(self.fields.pretty_format(reg_name, val))
 
 
 ######################################################################
@@ -260,20 +323,13 @@ class TMC2130:
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("tmc2130_" + self.name, self)
-        # Add DUMP_TMC, INIT_TMC command
+        # Register commands
+        cmdhelper = TMCCommandHelper(config, self.mcu_tmc)
+        cmdhelper.setup_register_dump(self.query_registers)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
             self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
-        gcode.register_mux_command(
-            "DUMP_TMC", "STEPPER", self.name,
-            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
-        gcode.register_mux_command(
-            "SET_TMC_FIELD", "STEPPER", self.name,
-            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
-        gcode.register_mux_command(
-            "INIT_TMC", "STEPPER", self.name,
-            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         vsense, irun, ihold, self.sense_resistor = get_config_current(config)
         self.fields.set_field("vsense", vsense)
@@ -297,17 +353,16 @@ class TMC2130:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
-        self._init_registers()
-    def _init_registers(self, print_time=0.):
-        # Send registers
-        for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val, print_time)
+        cmdhelper.init_registers()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc2130 virtual endstop")
         return TMC2130VirtualEndstop(self)
+    def query_registers(self, print_time=0.):
+        return [(reg_name, self.get_register(reg_name))
+                for reg_name in ReadRegisters]
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
@@ -348,38 +403,6 @@ class TMC2130:
             gcode.respond_info(
                 "Run Current: %0.2fA Hold Current: %0.2fA"
                 % (run_current, hold_current))
-    cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
-    def cmd_DUMP_TMC(self, params):
-        self.printer.lookup_object('toolhead').get_last_move_time()
-        gcode = self.printer.lookup_object('gcode')
-        logging.info("DUMP_TMC %s", self.name)
-        gcode.respond_info("========== Write-only registers ==========")
-        for reg_name, val in self.regs.items():
-            if reg_name not in ReadRegisters:
-                gcode.respond_info(self.fields.pretty_format(reg_name, val))
-        gcode.respond_info("========== Queried registers ==========")
-        for reg_name in ReadRegisters:
-            val = self.get_register(reg_name)
-            gcode.respond_info(self.fields.pretty_format(reg_name, val))
-    cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
-    def cmd_INIT_TMC(self, params):
-        logging.info("INIT_TMC 2130 %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self._init_registers(print_time)
-    cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2130 driver"
-    def cmd_SET_TMC_FIELD(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if ('FIELD' not in params or
-            'VALUE' not in params):
-            raise gcode.error("Invalid command format")
-        field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register.get(field)
-        if reg is None:
-            raise gcode.error("Unknown field name '%s'" % field)
-        value = gcode.get_int('VALUE', params)
-        self.fields.set_field(field, value)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.set_register(reg, self.regs[reg], print_time)
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:
