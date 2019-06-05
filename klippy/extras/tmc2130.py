@@ -213,6 +213,35 @@ def get_config_stealthchop(config, tmc_freq):
 
 
 ######################################################################
+# TMC2130 SPI
+######################################################################
+
+# Helper code for working with TMC devices via SPI
+class MCU_TMC_SPI:
+    def __init__(self, config, name_to_reg, fields):
+        self.printer = config.get_printer()
+        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        self.name_to_reg = name_to_reg
+        self.fields = fields
+    def get_fields(self):
+        return self.fields
+    def get_register(self, reg_name):
+        reg = self.name_to_reg[reg_name]
+        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
+        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
+        pr = bytearray(params['response'])
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+    def set_register(self, reg_name, val, print_time=0.):
+        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+        reg = Registers[reg_name]
+        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
+                (val >> 8) & 0xff, val & 0xff]
+        self.spi.spi_send(data, min_clock)
+
+
+######################################################################
 # TMC2130 printer object
 ######################################################################
 
@@ -220,7 +249,13 @@ class TMC2130:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        # Setup mcu communication
+        self.regs = collections.OrderedDict()
+        self.fields = FieldHelper(Fields, SignedFields, FieldFormatters,
+                                  self.regs)
+        self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
+        self.get_register = self.mcu_tmc.get_register
+        self.set_register = self.mcu_tmc.set_register
         # Allow virtual endstop to be created
         self.diag1_pin = config.get('diag1_pin', None)
         ppins = self.printer.lookup_object("pins")
@@ -240,9 +275,6 @@ class TMC2130:
             "INIT_TMC", "STEPPER", self.name,
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
-        self.regs = collections.OrderedDict()
-        self.fields = FieldHelper(Fields, SignedFields, FieldFormatters,
-                                  self.regs)
         vsense, irun, ihold, self.sense_resistor = get_config_current(config)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
@@ -266,29 +298,16 @@ class TMC2130:
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
         self._init_registers()
-    def _init_registers(self, min_clock = 0):
+    def _init_registers(self, print_time=0.):
         # Send registers
         for reg_name, val in self.regs.items():
-            self.set_register(reg_name, val, min_clock)
+            self.set_register(reg_name, val, print_time)
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
             raise pins.error("tmc2130 virtual endstop only useful as endstop")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert tmc2130 virtual endstop")
         return TMC2130VirtualEndstop(self)
-    def get_register(self, reg_name):
-        reg = Registers[reg_name]
-        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-        if self.printer.get_start_args().get('debugoutput') is not None:
-            return 0
-        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
-        pr = bytearray(params['response'])
-        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
-    def set_register(self, reg_name, val, min_clock = 0):
-        reg = Registers[reg_name]
-        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
-                (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data, min_clock)
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):
@@ -317,15 +336,14 @@ class TMC2130:
         if 'HOLDCURRENT' in params or 'CURRENT' in params:
             print_time = self.printer.lookup_object('toolhead')\
                              .get_last_move_time()
-            min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
             vsense_calc, irun, ihold = calc_current_config(run_current,
                                             hold_current, self.sense_resistor)
             if (vsense_calc != vsense):
                 self.fields.set_field("vsense", vsense_calc)
-                self.set_register("CHOPCONF", self.regs["CHOPCONF"], min_clock)
+                self.set_register("CHOPCONF", self.regs["CHOPCONF"], print_time)
             self.fields.set_field("IHOLD", ihold)
             self.fields.set_field("IRUN", irun)
-            self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"], min_clock)
+            self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"], print_time)
         else:
             gcode.respond_info(
                 "Run Current: %0.2fA Hold Current: %0.2fA"
@@ -347,8 +365,7 @@ class TMC2130:
     def cmd_INIT_TMC(self, params):
         logging.info("INIT_TMC 2130 %s", self.name)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
-        self._init_registers(min_clock)
+        self._init_registers(print_time)
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC2130 driver"
     def cmd_SET_TMC_FIELD(self, params):
         gcode = self.printer.lookup_object('gcode')
@@ -362,8 +379,7 @@ class TMC2130:
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
-        self.set_register(reg, self.regs[reg], min_clock)
+        self.set_register(reg, self.regs[reg], print_time)
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:
@@ -373,8 +389,6 @@ class TMC2130VirtualEndstop:
             raise pins.error("tmc2130 virtual endstop requires diag1_pin")
         ppins = tmc2130.printer.lookup_object('pins')
         self.mcu_endstop = ppins.setup_pin('endstop', tmc2130.diag1_pin)
-        if self.mcu_endstop.get_mcu() is not tmc2130.spi.get_mcu():
-            raise pins.error("tmc2130 virtual endstop must be on same mcu")
         self.en_pwm = tmc2130.fields.get_field("en_pwm_mode")
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
