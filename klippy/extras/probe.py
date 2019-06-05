@@ -175,6 +175,7 @@ class PrinterProbe:
         configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
     def cmd_PROBE_CALIBRATE(self, params):
+        manual_probe.verify_no_manual_probe(self.printer)
         # Perform initial probe
         curpos = self.run_probe()
         # Move away from the bed
@@ -292,6 +293,7 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         return False
     def start_probe(self, params):
+        manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
