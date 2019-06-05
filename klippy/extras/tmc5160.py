@@ -10,68 +10,68 @@ vsense = 0.325
 GLOBAL_SCALER = 256
 TMC_FREQUENCY=12000000.
 
-registers = {
-    "GCONF":            0x00 ,
-    "GSTAT":            0x01 ,
-    "IFCNT":            0x02 ,
-    "SLAVECONF":        0x03 ,
-    "IOIN":             0x04 ,
-    "X_COMPARE":        0x05 ,
-    "OTP_READ":         0x07 ,
-    "FACTORY_CONF":     0x08 ,
-    "SHORT_CONF":       0x09 ,
-    "DRV_CONF":         0x0A ,
-    "GLOBAL_SCALER":    0x0B ,
-    "OFFSET_READ":      0x0C ,
-    "IHOLD_IRUN":       0x10 ,
-    "TPOWERDOWN":       0x11 ,
-    "TSTEP":            0x12 ,
-    "TPWMTHRS":         0x13 ,
-    "TCOOLTHRS":        0x14 ,
-    "THIGH":            0x15 ,
-    "RAMPMODE":         0x20 ,
-    "XACTUAL":          0x21 ,
-    "VACTUAL":          0x22 ,
-    "VSTART":           0x23 ,
-    "A1":               0x24 ,
-    "V1":               0x25 ,
-    "AMAX":             0x26 ,
-    "VMAX":             0x27 ,
-    "DMAX":             0x28 ,
-    "D1":               0x2A ,
-    "VSTOP":            0x2B ,
-    "TZEROWAIT":        0x2C ,
-    "XTARGET":          0x2D ,
-    "VDCMIN":           0x33 ,
-    "SW_MODE":          0x34 ,
-    "RAMP_STAT":        0x35 ,
-    "XLATCH":           0x36 ,
-    "ENCMODE":          0x38 ,
-    "X_ENC":            0x39 ,
-    "ENC_CONST":        0x3A ,
-    "ENC_STATUS":       0x3B ,
-    "ENC_LATCH":        0x3C ,
-    "ENC_DEVIATION":    0x3D ,
-    "MSLUT0":           0x60 ,
-    "MSLUT1":           0x61 ,
-    "MSLUT2":           0x62 ,
-    "MSLUT3":           0x63 ,
-    "MSLUT4":           0x64 ,
-    "MSLUT5":           0x65 ,
-    "MSLUT6":           0x66 ,
-    "MSLUT7":           0x67 ,
-    "MSLUTSEL":         0x68 ,
-    "MSLUTSTART":       0x69 ,
-    "MSCNT":            0x6A ,
-    "MSCURACT":         0x6B ,
-    "CHOPCONF":         0x6C ,
-    "COOLCONF":         0x6D ,
-    "DCCTRL":           0x6E ,
-    "DRV_STATUS":       0x6F ,
-    "PWMCONF":          0x70 ,
-    "PWM_SCALE":        0x71 ,
-    "PWM_AUTO":         0x72 ,
-    "LOST_STEPS":       0x73
+Registers = {
+    "GCONF":            0x00,
+    "GSTAT":            0x01,
+    "IFCNT":            0x02,
+    "SLAVECONF":        0x03,
+    "IOIN":             0x04,
+    "X_COMPARE":        0x05,
+    "OTP_READ":         0x07,
+    "FACTORY_CONF":     0x08,
+    "SHORT_CONF":       0x09,
+    "DRV_CONF":         0x0A,
+    "GLOBAL_SCALER":    0x0B,
+    "OFFSET_READ":      0x0C,
+    "IHOLD_IRUN":       0x10,
+    "TPOWERDOWN":       0x11,
+    "TSTEP":            0x12,
+    "TPWMTHRS":         0x13,
+    "TCOOLTHRS":        0x14,
+    "THIGH":            0x15,
+    "RAMPMODE":         0x20,
+    "XACTUAL":          0x21,
+    "VACTUAL":          0x22,
+    "VSTART":           0x23,
+    "A1":               0x24,
+    "V1":               0x25,
+    "AMAX":             0x26,
+    "VMAX":             0x27,
+    "DMAX":             0x28,
+    "D1":               0x2A,
+    "VSTOP":            0x2B,
+    "TZEROWAIT":        0x2C,
+    "XTARGET":          0x2D,
+    "VDCMIN":           0x33,
+    "SW_MODE":          0x34,
+    "RAMP_STAT":        0x35,
+    "XLATCH":           0x36,
+    "ENCMODE":          0x38,
+    "X_ENC":            0x39,
+    "ENC_CONST":        0x3A,
+    "ENC_STATUS":       0x3B,
+    "ENC_LATCH":        0x3C,
+    "ENC_DEVIATION":    0x3D,
+    "MSLUT0":           0x60,
+    "MSLUT1":           0x61,
+    "MSLUT2":           0x62,
+    "MSLUT3":           0x63,
+    "MSLUT4":           0x64,
+    "MSLUT5":           0x65,
+    "MSLUT6":           0x66,
+    "MSLUT7":           0x67,
+    "MSLUTSEL":         0x68,
+    "MSLUTSTART":       0x69,
+    "MSCNT":            0x6A,
+    "MSCURACT":         0x6B,
+    "CHOPCONF":         0x6C,
+    "COOLCONF":         0x6D,
+    "DCCTRL":           0x6E,
+    "DRV_STATUS":       0x6F,
+    "PWMCONF":          0x70,
+    "PWM_SCALE":        0x71,
+    "PWM_AUTO":         0x72,
+    "LOST_STEPS":       0x73,
 }
 
 ReadRegisters = [
@@ -80,8 +80,8 @@ ReadRegisters = [
     "PWM_AUTO", "TSTEP"
 ]
 
-fields = {}
-fields["COOLCONF"] = {
+Fields = {}
+Fields["COOLCONF"] = {
     "semin":                    0x0F << 0,
     "seup":                     0x03 << 5,
     "semax":                    0x0F << 8,
@@ -90,7 +90,7 @@ fields["COOLCONF"] = {
     "sgt":                      0x7F << 16,
     "sfilt":                    0x01 << 24
 }
-fields["CHOPCONF"] = {
+Fields["CHOPCONF"] = {
     "toff":                     0x0F << 0,
     "hstrt":                    0x07 << 4,
     "hend":                     0x0F << 7,
@@ -107,7 +107,7 @@ fields["CHOPCONF"] = {
     "diss2g":                   0x01 << 30,
     "diss2vs":                  0x01 << 31
 }
-fields["DRV_STATUS"] = {
+Fields["DRV_STATUS"] = {
     "SG_RESULT":                0x3FF << 0,
     "s2vsa":                    0x01 << 12,
     "s2vsb":                    0x01 << 13,
@@ -123,10 +123,10 @@ fields["DRV_STATUS"] = {
     "olb":                      0x01 << 30,
     "stst":                     0x01 << 31
 }
-fields["FACTORY_CONF"] = {
+Fields["FACTORY_CONF"] = {
     "FACTORY_CONF":             0x1F << 0
 }
-fields["GCONF"] = {
+Fields["GCONF"] = {
     "recalibrate":              0x01 << 0,
     "faststandstill":           0x01 << 1,
     "en_pwm_mode":              0x01 << 2,
@@ -146,17 +146,17 @@ fields["GCONF"] = {
     "direct_mode":              0x01 << 16,
     "test_mode":                0x01 << 17
 }
-fields["GSTAT"] = {
+Fields["GSTAT"] = {
     "reset":                    0x01 << 0,
     "drv_err":                  0x01 << 1,
     "uv_cp":                    0x01 << 2
 }
-fields["IHOLD_IRUN"] = {
+Fields["IHOLD_IRUN"] = {
     "IHOLD":                    0x1F << 0,
     "IRUN":                     0x1F << 8,
     "IHOLDDELAY":               0x0F << 16
 }
-fields["IOIN"] = {
+Fields["IOIN"] = {
     "REFL_STEP":                0x01 << 0,
     "REFR_DIR":                 0x01 << 1,
     "ENCB_DCEN_CFG4":           0x01 << 2,
@@ -167,27 +167,27 @@ fields["IOIN"] = {
     "SWCOMP_IN":                0x01 << 7,
     "VERSION":                  0xFF << 24
 }
-fields["LOST_STEPS"] = {
+Fields["LOST_STEPS"] = {
     "LOST_STEPS":               0xfffff << 0
 }
-fields["MSCNT"] = {
+Fields["MSCNT"] = {
     "MSCNT":                    0x3ff << 0
 }
-fields["MSCURACT"] = {
+Fields["MSCURACT"] = {
     "CUR_A":                    0x1ff << 0,
     "CUR_B":                    0x1ff << 16
 }
-fields["OTP_READ"] = {
+Fields["OTP_READ"] = {
     "OTP_FCLKTRIM":             0x1f << 0,
     "otp_S2_LEVEL":             0x01 << 5,
     "otp_BBM":                  0x01 << 6,
     "otp_TBL":                  0x01 << 7
 }
-fields["PWM_AUTO"] = {
+Fields["PWM_AUTO"] = {
     "PWM_OFS_AUTO":             0xff << 0,
     "PWM_GRAD_AUTO":            0xff << 16
 }
-fields["PWMCONF"] = {
+Fields["PWMCONF"] = {
     "PWM_OFS":                  0xFF << 0,
     "PWM_GRAD":                 0xFF << 8,
     "pwm_freq":                 0x03 << 16,
@@ -197,17 +197,17 @@ fields["PWMCONF"] = {
     "PWM_REG":                  0x0F << 24,
     "PWM_LIM":                  0x0F << 28
 }
-fields["PWM_SCALE"] = {
+Fields["PWM_SCALE"] = {
     "PWM_SCALE_SUM":            0xff << 0,
     "PWM_SCALE_AUTO":           0x1ff << 16
 }
-fields["TPOWERDOWN"] = {
+Fields["TPOWERDOWN"] = {
     "TPOWERDOWN":               0xff << 0
 }
-fields["TPWMTHRS"] = {
+Fields["TPWMTHRS"] = {
     "TPWMTHRS":                 0xfffff << 0
 }
-fields["TSTEP"] = {
+Fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
 
@@ -275,7 +275,7 @@ class TMC5160:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(fields, SignedFields, FieldFormatters,
+        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
                                           self.regs)
         irun, ihold, self.sense_resistor = get_config_current(config)
         msteps, en_pwm, thresh = \
@@ -328,12 +328,12 @@ class TMC5160:
         self._init_registers()
     def decode_hex(self, hex_, reg_name=False):
         reg = int( (hex_ >> 32) & 0xff - long(0x80) )
-        if reg not in registers.values():
+        if reg not in Registers.values():
             reg = int( (hex_ >> 32) & 0xff )
-            if reg not in registers.values():
+            if reg not in Registers.values():
                 reg_name = "UFO"
         if not reg_name:
-            for name, adr_ in registers.items():
+            for name, adr_ in Registers.items():
                 if adr_ == reg:
                     reg_name = name
         val = hex_ & 0xFFFFFFFF
@@ -348,7 +348,7 @@ class TMC5160:
             raise pins.error("Can not pullup/invert tmc5160 virtual endstop")
         return tmc2130.TMC2130VirtualEndstop(self)
     def get_register(self, reg_name):
-        reg = registers[reg_name]
+        reg = Registers[reg_name]
         self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
@@ -356,7 +356,7 @@ class TMC5160:
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val, min_clock = 0):
-        reg = registers[reg_name]
+        reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
             (val >> 8) & 0xff, val & 0xff]
         self.decode_hex( val, reg_name=reg_name )
