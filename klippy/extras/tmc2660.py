@@ -225,6 +225,8 @@ class TMC2660:
     def get_response(self):
         reg = Registers["DRVCTRL"]
         val = self.regs["DRVCTRL"]
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
         params = self.spi.spi_transfer([((val >> 16) | reg) & 0xff,
                             (val >> 8) & 0xff, val & 0xff])
         pr = bytearray(params['response'])
