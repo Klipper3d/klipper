@@ -105,6 +105,22 @@ The following standard commands are supported:
   axis). If "MOVE_SPEED" is specified then the toolhead move will be
   performed with the given speed (in mm/s); otherwise the toolhead
   move will use the last specified G-Code speed.
+- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
+  g-code coordinate parsing state. Saving and restoring the g-code
+  state is useful in scripts and macros. This command saves the
+  current g-code absolute coordinate mode (G90/G91), absolute extrude
+  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
+  override (M220), extruder override (M221), move speed, current XYZ
+  position, and relative extruder "E" position. If NAME is provided it
+  allows one to name the saved state to the given string. If NAME is
+  not provided it defaults to "default".
+- `RESTORE_GCODE_STATE [NAME=<state_name>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
+  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
+  is specified then the toolhead move will be performed with the given
+  speed (in mm/s); otherwise the toolhead move will use the restored
+  g-code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
@@ -144,6 +160,8 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
+  idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -157,6 +175,14 @@ The following standard commands are supported:
   calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
+
+## G-Code Macro Commands
+
+The following command is available when a "gcode_macro" config section
+is enabled:
+- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
+  VALUE=<value>`: This command allows one to change the value of a
+  gcode_macro variable at run-time.
 
 ## Custom Pin Commands
 
@@ -396,3 +422,33 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+
+## Firmware Retraction
+
+The following commands are available when the "firmware_retraction"
+config section is enabled.  These commands allow you to utilise the
+firmware retraction feature available in many slicers, to reduce
+stringing during non-extrusion moves from one part of the print to
+another.  Appropriately configuring pressure advance reduces the length
+of retraction required.
+ - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP=<mm>]`:
+   Adjust the parameters used by firmware retraction.  RETRACT_LENGTH
+   determines the length of filament to retract and unretract.  The
+   speed of retraction is adjusted via RETRACT_SPEED, and is typically
+   set relatively high.  The speed of unretraction is adjusted via
+   UNRETRACT_SPEED, and is not particularly critical, although often
+   lower than RETRACT_SPEED.  In some cases it is useful to add a small
+   amount of additional length on unretraction, and this is set via
+   UNRETRACT_EXTRA_LENGTH.  It is possible to lift the Z axis by a small
+   amount when in retracted state by setting Z_HOP, although this is
+   more commonly used for printers where fast Z movements are supported,
+   such as delta printers. SET_RETRACTION is commonly set as part of
+   slicer per-filament configuration, as different filaments require
+   different parameter settings.
+ - `GET_RETRACTION`: Queries the current parameters used by firmware
+   retraction and displays them on the terminal.
+ - `G10`: Retracts the extruder using the currently configured
+   parameters.
+ - `G11`: Unretracts the extruder using the currently configured
+   parameters.

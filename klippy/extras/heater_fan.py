@@ -23,6 +23,8 @@ class PrinterHeaterFan:
                         for n in self.heater_name.split(',')]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.NOW)
+    def get_status(self, eventtime):
+        return self.fan.get_status(eventtime)
     def callback(self, eventtime):
         power = 0.
         for heater in self.heaters:

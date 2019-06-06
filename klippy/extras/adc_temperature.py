@@ -84,7 +84,7 @@ class LinearInterpolate:
 # Linear voltage to temperature converter
 ######################################################################
 
-# Linear style conversion chips calibrated with two temp measurements
+# Linear style conversion chips calibrated from temperature measurements
 class LinearVoltage:
     def __init__(self, config, params):
         adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
@@ -124,7 +124,7 @@ class CustomLinearVoltage:
 # Linear resistance to temperature converter
 ######################################################################
 
-# Linear resistance calibrated with two temp measurements
+# Linear resistance calibrated from temperature measurements
 class LinearResistance:
     def __init__(self, config, samples):
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)

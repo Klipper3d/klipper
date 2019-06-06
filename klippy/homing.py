@@ -1,9 +1,9 @@
 # Code for state tracking during homing operations
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
+import logging, math, collections
 
 HOMING_STEP_DELAY = 0.00000025
 HOMING_START_DELAY = 0.001
@@ -61,7 +61,7 @@ class Homing:
         error = None
         try:
             self.toolhead.move(movepos, speed)
-        except EndstopError as e:
+        except CommandError as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
@@ -80,11 +80,11 @@ class Homing:
         for mcu_endstop, name in endstops:
             try:
                 mcu_endstop.home_finalize()
-            except EndstopError as e:
+            except CommandError as e:
                 if error is None:
                     error = str(e)
         if error is not None:
-            raise EndstopError(error)
+            raise CommandError(error)
         # Check if some movement occurred
         if verify_movement:
             for s, name, pos in start_mcu_pos:
@@ -142,13 +142,18 @@ class Homing:
         self.changed_axes = axes
         try:
             self.toolhead.get_kinematics().home(self)
-        except EndstopError:
+        except CommandError:
             self.toolhead.motor_off()
             raise
 
-class EndstopError(Exception):
+class CommandError(Exception):
+    pass
+
+class EndstopError(CommandError):
     pass
 
 def EndstopMoveError(pos, msg="Move out of range"):
     return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
             msg, pos[0], pos[1], pos[2], pos[3]))
+
+Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))

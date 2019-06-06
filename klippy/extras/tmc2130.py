@@ -69,14 +69,14 @@ Fields["PWMCONF"] = {
 Fields["PWM_SCALE"] = { "PWM_SCALE": 0xff }
 Fields["LOST_STEPS"] = { "LOST_STEPS": 0xfffff }
 
+SignedFields = ["CUR_A", "CUR_B", "sgt"]
+
 FieldFormatters = {
     "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
     "VERSION":          (lambda v: "%#x" % v),
-    "CUR_A":            (lambda v: decode_signed_int(v, 9)),
-    "CUR_B":            (lambda v: decode_signed_int(v, 9)),
     "MRES":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
     "otpw":             (lambda v: "1(OvertempWarning!)" if v else ""),
     "ot":               (lambda v: "1(OvertempError!)" if v else ""),
@@ -84,7 +84,6 @@ FieldFormatters = {
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
-    "sgt":              (lambda v: decode_signed_int(v, 7)),
 }
 
 
@@ -96,15 +95,11 @@ FieldFormatters = {
 def ffs(mask):
     return (mask & -mask).bit_length() - 1
 
-# Decode two's complement signed integer
-def decode_signed_int(val, bits):
-    if ((val >> (bits - 1)) & 1):
-        return val - (1 << bits)
-    return val
-
 class FieldHelper:
-    def __init__(self, all_fields, field_formatters={}, registers=None):
+    def __init__(self, all_fields, signed_fields=[], field_formatters={},
+                 registers=None):
         self.all_fields = all_fields
+        self.signed_fields = {sf: 1 for sf in signed_fields}
         self.field_formatters = field_formatters
         self.registers = registers
         if self.registers is None:
@@ -118,7 +113,10 @@ class FieldHelper:
         if reg_value is None:
             reg_value = self.registers[reg_name]
         mask = self.all_fields[reg_name][field_name]
-        return (reg_value & mask) >> ffs(mask)
+        field_value = (reg_value & mask) >> ffs(mask)
+        if field_name in self.signed_fields and ((reg_value & mask)<<1) > mask:
+            field_value -= (1 << field_value.bit_length())
+        return field_value
     def set_field(self, field_name, field_value, reg_value=None, reg_name=None):
         # Returns register value with field bits filled with supplied value
         if reg_name is None:
@@ -138,20 +136,23 @@ class FieldHelper:
         maxval = mask >> ffs(mask)
         if maxval == 1:
             val = config.getboolean(config_name, default)
+        elif field_name in self.signed_fields:
+            val = config.getint(config_name, default,
+                                minval=-(maxval//2 + 1), maxval=maxval//2)
         else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
         return self.set_field(field_name, val)
-    def pretty_format(self, reg_name, value):
+    def pretty_format(self, reg_name, reg_value):
         # Provide a string description of a register
         reg_fields = self.all_fields.get(reg_name, {})
         reg_fields = sorted([(mask, name) for name, mask in reg_fields.items()])
         fields = []
         for mask, field_name in reg_fields:
-            fval = (value & mask) >> ffs(mask)
-            sval = self.field_formatters.get(field_name, str)(fval)
+            field_value = self.get_field(field_name, reg_value, reg_name)
+            sval = self.field_formatters.get(field_name, str)(field_value)
             if sval and sval != "0":
                 fields.append(" %s=%s" % (field_name, sval))
-        return "%-11s %08x%s" % (reg_name + ":", value, "".join(fields))
+        return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
 
 
 ######################################################################
@@ -240,7 +241,8 @@ class TMC2130:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         # Setup basic register values
         self.regs = collections.OrderedDict()
-        self.fields = FieldHelper(Fields, FieldFormatters, self.regs)
+        self.fields = FieldHelper(Fields, SignedFields, FieldFormatters,
+                                  self.regs)
         vsense, irun, ihold, self.sense_resistor = get_config_current(config)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
@@ -262,8 +264,7 @@ class TMC2130:
         set_config_field(config, "PWM_GRAD", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
-        sgt = config.getint('driver_SGT', 0, minval=-64, maxval=63) & 0x7f
-        self.fields.set_field("sgt", sgt)
+        set_config_field(config, "sgt", 0)
         self._init_registers()
     def _init_registers(self, min_clock = 0):
         # Send registers
@@ -353,7 +354,9 @@ class TMC2130:
             'VALUE' not in params):
             raise gcode.error("Invalid command format")
         field = gcode.get_str('FIELD', params)
-        reg = self.fields.field_to_register[field]
+        reg = self.fields.field_to_register.get(field)
+        if reg is None:
+            raise gcode.error("Unknown field name '%s'" % field)
         value = gcode.get_int('VALUE', params)
         self.fields.set_field(field, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
