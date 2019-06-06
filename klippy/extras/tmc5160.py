@@ -296,9 +296,8 @@ class TMC5160:
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
         # Allow virtual endstop to be created
-        self.diag1_pin = config.get('diag1_pin', None)
-        ppins = self.printer.lookup_object("pins")
-        ppins.register_chip("tmc5160_" + self.name, self)
+        diag1_pin = config.get('diag1_pin', None)
+        tmc2130.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
         # Register commands
         cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
@@ -348,12 +347,6 @@ class TMC5160:
         self.fields.set_field("TPWMTHRS", thresh)
         #   TPOWERDOWN
         set_config_field(config, "TPOWERDOWN", 10)
-    def setup_pin(self, pin_type, pin_params):
-        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
-            raise pins.error("tmc5160 virtual endstop only useful as endstop")
-        if pin_params['invert'] or pin_params['pullup']:
-            raise pins.error("Can not pullup/invert tmc5160 virtual endstop")
-        return tmc2130.TMC2130VirtualEndstop(self)
     def query_registers(self, print_time=0.):
         return [(reg_name, self.get_register(reg_name))
                 for reg_name in ReadRegisters]
