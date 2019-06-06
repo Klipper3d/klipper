@@ -1,23 +1,11 @@
 # TMC2660 configuration
 #
 # Copyright (C) 2018-2019  Florian Heilmann <Florian.Heilmann@gmx.net>
+# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, collections, logging
 import bus, tmc2130
-
-def current_bits(current, sense_resistor, vsense_on):
-    vsense = 0.165 if vsense_on else 0.310
-    cs = int(32 * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
-    return max(0, min(cs, 31))
-
-def get_config_current(run_current, sense_resistor):
-    vsense = False
-    cs = current_bits(run_current, sense_resistor, vsense)
-    if cs < 16:
-        vsense = True
-        cs = current_bits(run_current, sense_resistor, vsense)
-    return cs, vsense
 
 Registers = {
     "DRVCONF": 0xE, "SGCSCONF": 0xC, "SMARTEN": 0xA,
@@ -134,6 +122,80 @@ FieldFormatters = {
 
 
 ######################################################################
+# TMC stepper current config helper
+######################################################################
+
+MAX_CURRENT = 2.400
+
+class TMC2660CurrentHelper:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        self.current = config.getfloat('run_current', minval=0.1,
+                                       maxval=MAX_CURRENT)
+        self.sense_resistor = config.getfloat('sense_resistor')
+        vsense, cs = self._calc_current(self.current)
+        self.fields.set_field("CS", cs)
+        self.fields.set_field("VSENSE", vsense)
+
+        # Register ready/printing handlers
+        self.idle_current_percentage = config.getint(
+            'idle_current_percent', default=100, minval=0, maxval=100)
+        if self.idle_current_percentage < 100:
+            self.printer.register_event_handler("idle_timeout:printing",
+                                                self.handle_printing)
+            self.printer.register_event_handler("idle_timeout:ready",
+                                                self.handle_ready)
+
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_TMC_CURRENT", "STEPPER", self.name,
+            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+
+    def _calc_current_bits(self, current, vsense):
+        vref = 0.165 if vsense else 0.310
+        cs = int(32 * current * self.sense_resistor * math.sqrt(2.) / vref
+                 - 1. + .5)
+        return max(0, min(31, cs))
+
+    def _calc_current(self, run_current):
+        vsense = False
+        cs = self._calc_current_bits(run_current, vsense)
+        if cs < 16:
+            vsense = True
+            cs = self._calc_current_bits(run_current, vsense)
+        return vsense, cs
+
+    def handle_printing(self, print_time):
+        self.set_current(0., self.current) # workaround
+
+    def handle_ready(self, print_time):
+        self.set_current(print_time, (float(self.idle_current_percentage)
+                                      * self.current / 100))
+
+    def set_current(self, print_time, current):
+        vsense, cs = self._calc_current(current)
+        val = self.fields.set_field("CS", cs)
+        self.mcu_tmc.set_register("SGCSCONF", val, print_time)
+        # Only update VSENSE if we need to
+        if vsense != self.fields.get_field("VSENSE"):
+            val = self.fields.set_field("VSENSE", vsense)
+            self.mcu_tmc.set_register("DRVCONF", val, print_time)
+
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
+    def cmd_SET_TMC_CURRENT(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        if 'CURRENT' in params:
+            self.current = gcode.get_float(
+                'CURRENT', params, minval=0.1, maxval=MAX_CURRENT)
+            self.set_current(
+                self.printer.lookup_object('toolhead').get_last_move_time(),
+                self.current)
+
+
+######################################################################
 # TMC2660 SPI
 ######################################################################
 
@@ -171,25 +233,18 @@ class TMC2660:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
         # Setup mcu communication
-        self.regs = collections.OrderedDict()
-        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters,
-                                          self.regs)
+        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
         # Register commands
         cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
-        # Setup driver registers
-        set_config_field = self.fields.set_config_field
 
         # DRVCTRL
         mres = tmc2130.get_config_microsteps(config)
         self.fields.set_field("MRES", mres)
+        set_config_field = self.fields.set_config_field
         set_config_field(config, "DEDGE", 0)
         set_config_field(config, "INTPOL", True, 'interpolate')
         # CHOPCONF
@@ -214,31 +269,15 @@ class TMC2660:
         # SGSCONF
         set_config_field(config, "SFILT", 1)
         set_config_field(config, "SGT", 0)
-        self.current = config.getfloat('run_current', minval=0.1,
-                                       maxval=2.4)
-        self.sense_resistor = config.getfloat('sense_resistor')
-        (self.driver_cs,
-         self.driver_vsense) = get_config_current(self.current,
-                                                  self.sense_resistor)
-        self.fields.set_field("CS", self.driver_cs)
+        TMC2660CurrentHelper(config, self.mcu_tmc)
 
         # DRVCONF
         set_config_field(config, "SLPH", 0)
         set_config_field(config, "SLPL", 0)
         set_config_field(config, "DISS2G", 0)
         set_config_field(config, "TS2G", 3)
-        self.fields.set_field("VSENSE", self.driver_vsense)
         self.fields.set_field("RDSEL", 0) # needed for phase calculations
         self.fields.set_field("SDOFF", 0) # only step/dir mode supported
-
-        # Register ready/printing handlers
-        self.idle_current_percentage = config.getint(
-            'idle_current_percent', default=100, minval=0, maxval=100)
-        if self.idle_current_percentage < 100:
-            self.printer.register_event_handler("idle_timeout:printing",
-                                                self.handle_printing)
-            self.printer.register_event_handler("idle_timeout:ready",
-                                                self.handle_ready)
 
     def query_registers(self, print_time=0.):
         return [(reg_name, self.get_register(reg_name))
@@ -251,33 +290,6 @@ class TMC2660:
         reg = self.get_register("READRSP@RDSEL0")
         mscnt = self.fields.get_field("MSTEP", reg)
         return mscnt >> self.fields.get_field("MRES")
-
-    def handle_printing(self, print_time):
-        self.set_current(0., self.current) # workaround
-
-    def handle_ready(self, print_time):
-        self.set_current(print_time, (float(self.idle_current_percentage)
-                                      * self.current / 100))
-
-    def set_current(self, print_time, current):
-        (self.driver_cs,
-         self.driver_vsense) = get_config_current(current, self.sense_resistor)
-        self.fields.set_field("CS", self.driver_cs)
-        self.set_register("SGCSCONF", self.regs["SGCSCONF"], print_time)
-        # Only update VSENSE if we need to
-        if self.driver_vsense != self.fields.get_field("VSENSE"):
-            self.fields.set_field("VSENSE", self.driver_vsense)
-            self.set_register("DRVCONF", self.regs["DRVCONF"], print_time)
-
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'CURRENT' in params:
-            self.current = gcode.get_float(
-                'CURRENT', params, minval=0.1, maxval=2.4)
-            self.set_current(
-                self.printer.lookup_object('toolhead').get_last_move_time(),
-                self.current)
 
 def load_config_prefix(config):
     return TMC2660(config)
