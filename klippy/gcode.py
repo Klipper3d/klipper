@@ -194,8 +194,10 @@ class GCodeParser:
             params = { parts[i]: parts[i+1].strip()
                        for i in range(0, len(parts), 2) }
             params['#original'] = origline
+            line_number = None
             if parts and parts[0] == 'N':
                 # Skip line number at start of command
+                line_number = parts[1]
                 del parts[:2]
             if not parts:
                 # Treat empty line as empty command
@@ -218,7 +220,10 @@ class GCodeParser:
                 self.respond_error(msg)
                 if not need_ack:
                     raise
-            self.ack()
+            if line_number:
+                self.ack(str(line_number))
+            else:
+                self.ack()
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
@@ -395,6 +400,10 @@ class GCodeParser:
             for gcode_id, sensor in sorted(self.heaters.get_gcode_sensors()):
                 cur, target = sensor.get_temp(eventtime)
                 out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
+                if gcode_id.startswith( 'B' ) :
+                    out.append("B@:%d " % (sensor.last_pwm_value * 128))
+                else:
+                    out.append(("@%s:%d " % (gcode_id, (sensor.last_pwm_value * 128))).replace("T",""))																									   
         if not out:
             return "T:0"
         return " ".join(out)
@@ -526,6 +535,7 @@ class GCodeParser:
             raise error(str(e))
     def cmd_G4(self, params):
         # Dwell
+        delay = 0.
         if 'S' in params:
             delay = self.get_float('S', params, minval=0.)
         else:
