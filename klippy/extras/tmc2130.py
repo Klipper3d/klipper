@@ -1,6 +1,6 @@
 # TMC2130 configuration
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
@@ -103,7 +103,7 @@ class FieldHelper:
         self.field_formatters = field_formatters
         self.registers = registers
         if self.registers is None:
-            self.registers = {}
+            self.registers = collections.OrderedDict()
         self.field_to_register = { f: r for r, fields in self.all_fields.items()
                                    for f in fields }
     def lookup_register(self, field_name, default=None):
@@ -226,43 +226,86 @@ class TMCCommandHelper:
 
 
 ######################################################################
-# Config reading helpers
+# TMC stepper current config helper
 ######################################################################
 
-def current_bits(current, sense_resistor, vsense_on):
-    sense_resistor += 0.020
-    vsense = 0.32
-    if vsense_on:
-        vsense = 0.18
-    cs = int(32. * current * sense_resistor * math.sqrt(2.) / vsense - 1. + .5)
-    return max(0, min(31, cs))
+MAX_CURRENT = 2.000
 
-def bits_to_current(bits, sense_resistor, vsense_on):
-    sense_resistor += 0.020
-    vsense = 0.32
-    if vsense_on:
-        vsense = 0.18
-    current = (bits + 1) * vsense / (32 * sense_resistor * math.sqrt(2.))
-    return round(current, 2)
+class TMCCurrentHelper:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        run_current = config.getfloat('run_current',
+                                      above=0., maxval=MAX_CURRENT)
+        hold_current = config.getfloat('hold_current', run_current,
+                                       above=0., maxval=MAX_CURRENT)
+        self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+        vsense, irun, ihold = self._calc_current(run_current, hold_current)
+        self.fields.set_field("vsense", vsense)
+        self.fields.set_field("IHOLD", ihold)
+        self.fields.set_field("IRUN", irun)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_TMC_CURRENT", "STEPPER", self.name,
+            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+    def _calc_current_bits(self, current, vsense):
+        sense_resistor = self.sense_resistor + 0.020
+        vref = 0.32
+        if vsense:
+            vref = 0.18
+        cs = int(32. * current * sense_resistor * math.sqrt(2.) / vref
+                 - 1. + .5)
+        return max(0, min(31, cs))
+    def _calc_current(self, run_current, hold_current):
+        vsense = False
+        irun = self._calc_current_bits(run_current, vsense)
+        ihold = self._calc_current_bits(hold_current, vsense)
+        if irun < 16 and ihold < 16:
+            vsense = True
+            irun = self._calc_current_bits(run_current, vsense)
+            ihold = self._calc_current_bits(hold_current, vsense)
+        return vsense, irun, ihold
+    def _calc_current_from_field(self, field_name):
+        bits = self.fields.get_field(field_name)
+        sense_resistor = self.sense_resistor + 0.020
+        vref = 0.32
+        if self.fields.get_field("vsense"):
+            vref = 0.18
+        current = (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
+        return round(current, 2)
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
+    def cmd_SET_TMC_CURRENT(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        if 'HOLDCURRENT' in params:
+            hold_current = gcode.get_float(
+                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
+        else:
+            hold_current = self._calc_current_from_field("IHOLD")
+        if 'CURRENT' in params:
+            run_current = gcode.get_float(
+                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
+        else:
+            run_current = self._calc_current_from_field("IRUN")
+        if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
+            # Query only
+            gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                               % (run_current, hold_current))
+            return
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        vsense, irun, ihold = self._calc_current(run_current, hold_current)
+        if vsense != self.fields.get_field("vsense"):
+            val = self.fields.set_field("vsense", vsense)
+            self.mcu_tmc.set_register("CHOPCONF", val, print_time)
+        self.fields.set_field("IHOLD", ihold)
+        val = self.fields.set_field("IRUN", irun)
+        self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
-def calc_current_config(run_current, hold_current, sense_resistor):
-    vsense = False
-    irun = current_bits(run_current, sense_resistor, vsense)
-    ihold = current_bits(hold_current, sense_resistor, vsense)
-    if irun < 16 and ihold < 16:
-        vsense = True
-        irun = current_bits(run_current, sense_resistor, vsense)
-        ihold = current_bits(hold_current, sense_resistor, vsense)
-    return vsense, irun, ihold
 
-def get_config_current(config):
-    run_current = config.getfloat('run_current', above=0., maxval=2.)
-    hold_current = config.getfloat('hold_current', run_current,
-                                   above=0., maxval=2.)
-    sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
-    vsense, irun, ihold = calc_current_config(
-                              run_current, hold_current, sense_resistor)
-    return vsense, irun, ihold, sense_resistor
+######################################################################
+# Config reading helpers
+######################################################################
 
 def get_config_microsteps(config):
     steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
@@ -320,9 +363,7 @@ class TMC2130:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         # Setup mcu communication
-        self.regs = collections.OrderedDict()
-        self.fields = FieldHelper(Fields, SignedFields, FieldFormatters,
-                                  self.regs)
+        self.fields = FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
@@ -333,15 +374,8 @@ class TMC2130:
         # Register commands
         cmdhelper = TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
         # Setup basic register values
-        vsense, irun, ihold, self.sense_resistor = get_config_current(config)
-        self.fields.set_field("vsense", vsense)
-        self.fields.set_field("IHOLD", ihold)
-        self.fields.set_field("IRUN", irun)
+        TMCCurrentHelper(config, self.mcu_tmc)
         mres, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
         self.fields.set_field("MRES", mres)
         self.fields.set_field("en_pwm_mode", en_pwm)
@@ -374,41 +408,6 @@ class TMC2130:
     def get_phase(self):
         mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
         return mscnt >> self.fields.get_field("MRES")
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2130 driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        vsense = bool(self.fields.get_field("vsense"))
-        if 'HOLDCURRENT' in params:
-            hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=2.)
-        else:
-            hold_current = bits_to_current(
-                    self.fields.get_field("IHOLD"),
-                    self.sense_resistor,
-                    vsense)
-        if 'CURRENT' in params:
-            run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=2.)
-        else:
-            run_current = bits_to_current(
-                    self.fields.get_field("IRUN"),
-                    self.sense_resistor,
-                    vsense)
-        if 'HOLDCURRENT' in params or 'CURRENT' in params:
-            print_time = self.printer.lookup_object('toolhead')\
-                             .get_last_move_time()
-            vsense_calc, irun, ihold = calc_current_config(run_current,
-                                            hold_current, self.sense_resistor)
-            if (vsense_calc != vsense):
-                self.fields.set_field("vsense", vsense_calc)
-                self.set_register("CHOPCONF", self.regs["CHOPCONF"], print_time)
-            self.fields.set_field("IHOLD", ihold)
-            self.fields.set_field("IRUN", irun)
-            self.set_register("IHOLD_IRUN", self.regs["IHOLD_IRUN"], print_time)
-        else:
-            gcode.respond_info(
-                "Run Current: %0.2fA Hold Current: %0.2fA"
-                % (run_current, hold_current))
 
 # Endstop wrapper that enables tmc2130 "sensorless homing"
 class TMC2130VirtualEndstop:
@@ -430,14 +429,14 @@ class TMC2130VirtualEndstop:
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
         self.tmc2130.fields.set_field("en_pwm_mode", 0)
-        self.tmc2130.fields.set_field("diag1_stall", 1)
-        self.tmc2130.set_register("GCONF", self.tmc2130.regs['GCONF'])
+        val = self.tmc2130.fields.set_field("diag1_stall", 1)
+        self.tmc2130.set_register("GCONF", val)
         self.tmc2130.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         self.tmc2130.fields.set_field("en_pwm_mode", self.en_pwm)
-        self.tmc2130.fields.set_field("diag1_stall", 0)
-        self.tmc2130.set_register("GCONF", self.tmc2130.regs['GCONF'])
+        val = self.tmc2130.fields.set_field("diag1_stall", 0)
+        self.tmc2130.set_register("GCONF", val)
         self.tmc2130.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
 
