@@ -99,7 +99,7 @@ Fields["CHOPCONF"] = {
     "vhighfs":                  0x01 << 18,
     "vhighchm":                 0x01 << 19,
     "tpfd":                     0x0F << 20, # midrange resonances
-    "mres":                     0x0F << 24,
+    "MRES":                     0x0F << 24,
     "intpol":                   0x01 << 28,
     "dedge":                    0x01 << 29,
     "diss2g":                   0x01 << 30,
@@ -288,13 +288,9 @@ class TMC5160CurrentHelper:
 
 class TMC5160:
     def __init__(self, config):
-        self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
         # Setup mcu communication
         self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
-        self.get_register = self.mcu_tmc.get_register
-        self.set_register = self.mcu_tmc.set_register
         # Allow virtual endstop to be created
         diag1_pin = config.get('diag1_pin', None)
         tmc2130.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
@@ -302,10 +298,12 @@ class TMC5160:
         cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
         # Setup basic register values
-        msteps, en_pwm, thresh = \
-            tmc2130.get_config_stealthchop(config, TMC_FREQUENCY)
-        set_config_field = self.fields.set_config_field
+        mh = tmc2130.TMCMicrostepHelper(config, self.mcu_tmc)
+        self.get_microsteps = mh.get_microsteps
+        self.get_phase = mh.get_phase
+        tmc2130.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         #   CHOPCONF
+        set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 2)
@@ -316,7 +314,6 @@ class TMC5160:
         set_config_field(config, "vhighfs", 0)
         set_config_field(config, "vhighchm", 0)
         set_config_field(config, "tpfd", 4)
-        self.fields.set_field("mres", msteps)       # microsteps
         set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "dedge", 0)
         set_config_field(config, "diss2g", 0)
@@ -329,8 +326,6 @@ class TMC5160:
         set_config_field(config, "seimin", 0)
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
-        #   GCONF
-        self.fields.set_field("en_pwm_mode", en_pwm)
         #   IHOLDIRUN
         TMC5160CurrentHelper(config, self.mcu_tmc)
         set_config_field(config, "IHOLDDELAY", 6)
@@ -343,18 +338,11 @@ class TMC5160:
         set_config_field(config, "freewheel", 0)
         set_config_field(config, "PWM_REG", 4)
         set_config_field(config, "PWM_LIM", 12)
-        #   TPWMTHRS
-        self.fields.set_field("TPWMTHRS", thresh)
         #   TPOWERDOWN
         set_config_field(config, "TPOWERDOWN", 10)
     def query_registers(self, print_time=0.):
-        return [(reg_name, self.get_register(reg_name))
+        return [(reg_name, self.mcu_tmc.get_register(reg_name))
                 for reg_name in ReadRegisters]
-    def get_microsteps(self):
-        return 256 >> self.fields.get_field("MRES")
-    def get_phase(self):
-        mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
-        return mscnt >> self.fields.get_field("MRES")
 
 def load_config_prefix(config):
     return TMC5160(config)

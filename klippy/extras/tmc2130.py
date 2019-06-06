@@ -360,22 +360,45 @@ class TMCCurrentHelper:
 # Config reading helpers
 ######################################################################
 
-def get_config_microsteps(config):
-    steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-             '8': 5, '4': 6, '2': 7, '1': 8}
-    return config.getchoice('microsteps', steps)
+# Helper to configure and query the microstep settings
+class TMCMicrostepHelper:
+    def __init__(self, config, mcu_tmc):
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
+                 '8': 5, '4': 6, '2': 7, '1': 8}
+        mres = config.getchoice('microsteps', steps)
+        self.fields.set_field("MRES", mres)
+    def get_microsteps(self):
+        return 256 >> self.fields.get_field("MRES")
+    def get_phase(self):
+        field_name = "MSCNT"
+        if self.fields.lookup_register(field_name, None) is None:
+            # TMC2660 uses MSTEP
+            field_name = "MSTEP"
+        reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
+        mscnt = self.fields.get_field(field_name, reg)
+        return mscnt >> self.fields.get_field("MRES")
 
-def get_config_stealthchop(config, tmc_freq):
-    mres = get_config_microsteps(config)
+# Helper to configure "stealthchop" mode
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    en_pwm_mode = False
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-    if not velocity:
-        return mres, False, 0
-    stepper_name = " ".join(config.get_name().split()[1:])
-    stepper_config = config.getsection(stepper_name)
-    step_dist = stepper_config.getfloat('step_distance')
-    step_dist_256 = step_dist / (1 << mres)
-    threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-    return mres, True, max(0, min(0xfffff, threshold))
+    if velocity:
+        stepper_name = " ".join(config.get_name().split()[1:])
+        stepper_config = config.getsection(stepper_name)
+        step_dist = stepper_config.getfloat('step_distance')
+        step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
+        threshold = int(tmc_freq * step_dist_256 / velocity + .5)
+        fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+        en_pwm_mode = True
+    reg = fields.lookup_register("en_pwm_mode", None)
+    if reg is not None:
+        fields.set_field("en_pwm_mode", en_pwm_mode)
+    else:
+        # TMC2208 uses en_spreadCycle
+        fields.set_field("en_spreadCycle", not en_pwm_mode)
 
 
 ######################################################################
@@ -413,13 +436,9 @@ class MCU_TMC_SPI:
 
 class TMC2130:
     def __init__(self, config):
-        self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
         # Setup mcu communication
         self.fields = FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
-        self.get_register = self.mcu_tmc.get_register
-        self.set_register = self.mcu_tmc.set_register
         # Allow virtual endstop to be created
         diag1_pin = config.get('diag1_pin', None)
         TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
@@ -428,10 +447,10 @@ class TMC2130:
         cmdhelper.setup_register_dump(self.query_registers)
         # Setup basic register values
         TMCCurrentHelper(config, self.mcu_tmc)
-        mres, en_pwm, thresh = get_config_stealthchop(config, TMC_FREQUENCY)
-        self.fields.set_field("MRES", mres)
-        self.fields.set_field("en_pwm_mode", en_pwm)
-        self.fields.set_field("TPWMTHRS", thresh)
+        mh = TMCMicrostepHelper(config, self.mcu_tmc)
+        self.get_microsteps = mh.get_microsteps
+        self.get_phase = mh.get_phase
+        TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 4)
@@ -447,13 +466,8 @@ class TMC2130:
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
     def query_registers(self, print_time=0.):
-        return [(reg_name, self.get_register(reg_name))
+        return [(reg_name, self.mcu_tmc.get_register(reg_name))
                 for reg_name in ReadRegisters]
-    def get_microsteps(self):
-        return 256 >> self.fields.get_field("MRES")
-    def get_phase(self):
-        mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
-        return mscnt >> self.fields.get_field("MRES")
 
 def load_config_prefix(config):
     return TMC2130(config)
