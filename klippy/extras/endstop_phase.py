@@ -66,6 +66,8 @@ class EndstopPhase:
                 msg = "Unable to get stepper %s phase: %s" % (self.name, str(e))
                 logging.exception(msg)
                 raise homing.EndstopError(msg)
+            if stepper.is_dir_inverted():
+                phase = (self.phases - 1) - phase
         else:
             phase = stepper.get_mcu_position() % self.phases
         self.phase_history[phase] += 1

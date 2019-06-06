@@ -73,6 +73,7 @@ class PrinterStepper:
         self.set_commanded_position = mcu_stepper.set_commanded_position
         self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_step_dist = mcu_stepper.get_step_dist
+        self.is_dir_inverted = mcu_stepper.is_dir_inverted
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
