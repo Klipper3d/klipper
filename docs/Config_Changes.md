@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20190606: The "samples", "samples_result", and "sample_retract_dist"
+config options have been moved to the "probe" config section. These
+options are no longer supported in the "delta_calibrate", "bed_tilt",
+"bed_mesh", "screws_tilt_adjust", "z_tilt", or "quad_gantry_level"
+config sections.
+
 20190528: The magic "status" variable in gcode_macro template
 evaluation has been renamed to "printer".
 
