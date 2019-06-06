@@ -226,6 +226,59 @@ class TMCCommandHelper:
 
 
 ######################################################################
+# TMC virtual endstops
+######################################################################
+
+# Endstop wrapper that enables "sensorless homing"
+class TMCVirtualEndstop:
+    def __init__(self, mcu_tmc, mcu_endstop):
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        self.mcu_endstop = mcu_endstop
+        self.en_pwm = self.fields.get_field("en_pwm_mode")
+        # Wrappers
+        self.get_mcu = self.mcu_endstop.get_mcu
+        self.add_stepper = self.mcu_endstop.add_stepper
+        self.get_steppers = self.mcu_endstop.get_steppers
+        self.home_start = self.mcu_endstop.home_start
+        self.home_wait = self.mcu_endstop.home_wait
+        self.query_endstop = self.mcu_endstop.query_endstop
+        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
+        self.TimeoutError = self.mcu_endstop.TimeoutError
+    def home_prepare(self):
+        self.fields.set_field("en_pwm_mode", 0)
+        val = self.fields.set_field("diag1_stall", 1)
+        self.mcu_tmc.set_register("GCONF", val)
+        self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
+        self.mcu_endstop.home_prepare()
+    def home_finalize(self):
+        self.fields.set_field("en_pwm_mode", self.en_pwm)
+        val = self.fields.set_field("diag1_stall", 0)
+        self.mcu_tmc.set_register("GCONF", val)
+        self.mcu_tmc.set_register("TCOOLTHRS", 0)
+        self.mcu_endstop.home_finalize()
+
+class TMCEndstopHelper:
+    def __init__(self, config, mcu_tmc, diag_pin):
+        self.printer = config.get_printer()
+        self.mcu_tmc = mcu_tmc
+        self.diag_pin = diag_pin
+        name_parts = config.get_name().split()
+        ppins = self.printer.lookup_object("pins")
+        ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
+    def setup_pin(self, pin_type, pin_params):
+        ppins = self.printer.lookup_object('pins')
+        if self.diag_pin is None:
+            raise ppins.error("tmc virtual endstop requires diag pin config")
+        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
+            raise ppins.error("tmc virtual endstop only useful as endstop")
+        if pin_params['invert'] or pin_params['pullup']:
+            raise ppins.error("Can not pullup/invert tmc virtual endstop")
+        mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
+        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
+
+
+######################################################################
 # TMC stepper current config helper
 ######################################################################
 
@@ -368,9 +421,8 @@ class TMC2130:
         self.get_register = self.mcu_tmc.get_register
         self.set_register = self.mcu_tmc.set_register
         # Allow virtual endstop to be created
-        self.diag1_pin = config.get('diag1_pin', None)
-        ppins = self.printer.lookup_object("pins")
-        ppins.register_chip("tmc2130_" + self.name, self)
+        diag1_pin = config.get('diag1_pin', None)
+        TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
         # Register commands
         cmdhelper = TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
@@ -394,12 +446,6 @@ class TMC2130:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
-    def setup_pin(self, pin_type, pin_params):
-        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
-            raise pins.error("tmc2130 virtual endstop only useful as endstop")
-        if pin_params['invert'] or pin_params['pullup']:
-            raise pins.error("Can not pullup/invert tmc2130 virtual endstop")
-        return TMC2130VirtualEndstop(self)
     def query_registers(self, print_time=0.):
         return [(reg_name, self.get_register(reg_name))
                 for reg_name in ReadRegisters]
@@ -408,37 +454,6 @@ class TMC2130:
     def get_phase(self):
         mscnt = self.fields.get_field("MSCNT", self.get_register("MSCNT"))
         return mscnt >> self.fields.get_field("MRES")
-
-# Endstop wrapper that enables tmc2130 "sensorless homing"
-class TMC2130VirtualEndstop:
-    def __init__(self, tmc2130):
-        self.tmc2130 = tmc2130
-        if tmc2130.diag1_pin is None:
-            raise pins.error("tmc2130 virtual endstop requires diag1_pin")
-        ppins = tmc2130.printer.lookup_object('pins')
-        self.mcu_endstop = ppins.setup_pin('endstop', tmc2130.diag1_pin)
-        self.en_pwm = tmc2130.fields.get_field("en_pwm_mode")
-        # Wrappers
-        self.get_mcu = self.mcu_endstop.get_mcu
-        self.add_stepper = self.mcu_endstop.add_stepper
-        self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
-        self.home_wait = self.mcu_endstop.home_wait
-        self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
-        self.TimeoutError = self.mcu_endstop.TimeoutError
-    def home_prepare(self):
-        self.tmc2130.fields.set_field("en_pwm_mode", 0)
-        val = self.tmc2130.fields.set_field("diag1_stall", 1)
-        self.tmc2130.set_register("GCONF", val)
-        self.tmc2130.set_register("TCOOLTHRS", 0xfffff)
-        self.mcu_endstop.home_prepare()
-    def home_finalize(self):
-        self.tmc2130.fields.set_field("en_pwm_mode", self.en_pwm)
-        val = self.tmc2130.fields.set_field("diag1_stall", 0)
-        self.tmc2130.set_register("GCONF", val)
-        self.tmc2130.set_register("TCOOLTHRS", 0)
-        self.mcu_endstop.home_finalize()
 
 def load_config_prefix(config):
     return TMC2130(config)
