@@ -68,9 +68,12 @@ class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.env = jinja2.Environment('{%', '%}', '{', '}')
-    def load_template(self, config, option):
+    def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
-        script = config.get(option, '')
+        if default is None:
+            script = config.get(option)
+        else:
+            script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
 
 def load_config(config):
@@ -86,7 +89,6 @@ class GCodeMacro:
         name = config.get_name().split()[1]
         self.alias = name.upper()
         printer = config.get_printer()
-        config.get('gcode')
         gcode_macro = printer.try_load_module(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
