@@ -14,6 +14,7 @@ class BaseSensor(object):
         self.insert_gcode = config.get('insert_gcode', None)
         self.runout_pause = config.getboolean('pause_on_runout', True)
         if self.runout_pause:
+            self.printer.try_load_module(config, 'pause_resume')
             if self.runout_gcode is None:
                 self.runout_gcode = "PAUSE"
             else:
@@ -46,8 +47,8 @@ class BaseSensor(object):
         self.event_running = True
         # Pausing from inside an event requires that the pause portion
         # of pause_resume execute immediately.
-        pause_resume = self.printer.lookup_object('pause_resume', None)
-        if self.runout_pause and pause_resume is not None:
+        if self.runout_pause:
+            pause_resume = self.printer.lookup_object('pause_resume')
             pause_resume.send_pause_command()
         self._exec_gcode(self.runout_gcode)
         self.event_running = False
