@@ -30,7 +30,7 @@ class IdleTimeout:
         self.last_print_start_systime = 0.
     def get_status(self, eventtime):
         printing_time = 0.
-        if state == "Printing":
+        if self.state == "Printing":
             printing_time = eventtime - self.last_print_start_systime
         return { "state": self.state, "printing_time": printing_time }
     def handle_ready(self):
