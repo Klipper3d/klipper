@@ -21,7 +21,9 @@ class IdleTimeout:
         self.toolhead = self.timeout_timer = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.idle_timeout = config.getfloat('timeout', 600., above=0.)
-        self.idle_gcode = config.get('gcode', DEFAULT_IDLE_GCODE).split('\n')
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.idle_gcode = gcode_macro.load_template(
+            config, 'gcode', DEFAULT_IDLE_GCODE)
         self.gcode.register_command(
             'SET_IDLE_TIMEOUT', self.cmd_SET_IDLE_TIMEOUT)
         self.state = "Idle"
@@ -39,7 +41,8 @@ class IdleTimeout:
     def transition_idle_state(self, eventtime):
         self.state = "Printing"
         try:
-            res = self.gcode.process_batch(self.idle_gcode)
+            script = self.idle_gcode.render()
+            res = self.gcode.process_batch(script.split('\n'))
         except:
             logging.exception("idle timeout gcode execution")
             return eventtime + 1.
