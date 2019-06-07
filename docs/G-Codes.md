@@ -182,7 +182,8 @@ The following command is available when a "gcode_macro" config section
 is enabled:
 - `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
   VALUE=<value>`: This command allows one to change the value of a
-  gcode_macro variable at run-time.
+  gcode_macro variable at run-time. The provided VALUE is parsed as a
+  Python literal.
 
 ## Custom Pin Commands
 

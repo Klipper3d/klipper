@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20190607: The "variable_X" parameters of gcode_macro (along with the
+VALUE parameter of SET_GCODE_VARIABLE) are now parsed as Python
+literals. If a value needs to be assigned a string then wrap the value
+in quotes so that it is evaluated as a string.
+
 20190606: The "samples", "samples_result", and "sample_retract_dist"
 config options have been moved to the "probe" config section. These
 options are no longer supported in the "delta_calibrate", "bed_tilt",
