@@ -248,7 +248,8 @@ class TMC2208:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.printer.register_event_handler("klippy:connect",
+        if config.getboolean('auto_init', True):
+          self.printer.register_event_handler("klippy:connect",
                                             self._init_registers)
         # pin setup
         ppins = self.printer.lookup_object("pins")
