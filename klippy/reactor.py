@@ -1,6 +1,6 @@
 # File descriptor and timer event helper
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, select, math, time, Queue
@@ -33,6 +33,35 @@ class ReactorGreenlet(greenlet.greenlet):
     def __init__(self, run):
         greenlet.greenlet.__init__(self, run=run)
         self.timer = None
+
+class ReactorMutex:
+    def __init__(self, reactor, is_locked):
+        self.reactor = reactor
+        self.is_locked = is_locked
+        self.next_pending = False
+        self.queue = []
+        self.lock = self.__enter__
+        self.unlock = self.__exit__
+    def test(self):
+        return self.is_locked
+    def __enter__(self):
+        if not self.is_locked:
+            self.is_locked = True
+            return
+        g = greenlet.getcurrent()
+        self.queue.append(g)
+        while 1:
+            self.reactor.pause(self.reactor.NEVER)
+            if self.next_pending and self.queue[0] is g:
+                self.next_pending = False
+                self.queue.pop(0)
+                return
+    def __exit__(self, type=None, value=None, tb=None):
+        if not self.queue:
+            self.is_locked = False
+            return
+        self.next_pending = True
+        self.reactor.update_timer(self.queue[0].timer, self.reactor.NOW)
 
 class SelectReactor:
     NOW = 0.
@@ -146,6 +175,9 @@ class SelectReactor:
         self._g_dispatch.switch(self.NEVER)
         # This greenlet was reactivated - prepare for main processing loop
         self._g_dispatch = g_old
+    # Mutexes
+    def mutex(self, is_locked=False):
+        return ReactorMutex(self, is_locked)
     # File descriptors
     def register_fd(self, fd, callback):
         handler = ReactorFileHandler(fd, callback)
