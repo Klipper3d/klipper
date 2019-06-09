@@ -42,12 +42,10 @@ class IdleTimeout:
         self.state = "Printing"
         try:
             script = self.idle_gcode.render()
-            res = self.gcode.process_batch(script.split('\n'))
+            res = self.gcode.run_script(script)
         except:
             logging.exception("idle timeout gcode execution")
-            return eventtime + 1.
-        if not res:
-            # Raced with incoming g-code commands
+            self.state = "Ready"
             return eventtime + 1.
         print_time = self.toolhead.get_last_move_time()
         self.state = "Idle"
@@ -64,7 +62,7 @@ class IdleTimeout:
         if idle_time < self.idle_timeout:
             # Wait for idle timeout
             return eventtime + self.idle_timeout - idle_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + 1.
         # Idle timeout has elapsed
@@ -82,7 +80,7 @@ class IdleTimeout:
         if buffer_time > -READY_TIMEOUT:
             # Wait for ready timeout
             return eventtime + READY_TIMEOUT + buffer_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + READY_TIMEOUT
         # Transition to "ready" state
