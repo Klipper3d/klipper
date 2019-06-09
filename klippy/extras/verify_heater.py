@@ -19,6 +19,7 @@ class HeaterCheck:
                                             self.handle_shutdown)
         self.heater_name = config.get_name().split()[1]
         self.heater = None
+        self.disabled = config.getboolean('disabled', False)
         self.hysteresis = config.getfloat('hysteresis', 5., minval=0.)
         self.max_error = config.getfloat('max_error', 120., minval=0.)
         self.heating_gain = config.getfloat('heating_gain', 2., above=0.)
@@ -34,6 +35,9 @@ class HeaterCheck:
     def handle_connect(self):
         if self.printer.get_start_args().get('debugoutput') is not None:
             # Disable verify_heater if outputting to a debug file
+            return
+        if self.disabled:
+            # Disable verify_heater if configuration says so
             return
         pheater = self.printer.lookup_object('heater')
         self.heater = pheater.lookup_heater(self.heater_name)
