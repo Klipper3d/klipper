@@ -173,6 +173,7 @@ class TMCCurrentHelper:
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
+        self.mutex = self.printer.get_reactor().mutex()
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         self.name_to_reg = name_to_reg
         self.fields = fields
@@ -180,10 +181,11 @@ class MCU_TMC_SPI:
         return self.fields
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
-        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-        if self.printer.get_start_args().get('debugoutput') is not None:
-            return 0
-        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
+        with self.mutex:
+            self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
+            if self.printer.get_start_args().get('debugoutput') is not None:
+                return 0
+            params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val, print_time=None):
@@ -193,7 +195,8 @@ class MCU_TMC_SPI:
         reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data, minclock)
+        with self.mutex:
+            self.spi.spi_send(data, minclock)
 
 
 ######################################################################
