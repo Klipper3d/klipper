@@ -84,15 +84,6 @@ void clock_config(void)
     HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
 }
 
-// Implement simple early-boot delay mechanism
-void
-udelay(uint32_t usecs)
-{
-    uint32_t end = timer_read_time() + timer_from_us(usecs);
-    while (timer_is_before(timer_read_time(), end))
-        ;
-}
-
 void
 watchdog_reset(void)
 {
