@@ -3,8 +3,8 @@
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, collections
-import tmc2130
+import logging
+import tmc, tmc2130
 
 TMC_FREQUENCY=12000000.
 
@@ -308,20 +308,20 @@ class MCU_TMC_uart:
 class TMC2208:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_uart(config, Registers, self.fields)
         # Register commands
-        cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
         # Setup basic register values
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
         tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
-        mh = tmc2130.TMCMicrostepHelper(config, self.mcu_tmc)
+        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc2130.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)

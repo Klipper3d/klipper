@@ -4,8 +4,8 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, collections, logging
-import bus, tmc2130
+import math, logging
+import bus, tmc
 
 Registers = {
     "DRVCONF": 0xE, "SGCSCONF": 0xC, "SMARTEN": 0xA,
@@ -231,14 +231,14 @@ class MCU_TMC2660_SPI:
 class TMC2660:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc2130.FieldHelper(Fields, SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         # Register commands
-        cmdhelper = tmc2130.TMCCommandHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
 
         # DRVCTRL
-        mh = tmc2130.TMCMicrostepHelper(config, self.mcu_tmc)
+        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
         set_config_field = self.fields.set_config_field
