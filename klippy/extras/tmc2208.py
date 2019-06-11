@@ -182,16 +182,10 @@ FieldFormatters.update({
 # TMC2208 uart communication
 ######################################################################
 
-# Helper code for communicating via TMC uart
-class MCU_TMC_uart:
-    def __init__(self, config, name_to_reg, fields):
-        self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
-        self.name_to_reg = name_to_reg
-        self.fields = fields
-        self.ifcnt = None
-        # pin setup
-        ppins = self.printer.lookup_object("pins")
+# Code for sending messages on a TMC uart
+class MCU_TMC_uart_bitbang:
+    def __init__(self, config):
+        ppins = config.get_printer().lookup_object("pins")
         rx_pin_params = ppins.lookup_pin(
             config.get('uart_pin'), can_pullup=True)
         tx_pin_desc = config.get('tx_pin', None)
@@ -200,7 +194,7 @@ class MCU_TMC_uart:
         else:
             tx_pin_params = ppins.lookup_pin(tx_pin_desc)
         if rx_pin_params['chip'] is not tx_pin_params['chip']:
-            raise ppins.error("TMC2208 rx and tx pins must be on the same mcu")
+            raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
         self.mcu = rx_pin_params['chip']
         self.pullup = rx_pin_params['pullup']
         self.rx_pin = rx_pin_params['pin']
@@ -216,8 +210,6 @@ class MCU_TMC_uart:
         cmd_queue = self.mcu.alloc_command_queue()
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=cmd_queue)
-    def get_fields(self):
-        return self.fields
     def _calc_crc8(self, data):
         # Generate a CRC8-ATM value for a bytearray
         crc = 0
@@ -270,30 +262,46 @@ class MCU_TMC_uart:
         if data != encoded_data:
             return None
         return val
+    def reg_read(self, addr, reg):
+        msg = self._encode_read(0xf5, addr, reg)
+        params = self.tmcuart_send_cmd.send_with_response(
+            [self.oid, msg, 10], 'tmcuart_response', self.oid)
+        return self._decode_read(reg, params['read'])
+    def reg_write(self, addr, reg, val):
+        msg = self._encode_write(0xf5, 0x00, reg | 0x80, val)
+        self.tmcuart_send_cmd.send_with_response(
+            [self.oid, msg, 0], 'tmcuart_response', self.oid)
+
+# Helper code for communicating via TMC uart
+class MCU_TMC_uart:
+    def __init__(self, config, name_to_reg, fields):
+        self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        self.name_to_reg = name_to_reg
+        self.fields = fields
+        self.ifcnt = None
+        self.mcu_uart = MCU_TMC_uart_bitbang(config)
+    def get_fields(self):
+        return self.fields
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
-        msg = self._encode_read(0xf5, 0x00, reg)
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
         for retry in range(5):
-            params = self.tmcuart_send_cmd.send_with_response(
-                [self.oid, msg, 10], 'tmcuart_response', self.oid)
-            val = self._decode_read(reg, params['read'])
+            val = self.mcu_uart.reg_read(0x00, reg)
             if val is not None:
                 return val
         raise self.printer.command_error(
             "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
     def set_register(self, reg_name, val, print_time=0.):
-        msg = self._encode_write(0xf5, 0x00,
-                                 self.name_to_reg[reg_name] | 0x80, val)
+        reg = self.name_to_reg[reg_name]
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         for retry in range(5):
             ifcnt = self.ifcnt
             if ifcnt is None:
                 self.ifcnt = ifcnt = self.get_register("IFCNT")
-            params = self.tmcuart_send_cmd.send_with_response(
-                [self.oid, msg, 0], 'tmcuart_response', self.oid)
+            self.mcu_uart.reg_write(0x00, reg, val)
             self.ifcnt = self.get_register("IFCNT")
             if self.ifcnt == (ifcnt + 1) & 0xff:
                 return
