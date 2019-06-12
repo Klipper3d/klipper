@@ -92,13 +92,17 @@ class GCodeParser:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
-    def set_move_transform(self, transform):
-        if self.move_transform is not None:
+    def set_move_transform(self, transform, force=False):
+        if self.move_transform is not None and not force:
             raise self.printer.config_error(
                 "G-Code move transform already specified")
+        old_transform = self.move_transform
+        if old_transform is None:
+            old_transform = self.toolhead
         self.move_transform = transform
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
+        return old_transform
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
     def _action_emergency_stop(self, msg="action_emergency_stop"):
