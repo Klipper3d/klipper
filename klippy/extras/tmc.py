@@ -155,7 +155,7 @@ class TMCCommandHelper:
 
 
 ######################################################################
-# TMC virtual endstops
+# TMC virtual pins
 ######################################################################
 
 # Endstop wrapper that enables "sensorless homing"
@@ -187,8 +187,30 @@ class TMCVirtualEndstop:
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
 
-class TMCEndstopHelper:
-    def __init__(self, config, mcu_tmc, diag_pin):
+# Digital output wrapper for virtual enable
+class TMCVirtualEnable:
+    def __init__(self, printer, mcu_tmc):
+        self.reactor = printer.get_reactor()
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        self.toff = self.fields.get_field("toff")
+        self.fields.set_field("toff", 0)
+    def setup_max_duration(self, max_duration):
+        pass
+    def _do_set_digital(self, print_time, value):
+        toff_val = 0
+        if value:
+            toff_val = self.toff
+            print_time -= 0.100 # Schedule slightly before deadline
+        val = self.fields.set_field("toff", toff_val)
+        reg_name = self.fields.lookup_register("toff")
+        self.mcu_tmc.set_register(reg_name, val, print_time)
+    def set_digital(self, print_time, value):
+        self.reactor.register_callback(
+            (lambda ev: self._do_set_digital(print_time, value)))
+
+class TMCVirtualPinHelper:
+    def __init__(self, config, mcu_tmc, diag_pin=None):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
@@ -197,12 +219,18 @@ class TMCEndstopHelper:
         ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
     def setup_pin(self, pin_type, pin_params):
         ppins = self.printer.lookup_object('pins')
+        if pin_params['pin'] not in ('virtual_endstop', 'virtual_enable'):
+            raise ppins.error("Unknown tmc virtual pin")
+        if pin_params['invert'] or pin_params['pullup']:
+            raise ppins.error("Can not pullup/invert tmc virtual pin")
+        if pin_params['pin'] == 'virtual_enable':
+            if pin_type != 'digital_out':
+                raise ppins.error("tmc virtual enable only useful for enable")
+            return TMCVirtualEnable(self.printer, self.mcu_tmc)
         if self.diag_pin is None:
             raise ppins.error("tmc virtual endstop requires diag pin config")
-        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
+        if pin_type != 'endstop':
             raise ppins.error("tmc virtual endstop only useful as endstop")
-        if pin_params['invert'] or pin_params['pullup']:
-            raise ppins.error("Can not pullup/invert tmc virtual endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
         return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
 
