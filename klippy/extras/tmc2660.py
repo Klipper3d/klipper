@@ -23,7 +23,7 @@ Fields["DRVCTRL"] = {
 }
 
 Fields["CHOPCONF"] = {
-    "TOFF": 0x0f,
+    "toff": 0x0f,
     "HSTRT": 0x7 << 4,
     "HEND": 0x0f << 7,
     "HDEC": 0x03 << 11,
@@ -101,7 +101,7 @@ FieldFormatters = {
     "DEDGE": (lambda v:
         "1(Both Edges Active)" if v else "0(Only Rising Edge active)"),
     "INTPOL": (lambda v: "1(On)" if v else "0(Off)"),
-    "TOFF": (lambda v: ("%d" % v) if v else "0(Driver Disabled!)"),
+    "toff": (lambda v: ("%d" % v) if v else "0(Driver Disabled!)"),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "SFILT": (lambda v: "1(Filtered mode)" if v else "0(Standard mode)"),
     "VSENSE": (lambda v: "%d(%dmV)" % (v, 165 if v else 305)),
@@ -242,6 +242,8 @@ class TMC2660:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.fields.set_field("SDOFF", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
+        # Allow virtual pins to be created
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
@@ -259,7 +261,7 @@ class TMC2660:
         set_config_field(config, "CHM", 0)
         set_config_field(config, "HEND", 3)
         set_config_field(config, "HSTRT", 3)
-        set_config_field(config, "TOFF", 4)
+        set_config_field(config, "toff", 4)
         if not self.fields.get_field("CHM"):
             if (self.fields.get_field("HSTRT") +
                 self.fields.get_field("HEND")) > 15:
