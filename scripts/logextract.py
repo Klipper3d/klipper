@@ -121,9 +121,9 @@ class GatherShutdown:
     def handle_gcode_state(self, line):
         kv = self.extract_params(line)
         out = ['; Start g-code state restore', 'G28']
-        if not kv['absolutecoord']:
+        if not kv.get('absolute_coord', kv.get('absolutecoord')):
             out.append('G91')
-        if not kv['absoluteextrude']:
+        if not kv.get('absolute_extrude', kv.get('absoluteextrude')):
             out.append('M83')
         lp = kv['last_position']
         out.append('G1 X%f Y%f Z%f F%f' % (

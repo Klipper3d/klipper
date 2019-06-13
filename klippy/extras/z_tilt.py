@@ -23,6 +23,7 @@ class ZTilt:
         if len(z_positions) < 2:
             raise config.error("z_tilt requires at least two z_positions")
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe_helper.minimum_points(2)
         self.z_steppers = []
         # Register Z_TILT_ADJUST command
         self.gcode = self.printer.lookup_object('gcode')

@@ -50,6 +50,8 @@ class PrinterServo:
             toolhead = self.printer.lookup_object('toolhead')
             print_time = toolhead.get_last_move_time()
             self._set_pwm(print_time, self.initial_pwm_value)
+    def get_status(self, eventtime):
+        return {'value': self.last_value}
     def _set_pwm(self, print_time, value):
         if value == self.last_value and self.enable == self.last_enable:
             return

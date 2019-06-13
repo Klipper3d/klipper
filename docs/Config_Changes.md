@@ -6,6 +6,25 @@ All dates in this document are approximate.
 
 # Changes
 
+20190607: The "variable_X" parameters of gcode_macro (along with the
+VALUE parameter of SET_GCODE_VARIABLE) are now parsed as Python
+literals. If a value needs to be assigned a string then wrap the value
+in quotes so that it is evaluated as a string.
+
+20190606: The "samples", "samples_result", and "sample_retract_dist"
+config options have been moved to the "probe" config section. These
+options are no longer supported in the "delta_calibrate", "bed_tilt",
+"bed_mesh", "screws_tilt_adjust", "z_tilt", or "quad_gantry_level"
+config sections.
+
+20190528: The magic "status" variable in gcode_macro template
+evaluation has been renamed to "printer".
+
+20190520: The SET_GCODE_OFFSET command has changed; update any g-code
+macros accordingly. The command will no longer apply the requested
+offset to the next G1 command. The old behavior may be approximated by
+using the new "MOVE=1" parameter.
+
 20190404: The Python host software packages were updated. Users will
 need to rerun the ~/klipper/scripts/install-octopi.sh script (or
 otherwise upgrade the python dependencies if not using a standard

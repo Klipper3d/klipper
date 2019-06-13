@@ -337,11 +337,10 @@ class MCU_pwm:
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
         else:
-            if (self._start_value not in [0., 1.]
-                or self._shutdown_value not in [0., 1.]):
+            if self._shutdown_value not in [0., 1.]:
                 raise pins.error(
-                    "start and shutdown values must be 0.0 or 1.0 on soft pwm")
-            self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
+                    "shutdown value must be 0.0 or 1.0 on soft pwm")
+            self._pwm_max = float(cycle_ticks)
             if self._is_static:
                 self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
                     self._pin, self._start_value >= 0.5))
@@ -351,10 +350,17 @@ class MCU_pwm:
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
                 " default_value=%d max_duration=%d" % (
                     self._oid, self._pin, cycle_ticks,
-                    self._start_value >= 0.5, self._shutdown_value >= 0.5,
+                    self._start_value >= 1.0, self._shutdown_value >= 0.5,
                     self._mcu.seconds_to_clock(self._max_duration)))
+            if self._start_value not in [0., 1.]:
+                clock = self._mcu.get_query_slot(self._oid)
+                svalue = int(self._start_value * self._pwm_max + 0.5)
+                self._mcu.add_config_cmd(
+                    "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d" % (
+                        self._oid, clock, svalue))
             self._set_cmd = self._mcu.lookup_command(
-                "schedule_soft_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+                "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+                cq=cmd_queue)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
@@ -620,10 +626,10 @@ class MCU:
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
         ppins = self._printer.lookup_object('pins')
-        for name, value in self.get_constants().items():
-            if name.startswith("RESERVE_PINS_"):
+        for cname, value in self.get_constants().items():
+            if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
-                    ppins.reserve_pin(name, pin, name[14:])
+                    ppins.reserve_pin(name, pin, cname[13:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")

@@ -131,20 +131,6 @@ void io_config(void)
     LL_DBGMCU_SetTracePinAssignment(LL_DBGMCU_TRACE_NONE);
 }
 
-// Implement simple early-boot delay mechanism
-void
-udelay(uint32_t usecs)
-{
-    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
-        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-    }
-
-    uint32_t end = timer_read_time() + timer_from_us(usecs);
-    while (timer_is_before(timer_read_time(), end))
-        ;
-}
-
 // Main entry point
 int
 main(void)

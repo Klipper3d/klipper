@@ -45,7 +45,7 @@ spi_software_oid_lookup(uint8_t oid)
 void
 spi_software_prepare(struct spi_software *ss)
 {
-    gpio_out_write(ss->sclk, ss->mode < 2 ? 0 : 1);
+    gpio_out_write(ss->sclk, ss->mode & 0x02);
 }
 
 void

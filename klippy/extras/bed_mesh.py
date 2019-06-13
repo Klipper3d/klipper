@@ -195,6 +195,7 @@ class BedMeshCalibrate:
         self._init_probe_params(config, points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, points)
+        self.probe_helper.minimum_points(3)
         # setup persistent storage
         self.profiles = {}
         self._load_storage(config)
