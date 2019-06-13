@@ -468,3 +468,17 @@ of retraction required.
    parameters.
  - `G11`: Unretracts the extruder using the currently configured
    parameters.
+
+## Skew Correction
+
+The following commands are available when the "skew_correction" config
+section is enabled.
+  - `GET_CURRENT_SKEW`: Reports the current printer skew for each plane in
+    both radians and degrees.  The skew is calculated based on parameters
+    provided to the [skew_correction] section of printer.cfg.
+  - `CALC_MEASURED_SKEW [AC=<ac_length>] [BD=<bd_length>] [AD=<ad_length>]`:
+    Calculates and reports the skew (in radians and degrees) based on a
+    measured print.  This can be useful for determining the printer's current
+    skew after correction has been applied.  It may also be useful before
+    correction is applied to determine if skew correction is necessary.   See
+    skew_correction.md for details on skew calibration objects and measurements.
