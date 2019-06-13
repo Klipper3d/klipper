@@ -46,7 +46,7 @@ class HeaterCheck:
             reactor.update_timer(self.check_timer, reactor.NEVER)
     def check_event(self, eventtime):
         temp, target = self.heater.get_temp(eventtime)
-        if temp >= target - self.hysteresis:
+        if temp >= target - self.hysteresis or target <= 0.:
             # Temperature near target - reset checks
             if self.approaching_target and target:
                 logging.info("Heater %s within range of %.3f",
