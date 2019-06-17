@@ -5,30 +5,35 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import probe
+import probe, toolhead
 
 class SafeZHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
         (self.home_x_pos,
-          self.home_y_pos) = config.get("home_xy_position").split(',')
+          self.home_y_pos) = config.get("home_xy_position",
+                                        default=",").split(',')
         self.z_hop = config.getfloat("z_hop", default=0.0)
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.speed = config.getfloat('speed', 50.0, above=0.)
         self.gcode = self.printer.lookup_object('gcode')
+        self.toolhead = None
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
 
     def cmd_G28(self, params):
         need_x, need_y, need_z = [False] * 3
-
+        if not self.toolhead:
+            self.toolhead = self.printer.lookup_object('toolhead')
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
-            toolhead = self.printer.lookup_object('toolhead')
-            pos = toolhead.get_position()
-            toolhead.set_position(pos, homing_axes=[2])
+            pos = self.toolhead.get_position()
             pos[2] = pos[2] + self.z_hop
-            toolhead.move(pos, self.z_hop_speed)
+            move = toolhead.Move(self.toolhead, self.toolhead.commanded_pos,
+                                 pos, self.z_hop_speed)
+            self.toolhead.move_queue.add_move(move)
+            if self.toolhead.print_time > self.toolhead.need_check_stall:
+                self.toolhead._check_stall()
             self.gcode.reset_last_position()
 
         # Determine which axes we need to home
@@ -50,9 +55,12 @@ class SafeZHoming:
         # Home Z axis if necessary
         if need_z:
             # Move to safe XY homing position
-            self.gcode.cmd_G1({'X': self.home_x_pos,
-                               'Y': self.home_y_pos,
-                               'F': self.speed*60.0})
+            pos = self.toolhead.get_position()
+            if self.home_x_pos:
+                pos[0] = float(self.home_x_pos)
+            if self.home_y_pos:
+                pos[1] = float(self.home_y_pos)
+            self.toolhead.move(pos, self.speed)
             # Home Z
             self.gcode.cmd_G28({'Z': '0'})
 
