@@ -16,6 +16,10 @@ class HomingOverride:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
+
+        if self.printer.lookup_object("safe_z_homing", default=None):
+            raise config.error("homing_override and safe_z_homing cannot"
+                                    +" be used simultaneously")
     def cmd_G28(self, params):
         if self.in_script:
             # Was called recursively - invoke the real G28 command

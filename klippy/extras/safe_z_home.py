@@ -10,9 +10,14 @@ import probe, toolhead
 class SafeZHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
-        (self.home_x_pos,
-          self.home_y_pos) = config.get("home_xy_position",
-                                        default=",").split(',')
+        try:
+            (self.home_x_pos,
+            self.home_y_pos) = config.get("home_xy_position",
+                                            default=",").split(',')
+        except:
+            raise config.error("Unable to parse home_xy_position in %s" % (
+                config.get_name()))
+
         self.z_hop = config.getfloat("z_hop", default=0.0)
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.speed = config.getfloat('speed', 50.0, above=0.)
@@ -20,6 +25,10 @@ class SafeZHoming:
         self.toolhead = None
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
+
+        if self.printer.lookup_object("homing_override", default=None):
+            raise config.error("homing_override and safe_z_homing cannot"
+                                    +" be used simultaneously")
 
     def cmd_G28(self, params):
         need_x, need_y, need_z = [False] * 3
