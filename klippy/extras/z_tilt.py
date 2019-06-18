@@ -61,6 +61,50 @@ class ZAdjustHelper:
         toolhead.set_position(curpos)
         gcode.reset_last_position()
 
+class RetryHelper:
+    def __init__(self, config, error_msg_extra = ""):
+        self.gcode = config.get_printer().lookup_object('gcode')
+        self.default_max_retries = config.getint("retries", 0, minval=0)
+        self.default_retry_tolerance = \
+            config.getfloat("retry_tolerance", 0., above=0.)
+        self.value_label = "Probed points range"
+        self.error_msg_extra = error_msg_extra
+    def start(self, params):
+        self.max_retries = self.gcode.get_int('RETRIES', params,
+            default=self.default_max_retries, minval=0, maxval=30)
+        self.retry_tolerance = self.gcode.get_float('RETRY_TOLERANCE', params,
+            default=self.default_retry_tolerance, minval=0, maxval=1.0)
+        self.current_retry = 0
+        self.previous = None
+        self.increasing = 0
+    def check_increase(self,error):
+        if self.previous and error > self.previous + 0.0000001:
+            self.increasing += 1
+        elif self.increasing > 0:
+            self.increasing -= 1
+        self.previous = error
+        return self.increasing > 1
+    def check_retry(self,z_positions):
+        if self.max_retries == 0:
+            return
+        error = max(z_positions) - min(z_positions)
+        if self.check_increase(error):
+            self.gcode.respond_error(
+                "Retries aborting: %s is increasing. %s" % (
+                    self.value_label, self.error_msg_extra))
+            return
+        self.gcode.respond_info(
+            "Retries: %d/%d %s: %0.6f tolerance: %0.6f" % (
+                self.current_retry, self.max_retries, self.value_label,
+                error, self.retry_tolerance))
+        if error <= self.retry_tolerance:
+            return "done"
+        self.current_retry += 1
+        if self.current_retry > self.max_retries:
+            self.gcode.respond_error("Too many retries")
+            return
+        return "retry"
+
 class ZTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
