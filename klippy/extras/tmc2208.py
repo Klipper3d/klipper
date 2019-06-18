@@ -238,6 +238,7 @@ class MCU_TMC_uart_bitbang:
         if select_pins_desc is not None:
             self.analog_mux = MCU_analog_mux(self.mcu, self.cmd_queue,
                                              select_pins_desc)
+        self.instances = {}
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
@@ -256,6 +257,10 @@ class MCU_TMC_uart_bitbang:
         instance_id = None
         if self.analog_mux is not None:
             instance_id = self.analog_mux.get_instance_id(select_pins_desc)
+        if instance_id in self.instances:
+            raise self.mcu.get_printer().config_error(
+                "Each TMC uart must have unique select pins polarity")
+        self.instances[instance_id] = True
         return instance_id
     def _calc_crc8(self, data):
         # Generate a CRC8-ATM value for a bytearray
