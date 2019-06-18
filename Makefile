@@ -1,6 +1,6 @@
 # Klipper build system
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -37,6 +37,8 @@ CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD -g \
     -ffunction-sections -fdata-sections
 CFLAGS += -flto -fwhole-program -fno-use-linker-plugin
 
+OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
+OBJS_klipper.elf += $(OUT)compile_time_request.o
 CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
@@ -70,9 +72,11 @@ $(OUT)board-link: $(KCONFIG_CONFIG)
 	@echo "  Creating symbolic link $(OUT)board"
 	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
 	$(Q)touch $@
-	$(Q)ln -Tsf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)rm -f $(OUT)board
+	$(Q)ln -sf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
-	$(Q)ln -Tsf $(PWD)/src/generic $(OUT)board-generic/board
+	$(Q)rm -f $(OUT)board-generic/board
+	$(Q)ln -sf $(PWD)/src/generic $(OUT)board-generic/board
 
 $(OUT)%.o.ctr: $(OUT)%.o
 	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
@@ -83,9 +87,9 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)klipper.compile_time_request $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
-$(OUT)klipper.elf: $(patsubst %.c, $(OUT)src/%.o,$(src-y)) $(OUT)compile_time_request.o
+$(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
-	$(Q)$(CC) $^ $(CFLAGS_klipper.elf) -o $@
+	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
 	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
 
 ################ Kconfig rules

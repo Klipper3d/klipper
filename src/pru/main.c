@@ -17,7 +17,7 @@
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "pru");
+DECL_CONSTANT_STR("MCU", "pru");
 
 
 /****************************************************************
@@ -56,6 +56,8 @@ irq_wait(void)
 static void
 timer_set(uint32_t value)
 {
+    if (!value)
+        value = 1;
     CT_IEP.TMR_CMP0 = value;
 }
 
@@ -103,7 +105,7 @@ timer_init(void)
 {
     CT_IEP.TMR_CMP_CFG = 0x01 << 1;
     CT_IEP.TMR_GLB_CFG = 0x11;
-    CT_IEP.TMR_CNT = 0;
+    CT_IEP.TMR_CNT = 0xffffffff;
     timer_kick();
 }
 DECL_INIT(timer_init);

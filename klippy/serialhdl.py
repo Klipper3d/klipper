@@ -31,7 +31,6 @@ class SerialReader:
         # Message handlers
         handlers = {
             '#unknown': self.handle_unknown, '#output': self.handle_output,
-            'shutdown': self.handle_output, 'is_shutdown': self.handle_output
         }
         self.handlers = { (k, None): v for k, v in handlers.items() }
     def _bg_thread(self):
@@ -45,10 +44,10 @@ class SerialReader:
             params['#sent_time'] = response.sent_time
             params['#receive_time'] = response.receive_time
             hdl = (params['#name'], params.get('oid'))
-            with self.lock:
-                hdl = self.handlers.get(hdl, self.handle_default)
             try:
-                hdl(params)
+                with self.lock:
+                    hdl = self.handlers.get(hdl, self.handle_default)
+                    hdl(params)
             except:
                 logging.exception("Exception in serial callback")
     def connect(self):
@@ -59,7 +58,7 @@ class SerialReader:
             try:
                 if self.baud:
                     self.ser = serial.Serial(
-                        self.serialport, self.baud, timeout=0)
+                        self.serialport, self.baud, timeout=0, exclusive=True)
                 else:
                     self.ser = open(self.serialport, 'rb+')
             except (OSError, IOError, serial.SerialException) as e:
@@ -198,29 +197,37 @@ class SerialRetryCommand:
         self.name = name
         self.oid = oid
         self.response = None
+        reactor = self.serial.reactor
+        self.mutex = reactor.mutex(is_locked=True)
         self.min_query_time = self.serial.reactor.monotonic()
         self.serial.register_callback(self.handle_callback, self.name, self.oid)
-        self.send_timer = self.serial.reactor.register_timer(
-            self.send_event, self.serial.reactor.NOW)
+        retry_time = self.send_event(self.min_query_time)
+        self.send_timer = reactor.register_timer(self.send_event, retry_time)
     def unregister(self):
         self.serial.unregister_callback(self.name, self.oid)
         self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
             return self.serial.reactor.NEVER
+        if eventtime > self.min_query_time + self.TIMEOUT_TIME:
+            self.unregister()
+            if self.response is None:
+                self.mutex.unlock()
+            return self.serial.reactor.NEVER
         self.serial.raw_send(self.cmd, 0, 0, self.serial.default_cmd_queue)
         return eventtime + self.RETRY_TIME
     def handle_callback(self, params):
         last_sent_time = params['#sent_time']
-        if last_sent_time >= self.min_query_time:
+        if last_sent_time >= self.min_query_time and self.response is None:
             self.response = params
+            self.serial.reactor.register_async_callback(self.do_wake)
+    def do_wake(self, eventtime):
+        self.mutex.unlock()
     def get_response(self):
-        eventtime = self.serial.reactor.monotonic()
-        while self.response is None:
-            eventtime = self.serial.reactor.pause(eventtime + 0.05)
-            if eventtime > self.min_query_time + self.TIMEOUT_TIME:
-                self.unregister()
-                raise error("Timeout on wait for '%s' response" % (self.name,))
+        with self.mutex:
+            pass
+        if self.response is None:
+            raise error("Timeout on wait for '%s' response" % (self.name,))
         self.unregister()
         return self.response
 
@@ -285,7 +292,7 @@ def stk500v2_leave(ser, reactor):
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
     # First try opening the port at a different baud
-    ser = serial.Serial(serialport, 2400, timeout=0)
+    ser = serial.Serial(serialport, 2400, timeout=0, exclusive=True)
     ser.read(1)
     reactor.pause(reactor.monotonic() + 0.100)
     # Then toggle DTR

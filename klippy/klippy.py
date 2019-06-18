@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse, logging, time, threading, collections, importlib
-import util, reactor, queuelogger, msgproto
+import util, reactor, queuelogger, msgproto, homing
 import gcode, configfile, pins, heater, mcu, toolhead
 
 message_ready = "Printer is ready"
@@ -47,6 +47,7 @@ Printer is shutdown
 
 class Printer:
     config_error = configfile.error
+    command_error = homing.CommandError
     def __init__(self, input_fd, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
@@ -147,10 +148,10 @@ class Printer:
             logging.exception("MCU error during connect")
             self._set_state("%s%s" % (str(e), message_mcu_connect_error))
             return
-        except:
+        except Exception as e:
             logging.exception("Unhandled exception during connect")
-            self._set_state("Internal error during connect.%s" % (
-                message_restart,))
+            self._set_state("Internal error during connect: %s\n%s" % (
+                str(e), message_restart,))
             return
         try:
             self._set_state(message_ready)
@@ -158,9 +159,10 @@ class Printer:
                 if self.state_message is not message_ready:
                     return
                 cb()
-        except:
+        except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback")
+            self.invoke_shutdown("Internal error during ready callback: %s" % (
+                str(e),))
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
@@ -222,7 +224,8 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-i", "--debuginput", dest="debuginput",
                     help="read commands from file instead of from tty port")
-    opts.add_option("-I", "--input-tty", dest="inputtty", default='/tmp/printer',
+    opts.add_option("-I", "--input-tty", dest="inputtty",
+                    default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")

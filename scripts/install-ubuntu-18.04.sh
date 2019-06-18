@@ -40,16 +40,15 @@ create_virtualenv()
     [ ! -d ${PYTHONDIR} ] && virtualenv ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install cffi==1.6.0 pyserial==3.2.1 greenlet==0.4.10
+    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
 # Step 3: Install startup script
 install_script()
 {
 # Create systemd service file
-    KLIPPER_LOG=/var/log/klippy.log
+    KLIPPER_LOG=/tmp/klippy.log
     report_status "Installing system start script..."
-    sudo touch $KLIPPER_LOG && sudo chown $KLIPPER_USER:$KLIPPER_GROUP $KLIPPER_LOG
     sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper.service" << EOF
 #Systemd service file for klipper
 [Unit]

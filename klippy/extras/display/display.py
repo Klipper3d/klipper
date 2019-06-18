@@ -11,7 +11,8 @@ import menu
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
-    'uc1701' : uc1701.UC1701, 'ssd1306': uc1701.SSD1306,
+    'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306,
+    'st7567': uc1701.ST7567,
 }
 M73_TIMEOUT = 5.
 
@@ -50,6 +51,11 @@ class PrinterLCD:
         self.message = None
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
+    def get_status(self, eventtime):
+        return {
+            'progress': self.progress or 0,
+            'message': self.message or ''
+        }
     # Get menu instance
     def get_menu(self):
         return self.menu

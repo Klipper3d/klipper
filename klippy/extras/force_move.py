@@ -3,11 +3,24 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import math, logging
 import chelper
 
 BUZZ_VELOCITY = 4.
 STALL_TIME = 0.100
+
+# Calculate a move's accel_t, cruise_t, and cruise_v
+def calc_move_time(dist, speed, accel):
+    dist = abs(dist)
+    if not accel or not dist:
+        return 0., dist / speed, speed
+    max_cruise_v2 = dist * accel
+    if max_cruise_v2 < speed**2:
+        speed = math.sqrt(max_cruise_v2)
+    accel_t = speed / accel
+    accel_decel_d = accel_t * speed
+    cruise_t = (dist - accel_decel_d) / speed
+    return accel_t, cruise_t, speed
 
 class ForceMove:
     def __init__(self, config):
@@ -49,17 +62,17 @@ class ForceMove:
             print_time = toolhead.get_last_move_time()
             stepper.motor_enable(print_time, 0)
             toolhead.dwell(STALL_TIME)
-    def manual_move(self, stepper, dist, speed):
+    def manual_move(self, stepper, dist, speed, accel=0.):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
-        move_t = abs(dist / speed)
         prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
         stepper.set_position((0., 0., 0.))
-        self.move_fill(self.cmove, print_time, 0., move_t, 0.,
-                       0., 0., 0., dist, 0., 0., 0., speed, 0.)
+        accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
+        self.move_fill(self.cmove, print_time, accel_t, cruise_t, accel_t,
+                       0., 0., 0., dist, 0., 0., 0., cruise_v, accel)
         stepper.step_itersolve(self.cmove)
         stepper.set_stepper_kinematics(prev_sk)
-        toolhead.dwell(move_t)
+        toolhead.dwell(accel_t + cruise_t + accel_t)
     def _lookup_stepper(self, params):
         name = self.gcode.get_str('STEPPER', params)
         if name not in self.steppers:
@@ -82,10 +95,11 @@ class ForceMove:
         stepper = self._lookup_stepper(params)
         distance = self.gcode.get_float('DISTANCE', params)
         speed = self.gcode.get_float('VELOCITY', params, above=0.)
-        logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f",
-                     stepper.get_name(), distance, speed)
+        accel = self.gcode.get_float('ACCEL', params, 0., minval=0.)
+        logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f accel=%.3f",
+                     stepper.get_name(), distance, speed, accel)
         was_enable, was_ignore = self.force_enable(stepper)
-        self.manual_move(stepper, distance, speed)
+        self.manual_move(stepper, distance, speed, accel)
         self.restore_enable(stepper, True, was_ignore)
     cmd_SET_KINEMATIC_POSITION_help = "Force a low-level kinematic position"
     def cmd_SET_KINEMATIC_POSITION(self, params):

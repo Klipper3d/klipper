@@ -5,8 +5,11 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/serial_irq.h" // serial_rx_data
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
+
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA11,PA10");
 
 void
 serial_init(void)
@@ -14,18 +17,18 @@ serial_init(void)
     // Enable serial clock
     enable_pclock(SERCOM0_GCLK_ID_CORE, ID_SERCOM0);
     // Enable pins
-    gpio_peripheral(GPIO('A', 10), 'C', 0);
     gpio_peripheral(GPIO('A', 11), 'C', 0);
+    gpio_peripheral(GPIO('A', 10), 'C', 0);
     // Configure serial
     SercomUsart *su = &SERCOM0->USART;
     su->CTRLA.reg = 0;
     uint32_t areg = (SERCOM_USART_CTRLA_MODE(1)
                      | SERCOM_USART_CTRLA_DORD
                      | SERCOM_USART_CTRLA_SAMPR(1)
-                     | SERCOM_USART_CTRLA_TXPO(1)
-                     | SERCOM_USART_CTRLA_RXPO(3));
+                     | SERCOM_USART_CTRLA_RXPO(3)
+                     | SERCOM_USART_CTRLA_TXPO(1));
     su->CTRLA.reg = areg;
-    su->CTRLB.reg = SERCOM_USART_CTRLB_TXEN | SERCOM_USART_CTRLB_RXEN;
+    su->CTRLB.reg = SERCOM_USART_CTRLB_RXEN | SERCOM_USART_CTRLB_TXEN;
     uint32_t freq = get_pclock_frequency(SERCOM0_GCLK_ID_CORE);
     uint32_t baud8 = freq / (2 * CONFIG_SERIAL_BAUD);
     su->BAUD.reg = (SERCOM_USART_BAUD_FRAC_BAUD(baud8 / 8)

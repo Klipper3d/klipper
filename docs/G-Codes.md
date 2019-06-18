@@ -42,9 +42,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](../config/example-extras.cfg) for details). For
-example, one might use this to implement: `G10`, `G11`, `G12`, `G29`,
-`G30`, `G31`, `M42`, `M80`, `M81`, etc.
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for details). For example, one might use this to implement: `G10`,
+`G11`, `G12`, `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
 
 ## G-Code SD card commands
 
@@ -90,15 +90,37 @@ The following standard commands are supported:
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
-  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]`: Set a
-  positional offset to apply to future G-Code commands. This is
-  commonly used to virtually change the Z bed offset or to set nozzle
-  XY offsets when switching extruders. For example, if
-  "SET_GCODE_OFFSET Z=0.2" is sent, then future G-Code moves will
-  have 0.2mm added to their Z height. If the X_ADJUST style parameters
-  are used, then the adjustment will be added to any existing offset
-  (eg, "SET_GCODE_OFFSET Z=-0.2" followed by "SET_GCODE_OFFSET
-  Z_ADJUST=0.3" would result in a total Z offset of 0.1).
+  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
+  future G-Code commands. This is commonly used to virtually change
+  the Z bed offset or to set nozzle XY offsets when switching
+  extruders. For example, if "SET_GCODE_OFFSET Z=0.2" is sent, then
+  future G-Code moves will have 0.2mm added to their Z height. If the
+  X_ADJUST style parameters are used, then the adjustment will be
+  added to any existing offset (eg, "SET_GCODE_OFFSET Z=-0.2" followed
+  by "SET_GCODE_OFFSET Z_ADJUST=0.3" would result in a total Z offset
+  of 0.1). If "MOVE=1" is specified then a toolhead move will be
+  issued to apply the given offset (otherwise the offset will take
+  effect on the next absolute G-Code move that specifies the given
+  axis). If "MOVE_SPEED" is specified then the toolhead move will be
+  performed with the given speed (in mm/s); otherwise the toolhead
+  move will use the last specified G-Code speed.
+- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
+  g-code coordinate parsing state. Saving and restoring the g-code
+  state is useful in scripts and macros. This command saves the
+  current g-code absolute coordinate mode (G90/G91), absolute extrude
+  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
+  override (M220), extruder override (M221), move speed, current XYZ
+  position, and relative extruder "E" position. If NAME is provided it
+  allows one to name the saved state to the given string. If NAME is
+  not provided it defaults to "default".
+- `RESTORE_GCODE_STATE [NAME=<state_name>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
+  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
+  is specified then the toolhead move will be performed with the given
+  speed (in mm/s); otherwise the toolhead move will use the restored
+  g-code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
@@ -138,6 +160,8 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
+  idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -151,6 +175,15 @@ The following standard commands are supported:
   calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
+
+## G-Code Macro Commands
+
+The following command is available when a "gcode_macro" config section
+is enabled:
+- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
+  VALUE=<value>`: This command allows one to change the value of a
+  gcode_macro variable at run-time. The provided VALUE is parsed as a
+  Python literal.
 
 ## Custom Pin Commands
 
@@ -170,15 +203,18 @@ enabled:
 The following command is available when a "manual_stepper" config
 section is enabled:
 - `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
-  [SET_POSITION=<pos>]
-  [MOVE=<pos> SPEED=<speed> [STOP_ON_ENDSTOP=1]]`: This command will
-  alter the state of the stepper. Use the ENABLE parameter to
-  enable/disable the stepper. Use the SET_POSITION parameter to force
-  the stepper to think it is at the given position. Use the MOVE
-  parameter to request a movement to the given position at the given
-  SPEED. If STOP_ON_ENDSTOP is specified then the move will end early
-  should the endstop report as triggered (use STOP_ON_ENDSTOP=-1 to
-  stop early should the endstop report not triggered).
+  [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
+  [MOVE=<pos> [STOP_ON_ENDSTOP=1]]`: This command will alter the state
+  of the stepper. Use the ENABLE parameter to enable/disable the
+  stepper. Use the SET_POSITION parameter to force the stepper to
+  think it is at the given position. Use the MOVE parameter to request
+  a movement to the given position. If SPEED and/or ACCEL is specified
+  then the given values will be used instead of the defaults specified
+  in the config file. If an ACCEL of zero is specified then no
+  acceleration will be preformed. If STOP_ON_ENDSTOP is specified then
+  the move will end early should the endstop report as triggered (use
+  STOP_ON_ENDSTOP=-1 to stop early should the endstop report not
+  triggered).
 
 ## Probe
 
@@ -261,6 +297,26 @@ section is enabled:
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
 
+## Bed Screws Helper
+
+The following commands are available when the "bed_screws" config
+section is enabled:
+- `BED_SCREWS_ADJUST`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) and allow one to make adjustments to
+  the bed screws so that the bed is a constant distance from the
+  nozzle.
+
+## Bed Screws Tilt adjust Helper
+
+The following commands are available when the "screws_tilt_adjust"
+config section is enabled:
+- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
+  adjustment tool. It will command the nozzle to different locations
+  (as defined in the config file) probing the z height and calculate
+  the number of knob turns to adjust the bed level.
+  IMPORTANT: You MUST always do a G28 before using this command.
+
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
@@ -277,12 +333,25 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130
+## TMC2130, TMC2660 and TMC2208
 
-The following command is available when the "tmc2130" config section
-is enabled:
-- `DUMP_TMC STEPPER=<name>`: This command will read the TMC2130 driver
+The following commands are available when the "tmc2130", "tmc2660"
+or "tmc2208" config section is enabled:
+- `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
+- `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
+  registers. Needed to re-enable the driver if power to the chip is
+  turned off then back on.
+- `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
+  This will adjust the run and hold currents of the TMC driver.
+  HOLDCURRENT is applicable only to the tmc2130 and tmc2208.
+- `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
+  alter the value of the specified register field of the TMC driver.
+  This command is intended for low-level diagnostics and debugging only because
+  changing the fields during run-time can lead to undesired and potentially
+  dangerous behavior of your printer. Permanent changes should be made using
+  the printer configuration file instead. No sanity checks are performed for the
+  given values.
 
 ## Endstop adjustments by stepper phase
 
@@ -299,16 +368,18 @@ section is enabled:
 
 The following commands are available when the "force_move" config
 section is enabled:
-- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value>
-  VELOCITY=<value>`: This command will forcibly move the given stepper
+- `FORCE_MOVE STEPPER=<config_name> DISTANCE=<value> VELOCITY=<value>
+  [ACCEL=<value>]`: This command will forcibly move the given stepper
   the given distance (in mm) at the given constant velocity (in
-  mm/s). No acceleration is performed; no boundary checks are
-  performed; no kinematic updates are made; other parallel steppers on
-  an axis will not be moved. Use caution as an incorrect command could
-  cause damage! Using this command will almost certainly place the
-  low-level kinematics in an incorrect state; issue a G28 afterwards
-  to reset the kinematics. This command is intended for low-level
-  diagnostics and debugging.
+  mm/s). If ACCEL is specified and is greater than zero, then the
+  given acceleration (in mm/s^2) will be used; otherwise no
+  acceleration is performed. No boundary checks are performed; no
+  kinematic updates are made; other parallel steppers on an axis will
+  not be moved. Use caution as an incorrect command could cause
+  damage! Using this command will almost certainly place the low-level
+  kinematics in an incorrect state; issue a G28 afterwards to reset
+  the kinematics. This command is intended for low-level diagnostics
+  and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
@@ -344,3 +415,41 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+
+## Filament Sensor
+
+The following command is available when the "filament_switch_sensor" config
+section is enabled.
+ - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
+  the filament sensor.  The data displayed on the terminal will depend on the
+  sensor type defined in the confguration.
+
+## Firmware Retraction
+
+The following commands are available when the "firmware_retraction"
+config section is enabled.  These commands allow you to utilise the
+firmware retraction feature available in many slicers, to reduce
+stringing during non-extrusion moves from one part of the print to
+another.  Appropriately configuring pressure advance reduces the length
+of retraction required.
+ - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP=<mm>]`:
+   Adjust the parameters used by firmware retraction.  RETRACT_LENGTH
+   determines the length of filament to retract and unretract.  The
+   speed of retraction is adjusted via RETRACT_SPEED, and is typically
+   set relatively high.  The speed of unretraction is adjusted via
+   UNRETRACT_SPEED, and is not particularly critical, although often
+   lower than RETRACT_SPEED.  In some cases it is useful to add a small
+   amount of additional length on unretraction, and this is set via
+   UNRETRACT_EXTRA_LENGTH.  It is possible to lift the Z axis by a small
+   amount when in retracted state by setting Z_HOP, although this is
+   more commonly used for printers where fast Z movements are supported,
+   such as delta printers. SET_RETRACTION is commonly set as part of
+   slicer per-filament configuration, as different filaments require
+   different parameter settings.
+ - `GET_RETRACTION`: Queries the current parameters used by firmware
+   retraction and displays them on the terminal.
+ - `G10`: Retracts the extruder using the currently configured
+   parameters.
+ - `G11`: Unretracts the extruder using the currently configured
+   parameters.

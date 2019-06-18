@@ -1,0 +1,49 @@
+# Test case for bed screws helper tool
+CONFIG bed_screws.cfg
+DICTIONARY atmega2560.dict
+
+# Start helper script and then abort it
+G28
+BED_SCREWS_ADJUST
+
+ACCEPT
+ACCEPT
+ABORT
+
+# Start helper script and run until success
+BED_SCREWS_ADJUST
+
+ACCEPT
+ACCEPT
+ACCEPT
+
+ACCEPT
+ACCEPT
+ACCEPT
+
+# Start helper script and run with two readjusts
+BED_SCREWS_ADJUST
+
+ACCEPT
+ADJUSTED
+ACCEPT
+
+ACCEPT
+ACCEPT
+ACCEPT
+
+ADJUSTED
+ACCEPT
+ACCEPT
+
+ACCEPT
+ACCEPT
+ACCEPT
+
+ACCEPT
+ACCEPT
+ACCEPT
+
+# Start helper script and run with two readjusts
+BED_SCREWS_ADJUST
+ABORT

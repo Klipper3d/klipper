@@ -19,7 +19,7 @@
 #include "stm32f1xx_ll_spi.h"
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "stm32f103");
+DECL_CONSTANT_STR("MCU", "stm32f103");
 
 
 /****************************************************************
@@ -129,20 +129,6 @@ void io_config(void)
     LL_GPIO_AF_Remap_SWJ_NOJTAG();
     /* Likewise, we don't need PB3 for TRACESWO output */
     LL_DBGMCU_SetTracePinAssignment(LL_DBGMCU_TRACE_NONE);
-}
-
-// Implement simple early-boot delay mechanism
-void
-udelay(uint32_t usecs)
-{
-    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
-        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-    }
-
-    uint32_t end = timer_read_time() + timer_from_us(usecs);
-    while (timer_is_before(timer_read_time(), end))
-        ;
 }
 
 // Main entry point

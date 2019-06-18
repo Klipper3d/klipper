@@ -10,8 +10,9 @@ KELVIN_TO_CELCIUS = -273.15
 
 # Analog voltage to temperature converter for thermistors
 class Thermistor:
-    def __init__(self, pullup):
+    def __init__(self, pullup, inline_resistor):
         self.pullup = pullup
+        self.inline_resistor = inline_resistor
         self.c1 = self.c2 = self.c3 = 0.
     def setup_coefficients(self, t1, r1, t2, r2, t3, r3, name=""):
         # Calculate Steinhart-Hart coefficents from temp measurements.
@@ -48,7 +49,7 @@ class Thermistor:
         # Calculate temperature from adc
         adc = max(.00001, min(.99999, adc))
         r = self.pullup * adc / (1.0 - adc)
-        ln_r = math.log(r)
+        ln_r = math.log(r - self.inline_resistor)
         inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
         return 1.0/inv_t + KELVIN_TO_CELCIUS
     def calc_adc(self, temp):
@@ -63,13 +64,14 @@ class Thermistor:
             ln_r = math.pow(x - y, 1./3.) - math.pow(x + y, 1./3.)
         else:
             ln_r = (inv_t - self.c1) / self.c2
-        r = math.exp(ln_r)
+        r = math.exp(ln_r) + self.inline_resistor
         return r / (self.pullup + r)
 
 # Create an ADC converter with a thermistor
 def PrinterThermistor(config, params):
     pullup = config.getfloat('pullup_resistor', 4700., above=0.)
-    thermistor = Thermistor(pullup)
+    inline_resistor = config.getfloat('inline_resistor', 0., minval=0.)
+    thermistor = Thermistor(pullup, inline_resistor)
     if 'beta' in params:
         thermistor.setup_coefficients_beta(
             params['t1'], params['r1'], params['beta'])
@@ -108,7 +110,7 @@ Sensors = {
         't1': 20., 'r1': 126800., 't2': 150., 'r2': 1360.,
         't3': 300., 'r3': 80.65 },
     "NTC 100K beta 3950": { 't1': 25., 'r1': 100000., 'beta': 3950. },
-    "Honeywell 100K 135-104LAG-J01": { 't1': 25., 'r1': 100000., 'beta': 3974. },
+    "Honeywell 100K 135-104LAG-J01": { 't1': 25., 'r1': 100000., 'beta': 3974.},
     "NTC 100K MGB18-104F39050L32": { 't1': 25., 'r1': 100000., 'beta': 4100. },
 }
 
@@ -117,9 +119,9 @@ def load_config(config):
     pheater = config.get_printer().lookup_object("heater")
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: PrinterThermistor(config, params))
-        pheater.add_sensor(sensor_type, func)
+        pheater.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     thermistor = CustomThermistor(config)
     pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor(thermistor.name, thermistor.create)
+    pheater.add_sensor_factory(thermistor.name, thermistor.create)

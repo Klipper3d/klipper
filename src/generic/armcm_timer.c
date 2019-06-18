@@ -11,7 +11,7 @@
 #include "command.h" // shutdown
 #include "sched.h" // sched_timer_dispatch
 
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
@@ -52,6 +52,20 @@ timer_kick(void)
     SysTick->LOAD = 0;
     SysTick->VAL = 0;
     SCB->ICSR = SCB_ICSR_PENDSTSET_Msk;
+}
+
+// Implement simple early-boot delay mechanism
+void
+udelay(uint32_t usecs)
+{
+    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    }
+
+    uint32_t end = timer_read_time() + timer_from_us(usecs);
+    while (timer_is_before(timer_read_time(), end))
+        ;
 }
 
 void

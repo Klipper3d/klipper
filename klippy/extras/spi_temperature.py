@@ -7,12 +7,6 @@
 import math
 import bus
 
-# Sensor types defined in the micro-controller code (thermocouple.c)
-TS_CHIP_MAX31855 = 1 << 0
-TS_CHIP_MAX31856 = 1 << 1
-TS_CHIP_MAX31865 = 1 << 2
-TS_CHIP_MAX6675  = 1 << 3
-
 
 ######################################################################
 # SensorBase
@@ -21,14 +15,14 @@ TS_CHIP_MAX6675  = 1 << 3
 REPORT_TIME = 0.300
 
 class SensorBase:
-    def __init__(self, config, chip_type, config_cmd=None):
+    def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
         self.printer = config.get_printer()
         self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
         self.spi = bus.MCU_SPI_from_config(
-            config, 1, pin_option="sensor_pin", default_speed=4000000)
+            config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
             self.spi.spi_send(config_cmd)
         self.mcu = mcu = self.spi.get_mcu()
@@ -46,7 +40,7 @@ class SensorBase:
         return REPORT_TIME
     def _build_config(self):
         self.mcu.add_config_cmd(
-            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
+            "config_thermocouple oid=%u spi_oid=%u thermocouple_type=%s" % (
                 self.oid, self.spi.get_oid(), self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
@@ -123,7 +117,7 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31856,
+        SensorBase.__init__(self, config, "MAX31856",
                             self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
@@ -198,7 +192,7 @@ MAX31855_MULT = 0.25
 
 class MAX31855(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31855)
+        SensorBase.__init__(self, config, "MAX31855", spi_mode=0)
     def calc_temp(self, adc, fault):
         if adc & 0x1:
             self.fault("MAX31855 : Open Circuit")
@@ -227,7 +221,7 @@ MAX6675_MULT = 0.25
 
 class MAX6675(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX6675)
+        SensorBase.__init__(self, config, "MAX6675", spi_mode=0)
     def calc_temp(self, adc, fault):
         if adc & 0x02:
             self.fault("Max6675 : Device ID error")
@@ -281,7 +275,7 @@ class MAX31865(SensorBase):
     def __init__(self, config):
         self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
         self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
-        SensorBase.__init__(self, config, TS_CHIP_MAX31865,
+        SensorBase.__init__(self, config, "MAX31865",
                             self.build_spi_init(config))
     def calc_temp(self, adc, fault):
         if fault & 0x80:
@@ -289,7 +283,8 @@ class MAX31865(SensorBase):
         if fault & 0x40:
             self.fault("Max31865 RTD input is shorted")
         if fault & 0x20:
-            self.fault("Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
+            self.fault(
+                "Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
         if fault & 0x10:
             self.fault("Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x08:
@@ -300,16 +295,16 @@ class MAX31865(SensorBase):
             self.fault("Max31865 Unspecified error")
         adc = adc >> 1 # remove fault bit
         R_rtd = (self.reference_r * adc) / VAL_ADC_MAX
-        temp = (
-            (( ( -1 * self.rtd_nominal_r ) * VAL_A ) +
-             math.sqrt( ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) -
-                        ( 4 * self.rtd_nominal_r * VAL_B * ( self.rtd_nominal_r - R_rtd ) )))
-            / (2 * self.rtd_nominal_r * VAL_B))
+        temp = ((( ( -1 * self.rtd_nominal_r ) * VAL_A )
+                 + math.sqrt( ( self.rtd_nominal_r**2 * VAL_A * VAL_A )
+                              - ( 4 * self.rtd_nominal_r * VAL_B
+                                  * ( self.rtd_nominal_r - R_rtd ) )))
+                / (2 * self.rtd_nominal_r * VAL_B))
         return temp
     def calc_adc(self, temp):
         R_rtd = temp * ( 2 * self.rtd_nominal_r * VAL_B )
         R_rtd = math.pow( ( R_rtd + ( self.rtd_nominal_r * VAL_A ) ), 2)
-        R_rtd = -1 * ( R_rtd - ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) )
+        R_rtd = -1 * ( R_rtd - (self.rtd_nominal_r**2 * VAL_A * VAL_A ) )
         R_rtd = R_rtd / ( 4 * self.rtd_nominal_r * VAL_B )
         R_rtd = ( -1 * R_rtd ) + self.rtd_nominal_r
         adc = int( ( ( R_rtd * VAL_ADC_MAX ) / self.reference_r) + 0.5 )
@@ -342,4 +337,4 @@ def load_config(config):
     # Register sensors
     pheater = config.get_printer().lookup_object("heater")
     for name, klass in Sensors.items():
-        pheater.add_sensor(name, klass)
+        pheater.add_sensor_factory(name, klass)

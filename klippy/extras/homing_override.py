@@ -10,7 +10,8 @@ class HomingOverride:
         self.start_pos = [config.getfloat('set_position_' + a, None)
                           for a in 'xyz']
         self.axes = config.get('axes', 'XYZ').upper()
-        self.script = config.get('gcode')
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.template = gcode_macro.load_template(config, 'gcode')
         self.in_script = False
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G28", None)
@@ -52,9 +53,11 @@ class HomingOverride:
         toolhead.set_position(pos, homing_axes=homing_axes)
         self.gcode.reset_last_position()
         # Perform homing
+        kwparams = { 'printer': self.template.create_status_wrapper() }
+        kwparams['params'] = params
         try:
             self.in_script = True
-            self.gcode.run_script_from_command(self.script)
+            self.template.run_gcode_from_command(kwparams)
         finally:
             self.in_script = False
 

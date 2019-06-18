@@ -1,5 +1,5 @@
 # Tests for miscellaneous g-code commands
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 CONFIG ../../config/example.cfg
 
 # Simple status commands
@@ -18,6 +18,21 @@ M115
 RESTART
 
 M18
+
+# G-code state commands
+G28
+SAVE_GCODE_STATE
+G92 Z-5
+G92 E5
+SAVE_GCODE_STATE NAME=test
+G1 Z-5
+G91
+G1 Z0
+RESTORE_GCODE_STATE NAME=test
+G1 Z-5
+RESTORE_GCODE_STATE
+G1 Z0 E0
+RESTORE_GCODE_STATE MOVE=1
 
 # Update commands
 SET_GCODE_OFFSET Z=.1

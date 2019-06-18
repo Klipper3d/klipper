@@ -109,17 +109,46 @@ output("The value of %u is %s with size %u.", x, buf, buf_len);
 The output() function is similar in usage to printf() - it is intended
 to generate and format arbitrary messages for human consumption.
 
+Declaring enumerations
+----------------------
+
+Enumerations allow the host code to use string identifiers for
+parameters that the micro-controller handles as integers. They are
+declared in the micro-controller code - for example:
+
+```
+DECL_ENUMERATION("spi_bus", "spi", 0);
+
+DECL_ENUMERATION_RANGE("pin", "PC0", 16, 8);
+```
+
+If the first example, the DECL_ENUMERATION() macro defines an
+enumeration for any command/response message with a parameter name of
+"spi_bus" or parameter name with a suffix of "_spi_bus". For those
+parameters the string "spi" is a valid value and it will be
+transmitted with an integer value of zero.
+
+It's also possible to declare an enumeration range. In the second
+example, a "pin" parameter (or any parameter with a suffix of "_pin")
+would accept PC0, PC1, PC2, ..., PC7 as valid values. The strings will
+be transmitted with integers 16, 17, 18, ..., 23.
+
 Declaring constants
 -------------------
 
 Constants can also be exported. For example, the following:
 
 ```
-DECL_CONSTANT(SERIAL_BAUD, 250000);
+DECL_CONSTANT("SERIAL_BAUD", 250000);
 ```
 
 would export a constant named "SERIAL_BAUD" with a value of 250000
-from the micro-controller to the host.
+from the micro-controller to the host. It is also possible to declare
+a constant that is a string - for example:
+
+```
+DECL_CONSTANT_STR("MCU", "pru");
+```
 
 Low-level message encoding
 ==========================
@@ -277,24 +306,9 @@ dictionary. Once all chunks are obtained the host will assemble the
 chunks, uncompress the data, and parse the contents.
 
 In addition to information on the communication protocol, the data
-dictionary also contains the software version, constants (as defined
-by DECL_CONSTANT), and static strings.
-
-Static Strings
---------------
-
-To reduce bandwidth the data dictionary also contains a set of static
-strings known to the micro-controller. This is useful when sending
-messages from micro-controller to host. For example, if the
-micro-controller were to run:
-
-```
-shutdown("Unable to handle command");
-```
-
-The error message would be encoded and sent using a single VLQ. The
-host uses the data dictionary to resolve VLQ encoded static string ids
-to their associated human-readable strings.
+dictionary also contains the software version, enumerations (as
+defined by DECL_ENUMERATION), and constants (as defined by
+DECL_CONSTANT).
 
 Message flow
 ============

@@ -12,7 +12,11 @@ format of commands and their transmission. The commands here are
 described using their "printf" style syntax - for those unfamiliar
 with that format, just note that where a '%...' sequence is seen it
 should be replaced with an actual integer. For example, a description
-with "count=%c" could be replaced with the text "count=10".
+with "count=%c" could be replaced with the text "count=10". Note that
+parameters that are considered "enumerations" (see the above protocol
+document) take a string value which is automatically converted to an
+integer value for the micro-controller. This is common with parameters
+named "pin" (or that have a suffix of "_pin").
 
 Startup Commands
 ================
@@ -22,14 +26,6 @@ micro-controller and its peripherals. This section lists common
 commands available for that purpose. Unlike most micro-controller
 commands, these commands run as soon as they are received and they do
 not require any particular setup.
-
-Several of these commands will take a "pin=%u" parameter. The
-low-level micro-controller software uses integer encodings of the
-hardware pin numbers, but to make things more readable the host will
-translate human readable pin names (eg, "PA3") to their equivalent
-integer encodings. By convention, any parameter named "pin" or that
-has a "_pin" suffix will use pin name translation by the
-host.
 
 Common startup commands:
 

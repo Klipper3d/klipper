@@ -64,7 +64,7 @@ class KeyboardReader:
         self.ser.register_callback(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
-        self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
+        self.pins = pins.PinResolver(mcu_type, {}, validate_aliases=False)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):
@@ -144,8 +144,8 @@ class KeyboardReader:
         out += "\nAvailable artificial commands:"
         out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
         out += "\nAvailable local variables:"
-        out += "\n  ".join([""] + ["%s: %s" % (k, v)
-                                   for k, v in sorted(self.eval_globals.items())])
+        lvars = sorted(self.eval_globals.items())
+        out += "\n  ".join([""] + ["%s: %s" % (k, v) for k, v in lvars])
         self.output(out)
     def command_HELP(self, parts):
         self.output(help_txt)
