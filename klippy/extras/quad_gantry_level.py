@@ -6,6 +6,22 @@
 import logging
 from . import probe, z_tilt
 
+# Leveling code for XY rails that are controlled by Z steppers as in:
+#
+# Z stepper1 ----> O                             O <---- Z stepper2
+#                  | * <-- probe1   probe2 --> * |
+#                  |                             |
+#                  |                             | <--- Y2 rail
+#   Y1 rail -----> |                             |
+#                  |                             |
+#                  |=============================|
+#                  |            ^                |
+#                  |            |                |
+#                  |   X rail --/                |
+#                  |                             |
+#                  | * <-- probe0   probe3 --> * |
+# Z stepper0 ----> O                             O <---- Z stepper3
+
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -48,29 +64,36 @@ class QuadGantryLevel:
             " ".join(["%s: %.6f" % (z_id, z_positions[z_id])
                 for z_id in range(len(z_positions))]))
         self.gcode.respond_info(points_message)
-        p1 = [positions[0][0] + offsets[0],z_positions[0]]
-        p2 = [positions[1][0] + offsets[0],z_positions[1]]
-        p3 = [positions[2][0] + offsets[0],z_positions[2]]
-        p4 = [positions[3][0] + offsets[0],z_positions[3]]
-        f1 = self.linefit(p1,p4)
-        f2 = self.linefit(p2,p3)
-        logging.info("quad_gantry_level f1: %s, f2: %s" % (f1,f2))
+        # Calculate slope along X axis between probe point 0 and 3
+        ppx0 = [positions[0][0] + offsets[0], z_positions[0]]
+        ppx3 = [positions[3][0] + offsets[0], z_positions[3]]
+        slope_x_pp03 = self.linefit(ppx0, ppx3)
+        # Calculate slope along X axis between probe point 1 and 2
+        ppx1 = [positions[1][0] + offsets[0], z_positions[1]]
+        ppx2 = [positions[2][0] + offsets[0], z_positions[2]]
+        slope_x_pp12 = self.linefit(ppx1, ppx2)
+        logging.info("quad_gantry_level f1: %s, f2: %s"
+                     % (slope_x_pp03, slope_x_pp12))
+        # Calculate gantry slope along Y axis between stepper 0 and 1
         a1 = [positions[0][1] + offsets[1],
-              self.plot(f1,self.gantry_corners[0][0])]
+              self.plot(slope_x_pp03, self.gantry_corners[0][0])]
         a2 = [positions[1][1] + offsets[1],
-              self.plot(f2,self.gantry_corners[0][0])]
+              self.plot(slope_x_pp12, self.gantry_corners[0][0])]
+        slope_y_s01 = self.linefit(a1, a2)
+        # Calculate gantry slope along Y axis between stepper 2 and 3
         b1 = [positions[0][1] + offsets[1],
-              self.plot(f1,self.gantry_corners[1][0])]
+              self.plot(slope_x_pp03, self.gantry_corners[1][0])]
         b2 = [positions[1][1] + offsets[1],
-              self.plot(f2,self.gantry_corners[1][0])]
-        af = self.linefit(a1,a2)
-        bf = self.linefit(b1,b2)
-        logging.info("quad_gantry_level af: %s, bf: %s" % (af,bf))
+              self.plot(slope_x_pp12, self.gantry_corners[1][0])]
+        slope_y_s23 = self.linefit(b1, b2)
+        logging.info("quad_gantry_level af: %s, bf: %s"
+                     % (slope_y_s01, slope_y_s23))
+        # Calculate z height of each stepper
         z_height = [0,0,0,0]
-        z_height[0] = self.plot(af,self.gantry_corners[0][1])
-        z_height[1] = self.plot(af,self.gantry_corners[1][1])
-        z_height[2] = self.plot(bf,self.gantry_corners[1][1])
-        z_height[3] = self.plot(bf,self.gantry_corners[0][1])
+        z_height[0] = self.plot(slope_y_s01, self.gantry_corners[0][1])
+        z_height[1] = self.plot(slope_y_s01, self.gantry_corners[1][1])
+        z_height[2] = self.plot(slope_y_s23, self.gantry_corners[1][1])
+        z_height[3] = self.plot(slope_y_s23, self.gantry_corners[0][1])
 
         ainfo = zip(["z","z1","z2","z3"], z_height[0:4])
         apos = " ".join(["%s: %06f" % (x) for x in ainfo])
