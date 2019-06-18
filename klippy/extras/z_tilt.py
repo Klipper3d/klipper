@@ -117,6 +117,7 @@ class ZTilt:
         except:
             raise config.error("Unable to parse z_positions in %s" % (
                 config.get_name()))
+        self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
@@ -126,6 +127,7 @@ class ZTilt:
                                     desc=self.cmd_Z_TILT_ADJUST_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, params):
+        self.retry_helper.start(params)
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis
@@ -154,6 +156,7 @@ class ZTilt:
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
         self.z_helper.adjust_steppers(adjustments, speed)
+        return self.retry_helper.check_retry([p[2] for p in positions])
 
 def load_config(config):
     return ZTilt(config)
