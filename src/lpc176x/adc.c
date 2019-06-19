@@ -117,7 +117,8 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     adc_status.chan |= ADC_DONE;
-    // Perform median filter on 5 read samples
+    // The lpc176x adc has a defect that causes random reports near
+    // 0xfff. Work around that with a 5 sample median filter.
     uint16_t *p = adc_status.samples;
     uint32_t v0 = p[0], v4 = p[1], v1 = p[2], v3 = p[3], v2 = p[4];
     ORDER(v0, v4);
@@ -127,6 +128,15 @@ gpio_adc_read(struct gpio_adc g)
     ORDER(v1, v3);
     ORDER(v1, v2);
     ORDER(v2, v3);
+    if (v3 >= 0xff0 || v4 >= 0xff0) {
+        ORDER(v0, v1);
+        if (v2 >= 0xff0)
+            // At least 3 reports are clearly bogus - return the minimum sample
+            return v0;
+        // 1 or 2 bogus reports - return the median of the minimum 3 samples
+        return v1;
+    }
+    // Return the median of the 5 samples
     return v2;
 }
 
