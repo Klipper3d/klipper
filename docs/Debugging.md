@@ -147,7 +147,7 @@ sudo apt-get install python-matplotlib
 Then graphs can be produced with:
 
 ```
-~/klipper/scripts/graphstats.py /tmp/klippy.log loadgraph.png
+~/klipper/scripts/graphstats.py /tmp/klippy.log -o loadgraph.png
 ```
 
 One can then view the resulting **loadgraph.png** file.
