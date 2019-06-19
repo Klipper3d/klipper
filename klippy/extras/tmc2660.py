@@ -232,6 +232,7 @@ class TMC2660:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
+        self.fields.set_field("SDOFF", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
@@ -242,7 +243,6 @@ class TMC2660:
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
         set_config_field = self.fields.set_config_field
-        set_config_field(config, "DEDGE", 0)
         set_config_field(config, "INTPOL", True, 'interpolate')
         # CHOPCONF
         set_config_field(config, "TBL", 2)
@@ -273,8 +273,6 @@ class TMC2660:
         set_config_field(config, "SLPL", 0)
         set_config_field(config, "DISS2G", 0)
         set_config_field(config, "TS2G", 3)
-        self.fields.set_field("RDSEL", 0) # needed for phase calculations
-        self.fields.set_field("SDOFF", 0) # only step/dir mode supported
 
     def query_registers(self, print_time=0.):
         return [(reg_name, self.mcu_tmc.get_register(reg_name))
