@@ -1,32 +1,35 @@
+# TMC5160 configuration
 #
+# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
 
-import tmc2208, tmc2130, tmc5160, tmc, tmc_uart
+import tmc2208, tmc2130, tmc, tmc_uart
 TMC_FREQUENCY=12000000.
 
 Registers = dict(tmc2208.Registers)
 
 Registers.update({
 	"TCOOLTHRS": 0x14,
-	"COOLCONF": 0x42
+	"COOLCONF": 0x42,
+	"SGTHRS": 0x40
 })
-
-#
 
 ReadRegisters = tmc2208.ReadRegisters
 
-#
-
 fields = dict(tmc2208.Fields)
-fields.update({
-	"COOLCONF": tmc5160.Fields["COOLCONF"]
-})
+fields["COOLCONF"] = {
+    "semin":                    0x0F << 0,
+    "seup":                     0x03 << 5,
+    "semax":                    0x0F << 8,
+    "sedn":                     0x03 << 13,
+    "seimin":                   0x01 << 15
+}
+fields["SGTHRS"] = {
+	"sgt": 0xFF << 0
+}
 
-FieldFormatters = dict(tmc2130.FieldFormatters)
-FieldFormatters.update({
-    "SEL_A":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
-    "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
-    "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
-})
+FieldFormatters = dict(tmc2208.FieldFormatters)
 
 #
 
