@@ -27,7 +27,7 @@ Fields = {}
 Fields["GCONF"] = {
     "I_scale_analog":      0x01,
     "internal_Rsense":     0x01 << 1,
-    "en_spreadCycle":      0x01 << 2,
+    "en_pwm_mode":         0x01 << 2,
     "shaft":               0x01 << 3,
     "index_otpw":          0x01 << 4,
     "index_step":          0x01 << 5,

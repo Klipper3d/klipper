@@ -1,6 +1,6 @@
 #
 
-import tmc2208, tmc2130, tmc5160, tmc
+import tmc2208, tmc2130, tmc5160, tmc, tmc_uart
 TMC_FREQUENCY=12000000.
 
 Registers = dict(tmc2208.Registers)
@@ -13,19 +13,6 @@ Registers.update({
 #
 
 ReadRegisters = tmc2208.ReadRegisters
-#ReadRegisters.append()
-#2208
-#ReadRegisters = [
-#    "GCONF", "GSTAT", "IFCNT", "OTP_READ", "IOIN", "FACTORY_CONF", "TSTEP",
-#    "MSCNT", "MSCURACT", "CHOPCONF", "DRV_STATUS",
-#    "PWMCONF", "PWM_SCALE", "PWM_AUTO"
-#]
-
-#2130
-#ReadRegisters = [
-#    "GCONF", "GSTAT", "IOIN", "TSTEP", "XDIRECT", "MSCNT", "MSCURACT",
-#    "CHOPCONF", "DRV_STATUS", "PWM_SCALE", "LOST_STEPS",
-#]
 
 #
 
@@ -48,10 +35,13 @@ FieldFormatters.update({
 ######################################################################
 
 class TMC2209:
-    def __init__(self, config):
+    def __init__(self, config): 
         # Setup mcu communication
         self.fields = tmc.FieldHelper(fields, tmc2208.SignedFields, FieldFormatters)
-        self.mcu_tmc = tmc2208.MCU_TMC_uart(config, Registers, self.fields)
+        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
+        # Allow virtual endstop to be created
+        diag1_pin = config.get('diag1_pin', None)
+        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin, tmc_type=2209)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)

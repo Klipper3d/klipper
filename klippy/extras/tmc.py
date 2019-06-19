@@ -158,7 +158,8 @@ class TMCCommandHelper:
 
 # Endstop wrapper that enables "sensorless homing"
 class TMCVirtualEndstop:
-    def __init__(self, mcu_tmc, mcu_endstop):
+    def __init__(self, mcu_tmc, mcu_endstop, tmc_type):
+        self.tmc_type = tmc_type
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
@@ -173,20 +174,23 @@ class TMCVirtualEndstop:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        self.fields.set_field("en_pwm_mode", 0)
-        val = self.fields.set_field("diag1_stall", 1)
+        val = self.fields.set_field("en_pwm_mode", 0)
+        if self.tmc_type == 2130:
+            val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        self.fields.set_field("en_pwm_mode", self.en_pwm)
-        val = self.fields.set_field("diag1_stall", 0)
+        val = self.fields.set_field("en_pwm_mode", self.en_pwm)
+        if self.tmc_type == 2130:
+            val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
 
 class TMCEndstopHelper:
-    def __init__(self, config, mcu_tmc, diag_pin):
+    def __init__(self, config, mcu_tmc, diag_pin, tmc_type=2130):
+        self.tmc_type = tmc_type
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
@@ -202,7 +206,7 @@ class TMCEndstopHelper:
         if pin_params['invert'] or pin_params['pullup']:
             raise ppins.error("Can not pullup/invert tmc virtual endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
-        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
+        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop, self.tmc_type)
 
 
 ######################################################################
