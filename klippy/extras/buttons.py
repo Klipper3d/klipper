@@ -51,8 +51,8 @@ class MCU_buttons:
             "buttons_query oid=%d clock=%d"
             " rest_ticks=%d retransmit_count=%d" % (
                 self.oid, clock, rest_ticks, RETRANSMIT_COUNT), is_init=True)
-        self.mcu.register_msg(
-            self.handle_buttons_state, "buttons_state", self.oid)
+        self.mcu.register_response(self.handle_buttons_state,
+                                   "buttons_state", self.oid)
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
         ack_count = self.ack_count

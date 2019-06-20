@@ -44,7 +44,7 @@ class ClockSync:
             params = self.get_clock_cmd.send_with_response(response='clock')
             self._handle_clock(params)
             self.reactor.pause(0.100)
-        serial.register_callback(self._handle_clock, 'clock')
+        serial.register_response(self._handle_clock, 'clock')
         self.reactor.update_timer(self.get_clock_timer, self.reactor.NOW)
     def connect_file(self, serial, pace=False):
         self.serial = serial

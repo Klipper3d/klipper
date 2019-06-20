@@ -177,8 +177,8 @@ class MCU_endstop:
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_command(
             "end_stop_query_state oid=%c", cq=cmd_queue)
-        self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
-                               , self._oid)
+        self._mcu.register_response(self._handle_end_stop_state,
+                                    "end_stop_state", self._oid)
     def home_prepare(self):
         pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
@@ -414,8 +414,8 @@ class MCU_adc:
                 self._oid, clock, sample_ticks, self._sample_count,
                 self._report_clock, min_sample, max_sample,
                 self._range_check_count), is_init=True)
-        self._mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
-                               , self._oid)
+        self._mcu.register_response(self._handle_analog_in_state,
+                                    "analog_in_state", self._oid)
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
@@ -640,9 +640,9 @@ class MCU:
                  or self._config_reset_cmd is not None)
             and msgparser.get_constant('SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
-        self.register_msg(self._handle_shutdown, 'shutdown')
-        self.register_msg(self._handle_shutdown, 'is_shutdown')
-        self.register_msg(self._handle_mcu_stats, 'stats')
+        self.register_response(self._handle_shutdown, 'shutdown')
+        self.register_response(self._handle_shutdown, 'is_shutdown')
+        self.register_response(self._handle_mcu_stats, 'stats')
         self._check_config()
         move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
         logging.info(move_msg)
@@ -680,8 +680,8 @@ class MCU:
         return self._printer
     def get_name(self):
         return self._name
-    def register_msg(self, cb, msg, oid=None):
-        self._serial.register_callback(cb, msg, oid)
+    def register_response(self, cb, msg, oid=None):
+        self._serial.register_response(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):

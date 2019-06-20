@@ -61,7 +61,7 @@ class KeyboardReader:
             ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
-        self.ser.register_callback(self.handle_output, '#output')
+        self.ser.register_response(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
         mcu_type = msgparser.get_constant('MCU')
         self.pins = pins.PinResolver(mcu_type, {}, validate_aliases=False)
@@ -130,7 +130,7 @@ class KeyboardReader:
         except ValueError as e:
             self.output("Error: %s" % (str(e),))
             return
-        self.ser.register_callback(self.handle_suppress, name, oid)
+        self.ser.register_response(self.handle_suppress, name, oid)
     def command_STATS(self, parts):
         curtime = self.reactor.monotonic()
         self.output(' '.join([self.ser.stats(curtime),

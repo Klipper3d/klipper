@@ -82,7 +82,7 @@ class SerialReader:
         msgparser = msgproto.MessageParser()
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
-        self.register_callback(self.handle_unknown, '#unknown')
+        self.register_response(self.handle_unknown, '#unknown')
         # Setup baud adjust
         mcu_baud = msgparser.get_constant_float('SERIAL_BAUD', None)
         if mcu_baud is not None:
@@ -117,10 +117,10 @@ class SerialReader:
             self.serialqueue, self.stats_buf, len(self.stats_buf))
         return self.ffi_main.string(self.stats_buf)
     # Serial response callbacks
-    def register_callback(self, callback, name, oid=None):
+    def register_response(self, callback, name, oid=None):
         with self.lock:
             self.handlers[name, oid] = callback
-    def unregister_callback(self, name, oid=None):
+    def unregister_response(self, name, oid=None):
         with self.lock:
             del self.handlers[name, oid]
     # Command sending
@@ -200,11 +200,11 @@ class SerialRetryCommand:
         reactor = self.serial.reactor
         self.mutex = reactor.mutex(is_locked=True)
         self.min_query_time = self.serial.reactor.monotonic()
-        self.serial.register_callback(self.handle_callback, self.name, self.oid)
+        self.serial.register_response(self.handle_callback, self.name, self.oid)
         retry_time = self.send_event(self.min_query_time)
         self.send_timer = reactor.register_timer(self.send_event, retry_time)
     def unregister(self):
-        self.serial.unregister_callback(self.name, self.oid)
+        self.serial.unregister_response(self.name, self.oid)
         self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
@@ -240,15 +240,15 @@ class SerialBootStrap:
         self.identify_cmd = self.serial.lookup_command(
             "identify offset=%u count=%c")
         self.is_done = False
-        self.serial.register_callback(self.handle_identify, 'identify_response')
-        self.serial.register_callback(self.handle_unknown, '#unknown')
+        self.serial.register_response(self.handle_identify, 'identify_response')
+        self.serial.register_response(self.handle_unknown, '#unknown')
         self.send_timer = self.serial.reactor.register_timer(
             self.send_event, self.serial.reactor.NOW)
     def get_identify_data(self, timeout):
         eventtime = self.serial.reactor.monotonic()
         while not self.is_done and eventtime <= timeout:
             eventtime = self.serial.reactor.pause(eventtime + 0.05)
-        self.serial.unregister_callback('identify_response')
+        self.serial.unregister_response('identify_response')
         self.serial.reactor.unregister_timer(self.send_timer)
         if not self.is_done:
             return None
