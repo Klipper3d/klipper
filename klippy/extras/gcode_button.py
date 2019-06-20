@@ -6,7 +6,7 @@
 # Copyright (C) 2019 Alec Plumb <alec@etherwalker.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
+import logging
 
 class GCodeButton:
     def __init__(self, config):
@@ -20,30 +20,29 @@ class GCodeButton:
         gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
         self.press_template = gcode_macro.load_template(config, 'press_gcode')
         self.release_template = gcode_macro.load_template(config, 'release_gcode')
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("QUERY_BUTTON", "BUTTON", self.name,
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_mux_command("QUERY_BUTTON", "BUTTON", self.name,
                                         self.cmd_QUERY_BUTTON,
                                         desc=self.cmd_QUERY_BUTTON_help)
 
     cmd_QUERY_BUTTON_help = "Report on the state of a button"
 
     def cmd_QUERY_BUTTON(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        gcode.respond(self.name + ": " + self.get_status()['state'])
+        self.gcode.respond(self.name + ": " + self.get_status()['state'])
 
     def button_callback(self, eventtime, state):
         self.last_state = state
         if state and bool(self.press_template):
-           self.press_template.run_gcode_from_command()
+           self.queue_template(self.press_template)
         if (not state) and bool(self.release_template):
-           self.release_template.run_gcode_from_command()
+           self.queue_template(self.release_template)
 
     def get_status(self, eventtime=None):
         if self.last_state:
             return {'state': "PRESSED"}
         return {'state': "RELEASED"}
 
-    def queue_tempate(self, template):
+    def queue_template(self, template):
         if template is None:
             return
         if not self.template_queue:
@@ -52,13 +51,13 @@ class GCodeButton:
         self.template_queue.append(template)
 
     def dispatch_templates(self, eventtime):
-        while self.template:
-            template = self.template[0]
+        while self.template_queue:
+            template = self.template_queue[0]
             try:
                 self.gcode.run_script(template.render())
             except Exception:
                 logging.exception("Script running error")
-            self.gcode_queue.pop(0)
+            self.template_queue.pop(0)
 
 
 def load_config_prefix(config):
