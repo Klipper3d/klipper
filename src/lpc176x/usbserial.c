@@ -7,6 +7,7 @@
 #include <string.h> // memcpy
 #include "LPC17xx.h" // LPC_SC
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
+#include "board/armcm_timer.h" // udelay
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
 #include "byteorder.h" // cpu_to_le32

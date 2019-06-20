@@ -21,14 +21,16 @@ class IdleTimeout:
         self.toolhead = self.timeout_timer = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.idle_timeout = config.getfloat('timeout', 600., above=0.)
-        self.idle_gcode = config.get('gcode', DEFAULT_IDLE_GCODE).split('\n')
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.idle_gcode = gcode_macro.load_template(
+            config, 'gcode', DEFAULT_IDLE_GCODE)
         self.gcode.register_command(
             'SET_IDLE_TIMEOUT', self.cmd_SET_IDLE_TIMEOUT)
         self.state = "Idle"
         self.last_print_start_systime = 0.
     def get_status(self, eventtime):
         printing_time = 0.
-        if state == "Printing":
+        if self.state == "Printing":
             printing_time = eventtime - self.last_print_start_systime
         return { "state": self.state, "printing_time": printing_time }
     def handle_ready(self):
@@ -39,12 +41,11 @@ class IdleTimeout:
     def transition_idle_state(self, eventtime):
         self.state = "Printing"
         try:
-            res = self.gcode.process_batch(self.idle_gcode)
+            script = self.idle_gcode.render()
+            res = self.gcode.run_script(script)
         except:
             logging.exception("idle timeout gcode execution")
-            return eventtime + 1.
-        if not res:
-            # Raced with incoming g-code commands
+            self.state = "Ready"
             return eventtime + 1.
         print_time = self.toolhead.get_last_move_time()
         self.state = "Idle"
@@ -61,7 +62,7 @@ class IdleTimeout:
         if idle_time < self.idle_timeout:
             # Wait for idle timeout
             return eventtime + self.idle_timeout - idle_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + 1.
         # Idle timeout has elapsed
@@ -79,7 +80,7 @@ class IdleTimeout:
         if buffer_time > -READY_TIMEOUT:
             # Wait for ready timeout
             return eventtime + READY_TIMEOUT + buffer_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + READY_TIMEOUT
         # Transition to "ready" state

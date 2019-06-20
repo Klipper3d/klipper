@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import traceback, logging
+import traceback, logging, ast
 import jinja2
 
 
@@ -68,9 +68,12 @@ class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.env = jinja2.Environment('{%', '%}', '{', '}')
-    def load_template(self, config, option):
+    def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
-        script = config.get(option, '')
+        if default is None:
+            script = config.get(option)
+        else:
+            script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
 
 def load_config(config):
@@ -86,7 +89,6 @@ class GCodeMacro:
         name = config.get_name().split()[1]
         self.alias = name.upper()
         printer = config.get_printer()
-        config.get('gcode')
         gcode_macro = printer.try_load_module(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
@@ -98,9 +100,16 @@ class GCodeMacro:
         prefix = 'default_parameter_'
         self.kwparams = { o[len(prefix):].upper(): config.get(o)
                           for o in config.get_prefix_options(prefix) }
+        self.variables = {}
         prefix = 'variable_'
-        self.variables = { o[len(prefix):]: config.get(o)
-                           for o in config.get_prefix_options(prefix) }
+        for option in config.get_prefix_options(prefix):
+            try:
+                self.variables[option[len(prefix):]] = ast.literal_eval(
+                    config.get(option))
+            except ValueError as e:
+                raise config.error(
+                    "Option '%s' in section '%s' is not a valid literal" % (
+                        option, config.get_name()))
     def get_status(self, eventtime):
         return dict(self.variables)
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
@@ -113,7 +122,12 @@ class GCodeMacro:
                 return
             raise self.gcode.error("Unknown gcode_macro variable '%s'" % (
                 variable,))
-        self.variables[variable] = value
+        try:
+            literal = ast.literal_eval(value)
+        except ValueError as e:
+            raise self.gcode.error("Unable to parse '%s' as a literal" % (
+                value,))
+        self.variables[variable] = literal
     cmd_desc = "G-Code macro"
     def cmd(self, params):
         if self.in_script:

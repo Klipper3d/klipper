@@ -9,7 +9,6 @@
 
 extern uint8_t const avail_pins[];
 
-void udelay(uint32_t usecs);
 void gpio_init(void);
 void TimerInit(void);
 
