@@ -51,7 +51,7 @@ gpio_adc_setup(uint8_t pin)
     if (!is_enabled_pclock(PCLK_ADC)) {
         // Power up ADC
         enable_pclock(PCLK_ADC);
-        uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX) - 1;
+        uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ, ADC_FREQ_MAX) - 1;
         LPC_ADC->ADCR = adc_status.adcr = (1<<21) | ((prescal & 0xff) << 8);
         LPC_ADC->ADINTEN = 0xff;
         adc_status.chan = ADC_DONE;
@@ -104,7 +104,7 @@ gpio_adc_sample(struct gpio_adc g)
     LPC_ADC->ADCR = adc_status.adcr | (1 << g.chan) | (1<<16);
 
 need_delay:
-    return ((64 * DIV_ROUND_UP(CONFIG_CLOCK_FREQ*4, ADC_FREQ_MAX)
+    return ((64 * DIV_ROUND_UP(CONFIG_CLOCK_FREQ, ADC_FREQ_MAX)
              * ARRAY_SIZE(adc_status.samples)) / 4 + timer_from_us(10));
 }
 
@@ -117,7 +117,8 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     adc_status.chan |= ADC_DONE;
-    // Perform median filter on 5 read samples
+    // The lpc176x adc has a defect that causes random reports near
+    // 0xfff. Work around that with a 5 sample median filter.
     uint16_t *p = adc_status.samples;
     uint32_t v0 = p[0], v4 = p[1], v1 = p[2], v3 = p[3], v2 = p[4];
     ORDER(v0, v4);
@@ -127,6 +128,15 @@ gpio_adc_read(struct gpio_adc g)
     ORDER(v1, v3);
     ORDER(v1, v2);
     ORDER(v2, v3);
+    if (v3 >= 0xff0 || v4 >= 0xff0) {
+        ORDER(v0, v1);
+        if (v2 >= 0xff0)
+            // At least 3 reports are clearly bogus - return the minimum sample
+            return v0;
+        // 1 or 2 bogus reports - return the median of the minimum 3 samples
+        return v1;
+    }
+    // Return the median of the 5 samples
     return v2;
 }
 
