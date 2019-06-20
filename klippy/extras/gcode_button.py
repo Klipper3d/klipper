@@ -14,6 +14,7 @@ class GCodeButton:
         self.name = config.get_name().split(' ')[-1]
         self.pin = config.get('pin')
         self.last_state = 0
+        self.template_queue = []
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.pin], self.button_callback)
         gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
@@ -41,6 +42,24 @@ class GCodeButton:
         if self.last_state:
             return {'state': "PRESSED"}
         return {'state': "RELEASED"}
+
+    def queue_tempate(self, template):
+        if template is None:
+            return
+        if not self.template_queue:
+            reactor = self.printer.get_reactor()
+            reactor.register_callback(self.dispatch_templates)
+        self.template_queue.append(template)
+
+    def dispatch_templates(self, eventtime):
+        while self.template:
+            template = self.template[0]
+            try:
+                self.gcode.run_script(template.render())
+            except Exception:
+                logging.exception("Script running error")
+            self.gcode_queue.pop(0)
+
 
 def load_config_prefix(config):
     return GCodeButton(config)
