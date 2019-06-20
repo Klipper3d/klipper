@@ -19,7 +19,8 @@ class GCodeButton:
         buttons.register_buttons([self.pin], self.button_callback)
         gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
         self.press_template = gcode_macro.load_template(config, 'press_gcode')
-        self.release_template = gcode_macro.load_template(config, 'release_gcode')
+        self.release_template = gcode_macro.load_template(
+                                        config, 'release_gcode')
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_mux_command("QUERY_BUTTON", "BUTTON", self.name,
                                         self.cmd_QUERY_BUTTON,
@@ -58,7 +59,6 @@ class GCodeButton:
             except Exception:
                 logging.exception("Script running error")
             self.template_queue.pop(0)
-
 
 def load_config_prefix(config):
     return GCodeButton(config)
