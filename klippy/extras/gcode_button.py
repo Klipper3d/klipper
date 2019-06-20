@@ -1,4 +1,4 @@
-# Support for multiple filament run out sensors
+# Support for executing gcode when a hardware button is pressed or released.
 #
 # Inspired by pull request #545 from Miguel Moitinho <miguel@moitinho.net>
 # Inspired by pull request #1098 from Paulo Drugos <paulodrugos@gmail.com>
