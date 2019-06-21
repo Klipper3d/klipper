@@ -30,14 +30,16 @@ class PrinterProbe:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Multi-sample support (for improved accuracy)
-        self.samples = config.getint('samples', 1, minval=1)
+        self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
         atypes = {'median': 'median', 'average': 'average'}
         self.samples_result = config.getchoice('samples_result', atypes,
                                                'average')
-        self.samples_tolerance = config.getfloat('samples_tolerance', 0.100)
-        self.samples_retries = config.getint('samples_tolerance_retries', 0)
+        self.samples_tolerance = config.getfloat('samples_tolerance', 0.100,
+                                                 minval=0.)
+        self.samples_retries = config.getint('samples_tolerance_retries', 0,
+                                             minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
@@ -98,17 +100,29 @@ class PrinterProbe:
             return z_sorted[middle]
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
-    def run_probe(self):
+    def run_probe(self, params={}):
+        speed = self.gcode.get_float(
+            "PROBE_SPEED", params, self.speed, above=0.)
+        sample_count = self.gcode.get_int(
+            "SAMPLES", params, self.sample_count, minval=1)
+        sample_retract_dist = self.gcode.get_float(
+            "SAMPLE_RETRACT_DIST", params, self.sample_retract_dist, above=0.)
+        samples_tolerance = self.gcode.get_float(
+            "SAMPLES_TOLERANCE", params, self.samples_tolerance, minval=0.)
+        samples_retries = self.gcode.get_int(
+            "SAMPLES_TOLERANCE_RETRIES", params, self.samples_retries, minval=0)
+        samples_result = self.gcode.get_str(
+            "SAMPLES_RESULT", params, self.samples_result)
         retries = 0
         positions = []
-        while len(positions) < self.samples:
+        while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(self.speed)
+            pos = self._probe(speed)
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
-            if max(z_positions) - min(z_positions) > self.samples_tolerance:
-                if retries >= self.samples_retries:
+            if max(z_positions) - min(z_positions) > samples_tolerance:
+                if retries >= samples_retries:
                     raise homing.CommandError(
                         "Probe samples exceed samples_tolerance")
                 self.gcode.respond_info(
@@ -116,16 +130,16 @@ class PrinterProbe:
                 retries += 1
                 positions = []
             # Retract
-            if len(positions) < self.samples:
-                liftpos = [None, None, pos[2] + self.sample_retract_dist]
-                self._move(liftpos, self.speed)
+            if len(positions) < sample_count:
+                liftpos = [None, None, pos[2] + sample_retract_dist]
+                self._move(liftpos, speed)
         # Calculate and return result
-        if self.samples_result == 'median':
+        if samples_result == 'median':
             return self._calc_median(positions)
         return self._calc_mean(positions)
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, params):
-        pos = self.run_probe()
+        pos = self.run_probe(params)
         self.gcode.respond_info("Result is z=%.6f" % (pos[2],))
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, params):
@@ -192,7 +206,7 @@ class PrinterProbe:
     def cmd_PROBE_CALIBRATE(self, params):
         manual_probe.verify_no_manual_probe(self.printer)
         # Perform initial probe
-        curpos = self.run_probe()
+        curpos = self.run_probe(params)
         # Move away from the bed
         self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
@@ -331,7 +345,7 @@ class ProbePointsHelper:
             done = self._move_next()
             if done:
                 break
-            pos = probe.run_probe()
+            pos = probe.run_probe(params)
             self.results.append(pos)
     def _manual_probe_start(self):
         done = self._move_next()

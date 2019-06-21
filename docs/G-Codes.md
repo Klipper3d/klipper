@@ -220,17 +220,26 @@ section is enabled:
 
 The following commands are available when a "probe" config section is
 enabled:
-- `PROBE`: Move the nozzle downwards until the probe triggers.
+- `PROBE [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+  [SAMPLES_TOLERANCE_RETRIES=<count>]
+  [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
+  the probe triggers. If any of the optional parameters are provided
+  they override their equivalent setting in the probe config section
+  (see
+  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+  for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
 - `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
   [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
   median and standard deviation. The default values are: REPEAT=10,
   SPEED=probe config speed, X=current X, Y=current Y and Z=10.
-- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
-  calibrating the probe's z_offset. See the MANUAL_PROBE command for
-  details on the parameters and the additional commands available
-  while the tool is active.
+- `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
+  helper script useful for calibrating the probe's z_offset. See the
+  PROBE command for details on the optional probe parameters. See the
+  MANUAL_PROBE command for details on the SPEED parameter and the
+  additional commands available while the tool is active.
 
 ## BLTouch
 
@@ -246,12 +255,13 @@ See [Working with the BL-Touch](BLTouch.md) for more details.
 
 The following commands are available when the "delta_calibrate" config
 section is enabled:
-- `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
-  points on the bed and recommend updated endstop positions, tower
-  angles, and radius. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `DELTA_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`: This
+  command will probe seven points on the bed and recommend updated
+  endstop positions, tower angles, and radius. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -259,24 +269,26 @@ section is enabled:
 
 The following commands are available when the "bed_tilt" config
 section is enabled:
-- `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
-  points specified in the config and then recommend updated x and y
-  tilt adjustments. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `BED_TILT_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command will probe the points specified in the config and then
+  recommend updated x and y tilt adjustments. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 
 ## Mesh Bed Leveling
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
-  using generated points specified by the parameters in the
-  config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh. If METHOD=manual is specified then
-  the manual probing tool is activated - see the MANUAL_PROBE command
-  above for details on the additional commands available while this
-  tool is active.
+- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command probes the bed using generated points specified by the
+  parameters in the config. After probing, a mesh is generated and
+  z-movement is adjusted according to the mesh. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
@@ -311,19 +323,22 @@ section is enabled:
 
 The following commands are available when the "screws_tilt_adjust"
 config section is enabled:
-- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
-  adjustment tool. It will command the nozzle to different locations
-  (as defined in the config file) probing the z height and calculate
-  the number of knob turns to adjust the bed level.
+- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
+  will invoke the bed screws adjustment tool. It will command the
+  nozzle to different locations (as defined in the config file)
+  probing the z height and calculate the number of knob turns to
+  adjust the bed level. See the PROBE command for details on the
+  optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
 is enabled:
-- `Z_TILT_ADJUST`: This command will probe the points specified in the
-  config and then make independent adjustments to each Z stepper to
-  compensate for tilt.
+- `Z_TILT_ADJUST [<probe_parameter>=<value>]`: This command will probe
+  the points specified in the config and then make independent
+  adjustments to each Z stepper to compensate for tilt. See the PROBE
+  command for details on the optional probe parameters.
 
 ## Dual Carriages
 
