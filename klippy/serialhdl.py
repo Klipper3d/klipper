@@ -134,6 +134,8 @@ class SerialReader:
         return self.ffi_main.string(self.stats_buf)
     def get_msgparser(self):
         return self.msgparser
+    def get_default_command_queue(self):
+        return self.default_cmd_queue
     # Serial response callbacks
     def register_response(self, callback, name, oid=None):
         with self.lock:
@@ -152,11 +154,6 @@ class SerialReader:
         cmd = self.msgparser.create_command(msg)
         src = SerialRetryCommand(self, cmd, response)
         return src.get_response()
-    def lookup_command(self, msgformat, cq=None):
-        if cq is None:
-            cq = self.default_cmd_queue
-        cmd = self.msgparser.lookup_command(msgformat)
-        return SerialCommand(self, cq, cmd)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -197,20 +194,6 @@ class SerialReader:
         logging.warn("got %s", params)
     def __del__(self):
         self.disconnect()
-
-# Wrapper around command sending
-class SerialCommand:
-    def __init__(self, serial, cmd_queue, cmd):
-        self.serial = serial
-        self.cmd_queue = cmd_queue
-        self.cmd = cmd
-    def send(self, data=(), minclock=0, reqclock=0):
-        cmd = self.cmd.encode(data)
-        self.serial.raw_send(cmd, minclock, reqclock, self.cmd_queue)
-    def send_with_response(self, data=(), response=None, response_oid=None):
-        cmd = self.cmd.encode(data)
-        src = SerialRetryCommand(self.serial, cmd, response, response_oid)
-        return src.get_response()
 
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:

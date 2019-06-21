@@ -424,6 +424,25 @@ class MCU_adc:
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
+# Wrapper around command sending
+class CommandWrapper:
+    def __init__(self, mcu, serial, cmd, cmd_queue):
+        self._mcu = mcu
+        self._serial = serial
+        self._cmd = cmd
+        self._cmd_queue = cmd_queue
+    def send(self, data=(), minclock=0, reqclock=0):
+        cmd = self._cmd.encode(data)
+        self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
+    def send_with_response(self, data=(), response=None, response_oid=None):
+        cmd = self._cmd.encode(data)
+        try:
+            src = serialhdl.SerialRetryCommand(self._serial, cmd,
+                                               response, response_oid)
+            return src.get_response()
+        except serialhdl.error as e:
+            raise error(str(e))
+
 class MCU:
     error = error
     def __init__(self, config, clocksync):
@@ -688,7 +707,10 @@ class MCU:
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
-        return self._serial.lookup_command(msgformat, cq)
+        if cq is None:
+            cq = self._serial.get_default_command_queue()
+        cmd = self._serial.get_msgparser().lookup_command(msgformat)
+        return CommandWrapper(self, self._serial, cmd, cq)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
