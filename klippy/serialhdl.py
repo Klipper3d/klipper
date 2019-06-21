@@ -29,10 +29,9 @@ class SerialReader:
         self.lock = threading.Lock()
         self.background_thread = None
         # Message handlers
-        handlers = {
-            '#unknown': self.handle_unknown, '#output': self.handle_output,
-        }
-        self.handlers = { (k, None): v for k, v in handlers.items() }
+        self.handlers = {}
+        self.register_response(self._handle_unknown_init, '#unknown')
+        self.register_response(self.handle_output, '#output')
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
@@ -50,6 +49,21 @@ class SerialReader:
                     hdl(params)
             except:
                 logging.exception("Exception in serial callback")
+    def _get_identify_data(self, timeout):
+        # Query the "data dictionary" from the micro-controller
+        identify_data = ""
+        identify_cmd = self.lookup_command("identify offset=%u count=%c")
+        while 1:
+            params = identify_cmd.send_with_response([len(identify_data), 40],
+                                                     'identify_response')
+            if params['offset'] == len(identify_data):
+                msgdata = params['data']
+                if not msgdata:
+                    # Done
+                    return identify_data
+                identify_data += msgdata
+            if self.reactor.monotonic() > timeout:
+                raise error("Timeout during identify")
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
@@ -72,10 +86,10 @@ class SerialReader:
             self.background_thread = threading.Thread(target=self._bg_thread)
             self.background_thread.start()
             # Obtain and load the data dictionary from the firmware
-            sbs = SerialBootStrap(self)
-            identify_data = sbs.get_identify_data(starttime + 5.)
-            if identify_data is None:
-                logging.warn("Timeout on serial connect")
+            try:
+                identify_data = self._get_identify_data(starttime + 5.)
+            except error as e:
+                logging.exception("Timeout on serial connect")
                 self.disconnect()
                 continue
             break
@@ -165,6 +179,9 @@ class SerialReader:
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
         return '\n'.join(out)
     # Default message handlers
+    def _handle_unknown_init(self, params):
+        logging.debug("Unknown message %d (len %d) while identifying",
+                      params['#msgid'], len(params['#msg']))
     def handle_unknown(self, params):
         logging.warn("Unknown message type %d: %s",
                      params['#msgid'], repr(params['#msg']))
@@ -232,46 +249,6 @@ class SerialRetryCommand:
             raise error("Timeout on wait for '%s' response" % (self.name,))
         self.unregister()
         return self.response
-
-# Code to start communication and download message type dictionary
-class SerialBootStrap:
-    RETRY_TIME = 0.500
-    def __init__(self, serial):
-        self.serial = serial
-        self.identify_data = ""
-        self.identify_cmd = self.serial.lookup_command(
-            "identify offset=%u count=%c")
-        self.is_done = False
-        self.serial.register_response(self.handle_identify, 'identify_response')
-        self.serial.register_response(self.handle_unknown, '#unknown')
-        self.send_timer = self.serial.reactor.register_timer(
-            self.send_event, self.serial.reactor.NOW)
-    def get_identify_data(self, timeout):
-        eventtime = self.serial.reactor.monotonic()
-        while not self.is_done and eventtime <= timeout:
-            eventtime = self.serial.reactor.pause(eventtime + 0.05)
-        self.serial.unregister_response('identify_response')
-        self.serial.reactor.unregister_timer(self.send_timer)
-        if not self.is_done:
-            return None
-        return self.identify_data
-    def handle_identify(self, params):
-        if self.is_done or params['offset'] != len(self.identify_data):
-            return
-        msgdata = params['data']
-        if not msgdata:
-            self.is_done = True
-            return
-        self.identify_data += msgdata
-        self.identify_cmd.send([len(self.identify_data), 40])
-    def send_event(self, eventtime):
-        if self.is_done:
-            return self.serial.reactor.NEVER
-        self.identify_cmd.send([len(self.identify_data), 40])
-        return eventtime + self.RETRY_TIME
-    def handle_unknown(self, params):
-        logging.debug("Unknown message %d (len %d) while identifying",
-                      params['#msgid'], len(params['#msg']))
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):
