@@ -14,7 +14,7 @@ class ClockSync:
         self.reactor = reactor
         self.serial = None
         self.get_clock_timer = reactor.register_timer(self._get_clock_event)
-        self.get_clock_cmd = None
+        self.get_clock_cmd = self.cmd_queue = None
         self.queries_pending = 0
         self.mcu_freq = 1.
         self.last_clock = 0
@@ -31,19 +31,19 @@ class ClockSync:
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
         # Load initial clock and frequency
-        get_uptime_cmd = serial.lookup_command('get_uptime')
-        params = get_uptime_cmd.send_with_response(response='uptime')
+        params = serial.send_with_response('get_uptime', 'uptime')
         self.last_clock = (params['high'] << 32) | params['clock']
         self.clock_avg = self.last_clock
         self.time_avg = params['#sent_time']
         self.clock_est = (self.time_avg, self.clock_avg, self.mcu_freq)
         self.prediction_variance = (.001 * self.mcu_freq)**2
         # Enable periodic get_clock timer
-        self.get_clock_cmd = serial.lookup_command('get_clock')
         for i in range(8):
-            params = self.get_clock_cmd.send_with_response(response='clock')
+            params = serial.send_with_response('get_clock', 'clock')
             self._handle_clock(params)
             self.reactor.pause(0.100)
+        self.get_clock_cmd = serial.get_msgparser().create_command('get_clock')
+        self.cmd_queue = serial.alloc_command_queue()
         serial.register_response(self._handle_clock, 'clock')
         self.reactor.update_timer(self.get_clock_timer, self.reactor.NOW)
     def connect_file(self, serial, pace=False):
@@ -56,7 +56,7 @@ class ClockSync:
         serial.set_clock_est(freq, self.reactor.monotonic(), 0)
     # MCU clock querying (_handle_clock is invoked from background thread)
     def _get_clock_event(self, eventtime):
-        self.get_clock_cmd.send()
+        self.serial.raw_send(self.get_clock_cmd, 0, 0, self.cmd_queue)
         self.queries_pending += 1
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.

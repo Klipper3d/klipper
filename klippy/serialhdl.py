@@ -52,10 +52,9 @@ class SerialReader:
     def _get_identify_data(self, timeout):
         # Query the "data dictionary" from the micro-controller
         identify_data = ""
-        identify_cmd = self.lookup_command("identify offset=%u count=%c")
         while 1:
-            params = identify_cmd.send_with_response([len(identify_data), 40],
-                                                     'identify_response')
+            msg = "identify offset=%d count=%d" % (len(identify_data), 40)
+            params = self.send_with_response(msg, 'identify_response')
             if params['offset'] == len(identify_data):
                 msgdata = params['data']
                 if not msgdata:
@@ -149,6 +148,10 @@ class SerialReader:
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
+    def send_with_response(self, msg, response):
+        cmd = self.msgparser.create_command(msg)
+        src = SerialRetryCommand(self, cmd, response)
+        return src.get_response()
     def lookup_command(self, msgformat, cq=None):
         if cq is None:
             cq = self.default_cmd_queue
