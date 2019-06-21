@@ -13,7 +13,8 @@ class QuadGantryLevel:
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe = self.printer.lookup_object('probe')
+        self.probe_helper = self.probe.getProbePointsHelper(config, self.probe_finalize)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
