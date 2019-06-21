@@ -31,11 +31,13 @@ class PrinterProbe:
             self.z_position = pconfig.getfloat('minimum_z_position', 0.)
         # Multi-sample support (for improved accuracy)
         self.samples = config.getint('samples', 1, minval=1)
-        self.sample_retract_dist = config.getfloat(
-            'sample_retract_dist', 2., above=0.)
+        self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
+                                                   above=0.)
         atypes = {'median': 'median', 'average': 'average'}
         self.samples_result = config.getchoice('samples_result', atypes,
                                                'average')
+        self.samples_tolerance = config.getfloat('samples_tolerance', 0.100)
+        self.samples_retries = config.getint('samples_tolerance_retries', 0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register PROBE/QUERY_PROBE commands
@@ -97,14 +99,27 @@ class PrinterProbe:
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
     def run_probe(self):
+        retries = 0
         positions = []
-        for i in range(self.samples):
+        while len(positions) < self.samples:
+            # Probe position
             pos = self._probe(self.speed)
             positions.append(pos)
-            if i < self.samples - 1:
-                # retract
+            # Check samples tolerance
+            z_positions = [p[2] for p in positions]
+            if max(z_positions) - min(z_positions) > self.samples_tolerance:
+                if retries >= self.samples_retries:
+                    raise homing.CommandError(
+                        "Probe samples exceed samples_tolerance")
+                self.gcode.respond_info(
+                    "Probe samples exceed tolerance. Retrying...")
+                retries += 1
+                positions = []
+            # Retract
+            if len(positions) < self.samples:
                 liftpos = [None, None, pos[2] + self.sample_retract_dist]
                 self._move(liftpos, self.speed)
+        # Calculate and return result
         if self.samples_result == 'median':
             return self._calc_median(positions)
         return self._calc_mean(positions)
