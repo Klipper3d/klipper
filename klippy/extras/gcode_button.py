@@ -1,8 +1,5 @@
 # Support for executing gcode when a hardware button is pressed or released.
 #
-# Inspired by pull request #545 from Miguel Moitinho <miguel@moitinho.net>
-# Inspired by pull request #1098 from Paulo Drugos <paulodrugos@gmail.com>
-#
 # Copyright (C) 2019 Alec Plumb <alec@etherwalker.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
