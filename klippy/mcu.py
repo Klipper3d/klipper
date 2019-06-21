@@ -614,8 +614,11 @@ class MCU:
                 and not os.path.exists(self._serialport)):
                 # Try toggling usb power
                 self._check_restart("enable power")
-            self._serial.connect()
-            self._clocksync.connect(self._serial)
+            try:
+                self._serial.connect()
+                self._clocksync.connect(self._serial)
+            except serialhdl.error as e:
+                raise error(str(e))
         msgparser = self._serial.get_msgparser()
         name = self._name
         log_info = [

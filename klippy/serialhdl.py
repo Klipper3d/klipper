@@ -67,8 +67,11 @@ class SerialReader:
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
+        start_time = self.reactor.monotonic()
         while 1:
-            starttime = self.reactor.monotonic()
+            connect_time = self.reactor.monotonic()
+            if connect_time > start_time + 150.:
+                raise error("Unable to connect")
             try:
                 if self.baud:
                     self.ser = serial.Serial(
@@ -77,7 +80,7 @@ class SerialReader:
                     self.ser = open(self.serialport, 'rb+')
             except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("Unable to open port: %s", e)
-                self.reactor.pause(starttime + 5.)
+                self.reactor.pause(connect_time + 5.)
                 continue
             if self.baud:
                 stk500v2_leave(self.ser, self.reactor)
@@ -87,7 +90,7 @@ class SerialReader:
             self.background_thread.start()
             # Obtain and load the data dictionary from the firmware
             try:
-                identify_data = self._get_identify_data(starttime + 5.)
+                identify_data = self._get_identify_data(connect_time + 5.)
             except error as e:
                 logging.exception("Timeout on serial connect")
                 self.disconnect()
