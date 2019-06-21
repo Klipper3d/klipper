@@ -193,7 +193,8 @@ class BedMeshCalibrate:
         self.probe_params = collections.OrderedDict()
         points = self._generate_points(config)
         self._init_probe_params(config, points)
-        self.probe_helper = probe.ProbePointsHelper(
+        self.probe = self.printer.lookup_object('probe')
+        self.probe_helper = self.probe.getProbePointsHelper(
             config, self.probe_finalize, points)
         # setup persistent storage
         self.profiles = {}
