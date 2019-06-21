@@ -10,9 +10,9 @@ TMC_FREQUENCY=12000000.
 Registers = dict(tmc2208.Registers)
 
 Registers.update({
-	"TCOOLTHRS": 0x14,
-	"COOLCONF": 0x42,
-	"SGTHRS": 0x40
+    "TCOOLTHRS": 0x14,
+    "COOLCONF": 0x42,
+    "SGTHRS": 0x40
 })
 
 ReadRegisters = tmc2208.ReadRegisters
@@ -26,7 +26,7 @@ fields["COOLCONF"] = {
     "seimin":                   0x01 << 15
 }
 fields["SGTHRS"] = {
-	"sgt": 0xFF << 0
+    "sgt": 0xFF << 0
 }
 
 FieldFormatters = dict(tmc2208.FieldFormatters)
@@ -38,9 +38,10 @@ FieldFormatters = dict(tmc2208.FieldFormatters)
 ######################################################################
 
 class TMC2209:
-    def __init__(self, config): 
+    def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc.FieldHelper(fields, tmc2208.SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(fields, tmc2208.SignedFields,\
+            FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
         # Allow virtual endstop to be created
         diag1_pin = config.get('diag1_pin', None)
@@ -56,7 +57,8 @@ class TMC2209:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         tmc2208.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY, tmc_type=2209)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY,\
+            tmc_type=2209)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)

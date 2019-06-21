@@ -42,7 +42,7 @@ driver_SGT: 0  # tuning value for sensorless homing, set to 0 as a start. -63 to
 #### for TMC2209
 ```
 [tmc2209 stepper_x]
-uart_pin: 
+uart_pin:
 ...
 diag1_pin:        # this works without ! on TMC2209
 driver_sgt: 255   # accepts values 0 to 255, where as 255 is most sensitive value and 0 is a extrusion bender.
