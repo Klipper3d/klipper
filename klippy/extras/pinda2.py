@@ -16,7 +16,8 @@
 ## min and max temp define safe operating range, like other thermistors
 #min_temp:5
 #max_temp:60
-## Autoadjust correction after home - if you want to do that manually add PROBE_ADJUST in start code
+## Autoadjust correction after home 
+## if you want to do that manually add PROBE_ADJUST in start code
 #auto_adjust: True
 #z_offset_calibration:
 #    0, 0.00
@@ -60,7 +61,8 @@ class Pinda2Probe (probe.PrinterProbe):
     cmd_PROBE_ADJUST_help = "Adjust P.I.N.D.A 2 offset"
     def cmd_PROBE_ADJUST(self, params):
         self.mcu_probe.apply_corection()
-        self.gcode.respond_info( "pinda2_temp: %s , temp correction: %s" % (self.mcu_probe.last_temp, self.mcu_probe.last_e) )
+        self.gcode.respond_info( "pinda2_temp: %s , temp correction: %s" 
+                                % (self.mcu_probe.last_temp, self.mcu_probe.last_e) )
 
     def _probe(self, speed):
         self.mcu_probe.in_probe = True
@@ -88,13 +90,15 @@ class Pinda2EndstopWrapper(probe.ProbeEndstopWrapper):
         z_offset_calibration_samples = s.split('\n')
         try:
             offset_map = [line.split(',', 1)
-                              for line in z_offset_calibration_samples if line.strip()]
+                for line in z_offset_calibration_samples if line.strip()]
             self.z_offset_calibration_samples = []
             for zp in offset_map :
-                self.z_offset_calibration_samples += [(float(zp[0].strip()), float(zp[1].strip()))]
+                self.z_offset_calibration_samples += [(float(zp[0].strip()), 
+                                                       float(zp[1].strip()))]
         except:
             raise config.error(
-                "Unable to parse date %s, %s. A newline separated list of temperature, correction" % (
+                "Unable to parse date %s, %s. A newline separated list of "
+                "temperature, correction" % (
                     config.get_name(), s))
         if len(self.z_offset_calibration_samples) < 2:
             raise config.error(
@@ -149,7 +153,8 @@ class Pinda2EndstopWrapper(probe.ProbeEndstopWrapper):
 
 class ProbePointsHelper(probe.ProbePointsHelper):
     def __init__(self, config, finalize_callback, default_points=None):
-        probe.ProbePointsHelper.__init__(self, config, finalize_callback, default_points)
+        probe.ProbePointsHelper.__init__(self, config, 
+                                         finalize_callback, default_points)
         self.probe = self.printer.lookup_object('probe')
 
     def _automatic_probe_point(self):
