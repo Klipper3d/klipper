@@ -172,6 +172,8 @@ class PrinterProbe:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, params,
                                        self.probe_calibrate_finalize)
+    def getProbePointsHelper(self, config, finalize_callback, default_points=None) :
+        return ProbePointsHelper(self, config, finalize_callback, default_points)
 
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
