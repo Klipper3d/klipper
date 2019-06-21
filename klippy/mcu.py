@@ -544,7 +544,7 @@ class MCU:
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
         # Resolve pin names
-        mcu_type = self._serial.msgparser.get_constant('MCU')
+        mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         reserved_pins = ppins.get_reserved_pins(self._name)
         pin_resolver = pins.PinResolver(mcu_type, reserved_pins)
@@ -616,7 +616,7 @@ class MCU:
                 self._check_restart("enable power")
             self._serial.connect()
             self._clocksync.connect(self._serial)
-        msgparser = self._serial.msgparser
+        msgparser = self._serial.get_msgparser()
         name = self._name
         log_info = [
             "Loaded MCU '%s' %d commands (%s / %s)" % (
@@ -689,16 +689,16 @@ class MCU:
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
-        except self._serial.msgparser.error as e:
+        except self._serial.get_msgparser().error as e:
             return None
     def lookup_command_id(self, msgformat):
-        return self._serial.msgparser.lookup_command(msgformat).msgid
+        return self._serial.get_msgparser().lookup_command(msgformat).msgid
     def get_enumerations(self):
-        return self._serial.msgparser.get_enumerations()
+        return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
-        return self._serial.msgparser.get_constants()
+        return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
-        return self._serial.msgparser.get_constant_float(name)
+        return self._serial.get_msgparser().get_constant_float(name)
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):

@@ -116,6 +116,8 @@ class SerialReader:
         self.ffi_lib.serialqueue_get_stats(
             self.serialqueue, self.stats_buf, len(self.stats_buf))
         return self.ffi_main.string(self.stats_buf)
+    def get_msgparser(self):
+        return self.msgparser
     # Serial response callbacks
     def register_response(self, callback, name, oid=None):
         with self.lock:
