@@ -141,7 +141,8 @@ class DeltaCalibrate:
             r = math.radians(90. + 60. * i)
             dist = radius * scatter[i]
             points.append((math.cos(r) * dist, math.sin(r) * dist))
-        self.probe_helper = probe.ProbePointsHelper(
+        self.probe = self.printer.lookup_object('probe')
+        self.probe_helper = self.probe.getProbePointsHelper(
             config, self.probe_finalize, default_points=points)
         # Restore probe stable positions
         self.last_probe_positions = []
