@@ -75,7 +75,7 @@ class PrinterProbe:
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f" % (
             pos[0], pos[1], pos[2]))
         self.gcode.reset_last_position()
-        return pos
+        return pos[:3]
     def _move(self, coord, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curpos = toolhead.get_position()
