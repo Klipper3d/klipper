@@ -293,7 +293,7 @@ class TMC5160:
         self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual endstop to be created
         diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
+        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin, tmc_type=5160)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
@@ -301,7 +301,8 @@ class TMC5160:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY,\
+            tmc_type=5160)
         #   CHOPCONF
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
