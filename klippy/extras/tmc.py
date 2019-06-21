@@ -163,7 +163,10 @@ class TMCVirtualEndstop:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
-        self.en_pwm = self.fields.get_field("en_pwm_mode")
+        if self.tmc_type == 2130:
+            self.en_pwm = self.fields.get_field("en_pwm_mode")
+        elif self.tmc_type == 2209:
+            self.en_pwm = self.fields.get_field("en_spreadCycle")
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -174,16 +177,20 @@ class TMCVirtualEndstop:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        val = self.fields.set_field("en_pwm_mode", 0)
         if self.tmc_type == 2130:
             val = self.fields.set_field("diag1_stall", 1)
+            val = self.fields.set_field("en_pwm_mode", 0)
+        elif self.tmc_type == 2209:
+            val = self.fields.set_field("en_spreadCycle", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        val = self.fields.set_field("en_pwm_mode", self.en_pwm)
         if self.tmc_type == 2130:
+            val = self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field("diag1_stall", 0)
+        elif self.tmc_type == 2209:
+            val = self.fields.set_field("en_spreadCycle", self.en_pwm)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
@@ -234,7 +241,7 @@ class TMCMicrostepHelper:
         return mscnt >> self.fields.get_field("MRES")
 
 # Helper to configure "stealthchop" mode
-def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq, tmc_type=2130):
     fields = mcu_tmc.get_fields()
     en_pwm_mode = False
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
@@ -246,9 +253,8 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
         en_pwm_mode = True
-    reg = fields.lookup_register("en_pwm_mode", None)
-    if reg is not None:
+    if tmc_type == 2130 or tmc_type == 5160:
         fields.set_field("en_pwm_mode", en_pwm_mode)
-    else:
-        # TMC2208 uses en_spreadCycle
+    elif tmc_type == 2208 or tmc_type == 2209:
+        # TMC2208/2209 uses en_spreadCycle
         fields.set_field("en_spreadCycle", not en_pwm_mode)
