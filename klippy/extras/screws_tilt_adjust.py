@@ -43,7 +43,8 @@ class ScrewsTiltAdjust:
                                        default='CW-M3')
         # Initialize ProbePointsHelper
         points = [coord for coord, name in self.screws]
-        self.probe_helper = probe.ProbePointsHelper(self.config,
+        self.probe = self.printer.lookup_object('probe')
+        self.probe_helper = self.probe.getProbePointsHelper(self.config,
                                                     self.probe_finalize,
                                                     default_points=points)
         # Register command
