@@ -1,6 +1,6 @@
-# TMC5160 configuration
+# TMC2209 configuration
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019  Stephan Oelze stephan.oelze@gmail.com
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -56,7 +56,7 @@ class TMC2209:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         tmc2208.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY, tmc_type=2209)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)

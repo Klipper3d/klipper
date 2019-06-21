@@ -27,7 +27,7 @@ Fields = {}
 Fields["GCONF"] = {
     "I_scale_analog":      0x01,
     "internal_Rsense":     0x01 << 1,
-    "en_pwm_mode":         0x01 << 2,
+    "en_spreadCycle":      0x01 << 2,
     "shaft":               0x01 << 3,
     "index_otpw":          0x01 << 4,
     "index_step":          0x01 << 5,
@@ -198,7 +198,7 @@ class TMC2208:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY, tmc_type=2208)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)

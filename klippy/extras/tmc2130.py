@@ -211,10 +211,10 @@ class TMC2130:
         cmdhelper.setup_register_dump(self.query_registers)
         # Setup basic register values
         TMCCurrentHelper(config, self.mcu_tmc)
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
+        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc, tmc_type=2130)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY, tmc_type=2130)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 4)
