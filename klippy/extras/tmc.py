@@ -177,18 +177,16 @@ class TMCVirtualEndstop:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        if self.tmc_type == 2130:
+        if self.tmc_type == 2130 or tmc_type == 5160:
             val = self.fields.set_field("diag1_stall", 1)
             val = self.fields.set_field("en_pwm_mode", 0)
         elif self.tmc_type == 2209:
             val = self.fields.set_field("en_spreadCycle", 1)
-        else:
-            val = 0 # this will never happen
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        if self.tmc_type == 2130:
+        if self.tmc_type == 2130 or tmc_type == 5160:
             val = self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field("diag1_stall", 0)
         elif self.tmc_type == 2209:
