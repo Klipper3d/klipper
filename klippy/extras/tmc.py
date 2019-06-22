@@ -164,9 +164,9 @@ class TMCVirtualEndstop:
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
         if self.tmc_type == 2130 or self.tmc_type == 5160:
-            self.en_pwm = self.fields.get_field("en_pwm_mode")
+            self.pwm_state = self.fields.get_field("en_pwm_mode")
         elif self.tmc_type == 2209:
-            self.en_pwm = self.fields.get_field("en_spreadCycle")
+            self.pwm_state = self.fields.get_field("en_spreadCycle")
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -187,10 +187,10 @@ class TMCVirtualEndstop:
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         if self.tmc_type == 2130 or self.tmc_type == 5160:
-            val = self.fields.set_field("en_pwm_mode", self.en_pwm)
+            val = self.fields.set_field("en_pwm_mode", self.pwm_state)
             val = self.fields.set_field("diag1_stall", 0)
         elif self.tmc_type == 2209:
-            val = self.fields.set_field("en_spreadCycle", self.en_pwm)
+            val = self.fields.set_field("en_spreadCycle", self.pwm_state)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()

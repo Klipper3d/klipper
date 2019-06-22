@@ -10,12 +10,14 @@ TMC_FREQUENCY=12000000.
 Registers = dict(tmc2208.Registers)
 
 Registers.update({
-    "TCOOLTHRS": 0x14,
-    "COOLCONF": 0x42,
-    "SGTHRS": 0x40
+    "TCOOLTHRS":    0x14,
+    "COOLCONF":     0x42,
+    "SGTHRS":       0x40,
+    "SG_RESULT":    0x41
 })
 
 ReadRegisters = tmc2208.ReadRegisters
+ReadRegisters.append("SG_RESULT")
 
 fields = dict(tmc2208.Fields)
 fields["COOLCONF"] = {
@@ -25,8 +27,24 @@ fields["COOLCONF"] = {
     "sedn":                     0x03 << 13,
     "seimin":                   0x01 << 15
 }
+fields["IOIN"] = {
+    "ENN":       0x01 << 0,
+    "0":         0x01 << 1,
+    "MS1":       0x01 << 2,
+    "MS2":       0x01 << 3,
+    "DIAG":      0x01 << 4,
+    "0":         0x01 << 5,
+    "PDN_UART":  0x01 << 6,
+    "STEP":      0x01 << 7,
+    "SPREAD_EN": 0x01 << 8,
+    "DIR":       0x01 << 9,
+    "VERSION":   0xff << 24
+}
 fields["SGTHRS"] = {
-    "sgt": 0xFF << 0
+    "SGTHRS":      0xFF << 0
+}
+fields["SG_RESULT"] = {
+    "SG_RESULT": 0x3FF << 0
 }
 
 FieldFormatters = dict(tmc2208.FieldFormatters)
@@ -44,8 +62,8 @@ class TMC2209:
             FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
         # Allow virtual endstop to be created
-        diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin, tmc_type=2209)
+        diag_pin = config.get('diag_pin', None)
+        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag_pin, tmc_type=2209)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
@@ -75,18 +93,10 @@ class TMC2209:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
-        set_config_field(config, "sgt", 0)
+        set_config_field(config, "SGTHRS", 0)
     def query_registers(self, print_time=0.):
-        out = []
-        for reg_name in ReadRegisters:
-            val = self.mcu_tmc.get_register(reg_name)
-            # IOIN has different mappings depending on the driver type
-            # (SEL_A field of IOIN reg)
-            if reg_name == "IOIN":
-                drv_type = self.fields.get_field("SEL_A", val)
-                reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
-            out.append((reg_name, val))
-        return out
+        return [(reg_name, self.mcu_tmc.get_register(reg_name))
+                for reg_name in ReadRegisters]
 
 def load_config_prefix(config):
     return TMC2209(config)
