@@ -205,13 +205,13 @@ class TMC2130:
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual endstop to be created
         diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
+        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin, tmc_type=2130)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
         # Setup basic register values
         TMCCurrentHelper(config, self.mcu_tmc)
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc, tmc_type=2130)
+        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY,\
