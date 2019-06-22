@@ -131,6 +131,9 @@ class ClockSync:
     def get_clock(self, eventtime):
         sample_time, clock, freq = self.clock_est
         return int(clock + (eventtime - sample_time) * freq)
+    def estimate_clock_systime(self, reqclock):
+        sample_time, clock, freq = self.clock_est
+        return float(reqclock - clock)/freq + sample_time
     def estimated_print_time(self, eventtime):
         return self.clock_to_print_time(self.get_clock(eventtime))
     # misc commands

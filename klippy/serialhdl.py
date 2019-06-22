@@ -152,7 +152,7 @@ class SerialReader:
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
-        src = SerialRetryCommand(self, cmd, response)
+        src = SerialRetryCommand(self, [cmd], self.default_cmd_queue, response)
         return src.get_response()
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
@@ -199,17 +199,22 @@ class SerialReader:
 class SerialRetryCommand:
     TIMEOUT_TIME = 5.0
     RETRY_TIME = 0.500
-    def __init__(self, serial, cmd, name, oid=None):
+    def __init__(self, serial, cmds, cmd_queue, name, oid=None,
+                 minclock=0, minsystime=0.):
         self.serial = serial
-        self.cmd = cmd
+        self.cmds = cmds
+        self.cmd_queue = cmd_queue
         self.name = name
         self.oid = oid
+        self.minclock = minclock
         self.response = None
         reactor = self.serial.reactor
         self.mutex = reactor.mutex(is_locked=True)
         self.min_query_time = self.serial.reactor.monotonic()
+        self.first_query_time = max(self.min_query_time, minsystime)
         self.serial.register_response(self.handle_callback, self.name, self.oid)
-        retry_time = self.send_event(self.min_query_time)
+        self.send_event(self.min_query_time)
+        retry_time = self.first_query_time + self.RETRY_TIME
         self.send_timer = reactor.register_timer(self.send_event, retry_time)
     def unregister(self):
         self.serial.unregister_response(self.name, self.oid)
@@ -217,12 +222,14 @@ class SerialRetryCommand:
     def send_event(self, eventtime):
         if self.response is not None:
             return self.serial.reactor.NEVER
-        if eventtime > self.min_query_time + self.TIMEOUT_TIME:
+        if eventtime > self.first_query_time + self.TIMEOUT_TIME:
             self.unregister()
             if self.response is None:
                 self.mutex.unlock()
             return self.serial.reactor.NEVER
-        self.serial.raw_send(self.cmd, 0, 0, self.serial.default_cmd_queue)
+        for cmd in self.cmds:
+            self.serial.raw_send(cmd, self.minclock, self.minclock,
+                                 self.cmd_queue)
         return eventtime + self.RETRY_TIME
     def handle_callback(self, params):
         last_sent_time = params['#sent_time']
