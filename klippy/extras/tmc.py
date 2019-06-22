@@ -163,7 +163,7 @@ class TMCVirtualEndstop:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
-        if self.tmc_type == 2130:
+        if self.tmc_type == 2130 or self.tmc_type == 5160:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
         elif self.tmc_type == 2209:
             self.en_pwm = self.fields.get_field("en_spreadCycle")
