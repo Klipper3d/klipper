@@ -158,8 +158,7 @@ class TMCCommandHelper:
 
 # Endstop wrapper that enables "sensorless homing"
 class TMCVirtualEndstop:
-    def __init__(self, mcu_tmc, mcu_endstop, tmc_type):
-        self.tmc_type = tmc_type
+    def __init__(self, mcu_tmc, mcu_endstop):
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
@@ -202,8 +201,7 @@ class TMCVirtualEndstop:
         self.mcu_endstop.home_finalize()
 
 class TMCEndstopHelper:
-    def __init__(self, config, mcu_tmc, diag_pin, tmc_type=2130):
-        self.tmc_type = tmc_type
+    def __init__(self, config, mcu_tmc, diag_pin):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
@@ -219,7 +217,7 @@ class TMCEndstopHelper:
         if pin_params['invert'] or pin_params['pullup']:
             raise ppins.error("Can not pullup/invert tmc virtual endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
-        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop, self.tmc_type)
+        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
 
 
 ######################################################################
@@ -247,7 +245,7 @@ class TMCMicrostepHelper:
         return mscnt >> self.fields.get_field("MRES")
 
 # Helper to configure "stealthchop" mode
-def TMCStealthchopHelper(config, mcu_tmc, tmc_freq, tmc_type=2130):
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     fields = mcu_tmc.get_fields()
     en_pwm_mode = False
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
@@ -259,8 +257,9 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq, tmc_type=2130):
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
         en_pwm_mode = True
-    if tmc_type == 2130 or tmc_type == 5160:
+    reg = fields.lookup_register("en_pwm_mode", None)
+    if reg:
         fields.set_field("en_pwm_mode", en_pwm_mode)
-    elif tmc_type == 2208 or tmc_type == 2209:
+    else:
         # TMC2208/2209 uses en_spreadCycle
         fields.set_field("en_spreadCycle", not en_pwm_mode)
