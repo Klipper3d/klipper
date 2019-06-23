@@ -16,35 +16,38 @@ Registers.update({
     "SG_RESULT":    0x41
 })
 
-ReadRegisters = tmc2208.ReadRegisters
+ReadRegisters = dict(tmc2208.ReadRegisters)
 ReadRegisters.append("SG_RESULT")
 
 fields = dict(tmc2208.Fields)
 fields["COOLCONF"] = {
-    "semin":                    0x0F << 0,
-    "seup":                     0x03 << 5,
-    "semax":                    0x0F << 8,
-    "sedn":                     0x03 << 13,
-    "seimin":                   0x01 << 15
+    "semin":        0x0F << 0,
+    "seup":         0x03 << 5,
+    "semax":        0x0F << 8,
+    "sedn":         0x03 << 13,
+    "seimin":       0x01 << 15
 }
 fields["IOIN"] = {
-    "ENN":       0x01 << 0,
-    "0":         0x01 << 1,
-    "MS1":       0x01 << 2,
-    "MS2":       0x01 << 3,
-    "DIAG":      0x01 << 4,
-    "0":         0x01 << 5,
-    "PDN_UART":  0x01 << 6,
-    "STEP":      0x01 << 7,
-    "SPREAD_EN": 0x01 << 8,
-    "DIR":       0x01 << 9,
-    "VERSION":   0xff << 24
+    "ENN":          0x01 << 0,
+    "0":            0x01 << 1,
+    "MS1":          0x01 << 2,
+    "MS2":          0x01 << 3,
+    "DIAG":         0x01 << 4,
+    "0":            0x01 << 5,
+    "PDN_UART":     0x01 << 6,
+    "STEP":         0x01 << 7,
+    "SPREAD_EN":    0x01 << 8,
+    "DIR":          0x01 << 9,
+    "VERSION":      0xff << 24
 }
 fields["SGTHRS"] = {
-    "SGTHRS":      0xFF << 0
+    "SGTHRS":       0xFF << 0
 }
 fields["SG_RESULT"] = {
-    "SG_RESULT": 0x3FF << 0
+    "SG_RESULT":    0x3FF << 0
+}
+fields["TCOOLTHRS"] = {
+    "TCOOLTHRS": 0xfffff
 }
 
 FieldFormatters = dict(tmc2208.FieldFormatters)
@@ -63,7 +66,7 @@ class TMC2209:
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
         # Allow virtual endstop to be created
         diag_pin = config.get('diag_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag_pin, tmc_type=2209)
+        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag_pin)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(self.query_registers)
@@ -75,8 +78,7 @@ class TMC2209:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         tmc2208.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY,\
-            tmc_type=2209)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
