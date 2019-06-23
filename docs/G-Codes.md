@@ -430,6 +430,10 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+  - `CLEAR_PAUSE`:  Clears the current paused state without resuming the print.
+  This is useful if one decides to cancel a print after a PAUSE.  It is recommended
+  to add this to your start gcode to make sure the paused state is fresh for each
+  print.
 
 ## Filament Sensor
 
