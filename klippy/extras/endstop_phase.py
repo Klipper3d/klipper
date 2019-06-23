@@ -6,7 +6,7 @@
 import math, logging
 import homing
 
-TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2660"]
+TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
 
 class EndstopPhase:
     def __init__(self, config):
