@@ -162,7 +162,7 @@ class TMCVirtualEndstop:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
-        reg = fields.lookup_register("en_pwm_mode", None)
+        reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg:
             self.pwm_state = self.fields.get_field("en_pwm_mode")
         else:
@@ -178,7 +178,7 @@ class TMCVirtualEndstop:
         self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        reg = fields.lookup_register("diag1_stall", None)
+        reg = self.fields.lookup_register("diag1_stall", None)
         if reg:
             val = self.fields.set_field("diag1_stall", 1)
             val = self.fields.set_field("en_pwm_mode", 0)
@@ -189,7 +189,7 @@ class TMCVirtualEndstop:
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        reg = fields.lookup_register("diag1_stall", None)
+        reg = self.fields.lookup_register("diag1_stall", None)
         if reg:
             val = self.fields.set_field("en_pwm_mode", self.pwm_state)
             val = self.fields.set_field("diag1_stall", 0)
