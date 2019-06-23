@@ -208,7 +208,7 @@ class TMC2130:
         tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
-        cmdhelper.setup_register_dump(self.query_registers)
+        cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         TMCCurrentHelper(config, self.mcu_tmc)
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
@@ -229,9 +229,6 @@ class TMC2130:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
-    def query_registers(self, print_time=0.):
-        return [(reg_name, self.mcu_tmc.get_register(reg_name))
-                for reg_name in ReadRegisters]
 
 def load_config_prefix(config):
     return TMC2130(config)

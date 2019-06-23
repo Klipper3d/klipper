@@ -86,7 +86,7 @@ class TMCCommandHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.query_registers = None
+        self.read_registers = self.read_translate = None
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_mux_command(
             "SET_TMC_FIELD", "STEPPER", self.name,
@@ -131,8 +131,9 @@ class TMCCommandHelper:
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
     # DUMP_TMC support
-    def setup_register_dump(self, query_registers):
-        self.query_registers = query_registers
+    def setup_register_dump(self, read_registers, read_translate=None):
+        self.read_registers = read_registers
+        self.read_translate = read_translate
         self.gcode.register_mux_command(
             "DUMP_TMC", "STEPPER", self.name,
             self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
@@ -140,15 +141,16 @@ class TMCCommandHelper:
     def cmd_DUMP_TMC(self, params):
         logging.info("DUMP_TMC %s", self.name)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        read_regs = self.query_registers(print_time)
-        read_regs_by_name = { reg_name: val for reg_name, val in read_regs }
         self.gcode.respond_info("========== Write-only registers ==========")
         for reg_name, val in self.fields.registers.items():
-            if reg_name not in read_regs_by_name:
+            if reg_name not in self.read_registers:
                 self.gcode.respond_info(
                     self.fields.pretty_format(reg_name, val))
         self.gcode.respond_info("========== Queried registers ==========")
-        for reg_name, val in read_regs:
+        for reg_name in self.read_registers:
+            val = self.mcu_tmc.get_register(reg_name)
+            if self.read_translate is not None:
+                reg_name, val = self.read_translate(reg_name, val)
             self.gcode.respond_info(self.fields.pretty_format(reg_name, val))
 
 
