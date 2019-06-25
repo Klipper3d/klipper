@@ -186,12 +186,14 @@ class MCU_TMC_SPI:
         params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
-    def set_register(self, reg_name, val, print_time=0.):
-        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
+    def set_register(self, reg_name, val, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         reg = Registers[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data, min_clock)
+        self.spi.spi_send(data, minclock)
 
 
 ######################################################################

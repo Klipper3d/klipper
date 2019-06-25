@@ -96,7 +96,7 @@ class TMCCommandHelper:
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
-    def _init_registers(self, print_time):
+    def _init_registers(self, print_time=None):
         # Send registers
         for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
@@ -104,7 +104,7 @@ class TMCCommandHelper:
         retry_count = 0
         while 1:
             try:
-                self._init_registers(0.)
+                self._init_registers()
                 return
             except self.printer.command_error as e:
                 logging.exception("TMC init error")
