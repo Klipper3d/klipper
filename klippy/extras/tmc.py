@@ -48,10 +48,9 @@ class FieldHelper:
         new_value = (reg_value & ~mask) | ((field_value << ffs(mask)) & mask)
         self.registers[reg_name] = new_value
         return new_value
-    def set_config_field(self, config, field_name, default, config_name=None):
+    def set_config_field(self, config, field_name, default):
         # Allow a field to be set from the config file
-        if config_name is None:
-            config_name = "driver_" + field_name.upper()
+        config_name = "driver_" + field_name.upper()
         reg_name = self.field_to_register[field_name]
         mask = self.all_fields[reg_name][field_name]
         maxval = mask >> ffs(mask)
@@ -248,6 +247,7 @@ class TMCMicrostepHelper:
                  '8': 5, '4': 6, '2': 7, '1': 8}
         mres = config.getchoice('microsteps', steps)
         self.fields.set_field("MRES", mres)
+        self.fields.set_field("intpol", config.getboolean("interpolate", True))
     def get_microsteps(self):
         return 256 >> self.fields.get_field("MRES")
     def get_phase(self):

@@ -19,7 +19,7 @@ Fields = {}
 Fields["DRVCTRL"] = {
     "MRES": 0x0f,
     "DEDGE": 0x01 << 8,
-    "INTPOL": 0x01 << 9,
+    "intpol": 0x01 << 9,
 }
 
 Fields["CHOPCONF"] = {
@@ -100,7 +100,7 @@ FieldFormatters = {
     "MRES": (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
     "DEDGE": (lambda v:
         "1(Both Edges Active)" if v else "0(Only Rising Edge active)"),
-    "INTPOL": (lambda v: "1(On)" if v else "0(Off)"),
+    "intpol": (lambda v: "1(On)" if v else "0(Off)"),
     "toff": (lambda v: ("%d" % v) if v else "0(Driver Disabled!)"),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "SFILT": (lambda v: "1(Filtered mode)" if v else "0(Standard mode)"),
@@ -252,9 +252,8 @@ class TMC2660:
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
-        set_config_field = self.fields.set_config_field
-        set_config_field(config, "INTPOL", True, 'interpolate')
         # CHOPCONF
+        set_config_field = self.fields.set_config_field
         set_config_field(config, "TBL", 2)
         set_config_field(config, "RNDTF", 0)
         set_config_field(config, "HDEC", 0)
