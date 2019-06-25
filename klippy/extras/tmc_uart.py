@@ -204,7 +204,7 @@ class MCU_TMC_uart:
                 return val
         raise self.printer.command_error(
             "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
-    def set_register(self, reg_name, val, print_time=0.):
+    def set_register(self, reg_name, val, print_time=None):
         reg = self.name_to_reg[reg_name]
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
