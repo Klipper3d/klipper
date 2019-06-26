@@ -55,7 +55,6 @@ class BLTouchEndstopWrapper:
         self.get_steppers = self.mcu_endstop.get_steppers
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')

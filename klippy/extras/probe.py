@@ -145,8 +145,7 @@ class PrinterProbe:
     def cmd_QUERY_PROBE(self, params):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
-        self.mcu_probe.query_endstop(print_time)
-        res = self.mcu_probe.query_endstop_wait()
+        res = self.mcu_probe.query_endstop(print_time)
         self.gcode.respond_info(
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
@@ -244,7 +243,6 @@ class ProbeEndstopWrapper:
         self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
