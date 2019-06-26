@@ -234,10 +234,8 @@ class MCU_endstop:
         return True
     def query_endstop(self, print_time):
         self._homing = False
-        self._min_query_time = self._mcu.monotonic()
+        self._min_query_time = eventtime = self._mcu.monotonic()
         self._next_query_print_time = print_time
-    def query_endstop_wait(self):
-        eventtime = self._mcu.monotonic()
         while self._check_busy(eventtime):
             eventtime = self._mcu.pause(eventtime + 0.1)
         return self._last_state.get('pin_value', self._invert) ^ self._invert
