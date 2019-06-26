@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -149,8 +149,9 @@ class MCU_endstop:
         self._oid = self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._min_query_time = self._last_sent_time = 0.
-        self._next_query_print_time = 0.
-        self._completion = None
+        self._next_query_print_time = self._end_home_time = 0.
+        self._trigger_completion = self._home_completion = None
+        self._trigger_notify = None
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
@@ -182,21 +183,24 @@ class MCU_endstop:
     def home_prepare(self):
         pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
-                   triggered=True):
+                   triggered=True, notify=None):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
+        self._trigger_notify = notify
         self._next_query_print_time = print_time + self.RETRY_QUERY
         self._min_query_time = self._reactor.monotonic()
         self._last_sent_time = 0.
-        self._completion = self._reactor.completion()
+        self._home_end_time = self._reactor.NEVER
+        self._trigger_completion = self._reactor.completion()
+        self._home_completion = self._reactor.completion()
         self._mcu.register_response(self._handle_end_stop_state,
                                     "end_stop_state", self._oid)
         self._home_cmd.send(
             [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
              sample_count, rest_ticks, triggered ^ self._invert],
             reqclock=clock)
-        for s in self._steppers:
-            s.note_homing_start(clock)
+        self._home_completion = self._reactor.register_callback(
+            self._home_retry)
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s", params)
         if params['#sent_time'] >= self._min_query_time:
@@ -204,36 +208,36 @@ class MCU_endstop:
                 self._last_sent_time = params['#sent_time']
             else:
                 self._min_query_time = self._reactor.NEVER
-                self._reactor.async_complete(self._completion, params)
-    def home_wait(self, home_end_time):
+                self._reactor.async_complete(self._trigger_completion, params)
+    def _home_retry(self, eventtime):
         if self._mcu.is_fileoutput():
-            self._completion.complete({})
-        curtime = self._reactor.monotonic()
+            return True
         while 1:
-            params = self._completion.wait(curtime + 0.100)
+            params = self._trigger_completion.wait(eventtime + 0.100)
             if params is not None:
                 # Homing completed successfully
-                self._mcu.register_response(None, "end_stop_state", self._oid)
-                for s in self._steppers:
-                    s.note_homing_end(did_trigger=True)
-                return
+                if self._trigger_notify is not None:
+                    self._trigger_notify()
+                return True
             # Check for timeout
             last = self._mcu.estimated_print_time(self._last_sent_time)
-            if last > home_end_time:
-                # Timeout - disable endstop checking
-                self._mcu.register_response(None, "end_stop_state", self._oid)
-                for s in self._steppers:
-                    s.note_homing_end()
-                self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
-                raise self.TimeoutError("Timeout during endstop homing")
+            if last > self._home_end_time or self._mcu.is_shutdown():
+                return False
             # Check for resend
-            curtime = self._reactor.monotonic()
-            est_print_time = self._mcu.estimated_print_time(curtime)
+            eventtime = self._reactor.monotonic()
+            est_print_time = self._mcu.estimated_print_time(eventtime)
             if est_print_time >= self._next_query_print_time:
                 self._next_query_print_time = est_print_time + self.RETRY_QUERY
                 self._query_cmd.send([self._oid])
-            if self._mcu.is_shutdown():
-                raise error("MCU is shutdown")
+    def home_wait(self, home_end_time):
+        self._home_end_time = home_end_time
+        did_trigger = self._home_completion.wait()
+        self._mcu.register_response(None, "end_stop_state", self._oid)
+        self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
+        for s in self._steppers:
+            s.note_homing_end(did_trigger=did_trigger)
+        if not did_trigger:
+            raise self.TimeoutError("Timeout during endstop homing")
     def home_finalize(self):
         pass
     def query_endstop(self, print_time):

@@ -16,6 +16,7 @@ class Homing:
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
         self.verify_retract = True
+        self.endstops_pending = -1
     def set_no_verify_retract(self):
         self.verify_retract = False
     def set_axes(self, axes):
@@ -39,6 +40,10 @@ class Homing:
         dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
         ticks_per_step = math.ceil(dist_ticks / speed)
         return dist_ticks / ticks_per_step
+    def _endstop_notify(self):
+        self.endstops_pending -= 1
+        if not self.endstops_pending:
+            self.toolhead.signal_drip_mode_end()
     def homing_move(self, movepos, endstops, speed, dwell_t=0.,
                     probe_pos=False, verify_movement=False):
         # Notify endstops of upcoming home
@@ -50,22 +55,22 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         start_mcu_pos = [(s, name, s.get_mcu_position())
                          for es, name in endstops for s in es.get_steppers()]
+        self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
                                  for s in mcu_endstop.get_steppers()])
             mcu_endstop.home_start(
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
-                min_step_dist / speed)
-        self.toolhead.dwell(HOMING_START_DELAY, check_stall=False)
+                min_step_dist / speed, notify=self._endstop_notify)
+        self.toolhead.dwell(HOMING_START_DELAY)
         # Issue move
         error = None
         try:
-            self.toolhead.move(movepos, speed)
+            self.toolhead.drip_move(movepos, speed)
         except CommandError as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
-        self.toolhead.reset_print_time(print_time)
         for mcu_endstop, name in endstops:
             try:
                 mcu_endstop.home_wait(move_end_print_time)
