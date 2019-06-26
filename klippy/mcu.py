@@ -438,11 +438,10 @@ class CommandWrapper:
         if minclock:
             minsystime = self._clocksync.estimate_clock_systime(minclock)
         cmd = self._cmd.encode(data)
+        src = serialhdl.SerialRetryCommand(self._serial, response, response_oid)
         try:
-            src = serialhdl.SerialRetryCommand(
-                self._serial, [cmd], self._cmd_queue, response, response_oid,
-                minclock=minclock, minsystime=minsystime)
-            return src.get_response()
+            return src.get_response([cmd], self._cmd_queue,
+                                    minclock=minclock, minsystime=minsystime)
         except serialhdl.error as e:
             raise error(str(e))
 
