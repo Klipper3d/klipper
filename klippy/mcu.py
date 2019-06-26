@@ -145,11 +145,12 @@ class MCU_endstop:
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
+        self._reactor = mcu.get_printer().get_reactor()
         self._oid = self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
-        self._min_query_time = 0.
+        self._min_query_time = self._last_sent_time = 0.
         self._next_query_print_time = 0.
-        self._last_state = {}
+        self._completion = None
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
@@ -184,8 +185,10 @@ class MCU_endstop:
                    triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
-        self._min_query_time = self._mcu.monotonic()
         self._next_query_print_time = print_time + self.RETRY_QUERY
+        self._min_query_time = self._reactor.monotonic()
+        self._last_sent_time = 0.
+        self._completion = self._reactor.completion()
         self._mcu.register_response(self._handle_end_stop_state,
                                     "end_stop_state", self._oid)
         self._home_cmd.send(
@@ -194,41 +197,45 @@ class MCU_endstop:
             reqclock=clock)
         for s in self._steppers:
             s.note_homing_start(clock)
-    def home_wait(self, home_end_time):
-        eventtime = self._mcu.monotonic()
-        try:
-            while self._check_busy(eventtime, home_end_time):
-                eventtime = self._mcu.pause(eventtime + 0.1)
-        finally:
-            self._mcu.register_response(None, "end_stop_state", self._oid)
-    def home_finalize(self):
-        pass
     def _handle_end_stop_state(self, params):
         logging.debug("end_stop_state %s", params)
-        self._last_state = params
-    def _check_busy(self, eventtime, home_end_time=0.):
-        # Check if need to send an end_stop_query command
-        last_sent_time = self._last_state.get('#sent_time', -1.)
-        if last_sent_time >= self._min_query_time or self._mcu.is_fileoutput():
-            if not self._last_state.get('homing', 0):
+        if params['#sent_time'] >= self._min_query_time:
+            if params['homing']:
+                self._last_sent_time = params['#sent_time']
+            else:
+                self._min_query_time = self._reactor.NEVER
+                self._reactor.async_complete(self._completion, params)
+    def home_wait(self, home_end_time):
+        if self._mcu.is_fileoutput():
+            self._completion.complete({})
+        curtime = self._reactor.monotonic()
+        while 1:
+            params = self._completion.wait(curtime + 0.100)
+            if params is not None:
+                # Homing completed successfully
+                self._mcu.register_response(None, "end_stop_state", self._oid)
                 for s in self._steppers:
                     s.note_homing_end(did_trigger=True)
-                return False
-            last_sent_print_time = self._mcu.estimated_print_time(
-                last_sent_time)
-            if last_sent_print_time > home_end_time:
+                return
+            # Check for timeout
+            last = self._mcu.estimated_print_time(self._last_sent_time)
+            if last > home_end_time:
                 # Timeout - disable endstop checking
+                self._mcu.register_response(None, "end_stop_state", self._oid)
                 for s in self._steppers:
                     s.note_homing_end()
                 self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
                 raise self.TimeoutError("Timeout during endstop homing")
-        if self._mcu.is_shutdown():
-            raise error("MCU is shutdown")
-        est_print_time = self._mcu.estimated_print_time(eventtime)
-        if est_print_time >= self._next_query_print_time:
-            self._next_query_print_time = est_print_time + self.RETRY_QUERY
-            self._query_cmd.send([self._oid])
-        return True
+            # Check for resend
+            curtime = self._reactor.monotonic()
+            est_print_time = self._mcu.estimated_print_time(curtime)
+            if est_print_time >= self._next_query_print_time:
+                self._next_query_print_time = est_print_time + self.RETRY_QUERY
+                self._query_cmd.send([self._oid])
+            if self._mcu.is_shutdown():
+                raise error("MCU is shutdown")
+    def home_finalize(self):
+        pass
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
@@ -691,7 +698,7 @@ class MCU:
             self._config_cmds.append(cmd)
     def get_query_slot(self, oid):
         slot = self.seconds_to_clock(oid * .01)
-        t = int(self.estimated_print_time(self.monotonic()) + 1.5)
+        t = int(self.estimated_print_time(self._reactor.monotonic()) + 1.5)
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
@@ -736,10 +743,6 @@ class MCU:
         return self._clocksync.get_adjusted_freq()
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
-    def pause(self, waketime):
-        return self._reactor.pause(waketime)
-    def monotonic(self):
-        return self._reactor.monotonic()
     # Restarts
     def _disconnect(self):
         self._serial.disconnect()
