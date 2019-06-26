@@ -139,10 +139,10 @@ class SerialReader:
     # Serial response callbacks
     def register_response(self, callback, name, oid=None):
         with self.lock:
-            self.handlers[name, oid] = callback
-    def unregister_response(self, name, oid=None):
-        with self.lock:
-            del self.handlers[name, oid]
+            if callback is None:
+                del self.handlers[name, oid]
+            else:
+                self.handlers[name, oid] = callback
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
         self.ffi_lib.serialqueue_send(
@@ -217,7 +217,7 @@ class SerialRetryCommand:
         retry_time = self.first_query_time + self.RETRY_TIME
         self.send_timer = reactor.register_timer(self.send_event, retry_time)
     def unregister(self):
-        self.serial.unregister_response(self.name, self.oid)
+        self.serial.register_response(None, self.name, self.oid)
         self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
