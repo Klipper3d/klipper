@@ -231,16 +231,13 @@ class ToolHead:
         self.move_flush_time = config.getfloat(
             'move_flush_time', 0.050, above=0.)
         self.print_time = 0.
-        self.last_print_start_time = 0.
+        self.special_queuing_state = "Flushed"
         self.need_check_stall = -1.
-        self.print_stall = 0
-        self.sync_print_time = True
-        self.idle_flush_print_time = 0.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
-        self.printer.try_load_module(config, "idle_timeout")
-        self.printer.try_load_module(config, "statistics")
-        self.printer.try_load_module(config, "manual_probe")
+        self.last_print_start_time = 0.
+        self.idle_flush_print_time = 0.
+        self.print_stall = 0
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
@@ -266,6 +263,10 @@ class ToolHead:
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
+        # Load some default modules
+        self.printer.try_load_module(config, "idle_timeout")
+        self.printer.try_load_module(config, "statistics")
+        self.printer.try_load_module(config, "manual_probe")
     # Print time tracking
     def update_move_time(self, movetime):
         self.print_time += movetime
@@ -281,40 +282,48 @@ class ToolHead:
             self.printer.send_event("toolhead:sync_print_time",
                                     curtime, est_print_time, self.print_time)
     def get_next_move_time(self):
-        if self.sync_print_time:
-            self.sync_print_time = False
+        if self.special_queuing_state:
+            # Transition from "Flushed"/"Priming" state to main state
+            self.special_queuing_state = ""
+            self.need_check_stall = -1.
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
             self._calc_print_time()
         return self.print_time
-    def _flush_lookahead(self, must_sync=False):
-        sync_print_time = self.sync_print_time
+    def _full_flush(self):
+        # Transition from "Flushed"/"Priming"/main state to "Flushed" state
         self.move_queue.flush()
+        self.special_queuing_state = "Flushed"
+        self.need_check_stall = -1.
+        self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
+        self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
-        if sync_print_time or must_sync:
-            self.sync_print_time = True
-            self.move_queue.set_flush_time(self.buffer_time_high)
-            self.need_check_stall = -1.
-            self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
-            for m in self.all_mcus:
-                m.flush_moves(self.print_time)
+        for m in self.all_mcus:
+            m.flush_moves(self.print_time)
+    def _flush_lookahead(self):
+        if self.special_queuing_state:
+            return self._full_flush()
+        self.move_queue.flush()
     def get_last_move_time(self):
         self._flush_lookahead()
-        if self.sync_print_time:
+        if self.special_queuing_state:
             self._calc_print_time()
         return self.print_time
     def reset_print_time(self, min_print_time=0.):
-        self._flush_lookahead(must_sync=True)
+        self._full_flush()
         est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
         self.print_time = max(min_print_time, est_print_time)
     def _check_stall(self):
         eventtime = self.reactor.monotonic()
-        if self.sync_print_time:
-            # Building initial queue - make sure to flush on idle input
+        if self.special_queuing_state:
             if self.idle_flush_print_time:
+                # Was in "Flushed" state and got there from idle input
                 est_print_time = self.mcu.estimated_print_time(eventtime)
                 if est_print_time < self.idle_flush_print_time:
                     self.print_stall += 1
                 self.idle_flush_print_time = 0.
+            # Transition from "Flushed"/"Priming" state to "Priming" state
+            self.special_queuing_state = "Priming"
+            self.need_check_stall = -1.
             self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
         # Check if there are lots of queued moves and stall if so
         while 1:
@@ -327,7 +336,8 @@ class ToolHead:
                 self.need_check_stall = self.reactor.NEVER
                 return
             eventtime = self.reactor.pause(eventtime + min(1., stall_time))
-        if not self.sync_print_time:
+        if not self.special_queuing_state:
+            # In main state - defer stall checking until needed
             self.need_check_stall = (est_print_time + self.buffer_time_high
                                      + 0.100)
     def _flush_handler(self, eventtime):
@@ -338,7 +348,7 @@ class ToolHead:
                 # Running normally - reschedule check
                 return eventtime + buffer_time - self.buffer_time_low
             # Under ran low buffer mark - flush lookahead queue
-            self._flush_lookahead(must_sync=True)
+            self._full_flush()
             if print_time != self.print_time:
                 self.idle_flush_print_time = self.print_time
         except:
@@ -383,7 +393,7 @@ class ToolHead:
         if self.mcu.is_fileoutput():
             return
         eventtime = self.reactor.monotonic()
-        while (not self.sync_print_time
+        while (not self.special_queuing_state
                or self.print_time >= self.mcu.estimated_print_time(eventtime)):
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder):
@@ -400,7 +410,7 @@ class ToolHead:
         for m in self.all_mcus:
             m.check_active(self.print_time, eventtime)
         buffer_time = self.print_time - self.mcu.estimated_print_time(eventtime)
-        is_active = buffer_time > -60. or not self.sync_print_time
+        is_active = buffer_time > -60. or not self.special_queuing_state
         return is_active, "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
             self.print_time, max(buffer_time, 0.), self.print_stall)
     def check_busy(self, eventtime):
@@ -412,7 +422,7 @@ class ToolHead:
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
         last_print_start_time = self.last_print_start_time
         buffer_time = print_time - estimated_print_time
-        if buffer_time > -1. or not self.sync_print_time:
+        if buffer_time > -1. or not self.special_queuing_state:
             status = "Printing"
         else:
             status = "Ready"
