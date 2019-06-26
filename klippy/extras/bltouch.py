@@ -157,10 +157,11 @@ class BLTouchEndstopWrapper:
             if s.get_mcu_position() == mcu_pos:
                 raise homing.EndstopError("BLTouch failed to deploy")
         self.mcu_endstop.home_finalize()
-    def home_start(self, print_time, sample_time, sample_count, rest_time):
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   notify=None):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
-        self.mcu_endstop.home_start(
-            print_time, sample_time, sample_count, rest_time)
+        self.mcu_endstop.home_start(print_time, sample_time, sample_count,
+                                    rest_time, notify=notify)
     def get_position_endstop(self):
         return self.position_endstop
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"
