@@ -63,10 +63,7 @@ class PolarKinematics:
         else:
             forcepos[axis] += position_max - hi.position_endstop
         # Perform homing
-        limit_speed = None
-        if axis == 2:
-            limit_speed = self.max_z_velocity
-        homing_state.home_rails([rail], forcepos, homepos, limit_speed)
+        homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         # Always home XY together
         homing_axes = homing_state.get_axes()

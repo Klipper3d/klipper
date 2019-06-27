@@ -66,10 +66,7 @@ class CartKinematics:
         else:
             forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
         # Perform homing
-        limit_speed = None
-        if axis == 2:
-            limit_speed = self.max_z_velocity
-        homing_state.home_rails([rail], forcepos, homepos, limit_speed)
+        homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
