@@ -11,7 +11,6 @@ void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
                        , uint32_t set_next_step_dir_msgid);
 void stepcompress_free(struct stepcompress *sc);
 int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
-int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 double stepcompress_get_mcu_freq(struct stepcompress *sc);
 uint32_t stepcompress_get_oid(struct stepcompress *sc);

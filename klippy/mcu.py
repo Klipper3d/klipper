@@ -9,8 +9,6 @@ import serialhdl, pins, chelper, clocksync
 class error(Exception):
     pass
 
-STEPCOMPRESS_ERROR_RET = -989898989
-
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
@@ -104,15 +102,7 @@ class MCU_stepper:
         else:
             self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
         return was_ignore
-    def note_homing_start(self, homing_clock):
-        ret = self._ffi_lib.stepcompress_set_homing(
-            self._stepqueue, homing_clock)
-        if ret:
-            raise error("Internal error in stepcompress")
     def note_homing_end(self, did_trigger=False):
-        ret = self._ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
-        if ret:
-            raise error("Internal error in stepcompress")
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
