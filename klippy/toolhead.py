@@ -326,10 +326,6 @@ class ToolHead:
         if self.special_queuing_state:
             self._calc_print_time()
         return self.print_time
-    def reset_print_time(self, min_print_time=0.):
-        self._full_flush()
-        est_print_time = self.mcu.estimated_print_time(self.reactor.monotonic())
-        self.print_time = max(min_print_time, est_print_time)
     def _check_stall(self):
         eventtime = self.reactor.monotonic()
         if self.special_queuing_state:
@@ -392,11 +388,10 @@ class ToolHead:
         self.move_queue.add_move(move)
         if self.print_time > self.need_check_stall:
             self._check_stall()
-    def dwell(self, delay, check_stall=True):
+    def dwell(self, delay):
         self.get_last_move_time()
         self.update_move_time(delay)
-        if check_stall:
-            self._check_stall()
+        self._check_stall()
     def motor_off(self):
         self.dwell(STALL_TIME)
         last_move_time = self.get_last_move_time()
@@ -488,7 +483,6 @@ class ToolHead:
         self.motor_off()
     def _handle_shutdown(self):
         self.move_queue.reset()
-        self.reset_print_time()
     def get_kinematics(self):
         return self.kin
     def get_max_velocity(self):
