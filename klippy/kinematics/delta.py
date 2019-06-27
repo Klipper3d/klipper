@@ -101,8 +101,7 @@ class DeltaKinematics:
         homing_state.set_axes([0, 1, 2])
         forcepos = list(self.home_position)
         forcepos[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
-        homing_state.home_rails(self.rails, forcepos, self.home_position,
-                                limit_speed=self.max_z_velocity)
+        homing_state.home_rails(self.rails, forcepos, self.home_position)
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for rail in self.rails:
