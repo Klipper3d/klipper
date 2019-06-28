@@ -16,22 +16,14 @@ def calc_skew_factor(ac, bd, ad):
     return math.tan(math.pi/2 - math.acos(
         (ac*ac - side*side - ad*ad) / (2*side*ad)))
 
-def get_skew_from_plane(plane, config):
-    ac = config.getfloat(plane + "_ac_length", None, above=0.)
-    if ac is None:
-        return 0.
-    bd = config.getfloat(plane + "_bd_length", above=0.)
-    ad = config.getfloat(plane + "_ad_length", above=0.)
-    return calc_skew_factor(ac, bd, ad)
-
 class PrinterSkew:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = None
-        self.xy_factor = get_skew_from_plane("xy", config)
-        self.xz_factor = get_skew_from_plane("xz", config)
-        self.yz_factor = get_skew_from_plane("yz", config)
+        self.xy_factor = 0.
+        self.xz_factor = 0.
+        self.yz_factor = 0.
         self.printer.register_event_handler("klippy:ready",
                                             self._handle_ready)
         self.next_transform = None
@@ -41,6 +33,9 @@ class PrinterSkew:
         self.gcode.register_command(
             'CALC_MEASURED_SKEW', self.cmd_CALC_MEASURED_SKEW,
             desc=self.cmd_CALC_MEASURED_SKEW_help)
+        self.gcode.register_command(
+            'SET_SKEW', self.cmd_SET_SKEW,
+            desc=self.cmd_SET_SKEW_help)
     def _handle_ready(self):
         self.next_transform = self.gcode.set_move_transform(self, force=True)
     def calc_skew(self, pos):
@@ -77,6 +72,28 @@ class PrinterSkew:
         self.gcode.respond_info(
             "Calculated Skew: %.6f radians, %.2f degrees" %
             (factor, math.degrees(factor)))
+    cmd_SET_SKEW_help = "Set skew based on lengths of measured object"
+    def cmd_SET_SKEW(self, params):
+        if self.gcode.get_int("CLEAR", params, 0):
+            self.xy_factor = 0.
+            self.xz_factor = 0.
+            self.yz_factor = 0.
+            return
+        planes = ["XY", "XZ", "YZ"]
+        for plane in planes:
+            lengths = self.gcode.get_str(plane, params, None)
+            if lengths is not None:
+                try:
+                    lengths = lengths.strip().split(",", 2)
+                    lengths = [float(l.strip()) for l in lengths]
+                    if len(lengths) != 3:
+                        raise Exception
+                except Exception:
+                    raise self.gcode.error(
+                        "skew_correction: improperly formatted entry for "
+                        "plane [%s]\n%s" % (plane, params['#original']))
+                factor = plane.lower() + '_factor'
+                setattr(self, factor, calc_skew_factor(*lengths))
 
 def load_config(config):
     return PrinterSkew(config)
