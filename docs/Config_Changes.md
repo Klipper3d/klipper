@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20190628: All configuration options have been removed from the
+[skew_correction] section.  Configuration for skew_correction
+is now done via the SET_SKEW gcode.  See skew_correction.md
+for recommended usage.
+
 20190607: The "variable_X" parameters of gcode_macro (along with the
 VALUE parameter of SET_GCODE_VARIABLE) are now parsed as Python
 literals. If a value needs to be assigned a string then wrap the value
