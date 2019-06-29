@@ -58,6 +58,14 @@ STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
 version 1.6.0 (extracted 20180330).
 
+The cmsis-stm32f4 and the hal-stm32f4 directories contain code from
+STMicroelectronics:
+  https://www.st.com/en/embedded-software/stm32cubef4.html
+  https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32-standard-peripheral-libraries/stsw-stm32065.html
+versions:
+  stm32cubef4 1.24.1 (extracted 20190609)
+  stsw-stm32065 1.8.0 (extracted 20190609) 
+
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
 revision 42095e522859059e8a5f4ec05c1e3def01a870a9.
