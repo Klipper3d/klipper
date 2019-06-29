@@ -500,3 +500,12 @@ section is enabled.
     matching the supplied name from persistent memory.  Note that after SAVE
     or REMOVE operations have been run the SAVE_CONFIG gcode must be run
     to make the changes to peristent memory permanent.
+
+## Delayed GCode
+
+The following command is enabled if a [delayed_gcode] config section has
+been enabled:
+  - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
+    delay duration for the identified [delayed_gcode] and starts the timer
+    for gcode execution.  A value of 0 will cancel a pending delayed gcode
+    from executing.

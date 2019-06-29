@@ -186,3 +186,64 @@ gcode:
 
 Be sure to take the timing of macro evaluation and command execution
 into account when using SET_GCODE_VARIABLE.
+
+### Delayed Gcodes
+
+The [delayed_gcode] configuration option can be used to execute a delayed
+gcode sequence:
+
+```
+[delayed_gcode clear_display]
+gcode:
+  M117
+
+[gcode_macro load_filament]
+gcode:
+ G91
+ G1 E50
+ G90
+ M400
+ M117 Load Complete!
+ UPDATE_DELAYED_GCODE ID=clear_display DURATION=10
+```
+
+When the `load_filament` macro above executes, it will display a
+"Load Complete!" message after the extrusion is finished.  The
+last line of gcode enables the "clear_display" delayed_gcode, set
+to execute in 10 seconds.
+
+The `initial_duration` config option can be set to execute the
+delayed_gcode on printer startup.  The countdown begins when the
+printer enters the "ready" state.  For example, the below delayed_gcode
+will execute 5 seconds after the printer is ready, initializing
+the display with a "Welcome!" message:
+
+```
+[delayed_gcode welcome]
+initial_duration: 5.
+gcode:
+  M117 Welcome!
+```
+
+Its possible for a delayed gcode to repeat by updating itself in
+the gcode option:
+
+```
+[delayed_gcode report_temp]
+initial_duration: 2.
+gcode:
+  {printer.gcode.action_respond_info(
+    "Extruder Temp: %.1f" %
+    (printer.extruder0.temperature))}
+  UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
+
+```
+
+The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to
+Octoprint every 2 seconds.  This can be canceled with the following
+gcode:
+
+
+```
+UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
+```
