@@ -34,6 +34,10 @@ class GetStatusWrapper:
         except KeyError as e:
             return False
         return True
+    def __iter__(self):
+        for name, obj in self.printer.lookup_objects():
+            if self.__contains__(name):
+                yield name
 
 # Wrapper around a Jinja2 template
 class TemplateWrapper:
