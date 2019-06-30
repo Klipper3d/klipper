@@ -10,14 +10,17 @@ class BaseSensor(object):
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
-        self.runout_gcode = config.get('runout_gcode', None)
-        self.insert_gcode = config.get('insert_gcode', None)
         self.runout_pause = config.getboolean('pause_on_runout', True)
         if self.runout_pause:
-            if self.runout_gcode is None:
-                self.runout_gcode = "PAUSE"
-            else:
-                self.runout_gcode = "PAUSE\n" + self.runout_gcode
+            self.printer.try_load_module(config, 'pause_resume')
+        self.runout_gcode = self.insert_gcode = None
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        if self.runout_pause or config.get('runout_gcode', None) is not None:
+            self.runout_gcode = gcode_macro.load_template(
+                config, 'runout_gcode', '')
+        if config.get('insert_gcode', None) is not None:
+            self.insert_gcode = gcode_macro.load_template(
+                config, 'insert_gcode')
         self.runout_enabled = False
         self.insert_enabled = self.insert_gcode is not None
         self.event_running = False
@@ -46,20 +49,22 @@ class BaseSensor(object):
         self.event_running = True
         # Pausing from inside an event requires that the pause portion
         # of pause_resume execute immediately.
-        pause_resume = self.printer.lookup_object('pause_resume', None)
-        if self.runout_pause and pause_resume is not None:
+        pause_prefix = ""
+        if self.runout_pause:
+            pause_resume = self.printer.lookup_object('pause_resume')
             pause_resume.send_pause_command()
-        self._exec_gcode(self.runout_gcode)
+            pause_prefix = "PAUSE\n"
+        self._exec_gcode(pause_prefix, self.runout_gcode)
         self.event_running = False
     def _insert_event_handler(self, eventtime):
         if self.event_running:
             return
         self.event_running = True
-        self._exec_gcode(self.insert_gcode)
+        self._exec_gcode("", self.insert_gcode)
         self.event_running = False
-    def _exec_gcode(self, script):
+    def _exec_gcode(self, prefix, template):
         try:
-            self.gcode.run_script(script)
+            self.gcode.run_script(prefix + template.render())
         except Exception:
             logging.exception("Script running error")
     def set_enable(self, runout, insert):

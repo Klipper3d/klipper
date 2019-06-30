@@ -1,0 +1,45 @@
+# Tests for the tmc drivers
+CONFIG tmc.cfg
+DICTIONARY atmega2560.dict
+
+; Start by homing the printer.
+G28
+G90
+G1 F6000
+
+; Z / X / Y moves
+G1 Z1
+G1 X1
+G1 Y1
+
+; Test DUMP_TMC commands
+DUMP_TMC STEPPER=stepper_x
+DUMP_TMC STEPPER=stepper_x1
+DUMP_TMC STEPPER=stepper_y
+DUMP_TMC STEPPER=stepper_y1
+DUMP_TMC STEPPER=stepper_z
+DUMP_TMC STEPPER=stepper_z1
+
+; Test INIT_TMC commands
+INIT_TMC STEPPER=stepper_x
+INIT_TMC STEPPER=stepper_x1
+INIT_TMC STEPPER=stepper_y
+INIT_TMC STEPPER=stepper_y1
+INIT_TMC STEPPER=stepper_z
+INIT_TMC STEPPER=stepper_z1
+
+; Test SET_TMC_CURRENT commands
+SET_TMC_CURRENT STEPPER=stepper_x CURRENT=.7
+SET_TMC_CURRENT STEPPER=stepper_x1 CURRENT=.7
+SET_TMC_CURRENT STEPPER=stepper_y CURRENT=.7
+SET_TMC_CURRENT STEPPER=stepper_y1 CURRENT=.7
+SET_TMC_CURRENT STEPPER=stepper_z CURRENT=.7
+SET_TMC_CURRENT STEPPER=stepper_z1 CURRENT=.7
+
+; Test SET_TMC_FIELD commands
+SET_TMC_FIELD STEPPER=stepper_x FIELD=intpol VALUE=0
+SET_TMC_FIELD STEPPER=stepper_x1 FIELD=intpol VALUE=0
+SET_TMC_FIELD STEPPER=stepper_y FIELD=intpol VALUE=0
+SET_TMC_FIELD STEPPER=stepper_y1 FIELD=intpol VALUE=0
+SET_TMC_FIELD STEPPER=stepper_z FIELD=intpol VALUE=0
+SET_TMC_FIELD STEPPER=stepper_z1 FIELD=intpol VALUE=0

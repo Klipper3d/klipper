@@ -316,7 +316,6 @@ class ToolHead:
                     self.print_stall += 1
                 self.idle_flush_print_time = 0.
             self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
-            return
         # Check if there are lots of queued moves and stall if so
         while 1:
             est_print_time = self.mcu.estimated_print_time(eventtime)
@@ -328,7 +327,9 @@ class ToolHead:
                 self.need_check_stall = self.reactor.NEVER
                 return
             eventtime = self.reactor.pause(eventtime + min(1., stall_time))
-        self.need_check_stall = est_print_time + self.buffer_time_high + 0.100
+        if not self.sync_print_time:
+            self.need_check_stall = (est_print_time + self.buffer_time_high
+                                     + 0.100)
     def _flush_handler(self, eventtime):
         try:
             print_time = self.print_time
@@ -417,6 +418,7 @@ class ToolHead:
             status = "Ready"
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
+                 'position': homing.Coord(*self.commanded_pos),
                  'printing_time': print_time - last_print_start_time }
     def _handle_request_restart(self, print_time):
         self.motor_off()
@@ -465,13 +467,17 @@ class ToolHead:
         gcode.respond_info(msg, log=False)
     def cmd_M204(self, params):
         gcode = self.printer.lookup_object('gcode')
-        if 'P' in params and 'T' in params and 'S' not in params:
+        if 'S' in params:
+            # Use S for accel
+            accel = gcode.get_float('S', params, above=0.)
+        elif 'P' in params and 'T' in params:
             # Use minimum of P and T for accel
             accel = min(gcode.get_float('P', params, above=0.),
                         gcode.get_float('T', params, above=0.))
         else:
-            # Use S for accel
-            accel = gcode.get_float('S', params, above=0.)
+            gcode.respond_info('Invalid M204 command "%s"'
+                               % (params['#original'],))
+            return
         self.max_accel = min(accel, self.config_max_accel)
         self._calc_junction_deviation()
 

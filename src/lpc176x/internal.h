@@ -18,6 +18,4 @@ int is_enabled_pclock(uint32_t pclk);
 void enable_pclock(uint32_t pclk);
 void gpio_peripheral(uint32_t gpio, int func, int pullup);
 
-void udelay(uint32_t usecs);
-
 #endif // internal.h

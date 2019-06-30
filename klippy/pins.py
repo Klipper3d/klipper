@@ -167,8 +167,7 @@ class PrinterPins:
         self.chips = {}
         self.active_pins = {}
         self.reserved_pins = {}
-    def lookup_pin(self, pin_desc, can_invert=False, can_pullup=False,
-                   share_type=None):
+    def parse_pin(self, pin_desc, can_invert=False, can_pullup=False):
         desc = pin_desc.strip()
         pullup = invert = 0
         if can_pullup and (desc.startswith('^') or desc.startswith('~')):
@@ -194,17 +193,23 @@ class PrinterPins:
             raise error("Invalid pin description '%s'\n"
                         "Format is: %s[chip_name:] pin_name" % (
                             pin_desc, format))
-        share_name = "%s:%s" % (chip_name, pin)
-        if share_name in self.active_pins:
-            pin_params = self.active_pins[share_name]
-            if share_type is None or share_type != pin_params['share_type']:
-                raise error("pin %s used multiple times in config" % (pin,))
-            if invert != pin_params['invert'] or pullup != pin_params['pullup']:
-                raise error("Shared pin %s must have same polarity" % (pin,))
-            return pin_params
         pin_params = {'chip': self.chips[chip_name], 'chip_name': chip_name,
-                      'pin': pin, 'share_type': share_type,
-                      'invert': invert, 'pullup': pullup}
+                      'pin': pin, 'invert': invert, 'pullup': pullup}
+        return pin_params
+    def lookup_pin(self, pin_desc, can_invert=False, can_pullup=False,
+                   share_type=None):
+        pin_params = self.parse_pin(pin_desc, can_invert, can_pullup)
+        pin = pin_params['pin']
+        share_name = "%s:%s" % (pin_params['chip_name'], pin)
+        if share_name in self.active_pins:
+            share_params = self.active_pins[share_name]
+            if share_type is None or share_type != share_params['share_type']:
+                raise error("pin %s used multiple times in config" % (pin,))
+            if (pin_params['invert'] != share_params['invert']
+                or pin_params['pullup'] != share_params['pullup']):
+                raise error("Shared pin %s must have same polarity" % (pin,))
+            return share_params
+        pin_params['share_type'] = share_type
         self.active_pins[share_name] = pin_params
         return pin_params
     def setup_pin(self, pin_type, pin_desc):

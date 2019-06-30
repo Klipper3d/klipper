@@ -41,8 +41,11 @@ class PrinterExtruder:
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
-        self.activate_gcode = config.get('activate_gcode', '')
-        self.deactivate_gcode = config.get('deactivate_gcode', '')
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.activate_gcode = gcode_macro.load_template(
+            config, 'activate_gcode', '')
+        self.deactivate_gcode = gcode_macro.load_template(
+            config, 'deactivate_gcode', '')
         self.pressure_advance = config.getfloat(
             'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = config.getfloat(
@@ -63,14 +66,20 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+    def get_status(self, eventtime):
+        return dict(
+            self.get_heater().get_status(eventtime),
+            pressure_advance=self.pressure_advance,
+            lookahead_time=self.pressure_advance_lookahead_time
+        )
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
         return self.extrude_pos
     def get_activate_gcode(self, is_active):
         if is_active:
-            return self.activate_gcode
-        return self.deactivate_gcode
+            return self.activate_gcode.render()
+        return self.deactivate_gcode.render()
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def motor_off(self, print_time):

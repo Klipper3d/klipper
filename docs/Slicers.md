@@ -50,6 +50,12 @@ between moves. This is likely to make blobbing worse, not better.
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
 
+# Disable "PreloadVE" on KISSlicer
+
+If using KISSlicer slicing software then set "PreloadVE" to
+zero. Consider using Klipper's [pressure advance](Pressure_Advance.md)
+instead.
+
 # Disable any "advanced extruder pressure" settings
 
 Some slicers advertise an "advanced extruder pressure" capability. It

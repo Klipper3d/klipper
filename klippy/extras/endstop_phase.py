@@ -6,7 +6,7 @@
 import math, logging
 import homing
 
-TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2660"]
+TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
 
 class EndstopPhase:
     def __init__(self, config):
@@ -66,6 +66,8 @@ class EndstopPhase:
                 msg = "Unable to get stepper %s phase: %s" % (self.name, str(e))
                 logging.exception(msg)
                 raise homing.EndstopError(msg)
+            if stepper.is_dir_inverted():
+                phase = (self.phases - 1) - phase
         else:
             phase = stepper.get_mcu_position() % self.phases
         self.phase_history[phase] += 1
