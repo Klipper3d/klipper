@@ -5,10 +5,14 @@
 # Copyright (C) 2018  Janar Sööt <janar.soot@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, sys, ast, re, string
+import os, logging
 
 
 class error(Exception):
+    pass
+
+
+class sentinel:
     pass
 
 
@@ -19,27 +23,190 @@ class MenuCursor:
     EDIT = '*'
 
 
-# Menu element baseclass
-class MenuElement(object):
-    def __init__(self, manager, config, namespace=''):
+# static class for type cast
+class MenuHelper:
+    @staticmethod
+    def asliteral(s):
+        s = str(s)
+        if (s.startswith('"') and s.endswith('"')) or \
+                (s.startswith("'") and s.endswith("'")):
+            s = s[1:-1]
+        return s
+
+    @staticmethod
+    def aslatin(s):
+        if isinstance(s, str):
+            return s
+        elif isinstance(s, unicode):
+            return unicode(s).encode('latin-1', 'ignore')
+        else:
+            return str(s)
+
+    @staticmethod
+    def asflatline(s):
+        return ''.join(MenuHelper.aslatin(s).splitlines())
+
+    @staticmethod
+    def asbool(s, default=False):
+        if s is None:
+            return bool(default)
+        elif isinstance(s, (bool, int, float)):
+            return bool(s)
+        elif MenuHelper.isfloat(s):
+            return bool(MenuHelper.asfloat(s))
+        s = str(s).strip()
+        return s.lower() in ('y', 'yes', 't', 'true', 'on', '1')
+
+    @staticmethod
+    def asint(s, default=0):
+        if s is None:
+            return default
+        if isinstance(s, (int, float)):
+            return int(s)
+        s = str(s).strip()
+        return int(float(s)) if MenuHelper.isfloat(s) else int(default)
+
+    @staticmethod
+    def asfloat(s, default=0.0):
+        if s is None:
+            return default
+        if isinstance(s, (int, float)):
+            return float(s)
+        s = str(s).strip()
+        return float(s) if MenuHelper.isfloat(s) else float(default)
+
+    @staticmethod
+    def isfloat(value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def lines_aslist(value, default=[]):
+        if isinstance(value, str):
+            value = filter(None, [x.strip() for x in value.splitlines()])
+        try:
+            return list(value)
+        except Exception:
+            logging.exception("Lines as list parsing error")
+            return list(default)
+
+    @staticmethod
+    def words_aslist(value, sep=',', default=[]):
+        if isinstance(value, str):
+            value = filter(None, [x.strip() for x in value.split(sep)])
+        try:
+            return list(value)
+        except Exception:
+            logging.exception("Words as list parsing error")
+            return list(default)
+
+    @staticmethod
+    def aslist(value, flatten=True, default=[]):
+        values = MenuHelper.lines_aslist(value)
+        if not flatten:
+            return values
+        result = []
+        for value in values:
+            subvalues = MenuHelper.words_aslist(value, sep=',')
+            result.extend(subvalues)
+        return result
+
+    @staticmethod
+    def aschoice(config, option, choices, default=sentinel):
+        c = config.get(option, default)
+        if c not in choices:
+            raise error("Choice '%s' for option '%s'"
+                        " is not a valid choice" % (c, option))
+        return choices[c]
+
+    @staticmethod
+    def seconds2(key):
+        """Convert seconds to minutes, hours, days"""
+        time = {}
+
+        def time_fn(value):
+            try:
+                seconds = int(abs(value))
+            except Exception:
+                logging.exception("Seconds parsing error")
+                seconds = 0
+            time['days'], time['seconds'] = divmod(seconds, 86400)
+            time['hours'], time['seconds'] = divmod(time['seconds'], 3600)
+            time['minutes'], time['seconds'] = divmod(time['seconds'], 60)
+            if key in time:
+                return time[key]
+            else:
+                return 0
+        return time_fn
+
+    @staticmethod
+    def interpolate(value, from_min, from_max, to_min, to_max):
+        """Linear Interpolation, re-maps a number from one range to another"""
+        from_span = from_max - from_min
+        to_span = to_max - to_min
+        scale_factor = float(to_span) / float(from_span)
+        return to_min + (value - from_min) * scale_factor
+
+    @staticmethod
+    def sequence(eventtime):
+        """Sequence animation"""
+        def sequence_fn(frames, animate=True, offset=0):
+            if isinstance(frames, (list, tuple)):
+                offset = min(len(frames)-1, max(0, offset))
+                frame = (offset+((int(eventtime) % len(frames[offset:])))) \
+                    if animate else 0
+                return frames[frame]
+            else:
+                return str(frames)
+        return sequence_fn
+
+
+# Menu item baseclass
+class MenuItem(object):
+    def __init__(self, manager, config):
         self.cursor = config.get('cursor', MenuCursor.SELECT)
-        self._namespace = namespace
         self._manager = manager
-        self._width = self._asint(config.get('width', '0'))
-        self._scroll = self._asbool(config.get('scroll', 'false'))
-        self._enable = self._aslist(config.get('enable', 'true'),
-                                    flatten=False)
-        self._name = self._asliteral(config.get('name'))
+        self._width = MenuHelper.asint(config.get('width', '0'))
+        self._scroll = MenuHelper.asbool(config.get('scroll', 'false'))
+        self._enable_tpl = manager.gcode_macro.load_template(
+            config, 'enable', 'True')
+        self._name_tpl = manager.gcode_macro.load_template(
+            config, 'name')
+        self._last_heartbeat = None
         self.__scroll_offs = 0
         self.__scroll_diff = 0
         self.__scroll_dir = None
         self.__last_state = True
         if len(self.cursor) < 1:
             raise error("Cursor with unexpected length, expecting 1.")
+        # id: item id - used when sending events
+        # ns: item namespace - used in item relative paths
+        if isinstance(config, dict):
+            self._id = config.get('__id', hex(id(self)))
+            self._ns = config.get('__ns', '')
+        else:
+            self._id = self._ns = " ".join(config.get_name().split()[1:])
+        # if scroll is enabled and width is not specified then
+        # display width is used and adjusted by cursor size
+        if self._scroll and not self._width:
+            self._width = self.manager.cols - len(self.cursor)
+        self.init()
+
+    # override
+    def init(self):
+        pass
+
+    def _name(self):
+        context = self.get_context()
+        return MenuHelper.asliteral(MenuHelper.asflatline(
+            self._name_tpl.render(context)))
 
     # override
     def _render(self):
-        return self._name
+        return self._name()
 
     # override
     def _second_tick(self, eventtime):
@@ -62,16 +229,30 @@ class MenuElement(object):
         return self.eval_enable()
 
     # override
-    def reset_editing(self):
+    def start_editing(self, run_script=True):
         pass
 
-    def eval_enable(self):
-        return self._parse_bool(self._enable)
+    # override
+    def stop_editing(self, run_script=True):
+        pass
 
-    def init(self):
+    def get_context(self, cxt=None, action_cb=None):
+        # get default menu context
+        context = self.manager.get_context(action_cb)
+        if isinstance(cxt, dict):
+            context.update(cxt)
+        return context
+
+    def eval_enable(self):
+        context = self.get_context()
+        return MenuHelper.asbool(self._enable_tpl.render(context))
+
+    # Called when a item is selected
+    def select(self):
         self.__clear_scroll()
 
     def heartbeat(self, eventtime):
+        self._last_heartbeat = eventtime
         state = bool(int(eventtime) & 1)
         if self.__last_state ^ state:
             self.__last_state = state
@@ -119,123 +300,34 @@ class MenuElement(object):
             self.__clear_scroll()
         return s
 
-    def _parse_bool(self, lst):
-        try:
-            return any([
-                all([
-                    self._lookup_bool(l2) for l2 in self._words_aslist(l1)
-                ]) for l1 in lst
-            ])
-        except Exception:
-            logging.exception("Boolean parsing error")
-            return False
-
-    def _lookup_bool(self, b):
-        if not self._asbool(b):
-            if b[0] == '!':  # logical negation:
-                return not (not not self._lookup_parameter(b[1:]))
-            else:
-                return not not self._lookup_parameter(b)
-        return True
-
-    def _lookup_parameter(self, literal):
-        if self._isfloat(literal):
-            return float(literal)
-        else:
-            # only 2 level dot notation
-            keys = literal.rsplit('.', 1)
-            name = keys[0] if keys[0:1] else None
-            attr = keys[1] if keys[1:2] else None
-            if isinstance(self._manager.parameters, dict):
-                return (self._manager.parameters.get(name) or {}).get(attr)
-            else:
-                logging.error("Parameter storage is not dictionary")
-        return None
-
-    def _asliteral(self, s):
-        s = str(s).strip()
-        if s.startswith(('"', "'")):
-            s = s[1:]
-        if s.endswith(('"', "'")):
-            s = s[:-1]
-        return s
-
-    def _asbool(self, s, default=False):
-        if s is None:
-            return default
-        if isinstance(s, bool):
-            return s
-        s = str(s).strip()
-        return s.lower() in ('y', 'yes', 't', 'true', 'on', '1')
-
-    def _asint(self, s, default=0):
-        if s is None:
-            return default
-        if isinstance(s, (int, float)):
-            return int(s)
-        s = str(s).strip()
-        return int(float(s)) if self._isfloat(s) else int(default)
-
-    def _asfloat(self, s, default=0.0):
-        if s is None:
-            return default
-        if isinstance(s, (int, float)):
-            return float(s)
-        s = str(s).strip()
-        return float(s) if self._isfloat(s) else float(default)
-
-    def _lines_aslist(self, value, default=[]):
-        if isinstance(value, str):
-            value = filter(None, [x.strip() for x in value.splitlines()])
-        try:
-            return list(value)
-        except Exception:
-            logging.exception("Lines as list parsing error")
-            return list(default)
-
-    def _words_aslist(self, value, sep=',', default=[]):
-        if isinstance(value, str):
-            value = filter(None, [x.strip() for x in value.split(sep)])
-        try:
-            return list(value)
-        except Exception:
-            logging.exception("Words as list parsing error")
-            return list(default)
-
-    def _aslist(self, value, flatten=True, default=[]):
-        values = self._lines_aslist(value)
-        if not flatten:
-            return values
-        result = []
-        for value in values:
-            subvalues = self._words_aslist(value, sep=',')
-            result.extend(subvalues)
-        return result
-
-    def _isfloat(self, value):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
+    def send_event(self, event, *args):
+        return self.manager.send_event(
+            "item:%s:%s" % (self.id, str(event)), *args)
 
     @property
-    def namespace(self):
-        return self._namespace
+    def manager(self):
+        return self._manager
 
-    @namespace.setter
-    def namespace(self, ns):
-        self._namespace = ns
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def ns(self):
+        return self._ns
 
 
 # menu container baseclass
-class MenuContainer(MenuElement):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuContainer, self).__init__(manager, config, namespace)
-        self._show_back = self._asbool(config.get('show_back', 'true'))
-        self._show_title = self._asbool(config.get('show_title', 'true'))
+class MenuContainer(MenuItem):
+    def __init__(self, manager, config):
+        super(MenuContainer, self).__init__(manager, config)
+        self._show_back = MenuHelper.asbool(config.get('show_back', 'true'))
+        self._show_title = MenuHelper.asbool(config.get('show_title', 'true'))
         self._allitems = []
         self._items = []
+
+    def init(self):
+        super(MenuContainer, self).init()
         # recursive guard
         self._parents = []
 
@@ -245,7 +337,7 @@ class MenuContainer(MenuElement):
 
     # overload
     def is_accepted(self, item):
-        return isinstance(item, MenuElement)
+        return isinstance(item, MenuItem)
 
     def is_readonly(self):
         return False
@@ -253,24 +345,28 @@ class MenuContainer(MenuElement):
     def is_editing(self):
         return any([item.is_editing() for item in self._items])
 
-    def reset_editing(self):
+    def stop_editing(self, run_script=True):
         for item in self._items:
             if item.is_editing():
-                item.reset_editing()
+                item.stop_editing(run_script)
 
-    def _lookup_item(self, item):
+    def lookup_item(self, item):
         if isinstance(item, str):
             s = item.strip()
             if s.startswith('.'):
-                s = ' '.join([self.namespace, s[1:]])
-            item = self._manager.lookup_menuitem(s)
+                s = ' '.join([self.ns, s[1:]])
+            item = self.manager.lookup_menuitem(s)
         return item
 
-    def find_item(self, item):
+    # overload
+    def _lookup_item(self, item):
+        return self.lookup_item(item)
+
+    def find_item(self, item, first_level=False):
         index = None
         if item in self._items:
             index = self._items.index(item)
-        else:
+        elif first_level is False:
             for con in self._items:
                 if isinstance(con, MenuContainer) and item in con:
                     index = self._items.index(con)
@@ -284,30 +380,46 @@ class MenuContainer(MenuElement):
 
     def assert_recursive_relation(self, parents=None):
         assert self not in (parents or self._parents), \
-            "Recursive relation of '%s' container" % (self.namespace,)
+            "Recursive relation of '%s' container" % (self.id,)
 
-    def append_item(self, s):
+    def insert_item(self, s, index=None):
         item = self._lookup_item(s)
         if item is not None:
             if not self.is_accepted(item):
                 raise error("Menu item '%s'is not accepted!" % str(type(item)))
+            if isinstance(item, (MenuItem)):
+                item.init()
             if isinstance(item, (MenuContainer)):
                 item.add_parents(self._parents)
                 item.add_parents(self)
                 item.assert_recursive_relation()
                 item.populate_items()
-            self._allitems.append(item)
+            if index is None:
+                self._allitems.append(item)
+            else:
+                self._allitems.insert(index, item)
+
+    # overload
+    def _populate_items(self):
+        pass
 
     def populate_items(self):
         self._allitems = []  # empty list
+        for name in self._names_aslist():
+            self.insert_item(name)
+        # populate successor items
+        self._populate_items()
+        # send populate event
+        self.send_event('populate', self)
+        # insert back as first
         if self._show_back is True:
             name = '[..]'
             if self._show_title:
-                name += ' %s' % str(self._name)
-            self.append_item(MenuCommand(self._manager, {
-                'name': name, 'gcode': '', 'action': 'back'}, self.namespace))
-        for name in self._names_aslist():
-            self.append_item(name)
+                name += ' %s' % str(self._name())
+            self.insert_item(MenuCommand(self._manager, {
+                'name': repr(name),
+                'gcode': '{menu.back()}'
+            }), 0)
         self.update_items()
 
     def update_items(self):
@@ -323,230 +435,144 @@ class MenuContainer(MenuElement):
         return self._items[key]
 
 
-class MenuItem(MenuElement):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuItem, self).__init__(manager, config, namespace)
-        self.parameter = config.get('parameter', '')
-        self.transform = config.get('transform', '')
-
-    def _parse_transform(self, t):
-        flist = {
-            'int': int,
-            'float': float,
-            'bool': bool,
-            'str': str,
-            'abs': abs,
-            'bin': bin,
-            'hex': hex,
-            'oct': oct
-        }
-
-        def mapper(left_min, left_max, right_min, right_max, cast_fn, index=0):
-            # interpolate
-            left_span = left_max - left_min
-            right_span = right_max - right_min
-            scale_factor = float(right_span) / float(left_span)
-
-            def map_fn(values):
-                return cast_fn(
-                    right_min + (values[index] - left_min) * scale_factor
-                )
-            return map_fn
-
-        def scaler(scale_factor, cast_fn, index=0):
-            def scale_fn(values):
-                return cast_fn(values[index] * scale_factor)
-            return scale_fn
-
-        def chooser(choices, cast_fn, index=0):
-            def choose_fn(values):
-                return choices[cast_fn(values[index])]
-            return choose_fn
-
-        def timerizer(key, index=0):
-            time = {}
-
-            def time_fn(values):
-                try:
-                    seconds = int(values[index])
-                except Exception:
-                    logging.exception("Seconds parsing error")
-                    seconds = 0
-
-                time['days'], time['seconds'] = divmod(seconds, 86400)
-                time['hours'], time['seconds'] = divmod(time['seconds'], 3600)
-                time['minutes'], time['seconds'] = divmod(time['seconds'], 60)
-
-                if key in time:
-                    return time[key]
-                else:
-                    return 0
-            return time_fn
-
-        def functionizer(key, index=0):
-            def func_fn(values):
-                if key in flist and callable(flist[key]):
-                    return flist[key](values[index])
-                else:
-                    logging.error("Unknown function: '%s'" % str(key))
-                    return values[index]
-            return func_fn
-
-        fn = None
-        t = str(t).strip()
-        # transform: idx.func(a,b,...)
-        m = re.search(r"^(\d*)(?:\.?)([\S]+)(\(.*\))$", t)
-        if m is not None:
-            index = int(m.group(1) or 0)
-            fname = str(m.group(2)).lower()
-            try:
-                o = ast.literal_eval(m.group(3))
-                if (fname == 'map' and isinstance(o, tuple) and len(o) == 4
-                        and isinstance(o[3], (float, int))):
-                    # mapper (interpolate), cast type by last parameter type
-                    fn = mapper(o[0], o[1], o[2], o[3], type(o[3]), index)
-                elif (fname == 'choose' and isinstance(o, tuple)
-                        and len(o) == 2):
-                    # boolean chooser for 2 size tuple
-                    fn = chooser(o, bool, index)
-                elif fname == 'choose' and isinstance(o, tuple) and len(o) > 2:
-                    # int chooser for list
-                    fn = chooser(o, int, index)
-                elif (fname == 'choose' and isinstance(o, dict) and o.keys()
-                        and isinstance(o.keys()[0], (int, float, str))):
-                    # chooser, cast type by first key type
-                    fn = chooser(o, type(o.keys()[0]), index)
-                elif fname == 'scale' and isinstance(o, (float, int)):
-                    # scaler, cast type depends from scale factor type
-                    fn = scaler(o, type(o), index)
-                elif fname in ('days', 'hours', 'minutes', 'seconds'):
-                    fn = timerizer(fname, index)
-                elif fname in flist:
-                    fn = functionizer(fname, index)
-                else:
-                    logging.error(
-                        "Unknown transform function: '%s'" % str(m.group(0)))
-            except Exception:
-                logging.exception("Transform parsing error")
-        else:
-            logging.error(
-                "Invalid transform parameter: '%s'" % str(t))
-        return fn
-
-    def _transform_aslist(self):
-        return list(filter(None, (
-            self._parse_transform(t) for t in self._aslist(
-                self.transform, flatten=False)
-        )))
-
-    def _parameter_aslist(self):
-        lst = []
-        for p in self._words_aslist(self.parameter):
-            lst.append(self._lookup_parameter(p))
-            if lst[-1] is None:
-                logging.error("Parameter '%s' not found" % str(p))
-        return list(lst)
-
-    def _prepare_values(self, value=None):
-        values = []
-        for i, v in enumerate(self._parameter_aslist()):
-            values += [value if i == 0 and value is not None else v]
-        if values:
-            try:
-                values += [t(list(values)) for t in self._transform_aslist()]
-            except Exception:
-                logging.exception("Transformation execution failed")
-        return tuple(values)
-
-    def _get_formatted(self, literal, val=None):
-        values = self._prepare_values(val)
-        if isinstance(literal, str) and len(values) > 0:
-            try:
-                literal = literal.format(*values)
-            except Exception:
-                logging.exception("Literal formatting failed")
-        return literal
-
-    def _render(self):
-        return self._get_formatted(self._name)
-
-
 class MenuCommand(MenuItem):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuCommand, self).__init__(manager, config, namespace)
-        self._gcode = config.get('gcode', '')
-        self._action = config.get('action', None)
-        if self._action is None and not self._gcode:
-            raise error("Missing or empty 'gcode' option")
+    def __init__(self, manager, config):
+        super(MenuCommand, self).__init__(manager, config)
+        self._gcode_tpl = manager.gcode_macro.load_template(config, 'gcode')
+        self._auto = MenuHelper.asbool(config.get('auto', 'true'))
 
     def is_readonly(self):
         return False
 
-    def get_gcode(self):
-        return self._get_formatted(self._gcode)
+    def is_auto(self):
+        return self._auto
 
-    def __call__(self):
-        if self._action is not None:
-            try:
-                fmt = self._get_formatted(self._action)
-                args = fmt.split()
-                self._manager.run_action(args[0], *args[1:])
-            except Exception:
-                logging.exception("Action formatting failed")
+    def get_gcode(self, action_cb=None):
+        context = self.get_context(action_cb=action_cb)
+        return self._gcode_tpl.render(context)
+
+    def run_gcode(self):
+        self.manager.queue_gcode(self.get_gcode())
 
 
 class MenuInput(MenuCommand):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuInput, self).__init__(manager, config, namespace)
-        self._reverse = self._asbool(config.get('reverse', 'false'))
-        self._realtime = self._asbool(config.get('realtime', 'false'))
-        self._readonly = self._aslist(
-            config.get('readonly', 'false'), flatten=False)
-        self._input_value = None
-        self.__last_value = None
-        self._input_min = config.getfloat('input_min', sys.float_info.min)
-        self._input_max = config.getfloat('input_max', sys.float_info.max)
+    def __init__(self, manager, config,):
+        super(MenuInput, self).__init__(manager, config)
+        self._reverse = MenuHelper.asbool(config.get('reverse', 'false'))
+        self._realtime = MenuHelper.asbool(config.get('realtime', 'false'))
+        self._readonly_tpl = manager.gcode_macro.load_template(
+            config, 'readonly', 'False')
+        self._input_tpl = manager.gcode_macro.load_template(config, 'input')
+        self._input_min = config.getfloat('input_min', -999999.0)
+        self._input_max = config.getfloat('input_max', 999999.0)
         self._input_step = config.getfloat('input_step', above=0.)
         self._input_step2 = config.getfloat('input_step2', 0, minval=0.)
-        self._longpress_gcode = config.get('longpress_gcode', '')
+        self._longpress_gcode_tpl = manager.gcode_macro.load_template(
+            config, 'longpress_gcode', '')
+        self._start_gcode_tpl = manager.gcode_macro.load_template(
+            config, 'start_gcode', '')
+        self._stop_gcode_tpl = manager.gcode_macro.load_template(
+            config, 'stop_gcode', '')
+
+    def _name(self):
+        context = self.get_input_context()
+        return MenuHelper.asliteral(MenuHelper.asflatline(
+            self._name_tpl.render(context)))
+
+    def init(self):
+        super(MenuInput, self).init()
+        self._is_dirty = False
+        self.__last_change = None
+        self._input_value = None
+        self.__last_value = None
 
     def is_scrollable(self):
         return False
 
     def is_readonly(self):
-        return self._parse_bool(self._readonly)
+        context = self.get_context()
+        return MenuHelper.asbool(self._readonly_tpl.render(context))
 
-    def _render(self):
-        return self._get_formatted(self._name, self._input_value)
+    def is_realtime(self):
+        return self._realtime
 
-    def get_gcode(self):
-        return self._get_formatted(self._gcode, self._input_value)
+    def get_gcode(self, action_cb=None):
+        context = self.get_input_context(action_cb=action_cb)
+        return self._gcode_tpl.render(context)
 
-    def get_longpress_gcode(self):
-        return self._get_formatted(self._longpress_gcode, self._input_value)
+    def get_longpress_gcode(self, action_cb=None):
+        context = self.get_input_context(action_cb=action_cb)
+        return self._longpress_gcode_tpl.render(context)
+
+    def run_longpress_gcode(self):
+        self.manager.queue_gcode(self.get_longpress_gcode())
+
+    def run_start_gcode(self):
+        context = self.get_input_context()
+        self.manager.queue_gcode(self._start_gcode_tpl.render(context))
+
+    def run_stop_gcode(self):
+        context = self.get_input_context()
+        self.manager.queue_gcode(self._stop_gcode_tpl.render(context))
 
     def is_editing(self):
         return self._input_value is not None
 
-    def reset_editing(self):
-        self.reset_value()
+    def stop_editing(self, run_script=True):
+        if run_script is True:
+            self.run_stop_gcode()
+        self._reset_value()
 
-    def _onchange(self):
-        self._manager.queue_gcode(self.get_gcode())
+    def start_editing(self, run_script=True):
+        self._init_value()
+        if run_script is True:
+            self.run_start_gcode()
 
-    def init_value(self):
+    def get_value(self):
+        return self._input_value
+
+    def heartbeat(self, eventtime):
+        super(MenuInput, self).heartbeat(eventtime)
+        if (self._realtime
+                and not self.is_readonly()
+                and self._is_dirty is True
+                and self.__last_change is not None
+                and self._input_value is not None
+                and (eventtime - self.__last_change) > 0.200):
+            self.run_gcode()
+            self._is_dirty = False
+
+    def get_input_context(self, cxt=None, action_cb=None):
+        context = self.get_context({
+            'input': MenuHelper.asfloat(
+                self._eval_value() if self._input_value is None
+                else self._input_value)
+        }, action_cb=action_cb)
+        if isinstance(cxt, dict):
+            context.update(cxt)
+        return context
+
+    def _eval_value(self):
+        return self._input_tpl.render(self.get_context())
+
+    def _value_changed(self):
+        self.__last_change = self._last_heartbeat
+        self._is_dirty = True
+
+    def _init_value(self):
         self._input_value = None
         self.__last_value = None
         if not self.is_readonly():
-            args = self._prepare_values()
-            if len(args) > 0 and self._isfloat(args[0]):
-                self._input_value = float(args[0])
+            value = self._eval_value()
+            if MenuHelper.isfloat(value):
+                self._input_value = min(self._input_max, max(
+                    self._input_min, MenuHelper.asfloat(value)))
                 if self._realtime:
-                    self._onchange()
+                    self._value_changed()
             else:
                 logging.error("Cannot init input value")
 
-    def reset_value(self):
+    def _reset_value(self):
         self._input_value = None
 
     def inc_value(self, fast_rate=False):
@@ -564,7 +590,7 @@ class MenuInput(MenuCommand):
             self._input_min, self._input_value))
 
         if self._realtime and last_value != self._input_value:
-            self._onchange()
+            self._value_changed()
 
     def dec_value(self, fast_rate=False):
         last_value = self._input_value
@@ -581,17 +607,21 @@ class MenuInput(MenuCommand):
             self._input_min, self._input_value))
 
         if self._realtime and last_value != self._input_value:
-            self._onchange()
+            self._value_changed()
 
 
 class MenuGroup(MenuContainer):
-    def __init__(self, manager, config, namespace='', sep=','):
-        super(MenuGroup, self).__init__(manager, config, namespace)
+    def __init__(self, manager, config, sep=','):
+        super(MenuGroup, self).__init__(manager, config)
         self._sep = sep
         self._show_back = False
-        self.selected = None
-        self.use_cursor = self._asbool(config.get('use_cursor', 'false'))
+        self.use_cursor = MenuHelper.asbool(config.get('use_cursor', 'false'))
         self.items = config.get('items', '')
+
+    def init(self):
+        super(MenuGroup, self).init()
+        self.selected = None
+        self._leaving_dir = None  # 0 - bottom, 1 - top, None - undefined
 
     def is_accepted(self, item):
         return (super(MenuGroup, self).is_accepted(item)
@@ -607,27 +637,27 @@ class MenuGroup(MenuContainer):
         return all([item.is_readonly() for item in self._items])
 
     def _names_aslist(self):
-        return self._words_aslist(self.items, sep=self._sep)
+        return MenuHelper.words_aslist(self.items, sep=self._sep)
 
-    def init(self):
-        super(MenuGroup, self).init()
+    def select(self):
+        super(MenuGroup, self).select()
         for item in self._items:
-            item.init()
+            item.select()
 
     def _render_item(self, item, selected=False, scroll=False):
         name = "%s" % str(item.render(scroll))
         if selected and not self.is_editing():
             if self.use_cursor:
-                name = (item.cursor if isinstance(item, MenuElement)
+                name = (item.cursor if isinstance(item, MenuItem)
                         else MenuCursor.SELECT) + name
             else:
-                name = (name if self._manager.blink_slow_state
+                name = (name if self.manager.blink_slow_state
                         else ' '*len(name))
         elif selected and self.is_editing():
             if self.use_cursor:
                 name = MenuCursor.EDIT + name
             else:
-                name = (name if self._manager.blink_fast_state
+                name = (name if self.manager.blink_fast_state
                         else ' '*len(name))
         elif self.use_cursor:
             name = MenuCursor.NONE + name
@@ -655,8 +685,11 @@ class MenuGroup(MenuContainer):
                 logging.exception("Call selected error")
         return res
 
-    def reset_editing(self):
-        return self._call_selected('reset_editing')
+    def stop_editing(self, run_script=True):
+        return self._call_selected('stop_editing', run_script)
+
+    def start_editing(self, run_script=True):
+        return self._call_selected('start_editing', run_script)
 
     def is_editing(self):
         return self._call_selected('is_editing')
@@ -670,12 +703,26 @@ class MenuGroup(MenuContainer):
     def selected_item(self):
         return self._call_selected()
 
+    def select_item(self, needle):
+        if isinstance(needle, MenuItem) and not needle.is_readonly():
+            if self._call_selected() is not needle:
+                self.selected = None
+                self._leaving_dir = None
+                for i, item in enumerate(self):
+                    if item is needle:
+                        self.selected = i
+                        break
+        else:
+            logging.error("Cannot select read-only item")
+        return self.selected
+
     def find_next_item(self):
         if self.selected is None:
             self.selected = 0
         elif self.selected < len(self) - 1:
             self.selected += 1
         else:
+            self._leaving_dir = 1
             self.selected = None
         # skip readonly
         while (self.selected is not None
@@ -684,6 +731,7 @@ class MenuGroup(MenuContainer):
             if self.selected < len(self) - 1:
                 self.selected = (self.selected + 1)
             else:
+                self._leaving_dir = 1
                 self.selected = None
         return self.selected
 
@@ -693,18 +741,23 @@ class MenuGroup(MenuContainer):
         elif self.selected > 0:
             self.selected -= 1
         else:
+            self._leaving_dir = 0
             self.selected = None
         # skip readonly
         while (self.selected is not None
                 and self.selected >= 0
                 and self._call_selected('is_readonly')):
-            self.selected = (self.selected - 1) if self.selected > 0 else None
+            if self.selected > 0:
+                self.selected = (self.selected - 1)
+            else:
+                self._leaving_dir = 0
+                self.selected = None
         return self.selected
 
 
 class MenuItemGroup(MenuGroup):
-    def __init__(self, manager, config, namespace='', sep='|'):
-        super(MenuItemGroup, self).__init__(manager, config, namespace, sep)
+    def __init__(self, manager, config, sep='|'):
+        super(MenuItemGroup, self).__init__(manager, config, sep)
 
     def is_readonly(self):
         return True
@@ -714,8 +767,11 @@ class MenuItemGroup(MenuGroup):
 
 
 class MenuCycler(MenuGroup):
-    def __init__(self, manager, config, namespace='', sep=','):
-        super(MenuCycler, self).__init__(manager, config, namespace, sep)
+    def __init__(self, manager, config, sep=','):
+        super(MenuCycler, self).__init__(manager, config, sep)
+
+    def init(self):
+        super(MenuCycler, self).init()
         self._interval = 0
         self.__interval_cnt = 0
         self.__alllen = 0
@@ -729,10 +785,11 @@ class MenuCycler(MenuGroup):
 
     def _lookup_item(self, item):
         if isinstance(item, str) and '|' in item:
-            item = MenuItemGroup(self._manager, {
-                'name': ' '.join([self._name, 'ItemGroup']),
+            item = MenuItemGroup(self.manager, {
+                '__ns': self.ns,
+                'name': repr(' '.join([self.id, 'ItemGroup'])),
                 'items': item
-            }, self.namespace, '|')
+            }, '|')
         elif isinstance(item, str) and item.isdigit():
             try:
                 self._interval = max(0, int(item))
@@ -767,10 +824,12 @@ class MenuCycler(MenuGroup):
 
 
 class MenuList(MenuContainer):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuList, self).__init__(manager, config, namespace)
-        self._enter_gcode = config.get('enter_gcode', None)
-        self._leave_gcode = config.get('leave_gcode', None)
+    def __init__(self, manager, config):
+        super(MenuList, self).__init__(manager, config)
+        self._enter_gcode_tpl = manager.gcode_macro.load_template(
+            config, 'enter_gcode', '')
+        self._leave_gcode_tpl = manager.gcode_macro.load_template(
+            config, 'leave_gcode', '')
         self.items = config.get('items', '')
 
     def is_accepted(self, item):
@@ -778,14 +837,15 @@ class MenuList(MenuContainer):
                 and type(item) is not MenuCard)
 
     def _names_aslist(self):
-        return self._lines_aslist(self.items)
+        return MenuHelper.lines_aslist(self.items)
 
     def _lookup_item(self, item):
         if isinstance(item, str) and ',' in item:
-            item = MenuGroup(self._manager, {
-                'name': ' '.join([self._name, 'Group']),
+            item = MenuGroup(self.manager, {
+                '__ns': self.ns,
+                'name': repr(' '.join([self.id, 'Group'])),
                 'items': item
-            }, self.namespace, ',')
+            }, ',')
         return super(MenuList, self)._lookup_item(item)
 
     def update_items(self):
@@ -794,79 +854,61 @@ class MenuList(MenuContainer):
             if isinstance(item, MenuGroup) and not item.is_editing():
                 item.update_items()
 
-    def get_enter_gcode(self):
-        return self._enter_gcode
+    def run_enter_gcode(self):
+        context = self.get_context()
+        self.manager.queue_gcode(self._enter_gcode_tpl.render(context))
 
-    def get_leave_gcode(self):
-        return self._leave_gcode
+    def run_leave_gcode(self):
+        context = self.get_context()
+        self.manager.queue_gcode(self._leave_gcode_tpl.render(context))
 
 
 class MenuVSDCard(MenuList):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuVSDCard, self).__init__(manager, config, namespace)
+    def __init__(self, manager, config):
+        super(MenuVSDCard, self).__init__(manager, config)
 
-    def _populate_files(self):
-        sdcard = self._manager.objs.get('virtual_sdcard')
+    def _populate_items(self):
+        super(MenuVSDCard, self)._populate_items()
+        sdcard = self.manager.objs.get('virtual_sdcard')
         if sdcard is not None:
             files = sdcard.get_file_list()
             for fname, fsize in files:
                 gcode = [
                     'M23 /%s' % str(fname)
                 ]
-                self.append_item(MenuCommand(self._manager, {
-                    'name': '%s' % str(fname),
+                self.insert_item(MenuCommand(self.manager, {
+                    'name': repr('%s' % str(fname)),
                     'cursor': '+',
                     'gcode': "\n".join(gcode),
-                    'scroll': True,
-                    # mind the cursor size in width
-                    'width': (self._manager.cols-1)
+                    'scroll': True
                 }))
-
-    def populate_items(self):
-        super(MenuVSDCard, self).populate_items()
-        self._populate_files()
 
 
 class MenuCard(MenuGroup):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuCard, self).__init__(manager, config, namespace)
-        self.content = config.get('content')
-        self._allow_without_selection = self._asbool(
-            config.get('allow_without_selection', 'true'))
-        if not self.items:
-            self.content = self._parse_content_items(self.content)
+    def __init__(self, manager, config):
+        super(MenuCard, self).__init__(manager, config)
+        prfx = 'content_'
+        self._content_tpls = [manager.gcode_macro.load_template(
+            config, o) for o in config.get_prefix_options(prfx)]
+        self.sticky = config.get('sticky', None)
+        self.inline_ns_prefix = config.get(
+            'inline_ns_prefix', '__ns__')
+        self._sticky = None
+        self._inline_names = []
+        # find all template variables (except variable 'items')
+        self._tpl_vars = [(n, self._ns_prefix(n)) for t in self._content_tpls
+                          for n in t.find_variables() if n != 'items']
 
-    def _parse_content_items(self, content):
-        formatter = string.Formatter()
-        out = ""
-        items = []
-
-        try:
-            parsed_content = list(formatter.parse(content))
-        except Exception:
-            logging.exception("Card content parsing error")
-
-        for part in parsed_content:
-            # (literal_text, field_name, format_spec, conversion)
-            out += part[0]
-            if part[1]:
-                out += "{%s%s%s}" % (
-                    len(items),
-                    ("!" + part[3]) if part[3] else '',
-                    (":" + part[2]) if part[2] else '',
-                )
-                items.append(str(part[1]))
-
-        self.items = "\n".join(items)
-        return out
+    def _ns_prefix(self, name):
+        name = str(name).strip()
+        if self.inline_ns_prefix and \
+                name.startswith(self.inline_ns_prefix):
+            name = ' '.join([self.ns, name[
+                len(self.inline_ns_prefix):]])
+        return name
 
     def _names_aslist(self):
-        return self._lines_aslist(self.items)
-
-    def _content_aslist(self):
-        return filter(None, [
-            self._asliteral(s) for s in self._lines_aslist(self.content)
-        ])
+        return MenuHelper.lines_aslist(self.items)
 
     def update_items(self):
         self._items = self._allitems[:]
@@ -876,79 +918,136 @@ class MenuCard(MenuGroup):
 
     def _lookup_item(self, item):
         if isinstance(item, str) and ',' in item:
-            item = MenuCycler(self._manager, {
-                'name': ' '.join([self._name, 'Cycler']),
+            item = MenuCycler(self.manager, {
+                '__ns': self.ns,
+                'name': repr(' '.join([self.id, 'Cycler'])),
                 'items': item
-            }, self.namespace, ',')
+            }, ',')
         return super(MenuCard, self)._lookup_item(item)
 
-    def render_content(self, eventtime):
+    def _lookup_sticky(self):
+        self._sticky = None
+        if self.sticky is not None:
+            item = self.lookup_item(self.sticky)
+            if isinstance(item, MenuItem) and not item.is_readonly():
+                self._sticky = item
+            else:
+                logging.error("Cannot stick to read-only item")
+
+    def populate_inline_items(self):
+        self._inline_names = []
+        menuitems = [n for n, m in self.manager.lookup_menuitems()]
+        for var_name, cfg_name in self._tpl_vars:
+            if cfg_name in menuitems:
+                self.insert_item(cfg_name)
+                self._inline_names.append(var_name)
+        self.update_items()
+
+    def _populate_items(self):
+        super(MenuCard, self)._populate_items()
+        self.populate_inline_items()
+        self._lookup_sticky()
+
+    def select(self):
+        super(MenuCard, self).select()
+        if self._sticky is not None:
+            self.selected = None
+            self._leaving_dir = None
+
+    def render_content(self, eventtime, constrained=False):
+        rendered_items = []
+        rendered_kwitems = {}
+
         if self.selected is not None:
             self.selected = (
                 (self.selected % len(self)) if len(self) > 0 else None)
-        if self._allow_without_selection is False and self.selected is None:
-            self.selected = 0 if len(self) > 0 else None
+        else:
+            if (self._leaving_dir is None
+                    and self._sticky is not None
+                    and self.select_item(self._sticky) is not None):
+                if (isinstance(self._sticky, MenuInput)
+                        and not self._sticky.is_editing()):
+                    if self.is_editing():
+                        self.stop_editing()
+                    self._sticky.start_editing()
+            elif self._leaving_dir == 0 and len(self) > 0:
+                self.find_next_item()
+            elif self._leaving_dir == 1 and len(self) > 0:
+                self.find_prev_item()
+            elif constrained is True:
+                self.find_next_item()
+            else:
+                self.selected = None
 
-        items = []
+        nitems = len(self._names_aslist())
         for i, item in enumerate(self):
-            name = ''
+            s = ''
             if item.is_enabled():
                 item.heartbeat(eventtime)
-                name = self._render_item(item, (i == self.selected), True)
-            items.append(name)
+                s = self._render_item(item, (i == self.selected), True)
+            rendered_items.append(s)
+            if self._inline_names and i >= nitems:
+                rendered_kwitems[self._inline_names[i-nitems]] = s
+
+        context = self.get_context(
+            dict({'items': tuple(rendered_items)}, **rendered_kwitems))
         lines = []
-        for line in self._content_aslist():
+        for tpl in self._content_tpls:
             try:
-                lines.append(str(line).format(*items))
+                lines.append(MenuHelper.asliteral(MenuHelper.asflatline(
+                    tpl.render(context))))
             except Exception:
                 logging.exception('Card rendering error')
         return lines
 
     def _render(self):
-        return self._name
+        return self._name()
 
 
 class MenuDeck(MenuList):
-    def __init__(self, manager, config, namespace=''):
-        super(MenuDeck, self).__init__(manager, config, namespace)
-        self._menu = config.get('longpress_menu', None)
-        self.menu = None
+    def __init__(self, manager, config):
+        super(MenuDeck, self).__init__(manager, config)
+        self.menu = config.get('longpress_menu', None)
+        self.constrained = MenuHelper.asbool(
+            config.get('constrained', 'false'))
+        self._menu = None
         self._show_back = False
         self._show_title = False
         if not self.items:
-            card = MenuCard(self._manager, {
-                'name': ' '.join([self._name, 'Card']),
-                'use_cursor': config.get('use_cursor', 'false'),
-                'allow_without_selection': config.get(
-                    'allow_without_selection', 'true'),
-                'content': config.get('content')
-            }, self.namespace)
-            name = " ".join(
-                config.get_name().split()[1:]) + "__singlecarddeck__"
-            self._manager.add_menuitem(name, card)
-            self.items = name
+            id = " ".join([self.id, "__singlecard__"])
+            cfg = {o: config.get(o) for o in config.get_prefix_options('')}
+            cfg['__id'] = id
+            cfg['__ns'] = self.ns
+            self.manager.add_menuitem(id, MenuCard(self.manager, cfg))
+            self.items = id
+
+    def is_constrained(self):
+        return self.constrained
+
+    def get_longpress_menu(self):
+        return self._menu
 
     def _populate_menu(self):
-        self.menu = None
-        if self._menu is not None:
-            menu = self._manager.lookup_menuitem(self._menu)
+        self._menu = None
+        if self.menu is not None:
+            menu = self.manager.lookup_menuitem(self.menu)
             if isinstance(menu, MenuContainer):
                 menu.assert_recursive_relation(self._parents)
                 menu.populate_items()
-                self.menu = menu
+                self._menu = menu
 
-    def populate_items(self):
-        super(MenuDeck, self).populate_items()
+    def _populate_items(self):
+        super(MenuDeck, self)._populate_items()
         self._populate_menu()
 
     def _names_aslist(self):
-        return self._aslist(self.items)
+        return MenuHelper.aslist(self.items)
 
     def is_accepted(self, item):
         return type(item) is MenuCard
 
     def _render(self):
-        return self._name
+        return self._name()
 
 
 menu_items = {
@@ -969,7 +1068,7 @@ BLINK_SLOW_SEQUENCE = (True, True, True, True, False, False, False)
 
 
 class MenuManager:
-    def __init__(self, config, lcd_chip):
+    def __init__(self, config, display):
         self.running = False
         self.menuitems = {}
         self.menustack = []
@@ -978,10 +1077,12 @@ class MenuManager:
         self.selected = 0
         self.blink_fast_state = True
         self.blink_slow_state = True
+        self._last_eventtime = 0
         self.blink_fast_idx = 0
         self.blink_slow_idx = 0
         self.timeout_idx = 0
-        self.lcd_chip = lcd_chip
+        self.display = display
+        self.lcd_chip = display.get_lcd_chip()
         self.printer = config.get_printer()
         self.pconfig = self.printer.lookup_object('configfile')
         self.gcode = self.printer.lookup_object('gcode')
@@ -990,7 +1091,7 @@ class MenuManager:
         self.objs = {}
         self.root = None
         self._root = config.get('menu_root', '__main')
-        self.cols, self.rows = lcd_chip.get_dimensions()
+        self.cols, self.rows = self.lcd_chip.get_dimensions()
         self.timeout = config.getint('menu_timeout', 0)
         self.timer = 0
         # buttons
@@ -1021,6 +1122,7 @@ class MenuManager:
         self._last_encoder_ccw_eventtime = 0
         # printer objects
         self.buttons = self.printer.try_load_module(config, "buttons")
+        self.gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
         # register itself for printer callbacks
         self.printer.add_object('menu', self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -1106,29 +1208,22 @@ class MenuManager:
                     self.buttons.register_button_push(
                         self.kill_pin, self.kill_callback)
 
-        # Add MENU commands
-        self.gcode.register_mux_command("MENU", "DO", 'dump', self.cmd_DO_DUMP,
-                                        desc=self.cmd_DO_help)
-
         # Load local config file in same directory as current module
         self.load_config(os.path.dirname(__file__), 'menu.cfg')
         # Load items from main config
         self.load_menuitems(config)
         # Load menu root
         self.load_root()
+        # send init event
+        self.send_event('init', self)
 
     def handle_ready(self):
-        # Load all available printer objects
-        for cfg_name, obj in self.printer.lookup_objects():
-            name = ".".join(str(cfg_name).split())
-            self.objs[name] = obj
-            logging.debug("Load module '%s' -> %s" % (
-                str(name), str(obj.__class__)))
         # start timer
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.timer_event, reactor.NOW)
 
     def timer_event(self, eventtime):
+        self._last_eventtime = eventtime
         # take next from sequence
         self.blink_fast_idx = (
             (self.blink_fast_idx + 1) % len(BLINK_FAST_SEQUENCE)
@@ -1156,18 +1251,30 @@ class MenuManager:
     def timeout_check(self, eventtime):
         # check timeout
         if (self.is_running() and self.timeout > 0
-                and not self._timeout_autorun_root()):
+                and self.root is not None
+                and self._allow_timeout()):
             if self.timer >= self.timeout:
                 self.exit()
-            self.timer += 1
+            else:
+                self.timer += 1
         else:
             self.timer = 0
 
-    def _timeout_autorun_root(self):
-        return (self._autorun is True and self.root is not None
-                and self.stack_peek() is self.root and self.selected == 0)
+    def _allow_timeout(self):
+        container = self.stack_peek()
+        if (container is self.root
+                and self.selected == 0
+                and self._autorun is True):
+            current = container[0] if len(container) > 0 else None
+            if (isinstance(container, MenuDeck)
+                    and isinstance(current, MenuCard)
+                    and container.is_constrained() is False
+                    and current.selected_item() is not None):
+                return True
+            return False
+        return True
 
-    def restart_root(self, root=None, force_exit=True):
+    def restart(self, root=None, force_exit=True):
         if self.is_running():
             self.exit(force_exit)
         self.load_root(root)
@@ -1197,14 +1304,21 @@ class MenuManager:
             if name in self.objs:
                 self.objs.pop(name)
 
-    def after(self, timeout, callback, *args):
+    def after(self, starttime, callback, *args):
         """Helper method for reactor.register_callback.
-        The callback will be executed once after given timeout (sec)."""
+        The callback will be executed once after the start time elapses.
+        Starttime values less than 3600 are considered as timeout/delay seconds
+        from current reactor time."""
         def callit(eventtime):
             callback(eventtime, *args)
         reactor = self.printer.get_reactor()
-        starttime = reactor.monotonic() + max(0., float(timeout))
+        starttime = max(0., float(starttime))
+        if starttime < 3600.0:  # 1h
+            starttime = reactor.monotonic() + starttime
         reactor.register_callback(callit, starttime)
+
+    def send_event(self, event, *args):
+        return self.printer.send_event("menu:" + str(event), *args)
 
     def is_running(self):
         return self.running
@@ -1215,6 +1329,8 @@ class MenuManager:
         self.selected = 0
         self.timer = 0
         if isinstance(self.root, MenuContainer):
+            # send begin event
+            self.send_event('begin', self)
             self.update_parameters(eventtime)
             self.root.populate_items()
             self.stack_push(self.root)
@@ -1230,52 +1346,59 @@ class MenuManager:
             'eventtime': eventtime,
             'timeout': self.timeout,
             'autorun': self._autorun,
-            'isRunning': self.running,
-            'is2004': (self.rows == 4 and self.cols == 20),
-            'is2002': (self.rows == 2 and self.cols == 20),
-            'is1604': (self.rows == 4 and self.cols == 16),
-            'is1602': (self.rows == 2 and self.cols == 16),
-            'is20xx': (self.cols == 20),
-            'is16xx': (self.cols == 16)
+            'running': self.running,
+            'blink_fast': self.blink_fast_state,
+            'blink_slow': self.blink_slow_state,
+            'rows': self.rows,
+            'cols': self.cols
+        }
+
+    def get_context(self, action_cb=None):
+        def action(name, *a):
+            if callable(action_cb):
+                return lambda *b: action_cb(name, *(a+b))
+            else:
+                return lambda *b: ''
+
+        # menu default jinja2 context
+        return {
+            'printer': self.parameters,
+            's2days': MenuHelper.seconds2('days'),
+            's2hours': MenuHelper.seconds2('hours'),
+            's2mins': MenuHelper.seconds2('minutes'),
+            's2secs': MenuHelper.seconds2('seconds'),
+            'lerp': MenuHelper.interpolate,
+            'seq': MenuHelper.sequence(self._last_eventtime),
+            'menu': {
+                'back': action('menu-back'),
+                'exit': action('menu-exit'),
+                'emit': action('menu-emit'),
+                'log': action('menu-log')
+            },
+            'deck': {
+                'menu': action('deck', 'menu')
+            },
+            'editing': {
+                'start': action('editing', 'start'),
+                'stop': action('editing', 'stop')
+            },
+            'run': {
+                'gcode': action('run-gcode'),
+                'longpress_gcode': action('run-longpress-gcode')
+            }
         }
 
     def update_parameters(self, eventtime):
-        self.parameters = {}
+        self.parameters = self.gcode_macro.create_status_wrapper(eventtime)
         objs = dict(self.objs)
-        # getting info this way is more like hack
-        # all modules should have special reporting method (maybe get_status)
-        # for available parameters
-        # Only 2 level dot notation
         for name in objs.keys():
             try:
                 if objs[name] is not None:
-                    class_name = str(objs[name].__class__.__name__)
                     get_status = getattr(objs[name], "get_status", None)
                     if callable(get_status):
                         self.parameters[name] = get_status(eventtime)
                     else:
                         self.parameters[name] = {}
-
-                    self.parameters[name].update({'is_enabled': True})
-                    # get additional info
-                    if class_name == 'ToolHead':
-                        pos = objs[name].get_position()
-                        self.parameters[name].update({
-                            'xpos': pos[0],
-                            'ypos': pos[1],
-                            'zpos': pos[2],
-                            'epos': pos[3]
-                        })
-                        self.parameters[name].update({
-                            'is_printing': (
-                                self.parameters[name]['status'] == "Printing"),
-                            'is_ready': (
-                                self.parameters[name]['status'] == "Ready"),
-                            'is_idle': (
-                                self.parameters[name]['status'] == "Idle")
-                        })
-                else:
-                    self.parameters[name] = {'is_enabled': False}
             except Exception:
                 logging.exception("Parameter '%s' update error" % str(name))
 
@@ -1284,8 +1407,8 @@ class MenuManager:
             raise error("Wrong type, expected MenuContainer")
         top = self.stack_peek()
         if top is not None:
-            self.queue_gcode(top.get_leave_gcode())
-        self.queue_gcode(container.get_enter_gcode())
+            top.run_leave_gcode()
+        container.run_enter_gcode()
         if not container.is_editing():
             container.update_items()
         self.menustack.append(container)
@@ -1302,10 +1425,10 @@ class MenuManager:
                     raise error("Wrong type, expected MenuContainer")
                 if not top.is_editing():
                     top.update_items()
-                self.queue_gcode(container.get_leave_gcode())
-                self.queue_gcode(top.get_enter_gcode())
+                container.run_leave_gcode()
+                top.run_enter_gcode()
             else:
-                self.queue_gcode(container.get_leave_gcode())
+                container.run_leave_gcode()
         return container
 
     def stack_size(self):
@@ -1316,18 +1439,6 @@ class MenuManager:
         if self.stack_size() > lvl:
             container = self.menustack[self.stack_size() - lvl - 1]
         return container
-
-    def _unescape_cchars(self, text):
-        def fixup(m):
-            text = str(m.group(0))
-            if text[:2] == "\\x":
-                try:
-                    return "%c" % (int(text[2:], 16),)
-                except ValueError:
-                    logging.exception('Custom character unescape error')
-            else:
-                return text
-        return re.sub(r'\\x[0-9a-f]{2}', fixup, str(text), flags=re.IGNORECASE)
 
     def render(self, eventtime):
         lines = []
@@ -1344,7 +1455,8 @@ class MenuManager:
                 self.selected, len(container) - 1))
             if isinstance(container, MenuDeck):
                 container[self.selected].heartbeat(eventtime)
-                lines = container[self.selected].render_content(eventtime)
+                lines = container[self.selected].render_content(
+                    eventtime, container.is_constrained())
             else:
                 for row in range(self.top_row, self.top_row + self.rows):
                     s = ""
@@ -1356,7 +1468,7 @@ class MenuManager:
                             if (isinstance(current, (MenuInput, MenuGroup))
                                     and current.is_editing()):
                                 s += MenuCursor.EDIT
-                            elif isinstance(current, MenuElement):
+                            elif isinstance(current, MenuItem):
                                 s += current.cursor
                             else:
                                 s += MenuCursor.SELECT
@@ -1377,7 +1489,7 @@ class MenuManager:
         if self.is_running():
             self.lcd_chip.clear()
             for y, line in enumerate(self.render(eventtime)):
-                self.lcd_chip.write_text(0, y, self._unescape_cchars(line))
+                self.display.draw_text(0, y, line)
             self.lcd_chip.flush()
             return eventtime + MENU_UPDATE_DELAY
         elif not self.is_running() and self._autorun is True:
@@ -1407,10 +1519,11 @@ class MenuManager:
                     self.top_row -= 1
                     self.selected -= 1
                 # init element
-                if isinstance(container[self.selected], MenuElement):
-                    container[self.selected].init()
+                if isinstance(container[self.selected], MenuItem):
+                    container[self.selected].select()
                 # wind up group last item or init item
-                if isinstance(container[self.selected], MenuGroup):
+                if (isinstance(container[self.selected], MenuGroup)
+                        and type(container[self.selected]) is not MenuCard):
                     container[self.selected].find_prev_item()
 
     def down(self, fast_rate=False):
@@ -1433,10 +1546,11 @@ class MenuManager:
                     self.top_row += 1
                     self.selected += 1
                 # init element
-                if isinstance(container[self.selected], MenuElement):
-                    container[self.selected].init()
+                if isinstance(container[self.selected], MenuItem):
+                    container[self.selected].select()
                 # wind up group first item
-                if isinstance(container[self.selected], MenuGroup):
+                if (isinstance(container[self.selected], MenuGroup)
+                        and type(container[self.selected]) is not MenuCard):
                     container[self.selected].find_next_item()
 
     def back(self):
@@ -1458,16 +1572,101 @@ class MenuManager:
                     self.top_row = 0
                     self.selected = 0
                 # init element
-                if isinstance(parent[self.selected], MenuElement):
-                    parent[self.selected].init()
+                if isinstance(parent[self.selected], MenuItem):
+                    parent[self.selected].select()
                 # wind up group first item or init item
-                if isinstance(parent[self.selected], MenuGroup):
+                if (isinstance(parent[self.selected], MenuGroup)
+                        and type(parent[self.selected]) is not MenuCard):
                     parent[self.selected].find_next_item()
             else:
                 self.stack_pop()
                 self.running = False
 
-    def select(self, long_press=False):
+    def exit(self, force=False):
+        container = self.stack_peek()
+        if self.running and isinstance(container, MenuContainer):
+            current = container[self.selected]
+            if (not force and isinstance(current, (MenuInput, MenuGroup))
+                    and current.is_editing()):
+                return
+            container.run_leave_gcode()
+            self.send_event('exit', self)
+            self.running = False
+
+    def process_actions(self, actions, names, source):
+        matches = None
+        if (actions and isinstance(actions, list)
+                and names and isinstance(names, list)):
+            # Process matching actions
+            matches = [t for t in actions if t[1] in names]
+            for match in matches:
+                i, name, args = match
+                malformed = False
+                # remove found actions from global action list
+                actions.remove(match)
+                # process found actions callback
+                if name == 'menu-back':
+                    self.back()
+                elif name == 'menu-exit':
+                    self.exit()
+                elif name == 'deck':
+                    if len(args[0:]) > 0:
+                        if args[0] == 'menu':
+                            self.push_deck_menu()
+                    else:
+                        malformed = True
+                elif name == 'editing':
+                    run_script = True
+                    if len(args[0:]) > 0:
+                        if len(args[1:]) > 0:
+                            run_script = MenuHelper.asbool(args[1])
+                        if args[0] == 'stop':
+                            if (isinstance(source, MenuInput)
+                                    and source.is_editing()):
+                                source.stop_editing(run_script)
+                        elif args[0] == 'start':
+                            if (isinstance(source, MenuInput)
+                                    and not source.is_editing()):
+                                source.start_editing(run_script)
+                        else:
+                            malformed = True
+                    else:
+                        malformed = True
+                elif name == 'run-gcode':
+                    if (isinstance(source, MenuInput) and source.is_editing()):
+                        source.run_gcode()
+                    elif (isinstance(source, MenuCommand)):
+                        source.run_gcode()
+                elif name == 'run-longpress-gcode':
+                    if (isinstance(source, MenuInput) and source.is_editing()):
+                        source.run_longpress_gcode()
+                elif name == 'menu-emit':
+                    if len(args[0:]) > 0 and len(str(args[0])) > 0:
+                        self.send_event(
+                            "action:" + str(args[0]), source, *args[1:])
+                    else:
+                        malformed = True
+                elif name == 'menu-log':
+                    if len(args[0:]) > 0:
+                        logging.info("menu:{} {}".format(
+                            repr(source), ' '.join(map(str, args[0:]))))
+                    else:
+                        malformed = True
+                else:
+                    logging.error("Unknown action: {} {}".format(
+                        name, ' '.join(map(str, args[0:]))))
+                if malformed is True:
+                    logging.error("Malformed action: {} {}".format(
+                        name, ' '.join(map(str, args[0:]))))
+        return matches
+
+    def enter(self, long_press=False):
+        actions = []
+
+        def cb(name, *args):
+            actions.append((len(actions), name, list(args)))
+            return ''
+
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
@@ -1481,48 +1680,34 @@ class MenuManager:
             elif isinstance(current, MenuInput):
                 if current.is_editing():
                     if long_press is True:
-                        self.queue_gcode(current.get_gcode())
-                        self.queue_gcode(current.get_longpress_gcode())
+                        gcode = current.get_longpress_gcode(action_cb=cb)
+                        if current.is_auto() is True:
+                            self.queue_gcode(gcode)
+                        else:
+                            self.process_actions(
+                                actions, ['run-longpress-gcode'], current)
                     else:
-                        self.queue_gcode(current.get_gcode())
-                        current.reset_value()
+                        gcode = current.get_gcode(action_cb=cb)
+                        if current.is_auto() is True:
+                            if not current.is_realtime():
+                                self.queue_gcode(gcode)
+                            current.stop_editing()
+                        else:
+                            self.process_actions(
+                                actions, ['run-gcode'], current)
+                    self.process_actions(actions, ['editing'], current)
                 else:
-                    current.init_value()
+                    current.start_editing()
             elif isinstance(current, MenuCommand):
-                current()
-                self.queue_gcode(current.get_gcode())
-
-    def exit(self, force=False):
-        container = self.stack_peek()
-        if self.running and isinstance(container, MenuContainer):
-            current = container[self.selected]
-            if (not force and isinstance(current, (MenuInput, MenuGroup))
-                    and current.is_editing()):
-                return
-            self.queue_gcode(container.get_leave_gcode())
-            self.running = False
-
-    def run_action(self, action, *args):
-        try:
-            action = str(action).strip().lower()
-            if action == 'back':
-                self.back()
-            elif action == 'exit':
-                self.exit()
-            elif action == 'respond':
-                self.gcode.respond_info("{}".format(' '.join(map(str, args))),
-                                        log=False)
-            elif action == 'event' and len(args) > 0:
-                if len(str(args[0])) > 0:
-                    self.printer.send_event(
-                        "menu:action:" + str(args[0]), *args[1:])
+                gcode = current.get_gcode(action_cb=cb)
+                if current.is_auto() is True:
+                    self.queue_gcode(gcode)
                 else:
-                    logging.error("Malformed event call: {} {}".format(
-                        action, ' '.join(map(str, args))))
-            else:
-                logging.error("Unknown action %s" % (action))
-        except Exception:
-            logging.exception("Malformed action call")
+                    self.process_actions(actions, ['run-gcode'], current)
+            # process actions
+            self.process_actions(actions, [
+                'menu-back', 'menu-exit', 'deck', 'menu-emit', 'menu-log'
+            ], current)
 
     def queue_gcode(self, script):
         if script is None:
@@ -1541,6 +1726,10 @@ class MenuManager:
                 logging.exception("Script running error")
             self.gcode_queue.pop(0)
 
+    def menuitem_from_config(self, config):
+        return MenuHelper.aschoice(
+            config, 'type', menu_items)(self, config)
+
     def add_menuitem(self, name, menu):
         if name in self.menuitems:
             logging.info(
@@ -1548,13 +1737,24 @@ class MenuManager:
                 "previous menuitem declaration" % (name,))
         self.menuitems[name] = menu
 
-    def lookup_menuitem(self, name):
+    def lookup_menuitem(self, name, default=sentinel):
         if name is None:
             return None
-        if name not in self.menuitems:
+        if name in self.menuitems:
+            return self.menuitems[name]
+        if default is sentinel:
             raise self.printer.config_error(
                 "Unknown menuitem '%s'" % (name,))
-        return self.menuitems[name]
+        return default
+
+    def lookup_menuitems(self, prefix=None):
+        if prefix is None:
+            return list(self.menuitems.items())
+        items = [(n, self.menuitems[n])
+                 for n in self.menuitems if n.startswith(prefix + ' ')]
+        if prefix in self.menuitems:
+            return [(prefix, self.menuitems[prefix])] + items
+        return items
 
     def load_config(self, *args):
         cfg = None
@@ -1570,24 +1770,8 @@ class MenuManager:
 
     def load_menuitems(self, config):
         for cfg in config.get_prefix_sections('menu '):
-            name = " ".join(cfg.get_name().split()[1:])
-            item = cfg.getchoice('type', menu_items)(self, cfg, name)
-            self.add_menuitem(name, item)
-
-    cmd_DO_help = "Menu do things"
-
-    def cmd_DO_DUMP(self, params):
-        for key1 in self.parameters:
-            if type(self.parameters[key1]) == dict:
-                for key2 in self.parameters[key1]:
-                    msg = "{0}.{1} = {2}".format(
-                        key1, key2,
-                        self.parameters[key1].get(key2)
-                    )
-                    self.gcode.respond_info(msg)
-            else:
-                msg = "{0} = {1}".format(key1, self.parameters.get(key1))
-                self.gcode.respond_info(msg)
+            item = self.menuitem_from_config(cfg)
+            self.add_menuitem(item.id, item)
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
@@ -1614,7 +1798,7 @@ class MenuManager:
 
     def _short_click_callback(self, eventtime):
         if self.is_running():
-            self.select()
+            self.enter()
         else:
             # lets start and populate the menu items
             self.begin(eventtime)
@@ -1624,18 +1808,21 @@ class MenuManager:
             # lets start and populate the menu items
             self.begin(eventtime)
         else:
-            container = self.stack_peek()
-            if isinstance(container, MenuDeck):
-                menu = container.menu
-                if (isinstance(menu, MenuList)
-                        and not container.is_editing()
-                        and menu is not container):
-                    self.stack_push(menu)
-                    self.top_row = 0
-                    self.selected = 0
-                    return
-            if container.is_editing():
-                self.select(True)
+            if not self.push_deck_menu():
+                self.enter(True)
+
+    def push_deck_menu(self):
+        container = self.stack_peek()
+        if isinstance(container, MenuDeck):
+            menu = container.get_longpress_menu()
+            if (isinstance(menu, MenuList)
+                    and not container.is_editing()
+                    and menu is not container):
+                self.stack_push(menu)
+                self.top_row = 0
+                self.selected = 0
+                return True
+        return False
 
     def back_callback(self, eventtime):
         if self.back_pin:

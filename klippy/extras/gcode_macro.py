@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import traceback, logging, ast
 import jinja2
+from jinja2 import meta
 
 
 ######################################################################
@@ -28,6 +29,9 @@ class GetStatusWrapper:
             self.eventtime = self.printer.get_reactor().monotonic()
         self.cache[sval] = res = dict(po.get_status(self.eventtime))
         return res
+    def __setitem__(self, key, val):
+        skey = str(key).strip()
+        self.cache[skey] = val
     def __contains__(self, val):
         try:
             self.__getitem__(val)
@@ -43,7 +47,9 @@ class GetStatusWrapper:
 class TemplateWrapper:
     def __init__(self, printer, env, name, script):
         self.printer = printer
+        self.env = env
         self.name = name
+        self.script = script
         self.gcode = self.printer.lookup_object('gcode')
         try:
             self.template = env.from_string(script)
@@ -66,19 +72,36 @@ class TemplateWrapper:
             raise self.gcode.error(msg)
     def run_gcode_from_command(self, context=None):
         self.gcode.run_script_from_command(self.render(context))
+    def find_variables(self):
+        """Returns a set of all variables in the template that will be
+        looked up from the context at runtime."""
+        try:
+            ast = self.env.parse(self.script)
+        except Exception as e:
+            msg = "Error parsing template '%s': %s" % (
+                self.name, traceback.format_exception_only(type(e), e)[-1])
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+        return meta.find_undeclared_variables(ast)
+
 
 # Main gcode macro template tracking
 class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.env = jinja2.Environment('{%', '%}', '{', '}')
+        LoggingUndefined = jinja2.make_logging_undefined(
+            logger=logging.getLogger('logger'), base=jinja2.Undefined)
+        self.env = jinja2.Environment(
+            '{%', '%}', '{', '}',
+            undefined=LoggingUndefined)
     def load_template(self, config, option, default=None):
-        name = "%s:%s" % (config.get_name(), option)
-        if default is None:
-            script = config.get(option)
-        else:
-            script = config.get(option, default)
+        name = "%s:%s" % ('<dict>' if isinstance(config, dict)
+                          else config.get_name(), option)
+        script = (config.get(option) if default is None
+                  else config.get(option, default))
         return TemplateWrapper(self.printer, self.env, name, script)
+    def create_status_wrapper(self, eventtime=None):
+        return GetStatusWrapper(self.printer, eventtime)
 
 def load_config(config):
     return PrinterGCodeMacro(config)

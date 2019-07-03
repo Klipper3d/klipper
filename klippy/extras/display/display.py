@@ -5,7 +5,7 @@
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, re
 import hd44780, st7920, uc1701
 import menu
 
@@ -23,7 +23,7 @@ class PrinterLCD:
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.lcd_type = config.get('lcd_type')
         # menu
-        self.menu = menu.MenuManager(config, self.lcd_chip)
+        self.menu = menu.MenuManager(config, self)
         # printer objects
         self.toolhead = self.sdcard = None
         self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
@@ -59,6 +59,8 @@ class PrinterLCD:
     # Get menu instance
     def get_menu(self):
         return self.menu
+    def get_lcd_chip(self):
+        return self.lcd_chip
     # Graphics drawing
     def animate_glyphs(self, eventtime, x, y, glyph_name, do_animate):
         frame = do_animate and int(eventtime) & 1
@@ -204,7 +206,7 @@ class PrinterLCD:
     # Screen update helpers
     def draw_text(self, x, y, mixed_text):
         pos = x
-        for i, text in enumerate(mixed_text.split('~')):
+        for i, text in enumerate(re.split(r'\~(.*?)\~', mixed_text)):
             if i & 1 == 0:
                 # write text
                 self.lcd_chip.write_text(pos, y, text)
