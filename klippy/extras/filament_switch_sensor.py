@@ -62,7 +62,7 @@ class BaseSensor(object):
         self.event_running = False
     def _exec_gcode(self, prefix, template):
         try:
-            self.gcode.run_script(prefix + template.render())
+            self.gcode.run_script(prefix + template.render() + "\nM400")
         except Exception:
             logging.exception("Script running error")
     def set_enable(self, runout, insert):
