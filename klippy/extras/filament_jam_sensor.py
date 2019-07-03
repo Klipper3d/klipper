@@ -3,7 +3,6 @@
 # Copyright (C) 2019 <windo.ac@gmail.com> - Windo.AC
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
 import logging
 
 
@@ -41,9 +40,6 @@ class JamSensor:
             / 100.0
         )
         self.jam_gcode = config.get("jam_gcode", None)
-        self.jam_pause = config.getboolean(
-            "jam_pause", True
-        )
         self.slow_speed_resume = config.getfloat(
             "slow_speed_resume", 1.0, above=0.0
         ) / (
