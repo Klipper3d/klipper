@@ -1,7 +1,7 @@
 This document describes Filament Jam Sensor module. Hardware used for developing this module is based on optical endstop or encoder(1 line) count the filament usage within one LOW/HIGH cycle. You can find designs at [thingiverse.com](https://www.thingiverse.com/thing:3067904)
 
 ## How does it work?
-Filaments spins the wheel in the sensor, the sensor goes LOW to HIGH. The module calculates the filament usage between a LOW/HIGH cycle compare with base line(setting base_usage) usage. 
+Filaments spins the wheel in the sensor, the sensor goes LOW to HIGH. The module calculates the filament usage between a LOW/HIGH cycle compare with base line(setting base_usage) usage.
 If the usage reached slow%(setting slow_usage) will trigger the slow down action.
 If the usage reached jam%(setting jam_usage) will trigger the jam/pause action.
 
@@ -9,7 +9,7 @@ If the usage reached jam%(setting jam_usage) will trigger the jam/pause action.
     # Pause/Resume module must define
     [pause_resume]
     #recover_velocity: 50.
-    
+    #
     # on/off / encoder(user only 1 line) Filament Jam Sensor
     [filament_jam_sensor jamsensor]
     pin: ar22
@@ -44,7 +44,7 @@ If the usage reached jam%(setting jam_usage) will trigger the jam/pause action.
     [JAM_USAGE=<%>] [ACTION=<0|1>] [ENABLE=<0|1>] [DEBUG=<0|1>]
     `:  Configures the [filament_jam_sensor] module. TIMER, BASE_USAGE, SLOW_USAGE,
     SLOW_SPEED, SLOW_SPEED_RESUME, JAM_USAGE correspond to same name in configuration.
-    ACTION default is 1 and set to 0 will bypass the action of slow down/speed up, 
+    ACTION default is 1 and set to 0 will bypass the action of slow down/speed up,
     pause and gcode execute defined in the config. ENABLE default is 1 and set to 0
     will disable the checking logic of this module. DEBUG default is 0 and set to 1
     will output the information for debug.
