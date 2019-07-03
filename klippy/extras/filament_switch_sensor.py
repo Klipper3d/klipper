@@ -34,8 +34,6 @@ class BaseSensor(object):
         self.printer.register_event_handler(
             "idle_timeout:printing",
             (lambda e, s=self, st="printing": s._update_print_status(e, st)))
-    def _handle_ready(self):
-        self.toolhead = self.printer.lookup_object('toolhead')
     def _update_print_status(self, eventtime, status):
         if status == "printing":
             runout_en = self.runout_gcode is not None
@@ -95,7 +93,6 @@ class SwitchSensor(BaseSensor):
             desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
     def _handle_ready(self):
-        super(SwitchSensor, self)._handle_ready()
         self.start_time = self.reactor.monotonic() + 2.
     def _button_handler(self, eventtime, state):
         if eventtime < self.start_time or state == self.last_button_state:
