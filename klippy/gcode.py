@@ -389,7 +389,8 @@ class GCodeParser:
                 if gcode_id.startswith( 'B' ) :
                     out.append("B@:%d " % (sensor.last_pwm_value * 128))
                 else:
-                    out.append(("@%s:%d " % (gcode_id, (sensor.last_pwm_value * 128))).replace("T",""))
+                    out.append(("@%s:%d " % (gcode_id,
+                        (sensor.last_pwm_value * 128))).replace("T",""))
         if not out:
             return "T:0"
         return " ".join(out)
