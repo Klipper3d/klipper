@@ -49,8 +49,9 @@ class MCU_buttons:
         rest_ticks = self.mcu.seconds_to_clock(QUERY_TIME)
         self.mcu.add_config_cmd(
             "buttons_query oid=%d clock=%d"
-            " rest_ticks=%d retransmit_count=%d" % (
-                self.oid, clock, rest_ticks, RETRANSMIT_COUNT), is_init=True)
+            " rest_ticks=%d retransmit_count=%d invert=%d" % (
+                self.oid, clock, rest_ticks, RETRANSMIT_COUNT,
+                self.invert), is_init=True)
         self.mcu.register_response(self.handle_buttons_state,
                                    "buttons_state", self.oid)
     def handle_buttons_state(self, params):
