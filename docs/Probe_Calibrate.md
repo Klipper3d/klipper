@@ -76,12 +76,12 @@ After calibrating the probe X, Y, and Z offsets it is a good idea to
 verify that the probe provides repeatable results. Start by homing the
 printer and then move the head to a position near the center of the
 bed. Navigate to the OctoPrint terminal tab and run the
-`PROBE_ACCURACY` command.
-
+`PROBE_ACCURACY` command with the syntax Z=(your probes Z offset + 10mm). In this
+example it would look like this `PROBE_ACCURACY Z=12.5`
 This command will run the probe ten times and produce output similar
 to the following:
 ```
-Recv: // probe accuracy: at X:0.000 Y:0.000 Z:10.000
+Recv: // probe accuracy: at X:0.000 Y:0.000 Z:12.500
 Recv: // and read 10 times with speed of 5 mm/s
 Recv: // probe at -0.003,0.005 is z=2.506948
 Recv: // probe at -0.003,0.005 is z=2.519448
