@@ -8,7 +8,7 @@ struct coord {
 };
 
 struct move_accel {
-    double c1, c2;
+    double c1, c2, c3, c4, c5, c6;
 };
 
 struct move {
@@ -18,9 +18,11 @@ struct move {
     double cruise_v;
     struct move_accel accel, decel;
     struct coord start_pos, axes_r;
+    int accel_order;
 };
 
 struct move *move_alloc(void);
+void move_set_accel_order(struct move *m, int accel_order);
 void move_fill(struct move *m, double print_time
                , double accel_t, double cruise_t, double decel_t
                , double start_pos_x, double start_pos_y, double start_pos_z

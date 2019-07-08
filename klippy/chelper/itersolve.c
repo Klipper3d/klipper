@@ -22,7 +22,52 @@ move_alloc(void)
 {
     struct move *m = malloc(sizeof(*m));
     memset(m, 0, sizeof(*m));
+    m->accel_order = 2;
     return m;
+}
+
+void __visible
+move_set_accel_order(struct move *m, int accel_order)
+{
+    memset(&m->accel, 0, sizeof(m->accel));
+    memset(&m->decel, 0, sizeof(m->decel));
+    m->accel_order = accel_order;
+}
+
+// Determine the coefficients for a 4th order bezier position function
+static void
+move_fill_bezier4(struct move_accel *ma, double start_v
+                  , double accel, double accel_t)
+{
+    if (!accel_t) {
+        ma->c4 = ma->c3 = ma->c1 = 0.;
+        return;
+    }
+    double inv_accel_t = 1. / accel_t;
+    double accel_div_accel_t = accel * inv_accel_t;
+    double accel_div_accel_t2 = accel_div_accel_t * inv_accel_t;
+    ma->c4 = -.5 * accel_div_accel_t2;
+    ma->c3 = accel_div_accel_t;
+    ma->c1 = start_v;
+}
+
+// Determine the coefficients for a 6th order bezier position function
+static void
+move_fill_bezier6(struct move_accel *ma, double start_v
+                  , double accel, double accel_t)
+{
+    if (!accel_t) {
+        ma->c6 = ma->c5 = ma->c4 = ma->c1 = 0.;
+        return;
+    }
+    double inv_accel_t = 1. / accel_t;
+    double accel_div_accel_t2 = accel * inv_accel_t * inv_accel_t;
+    double accel_div_accel_t3 = accel_div_accel_t2 * inv_accel_t;
+    double accel_div_accel_t4 = accel_div_accel_t3 * inv_accel_t;
+    ma->c6 = accel_div_accel_t4;
+    ma->c5 = -3. * accel_div_accel_t3;
+    ma->c4 = 2.5 * accel_div_accel_t2;
+    ma->c1 = start_v;
 }
 
 // Populate a 'struct move' with a velocity trapezoid
@@ -43,10 +88,18 @@ move_fill(struct move *m, double print_time
 
     // Setup for accel/cruise/decel phases
     m->cruise_v = cruise_v;
-    m->accel.c1 = start_v;
-    m->accel.c2 = .5 * accel;
-    m->decel.c1 = cruise_v;
-    m->decel.c2 = -m->accel.c2;
+    if (m->accel_order == 4) {
+        move_fill_bezier4(&m->accel, start_v, accel, accel_t);
+        move_fill_bezier4(&m->decel, cruise_v, -accel, decel_t);
+    } else if (m->accel_order == 6) {
+        move_fill_bezier6(&m->accel, start_v, accel, accel_t);
+        move_fill_bezier6(&m->decel, cruise_v, -accel, decel_t);
+    } else {
+        m->accel.c1 = start_v;
+        m->accel.c2 = .5 * accel;
+        m->decel.c1 = cruise_v;
+        m->decel.c2 = -m->accel.c2;
+    }
 
     // Setup for move_get_coord()
     m->start_pos.x = start_pos_x;
@@ -63,7 +116,13 @@ move_fill(struct move *m, double print_time
 static inline double
 move_eval_accel(struct move_accel *ma, double move_time)
 {
-    return (ma->c1 + ma->c2 * move_time) * move_time;
+    double v = ma->c6;
+    v = ma->c5 + v * move_time;
+    v = ma->c4 + v * move_time;
+    v = ma->c3 + v * move_time;
+    v = ma->c2 + v * move_time;
+    v = ma->c1 + v * move_time;
+    return v * move_time;
 }
 
 // Return the distance moved given a time in a move

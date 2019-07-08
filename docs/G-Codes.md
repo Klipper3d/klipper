@@ -130,9 +130,10 @@ The following standard commands are supported:
   samples taken during the test.
 - `TURN_OFF_HEATERS`: Turn off all heaters.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
-  the printer's velocity limits. Note that one may only set values
-  less than or equal to the limits specified in the config file.
+  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]
+  [ACCEL_ORDER=<value>]`: Modify the printer's velocity limits. Note
+  that one may only set values less than or equal to the limits
+  specified in the config file.
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
@@ -500,3 +501,12 @@ section is enabled.
     matching the supplied name from persistent memory.  Note that after SAVE
     or REMOVE operations have been run the SAVE_CONFIG gcode must be run
     to make the changes to peristent memory permanent.
+
+## Delayed GCode
+
+The following command is enabled if a [delayed_gcode] config section has
+been enabled:
+  - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
+    delay duration for the identified [delayed_gcode] and starts the timer
+    for gcode execution.  A value of 0 will cancel a pending delayed gcode
+    from executing.
