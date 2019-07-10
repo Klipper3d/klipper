@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190710: The z_hop option was removed from the [firmware_retract]
+config section. The z_hop support was incomplete and could cause
+incorrect behavior with several common slicers.
+
 20190710: The optional parameters of the PROBE_ACCURACY command have
 changed. It may be necessary to update any macros or scripts that use
 that command.
