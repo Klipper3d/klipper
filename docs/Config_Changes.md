@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190710: The optional parameters of the PROBE_ACCURACY command have
+changed. It may be necessary to update any macros or scripts that use
+that command.
+
 20190628: All configuration options have been removed from the
 [skew_correction] section.  Configuration for skew_correction
 is now done via the SET_SKEW gcode.  See skew_correction.md

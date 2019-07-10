@@ -150,32 +150,26 @@ class PrinterProbe:
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, params):
+        speed = self.gcode.get_float(
+            "PROBE_SPEED", params, self.speed, above=0.)
+        sample_count = self.gcode.get_int("SAMPLES", params, 10, minval=1)
+        sample_retract_dist = self.gcode.get_float(
+            "SAMPLE_RETRACT_DIST", params, self.sample_retract_dist, above=0.)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
-        number_of_reads = self.gcode.get_int('REPEAT', params, default=10,
-                                                       minval=4, maxval=50)
-        speed = self.gcode.get_int('SPEED', params, default=self.speed,
-                                            minval=1, maxval=30)
-        z_start_position = self.gcode.get_float(
-            'Z', params, default=10., minval=self.z_offset, maxval=70.)
-        x_start_position = self.gcode.get_float('X', params, default=pos[0])
-        y_start_position = self.gcode.get_float('Y', params, default=pos[1])
-        start_pos = [x_start_position, y_start_position, z_start_position]
-        self.gcode.respond_info("probe accuracy: at X:%.3f Y:%.3f Z:%.3f\n"
-                                "                "
-                                "and read %d times with speed of %d mm/s" % (
-                                x_start_position, y_start_position,
-                                z_start_position, number_of_reads, speed))
-        # Probe bed "number_of_reads" times
+        self.gcode.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
+                                " (samples=%d retract=%.3f speed=%.1f\n"
+                                % (pos[0], pos[1], pos[2],
+                                   sample_count, sample_retract_dist, speed))
+        # Probe bed sample_count times
         positions = []
-        for i in range(number_of_reads):
-            # Move Z to start reading position
-            self._move(start_pos, speed)
-            # Probe
+        while len(positions) < sample_count:
+            # Probe position
             pos = self._probe(speed)
             positions.append(pos)
-        # Move Z to start reading position
-        self._move(start_pos, speed)
+            # Retract
+            liftpos = [None, None, pos[2] + sample_retract_dist]
+            self._move(liftpos, speed)
         # Calculate maximum, minimum and average values
         max_value = max([p[2] for p in positions])
         min_value = min([p[2] for p in positions])
@@ -183,9 +177,9 @@ class PrinterProbe:
         median = self._calc_median(positions)[2]
         # calculate the standard deviation
         deviation_sum = 0
-        for i in range(number_of_reads):
-            deviation_sum += pow(positions[i][2] - avg_value, 2)
-        sigma = (deviation_sum / number_of_reads) ** 0.5
+        for i in range(len(positions)):
+            deviation_sum += pow(positions[i][2] - avg_value, 2.)
+        sigma = (deviation_sum / len(positions)) ** 0.5
         # Show information
         self.gcode.respond_info(
             "probe accuracy results: maximum %.6f, minimum %.6f, "

@@ -231,10 +231,12 @@ enabled:
   for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
-- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
-  [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
-  median and standard deviation. The default values are: REPEAT=10,
-  SPEED=probe config speed, X=current X, Y=current Y and Z=10.
+- `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum,
+  average, median, and standard deviation of multiple probe
+  samples. By default, 10 SAMPLES are taken. Otherwise the optional
+  parameters default to their equivalent setting in the probe config
+  section.
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
   PROBE command for details on the optional probe parameters. See the
