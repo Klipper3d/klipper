@@ -24,6 +24,7 @@ serial_init(void)
     uint32_t div = pclk / (CONFIG_SERIAL_BAUD * 16);
     LPC_UART0->DLL = div & 0xff;
     LPC_UART0->DLM = (div >> 8) & 0xff;
+    LPC_UART0->FDR = 0x10;
     LPC_UART0->LCR = 3; // 8N1 ; clear DLAB bit
 
     // Enable fifo
