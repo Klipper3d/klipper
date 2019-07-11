@@ -1,13 +1,12 @@
 # Code to configure miscellaneous chips
 #
-# Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, os
 import pins, mcu, bus
 
 REPLICAPE_MAX_CURRENT = 3.84
-REPLICAPE_SHIFT_REGISTER_BUS = "spidev1.1"
 REPLICAPE_PCA9685_BUS = 2
 REPLICAPE_PCA9685_ADDRESS = 0x70
 REPLICAPE_PCA9685_CYCLE_TIME = .001
@@ -198,7 +197,11 @@ class Replicape:
             and self.stepper_dacs):
             shift_registers[4] &= ~1
         self.sr_enabled = list(reversed(shift_registers))
-        self.sr_spi = bus.MCU_SPI(self.host_mcu, REPLICAPE_SHIFT_REGISTER_BUS,
+        sr_spi_bus = "spidev1.1"
+        if not self.host_mcu.is_fileoutput() and os.path.exists(
+                '/sys/devices/platform/ocp/481a0000.spi/spi_master/spi2'):
+            sr_spi_bus = "spidev2.1"
+        self.sr_spi = bus.MCU_SPI(self.host_mcu, sr_spi_bus,
                                   None, 0, 50000000, self.sr_disabled)
         self.sr_spi.spi_send(self.sr_disabled)
     def note_pwm_start_value(self, channel, start_value, shutdown_value):
