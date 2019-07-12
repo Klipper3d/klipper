@@ -191,6 +191,14 @@ The following command is available when an "output_pin" config section
 is enabled:
 - `SET_PIN PIN=config_name VALUE=<value>`
 
+## Neopixel Commands
+
+The following command is available when a "neopixel" config section
+is enabled:
+- `SET_NEOPIXEL NEOPIXEL=<config_name> RED=<value> GREEN=<value>
+  BLUE=<value>`: This sets the neopixel LED output. Each <value> must
+  be between 0.0 and 1.0.
+
 ## Servo Commands
 
 The following commands are available when a "servo" config section is
