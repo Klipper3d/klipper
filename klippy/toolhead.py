@@ -244,7 +244,6 @@ class ToolHead:
         self.idle_flush_print_time = 0.
         self.print_stall = 0
         self.drip_completion = None
-        self.drip_need_calc_print_time = False
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
@@ -293,9 +292,6 @@ class ToolHead:
             return self.print_time
         if self.special_queuing_state == "Drip":
             # In "Drip" state - wait until ready to send next move
-            if self.drip_need_calc_print_time:
-                self.drip_need_calc_print_time = False
-                self._calc_print_time()
             while 1:
                 if self.drip_completion.test():
                     raise DripModeEndSignal()
@@ -436,21 +432,19 @@ class ToolHead:
         self.special_queuing_state = "Drip"
         self.need_check_stall = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
-        self.move_queue.set_flush_time(self.reactor.NEVER)
         self.drip_completion = self.reactor.completion()
-        self.drip_need_calc_print_time = True
         # Split move into many tiny moves and queue them
         num_moves = max(1, int(math.ceil(move.min_move_t / DRIP_SEGMENT_TIME)))
         inv_num_moves = 1. / float(num_moves)
         submove_d = [d * inv_num_moves for d in move.axes_d]
         prev_pos = move.start_pos
-        for i in range(num_moves-1):
-            next_pos = [p + d for p, d in zip(prev_pos, submove_d)]
-            self.move_queue.add_move(Move(self, prev_pos, next_pos, speed))
-            prev_pos = next_pos
-        self.move_queue.add_move(Move(self, prev_pos, move.end_pos, speed))
-        # Transmit moves
+        self._calc_print_time()
         try:
+            for i in range(num_moves-1):
+                next_pos = [p + d for p, d in zip(prev_pos, submove_d)]
+                self.move_queue.add_move(Move(self, prev_pos, next_pos, speed))
+                prev_pos = next_pos
+            self.move_queue.add_move(Move(self, prev_pos, move.end_pos, speed))
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
