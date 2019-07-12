@@ -155,21 +155,21 @@ class MCU_endstop:
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
+            "config_endstop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
                 self._oid, self._pin, self._pullup, len(self._steppers)))
         self._mcu.add_config_cmd(
-            "end_stop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
+            "endstop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
             " rest_ticks=0 pin_value=0" % (self._oid,), is_init=True)
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
-                "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
+                "endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._home_cmd = self._mcu.lookup_command(
-            "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
+            "endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_command(
-            "end_stop_query_state oid=%c", cq=cmd_queue)
+            "endstop_query_state oid=%c", cq=cmd_queue)
     def home_prepare(self):
         pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
@@ -183,16 +183,16 @@ class MCU_endstop:
         self._home_end_time = self._reactor.NEVER
         self._trigger_completion = self._reactor.completion()
         self._home_completion = self._reactor.completion()
-        self._mcu.register_response(self._handle_end_stop_state,
-                                    "end_stop_state", self._oid)
+        self._mcu.register_response(self._handle_endstop_state,
+                                    "endstop_state", self._oid)
         self._home_cmd.send(
             [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
              sample_count, rest_ticks, triggered ^ self._invert],
             reqclock=clock)
         self._home_completion = self._reactor.register_callback(
             self._home_retry)
-    def _handle_end_stop_state(self, params):
-        logging.debug("end_stop_state %s", params)
+    def _handle_endstop_state(self, params):
+        logging.debug("endstop_state %s", params)
         if params['#sent_time'] >= self._min_query_time:
             if params['homing']:
                 self._last_sent_time = params['#sent_time']
@@ -222,7 +222,7 @@ class MCU_endstop:
     def home_wait(self, home_end_time):
         self._home_end_time = home_end_time
         did_trigger = self._home_completion.wait()
-        self._mcu.register_response(None, "end_stop_state", self._oid)
+        self._mcu.register_response(None, "endstop_state", self._oid)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
         for s in self._steppers:
             s.note_homing_end(did_trigger=did_trigger)
@@ -235,7 +235,7 @@ class MCU_endstop:
         if self._mcu.is_fileoutput():
             return 0
         params = self._query_cmd.send_with_response(
-            [self._oid], "end_stop_state", self._oid, minclock=clock)
+            [self._oid], "endstop_state", self._oid, minclock=clock)
         return params['pin_value'] ^ self._invert
 
 class MCU_digital_out:
