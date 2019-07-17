@@ -35,7 +35,7 @@ timer_from_ns(uint32_t ns)
 }
 
 static int
-send_data(struct neopixel_s *n, uint32_t data)
+send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
 {
     // Make sure at least 50us has passed since last request
     uint32_t last_req_time = n->last_req_time, cur = timer_read_time();
@@ -45,45 +45,48 @@ send_data(struct neopixel_s *n, uint32_t data)
     }
 
     struct gpio_out pin = n->pin;
-    uint32_t expire_time = cur + 0x40000000;
-    uint_fast8_t bits = 24;
-    while (bits--) {
-        // Calculate pulse duration
-        uint32_t on, off;
-        if (data & 0x800000) {
-            on = timer_from_ns(700 - 150);
-            off = timer_from_ns(600 - 150);
-        } else {
-            on = timer_from_ns(350 - 150);
-            off = timer_from_ns(800 - 150);
-        }
-        data <<= 1;
+    uint32_t min_wait_time = cur, max_wait_time = cur + 0x40000000;
+    while (data_len--) {
+        uint_fast8_t byte = *data++;
+        uint_fast8_t bits = 8;
+        while (bits--) {
+            // Calculate pulse duration
+            uint32_t on, off;
+            if (byte & 0x80) {
+                on = timer_from_ns(700 - 150);
+                off = timer_from_ns(600 - 150);
+            } else {
+                on = timer_from_ns(350 - 150);
+                off = timer_from_ns(800 - 150);
+            }
+            byte <<= 1;
 
-        // Set output high
-        gpio_out_write(pin, 1);
-        uint32_t on_start_time = timer_read_time();
-        if (timer_is_before(expire_time, on_start_time))
-            goto fail;
-        cur = on_start_time;
-        while (timer_is_before(cur, on_start_time + on)) {
-            irq_poll();
-            cur = timer_read_time();
-        }
+            // Set output high
+            do {
+                irq_poll();
+                cur = timer_read_time();
+            } while (timer_is_before(cur, min_wait_time));
+            gpio_out_write(pin, 1);
+            uint32_t on_start_time = timer_read_time();
+            if (timer_is_before(max_wait_time, on_start_time))
+                goto fail;
+            min_wait_time = on_start_time + on;
+            max_wait_time = cur + on + timer_from_ns(300);
 
-        // Set output low
-        gpio_out_write(pin, 0);
-        uint32_t off_start_time = timer_read_time();
-        expire_time = on_start_time + on + timer_from_ns(300);
-        if (timer_is_before(expire_time, off_start_time))
-            goto fail;
-        cur = off_start_time;
-        while (timer_is_before(cur, off_start_time + off)) {
-            irq_poll();
-            cur = timer_read_time();
+            // Set output low
+            do {
+                irq_poll();
+                cur = timer_read_time();
+            } while (timer_is_before(cur, min_wait_time));
+            gpio_out_write(pin, 0);
+            uint32_t off_start_time = timer_read_time();
+            if (timer_is_before(max_wait_time, off_start_time))
+                goto fail;
+            min_wait_time = off_start_time + off;
+            max_wait_time = cur + off + timer_from_ns(300);
         }
-        expire_time = off_start_time + off + timer_from_ns(300);
     }
-    n->last_req_time = cur;
+    n->last_req_time = timer_read_time();
     return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
@@ -97,15 +100,16 @@ command_neopixel_send(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
-    uint32_t data = args[1];
+    uint_fast8_t data_len = args[1];
+    uint8_t *data = (void*)(size_t)args[2];
 
     uint_fast8_t retry = 8;
     while (retry--) {
-        int ret = send_data(n, data);
+        int ret = send_data(n, data, data_len);
         if (!ret)
             break;
     }
 }
 #if !CONFIG_MACH_AVR
-DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c data=%u");
+DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c data=%*s");
 #endif
