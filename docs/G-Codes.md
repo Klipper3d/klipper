@@ -195,9 +195,13 @@ is enabled:
 
 The following command is available when a "neopixel" config section
 is enabled:
-- `SET_NEOPIXEL NEOPIXEL=<config_name> RED=<value> GREEN=<value>
-  BLUE=<value>`: This sets the neopixel LED output. Each <value> must
-  be between 0.0 and 1.0.
+- `SET_NEOPIXEL NEOPIXEL=<config_name> INDEX=<index> RED=<value>
+  GREEN=<value> BLUE=<value>`: This sets the Neopixel LED output. Each
+  color <value> must be between 0.0 and 1.0. If multiple Neopixel
+  chips are daisy-chained then one may specify INDEX to alter the
+  color of just the given Neopixel chip (1 for the first Neopixel, 2
+  for the second, etc.). If INDEX is not provided then all Neopixels
+  in the daisy-chain will be set to the provided color.
 
 ## Servo Commands
 

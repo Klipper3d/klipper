@@ -16,6 +16,7 @@ class PrinterNeoPixel:
         self.mcu.add_config_cmd("config_neopixel oid=%d pin=%s"
                                 % (self.oid, pin_params['pin']))
         self.mcu.register_config_callback(self.build_config)
+        self.chain_count = config.getint('chain_count', 1, minval=1, maxval=18)
         self.neopixel_send_cmd = None
         # Initial color
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
@@ -24,7 +25,7 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        self.color_data = [green, red, blue]
+        self.color_data = [green, red, blue] * self.chain_count
         self.printer.register_event_handler("klippy:connect", self.send_data)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
@@ -50,7 +51,13 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        self.color_data = [green, red, blue]
+        color_data = [green, red, blue]
+        if 'INDEX' in params:
+            index = self.gcode.get_int('INDEX', params,
+                                       minval=1, maxval=self.chain_count)
+            self.color_data[(index-1)*3:index*3] = color_data
+        else:
+            self.color_data = color_data * self.chain_count
         # Send command
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.send_data(self.mcu.print_time_to_clock(print_time))
