@@ -23,6 +23,9 @@ class PrinterNeoPixel:
                                         self.cmd_SET_NEOPIXEL,
                                         desc=self.cmd_SET_NEOPIXEL_help)
     def build_config(self):
+        if self.mcu.get_constant_float('CLOCK_FREQ') <= 20000000:
+            raise self.printer.config_error(
+                "Neopixel is not supported on AVR micro-controllers")
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_send_cmd = self.mcu.lookup_command(
             "neopixel_send oid=%c data=%*s", cq=cmd_queue)
