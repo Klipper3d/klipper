@@ -50,7 +50,7 @@ class MCU_analog_mux:
 
 
 ######################################################################
-# TMC2208 uart communication
+# TMC uart communication
 ######################################################################
 
 # Code for sending messages on a TMC uart
@@ -116,18 +116,18 @@ class MCU_TMC_uart_bitbang:
             res.append((out >> (i*8)) & 0xff)
         return res
     def _encode_read(self, sync, addr, reg):
-        # Generate a tmc2208 read register message
+        # Generate a uart read register message
         msg = bytearray([sync, addr, reg])
         msg.append(self._calc_crc8(msg))
         return self._add_serial_bits(msg)
     def _encode_write(self, sync, addr, reg, val):
-        # Generate a tmc2208 write register message
+        # Generate a uart write register message
         msg = bytearray([sync, addr, reg, (val >> 24) & 0xff,
                          (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff])
         msg.append(self._calc_crc8(msg))
         return self._add_serial_bits(msg)
     def _decode_read(self, reg, data):
-        # Extract a tmc2208 read response message
+        # Extract a uart read response message
         if len(data) != 10:
             return None
         # Convert data into a long integer for easy manipulation
@@ -205,7 +205,7 @@ class MCU_TMC_uart:
             if val is not None:
                 return val
         raise self.printer.command_error(
-            "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
+            "Unable to read tmc uart '%s' register %s" % (self.name, reg_name))
     def get_register(self, reg_name):
         with self.mutex:
             return self._do_get_register(reg_name)
@@ -224,4 +224,4 @@ class MCU_TMC_uart:
                 if self.ifcnt == (ifcnt + 1) & 0xff:
                     return
         raise self.printer.command_error(
-            "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
+            "Unable to write tmc uart '%s' register %s" % (self.name, reg_name))
