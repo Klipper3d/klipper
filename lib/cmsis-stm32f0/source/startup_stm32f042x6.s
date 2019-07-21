@@ -152,29 +152,6 @@ Default_Handler:
 Infinite_Loop:
   b Infinite_Loop
   .size Default_Handler, .-Default_Handler
-Default_Handler2:
-Infinite_Loop2:
-  b Infinite_Loop2
-  .size Default_Handler2, .-Default_Handler2
-
-.weak  HardFault_Handler
-.type  HardFault_Handler, %function
-.extern hard_fault_handler_c
-HardFault_Handler:
-  movs r0,#4
-  mov r1,lr
-  tst r0,r1
-  beq _MSP
-  mrs r0, psp
-  b _HALT
-_MSP:
-  mrs r0, msp
-_HALT:
-  ldr r1,[r0,#20]
-  bl hard_fault_handler_c
-  bkpt #0
-.size  HardFault_Handler, .-HardFault_Handler
-
 /******************************************************************************
 *
 * The minimal vector table for a Cortex M0.  Note that the proper constructs
@@ -247,6 +224,9 @@ g_pfnVectors:
 
   .weak      NMI_Handler
   .thumb_set NMI_Handler,Default_Handler
+
+  .weak      HardFault_Handler
+  .thumb_set HardFault_Handler,Default_Handler
 
   .weak      SVC_Handler
   .thumb_set SVC_Handler,Default_Handler
@@ -333,7 +313,7 @@ g_pfnVectors:
   .thumb_set USART2_IRQHandler,Default_Handler
 
   .weak      CEC_CAN_IRQHandler
-  .thumb_set CEC_CAN_IRQHandler,Default_Handler2
+  .thumb_set CEC_CAN_IRQHandler,Default_Handler
 
   .weak      USB_IRQHandler
   .thumb_set USB_IRQHandler,Default_Handler
