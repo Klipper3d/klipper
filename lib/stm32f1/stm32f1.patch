@@ -1,0 +1,20 @@
+diff --git a/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h b/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h
+new file mode 100644
+index 00000000..fb41c421
+--- /dev/null
++++ b/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h
+@@ -0,0 +1 @@
++#include "stm32f1xx_hal_conf_template.h"
+diff --git a/lib/stm32f1/system_stm32f1xx.c b/lib/stm32f1/system_stm32f1xx.c
+index be2da1b1..fb6c279c 100644
+--- a/lib/stm32f1/system_stm32f1xx.c
++++ b/lib/stm32f1/system_stm32f1xx.c
+@@ -154,7 +154,7 @@ const uint8_t APBPrescTable[8U] =  {0, 0, 0, 0, 1, 2, 3, 4};
+   * @param  None
+   * @retval None
+   */
+-void SystemInit (void)
++void __attribute__((externally_visible)) SystemInit (void)
+ {
+   /* Reset the RCC clock configuration to the default reset state(for debug purpose) */
+   /* Set HSION bit */

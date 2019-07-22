@@ -4,21 +4,20 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/stm32f1 src/generic
-dirs-y += lib/cmsis-stm32f1/source
-dirs-y += lib/hal-stm32f1/source
+dirs-y += lib/stm32f1 lib/stm32f1/gcc lib/stm32f1/hal/source
 
 CFLAGS += -mthumb -mcpu=cortex-m3
 CFLAGS += -Ilib/cmsis-core
-CFLAGS += -Ilib/cmsis-stm32f1/include -Ilib/hal-stm32f1/include
+CFLAGS += -Ilib/stm32f1/include -Ilib/stm32f1/hal/include
 CFLAGS += -DSTM32F103xB
 
 # Add source files
 src-y += stm32f1/main.c stm32f1/gpio.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f1/adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f1/spi.c
-src-y += $(addprefix ../, $(wildcard lib/hal-stm32f1/source/stm32f1xx_ll_*.c))
+src-y += $(addprefix ../, $(wildcard lib/stm32f1/hal/source/stm32f1xx_ll_*.c))
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/armcm_timer.c
-src-y += ../lib/cmsis-stm32f1/source/system_stm32f1xx.c
+src-y += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_USBSERIAL) += stm32f1/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32f1/serial.c generic/serial_irq.c
 
@@ -27,7 +26,7 @@ $(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
 	@echo "  Assembling $@"
 	$(Q)$(AS) $< -o $@
 
-asmsrc-y = ../lib/cmsis-stm32f1/source/startup_stm32f103xb.s
+asmsrc-y = ../lib/stm32f1/gcc/startup_stm32f103xb.s
 OBJS_klipper.elf += $(patsubst %.s, $(OUT)src/%.o,$(asmsrc-y))
 
 # Build the linker script

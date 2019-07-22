@@ -1,8 +1,4 @@
-/* Cortex-M linker script
-
-   This file is taken from lib/cmsis-stm32f1/source/stm32f1.ld . It
-   has been modified to support a bootloader offset.
-*/
+/* Cortex-M linker script */
 
 ENTRY(Reset_Handler)
 
