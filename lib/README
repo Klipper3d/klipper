@@ -50,7 +50,8 @@ for the modifications.
 
 The stm32f0 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef0.html
-version 1.9.0 (extracted 20190116).
+version 1.9.0 (extracted 20190116). It has been modified to compile
+with gcc's LTO feature. See stm32f0.patch for the modifications.
 
 The stm32f1 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
