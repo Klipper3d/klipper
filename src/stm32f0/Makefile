@@ -6,8 +6,7 @@ STLINK=st-flash
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/stm32f0 src/generic
-dirs-y += lib/cmsis-stm32f0/source
-dirs-y += lib/hal-stm32f0/source
+dirs-y += lib/stm32f0 lib/stm32f0/gcc lib/stm32f0/hal/source
 
 CFLAGS = -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
@@ -15,8 +14,7 @@ CFLAGS = -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
 CFLAGS += -flto -fno-use-linker-plugin
 CFLAGS += -mthumb -mcpu=cortex-m0 -g3
 CFLAGS += -Ilib/cmsis-core -Iout/board
-CFLAGS += -Ilib/cmsis-stm32f0/include -Ilib/cmsis-stm32f0
-CFLAGS += -Ilib/hal-stm32f0/include
+CFLAGS += -Ilib/stm32f0/include -Ilib/stm32f0/hal/include
 CFLAGS += -DSTM32F042x6 -DUSE_HAL_DRIVER
 
 # Add source files
@@ -29,16 +27,16 @@ src-y += generic/timer_irq.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f0/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += stm32f0/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f0/spi.c
-src-y += $(addprefix ../, $(wildcard lib/hal-stm32f0/source/stm32f0xx_*.c))
+src-y += $(addprefix ../, $(wildcard lib/stm32f0/hal/source/stm32f0xx_*.c))
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c
-src-y += ../lib/cmsis-stm32f0/source/system_stm32f0xx.c
+src-y += ../lib/stm32f0/system_stm32f0xx.c
 
 # Add assembler build rules
 $(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
 	@echo "  Assembling $@"
 	$(Q)$(AS) $< -o $@
 
-asmsrc-y = ../lib/cmsis-stm32f0/source/startup_stm32f042x6.s
+asmsrc-y = ../lib/stm32f0/gcc/startup_stm32f042x6.s
 OBJS_klipper.elf += $(patsubst %.s, $(OUT)src/%.o,$(asmsrc-y))
 
 # Build the linker script
