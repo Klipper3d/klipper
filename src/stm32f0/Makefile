@@ -60,7 +60,7 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 $(OUT)klipper.hex: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -O ihex $< $@
-	
+
 flash: $(OUT)klipper.hex
 	@echo "  Flashing hex file $<"
 	$(Q)$(STLINK) --format ihex --reset write $<
