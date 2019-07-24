@@ -68,6 +68,25 @@ udelay(uint32_t usecs)
         ;
 }
 
+// On fast cpus, schedule a recurring timer so SysTick doesn't overflow
+static uint_fast8_t
+timer_wrap_event(struct timer *t)
+{
+    t->waketime += 0xffffff;
+    return SF_RESCHEDULE;
+}
+static struct timer wrap_timer = {
+    .func = timer_wrap_event,
+    .waketime = 0xffffff,
+};
+void
+timer_reset(void)
+{
+    if (CONFIG_CLOCK_FREQ > 0xffffff * 10)
+        sched_add_timer(&wrap_timer);
+}
+DECL_SHUTDOWN(timer_reset);
+
 void
 timer_init(void)
 {
@@ -75,6 +94,9 @@ timer_init(void)
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     DWT->CYCCNT = 0;
+
+    // Schedule a recurring timer on fast cpus
+    timer_reset();
 
     // Enable SysTick
     irqstatus_t flag = irq_save();
