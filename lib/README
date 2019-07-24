@@ -59,6 +59,10 @@ version 1.8.0 (extracted 20190721). It has been modified to compile
 with gcc's LTO feature and to add a stm32f1xx_hal_conf.h file. See
 stm32f1.patch for the modifications.
 
+The stm32f4 directory contains code from STMicroelectronics:
+  http://www.st.com/en/embedded-software/stm32cubef4.html
+version 1.24.0 (extracted 20190723).
+
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
 revision 42095e522859059e8a5f4ec05c1e3def01a870a9.
