@@ -1,0 +1,21 @@
+# Kconfig settings for STM32F4 processors
+
+if MACH_STM32F4
+
+config STM32F4_SELECT
+    bool
+    default y
+
+config BOARD_DIRECTORY
+    string
+    default "stm32f4"
+
+config CLOCK_FREQ
+    int
+    default 180000000
+
+config SERIAL
+    bool
+    default y
+
+endif
