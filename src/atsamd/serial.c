@@ -74,7 +74,7 @@ SERCOM0_Handler(void)
     }
 }
 
-// Aliases for irq handeler on SAMD51
+// Aliases for irq handler on SAMD51
 void SERCOM0_0_Handler(void)
     __visible __attribute__((alias("SERCOM0_Handler")));
 void SERCOM0_1_Handler(void)
