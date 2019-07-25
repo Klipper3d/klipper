@@ -201,6 +201,24 @@ The test was last run on commit `9f3517fd` with gcc version
 stepper result is `SET ticks 345`, the best dual stepper result is
 `SET ticks 365`, and the best three stepper result is `SET ticks 606`.
 
+### STM32F446 step rate benchmark ###
+
+The following configuration sequence is used on the STM32F446:
+```
+allocate_oids count=4
+config_stepper oid=0 step_pin=PA5 dir_pin=PB5 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 min_stop_interval=0 invert_step=0
+config_stepper oid=3 step_pin=PB3 dir_pin=PB8 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `1487f8a2` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The best single
+stepper result is `SET ticks 757`, the best dual stepper result is
+`SET ticks 761`, the best three stepper result is `SET ticks 757`, and
+the best four stepper result is `SET ticks 767`.
+
 ### LPC176x step rate benchmark ###
 
 The following configuration sequence is used on the LPC176x:
@@ -241,7 +259,7 @@ stepper result is `SET ticks 277`, the best dual stepper result is
 
 The following configuration sequence is used on the SAMD51:
 ```
-allocate_oids count=3
+allocate_oids count=4
 config_stepper oid=0 step_pin=PA22 dir_pin=PA20 min_stop_interval=0 invert_step=0
 config_stepper oid=1 step_pin=PA22 dir_pin=PA21 min_stop_interval=0 invert_step=0
 config_stepper oid=2 step_pin=PA22 dir_pin=PA19 min_stop_interval=0 invert_step=0
