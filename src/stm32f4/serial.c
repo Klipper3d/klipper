@@ -21,8 +21,9 @@ serial_init(void)
     enable_pclock(USART2_BASE);
 
     uint32_t pclk = get_pclock_frequency(USART2_BASE);
-    uint32_t div = pclk / (CONFIG_SERIAL_BAUD * 16);
-    USART2->BRR = div << USART_BRR_DIV_Mantissa_Pos;
+    uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
+    USART2->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
+                   | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
     USART2->CR1 = CR1_FLAGS;
     NVIC_SetPriority(USART2_IRQn, 0);
     NVIC_EnableIRQ(USART2_IRQn);
