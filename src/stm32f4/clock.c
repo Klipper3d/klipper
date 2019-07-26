@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_STM32F4_CLOCK_REF_8M
 #include "internal.h" // enable_pclock
 
 #define FREQ_PERIPH 45000000
@@ -38,11 +39,20 @@ get_pclock_frequency(uint32_t periph_base)
 void
 clock_setup(void)
 {
-    // Configure 180Mhz PLL from internal oscillator (HSI)
-    RCC->PLLCFGR = (
-        RCC_PLLCFGR_PLLSRC_HSI | (16 << RCC_PLLCFGR_PLLM_Pos)
-        | (360 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
-        | (7 << RCC_PLLCFGR_PLLQ_Pos) | (6 << RCC_PLLCFGR_PLLR_Pos));
+    if (CONFIG_STM32F4_CLOCK_REF_8M) {
+        // Configure 180Mhz PLL from external 8Mhz crystal (HSE)
+        RCC->CR |= RCC_CR_HSEON;
+        RCC->PLLCFGR = (
+            RCC_PLLCFGR_PLLSRC_HSE | (4 << RCC_PLLCFGR_PLLM_Pos)
+            | (180 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
+            | (7 << RCC_PLLCFGR_PLLQ_Pos) | (6 << RCC_PLLCFGR_PLLR_Pos));
+    } else {
+        // Configure 180Mhz PLL from internal 16Mhz oscillator (HSI)
+        RCC->PLLCFGR = (
+            RCC_PLLCFGR_PLLSRC_HSI | (8 << RCC_PLLCFGR_PLLM_Pos)
+            | (180 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
+            | (7 << RCC_PLLCFGR_PLLQ_Pos) | (6 << RCC_PLLCFGR_PLLR_Pos));
+    }
     RCC->CR |= RCC_CR_PLLON;
 
     // Enable "over drive"

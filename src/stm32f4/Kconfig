@@ -15,6 +15,14 @@ config CLOCK_FREQ
     int
     default 180000000
 
+choice
+    prompt "Clock Reference"
+    config STM32F4_CLOCK_REF_8M
+        bool "8Mhz crystal"
+    config STM32F4_CLOCK_REF_INTERNAL
+        bool "Internal clock"
+endchoice
+
 config SERIAL
     bool
     default y
