@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20190726: The mcp4728 digital-to-analog code has changed. The default
+i2c_address is now 0x60 and the voltage reference is now relative to
+the mcp4728's internal 2.048 volt reference.
+
 20190710: The z_hop option was removed from the [firmware_retract]
 config section. The z_hop support was incomplete and could cause
 incorrect behavior with several common slicers.

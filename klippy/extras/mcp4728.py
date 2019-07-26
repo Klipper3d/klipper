@@ -7,7 +7,7 @@ import bus
 
 class mcp4728:
     def __init__(self, config):
-        self.i2c = bus.MCU_I2C_from_config(config, default_addr=0)
+        self.i2c = bus.MCU_I2C_from_config(config, default_addr=0x60)
         scale = config.getfloat('scale', 1., above=0.)
         # Configure registers
         for i, name in enumerate('abcd'):
@@ -17,7 +17,7 @@ class mcp4728:
                 self.set_dac(i, int(val * 4095. / scale + .5))
     def set_dac(self, dac, value):
         self.i2c.i2c_write([0x40 | (dac << 1),
-                            (value >> 8) & 0x0f, value & 0xff])
+                            ((value >> 8) & 0x0f) | 0x80, value & 0xff])
 
 def load_config_prefix(config):
     return mcp4728(config)
