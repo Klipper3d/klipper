@@ -16,8 +16,7 @@ CFLAGS_klipper.elf += -T $(OUT)stm32f4.ld --specs=nano.specs --specs=nosys.specs
 
 # Add source files
 src-y += stm32f4/main.c stm32f4/clock.c stm32f4/watchdog.c stm32f4/gpio.c
-src-y += generic/crc16_ccitt.c generic/alloc.c
-src-y += generic/armcm_irq.c generic/armcm_timer.c
+src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/armcm_timer.c
 src-y += ../lib/stm32f4/system_stm32f4xx.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f4/adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f4/spi.c
