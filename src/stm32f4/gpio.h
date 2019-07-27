@@ -21,4 +21,12 @@ struct gpio_in gpio_in_setup(uint32_t pin, int32_t pull_up);
 void gpio_in_reset(struct gpio_in g, int32_t pull_up);
 uint8_t gpio_in_read(struct gpio_in g);
 
+struct gpio_adc {
+    uint32_t chan;
+};
+struct gpio_adc gpio_adc_setup(uint32_t pin);
+uint32_t gpio_adc_sample(struct gpio_adc g);
+uint16_t gpio_adc_read(struct gpio_adc g);
+void gpio_adc_cancel_sample(struct gpio_adc g);
+
 #endif // gpio.h
