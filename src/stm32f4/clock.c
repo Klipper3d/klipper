@@ -1,4 +1,4 @@
-// Code to setup clocks on stm32f446
+// Code to setup clocks on stm32f4
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -7,7 +7,7 @@
 #include "autoconf.h" // CONFIG_STM32F4_CLOCK_REF_8M
 #include "internal.h" // enable_pclock
 
-#define FREQ_PERIPH 45000000
+#define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
 // Enable a peripheral clock
 void
@@ -35,10 +35,33 @@ get_pclock_frequency(uint32_t periph_base)
     return FREQ_PERIPH;
 }
 
-// Main clock setup called at chip startup
-void
-clock_setup(void)
+// Clock configuration
+static void
+enable_clock_stm32f40x(void)
 {
+#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
+    if (CONFIG_STM32F4_CLOCK_REF_8M) {
+        // Configure 168Mhz PLL from external 8Mhz crystal (HSE)
+        RCC->CR |= RCC_CR_HSEON;
+        RCC->PLLCFGR = (
+            RCC_PLLCFGR_PLLSRC_HSE | (4 << RCC_PLLCFGR_PLLM_Pos)
+            | (168 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
+            | (7 << RCC_PLLCFGR_PLLQ_Pos));
+    } else {
+        // Configure 168Mhz PLL from internal 16Mhz oscillator (HSI)
+        RCC->PLLCFGR = (
+            RCC_PLLCFGR_PLLSRC_HSI | (8 << RCC_PLLCFGR_PLLM_Pos)
+            | (168 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
+            | (7 << RCC_PLLCFGR_PLLQ_Pos));
+    }
+    RCC->CR |= RCC_CR_PLLON;
+#endif
+}
+
+static void
+enable_clock_stm32f446(void)
+{
+#if CONFIG_MACH_STM32F446
     if (CONFIG_STM32F4_CLOCK_REF_8M) {
         // Configure 180Mhz PLL from external 8Mhz crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
@@ -63,6 +86,17 @@ clock_setup(void)
     PWR->CR = (3 << PWR_CR_VOS_Pos) | PWR_CR_ODEN | PWR_CR_ODSWEN;
     while (!(PWR->CSR & PWR_CSR_ODSWRDY))
         ;
+#endif
+}
+
+// Main clock setup called at chip startup
+void
+clock_setup(void)
+{
+    if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
+        enable_clock_stm32f40x();
+    else
+        enable_clock_stm32f446();
 
     // Set flash latency
     FLASH->ACR = (FLASH_ACR_LATENCY_5WS | FLASH_ACR_ICEN | FLASH_ACR_DCEN
