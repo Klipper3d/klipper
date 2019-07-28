@@ -26,6 +26,7 @@ src-$(CONFIG_MACH_STM32F4xx) += ../lib/stm32f4/system_stm32f4xx.c
 src-$(CONFIG_MACH_STM32F4xx) += stm32f4/clock.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32f4/adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32f4/spi.c
+src-$(CONFIG_USBSERIAL) += stm32f4/usbfs.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32f4/serial.c generic/serial_irq.c
 
 # Add assembler build rules
@@ -50,6 +51,13 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
+FLASH_TYPE-$(CONFIG_MACH_STM32F1xx) := stm32f1
+FLASH_TYPE-$(CONFIG_MACH_STM32F4xx) := stm32f4
+
 flash: $(OUT)klipper.bin
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(FLASH_TYPE-y) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
+
+serialflash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
 	$(Q)stm32flash -w $< -v -g 0 $(FLASH_DEVICE)
