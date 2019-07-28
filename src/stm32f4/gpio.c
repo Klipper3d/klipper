@@ -21,16 +21,17 @@ static GPIO_TypeDef * const digital_regs[] = {
 
 // Set the mode and extended function of a pin
 void
-gpio_peripheral(uint32_t gpio, uint32_t mode, uint32_t func, int pullup)
+gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 {
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
+    uint32_t mode_bits = mode & 0x0f, func = mode >> 4;
     uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
     uint32_t pos = gpio % 16, af_reg = pos / 8;
     uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
     uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
 
     regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
-    regs->MODER = (regs->MODER & ~m_msk) | (mode << m_shift);
+    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
 }
@@ -74,7 +75,7 @@ gpio_out_reset(struct gpio_out g, uint32_t val)
         regs->BSRR = g.bit;
     else
         regs->BSRR = g.bit << 16;
-    gpio_peripheral(pin, GPIO_OUTPUT, 0, 0);
+    gpio_peripheral(pin, GPIO_OUTPUT, 0);
     irq_restore(flag);
 }
 
@@ -123,7 +124,7 @@ gpio_in_reset(struct gpio_in g, int32_t pull_up)
     GPIO_TypeDef *regs = g.regs;
     int pin = regs_to_pin(regs, g.bit);
     irqstatus_t flag = irq_save();
-    gpio_peripheral(pin, GPIO_INPUT, 0, pull_up);
+    gpio_peripheral(pin, GPIO_INPUT, pull_up);
     irq_restore(flag);
 }
 

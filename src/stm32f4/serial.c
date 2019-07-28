@@ -28,8 +28,8 @@ serial_init(void)
     NVIC_SetPriority(USART2_IRQn, 0);
     NVIC_EnableIRQ(USART2_IRQn);
 
-    gpio_peripheral(GPIO('A', 2), GPIO_FUNCTION, 7, 0);
-    gpio_peripheral(GPIO('A', 3), GPIO_FUNCTION, 7, 1);
+    gpio_peripheral(GPIO('A', 2), GPIO_FUNCTION(7), 0);
+    gpio_peripheral(GPIO('A', 3), GPIO_FUNCTION(7), 1);
 }
 DECL_INIT(serial_init);
 

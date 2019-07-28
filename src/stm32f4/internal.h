@@ -10,12 +10,12 @@
 
 #define GPIO_INPUT 0
 #define GPIO_OUTPUT 1
-#define GPIO_FUNCTION 2
+#define GPIO_FUNCTION(fn) (2 | ((fn) << 4))
 #define GPIO_ANALOG 3
 
 void enable_pclock(uint32_t periph_base);
 uint32_t get_pclock_frequency(uint32_t periph_base);
 void clock_setup(void);
-void gpio_peripheral(uint32_t gpio, uint32_t mode, uint32_t func, int pullup);
+void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 
 #endif // internal.h

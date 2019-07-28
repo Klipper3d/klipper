@@ -44,7 +44,7 @@ gpio_adc_setup(uint32_t pin)
                    | (aticks << 21) | (aticks << 24) | (aticks << 27));
     ADC1->CR2 = ADC_CR2_ADON;
 
-    gpio_peripheral(pin, GPIO_ANALOG, 0, 0);
+    gpio_peripheral(pin, GPIO_ANALOG, 0);
 
     return (struct gpio_adc){ .chan = chan };
 }

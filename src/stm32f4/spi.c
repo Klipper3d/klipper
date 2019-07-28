@@ -20,9 +20,9 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     // Enable SPI
     enable_pclock(SPI2_BASE);
-    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION, 5, 1);
-    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION, 5, 0);
-    gpio_peripheral(GPIO('B', 13), GPIO_FUNCTION, 5, 0);
+    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION(5), 1);
+    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION(5), 0);
+    gpio_peripheral(GPIO('B', 13), GPIO_FUNCTION(5), 0);
 
     // Calculate CR1 register
     uint32_t pclk = get_pclock_frequency(SPI2_BASE);
