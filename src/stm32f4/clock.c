@@ -1,10 +1,11 @@
-// Code to setup clocks on stm32f4
+// Code to setup clocks and gpio on stm32f4
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_STM32F4_CLOCK_REF_8M
+#include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
@@ -51,6 +52,33 @@ get_pclock_frequency(uint32_t periph_base)
 {
     return FREQ_PERIPH;
 }
+
+// Set the mode and extended function of a pin
+void
+gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
+{
+    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
+
+    // Enable GPIO clock
+    uint32_t rcc_pos = ((uint32_t)regs - AHB1PERIPH_BASE) / 0x400;
+    RCC->AHB1ENR |= (1<<rcc_pos);
+
+    // Configure GPIO
+    uint32_t mode_bits = mode & 0x0f, func = mode >> 4;
+    uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
+    uint32_t pos = gpio % 16, af_reg = pos / 8;
+    uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
+    uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
+
+    regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
+    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
+    regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
+    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+}
+
+#if CONFIG_STM32F4_CLOCK_REF_8M
+DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
+#endif
 
 // Clock configuration
 static void
@@ -127,9 +155,4 @@ clock_setup(void)
     RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
-
-    // Enable GPIO clocks
-    enable_pclock(GPIOA_BASE);
-    enable_pclock(GPIOB_BASE);
-    enable_pclock(GPIOC_BASE);
 }

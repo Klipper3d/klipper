@@ -14,27 +14,21 @@
 DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 32);
+#ifdef GPIOI
+DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 32);
+#endif
 
-static GPIO_TypeDef * const digital_regs[] = {
-    GPIOA, GPIOB, GPIOC
+GPIO_TypeDef * const digital_regs[] = {
+    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH,
+#ifdef GPIOI
+    GPIOI,
+#endif
 };
-
-// Set the mode and extended function of a pin
-void
-gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
-{
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
-    uint32_t mode_bits = mode & 0x0f, func = mode >> 4;
-    uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
-    uint32_t pos = gpio % 16, af_reg = pos / 8;
-    uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
-    uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
-
-    regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
-    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
-    regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
-}
 
 // Convert a register and bit location back to an integer pin identifier
 static int
@@ -46,11 +40,6 @@ regs_to_pin(GPIO_TypeDef *regs, uint32_t bit)
             return GPIO('A' + i, ffs(bit)-1);
     return 0;
 }
-
-
-/****************************************************************
- * General Purpose Input Output (GPIO) pins
- ****************************************************************/
 
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint32_t val)

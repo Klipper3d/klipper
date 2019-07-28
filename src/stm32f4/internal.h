@@ -4,6 +4,8 @@
 
 #include "stm32f4xx.h"
 
+extern GPIO_TypeDef * const digital_regs[];
+
 #define GPIO(PORT, NUM) (((PORT)-'A') * 16 + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / 16)
 #define GPIO2BIT(PIN) (1<<((PIN) % 16))
