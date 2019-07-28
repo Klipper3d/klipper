@@ -19,7 +19,7 @@ watchdog_init(void)
 {
     IWDG->KR = 0x5555;
     IWDG->PR = 0;
-    IWDG->RLR = 0x0FFF; // 512ms timeout
+    IWDG->RLR = 0x0FFF; // 410-512ms timeout (depending on stm32 chip)
     IWDG->KR = 0xCCCC;
 }
 DECL_INIT(watchdog_init);
