@@ -2,7 +2,13 @@
 #define __STM32F4_INTERNAL_H
 // Local definitions for STM32F4 code
 
+#include "autoconf.h" // CONFIG_MACH_STM32F1xx
+
+#if CONFIG_MACH_STM32F1xx
+#include "stm32f1xx.h"
+#else
 #include "stm32f4xx.h"
+#endif
 
 extern GPIO_TypeDef * const digital_regs[];
 

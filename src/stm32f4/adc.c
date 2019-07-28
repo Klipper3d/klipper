@@ -8,6 +8,7 @@
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "compiler.h" // ARRAY_SIZE
+#include "generic/armcm_timer.h" // udelay
 #include "gpio.h" // gpio_adc_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
@@ -20,6 +21,12 @@ static const uint8_t adc_pins[] = {
     GPIO('B', 0), GPIO('B', 1), GPIO('C', 0), GPIO('C', 1),
     GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5)
 };
+
+#if CONFIG_MACH_STM32F1xx
+#define CR2_FLAGS (ADC_CR2_ADON | (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG)
+#else
+#define CR2_FLAGS ADC_CR2_ADON
+#endif
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -36,14 +43,22 @@ gpio_adc_setup(uint32_t pin)
     // Enable the ADC
     if (!is_enabled_pclock(ADC1_BASE)) {
         enable_pclock(ADC1_BASE);
-        uint32_t aticks = 3; // 56 adc cycles
+        uint32_t aticks = 3; // 2.5-3.2us (depending on stm32 chip)
         ADC1->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                        | (aticks << 12) | (aticks << 15) | (aticks << 18)
                        | (aticks << 21) | (aticks << 24));
         ADC1->SMPR2 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                        | (aticks << 12) | (aticks << 15) | (aticks << 18)
                        | (aticks << 21) | (aticks << 24) | (aticks << 27));
-        ADC1->CR2 = ADC_CR2_ADON;
+        ADC1->CR2 = CR2_FLAGS;
+
+#if CONFIG_MACH_STM32F1xx
+        // Perform calibration
+        udelay(timer_from_us(1));
+        ADC1->CR2 = ADC_CR2_CAL | CR2_FLAGS;
+        while (ADC1->CR2 & ADC_CR2_CAL)
+            ;
+#endif
     }
 
     gpio_peripheral(pin, GPIO_ANALOG, 0);
@@ -67,9 +82,10 @@ gpio_adc_sample(struct gpio_adc g)
     }
     // Start sample
     ADC1->SQR3 = g.chan;
-    ADC1->CR2 = ADC_CR2_SWSTART | ADC_CR2_ADON;
+    ADC1->CR2 = ADC_CR2_SWSTART | CR2_FLAGS;
+
 need_delay:
-    return timer_from_us(4);
+    return timer_from_us(10);
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero
