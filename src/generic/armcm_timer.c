@@ -68,7 +68,7 @@ udelay(uint32_t usecs)
         ;
 }
 
-// On fast cpus, schedule a recurring timer so SysTick doesn't overflow
+// Dummy timer to avoid scheduling a SysTick irq greater than 0xffffff
 static uint_fast8_t
 timer_wrap_event(struct timer *t)
 {
@@ -82,8 +82,10 @@ static struct timer wrap_timer = {
 void
 timer_reset(void)
 {
-    if (CONFIG_CLOCK_FREQ > 0xffffff * 10)
-        sched_add_timer(&wrap_timer);
+    if (timer_from_us(100000) <= 0xffffff)
+        // Timer in sched.c already ensures SysTick wont overflow
+        return;
+    sched_add_timer(&wrap_timer);
 }
 DECL_SHUTDOWN(timer_reset);
 
