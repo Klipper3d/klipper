@@ -38,6 +38,8 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 int
 main(void)
 {
+    SCB->VTOR += CONFIG_FLASH_START;
+
     clock_setup();
 
     sched_main();

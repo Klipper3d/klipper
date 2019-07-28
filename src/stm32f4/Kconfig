@@ -19,6 +19,7 @@ choice
     config MACH_STM32F103
         bool "STM32F103"
         select MACH_STM32F1xx
+        select HAVE_STM32_USBFS
     config MACH_STM32F405
         bool "STM32F405"
         select MACH_STM32F4xx
@@ -33,6 +34,8 @@ endchoice
 config MACH_STM32F1xx
     bool
 config MACH_STM32F4xx
+    bool
+config HAVE_STM32_USBFS
     bool
 
 config MCU
@@ -65,6 +68,21 @@ config STACK_SIZE
     default 512
 
 choice
+    prompt "Bootloader offset" if MACH_STM32F103
+    config STM32_FLASH_START_2000
+        bool "8KiB bootloader (stm32duino)"
+    config STM32_FLASH_START_7000
+        bool "28KiB bootloader"
+    config STM32_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_START
+    hex
+    default 0x2000 if STM32_FLASH_START_2000
+    default 0x7000 if STM32_FLASH_START_7000
+    default 0x0000
+
+choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
     config STM32_CLOCK_REF_8M
         bool "8Mhz crystal"
@@ -76,7 +94,12 @@ config CLOCK_REF_8M
     default n if STM32_CLOCK_REF_INTERNAL
     default y
 
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    depends on HAVE_STM32_USBFS
+    default y
 config SERIAL
+    depends on !USBSERIAL
     bool
     default y
 choice
