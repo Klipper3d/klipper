@@ -28,6 +28,23 @@ enable_pclock(uint32_t periph_base)
     }
 }
 
+// Check if a peripheral clock has been enabled
+int
+is_enabled_pclock(uint32_t periph_base)
+{
+    if (periph_base < APB2PERIPH_BASE) {
+        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
+        return RCC->APB1ENR & (1<<pos);
+    } else if (periph_base < AHB1PERIPH_BASE) {
+        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
+        return RCC->APB2ENR & (1<<pos);
+    } else if (periph_base < AHB2PERIPH_BASE) {
+        uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
+        return RCC->AHB1ENR & (1<<pos);
+    }
+    return 0;
+}
+
 // Return the frequency of the given peripheral clock
 uint32_t
 get_pclock_frequency(uint32_t periph_base)

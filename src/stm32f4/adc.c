@@ -34,15 +34,17 @@ gpio_adc_setup(uint32_t pin)
     }
 
     // Enable the ADC
-    enable_pclock(ADC1_BASE);
-    uint32_t aticks = 3; // 56 adc cycles
-    ADC1->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
-                   | (aticks << 12) | (aticks << 15) | (aticks << 18)
-                   | (aticks << 21) | (aticks << 24));
-    ADC1->SMPR2 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
-                   | (aticks << 12) | (aticks << 15) | (aticks << 18)
-                   | (aticks << 21) | (aticks << 24) | (aticks << 27));
-    ADC1->CR2 = ADC_CR2_ADON;
+    if (!is_enabled_pclock(ADC1_BASE)) {
+        enable_pclock(ADC1_BASE);
+        uint32_t aticks = 3; // 56 adc cycles
+        ADC1->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
+                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
+                       | (aticks << 21) | (aticks << 24));
+        ADC1->SMPR2 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
+                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
+                       | (aticks << 21) | (aticks << 24) | (aticks << 27));
+        ADC1->CR2 = ADC_CR2_ADON;
+    }
 
     gpio_peripheral(pin, GPIO_ANALOG, 0);
 
