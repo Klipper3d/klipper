@@ -10,7 +10,29 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
+// Select the configured serial port
+#if CONFIG_SERIAL_PORT == 1
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
+#define GPIO_Rx GPIO('A', 10)
+#define GPIO_Tx GPIO('A', 9)
+#define USARTx USART1
+#define USARTx_IRQn USART1_IRQn
+#define USARTx_IRQHandler USART1_IRQHandler
+#elif CONFIG_SERIAL_PORT == 2
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
+#define GPIO_Rx GPIO('A', 3)
+#define GPIO_Tx GPIO('A', 2)
+#define USARTx USART2
+#define USARTx_IRQn USART2_IRQn
+#define USARTx_IRQHandler USART2_IRQHandler
+#else
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
+#define GPIO_Rx GPIO('B', 11)
+#define GPIO_Tx GPIO('B', 10)
+#define USARTx USART3
+#define USARTx_IRQn USART3_IRQn
+#define USARTx_IRQHandler USART3_IRQHandler
+#endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
                    | USART_CR1_RXNEIE)
@@ -18,39 +40,39 @@ DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
 void
 serial_init(void)
 {
-    enable_pclock(USART2_BASE);
+    enable_pclock((uint32_t)USARTx);
 
-    uint32_t pclk = get_pclock_frequency(USART2_BASE);
+    uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
     uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
-    USART2->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
+    USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
                    | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
-    USART2->CR1 = CR1_FLAGS;
-    NVIC_SetPriority(USART2_IRQn, 0);
-    NVIC_EnableIRQ(USART2_IRQn);
+    USARTx->CR1 = CR1_FLAGS;
+    NVIC_SetPriority(USARTx_IRQn, 0);
+    NVIC_EnableIRQ(USARTx_IRQn);
 
-    gpio_peripheral(GPIO('A', 2), GPIO_FUNCTION(7), 0);
-    gpio_peripheral(GPIO('A', 3), GPIO_FUNCTION(7), 1);
+    gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(7), 1);
+    gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(7), 0);
 }
 DECL_INIT(serial_init);
 
 void __visible
-USART2_IRQHandler(void)
+USARTx_IRQHandler(void)
 {
-    uint32_t sr = USART2->SR;
+    uint32_t sr = USARTx->SR;
     if (sr & (USART_SR_RXNE | USART_SR_ORE))
-        serial_rx_byte(USART2->DR);
-    if (sr & USART_SR_TXE && USART2->CR1 & USART_CR1_TXEIE) {
+        serial_rx_byte(USARTx->DR);
+    if (sr & USART_SR_TXE && USARTx->CR1 & USART_CR1_TXEIE) {
         uint8_t data;
         int ret = serial_get_tx_byte(&data);
         if (ret)
-            USART2->CR1 = CR1_FLAGS;
+            USARTx->CR1 = CR1_FLAGS;
         else
-            USART2->DR = data;
+            USARTx->DR = data;
     }
 }
 
 void
 serial_enable_tx_irq(void)
 {
-    USART2->CR1 = CR1_FLAGS | USART_CR1_TXEIE;
+    USARTx->CR1 = CR1_FLAGS | USART_CR1_TXEIE;
 }

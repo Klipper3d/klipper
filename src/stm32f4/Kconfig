@@ -64,5 +64,22 @@ config CLOCK_REF_8M
 config SERIAL
     bool
     default y
+choice
+    depends on SERIAL
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS
+    help
+        Select the serial device to use.
+    config STM32_SERIAL_USART1
+        bool "USART1"
+    config STM32_SERIAL_USART2
+        bool "USART2"
+    config STM32_SERIAL_USART3
+        bool "USART3"
+endchoice
+config SERIAL_PORT
+    int
+    default 3 if STM32_SERIAL_USART3
+    default 2 if STM32_SERIAL_USART2
+    default 1
 
 endif
