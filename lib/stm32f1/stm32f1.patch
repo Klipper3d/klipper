@@ -1,10 +1,3 @@
-diff --git a/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h b/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h
-new file mode 100644
-index 00000000..fb41c421
---- /dev/null
-+++ b/lib/stm32f1/hal/include/stm32f1xx_hal_conf.h
-@@ -0,0 +1 @@
-+#include "stm32f1xx_hal_conf_template.h"
 diff --git a/lib/stm32f1/system_stm32f1xx.c b/lib/stm32f1/system_stm32f1xx.c
 index be2da1b1..fb6c279c 100644
 --- a/lib/stm32f1/system_stm32f1xx.c

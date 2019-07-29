@@ -56,8 +56,7 @@ version 1.9.0 (extracted 20190116).
 The stm32f1 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
 version 1.8.0 (extracted 20190721). It has been modified to compile
-with gcc's LTO feature and to add a stm32f1xx_hal_conf.h file. See
-stm32f1.patch for the modifications.
+with gcc's LTO feature. See stm32f1.patch for the modifications.
 
 The stm32f4 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef4.html
