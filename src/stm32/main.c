@@ -1,4 +1,4 @@
-// Main starting point for STM32F4 boards.
+// Main starting point for STM32 boards.
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //

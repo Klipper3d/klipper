@@ -1,5 +1,5 @@
-#ifndef __STM32F4_GPIO_H
-#define __STM32F4_GPIO_H
+#ifndef __STM32_GPIO_H
+#define __STM32_GPIO_H
 
 #include <stdint.h> // uint32_t
 

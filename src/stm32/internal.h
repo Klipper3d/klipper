@@ -1,10 +1,10 @@
-#ifndef __STM32F4_INTERNAL_H
-#define __STM32F4_INTERNAL_H
-// Local definitions for STM32F4 code
+#ifndef __STM32_INTERNAL_H
+#define __STM32_INTERNAL_H
+// Local definitions for STM32 code
 
-#include "autoconf.h" // CONFIG_MACH_STM32F1xx
+#include "autoconf.h" // CONFIG_MACH_STM32F1
 
-#if CONFIG_MACH_STM32F1xx
+#if CONFIG_MACH_STM32F1
 #include "stm32f1xx.h"
 #else
 #include "stm32f4xx.h"

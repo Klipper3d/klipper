@@ -1,4 +1,4 @@
-// SPI functions on STM32F4
+// SPI functions on STM32
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //

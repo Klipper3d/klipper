@@ -1,4 +1,4 @@
-// ADC functions on STM32F4
+// ADC functions on STM32
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -22,7 +22,7 @@ static const uint8_t adc_pins[] = {
     GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5)
 };
 
-#if CONFIG_MACH_STM32F1xx
+#if CONFIG_MACH_STM32F1
 #define CR2_FLAGS (ADC_CR2_ADON | (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG)
 #else
 #define CR2_FLAGS ADC_CR2_ADON
@@ -52,7 +52,7 @@ gpio_adc_setup(uint32_t pin)
                        | (aticks << 21) | (aticks << 24) | (aticks << 27));
         ADC1->CR2 = CR2_FLAGS;
 
-#if CONFIG_MACH_STM32F1xx
+#if CONFIG_MACH_STM32F1
         // Perform calibration
         udelay(timer_from_us(1));
         ADC1->CR2 = ADC_CR2_CAL | CR2_FLAGS;
