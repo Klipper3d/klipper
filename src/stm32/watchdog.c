@@ -1,4 +1,4 @@
-// Watchdog handler on STM32F4
+// Watchdog handler on STM32
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //

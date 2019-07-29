@@ -19,12 +19,10 @@ choice
         bool "SAMD21/SAMD51"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
+    config MACH_STM32
+        bool "STMicroelectronics STM32F1/F4"
     config MACH_STM32F0
         bool "STMicroelectronics STM32F042"
-    config MACH_STM32F1
-        bool "STMicroelectronics STM32F103"
-    config MACH_STM32F4
-        bool "STMicroelectronics STM32F4"
     config MACH_PRU
         bool "Beaglebone PRU"
     config MACH_LINUX
@@ -37,9 +35,8 @@ source "src/avr/Kconfig"
 source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
+source "src/stm32/Kconfig"
 source "src/stm32f0/Kconfig"
-source "src/stm32f1/Kconfig"
-source "src/stm32f4/Kconfig"
 source "src/pru/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"

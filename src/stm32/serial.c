@@ -1,4 +1,4 @@
-// STM32F4 serial
+// STM32 serial
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
