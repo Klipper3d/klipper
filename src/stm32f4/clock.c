@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_STM32F4_CLOCK_REF_8M
+#include "autoconf.h" // CONFIG_CLOCK_REF_8M
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 
@@ -76,7 +76,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
 }
 
-#if CONFIG_STM32F4_CLOCK_REF_8M
+#if CONFIG_CLOCK_REF_8M
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
 
@@ -85,7 +85,7 @@ static void
 enable_clock_stm32f40x(void)
 {
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-    if (CONFIG_STM32F4_CLOCK_REF_8M) {
+    if (CONFIG_CLOCK_REF_8M) {
         // Configure 168Mhz PLL from external 8Mhz crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
         RCC->PLLCFGR = (
@@ -107,7 +107,7 @@ static void
 enable_clock_stm32f446(void)
 {
 #if CONFIG_MACH_STM32F446
-    if (CONFIG_STM32F4_CLOCK_REF_8M) {
+    if (CONFIG_CLOCK_REF_8M) {
         // Configure 180Mhz PLL from external 8Mhz crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
         RCC->PLLCFGR = (

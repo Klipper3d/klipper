@@ -50,12 +50,16 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Clock Reference"
-    config STM32F4_CLOCK_REF_8M
+    prompt "Clock Reference" if LOW_LEVEL_OPTIONS
+    config STM32_CLOCK_REF_8M
         bool "8Mhz crystal"
-    config STM32F4_CLOCK_REF_INTERNAL
+    config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
+config CLOCK_REF_8M
+    bool
+    default n if STM32_CLOCK_REF_INTERNAL
+    default y
 
 config SERIAL
     bool
