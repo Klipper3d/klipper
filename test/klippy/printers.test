@@ -82,6 +82,10 @@ CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
 
+# Printers using the stm32f103
+DICTIONARY stm32f1.dict
+CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
+
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
 CONFIG ../../config/generic-cramps.cfg
