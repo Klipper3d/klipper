@@ -140,9 +140,9 @@ This section lists some commonly used config commands.
   special hardware support (other than the ability to configure the
   pin as a digital output GPIO). Because the output switching is
   implemented in the micro-controller software, it is recommended that
-  the cycle_ticks parameter correspond to a time of 10ms or
-  greater. See the description of the 'set_pwm_out' and
-  'config_digital_out' commands for parameter description.
+  the cycle_ticks parameter correspond to a time of 10ms or greater.
+  See the description of the 'set_pwm_out' and 'config_digital_out'
+  commands for parameter description.
 
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be
@@ -203,7 +203,7 @@ only of interest to developers looking to gain insight into Klipper.
   a hardware PWM output pin. See the 'schedule_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u value=%hu` : Schedules a
+* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
   change to a software PWM output pin. See the 'schedule_digital_out'
   and 'config_soft_pwm_out' commands for more info.
 
