@@ -25,7 +25,7 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        self.color_data = [green, red, blue] * self.chain_count
+        self.color_data = [red, green, blue] * self.chain_count
         self.printer.register_event_handler("klippy:connect", self.send_data)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
@@ -51,7 +51,7 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        color_data = [green, red, blue]
+        color_data = [red, green, blue]
         if 'INDEX' in params:
             index = self.gcode.get_int('INDEX', params,
                                        minval=1, maxval=self.chain_count)
