@@ -7,10 +7,9 @@ pin mappings either.
 General considerations
 ======================
 
-The STM32 port currently requires an 8 MHz crystal for correct
-operation. The port is currently designed for and tested with
-STM32F103xB series MCUs, but it should work with any STM32F103 series
-MCUs with minimal changes.
+The port is currently designed for and tested with STM32F103xB series
+MCUs, but it should work with any STM32F103 series MCUs with minimal
+changes.
 
 Unlike Arduino-based boards, typically there is no automatic reset on serial
 connection with STM32 boards. Please use `restart_method: command` with the
@@ -19,14 +18,12 @@ STM32F1 port.
 Fixed pins
 ==========
 
-When using serial, the UART used for communication with the host is
-fixed to pins PA9 (TX) and PA10 (RX). When using USB, the PA11 (D-)
-and PA12 (D+) pins are reserved. The USB code assumes that PA12 (D+)
-has a fixed pullup resistor attached to it.
+When using USB, the PA11 (D-) and PA12 (D+) pins are reserved. The USB
+code assumes that PA12 (D+) has a fixed pullup resistor attached to
+it.
 
-SWD pins (PA13/PA14) are enabled for debugging and cannot be used for
-any I/O. SPI uses pins PB13/PB14/PB15, but the pins can be used as
-general I/O if SPI is not used.
+SPI uses pins PB13/PB14/PB15, but the pins can be used as general I/O
+if SPI is not used.
 
 Digital I/O
 ===========
