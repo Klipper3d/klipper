@@ -85,6 +85,10 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         regs->BSRR = 1 << pos;
     else if (pullup < 0)
         regs->BSRR = 1 << (pos + 16);
+
+    if (gpio == GPIO('A', 13) || gpio == GPIO('A', 14))
+        // Disable SWD to free PA13, PA14
+        AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE;
 }
 
 // Main clock setup called at chip startup
