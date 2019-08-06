@@ -84,7 +84,7 @@ class PrinterNeoPixel:
             ret = [g, r, b]
         else: 
             raise self.printer.config_error(
-                "Neopixel is not supported on AVR micro-controllers")
+                "The code must be a combination of the [R, G, B] letters.")
         return ret
         
 
