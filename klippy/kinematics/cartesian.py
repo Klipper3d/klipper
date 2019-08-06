@@ -124,6 +124,10 @@ class CartKinematics:
         for i, rail in enumerate(self.rails):
             if move.axes_d[i]:
                 rail.step_itersolve(move.cmove)
+    def get_status(self):
+        return {'homed_axes': "".join([a
+                    for a, (l, h) in zip("XYZ", self.limits) if l <= h])
+        }
     # Dual carriage support
     def _activate_carriage(self, carriage):
         toolhead = self.printer.lookup_object('toolhead')

@@ -150,6 +150,9 @@ class DeltaKinematics:
             self._check_motor_enable(print_time)
         for rail in self.rails:
             rail.step_itersolve(move.cmove)
+    def get_status(self):
+        return {'homed_axes': '' if self.need_home else 'XYZ'}
+
     # Helper function for DELTA_CALIBRATE script
     def get_calibrate_params(self):
         out = { 'radius': self.radius }
