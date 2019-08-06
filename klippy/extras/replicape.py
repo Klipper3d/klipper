@@ -201,8 +201,8 @@ class Replicape:
         if not self.host_mcu.is_fileoutput() and os.path.exists(
                 '/sys/devices/platform/ocp/481a0000.spi/spi_master/spi2'):
             sr_spi_bus = "spidev2.1"
-        self.sr_spi = bus.MCU_SPI(self.host_mcu, sr_spi_bus,
-                                  None, 0, 50000000, self.sr_disabled)
+        self.sr_spi = bus.MCU_SPI(self.host_mcu, sr_spi_bus, None, 0, 50000000)
+        self.sr_spi.setup_shutdown_msg(self.sr_disabled)
         self.sr_spi.spi_send(self.sr_disabled)
     def note_pwm_start_value(self, channel, start_value, shutdown_value):
         self.mcu_pwm_start_value |= not not start_value

@@ -97,13 +97,13 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         int ret = ioctl(config.fd, SPI_IOC_MESSAGE(1), &transfer);
         if (ret < 0) {
             report_errno("spi ioctl", ret);
-            shutdown("Unable to issue spi ioctl");
+            try_shutdown("Unable to issue spi ioctl");
         }
     } else {
         int ret = write(config.fd, data, len);
         if (ret < 0) {
             report_errno("write spi", ret);
-            shutdown("Unable to write to spi");
+            try_shutdown("Unable to write to spi");
         }
     }
 }
