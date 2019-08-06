@@ -18,6 +18,10 @@ class PrinterNeoPixel:
         self.mcu.register_config_callback(self.build_config)
         self.chain_count = config.getint('chain_count', 1, minval=1, maxval=18)
         self.neopixel_send_cmd = None
+
+        color_order_selection = {'RGB': 0, 'RBG': 1, 'BRG': 2, 'BGR': 3, 'GRB': 4, 'GBR': 5}
+        self.color_code = config.getchoice('color_order', color_order_selection)
+
         # Initial color
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
@@ -25,7 +29,9 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        self.color_data = [red, green, blue] * self.chain_count
+        formatted_color = self.SetColorByCode( red, green, blue)
+
+        self.color_data = formatted_color * self.chain_count
         self.printer.register_event_handler("klippy:connect", self.send_data)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
@@ -51,7 +57,8 @@ class PrinterNeoPixel:
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        color_data = [red, green, blue]
+        #color_data = [green, red, blue]
+        color_data = self.SetColorByCode( red, green, blue)
         if 'INDEX' in params:
             index = self.gcode.get_int('INDEX', params,
                                        minval=1, maxval=self.chain_count)
@@ -61,6 +68,25 @@ class PrinterNeoPixel:
         # Send command
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.send_data(self.mcu.print_time_to_clock(print_time))
+
+    def SetColorByCode(self, r, g, b):
+        if self.color_code == "RGB":
+            ret = [r, g, b]
+        elif self.color_code == "RBG":
+            ret = [r, b, g]
+        elif self.color_code == "BRG":
+            ret = [b, r, g]
+        elif self.color_code == "BGR":
+            ret = [b, g, r]
+        elif self.color_code == "GBR":
+            ret = [g, b, r]
+        elif self.color_code == "GRB":
+            ret = [g, r, b]
+        else: 
+            raise self.printer.config_error(
+                "Neopixel is not supported on AVR micro-controllers")
+        return ret
+        
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)
