@@ -21,6 +21,8 @@ class NoneKinematics:
         pass
     def move(self, print_time, move):
         pass
+    def get_status(self):
+        return {'homed_axes': ''}
 
 def load_kinematics(toolhead, config):
     return NoneKinematics(toolhead, config)

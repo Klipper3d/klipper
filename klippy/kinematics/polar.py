@@ -130,6 +130,9 @@ class PolarKinematics:
                 stepper_bed.set_commanded_position(angle - 2. * math.pi)
         if axes_d[2]:
             self.rails[1].step_itersolve(cmove)
+    def get_status(self):
+        return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
+                        ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)
