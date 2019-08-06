@@ -6,6 +6,8 @@ All dates in this document are approximate.
 
 # Changes
 
+20190806: The SET_NEOPIXEL command has been renamed to SET_LED.
+
 20190726: The mcp4728 digital-to-analog code has changed. The default
 i2c_address is now 0x60 and the voltage reference is now relative to
 the mcp4728's internal 2.048 volt reference.
