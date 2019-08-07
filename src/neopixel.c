@@ -11,6 +11,74 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 
+// The WS2812 uses a bit-banging protocol where each bit is
+// transmitted as a gpio high pulse of variable length.  The various
+// specs are unclear, but it is believed the timing requirements are:
+// - A zero bit must have a high pulse less than 500ns.
+// - A one bit must have a high pulse longer than 650ns.
+// - The total bit time (gpio high to following gpio high) must not
+//   exceed ~5000ns. The average bit time must be at least 1250ns.
+// - The specs generally indicate a minimum high pulse and low pulse
+//   of 200ns, but the actual requirement might be smaller.
+
+
+
+/****************************************************************
+ * Timing
+ ****************************************************************/
+
+typedef unsigned int neopixel_time_t;
+
+static neopixel_time_t
+nsecs_to_ticks(uint32_t ns)
+{
+    return timer_from_us(ns * 1000) / 1000000;
+}
+
+static inline int
+neopixel_check_elapsed(neopixel_time_t t1, neopixel_time_t t2, uint32_t nsecs)
+{
+    return t2 - t1 >= nsecs_to_ticks(nsecs);
+}
+
+// The AVR micro-controllers require specialized timing
+#if CONFIG_MACH_AVR
+
+#include <avr/interrupt.h> // TCNT1
+
+static neopixel_time_t
+neopixel_get_time(void)
+{
+    return TCNT1;
+}
+
+static inline void
+neopixel_delay(neopixel_time_t start, uint32_t nsecs)
+{
+}
+
+#else
+
+static neopixel_time_t
+neopixel_get_time(void)
+{
+    return timer_read_time();
+}
+
+static inline void
+neopixel_delay(neopixel_time_t start, uint32_t nsecs)
+{
+    while (!neopixel_check_elapsed(start, neopixel_get_time(), nsecs))
+        ;
+}
+
+#endif
+
+
+/****************************************************************
+ * Neopixel interface
+ ****************************************************************/
+
 struct neopixel_s {
     struct gpio_out pin;
     uint32_t last_req_time;
@@ -24,25 +92,7 @@ command_config_neopixel(uint32_t *args)
                                      , sizeof(*n));
     n->pin = pin;
 }
-#if !CONFIG_MACH_AVR
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u");
-#endif
-
-static uint32_t
-timer_from_ns(uint32_t ns)
-{
-    return timer_from_us(ns * 1000) / 1000000;
-}
-
-// The WS2812 uses a bit-banging protocol where each bit is
-// transmitted as a gpio high pulse of variable length.  The various
-// specs are unclear, but it is believed the timing requirements are:
-// - A zero bit must have a high pulse less than 500ns.
-// - A one bit must have a high pulse longer than 650ns.
-// - The total bit time (gpio high to following gpio high) must not
-//   exceed ~5000ns. The average bit time must be at least 1250ns.
-// - The specs generally indicate a minimum high pulse and low pulse
-//   of 200ns, but the actual requirement might be smaller.
 
 static int
 send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
@@ -55,61 +105,51 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
     }
 
     struct gpio_out pin = n->pin;
-    uint32_t min_wait_time = cur, max_wait_time = cur + 0x40000000;
+    neopixel_time_t last_start = neopixel_get_time();
     while (data_len--) {
         uint_fast8_t byte = *data++;
         uint_fast8_t bits = 8;
         while (bits--) {
-            // Calculate pulse duration
-            uint32_t on;
-            if (byte & 0x80)
-                on = timer_from_ns(650);
-            else
-                on = timer_from_ns(200);
-
-            // Set output high
-            do {
-                irq_poll();
-                cur = timer_read_time();
-            } while (timer_is_before(cur, min_wait_time));
-            uint32_t off_end_time = cur;
-            gpio_out_write(pin, 1);
-            uint32_t on_start_time = timer_read_time();
-            min_wait_time = on_start_time + on;
-
-            // Set output low
-            do {
-                irq_poll();
-                cur = timer_read_time();
-            } while (timer_is_before(cur, min_wait_time));
-            uint32_t on_end_time = cur;
-            gpio_out_write(pin, 0);
-            uint32_t off_start_time = cur = timer_read_time();
-            min_wait_time = on_start_time + timer_from_ns(1250);
-
-            // Check for faults
             if (byte & 0x80) {
-                // Make sure off for at least 200ns
-                uint32_t min_off = off_start_time + timer_from_ns(200);
-                if (timer_is_before(min_wait_time, min_off))
-                    min_wait_time = min_off;
-            } else {
-                // Make sure short on duration was no more than 500ns
-                uint32_t max_off = off_end_time + timer_from_ns(500);
-                if (timer_is_before(max_off, off_start_time))
+                // Long pulse
+                neopixel_delay(last_start, 1250);
+                irq_disable();
+                neopixel_time_t start = neopixel_get_time();
+                gpio_out_toggle_noirq(pin);
+                irq_enable();
+
+                if (neopixel_check_elapsed(last_start, start, 4000))
                     goto fail;
+                last_start = start;
+                byte <<= 1;
+
+                neopixel_delay(start, 650);
+                irq_disable();
+                gpio_out_toggle_noirq(pin);
+                irq_enable();
+            } else {
+                // Short pulse
+                neopixel_delay(last_start, 1250);
+                irq_disable();
+                neopixel_time_t start = neopixel_get_time();
+                gpio_out_toggle_noirq(pin);
+                neopixel_delay(start, 200);
+                gpio_out_toggle_noirq(pin);
+                irq_enable();
+
+                if (neopixel_check_elapsed(last_start, start, 4000))
+                    goto fail;
+                last_start = start;
+                byte <<= 1;
             }
-            byte <<= 1;
-            if (timer_is_before(max_wait_time, on_start_time))
-                goto fail;
-            max_wait_time = on_end_time + timer_from_us(4);
         }
     }
-    n->last_req_time = cur;
+    n->last_req_time = timer_read_time();
     return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
-    n->last_req_time = cur;
+    gpio_out_write(pin, 0);
+    n->last_req_time = timer_read_time();
     return -1;
 }
 
@@ -128,6 +168,4 @@ command_neopixel_send(uint32_t *args)
             break;
     }
 }
-#if !CONFIG_MACH_AVR
 DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c data=%*s");
-#endif
