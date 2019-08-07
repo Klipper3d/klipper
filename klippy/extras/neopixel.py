@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
+
 class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -41,7 +43,8 @@ class PrinterNeoPixel:
             "neopixel_send oid=%c data=%*s", cq=cmd_queue)
     def send_data(self, minclock=0):
         self.neopixel_send_cmd.send([self.oid, self.color_data],
-                                    minclock=minclock)
+                                    minclock=minclock,
+                                    reqclock=BACKGROUND_PRIORITY_CLOCK)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, params):
         # Parse parameters

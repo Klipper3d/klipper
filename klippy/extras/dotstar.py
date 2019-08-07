@@ -5,6 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import bus
 
+BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
+
 class PrinterDotstar:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -36,7 +38,8 @@ class PrinterDotstar:
                                         self.cmd_SET_LED,
                                         desc=self.cmd_SET_LED_help)
     def send_data(self, minclock=0):
-        self.spi.spi_send(self.color_data, minclock=minclock, reqclock=minclock)
+        self.spi.spi_send(self.color_data, minclock=minclock,
+                          reqclock=BACKGROUND_PRIORITY_CLOCK)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, params):
         # Parse parameters
