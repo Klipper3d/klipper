@@ -22,7 +22,7 @@ class PrinterDotstar:
                        clock_pin_params['pin'])
         self.spi = bus.MCU_SPI(mcu, None, None, 0, 500000, sw_spi_pins)
         # Initial color
-        self.chain_count = config.getint('chain_count', 1, minval=1, maxval=12)
+        self.chain_count = config.getint('chain_count', 1, minval=1)
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
@@ -38,8 +38,10 @@ class PrinterDotstar:
                                         self.cmd_SET_LED,
                                         desc=self.cmd_SET_LED_help)
     def send_data(self, minclock=0):
-        self.spi.spi_send(self.color_data, minclock=minclock,
-                          reqclock=BACKGROUND_PRIORITY_CLOCK)
+        data = self.color_data
+        for d in [data[i:i+20] for i in range(0, len(data), 20)]:
+            self.spi.spi_send(d, minclock=minclock,
+                              reqclock=BACKGROUND_PRIORITY_CLOCK)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, params):
         # Parse parameters
