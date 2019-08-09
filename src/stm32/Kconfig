@@ -66,11 +66,13 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F103
+    prompt "Bootloader offset" if MACH_STM32F103 || MACH_STM32F4
     config STM32_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)"
     config STM32_FLASH_START_7000
         bool "28KiB bootloader"
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader (SKR-PRO)"
     config STM32_FLASH_START_0000
         bool "No bootloader"
 endchoice
@@ -78,6 +80,7 @@ config FLASH_START
     hex
     default 0x2000 if STM32_FLASH_START_2000
     default 0x7000 if STM32_FLASH_START_7000
+    default 0x8000 if STM32_FLASH_START_8000
     default 0x0000
 
 choice

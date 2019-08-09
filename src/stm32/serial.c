@@ -26,12 +26,21 @@ DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
 #define USARTx_IRQn USART2_IRQn
 #define USARTx_IRQHandler USART2_IRQHandler
 #else
+#if CONFIG_MACH_STM32F407
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
+#define GPIO_Rx GPIO('D', 9)
+#define GPIO_Tx GPIO('D', 8)
+#define USARTx USART3
+#define USARTx_IRQn USART3_IRQn
+#define USARTx_IRQHandler USART3_IRQHandler
+#else
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
 #define GPIO_Rx GPIO('B', 11)
 #define GPIO_Tx GPIO('B', 10)
 #define USARTx USART3
 #define USARTx_IRQn USART3_IRQn
 #define USARTx_IRQHandler USART3_IRQHandler
+#endif
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
