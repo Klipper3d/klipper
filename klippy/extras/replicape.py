@@ -128,8 +128,9 @@ class servo_pwm:
         pru_mcu = replicape.mcu_pwm_enable.get_mcu()
         printer = pru_mcu.get_printer()
         ppins = printer.lookup_object('pins')
-        ppins.reserve_pin(pru_mcu.get_name(), resv1, config_name)
-        ppins.reserve_pin(pru_mcu.get_name(), resv2, config_name)
+        pin_resolver = ppins.get_pin_resolver(pru_mcu.get_name())
+        pin_resolver.reserve_pin(resv1, config_name)
+        pin_resolver.reserve_pin(resv2, config_name)
     def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         self.mcu_pwm.setup_cycle_time(cycle_time, True);
 
