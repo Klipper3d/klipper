@@ -26,9 +26,10 @@ def resolve_bus_name(mcu, param, bus):
     # Check for reserved bus pins
     constants = mcu.get_constants()
     reserve_pins = constants.get('BUS_PINS_%s' % (bus,), None)
+    pin_resolver = ppins.get_pin_resolver(mcu_name)
     if reserve_pins is not None:
         for pin in reserve_pins.split(','):
-            ppins.reserve_pin(mcu_name, pin, bus)
+            pin_resolver.reserve_pin(pin, bus)
     return bus
 
 
