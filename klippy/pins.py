@@ -161,13 +161,25 @@ class PinResolver:
             raise error("Pin %s reserved for %s - can't reserve for %s" % (
                 pin, self.reserved[pin], reserve_name))
         self.reserved[pin] = reserve_name
+    def alias_pin(self, alias, pin):
+        if alias in self.aliases and self.aliases[alias] != pin:
+            raise error("Alias %s mapped to %s - can't alias to %s" % (
+                alias, self.aliases[alias], pin))
+        if pin in self.aliases:
+            pin = self.aliases[pin]
+        self.aliases[alias] = pin
+        for existing_alias, existing_pin in self.aliases.items():
+            if existing_pin == alias:
+                self.aliases[existing_alias] = pin
     def add_pin_mapping(self, mcu_type, mapping_name):
         if mapping_name == 'arduino':
-            self.aliases = get_aliases_arduino(mcu_type)
+            pin_mapping = get_aliases_arduino(mcu_type)
         elif mapping_name == 'beaglebone':
-            self.aliases = get_aliases_beaglebone(mcu_type)
+            pin_mapping = get_aliases_beaglebone(mcu_type)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
+        for alias, pin in pin_mapping.items():
+            self.alias_pin(alias, pin)
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
