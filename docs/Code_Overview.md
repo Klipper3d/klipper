@@ -424,7 +424,7 @@ software:
   to convert from a "print time" to the main micro-controller's
   hardware clock by multiplying the print time by the mcu's statically
   configured frequency rate. The high-level host code uses print times
-  to calculates almost all physical actions (eg, head movement, heater
+  to calculate almost all physical actions (eg, head movement, heater
   changes, etc.). Within the host code, print times are generally
   stored in variables named *print_time* or *move_time*.
 * MCU clock. This is the hardware clock counter on each
