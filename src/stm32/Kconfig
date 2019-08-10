@@ -111,9 +111,12 @@ choice
         bool "USART2"
     config STM32_SERIAL_USART3
         bool "USART3"
+    config STM32_SERIAL_USART3_ALT
+        bool "USART3 (on PD9/PD8)" if MACH_STM32F4
 endchoice
 config SERIAL_PORT
     int
+    default 103 if STM32_SERIAL_USART3_ALT
     default 3 if STM32_SERIAL_USART3
     default 2 if STM32_SERIAL_USART2
     default 1
