@@ -24,6 +24,13 @@ struct st7920 {
 #define SYNC_CMD  0xf8
 #define SYNC_DATA 0xfa
 
+static uint32_t
+nsecs_to_ticks(uint32_t ns)
+{
+    return timer_from_us(ns * 1000) / 1000000;
+}
+
+
 // Write eight bits to the st7920 via the serial interface
 static void
 st7920_xmit_byte(struct st7920 *s, uint8_t data)
@@ -37,6 +44,12 @@ st7920_xmit_byte(struct st7920 *s, uint8_t data)
         }
         gpio_out_toggle(sclk);
         data <<= 1;
+        // Add about 200ns delay between the rise and fall of thesclk pin.
+        uint32_t last_clk_time = timer_read_time(), cur = timer_read_time(), nsecs_ticks = nsecs_to_ticks(200);
+        while (cur - last_clk_time < nsecs_ticks) {
+            irq_poll();
+            cur = timer_read_time();
+        }
         gpio_out_toggle(sclk);
     }
 }
