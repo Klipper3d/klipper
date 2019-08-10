@@ -44,7 +44,7 @@ st7920_xmit_byte(struct st7920 *s, uint8_t data)
         }
         gpio_out_toggle(sclk);
         data <<= 1;
-        // Add about 200ns delay between the rise and fall of thesclk pin.
+        // Add about 200ns delay between the rise and fall of the sclk pin.
         uint32_t last_clk_time = timer_read_time(), cur = timer_read_time(), nsecs_ticks = nsecs_to_ticks(200);
         while (cur - last_clk_time < nsecs_ticks) {
             irq_poll();
