@@ -19,7 +19,6 @@ choice
     config MACH_STM32F103
         bool "STM32F103"
         select MACH_STM32F1
-        select HAVE_STM32_USBFS
     config MACH_STM32F405
         bool "STM32F405"
         select MACH_STM32F4
@@ -37,6 +36,12 @@ config MACH_STM32F4
     bool
 config HAVE_STM32_USBFS
     bool
+    default y if MACH_STM32F103
+    default n
+config HAVE_STM32_USBOTG
+    bool
+    default y if MACH_STM32F4
+    default n
 
 config MCU
     string
@@ -97,7 +102,7 @@ config CLOCK_REF_8M
 
 config USBSERIAL
     bool "Use USB for communication (instead of serial)"
-    depends on HAVE_STM32_USBFS
+    depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     default y
 config SERIAL
     depends on !USBSERIAL

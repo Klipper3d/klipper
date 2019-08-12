@@ -26,7 +26,9 @@ src-$(CONFIG_MACH_STM32F4) += ../lib/stm32f4/system_stm32f4xx.c
 src-$(CONFIG_MACH_STM32F4) += stm32/stm32f4.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32/adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32/spi.c
-src-$(CONFIG_USBSERIAL) += stm32/usbfs.c generic/usb_cdc.c
+usb-src-$(CONFIG_HAVE_STM32_USBFS) := stm32/usbfs.c
+usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
+src-$(CONFIG_USBSERIAL) += $(usb-src-y) generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32/serial.c generic/serial_irq.c
 
 # Add assembler build rules
