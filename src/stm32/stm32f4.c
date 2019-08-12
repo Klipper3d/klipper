@@ -131,6 +131,28 @@ enable_clock_stm32f446(void)
     PWR->CR = (3 << PWR_CR_VOS_Pos) | PWR_CR_ODEN | PWR_CR_ODSWEN;
     while (!(PWR->CSR & PWR_CSR_ODSWRDY))
         ;
+
+    // Enable 48Mhz USB clock
+    if (CONFIG_USBSERIAL) {
+        if (CONFIG_CLOCK_REF_8M) {
+            RCC->PLLSAICFGR = (
+                (4 << RCC_PLLSAICFGR_PLLSAIM_Pos)
+                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
+                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
+                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
+        } else {
+            RCC->PLLSAICFGR = (
+                (8 << RCC_PLLSAICFGR_PLLSAIM_Pos)
+                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
+                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
+                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
+        }
+        RCC->CR |= RCC_CR_PLLSAION;
+        while (!(RCC->CR & RCC_CR_PLLSAIRDY))
+            ;
+
+        RCC->DCKCFGR2 = RCC_DCKCFGR2_CK48MSEL;
+    }
 #endif
 }
 
