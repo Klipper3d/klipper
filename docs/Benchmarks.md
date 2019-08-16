@@ -309,6 +309,7 @@ class machine.
 | sam4s8c (USB)       | 619K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | samd51 (USB)        | 620K | 8cd83b4c | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| stm32f446 (USB)     | 621K | aac51bdb | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 
 Host Benchmarks
 ===============
