@@ -57,40 +57,35 @@ fifo_configure(void)
     fpos += ep_size;
 }
 
-// Inspect the next packet on the rx queue
-static uint32_t
-peek_rx_queue(uint32_t ep)
+// Write a packet to a tx fifo
+static int_fast8_t
+fifo_write_packet(uint32_t ep, const uint8_t *src, uint32_t len)
 {
-    for (;;) {
-        USB_OTG_OUTEndpointTypeDef *epo = EPOUT(ep);
-        uint32_t ctl = epo->DOEPCTL;
-        if (!(ctl & USB_OTG_DOEPCTL_EPENA) || ctl & USB_OTG_DOEPCTL_NAKSTS) {
-            // Reenable packet reception if it got disabled by controller
-            epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
-            epo->DOEPCTL = ctl | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
-        }
-        uint32_t sts = OTG->GINTSTS;
-        if (!(sts & USB_OTG_GINTSTS_RXFLVL))
-            // No packet ready
-            return 0;
-        uint32_t grx = OTG->GRXSTSR;
-        uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
-                           >> USB_OTG_GRXSTSP_PKTSTS_Pos);
-        if (pktsts != 1 && pktsts != 3 && pktsts != 4) {
-            // A packet is ready
-            if ((grx & USB_OTG_GRXSTSP_EPNUM_Msk) != ep)
-                return 0;
-            return grx;
-        }
-        // Discard informational entries from queue
-        grx = OTG->GRXSTSP;
+    void *fifo = EPFIFO(ep);
+    USB_OTG_INEndpointTypeDef *epi = EPIN(ep);
+    epi->DIEPTSIZ = len | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos);
+    epi->DIEPCTL |= USB_OTG_DIEPCTL_EPENA | USB_OTG_DIEPCTL_CNAK;
+    int32_t count = len;
+    while (count >= 4) {
+        uint32_t data;
+        memcpy(&data, src, 4);
+        writel(fifo, data);
+        count -= 4;
+        src += 4;
     }
+    if (count) {
+        uint32_t data = 0;
+        memcpy(&data, src, count);
+        writel(fifo, data);
+    }
+    return len;
 }
 
 // Read a packet from the rx queue
 static int_fast8_t
 fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
 {
+    // Transfer data
     void *fifo = EPFIFO(0);
     uint32_t grx = OTG->GRXSTSP;
     uint32_t bcnt = (grx & USB_OTG_GRXSTSP_BCNT) >> USB_OTG_GRXSTSP_BCNT_Pos;
@@ -108,24 +103,37 @@ fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
     uint32_t extra = DIV_ROUND_UP(bcnt, 4) - DIV_ROUND_UP(xfer, 4);
     while (extra--)
         readl(fifo);
+
+    // Reenable packet reception if it got disabled by controller
+    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(grx & USB_OTG_GRXSTSP_EPNUM_Msk);
+    uint32_t ctl = epo->DOEPCTL;
+    if (!(ctl & USB_OTG_DOEPCTL_EPENA) || ctl & USB_OTG_DOEPCTL_NAKSTS) {
+        epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
+        epo->DOEPCTL = ctl | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+    }
     return xfer;
 }
 
-// Write a packet to a tx fifo
-static void
-fifo_write_packet(void *fifo, const uint8_t *src, uint32_t count)
+// Inspect the next packet on the rx queue
+static uint32_t
+peek_rx_queue(uint32_t ep)
 {
-    while (count >= 4) {
-        uint32_t data;
-        memcpy(&data, src, 4);
-        writel(fifo, data);
-        count -= 4;
-        src += 4;
-    }
-    if (count) {
-        uint32_t data = 0;
-        memcpy(&data, src, count);
-        writel(fifo, data);
+    for (;;) {
+        uint32_t sts = OTG->GINTSTS;
+        if (!(sts & USB_OTG_GINTSTS_RXFLVL))
+            // No packet ready
+            return 0;
+        uint32_t grx = OTG->GRXSTSR;
+        uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
+                           >> USB_OTG_GRXSTSP_PKTSTS_Pos);
+        if (pktsts != 1 && pktsts != 3 && pktsts != 4) {
+            // A packet is ready
+            if ((grx & USB_OTG_GRXSTSP_EPNUM_Msk) != ep)
+                return 0;
+            return grx;
+        }
+        // Discard informational entries from queue
+        fifo_read_packet(NULL, 0);
     }
 }
 
@@ -149,20 +157,16 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
-    USB_OTG_INEndpointTypeDef *epi = EPIN(USB_CDC_EP_BULK_IN);
-    uint32_t len_d4 = DIV_ROUND_UP(len, 4);
-    uint32_t ctl = epi->DIEPCTL;
+    uint32_t ctl = EPIN(USB_CDC_EP_BULK_IN)->DIEPCTL;
     if (!(ctl & USB_OTG_DIEPCTL_USBAEP))
+        // Controller not enabled
         return -2;
-    if (ctl & USB_OTG_DIEPCTL_EPENA || len_d4 > epi->DTXFSTS) {
+    if (ctl & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
         OTGD->DIEPEMPMSK |= (1 << USB_CDC_EP_BULK_IN);
         return -1;
     }
-    epi->DIEPTSIZ = len | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos);
-    epi->DIEPCTL |= USB_OTG_DIEPCTL_EPENA | USB_OTG_DIEPCTL_CNAK;
-    fifo_write_packet(EPFIFO(USB_CDC_EP_BULK_IN), data, len);
-    return len;
+    return fifo_write_packet(USB_CDC_EP_BULK_IN, data, len);
 }
 
 int_fast8_t
@@ -221,20 +225,13 @@ usb_send_ep0(const void *data, uint_fast8_t len)
         // Transfer interrupted
         return -2;
     }
-    USB_OTG_INEndpointTypeDef *epi = EPIN(0);
-    uint32_t len_d4 = DIV_ROUND_UP(len, 4);
-    uint32_t ctl = epi->DIEPCTL;
-    if (ctl & USB_OTG_DIEPCTL_EPENA || len_d4 > epi->DTXFSTS) {
+    if (EPIN(0)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
         OTGD->DIEPEMPMSK |= (1 << 0);
         OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
         return -1;
     }
-    epi->DIEPTSIZ = len | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos);
-    epi->DIEPCTL = ((ctl & ~USB_OTG_DIEPCTL_STALL) | USB_OTG_DIEPCTL_EPENA
-                    | USB_OTG_DIEPCTL_CNAK);
-    fifo_write_packet(EPFIFO(0), data, len);
-    return len;
+    return fifo_write_packet(0, data, len);
 }
 
 void
