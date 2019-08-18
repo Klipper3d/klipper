@@ -32,7 +32,7 @@ class FieldHelper:
         if reg_name is None:
             reg_name = self.field_to_register[field_name]
         if reg_value is None:
-            reg_value = self.registers[reg_name]
+            reg_value = self.registers.get(reg_name, 0)
         mask = self.all_fields[reg_name][field_name]
         field_value = (reg_value & mask) >> ffs(mask)
         if field_name in self.signed_fields and ((reg_value & mask)<<1) > mask:
@@ -163,7 +163,13 @@ class TMCVirtualEndstop:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
-        self.en_pwm = self.fields.get_field("en_pwm_mode")
+        reg = self.fields.lookup_register("en_pwm_mode", None)
+        if reg is None:
+            self.en_pwm = not self.fields.get_field("en_spreadCycle")
+            self.pwmthrs = self.fields.get_field("TPWMTHRS")
+        else:
+            self.en_pwm = self.fields.get_field("en_pwm_mode")
+            self.pwmthrs = 0
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -173,14 +179,26 @@ class TMCVirtualEndstop:
         self.query_endstop = self.mcu_endstop.query_endstop
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def home_prepare(self):
-        self.fields.set_field("en_pwm_mode", 0)
-        val = self.fields.set_field("diag1_stall", 1)
+        reg = self.fields.lookup_register("en_pwm_mode", None)
+        if reg is None:
+            # On "stallguard4" drivers, "stealthchop" must be enabled
+            self.mcu_tmc.set_register("TPWMTHRS", 0)
+            val = self.fields.set_field("en_spreadCycle", 0)
+        else:
+            # On earlier drivers, "stealthchop" must be disabled
+            self.fields.set_field("en_pwm_mode", 0)
+            val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
-        self.fields.set_field("en_pwm_mode", self.en_pwm)
-        val = self.fields.set_field("diag1_stall", 0)
+        reg = self.fields.lookup_register("en_pwm_mode", None)
+        if reg is None:
+            self.mcu_tmc.set_register("TPWMTHRS", self.pwmthrs)
+            val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
+        else:
+            self.fields.set_field("en_pwm_mode", self.en_pwm)
+            val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
