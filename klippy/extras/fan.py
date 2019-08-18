@@ -16,6 +16,8 @@ class PrinterFan:
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
                                                minval=0.)
+        self.off_below = config.getfloat(
+            'off_below', default=0., minval=0., maxval=1.)
         ppins = printer.lookup_object('pins')
         self.mcu_fan = ppins.setup_pin('pwm', config.get('pin'))
         self.mcu_fan.setup_max_duration(0.)
@@ -29,6 +31,8 @@ class PrinterFan:
     def handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
     def set_speed(self, print_time, value):
+        if value < self.off_below:
+            value = 0.
         value = max(0., min(self.max_power, value * self.max_power))
         if value == self.last_fan_value:
             return
