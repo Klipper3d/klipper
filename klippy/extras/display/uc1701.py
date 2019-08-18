@@ -1,6 +1,6 @@
 # Support for UC1701 (and similar) 128x64 graphics LCD displays
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 # Copyright (C) 2019  Dmitry Budaev <condemil@gmail.com>
 #
@@ -110,30 +110,12 @@ class SPI4wire:
     def __init__(self, config, data_pin_name):
         self.spi = extras.bus.MCU_SPI_from_config(config, 0,
                                                   default_speed=10000000)
-        mcu = self.spi.get_mcu()
-        # Create data/control pin
-        ppins = config.get_printer().lookup_object('pins')
-        pin_params = ppins.lookup_pin(config.get(data_pin_name))
-        if pin_params['chip'] != mcu:
-            raise ppins.error("%s: all pins must be on same mcu" % (
-                config.get_name()))
-        self.dc_oid = mcu.create_oid()
-        mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
-                           " value=%d default_value=%d max_duration=%d" % (
-                               self.dc_oid, pin_params['pin'], 0, 0, 0))
-        mcu.register_config_callback(self.build_config)
-        self.update_pin_cmd = None
-    def build_config(self):
-        self.update_pin_cmd = self.spi.get_mcu().lookup_command(
-            "update_digital_out oid=%c value=%c",
-            cq=self.spi.get_command_queue())
+        dc_pin = config.get(data_pin_name)
+        self.mcu_dc = extras.bus.MCU_bus_digital_out(
+            self.spi.get_mcu(), dc_pin, self.spi.get_command_queue())
     def send(self, cmds, is_data=False):
-        if is_data:
-            self.update_pin_cmd.send([self.dc_oid, 1],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
-        else:
-            self.update_pin_cmd.send([self.dc_oid, 0],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.mcu_dc.update_digital_out(is_data,
+                                       reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # IO wrapper for i2c bus
