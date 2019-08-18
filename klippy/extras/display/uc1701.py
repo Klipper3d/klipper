@@ -200,10 +200,25 @@ class SSD1306(DisplayBase):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
             io = I2C(config, 60)
+            io_bus = io.i2c
         else:
             io = SPI4wire(config, "dc_pin")
+            io_bus = io.spi
+        self.mcu_reset = None
+        reset_pin_desc = config.get("reset_pin", None)
+        if reset_pin_desc is not None:
+            self.mcu_reset = extras.bus.MCU_bus_digital_out(
+                io_bus.get_mcu(), reset_pin_desc, io_bus.get_command_queue())
         DisplayBase.__init__(self, io)
     def init(self):
+        if self.mcu_reset is not None:
+            mcu = self.mcu_reset.get_mcu()
+            curtime = mcu.get_printer().get_reactor().monotonic()
+            print_time = mcu.estimated_print_time(curtime)
+            minclock = mcu.print_time_to_clock(print_time + .100)
+            self.mcu_reset.update_digital_out(0, minclock=minclock)
+            minclock = mcu.print_time_to_clock(print_time + .200)
+            self.mcu_reset.update_digital_out(1, minclock=minclock)
         init_cmds = [
             0xAE,       # Display off
             0xD5, 0x80, # Set oscillator frequency
