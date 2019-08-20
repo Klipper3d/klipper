@@ -75,10 +75,15 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         cfg = pullup ? 0x8 : 0x4;
     } else if (mode == GPIO_OUTPUT) {
         cfg = 0x1;
+    } else if (mode == (GPIO_OUTPUT | GPIO_OPEN_DRAIN)) {
+        cfg = 0x5;
     } else if (mode == GPIO_ANALOG) {
         cfg = 0x0;
     } else {
-        if (pullup > 0)
+        if (mode & GPIO_OPEN_DRAIN)
+            // Alternate function with open-drain mode
+            cfg = 0xd;
+        else if (pullup > 0)
             // Alternate function input pins use GPIO_INPUT mode on the stm32f1
             cfg = 0x8;
         else
