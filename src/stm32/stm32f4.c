@@ -53,6 +53,15 @@ get_pclock_frequency(uint32_t periph_base)
     return FREQ_PERIPH;
 }
 
+// Enable a GPIO peripheral clock
+void
+gpio_clock_enable(GPIO_TypeDef *regs)
+{
+    uint32_t rcc_pos = ((uint32_t)regs - AHB1PERIPH_BASE) / 0x400;
+    RCC->AHB1ENR |= 1 << rcc_pos;
+    RCC->AHB1ENR;
+}
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -60,8 +69,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
 
     // Enable GPIO clock
-    uint32_t rcc_pos = ((uint32_t)regs - AHB1PERIPH_BASE) / 0x400;
-    RCC->AHB1ENR |= (1<<rcc_pos);
+    gpio_clock_enable(regs);
 
     // Configure GPIO
     uint32_t mode_bits = mode & 0x0f, func = mode >> 4;

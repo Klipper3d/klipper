@@ -52,6 +52,7 @@ gpio_out_setup(uint32_t pin, uint32_t val)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    gpio_clock_enable(regs);
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
     return g;
