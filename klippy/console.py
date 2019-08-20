@@ -38,7 +38,7 @@ class KeyboardReader:
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
         self.mcu_freq = 0
-        self.pins = pins.PinResolver({}, validate_aliases=False)
+        self.pins = pins.PinResolver(validate_aliases=False)
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
         reactor.register_callback(self.connect)
