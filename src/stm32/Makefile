@@ -25,6 +25,7 @@ src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c
 src-$(CONFIG_MACH_STM32F4) += ../lib/stm32f4/system_stm32f4xx.c
 src-$(CONFIG_MACH_STM32F4) += stm32/stm32f4.c
 src-$(CONFIG_HAVE_GPIO_ADC) += stm32/adc.c
+src-$(CONFIG_HAVE_GPIO_I2C) += stm32/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32/spi.c
 usb-src-$(CONFIG_HAVE_STM32_USBFS) := stm32/usbfs.c
 usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
