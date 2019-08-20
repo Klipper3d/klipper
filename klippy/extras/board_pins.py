@@ -8,10 +8,15 @@ class PrinterBoardAliases:
     def __init__(self, config, chip_name):
         ppins = config.get_printer().lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(chip_name)
-        aliases = config.get("aliases")
+        aliases = config.get("aliases").strip()
+        if aliases.endswith(','):
+            aliases = aliases[:-1]
         parts = [a.split('=', 1) for a in aliases.split(',')]
-        for name, value in parts:
-            name, value = name.strip(), value.strip()
+        for pair in parts:
+            if len(pair) != 2:
+                raise ppins.error("Unable to parse aliases in %s"
+                                  % (config.get_name(),))
+            name, value = [s.strip() for s in pair]
             if value.startswith('<') and value.endswith('>'):
                 pin_resolver.reserve_pin(name, value)
             else:
