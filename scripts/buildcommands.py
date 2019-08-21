@@ -210,6 +210,50 @@ Handlers.append(HandleInitialPins())
 
 
 ######################################################################
+# ARM IRQ vector table generation
+######################################################################
+
+# Create ARM IRQ vector table from interrupt handler declarations
+class Handle_arm_irq:
+    def __init__(self):
+        self.irqs = {}
+        self.ctr_dispatch = { 'DECL_ARMCM_IRQ': self.decl_armcm_irq }
+    def decl_armcm_irq(self, req):
+        func, num = req.split()[1:]
+        num = decode_integer(num)
+        if num in self.irqs and self.irqs[num] != func:
+            error("Conflicting IRQ definition %d (old %s new %s)"
+                  % (num, self.irqs[num], func))
+        self.irqs[num] = func
+    def update_data_dictionary(self, data):
+        pass
+    def generate_code(self, options):
+        armcm_offset = 16
+        if 1 - armcm_offset not in self.irqs:
+            # The ResetHandler was not defined - don't build VectorTable
+            return ""
+        max_irq = max(self.irqs.keys())
+        table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 1)
+        defs = []
+        for num, func in self.irqs.items():
+            if num < 1 - armcm_offset:
+                error("Invalid IRQ %d (%s)" % (num, func))
+            defs.append("extern void %s(void);\n" % (func,))
+            table[num + armcm_offset] = "    %s,\n" % (func,)
+        table[0] = "    &_stack_end,\n"
+        fmt = """
+extern void DefaultHandler(void);
+extern uint32_t _stack_end;
+%s
+const void *VectorTable[] __visible __section(".vector_table") = {
+%s};
+"""
+        return fmt % (''.join(defs), ''.join(table))
+
+Handlers.append(Handle_arm_irq())
+
+
+######################################################################
 # Wire protocol commands and responses
 ######################################################################
 
