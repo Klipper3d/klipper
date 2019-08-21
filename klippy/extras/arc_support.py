@@ -138,8 +138,8 @@ def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
         step*= -1.0
     ra = frange(startAngle, endAngle+step, step)
 
-    if rev:
-        ra = reversed(ra)
+#    if rev:
+#       ra = reversed(ra)
         
     for i in ra:
         rad = i * (math.pi / 180)
