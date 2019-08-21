@@ -14,7 +14,9 @@ CFLAGS-$(CONFIG_MACH_SAMD51) += -mcpu=cortex-m4 -Ilib/samd51/samd51a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 
-CFLAGS_klipper.elf += -T $(OUT)samd.ld --specs=nano.specs --specs=nosys.specs
+CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
+CFLAGS_klipper.elf += -T $(OUT)src/atsamd/samd.ld
+$(OUT)klipper.elf: $(OUT)src/atsamd/samd.ld
 
 # Add source files
 src-y += atsamd/main.c atsamd/gpio.c generic/crc16_ccitt.c generic/armcm_irq.c
@@ -31,15 +33,6 @@ src-$(CONFIG_MACH_SAMD21) += ../lib/samd21/samd21a/gcc/gcc/startup_samd21.c
 src-$(CONFIG_MACH_SAMD51) += atsamd/samd51_watchdog.c
 src-$(CONFIG_MACH_SAMD51) += atsamd/samd51_clock.c generic/armcm_timer.c
 src-$(CONFIG_MACH_SAMD51) += ../lib/samd51/samd51a/gcc/gcc/startup_samd51.c
-
-# Support bootloader offset address
-target-y := $(target-y)
-
-$(OUT)samd.ld: src/atsamd/samd.lds.S $(OUT)board-link
-	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
-
-$(OUT)klipper.elf: $(OUT)samd.ld
 
 # Build the additional hex and bin output files
 target-y += $(OUT)klipper.bin $(OUT)klipper.elf.hex

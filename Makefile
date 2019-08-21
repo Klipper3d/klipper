@@ -66,6 +66,10 @@ $(OUT)%.o: %.c $(OUT)autoconf.h $(OUT)board-link
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
+$(OUT)%.ld: %.lds.S $(OUT)board-link
+	@echo "  Preprocessing $@"
+	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
+
 ################ Main build rules
 
 $(OUT)board-link: $(KCONFIG_CONFIG)
