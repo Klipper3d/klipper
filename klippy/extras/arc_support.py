@@ -60,7 +60,9 @@ class ArcSupport:
             raise self.gcode.error("g2/g3: R, I and J were given. no idea what to do ...")
         else:   # -------- execute conversion -----------
             coords = []
-            rev = msg.lower().startswith("g3") # direction, reversed for g3
+            rev = False
+            if msg.lower().find("g3"):  #sometimes contains prefixes, jsut serach for G3 in gcode
+                rev = True
             asY = float(asY)
             asX = float(asX)
 
