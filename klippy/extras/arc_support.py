@@ -31,7 +31,7 @@ class ArcSupport:
 
     def cmd_G2(self, params):
         msg = params['#command']
-        
+    
         # # set vars
 
         toolhead = self.printer.lookup_object('toolhead')
@@ -60,7 +60,7 @@ class ArcSupport:
             raise self.gcode.error("g2/g3: R, I and J were given. no idea what to do ...")
         else:   # -------- execute conversion -----------
             coords = []
-            rev = msg.lower().startswith("g3") # direction, reversed for g3
+            rev = params['#command'].lower().startswith("g3") # direction, reversed for g3
             asY = float(asY)
             asX = float(asX)
 
