@@ -34,11 +34,9 @@ class ArcSupport:
         # # set vars
 
         toolhead = self.printer.lookup_object('toolhead')
-        kin =  self.printer.lookup_object('toolhead').get_kinematics()
-        if self.debug:
-            logging.info(kin)
-        asStartX = 150.0
-        asStartY = 150.0
+        pos =  self.printer.lookup_object('toolhead').get_position()
+        asStartX = pos[0] 
+        asStartY = pos[1]
 
         asX = params.get("X", "")
         asY = params.get("Y", "")
