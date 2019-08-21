@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -172,7 +173,7 @@ handle_end_reset(void)
     UDP->UDP_TXVC = UDP_TXVC_PUON;
 }
 
-void __visible
+void
 UDP_Handler(void)
 {
     uint32_t s = UDP->UDP_ISR;
@@ -212,7 +213,6 @@ usbserial_init(void)
 
     // Enable interrupts
     UDP->UDP_ICR = 0xffffffff;
-    NVIC_SetPriority(UDP_IRQn, 1);
-    NVIC_EnableIRQ(UDP_IRQn);
+    armcm_enable_irq(UDP_Handler, UDP_IRQn, 1);
 }
 DECL_INIT(usbserial_init);

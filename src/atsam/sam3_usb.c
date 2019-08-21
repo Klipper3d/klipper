@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "internal.h" // UOTGHS
@@ -179,7 +180,7 @@ handle_end_reset(void)
     UOTGHS->UOTGHS_DEVICR = UOTGHS_DEVICR_EORSTC;
 }
 
-void __visible
+void
 UOTGHS_Handler(void)
 {
     uint32_t s = UOTGHS->UOTGHS_DEVISR;
@@ -222,8 +223,7 @@ usbserial_init(void)
     UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;
 
     // Enable interrupts
-    NVIC_SetPriority(UOTGHS_IRQn, 1);
-    NVIC_EnableIRQ(UOTGHS_IRQn);
+    armcm_enable_irq(UOTGHS_Handler, UOTGHS_IRQn, 1);
     UOTGHS->UOTGHS_DEVIER = UOTGHS_DEVIER_EORSTES;
 }
 DECL_INIT(usbserial_init);
