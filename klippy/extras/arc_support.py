@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-# import logging
+import logging
 import math
 import re 
 
@@ -12,6 +12,7 @@ class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.degree_steps = config.getfloat('degree_steps', 1)
+        self.debug = config.getbolean('debug', False)
         # if self.degree_steps>0:
 
         self.gcode = self.printer.lookup_object('gcode')
@@ -32,6 +33,10 @@ class ArcSupport:
 
         # # set vars
 
+        toolhead = self.printer.lookup_object('toolhead')
+        kin =  self.printer.lookup_object('toolhead').get_kinematics()
+        if self.debug:
+            logging.info(kin)
         asStartX = 150.0
         asStartY = 150.0
 
@@ -68,7 +73,7 @@ class ArcSupport:
             #         startAngle = 360.0
             #         endAngle = 0.0
 
-            #     coords=calcRadCoords(asX, asY, asR, 0, 360)
+            #     coords=calcRadCoords(asX, asY, asR, 0, 360, self.degree_steps, rev)
             # use IJK
             if asI != 0 or asJ!=0:
                 cX = asStartX + asI
@@ -85,7 +90,7 @@ class ArcSupport:
                 radian = math.atan2(asY - cY, asX - cX)
                 endAngle = radian * (float(180) / math.pi)
 
-                coords=calcRadCoords(cX, cY, radius, startAngle, endAngle)
+                coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps, rev)
                 
 
             #####################################################################
@@ -107,6 +112,8 @@ class ArcSupport:
                 # throw g1 commands in queue
                 # logging.info(asOut)
                 self.gcode.run_script_from_command(asOut)
+                if self.debug:
+                    logging.info(asOut)
 
             else:
                 self.gcode.respond_info("could not tranlate from '" + msg + "'")
@@ -126,12 +133,11 @@ def load_config(config):
 #         list[match[1].lower()] = float(match[2])
 #     return list
 
-def calcRadCoords(x,y,r,startAngle=0, endAngle=360, rev=False):
+def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
     coords = []
-    mod = 1.0
     if startAngle>endAngle:
-        mod = -1.0
-    ra = frange(startAngle, endAngle+mod, mod)
+        step*= -1.0
+    ra = frange(startAngle, endAngle+step, step)
 
     if rev:
         ra = reversed(ra)
