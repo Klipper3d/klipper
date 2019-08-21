@@ -6,6 +6,7 @@
 
 #include <string.h> // NULL
 #include "autoconf.h" // CONFIG_STM32_FLASH_START_2000
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
@@ -249,7 +250,7 @@ usb_reset(void)
 }
 
 // Main irq handler
-void __visible
+void
 USB_LP_CAN1_RX0_IRQHandler(void)
 {
     uint32_t istr = USB->ISTR;
@@ -301,7 +302,6 @@ usb_init(void)
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
-    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 1);
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
+    armcm_enable_irq(USB_LP_CAN1_RX0_IRQHandler, USB_LP_CAN1_RX0_IRQn, 1);
 }
 DECL_INIT(usb_init);

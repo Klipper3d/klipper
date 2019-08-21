@@ -6,6 +6,7 @@
 
 #include <string.h> // NULL
 #include "autoconf.h" // CONFIG_MACH_STM32F446
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // writel
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -323,7 +324,7 @@ usb_suspend(void)
 }
 
 // Main irq handler
-void __visible
+void
 OTG_FS_IRQHandler(void)
 {
     uint32_t sts = OTG->GINTSTS;
@@ -388,8 +389,7 @@ usb_init(void)
     OTG->GINTMSK = (USB_OTG_GINTMSK_USBRST | USB_OTG_GINTSTS_USBSUSP
                     | USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT);
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
-    NVIC_SetPriority(OTG_FS_IRQn, 1);
-    NVIC_EnableIRQ(OTG_FS_IRQn);
+    armcm_enable_irq(OTG_FS_IRQHandler, OTG_FS_IRQn, 1);
 
     // Enable USB
     OTG->GCCFG |= USB_OTG_GCCFG_PWRDWN;

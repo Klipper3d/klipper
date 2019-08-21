@@ -4,8 +4,8 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/stm32 src/generic
-dirs-$(CONFIG_MACH_STM32F1) += lib/stm32f1 lib/stm32f1/gcc
-dirs-$(CONFIG_MACH_STM32F4) += lib/stm32f4 lib/stm32f4/gcc
+dirs-$(CONFIG_MACH_STM32F1) += lib/stm32f1
+dirs-$(CONFIG_MACH_STM32F4) += lib/stm32f4
 
 MCU := $(shell echo $(CONFIG_MCU))
 MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
@@ -16,11 +16,11 @@ CFLAGS-$(CONFIG_MACH_STM32F4) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS += $(CFLAGS-y) -D$(MCU_UPPER) -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
-CFLAGS_klipper.elf += -T $(OUT)src/stm32/stm32.ld
-$(OUT)klipper.elf: $(OUT)src/stm32/stm32.ld
+CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_boot.ld
+$(OUT)klipper.elf: $(OUT)src/generic/armcm_boot.ld
 
 # Add source files
-src-y += stm32/main.c stm32/watchdog.c stm32/gpio.c
+src-y += stm32/main.c stm32/watchdog.c stm32/gpio.c generic/armcm_boot.c
 src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32F1) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c
@@ -33,15 +33,6 @@ usb-src-$(CONFIG_HAVE_STM32_USBFS) := stm32/usbfs.c
 usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += stm32/serial.c generic/serial_irq.c
-
-# Add assembler build rules
-$(OUT)%.o: %.s $(OUT)autoconf.h $(OUT)board-link
-	@echo "  Assembling $@"
-	$(Q)$(AS) $< -o $@
-
-asmsrc-$(CONFIG_MACH_STM32F1) := ../lib/stm32f1/gcc/startup_$(MCU).s
-asmsrc-$(CONFIG_MACH_STM32F4) := ../lib/stm32f4/gcc/startup_$(MCU).s
-OBJS_klipper.elf += $(patsubst %.s, $(OUT)src/%.o,$(asmsrc-y))
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin
