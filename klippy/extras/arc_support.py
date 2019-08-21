@@ -99,7 +99,6 @@ class ArcSupport:
                 self.gcode.respond_info("arc_support: tranlated from '" + msg + "'")
                 # asOut = "arc_support: tranlated from '" + msg + "'"  #spew info
 
-                asOut+= "G1 X150 Y150 \n"
                 for coord in coords:
                     asOut+= "G1 X%f Y%f" % (coord[0], coord[1])
                     if asE>0:
