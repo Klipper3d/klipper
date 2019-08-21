@@ -12,7 +12,7 @@ class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.degree_steps = config.getfloat('degree_steps', 1)
-        self.debug = config.getbolean('debug', False)
+        self.debug = config.getboolean('debug', False)
         # if self.degree_steps>0:
 
         self.gcode = self.printer.lookup_object('gcode')
