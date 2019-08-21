@@ -6,6 +6,7 @@
 
 #include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_FLASH_START
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
@@ -190,7 +191,7 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-void __visible
+void
 USB_Handler(void)
 {
     uint8_t s = USB->DEVICE.INTFLAG.reg;
@@ -225,12 +226,6 @@ USB_Handler(void)
     }
 }
 
-// Aliases for irq handeler on SAMD51
-void USB_0_Handler(void) __visible __attribute__((alias("USB_Handler")));
-void USB_1_Handler(void) __visible __attribute__((alias("USB_Handler")));
-void USB_2_Handler(void) __visible __attribute__((alias("USB_Handler")));
-void USB_3_Handler(void) __visible __attribute__((alias("USB_Handler")));
-
 DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA24,PA25");
 
 void
@@ -256,17 +251,12 @@ usbserial_init(void)
     // enable irqs
     USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
 #if CONFIG_MACH_SAMD21
-    NVIC_SetPriority(USB_IRQn, 1);
-    NVIC_EnableIRQ(USB_IRQn);
+    armcm_enable_irq(USB_Handler, USB_IRQn, 1);
 #elif CONFIG_MACH_SAMD51
-    NVIC_SetPriority(USB_0_IRQn, 1);
-    NVIC_SetPriority(USB_1_IRQn, 1);
-    NVIC_SetPriority(USB_2_IRQn, 1);
-    NVIC_SetPriority(USB_3_IRQn, 1);
-    NVIC_EnableIRQ(USB_0_IRQn);
-    NVIC_EnableIRQ(USB_1_IRQn);
-    NVIC_EnableIRQ(USB_2_IRQn);
-    NVIC_EnableIRQ(USB_3_IRQn);
+    armcm_enable_irq(USB_Handler, USB_0_IRQn, 1);
+    armcm_enable_irq(USB_Handler, USB_1_IRQn, 1);
+    armcm_enable_irq(USB_Handler, USB_2_IRQn, 1);
+    armcm_enable_irq(USB_Handler, USB_3_IRQn, 1);
 #endif
 }
 DECL_INIT(usbserial_init);

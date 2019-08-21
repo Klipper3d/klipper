@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/serial_irq.h" // serial_rx_data
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
@@ -15,7 +16,7 @@ serial_enable_tx_irq(void)
     SERCOM0->USART.INTENSET.reg = SERCOM_USART_INTENSET_DRE;
 }
 
-void __visible
+void
 SERCOM0_Handler(void)
 {
     uint32_t status = SERCOM0->USART.INTFLAG.reg;
@@ -30,16 +31,6 @@ SERCOM0_Handler(void)
             SERCOM0->USART.DATA.reg = data;
     }
 }
-
-// Aliases for irq handler on SAMD51
-void SERCOM0_0_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_1_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_2_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_3_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
 
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA11,PA10");
 
@@ -69,17 +60,12 @@ serial_init(void)
     su->INTENSET.reg = SERCOM_USART_INTENSET_RXC;
     su->CTRLA.reg = areg | SERCOM_USART_CTRLA_ENABLE;
 #if CONFIG_MACH_SAMD21
-    NVIC_SetPriority(SERCOM0_IRQn, 0);
-    NVIC_EnableIRQ(SERCOM0_IRQn);
+    armcm_enable_irq(SERCOM0_Handler, SERCOM0_IRQn, 0);
 #elif CONFIG_MACH_SAMD51
-    NVIC_SetPriority(SERCOM0_0_IRQn, 0);
-    NVIC_SetPriority(SERCOM0_1_IRQn, 0);
-    NVIC_SetPriority(SERCOM0_2_IRQn, 0);
-    NVIC_SetPriority(SERCOM0_3_IRQn, 0);
-    NVIC_EnableIRQ(SERCOM0_0_IRQn);
-    NVIC_EnableIRQ(SERCOM0_1_IRQn);
-    NVIC_EnableIRQ(SERCOM0_2_IRQn);
-    NVIC_EnableIRQ(SERCOM0_3_IRQn);
+    armcm_enable_irq(SERCOM0_Handler, SERCOM0_0_IRQn, 0);
+    armcm_enable_irq(SERCOM0_Handler, SERCOM0_1_IRQn, 0);
+    armcm_enable_irq(SERCOM0_Handler, SERCOM0_2_IRQn, 0);
+    armcm_enable_irq(SERCOM0_Handler, SERCOM0_3_IRQn, 0);
 #endif
 }
 DECL_INIT(serial_init);
