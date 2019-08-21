@@ -17,7 +17,7 @@ class ArcSupport:
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
-        self.gcode.register_command("G3", self.cmd_G3, desc=self.cmd_G2_help)
+        self.gcode.register_command("G3", self.cmd_G2, desc=self.cmd_G2_help)
             # self.gcode.register_command("G3", self.cmd_G3)
         
         # raise config.error("Arc support test")
@@ -28,15 +28,10 @@ class ArcSupport:
     # def cmd_G3(self, params):
     #     self.GArc(self, params)
 
+
     def cmd_G2(self, params):
-        self.cmd_G(self,params, False)
-
-    def cmd_G3(self, params):
-        self.cmd_G(self,params, True)
-
-    def cmd_G(self, params, rev=False):
-        msg = params['#original']
-
+        msg = params['#command']
+        
         # # set vars
 
         toolhead = self.printer.lookup_object('toolhead')
@@ -65,7 +60,7 @@ class ArcSupport:
             raise self.gcode.error("g2/g3: R, I and J were given. no idea what to do ...")
         else:   # -------- execute conversion -----------
             coords = []
-            # rev = msg.lower().startswith("g3") # direction, reversed for g3
+            rev = msg.lower().startswith("g3") # direction, reversed for g3
             asY = float(asY)
             asX = float(asX)
 
