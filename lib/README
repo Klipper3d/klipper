@@ -51,8 +51,7 @@ with gcc's LTO feature. See stm32f1.patch for the modifications.
 
 The stm32f4 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef4.html
-version 1.24.0 (extracted 20190723). It has been modified to compile
-with gcc's LTO feature. See stm32f4.patch for the modifications.
+version 1.24.0 (extracted 20190723).
 
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
