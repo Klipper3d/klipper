@@ -16,8 +16,8 @@ CFLAGS-$(CONFIG_MACH_STM32F4) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS += $(CFLAGS-y) -D$(MCU_UPPER) -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
-CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_boot.ld
-$(OUT)klipper.elf: $(OUT)src/generic/armcm_boot.ld
+CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
+$(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
 src-y += stm32/main.c stm32/watchdog.c stm32/gpio.c generic/armcm_boot.c

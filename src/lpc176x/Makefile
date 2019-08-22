@@ -8,8 +8,8 @@ dirs-y += src/lpc176x src/generic lib/lpc176x/device
 CFLAGS += -mthumb -mcpu=cortex-m3 -Ilib/lpc176x/device -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
-CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_boot.ld
-$(OUT)klipper.elf: $(OUT)src/generic/armcm_boot.ld
+CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
+$(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
 src-y += lpc176x/main.c lpc176x/gpio.c

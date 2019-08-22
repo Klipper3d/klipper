@@ -15,8 +15,8 @@ CFLAGS-$(CONFIG_MACH_SAMD51) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
-CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_boot.ld
-$(OUT)klipper.elf: $(OUT)src/generic/armcm_boot.ld
+CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
+$(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
 src-y += atsamd/main.c atsamd/gpio.c

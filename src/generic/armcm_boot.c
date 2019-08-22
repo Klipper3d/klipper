@@ -7,7 +7,7 @@
 #include "armcm_boot.h" // DECL_ARMCM_IRQ
 #include "board/internal.h" // SystemInit
 
-// Symbols created by armcm_boot.lds.S linker script
+// Symbols created by armcm_link.lds.S linker script
 extern uint32_t _data_start, _data_end, _data_flash;
 extern uint32_t _bss_start, _bss_end, _stack_start;
 
