@@ -73,8 +73,8 @@ class HandleEnumerations:
         self.enumerations = {}
         self.ctr_dispatch = {
             '_DECL_STATIC_STR': self.decl_static_str,
-            '_DECL_ENUMERATION': self.decl_enumeration,
-            '_DECL_ENUMERATION_RANGE': self.decl_enumeration_range
+            'DECL_ENUMERATION': self.decl_enumeration,
+            'DECL_ENUMERATION_RANGE': self.decl_enumeration_range
         }
     def add_enumeration(self, enum, name, value):
         enums = self.enumerations.setdefault(enum, {})
@@ -124,8 +124,8 @@ class HandleConstants:
     def __init__(self):
         self.constants = {}
         self.ctr_dispatch = {
-            '_DECL_CONSTANT': self.decl_constant,
-            '_DECL_CONSTANT_STR': self.decl_constant_str,
+            'DECL_CONSTANT': self.decl_constant,
+            'DECL_CONSTANT_STR': self.decl_constant_str,
         }
     def set_value(self, name, value):
         if name in self.constants and self.constants[name] != value:
@@ -253,7 +253,7 @@ class HandleCommandGeneration:
         self.messages_by_name = { m.split()[0]: m for m in self.msg_to_id }
         self.all_param_types = {}
         self.ctr_dispatch = {
-            '_DECL_COMMAND': self.decl_command,
+            'DECL_COMMAND_FLAGS': self.decl_command,
             '_DECL_ENCODER': self.decl_encoder,
             '_DECL_OUTPUT': self.decl_output
         }
