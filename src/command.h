@@ -25,8 +25,8 @@
 #define DECL_ENUMERATION(ENUM, NAME, VALUE)                             \
     DECL_CTR_INT("_DECL_ENUMERATION " ENUM " " NAME, 1, CTR_INT(VALUE))
 #define DECL_ENUMERATION_RANGE(ENUM, NAME, VALUE, COUNT)        \
-    DECL_CTR_INT("_DECL_ENUMERATION_RANGE " ENUM " " NAME       \
-                 " " __stringify(COUNT), 1, CTR_INT(VALUE))
+    DECL_CTR_INT("_DECL_ENUMERATION_RANGE " ENUM " " NAME,      \
+                 2, CTR_INT(VALUE), CTR_INT(COUNT))
 
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \

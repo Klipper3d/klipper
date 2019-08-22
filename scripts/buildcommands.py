@@ -86,12 +86,9 @@ class HandleEnumerations:
         enum, name, value = req.split()[1:]
         self.add_enumeration(enum, name, decode_integer(value))
     def decl_enumeration_range(self, req):
-        enum, name, count, value = req.split()[1:]
-        try:
-            count = int(count, 0)
-        except ValueError as e:
-            error("Invalid enumeration count in '%s'" % (req,))
-        self.add_enumeration(enum, name, (decode_integer(value), count))
+        enum, name, value, count = req.split()[1:]
+        vc = (decode_integer(value), decode_integer(count))
+        self.add_enumeration(enum, name, vc)
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
         if msg not in self.static_strings:
