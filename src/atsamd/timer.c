@@ -32,6 +32,16 @@ timer_kick(void)
     timer_set(timer_read_time() + 50);
 }
 
+// IRQ handler
+void __visible __aligned(16) // aligning helps stabilize perf benchmarks
+TC4_Handler(void)
+{
+    irq_disable();
+    uint32_t next = timer_dispatch_many();
+    timer_set(next);
+    irq_enable();
+}
+
 void
 timer_init(void)
 {
@@ -53,13 +63,3 @@ timer_init(void)
     irq_restore(flag);
 }
 DECL_INIT(timer_init);
-
-// IRQ handler
-void __visible __aligned(16) // aligning helps stabilize perf benchmarks
-TC4_Handler(void)
-{
-    irq_disable();
-    uint32_t next = timer_dispatch_many();
-    timer_set(next);
-    irq_enable();
-}

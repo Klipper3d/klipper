@@ -9,6 +9,38 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
+void
+serial_enable_tx_irq(void)
+{
+    SERCOM0->USART.INTENSET.reg = SERCOM_USART_INTENSET_DRE;
+}
+
+void __visible
+SERCOM0_Handler(void)
+{
+    uint32_t status = SERCOM0->USART.INTFLAG.reg;
+    if (status & SERCOM_USART_INTFLAG_RXC)
+        serial_rx_byte(SERCOM0->USART.DATA.reg);
+    if (status & SERCOM_USART_INTFLAG_DRE) {
+        uint8_t data;
+        int ret = serial_get_tx_byte(&data);
+        if (ret)
+            SERCOM0->USART.INTENCLR.reg = SERCOM_USART_INTENSET_DRE;
+        else
+            SERCOM0->USART.DATA.reg = data;
+    }
+}
+
+// Aliases for irq handler on SAMD51
+void SERCOM0_0_Handler(void)
+    __visible __attribute__((alias("SERCOM0_Handler")));
+void SERCOM0_1_Handler(void)
+    __visible __attribute__((alias("SERCOM0_Handler")));
+void SERCOM0_2_Handler(void)
+    __visible __attribute__((alias("SERCOM0_Handler")));
+void SERCOM0_3_Handler(void)
+    __visible __attribute__((alias("SERCOM0_Handler")));
+
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA11,PA10");
 
 void
@@ -51,35 +83,3 @@ serial_init(void)
 #endif
 }
 DECL_INIT(serial_init);
-
-void
-serial_enable_tx_irq(void)
-{
-    SERCOM0->USART.INTENSET.reg = SERCOM_USART_INTENSET_DRE;
-}
-
-void __visible
-SERCOM0_Handler(void)
-{
-    uint32_t status = SERCOM0->USART.INTFLAG.reg;
-    if (status & SERCOM_USART_INTFLAG_RXC)
-        serial_rx_byte(SERCOM0->USART.DATA.reg);
-    if (status & SERCOM_USART_INTFLAG_DRE) {
-        uint8_t data;
-        int ret = serial_get_tx_byte(&data);
-        if (ret)
-            SERCOM0->USART.INTENCLR.reg = SERCOM_USART_INTENSET_DRE;
-        else
-            SERCOM0->USART.DATA.reg = data;
-    }
-}
-
-// Aliases for irq handler on SAMD51
-void SERCOM0_0_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_1_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_2_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));
-void SERCOM0_3_Handler(void)
-    __visible __attribute__((alias("SERCOM0_Handler")));

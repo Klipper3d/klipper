@@ -58,11 +58,6 @@ static UsbDeviceDescriptor usb_desc[USB_CDC_EP_BULK_IN + 1] = {
     } },
 };
 
-
-/****************************************************************
- * Interface
- ****************************************************************/
-
 #define EP0 USB->DEVICE.DeviceEndpoint[0]
 #define EP_ACM USB->DEVICE.DeviceEndpoint[USB_CDC_EP_ACM]
 #define EP_BULKOUT USB->DEVICE.DeviceEndpoint[USB_CDC_EP_BULK_OUT]
@@ -110,6 +105,11 @@ usb_read_packet(uint32_t ep, uint32_t bank, void *data, uint_fast8_t max_len)
     ude->EPSTATUSCLR.reg = bkrdy;
     return c;
 }
+
+
+/****************************************************************
+ * Interface
+ ****************************************************************/
 
 int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
@@ -185,45 +185,10 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA24,PA25");
 
-void
-usbserial_init(void)
-{
-    // configure usb clock
-    enable_pclock(USB_GCLK_ID, ID_USB);
-    // configure USBD+ and USBD- pins
-    uint32_t ptype = CONFIG_MACH_SAMD21 ? 'G' : 'H';
-    gpio_peripheral(GPIO('A', 24), ptype, 0);
-    gpio_peripheral(GPIO('A', 25), ptype, 0);
-    uint32_t trim = GET_FUSE(USB_FUSES_TRIM);
-    uint32_t transp = GET_FUSE(USB_FUSES_TRANSP);
-    uint32_t transn = GET_FUSE(USB_FUSES_TRANSN);
-    USB->DEVICE.PADCAL.reg = (USB_PADCAL_TRIM(trim) | USB_PADCAL_TRANSP(transp)
-                              | USB_PADCAL_TRANSN(transn));
-    // Enable USB in device mode
-    USB->DEVICE.CTRLA.reg = USB_CTRLA_ENABLE;
-    USB->DEVICE.DESCADD.reg = (uint32_t)usb_desc;
-    EP0.EPCFG.reg = USB_DEVICE_EPCFG_EPTYPE0(1) | USB_DEVICE_EPCFG_EPTYPE1(1);
-    EP_ACM.EPCFG.reg = USB_DEVICE_EPCFG_EPTYPE1(4);
-    USB->DEVICE.CTRLB.reg = 0;
-    // enable irqs
-    USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
-#if CONFIG_MACH_SAMD21
-    NVIC_SetPriority(USB_IRQn, 1);
-    NVIC_EnableIRQ(USB_IRQn);
-#elif CONFIG_MACH_SAMD51
-    NVIC_SetPriority(USB_0_IRQn, 1);
-    NVIC_SetPriority(USB_1_IRQn, 1);
-    NVIC_SetPriority(USB_2_IRQn, 1);
-    NVIC_SetPriority(USB_3_IRQn, 1);
-    NVIC_EnableIRQ(USB_0_IRQn);
-    NVIC_EnableIRQ(USB_1_IRQn);
-    NVIC_EnableIRQ(USB_2_IRQn);
-    NVIC_EnableIRQ(USB_3_IRQn);
-#endif
-}
-DECL_INIT(usbserial_init);
+/****************************************************************
+ * Setup and interrupts
+ ****************************************************************/
 
 void __visible
 USB_Handler(void)
@@ -265,3 +230,43 @@ void USB_0_Handler(void) __visible __attribute__((alias("USB_Handler")));
 void USB_1_Handler(void) __visible __attribute__((alias("USB_Handler")));
 void USB_2_Handler(void) __visible __attribute__((alias("USB_Handler")));
 void USB_3_Handler(void) __visible __attribute__((alias("USB_Handler")));
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA24,PA25");
+
+void
+usbserial_init(void)
+{
+    // configure usb clock
+    enable_pclock(USB_GCLK_ID, ID_USB);
+    // configure USBD+ and USBD- pins
+    uint32_t ptype = CONFIG_MACH_SAMD21 ? 'G' : 'H';
+    gpio_peripheral(GPIO('A', 24), ptype, 0);
+    gpio_peripheral(GPIO('A', 25), ptype, 0);
+    uint32_t trim = GET_FUSE(USB_FUSES_TRIM);
+    uint32_t transp = GET_FUSE(USB_FUSES_TRANSP);
+    uint32_t transn = GET_FUSE(USB_FUSES_TRANSN);
+    USB->DEVICE.PADCAL.reg = (USB_PADCAL_TRIM(trim) | USB_PADCAL_TRANSP(transp)
+                              | USB_PADCAL_TRANSN(transn));
+    // Enable USB in device mode
+    USB->DEVICE.CTRLA.reg = USB_CTRLA_ENABLE;
+    USB->DEVICE.DESCADD.reg = (uint32_t)usb_desc;
+    EP0.EPCFG.reg = USB_DEVICE_EPCFG_EPTYPE0(1) | USB_DEVICE_EPCFG_EPTYPE1(1);
+    EP_ACM.EPCFG.reg = USB_DEVICE_EPCFG_EPTYPE1(4);
+    USB->DEVICE.CTRLB.reg = 0;
+    // enable irqs
+    USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
+#if CONFIG_MACH_SAMD21
+    NVIC_SetPriority(USB_IRQn, 1);
+    NVIC_EnableIRQ(USB_IRQn);
+#elif CONFIG_MACH_SAMD51
+    NVIC_SetPriority(USB_0_IRQn, 1);
+    NVIC_SetPriority(USB_1_IRQn, 1);
+    NVIC_SetPriority(USB_2_IRQn, 1);
+    NVIC_SetPriority(USB_3_IRQn, 1);
+    NVIC_EnableIRQ(USB_0_IRQn);
+    NVIC_EnableIRQ(USB_1_IRQn);
+    NVIC_EnableIRQ(USB_2_IRQn);
+    NVIC_EnableIRQ(USB_3_IRQn);
+#endif
+}
+DECL_INIT(usbserial_init);
