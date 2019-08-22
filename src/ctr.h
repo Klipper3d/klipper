@@ -16,7 +16,8 @@
 
 // Macro to encode an integer for use with DECL_CTR_INT()
 #define _CTR_HEX(H) ((H) > 9 ? (H) - 10 + 'A' : (H) + '0')
-#define _CTR_INT(V, S) _CTR_HEX(((uint32_t)(V) >> (S)) & 0x0f)
+#define _CTR_SHIFT(V, S) _CTR_HEX(((uint32_t)(V) >> (S)) & 0x0f)
+#define _CTR_INT(V, S) ((V) < 0 ? _CTR_SHIFT(-(V), (S)) : _CTR_SHIFT((V), (S)))
 #define CTR_INT(VALUE) {                                \
         ' ', (VALUE) < 0 ? '-' : '+', '0', 'x',         \
         _CTR_INT((VALUE),28), _CTR_INT((VALUE),24),     \

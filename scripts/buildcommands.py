@@ -84,11 +84,10 @@ class HandleEnumerations:
         enums[name] = value
     def decl_enumeration(self, req):
         enum, name, value = req.split()[1:]
-        self.add_enumeration(enum, name, decode_integer(value))
+        self.add_enumeration(enum, name, int(value, 0))
     def decl_enumeration_range(self, req):
         enum, name, value, count = req.split()[1:]
-        vc = (decode_integer(value), decode_integer(count))
-        self.add_enumeration(enum, name, vc)
+        self.add_enumeration(enum, name, (int(value, 0), int(count, 0)))
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
         if msg not in self.static_strings:
@@ -120,15 +119,6 @@ Handlers.append(HandlerEnumerations)
 # Constants
 ######################################################################
 
-def decode_integer(value):
-    value = value.strip()
-    if len(value) != 11 or value[0] not in '-+' or value[1:3] != '0x':
-        error("Invalid encoded integer '%s'" % (value,))
-    out = int(value[1:], 0)
-    if value[0] == '-':
-        out -= 1<<32
-    return out
-
 # Allow adding build time constants to the data dictionary
 class HandleConstants:
     def __init__(self):
@@ -143,7 +133,7 @@ class HandleConstants:
         self.constants[name] = value
     def decl_constant(self, req):
         name, value = req.split()[1:]
-        self.set_value(name, decode_integer(value))
+        self.set_value(name, int(value, 0))
     def decl_constant_str(self, req):
         name, value = req.split(None, 2)[1:]
         value = value.strip()
@@ -217,7 +207,7 @@ class Handle_arm_irq:
         self.ctr_dispatch = { 'DECL_ARMCM_IRQ': self.decl_armcm_irq }
     def decl_armcm_irq(self, req):
         func, num = req.split()[1:]
-        num = decode_integer(num)
+        num = int(num, 0)
         if num in self.irqs and self.irqs[num] != func:
             error("Conflicting IRQ definition %d (old %s new %s)"
                   % (num, self.irqs[num], func))
