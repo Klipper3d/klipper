@@ -80,14 +80,14 @@ class ArcSupport:
                 radius = math.sqrt((asStartX - cX)**2 + (asStartY - cY)**2)
 
                 # calc start angle
-                radian = math.atan2(asStartY - cY, asStartX - cX)
-                startAngle = radian * (180 / math.pi)
-                # if rev :
-                #     startAngle-= float(360)
+                startAngle = getAngle(asStartX, asStartY, cX, cY, radius, rev)
 
                 # # calc end angle
-                radian = math.atan2(asY - cY, asX - cX)
-                endAngle = radian * (float(180) / math.pi)
+                endAngle = getAngle(asX, asY, cX, cY, radius, rev)
+
+                print(startAngle)
+                print(endAngle)
+
 
                 if rev :
                     coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps, True)
@@ -169,3 +169,25 @@ def frange(start, stop=None, step=None):
             break
         yield start # return float number
         start = start + step
+
+def getAngle(x, y,cx, cy, radius, direction=False):
+    rad = math.atan2(y - cy, x - cx)
+    angle = angle = rad * (180 / math.pi)
+
+    degrees = (angle + 360.0) % 360.0
+
+    if direction:
+        if(degrees==0 and x < cx):
+            degrees+=360
+    else:
+        if(degrees==0 and x > cx):
+            degrees+=360
+
+
+    angle = degrees
+    # print("cX=%f cY=%f | X=%f Y=%f | %f deg (%f)" % (cx, cy, x, y, angle, degrees))
+
+
+
+
+    return angle
