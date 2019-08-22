@@ -90,7 +90,7 @@ class ArcSupport:
                 endAngle = radian * (float(180) / math.pi)
 
                 if rev :
-                    coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps)
+                    coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps, True)
                 else:
                     coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps)
                 
