@@ -79,30 +79,21 @@ class ArcSupport:
                 cY = asStartY + asJ
                 radius = math.sqrt((asStartX - cX)**2 + (asStartY - cY)**2)
 
-                bX = asStartX
-                bY = asStartY
-                eX = asX
-                eY = asY
-                
-                if rev :
-                bX = asX
-                bY = asY
-                eX = asStartX
-                eY = asStartY
-
-
                 # calc start angle
-                radian = math.atan2(bY - cY, bX - cX)
+                radian = math.atan2(asStartY - cY, asStartX - cX)
+                radian = math.a
                 startAngle = radian * (180 / math.pi)
                 # if rev :
                 #     startAngle-= float(360)
 
                 # # calc end angle
-                radian = math.atan2(eY - cY, eX - cX)
+                radian = math.atan2(asY - cY, asX - cX)
                 endAngle = radian * (float(180) / math.pi)
 
-                coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps, rev)
-                
+                if rev :
+                    coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps, rev)
+                else:
+                    coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps, rev)
 
             #####################################################################
 
