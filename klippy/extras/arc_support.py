@@ -81,10 +81,9 @@ class ArcSupport:
 
                 # calc start angle
                 radian = math.atan2(asStartY - cY, asStartX - cX)
-                radian = math.a
                 startAngle = radian * (180 / math.pi)
-                # if rev :
-                #     startAngle-= float(360)
+                if rev :
+                    startAngle-= float(360)
 
                 # # calc end angle
                 radian = math.atan2(asY - cY, asX - cX)
@@ -94,6 +93,7 @@ class ArcSupport:
                     coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps, rev)
                 else:
                     coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps, rev)
+                
 
             #####################################################################
 
