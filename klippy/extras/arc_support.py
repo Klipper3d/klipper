@@ -6,7 +6,7 @@
 
 import logging
 import math
-import re 
+import re
 
 class ArcSupport:
     def __init__(self, config):
@@ -136,14 +136,18 @@ def load_config(config):
 
 def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
     coords = []
-    # if startAngle>endAngle:
-    #     step*= -1.0
-    ra = frange(startAngle, endAngle+step, step)
+    rangelist = []
+    if startAngle>endAngle:
+        step*= -1.0
 
-    if rev: 
-        ra = reversed(ra)
+    for i in frange(startAngle, endAngle+step, step):
+        rangelist.append(i)
 
-    for i in ra:
+
+    if rev and rangelist.__sizeof__>1: 
+        rangelist = reversed(rangelist)
+
+    for i in rangelist:
         rad = i * (math.pi / 180)
         tX = x + r * math.cos(rad)
         tY = y + r * math.sin(rad)
