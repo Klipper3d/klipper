@@ -36,6 +36,22 @@ static struct {
 
 enum { ADC_DONE=0x0100 };
 
+// ADC hardware irq handler
+void __visible
+ADC_IRQHandler(void)
+{
+    uint32_t pos = adc_status.pos, chan = adc_status.chan & 0xff;
+    uint32_t result = (&LPC_ADC->ADDR0)[chan];
+    if (pos >= ARRAY_SIZE(adc_status.samples))
+        // All samples complete
+        return;
+    if (pos >= ARRAY_SIZE(adc_status.samples) - 2)
+        // Turn off burst mode
+        LPC_ADC->ADCR = adc_status.adcr | (1 << chan);
+    adc_status.samples[pos++] = (result >> 4) & 0x0fff;
+    adc_status.pos = pos;
+}
+
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
 {
@@ -62,22 +78,6 @@ gpio_adc_setup(uint8_t pin)
     gpio_peripheral(pin, adc_pin_funcs[chan], 0);
 
     return (struct gpio_adc){ .chan = chan };
-}
-
-// ADC hardware irq handler
-void __visible
-ADC_IRQHandler(void)
-{
-    uint32_t pos = adc_status.pos, chan = adc_status.chan & 0xff;
-    uint32_t result = (&LPC_ADC->ADDR0)[chan];
-    if (pos >= ARRAY_SIZE(adc_status.samples))
-        // All samples complete
-        return;
-    if (pos >= ARRAY_SIZE(adc_status.samples) - 2)
-        // Turn off burst mode
-        LPC_ADC->ADCR = adc_status.adcr | (1 << chan);
-    adc_status.samples[pos++] = (result >> 4) & 0x0fff;
-    adc_status.pos = pos;
 }
 
 // Try to sample a value. Returns zero if sample ready, otherwise

@@ -260,6 +260,41 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
+
+/****************************************************************
+ * Setup and interrupts
+ ****************************************************************/
+
+void __visible
+USB_IRQHandler(void)
+{
+    uint32_t udis = LPC_USB->USBDevIntSt;
+    if (udis & DEV_STAT) {
+        LPC_USB->USBDevIntClr = DEV_STAT;
+        // XXX - should handle reset and other states
+    }
+    if (udis & EP_SLOW) {
+        uint32_t ueis = LPC_USB->USBEpIntSt;
+        if (ueis & (1<<EP0OUT)) {
+            sie_select_and_clear(EP0OUT);
+            usb_notify_ep0();
+        }
+        if (ueis & (1<<EP0IN)) {
+            sie_select_and_clear(EP0IN);
+            usb_notify_ep0();
+        }
+        if (ueis & (1<<EP2OUT)) {
+            sie_select_and_clear(EP2OUT);
+            usb_notify_bulk_out();
+        }
+        if (ueis & (1<<EP5IN)) {
+            sie_select_and_clear(EP5IN);
+            usb_notify_bulk_in();
+        }
+        LPC_USB->USBDevIntClr = EP_SLOW;
+    }
+}
+
 DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
 
 void
@@ -295,33 +330,3 @@ usbserial_shutdown(void)
     usb_irq_enable();
 }
 DECL_SHUTDOWN(usbserial_shutdown);
-
-void __visible
-USB_IRQHandler(void)
-{
-    uint32_t udis = LPC_USB->USBDevIntSt;
-    if (udis & DEV_STAT) {
-        LPC_USB->USBDevIntClr = DEV_STAT;
-        // XXX - should handle reset and other states
-    }
-    if (udis & EP_SLOW) {
-        uint32_t ueis = LPC_USB->USBEpIntSt;
-        if (ueis & (1<<EP0OUT)) {
-            sie_select_and_clear(EP0OUT);
-            usb_notify_ep0();
-        }
-        if (ueis & (1<<EP0IN)) {
-            sie_select_and_clear(EP0IN);
-            usb_notify_ep0();
-        }
-        if (ueis & (1<<EP2OUT)) {
-            sie_select_and_clear(EP2OUT);
-            usb_notify_bulk_out();
-        }
-        if (ueis & (1<<EP5IN)) {
-            sie_select_and_clear(EP5IN);
-            usb_notify_bulk_in();
-        }
-        LPC_USB->USBDevIntClr = EP_SLOW;
-    }
-}
