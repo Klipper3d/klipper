@@ -179,29 +179,6 @@ handle_end_reset(void)
     UOTGHS->UOTGHS_DEVICR = UOTGHS_DEVICR_EORSTC;
 }
 
-void
-usbserial_init(void)
-{
-    // Setup USB clock
-    enable_pclock(ID_UOTGHS);
-    PMC->CKGR_UCKR = CKGR_UCKR_UPLLCOUNT(3) | CKGR_UCKR_UPLLEN;
-    while (!(PMC->PMC_SR & PMC_SR_LOCKU))
-        ;
-    PMC->PMC_USB = PMC_USB_USBS | PMC_USB_USBDIV(0);
-    PMC->PMC_SCER = PMC_SCER_UOTGCLK;
-
-    // Enable USB
-    UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE
-                           | UOTGHS_CTRL_USBE);
-    UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;
-
-    // Enable interrupts
-    NVIC_SetPriority(UOTGHS_IRQn, 1);
-    NVIC_EnableIRQ(UOTGHS_IRQn);
-    UOTGHS->UOTGHS_DEVIER = UOTGHS_DEVIER_EORSTES;
-}
-DECL_INIT(usbserial_init);
-
 void __visible
 UOTGHS_Handler(void)
 {
@@ -227,3 +204,26 @@ UOTGHS_Handler(void)
     if (s & (UOTGHS_DEVISR_PEP_0 << USB_CDC_EP_BULK_IN))
         usb_notify_bulk_in();
 }
+
+void
+usbserial_init(void)
+{
+    // Setup USB clock
+    enable_pclock(ID_UOTGHS);
+    PMC->CKGR_UCKR = CKGR_UCKR_UPLLCOUNT(3) | CKGR_UCKR_UPLLEN;
+    while (!(PMC->PMC_SR & PMC_SR_LOCKU))
+        ;
+    PMC->PMC_USB = PMC_USB_USBS | PMC_USB_USBDIV(0);
+    PMC->PMC_SCER = PMC_SCER_UOTGCLK;
+
+    // Enable USB
+    UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE
+                           | UOTGHS_CTRL_USBE);
+    UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;
+
+    // Enable interrupts
+    NVIC_SetPriority(UOTGHS_IRQn, 1);
+    NVIC_EnableIRQ(UOTGHS_IRQn);
+    UOTGHS->UOTGHS_DEVIER = UOTGHS_DEVIER_EORSTES;
+}
+DECL_INIT(usbserial_init);

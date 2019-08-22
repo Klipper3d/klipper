@@ -34,6 +34,28 @@ static const uint32_t tx_pin = GPIO('A', 10);
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA9,PA10");
 #endif
 
+void __visible
+Serial_IRQ_Handler(void)
+{
+    uint32_t status = Port->UART_SR;
+    if (status & UART_SR_RXRDY)
+        serial_rx_byte(Port->UART_RHR);
+    if (status & UART_SR_TXRDY) {
+        uint8_t data;
+        int ret = serial_get_tx_byte(&data);
+        if (ret)
+            Port->UART_IDR = UART_IDR_TXRDY;
+        else
+            Port->UART_THR = data;
+    }
+}
+
+void
+serial_enable_tx_irq(void)
+{
+    Port->UART_IER = UART_IDR_TXRDY;
+}
+
 void
 serial_init(void)
 {
@@ -57,25 +79,3 @@ serial_init(void)
     Port->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
 }
 DECL_INIT(serial_init);
-
-void __visible
-Serial_IRQ_Handler(void)
-{
-    uint32_t status = Port->UART_SR;
-    if (status & UART_SR_RXRDY)
-        serial_rx_byte(Port->UART_RHR);
-    if (status & UART_SR_TXRDY) {
-        uint8_t data;
-        int ret = serial_get_tx_byte(&data);
-        if (ret)
-            Port->UART_IDR = UART_IDR_TXRDY;
-        else
-            Port->UART_THR = data;
-    }
-}
-
-void
-serial_enable_tx_irq(void)
-{
-    Port->UART_IER = UART_IDR_TXRDY;
-}

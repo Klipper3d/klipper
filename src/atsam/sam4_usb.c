@@ -160,26 +160,6 @@ usb_set_configure(void)
     UDP->UDP_GLB_STAT |= UDP_GLB_STAT_CONFG;
 }
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PB10,PB11");
-
-void
-usbserial_init(void)
-{
-    // Enable clocks
-    enable_pclock(ID_UDP);
-    PMC->PMC_USB = PMC_USB_USBDIV(5 - 1); // PLLA=240Mhz; divide by 5 for 48Mhz
-    PMC->PMC_SCER = PMC_SCER_UDP;
-
-    // Enable USB pullup
-    UDP->UDP_TXVC = UDP_TXVC_PUON | UDP_TXVC_TXVDIS;
-
-    // Enable interrupts
-    UDP->UDP_ICR = 0xffffffff;
-    NVIC_SetPriority(UDP_IRQn, 1);
-    NVIC_EnableIRQ(UDP_IRQn);
-}
-DECL_INIT(usbserial_init);
-
 // Configure endpoint 0 after usb reset completes
 static void
 handle_end_reset(void)
@@ -216,3 +196,23 @@ UDP_Handler(void)
     if (s & (1<<USB_CDC_EP_BULK_IN))
         usb_notify_bulk_in();
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PB10,PB11");
+
+void
+usbserial_init(void)
+{
+    // Enable clocks
+    enable_pclock(ID_UDP);
+    PMC->PMC_USB = PMC_USB_USBDIV(5 - 1); // PLLA=240Mhz; divide by 5 for 48Mhz
+    PMC->PMC_SCER = PMC_SCER_UDP;
+
+    // Enable USB pullup
+    UDP->UDP_TXVC = UDP_TXVC_PUON | UDP_TXVC_TXVDIS;
+
+    // Enable interrupts
+    UDP->UDP_ICR = 0xffffffff;
+    NVIC_SetPriority(UDP_IRQn, 1);
+    NVIC_EnableIRQ(UDP_IRQn);
+}
+DECL_INIT(usbserial_init);
