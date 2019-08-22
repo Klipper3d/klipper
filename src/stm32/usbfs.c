@@ -233,34 +233,6 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
-
-// Initialize the usb controller
-void
-usb_init(void)
-{
-    // Pull the D+ pin low briefly to signal a new connection
-    gpio_out_setup(GPIO('A', 12), 0);
-    udelay(5000);
-    gpio_in_setup(GPIO('A', 12), 0);
-
-    // Setup USB packet memory
-    btable_configure();
-
-    // Enable USB clock
-    enable_pclock(USB_BASE);
-
-    // Reset usb controller and enable interrupts
-    USB->CNTR = USB_CNTR_FRES;
-    USB->BTABLE = 0;
-    USB->DADDR = 0;
-    USB->CNTR = USB_CNTR_RESETM;
-    USB->ISTR = 0;
-    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 1);
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
-}
-DECL_INIT(usb_init);
-
 // Configure interface after a USB reset event
 static void
 usb_reset(void)
@@ -305,3 +277,31 @@ USB_LP_CAN1_RX0_IRQHandler(void)
         usb_reset();
     }
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+
+// Initialize the usb controller
+void
+usb_init(void)
+{
+    // Pull the D+ pin low briefly to signal a new connection
+    gpio_out_setup(GPIO('A', 12), 0);
+    udelay(5000);
+    gpio_in_setup(GPIO('A', 12), 0);
+
+    // Setup USB packet memory
+    btable_configure();
+
+    // Enable USB clock
+    enable_pclock(USB_BASE);
+
+    // Reset usb controller and enable interrupts
+    USB->CNTR = USB_CNTR_FRES;
+    USB->BTABLE = 0;
+    USB->DADDR = 0;
+    USB->CNTR = USB_CNTR_RESETM;
+    USB->ISTR = 0;
+    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 1);
+    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
+}
+DECL_INIT(usb_init);

@@ -264,48 +264,6 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
-
-// Initialize the usb controller
-void
-usb_init(void)
-{
-    // Enable USB clock
-    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-    while (!(OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL))
-        ;
-
-    // Configure USB in full-speed device mode
-    OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL
-                    | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
-    OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
-#if CONFIG_MACH_STM32F446
-    OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
-#else
-    OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
-#endif
-
-    // Route pins
-    gpio_peripheral(GPIO('A', 11), GPIO_FUNCTION(10), 0);
-    gpio_peripheral(GPIO('A', 12), GPIO_FUNCTION(10), 0);
-
-    // Setup USB packet memory
-    fifo_configure();
-
-    // Enable interrupts
-    OTGD->DAINTMSK = (1 << 0) | (1 << USB_CDC_EP_BULK_IN);
-    OTG->GINTMSK = (USB_OTG_GINTMSK_USBRST | USB_OTG_GINTSTS_USBSUSP
-                    | USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT);
-    OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
-    NVIC_SetPriority(OTG_FS_IRQn, 1);
-    NVIC_EnableIRQ(OTG_FS_IRQn);
-
-    // Enable USB
-    OTG->GCCFG |= USB_OTG_GCCFG_PWRDWN;
-    OTGD->DCTL = 0;
-}
-DECL_INIT(usb_init);
-
 // Configure interface after a USB reset event
 static void
 usb_reset(void)
@@ -396,3 +354,45 @@ OTG_FS_IRQHandler(void)
             usb_notify_bulk_in();
     }
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+
+// Initialize the usb controller
+void
+usb_init(void)
+{
+    // Enable USB clock
+    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
+    while (!(OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL))
+        ;
+
+    // Configure USB in full-speed device mode
+    OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL
+                    | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
+    OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
+#if CONFIG_MACH_STM32F446
+    OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
+#else
+    OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
+#endif
+
+    // Route pins
+    gpio_peripheral(GPIO('A', 11), GPIO_FUNCTION(10), 0);
+    gpio_peripheral(GPIO('A', 12), GPIO_FUNCTION(10), 0);
+
+    // Setup USB packet memory
+    fifo_configure();
+
+    // Enable interrupts
+    OTGD->DAINTMSK = (1 << 0) | (1 << USB_CDC_EP_BULK_IN);
+    OTG->GINTMSK = (USB_OTG_GINTMSK_USBRST | USB_OTG_GINTSTS_USBSUSP
+                    | USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT);
+    OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
+    NVIC_SetPriority(OTG_FS_IRQn, 1);
+    NVIC_EnableIRQ(OTG_FS_IRQn);
+
+    // Enable USB
+    OTG->GCCFG |= USB_OTG_GCCFG_PWRDWN;
+    OTGD->DCTL = 0;
+}
+DECL_INIT(usb_init);

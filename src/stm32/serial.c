@@ -44,24 +44,6 @@ DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
                    | USART_CR1_RXNEIE)
 
-void
-serial_init(void)
-{
-    enable_pclock((uint32_t)USARTx);
-
-    uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
-    uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
-    USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
-                   | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
-    USARTx->CR1 = CR1_FLAGS;
-    NVIC_SetPriority(USARTx_IRQn, 0);
-    NVIC_EnableIRQ(USARTx_IRQn);
-
-    gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(7), 1);
-    gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(7), 0);
-}
-DECL_INIT(serial_init);
-
 void __visible
 USARTx_IRQHandler(void)
 {
@@ -83,3 +65,21 @@ serial_enable_tx_irq(void)
 {
     USARTx->CR1 = CR1_FLAGS | USART_CR1_TXEIE;
 }
+
+void
+serial_init(void)
+{
+    enable_pclock((uint32_t)USARTx);
+
+    uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
+    uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
+    USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
+                   | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
+    USARTx->CR1 = CR1_FLAGS;
+    NVIC_SetPriority(USARTx_IRQn, 0);
+    NVIC_EnableIRQ(USARTx_IRQn);
+
+    gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(7), 1);
+    gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(7), 0);
+}
+DECL_INIT(serial_init);
