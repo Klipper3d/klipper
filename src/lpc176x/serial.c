@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // LPC_UART0
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/irq.h" // irq_save
 #include "board/serial_irq.h" // serial_rx_data
@@ -33,7 +33,7 @@ kick_tx(void)
     }
 }
 
-void __visible
+void
 UART0_IRQHandler(void)
 {
     uint32_t iir = LPC_UART0->IIR, status = iir & 0x0f;
@@ -76,8 +76,7 @@ serial_init(void)
     gpio_peripheral(GPIO(0, 2), 1, 0);
 
     // Enable receive irq
-    NVIC_SetPriority(UART0_IRQn, 0);
-    NVIC_EnableIRQ(UART0_IRQn);
+    armcm_enable_irq(UART0_IRQHandler, UART0_IRQn, 0);
     LPC_UART0->IER = 0x01;
 }
 DECL_INIT(serial_init);

@@ -5,8 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "LPC17xx.h" // LPC_SC
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
@@ -265,7 +265,7 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-void __visible
+void
 USB_IRQHandler(void)
 {
     uint32_t udis = LPC_USB->USBDevIntSt;
@@ -319,8 +319,7 @@ usbserial_init(void)
     sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 1);
     // enable irqs
     LPC_USB->USBDevIntEn = DEV_STAT | EP_SLOW;
-    NVIC_SetPriority(USB_IRQn, 1);
-    usb_irq_enable();
+    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
 }
 DECL_INIT(usbserial_init);
 

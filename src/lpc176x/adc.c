@@ -4,8 +4,8 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // LPC_PINCON
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
@@ -37,7 +37,7 @@ static struct {
 enum { ADC_DONE=0x0100 };
 
 // ADC hardware irq handler
-void __visible
+void
 ADC_IRQHandler(void)
 {
     uint32_t pos = adc_status.pos, chan = adc_status.chan & 0xff;
@@ -71,8 +71,7 @@ gpio_adc_setup(uint8_t pin)
         LPC_ADC->ADCR = adc_status.adcr = (1<<21) | ((prescal & 0xff) << 8);
         LPC_ADC->ADINTEN = 0xff;
         adc_status.chan = ADC_DONE;
-        NVIC_SetPriority(ADC_IRQn, 0);
-        NVIC_EnableIRQ(ADC_IRQn);
+        armcm_enable_irq(ADC_IRQHandler, ADC_IRQn, 0);
     }
 
     gpio_peripheral(pin, adc_pin_funcs[chan], 0);
