@@ -136,8 +136,8 @@ def load_config(config):
 
 def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
     coords = []
-    if startAngle>endAngle:
-        step*= -1.0
+    # if startAngle>endAngle:
+    #     step*= -1.0
     ra = frange(startAngle, endAngle+step, step)
 
     if rev: 
