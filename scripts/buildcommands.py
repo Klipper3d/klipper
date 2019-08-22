@@ -125,9 +125,9 @@ Handlers.append(HandlerEnumerations)
 
 def decode_integer(value):
     value = value.strip()
-    if len(value) != 7 or value[0] not in '-+':
+    if len(value) != 11 or value[0] not in '-+' or value[1:3] != '0x':
         error("Invalid encoded integer '%s'" % (value,))
-    out = sum([(ord(c) - 48) << (i*6) for i, c in enumerate(value[1:])])
+    out = int(value[1:], 0)
     if value[0] == '-':
         out -= 1<<32
     return out
