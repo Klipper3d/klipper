@@ -84,13 +84,18 @@ class ArcSupport:
                 eX = asX
                 eY = asY
                 
-                # if rev :
+                if rev :
+                bX = asX
+                bY = asY
+                eX = asStartX
+                eY = asStartY
+
 
                 # calc start angle
                 radian = math.atan2(bY - cY, bX - cX)
                 startAngle = radian * (180 / math.pi)
-                if rev :
-                    startAngle-= float(360)
+                # if rev :
+                #     startAngle-= float(360)
 
                 # # calc end angle
                 radian = math.atan2(eY - cY, eX - cX)
