@@ -2,8 +2,8 @@
 #define __CTR_H
 // Definitions for creating compile time requests.  The DECL_CTR macro
 // produces requests (text strings) that are placed in a special
-// section of the intermediate object files.  The requests are then
-// extracted during the build and passed to scripts/buildcommand.py.
+// section of the intermediate object files (*.o).  The build extracts
+// these strings and places them in out/compile_time_requests.txt.
 // The scripts/buildcommand.py code then generates
 // out/compile_time_request.c from these requests.
 
