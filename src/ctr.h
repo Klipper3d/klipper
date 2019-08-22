@@ -14,20 +14,24 @@
     static char __PASTE(_DECLS_, __LINE__)[] __attribute__((used))      \
         __section(".compile_time_request") = (REQUEST)
 
-// Helper macros for encoding an integer
-#define CTR_HEX(H) ((H) > 9 ? (H) - 10 + 'A' : (H) + '0')
-#define CTR_INT(V, S) CTR_HEX(((uint32_t)(V) >> (S)) & 0x0f)
+// Macro to encode an integer for use with DECL_CTR_INT()
+#define _CTR_HEX(H) ((H) > 9 ? (H) - 10 + 'A' : (H) + '0')
+#define _CTR_INT(V, S) _CTR_HEX(((uint32_t)(V) >> (S)) & 0x0f)
+#define CTR_INT(VALUE) {                                \
+        ' ', (VALUE) < 0 ? '-' : '+', '0', 'x',         \
+        _CTR_INT((VALUE),28), _CTR_INT((VALUE),24),     \
+        _CTR_INT((VALUE),20), _CTR_INT((VALUE),16),     \
+        _CTR_INT((VALUE),12), _CTR_INT((VALUE),8),      \
+        _CTR_INT((VALUE),4), _CTR_INT((VALUE),0) }
 
 // Declare a compile time request with an integer expression
-#define DECL_CTR_INT(REQUEST, VALUE)                            \
-    static struct { char _r[sizeof(REQUEST)]; char _v[12]; }    \
-        __PASTE(_DECLI_, __LINE__) __attribute__((used))        \
-            __section(".compile_time_request") = {              \
-            REQUEST " ", {                                      \
-                (VALUE) < 0 ? '-' : '+', '0', 'x',              \
-                CTR_INT((VALUE),28), CTR_INT((VALUE),24),       \
-                CTR_INT((VALUE),20), CTR_INT((VALUE),16),       \
-                CTR_INT((VALUE),12), CTR_INT((VALUE),8),        \
-                CTR_INT((VALUE),4), CTR_INT((VALUE),0), 0 } }
+#define DECL_CTR_INT(REQUEST, PARAM_COUNT, args...)     \
+    static struct {                                     \
+        char _request[sizeof(REQUEST)-1];               \
+        char _values[(PARAM_COUNT)][12];                \
+        char _end_of_line;                              \
+    } __PASTE(_DECLI_, __LINE__) __attribute__((used))  \
+        __section(".compile_time_request") = {          \
+        (REQUEST), { args }, 0 }
 
 #endif // ctr.h
