@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import logging
+import numpy
 import math
 import re 
 
@@ -138,10 +139,11 @@ def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
     coords = []
     # if startAngle>endAngle:
     #     step*= -1.0
-    ra = frange(startAngle, endAngle+step, step)
+    # ra = frange(startAngle, endAngle+step, step)
+    ra = numpy.arange(startAngle, endAngle+step, step)
 
-    if rev: 
-        ra = reversed(ra)
+    # if rev: 
+    #     ra = reversed(ra)
 
     for i in ra:
         rad = i * (math.pi / 180)
