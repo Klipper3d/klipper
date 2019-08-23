@@ -1,1 +1,0 @@
-~/klippy-env/bin/python ./klippy/klippy.py ./test/g2/plotter.cfg -i $1 -o out/test.serial -v -d out/klipper.dict

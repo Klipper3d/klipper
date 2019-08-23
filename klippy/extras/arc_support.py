@@ -1,10 +1,15 @@
 # adds g2/g3 support. converts both commands into g1 code in 360 degree steps
 #
-# Copyright (C) 2019  Eric Callahan <arksine.code@gmail.com>
+#
+#
+#   
+#
+#
+# Copyright (C) 2019  Aleksej Vasiljkovic <achmed21@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import logging
+#import logging
 import math
 import re
 
@@ -70,11 +75,9 @@ class ArcSupport:
 
                 coords = self.planArc(currentPos, [asX,asY,0,0], [asI, asJ], clockwise)
             #####################################################################
-
+            # converting coords into G1 codes (lazy aproch)
             if coords.__sizeof__()>0:
                 asOut = ""
-                msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg 
-                self.gcode.respond_info("arc_support: tranlated from:" + msg)
                 # asOut = "arc_support: tranlated from '" + msg + "'"  #spew info
 
                 for coord in coords:
@@ -88,19 +91,22 @@ class ArcSupport:
                     asOut+= "\n"
     
                 # throw g1 commands in queue
-                # logging.info(asOut)
                 self.gcode.run_script_from_command(asOut)
                 if self.debug:
-                    logging.info(asOut)
-                    f= open("test/g2/arc.gcode","w")
-                    f.write("\n;--------------\n"+asOut)
-                    f.close()
+                    msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg 
+                    self.gcode.respond_info("arc_support: tranlated from:" + msg)
+                    self.gcode.respond_info(asOut)
+                    # f= open("test/g2/arc.gcode","w")
+                    # f.write("\n;--------------\n"+asOut)
+                    # f.close()
 
 
 
             else:
                 self.gcode.respond_info("could not tranlate from '" + msg + "'")
-            
+    
+
+    # Pulled from Marlin - planarc()
     def planArc(self, currentPos, targetPos=[0,0,0,0], offset=[0,0], clockwise=False):
         # todo: sometimes produces full circles
         coords = []
@@ -171,8 +177,6 @@ class ArcSupport:
             raw[X_AXIS] = center_P + r_P
             raw[Y_AXIS] = center_Q + r_Q
             raw[Z_AXIS] += linear_per_segment
-
-            logging.debug(raw)
 
             coords.append([raw[X_AXIS],  raw[Y_AXIS], raw[Z_AXIS] ])
         
