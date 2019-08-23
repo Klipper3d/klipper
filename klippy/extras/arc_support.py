@@ -97,10 +97,10 @@ class ArcSupport:
 
                 print("start: %f, end: %f" % (sa, ea))
 
-                coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
 
-                planArc(currentPos, [asX,asY,0,0], [asI, asJ], clockwise)
+                coords = planArc(currentPos, [asX,asY,0,0], [asI, asJ], clockwise)
 
+                # does not work like i want it to. totaly messes up in some coords
                 # if clockwise :
                 #     coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
                 # else:
@@ -127,7 +127,7 @@ class ArcSupport:
                 # logging.info(asOut)
                 self.gcode.run_script_from_command(asOut)
                 if self.debug:
-                    # logging.info(asOut)
+                    logging.info(asOut)
                     f= open("test/g2/arc.gcode","w")
                     f.write("\n;--------------\n"+asOut)
                     f.close()
@@ -143,15 +143,7 @@ def load_config(config):
     return ArcSupport(config)
 
 ################ internal functions ##########################
-
-# def getParams(gcode):
-#     list = {}
-#     matches = re.finditer(r"([xyijefr])(\d?\.\d+|\-?\d+)", gcode, re.MULTILINE | re.IGNORECASE)
-    
-#     for matchnum, match in enumerate(matches, start=1):
-#         list[match[1].lower()] = float(match[2])
-#     return list
-
+# My sad attempt!
 def calcRadCoords(x,y,r,startAngle=0, endAngle=360, step=0.0, rev=False):
     coords = []
     rangelist = []
@@ -192,41 +184,29 @@ def getAngle(x, y,cx, cy, radius):
     rad = math.atan2((y - cy)*-1, (x - cx)*-1)
     angle = angle = rad * (180 / math.pi) + 180
 
-    # rad = math.atan2((y - cy)*1, (x - cx)*1)
-    # angle = angle = rad * (180 / math.pi)
-
-    # print("cX=%f cY=%f | X=%f Y=%f | %f deg (%f)" % (cx, cy, x, y, angle, degrees))
-
     return angle
 
-#####################################################################################################
+######################################### Marlin Implementaion ############################################################
 
 def planArc(currentPos, targetPos=[0,0,0,0], offset=[0,0], clockwise=False):
+    coords = []
     MM_PER_ARC_SEGMENT = 1
-
-    p_axis = 0
-    q_axis = 1
-    l_axis = 2
     
     X_AXIS = 0
-    A_AXIS = 0
     Y_AXIS = 1
-    B_AXIS = 1
     Z_AXIS = 2
-    C_AXIS = 2
-    E_CART = 3
 
     # Radius vector from center to current location
-    r_P = offset[0]*-1  # was -offset[0]
-    r_Q = offset[1]*-1  # was -offset[1]
+    r_P = offset[0]*-1
+    r_Q = offset[1]*-1
 
     radius = math.hypot(r_P, r_Q)
-    center_P = currentPos[p_axis] - r_P
-    center_Q = currentPos[q_axis] - r_Q
-    rt_X = targetPos[p_axis] - center_P
-    rt_Y = targetPos[q_axis] - center_Q
-    linear_travel = targetPos[l_axis] - currentPos[l_axis]
-    extruder_travel = targetPos[E_CART] - currentPos[E_CART]
+    center_P = currentPos[X_AXIS] - r_P
+    center_Q = currentPos[Y_AXIS] - r_Q
+    rt_X = targetPos[X_AXIS] - center_P
+    rt_Y = targetPos[Y_AXIS] - center_Q
+    linear_travel = targetPos[Z_AXIS] - currentPos[Z_AXIS]
+    # extruder_travel = targetPos[E_CART] - currentPos[E_CART]
 
     # CCW angle of rotation between position and target from the circle center. Only one atan2() trig computation required.
     angular_travel = math.atan2(r_P * rt_Y - r_Q * rt_X, r_P * rt_X + r_Q * rt_Y)
@@ -236,171 +216,51 @@ def planArc(currentPos, targetPos=[0,0,0,0], offset=[0,0], clockwise=False):
 
 
     # Make a circle if the angular rotation is 0 and the target is current position
-    if (angular_travel == 0 and currentPos[p_axis] == targetPos[p_axis] and currentPos[q_axis] == targetPos[q_axis]):
+    if (angular_travel == 0 and currentPos[X_AXIS] == targetPos[X_AXIS] and currentPos[Y_AXIS] == targetPos[Y_AXIS]):
         angular_travel = RADIANS(360);
 
 
     flat_mm = radius * angular_travel
     mm_of_travel = linear_travel    # todo: needs checking
     if(mm_of_travel == linear_travel):
-        math.hypot(flat_mm, linear_travel)
+        mm_of_travel = math.hypot(flat_mm, linear_travel)
     else:
-        math.abs(flat_mm)
-    if (mm_of_travel < 0.001):
-        return
+       mm_of_travel = math.abs(flat_mm)
 
-    segments = FLOOR(mm_of_travel / (MM_PER_ARC_SEGMENT))
+
+    if (mm_of_travel < 0.001):
+        return coords
+
+    segments = int(math.floor(mm_of_travel / (MM_PER_ARC_SEGMENT)))
     if(segments<1): #NOLESS(segments, 1);
         segments=1
 
-#     /**
-#      * Vector rotation by transformation matrix: r is the original vector, r_T is the rotated vector,
-#      * and phi is the angle of rotation. Based on the solution approach by Jens Geisler.
-#      *     r_T = [cos(phi) -sin(phi);
-#      *            sin(phi)  cos(phi)] * r ;
-#      *
-#      * For arc generation, the center of the circle is the axis of rotation and the radius vector is
-#      * defined from the circle center to the initial position. Each line segment is formed by successive
-#      * vector rotations. This requires only two cos() and sin() computations to form the rotation
-#      * matrix for the duration of the entire arc. Error may accumulate from numerical round-off, since
-#      * all double numbers are single precision on the Arduino. (True double precision will not have
-#      * round off issues for CNC applications.) Single precision error can accumulate to be greater than
-#      * tool precision in some cases. Therefore, arc path correction is implemented.
-#      *
-#      * Small angle approximation may be used to reduce computation overhead further. This approximation
-#      * holds for everything, but very small circles and large MM_PER_ARC_SEGMENT values. In other words,
-#      * theta_per_segment would need to be greater than 0.1 rad and N_ARC_CORRECTION would need to be large
-#      * to cause an appreciable drift error. N_ARC_CORRECTION~=25 is more than small enough to correct for
-#      * numerical drift error. N_ARC_CORRECTION may be on the order a hundred(s) before error becomes an
-#      * issue for CNC machines with the single precision Arduino calculations.
-#      *
-#      * This approximation also allows plan_arc to immediately insert a line segment into the planner
-#      * without the initial overhead of computing cos() or sin(). By the time the arc needs to be applied
-#      * a correction, the planner should have caught up to the lag caused by the initial plan_arc overhead.
-#      * This is important when there are successive arc motions.
-#      */
+
 #     // Vector rotation matrix values
     raw = [0,0,0,0]
     theta_per_segment = float(angular_travel / segments)
     linear_per_segment = float(linear_travel / segments)
-    extruder_per_segment = float(extruder_travel / segments)
     sin_T = theta_per_segment
     cos_T = float(1 - 0.5 * (theta_per_segment**2)) # Small angle approximation
 
     # Initialize the linear axis
-    raw[l_axis] = currentPos[l_axis];
+    raw[Z_AXIS] = currentPos[Z_AXIS];
 
-    # Initialize the extruder axis
-    raw[E_CART] = currentPos[E_CART];
 
-#     const float fr_mm_s = MMS_SCALED(feedrate_mm_s);
+    for i in range(1,segments):
+        cos_Ti = math.cos(i * theta_per_segment)
+        sin_Ti = math.sin(i * theta_per_segment)
+        r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti
+        r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti
 
-#     millis_t next_idle_ms = millis() + 200UL;
+      # Update raw location
+        raw[X_AXIS] = center_P + r_P
+        raw[Y_AXIS] = center_Q + r_Q
+        raw[Z_AXIS] += linear_per_segment
 
-#     #if HAS_FEEDRATE_SCALING
-#       // SCARA needs to scale the feed rate from mm/s to degrees/s
-#       const float inv_segment_length = 1.0f / (MM_PER_ARC_SEGMENT),
-#                   inverse_secs = inv_segment_length * fr_mm_s;
-#       float oldA = planner.position_float[A_AXIS],
-#             oldB = planner.position_float[B_AXIS]
-#             #if ENABLED(DELTA_FEEDRATE_SCALING)
-#               , oldC = planner.position_float[C_AXIS]
-#             #endif
-#             ;
-#     #endif
+        logging.debug(raw)
 
-#     #if N_ARC_CORRECTION > 1
-#       int8_t arc_recalc_count = N_ARC_CORRECTION;
-#     #endif
+        coords.append([raw[X_AXIS],  raw[Y_AXIS], raw[Z_AXIS] ])
+    
 
-#     for (uint16_t i = 1; i < segments; i++) { // Iterate (segments-1) times
-
-#       thermalManager.manage_heater();
-#       if (ELAPSED(millis(), next_idle_ms)) {
-#         next_idle_ms = millis() + 200UL;
-#         idle();
-#       }
-
-#       #if N_ARC_CORRECTION > 1
-#         if (--arc_recalc_count) {
-#           // Apply vector rotation matrix to previous r_P / 1
-#           const float r_new_Y = r_P * sin_T + r_Q * cos_T;
-#           r_P = r_P * cos_T - r_Q * sin_T;
-#           r_Q = r_new_Y;
-#         }
-#         else
-#       #endif
-#       {
-#         #if N_ARC_CORRECTION > 1
-#           arc_recalc_count = N_ARC_CORRECTION;
-#         #endif
-
-#         // Arc correction to radius vector. Computed only every N_ARC_CORRECTION increments.
-#         // Compute exact location by applying transformation matrix from initial radius vector(=-offset).
-#         // To reduce stuttering, the sin and cos could be computed at different times.
-#         // For now, compute both at the same time.
-#         const float cos_Ti = cos(i * theta_per_segment), sin_Ti = sin(i * theta_per_segment);
-#         r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti;
-#         r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti;
-#       }
-
-#       // Update raw location
-#       raw[p_axis] = center_P + r_P;
-#       raw[q_axis] = center_Q + r_Q;
-#       raw[l_axis] += linear_per_segment;
-#       raw[E_CART] += extruder_per_segment;
-
-#       clamp_to_software_endstops(raw);
-
-#       #if HAS_FEEDRATE_SCALING
-#         inverse_kinematics(raw);
-#         ADJUST_DELTA(raw);
-#       #endif
-
-#       #if ENABLED(SCARA_FEEDRATE_SCALING)
-#         // For SCARA scale the feed rate from mm/s to degrees/s
-#         // i.e., Complete the angular vector in the given time.
-#         if (!planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], raw[Z_AXIS], raw[E_CART], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder, MM_PER_ARC_SEGMENT))
-#           break;
-#         oldA = delta[A_AXIS]; oldB = delta[B_AXIS];
-#       #elif ENABLED(DELTA_FEEDRATE_SCALING)
-#         // For DELTA scale the feed rate from Effector mm/s to Carriage mm/s
-#         // i.e., Complete the linear vector in the given time.
-#         if (!planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], raw[E_AXIS], SQRT(sq(delta[A_AXIS] - oldA) + sq(delta[B_AXIS] - oldB) + sq(delta[C_AXIS] - oldC)) * inverse_secs, active_extruder, MM_PER_ARC_SEGMENT))
-#           break;
-#         oldA = delta[A_AXIS]; oldB = delta[B_AXIS]; oldC = delta[C_AXIS];
-#       #elif HAS_UBL_AND_CURVES
-#         float pos[XYZ] = { raw[X_AXIS], raw[Y_AXIS], raw[Z_AXIS] };
-#         planner.apply_leveling(pos);
-#         if (!planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], raw[E_CART], fr_mm_s, active_extruder, MM_PER_ARC_SEGMENT))
-#           break;
-#       #else
-#         if (!planner.buffer_line_kinematic(raw, fr_mm_s, active_extruder))
-#           break;
-#       #endif
-#     }
-
-#     // Ensure last segment arrives at target location.
-#     #if HAS_FEEDRATE_SCALING
-#       inverse_kinematics(cart);
-#       ADJUST_DELTA(cart);
-#     #endif
-
-#     #if ENABLED(SCARA_FEEDRATE_SCALING)
-#       const float diff2 = HYPOT2(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB);
-#       if (diff2)
-#         planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], targetPos[Z_AXIS], targetPos[E_CART], SQRT(diff2) * inverse_secs, active_extruder, MM_PER_ARC_SEGMENT);
-#     #elif ENABLED(DELTA_FEEDRATE_SCALING)
-#       const float diff2 = sq(delta[A_AXIS] - oldA) + sq(delta[B_AXIS] - oldB) + sq(delta[C_AXIS] - oldC);
-#       if (diff2)
-#         planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], targetPos[E_CART], SQRT(diff2) * inverse_secs, active_extruder, MM_PER_ARC_SEGMENT);
-#     #elif HAS_UBL_AND_CURVES
-#       float pos[XYZ] = { targetPos[X_AXIS], targetPos[Y_AXIS], targetPos[Z_AXIS] };
-#       planner.apply_leveling(pos);
-#       planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], targetPos[E_CART], fr_mm_s, active_extruder, MM_PER_ARC_SEGMENT);
-#     #else
-#       planner.buffer_line_kinematic(cart, fr_mm_s, active_extruder);
-#     #endif
-
-#     COPY(currentPos, cart);
-#   } // plan_arc
+    return coords
