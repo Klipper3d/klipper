@@ -36,6 +36,7 @@ class ArcSupport:
 
         asX = params.get("X", "")
         asY = params.get("Y", "")
+        asZ = params.get("Z", "")
 
         asR = float(params.get("R", 0))    #radius
         asI = float(params.get("I", 0))
@@ -78,6 +79,8 @@ class ArcSupport:
 
                 for coord in coords:
                     asOut+= "G1 X%f Y%f" % (coord[0], coord[1])
+                    if asZ:
+                        asOut+= " E%f" % ((float(asZ)/coords.__sizeof__()))
                     if asE>0:
                         asOut+= " E%f" % ((asE/coords.__sizeof__()))
                     if asF>0:
@@ -99,6 +102,7 @@ class ArcSupport:
                 self.gcode.respond_info("could not tranlate from '" + msg + "'")
             
     def planArc(self, currentPos, targetPos=[0,0,0,0], offset=[0,0], clockwise=False):
+        # todo: sometimes produces full circles
         coords = []
         MM_PER_ARC_SEGMENT = self.mm_per_step
         
@@ -127,7 +131,7 @@ class ArcSupport:
 
         # Make a circle if the angular rotation is 0 and the target is current position
         if (angular_travel == 0 and currentPos[X_AXIS] == targetPos[X_AXIS] and currentPos[Y_AXIS] == targetPos[Y_AXIS]):
-            angular_travel = RADIANS(360);
+            angular_travel = math.radians(360)
 
 
         flat_mm = radius * angular_travel
@@ -150,8 +154,8 @@ class ArcSupport:
         raw = [0,0,0,0]
         theta_per_segment = float(angular_travel / segments)
         linear_per_segment = float(linear_travel / segments)
-        sin_T = theta_per_segment
-        cos_T = float(1 - 0.5 * (theta_per_segment**2)) # Small angle approximation
+        # sin_T = theta_per_segment
+        # cos_T = float(1 - 0.5 * (theta_per_segment**2)) # Small angle approximation
 
         # Initialize the linear axis
         raw[Z_AXIS] = currentPos[Z_AXIS];
