@@ -1,10 +1,12 @@
 # adds g2/g3 support. converts both commands into g1 code in 360 degree steps
 #
+# uses the plan_arc function from marlin which does steps in mm rather then
+# in degrees. 
+# Coordinates created by this are converted into G1 commands. It is a bit
+# of a lazy aproach but i didnt feel like copying the G1 code functions.
 #
-#
+# note: only IJK version available
 #   
-#
-#
 # Copyright (C) 2019  Aleksej Vasiljkovic <achmed21@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -18,16 +20,13 @@ class ArcSupport:
         self.printer = config.get_printer()
         self.mm_per_step = config.getfloat('mm_per_step', 1)
         self.debug = config.getboolean('debug', False)
-        # if self.degree_steps>0:
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
         self.gcode.register_command("G3", self.cmd_G2, desc=self.cmd_G3_help)
-            # self.gcode.register_command("G3", self.cmd_G3)
-        
-        # raise config.error("Arc support test")
 
-    cmd_G2_help = cmd_G3_help = "testing ..."
+    cmd_G2_help = "Counterclockwise rotation move"
+    cmd_G3_help = "Clockwise rotaion move"
     def cmd_G2(self, params):
         msg = params['#original']
     
@@ -78,7 +77,7 @@ class ArcSupport:
             # converting coords into G1 codes (lazy aproch)
             if coords.__sizeof__()>0:
                 asOut = ""
-                # asOut = "arc_support: tranlated from '" + msg + "'"  #spew info
+                    msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg 
 
                 for coord in coords:
                     asOut+= "G1 X%f Y%f" % (coord[0], coord[1])
@@ -93,7 +92,6 @@ class ArcSupport:
                 # throw g1 commands in queue
                 self.gcode.run_script_from_command(asOut)
                 if self.debug:
-                    msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg 
                     self.gcode.respond_info("arc_support: tranlated from:" + msg)
                     self.gcode.respond_info(asOut)
                     # f= open("test/g2/arc.gcode","w")
@@ -103,7 +101,7 @@ class ArcSupport:
 
 
             else:
-                self.gcode.respond_info("could not tranlate from '" + msg + "'")
+                self.gcode.respond_info("could not tranlate from '" + params['#original'] + "'")
     
 
     # Pulled from Marlin - planarc()
@@ -141,7 +139,7 @@ class ArcSupport:
 
 
         flat_mm = radius * angular_travel
-        mm_of_travel = linear_travel    # todo: needs checking
+        mm_of_travel = linear_travel
         if(mm_of_travel == linear_travel):
             mm_of_travel = math.hypot(flat_mm, linear_travel)
         else:
@@ -152,11 +150,10 @@ class ArcSupport:
             return coords
 
         segments = int(math.floor(mm_of_travel / (MM_PER_ARC_SEGMENT)))
-        if(segments<1): #NOLESS(segments, 1);
+        if(segments<1):
             segments=1
 
 
-    #     // Vector rotation matrix values
         raw = [0,0,0,0]
         theta_per_segment = float(angular_travel / segments)
         linear_per_segment = float(linear_travel / segments)
@@ -173,7 +170,6 @@ class ArcSupport:
             r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti
             r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti
 
-        # Update raw location
             raw[X_AXIS] = center_P + r_P
             raw[Y_AXIS] = center_Q + r_Q
             raw[Z_AXIS] += linear_per_segment
