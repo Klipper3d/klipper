@@ -161,7 +161,7 @@ class ArcSupport:
         raw[Z_AXIS] = currentPos[Z_AXIS];
 
 
-        for i in range(1,segments):
+        for i in range(1,segments+1):
             cos_Ti = math.cos(i * theta_per_segment)
             sin_Ti = math.sin(i * theta_per_segment)
             r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti
