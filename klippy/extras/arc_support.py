@@ -28,11 +28,12 @@ class ArcSupport:
     
         # # set vars
 
-        toolhead = self.printer.lookup_object('toolhead')
+        # toolhead = self.printer.lookup_object('toolhead')
         pos =  self.printer.lookup_object('toolhead').get_position()
         asStartX = pos[0] 
         asStartY = pos[1]
         asStartZ = pos[2]
+        print(asStartY)
 
         asX = params.get("X", "")
         asY = params.get("Y", "")
@@ -83,16 +84,22 @@ class ArcSupport:
  
                 print("cX=%f cY=%f | X=%f Y=%f | rad=%f | %f deg" % (cX, cX, asStartX, asStartY, radius, startAngle))
 
-                # if (startAngle==0 and (cY+radius>=asStartY)):
-                #     sa+= 360
+                if clockwise:
+                    # sa-=360
+                    ea-=360
+                
+                if(ea == sa):   #both the same, do a full circle
+                    ea+=360
 
 
                 print("start: %f, end: %f" % (sa, ea))
 
-                if clockwise :
-                    coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
-                else:
-                    coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
+                coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
+
+                # if clockwise :
+                #     coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
+                # else:
+                #     coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
                 
 
             #####################################################################
@@ -116,6 +123,11 @@ class ArcSupport:
                 self.gcode.run_script_from_command(asOut)
                 if self.debug:
                     logging.info(asOut)
+                    f= open("test/g2/arc.gcode","w")
+                    f.write(msg+"\n;--------------\n"+asOut)
+                    f.close()
+
+
 
             else:
                 self.gcode.respond_info("could not tranlate from '" + msg + "'")
@@ -172,11 +184,11 @@ def frange(start, stop=None, step=None):
         start = start + step
 
 def getAngle(x, y,cx, cy, radius):
-    # rad = math.atan2((y - cy)*-1, (x - cx)*-1)
-    # angle = angle = rad * (180 / math.pi) + 180
+    rad = math.atan2((y - cy)*-1, (x - cx)*-1)
+    angle = angle = rad * (180 / math.pi) + 180
 
-    rad = math.atan2((y - cy)*1, (x - cx)*1)
-    angle = angle = rad * (180 / math.pi)
+    # rad = math.atan2((y - cy)*1, (x - cx)*1)
+    # angle = angle = rad * (180 / math.pi)
 
     # print("cX=%f cY=%f | X=%f Y=%f | %f deg (%f)" % (cx, cy, x, y, angle, degrees))
 
