@@ -33,7 +33,7 @@ class ArcSupport:
         asStartX = pos[0] 
         asStartY = pos[1]
         asStartZ = pos[2]
-        print(asStartY)
+        print(pos)
 
         asX = params.get("X", "")
         asY = params.get("Y", "")
@@ -127,7 +127,7 @@ class ArcSupport:
                 if self.debug:
                     logging.info(asOut)
                     f= open("test/g2/arc.gcode","w")
-                    f.write(msg+"\n;--------------\n"+asOut)
+                    f.write("\n;--------------\n"+asOut)
                     f.close()
 
 
