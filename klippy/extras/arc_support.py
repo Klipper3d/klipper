@@ -5,7 +5,7 @@
 # Coordinates created by this are converted into G1 commands. It is a bit
 # of a lazy aproach but i didnt feel like copying the G1 code functions.
 #
-# note: only IJK version available
+# note: only IJ version available
 #   
 # Copyright (C) 2019  Aleksej Vasiljkovic <achmed21@gmail.com>
 #
