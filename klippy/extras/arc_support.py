@@ -1,4 +1,4 @@
-# adds g2/g3 support. converts both commands into g1 code in 360 degree steps
+# adds g2/g3 support. converts both commands into g1 code
 #
 # uses the plan_arc function from marlin which does steps in mm rather then
 # in degrees. 
