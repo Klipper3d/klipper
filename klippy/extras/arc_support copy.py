@@ -17,12 +17,18 @@ class ArcSupport:
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
-        self.gcode.register_command("G3", self.cmd_G2, desc=self.cmd_G3_help)
+        self.gcode.register_command("G3", self.cmd_G2, desc=self.cmd_G2_help)
             # self.gcode.register_command("G3", self.cmd_G3)
         
         # raise config.error("Arc support test")
 
-    cmd_G2_help = cmd_G3_help = "testing ..."
+    cmd_G2_help = "testing ..."
+    # def cmd_Ga(self, params):
+    #     self.arc(self, params)
+    # def cmd_G3(self, params):
+    #     self.GArc(self, params)
+
+
     def cmd_G2(self, params):
         msg = params['#original']
     
@@ -32,7 +38,6 @@ class ArcSupport:
         pos =  self.printer.lookup_object('toolhead').get_position()
         asStartX = pos[0] 
         asStartY = pos[1]
-        asStartZ = pos[2]
 
         asX = params.get("X", "")
         asY = params.get("Y", "")
@@ -55,7 +60,7 @@ class ArcSupport:
             raise self.gcode.error("g2/g3: R, I and J were given. no idea what to do ...")
         else:   # -------- execute conversion -----------
             coords = []
-            clockwise = params['#command'].lower().startswith("g2") # direction, reversed for g3
+            rev = params['#command'].lower().startswith("g3") # direction, reversed for g3
             asY = float(asY)
             asX = float(asX)
 
@@ -69,38 +74,32 @@ class ArcSupport:
 
             #     coords=calcRadCoords(asX, asY, asR, 0, 360, self.degree_steps, rev)
             # use IJK
-
             if asI != 0 or asJ!=0:
                 cX = asStartX + asI
                 cY = asStartY + asJ
                 radius = math.sqrt((asStartX - cX)**2 + (asStartY - cY)**2)
 
-                startAngle = getAngle(asStartX, asStartY, cX, cY, radius)
-                endAngle = getAngle(asX, asY, cX, cY, radius)
+                # calc start angle
+                startAngle = getAngle(asStartX, asStartY, cX, cY, radius, rev)
 
-                sa = startAngle
-                ea = endAngle
- 
-                print("cX=%f cY=%f | X=%f Y=%f | rad=%f | %f deg" % (cX, cX, asStartX, asStartY, radius, startAngle))
+                # # calc end angle
+                endAngle = getAngle(asX, asY, cX, cY, radius, rev)
 
-                # if (startAngle==0 and (cY+radius>=asStartY)):
-                #     sa+= 360
+                print(startAngle)
+                print(endAngle)
 
 
-                print("start: %f, end: %f" % (sa, ea))
-
-                if clockwise :
-                    coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
+                if rev :
+                    coords=calcRadCoords(cX, cY, radius, endAngle, startAngle, self.degree_steps, True)
                 else:
-                    coords=calcRadCoords(cX, cY, radius, sa, ea, self.degree_steps)
+                    coords=calcRadCoords(cX, cY, radius, startAngle, endAngle, self.degree_steps)
                 
 
             #####################################################################
 
             if coords.__sizeof__()>0:
                 asOut = ""
-                msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg 
-                self.gcode.respond_info("arc_support: tranlated from:" + msg)
+                self.gcode.respond_info("arc_support: tranlated from '" + msg + "'")
                 # asOut = "arc_support: tranlated from '" + msg + "'"  #spew info
 
                 for coord in coords:
@@ -171,13 +170,24 @@ def frange(start, stop=None, step=None):
         yield start # return float number
         start = start + step
 
-def getAngle(x, y,cx, cy, radius):
-    # rad = math.atan2((y - cy)*-1, (x - cx)*-1)
-    # angle = angle = rad * (180 / math.pi) + 180
-
-    rad = math.atan2((y - cy)*1, (x - cx)*1)
+def getAngle(x, y,cx, cy, radius, direction=False):
+    rad = math.atan2(y - cy, x - cx)
     angle = angle = rad * (180 / math.pi)
 
+    degrees = (angle + 360.0) % 360.0
+
+    if direction:
+        if(degrees==0 and x < cx):
+            degrees+=360
+    else:
+        if(degrees==0 and x > cx):
+            degrees+=360
+
+
+    angle = degrees
     # print("cX=%f cY=%f | X=%f Y=%f | %f deg (%f)" % (cx, cy, x, y, angle, degrees))
+
+
+
 
     return angle
