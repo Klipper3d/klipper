@@ -87,6 +87,9 @@ class ArcSupport:
                 if clockwise:
                     # sa-=360
                     ea-=360
+
+                if (asI<>0 and asJ<>0) and asI<asJ:
+                        sa-=360
                 
                 if(ea == sa):   #both the same, do a full circle
                     ea+=360
