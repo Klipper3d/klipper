@@ -1,6 +1,6 @@
 # Printer stepper support
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
@@ -26,17 +26,29 @@ class StepperEnablePin:
             if not self.enable_count:
                 self.mcu_enable.set_digital(print_time, 0)
 
-def lookup_enable_pin(ppins, pin):
-    if pin is None:
+class StepperMultiEnablePin:
+    def __init__(self, enable_list):
+        self.enable_list = enable_list
+    def set_enable(self, print_time, enable):
+        for en in self.enable_list:
+            en.set_enable(print_time, enable)
+
+def lookup_enable_pin(ppins, pin_list):
+    if pin_list is None:
         return StepperEnablePin(None, 9999)
-    pin_params = ppins.lookup_pin(pin, can_invert=True,
-                                  share_type='stepper_enable')
-    enable = pin_params.get('class')
-    if enable is None:
-        mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
-        mcu_enable.setup_max_duration(0.)
-        pin_params['class'] = enable = StepperEnablePin(mcu_enable)
-    return enable
+    enable_list = []
+    for pin in pin_list.split(','):
+        pin_params = ppins.lookup_pin(pin, can_invert=True,
+                                      share_type='stepper_enable')
+        enable = pin_params.get('class')
+        if enable is None:
+            mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
+            mcu_enable.setup_max_duration(0.)
+            pin_params['class'] = enable = StepperEnablePin(mcu_enable)
+        enable_list.append(enable)
+    if len(enable_list) == 1:
+        return enable_list[0]
+    return StepperMultiEnablePin(enable_list)
 
 
 ######################################################################
@@ -73,6 +85,7 @@ class PrinterStepper:
         self.set_commanded_position = mcu_stepper.set_commanded_position
         self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_step_dist = mcu_stepper.get_step_dist
+        self.is_dir_inverted = mcu_stepper.is_dir_inverted
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]

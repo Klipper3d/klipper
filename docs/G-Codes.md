@@ -160,6 +160,8 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
+  idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -174,11 +176,32 @@ The following standard commands are supported:
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
 
+## G-Code Macro Commands
+
+The following command is available when a "gcode_macro" config section
+is enabled:
+- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
+  VALUE=<value>`: This command allows one to change the value of a
+  gcode_macro variable at run-time. The provided VALUE is parsed as a
+  Python literal.
+
 ## Custom Pin Commands
 
 The following command is available when an "output_pin" config section
 is enabled:
 - `SET_PIN PIN=config_name VALUE=<value>`
+
+## Neopixel and Dotstar Commands
+
+The following command is available when "neopixel" or "dotstar" config
+sections are enabled:
+- `SET_LED LED=<config_name> INDEX=<index> RED=<value> GREEN=<value>
+  BLUE=<value>`: This sets the LED output. Each color <value> must be
+  between 0.0 and 1.0. If multiple LED chips are daisy-chained then
+  one may specify INDEX to alter the color of just the given chip (1
+  for the first chip, 2 for the second, etc.). If INDEX is not
+  provided then all LEDs in the daisy-chain will be set to the
+  provided color.
 
 ## Servo Commands
 
@@ -209,17 +232,28 @@ section is enabled:
 
 The following commands are available when a "probe" config section is
 enabled:
-- `PROBE`: Move the nozzle downwards until the probe triggers.
+- `PROBE [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+  [SAMPLES_TOLERANCE_RETRIES=<count>]
+  [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
+  the probe triggers. If any of the optional parameters are provided
+  they override their equivalent setting in the probe config section
+  (see
+  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+  for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
-- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
-  [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
-  median and standard deviation. The default values are: REPEAT=10,
-  SPEED=probe config speed, X=current X, Y=current Y and Z=10.
-- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
-  calibrating the probe's z_offset. See the MANUAL_PROBE command for
-  details on the parameters and the additional commands available
-  while the tool is active.
+- `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum,
+  average, median, and standard deviation of multiple probe
+  samples. By default, 10 SAMPLES are taken. Otherwise the optional
+  parameters default to their equivalent setting in the probe config
+  section.
+- `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
+  helper script useful for calibrating the probe's z_offset. See the
+  PROBE command for details on the optional probe parameters. See the
+  MANUAL_PROBE command for details on the SPEED parameter and the
+  additional commands available while the tool is active.
 
 ## BLTouch
 
@@ -235,12 +269,13 @@ See [Working with the BL-Touch](BLTouch.md) for more details.
 
 The following commands are available when the "delta_calibrate" config
 section is enabled:
-- `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
-  points on the bed and recommend updated endstop positions, tower
-  angles, and radius. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `DELTA_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`: This
+  command will probe seven points on the bed and recommend updated
+  endstop positions, tower angles, and radius. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -248,24 +283,26 @@ section is enabled:
 
 The following commands are available when the "bed_tilt" config
 section is enabled:
-- `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
-  points specified in the config and then recommend updated x and y
-  tilt adjustments. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `BED_TILT_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command will probe the points specified in the config and then
+  recommend updated x and y tilt adjustments. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 
 ## Mesh Bed Leveling
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
-  using generated points specified by the parameters in the
-  config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh. If METHOD=manual is specified then
-  the manual probing tool is activated - see the MANUAL_PROBE command
-  above for details on the additional commands available while this
-  tool is active.
+- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command probes the bed using generated points specified by the
+  parameters in the config. After probing, a mesh is generated and
+  z-movement is adjusted according to the mesh. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
@@ -300,19 +337,22 @@ section is enabled:
 
 The following commands are available when the "screws_tilt_adjust"
 config section is enabled:
-- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
-  adjustment tool. It will command the nozzle to different locations
-  (as defined in the config file) probing the z height and calculate
-  the number of knob turns to adjust the bed level.
+- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
+  will invoke the bed screws adjustment tool. It will command the
+  nozzle to different locations (as defined in the config file)
+  probing the z height and calculate the number of knob turns to
+  adjust the bed level. See the PROBE command for details on the
+  optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
 is enabled:
-- `Z_TILT_ADJUST`: This command will probe the points specified in the
-  config and then make independent adjustments to each Z stepper to
-  compensate for tilt.
+- `Z_TILT_ADJUST [<probe_parameter>=<value>]`: This command will probe
+  the points specified in the config and then make independent
+  adjustments to each Z stepper to compensate for tilt. See the PROBE
+  command for details on the optional probe parameters.
 
 ## Dual Carriages
 
@@ -404,6 +444,10 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+  - `CLEAR_PAUSE`:  Clears the current paused state without resuming the print.
+  This is useful if one decides to cancel a print after a PAUSE.  It is recommended
+  to add this to your start gcode to make sure the paused state is fresh for each
+  print.
 
 ## Filament Sensor
 
@@ -412,3 +456,70 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+ - `SET_FILAMENT_SENSOR SENSOR=<sensor_name> ENABLE=[0|1]`:  Sets the
+   filament sensor on/off.  If ENABLE is set to 0, the filament sensor will
+   be disabled, if set to 1 it is enabled.
+
+## Firmware Retraction
+
+The following commands are available when the "firmware_retraction"
+config section is enabled.  These commands allow you to utilise the
+firmware retraction feature available in many slicers, to reduce
+stringing during non-extrusion moves from one part of the print to
+another.  Appropriately configuring pressure advance reduces the length
+of retraction required.
+ - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>]`: Adjust the
+   parameters used by firmware retraction. RETRACT_LENGTH determines
+   the length of filament to retract and unretract. The speed of
+   retraction is adjusted via RETRACT_SPEED, and is typically set
+   relatively high. The speed of unretraction is adjusted via
+   UNRETRACT_SPEED, and is not particularly critical, although often
+   lower than RETRACT_SPEED. In some cases it is useful to add a small
+   amount of additional length on unretraction, and this is set via
+   UNRETRACT_EXTRA_LENGTH. SET_RETRACTION is commonly set as part of
+   slicer per-filament configuration, as different filaments require
+   different parameter settings.
+ - `GET_RETRACTION`: Queries the current parameters used by firmware
+   retraction and displays them on the terminal.
+ - `G10`: Retracts the extruder using the currently configured
+   parameters.
+ - `G11`: Unretracts the extruder using the currently configured
+   parameters.
+
+## Skew Correction
+
+The following commands are available when the "skew_correction" config
+section is enabled.
+  - `SET_SKEW [XY=<ac_length,bd_length,ad_length>] [XZ=<ac,bd,ad>]
+    [YZ=<ac,bd,ad>] [CLEAR=<0|1>]`:  Configures the [skew_correction] module
+    with measurements (in mm) taken from a calibration print.  One may
+    enter measurements for any combination of planes, planes not entered will
+    retain their current value.  If `CLEAR=1` is entered then all skew
+    correction will be disabled.
+  - `GET_CURRENT_SKEW`: Reports the current printer skew for each plane in
+    both radians and degrees.  The skew is calculated based on parameters
+    provided via the `SET_SKEW` gcode.
+  - `CALC_MEASURED_SKEW [AC=<ac_length>] [BD=<bd_length>] [AD=<ad_length>]`:
+    Calculates and reports the skew (in radians and degrees) based on a
+    measured print.  This can be useful for determining the printer's current
+    skew after correction has been applied.  It may also be useful before
+    correction is applied to determine if skew correction is necessary.   See
+    skew_correction.md for details on skew calibration objects and
+    measurements.
+  - `SKEW_PROFILE [LOAD=<name>] [SAVE=<name>] [REMOVE=<name>]`: Profile
+    management for skew_correction.  LOAD will restore skew state from the
+    profile matching the supplied name. SAVE will save the current skew state
+    to a profile matching the supplied name.  Remove will delete the profile
+    matching the supplied name from persistent memory.  Note that after SAVE
+    or REMOVE operations have been run the SAVE_CONFIG gcode must be run
+    to make the changes to peristent memory permanent.
+
+## Delayed GCode
+
+The following command is enabled if a [delayed_gcode] config section has
+been enabled:
+  - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
+    delay duration for the identified [delayed_gcode] and starts the timer
+    for gcode execution.  A value of 0 will cancel a pending delayed gcode
+    from executing.

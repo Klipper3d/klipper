@@ -4,10 +4,10 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // NVIC_SystemReset
-#include "command.h" // DECL_CONSTANT
-#include "sched.h" // sched_main
 #include "board/misc.h" // timer_read_time
+#include "command.h" // DECL_CONSTANT
+#include "internal.h" // NVIC_SystemReset
+#include "sched.h" // sched_main
 
 DECL_CONSTANT_STR("MCU", "lpc176x");
 
@@ -66,20 +66,6 @@ command_reset(uint32_t *args)
     NVIC_SystemReset();
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
-
-// Implement simple early-boot delay mechanism
-void
-udelay(uint32_t usecs)
-{
-    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
-        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-    }
-
-    uint32_t end = timer_read_time() + timer_from_us(usecs);
-    while (timer_is_before(timer_read_time(), end))
-        ;
-}
 
 // Main entry point
 int

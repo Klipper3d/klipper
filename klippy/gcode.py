@@ -6,12 +6,9 @@
 import os, re, logging, collections, shlex
 import homing, kinematics.extruder
 
-class error(Exception):
-    pass
-
 # Parse and handle G-Code commands
 class GCodeParser:
-    error = error
+    error = homing.CommandError
     RETRY_TIME = 0.100
     def __init__(self, printer, fd):
         self.printer = printer
@@ -34,6 +31,7 @@ class GCodeParser:
         self.input_log = collections.deque([], 50)
         # Command handling
         self.is_printer_ready = False
+        self.mutex = self.reactor.mutex()
         self.base_gcode_handlers = self.gcode_handlers = {}
         self.ready_gcode_handlers = {}
         self.mux_commands = {}
@@ -94,15 +92,28 @@ class GCodeParser:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
-    def set_move_transform(self, transform):
-        if self.move_transform is not None:
+    def set_move_transform(self, transform, force=False):
+        if self.move_transform is not None and not force:
             raise self.printer.config_error(
                 "G-Code move transform already specified")
+        old_transform = self.move_transform
+        if old_transform is None:
+            old_transform = self.toolhead
         self.move_transform = transform
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
+        return old_transform
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
+    def _action_emergency_stop(self, msg="action_emergency_stop"):
+        self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
+        return ""
+    def _action_respond_info(self, msg):
+        self.respond_info(msg)
+        return ""
+    def _action_respond_error(self, msg):
+        self.respond_error(msg)
+        return ""
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
@@ -134,7 +145,11 @@ class GCodeParser:
             'base_epos': self.base_position[3],
             'homing_xpos': self.homing_position[0],
             'homing_ypos': self.homing_position[1],
-            'homing_zpos': self.homing_position[2]
+            'homing_zpos': self.homing_position[2],
+            'gcode_position': homing.Coord(*move_position),
+            'action_respond_info': self._action_respond_info,
+            'action_respond_error': self._action_respond_error,
+            'action_emergency_stop': self._action_emergency_stop,
         }
     def _handle_shutdown(self):
         if not self.is_printer_ready:
@@ -207,7 +222,7 @@ class GCodeParser:
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
                 handler(params)
-            except error as e:
+            except self.error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
                 if not need_ack:
@@ -257,35 +272,15 @@ class GCodeParser:
                 return
         # Process commands
         self.is_processing_data = True
-        self.pending_commands = []
-        self._process_commands(pending_commands)
-        if self.pending_commands:
-            self._process_pending()
-        self.is_processing_data = False
-    def _process_pending(self):
-        pending_commands = self.pending_commands
         while pending_commands:
             self.pending_commands = []
-            self._process_commands(pending_commands)
+            with self.mutex:
+                self._process_commands(pending_commands)
             pending_commands = self.pending_commands
+        self.is_processing_data = False
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
-    def process_batch(self, commands):
-        if self.is_processing_data:
-            return False
-        self.is_processing_data = True
-        try:
-            self._process_commands(commands, need_ack=False)
-        except error as e:
-            if self.pending_commands:
-                self._process_pending()
-            self.is_processing_data = False
-            raise
-        if self.pending_commands:
-            self._process_pending()
-        self.is_processing_data = False
-        return True
     def run_script_from_command(self, script):
         prev_need_ack = self.need_ack
         try:
@@ -293,15 +288,10 @@ class GCodeParser:
         finally:
             self.need_ack = prev_need_ack
     def run_script(self, script):
-        commands = script.split('\n')
-        curtime = None
-        while 1:
-            res = self.process_batch(commands)
-            if res:
-                break
-            if curtime is None:
-                curtime = self.reactor.monotonic()
-            curtime = self.reactor.pause(curtime + 0.100)
+        with self.mutex:
+            self._process_commands(script.split('\n'), need_ack=False)
+    def get_mutex(self):
+        return self.mutex
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack or self.is_fileinput:
@@ -342,25 +332,25 @@ class GCodeParser:
                 minval=None, maxval=None, above=None, below=None):
         if name not in params:
             if default is self.sentinel:
-                raise error("Error on '%s': missing %s" % (
+                raise self.error("Error on '%s': missing %s" % (
                     params['#original'], name))
             return default
         try:
             value = parser(params[name])
         except:
-            raise error("Error on '%s': unable to parse %s" % (
+            raise self.error("Error on '%s': unable to parse %s" % (
                 params['#original'], params[name]))
         if minval is not None and value < minval:
-            raise error("Error on '%s': %s must have minimum of %s" % (
+            raise self.error("Error on '%s': %s must have minimum of %s" % (
                 params['#original'], name, minval))
         if maxval is not None and value > maxval:
-            raise error("Error on '%s': %s must have maximum of %s" % (
+            raise self.error("Error on '%s': %s must have maximum of %s" % (
                 params['#original'], name, maxval))
         if above is not None and value <= above:
-            raise error("Error on '%s': %s must be above %s" % (
+            raise self.error("Error on '%s': %s must be above %s" % (
                 params['#original'], name, above))
         if below is not None and value >= below:
-            raise error("Error on '%s': %s must be below %s" % (
+            raise self.error("Error on '%s': %s must be below %s" % (
                 params['#original'], name, below))
         return value
     def get_int(self, name, params, default=sentinel, minval=None, maxval=None):
@@ -387,7 +377,7 @@ class GCodeParser:
             eparams.update({k: params[k] for k in params if k.startswith('#')})
             return eparams
         except ValueError as e:
-            raise error("Malformed command '%s'" % (params['#original'],))
+            raise self.error("Malformed command '%s'" % (params['#original'],))
     # Temperature wrappers
     def _get_temp(self, eventtime):
         # Tn:XXX /YYY B:XXX /YYY
@@ -427,7 +417,7 @@ class GCodeParser:
         try:
             heater.set_temp(print_time, temp)
         except heater.error as e:
-            raise error(str(e))
+            raise self.error(str(e))
         if wait and temp:
             self.bg_temp(heater)
     def _set_fan_speed(self, speed):
@@ -465,10 +455,7 @@ class GCodeParser:
         if self.extruder is e:
             return
         self.run_script_from_command(self.extruder.get_activate_gcode(False))
-        try:
-            self.toolhead.set_extruder(e)
-        except homing.EndstopError as e:
-            raise error(str(e))
+        self.toolhead.set_extruder(e)
         self.extruder = e
         self.reset_last_position()
         self.extrude_factor = 1.
@@ -481,7 +468,8 @@ class GCodeParser:
         else:
             key_param = self.get_str(key, params)
         if key_param not in values:
-            raise error("The value '%s' is not valid for %s" % (key_param, key))
+            raise self.error("The value '%s' is not valid for %s" % (
+                key_param, key))
         values[key_param](params)
     all_handlers = [
         'G1', 'G4', 'G28', 'M18', 'M400',
@@ -516,15 +504,13 @@ class GCodeParser:
             if 'F' in params:
                 gcode_speed = float(params['F'])
                 if gcode_speed <= 0.:
-                    raise error("Invalid speed in '%s'" % (
+                    raise self.error("Invalid speed in '%s'" % (
                         params['#original'],))
                 self.speed = gcode_speed * self.speed_factor
         except ValueError as e:
-            raise error("Unable to parse move '%s'" % (params['#original'],))
-        try:
-            self.move_with_transform(self.last_position, self.speed)
-        except homing.EndstopError as e:
-            raise error(str(e))
+            raise self.error("Unable to parse move '%s'" % (
+                params['#original'],))
+        self.move_with_transform(self.last_position, self.speed)
     def cmd_G4(self, params):
         # Dwell
         if 'S' in params:
@@ -543,10 +529,7 @@ class GCodeParser:
         homing_state = homing.Homing(self.printer)
         if self.is_fileinput:
             homing_state.set_no_verify_retract()
-        try:
-            homing_state.home_axes(axes)
-        except homing.EndstopError as e:
-            raise error(str(e))
+        homing_state.home_axes(axes)
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
         self.reset_last_position()
@@ -620,10 +603,7 @@ class GCodeParser:
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             for pos, delta in enumerate(move_delta):
                 self.last_position[pos] += delta
-            try:
-                self.move_with_transform(self.last_position, speed)
-            except homing.EndstopError as e:
-                raise error(str(e))
+            self.move_with_transform(self.last_position, speed)
     def cmd_M206(self, params):
         # Offset axes
         offsets = { self.axis2pos[a]: -self.get_float(a, params)
@@ -649,7 +629,7 @@ class GCodeParser:
         state_name = self.get_str('NAME', params, 'default')
         state = self.saved_states.get(state_name)
         if state is None:
-            raise error("Unknown g-code state: %s" % (state_name,))
+            raise self.error("Unknown g-code state: %s" % (state_name,))
         # Restore state
         self.absolute_coord = state['absolute_coord']
         self.absolute_extrude = state['absolute_extrude']
@@ -665,10 +645,7 @@ class GCodeParser:
         if self.get_int('MOVE', params, 0):
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
-            try:
-                self.move_with_transform(self.last_position, speed)
-            except homing.EndstopError as e:
-                raise error(str(e))
+            self.move_with_transform(self.last_position, speed)
     # G-Code temperature and fan commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):

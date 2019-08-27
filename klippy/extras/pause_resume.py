@@ -16,6 +16,7 @@ class PauseResume:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.gcode.register_command("PAUSE", self.cmd_PAUSE)
         self.gcode.register_command("RESUME", self.cmd_RESUME)
+        self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE)
     def handle_ready(self):
         self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
     def get_status(self, eventtime):
@@ -59,6 +60,8 @@ class PauseResume:
             self.v_sd.cmd_M24({})
         else:
             self.gcode.respond_info("action:resumed")
+    def cmd_CLEAR_PAUSE(self, params):
+        self.is_paused = self.pause_command_sent = False
 
 def load_config(config):
     return PauseResume(config)

@@ -1274,23 +1274,6 @@ class MenuManager:
                             'is_idle': (
                                 self.parameters[name]['status'] == "Idle")
                         })
-                    elif class_name == 'PrinterExtruder':
-                        info = objs[name].get_heater().get_status(
-                            eventtime)
-                        self.parameters[name].update(info)
-                    elif class_name == 'PrinterLCD':
-                        self.parameters[name].update({
-                            'progress': objs[name].progress or 0,
-                            'message': objs[name].message or '',
-                            'is_enabled': True
-                        })
-                    elif class_name == 'PrinterHeaterFan':
-                        info = objs[name].fan.get_status(eventtime)
-                        self.parameters[name].update(info)
-                    elif class_name in ('PrinterOutputPin', 'PrinterServo'):
-                        self.parameters[name].update({
-                            'value': objs[name].last_value
-                        })
                 else:
                     self.parameters[name] = {'is_enabled': False}
             except Exception:

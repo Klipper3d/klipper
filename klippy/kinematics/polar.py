@@ -1,6 +1,6 @@
 # Code for handling the kinematics of polar robots
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -63,10 +63,7 @@ class PolarKinematics:
         else:
             forcepos[axis] += position_max - hi.position_endstop
         # Perform homing
-        limit_speed = None
-        if axis == 2:
-            limit_speed = self.max_z_velocity
-        homing_state.home_rails([rail], forcepos, homepos, limit_speed)
+        homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         # Always home XY together
         homing_axes = homing_state.get_axes()
@@ -122,10 +119,20 @@ class PolarKinematics:
         axes_d = move.axes_d
         cmove = move.cmove
         if axes_d[0] or axes_d[1]:
-            self.steppers[0].step_itersolve(cmove)
             self.rails[0].step_itersolve(cmove)
+            stepper_bed = self.steppers[0]
+            stepper_bed.step_itersolve(cmove)
+            # Normalize the stepper_bed angle
+            angle = stepper_bed.get_commanded_position()
+            if angle < -math.pi:
+                stepper_bed.set_commanded_position(angle + 2. * math.pi)
+            elif angle > math.pi:
+                stepper_bed.set_commanded_position(angle - 2. * math.pi)
         if axes_d[2]:
             self.rails[1].step_itersolve(cmove)
+    def get_status(self):
+        return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
+                        ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)

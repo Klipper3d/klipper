@@ -51,6 +51,11 @@ class PrinterLCD:
         self.message = None
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
+    def get_status(self, eventtime):
+        return {
+            'progress': self.progress or 0,
+            'message': self.message or ''
+        }
     # Get menu instance
     def get_menu(self):
         return self.menu

@@ -60,10 +60,7 @@ class CoreXYKinematics:
             else:
                 forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
             # Perform homing
-            limit_speed = None
-            if axis == 2:
-                limit_speed = self.max_z_velocity
-            homing_state.home_rails([rail], forcepos, homepos, limit_speed)
+            homing_state.home_rails([rail], forcepos, homepos)
     def motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
         for rail in self.rails:
@@ -114,6 +111,10 @@ class CoreXYKinematics:
             rail_y.step_itersolve(cmove)
         if axes_d[2]:
             rail_z.step_itersolve(cmove)
+    def get_status(self):
+        return {'homed_axes': "".join([a
+                    for a, (l, h) in zip("XYZ", self.limits) if l <= h])
+        }
 
 def load_kinematics(toolhead, config):
     return CoreXYKinematics(toolhead, config)

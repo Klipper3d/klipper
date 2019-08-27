@@ -6,6 +6,39 @@ All dates in this document are approximate.
 
 # Changes
 
+20190806: The SET_NEOPIXEL command has been renamed to SET_LED.
+
+20190726: The mcp4728 digital-to-analog code has changed. The default
+i2c_address is now 0x60 and the voltage reference is now relative to
+the mcp4728's internal 2.048 volt reference.
+
+20190710: The z_hop option was removed from the [firmware_retract]
+config section. The z_hop support was incomplete and could cause
+incorrect behavior with several common slicers.
+
+20190710: The optional parameters of the PROBE_ACCURACY command have
+changed. It may be necessary to update any macros or scripts that use
+that command.
+
+20190628: All configuration options have been removed from the
+[skew_correction] section.  Configuration for skew_correction
+is now done via the SET_SKEW gcode.  See skew_correction.md
+for recommended usage.
+
+20190607: The "variable_X" parameters of gcode_macro (along with the
+VALUE parameter of SET_GCODE_VARIABLE) are now parsed as Python
+literals. If a value needs to be assigned a string then wrap the value
+in quotes so that it is evaluated as a string.
+
+20190606: The "samples", "samples_result", and "sample_retract_dist"
+config options have been moved to the "probe" config section. These
+options are no longer supported in the "delta_calibrate", "bed_tilt",
+"bed_mesh", "screws_tilt_adjust", "z_tilt", or "quad_gantry_level"
+config sections.
+
+20190528: The magic "status" variable in gcode_macro template
+evaluation has been renamed to "printer".
+
 20190520: The SET_GCODE_OFFSET command has changed; update any g-code
 macros accordingly. The command will no longer apply the requested
 offset to the next G1 command. The old behavior may be approximated by

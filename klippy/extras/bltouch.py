@@ -55,7 +55,6 @@ class BLTouchEndstopWrapper:
         self.get_steppers = self.mcu_endstop.get_steppers
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.query_endstop_wait = self.mcu_endstop.query_endstop_wait
         self.TimeoutError = self.mcu_endstop.TimeoutError
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')
@@ -68,7 +67,7 @@ class BLTouchEndstopWrapper:
     def handle_connect(self):
         try:
             self.raise_probe()
-        except homing.EndstopError as e:
+        except homing.CommandError as e:
             logging.warning("BLTouch raise probe error: %s", str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
@@ -114,7 +113,7 @@ class BLTouchEndstopWrapper:
                 try:
                     self.verify_state(check_start_time, check_end_time,
                                       False, "raise probe")
-                except homing.EndstopError as e:
+                except homing.CommandError as e:
                     if retry >= 2:
                         raise
                     msg = "Failed to verify BLTouch probe is raised; retrying."
@@ -158,10 +157,11 @@ class BLTouchEndstopWrapper:
             if s.get_mcu_position() == mcu_pos:
                 raise homing.EndstopError("BLTouch failed to deploy")
         self.mcu_endstop.home_finalize()
-    def home_start(self, print_time, sample_time, sample_count, rest_time):
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   notify=None):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
-        self.mcu_endstop.home_start(
-            print_time, sample_time, sample_count, rest_time)
+        self.mcu_endstop.home_start(print_time, sample_time, sample_count,
+                                    rest_time, notify=notify)
     def get_position_endstop(self):
         return self.position_endstop
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"

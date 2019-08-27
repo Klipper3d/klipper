@@ -1,0 +1,137 @@
+# Kconfig settings for STM32 processors
+
+if MACH_STM32
+
+config STM32_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_BITBANGING
+
+config BOARD_DIRECTORY
+    string
+    default "stm32"
+
+choice
+    prompt "Processor model"
+    config MACH_STM32F103
+        bool "STM32F103"
+        select MACH_STM32F1
+    config MACH_STM32F405
+        bool "STM32F405"
+        select MACH_STM32F4
+    config MACH_STM32F407
+        bool "STM32F407"
+        select MACH_STM32F4
+    config MACH_STM32F446
+        bool "STM32F446"
+        select MACH_STM32F4
+endchoice
+
+config MACH_STM32F1
+    bool
+config MACH_STM32F4
+    bool
+config HAVE_STM32_USBFS
+    bool
+    default y if MACH_STM32F103
+    default n
+config HAVE_STM32_USBOTG
+    bool
+    default y if MACH_STM32F4
+    default n
+
+config MCU
+    string
+    default "stm32f103xb" if MACH_STM32F103
+    default "stm32f405xx" if MACH_STM32F405
+    default "stm32f407xx" if MACH_STM32F407
+    default "stm32f446xx" if MACH_STM32F446
+
+config CLOCK_FREQ
+    int
+    default 72000000 if MACH_STM32F103
+    default 168000000 if MACH_STM32F405 || MACH_STM32F407
+    default 180000000 if MACH_STM32F446
+
+config FLASH_SIZE
+    hex
+    default 0x10000 if MACH_STM32F103
+    default 0x80000 if MACH_STM32F4
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x5000 if MACH_STM32F103
+    default 0x20000 if MACH_STM32F4
+
+config STACK_SIZE
+    int
+    default 512
+
+choice
+    prompt "Bootloader offset"
+    config STM32_FLASH_START_2000
+        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103
+    config STM32_FLASH_START_7000
+        bool "28KiB bootloader" if MACH_STM32F103
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader (SKR-PRO)" if MACH_STM32F4
+    config STM32_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_START
+    hex
+    default 0x8002000 if STM32_FLASH_START_2000
+    default 0x8007000 if STM32_FLASH_START_7000
+    default 0x8008000 if STM32_FLASH_START_8000
+    default 0x8000000
+
+choice
+    prompt "Clock Reference" if LOW_LEVEL_OPTIONS
+    config STM32_CLOCK_REF_8M
+        bool "8Mhz crystal"
+    config STM32_CLOCK_REF_INTERNAL
+        bool "Internal clock"
+endchoice
+config CLOCK_REF_8M
+    bool
+    default n if STM32_CLOCK_REF_INTERNAL
+    default y
+
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
+    default y
+config SERIAL
+    depends on !USBSERIAL
+    bool
+    default y
+choice
+    depends on SERIAL
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS
+    help
+        Select the serial device to use.
+    config STM32_SERIAL_USART1
+        bool "USART1"
+    config STM32_SERIAL_USART2
+        bool "USART2"
+    config STM32_SERIAL_USART3
+        bool "USART3"
+    config STM32_SERIAL_USART3_ALT
+        bool "USART3 (on PD9/PD8)" if MACH_STM32F4
+endchoice
+config SERIAL_PORT
+    int
+    default 103 if STM32_SERIAL_USART3_ALT
+    default 3 if STM32_SERIAL_USART3
+    default 2 if STM32_SERIAL_USART2
+    default 1
+
+endif

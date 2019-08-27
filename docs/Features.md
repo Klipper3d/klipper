@@ -92,10 +92,10 @@ Klipper supports many standard 3d printer features:
 * Support for standard fans, nozzle fans, and temperature controlled
   fans. No need to keep fans running when the printer is idle.
 
-* Support for run-time configuration of TMC2130, TMC2208, TMC2224, and
-  TMC2660 stepper motor drivers. There is also support for current
-  control of traditional stepper drivers via AD5206, MCP4451, MCP4728,
-  MCP4018, and PWM pins.
+* Support for run-time configuration of TMC2130, TMC2208/TMC2224,
+  TMC2209, TMC2660, and TMC5160 stepper motor drivers. There is also
+  support for current control of traditional stepper drivers via
+  AD5206, MCP4451, MCP4728, MCP4018, and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available.
@@ -137,7 +137,7 @@ represent total number of steps per second on the micro-controller.
 | "Blue Pill" (STM32F103)     | 395K              | 356K              |
 | Arduino Due (SAM3X8E)       | 438K              | 438K              |
 | Smoothieboard (LPC1768)     | 574K              | 574K              |
-| SAM4S8C                     | 578K              | 578K              |
+| Duet2 Maestro (SAM4S8C)     | 578K              | 578K              |
 | Smoothieboard (LPC1769)     | 661K              | 661K              |
 | Beaglebone PRU              | 680K              | 680K              |
 | Duet2 Wifi/Eth (SAM4E8E)    | 686K              | 686K              |

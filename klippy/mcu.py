@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -8,8 +8,6 @@ import serialhdl, pins, chelper, clocksync
 
 class error(Exception):
     pass
-
-STEPCOMPRESS_ERROR_RET = -989898989
 
 class MCU_stepper:
     def __init__(self, mcu, pin_params):
@@ -70,6 +68,8 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
+    def is_dir_inverted(self):
+        return self._invert_dir
     def calc_position_from_coord(self, coord):
         return self._ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
@@ -102,15 +102,7 @@ class MCU_stepper:
         else:
             self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
         return was_ignore
-    def note_homing_start(self, homing_clock):
-        ret = self._ffi_lib.stepcompress_set_homing(
-            self._stepqueue, homing_clock)
-        if ret:
-            raise error("Internal error in stepcompress")
     def note_homing_end(self, did_trigger=False):
-        ret = self._ffi_lib.stepcompress_set_homing(self._stepqueue, 0)
-        if ret:
-            raise error("Internal error in stepcompress")
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
@@ -143,12 +135,13 @@ class MCU_endstop:
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
+        self._reactor = mcu.get_printer().get_reactor()
         self._oid = self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
-        self._homing = False
-        self._min_query_time = 0.
-        self._next_query_print_time = 0.
-        self._last_state = {}
+        self._min_query_time = self._last_sent_time = 0.
+        self._next_query_print_time = self._end_home_time = 0.
+        self._trigger_completion = self._home_completion = None
+        self._trigger_notify = None
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
@@ -162,83 +155,88 @@ class MCU_endstop:
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_end_stop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
+            "config_endstop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
                 self._oid, self._pin, self._pullup, len(self._steppers)))
         self._mcu.add_config_cmd(
-            "end_stop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
+            "endstop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
             " rest_ticks=0 pin_value=0" % (self._oid,), is_init=True)
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
-                "end_stop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
+                "endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._home_cmd = self._mcu.lookup_command(
-            "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
+            "endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_command(
-            "end_stop_query_state oid=%c", cq=cmd_queue)
-        self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
-                               , self._oid)
+            "endstop_query_state oid=%c", cq=cmd_queue)
     def home_prepare(self):
         pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
-                   triggered=True):
+                   triggered=True, notify=None):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
-        self._homing = True
-        self._min_query_time = self._mcu.monotonic()
+        self._trigger_notify = notify
         self._next_query_print_time = print_time + self.RETRY_QUERY
+        self._min_query_time = self._reactor.monotonic()
+        self._last_sent_time = 0.
+        self._home_end_time = self._reactor.NEVER
+        self._trigger_completion = self._reactor.completion()
+        self._home_completion = self._reactor.completion()
+        self._mcu.register_response(self._handle_endstop_state,
+                                    "endstop_state", self._oid)
         self._home_cmd.send(
             [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
              sample_count, rest_ticks, triggered ^ self._invert],
             reqclock=clock)
-        for s in self._steppers:
-            s.note_homing_start(clock)
+        self._home_completion = self._reactor.register_callback(
+            self._home_retry)
+    def _handle_endstop_state(self, params):
+        logging.debug("endstop_state %s", params)
+        if params['#sent_time'] >= self._min_query_time:
+            if params['homing']:
+                self._last_sent_time = params['#sent_time']
+            else:
+                self._min_query_time = self._reactor.NEVER
+                self._reactor.async_complete(self._trigger_completion, params)
+    def _home_retry(self, eventtime):
+        if self._mcu.is_fileoutput():
+            return True
+        while 1:
+            params = self._trigger_completion.wait(eventtime + 0.100)
+            if params is not None:
+                # Homing completed successfully
+                if self._trigger_notify is not None:
+                    self._trigger_notify()
+                return True
+            # Check for timeout
+            last = self._mcu.estimated_print_time(self._last_sent_time)
+            if last > self._home_end_time or self._mcu.is_shutdown():
+                return False
+            # Check for resend
+            eventtime = self._reactor.monotonic()
+            est_print_time = self._mcu.estimated_print_time(eventtime)
+            if est_print_time >= self._next_query_print_time:
+                self._next_query_print_time = est_print_time + self.RETRY_QUERY
+                self._query_cmd.send([self._oid])
     def home_wait(self, home_end_time):
-        eventtime = self._mcu.monotonic()
-        while self._check_busy(eventtime, home_end_time):
-            eventtime = self._mcu.pause(eventtime + 0.1)
+        self._home_end_time = home_end_time
+        did_trigger = self._home_completion.wait()
+        self._mcu.register_response(None, "endstop_state", self._oid)
+        self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
+        for s in self._steppers:
+            s.note_homing_end(did_trigger=did_trigger)
+        if not did_trigger:
+            raise self.TimeoutError("Timeout during endstop homing")
     def home_finalize(self):
         pass
-    def _handle_end_stop_state(self, params):
-        logging.debug("end_stop_state %s", params)
-        self._last_state = params
-    def _check_busy(self, eventtime, home_end_time=0.):
-        # Check if need to send an end_stop_query command
-        last_sent_time = self._last_state.get('#sent_time', -1.)
-        if last_sent_time >= self._min_query_time or self._mcu.is_fileoutput():
-            if not self._homing:
-                return False
-            if not self._last_state.get('homing', 0):
-                for s in self._steppers:
-                    s.note_homing_end(did_trigger=True)
-                self._homing = False
-                return False
-            last_sent_print_time = self._mcu.estimated_print_time(
-                last_sent_time)
-            if last_sent_print_time > home_end_time:
-                # Timeout - disable endstop checking
-                for s in self._steppers:
-                    s.note_homing_end()
-                self._homing = False
-                self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
-                raise self.TimeoutError("Timeout during endstop homing")
-        if self._mcu.is_shutdown():
-            raise error("MCU is shutdown")
-        est_print_time = self._mcu.estimated_print_time(eventtime)
-        if est_print_time >= self._next_query_print_time:
-            self._next_query_print_time = est_print_time + self.RETRY_QUERY
-            self._query_cmd.send([self._oid])
-        return True
     def query_endstop(self, print_time):
-        self._homing = False
-        self._min_query_time = self._mcu.monotonic()
-        self._next_query_print_time = print_time
-    def query_endstop_wait(self):
-        eventtime = self._mcu.monotonic()
-        while self._check_busy(eventtime):
-            eventtime = self._mcu.pause(eventtime + 0.1)
-        return self._last_state.get('pin_value', self._invert) ^ self._invert
+        clock = self._mcu.print_time_to_clock(print_time)
+        if self._mcu.is_fileoutput():
+            return 0
+        params = self._query_cmd.send_with_response(
+            [self._oid], "endstop_state", self._oid, minclock=clock)
+        return params['pin_value'] ^ self._invert
 
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
@@ -414,8 +412,8 @@ class MCU_adc:
                 self._oid, clock, sample_ticks, self._sample_count,
                 self._report_clock, min_sample, max_sample,
                 self._range_check_count), is_init=True)
-        self._mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
-                               , self._oid)
+        self._mcu.register_response(self._handle_analog_in_state,
+                                    "analog_in_state", self._oid)
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
@@ -423,6 +421,30 @@ class MCU_adc:
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
+
+# Wrapper around command sending
+class CommandWrapper:
+    def __init__(self, mcu, serial, clocksync, cmd, cmd_queue):
+        self._mcu = mcu
+        self._serial = serial
+        self._clocksync = clocksync
+        self._cmd = cmd
+        self._cmd_queue = cmd_queue
+    def send(self, data=(), minclock=0, reqclock=0):
+        cmd = self._cmd.encode(data)
+        self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
+    def send_with_response(self, data=(), response=None, response_oid=None,
+                           minclock=0):
+        minsystime = 0.
+        if minclock:
+            minsystime = self._clocksync.estimate_clock_systime(minclock)
+        cmd = self._cmd.encode(data)
+        src = serialhdl.SerialRetryCommand(self._serial, response, response_oid)
+        try:
+            return src.get_response([cmd], self._cmd_queue,
+                                    minclock=minclock, minsystime=minsystime)
+        except serialhdl.error as e:
+            raise error(str(e))
 
 class MCU:
     error = error
@@ -544,12 +566,11 @@ class MCU:
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
         # Resolve pin names
-        mcu_type = self._serial.msgparser.get_constant('MCU')
+        mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
-        reserved_pins = ppins.get_reserved_pins(self._name)
-        pin_resolver = pins.PinResolver(mcu_type, reserved_pins)
+        pin_resolver = ppins.get_pin_resolver(self._name)
         if self._pin_map is not None:
-            pin_resolver.update_aliases(self._pin_map)
+            pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
         for i, cmd in enumerate(self._config_cmds):
             self._config_cmds[i] = pin_resolver.update_command(cmd)
         for i, cmd in enumerate(self._init_cmds):
@@ -614,9 +635,12 @@ class MCU:
                 and not os.path.exists(self._serialport)):
                 # Try toggling usb power
                 self._check_restart("enable power")
-            self._serial.connect()
-            self._clocksync.connect(self._serial)
-        msgparser = self._serial.msgparser
+            try:
+                self._serial.connect()
+                self._clocksync.connect(self._serial)
+            except serialhdl.error as e:
+                raise error(str(e))
+        msgparser = self._serial.get_msgparser()
         name = self._name
         log_info = [
             "Loaded MCU '%s' %d commands (%s / %s)" % (
@@ -626,10 +650,11 @@ class MCU:
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
         ppins = self._printer.lookup_object('pins')
+        pin_resolver = ppins.get_pin_resolver(name)
         for cname, value in self.get_constants().items():
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
-                    ppins.reserve_pin(name, pin, cname[13:])
+                    pin_resolver.reserve_pin(pin, cname[13:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
@@ -640,9 +665,9 @@ class MCU:
                  or self._config_reset_cmd is not None)
             and msgparser.get_constant('SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
-        self.register_msg(self._handle_shutdown, 'shutdown')
-        self.register_msg(self._handle_shutdown, 'is_shutdown')
-        self.register_msg(self._handle_mcu_stats, 'stats')
+        self.register_response(self._handle_shutdown, 'shutdown')
+        self.register_response(self._handle_shutdown, 'is_shutdown')
+        self.register_response(self._handle_mcu_stats, 'stats')
         self._check_config()
         move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
         logging.info(move_msg)
@@ -667,7 +692,7 @@ class MCU:
             self._config_cmds.append(cmd)
     def get_query_slot(self, oid):
         slot = self.seconds_to_clock(oid * .01)
-        t = int(self.estimated_print_time(self.monotonic()) + 1.5)
+        t = int(self.estimated_print_time(self._reactor.monotonic()) + 1.5)
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
@@ -680,25 +705,28 @@ class MCU:
         return self._printer
     def get_name(self):
         return self._name
-    def register_msg(self, cb, msg, oid=None):
-        self._serial.register_callback(cb, msg, oid)
+    def register_response(self, cb, msg, oid=None):
+        self._serial.register_response(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
-        return self._serial.lookup_command(msgformat, cq)
+        if cq is None:
+            cq = self._serial.get_default_command_queue()
+        cmd = self._serial.get_msgparser().lookup_command(msgformat)
+        return CommandWrapper(self, self._serial, self._clocksync, cmd, cq)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
-        except self._serial.msgparser.error as e:
+        except self._serial.get_msgparser().error as e:
             return None
     def lookup_command_id(self, msgformat):
-        return self._serial.msgparser.lookup_command(msgformat).msgid
+        return self._serial.get_msgparser().lookup_command(msgformat).msgid
     def get_enumerations(self):
-        return self._serial.msgparser.get_enumerations()
+        return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
-        return self._serial.msgparser.get_constants()
+        return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
-        return self._serial.msgparser.get_constant_float(name)
+        return self._serial.get_msgparser().get_constant_float(name)
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):
@@ -709,10 +737,6 @@ class MCU:
         return self._clocksync.get_adjusted_freq()
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
-    def pause(self, waketime):
-        return self._reactor.pause(waketime)
-    def monotonic(self):
-        return self._reactor.monotonic()
     # Restarts
     def _disconnect(self):
         self._serial.disconnect()

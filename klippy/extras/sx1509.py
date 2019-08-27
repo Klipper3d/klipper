@@ -81,7 +81,7 @@ class SX1509(object):
             self.reg_dict[reg] = value
         elif reg in self.reg_i_on_dict:
             self.reg_i_on_dict[reg] = value
-    def send_register(self, reg, print_time=0):
+    def send_register(self, reg, print_time):
         data = [reg & 0xFF]
         if reg in self.reg_dict:
             # Word

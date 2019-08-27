@@ -102,10 +102,9 @@ will need to manually flash. See if there is a config file in the
 [config directory](https://github.com/KevinOConnor/klipper/tree/master/config)
 with specific instructions for flashing the device. Also, check the
 board manufacturer's documentation to see if it describes how to flash
-the device. Finally, on AVR devices, it may be possible to manually
-flash the device using [avrdude](http://www.nongnu.org/avrdude/) with
-custom command-line parameters - see the avrdude documentation for
-further information.
+the device. Finally, it may be possible to manually flash the device
+using tools such as "avrdude" or "bossac" - see the
+[bootloader document](Bootloaders.md) for additional information.
 
 ### How do I change the serial baud rate?
 
