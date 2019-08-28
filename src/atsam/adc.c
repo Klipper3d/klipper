@@ -49,6 +49,9 @@ gpio_adc_setup(uint8_t pin)
                        | ADC_MR_STARTUP_SUT768
                        | ADC_MR_TRANSFER(1));
     }
+
+    // Place pin in input floating mode
+    gpio_in_setup(pin, 0);
     return (struct gpio_adc){ .chan = 1 << chan };
 }
 
