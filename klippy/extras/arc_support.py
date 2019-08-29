@@ -1,25 +1,27 @@
-# adds g2/g3 support. converts both commands into g1 code
-#
-# uses the plan_arc function from marlin which does steps in mm rather then
-# in degrees.
-# Coordinates created by this are converted into G1 commands. It is a bit
-# of a lazy aproach but i didnt feel like copying the G1 code functions.
-#
-# note: only IJ version available
+# adds support fro ARC commands via G2/G3
 #
 # Copyright (C) 2019  Aleksej Vasiljkovic <achmed21@gmail.com>
 #
+# function planArc() originates from https://github.com/MarlinFirmware/Marlin
+# Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-#import logging
+
+# uses the plan_arc function from marlin which does steps in mm rather then
+# in degrees. # Coordinates created by this are converted into G1 commands.
+#
+# note: only IJ version available
+
+import logging
 import math
 import re
 
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mm_per_step = config.getfloat('mm_per_step', 1)
-        self.debug = config.getboolean('debug', False)
+        self.mm_per_arc_segment = config.getfloat('resolution', 1)
+        self.debug = True  #will respond motion to terminal as G1 code
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
@@ -27,30 +29,28 @@ class ArcSupport:
 
     cmd_G2_help = "Counterclockwise rotation move"
     cmd_G3_help = "Clockwise rotaion move"
+
     def cmd_G2(self, params):
-        msg = params['#original']
 
-        # # set vars
-
-        # toolhead = self.printer.lookup_object('toolhead')
+        # set vars
         currentPos =  self.printer.lookup_object('toolhead').get_position()
         asStartX = currentPos[0]
         asStartY = currentPos[1]
         asStartZ = currentPos[2]
 
-        asX = params.get("X", "")
-        asY = params.get("Y", "")
-        asZ = params.get("Z", "")
+        asX = params.get("X", None)
+        asY = params.get("Y", None)
+        asZ = params.get("Z", None)
 
-        asR = float(params.get("R", 0))    #radius
-        asI = float(params.get("I", 0))
-        asJ = float(params.get("J", 0))
+        asR = float(params.get("R", 0.))    #radius
+        asI = float(params.get("I", 0.))
+        asJ = float(params.get("J", 0.))
 
-        asE = float(params.get("E", 0))
+        asE = float(params.get("E", 0.))
         asF = float(params.get("F", -1))
 
         # --------- health checks of code -----------
-        if (asX == "" or asY == ""):
+        if (asX == None or asY == None):
             raise self.gcode.error("g2/g3: Coords missing")
 
         elif asR == 0 and asI == 0 and asJ==0:
@@ -66,40 +66,32 @@ class ArcSupport:
 
             # use radius
             # if asR > 0:
-                # not sure if neccessary
+                # not sure if neccessary since R barely seems to be used
 
             # use IJK
 
             if asI != 0 or asJ!=0:
                 coords = self.planArc(currentPos,
-                            [asX,asY,0,0],
+                            [asX,asY,0.,0.],
                             [asI, asJ],
                             clockwise)
             ###############################
             # converting coords into G1 codes (lazy aproch)
-            if coords.__sizeof__()>0:
-                asOut = ""
-                msg="G1 X%f Y%f Z%f\n"%(asStartX,asStartX,asStartZ)+msg
+            if len(coords)>0:
 
+                # build dict and call cmd_G1
                 for coord in coords:
-                    asOut+= "G1 X%f Y%f" % (coord[0], coord[1])
+                    g1_params = {'X': coord[0], 'Y': coord[1]}
                     if asZ:
-                        asOut+= " E%f" % ((float(asZ)/coords.__sizeof__()))
+                        g1_params['Z']= float(asZ)/len(coords)
                     if asE>0:
-                        asOut+= " E%f" % ((asE/coords.__sizeof__()))
+                        g1_params['E']= float(asE)/len(coords)
                     if asF>0:
-                        asOut+= " F%f" % (asF)
-                    asOut+= "\n"
+                        g1_params['F']= asF
 
-                # throw g1 commands in queue
-                self.gcode.run_script_from_command(asOut)
-                if self.debug:
-                    self.gcode.respond_info(
-                        "arc_support: tranlated from:" + msg)
-                    self.gcode.respond_info(asOut)
-                    # f= open("test/g2/arc.gcode","w")
-                    # f.write("\n;--------------\n"+asOut)
-                    # f.close()
+                    self.gcode.cmd_G1(g1_params)
+                    logging.debug(g1_params)
+
 
 
 
@@ -108,16 +100,22 @@ class ArcSupport:
                     "could not tranlate from '" + params['#original'] + "'")
 
 
-    # Pulled from Marlin - planarc()
+    # function planArc() originates from marlin plan_arc()
+    # https://github.com/MarlinFirmware/Marlin
+    #
+    # The arc is approximated by generating many small linear segments.
+    # The length of each segment is configured in MM_PER_ARC_SEGMENT
+    # Arcs smaller then this value, will be a Line only
+
     def planArc(
             self,
             currentPos,
-            targetPos=[0,0,0,0],
-            offset=[0,0],
+            targetPos=[0.,0.,0.,0.],
+            offset=[0.,0.],
             clockwise=False):
         # todo: sometimes produces full circles
         coords = []
-        MM_PER_ARC_SEGMENT = self.mm_per_step
+        MM_PER_ARC_SEGMENT = self.mm_per_arc_segment
 
         X_AXIS = 0
         Y_AXIS = 1
@@ -163,7 +161,7 @@ class ArcSupport:
             segments=1
 
 
-        raw = [0,0,0,0]
+        raw = [0.,0.,0.,0.]
         theta_per_segment = float(angular_travel / segments)
         linear_per_segment = float(linear_travel / segments)
 
