@@ -13,7 +13,6 @@
 #
 # note: only IJ version available
 
-import logging
 import math
 import re
 
@@ -90,7 +89,6 @@ class ArcSupport:
                         g1_params['F']= asF
 
                     self.gcode.cmd_G1(g1_params)
-                    logging.debug(g1_params)
 
 
 
