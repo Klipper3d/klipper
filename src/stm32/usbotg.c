@@ -299,34 +299,11 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-// Configure interface after a USB reset event
-static void
-usb_reset(void)
-{
-    // Flush Rx queue
-    OTG->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
-    while (OTG->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH)
-        ;
-
-    // Configure and enable ep0
-    uint32_t mpsize_ep0 = 2;
-    USB_OTG_INEndpointTypeDef *epi = EPIN(0);
-    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(0);
-    epi->DIEPCTL = mpsize_ep0 | USB_OTG_DIEPCTL_SNAK;
-    epo->DOEPTSIZ = (64 | (1 << USB_OTG_DOEPTSIZ_STUPCNT_Pos)
-                     | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
-    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
-}
-
 // Main irq handler
 void
 OTG_FS_IRQHandler(void)
 {
     uint32_t sts = OTG->GINTSTS;
-    if (sts & USB_OTG_GINTSTS_USBRST) {
-        OTG->GINTSTS = USB_OTG_GINTSTS_USBRST;
-        usb_reset();
-    }
     if (sts & USB_OTG_GINTSTS_RXFLVL) {
         // Received data - disable irq and notify endpoint
         OTG->GINTMSK &= ~USB_OTG_GINTMSK_RXFLVLM;
@@ -375,10 +352,18 @@ usb_init(void)
     // Setup USB packet memory
     fifo_configure();
 
+    // Configure and enable ep0
+    uint32_t mpsize_ep0 = 2;
+    USB_OTG_INEndpointTypeDef *epi = EPIN(0);
+    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(0);
+    epi->DIEPCTL = mpsize_ep0 | USB_OTG_DIEPCTL_SNAK;
+    epo->DOEPTSIZ = (64 | (1 << USB_OTG_DOEPTSIZ_STUPCNT_Pos)
+                     | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
+    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+
     // Enable interrupts
     OTGD->DAINTMSK = (1 << 0) | (1 << USB_CDC_EP_BULK_IN);
-    OTG->GINTMSK = (USB_OTG_GINTMSK_USBRST
-                    | USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT);
+    OTG->GINTMSK = USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT;
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
     armcm_enable_irq(OTG_FS_IRQHandler, OTG_FS_IRQn, 1);
 
