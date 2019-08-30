@@ -245,7 +245,8 @@ usb_stall_ep0(void)
 void
 usb_set_address(uint_fast8_t addr)
 {
-    OTGD->DCFG |= addr << USB_OTG_DCFG_DAD_Pos;
+    OTGD->DCFG = ((OTGD->DCFG & ~USB_OTG_DCFG_DAD_Msk)
+                  | (addr << USB_OTG_DCFG_DAD_Pos));
     usb_send_ep0(NULL, 0);
     usb_notify_ep0();
 }
@@ -312,9 +313,6 @@ usb_reset(void)
         | (0x02 << USB_OTG_DIEPCTL_EPTYP_Pos) | USB_OTG_DIEPCTL_SD0PID_SEVNFRM
         | (USB_CDC_EP_BULK_IN << USB_OTG_DIEPCTL_TXFNUM_Pos)
         | (USB_CDC_EP_BULK_IN_SIZE << USB_OTG_DIEPCTL_MPSIZ_Pos));
-
-    // Set address to zero
-    OTGD->DCFG &= ~USB_OTG_DCFG_DAD;
 }
 
 // Handle a USB disconnect
