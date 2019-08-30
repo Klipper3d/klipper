@@ -505,7 +505,8 @@ class MCU:
         c = 1.0 / (count * self._mcu_freq)
         self._mcu_tick_avg = tick_sum * c
         tick_sumsq = params['sumsq'] * self._stats_sumsq_base
-        self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
+        diff = count*tick_sumsq - tick_sum**2
+        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
         self._mcu_tick_awake = tick_sum / self._mcu_freq
     def _handle_shutdown(self, params):
         if self._is_shutdown:
