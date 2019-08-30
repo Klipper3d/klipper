@@ -254,6 +254,31 @@ usb_set_address(uint_fast8_t addr)
 void
 usb_set_configure(void)
 {
+    // Configure and enable endpoints
+    USB_OTG_INEndpointTypeDef *epi = EPIN(USB_CDC_EP_ACM);
+    epi->DIEPTSIZ = (USB_CDC_EP_ACM_SIZE
+                     | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos));
+    epi->DIEPCTL = (
+        USB_OTG_DIEPCTL_SNAK | USB_OTG_DIEPCTL_USBAEP
+        | (0x03 << USB_OTG_DIEPCTL_EPTYP_Pos) | USB_OTG_DIEPCTL_SD0PID_SEVNFRM
+        | (USB_CDC_EP_ACM << USB_OTG_DIEPCTL_TXFNUM_Pos)
+        | (USB_CDC_EP_ACM_SIZE << USB_OTG_DIEPCTL_MPSIZ_Pos));
+
+    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(USB_CDC_EP_BULK_OUT);
+    epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
+    epo->DOEPCTL = (
+        USB_OTG_DOEPCTL_CNAK | USB_OTG_DOEPCTL_USBAEP | USB_OTG_DOEPCTL_EPENA
+        | (0x02 << USB_OTG_DOEPCTL_EPTYP_Pos) | USB_OTG_DOEPCTL_SD0PID_SEVNFRM
+        | (USB_CDC_EP_BULK_OUT_SIZE << USB_OTG_DOEPCTL_MPSIZ_Pos));
+
+    epi = EPIN(USB_CDC_EP_BULK_IN);
+    epi->DIEPTSIZ = (USB_CDC_EP_BULK_IN_SIZE
+                     | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos));
+    epi->DIEPCTL = (
+        USB_OTG_DIEPCTL_SNAK | USB_OTG_DIEPCTL_USBAEP
+        | (0x02 << USB_OTG_DIEPCTL_EPTYP_Pos) | USB_OTG_DIEPCTL_SD0PID_SEVNFRM
+        | (USB_CDC_EP_BULK_IN << USB_OTG_DIEPCTL_TXFNUM_Pos)
+        | (USB_CDC_EP_BULK_IN_SIZE << USB_OTG_DIEPCTL_MPSIZ_Pos));
 }
 
 void
@@ -280,7 +305,7 @@ usb_reset(void)
     while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
         ;
 
-    // Configure and enable endpoints
+    // Configure and enable ep0
     uint32_t mpsize_ep0 = 2;
     USB_OTG_INEndpointTypeDef *epi = EPIN(0);
     USB_OTG_OUTEndpointTypeDef *epo = EPOUT(0);
@@ -288,31 +313,6 @@ usb_reset(void)
     epo->DOEPTSIZ = (64 | (1 << USB_OTG_DOEPTSIZ_STUPCNT_Pos)
                      | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
     epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
-
-    epi = EPIN(USB_CDC_EP_ACM);
-    epi->DIEPTSIZ = (USB_CDC_EP_ACM_SIZE
-                     | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos));
-    epi->DIEPCTL = (
-        USB_OTG_DIEPCTL_SNAK | USB_OTG_DIEPCTL_USBAEP
-        | (0x03 << USB_OTG_DIEPCTL_EPTYP_Pos) | USB_OTG_DIEPCTL_SD0PID_SEVNFRM
-        | (USB_CDC_EP_ACM << USB_OTG_DIEPCTL_TXFNUM_Pos)
-        | (USB_CDC_EP_ACM_SIZE << USB_OTG_DIEPCTL_MPSIZ_Pos));
-
-    epo = EPOUT(USB_CDC_EP_BULK_OUT);
-    epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
-    epo->DOEPCTL = (
-        USB_OTG_DOEPCTL_CNAK | USB_OTG_DOEPCTL_USBAEP | USB_OTG_DOEPCTL_EPENA
-        | (0x02 << USB_OTG_DOEPCTL_EPTYP_Pos) | USB_OTG_DOEPCTL_SD0PID_SEVNFRM
-        | (USB_CDC_EP_BULK_OUT_SIZE << USB_OTG_DOEPCTL_MPSIZ_Pos));
-
-    epi = EPIN(USB_CDC_EP_BULK_IN);
-    epi->DIEPTSIZ = (USB_CDC_EP_BULK_IN_SIZE
-                     | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos));
-    epi->DIEPCTL = (
-        USB_OTG_DIEPCTL_SNAK | USB_OTG_DIEPCTL_USBAEP
-        | (0x02 << USB_OTG_DIEPCTL_EPTYP_Pos) | USB_OTG_DIEPCTL_SD0PID_SEVNFRM
-        | (USB_CDC_EP_BULK_IN << USB_OTG_DIEPCTL_TXFNUM_Pos)
-        | (USB_CDC_EP_BULK_IN_SIZE << USB_OTG_DIEPCTL_MPSIZ_Pos));
 }
 
 // Handle a USB disconnect
