@@ -160,8 +160,8 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
 {
     uint32_t ctl = EPIN(USB_CDC_EP_BULK_IN)->DIEPCTL;
     if (!(ctl & USB_OTG_DIEPCTL_USBAEP))
-        // Controller not enabled
-        return -2;
+        // Controller not enabled - discard data
+        return len;
     if (ctl & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
         OTGD->DIEPEMPMSK |= (1 << USB_CDC_EP_BULK_IN);
