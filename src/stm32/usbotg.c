@@ -124,14 +124,21 @@ peek_rx_queue(uint32_t ep)
         if (!(sts & USB_OTG_GINTSTS_RXFLVL))
             // No packet ready
             return 0;
-        uint32_t grx = OTG->GRXSTSR;
+        uint32_t grx = OTG->GRXSTSR, grx_ep = grx & USB_OTG_GRXSTSP_EPNUM_Msk;
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                            >> USB_OTG_GRXSTSP_PKTSTS_Pos);
-        if (pktsts != 1 && pktsts != 3 && pktsts != 4) {
+        if ((grx_ep == 0 || grx_ep == USB_CDC_EP_BULK_OUT)
+            && (pktsts == 2 || pktsts == 6)) {
             // A packet is ready
-            if ((grx & USB_OTG_GRXSTSP_EPNUM_Msk) != ep)
+            if (grx_ep != ep)
                 return 0;
             return grx;
+        }
+        if ((grx_ep != 0 && grx_ep != USB_CDC_EP_BULK_OUT)
+            || (pktsts != 1 && pktsts != 3 && pktsts != 4)) {
+            // Rx queue has bogus value - just pop it
+            sts = OTG->GRXSTSP;
+            continue;
         }
         // Discard informational entries from queue
         fifo_read_packet(NULL, 0);
