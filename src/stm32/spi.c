@@ -10,7 +10,7 @@
 #include "sched.h" // sched_shutdown
 
 struct spi_info {
-    void *spi;
+    SPI_TypeDef *spi;
     uint8_t miso_pin, mosi_pin, sck_pin, function;
 };
 
@@ -21,6 +21,10 @@ DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
 #ifdef SPI3
 DECL_ENUMERATION("spi_bus", "spi3", 2);
 DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
+ #if CONFIG_MACH_STM32F4
+DECL_ENUMERATION("spi_bus", "spi3a", 3);
+DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
+ #endif
 #endif
 
 static const struct spi_info spi_bus[] = {
@@ -28,6 +32,9 @@ static const struct spi_info spi_bus[] = {
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION(5) },
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
+ #if CONFIG_MACH_STM32F4
+    { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION(6) },
+ #endif
 #endif
 };
 
