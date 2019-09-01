@@ -164,7 +164,7 @@ class PrinterConfig:
         include_filenames = glob.glob(include_glob)
         if not include_filenames and not glob.has_magic(include_glob):
             # Empty set is OK if wildcard but not for direct file reference
-            raise error("Include file '%s' does not exist", include_glob)
+            raise error("Include file '%s' does not exist" % (include_glob,))
         include_filenames.sort()
         for include_filename in include_filenames:
             include_data = self._read_config_file(include_filename)
