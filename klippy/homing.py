@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, collections
 
-HOMING_STEP_DELAY = 0.00000025
 HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
@@ -16,6 +15,7 @@ class Homing:
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
         self.verify_retract = True
+        self.endstops_pending = -1
     def set_no_verify_retract(self):
         self.verify_retract = False
     def set_axes(self, axes):
@@ -31,41 +31,35 @@ class Homing:
         return thcoord
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
-    def _get_homing_speed(self, speed, endstops):
-        # Round the requested homing speed so that it is an even
-        # number of ticks per step.
-        mcu_stepper = endstops[0][0].get_steppers()[0]
-        adjusted_freq = mcu_stepper.get_mcu().get_adjusted_freq()
-        dist_ticks = adjusted_freq * mcu_stepper.get_step_dist()
-        ticks_per_step = math.ceil(dist_ticks / speed)
-        return dist_ticks / ticks_per_step
-    def homing_move(self, movepos, endstops, speed, dwell_t=0.,
+    def _endstop_notify(self):
+        self.endstops_pending -= 1
+        if not self.endstops_pending:
+            self.toolhead.signal_drip_mode_end()
+    def homing_move(self, movepos, endstops, speed,
                     probe_pos=False, verify_movement=False):
         # Notify endstops of upcoming home
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
-        if dwell_t:
-            self.toolhead.dwell(dwell_t, check_stall=False)
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
         start_mcu_pos = [(s, name, s.get_mcu_position())
                          for es, name in endstops for s in es.get_steppers()]
+        self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
                                  for s in mcu_endstop.get_steppers()])
             mcu_endstop.home_start(
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
-                min_step_dist / speed)
-        self.toolhead.dwell(HOMING_START_DELAY, check_stall=False)
+                min_step_dist / speed, notify=self._endstop_notify)
+        self.toolhead.dwell(HOMING_START_DELAY)
         # Issue move
         error = None
         try:
-            self.toolhead.move(movepos, speed)
+            self.toolhead.drip_move(movepos, speed)
         except CommandError as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
-        self.toolhead.reset_print_time(print_time)
         for mcu_endstop, name in endstops:
             try:
                 mcu_endstop.home_wait(move_end_print_time)
@@ -93,42 +87,30 @@ class Homing:
                         raise EndstopError("Probe triggered prior to movement")
                     raise EndstopError(
                         "Endstop %s still triggered after retract" % (name,))
-    def home_rails(self, rails, forcepos, movepos, limit_speed=None):
+    def home_rails(self, rails, forcepos, movepos):
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         forcepos = self._fill_coord(forcepos)
         movepos = self._fill_coord(movepos)
         self.toolhead.set_position(forcepos, homing_axes=homing_axes)
-        # Determine homing speed
+        # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
-        max_velocity = self.toolhead.get_max_velocity()[0]
-        if limit_speed is not None and limit_speed < max_velocity:
-            max_velocity = limit_speed
-        homing_speed = min(hi.speed, max_velocity)
-        homing_speed = self._get_homing_speed(homing_speed, endstops)
-        second_homing_speed = min(hi.second_homing_speed, max_velocity)
-        # Calculate a CPU delay when homing a large axis
-        axes_d = [mp - fp for mp, fp in zip(movepos, forcepos)]
-        est_move_d = abs(axes_d[0]) + abs(axes_d[1]) + abs(axes_d[2])
-        est_steps = sum([est_move_d / s.get_step_dist()
-                         for es, n in endstops for s in es.get_steppers()])
-        dwell_t = est_steps * HOMING_STEP_DELAY
-        # Perform first home
-        self.homing_move(movepos, endstops, homing_speed, dwell_t=dwell_t)
+        self.homing_move(movepos, endstops, hi.speed)
         # Perform second home
         if hi.retract_dist:
             # Retract
+            axes_d = [mp - fp for mp, fp in zip(movepos, forcepos)]
             move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
             retract_r = min(1., hi.retract_dist / move_d)
             retractpos = [mp - ad * retract_r
                           for mp, ad in zip(movepos, axes_d)]
-            self.toolhead.move(retractpos, homing_speed)
+            self.toolhead.move(retractpos, hi.speed)
             # Home again
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
-            self.homing_move(movepos, endstops, second_homing_speed,
+            self.homing_move(movepos, endstops, hi.second_homing_speed,
                              verify_movement=self.verify_retract)
         # Signal home operation complete
         ret = self.printer.send_event("homing:homed_rails", self, rails)

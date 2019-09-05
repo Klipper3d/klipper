@@ -188,9 +188,21 @@ def flash_stm32f1(options, binfile):
             options.device, str(e), options.device))
         sys.exit(-1)
 
+STM32F4_HELP = """
+USB flash is not supported on the STM32F4!
+
+If attempting to flash via 3.3V serial, then use:
+  make serialflash FLASH_DEVICE=%s
+
+"""
+
+def flash_stm32f4(options, binfile):
+    sys.stderr.write(STM32F4_HELP % (options.device,))
+    sys.exit(-1)
+
 MCUTYPES = {
     'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
-    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1
+    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1, 'stm32f4': flash_stm32f4
 }
 
 

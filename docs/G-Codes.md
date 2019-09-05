@@ -191,6 +191,18 @@ The following command is available when an "output_pin" config section
 is enabled:
 - `SET_PIN PIN=config_name VALUE=<value>`
 
+## Neopixel and Dotstar Commands
+
+The following command is available when "neopixel" or "dotstar" config
+sections are enabled:
+- `SET_LED LED=<config_name> INDEX=<index> RED=<value> GREEN=<value>
+  BLUE=<value>`: This sets the LED output. Each color <value> must be
+  between 0.0 and 1.0. If multiple LED chips are daisy-chained then
+  one may specify INDEX to alter the color of just the given chip (1
+  for the first chip, 2 for the second, etc.). If INDEX is not
+  provided then all LEDs in the daisy-chain will be set to the
+  provided color.
+
 ## Servo Commands
 
 The following commands are available when a "servo" config section is
@@ -231,10 +243,12 @@ enabled:
   for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
-- `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
-  [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
-  median and standard deviation. The default values are: REPEAT=10,
-  SPEED=probe config speed, X=current X, Y=current Y and Z=10.
+- `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum,
+  average, median, and standard deviation of multiple probe
+  samples. By default, 10 SAMPLES are taken. Otherwise the optional
+  parameters default to their equivalent setting in the probe config
+  section.
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
   PROBE command for details on the optional probe parameters. See the
@@ -442,6 +456,9 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+ - `SET_FILAMENT_SENSOR SENSOR=<sensor_name> ENABLE=[0|1]`:  Sets the
+   filament sensor on/off.  If ENABLE is set to 0, the filament sensor will
+   be disabled, if set to 1 it is enabled.
 
 ## Firmware Retraction
 
@@ -452,18 +469,15 @@ stringing during non-extrusion moves from one part of the print to
 another.  Appropriately configuring pressure advance reduces the length
 of retraction required.
  - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
-   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP=<mm>]`:
-   Adjust the parameters used by firmware retraction.  RETRACT_LENGTH
-   determines the length of filament to retract and unretract.  The
-   speed of retraction is adjusted via RETRACT_SPEED, and is typically
-   set relatively high.  The speed of unretraction is adjusted via
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>]`: Adjust the
+   parameters used by firmware retraction. RETRACT_LENGTH determines
+   the length of filament to retract and unretract. The speed of
+   retraction is adjusted via RETRACT_SPEED, and is typically set
+   relatively high. The speed of unretraction is adjusted via
    UNRETRACT_SPEED, and is not particularly critical, although often
-   lower than RETRACT_SPEED.  In some cases it is useful to add a small
+   lower than RETRACT_SPEED. In some cases it is useful to add a small
    amount of additional length on unretraction, and this is set via
-   UNRETRACT_EXTRA_LENGTH.  It is possible to lift the Z axis by a small
-   amount when in retracted state by setting Z_HOP, although this is
-   more commonly used for printers where fast Z movements are supported,
-   such as delta printers. SET_RETRACTION is commonly set as part of
+   UNRETRACT_EXTRA_LENGTH. SET_RETRACTION is commonly set as part of
    slicer per-filament configuration, as different filaments require
    different parameter settings.
  - `GET_RETRACTION`: Queries the current parameters used by firmware
@@ -477,12 +491,35 @@ of retraction required.
 
 The following commands are available when the "skew_correction" config
 section is enabled.
+  - `SET_SKEW [XY=<ac_length,bd_length,ad_length>] [XZ=<ac,bd,ad>]
+    [YZ=<ac,bd,ad>] [CLEAR=<0|1>]`:  Configures the [skew_correction] module
+    with measurements (in mm) taken from a calibration print.  One may
+    enter measurements for any combination of planes, planes not entered will
+    retain their current value.  If `CLEAR=1` is entered then all skew
+    correction will be disabled.
   - `GET_CURRENT_SKEW`: Reports the current printer skew for each plane in
     both radians and degrees.  The skew is calculated based on parameters
-    provided to the [skew_correction] section of printer.cfg.
+    provided via the `SET_SKEW` gcode.
   - `CALC_MEASURED_SKEW [AC=<ac_length>] [BD=<bd_length>] [AD=<ad_length>]`:
     Calculates and reports the skew (in radians and degrees) based on a
     measured print.  This can be useful for determining the printer's current
     skew after correction has been applied.  It may also be useful before
     correction is applied to determine if skew correction is necessary.   See
-    skew_correction.md for details on skew calibration objects and measurements.
+    skew_correction.md for details on skew calibration objects and
+    measurements.
+  - `SKEW_PROFILE [LOAD=<name>] [SAVE=<name>] [REMOVE=<name>]`: Profile
+    management for skew_correction.  LOAD will restore skew state from the
+    profile matching the supplied name. SAVE will save the current skew state
+    to a profile matching the supplied name.  Remove will delete the profile
+    matching the supplied name from persistent memory.  Note that after SAVE
+    or REMOVE operations have been run the SAVE_CONFIG gcode must be run
+    to make the changes to peristent memory permanent.
+
+## Delayed GCode
+
+The following command is enabled if a [delayed_gcode] config section has
+been enabled:
+  - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
+    delay duration for the identified [delayed_gcode] and starts the timer
+    for gcode execution.  A value of 0 will cancel a pending delayed gcode
+    from executing.

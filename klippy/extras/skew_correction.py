@@ -16,22 +16,17 @@ def calc_skew_factor(ac, bd, ad):
     return math.tan(math.pi/2 - math.acos(
         (ac*ac - side*side - ad*ad) / (2*side*ad)))
 
-def get_skew_from_plane(plane, config):
-    ac = config.getfloat(plane + "_ac_length", None, above=0.)
-    if ac is None:
-        return 0.
-    bd = config.getfloat(plane + "_bd_length", above=0.)
-    ad = config.getfloat(plane + "_ad_length", above=0.)
-    return calc_skew_factor(ac, bd, ad)
-
 class PrinterSkew:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.name = config.get_name()
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = None
-        self.xy_factor = get_skew_from_plane("xy", config)
-        self.xz_factor = get_skew_from_plane("xz", config)
-        self.yz_factor = get_skew_from_plane("yz", config)
+        self.xy_factor = 0.
+        self.xz_factor = 0.
+        self.yz_factor = 0.
+        self.skew_profiles = {}
+        self._load_storage(config)
         self.printer.register_event_handler("klippy:ready",
                                             self._handle_ready)
         self.next_transform = None
@@ -41,8 +36,26 @@ class PrinterSkew:
         self.gcode.register_command(
             'CALC_MEASURED_SKEW', self.cmd_CALC_MEASURED_SKEW,
             desc=self.cmd_CALC_MEASURED_SKEW_help)
+        self.gcode.register_command(
+            'SET_SKEW', self.cmd_SET_SKEW,
+            desc=self.cmd_SET_SKEW_help)
+        self.gcode.register_command(
+            'SKEW_PROFILE', self.cmd_SKEW_PROFILE,
+            desc=self.cmd_SKEW_PROFILE_help)
     def _handle_ready(self):
         self.next_transform = self.gcode.set_move_transform(self, force=True)
+    def _load_storage(self, config):
+        stored_profs = config.get_prefix_sections(self.name)
+        # Remove primary skew_correction section, as it is not a stored profile
+        stored_profs = [s for s in stored_profs
+                        if s.get_name() != self.name]
+        for profile in stored_profs:
+            name = profile.get_name().split(' ', 1)[1]
+            self.skew_profiles[name] = {
+                'xy_skew': profile.getfloat("xy_skew"),
+                'xz_skew': profile.getfloat("xz_skew"),
+                'yz_skew': profile.getfloat("yz_skew"),
+            }
     def calc_skew(self, pos):
         skewed_x = pos[0] - pos[1] * self.xy_factor \
             - pos[2] * (self.xz_factor - (self.xy_factor * self.yz_factor))
@@ -77,6 +90,73 @@ class PrinterSkew:
         self.gcode.respond_info(
             "Calculated Skew: %.6f radians, %.2f degrees" %
             (factor, math.degrees(factor)))
+    cmd_SET_SKEW_help = "Set skew based on lengths of measured object"
+    def cmd_SET_SKEW(self, params):
+        if self.gcode.get_int("CLEAR", params, 0):
+            self.xy_factor = 0.
+            self.xz_factor = 0.
+            self.yz_factor = 0.
+            return
+        planes = ["XY", "XZ", "YZ"]
+        for plane in planes:
+            lengths = self.gcode.get_str(plane, params, None)
+            if lengths is not None:
+                try:
+                    lengths = lengths.strip().split(",", 2)
+                    lengths = [float(l.strip()) for l in lengths]
+                    if len(lengths) != 3:
+                        raise Exception
+                except Exception:
+                    raise self.gcode.error(
+                        "skew_correction: improperly formatted entry for "
+                        "plane [%s]\n%s" % (plane, params['#original']))
+                factor = plane.lower() + '_factor'
+                setattr(self, factor, calc_skew_factor(*lengths))
+    cmd_SKEW_PROFILE_help = "Profile management for skew_correction"
+    def cmd_SKEW_PROFILE(self, params):
+        if 'LOAD' in params:
+            name = self.gcode.get_str('LOAD', params)
+            if name not in self.skew_profiles:
+                self.gcode.respond_info(
+                    "skew_correction:  Load failed, unknown profile [%s]" %
+                    (name))
+                return
+            self.xy_factor = self.skew_profiles[name]['xy_skew']
+            self.xz_factor = self.skew_profiles[name]['xz_skew']
+            self.yz_factor = self.skew_profiles[name]['yz_skew']
+        elif 'SAVE' in params:
+            name = self.gcode.get_str('SAVE', params)
+            configfile = self.printer.lookup_object('configfile')
+            cfg_name = self.name + " " + name
+            configfile.set(cfg_name, 'xy_skew', self.xy_factor)
+            configfile.set(cfg_name, 'xz_skew', self.xz_factor)
+            configfile.set(cfg_name, 'yz_skew', self.yz_factor)
+            # Copy to local storage
+            self.skew_profiles[name] = {
+                'xy_skew': self.xy_factor,
+                'xz_skew': self.xz_factor,
+                'yz_skew': self.yz_factor
+            }
+            self.gcode.respond_info(
+                "Skew Correction state has been saved to profile [%s]\n"
+                "for the current session.  The SAVE_CONFIG command will\n"
+                "update the printer config file and restart the printer."
+                % (name))
+        elif 'REMOVE' in params:
+            name = self.gcode.get_str('REMOVE', params)
+            if name in self.skew_profiles:
+                configfile = self.printer.lookup_object('configfile')
+                configfile.remove_section('skew_correction ' + name)
+                del self.skew_profiles[name]
+                self.gcode.respond_info(
+                    "Profile [%s] removed from storage for this session.\n"
+                    "The SAVE_CONFIG command will update the printer\n"
+                    "configuration and restart the printer" % (name))
+            else:
+                self.gcode.respond_info(
+                    "skew_correction: No profile named [%s] to remove" %
+                    (name))
+
 
 def load_config(config):
     return PrinterSkew(config)

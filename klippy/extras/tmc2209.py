@@ -58,9 +58,10 @@ class TMC2209:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields,
                                       FieldFormatters)
-        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
+        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3)
         # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
+        diag_pin = config.get('diag_pin', None)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag_pin)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)

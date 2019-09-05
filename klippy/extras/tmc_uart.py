@@ -50,7 +50,7 @@ class MCU_analog_mux:
 
 
 ######################################################################
-# TMC2208 uart communication
+# TMC uart communication
 ######################################################################
 
 # Code for sending messages on a TMC uart
@@ -77,19 +77,20 @@ class MCU_TMC_uart_bitbang:
             % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=self.cmd_queue)
-    def register_instance(self, rx_pin_params, tx_pin_params, select_pins_desc):
+    def register_instance(self, rx_pin_params, tx_pin_params,
+                          select_pins_desc, addr):
         if (rx_pin_params['pin'] != self.rx_pin
             or tx_pin_params['pin'] != self.tx_pin
             or (select_pins_desc is None) != (self.analog_mux is None)):
             raise self.mcu.get_printer().config_error(
-                "Shared TMC uart must use identical pins")
+                "Shared TMC uarts must use the same pins")
         instance_id = None
         if self.analog_mux is not None:
             instance_id = self.analog_mux.get_instance_id(select_pins_desc)
-        if instance_id in self.instances:
+        if (instance_id, addr) in self.instances:
             raise self.mcu.get_printer().config_error(
-                "Each TMC uart must have unique select pins polarity")
-        self.instances[instance_id] = True
+                "Shared TMC uarts need unique address or select_pins polarity")
+        self.instances[(instance_id, addr)] = True
         return instance_id
     def _calc_crc8(self, data):
         # Generate a CRC8-ATM value for a bytearray
@@ -116,18 +117,18 @@ class MCU_TMC_uart_bitbang:
             res.append((out >> (i*8)) & 0xff)
         return res
     def _encode_read(self, sync, addr, reg):
-        # Generate a tmc2208 read register message
+        # Generate a uart read register message
         msg = bytearray([sync, addr, reg])
         msg.append(self._calc_crc8(msg))
         return self._add_serial_bits(msg)
     def _encode_write(self, sync, addr, reg, val):
-        # Generate a tmc2208 write register message
+        # Generate a uart write register message
         msg = bytearray([sync, addr, reg, (val >> 24) & 0xff,
                          (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff])
         msg.append(self._calc_crc8(msg))
         return self._add_serial_bits(msg)
     def _decode_read(self, reg, data):
-        # Extract a tmc2208 read response message
+        # Extract a uart read response message
         if len(data) != 10:
             return None
         # Convert data into a long integer for easy manipulation
@@ -156,13 +157,13 @@ class MCU_TMC_uart_bitbang:
             minclock = self.mcu.print_time_to_clock(print_time)
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
-        msg = self._encode_write(0xf5, 0x00, reg | 0x80, val)
+        msg = self._encode_write(0xf5, addr, reg | 0x80, val)
         self.tmcuart_send_cmd.send_with_response(
             [self.oid, msg, 0], 'tmcuart_response', self.oid,
             minclock=minclock)
 
 # Lookup a (possibly shared) tmc uart
-def lookup_tmc_uart_bitbang(config):
+def lookup_tmc_uart_bitbang(config, max_addr):
     ppins = config.get_printer().lookup_object("pins")
     rx_pin_params = ppins.lookup_pin(
         config.get('uart_pin'), can_pullup=True, share_type="tmc_uart_rx")
@@ -174,25 +175,26 @@ def lookup_tmc_uart_bitbang(config):
     if rx_pin_params['chip'] is not tx_pin_params['chip']:
         raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
     select_pins_desc = config.get('select_pins', None)
+    addr = config.getint('uart_address', 0, minval=0, maxval=max_addr)
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:
         mcu_uart = MCU_TMC_uart_bitbang(rx_pin_params, tx_pin_params,
                                         select_pins_desc)
         rx_pin_params['class'] = mcu_uart
     instance_id = mcu_uart.register_instance(rx_pin_params, tx_pin_params,
-                                             select_pins_desc)
-    return instance_id, mcu_uart
+                                             select_pins_desc, addr)
+    return instance_id, addr, mcu_uart
 
 # Helper code for communicating via TMC uart
 class MCU_TMC_uart:
-    def __init__(self, config, name_to_reg, fields):
+    def __init__(self, config, name_to_reg, fields, max_addr=0):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.name_to_reg = name_to_reg
         self.fields = fields
         self.ifcnt = None
-        self.addr = 0
-        self.instance_id, self.mcu_uart = lookup_tmc_uart_bitbang(config)
+        self.instance_id, self.addr, self.mcu_uart = lookup_tmc_uart_bitbang(
+            config, max_addr)
         self.mutex = self.mcu_uart.mutex
     def get_fields(self):
         return self.fields
@@ -205,7 +207,7 @@ class MCU_TMC_uart:
             if val is not None:
                 return val
         raise self.printer.command_error(
-            "Unable to read tmc2208 '%s' register %s" % (self.name, reg_name))
+            "Unable to read tmc uart '%s' register %s" % (self.name, reg_name))
     def get_register(self, reg_name):
         with self.mutex:
             return self._do_get_register(reg_name)
@@ -224,4 +226,4 @@ class MCU_TMC_uart:
                 if self.ifcnt == (ifcnt + 1) & 0xff:
                     return
         raise self.printer.command_error(
-            "Unable to write tmc2208 '%s' register %s" % (self.name, reg_name))
+            "Unable to write tmc uart '%s' register %s" % (self.name, reg_name))

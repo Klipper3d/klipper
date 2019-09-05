@@ -60,6 +60,27 @@ Arduino_Due_analog = [
     "PB19", "PB20"
 ]
 
+Adafruit_GrandCentral = [
+    "PB25", "PB24", "PC18", "PC19", "PC20",
+    "PC21", "PD20", "PD21", "PB18", "PB2",
+    "PB22", "PB23", "PB0", "PB1", "PB16",
+    "PB17", "PC22", "PC23", "PB12", "PB13",
+    "PB20", "PB21", "PD12", "PA15", "PC17",
+    "PC16", "PA12", "PA13", "PA14", "PB19",
+    "PA23", "PA22", "PA21", "PA20", "PA19",
+    "PA18", "PA17", "PA16", "PB15", "PB14",
+    "PC13", "PC12", "PC15", "PC14", "PC11",
+    "PC10", "PC6", "PC7", "PC4", "PC5",
+    "PD11", "PD8", "PD9", "PD10", "PA2",
+    "PA5", "PB3", "PC0", "PC1", "PC2",
+    "PC3", "PB4", "PB5", "PB6", "PB7",
+    "PB8", "PB9", "PA4", "PA6", "PA7"
+]
+Adafruit_GrandCentral_analog = [
+    "PA2", "PA5", "PB3", "PC0", "PC1", "PC2", "PC3", "PB4", "PB5", "PB6", "PB7",
+    "PB8", "PB9", "PA4", "PA6", "PA7"
+]
+
 
 Arduino_from_mcu = {
     "atmega168": (Arduino_standard, Arduino_analog_standard),
@@ -69,6 +90,7 @@ Arduino_from_mcu = {
     "atmega1280": (Arduino_mega, Arduino_analog_mega),
     "atmega2560": (Arduino_mega, Arduino_analog_mega),
     "sam3x8e": (Arduino_Due, Arduino_Due_analog),
+    "samd51p20a": (Adafruit_GrandCentral, Adafruit_GrandCentral_analog),
 }
 
 def get_aliases_arduino(mcu):
@@ -129,19 +151,35 @@ def get_aliases_beaglebone(mcu):
 re_pin = re.compile(r'(?P<prefix>[ _]pin=)(?P<name>[^ ]*)')
 
 class PinResolver:
-    def __init__(self, mcu_type, reserved_pins, validate_aliases=True):
-        self.mcu_type = mcu_type
-        self.reserved_pins = reserved_pins
+    def __init__(self, validate_aliases=True):
         self.validate_aliases = validate_aliases
+        self.reserved = {}
         self.aliases = {}
         self.active_pins = {}
-    def update_aliases(self, mapping_name):
+    def reserve_pin(self, pin, reserve_name):
+        if pin in self.reserved and self.reserved[pin] != reserve_name:
+            raise error("Pin %s reserved for %s - can't reserve for %s" % (
+                pin, self.reserved[pin], reserve_name))
+        self.reserved[pin] = reserve_name
+    def alias_pin(self, alias, pin):
+        if alias in self.aliases and self.aliases[alias] != pin:
+            raise error("Alias %s mapped to %s - can't alias to %s" % (
+                alias, self.aliases[alias], pin))
+        if pin in self.aliases:
+            pin = self.aliases[pin]
+        self.aliases[alias] = pin
+        for existing_alias, existing_pin in self.aliases.items():
+            if existing_pin == alias:
+                self.aliases[existing_alias] = pin
+    def add_pin_mapping(self, mcu_type, mapping_name):
         if mapping_name == 'arduino':
-            self.aliases = get_aliases_arduino(self.mcu_type)
+            pin_mapping = get_aliases_arduino(mcu_type)
         elif mapping_name == 'beaglebone':
-            self.aliases = get_aliases_beaglebone(self.mcu_type)
+            pin_mapping = get_aliases_beaglebone(mcu_type)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
+        for alias, pin in pin_mapping.items():
+            self.alias_pin(alias, pin)
     def update_command(self, cmd):
         def pin_fixup(m):
             name = m.group('name')
@@ -150,9 +188,9 @@ class PinResolver:
                 and self.validate_aliases):
                 raise error("pin %s is an alias for %s" % (
                     name, self.active_pins[pin_id]))
-            if pin_id in self.reserved_pins:
+            if pin_id in self.reserved:
                 raise error("pin %s is reserved for %s" % (
-                    name, self.reserved_pins[pin_id]))
+                    name, self.reserved[pin_id]))
             return m.group('prefix') + str(pin_id)
         return re_pin.sub(pin_fixup, cmd)
 
@@ -166,7 +204,7 @@ class PrinterPins:
     def __init__(self):
         self.chips = {}
         self.active_pins = {}
-        self.reserved_pins = {}
+        self.pin_resolvers = {}
     def parse_pin(self, pin_desc, can_invert=False, can_pullup=False):
         desc = pin_desc.strip()
         pullup = invert = 0
@@ -220,19 +258,16 @@ class PrinterPins:
     def reset_pin_sharing(self, pin_params):
         share_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
         del self.active_pins[share_name]
-    def reserve_pin(self, chip_name, pin, reserve_name):
-        chip_reserve = self.reserved_pins.setdefault(chip_name, {})
-        if pin in chip_reserve and chip_reserve[pin] != reserve_name:
-            raise error("Pin %s:%s reserved for %s - can't reserve for %s" % (
-                chip_name, pin, chip_reserve[pin], reserve_name))
-        chip_reserve[pin] = reserve_name
-    def get_reserved_pins(self, chip_name):
-        return self.reserved_pins.get(chip_name, {})
+    def get_pin_resolver(self, chip_name):
+        if chip_name not in self.pin_resolvers:
+            raise error("Unknown chip name '%s'" % (chip_name,))
+        return self.pin_resolvers[chip_name]
     def register_chip(self, chip_name, chip):
         chip_name = chip_name.strip()
         if chip_name in self.chips:
             raise error("Duplicate chip name '%s'" % (chip_name,))
         self.chips[chip_name] = chip
+        self.pin_resolvers[chip_name] = PinResolver()
 
 def add_printer_objects(config):
     config.get_printer().add_object('pins', PrinterPins())

@@ -57,6 +57,9 @@ class WinchKinematics:
             self._check_motor_enable(print_time)
         for s in self.steppers:
             s.step_itersolve(move.cmove)
+    def get_status(self):
+        # XXX - homed_checks and rail limits not implemented
+        return {'homed_axes': 'XYZ'}
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

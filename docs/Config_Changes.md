@@ -6,6 +6,25 @@ All dates in this document are approximate.
 
 # Changes
 
+20190806: The SET_NEOPIXEL command has been renamed to SET_LED.
+
+20190726: The mcp4728 digital-to-analog code has changed. The default
+i2c_address is now 0x60 and the voltage reference is now relative to
+the mcp4728's internal 2.048 volt reference.
+
+20190710: The z_hop option was removed from the [firmware_retract]
+config section. The z_hop support was incomplete and could cause
+incorrect behavior with several common slicers.
+
+20190710: The optional parameters of the PROBE_ACCURACY command have
+changed. It may be necessary to update any macros or scripts that use
+that command.
+
+20190628: All configuration options have been removed from the
+[skew_correction] section.  Configuration for skew_correction
+is now done via the SET_SKEW gcode.  See skew_correction.md
+for recommended usage.
+
 20190607: The "variable_X" parameters of gcode_macro (along with the
 VALUE parameter of SET_GCODE_VARIABLE) are now parsed as Python
 literals. If a value needs to be assigned a string then wrap the value

@@ -27,7 +27,7 @@ alloc_init(void)
 DECL_INIT(alloc_init);
 
 // Allocate an area of memory
-static void *
+void *
 alloc_chunk(size_t size)
 {
     if (alloc_end + size > dynmem_end())

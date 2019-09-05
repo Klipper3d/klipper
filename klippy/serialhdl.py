@@ -1,6 +1,6 @@
 # Serial port management for firmware communication
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
@@ -139,10 +139,10 @@ class SerialReader:
     # Serial response callbacks
     def register_response(self, callback, name, oid=None):
         with self.lock:
-            self.handlers[name, oid] = callback
-    def unregister_response(self, name, oid=None):
-        with self.lock:
-            del self.handlers[name, oid]
+            if callback is None:
+                del self.handlers[name, oid]
+            else:
+                self.handlers[name, oid] = callback
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
         self.ffi_lib.serialqueue_send(
@@ -152,8 +152,8 @@ class SerialReader:
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
-        src = SerialRetryCommand(self, [cmd], self.default_cmd_queue, response)
-        return src.get_response()
+        src = SerialRetryCommand(self, response)
+        return src.get_response([cmd], self.default_cmd_queue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -199,52 +199,30 @@ class SerialReader:
 class SerialRetryCommand:
     TIMEOUT_TIME = 5.0
     RETRY_TIME = 0.500
-    def __init__(self, serial, cmds, cmd_queue, name, oid=None,
-                 minclock=0, minsystime=0.):
+    def __init__(self, serial, name, oid=None):
         self.serial = serial
-        self.cmds = cmds
-        self.cmd_queue = cmd_queue
         self.name = name
         self.oid = oid
-        self.minclock = minclock
-        self.response = None
-        reactor = self.serial.reactor
-        self.mutex = reactor.mutex(is_locked=True)
-        self.min_query_time = self.serial.reactor.monotonic()
-        self.first_query_time = max(self.min_query_time, minsystime)
-        self.serial.register_response(self.handle_callback, self.name, self.oid)
-        self.send_event(self.min_query_time)
-        retry_time = self.first_query_time + self.RETRY_TIME
-        self.send_timer = reactor.register_timer(self.send_event, retry_time)
-    def unregister(self):
-        self.serial.unregister_response(self.name, self.oid)
-        self.serial.reactor.unregister_timer(self.send_timer)
-    def send_event(self, eventtime):
-        if self.response is not None:
-            return self.serial.reactor.NEVER
-        if eventtime > self.first_query_time + self.TIMEOUT_TIME:
-            self.unregister()
-            if self.response is None:
-                self.mutex.unlock()
-            return self.serial.reactor.NEVER
-        for cmd in self.cmds:
-            self.serial.raw_send(cmd, self.minclock, self.minclock,
-                                 self.cmd_queue)
-        return eventtime + self.RETRY_TIME
+        self.completion = serial.reactor.completion()
+        self.min_query_time = serial.reactor.monotonic()
+        self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
-        last_sent_time = params['#sent_time']
-        if last_sent_time >= self.min_query_time and self.response is None:
-            self.response = params
-            self.serial.reactor.register_async_callback(self.do_wake)
-    def do_wake(self, eventtime):
-        self.mutex.unlock()
-    def get_response(self):
-        with self.mutex:
-            pass
-        if self.response is None:
-            raise error("Timeout on wait for '%s' response" % (self.name,))
-        self.unregister()
-        return self.response
+        if params['#sent_time'] >= self.min_query_time:
+            self.min_query_time = self.serial.reactor.NEVER
+            self.serial.reactor.async_complete(self.completion, params)
+    def get_response(self, cmds, cmd_queue, minclock=0, minsystime=0.):
+        first_query_time = query_time = max(self.min_query_time, minsystime)
+        while 1:
+            for cmd in cmds:
+                self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
+            params = self.completion.wait(query_time + self.RETRY_TIME)
+            if params is not None:
+                self.serial.register_response(None, self.name, self.oid)
+                return params
+            query_time = self.serial.reactor.monotonic()
+            if query_time > first_query_time + self.TIMEOUT_TIME:
+                self.serial.register_response(None, self.name, self.oid)
+                raise error("Timeout on wait for '%s' response" % (self.name,))
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):

@@ -101,8 +101,7 @@ class DeltaKinematics:
         homing_state.set_axes([0, 1, 2])
         forcepos = list(self.home_position)
         forcepos[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
-        homing_state.home_rails(self.rails, forcepos, self.home_position,
-                                limit_speed=self.max_z_velocity)
+        homing_state.home_rails(self.rails, forcepos, self.home_position)
     def motor_off(self, print_time):
         self.limit_xy2 = -1.
         for rail in self.rails:
@@ -151,6 +150,9 @@ class DeltaKinematics:
             self._check_motor_enable(print_time)
         for rail in self.rails:
             rail.step_itersolve(move.cmove)
+    def get_status(self):
+        return {'homed_axes': '' if self.need_home else 'XYZ'}
+
     # Helper function for DELTA_CALIBRATE script
     def get_calibrate_params(self):
         out = { 'radius': self.radius }

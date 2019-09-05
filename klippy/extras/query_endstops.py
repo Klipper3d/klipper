@@ -1,6 +1,6 @@
 # Utility for querying the current state of all endstops
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -16,14 +16,10 @@ class QueryEndstops:
         self.endstops.append((mcu_endstop, name))
     cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
     def cmd_QUERY_ENDSTOPS(self, params):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
         # Query the endstops
-        for mcu_endstop, name in self.endstops:
-            mcu_endstop.query_endstop(print_time)
-        out = []
-        for mcu_endstop, name in self.endstops:
-            out.append((name, mcu_endstop.query_endstop_wait()))
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        out = [(name, mcu_endstop.query_endstop(print_time))
+               for mcu_endstop, name in self.endstops]
         # Report results
         msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                         for name, t in out])

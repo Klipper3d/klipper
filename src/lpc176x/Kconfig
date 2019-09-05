@@ -28,6 +28,22 @@ config CLOCK_FREQ
     default 100000000 if MACH_LPC1768
     default 120000000 if MACH_LPC1769
 
+config FLASH_SIZE
+    hex
+    default 0x80000
+
+config RAM_START
+    hex
+    default 0x10000000
+
+config RAM_SIZE
+    hex
+    default 0x7fe0 # (0x8000 - 32) - top 32 bytes used by IAP functions
+
+config STACK_SIZE
+    int
+    default 512
+
 config SMOOTHIEWARE_BOOTLOADER
     bool "Target board uses Smoothieware bootloader"
     default y

@@ -72,6 +72,7 @@ CONFIG ../../config/generic-duet2-maestro.cfg
 # Printers using the sam4e8e
 DICTIONARY sam4e8e.dict
 CONFIG ../../config/generic-duet2.cfg
+CONFIG ../../config/generic-duet2-duex.cfg
 
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
@@ -80,6 +81,16 @@ CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+
+# Printers using the stm32f103
+DICTIONARY stm32f1.dict
+CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3.cfg
+
+# Printers using the stm32f103 via serial
+DICTIONARY stm32f1-serial.dict
+CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
+CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict

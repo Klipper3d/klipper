@@ -34,8 +34,6 @@ class BaseSensor(object):
         self.printer.register_event_handler(
             "idle_timeout:printing",
             (lambda e, s=self, st="printing": s._update_print_status(e, st)))
-    def _handle_ready(self):
-        self.toolhead = self.printer.lookup_object('toolhead')
     def _update_print_status(self, eventtime, status):
         if status == "printing":
             runout_en = self.runout_gcode is not None
@@ -64,7 +62,7 @@ class BaseSensor(object):
         self.event_running = False
     def _exec_gcode(self, prefix, template):
         try:
-            self.gcode.run_script(prefix + template.render())
+            self.gcode.run_script(prefix + template.render() + "\nM400")
         except Exception:
             logging.exception("Script running error")
     def set_enable(self, runout, insert):
@@ -77,6 +75,10 @@ class BaseSensor(object):
     def cmd_QUERY_FILAMENT_SENSOR(self, params):
         raise NotImplementedError(
             "Sensor must implement cmd_QUERY_FILAMENT_SENSOR")
+    cmd_SET_FILAMENT_SENSOR_help = "Sets the filament sensor on/off"
+    def cmd_SET_FILAMENT_SENSOR(self, params):
+        raise NotImplementedError(
+            "Sensor must implement cmd_SET_FILAMENT_SENSOR")
 
 class SwitchSensor(BaseSensor):
     def __init__(self, config):
@@ -87,15 +89,19 @@ class SwitchSensor(BaseSensor):
         self.buttons.register_buttons([switch_pin], self._button_handler)
         self.event_delay = config.getfloat('event_delay', 3., above=0.)
         self.start_time = self.reactor.NEVER
+        self.sensor_enabled = True
         self.last_button_state = False
         self.last_cb_event_time = 0.
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_SENSOR,
             desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
+        self.gcode.register_mux_command(
+            "SET_FILAMENT_SENSOR", "SENSOR", self.name,
+            self.cmd_SET_FILAMENT_SENSOR,
+            desc=self.cmd_SET_FILAMENT_SENSOR_help)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
     def _handle_ready(self):
-        super(SwitchSensor, self)._handle_ready()
         self.start_time = self.reactor.monotonic() + 2.
     def _button_handler(self, eventtime, state):
         if eventtime < self.start_time or state == self.last_button_state:
@@ -103,14 +109,14 @@ class SwitchSensor(BaseSensor):
             return
         if state:
             # button pushed, check if insert callback should happen
-            if (self.insert_enabled and
+            if (self.insert_enabled and self.sensor_enabled and
                     (eventtime - self.last_cb_event_time) > self.event_delay):
                 self.last_cb_event_time = eventtime
                 logging.info(
                     "switch_sensor: insert event detected, Time %.2f",
                     eventtime)
                 self.reactor.register_callback(self._insert_event_handler)
-        elif (self.runout_enabled and
+        elif (self.runout_enabled and self.sensor_enabled and
                 (eventtime - self.last_cb_event_time) > self.event_delay):
             # Filament runout detected
             self.last_cb_event_time = eventtime
@@ -124,6 +130,8 @@ class SwitchSensor(BaseSensor):
         else:
             msg = "Switch Sensor: filament not detected"
         self.gcode.respond_info(msg)
+    def cmd_SET_FILAMENT_SENSOR(self, params):
+        self.sensor_enabled = self.gcode.get_int("ENABLE", params, 1)
 
 def load_config_prefix(config):
     return SwitchSensor(config)

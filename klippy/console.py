@@ -38,7 +38,7 @@ class KeyboardReader:
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
         self.mcu_freq = 0
-        self.pins = None
+        self.pins = pins.PinResolver(validate_aliases=False)
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
         reactor.register_callback(self.connect)
@@ -63,8 +63,6 @@ class KeyboardReader:
         self.ser.handle_default = self.handle_default
         self.ser.register_response(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
-        mcu_type = msgparser.get_constant('MCU')
-        self.pins = pins.PinResolver(mcu_type, {}, validate_aliases=False)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):
@@ -83,7 +81,8 @@ class KeyboardReader:
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.clocksync.get_clock(eventtime)
     def command_PINS(self, parts):
-        self.pins.update_aliases(parts[1])
+        mcu_type = self.ser.get_msgparser().get_constant('MCU')
+        self.pins.add_pin_mapping(mcu_type, parts[1])
     def command_SET(self, parts):
         val = parts[2]
         try:
@@ -164,12 +163,11 @@ class KeyboardReader:
                 return None
             line = ''.join(evalparts)
             self.output("Eval: %s" % (line,))
-        if self.pins is not None:
-            try:
-                line = self.pins.update_command(line).strip()
-            except:
-                self.output("Unable to map pin: %s" % (line,))
-                return None
+        try:
+            line = self.pins.update_command(line).strip()
+        except:
+            self.output("Unable to map pin: %s" % (line,))
+            return None
         if line:
             parts = line.split()
             if parts[0] in self.local_commands:

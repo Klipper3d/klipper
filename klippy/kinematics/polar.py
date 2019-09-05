@@ -63,10 +63,7 @@ class PolarKinematics:
         else:
             forcepos[axis] += position_max - hi.position_endstop
         # Perform homing
-        limit_speed = None
-        if axis == 2:
-            limit_speed = self.max_z_velocity
-        homing_state.home_rails([rail], forcepos, homepos, limit_speed)
+        homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         # Always home XY together
         homing_axes = homing_state.get_axes()
@@ -133,6 +130,9 @@ class PolarKinematics:
                 stepper_bed.set_commanded_position(angle - 2. * math.pi)
         if axes_d[2]:
             self.rails[1].step_itersolve(cmove)
+    def get_status(self):
+        return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
+                        ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)

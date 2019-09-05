@@ -140,9 +140,9 @@ This section lists some commonly used config commands.
   special hardware support (other than the ability to configure the
   pin as a digital output GPIO). Because the output switching is
   implemented in the micro-controller software, it is recommended that
-  the cycle_ticks parameter correspond to a time of 10ms or
-  greater. See the description of the 'set_pwm_out' and
-  'config_digital_out' commands for parameter description.
+  the cycle_ticks parameter correspond to a time of 10ms or greater.
+  See the description of the 'set_pwm_out' and 'config_digital_out'
+  commands for parameter description.
 
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be
@@ -161,15 +161,15 @@ This section lists some commonly used config commands.
   clock ticks since the last step. It is used as a check on the
   maximum stepper velocity that a stepper may have before stopping.
 
-* `config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
+* `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify
   the endstop pins and to enable "homing" operations (see the
-  end_stop_home command below). The command will configure the
+  endstop_home command below). The command will configure the
   specified pin in digital input mode. The 'pull_up' parameter
   determines whether hardware provided pullup resistors for the pin
   (if available) will be enabled. The 'stepper_count' parameter
   specifies the maximum number of steppers that this endstop may need
-  to halt during a homing operation (see end_stop_home below).
+  to halt during a homing operation (see endstop_home below).
 
 * `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
   This command creates an internal SPI object. It is used with
@@ -203,7 +203,7 @@ only of interest to developers looking to gain insight into Klipper.
   a hardware PWM output pin. See the 'schedule_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u value=%hu` : Schedules a
+* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
   change to a software PWM output pin. See the 'schedule_digital_out'
   and 'config_soft_pwm_out' commands for more info.
 
@@ -260,9 +260,9 @@ Stepper commands
   number of steps generated with dir=1 minus the total number of steps
   generated with dir=0.
 
-* `end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
+* `endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u pin_value=%c` : This command is used during stepper
-  "homing" operations. To use this command a 'config_end_stop' command
+  "homing" operations. To use this command a 'config_endstop' command
   with the same 'oid' parameter must have been issued during
   micro-controller configuration. When this command is invoked, the
   micro-controller will sample the endstop pin every 'rest_ticks'
