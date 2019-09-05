@@ -1,7 +1,7 @@
 # Mesh Bed Leveling
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2018 Eric Callahan <arksine.code@gmail.com>
+# Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -9,6 +9,8 @@ import math
 import json
 import probe
 import collections
+
+PROBE_TYPES = ['bltouch', 'probe']
 
 class BedMeshError(Exception):
     pass
@@ -190,6 +192,9 @@ class BedMeshCalibrate:
         self.bedmesh = bedmesh
         self.probed_z_table = None
         self.build_map = False
+        self.probe = None
+        self.probe_offsets = (0., 0., 0.)
+        self._lookup_probe(config)
         self.probe_params = collections.OrderedDict()
         points = self._generate_points(config)
         self._init_probe_params(config, points)
@@ -209,10 +214,20 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
+    def _lookup_probe(self, config):
+        for p in PROBE_TYPES:
+            if config.has_section(p):
+                self.printer.try_load_module(config, p)
+                self.probe = self.printer.lookup_object('probe')
+                self.probe_offsets = self.probe.get_offsets()
+                return
     def _generate_points(self, config):
-        self.radius = config.getfloat('bed_radius', None, above=0.)
+        self.radius = config.getfloat('mesh_radius', None, above=0.)
+        x_offset, y_offset, z_offset = self.probe_offsets
         if self.radius is not None:
             x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
+            origin = parse_pair(config, ('mesh_origin', "0, 0"))
+            origin = (origin[0] - x_offset, origin[1] - y_offset)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
                 raise config.error(
@@ -225,8 +240,8 @@ class BedMeshCalibrate:
             # rectangular
             x_cnt, y_cnt = parse_pair(
                 config, ('probe_count', '3'), check=False, cast=int, minval=3)
-            min_x, min_y = parse_pair(config, ('min_point',))
-            max_x, max_y = parse_pair(config, ('max_point',))
+            min_x, min_y = parse_pair(config, ('mesh_min',))
+            max_x, max_y = parse_pair(config, ('mesh_max',))
             if max_x <= min_x or max_y <= min_y:
                 raise config.error('bed_mesh: invalid min/max points')
 
@@ -261,12 +276,12 @@ class BedMeshCalibrate:
                     pos_x = max_x - j * x_dist
                 if self.radius is None:
                     # rectangular bed, append
-                    points.append((pos_x, pos_y))
+                    points.append((pos_x - x_offset, pos_y - y_offset))
                 else:
                     # round bed, check distance from origin
                     dist_from_origin = math.sqrt(pos_x*pos_x + pos_y*pos_y)
                     if dist_from_origin <= self.radius:
-                        points.append((pos_x, pos_y))
+                        points.append((origin[0] + pos_x, origin[1] + pos_y))
             pos_y += y_dist
         logging.info('bed_mesh: generated points')
         for i, p in enumerate(points):
