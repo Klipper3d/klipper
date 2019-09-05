@@ -131,7 +131,8 @@ def measurements_to_distances(measured_params, delta_params):
 class DeltaCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
-        if config.getsection('printer').get('kinematics') != 'delta':
+        if config.getsection('printer').get('kinematics') != 'delta' and \
+           config.getsection('printer').get('kinematics') != 'delta_mfe':
             raise config.error("Delta calibrate is only for delta printers")
         # Calculate default probing points
         radius = config.getfloat('radius', above=0.)
