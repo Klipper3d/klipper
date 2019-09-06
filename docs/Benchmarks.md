@@ -298,7 +298,7 @@ commands per second is then `100000 * mcu_frequency / clock_diff`.
 
 Note that this test may saturate the USB/CPU capacity of a Raspberry
 Pi. The benchmarks below are with console.py running on a desktop
-class machine.
+class machine with the device connected via a high-speed hub.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |
@@ -306,15 +306,15 @@ class machine.
 | stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| at90usb1286 (USB)   |  75K | b161a69e | avr-gcc (GCC) 4.8.1 |
-| samd21 (USB)        | 238K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| stm32f103 (USB)     | 335K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| sam3x8e (USB)       | 450K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| lpc1768 (USB)       | 546K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| sam4s8c (USB)       | 619K | a5aede52 | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| lpc1769 (USB)       | 619K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| samd51 (USB)        | 620K | 8cd83b4c | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| stm32f446 (USB)     | 621K | aac51bdb | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 4.8.1 |
+| samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| lpc1768 (USB)       | 534K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| sam4s8c (USB)       | 607K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| lpc1769 (USB)       | 628K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| samd51 (USB)        | 864K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| stm32f446 (USB)     | 870K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 
 Host Benchmarks
 ===============
