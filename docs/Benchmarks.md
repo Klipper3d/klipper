@@ -92,13 +92,13 @@ config_stepper oid=2 step_pin=ar23 dir_pin=ar22 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version `avr-gcc
-(GCC) 4.8.1`. Both the 16Mhz and 20Mhz tests were run using simulavr
+The test was last run on commit `01d2183f` with gcc version `avr-gcc
+(GCC) 5.4.0`. Both the 16Mhz and 20Mhz tests were run using simulavr
 configured for an atmega644p (previous tests have confirmed simulavr
 results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 On both 16Mhz and 20Mhz the best single stepper result is `SET ticks
-106`, the best dual stepper result is `SET ticks 276`, and the best
-three stepper result is `SET ticks 481`.
+104`, the best dual stepper result is `SET ticks 269`, and the best
+three stepper result is `SET ticks 472`.
 
 ### Arduino Due step rate benchmark ###
 
@@ -306,7 +306,7 @@ class machine with the device connected via a high-speed hub.
 | stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 4.8.1 |
+| at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

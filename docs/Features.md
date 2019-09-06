@@ -131,8 +131,8 @@ represent total number of steps per second on the micro-controller.
 
 | Micro-controller                | Fastest step rate | 3 steppers active |
 | ------------------------------- | ----------------- | ----------------- |
-| 16Mhz AVR                       | 151K              | 100K              |
-| 20Mhz AVR                       | 189K              | 125K              |
+| 16Mhz AVR                       | 154K              | 102K              |
+| 20Mhz AVR                       | 192K              | 127K              |
 | Arduino Zero (SAMD21)           | 234K              | 217K              |
 | "Blue Pill" (STM32F103)         | 395K              | 356K              |
 | Arduino Due (SAM3X8E)           | 438K              | 438K              |
