@@ -169,11 +169,9 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     if (!(ctl & USB_OTG_DIEPCTL_USBAEP))
         // Controller not enabled - discard data
         return len;
-    if (ctl & USB_OTG_DIEPCTL_EPENA) {
+    if (ctl & USB_OTG_DIEPCTL_EPENA)
         // Wait for space to transmit
-        OTGD->DIEPEMPMSK |= (1 << USB_CDC_EP_BULK_IN);
         return -1;
-    }
     return fifo_write_packet(USB_CDC_EP_BULK_IN, data, len);
 }
 
@@ -235,7 +233,6 @@ usb_send_ep0(const void *data, uint_fast8_t len)
     }
     if (EPIN(0)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
-        OTGD->DIEPEMPMSK |= (1 << 0);
         OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
         return -1;
     }
@@ -323,11 +320,16 @@ OTG_FS_IRQHandler(void)
     if (sts & USB_OTG_GINTSTS_IEPINT) {
         // Can transmit data - disable irq and notify endpoint
         uint32_t daint = OTGD->DAINT;
-        OTGD->DIEPEMPMSK &= ~daint;
-        if (daint & (1 << 0))
+        if (daint & (1 << 0)) {
+            USB_OTG_INEndpointTypeDef *epi = EPIN(0);
+            epi->DIEPINT = epi->DIEPINT;
             usb_notify_ep0();
-        if (daint & (1 << USB_CDC_EP_BULK_IN))
+        }
+        if (daint & (1 << USB_CDC_EP_BULK_IN)) {
+            USB_OTG_INEndpointTypeDef *epi = EPIN(USB_CDC_EP_BULK_IN);
+            epi->DIEPINT = epi->DIEPINT;
             usb_notify_bulk_in();
+        }
     }
 }
 
@@ -370,6 +372,7 @@ usb_init(void)
 
     // Enable interrupts
     OTGD->DAINTMSK = (1 << 0) | (1 << USB_CDC_EP_BULK_IN);
+    OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
     OTG->GINTMSK = USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT;
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
     armcm_enable_irq(OTG_FS_IRQHandler, OTG_FS_IRQn, 1);
