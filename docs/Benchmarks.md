@@ -80,6 +80,12 @@ example, with three active steppers:
 ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
 ```
 
+Benchmarks may be run with the micro-controller code compiled using a
+"step pulse duration" of zero (the tables below report this as "no
+delay"). This configuration is believed to be valid in real-world
+usage when one is solely using Trinamic stepper drivers. The results
+of these benchmarks are not reported in the Features.md document.
+
 ### AVR step rate benchmark ###
 
 The following configuration sequence is used on AVR chips:
@@ -114,14 +120,16 @@ config_stepper oid=2 step_pin=PA21 dir_pin=PC30 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `74c21654` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`.
+The test was last run on commit `8d4a5c16` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
 
-| sam3x8e          | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 388   |
-| 2 stepper        | 405   |
-| 3 stepper        | 576   |
+| sam3x8e              | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 388   |
+| 2 stepper            | 405   |
+| 3 stepper            | 576   |
+| 1 stepper (no delay) | 77    |
+| 3 stepper (no delay) | 299   |
 
 ### Duet Maestro step rate benchmark ###
 
@@ -244,24 +252,28 @@ config_stepper oid=3 step_pin=PB3 dir_pin=PB8 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `c380d463` with gcc version
+The test was last run on commit `8d4a5c16` with gcc version
 `arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The STM32F407 results
 were obtained by running an STM32F407 binary on an STM32F446 (and thus
 using a 168Mhz clock).
 
-| stm32f446        | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 757   |
-| 2 stepper        | 761   |
-| 3 stepper        | 757   |
-| 4 stepper        | 767   |
+| stm32f446            | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 757   |
+| 2 stepper            | 761   |
+| 3 stepper            | 757   |
+| 4 stepper            | 767   |
+| 1 stepper (no delay) | 51    |
+| 3 stepper (no delay) | 226   |
 
-| stm32f407        | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 709   |
-| 2 stepper        | 714   |
-| 3 stepper        | 709   |
-| 4 stepper        | 729   |
+| stm32f407            | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 709   |
+| 2 stepper            | 714   |
+| 3 stepper            | 709   |
+| 4 stepper            | 729   |
+| 1 stepper (no delay) | 52    |
+| 3 stepper (no delay) | 226   |
 
 ### LPC176x step rate benchmark ###
 
@@ -274,21 +286,25 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The 120Mhz LPC1769
+The test was last run on commit `8d4a5c16` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The 120Mhz LPC1769
 results were obtained by overclocking an LPC1768 to 120Mhz.
 
-| lpc1768          | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 448   |
-| 2 stepper        | 450   |
-| 3 stepper        | 523   |
+| lpc1768              | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 448   |
+| 2 stepper            | 450   |
+| 3 stepper            | 523   |
+| 1 stepper (no delay) | 56    |
+| 3 stepper (no delay) | 240   |
 
-| lpc1769          | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 525   |
-| 2 stepper        | 526   |
-| 3 stepper        | 545   |
+| lpc1769              | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 525   |
+| 2 stepper            | 526   |
+| 3 stepper            | 545   |
+| 1 stepper (no delay) | 56    |
+| 3 stepper (no delay) | 240   |
 
 ### SAMD21 step rate benchmark ###
 
@@ -301,15 +317,17 @@ config_stepper oid=2 step_pin=PA17 dir_pin=PA21 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD21G18
+The test was last run on commit `8d4a5c16` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0` on a SAMD21G18
 micro-controller.
 
-| samd21           | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 277   |
-| 2 stepper        | 410   |
-| 3 stepper        | 664   |
+| samd21               | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 277   |
+| 2 stepper            | 410   |
+| 3 stepper            | 664   |
+| 1 stepper (no delay) | 83    |
+| 3 stepper (no delay) | 321   |
 
 ### SAMD51 step rate benchmark ###
 
@@ -323,16 +341,18 @@ config_stepper oid=3 step_pin=PA22 dir_pin=PA18 min_stop_interval=0 invert_step=
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD51G19A
+The test was last run on commit `8d4a5c16` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0` on a SAMD51G19A
 micro-controller.
 
-| samd51           | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 516   |
-| 2 stepper        | 520   |
-| 3 stepper        | 519   |
-| 4 stepper        | 655   |
+| samd51               | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 516   |
+| 2 stepper            | 520   |
+| 3 stepper            | 519   |
+| 4 stepper            | 655   |
+| 1 stepper (no delay) | 41    |
+| 3 stepper (no delay) | 197   |
 
 ## Command dispatch benchmark ##
 
