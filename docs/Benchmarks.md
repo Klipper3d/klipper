@@ -134,16 +134,16 @@ config_stepper oid=2 step_pin=PC26 dir_pin=PB4 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `4fa41d9c` with gcc version
+The test was last run on commit `8d4a5c16` with gcc version
 `arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
 
 | sam4s8c              | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 553   |
-| 2 stepper            | 563   |
-| 3 stepper            | 623   |
-| 1 stepper (no delay) | 79    |
-| 3 stepper (no delay) | 296   |
+| 1 stepper            | 527   |
+| 2 stepper            | 535   |
+| 3 stepper            | 638   |
+| 1 stepper (no delay) | 70    |
+| 3 stepper (no delay) | 254   |
 
 ### Duet Wifi step rate benchmark ###
 
@@ -364,8 +364,8 @@ class machine with the device connected via a high-speed hub.
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | lpc1768 (USB)       | 534K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| sam4s8c (USB)       | 607K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | lpc1769 (USB)       | 628K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| sam4s8c (USB)       | 650K | 8d4a5c16 | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | samd51 (USB)        | 864K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | stm32f446 (USB)     | 870K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 

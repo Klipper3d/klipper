@@ -136,8 +136,8 @@ represent total number of steps per second on the micro-controller.
 | Arduino Zero (SAMD21)           | 234K              | 217K              |
 | "Blue Pill" (STM32F103)         | 395K              | 356K              |
 | Arduino Due (SAM3X8E)           | 438K              | 438K              |
+| Duet2 Maestro (SAM4S8C)         | 564K              | 564K              |
 | Smoothieboard (LPC1768)         | 574K              | 574K              |
-| Duet2 Maestro (SAM4S8C)         | 578K              | 578K              |
 | Smoothieboard (LPC1769)         | 661K              | 661K              |
 | Beaglebone PRU                  | 680K              | 680K              |
 | Duet2 Wifi/Eth (SAM4E8E)        | 686K              | 686K              |
