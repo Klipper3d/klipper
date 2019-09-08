@@ -221,14 +221,16 @@ config_stepper oid=2 step_pin=PA4 dir_pin=PB7 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`.
+The test was last run on commit `8d4a5c16` with gcc version
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
 
-| stm32f103        | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 345   |
-| 2 stepper        | 365   |
-| 3 stepper        | 606   |
+| stm32f103            | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 347   |
+| 2 stepper            | 372   |
+| 3 stepper            | 600   |
+| 1 stepper (no delay) | 71    |
+| 3 stepper (no delay) | 288   |
 
 ### STM32F4 step rate benchmark ###
 
