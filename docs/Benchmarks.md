@@ -96,9 +96,12 @@ The test was last run on commit `01d2183f` with gcc version `avr-gcc
 (GCC) 5.4.0`. Both the 16Mhz and 20Mhz tests were run using simulavr
 configured for an atmega644p (previous tests have confirmed simulavr
 results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
-On both 16Mhz and 20Mhz the best single stepper result is `SET ticks
-104`, the best dual stepper result is `SET ticks 269`, and the best
-three stepper result is `SET ticks 472`.
+
+| avr              | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 104   |
+| 2 stepper        | 296   |
+| 3 stepper        | 472   |
 
 ### Arduino Due step rate benchmark ###
 
@@ -112,9 +115,13 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `74c21654` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 388`, the best dual stepper result is
-`SET ticks 405`, and the best three stepper result is `SET ticks 576`.
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`.
+
+| sam3x8e          | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 388   |
+| 2 stepper        | 405   |
+| 3 stepper        | 576   |
 
 ### Duet Maestro step rate benchmark ###
 
@@ -128,9 +135,13 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `74c21654` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 553`, the best dual stepper result is
-`SET ticks 563`, and the best three stepper result is `SET ticks 623`.
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`.
+
+| sam4s8c          | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 553   |
+| 2 stepper        | 563   |
+| 3 stepper        | 623   |
 
 ### Duet Wifi step rate benchmark ###
 
@@ -147,10 +158,14 @@ finalize_config crc=0
 
 The test was last run on commit `59a60d68` with gcc version
 `arm-none-eabi-gcc 7.3.1 20180622 (release)
-[ARM/embedded-7-branch revision 261907]`. The best single stepper
-result is `SET ticks 519`, the best dual stepper result is `SET ticks
-520`, and the best three stepper result is `SET ticks 525`, and the
-best four stepper result is `SET ticks 703`.
+[ARM/embedded-7-branch revision 261907]`.
+
+| sam4e8e          | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 519   |
+| 2 stepper        | 520   |
+| 3 stepper        | 525   |
+| 4 stepper        | 703   |
 
 ### Beaglebone PRU step rate benchmark ###
 
@@ -165,9 +180,13 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `b161a69e` with gcc version `pru-gcc
-(GCC) 8.0.0 20170530 (experimental)`. The best single stepper result
-is `SET ticks 861`, the best dual stepper result is `SET ticks 853`,
-and the best three stepper result is `SET ticks 883`.
+(GCC) 8.0.0 20170530 (experimental)`.
+
+| pru              | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 861   |
+| 2 stepper        | 853   |
+| 3 stepper        | 883   |
 
 ### STM32F042 step rate benchmark ###
 
@@ -181,9 +200,13 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `c105adc8` with gcc version
-`arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1`. The best single
-stepper result is `SET ticks 308`, the best dual stepper result is
-`SET ticks 638`, and the best three stepper result is `SET ticks 1021`.
+`arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1`.
+
+| stm32f042        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 308   |
+| 2 stepper        | 638   |
+| 3 stepper        | 1021  |
 
 ### STM32F103 step rate benchmark ###
 
@@ -197,9 +220,13 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 345`, the best dual stepper result is
-`SET ticks 365`, and the best three stepper result is `SET ticks 606`.
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`.
+
+| stm32f103        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 345   |
+| 2 stepper        | 365   |
+| 3 stepper        | 606   |
 
 ### STM32F4 step rate benchmark ###
 
@@ -214,15 +241,23 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `c380d463` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. For the STM32F446 the
-best single stepper result is `SET ticks 757`, the best dual stepper
-result is `SET ticks 761`, the best three stepper result is `SET ticks
-757`, and the best four stepper result is `SET ticks 767`. The
-STM32F407 results were obtained by running an STM32F407 binary on an
-STM32F446 (and thus using a 168Mhz clock) - the best single stepper
-result is `SET ticks 709`, the best dual stepper result is `SET ticks
-714`, the best three stepper result is `SET ticks 709`, and the best
-four stepper result is `SET ticks 729`.
+`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The STM32F407 results
+were obtained by running an STM32F407 binary on an STM32F446 (and thus
+using a 168Mhz clock).
+
+| stm32f446        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 757   |
+| 2 stepper        | 761   |
+| 3 stepper        | 757   |
+| 4 stepper        | 767   |
+
+| stm32f407        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 709   |
+| 2 stepper        | 714   |
+| 3 stepper        | 709   |
+| 4 stepper        | 729   |
 
 ### LPC176x step rate benchmark ###
 
@@ -236,13 +271,20 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. For the 100Mhz
-LPC1768, the best single stepper result is `SET ticks 448`, the best
-dual stepper result is `SET ticks 450`, and the best three stepper
-result is `SET ticks 523`. The 120Mhz LPC1769 results were obtained by
-overclocking an LPC1768 to 120Mhz - the best single stepper result is
-`SET ticks 525`, the best dual stepper result is `SET ticks 526`, and
-the best three stepper result is `SET ticks 545`.
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The 120Mhz LPC1769
+results were obtained by overclocking an LPC1768 to 120Mhz.
+
+| lpc1768          | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 448   |
+| 2 stepper        | 450   |
+| 3 stepper        | 523   |
+
+| lpc1769          | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 525   |
+| 2 stepper        | 526   |
+| 3 stepper        | 545   |
 
 ### SAMD21 step rate benchmark ###
 
@@ -256,9 +298,14 @@ finalize_config crc=0
 ```
 
 The test was last run on commit `9f3517fd` with gcc version
-`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0`. The best single
-stepper result is `SET ticks 277`, the best dual stepper result is
-`SET ticks 410`, and the best three stepper result is `SET ticks 664`.
+`arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD21G18
+micro-controller.
+
+| samd21           | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 277   |
+| 2 stepper        | 410   |
+| 3 stepper        | 664   |
 
 ### SAMD51 step rate benchmark ###
 
@@ -274,10 +321,14 @@ finalize_config crc=0
 
 The test was last run on commit `9f3517fd` with gcc version
 `arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0` on a SAMD51G19A
-micro-controller. The best single stepper result is `SET ticks 516`,
-the best dual stepper result is `SET ticks 520`, the best three
-stepper result is `SET ticks 519`, and the best four stepper result is
-`SET ticks 655`.
+micro-controller.
+
+| samd51           | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 516   |
+| 2 stepper        | 520   |
+| 3 stepper        | 519   |
+| 4 stepper        | 655   |
 
 ## Command dispatch benchmark ##
 
