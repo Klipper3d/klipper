@@ -16,8 +16,8 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -o %s %s")
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c',
-    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_delta_mfe.c',
-    'kin_polar.c', 'kin_winch.c', 'kin_extruder.c',
+    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
+    'kin_winch.c', 'kin_extruder.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -69,10 +69,6 @@ defs_kin_corexy = """
 defs_kin_delta = """
     struct stepper_kinematics *delta_stepper_alloc(double arm2
         , double tower_x, double tower_y);
-"""
-
-defs_kin_delta_mfe = """
-    struct stepper_kinematics *delta_mfe_stepper_alloc();
 """
 
 defs_kin_polar = """
@@ -132,7 +128,7 @@ defs_std = """
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std,
     defs_stepcompress, defs_itersolve,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_delta_mfe,
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta,
     defs_kin_polar, defs_kin_winch, defs_kin_extruder
 ]
 
