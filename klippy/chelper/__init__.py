@@ -128,8 +128,8 @@ defs_std = """
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std,
     defs_stepcompress, defs_itersolve,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta,
-    defs_kin_polar, defs_kin_winch, defs_kin_extruder
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar, 
+    defs_kin_winch, defs_kin_extruder
 ]
 
 # Return the list of file modification times
