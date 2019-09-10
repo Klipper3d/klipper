@@ -1,4 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python2
+# Tool to read the current extruder calibration values and provide users with
+# adjusted values per user-provided measurements
+#
+# Copyright (C) 2019 Kyle Turpin <kyle@moturpin.com>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
 import configparser
 config = configparser.ConfigParser()
 

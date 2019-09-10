@@ -1,4 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python2
+# Tool to read the current stepper calibration values and provide
+# the user with appropriate values per user-provided measurements
+#
+# Copyright (C) 2019 Kyle Turpin <kyle@moturpin.com>
+#
 import configparser
 config = configparser.ConfigParser()
 
