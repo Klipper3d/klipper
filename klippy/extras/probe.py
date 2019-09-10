@@ -290,6 +290,8 @@ class ProbePointsHelper:
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
+    def set_points(self, points):
+        self.probe_points = points
     def get_lift_speed(self):
         return self.lift_speed
     def _move_next(self):

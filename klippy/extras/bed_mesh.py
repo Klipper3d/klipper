@@ -196,10 +196,12 @@ class BedMeshCalibrate:
         self.probe_offsets = (0., 0., 0.)
         self._lookup_probe(config)
         self.probe_params = collections.OrderedDict()
-        points = self._generate_points(config)
-        self._init_probe_params(config, points)
+        self.auto_points = []
+        self.manual_points = []
+        self._generate_points(config)
+        self._init_probe_params(config, self.auto_points)
         self.probe_helper = probe.ProbePointsHelper(
-            config, self.probe_finalize, points)
+            config, self.probe_finalize, self.auto_points)
         self.probe_helper.minimum_points(3)
         # setup persistent storage
         self.profiles = {}
@@ -227,7 +229,6 @@ class BedMeshCalibrate:
         if self.radius is not None:
             x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
             origin = parse_pair(config, ('mesh_origin', "0, 0"))
-            origin = (origin[0] - x_offset, origin[1] - y_offset)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
                 raise config.error(
@@ -265,7 +266,6 @@ class BedMeshCalibrate:
             # rectangular bed, only re-calc max_x
             max_x = min_x + x_dist * (x_cnt - 1)
         pos_y = min_y
-        points = []
         for i in range(y_cnt):
             for j in range(x_cnt):
                 if not i % 2:
@@ -276,26 +276,41 @@ class BedMeshCalibrate:
                     pos_x = max_x - j * x_dist
                 if self.radius is None:
                     # rectangular bed, append
-                    points.append((pos_x - x_offset, pos_y - y_offset))
+                    self.manual_points.append((pos_x, pos_y))
+                    self.auto_points.append(
+                        (pos_x - x_offset, pos_y - y_offset))
                 else:
                     # round bed, check distance from origin
                     dist_from_origin = math.sqrt(pos_x*pos_x + pos_y*pos_y)
                     if dist_from_origin <= self.radius:
-                        points.append((origin[0] + pos_x, origin[1] + pos_y))
+                        self.manual_points.append(
+                            (origin[0] + pos_x, origin[1] + pos_y))
+                        self.auto_points.append(
+                            (origin[0] + pos_x - x_offset,
+                             origin[1] + pos_y - y_offset))
             pos_y += y_dist
-        logging.info('bed_mesh: generated points')
-        for i, p in enumerate(points):
-            logging.info("%d: (%.1f, %.1f)" % (i, p[0], p[1]))
+        logging.info(
+            'bed_mesh: generated points\nIndex |    Automatic    |   Manual')
+        for i, (a, m) in enumerate(zip(self.auto_points, self.manual_points)):
+            auto_pt = "(%.1f, %.1f)" % (a[0], a[1])
+            man_pt = "(%.1f, %.1f)" % (m[0], m[1])
+            logging.info(
+                "  %-4d| %-16s| %s" % (i, auto_pt, man_pt))
         rref_index = config.get('relative_reference_index', None)
         if rref_index is not None:
             rref_index = int(rref_index)
-            if rref_index < 0 or rref_index >= len(points):
-                raise config.error("bed_mesh: relative reference index %d "
-                    "is out of bounds" % (rref_index))
-            logging.info("bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
-                % (rref_index, points[rref_index][0], points[rref_index][1]))
+            if rref_index < 0 or rref_index >= len(self.auto_points):
+                raise config.error(
+                    "bed_mesh: relative reference index %d is out of bounds"
+                    % (rref_index))
+            logging.info(
+                "bed_mesh: relative_reference_index %d is (%.2f, %.2f),"
+                " (%.2f, %.2f)" %
+                (rref_index, self.auto_points[rref_index][0],
+                 self.auto_points[rref_index][1],
+                 self.manual_points[rref_index][0],
+                 self.manual_points[rref_index][1]))
             self.relative_reference_index = rref_index
-        return points
     def _init_probe_params(self, config, points):
         self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
         self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
@@ -419,6 +434,15 @@ class BedMeshCalibrate:
         self.start_calibration(params)
     def start_calibration(self, params):
         self.bedmesh.set_mesh(None)
+        method = self.gcode.get_str('METHOD', params, 'automatic').lower()
+        points = self.auto_points
+        if method != "automatic":
+            points = self.manual_points
+        self.probe_helper.set_points(points)
+        self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
+        self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
+        self.probe_params['min_y'] = min(points, key=lambda p: p[1])[1]
+        self.probe_params['max_y'] = max(points, key=lambda p: p[1])[1]
         self.probe_helper.start_probe(params)
     def print_probed_positions(self, print_func):
         if self.probed_z_table is not None:
