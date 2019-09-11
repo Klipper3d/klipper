@@ -70,6 +70,8 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
+    def is_dir_inverted(self):
+        return self._invert_dir
     def calc_position_from_coord(self, coord):
         return self._ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
@@ -177,8 +179,8 @@ class MCU_endstop:
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_command(
             "end_stop_query_state oid=%c", cq=cmd_queue)
-        self._mcu.register_msg(self._handle_end_stop_state, "end_stop_state"
-                               , self._oid)
+        self._mcu.register_response(self._handle_end_stop_state,
+                                    "end_stop_state", self._oid)
     def home_prepare(self):
         pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
@@ -337,11 +339,10 @@ class MCU_pwm:
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
         else:
-            if (self._start_value not in [0., 1.]
-                or self._shutdown_value not in [0., 1.]):
+            if self._shutdown_value not in [0., 1.]:
                 raise pins.error(
-                    "start and shutdown values must be 0.0 or 1.0 on soft pwm")
-            self._pwm_max = self._mcu.get_constant_float("SOFT_PWM_MAX")
+                    "shutdown value must be 0.0 or 1.0 on soft pwm")
+            self._pwm_max = float(cycle_ticks)
             if self._is_static:
                 self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
                     self._pin, self._start_value >= 0.5))
@@ -351,10 +352,17 @@ class MCU_pwm:
                 "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
                 " default_value=%d max_duration=%d" % (
                     self._oid, self._pin, cycle_ticks,
-                    self._start_value >= 0.5, self._shutdown_value >= 0.5,
+                    self._start_value >= 1.0, self._shutdown_value >= 0.5,
                     self._mcu.seconds_to_clock(self._max_duration)))
+            if self._start_value not in [0., 1.]:
+                clock = self._mcu.get_query_slot(self._oid)
+                svalue = int(self._start_value * self._pwm_max + 0.5)
+                self._mcu.add_config_cmd(
+                    "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d" % (
+                        self._oid, clock, svalue))
             self._set_cmd = self._mcu.lookup_command(
-                "schedule_soft_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+                "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+                cq=cmd_queue)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
@@ -408,8 +416,8 @@ class MCU_adc:
                 self._oid, clock, sample_ticks, self._sample_count,
                 self._report_clock, min_sample, max_sample,
                 self._range_check_count), is_init=True)
-        self._mcu.register_msg(self._handle_analog_in_state, "analog_in_state"
-                               , self._oid)
+        self._mcu.register_response(self._handle_analog_in_state,
+                                    "analog_in_state", self._oid)
     def _handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
@@ -417,6 +425,31 @@ class MCU_adc:
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
+
+# Wrapper around command sending
+class CommandWrapper:
+    def __init__(self, mcu, serial, clocksync, cmd, cmd_queue):
+        self._mcu = mcu
+        self._serial = serial
+        self._clocksync = clocksync
+        self._cmd = cmd
+        self._cmd_queue = cmd_queue
+    def send(self, data=(), minclock=0, reqclock=0):
+        cmd = self._cmd.encode(data)
+        self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
+    def send_with_response(self, data=(), response=None, response_oid=None,
+                           minclock=0):
+        minsystime = 0.
+        if minclock:
+            minsystime = self._clocksync.estimate_clock_systime(minclock)
+        cmd = self._cmd.encode(data)
+        try:
+            src = serialhdl.SerialRetryCommand(
+                self._serial, [cmd], self._cmd_queue, response, response_oid,
+                minclock=minclock, minsystime=minsystime)
+            return src.get_response()
+        except serialhdl.error as e:
+            raise error(str(e))
 
 class MCU:
     error = error
@@ -538,7 +571,7 @@ class MCU:
         self._config_cmds.insert(0, "allocate_oids count=%d" % (
             self._oid_count,))
         # Resolve pin names
-        mcu_type = self._serial.msgparser.get_constant('MCU')
+        mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         reserved_pins = ppins.get_reserved_pins(self._name)
         pin_resolver = pins.PinResolver(mcu_type, reserved_pins)
@@ -608,9 +641,12 @@ class MCU:
                 and not os.path.exists(self._serialport)):
                 # Try toggling usb power
                 self._check_restart("enable power")
-            self._serial.connect()
-            self._clocksync.connect(self._serial)
-        msgparser = self._serial.msgparser
+            try:
+                self._serial.connect()
+                self._clocksync.connect(self._serial)
+            except serialhdl.error as e:
+                raise error(str(e))
+        msgparser = self._serial.get_msgparser()
         name = self._name
         log_info = [
             "Loaded MCU '%s' %d commands (%s / %s)" % (
@@ -620,10 +656,10 @@ class MCU:
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
         ppins = self._printer.lookup_object('pins')
-        for name, value in self.get_constants().items():
-            if name.startswith("RESERVE_PINS_"):
+        for cname, value in self.get_constants().items():
+            if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
-                    ppins.reserve_pin(name, pin, name[14:])
+                    ppins.reserve_pin(name, pin, cname[13:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
@@ -634,9 +670,9 @@ class MCU:
                  or self._config_reset_cmd is not None)
             and msgparser.get_constant('SERIAL_BAUD', None) is None):
             self._restart_method = 'command'
-        self.register_msg(self._handle_shutdown, 'shutdown')
-        self.register_msg(self._handle_shutdown, 'is_shutdown')
-        self.register_msg(self._handle_mcu_stats, 'stats')
+        self.register_response(self._handle_shutdown, 'shutdown')
+        self.register_response(self._handle_shutdown, 'is_shutdown')
+        self.register_response(self._handle_mcu_stats, 'stats')
         self._check_config()
         move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
         logging.info(move_msg)
@@ -674,25 +710,28 @@ class MCU:
         return self._printer
     def get_name(self):
         return self._name
-    def register_msg(self, cb, msg, oid=None):
-        self._serial.register_callback(cb, msg, oid)
+    def register_response(self, cb, msg, oid=None):
+        self._serial.register_response(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
-        return self._serial.lookup_command(msgformat, cq)
+        if cq is None:
+            cq = self._serial.get_default_command_queue()
+        cmd = self._serial.get_msgparser().lookup_command(msgformat)
+        return CommandWrapper(self, self._serial, self._clocksync, cmd, cq)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
-        except self._serial.msgparser.error as e:
+        except self._serial.get_msgparser().error as e:
             return None
     def lookup_command_id(self, msgformat):
-        return self._serial.msgparser.lookup_command(msgformat).msgid
+        return self._serial.get_msgparser().lookup_command(msgformat).msgid
     def get_enumerations(self):
-        return self._serial.msgparser.get_enumerations()
+        return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
-        return self._serial.msgparser.get_constants()
+        return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
-        return self._serial.msgparser.get_constant_float(name)
+        return self._serial.get_msgparser().get_constant_float(name)
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):

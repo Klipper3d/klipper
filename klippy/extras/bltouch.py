@@ -1,13 +1,13 @@
 # BLTouch support
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 import homing, probe
 
-SIGNAL_PERIOD = 0.025600
-MIN_CMD_TIME = 4 * SIGNAL_PERIOD
+SIGNAL_PERIOD = 0.020
+MIN_CMD_TIME = 5 * SIGNAL_PERIOD
 
 TEST_TIME = 5 * 60.
 RETRY_RESET_TIME = 1.
@@ -16,8 +16,8 @@ ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
 Commands = {
-    None: 0.0, 'pin_down': 0.000700, 'touch_mode': 0.001200,
-    'pin_up': 0.001500, 'self_test': 0.001800, 'reset': 0.002200,
+    None: 0.0, 'pin_down': 0.000650, 'touch_mode': 0.001165,
+    'pin_up': 0.001475, 'self_test': 0.001780, 'reset': 0.002190,
 }
 
 # BLTouch "endstop" wrapper
@@ -68,7 +68,7 @@ class BLTouchEndstopWrapper:
     def handle_connect(self):
         try:
             self.raise_probe()
-        except homing.EndstopError as e:
+        except homing.CommandError as e:
             logging.warning("BLTouch raise probe error: %s", str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
@@ -114,7 +114,7 @@ class BLTouchEndstopWrapper:
                 try:
                     self.verify_state(check_start_time, check_end_time,
                                       False, "raise probe")
-                except homing.EndstopError as e:
+                except homing.CommandError as e:
                     if retry >= 2:
                         raise
                     msg = "Failed to verify BLTouch probe is raised; retrying."

@@ -73,28 +73,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     }
 
     // Setup mode
-    config.spcr |= (1<<SPE) | (1<<MSTR);
-    switch(mode) {
-        case 0: {
-            // MODE 0 - CPOL=0, CPHA=0
-            break;
-        }
-        case 1: {
-            // MODE 1 - CPOL=0, CPHA=1
-            config.spcr |= (1<<CPHA);
-            break;
-        }
-        case 2: {
-            // MODE 2 - CPOL=1, CPHA=0
-            config.spcr |= (1<<CPOL);
-            break;
-        }
-        case 3: {
-            // MODE 3 - CPOL=1, CPHA=1
-            config.spcr |= (1<<CPOL) | (1<<CPHA);
-            break;
-        }
-    }
+    config.spcr |= (1<<SPE) | (1<<MSTR) | (mode << CPHA);
 
     return config;
 }

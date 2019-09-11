@@ -29,10 +29,9 @@ class SerialReader:
         self.lock = threading.Lock()
         self.background_thread = None
         # Message handlers
-        handlers = {
-            '#unknown': self.handle_unknown, '#output': self.handle_output,
-        }
-        self.handlers = { (k, None): v for k, v in handlers.items() }
+        self.handlers = {}
+        self.register_response(self._handle_unknown_init, '#unknown')
+        self.register_response(self.handle_output, '#output')
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
@@ -44,26 +43,43 @@ class SerialReader:
             params['#sent_time'] = response.sent_time
             params['#receive_time'] = response.receive_time
             hdl = (params['#name'], params.get('oid'))
-            with self.lock:
-                hdl = self.handlers.get(hdl, self.handle_default)
             try:
-                hdl(params)
+                with self.lock:
+                    hdl = self.handlers.get(hdl, self.handle_default)
+                    hdl(params)
             except:
                 logging.exception("Exception in serial callback")
+    def _get_identify_data(self, timeout):
+        # Query the "data dictionary" from the micro-controller
+        identify_data = ""
+        while 1:
+            msg = "identify offset=%d count=%d" % (len(identify_data), 40)
+            params = self.send_with_response(msg, 'identify_response')
+            if params['offset'] == len(identify_data):
+                msgdata = params['data']
+                if not msgdata:
+                    # Done
+                    return identify_data
+                identify_data += msgdata
+            if self.reactor.monotonic() > timeout:
+                raise error("Timeout during identify")
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
+        start_time = self.reactor.monotonic()
         while 1:
-            starttime = self.reactor.monotonic()
+            connect_time = self.reactor.monotonic()
+            if connect_time > start_time + 150.:
+                raise error("Unable to connect")
             try:
                 if self.baud:
                     self.ser = serial.Serial(
-                        self.serialport, self.baud, timeout=0)
+                        self.serialport, self.baud, timeout=0, exclusive=True)
                 else:
                     self.ser = open(self.serialport, 'rb+')
             except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("Unable to open port: %s", e)
-                self.reactor.pause(starttime + 5.)
+                self.reactor.pause(connect_time + 5.)
                 continue
             if self.baud:
                 stk500v2_leave(self.ser, self.reactor)
@@ -72,17 +88,17 @@ class SerialReader:
             self.background_thread = threading.Thread(target=self._bg_thread)
             self.background_thread.start()
             # Obtain and load the data dictionary from the firmware
-            sbs = SerialBootStrap(self)
-            identify_data = sbs.get_identify_data(starttime + 5.)
-            if identify_data is None:
-                logging.warn("Timeout on serial connect")
+            try:
+                identify_data = self._get_identify_data(connect_time + 5.)
+            except error as e:
+                logging.exception("Timeout on serial connect")
                 self.disconnect()
                 continue
             break
         msgparser = msgproto.MessageParser()
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
-        self.register_callback(self.handle_unknown, '#unknown')
+        self.register_response(self.handle_unknown, '#unknown')
         # Setup baud adjust
         mcu_baud = msgparser.get_constant_float('SERIAL_BAUD', None)
         if mcu_baud is not None:
@@ -116,11 +132,15 @@ class SerialReader:
         self.ffi_lib.serialqueue_get_stats(
             self.serialqueue, self.stats_buf, len(self.stats_buf))
         return self.ffi_main.string(self.stats_buf)
+    def get_msgparser(self):
+        return self.msgparser
+    def get_default_command_queue(self):
+        return self.default_cmd_queue
     # Serial response callbacks
-    def register_callback(self, callback, name, oid=None):
+    def register_response(self, callback, name, oid=None):
         with self.lock:
             self.handlers[name, oid] = callback
-    def unregister_callback(self, name, oid=None):
+    def unregister_response(self, name, oid=None):
         with self.lock:
             del self.handlers[name, oid]
     # Command sending
@@ -130,11 +150,10 @@ class SerialReader:
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
-    def lookup_command(self, msgformat, cq=None):
-        if cq is None:
-            cq = self.default_cmd_queue
-        cmd = self.msgparser.lookup_command(msgformat)
-        return SerialCommand(self, cq, cmd)
+    def send_with_response(self, msg, response):
+        cmd = self.msgparser.create_command(msg)
+        src = SerialRetryCommand(self, [cmd], self.default_cmd_queue, response)
+        return src.get_response()
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -163,6 +182,9 @@ class SerialReader:
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
         return '\n'.join(out)
     # Default message handlers
+    def _handle_unknown_init(self, params):
+        logging.debug("Unknown message %d (len %d) while identifying",
+                      params['#msgid'], len(params['#msg']))
     def handle_unknown(self, params):
         logging.warn("Unknown message type %d: %s",
                      params['#msgid'], repr(params['#msg']))
@@ -173,95 +195,56 @@ class SerialReader:
     def __del__(self):
         self.disconnect()
 
-# Wrapper around command sending
-class SerialCommand:
-    def __init__(self, serial, cmd_queue, cmd):
-        self.serial = serial
-        self.cmd_queue = cmd_queue
-        self.cmd = cmd
-    def send(self, data=(), minclock=0, reqclock=0):
-        cmd = self.cmd.encode(data)
-        self.serial.raw_send(cmd, minclock, reqclock, self.cmd_queue)
-    def send_with_response(self, data=(), response=None, response_oid=None):
-        cmd = self.cmd.encode(data)
-        src = SerialRetryCommand(self.serial, cmd, response, response_oid)
-        return src.get_response()
-
 # Class to retry sending of a query command until a given response is received
 class SerialRetryCommand:
     TIMEOUT_TIME = 5.0
     RETRY_TIME = 0.500
-    def __init__(self, serial, cmd, name, oid=None):
+    def __init__(self, serial, cmds, cmd_queue, name, oid=None,
+                 minclock=0, minsystime=0.):
         self.serial = serial
-        self.cmd = cmd
+        self.cmds = cmds
+        self.cmd_queue = cmd_queue
         self.name = name
         self.oid = oid
+        self.minclock = minclock
         self.response = None
+        reactor = self.serial.reactor
+        self.mutex = reactor.mutex(is_locked=True)
         self.min_query_time = self.serial.reactor.monotonic()
-        self.serial.register_callback(self.handle_callback, self.name, self.oid)
-        self.send_timer = self.serial.reactor.register_timer(
-            self.send_event, self.serial.reactor.NOW)
+        self.first_query_time = max(self.min_query_time, minsystime)
+        self.serial.register_response(self.handle_callback, self.name, self.oid)
+        self.send_event(self.min_query_time)
+        retry_time = self.first_query_time + self.RETRY_TIME
+        self.send_timer = reactor.register_timer(self.send_event, retry_time)
     def unregister(self):
-        self.serial.unregister_callback(self.name, self.oid)
+        self.serial.unregister_response(self.name, self.oid)
         self.serial.reactor.unregister_timer(self.send_timer)
     def send_event(self, eventtime):
         if self.response is not None:
             return self.serial.reactor.NEVER
-        self.serial.raw_send(self.cmd, 0, 0, self.serial.default_cmd_queue)
+        if eventtime > self.first_query_time + self.TIMEOUT_TIME:
+            self.unregister()
+            if self.response is None:
+                self.mutex.unlock()
+            return self.serial.reactor.NEVER
+        for cmd in self.cmds:
+            self.serial.raw_send(cmd, self.minclock, self.minclock,
+                                 self.cmd_queue)
         return eventtime + self.RETRY_TIME
     def handle_callback(self, params):
         last_sent_time = params['#sent_time']
-        if last_sent_time >= self.min_query_time:
+        if last_sent_time >= self.min_query_time and self.response is None:
             self.response = params
+            self.serial.reactor.register_async_callback(self.do_wake)
+    def do_wake(self, eventtime):
+        self.mutex.unlock()
     def get_response(self):
-        eventtime = self.serial.reactor.monotonic()
-        while self.response is None:
-            eventtime = self.serial.reactor.pause(eventtime + 0.05)
-            if eventtime > self.min_query_time + self.TIMEOUT_TIME:
-                self.unregister()
-                raise error("Timeout on wait for '%s' response" % (self.name,))
+        with self.mutex:
+            pass
+        if self.response is None:
+            raise error("Timeout on wait for '%s' response" % (self.name,))
         self.unregister()
         return self.response
-
-# Code to start communication and download message type dictionary
-class SerialBootStrap:
-    RETRY_TIME = 0.500
-    def __init__(self, serial):
-        self.serial = serial
-        self.identify_data = ""
-        self.identify_cmd = self.serial.lookup_command(
-            "identify offset=%u count=%c")
-        self.is_done = False
-        self.serial.register_callback(self.handle_identify, 'identify_response')
-        self.serial.register_callback(self.handle_unknown, '#unknown')
-        self.send_timer = self.serial.reactor.register_timer(
-            self.send_event, self.serial.reactor.NOW)
-    def get_identify_data(self, timeout):
-        eventtime = self.serial.reactor.monotonic()
-        while not self.is_done and eventtime <= timeout:
-            eventtime = self.serial.reactor.pause(eventtime + 0.05)
-        self.serial.unregister_callback('identify_response')
-        self.serial.reactor.unregister_timer(self.send_timer)
-        if not self.is_done:
-            return None
-        return self.identify_data
-    def handle_identify(self, params):
-        if self.is_done or params['offset'] != len(self.identify_data):
-            return
-        msgdata = params['data']
-        if not msgdata:
-            self.is_done = True
-            return
-        self.identify_data += msgdata
-        self.identify_cmd.send([len(self.identify_data), 40])
-    def send_event(self, eventtime):
-        if self.is_done:
-            return self.serial.reactor.NEVER
-        self.identify_cmd.send([len(self.identify_data), 40])
-        return eventtime + self.RETRY_TIME
-    def handle_unknown(self, params):
-        logging.debug("Unknown message %d (len %d) while identifying",
-                      params['#msgid'], len(params['#msg']))
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):
@@ -284,7 +267,7 @@ def stk500v2_leave(ser, reactor):
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
     # First try opening the port at a different baud
-    ser = serial.Serial(serialport, 2400, timeout=0)
+    ser = serial.Serial(serialport, 2400, timeout=0, exclusive=True)
     ser.read(1)
     reactor.pause(reactor.monotonic() + 0.100)
     # Then toggle DTR

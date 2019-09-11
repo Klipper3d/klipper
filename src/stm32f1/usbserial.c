@@ -6,6 +6,7 @@
 
 #include <string.h> // NULL
 #include "autoconf.h" // CONFIG_STM_FLASH_START_2000
+#include "board/armcm_timer.h" // udelay
 #include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
 #include "board/irq.h" // irq_disable

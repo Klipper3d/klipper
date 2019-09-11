@@ -4,15 +4,20 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import probe
+import probe, z_tilt
 
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.retry_helper = z_tilt.RetryHelper(config,
+            "Possibly Z motor numbering is wrong")
+        self.max_adjust = config.getfloat("max_adjust", 4, above=0)
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        if len(self.probe_helper.probe_points) != 4:
+            raise config.error(
+                "Need exactly 4 probe points for quad_gantry_level")
+        self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
@@ -25,29 +30,22 @@ class QuadGantryLevel:
         if len(self.gantry_corners) < 2:
             raise config.error(
                 "quad_gantry_level requires at least two gantry_corners")
-        self.z_steppers = []
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'QUAD_GANTRY_LEVEL', self.cmd_QUAD_GANTRY_LEVEL,
             desc=self.cmd_QUAD_GANTRY_LEVEL_help)
-    def handle_connect(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        z_steppers = kin.get_steppers('Z')
-        if len(z_steppers) != 4:
-            raise self.printer.config_error(
-                "quad_gantry_level needs exactly 4 z steppers")
-        self.z_steppers = z_steppers
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, params):
+        self.retry_helper.start(params)
         self.probe_helper.start_probe(params)
     def probe_finalize(self, offsets, positions):
         # Mirror our perspective so the adjustments make sense
         # from the perspective of the gantry
         z_positions = [self.horizontal_move_z - p[2] for p in positions]
         points_message = "Gantry-relative probe points:\n%s\n" % (
-            "\n".join(["z%s = %.6f" % (z_id, z_positions[z_id])
+            " ".join(["%s: %.6f" % (z_id, z_positions[z_id])
                 for z_id in range(len(z_positions))]))
         self.gcode.respond_info(points_message)
         p1 = [positions[0][0] + offsets[0],z_positions[0]]
@@ -73,21 +71,28 @@ class QuadGantryLevel:
         z_height[1] = self.plot(af,self.gantry_corners[1][1])
         z_height[2] = self.plot(bf,self.gantry_corners[1][1])
         z_height[3] = self.plot(bf,self.gantry_corners[0][1])
-        self.gcode.respond_info("Actuator Positions:\n z1: %0.6f\n z2: %0.6f\
-            \n z3: %0.6f\n z4: %0.6f\n" % (
-                z_height[0],z_height[1],z_height[2],z_height[3]))
+
+        ainfo = zip(["z","z1","z2","z3"], z_height[0:4])
+        apos = " ".join(["%s: %06f" % (x) for x in ainfo])
+        self.gcode.respond_info("Actuator Positions:\n" + apos)
+
         z_ave = sum(z_height) / len(z_height)
         self.gcode.respond_info("Average: %0.6f" % z_ave)
         z_adjust = []
         for z in z_height:
             z_adjust.append(z_ave - z)
-        try:
-            self.adjust_steppers(z_adjust)
-        except:
-            logging.exception("quad_gantry_level adjust_steppers")
-            for s in self.z_steppers:
-                s.set_ignore_move(False)
-            raise
+
+        adjust_max = max(z_adjust)
+        if adjust_max > self.max_adjust:
+            self.gcode.respond_error(
+                "Aborting quad_gantry_level " +
+                "required adjustment %0.6f " % ( adjust_max ) +
+                "is greater than max_adjust %0.6f" % (self.max_adjust))
+            return
+
+        speed = self.probe_helper.get_lift_speed()
+        self.z_helper.adjust_steppers(z_adjust, speed)
+        return self.retry_helper.check_retry(z_positions)
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:
             # Straight line
@@ -97,29 +102,6 @@ class QuadGantryLevel:
         return m,b
     def plot(self,f,x):
         return f[0]*x + f[1]
-    def adjust_steppers(self, z_adjust):
-        msg = "Making the following gantry adjustments:\n%s\n" % (
-            "\n".join(["%s = %.6f" % (
-                self.z_steppers[z_id].get_name(), z_adjust[z_id]
-                ) for z_id in range(4)]))
-        self.gcode.respond_info(msg)
-        toolhead = self.printer.lookup_object('toolhead')
-        cur_pos = toolhead.get_position()
-        speed = self.probe_helper.get_lift_speed()
-        # Disable moves on all Z steppers
-        for s in self.z_steppers:
-            s.set_ignore_move(True)
-        for z_id in range(len(z_adjust)):
-            stepper = self.z_steppers[z_id]
-            stepper.set_ignore_move(False)
-            cur_pos[2] = cur_pos[2] + z_adjust[z_id]
-            toolhead.move(cur_pos, speed)
-            toolhead.set_position(cur_pos)
-            stepper.set_ignore_move(True)
-        # Re-enable moves on all Z steppers
-        for s in self.z_steppers:
-            s.set_ignore_move(False)
-        self.gcode.reset_last_position()
 
 def load_config(config):
     return QuadGantryLevel(config)

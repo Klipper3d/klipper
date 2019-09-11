@@ -41,8 +41,11 @@ class PrinterExtruder:
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
-        self.activate_gcode = config.get('activate_gcode', '')
-        self.deactivate_gcode = config.get('deactivate_gcode', '')
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.activate_gcode = gcode_macro.load_template(
+            config, 'activate_gcode', '')
+        self.deactivate_gcode = gcode_macro.load_template(
+            config, 'deactivate_gcode', '')
         self.pressure_advance = config.getfloat(
             'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = config.getfloat(
@@ -50,9 +53,9 @@ class PrinterExtruder:
         self.need_motor_enable = True
         self.extrude_pos = 0.
         # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.extruder_move_fill = ffi_lib.extruder_move_fill
+        ffi_main, self.ffi_lib = chelper.get_ffi()
+        self.cmove = ffi_main.gc(self.ffi_lib.move_alloc(), self.ffi_lib.free)
+        self.extruder_move_fill = self.ffi_lib.extruder_move_fill
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
@@ -63,16 +66,24 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+    def get_status(self, eventtime):
+        return dict(
+            self.get_heater().get_status(eventtime),
+            pressure_advance=self.pressure_advance,
+            lookahead_time=self.pressure_advance_lookahead_time
+        )
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
         return self.extrude_pos
     def get_activate_gcode(self, is_active):
         if is_active:
-            return self.activate_gcode
-        return self.deactivate_gcode
+            return self.activate_gcode.render()
+        return self.deactivate_gcode.render()
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
+    def setup_accel_order(self, accel_order):
+        self.ffi_lib.move_set_accel_order(self.cmove, accel_order)
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
         self.need_motor_enable = True
@@ -222,6 +233,8 @@ class PrinterExtruder:
 class DummyExtruder:
     def set_active(self, print_time, is_active):
         return 0.
+    def setup_accel_order(self, accel_order):
+        pass
     def motor_off(self, move_time):
         pass
     def check_move(self, move):

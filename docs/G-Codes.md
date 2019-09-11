@@ -42,9 +42,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](../config/example-extras.cfg) for details). For
-example, one might use this to implement: `G10`, `G11`, `G12`, `G29`,
-`G30`, `G31`, `M42`, `M80`, `M81`, etc.
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+for details). For example, one might use this to implement: `G10`,
+`G11`, `G12`, `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
 
 ## G-Code SD card commands
 
@@ -90,15 +90,37 @@ The following standard commands are supported:
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
-  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]`: Set a
-  positional offset to apply to future G-Code commands. This is
-  commonly used to virtually change the Z bed offset or to set nozzle
-  XY offsets when switching extruders. For example, if
-  "SET_GCODE_OFFSET Z=0.2" is sent, then future G-Code moves will
-  have 0.2mm added to their Z height. If the X_ADJUST style parameters
-  are used, then the adjustment will be added to any existing offset
-  (eg, "SET_GCODE_OFFSET Z=-0.2" followed by "SET_GCODE_OFFSET
-  Z_ADJUST=0.3" would result in a total Z offset of 0.1).
+  [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
+  future G-Code commands. This is commonly used to virtually change
+  the Z bed offset or to set nozzle XY offsets when switching
+  extruders. For example, if "SET_GCODE_OFFSET Z=0.2" is sent, then
+  future G-Code moves will have 0.2mm added to their Z height. If the
+  X_ADJUST style parameters are used, then the adjustment will be
+  added to any existing offset (eg, "SET_GCODE_OFFSET Z=-0.2" followed
+  by "SET_GCODE_OFFSET Z_ADJUST=0.3" would result in a total Z offset
+  of 0.1). If "MOVE=1" is specified then a toolhead move will be
+  issued to apply the given offset (otherwise the offset will take
+  effect on the next absolute G-Code move that specifies the given
+  axis). If "MOVE_SPEED" is specified then the toolhead move will be
+  performed with the given speed (in mm/s); otherwise the toolhead
+  move will use the last specified G-Code speed.
+- `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
+  g-code coordinate parsing state. Saving and restoring the g-code
+  state is useful in scripts and macros. This command saves the
+  current g-code absolute coordinate mode (G90/G91), absolute extrude
+  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
+  override (M220), extruder override (M221), move speed, current XYZ
+  position, and relative extruder "E" position. If NAME is provided it
+  allows one to name the saved state to the given string. If NAME is
+  not provided it defaults to "default".
+- `RESTORE_GCODE_STATE [NAME=<state_name>]
+  [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
+  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  be issued to move back to the previous XYZ position. If "MOVE_SPEED"
+  is specified then the toolhead move will be performed with the given
+  speed (in mm/s); otherwise the toolhead move will use the restored
+  g-code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
@@ -108,9 +130,10 @@ The following standard commands are supported:
   samples taken during the test.
 - `TURN_OFF_HEATERS`: Turn off all heaters.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
-  the printer's velocity limits. Note that one may only set values
-  less than or equal to the limits specified in the config file.
+  [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]
+  [ACCEL_ORDER=<value>]`: Modify the printer's velocity limits. Note
+  that one may only set values less than or equal to the limits
+  specified in the config file.
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
@@ -138,6 +161,8 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
+  idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
@@ -151,6 +176,15 @@ The following standard commands are supported:
   calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
+
+## G-Code Macro Commands
+
+The following command is available when a "gcode_macro" config section
+is enabled:
+- `SET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>
+  VALUE=<value>`: This command allows one to change the value of a
+  gcode_macro variable at run-time. The provided VALUE is parsed as a
+  Python literal.
 
 ## Custom Pin Commands
 
@@ -187,17 +221,26 @@ section is enabled:
 
 The following commands are available when a "probe" config section is
 enabled:
-- `PROBE`: Move the nozzle downwards until the probe triggers.
+- `PROBE [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+  [SAMPLES_TOLERANCE_RETRIES=<count>]
+  [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
+  the probe triggers. If any of the optional parameters are provided
+  they override their equivalent setting in the probe config section
+  (see
+  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+  for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
 - `PROBE_ACCURACY [REPEAT=<times>] [SPEED=<speed mm/s>] [X=<x pos>]
   [Y=<y pos>] [Z=<z height>]`: Calculate the maximum, minimum, average,
   median and standard deviation. The default values are: REPEAT=10,
   SPEED=probe config speed, X=current X, Y=current Y and Z=10.
-- `PROBE_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
-  calibrating the probe's z_offset. See the MANUAL_PROBE command for
-  details on the parameters and the additional commands available
-  while the tool is active.
+- `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
+  helper script useful for calibrating the probe's z_offset. See the
+  PROBE command for details on the optional probe parameters. See the
+  MANUAL_PROBE command for details on the SPEED parameter and the
+  additional commands available while the tool is active.
 
 ## BLTouch
 
@@ -213,12 +256,13 @@ See [Working with the BL-Touch](BLTouch.md) for more details.
 
 The following commands are available when the "delta_calibrate" config
 section is enabled:
-- `DELTA_CALIBRATE [METHOD=manual]`: This command will probe seven
-  points on the bed and recommend updated endstop positions, tower
-  angles, and radius. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `DELTA_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`: This
+  command will probe seven points on the bed and recommend updated
+  endstop positions, tower angles, and radius. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
@@ -226,24 +270,26 @@ section is enabled:
 
 The following commands are available when the "bed_tilt" config
 section is enabled:
-- `BED_TILT_CALIBRATE [METHOD=manual]`: This command will probe the
-  points specified in the config and then recommend updated x and y
-  tilt adjustments. If METHOD=manual is specified then the manual
-  probing tool is activated - see the MANUAL_PROBE command above for
-  details on the additional commands available while this tool is
-  active.
+- `BED_TILT_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command will probe the points specified in the config and then
+  recommend updated x and y tilt adjustments. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 
 ## Mesh Bed Leveling
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE [METHOD=manual]`: This command probes the bed
-  using generated points specified by the parameters in the
-  config. After probing, a mesh is generated and z-movement is
-  adjusted according to the mesh. If METHOD=manual is specified then
-  the manual probing tool is activated - see the MANUAL_PROBE command
-  above for details on the additional commands available while this
-  tool is active.
+- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+  This command probes the bed using generated points specified by the
+  parameters in the config. After probing, a mesh is generated and
+  z-movement is adjusted according to the mesh. See the PROBE command
+  for details on the optional probe parameters. If METHOD=manual is
+  specified then the manual probing tool is activated - see the
+  MANUAL_PROBE command above for details on the additional commands
+  available while this tool is active.
 - `BED_MESH_OUTPUT`: This command outputs the current probed z values
   and current mesh values to the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
@@ -278,19 +324,22 @@ section is enabled:
 
 The following commands are available when the "screws_tilt_adjust"
 config section is enabled:
-- `SCREWS_TILT_CALCULATE`: This command will invoke the bed screws
-  adjustment tool. It will command the nozzle to different locations
-  (as defined in the config file) probing the z height and calculate
-  the number of knob turns to adjust the bed level.
+- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
+  will invoke the bed screws adjustment tool. It will command the
+  nozzle to different locations (as defined in the config file)
+  probing the z height and calculate the number of knob turns to
+  adjust the bed level. See the PROBE command for details on the
+  optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
 
 The following commands are available when the "z_tilt" config section
 is enabled:
-- `Z_TILT_ADJUST`: This command will probe the points specified in the
-  config and then make independent adjustments to each Z stepper to
-  compensate for tilt.
+- `Z_TILT_ADJUST [<probe_parameter>=<value>]`: This command will probe
+  the points specified in the config and then make independent
+  adjustments to each Z stepper to compensate for tilt. See the PROBE
+  command for details on the optional probe parameters.
 
 ## Dual Carriages
 
@@ -382,6 +431,10 @@ is enabled:
   - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first restoring
   the previously captured position.  The VELOCITY parameter determines the speed
   at which the tool should return to the original captured position.
+  - `CLEAR_PAUSE`:  Clears the current paused state without resuming the print.
+  This is useful if one decides to cancel a print after a PAUSE.  It is recommended
+  to add this to your start gcode to make sure the paused state is fresh for each
+  print.
 
 ## Filament Sensor
 
@@ -390,3 +443,70 @@ section is enabled.
  - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current status of
   the filament sensor.  The data displayed on the terminal will depend on the
   sensor type defined in the confguration.
+
+## Firmware Retraction
+
+The following commands are available when the "firmware_retraction"
+config section is enabled.  These commands allow you to utilise the
+firmware retraction feature available in many slicers, to reduce
+stringing during non-extrusion moves from one part of the print to
+another.  Appropriately configuring pressure advance reduces the length
+of retraction required.
+ - `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+   [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP=<mm>]`:
+   Adjust the parameters used by firmware retraction.  RETRACT_LENGTH
+   determines the length of filament to retract and unretract.  The
+   speed of retraction is adjusted via RETRACT_SPEED, and is typically
+   set relatively high.  The speed of unretraction is adjusted via
+   UNRETRACT_SPEED, and is not particularly critical, although often
+   lower than RETRACT_SPEED.  In some cases it is useful to add a small
+   amount of additional length on unretraction, and this is set via
+   UNRETRACT_EXTRA_LENGTH.  It is possible to lift the Z axis by a small
+   amount when in retracted state by setting Z_HOP, although this is
+   more commonly used for printers where fast Z movements are supported,
+   such as delta printers. SET_RETRACTION is commonly set as part of
+   slicer per-filament configuration, as different filaments require
+   different parameter settings.
+ - `GET_RETRACTION`: Queries the current parameters used by firmware
+   retraction and displays them on the terminal.
+ - `G10`: Retracts the extruder using the currently configured
+   parameters.
+ - `G11`: Unretracts the extruder using the currently configured
+   parameters.
+
+## Skew Correction
+
+The following commands are available when the "skew_correction" config
+section is enabled.
+  - `SET_SKEW [XY=<ac_length,bd_length,ad_length>] [XZ=<ac,bd,ad>]
+    [YZ=<ac,bd,ad>] [CLEAR=<0|1>]`:  Configures the [skew_correction] module
+    with measurements (in mm) taken from a calibration print.  One may
+    enter measurements for any combination of planes, planes not entered will
+    retain their current value.  If `CLEAR=1` is entered then all skew
+    correction will be disabled.
+  - `GET_CURRENT_SKEW`: Reports the current printer skew for each plane in
+    both radians and degrees.  The skew is calculated based on parameters
+    provided via the `SET_SKEW` gcode.
+  - `CALC_MEASURED_SKEW [AC=<ac_length>] [BD=<bd_length>] [AD=<ad_length>]`:
+    Calculates and reports the skew (in radians and degrees) based on a
+    measured print.  This can be useful for determining the printer's current
+    skew after correction has been applied.  It may also be useful before
+    correction is applied to determine if skew correction is necessary.   See
+    skew_correction.md for details on skew calibration objects and
+    measurements.
+  - `SKEW_PROFILE [LOAD=<name>] [SAVE=<name>] [REMOVE=<name>]`: Profile
+    management for skew_correction.  LOAD will restore skew state from the
+    profile matching the supplied name. SAVE will save the current skew state
+    to a profile matching the supplied name.  Remove will delete the profile
+    matching the supplied name from persistent memory.  Note that after SAVE
+    or REMOVE operations have been run the SAVE_CONFIG gcode must be run
+    to make the changes to peristent memory permanent.
+
+## Delayed GCode
+
+The following command is enabled if a [delayed_gcode] config section has
+been enabled:
+  - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
+    delay duration for the identified [delayed_gcode] and starts the timer
+    for gcode execution.  A value of 0 will cancel a pending delayed gcode
+    from executing.

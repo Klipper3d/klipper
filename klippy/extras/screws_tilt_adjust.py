@@ -46,6 +46,7 @@ class ScrewsTiltAdjust:
         self.probe_helper = probe.ProbePointsHelper(self.config,
                                                     self.probe_finalize,
                                                     default_points=points)
+        self.probe_helper.minimum_points(3)
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("SCREWS_TILT_CALCULATE",

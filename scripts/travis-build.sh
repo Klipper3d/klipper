@@ -35,14 +35,8 @@ finish_test()
 # Check for whitespace errors
 ######################################################################
 
-WS_DIRS="config/ docs/ klippy/ scripts/ src/ test/"
-WS_EXCLUDE="-path scripts/kconfig -prune"
-WS_FILES="-o -iname '*.[csh]' -o -name '*.py' -o -name '*.sh'"
-WS_FILES="$WS_FILES -o -name '*.md' -o -name '*.cfg'"
-WS_FILES="$WS_FILES -o -name '*.test' -o -name '*.config'"
-WS_FILES="$WS_FILES -o -iname '*.lds' -o -iname 'Makefile' -o -iname 'Kconfig'"
 start_test check_whitespace "Check whitespace"
-eval find $WS_DIRS $WS_EXCLUDE $WS_FILES | xargs ./scripts/check_whitespace.py
+./scripts/check_whitespace.sh
 finish_test check_whitespace "Check whitespace"
 
 

@@ -93,8 +93,8 @@ class FilamentWidthSensor:
                     filament_width = item[1]
                     if ((filament_width <= self.max_diameter)
                         and (filament_width >= self.min_diameter)):
-                        percentage = round(self.nominal_filament_dia
-                                           / filament_width * 100)
+                        percentage = round(self.nominal_filament_dia**2
+                                           / filament_width**2 * 100)
                         self.gcode.run_script("M221 S" + str(percentage))
                     else:
                         self.gcode.run_script("M221 S100")

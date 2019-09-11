@@ -6,6 +6,7 @@
 import os, logging
 
 class VirtualSD:
+
     def __init__(self, config):
         printer = config.get_printer()
         printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
@@ -48,8 +49,9 @@ class VirtualSD:
         try:
             filenames = os.listdir(self.sdcard_dirname)
             return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                    for fname in filenames
-                    if not fname.startswith('.')]
+                    for fname in sorted(filenames, key=str.lower)
+                    if not fname.startswith('.')
+                    and os.path.isfile((os.path.join(dname, fname)))]
         except:
             logging.exception("virtual_sdcard get_file_list")
             raise self.gcode.error("Unable to get file list")
@@ -144,6 +146,7 @@ class VirtualSD:
             self.gcode.respond_error("Unable to seek file")
             self.work_timer = None
             return self.reactor.NEVER
+        gcode_mutex = self.gcode.get_mutex()
         partial_input = ""
         lines = []
         while not self.must_pause_work:
@@ -168,12 +171,13 @@ class VirtualSD:
                 lines.reverse()
                 self.reactor.pause(self.reactor.NOW)
                 continue
+            # Pause if any other request is pending in the gcode class
+            if gcode_mutex.test():
+                self.reactor.pause(self.reactor.monotonic() + 0.100)
+                continue
             # Dispatch command
             try:
-                res = self.gcode.process_batch([lines[-1]])
-                if not res:
-                    self.reactor.pause(self.reactor.monotonic() + 0.100)
-                    continue
+                self.gcode.run_script(lines[-1])
             except self.gcode.error as e:
                 break
             except:
