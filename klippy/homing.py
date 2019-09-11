@@ -96,6 +96,7 @@ class Homing:
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
+        self.printer.send_event("homing:homing_started", self, rails)
         self.homing_move(movepos, endstops, hi.speed)
         # Perform second home
         if hi.retract_dist:
@@ -113,6 +114,7 @@ class Homing:
             self.homing_move(movepos, endstops, hi.second_homing_speed,
                              verify_movement=self.verify_retract)
         # Signal home operation complete
+        self.printer.send_event("homing:homing_finished", self, rails)
         ret = self.printer.send_event("homing:homed_rails", self, rails)
         if any(ret):
             # Apply any homing offsets
