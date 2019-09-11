@@ -22,7 +22,7 @@ Sensorless homing works best at medium motor speeds. For very slow speeds (less 
 Load Measurement) in the TMC2130 datasheet.
 
 ## Configuration
-To enable sensorless homing add a section to configure the TMC stepper driver to your `printer.cfg`. 
+To enable sensorless homing add a section to configure the TMC stepper driver to your `printer.cfg`.
 
 In this guide we'll be using a TMC2130, but its applicable to the other TMCs with StallGuard as well (except the names for the pins may be different; look thouse up in [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)):
 
@@ -114,4 +114,4 @@ At this point, your axis should be able to home based on the stall detection of 
 
 ## Troubleshooting
 
-If you get '''Error on X-homing: Endstop x still triggered after retract'' try setting '''homing_retract_dist: 0.0'' to disabe the retract move. 
+If you get '''Error on X-homing: Endstop x still triggered after retract'' try setting '''homing_retract_dist: 0.0''' to disabe the retract move.
