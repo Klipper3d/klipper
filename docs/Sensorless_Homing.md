@@ -6,9 +6,9 @@ This guide covers the setup of sensorless homing for the X axis of your (cartesi
 ## Prerequisites
 A few prerequisites are needed to use sensorless homing:
 
-1. TMC2130 stepper driver
-2. SPI interface of the TMC2130 wired to MCU (stand-alone mode does not work)
-3. DIAG1 pin of TMC2130 connected to the MCU
+1. StallGuard capable TMCxxxx stepper driver
+2. SPI / UART interface of the TMCxxxx wired to MCU (stand-alone mode does not work)
+3. DIAG1/DIAG pin of TMCxxxx connected to the MCU
 
 
 ## Limitations
@@ -18,11 +18,13 @@ Further, sensorless homing might not be accurate enough for you printer. While h
 
 Further, the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
 
-Sensorless homing works best at medium motor speeds. For very slow speeds (less than 10 RPM) the motor does not generate significant back EMF and the TMC2130 cannot reliably detect motor stalls. Further, at very high speeds, the back EMF of the motor approaches the supply voltage of the motor, so the TMC2130 cannot detect stalls anymore. For more details on limitations refer to section 14 (stallGuard2
+Sensorless homing works best at medium motor speeds. For very slow speeds (less than 10 RPM) the motor does not generate significant back EMF and the TMC cannot reliably detect motor stalls. Further, at very high speeds, the back EMF of the motor approaches the supply voltage of the motor, so the TMC cannot detect stalls anymore. For more details on limitations refer to section 14 (stallGuard2
 Load Measurement) in the TMC2130 datasheet.
 
 ## Configuration
-To enable sensorless homing add a section to configure the TMC2130 stepper driver to your `printer.cfg`:
+To enable sensorless homing add a section to configure the TMC stepper driver to your `printer.cfg`. 
+
+In this guide we'll be using a TMC2130, but its applicable to the other TMCs with StallGuard as well (except the names for the pins may be different; look thouse up in [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)):
 
 ```
 [tmc2130 stepper_x]
@@ -30,10 +32,12 @@ cs_pin:        # chip select pin of the SPI interface
 microsteps:    # number of microsteps per full step of the motor
 run_current:   # value in amps
 diag1_pin: !   # pin on the MCU where DIAG1 is connected (active low)
-driver_SGT: 0  # tuning value for sensorless homing, set to 0 as a start
+driver_SGT:    # tuning value for sensorless homing
 ```
 
 The above snippet configures a TMC2130 for the stepper on the X axis. Make sure to fill in the missing values based on your configuration.
+
+The `driver_SGT` value describes the threshhold when the driver reports a stall. On some TMCs (e.g. 2209) the values go from 0 (least sensitive) to 255 (most sensitive). Look this up in the TMCs Datasheet. The TMC2130s values go form -64 (most sensitive) fo 64 (least sensitive).
 
 If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer. Be aware that Klipper needs both `DIAG1` pins connected to the MCU. It is not sufficient to use only one signal from one of the stepper drivers (as it is possible on e.g. Marlin).
 
@@ -58,7 +62,7 @@ The name of the virtual end stop pin is derived from the name of the TMC2130 sec
 
 ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at `config/example-extras.cfg` for all the available options.
 
-## Testing of SPI communication
+## Testing of SPI/UART communication
 Now that the stepper driver is configured, let's make sure that Klipper can communicate with the TMC2130 by sending the following extended G-Code command to the printer:
 
 ```
@@ -107,3 +111,7 @@ If your axis did not stop (third outcome), the stepper driver was not able to de
 Even if your axis homed correctly, it might be worth to try a few different values for `driver_SGT`. If you think that it bumps too hard into the mechanical limit, try to decrease the value by 1 or 2.
 
 At this point, your axis should be able to home based on the stall detection of the TMC2130. Congratulations! You can now proceed with the next axis of your printer.
+
+## Troubleshooting
+
+If you get '''Error on X-homing: Endstop x still triggered after retract'' try setting '''homing_retract_dist: 0.0'' to disabe the retract move. 
