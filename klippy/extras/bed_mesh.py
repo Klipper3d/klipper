@@ -172,7 +172,10 @@ class BedMesh:
         self.last_position[:] = newpos
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
     def cmd_BED_MESH_OUTPUT(self, params):
-        if self.z_mesh is None:
+        if self.gcode.get_int('PGP', params, 0):
+            # Print Generated Points instead of mesh
+            self.calibrate.print_generated_points(self.gcode.respond_info)
+        elif self.z_mesh is None:
             self.gcode.respond_info("Bed has not been probed")
         else:
             self.calibrate.print_probed_positions(self.gcode.respond_info)
@@ -289,13 +292,6 @@ class BedMeshCalibrate:
                             (origin[0] + pos_x - x_offset,
                              origin[1] + pos_y - y_offset))
             pos_y += y_dist
-        logging.info(
-            'bed_mesh: generated points\nIndex |    Automatic    |   Manual')
-        for i, (a, m) in enumerate(zip(self.auto_points, self.manual_points)):
-            auto_pt = "(%.1f, %.1f)" % (a[0], a[1])
-            man_pt = "(%.1f, %.1f)" % (m[0], m[1])
-            logging.info(
-                "  %-4d| %-16s| %s" % (i, auto_pt, man_pt))
         rref_index = config.get('relative_reference_index', None)
         if rref_index is not None:
             rref_index = int(rref_index)
@@ -303,14 +299,8 @@ class BedMeshCalibrate:
                 raise config.error(
                     "bed_mesh: relative reference index %d is out of bounds"
                     % (rref_index))
-            logging.info(
-                "bed_mesh: relative_reference_index %d is (%.2f, %.2f),"
-                " (%.2f, %.2f)" %
-                (rref_index, self.auto_points[rref_index][0],
-                 self.auto_points[rref_index][1],
-                 self.manual_points[rref_index][0],
-                 self.manual_points[rref_index][1]))
             self.relative_reference_index = rref_index
+        self.print_generated_points(logging.info)
     def _init_probe_params(self, config, points):
         self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
         self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
@@ -454,6 +444,21 @@ class BedMeshCalibrate:
             print_func(msg)
         else:
             print_func("bed_mesh: bed has not been probed")
+    def print_generated_points(self, print_func):
+        print_func(
+            'bed_mesh: generated points\nIndex |    Automatic    |   Manual')
+        for i, (a, m) in enumerate(zip(self.auto_points, self.manual_points)):
+            auto_pt = "(%.1f, %.1f)" % (a[0], a[1])
+            man_pt = "(%.1f, %.1f)" % (m[0], m[1])
+            print_func(
+                "  %-4d| %-16s| %s" % (i, auto_pt, man_pt))
+        if self.relative_reference_index is not None:
+            rri = self.relative_reference_index
+            print_func(
+                "bed_mesh: relative_reference_index %d is (%.2f, %.2f),"
+                " (%.2f, %.2f)" %
+                (rri, self.auto_points[rri][0], self.auto_points[rri][1],
+                 self.manual_points[rri][0], self.manual_points[rri][1]))
     def probe_finalize(self, offsets, positions):
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]

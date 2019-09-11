@@ -303,8 +303,11 @@ section is enabled:
   specified then the manual probing tool is activated - see the
   MANUAL_PROBE command above for details on the additional commands
   available while this tool is active.
-- `BED_MESH_OUTPUT`: This command outputs the current probed z values
-  and current mesh values to the terminal.
+- `BED_MESH_OUTPUT [PGP=<0|1>]`: This command outputs the current
+  probed z values and current mesh values to the terminal. If PGP
+  (Print Generated Points) is set to a non-zero value, then all
+  generated points and their associated indices will be output to
+  the terminal.
 - `BED_MESH_MAP`: This command probes the bed in a similar fashion
   to BED_MESH_CALIBRATE, however no mesh is generated.  Instead,
   the probed z values are serialized to json and output to the
