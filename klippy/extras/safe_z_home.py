@@ -16,6 +16,7 @@ class SafeZHoming:
                 config.get_name()))
 
         self.z_hop = config.getfloat("z_hop", default=0.0)
+        self.did_hop = False
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
@@ -33,7 +34,7 @@ class SafeZHoming:
         kinematics = toolhead.get_kinematics()
 
         # Perform Z Hop if necessary
-        if self.z_hop != 0.0:
+        if self.z_hop != 0.0 and self.did_hop == False:
             # Check if the zhop would exceed the printer limits
             pos = toolhead.get_position()
             kin_status = kinematics.get_status()
@@ -49,6 +50,7 @@ class SafeZHoming:
                 pos[2] = pos[2] + self.z_hop
                 toolhead.move(pos, self.z_hop_speed)
                 self.gcode.reset_last_position()
+                self.did_hop = True
 
         # Determine which axes we need to home
         if not any([axis in params.keys() for axis in ['X', 'Y', 'Z']]):
@@ -77,6 +79,7 @@ class SafeZHoming:
             self.gcode.reset_last_position()
             # Home Z
             self.gcode.cmd_G28({'Z': '0'})
+            self.did_hop = False
 
 def load_config(config):
     return SafeZHoming(config)
