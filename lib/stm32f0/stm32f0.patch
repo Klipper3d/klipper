@@ -1,5 +1,5 @@
 diff --git a/lib/stm32f0/system_stm32f0xx.c b/lib/stm32f0/system_stm32f0xx.c
-index 410809c2..670d94a7 100644
+index 36b4652..b73f6a1 100644
 --- a/lib/stm32f0/system_stm32f0xx.c
 +++ b/lib/stm32f0/system_stm32f0xx.c
 @@ -160,7 +160,7 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
@@ -11,3 +11,6 @@ index 410809c2..670d94a7 100644
  {
    /* Reset the RCC clock configuration to the default reset state ------------*/
    /* Set HSION bit */
+-- 
+2.21.0
+
