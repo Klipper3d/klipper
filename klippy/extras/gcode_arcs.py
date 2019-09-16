@@ -13,6 +13,7 @@
 #
 # note: only IJ version available
 
+import logging
 import math
 import re
 
@@ -87,11 +88,13 @@ class ArcSupport:
                 # build dict and call cmd_G1
                 for coord in coords:
                     g1_params = {'X': coord[0], 'Y': coord[1]}
+                    if asZ!=None:
+                        g1_params['Z']= float(asZ)
                     if asE>0:
                         g1_params['E']= float(asE)/len(coords)
                     if asF>0:
                         g1_params['F']= asF
-
+                    logging.debug(g1_params)
                     self.gcode.cmd_G1(g1_params)
 
 
