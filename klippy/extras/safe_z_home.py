@@ -100,7 +100,7 @@ class SafeZHoming:
                 pos[1] = prev_y
                 toolhead.move(pos, self.speed)
 
-    def reset_z_hop(self):
+    def reset_z_hop(self, _):
         self.did_hop = False
 
 def load_config(config):
