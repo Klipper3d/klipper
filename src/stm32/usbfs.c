@@ -35,9 +35,9 @@ struct ep_mem {
     uint32_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
 };
 
-#define USB_BTABLE ((struct ep_mem *)(USB_BASE + 0x400))
+#define EPM ((struct ep_mem *)(USB_BASE + 0x400))
 
-#define CALC_ADDR(p) (((void*)(p) - (void*)USB_BTABLE) / 2)
+#define CALC_ADDR(p) (((void*)(p) - (void*)EPM) / 2)
 #define CALC_SIZE(s) ((s) > 32 ? (DIV_ROUND_UP((s), 32) << 10) | 0x8000 \
                       : DIV_ROUND_UP((s), 2) << 10)
 
@@ -45,19 +45,19 @@ struct ep_mem {
 static void
 btable_configure(void)
 {
-    USB_BTABLE->ep0.count_tx = 0;
-    USB_BTABLE->ep0.addr_tx = CALC_ADDR(USB_BTABLE->ep0_tx);
-    USB_BTABLE->ep0.count_rx = CALC_SIZE(USB_CDC_EP0_SIZE);
-    USB_BTABLE->ep0.addr_rx = CALC_ADDR(USB_BTABLE->ep0_rx);
+    EPM->ep0.count_tx = 0;
+    EPM->ep0.addr_tx = CALC_ADDR(EPM->ep0_tx);
+    EPM->ep0.count_rx = CALC_SIZE(USB_CDC_EP0_SIZE);
+    EPM->ep0.addr_rx = CALC_ADDR(EPM->ep0_rx);
 
-    USB_BTABLE->ep_acm.count_tx = 0;
-    USB_BTABLE->ep_acm.addr_tx = CALC_ADDR(USB_BTABLE->ep_acm_tx);
+    EPM->ep_acm.count_tx = 0;
+    EPM->ep_acm.addr_tx = CALC_ADDR(EPM->ep_acm_tx);
 
-    USB_BTABLE->ep_bulk_out.count_rx = CALC_SIZE(USB_CDC_EP_BULK_OUT_SIZE);
-    USB_BTABLE->ep_bulk_out.addr_rx = CALC_ADDR(USB_BTABLE->ep_bulk_out_rx);
+    EPM->ep_bulk_out.count_rx = CALC_SIZE(USB_CDC_EP_BULK_OUT_SIZE);
+    EPM->ep_bulk_out.addr_rx = CALC_ADDR(EPM->ep_bulk_out_rx);
 
-    USB_BTABLE->ep_bulk_in.count_tx = 0;
-    USB_BTABLE->ep_bulk_in.addr_tx = CALC_ADDR(USB_BTABLE->ep_bulk_in_tx);
+    EPM->ep_bulk_in.count_tx = 0;
+    EPM->ep_bulk_in.addr_tx = CALC_ADDR(EPM->ep_bulk_in_tx);
 }
 
 // Read a packet stored in dedicated usb memory
@@ -137,10 +137,10 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     if ((epr & USB_EP0R_STAT_RX_Msk) == RX_VALID)
         // No data ready
         return -1;
-    uint32_t count = USB_BTABLE->ep_bulk_out.count_rx & 0x3ff;
+    uint32_t count = EPM->ep_bulk_out.count_rx & 0x3ff;
     if (count > max_len)
         count = max_len;
-    btable_read_packet(data, USB_BTABLE->ep_bulk_out_rx, count);
+    btable_read_packet(data, EPM->ep_bulk_out_rx, count);
     USB_EPR[USB_CDC_EP_BULK_OUT] = set_stat_rx_bits(epr, RX_VALID);
     return count;
 }
@@ -152,8 +152,8 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     if ((epr & USB_EP0R_STAT_TX_Msk) != TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(USB_BTABLE->ep_bulk_in_tx, data, len);
-    USB_BTABLE->ep_bulk_in.count_tx = len;
+    btable_write_packet(EPM->ep_bulk_in_tx, data, len);
+    EPM->ep_bulk_in.count_tx = len;
     USB_EPR[USB_CDC_EP_BULK_IN] = set_stat_tx_bits(epr, TX_VALID);
     return len;
 }
@@ -165,10 +165,10 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
     if ((epr & USB_EP0R_STAT_RX_Msk) != RX_NAK)
         // No data ready
         return -1;
-    uint32_t count = USB_BTABLE->ep0.count_rx & 0x3ff;
+    uint32_t count = EPM->ep0.count_rx & 0x3ff;
     if (count > max_len)
         count = max_len;
-    btable_read_packet(data, USB_BTABLE->ep0_rx, count);
+    btable_read_packet(data, EPM->ep0_rx, count);
     USB_EPR[0] = set_stat_rxtx_bits(epr, RX_VALID | TX_NAK);
     return count;
 }
@@ -189,8 +189,8 @@ usb_send_ep0(const void *data, uint_fast8_t len)
     if ((epr & USB_EP0R_STAT_TX_Msk) != TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(USB_BTABLE->ep0_tx, data, len);
-    USB_BTABLE->ep0.count_tx = len;
+    btable_write_packet(EPM->ep0_tx, data, len);
+    EPM->ep0.count_tx = len;
     USB_EPR[0] = set_stat_tx_bits(epr, TX_VALID);
     return len;
 }
