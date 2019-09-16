@@ -52,6 +52,8 @@ class SafeZHoming:
                         "No zhop performed, already above target height " +
                         str(pos[2]) + " >= " + str(self.z_hop)
                     )
+                else:
+                    self._perform_z_hop(pos)
             else:
                 self._perform_z_hop(pos)
 
@@ -94,6 +96,7 @@ class SafeZHoming:
                 pos[0] = prev_x
                 pos[1] = prev_y
                 toolhead.move(pos, self.speed)
+            self.gcode.reset_last_position()
 
     def _perform_z_hop(self, pos):
         toolhead = self.printer.lookup_object('toolhead')
