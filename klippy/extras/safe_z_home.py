@@ -9,7 +9,7 @@ class SafeZHoming:
         self.printer = config.get_printer()
         try:
             x_pos, y_pos = config.get("home_xy_position",
-                                            default=",").split(',')
+                                      default=",").split(',')
             self.home_x_pos, self.home_y_pos = float(x_pos), float(y_pos)
         except:
             raise config.error("Unable to parse home_xy_position in %s" % (
@@ -30,10 +30,9 @@ class SafeZHoming:
 
         if config.has_section("homing_override"):
             raise config.error("homing_override and safe_z_homing cannot"
-                                    +" be used simultaneously")
+                               +" be used simultaneously")
 
     def cmd_G28(self, params):
-
         toolhead = self.printer.lookup_object('toolhead')
         kinematics = toolhead.get_kinematics()
 
