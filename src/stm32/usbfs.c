@@ -94,34 +94,25 @@ btable_write_packet(uint32_t *dest, const uint8_t *src, int count)
 
 #define USB_EPR ((volatile uint32_t *)USB_BASE)
 
-#define EP_BULK (0 << USB_EP0R_EP_TYPE_Pos)
-#define EP_CONTROL (1 << USB_EP0R_EP_TYPE_Pos)
-#define EP_INTERRUPT (3 << USB_EP0R_EP_TYPE_Pos)
-#define RX_STALL (1 << USB_EP0R_STAT_RX_Pos)
-#define RX_NAK (2 << USB_EP0R_STAT_RX_Pos)
-#define RX_VALID (3 << USB_EP0R_STAT_RX_Pos)
-#define TX_STALL (1 << USB_EP0R_STAT_TX_Pos)
-#define TX_NAK (2 << USB_EP0R_STAT_TX_Pos)
-#define TX_VALID (3 << USB_EP0R_STAT_TX_Pos)
-#define EPR_RWBITS (USB_EP0R_EA | USB_EP0R_EP_KIND | USB_EP0R_EP_TYPE)
-#define EPR_RWCBITS (USB_EP0R_CTR_RX | USB_EP0R_CTR_TX)
+#define EPR_RWBITS (USB_EPADDR_FIELD | USB_EP_KIND | USB_EP_TYPE_MASK)
+#define EPR_RWCBITS (USB_EP_CTR_RX | USB_EP_CTR_TX)
 
 static uint32_t
 set_stat_rx_bits(uint32_t epr, uint32_t bits)
 {
-    return ((epr & (EPR_RWBITS | USB_EP0R_STAT_RX_Msk)) ^ bits) | EPR_RWCBITS;
+    return ((epr & (EPR_RWBITS | USB_EPRX_STAT)) ^ bits) | EPR_RWCBITS;
 }
 
 static uint32_t
 set_stat_tx_bits(uint32_t epr, uint32_t bits)
 {
-    return ((epr & (EPR_RWBITS | USB_EP0R_STAT_TX_Msk)) ^ bits) | EPR_RWCBITS;
+    return ((epr & (EPR_RWBITS | USB_EPTX_STAT)) ^ bits) | EPR_RWCBITS;
 }
 
 static uint32_t
 set_stat_rxtx_bits(uint32_t epr, uint32_t bits)
 {
-    uint32_t mask = EPR_RWBITS | USB_EP0R_STAT_RX_Msk | USB_EP0R_STAT_TX_Msk;
+    uint32_t mask = EPR_RWBITS | USB_EPRX_STAT | USB_EPTX_STAT;
     return ((epr & mask) ^ bits) | EPR_RWCBITS;
 }
 
@@ -134,14 +125,14 @@ int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
     uint32_t epr = USB_EPR[USB_CDC_EP_BULK_OUT];
-    if ((epr & USB_EP0R_STAT_RX_Msk) == RX_VALID)
+    if ((epr & USB_EPRX_STAT) == USB_EP_RX_VALID)
         // No data ready
         return -1;
     uint32_t count = EPM->ep_bulk_out.count_rx & 0x3ff;
     if (count > max_len)
         count = max_len;
     btable_read_packet(data, EPM->ep_bulk_out_rx, count);
-    USB_EPR[USB_CDC_EP_BULK_OUT] = set_stat_rx_bits(epr, RX_VALID);
+    USB_EPR[USB_CDC_EP_BULK_OUT] = set_stat_rx_bits(epr, USB_EP_RX_VALID);
     return count;
 }
 
@@ -149,12 +140,12 @@ int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
     uint32_t epr = USB_EPR[USB_CDC_EP_BULK_IN];
-    if ((epr & USB_EP0R_STAT_TX_Msk) != TX_NAK)
+    if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
     btable_write_packet(EPM->ep_bulk_in_tx, data, len);
     EPM->ep_bulk_in.count_tx = len;
-    USB_EPR[USB_CDC_EP_BULK_IN] = set_stat_tx_bits(epr, TX_VALID);
+    USB_EPR[USB_CDC_EP_BULK_IN] = set_stat_tx_bits(epr, USB_EP_TX_VALID);
     return len;
 }
 
@@ -162,14 +153,14 @@ int_fast8_t
 usb_read_ep0(void *data, uint_fast8_t max_len)
 {
     uint32_t epr = USB_EPR[0];
-    if ((epr & USB_EP0R_STAT_RX_Msk) != RX_NAK)
+    if ((epr & USB_EPRX_STAT) != USB_EP_RX_NAK)
         // No data ready
         return -1;
     uint32_t count = EPM->ep0.count_rx & 0x3ff;
     if (count > max_len)
         count = max_len;
     btable_read_packet(data, EPM->ep0_rx, count);
-    USB_EPR[0] = set_stat_rxtx_bits(epr, RX_VALID | TX_NAK);
+    USB_EPR[0] = set_stat_rxtx_bits(epr, USB_EP_RX_VALID | USB_EP_TX_NAK);
     return count;
 }
 
@@ -183,22 +174,23 @@ int_fast8_t
 usb_send_ep0(const void *data, uint_fast8_t len)
 {
     uint32_t epr = USB_EPR[0];
-    if ((epr & USB_EP0R_STAT_RX_Msk) != RX_VALID)
+    if ((epr & USB_EPRX_STAT) != USB_EP_RX_VALID)
         // Transfer interrupted
         return -2;
-    if ((epr & USB_EP0R_STAT_TX_Msk) != TX_NAK)
+    if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
     btable_write_packet(EPM->ep0_tx, data, len);
     EPM->ep0.count_tx = len;
-    USB_EPR[0] = set_stat_tx_bits(epr, TX_VALID);
+    USB_EPR[0] = set_stat_tx_bits(epr, USB_EP_TX_VALID);
     return len;
 }
 
 void
 usb_stall_ep0(void)
 {
-    USB_EPR[0] = set_stat_rxtx_bits(USB_EPR[0], RX_STALL | TX_STALL);
+    USB_EPR[0] = set_stat_rxtx_bits(USB_EPR[0]
+                                    , USB_EP_RX_STALL | USB_EP_TX_STALL);
 }
 
 static uint8_t set_address;
@@ -238,12 +230,13 @@ usb_request_bootloader(void)
 static void
 usb_reset(void)
 {
-    USB_EPR[0] = 0 | EP_CONTROL | RX_VALID | TX_NAK;
-    USB_EPR[USB_CDC_EP_ACM] = USB_CDC_EP_ACM | EP_INTERRUPT | RX_NAK | TX_NAK;
-    USB_EPR[USB_CDC_EP_BULK_OUT] = (USB_CDC_EP_BULK_OUT | EP_BULK
-                                    | RX_VALID | TX_NAK);
-    USB_EPR[USB_CDC_EP_BULK_IN] = (USB_CDC_EP_BULK_IN | EP_BULK
-                                   | RX_NAK | TX_NAK);
+    USB_EPR[0] = 0 | USB_EP_CONTROL | USB_EP_RX_VALID | USB_EP_TX_NAK;
+    USB_EPR[USB_CDC_EP_ACM] = (USB_CDC_EP_ACM | USB_EP_INTERRUPT
+                               | USB_EP_RX_NAK | USB_EP_TX_NAK);
+    USB_EPR[USB_CDC_EP_BULK_OUT] = (USB_CDC_EP_BULK_OUT | USB_EP_BULK
+                                    | USB_EP_RX_VALID | USB_EP_TX_NAK);
+    USB_EPR[USB_CDC_EP_BULK_IN] = (USB_CDC_EP_BULK_IN | USB_EP_BULK
+                                   | USB_EP_RX_NAK | USB_EP_TX_NAK);
 
     USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM;
     USB->DADDR = USB_DADDR_EF;
