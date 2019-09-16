@@ -86,7 +86,7 @@ class ArcSupport:
 
                 # build dict and call cmd_G1
                 for coord in coords:
-                    g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
+                    g1_params = {'X': coord[0], 'Y': coord[1]}
                     if asE>0:
                         g1_params['E']= float(asE)/len(coords)
                     if asF>0:
