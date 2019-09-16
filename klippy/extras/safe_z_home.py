@@ -25,6 +25,9 @@ class SafeZHoming:
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
 
+        self.printer.register_event_handler("toolhead:motor_off",
+                                            self.reset_z_hop)
+
         if config.has_section("homing_override"):
             raise config.error("homing_override and safe_z_homing cannot"
                                     +" be used simultaneously")
@@ -35,16 +38,21 @@ class SafeZHoming:
         kinematics = toolhead.get_kinematics()
 
         # Perform Z Hop if necessary
-        if self.z_hop != 0.0 and self.did_hop == False:
+        if self.z_hop != 0.0:
             # Check if the zhop would exceed the printer limits
             pos = toolhead.get_position()
             kin_status = kinematics.get_status()
-            if ('Z' in kin_status['homed_axes'] and
-                pos[2] + self.z_hop > self.max_z):
-                self.gcode.respond_info(
-                    "No zhop performed, target Z out of bounds: " +
-                    str(pos[2] + self.z_hop)
-                )
+            if 'Z' in kin_status['homed_axes']:
+                if pos[2] + self.z_hop > self.max_z:
+                    self.gcode.respond_info(
+                        "No zhop performed, target Z out of bounds: " +
+                        str(pos[2] + self.z_hop)
+                    )
+                elif pos[2] >= self.z_hop and self.did_hop:
+                    self.gcode.respond_info(
+                        "No zhop performed, already above target height " +
+                        str(pos[2]) + " >= " + str(self.z_hop)
+                    )
             else:
                 # Perform the Z-Hop
                 toolhead.set_position(pos, homing_axes=[2])
@@ -82,13 +90,19 @@ class SafeZHoming:
             self.gcode.reset_last_position()
             # Home Z
             self.gcode.cmd_G28({'Z': '0'})
-            self.did_hop = False
+            # Perform Z Hop again for pressure-based probes
+            pos = toolhead.get_position()
+            if self.z_hop:
+                pos[2] = self.z_hop
+                toolhead.move(pos, self.z_hop_speed)
             # Move XY back to previous positions
-            if (self.move_to_previous):
-                pos = toolhead.get_position()
+            if self.move_to_previous:
                 pos[0] = prev_x
                 pos[1] = prev_y
                 toolhead.move(pos, self.speed)
+
+    def reset_z_hop(self):
+        self.did_hop = False
 
 def load_config(config):
     return SafeZHoming(config)
