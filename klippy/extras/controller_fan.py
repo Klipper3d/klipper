@@ -44,10 +44,9 @@ class ControllerFan:
         if active:
             self.last_on = 0
             power = self.max_power
-        else:
-            if self.last_on < self.idle_timeout:
-                power = self.idle_speed
-                self.last_on += 1
+        elif self.last_on < self.idle_timeout:
+            power = self.idle_speed
+            self.last_on += 1
         print_time = self.mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
         self.fan.set_speed(print_time, power)
         return eventtime + 1.
