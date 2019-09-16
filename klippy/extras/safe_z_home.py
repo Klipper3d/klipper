@@ -53,12 +53,7 @@ class SafeZHoming:
                         str(pos[2]) + " >= " + str(self.z_hop)
                     )
             else:
-                # Perform the Z-Hop
-                toolhead.set_position(pos, homing_axes=[2])
-                pos[2] = pos[2] + self.z_hop
-                toolhead.move(pos, self.z_hop_speed)
-                self.gcode.reset_last_position()
-                self.did_hop = True
+                self._perform_z_hop(pos)
 
         # Determine which axes we need to home
         if not any([axis in params.keys() for axis in ['X', 'Y', 'Z']]):
@@ -99,6 +94,15 @@ class SafeZHoming:
                 pos[0] = prev_x
                 pos[1] = prev_y
                 toolhead.move(pos, self.speed)
+
+    def _perform_z_hop(self, pos):
+        toolhead = self.printer.lookup_object('toolhead')
+        # Perform the Z-Hop
+        toolhead.set_position(pos, homing_axes=[2])
+        pos[2] = pos[2] + self.z_hop
+        toolhead.move(pos, self.z_hop_speed)
+        self.gcode.reset_last_position()
+        self.did_hop = True
 
     def reset_z_hop(self, _):
         self.did_hop = False
