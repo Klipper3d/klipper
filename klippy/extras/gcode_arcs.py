@@ -13,7 +13,6 @@
 #
 # note: only IJ version available
 
-import logging
 import math
 import re
 
@@ -94,7 +93,7 @@ class ArcSupport:
                         g1_params['E']= float(asE)/len(coords)
                     if asF>0:
                         g1_params['F']= asF
-                    logging.debug(g1_params)
+
                     self.gcode.cmd_G1(g1_params)
 
 
