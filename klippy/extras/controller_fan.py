@@ -12,6 +12,7 @@ class ControllerFan:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.steppers = []
+        self.heaters = []
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.max_power = config.getfloat(
