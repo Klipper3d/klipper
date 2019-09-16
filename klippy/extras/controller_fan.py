@@ -16,10 +16,12 @@ class ControllerFan:
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.max_power = config.getfloat(
-            'max_power', 1., minval=0., maxval=1.)
+            'max_power', default=1.,
+            minval=0., maxval=1.)
         self.idle_speed = config.getfloat(
-            'idle_speed', self.max_power, minval=0., maxval=self.max_power)
-        self.idle_timeout = config.getint("idle_timeout", 30, minval=0)
+            'idle_speed', default=self.max_power,
+            minval=0., maxval=self.max_power)
+        self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
     def handle_ready(self):
