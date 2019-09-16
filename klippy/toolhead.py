@@ -427,6 +427,7 @@ class ToolHead:
             return
         self.kin.check_move(move)
         speed = math.sqrt(move.max_cruise_v2)
+        move_accel = move.accel
         # Transition to "Flushed" state and then to "Drip" state
         self._full_flush()
         self.special_queuing_state = "Drip"
@@ -442,9 +443,13 @@ class ToolHead:
         try:
             for i in range(num_moves-1):
                 next_pos = [p + d for p, d in zip(prev_pos, submove_d)]
-                self.move_queue.add_move(Move(self, prev_pos, next_pos, speed))
+                smove = Move(self, prev_pos, next_pos, speed)
+                smove.limit_speed(speed, move_accel)
+                self.move_queue.add_move(smove)
                 prev_pos = next_pos
-            self.move_queue.add_move(Move(self, prev_pos, move.end_pos, speed))
+            smove = Move(self, prev_pos, move.end_pos, speed)
+            smove.limit_speed(speed, move_accel)
+            self.move_queue.add_move(smove)
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()

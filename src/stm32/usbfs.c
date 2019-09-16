@@ -6,6 +6,7 @@
 
 #include <string.h> // NULL
 #include "autoconf.h" // CONFIG_STM32_FLASH_START_2000
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
@@ -233,34 +234,6 @@ usb_request_bootloader(void)
  * Setup and interrupts
  ****************************************************************/
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
-
-// Initialize the usb controller
-void
-usb_init(void)
-{
-    // Pull the D+ pin low briefly to signal a new connection
-    gpio_out_setup(GPIO('A', 12), 0);
-    udelay(5000);
-    gpio_in_setup(GPIO('A', 12), 0);
-
-    // Setup USB packet memory
-    btable_configure();
-
-    // Enable USB clock
-    enable_pclock(USB_BASE);
-
-    // Reset usb controller and enable interrupts
-    USB->CNTR = USB_CNTR_FRES;
-    USB->BTABLE = 0;
-    USB->DADDR = 0;
-    USB->CNTR = USB_CNTR_RESETM;
-    USB->ISTR = 0;
-    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 1);
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
-}
-DECL_INIT(usb_init);
-
 // Configure interface after a USB reset event
 static void
 usb_reset(void)
@@ -277,7 +250,7 @@ usb_reset(void)
 }
 
 // Main irq handler
-void __visible
+void
 USB_LP_CAN1_RX0_IRQHandler(void)
 {
     uint32_t istr = USB->ISTR;
@@ -305,3 +278,30 @@ USB_LP_CAN1_RX0_IRQHandler(void)
         usb_reset();
     }
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+
+// Initialize the usb controller
+void
+usb_init(void)
+{
+    // Pull the D+ pin low briefly to signal a new connection
+    gpio_out_setup(GPIO('A', 12), 0);
+    udelay(5000);
+    gpio_in_setup(GPIO('A', 12), 0);
+
+    // Setup USB packet memory
+    btable_configure();
+
+    // Enable USB clock
+    enable_pclock(USB_BASE);
+
+    // Reset usb controller and enable interrupts
+    USB->CNTR = USB_CNTR_FRES;
+    USB->BTABLE = 0;
+    USB->DADDR = 0;
+    USB->CNTR = USB_CNTR_RESETM;
+    USB->ISTR = 0;
+    armcm_enable_irq(USB_LP_CAN1_RX0_IRQHandler, USB_LP_CAN1_RX0_IRQn, 1);
+}
+DECL_INIT(usb_init);

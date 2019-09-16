@@ -21,6 +21,7 @@ class BaseSensor(object):
         if config.get('insert_gcode', None) is not None:
             self.insert_gcode = gcode_macro.load_template(
                 config, 'insert_gcode')
+        self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.runout_enabled = False
         self.insert_enabled = self.insert_gcode is not None
         self.event_running = False
@@ -52,6 +53,7 @@ class BaseSensor(object):
             pause_resume = self.printer.lookup_object('pause_resume')
             pause_resume.send_pause_command()
             pause_prefix = "PAUSE\n"
+            self.printer.get_reactor().pause(eventtime + self.pause_delay)
         self._exec_gcode(pause_prefix, self.runout_gcode)
         self.event_running = False
     def _insert_event_handler(self, eventtime):

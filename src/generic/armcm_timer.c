@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "armcm_boot.h" // DECL_ARMCM_IRQ
 #include "board/internal.h" // SysTick
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
@@ -160,6 +161,7 @@ SysTick_Handler(void)
     timer_set_diff(diff);
     irq_enable();
 }
+DECL_ARMCM_IRQ(SysTick_Handler, SysTick_IRQn);
 
 // Make sure timer_repeat_until doesn't wrap 32bit comparisons
 void

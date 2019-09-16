@@ -85,6 +85,16 @@ CONFIG ../../config/generic-smoothieboard.cfg
 # Printers using the stm32f103
 DICTIONARY stm32f1.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3.cfg
+
+# Printers using the stm32f103 via serial
+DICTIONARY stm32f1-serial.dict
+CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
+CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
+
+# Printers using the stm32f407
+DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict

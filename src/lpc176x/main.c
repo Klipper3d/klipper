@@ -4,10 +4,10 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // NVIC_SystemReset
-#include "command.h" // DECL_CONSTANT
-#include "sched.h" // sched_main
 #include "board/misc.h" // timer_read_time
+#include "command.h" // DECL_CONSTANT
+#include "internal.h" // NVIC_SystemReset
+#include "sched.h" // sched_main
 
 DECL_CONSTANT_STR("MCU", "lpc176x");
 

@@ -62,6 +62,10 @@ config FLASH_SIZE
     default 0x10000 if MACH_STM32F103
     default 0x80000 if MACH_STM32F4
 
+config RAM_START
+    hex
+    default 0x20000000
+
 config RAM_SIZE
     hex
     default 0x5000 if MACH_STM32F103
@@ -84,10 +88,10 @@ choice
 endchoice
 config FLASH_START
     hex
-    default 0x2000 if STM32_FLASH_START_2000
-    default 0x7000 if STM32_FLASH_START_7000
-    default 0x8000 if STM32_FLASH_START_8000
-    default 0x0000
+    default 0x8002000 if STM32_FLASH_START_2000
+    default 0x8007000 if STM32_FLASH_START_7000
+    default 0x8008000 if STM32_FLASH_START_8000
+    default 0x8000000
 
 choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS

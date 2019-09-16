@@ -19,6 +19,7 @@ import re
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
+<<<<<<< HEAD
         try:
             self.mm_per_arc_segment = config.getfloat('resolution',
             1, minval=0.1)
@@ -27,6 +28,10 @@ class ArcSupport:
             "resolution for [gcode_arcs] needs to be at least 0.1 " +
             "(default: 1.0)"
             )
+=======
+        self.mm_per_arc_segment = config.getfloat('resolution', 1)
+        self.debug = True  #will respond motion to terminal as G1 code
+>>>>>>> origin/master
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)

@@ -4,7 +4,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // LPC_I2C1
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "gpio.h" // i2c_setup
