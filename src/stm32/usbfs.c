@@ -29,9 +29,9 @@ struct ep_desc {
 struct ep_mem {
     struct ep_desc ep0, ep_acm, ep_bulk_out, ep_bulk_in;
     uint32_t ep0_tx[USB_CDC_EP0_SIZE / 2];
-    uint32_t ep0_rx[USB_CDC_EP0_SIZE / 2];
+    uint32_t ep0_rx[USB_CDC_EP0_SIZE / 2 + 1];
     uint32_t ep_acm_tx[USB_CDC_EP_ACM_SIZE / 2];
-    uint32_t ep_bulk_out_rx[USB_CDC_EP_BULK_OUT_SIZE / 2];
+    uint32_t ep_bulk_out_rx[USB_CDC_EP_BULK_OUT_SIZE / 2 + 1];
     uint32_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
 };
 
