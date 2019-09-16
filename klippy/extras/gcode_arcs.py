@@ -82,7 +82,7 @@ class ArcSupport:
                 for coord in coords:
                     g1_params = {'X': coord[0], 'Y': coord[1]}
                     if asZ:
-                        g1_params['Z']= float(asZ)/len(coords)
+                        g1_params['Z']= float(asZ)
                     if asE>0:
                         g1_params['E']= float(asE)/len(coords)
                     if asF>0:
