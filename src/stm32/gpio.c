@@ -15,9 +15,13 @@ DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 16);
+#ifdef GPIOE
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 16);
-#ifdef GPIOH
+#endif
+#ifdef GPIOF
 DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 16);
+#endif
+#ifdef GPIOH
 DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 16);
 #endif
@@ -26,9 +30,15 @@ DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 16);
 #endif
 
 GPIO_TypeDef * const digital_regs[] = {
-    ['A' - 'A'] = GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
+    ['A' - 'A'] = GPIOA, GPIOB, GPIOC, GPIOD,
+#ifdef GPIOE
+    ['E' - 'A'] = GPIOE,
+#endif
+#ifdef GPIOF
+    ['F' - 'A'] = GPIOF,
+#endif
 #ifdef GPIOH
-    ['F' - 'A'] = GPIOF, GPIOG, GPIOH,
+    ['G' - 'A'] = GPIOG, GPIOH,
 #endif
 #ifdef GPIOI
     ['I' - 'A'] = GPIOI,

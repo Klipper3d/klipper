@@ -235,7 +235,7 @@ usb_reset(void)
 
 // Main irq handler
 void
-USB_LP_CAN1_RX0_IRQHandler(void)
+USB_IRQHandler(void)
 {
     uint32_t istr = USB->ISTR;
     if (istr & USB_ISTR_CTR) {
@@ -269,10 +269,12 @@ DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
 void
 usb_init(void)
 {
-    // Pull the D+ pin low briefly to signal a new connection
-    gpio_out_setup(GPIO('A', 12), 0);
-    udelay(5000);
-    gpio_in_setup(GPIO('A', 12), 0);
+    if (CONFIG_MACH_STM32F1) {
+        // Pull the D+ pin low briefly to signal a new connection
+        gpio_out_setup(GPIO('A', 12), 0);
+        udelay(5000);
+        gpio_in_setup(GPIO('A', 12), 0);
+    }
 
     // Enable USB clock
     enable_pclock(USB_BASE);
@@ -280,12 +282,21 @@ usb_init(void)
     // Setup USB packet memory
     btable_configure();
 
+    // Enable USB pullup
+#ifdef USB_BCDR_DPPU
+    USB->BCDR = USB_BCDR_DPPU;
+#endif
+
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
     USB->BTABLE = 0;
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
-    armcm_enable_irq(USB_LP_CAN1_RX0_IRQHandler, USB_LP_CAN1_RX0_IRQn, 1);
+#if CONFIG_MACH_STM32F103
+    armcm_enable_irq(USB_IRQHandler, USB_LP_IRQn, 1);
+#elif CONFIG_MACH_STM32F0
+    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
+#endif
 }
 DECL_INIT(usb_init);
