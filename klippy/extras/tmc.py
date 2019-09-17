@@ -159,7 +159,7 @@ class TMCCommandHelper:
 
 # Endstop wrapper that enables "sensorless homing"
 class TMCVirtualEndstop:
-    def __init__(self, mcu_tmc, mcu_endstop):
+    def __init__(self, mcu_tmc, mcu_endstop, config):
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
@@ -170,6 +170,20 @@ class TMCVirtualEndstop:
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
+            
+        self.run_current = config.getfloat('run_current', above=0.)
+        self.homing_current = config.getfloat('homing_current',
+                                              self.run_current,
+                                              above=0.)
+
+        printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        printer.register_event_handler("homing:homing_started",
+                                       self._set_homing_current)
+        printer.register_event_handler("homing:homing_finished",
+                                       self._set_running_current)
+        self.gcode = printer.lookup_object("gcode")
+
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -178,6 +192,26 @@ class TMCVirtualEndstop:
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
         self.TimeoutError = self.mcu_endstop.TimeoutError
+
+    def _set_homing_current(self, homing_state, rails):
+        return self._set_current(homing_state, rails, self.homing_current)
+
+    def _set_running_current(self, homing_state, rails):
+        return self._set_current(homing_state, rails, self.run_current)
+
+    def _set_current(self, homing_state, rails, current):
+        for rail in rails:
+            for stepper in rail.get_steppers():
+                stepper_name = stepper.get_name()
+                if (stepper_name == self.name):
+                    self.gcode._cmd_mux({"#command" : "SET_TMC_CURRENT",
+                                         "CURRENT" : current,
+                                         "STEPPER" : stepper_name,
+                                         "#original" : "SET_TMC_CURRENT "\
+                                         "STEPPER=%s CURRENT=%s"
+                                         % (stepper_name, current)
+                                         })
+        return True
     def home_prepare(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
@@ -230,6 +264,7 @@ class TMCVirtualPinHelper:
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
+        self.config = config
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
@@ -248,7 +283,7 @@ class TMCVirtualPinHelper:
         if pin_type != 'endstop':
             raise ppins.error("tmc virtual endstop only useful as endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
-        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
+        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop, self.config)
 
 
 ######################################################################
