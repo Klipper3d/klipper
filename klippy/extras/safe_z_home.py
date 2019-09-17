@@ -47,12 +47,7 @@ class SafeZHoming:
                         "No zhop performed, target Z out of bounds: " +
                         str(pos[2] + self.z_hop)
                     )
-                elif pos[2] >= self.z_hop and self.did_hop:
-                    self.gcode.respond_info(
-                        "No zhop performed, already above target height " +
-                        str(pos[2]) + " >= " + str(self.z_hop)
-                    )
-                else:
+                elif pos[2] < self.z_hop and not self.did_hop:
                     self._perform_z_hop(pos)
             else:
                 self._perform_z_hop(pos)
