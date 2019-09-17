@@ -25,9 +25,6 @@ class SafeZHoming:
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
 
-        self.printer.register_event_handler("toolhead:motor_off",
-                                            self.reset_z_hop)
-
         if config.has_section("homing_override"):
             raise config.error("homing_override and safe_z_homing cannot"
                                +" be used simultaneously")
@@ -47,7 +44,7 @@ class SafeZHoming:
                         "No zhop performed, target Z out of bounds: " +
                         str(pos[2] + self.z_hop)
                     )
-                elif pos[2] < self.z_hop and not self.did_hop:
+                elif pos[2] < self.z_hop:
                     self._perform_z_hop(pos)
             else:
                 self._perform_z_hop(pos)
@@ -100,10 +97,6 @@ class SafeZHoming:
         pos[2] = pos[2] + self.z_hop
         toolhead.move(pos, self.z_hop_speed)
         self.gcode.reset_last_position()
-        self.did_hop = True
-
-    def reset_z_hop(self, _):
-        self.did_hop = False
 
 def load_config(config):
     return SafeZHoming(config)
