@@ -29,6 +29,9 @@ choice
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
+    config MACH_STM32F042
+        bool "STM32F042"
+        select MACH_STM32F0
     config MACH_STM32F070
         bool "STM32F070"
         select MACH_STM32F0
@@ -51,6 +54,7 @@ config HAVE_STM32_USBOTG
 
 config MCU
     string
+    default "stm32f042x6" if MACH_STM32F042
     default "stm32f070xb" if MACH_STM32F070
     default "stm32f103xe" if MACH_STM32F103
     default "stm32f405xx" if MACH_STM32F405
@@ -66,6 +70,7 @@ config CLOCK_FREQ
 
 config FLASH_SIZE
     hex
+    default 0x8000 if MACH_STM32F042
     default 0x20000 if MACH_STM32F070
     default 0x10000 if MACH_STM32F103
     default 0x80000 if MACH_STM32F4
@@ -76,6 +81,7 @@ config RAM_START
 
 config RAM_SIZE
     hex
+    default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070
     default 0x5000 if MACH_STM32F103
     default 0x20000 if MACH_STM32F4

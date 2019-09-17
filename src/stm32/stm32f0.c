@@ -124,6 +124,29 @@ pll_setup(void)
         RCC->CFGR3 = RCC_CFGR3_USBSW;
 }
 
+// Configure and enable internal 48Mhz clock on the stm32f042
+static void
+hsi48_setup(void)
+{
+#if CONFIG_MACH_STM32F042
+    // Enable HSI48
+    RCC->CR2 |= RCC_CR2_HSI48ON;
+    while (!(RCC->CR2 & RCC_CR2_HSI48RDY))
+        ;
+
+    // Switch system clock to HSI48
+    RCC->CFGR = RCC_CFGR_SW_HSI48;
+    while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_HSI48)
+        ;
+
+    // Enable USB clock recovery
+    if (CONFIG_USBSERIAL) {
+        enable_pclock(CRS_BASE);
+        CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
+    }
+#endif
+}
+
 // Main clock setup called at chip startup
 void
 clock_setup(void)
@@ -132,5 +155,8 @@ clock_setup(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    pll_setup();
+    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL)
+        hsi48_setup();
+    else
+        pll_setup();
 }
