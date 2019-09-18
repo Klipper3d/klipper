@@ -16,7 +16,6 @@ class SafeZHoming:
                 config.get_name()))
 
         self.z_hop = config.getfloat("z_hop", default=0.0)
-        self.did_hop = False
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
