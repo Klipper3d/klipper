@@ -184,10 +184,11 @@ class MoveQueue:
             # Enough moves have been queued to reach the target flush time.
             self.flush(lazy=True)
 
+MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 
 DRIP_SEGMENT_TIME = 0.050
-DRIP_TIME = 0.150
+DRIP_TIME = 0.100
 class DripModeEndSignal(Exception):
     pass
 
@@ -237,6 +238,10 @@ class ToolHead:
         self.idle_flush_print_time = 0.
         self.print_stall = 0
         self.drip_completion = None
+        # Kinematic step generation scan window time tracking
+        self.kin_flush_delay = 0.
+        self.kin_flush_times = []
+        self.last_kin_flush_time = self.last_kin_move_time = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -270,26 +275,31 @@ class ToolHead:
         self.printer.try_load_module(config, "manual_probe")
         self.printer.try_load_module(config, "tuning_tower")
     # Print time tracking
-    def _update_move_time(self, next_print_time, lazy=True):
+    def _update_move_time(self, next_print_time):
         batch_time = MOVE_BATCH_TIME
+        kin_flush_delay = self.kin_flush_delay
+        lkft = self.last_kin_flush_time
         while 1:
-            flush_to_time = min(self.print_time + batch_time, next_print_time)
-            self.print_time = flush_to_time
+            self.print_time = min(self.print_time + batch_time, next_print_time)
+            sg_flush_time = max(lkft, self.print_time - kin_flush_delay)
             for sg in self.step_generators:
-                sg(flush_to_time)
-            self.trapq_free_moves(self.trapq, flush_to_time)
-            if lazy:
-                flush_to_time -= self.move_flush_time
+                sg(sg_flush_time)
+            free_time = max(lkft, sg_flush_time - kin_flush_delay)
+            self.trapq_free_moves(self.trapq, free_time)
+            self.extruder.update_move_time(free_time)
+            mcu_flush_time = max(lkft, sg_flush_time - self.move_flush_time)
             for m in self.all_mcus:
-                m.flush_moves(flush_to_time)
+                m.flush_moves(mcu_flush_time)
             if self.print_time >= next_print_time:
                 break
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
-        if est_print_time + self.buffer_time_start > self.print_time:
-            self.print_time = est_print_time + self.buffer_time_start
-            self.last_print_start_time = self.print_time
+        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_kin_flush_time)
+        kin_time += self.kin_flush_delay
+        min_print_time = max(est_print_time + self.buffer_time_start, kin_time)
+        if min_print_time > self.print_time:
+            self.print_time = self.last_print_start_time = min_print_time
             self.printer.send_event("toolhead:sync_print_time",
                                     curtime, est_print_time, self.print_time)
     def _process_moves(self, moves):
@@ -316,10 +326,10 @@ class ToolHead:
             next_move_time = (next_move_time + move.accel_t
                               + move.cruise_t + move.decel_t)
         # Generate steps for moves
-        if self.special_queuing_state == "Drip":
+        if self.special_queuing_state:
             self._update_drip_move_time(next_move_time)
-        else:
-            self._update_move_time(next_move_time)
+        self._update_move_time(next_move_time)
+        self.last_kin_move_time = next_move_time
     def flush_step_generation(self):
         # Transition from "Flushed"/"Priming"/main state to "Flushed" state
         self.move_queue.flush()
@@ -328,7 +338,9 @@ class ToolHead:
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
-        self._update_move_time(self.print_time, lazy=False)
+        flush_time = self.last_kin_move_time + self.kin_flush_delay
+        self.last_kin_flush_time = max(self.last_kin_flush_time, flush_time)
+        self._update_move_time(max(self.print_time, self.last_kin_flush_time))
     def _flush_lookahead(self):
         if self.special_queuing_state:
             return self.flush_step_generation()
@@ -421,12 +433,13 @@ class ToolHead:
         return self.extruder
     # Homing "drip move" handling
     def _update_drip_move_time(self, next_print_time):
+        flush_delay = DRIP_TIME + self.move_flush_time + self.kin_flush_delay
         while self.print_time < next_print_time:
             if self.drip_completion.test():
                 raise DripModeEndSignal()
             curtime = self.reactor.monotonic()
             est_print_time = self.mcu.estimated_print_time(curtime)
-            wait_time = self.print_time - est_print_time - DRIP_TIME
+            wait_time = self.print_time - est_print_time - flush_delay
             if wait_time > 0. and self.can_pause:
                 # Pause before sending more steps
                 self.drip_completion.wait(curtime + wait_time)
@@ -494,6 +507,15 @@ class ToolHead:
         return self.trapq
     def register_step_generator(self, handler):
         self.step_generators.append(handler)
+    def note_step_generation_scan_time(self, delay, old_delay=0.):
+        self.flush_step_generation()
+        cur_delay = self.kin_flush_delay
+        if old_delay:
+            self.kin_flush_times.pop(self.kin_flush_times.index(old_delay))
+        if delay:
+            self.kin_flush_times.append(delay)
+        new_delay = max(self.kin_flush_times + [0.])
+        self.kin_flush_delay = new_delay
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):
