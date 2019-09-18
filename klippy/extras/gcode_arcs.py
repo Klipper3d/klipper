@@ -19,14 +19,7 @@ import re
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
-        try:
-            self.mm_per_arc_segment = config.getfloat('resolution',
-            1, minval=0.1)
-        except:
-            raise config.error(
-            "resolution for [gcode_arcs] needs to be at least 0.1 " +
-            "(default: 1.0)"
-            )
+        self.mm_per_arc_segment = config.getfloat('resolution', 1, above=0.0)
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
