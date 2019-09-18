@@ -60,13 +60,6 @@ enable_pclock(uint32_t pclk)
     }
 }
 
-void
-command_reset(uint32_t *args)
-{
-    NVIC_SystemReset();
-}
-DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
-
 // Main entry point
 int
 main(void)

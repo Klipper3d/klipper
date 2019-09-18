@@ -14,7 +14,7 @@ $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 # Add source files
 src-y += lpc176x/main.c lpc176x/gpio.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_timer.c
-src-y += generic/crc16_ccitt.c
+src-y += generic/armcm_reset.c generic/crc16_ccitt.c
 src-y += ../lib/lpc176x/device/system_LPC17xx.c
 src-$(CONFIG_HAVE_GPIO_ADC) += lpc176x/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += lpc176x/i2c.c

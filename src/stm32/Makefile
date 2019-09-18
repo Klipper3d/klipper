@@ -20,8 +20,9 @@ CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
-src-y += stm32/main.c stm32/watchdog.c stm32/gpio.c generic/armcm_boot.c
-src-y += generic/crc16_ccitt.c generic/armcm_irq.c generic/armcm_timer.c
+src-y += stm32/main.c stm32/watchdog.c stm32/gpio.c generic/crc16_ccitt.c
+src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_timer.c
+src-y += generic/armcm_reset.c
 src-$(CONFIG_MACH_STM32F1) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c
 src-$(CONFIG_MACH_STM32F4) += ../lib/stm32f4/system_stm32f4xx.c
