@@ -170,7 +170,7 @@ class TMCVirtualEndstop:
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
-            
+
         self.run_current = config.getfloat('run_current', above=0.)
         self.homing_current = config.getfloat('homing_current',
                                               self.run_current,
