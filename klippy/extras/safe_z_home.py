@@ -35,10 +35,11 @@ class SafeZHoming:
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
-            # Check if the zhop would exceed the printer limits
             pos = toolhead.get_position()
             kin_status = kinematics.get_status()
+            # Check if Z axis is homed or has a known position
             if 'Z' in kin_status['homed_axes']:
+                # Check if the zhop would exceed the printer limits
                 if pos[2] + self.z_hop > self.max_z:
                     self.gcode.respond_info(
                         "No zhop performed, target Z out of bounds: " +
