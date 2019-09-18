@@ -29,12 +29,8 @@ class ArcSupport:
     cmd_G3_help = "Clockwise rotaion move"
 
     def cmd_G2(self, params):
-
         # set vars
         currentPos =  self.printer.lookup_object('toolhead').get_position()
-        asStartX = currentPos[0]
-        asStartY = currentPos[1]
-        asStartZ = currentPos[2]
 
         asX = params.get("X", None)
         asY = params.get("Y", None)
