@@ -19,8 +19,7 @@ import re
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mm_per_arc_segment = config.getfloat('resolution', 1)
-        self.debug = True  #will respond motion to terminal as G1 code
+        self.mm_per_arc_segment = config.getfloat('resolution', 1, above=0.0)
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
@@ -81,8 +80,8 @@ class ArcSupport:
                 # build dict and call cmd_G1
                 for coord in coords:
                     g1_params = {'X': coord[0], 'Y': coord[1]}
-                    if asZ:
-                        g1_params['Z']= float(asZ)/len(coords)
+                    if asZ!=None:
+                        g1_params['Z']= float(asZ)
                     if asE>0:
                         g1_params['E']= float(asE)/len(coords)
                     if asF>0:
