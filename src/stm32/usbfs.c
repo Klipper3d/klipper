@@ -10,7 +10,6 @@
 #include "board/armcm_timer.h" // udelay
 #include "board/gpio.h" // gpio_out_setup
 #include "board/io.h" // writeb
-#include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "command.h" // DECL_CONSTANT_STR
@@ -205,20 +204,6 @@ usb_set_address(uint_fast8_t addr)
 void
 usb_set_configure(void)
 {
-}
-
-void
-usb_request_bootloader(void)
-{
-    if (!CONFIG_STM32_FLASH_START_2000)
-        return;
-    // Enter "stm32duino" bootloader
-    irq_disable();
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
-    PWR->CR |= PWR_CR_DBP;
-    BKP->DR10 = 0x01;
-    PWR->CR &=~ PWR_CR_DBP;
-    NVIC_SystemReset();
 }
 
 

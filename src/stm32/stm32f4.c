@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 
@@ -83,6 +84,12 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+}
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
 }
 
 #if CONFIG_CLOCK_REF_8M

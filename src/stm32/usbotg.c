@@ -338,11 +338,6 @@ usb_set_configure(void)
     usb_irq_enable();
 }
 
-void
-usb_request_bootloader(void)
-{
-}
-
 
 /****************************************************************
  * Setup and interrupts
