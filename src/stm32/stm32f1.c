@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
 #include "internal.h" // enable_pclock
@@ -125,6 +126,10 @@ usb_request_bootloader(void)
 void
 clock_setup(void)
 {
+    // The SystemInit() code alters VTOR - restore it
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    // Configure and enable PLL
     uint32_t cfgr;
     if (CONFIG_CLOCK_REF_8M) {
         // Configure 72Mhz PLL from external 8Mhz crystal (HSE)

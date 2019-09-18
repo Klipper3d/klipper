@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
 #include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
@@ -176,6 +177,10 @@ enable_clock_stm32f446(void)
 void
 clock_setup(void)
 {
+    // The SystemInit() code alters VTOR - restore it
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    // Configure and enable PLL
     if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
         enable_clock_stm32f40x();
     else

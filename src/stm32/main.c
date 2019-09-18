@@ -5,7 +5,6 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_MCU
-#include "board/armcm_boot.h" // VectorTable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // clock_setup
 #include "sched.h" // sched_main
@@ -23,8 +22,6 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 int
 main(void)
 {
-    SCB->VTOR = (uint32_t)VectorTable;
-
     clock_setup();
 
     sched_main();
