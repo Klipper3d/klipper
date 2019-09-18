@@ -5,7 +5,12 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "armcm_boot.h" // DECL_ARMCM_IRQ
+#include "autoconf.h" // CONFIG_MCU
 #include "board/internal.h" // SystemInit
+#include "command.h" // DECL_CONSTANT_STR
+
+// Export MCU type
+DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 // Symbols created by armcm_link.lds.S linker script
 extern uint32_t _data_start, _data_end, _data_flash;

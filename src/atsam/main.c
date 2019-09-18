@@ -6,11 +6,9 @@
 
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
-#include "command.h" // DECL_CONSTANT
+#include "command.h" // DECL_COMMAND_FLAGS
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
-
-DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 
 /****************************************************************
