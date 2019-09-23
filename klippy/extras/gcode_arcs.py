@@ -44,7 +44,7 @@ class ArcSupport:
         asF = float(params.get("F", -1))
 
         # --------- health checks of code -----------
-        if (asX == None or asY == None):
+        if (asX is None or asY is None):
             raise self.gcode.error("g2/g3: Coords missing")
 
         elif asR == 0 and asI == 0 and asJ==0:
