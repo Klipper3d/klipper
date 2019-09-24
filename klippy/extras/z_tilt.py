@@ -22,7 +22,8 @@ class ZAdjustHelper:
                 "%s z_positions needs exactly %d items" % (
                     self.name, len(z_steppers)))
         if len(z_steppers) < 2:
-            raise config.error("%s requires multiple z steppers" % (self.name,))
+            raise self.printer.config_error(
+                "%s requires multiple z steppers" % (self.name,))
         self.z_steppers = z_steppers
     def adjust_steppers(self, adjustments, speed):
         toolhead = self.printer.lookup_object('toolhead')
