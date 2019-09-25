@@ -9,6 +9,7 @@ import logging
 import math
 
 import homing
+from configfile import sentinel
 from extras import probe
 
 
@@ -21,20 +22,90 @@ ENDSTOP_REST_TIME = 0.001
 ENDSTOP_SAMPLE_TIME = 0.000015
 ENDSTOP_SAMPLE_COUNT = 4
 
-Commands = {
-    None: 0.0,
-    "pin_down": 0.000650,
-    "touch_mode": 0.001165,
-    "pin_up": 0.001475,
-    "self_test": 0.001780,
-    "reset": 0.002190,
-}
+# Defines known BLTouch versions
+DEFAULT_VERSION = "default"
+KNOWN_VERSIONS = [
+    DEFAULT_VERSION,
+    "genuine_classic_1.0",
+    "genuine_classic_1.1",
+    "genuine_classic_1.2",
+    "genuine_classic_1.3",
+    "genuine_smart_1.0",
+    "genuine_smart_2.0",
+    "genuine_smart_2.1",
+    "genuine_smart_2.2",
+    "genuine_smart_3.0",
+    "genuine_smart_3.1",
+]
+
+
+class FlavoredConfig:
+    """
+    FlavoredConfig provides sensible defaults for each flavor.
+    """
+
+    def __init__(self, config):
+        self._config = config
+        self.flavor = self._config.getchoice(
+            "flavor", dict(zip(KNOWN_VERSIONS, KNOWN_VERSIONS)), default=DEFAULT_VERSION
+        )
+        self.defaults = self._get_defaults()
+
+    def _get_defaults(self):
+        # defaults for any flavor
+        defaults = {
+            "pin_up_reports_not_triggered": True,
+            "pin_up_touch_mode_reports_triggered": True,
+            "keep_signal_during_probe": self.flavor.startswith("genuine"),
+            "probe_with_touch_switch_mode": self.flavor.startswith("genuine_smart")
+            and self.flavor.split("_")[-1] >= "2.1",
+        }
+
+        if (
+            self.flavor.startswith("genuine_smart")
+            and self.flavor.split("_")[-1] >= "3.1"
+        ):
+            defaults["commands"] = {
+                None: 0.0,
+                "pin_down": 0.000647,  # 647 µs (10°)
+                "touch_mode": 0.001162,  # 1162 µs (60°)
+                "pin_up": 0.001473,  # 1473 µs (90°)
+                "self_test": 0.001782,  # 1782 µs (120°)
+                "reset": 0.002194,  # 2194 µs (160°)
+            }
+        else:
+            defaults["commands"] = {
+                None: 0.0,
+                "pin_down": 0.000650,  # 650 µs (10°)
+                "touch_mode": 0.001165,  # 1165 µs (60°)
+                "pin_up": 0.001475,  # 1475 µs (90°)
+                "self_test": 0.001780,  # 1780 µs (120°)
+                "reset": 0.002190,  # 2190 µs (160°)
+            }
+
+        return defaults
+
+    def __getattr__(self, name):
+        """
+        Call the underlying ConfigWrapper and inject a flavored default value
+        when no default is given.
+        """
+        if name in ("get", "getboolean", "getfloat"):
+
+            def wrap(*args, **kwargs):
+                if "default" not in kwargs and args[0] in self.defaults:
+                    kwargs["default"] = self.defaults.get(args[0], sentinel)
+                return getattr(self._config, name)(*args, **kwargs)
+
+            return wrap
+        raise AttributeError(name)
 
 
 # BLTouch "endstop" wrapper
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
+        flavored_config = FlavoredConfig(config)
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
         self.position_endstop = config.getfloat("z_offset")
         # Create a pwm object to handle the control pin
@@ -51,15 +122,15 @@ class BLTouchEndstopWrapper:
         self.mcu_endstop = mcu.setup_pin("endstop", pin_params)
         # Setup for sensor test
         self.next_test_time = 0.0
-        self.pin_up_not_triggered = config.getboolean(
-            "pin_up_reports_not_triggered", True
+        self.pin_up_not_triggered = flavored_config.getboolean(
+            "pin_up_reports_not_triggered"
         )
-        self.pin_up_touch_triggered = config.getboolean(
-            "pin_up_touch_mode_reports_triggered", True
+        self.pin_up_touch_triggered = flavored_config.getboolean(
+            "pin_up_touch_mode_reports_triggered"
         )
         self.start_mcu_pos = []
         # Calculate pin move time
-        pmt = max(config.getfloat("pin_move_time", 0.675), MIN_CMD_TIME)
+        pmt = max(flavored_config.getfloat("pin_move_time", 0.675), MIN_CMD_TIME)
         self.pin_move_time = math.ceil(pmt / SIGNAL_PERIOD) * SIGNAL_PERIOD
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
@@ -72,6 +143,13 @@ class BLTouchEndstopWrapper:
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
             "BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG, desc=self.cmd_BLTOUCH_DEBUG_help
+        )
+        self._commands = flavored_config.defaults["commands"]
+        self._keep_signal_during_probe = flavored_config.getboolean(
+            "keep_signal_during_probe"
+        )
+        self._probe_with_touch_switch_mode = flavored_config.getboolean(
+            "probe_with_touch_switch_mode"
         )
 
     def _build_config(self):
@@ -99,7 +177,7 @@ class BLTouchEndstopWrapper:
             self.next_cmd_time = print_time
 
     def send_cmd(self, cmd, duration=MIN_CMD_TIME):
-        self.mcu_pwm.set_pwm(self.next_cmd_time, Commands[cmd] / SIGNAL_PERIOD)
+        self.mcu_pwm.set_pwm(self.next_cmd_time, self._commands[cmd] / SIGNAL_PERIOD)
         # Translate duration to ticks to avoid any secondary mcu clock skew
         mcu = self.mcu_pwm.get_mcu()
         cmd_clock = mcu.print_time_to_clock(self.next_cmd_time)
@@ -171,7 +249,10 @@ class BLTouchEndstopWrapper:
         self.sync_print_time()
         duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
         self.send_cmd("pin_down", duration=duration)
-        self.send_cmd(None)
+        if self._probe_with_touch_switch_mode:
+            self.send_cmd("touch_mode")
+        if not self._keep_signal_during_probe:
+            self.send_cmd(None)
         self.sync_print_time()
         self.mcu_endstop.home_prepare()
         self.start_mcu_pos = [
@@ -200,10 +281,10 @@ class BLTouchEndstopWrapper:
 
     def cmd_BLTOUCH_DEBUG(self, params):
         cmd = self.gcode.get_str("COMMAND", params, None)
-        if cmd is None or cmd not in Commands:
+        if cmd is None or cmd not in self._commands:
             self.gcode.respond_info(
                 "BLTouch commands: %s"
-                % (", ".join(sorted([c for c in Commands if c is not None])))
+                % (", ".join(sorted([c for c in self._commands if c is not None])))
             )
             return
         self.gcode.respond_info("Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,))
