@@ -157,8 +157,9 @@ class MoveQueue:
                     if delayed:
                         # Propagate peak_cruise_v2 to any delayed moves
                         if not update_flush_count and i < flush_count:
-                            for m, ms_v2, me_v2 in delayed:
-                                mc_v2 = min(peak_cruise_v2, ms_v2)
+                            mc_v2 = peak_cruise_v2
+                            for m, ms_v2, me_v2 in reversed(delayed):
+                                mc_v2 = min(mc_v2, ms_v2)
                                 m.set_junction(min(ms_v2, mc_v2), mc_v2
                                                , min(me_v2, mc_v2))
                         del delayed[:]
