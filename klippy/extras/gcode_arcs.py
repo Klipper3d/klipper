@@ -29,12 +29,8 @@ class ArcSupport:
     cmd_G3_help = "Clockwise rotaion move"
 
     def cmd_G2(self, params):
-
         # set vars
         currentPos =  self.printer.lookup_object('toolhead').get_position()
-        asStartX = currentPos[0]
-        asStartY = currentPos[1]
-        asStartZ = currentPos[2]
 
         asX = params.get("X", None)
         asY = params.get("Y", None)
@@ -48,7 +44,7 @@ class ArcSupport:
         asF = float(params.get("F", -1))
 
         # --------- health checks of code -----------
-        if (asX == None or asY == None):
+        if (asX is None or asY is None):
             raise self.gcode.error("g2/g3: Coords missing")
 
         elif asR == 0 and asI == 0 and asJ==0:
