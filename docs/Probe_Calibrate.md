@@ -105,10 +105,10 @@ range. So, in the above example, since the printer uses a
 Z step_distance of .0125, a range of 0.012500 would be considered normal.
 
 If the results of the test show a range value that is greater than
-25 microns (.025mm) then the probe does not have sufficient accuracy 
-for typical bed leveling procedures. It may be possible to tune the 
-probe speed and/or probe start height to improve the repeatability 
-of the probe. The `PROBE_ACCURACY` command allows one to run tests 
+25 microns (.025mm) then the probe does not have sufficient accuracy
+for typical bed leveling procedures. It may be possible to tune the
+probe speed and/or probe start height to improve the repeatability
+of the probe. The `PROBE_ACCURACY` command allows one to run tests
 with different parameters to see their impact - see
 the [G-Codes document](G-Codes.md) for further details. If the probe
 generally obtains repeatable results but has an occasional outlier,
