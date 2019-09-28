@@ -70,10 +70,8 @@ class SafeZHoming:
             pos = toolhead.get_position()
             prev_x = pos[0]
             prev_y = pos[1]
-            if self.home_x_pos:
-                pos[0] = self.home_x_pos
-            if self.home_y_pos:
-                pos[1] = self.home_y_pos
+            pos[0] = self.home_x_pos
+            pos[1] = self.home_y_pos
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
             # Home Z
