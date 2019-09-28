@@ -5,6 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
+#include "board/irq.h" // irq_disable
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "internal.h" // enable_pclock
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
@@ -51,6 +54,15 @@ get_pclock_frequency(uint32_t periph_base)
     return FREQ_PERIPH;
 }
 
+// Enable a GPIO peripheral clock
+void
+gpio_clock_enable(GPIO_TypeDef *regs)
+{
+    uint32_t rcc_pos = ((uint32_t)regs - APB2PERIPH_BASE) / 0x400;
+    RCC->APB2ENR |= 1 << rcc_pos;
+    RCC->APB2ENR;
+}
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -58,8 +70,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
 
     // Enable GPIO clock
-    uint32_t rcc_pos = ((uint32_t)regs - APB2PERIPH_BASE) / 0x400;
-    RCC->APB2ENR |= 1 << rcc_pos;
+    gpio_clock_enable(regs);
 
     // Configure GPIO
     uint32_t pos = gpio % 16, shift = (pos % 8) * 4, msk = 0xf << shift, cfg;
@@ -67,10 +78,15 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         cfg = pullup ? 0x8 : 0x4;
     } else if (mode == GPIO_OUTPUT) {
         cfg = 0x1;
+    } else if (mode == (GPIO_OUTPUT | GPIO_OPEN_DRAIN)) {
+        cfg = 0x5;
     } else if (mode == GPIO_ANALOG) {
         cfg = 0x0;
     } else {
-        if (pullup > 0)
+        if (mode & GPIO_OPEN_DRAIN)
+            // Alternate function with open-drain mode
+            cfg = 0xd;
+        else if (pullup > 0)
             // Alternate function input pins use GPIO_INPUT mode on the stm32f1
             cfg = 0x8;
         else
@@ -91,10 +107,29 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE;
 }
 
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    if (!CONFIG_STM32_FLASH_START_2000)
+        return;
+    // Enter "stm32duino" bootloader
+    irq_disable();
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+    PWR->CR |= PWR_CR_DBP;
+    BKP->DR10 = 0x01;
+    PWR->CR &=~ PWR_CR_DBP;
+    NVIC_SystemReset();
+}
+
 // Main clock setup called at chip startup
 void
 clock_setup(void)
 {
+    // The SystemInit() code alters VTOR - restore it
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    // Configure and enable PLL
     uint32_t cfgr;
     if (CONFIG_CLOCK_REF_8M) {
         // Configure 72Mhz PLL from external 8Mhz crystal (HSE)

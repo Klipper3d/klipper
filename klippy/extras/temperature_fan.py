@@ -24,7 +24,7 @@ class TemperatureFan:
         self.printer.lookup_object('heater').register_sensor(config, self)
         self.speed_delay = self.sensor.get_report_time_delta()
         self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
-        self.min_speed = config.getfloat('min_speed', 0.3, above=0., maxval=1.)
+        self.min_speed = config.getfloat('min_speed', 0.3, minval=0., maxval=1.)
         self.last_temp = 0.
         self.last_temp_time = 0.
         self.target_temp_conf = config.getfloat(

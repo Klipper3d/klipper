@@ -18,6 +18,7 @@ extern GPIO_TypeDef * const digital_regs[];
 
 #define GPIO_INPUT 0
 #define GPIO_OUTPUT 1
+#define GPIO_OPEN_DRAIN 0x100
 #define GPIO_FUNCTION(fn) (2 | ((fn) << 4))
 #define GPIO_ANALOG 3
 
@@ -25,6 +26,7 @@ void enable_pclock(uint32_t periph_base);
 int is_enabled_pclock(uint32_t periph_base);
 uint32_t get_pclock_frequency(uint32_t periph_base);
 void clock_setup(void);
+void gpio_clock_enable(GPIO_TypeDef *regs);
 void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 
 #endif // internal.h

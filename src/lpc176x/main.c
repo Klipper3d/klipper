@@ -4,12 +4,8 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // NVIC_SystemReset
-#include "command.h" // DECL_CONSTANT
+#include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
-#include "board/misc.h" // timer_read_time
-
-DECL_CONSTANT_STR("MCU", "lpc176x");
 
 
 /****************************************************************
@@ -59,13 +55,6 @@ enable_pclock(uint32_t pclk)
         LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
     }
 }
-
-void
-command_reset(uint32_t *args)
-{
-    NVIC_SystemReset();
-}
-DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 // Main entry point
 int

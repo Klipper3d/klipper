@@ -129,24 +129,25 @@ Step Benchmarks
 Below are the results of stepper performance tests. The numbers shown
 represent total number of steps per second on the micro-controller.
 
-| Micro-controller            | Fastest step rate | 3 steppers active |
-| --------------------------- | ----------------- | ----------------- |
-| 16Mhz AVR                   | 151K              | 100K              |
-| 20Mhz AVR                   | 189K              | 125K              |
-| Arduino Zero (SAMD21)       | 234K              | 217K              |
-| "Blue Pill" (STM32F103)     | 395K              | 356K              |
-| Arduino Due (SAM3X8E)       | 438K              | 438K              |
-| Smoothieboard (LPC1768)     | 574K              | 574K              |
-| Duet2 Maestro (SAM4S8C)     | 578K              | 578K              |
-| Smoothieboard (LPC1769)     | 661K              | 661K              |
-| Beaglebone PRU              | 680K              | 680K              |
-| Duet2 Wifi/Eth (SAM4E8E)    | 686K              | 686K              |
-| Adafruit Metro M4 (SAMD51)  | 733K              | 694K              |
+| Micro-controller                | Fastest step rate | 3 steppers active |
+| ------------------------------- | ----------------- | ----------------- |
+| 16Mhz AVR                       | 154K              | 102K              |
+| 20Mhz AVR                       | 192K              | 127K              |
+| Arduino Zero (SAMD21)           | 234K              | 217K              |
+| "Blue Pill" (STM32F103)         | 387K              | 360K              |
+| Arduino Due (SAM3X8E)           | 438K              | 438K              |
+| Duet2 Maestro (SAM4S8C)         | 564K              | 564K              |
+| Smoothieboard (LPC1768)         | 574K              | 574K              |
+| Smoothieboard (LPC1769)         | 661K              | 661K              |
+| Beaglebone PRU                  | 680K              | 680K              |
+| Duet2 Wifi/Eth (SAM4E8E)        | 686K              | 686K              |
+| Adafruit Metro M4 (SAMD51)      | 733K              | 694K              |
+| BigTreeTech SKR Pro (STM32F407) | 922K              | 711K              |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the SAMD21 and STM32F103 the highest step rate is
 with two simultaneous steppers stepping. On the SAM3X8E, SAM4S8C,
 SAM4E8E, LPC176x, and PRU the highest step rate is with three
-simultaneous steppers. On the SAMD51, the highest step rate is with
-four simultaneous steppers. (Further details on the benchmarks are
-available in the [Benchmarks document](Benchmarks.md).)
+simultaneous steppers. On the SAMD51 and STM32F4 the highest step rate
+is with four simultaneous steppers. (Further details on the benchmarks
+are available in the [Benchmarks document](Benchmarks.md).)

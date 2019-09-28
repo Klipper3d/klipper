@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -160,26 +161,6 @@ usb_set_configure(void)
     UDP->UDP_GLB_STAT |= UDP_GLB_STAT_CONFG;
 }
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PB10,PB11");
-
-void
-usbserial_init(void)
-{
-    // Enable clocks
-    enable_pclock(ID_UDP);
-    PMC->PMC_USB = PMC_USB_USBDIV(5 - 1); // PLLA=240Mhz; divide by 5 for 48Mhz
-    PMC->PMC_SCER = PMC_SCER_UDP;
-
-    // Enable USB pullup
-    UDP->UDP_TXVC = UDP_TXVC_PUON | UDP_TXVC_TXVDIS;
-
-    // Enable interrupts
-    UDP->UDP_ICR = 0xffffffff;
-    NVIC_SetPriority(UDP_IRQn, 1);
-    NVIC_EnableIRQ(UDP_IRQn);
-}
-DECL_INIT(usbserial_init);
-
 // Configure endpoint 0 after usb reset completes
 static void
 handle_end_reset(void)
@@ -192,7 +173,7 @@ handle_end_reset(void)
     UDP->UDP_TXVC = UDP_TXVC_PUON;
 }
 
-void __visible
+void
 UDP_Handler(void)
 {
     uint32_t s = UDP->UDP_ISR;
@@ -216,3 +197,22 @@ UDP_Handler(void)
     if (s & (1<<USB_CDC_EP_BULK_IN))
         usb_notify_bulk_in();
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PB10,PB11");
+
+void
+usbserial_init(void)
+{
+    // Enable clocks
+    enable_pclock(ID_UDP);
+    PMC->PMC_USB = PMC_USB_USBDIV(5 - 1); // PLLA=240Mhz; divide by 5 for 48Mhz
+    PMC->PMC_SCER = PMC_SCER_UDP;
+
+    // Enable USB pullup
+    UDP->UDP_TXVC = UDP_TXVC_PUON | UDP_TXVC_TXVDIS;
+
+    // Enable interrupts
+    UDP->UDP_ICR = 0xffffffff;
+    armcm_enable_irq(UDP_Handler, UDP_IRQn, 1);
+}
+DECL_INIT(usbserial_init);

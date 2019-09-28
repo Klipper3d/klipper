@@ -4,13 +4,54 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // LPC_UART0
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/irq.h" // irq_save
 #include "board/serial_irq.h" // serial_rx_data
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
+
+// Write tx bytes to the serial port
+static void
+kick_tx(void)
+{
+    for (;;) {
+        if (!(LPC_UART0->LSR & (1<<5))) {
+            // Output fifo full - enable tx irq
+            LPC_UART0->IER = 0x03;
+            break;
+        }
+        uint8_t data;
+        int ret = serial_get_tx_byte(&data);
+        if (ret) {
+            // No more data to send - disable tx irq
+            LPC_UART0->IER = 0x01;
+            break;
+        }
+        LPC_UART0->THR = data;
+    }
+}
+
+void
+UART0_IRQHandler(void)
+{
+    uint32_t iir = LPC_UART0->IIR, status = iir & 0x0f;
+    if (status == 0x04)
+        serial_rx_byte(LPC_UART0->RBR);
+    else if (status == 0x02)
+        kick_tx();
+}
+
+void
+serial_enable_tx_irq(void)
+{
+    if (LPC_UART0->LSR & (1<<5)) {
+        irqstatus_t flag = irq_save();
+        kick_tx();
+        irq_restore(flag);
+    }
+}
 
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "P0.3,P0.2");
 
@@ -35,49 +76,7 @@ serial_init(void)
     gpio_peripheral(GPIO(0, 2), 1, 0);
 
     // Enable receive irq
-    NVIC_SetPriority(UART0_IRQn, 0);
-    NVIC_EnableIRQ(UART0_IRQn);
+    armcm_enable_irq(UART0_IRQHandler, UART0_IRQn, 0);
     LPC_UART0->IER = 0x01;
 }
 DECL_INIT(serial_init);
-
-// Write tx bytes to the serial port
-static void
-kick_tx(void)
-{
-    for (;;) {
-        if (!(LPC_UART0->LSR & (1<<5))) {
-            // Output fifo full - enable tx irq
-            LPC_UART0->IER = 0x03;
-            break;
-        }
-        uint8_t data;
-        int ret = serial_get_tx_byte(&data);
-        if (ret) {
-            // No more data to send - disable tx irq
-            LPC_UART0->IER = 0x01;
-            break;
-        }
-        LPC_UART0->THR = data;
-    }
-}
-
-void __visible
-UART0_IRQHandler(void)
-{
-    uint32_t iir = LPC_UART0->IIR, status = iir & 0x0f;
-    if (status == 0x04)
-        serial_rx_byte(LPC_UART0->RBR);
-    else if (status == 0x02)
-        kick_tx();
-}
-
-void
-serial_enable_tx_irq(void)
-{
-    if (LPC_UART0->LSR & (1<<5)) {
-        irqstatus_t flag = irq_save();
-        kick_tx();
-        irq_restore(flag);
-    }
-}

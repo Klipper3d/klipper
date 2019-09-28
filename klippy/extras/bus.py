@@ -26,9 +26,10 @@ def resolve_bus_name(mcu, param, bus):
     # Check for reserved bus pins
     constants = mcu.get_constants()
     reserve_pins = constants.get('BUS_PINS_%s' % (bus,), None)
+    pin_resolver = ppins.get_pin_resolver(mcu_name)
     if reserve_pins is not None:
         for pin in reserve_pins.split(','):
-            ppins.reserve_pin(mcu_name, pin, bus)
+            pin_resolver.reserve_pin(pin, bus)
     return bus
 
 
@@ -197,3 +198,44 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
         addr = config.getint('i2c_address', default_addr, minval=0, maxval=127)
     # Create MCU_I2C object
     return MCU_I2C(i2c_mcu, bus, addr, speed)
+
+
+######################################################################
+# Bus synchronized digital outputs
+######################################################################
+
+# Helper code for a gpio that updates on a cmd_queue
+class MCU_bus_digital_out:
+    def __init__(self, mcu, pin_desc, cmd_queue=None, value=0):
+        self.mcu = mcu
+        self.oid = mcu.create_oid()
+        ppins = mcu.get_printer().lookup_object('pins')
+        pin_params = ppins.lookup_pin(pin_desc)
+        if pin_params['chip'] is not mcu:
+            raise ppins.error("Pin %s must be on mcu %s" % (
+                pin_desc, mcu.get_name()))
+        mcu.add_config_cmd("config_digital_out oid=%d pin=%s value=%d"
+                           " default_value=%d max_duration=%d"
+                           % (self.oid, pin_params['pin'], value, value, 0))
+        mcu.register_config_callback(self.build_config)
+        if cmd_queue is None:
+            cmd_queue = mcu.alloc_command_queue()
+        self.cmd_queue = cmd_queue
+        self.update_pin_cmd = None
+    def get_oid(self):
+        return self.oid
+    def get_mcu(self):
+        return self.mcu
+    def get_command_queue(self):
+        return self.cmd_queue
+    def build_config(self):
+        self.update_pin_cmd = self.mcu.lookup_command(
+            "update_digital_out oid=%c value=%c", cq=self.cmd_queue)
+    def update_digital_out(self, value, minclock=0, reqclock=0):
+        if self.update_pin_cmd is None:
+            # Send setup message via mcu initialization
+            self.mcu.add_config_cmd("update_digital_out oid=%c value=%c"
+                                    % (self.oid, not not value))
+            return
+        self.update_pin_cmd.send([self.oid, not not value],
+                                 minclock=minclock, reqclock=reqclock)

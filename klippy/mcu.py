@@ -505,7 +505,8 @@ class MCU:
         c = 1.0 / (count * self._mcu_freq)
         self._mcu_tick_avg = tick_sum * c
         tick_sumsq = params['sumsq'] * self._stats_sumsq_base
-        self._mcu_tick_stddev = c * math.sqrt(count*tick_sumsq - tick_sum**2)
+        diff = count*tick_sumsq - tick_sum**2
+        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
         self._mcu_tick_awake = tick_sum / self._mcu_freq
     def _handle_shutdown(self, params):
         if self._is_shutdown:
@@ -568,10 +569,9 @@ class MCU:
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
-        reserved_pins = ppins.get_reserved_pins(self._name)
-        pin_resolver = pins.PinResolver(mcu_type, reserved_pins)
+        pin_resolver = ppins.get_pin_resolver(self._name)
         if self._pin_map is not None:
-            pin_resolver.update_aliases(self._pin_map)
+            pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
         for i, cmd in enumerate(self._config_cmds):
             self._config_cmds[i] = pin_resolver.update_command(cmd)
         for i, cmd in enumerate(self._init_cmds):
@@ -651,10 +651,11 @@ class MCU:
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         logging.info("\n".join(log_info))
         ppins = self._printer.lookup_object('pins')
+        pin_resolver = ppins.get_pin_resolver(name)
         for cname, value in self.get_constants().items():
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
-                    ppins.reserve_pin(name, pin, cname[13:])
+                    pin_resolver.reserve_pin(pin, cname[13:])
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")

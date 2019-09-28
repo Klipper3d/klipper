@@ -5,6 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 
@@ -53,6 +55,15 @@ get_pclock_frequency(uint32_t periph_base)
     return FREQ_PERIPH;
 }
 
+// Enable a GPIO peripheral clock
+void
+gpio_clock_enable(GPIO_TypeDef *regs)
+{
+    uint32_t rcc_pos = ((uint32_t)regs - AHB1PERIPH_BASE) / 0x400;
+    RCC->AHB1ENR |= 1 << rcc_pos;
+    RCC->AHB1ENR;
+}
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -60,11 +71,10 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
 
     // Enable GPIO clock
-    uint32_t rcc_pos = ((uint32_t)regs - AHB1PERIPH_BASE) / 0x400;
-    RCC->AHB1ENR |= (1<<rcc_pos);
+    gpio_clock_enable(regs);
 
     // Configure GPIO
-    uint32_t mode_bits = mode & 0x0f, func = mode >> 4;
+    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf, od = mode >> 8;
     uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
     uint32_t pos = gpio % 16, af_reg = pos / 8;
     uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
@@ -73,7 +83,14 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
     regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
+    regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+}
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
 }
 
 #if CONFIG_CLOCK_REF_8M
@@ -131,6 +148,28 @@ enable_clock_stm32f446(void)
     PWR->CR = (3 << PWR_CR_VOS_Pos) | PWR_CR_ODEN | PWR_CR_ODSWEN;
     while (!(PWR->CSR & PWR_CSR_ODSWRDY))
         ;
+
+    // Enable 48Mhz USB clock
+    if (CONFIG_USBSERIAL) {
+        if (CONFIG_CLOCK_REF_8M) {
+            RCC->PLLSAICFGR = (
+                (4 << RCC_PLLSAICFGR_PLLSAIM_Pos)
+                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
+                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
+                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
+        } else {
+            RCC->PLLSAICFGR = (
+                (8 << RCC_PLLSAICFGR_PLLSAIM_Pos)
+                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
+                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
+                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
+        }
+        RCC->CR |= RCC_CR_PLLSAION;
+        while (!(RCC->CR & RCC_CR_PLLSAIRDY))
+            ;
+
+        RCC->DCKCFGR2 = RCC_DCKCFGR2_CK48MSEL;
+    }
 #endif
 }
 
@@ -138,6 +177,10 @@ enable_clock_stm32f446(void)
 void
 clock_setup(void)
 {
+    // The SystemInit() code alters VTOR - restore it
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    // Configure and enable PLL
     if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
         enable_clock_stm32f40x();
     else

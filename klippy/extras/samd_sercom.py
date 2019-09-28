@@ -18,7 +18,7 @@ class SamdSERCOM:
         self.mcu = tx_pin_params['chip']
         self.mcu.add_config_cmd(
             "set_sercom_pin bus=%s sercom_pin_type=tx pin=%s" % (
-                self.name, self.tx_pin))
+                self.name, tx_pin_params['pin']))
 
         clk_pin_params = ppins.lookup_pin(self.clk_pin)
         if self.mcu is not clk_pin_params['chip']:
@@ -26,7 +26,7 @@ class SamdSERCOM:
                     config.get_name(),))
         self.mcu.add_config_cmd(
             "set_sercom_pin bus=%s sercom_pin_type=clk pin=%s" % (
-                self.name, self.clk_pin))
+                self.name, clk_pin_params['pin']))
 
         if self.rx_pin:
             rx_pin_params = ppins.lookup_pin(self.rx_pin)
@@ -35,7 +35,7 @@ class SamdSERCOM:
                     config.get_name(),))
             self.mcu.add_config_cmd(
                 "set_sercom_pin bus=%s sercom_pin_type=rx pin=%s" % (
-                    self.name, self.rx_pin))
+                    self.name, rx_pin_params['pin']))
 
 def load_config_prefix(config):
     return SamdSERCOM(config)

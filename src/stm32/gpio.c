@@ -11,18 +11,18 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 16);
 #ifdef GPIOH
-DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 16);
 #endif
 #ifdef GPIOI
-DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 16);
 #endif
 
 GPIO_TypeDef * const digital_regs[] = {
@@ -52,6 +52,7 @@ gpio_out_setup(uint32_t pin, uint32_t val)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    gpio_clock_enable(regs);
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
     return g;
