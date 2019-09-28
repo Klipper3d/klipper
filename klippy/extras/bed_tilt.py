@@ -32,11 +32,17 @@ class BedTilt:
     def move(self, newpos, speed):
         x, y, z, e = newpos
         if self.chain_transform is not None:
-            self.chain_transform.move([x, y, z + x*self.x_adjust + y*self.y_adjust
-                                + self.z_adjust, e], speed)
+            self.chain_transform.move([x, y,
+                                       z + x*self.x_adjust
+                                       + y*self.y_adjust
+                                       + self.z_adjust, e],
+                                      speed)
         else:
-            self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
-                                + self.z_adjust, e], speed)
+            self.toolhead.move([x, y,
+                                z + x*self.x_adjust
+                                + y*self.y_adjust
+                                + self.z_adjust, e],
+                               speed)
 
     def update_adjust(self, x_adjust, y_adjust, z_adjust):
         self.x_adjust = x_adjust
