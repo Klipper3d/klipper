@@ -196,7 +196,6 @@ class TMCVirtualEndstop:
         return self._set_current(self.run_current)
 
     def _set_current(self, current):
-        logging.info("SET_TMC_CURRENT STEPPER=%s CURRENT=%s" % (self.name, current))
         self.gcode.run_script_from_command("SET_TMC_CURRENT "\
                                            "STEPPER=%s CURRENT=%s"
                                            % (self.name, current)
