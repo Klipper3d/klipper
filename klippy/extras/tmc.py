@@ -178,10 +178,6 @@ class TMCVirtualEndstop:
 
         printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        printer.register_event_handler("homing:homing_started",
-                                       self._set_homing_current)
-        printer.register_event_handler("homing:homing_finished",
-                                       self._set_running_current)
         self.gcode = printer.lookup_object("gcode")
 
         # Wrappers
@@ -193,24 +189,18 @@ class TMCVirtualEndstop:
         self.query_endstop = self.mcu_endstop.query_endstop
         self.TimeoutError = self.mcu_endstop.TimeoutError
 
-    def _set_homing_current(self, homing_state, rails):
-        return self._set_current(homing_state, rails, self.homing_current)
+    def _set_homing_current(self):
+        return self._set_current(self.homing_current)
 
-    def _set_running_current(self, homing_state, rails):
-        return self._set_current(homing_state, rails, self.run_current)
+    def _set_running_current(self):
+        return self._set_current(self.run_current)
 
-    def _set_current(self, homing_state, rails, current):
-        for rail in rails:
-            for stepper in rail.get_steppers():
-                stepper_name = stepper.get_name()
-                if (stepper_name == self.name):
-                    self.gcode._cmd_mux({"#command" : "SET_TMC_CURRENT",
-                                         "CURRENT" : current,
-                                         "STEPPER" : stepper_name,
-                                         "#original" : "SET_TMC_CURRENT "\
-                                         "STEPPER=%s CURRENT=%s"
-                                         % (stepper_name, current)
-                                         })
+    def _set_current(self, current):
+        logging.info("SET_TMC_CURRENT STEPPER=%s CURRENT=%s" % (self.name, current))
+        self.gcode.run_script_from_command("SET_TMC_CURRENT "\
+                                           "STEPPER=%s CURRENT=%s"
+                                           % (self.name, current)
+                                           )
         return True
     def home_prepare(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
@@ -224,6 +214,7 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
+        self._set_homing_current()
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
@@ -235,6 +226,7 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
+        self._set_running_current()
         self.mcu_endstop.home_finalize()
 
 # Digital output wrapper for virtual enable
