@@ -213,7 +213,8 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
-        self._set_homing_current()
+        if self.homing_current != self.run_current:
+            self._set_homing_current()
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
@@ -225,7 +226,8 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
-        self._set_running_current()
+        if self.homing_current != self.run_current:
+            self._set_running_current()
         self.mcu_endstop.home_finalize()
 
 # Digital output wrapper for virtual enable
