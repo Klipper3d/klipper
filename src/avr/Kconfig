@@ -64,11 +64,11 @@ config AVRDUDE_PROTOCOL
 
 choice
     prompt "Processor speed" if LOW_LEVEL_OPTIONS
+    config AVR_FREQ_16000000
+        bool "16Mhz"
     config AVR_FREQ_20000000
         bool "20Mhz"
         depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
-    config AVR_FREQ_16000000
-        bool "16Mhz"
     config AVR_FREQ_8000000
         bool "8Mhz"
 endchoice
