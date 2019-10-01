@@ -19,7 +19,7 @@ class SafeZHoming:
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
-        self.move_to_previous = config.getboolean('move_to_previous', True)
+        self.move_to_previous = config.getboolean('move_to_previous', False)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
