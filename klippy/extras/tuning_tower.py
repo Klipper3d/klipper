@@ -5,6 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 
+CANCEL_Z_DELTA=2.0
+
 class TuningTower:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -48,7 +50,10 @@ class TuningTower:
             and newpos[:3] != self.last_position[:3]):
             # Extrusion move at new z height
             z = newpos[2]
-            if z > self.last_z:
+            if z < self.last_z - CANCEL_Z_DELTA:
+                # Extrude at a lower z height - probably start of new print
+                self.end_test()
+            else:
                 # Process update
                 oldval = self.calc_value(self.last_z)
                 newval = self.calc_value(z)
@@ -57,8 +62,6 @@ class TuningTower:
                     gcode = self.printer.lookup_object("gcode")
                     gcode.run_script_from_command("%s %s=%.9f" % (
                         self.command, self.parameter, newval))
-            else:
-                self.end_test()
         # Forward move to actual handler
         self.last_position[:] = newpos
         normal_transform.move(newpos, speed)
