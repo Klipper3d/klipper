@@ -159,8 +159,9 @@ class TMCCommandHelper:
 
 # Endstop wrapper that enables "sensorless homing"
 class TMCVirtualEndstop:
-    def __init__(self, mcu_tmc, mcu_endstop, config):
+    def __init__(self, mcu_tmc, mcu_endstop, cur_helper):
         self.mcu_tmc = mcu_tmc
+        self.cur_helper = cur_helper
         self.fields = mcu_tmc.get_fields()
         self.mcu_endstop = mcu_endstop
         reg = self.fields.lookup_register("en_pwm_mode", None)
@@ -170,16 +171,6 @@ class TMCVirtualEndstop:
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
-
-        self.run_current = config.getfloat('run_current', above=0.)
-        self.homing_current = config.getfloat('homing_current',
-                                              self.run_current,
-                                              above=0.)
-
-        printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
-        self.gcode = printer.lookup_object("gcode")
-
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -188,19 +179,17 @@ class TMCVirtualEndstop:
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
         self.TimeoutError = self.mcu_endstop.TimeoutError
-
     def _set_homing_current(self):
-        return self._set_current(self.homing_current)
-
+        return self._set_current(2,2)
     def _set_running_current(self):
-        return self._set_current(self.run_current)
-
-    def _set_current(self, current):
-        self.gcode.run_script_from_command("SET_TMC_CURRENT "\
-                                           "STEPPER=%s CURRENT=%s"
-                                           % (self.name, current)
-                                           )
-        return True
+        return self._set_current(0,1)
+    def _set_current(self, runIndex, holdIndex):
+        if (self.cur_helper is not None):
+            currents = self.cur_helper.get_current()
+            self.cur_helper._set_current(
+                currents[runIndex],
+                currents[holdIndex]
+                )
     def home_prepare(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
@@ -213,8 +202,7 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
-        if self.homing_current != self.run_current:
-            self._set_homing_current()
+        self._set_homing_current()
         self.mcu_endstop.home_prepare()
     def home_finalize(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
@@ -226,8 +214,7 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
-        if self.homing_current != self.run_current:
-            self._set_running_current()
+        self._set_running_current()
         self.mcu_endstop.home_finalize()
 
 # Digital output wrapper for virtual enable
@@ -253,11 +240,11 @@ class TMCVirtualEnable:
             (lambda ev: self._do_set_digital(print_time, value)))
 
 class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc, diag_pin=None):
+    def __init__(self, config, mcu_tmc, diag_pin=None, cur_helper=None):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
-        self.config = config
+        self.cur_helper = cur_helper
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
         ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
@@ -276,7 +263,7 @@ class TMCVirtualPinHelper:
         if pin_type != 'endstop':
             raise ppins.error("tmc virtual endstop only useful as endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
-        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop, self.config)
+        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop, self.cur_helper)
 
 
 ######################################################################
