@@ -99,14 +99,16 @@ class TMCCurrentHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        run_current = config.getfloat('run_current',
+        self.run_current = config.getfloat('run_current',
                                       above=0., maxval=MAX_CURRENT)
-        hold_current = config.getfloat('hold_current', run_current,
+        self.hold_current = config.getfloat('hold_current', self.run_current,
                                        above=0., maxval=MAX_CURRENT)
-        self.homing_current = config.getfloat('homing_current', run_current,
-                                              above=0., maxval=MAX_CURRENT)
+        self.homing_current = config.getfloat('homing_current',
+                                              self.run_current, above=0.,
+                                              maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
-        vsense, irun, ihold = self._calc_current(run_current, hold_current)
+        vsense, irun, ihold = self._calc_current(self.run_current,
+                                                 self.hold_current)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
@@ -142,7 +144,13 @@ class TMCCurrentHelper:
     def get_current(self):
         run_current = self._calc_current_from_field("IRUN")
         hold_current= self._calc_current_from_field("IHOLD")
-        return [run_current, hold_current, self.homing_current]
+        return [
+            run_current,
+            hold_current,
+            self.homing_current,
+            self.run_current,
+            self.hold_current
+            ]
     def set_current(self, run_current, hold_current):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
@@ -162,13 +170,13 @@ class TMCCurrentHelper:
                 'HOMINGCURRENT', params, above=0., maxval=MAX_CURRENT)
         if 'HOLDCURRENT' in params:
             dumpinfo = False
-            hold_current = gcode.get_float(
+            self.hold_current = gcode.get_float(
                 'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
         else:
             hold_current = self._calc_current_from_field("IHOLD")
         if 'CURRENT' in params:
             dumpinfo = False
-            run_current = gcode.get_float(
+            self.run_current = gcode.get_float(
                 'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
         else:
             run_current = self._calc_current_from_field("IRUN")
@@ -183,7 +191,7 @@ class TMCCurrentHelper:
                                    self.homing_current
                                    ))
             return
-        self.set_current(run_current, hold_current)
+        self.set_current(self.run_current, self.hold_current)
 
 ######################################################################
 # TMC2130 SPI
@@ -230,12 +238,12 @@ class TMC2130:
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual pins to be created
         diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
-        TMCCurrentHelper(config, self.mcu_tmc)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin,
+                                TMCCurrentHelper(config, self.mcu_tmc))
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase

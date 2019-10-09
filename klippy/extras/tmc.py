@@ -182,11 +182,11 @@ class TMCVirtualEndstop:
     def _set_homing_current(self):
         return self._set_current(2,2)
     def _set_running_current(self):
-        return self._set_current(0,1)
+        return self._set_current(3,4)
     def _set_current(self, runIndex, holdIndex):
         if (self.cur_helper is not None):
             currents = self.cur_helper.get_current()
-            self.cur_helper._set_current(
+            self.cur_helper.set_current(
                 currents[runIndex],
                 currents[holdIndex]
                 )
