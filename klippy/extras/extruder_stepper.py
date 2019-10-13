@@ -12,7 +12,8 @@ class ExtruderStepper:
         self.name = config.get_name()
         self.extruder_name = config.get('add_to_extruder')
         self.stepper = stepper.PrinterStepper(config)
-        self.printer.register_event_handler("klippy:connect", self.add_stepper_to_extruder)
+        self.printer.register_event_handler("klippy:connect", \
+                                            self.add_stepper_to_extruder)
     def add_stepper_to_extruder(self):
         extruder_list = extruder.get_printer_extruders(self.printer)
         for e in extruder_list:
@@ -22,4 +23,3 @@ class ExtruderStepper:
 
 def load_config_prefix(config):
     return ExtruderStepper(config)
-
