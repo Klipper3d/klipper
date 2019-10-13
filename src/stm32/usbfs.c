@@ -34,7 +34,7 @@ struct ep_mem {
     uint32_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
 };
 
-#define EPM ((struct ep_mem *)(USB_BASE + 0x400))
+#define EPM ((struct ep_mem *)USB_PMAADDR)
 
 #define CALC_ADDR(p) (((void*)(p) - (void*)EPM) / 2)
 #define CALC_SIZE(s) ((s) > 32 ? (DIV_ROUND_UP((s), 32) << 10) | 0x8000 \
@@ -268,11 +268,11 @@ usb_init(void)
     udelay(5000);
     gpio_in_setup(GPIO('A', 12), 0);
 
-    // Setup USB packet memory
-    btable_configure();
-
     // Enable USB clock
     enable_pclock(USB_BASE);
+
+    // Setup USB packet memory
+    btable_configure();
 
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
