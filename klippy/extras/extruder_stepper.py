@@ -20,6 +20,6 @@ class ExtruderStepper:
                 e.add_stepper(self.stepper)
                 break
 
-def load_config(config):
+def load_config_prefix(config):
     return ExtruderStepper(config)
 
