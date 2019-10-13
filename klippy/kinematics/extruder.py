@@ -95,6 +95,8 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
+    def get_trapq(self):
+        return self.trapq
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
