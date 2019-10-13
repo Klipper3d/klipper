@@ -1,4 +1,4 @@
-# Code for handling printer nozzle extruders
+# Code for supporting multiple steppers in single filament extruder.
 #
 # Copyright (C) 2019-2020  Simo Apell <simo.apell@live.fi>
 #
