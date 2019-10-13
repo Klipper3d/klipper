@@ -19,7 +19,7 @@ class PrinterExtruder:
             self.heater = pheater.setup_heater(config, gcode_id)
         else:
             self.heater = pheater.lookup_heater(shared_heater)
-        self.stepper = stepper.PrinterStepper(config)
+        self.stepper_list = [stepper.PrinterStepper(config)]
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
@@ -38,7 +38,8 @@ class PrinterExtruder:
         self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
+        for s in self.stepper_list:
+            s.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
         gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
@@ -56,7 +57,8 @@ class PrinterExtruder:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.extruder_move_fill = ffi_lib.extruder_move_fill
-        self.stepper.setup_itersolve('extruder_stepper_alloc')
+        for s in self.stepper_list:
+            s.setup_itersolve('extruder_stepper_alloc')
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
         if self.name in ('extruder', 'extruder0'):
@@ -83,7 +85,8 @@ class PrinterExtruder:
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def motor_off(self, print_time):
-        self.stepper.motor_enable(print_time, 0)
+        for s in self.stepper_list:
+            s.motor_enable(print_time, 0)
         self.need_motor_enable = True
     def check_move(self, move):
         move.extrude_r = move.axes_d[3] / move.move_d
@@ -168,7 +171,8 @@ class PrinterExtruder:
         return flush_count
     def move(self, print_time, move):
         if self.need_motor_enable:
-            self.stepper.motor_enable(print_time, 1)
+            for s in self.stepper_list:
+                s.motor_enable(print_time, 1)
             self.need_motor_enable = False
         axis_d = move.axes_d[3]
         axis_r = axis_d / move.move_d
@@ -205,8 +209,16 @@ class PrinterExtruder:
         self.extruder_move_fill(
             self.cmove, print_time, accel_t, cruise_t, decel_t, start_pos,
             start_v, cruise_v, accel, extra_accel_v, extra_decel_v)
-        self.stepper.step_itersolve(self.cmove)
+        for s in self.stepper_list:
+            s.step_itersolve(self.cmove)
         self.extrude_pos = start_pos + axis_d
+    def add_stepper(self, stepper):
+        if stepper == None:
+            return
+        stepper.set_max_jerk(9999999.9, 9999999.9)
+        stepper.setup_itersolve('extruder_stepper_alloc')
+        self.stepper_list.append(stepper)
+        logging.info("Added stepper to '%s'" % self.name)
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
