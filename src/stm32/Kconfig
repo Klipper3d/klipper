@@ -124,6 +124,10 @@ config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     default y
+config STM32F042_USB_PIN_SWAP
+    bool "Use PA9/PA10 for USB" if MACH_STM32F042
+    depends on USBSERIAL && MACH_STM32F042
+    default n
 config SERIAL
     depends on !USBSERIAL
     bool

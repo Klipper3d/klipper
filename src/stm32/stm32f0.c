@@ -159,4 +159,12 @@ clock_setup(void)
         hsi48_setup();
     else
         pll_setup();
+
+    // Support alternate USB pins on stm32f042
+#ifdef SYSCFG_CFGR1_PA11_PA12_RMP
+    if (CONFIG_STM32F042_USB_PIN_SWAP) {
+        enable_pclock(SYSCFG_BASE);
+        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
+    }
+#endif
 }
