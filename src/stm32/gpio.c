@@ -26,12 +26,12 @@ DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 16);
 #endif
 
 GPIO_TypeDef * const digital_regs[] = {
-    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
+    ['A' - 'A'] = GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
 #ifdef GPIOH
-    GPIOF, GPIOG, GPIOH,
+    ['F' - 'A'] = GPIOF, GPIOG, GPIOH,
 #endif
 #ifdef GPIOI
-    GPIOI,
+    ['I' - 'A'] = GPIOI,
 #endif
 };
 
@@ -52,6 +52,8 @@ gpio_out_setup(uint32_t pin, uint32_t val)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    if (! regs)
+        goto fail;
     gpio_clock_enable(regs);
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
@@ -106,6 +108,8 @@ gpio_in_setup(uint32_t pin, int32_t pull_up)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    if (! regs)
+        goto fail;
     struct gpio_in g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;
