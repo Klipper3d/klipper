@@ -203,20 +203,20 @@ The test was last run on commit `b161a69e` with gcc version `pru-gcc
 The following configuration sequence is used on the STM32F042:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PA0 dir_pin=PA1 min_stop_interval=0 invert_step=0
-config_stepper oid=1 step_pin=PA2 dir_pin=PA3 min_stop_interval=0 invert_step=0
-config_stepper oid=2 step_pin=PA6 dir_pin=PA7 min_stop_interval=0 invert_step=0
+config_stepper oid=0 step_pin=PA1 dir_pin=PA2 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PB8 dir_pin=PA2 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `c105adc8` with gcc version
-`arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1`.
+The test was last run on commit `0b0c47c5` with gcc version
+`arm-none-eabi-gcc (Fedora 9.2.0-1.fc30) 9.2.0`.
 
 | stm32f042        | ticks |
 | ---------------- | ----- |
-| 1 stepper        | 308   |
-| 2 stepper        | 638   |
-| 3 stepper        | 1021  |
+| 1 stepper        | 247   |
+| 2 stepper        | 328   |
+| 3 stepper        | 558   |
 
 ### STM32F103 step rate benchmark ###
 
