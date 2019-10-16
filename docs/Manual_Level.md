@@ -157,14 +157,8 @@ screw4: -5,190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
-samples: 3
-sample_retract_dist: 2.
-samples_result: median
 screw_thread: CW-M3
 ```
-
-One can indicate the number of times to repeat probe on each screw and
-if the value is the median or the average read probe.
 
 The screw1 is always the reference point for the others, so the system
 assumes that screw1 is in the correct height.
