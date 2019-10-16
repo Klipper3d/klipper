@@ -41,7 +41,7 @@ static int tty_stdio;
 static int valid_stdin = 1;
 static int sync_kconfig;
 static int conf_cnt;
-static char line[128];
+static char line[144];
 static struct menu *rootEntry;
 
 static void print_help(struct menu *menu)
