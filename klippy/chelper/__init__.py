@@ -17,7 +17,7 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
-    'kin_winch.c', 'kin_extruder.c',
+    'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -86,6 +86,12 @@ defs_kin_polar = """
     struct stepper_kinematics *polar_stepper_alloc(char type);
 """
 
+defs_kin_rotary_delta = """
+    struct stepper_kinematics *rotary_delta_stepper_alloc(
+        double shoulder_radius, double shoulder_height
+        , double angle, double upper_arm, double lower_arm);
+"""
+
 defs_kin_winch = """
     struct stepper_kinematics *winch_stepper_alloc(double anchor_x
         , double anchor_y, double anchor_z);
@@ -138,7 +144,7 @@ defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std,
     defs_stepcompress, defs_itersolve, defs_trapq,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
-    defs_kin_winch, defs_kin_extruder
+    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder
 ]
 
 # Return the list of file modification times
