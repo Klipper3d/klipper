@@ -65,6 +65,11 @@ class TemperatureFan:
         return self.min_speed
     def get_max_speed(self):
         return self.max_speed
+    def get_status(self, eventtime):
+        status = self.fan.get_status(eventtime)
+        status["temperature"] = self.last_temp
+        status["target"] = self.target_temp
+        return status
     cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help = "Sets a temperature fan target"
     def cmd_SET_TEMPERATURE_FAN_TARGET_TEMP(self, params):
         temp = self.gcode.get_float('TARGET', params, self.target_temp_conf)
