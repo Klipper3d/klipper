@@ -56,6 +56,8 @@ Type=simple
 User=$USER
 RemainAfterExit=yes
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log
+Restart=always
+RestartSec=10
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
