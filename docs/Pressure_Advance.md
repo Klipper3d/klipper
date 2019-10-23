@@ -22,11 +22,12 @@ Use a slicer to generate g-code for the large hollow square found in
 speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
 height should be around 75% of the nozzle diameter).
 
-Prepare for the test by issuing the following G-Code command:
+Prepare for the test by issuing the following G-Code commands:
 ```
 SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
+SET_PRESSURE_ADVANCE ADVANCE_LOOKAHEAD_TIME=0
 ```
-This command makes the nozzle travel slower through corners and to
+These commands make the nozzle travel slower through corners and they
 emphasize the effects of extruder pressure. Then for printers with a
 direct drive extruder run the command:
 ```
