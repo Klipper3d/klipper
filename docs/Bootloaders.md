@@ -193,9 +193,8 @@ interface. This is commonly done with a dedicated SWD hardware dongle.
 Alternatively, one can use a
 [Raspberry Pi with OpenOCD](#running-openocd-on-the-raspberry-pi).
 
-To flash a bootloader with OpenOCD use a chip config similar to:
+To flash a bootloader with OpenOCD use the following chip config:
 ```
-set CHIPNAME at91samd21g18
 source [find target/at91samdXX.cfg]
 ```
 Obtain a bootloader - for example:
@@ -231,9 +230,8 @@ SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
 Like the SAMD21, the SAMD51 bootloader is flashed via the ARM Serial
 Wire Debug (SWD) interface. To flash a bootloader with
 [OpenOCD on a Raspberry Pi](#running-openocd-on-the-raspberry-pi) use
-a chip config similar to:
+the following chip config:
 ```
-set CHIPNAME at91samd51g19
 source [find target/atsame5x.cfg]
 ```
 Obtain a bootloader - several bootloaders are available from
@@ -361,15 +359,18 @@ bcm2835gpio_swd_nums 25 24
 bcm2835gpio_srst_num 18
 transport select swd
 
-# Set the chip (at91samd51j19 in this example)
-set CHIPNAME at91samd51j19
+# Use hardware reset wire for chip resets
+reset_config srst_only
+adapter_nsrst_delay 100
+adapter_nsrst_assert_width 100
+
+# Specify the chip type
 source [find target/atsame5x.cfg]
 
 # Set the adapter speed
 adapter_khz 40
-adapter_nsrst_delay 100
-adapter_nsrst_assert_width 100
 
+# Connect to chip
 init
 targets
 reset halt
