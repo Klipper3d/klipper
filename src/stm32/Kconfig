@@ -46,7 +46,7 @@ config HAVE_STM32_USBOTG
 
 config MCU
     string
-    default "stm32f103xb" if MACH_STM32F103
+    default "stm32f103xe" if MACH_STM32F103
     default "stm32f405xx" if MACH_STM32F405
     default "stm32f407xx" if MACH_STM32F407
     default "stm32f446xx" if MACH_STM32F446
