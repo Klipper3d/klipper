@@ -85,7 +85,7 @@ CONFIG ../../config/generic-smoothieboard.cfg
 # Printers using the stm32f103
 DICTIONARY stm32f1.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
-CONFIG ../../config/generic-bigtreetech-skr-mini-e3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
 
 # Printers using the stm32f103 via serial
