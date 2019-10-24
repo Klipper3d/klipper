@@ -232,8 +232,10 @@ class BedMeshCalibrate:
             max_x = max_y = self.radius
             mpi=atan(1.0)*4.0;
             self.tilt_points.append((0.0, self.radius))
-            self.tilt_points.append((-self.radius*cos(mpi/6.0), -self.radius*sin(mpi/6.0)))
-            self.tilt_points.append((self.radius*cos(mpi/6.0), self.radius*sin(mpi/6.0)))
+            self.tilt_points.append((-self.radius*cos(mpi/6.0),\
+                    -self.radius*sin(mpi/6.0)))
+            self.tilt_points.append((self.radius*cos(mpi/6.0), \
+                    self.radius*sin(mpi/6.0)))
         else:
             # rectangular
             x_cnt, y_cnt = parse_pair(
@@ -448,7 +450,8 @@ class BedMeshCalibrate:
         x_offset = offsets[0]
         y_offset = offsets[1]
         z_offset = offsets[2]
-        self.gcode.respond_info("offsets: %f %f %f" % (x_offset,y_offset,z_offset) );
+        self.gcode.respond_info \
+                ("offsets: %f %f %f" % (x_offset,y_offset,z_offset) );
 
         params=self.bedmesh.z_mesh.probe_params
 
@@ -465,14 +468,21 @@ class BedMeshCalibrate:
         # shift measured positions
         for pos in positions:
             # offset according to the mesh
-            calc_Zval=self.bedmesh.z_mesh.calc_z(pos[0]+x_offset,pos[1]+y_offset)+z_offset
+            calc_Zval=self.bedmesh.z_mesh.\
+                    calc_z(pos[0]+x_offset,pos[1]+y_offset)+z_offset
             ZvalCorrectioncorr=pos[2] -calc_Zval;
             pts.append([pos[0],pos[1],ZvalCorrectioncorr] )
 
         # cross product of vectors defined by 3 probed points
-        cx=pts[1][2]*(pts[0][1] - pts[2][1]) + pts[0][2]*(-pts[1][1] + pts[2][1]) + (-pts[0][1] + pts[1][1])*pts[2][2]
-        cy=pts[0][2]*(pts[1][0] - pts[2][0]) + pts[1][2]*(-pts[0][0] + pts[2][0]) + ( pts[0][0] - pts[1][0])*pts[2][2]
-        cz=pts[1][1]*(pts[0][0] - pts[2][0]) + pts[0][1]*(-pts[1][0] + pts[2][0]) + (-pts[0][0] + pts[1][0])*pts[2][1]
+        cx=pts[1][2]*(pts[0][1] - pts[2][1]) + \
+                pts[0][2]*(-pts[1][1] + pts[2][1]) + \
+                (-pts[0][1] + pts[1][1])*pts[2][2]
+        cy=pts[0][2]*(pts[1][0] - pts[2][0]) +\
+                pts[1][2]*(-pts[0][0] + pts[2][0]) + \
+                ( pts[0][0] - pts[1][0])*pts[2][2]
+        cz=pts[1][1]*(pts[0][0] - pts[2][0]) + \
+                pts[0][1]*(-pts[1][0] + pts[2][0]) + \
+                (-pts[0][0] + pts[1][0])*pts[2][1]
         # self.gcode.respond_info("Normal to plane is [%f,%f,%f]" % (cx,cy,cz))
         # calcuate d in the equation of plane cx*X+cy*Y+cz*Zd==d
         d=cx*pts[0][0]+cy*pts[0][1]+cz*pts[0][2]
@@ -491,8 +501,6 @@ class BedMeshCalibrate:
                 xx=(min_x+i*x_dist)
                 yy=(min_y+j*y_dist)
                 Zcorr=z_correction[0]*xx+z_correction[1]*yy+z_correction[2]
-#                calc_Zval=self.bedmesh.z_mesh.calc_z(xx+x_offset,yy+y_offset)+z_offset
-#                self.gcode.respond_info("Mesh tilt corrections: (%f,%f) : %f  ,%f @ %f]" % (xx+x_offset,yy+y_offset,Zcorr, calc_Zval, t_probed_z_table[j][i]+z_offset))
                 t_probed_z_table[j][i]+=Zcorr
 
         mesh = ZMesh(params)
@@ -504,10 +512,6 @@ class BedMeshCalibrate:
         self.bedmesh.set_mesh(mesh)
 
         self.probed_z_table=t_probed_z_table
-#        for pos in positions:
-#            # offset according to the mesh
-#            z_mesh_offs=self.bedmesh.z_mesh.calc_z(pos[0]+x_offset,pos[1]+y_offset)
-#            self.gcode.respond_info("Projected Mesh Z offset at  (%f,%f) is %f : %f" % (pos[0]+x_offset,pos[1]+y_offset,z_mesh_offs+z_offset,pos[2]))
 
         self.gcode.respond_info("Mesh Bed Tilting Complete")
         self.save_profile("default")
