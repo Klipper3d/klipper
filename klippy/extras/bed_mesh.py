@@ -464,6 +464,7 @@ class BedMeshCalibrate:
             self.probed_z_table_backup = copy.deepcopy(self.probed_z_table)
 
         t_probed_z_table=copy.deepcopy(self.probed_z_table_backup)
+        self.bedmesh.z_mesh.build_mesh(t_probed_z_table)
         pts=[]
         # shift measured positions
         for pos in positions:
