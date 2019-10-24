@@ -9,6 +9,7 @@ import math
 import json
 import probe
 import collections
+import copy
 
 class BedMeshError(Exception):
     pass
@@ -189,13 +190,18 @@ class BedMeshCalibrate:
         self.relative_reference_index = None
         self.bedmesh = bedmesh
         self.probed_z_table = None
+        self.probed_z_table_backup = None
         self.build_map = False
+        self.tilt_points = []
         self.probe_params = collections.OrderedDict()
         points = self._generate_points(config)
         self._init_probe_params(config, points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, points)
+        self.tilt_probe_helper = probe.ProbePointsHelper(
+            config, self.tilt_probe_finalize, self.tilt_points)
         self.probe_helper.minimum_points(3)
+        self.tilt_probe_helper.minimum_points(3)
         # setup persistent storage
         self.profiles = {}
         self._load_storage(config)
@@ -203,6 +209,9 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
+        self.gcode.register_command(
+            'BED_MESH_TILT', self.cmd_BED_MESH_TILT,
+            desc=self.cmd_BED_MESH_TILT_help)
         self.gcode.register_command(
             'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
             desc=self.cmd_BED_MESH_MAP_help)
@@ -221,6 +230,10 @@ class BedMeshCalibrate:
             self.radius = math.floor(self.radius * 10) / 10
             min_x = min_y = -self.radius
             max_x = max_y = self.radius
+            mpi=atan(1.0)*4.0;
+            self.tilt_points.append((0.0, self.radius))
+            self.tilt_points.append((-self.radius*cos(mpi/6.0), -self.radius*sin(mpi/6.0)))
+            self.tilt_points.append((self.radius*cos(mpi/6.0), self.radius*sin(mpi/6.0)))
         else:
             # rectangular
             x_cnt, y_cnt = parse_pair(
@@ -229,6 +242,9 @@ class BedMeshCalibrate:
             max_x, max_y = parse_pair(config, ('max_point',))
             if max_x <= min_x or max_y <= min_y:
                 raise config.error('bed_mesh: invalid min/max points')
+            self.tilt_points.append((min_x, min_y))
+            self.tilt_points.append((max_x, min_y))
+            self.tilt_points.append((0.5*(max_x+min_x), max_y))
 
         self.probe_params['x_count'] = x_cnt
         self.probe_params['y_count'] = y_cnt
@@ -354,6 +370,7 @@ class BedMeshCalibrate:
             raise self.gcode.error(
                 "bed_mesh: Unknown profile [%s]" % prof_name)
         self.probed_z_table = profile['points']
+        self.probed_z_table_backup = None
         zmesh = ZMesh(profile['probe_params'])
         try:
             zmesh.build_mesh(self.probed_z_table)
@@ -402,9 +419,19 @@ class BedMeshCalibrate:
     def cmd_BED_MESH_CALIBRATE(self, params):
         self.build_map = False
         self.start_calibration(params)
+    cmd_BED_MESH_TILT_help = "Perform Tilting of existing Mesh"
+    def cmd_BED_MESH_TILT(self, params):
+        self.start_tilting(params)
     def start_calibration(self, params):
         self.bedmesh.set_mesh(None)
+        self.probed_z_table_backup=None
         self.probe_helper.start_probe(params)
+    def start_tilting(self, params):
+        if self.bedmesh.z_mesh.mesh_z_table is None:
+            self.gcode.respond_info("No mesh! Nothing to tilt!");
+        else:
+            self.tilt_probe_helper.start_probe(params)
+
     def print_probed_positions(self, print_func):
         if self.probed_z_table is not None:
             msg = "Mesh Leveling Probed Z positions:\n"
@@ -415,6 +442,77 @@ class BedMeshCalibrate:
             print_func(msg)
         else:
             print_func("bed_mesh: bed has not been probed")
+
+
+    def tilt_probe_finalize(self, offsets, positions):
+        x_offset = offsets[0]
+        y_offset = offsets[1]
+        z_offset = offsets[2]
+        self.gcode.respond_info("offsets: %f %f %f" % (x_offset,y_offset,z_offset) );
+
+        params=self.bedmesh.z_mesh.probe_params
+
+        if self.relative_reference_index is not None:
+            # zero out probe z offset and
+            # set offset relative to reference index
+            z_offset = positions[self.relative_reference_index][2]
+
+        if self.probed_z_table_backup is None:
+            self.probed_z_table_backup = copy.deepcopy(self.probed_z_table)
+
+        t_probed_z_table=copy.deepcopy(self.probed_z_table_backup)
+        pts=[]
+        # shift measured positions
+        for pos in positions:
+            # offset according to the mesh
+            calc_Zval=self.bedmesh.z_mesh.calc_z(pos[0]+x_offset,pos[1]+y_offset)+z_offset
+            ZvalCorrectioncorr=pos[2] -calc_Zval;
+            pts.append([pos[0],pos[1],ZvalCorrectioncorr] )
+
+        # cross product of vectors defined by 3 probed points
+        cx=pts[1][2]*(pts[0][1] - pts[2][1]) + pts[0][2]*(-pts[1][1] + pts[2][1]) + (-pts[0][1] + pts[1][1])*pts[2][2]
+        cy=pts[0][2]*(pts[1][0] - pts[2][0]) + pts[1][2]*(-pts[0][0] + pts[2][0]) + ( pts[0][0] - pts[1][0])*pts[2][2]
+        cz=pts[1][1]*(pts[0][0] - pts[2][0]) + pts[0][1]*(-pts[1][0] + pts[2][0]) + (-pts[0][0] + pts[1][0])*pts[2][1]
+        # self.gcode.respond_info("Normal to plane is [%f,%f,%f]" % (cx,cy,cz))
+        # calcuate d in the equation of plane cx*X+cy*Y+cz*Zd==d
+        d=cx*pts[0][0]+cy*pts[0][1]+cz*pts[0][2]
+
+        # now for any (x,y) z defines as (d-cx*X-cy*Y)/cz
+        z_correction=[-cx/cz,-cy/cz,d/cz]
+
+        x_cnt = params['x_count']
+        y_cnt = params['y_count']
+        min_x=params['min_x']
+        min_y=params['min_y']
+        x_dist = (params['max_x'] -params['min_x']) / (x_cnt - 1)
+        y_dist = (params['max_y'] -params['min_y']) / (y_cnt - 1)
+        for i in range(x_cnt):
+            for j in range(y_cnt):
+                xx=(min_x+i*x_dist)
+                yy=(min_y+j*y_dist)
+                Zcorr=z_correction[0]*xx+z_correction[1]*yy+z_correction[2]
+#                calc_Zval=self.bedmesh.z_mesh.calc_z(xx+x_offset,yy+y_offset)+z_offset
+#                self.gcode.respond_info("Mesh tilt corrections: (%f,%f) : %f  ,%f @ %f]" % (xx+x_offset,yy+y_offset,Zcorr, calc_Zval, t_probed_z_table[j][i]+z_offset))
+                t_probed_z_table[j][i]+=Zcorr
+
+        mesh = ZMesh(params)
+        try:
+            mesh.build_mesh(t_probed_z_table)
+        except BedMeshError as e:
+            self.probed_z_table = copy.deepcopy(self.probed_z_table_backup)
+            raise self.gcode.error(e.message)
+        self.bedmesh.set_mesh(mesh)
+
+        self.probed_z_table=t_probed_z_table
+#        for pos in positions:
+#            # offset according to the mesh
+#            z_mesh_offs=self.bedmesh.z_mesh.calc_z(pos[0]+x_offset,pos[1]+y_offset)
+#            self.gcode.respond_info("Projected Mesh Z offset at  (%f,%f) is %f : %f" % (pos[0]+x_offset,pos[1]+y_offset,z_mesh_offs+z_offset,pos[2]))
+
+        self.gcode.respond_info("Mesh Bed Tilting Complete")
+#        self.save_profile("default")
+
+
     def probe_finalize(self, offsets, positions):
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]
