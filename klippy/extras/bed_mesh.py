@@ -510,7 +510,7 @@ class BedMeshCalibrate:
 #            self.gcode.respond_info("Projected Mesh Z offset at  (%f,%f) is %f : %f" % (pos[0]+x_offset,pos[1]+y_offset,z_mesh_offs+z_offset,pos[2]))
 
         self.gcode.respond_info("Mesh Bed Tilting Complete")
-#        self.save_profile("default")
+        self.save_profile("default")
 
 
     def probe_finalize(self, offsets, positions):
