@@ -4,15 +4,15 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/armcm_boot.h" // armcm_main
 #include "internal.h" // clock_setup
 #include "sched.h" // sched_main
 
-// Main entry point
-int
-main(void)
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
 {
+    SystemInit();
     clock_setup();
-
     sched_main();
-    return 0;
 }

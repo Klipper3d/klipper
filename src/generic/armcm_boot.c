@@ -6,8 +6,8 @@
 
 #include "armcm_boot.h" // DECL_ARMCM_IRQ
 #include "autoconf.h" // CONFIG_MCU
-#include "board/internal.h" // SystemInit
 #include "command.h" // DECL_CONSTANT_STR
+#include "misc.h" // dynmem_start
 
 // Export MCU type
 DECL_CONSTANT_STR("MCU", CONFIG_MCU);
@@ -37,14 +37,10 @@ ResetHandler(void)
     // Initializing the C library isn't needed...
     //__libc_init_array();
 
-    // Initialize the machine
-    SystemInit();
+    // Run the main board specific code
+    armcm_main();
 
-    // Run the main code
-    extern int main(void);
-    main();
-
-    // The main() call should not return
+    // The armcm_main() call should not return
     for (;;)
         ;
 }
