@@ -357,3 +357,19 @@ set, the generated probed points will be output to the terminal:
 The "Tool Adjusted" points refer to the nozzle location for each point, and
 the "Probe" points refer to the probe location.  Note that when manually
 probing the "Probe" points will refer to both the tool and nozzle locations.
+
+### Tilt
+
+`BED_MESH_TILT`
+
+Probes three points on the bed to gauge the bed's current height and tilt,
+then updates the active bed mesh to reflect this information. BED_MESH_TILT 
+allows the use of a high-resolution bed map without sacrificing the use of
+bed leveling screws or preventing the adjustment of axes. It's fast enough
+to use before every print.
+
+You can run BED_MESH_TILT repeatedly without degrading the quality of the 
+mesh. Each invocation starts with a fresh copy of the original bed mesh.
+
+Tilted meshes cannot be saved. BED_MESH_PROFILE SAVE=xxx always saves the 
+original, untilted probe data.
