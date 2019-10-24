@@ -27,7 +27,6 @@ extern GPIO_TypeDef * const digital_regs[];
 void enable_pclock(uint32_t periph_base);
 int is_enabled_pclock(uint32_t periph_base);
 uint32_t get_pclock_frequency(uint32_t periph_base);
-void clock_setup(void);
 void gpio_clock_enable(GPIO_TypeDef *regs);
 void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 

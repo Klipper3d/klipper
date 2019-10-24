@@ -9,6 +9,7 @@
 #include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
+#include "sched.h" // sched_main
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
@@ -174,12 +175,9 @@ enable_clock_stm32f446(void)
 }
 
 // Main clock setup called at chip startup
-void
+static void
 clock_setup(void)
 {
-    // The SystemInit() code alters VTOR - restore it
-    SCB->VTOR = (uint32_t)VectorTable;
-
     // Configure and enable PLL
     if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
         enable_clock_stm32f40x();
@@ -198,4 +196,17 @@ clock_setup(void)
     RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
+}
+
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
+{
+    // Run SystemInit() and then restore VTOR
+    SystemInit();
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    clock_setup();
+
+    sched_main();
 }

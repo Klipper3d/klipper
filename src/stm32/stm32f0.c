@@ -5,8 +5,10 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // armcm_main
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
+#include "sched.h" // sched_main
 
 #define FREQ_PERIPH 48000000
 
@@ -147,10 +149,12 @@ hsi48_setup(void)
 #endif
 }
 
-// Main clock setup called at chip startup
+// Main entry point - called from armcm_boot.c:ResetHandler()
 void
-clock_setup(void)
+armcm_main(void)
 {
+    SystemInit();
+
     // Set flash latency
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
@@ -167,4 +171,6 @@ clock_setup(void)
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }
 #endif
+
+    sched_main();
 }
