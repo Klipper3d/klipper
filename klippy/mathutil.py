@@ -12,7 +12,7 @@ import queuelogger
 ######################################################################
 
 # Helper code that implements coordinate descent
-def coordinate_descent(adj_params, params, error_func):
+def coordinate_descent(adj_params, params, error_func, precision=0.00001):
     # Define potential changes
     params = dict(params)
     dp = {param_name: 1. for param_name in adj_params}
@@ -20,10 +20,9 @@ def coordinate_descent(adj_params, params, error_func):
     best_err = error_func(params)
     logging.info("Coordinate descent initial error: %s", best_err)
 
-    threshold = 0.00001
     rounds = 0
 
-    while sum(dp.values()) > threshold and rounds < 10000:
+    while sum(dp.values()) > precision and rounds < 10000:
         rounds += 1
         for param_name in adj_params:
             orig = params[param_name]

@@ -357,3 +357,35 @@ set, the generated probed points will be output to the terminal:
 The "Tool Adjusted" points refer to the nozzle location for each point, and
 the "Probe" points refer to the probe location.  Note that when manually
 probing the "Probe" points will refer to both the tool and nozzle locations.
+
+### Tilt
+
+`BED_MESH_TILT SAMPLES=<count>`
+
+Probes the bed to gauge its current height and attitude, then updates the active
+mesh to reflect this information. BED_MESH_TILT lets you use a high-resolution
+bed mesh while accommodating geometric drift, changes made with bed leveling screws,
+and changes to endstops. It's fast enough to use before every print.
+
+BED_MESH_TILT probes 4 points by default. You can request that it probe anywhere
+from 3 to 16 points by including the SAMPLES option. However, it's unlikely that
+extra probes will improve your results unless your bed is particularly small or
+your probe is unreliable.
+
+To determine if additional probe points are warranted, run BED_MESH_TILT several times
+and observe the correction factors that it calculates. The Z adjustment at each
+point is `Wx * X + Wy * Y + Wz`. If the correction factors do not seem to be
+consistent from run to run, you might benefit from probing additional points.
+But be sure to verify that more points actually reduce variation: some randomness
+is inevitable, and small changes may be of no consequence. Use the width and depth
+of your bed to get a sense of the total amount of Z correction being applied.
+
+BED_MESH_TILT selects optimally distributed probe locations based on the geometry
+of your bed. This information comes from the '[bed_mesh]' section of printer.cfg.
+
+You can run BED_MESH_TILT repeatedly without degrading the quality of the
+mesh. Each tilt calculation starts with a fresh copy of the original probe data. To
+undo the effect of BED_MESH_TILT, just reload the mesh with BED_MESH_PROFILE.
+
+Tilted meshes may be saved, but the saved data does not include the tilt correction.
+BED_MESH_PROFILE SAVE=xxx always saves the original, untilted probe data.

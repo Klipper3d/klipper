@@ -379,6 +379,9 @@ section is enabled:
   supplied name from persistent memory.  Note that after SAVE or
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
+- `BED_MESH_TILT [SAMPLES=<count>]`: This command probes the bed to
+  determine its current height and attitude, then adjusts the active
+  mesh to reflect this information.
 
 ## Bed Screws Helper
 
