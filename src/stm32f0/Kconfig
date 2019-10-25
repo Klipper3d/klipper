@@ -1,8 +1,8 @@
 # Kconfig settings for STM32F0 processors
 
-if MACH_STM32F0
+if MACH_STM32F0_HAL
 
-config STM32F0_SELECT
+config STM32F0_HAL_SELECT
     bool
     default y
     select HAVE_GPIO

@@ -40,12 +40,12 @@ def parse_pair(config, param, check=True, cast=float,
         if pair[0] < minval or pair[1] < minval:
             raise config.error(
                 "Option '%s' in section bed_mesh must have a minimum of %s"
-                % (param[0]), minval)
+                % (param[0], str(minval)))
     if maxval is not None:
         if pair[0] > maxval or pair[1] > maxval:
             raise config.error(
                 "Option '%s' in section bed_mesh must have a maximum of %s"
-                % (param[0]), str(minval))
+                % (param[0], str(maxval)))
     return pair
 
 

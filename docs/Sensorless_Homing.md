@@ -6,9 +6,9 @@ This guide covers the setup of sensorless homing for the X axis of your (cartesi
 ## Prerequisites
 A few prerequisites are needed to use sensorless homing:
 
-1. TMC2130 stepper driver
-2. SPI interface of the TMC2130 wired to MCU (stand-alone mode does not work)
-3. DIAG1 pin of TMC2130 connected to the MCU
+1. StallGuard capable TMCxxxx stepper driver
+2. SPI / UART interface of the TMCxxxx wired to MCU (stand-alone mode does not work)
+3. DIAG1/DIAG pin of TMCxxxx connected to the MCU
 
 
 ## Limitations
@@ -18,11 +18,12 @@ Further, sensorless homing might not be accurate enough for you printer. While h
 
 Further, the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
 
-Sensorless homing works best at medium motor speeds. For very slow speeds (less than 10 RPM) the motor does not generate significant back EMF and the TMC2130 cannot reliably detect motor stalls. Further, at very high speeds, the back EMF of the motor approaches the supply voltage of the motor, so the TMC2130 cannot detect stalls anymore. For more details on limitations refer to section 14 (stallGuard2
-Load Measurement) in the TMC2130 datasheet.
+Sensorless homing works best at medium motor speeds. For very slow speeds (less than 10 RPM) the motor does not generate significant back EMF and the TMC cannot reliably detect motor stalls. Further, at very high speeds, the back EMF of the motor approaches the supply voltage of the motor, so the TMC cannot detect stalls anymore. It is advised to have a look in the datasheet of your specific TMCs. There you can also find more details on limitations of this setup.
 
 ## Configuration
-To enable sensorless homing add a section to configure the TMC2130 stepper driver to your `printer.cfg`:
+To enable sensorless homing add a section to configure the TMC stepper driver to your `printer.cfg`.
+
+In this guide we'll be using a TMC2130. The configuration however is simailar to the other TMCs with StallGuard:
 
 ```
 [tmc2130 stepper_x]
@@ -30,10 +31,12 @@ cs_pin:        # chip select pin of the SPI interface
 microsteps:    # number of microsteps per full step of the motor
 run_current:   # value in amps
 diag1_pin: !   # pin on the MCU where DIAG1 is connected (active low)
-driver_SGT: 0  # tuning value for sensorless homing, set to 0 as a start
+driver_SGT:    # tuning value for sensorless homing
 ```
 
 The above snippet configures a TMC2130 for the stepper on the X axis. Make sure to fill in the missing values based on your configuration.
+
+The `driver_SGT` value describes the threshhold when the driver reports a stall. Values have to be in between -64 (most sensitive) and 64 (least sensitive). On some TMCs like the TMC2209 this value doesn't exist in this form as the hehavior is different to the TMC2130. In the case of the TMC2209 the threshold is defined by the `driver_SGTHRS` value in the config and go from 0 (least sensitive) to 255 (most sensitive). Have a look at the datasheet of your specific TMC to avoid mistakes.
 
 If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer. Be aware that Klipper needs both `DIAG1` pins connected to the MCU. It is not sufficient to use only one signal from one of the stepper drivers (as it is possible on e.g. Marlin).
 
@@ -58,7 +61,7 @@ The name of the virtual end stop pin is derived from the name of the TMC2130 sec
 
 ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at `config/example-extras.cfg` for all the available options.
 
-## Testing of SPI communication
+## Testing of SPI/UART communication
 Now that the stepper driver is configured, let's make sure that Klipper can communicate with the TMC2130 by sending the following extended G-Code command to the printer:
 
 ```

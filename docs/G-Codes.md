@@ -160,6 +160,14 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
+  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
+  each Z height during a print. The tool will run the given COMMAND
+  with the given PARAMETER assigned to the value using the formula
+  `value = start + factor * z_height`. If BAND is provided then the
+  adjustment will only be made every BAND millimeters of z height - in
+  that case the formula used is `value = start + factor *
+  ((floor(z_height / band) + .5) * band)`.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
@@ -362,10 +370,9 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130, TMC2660 and TMC2208
+## TMC2130, TMC2660, TMC2208, TMC2209 and TMC5160
 
-The following commands are available when the "tmc2130", "tmc2660"
-or "tmc2208" config section is enabled:
+The following commands are available when any of the "tmcXXXX" config sections is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
 - `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
@@ -373,7 +380,7 @@ or "tmc2208" config section is enabled:
   turned off then back on.
 - `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
   This will adjust the run and hold currents of the TMC driver.
-  HOLDCURRENT is applicable only to the tmc2130 and tmc2208.
+  HOLDCURRENT is applicable only to the tmc2130, tmc2208, tmc2209 and tmc5160.
 - `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
   alter the value of the specified register field of the TMC driver.
   This command is intended for low-level diagnostics and debugging only because

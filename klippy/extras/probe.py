@@ -173,6 +173,7 @@ class PrinterProbe:
         # Calculate maximum, minimum and average values
         max_value = max([p[2] for p in positions])
         min_value = min([p[2] for p in positions])
+        range_value = max_value - min_value
         avg_value = self._calc_mean(positions)[2]
         median = self._calc_median(positions)[2]
         # calculate the standard deviation
@@ -182,9 +183,9 @@ class PrinterProbe:
         sigma = (deviation_sum / len(positions)) ** 0.5
         # Show information
         self.gcode.respond_info(
-            "probe accuracy results: maximum %.6f, minimum %.6f, "
+            "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
             "average %.6f, median %.6f, standard deviation %.6f" % (
-            max_value, min_value, avg_value, median, sigma))
+            max_value, min_value, range_value, avg_value, median, sigma))
     def probe_calibrate_finalize(self, kin_pos):
         if kin_pos is None:
             return

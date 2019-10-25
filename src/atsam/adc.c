@@ -17,7 +17,7 @@ static const uint8_t adc_pins[] = {
     GPIO('A', 2), GPIO('A', 3), GPIO('A', 4), GPIO('A', 6),
     GPIO('A', 22), GPIO('A', 23), GPIO('A', 24), GPIO('A', 16),
     GPIO('B', 12), GPIO('B', 13), GPIO('B', 17), GPIO('B', 18),
-    GPIO('B', 19), GPIO('B', 20)
+    GPIO('B', 19), GPIO('B', 20), GPIO('B', 21)
 #elif CONFIG_MACH_SAM4S
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19), GPIO('A', 20),
     GPIO('B', 0), GPIO('B', 1), GPIO('B', 2), GPIO('B', 3),
@@ -49,6 +49,9 @@ gpio_adc_setup(uint8_t pin)
                        | ADC_MR_STARTUP_SUT768
                        | ADC_MR_TRANSFER(1));
     }
+
+    // Place pin in input floating mode
+    gpio_in_setup(pin, 0);
     return (struct gpio_adc){ .chan = 1 << chan };
 }
 

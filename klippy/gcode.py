@@ -650,7 +650,11 @@ class GCodeParser:
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
-        self.ack(self._get_temp(self.reactor.monotonic()))
+        msg = self._get_temp(self.reactor.monotonic())
+        if self.need_ack:
+            self.ack(msg)
+        else:
+            self.respond(msg)
     def cmd_M104(self, params):
         # Set Extruder Temperature
         self._set_temp(params)

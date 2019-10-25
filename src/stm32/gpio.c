@@ -11,27 +11,42 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 16);
+#ifdef GPIOD
+DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 16);
+#endif
+#ifdef GPIOE
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 16);
+#endif
+#ifdef GPIOF
+DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 16);
+#endif
 #ifdef GPIOH
-DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 32);
-DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PG0", GPIO('G', 0), 16);
+DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 16);
 #endif
 #ifdef GPIOI
-DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 32);
+DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 16);
 #endif
 
 GPIO_TypeDef * const digital_regs[] = {
-    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
+    ['A' - 'A'] = GPIOA, GPIOB, GPIOC,
+#ifdef GPIOD
+    ['D' - 'A'] = GPIOD,
+#endif
+#ifdef GPIOE
+    ['E' - 'A'] = GPIOE,
+#endif
+#ifdef GPIOF
+    ['F' - 'A'] = GPIOF,
+#endif
 #ifdef GPIOH
-    GPIOF, GPIOG, GPIOH,
+    ['G' - 'A'] = GPIOG, GPIOH,
 #endif
 #ifdef GPIOI
-    GPIOI,
+    ['I' - 'A'] = GPIOI,
 #endif
 };
 
@@ -52,6 +67,8 @@ gpio_out_setup(uint32_t pin, uint32_t val)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    if (! regs)
+        goto fail;
     gpio_clock_enable(regs);
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
@@ -106,6 +123,8 @@ gpio_in_setup(uint32_t pin, int32_t pull_up)
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    if (! regs)
+        goto fail;
     struct gpio_in g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;

@@ -6,6 +6,13 @@ All dates in this document are approximate.
 
 # Changes
 
+20191003: The move_to_previous option in [safe_z_homing] now defaults
+to False.  (It was effectively False prior to 20190918.)
+
+20190918: The zhop option in [safe_z_homing] is always re-applied
+after Z axis homing completed. This might need users to update custom
+scripts based on this module.
+
 20190806: The SET_NEOPIXEL command has been renamed to SET_LED.
 
 20190726: The mcp4728 digital-to-analog code has changed. The default

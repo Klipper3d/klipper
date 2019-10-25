@@ -42,7 +42,7 @@ tmcuart_reset_line(struct tmcuart_s *t)
 
 // Helper function to end a transmission and schedule a response
 static uint_fast8_t
-tmcaurt_finalize(struct tmcuart_s *t)
+tmcuart_finalize(struct tmcuart_s *t)
 {
     tmcuart_reset_line(t);
     t->flags |= TU_REPORT;
@@ -65,7 +65,7 @@ tmcuart_read_event(struct timer *timer)
     t->data[pos >> 3] = data;
     pos++;
     if (pos >= t->read_count)
-        return tmcaurt_finalize(t);
+        return tmcuart_finalize(t);
     t->pos = pos;
     t->timer.waketime += t->bit_time;
     return SF_RESCHEDULE;
@@ -88,7 +88,7 @@ tmcuart_read_sync_event(struct timer *timer)
     if (t->pos++ >= 64) {
         // Timeout
         t->read_count = 0;
-        return tmcaurt_finalize(t);
+        return tmcuart_finalize(t);
     }
     t->timer.waketime += t->bit_time;
     return SF_RESCHEDULE;
@@ -101,7 +101,7 @@ tmcuart_send_finish_event(struct timer *timer)
     struct tmcuart_s *t = container_of(timer, struct tmcuart_s, timer);
     if (!t->read_count)
         // This is a tx only operation - success
-        return tmcaurt_finalize(t);
+        return tmcuart_finalize(t);
     // Prepare for message rx
     if (t->flags & TU_SINGLE_WIRE)
         gpio_in_reset(t->rx_pin, t->flags & TU_PULLUP);
