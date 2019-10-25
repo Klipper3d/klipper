@@ -19,7 +19,7 @@ class MCU_analog_mux:
                              for spd in select_pins_desc.split(',')]
         self.oids = [self.mcu.create_oid() for pp in select_pin_params]
         self.pins = [pp['pin'] for pp in select_pin_params]
-        self.pin_values = tuple([0 for pp in select_pin_params])
+        self.pin_values = tuple([-1 for pp in select_pin_params])
         for oid, pin, value in zip(self.oids, self.pins, self.pin_values):
             self.mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
                                     " value=%d default_value=0 max_duration=0"
