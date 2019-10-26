@@ -209,10 +209,10 @@ clock_setup(void)
 void
 armcm_main(void)
 {
-    if (*(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
+    if (CONFIG_USBSERIAL && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
         *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
         uint32_t *sysbase = (uint32_t*)0x1fff0000;
-        asm volatile("mov sp, %r0\n bx %r1"
+        asm volatile("mov sp, %0\n bx %1"
                      : : "r"(sysbase[0]), "r"(sysbase[1]));
     }
 
