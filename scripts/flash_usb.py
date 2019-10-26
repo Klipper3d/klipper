@@ -135,7 +135,7 @@ def flash_atsam4(options, binfile):
         sys.exit(-1)
 
 def flash_atsamd(options, binfile):
-    extra_flags = ["--offset=" + options.offset, "-b", "-R"]
+    extra_flags = ["--offset=0x%x" % (options.start,), "-b", "-R"]
     try:
         flash_bossac(options.device, binfile, extra_flags)
     except error as e:
@@ -228,8 +228,6 @@ def main():
                     help="micro-controller type")
     opts.add_option("-d", "--device", type="string", dest="device",
                     help="serial port device")
-    opts.add_option("-o", "--offset", type="string", dest="offset",
-                    help="flash offset")
     opts.add_option("-s", "--start", type="int", dest="start",
                     help="start address in flash")
     opts.add_option("--no-sudo", action="store_false", dest="sudo",
