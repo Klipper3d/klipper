@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
 #include "board/armcm_boot.h" // VectorTable
+#include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
@@ -88,10 +89,16 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
 }
 
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
 // Handle USB reboot requests
 void
 usb_request_bootloader(void)
 {
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
 }
 
 #if CONFIG_CLOCK_REF_8M
@@ -202,6 +209,13 @@ clock_setup(void)
 void
 armcm_main(void)
 {
+    if (*(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
+        *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+        uint32_t *sysbase = (uint32_t*)0x1fff0000;
+        asm volatile("mov sp, %r0\n bx %r1"
+                     : : "r"(sysbase[0]), "r"(sysbase[1]));
+    }
+
     // Run SystemInit() and then restore VTOR
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;

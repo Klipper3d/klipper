@@ -189,7 +189,11 @@ def flash_stm32f1(options, binfile):
         sys.exit(-1)
 
 STM32F4_HELP = """
-USB flash is not supported on the STM32F4!
+Failed to flash to %s: %s
+
+If the device is already in bootloader mode it can be flashed with the
+following command:
+  make flash FLASH_DEVICE=0483:df11
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -197,8 +201,13 @@ If attempting to flash via 3.3V serial, then use:
 """
 
 def flash_stm32f4(options, binfile):
-    sys.stderr.write(STM32F4_HELP % (options.device,))
-    sys.exit(-1)
+    try:
+        flash_dfuutil(options.device, binfile,
+                      ["-R", "-a", "0", "-s", str(options.start)], options.sudo)
+    except error as e:
+        sys.stderr.write(STM32F4_HELP % (
+            options.device, str(e), options.device))
+        sys.exit(-1)
 
 MCUTYPES = {
     'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
@@ -219,6 +228,8 @@ def main():
                     help="serial port device")
     opts.add_option("-o", "--offset", type="string", dest="offset",
                     help="flash offset")
+    opts.add_option("-s", "--start", type="int", dest="start",
+                    help="start address in flash")
     opts.add_option("--no-sudo", action="store_false", dest="sudo",
                     default=True, help="do not run sudo")
     options, args = opts.parse_args()
