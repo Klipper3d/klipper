@@ -211,7 +211,8 @@ def flash_stm32f4(options, binfile):
 
 MCUTYPES = {
     'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
-    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1, 'stm32f4': flash_stm32f4
+    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1,
+    'stm32f4': flash_stm32f4, 'stm32f0': flash_stm32f4,
 }
 
 

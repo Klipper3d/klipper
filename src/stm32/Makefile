@@ -49,6 +49,7 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 # Flash rules
+FLASH_TYPE-$(CONFIG_MACH_STM32F0) := stm32f0
 FLASH_TYPE-$(CONFIG_MACH_STM32F1) := stm32f1
 FLASH_TYPE-$(CONFIG_MACH_STM32F4) := stm32f4
 

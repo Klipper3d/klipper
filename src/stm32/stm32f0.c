@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
 #include "board/armcm_boot.h" // armcm_main
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -86,10 +87,16 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
 }
 
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
 // Handle USB reboot requests
 void
 usb_request_bootloader(void)
 {
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
 }
 
 #if CONFIG_CLOCK_REF_8M
@@ -153,6 +160,14 @@ hsi48_setup(void)
 void
 armcm_main(void)
 {
+    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F042
+        && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
+        *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+        uint32_t *sysbase = (uint32_t*)0x1fffc400;
+        asm volatile("mov sp, %0\n bx %1"
+                     : : "r"(sysbase[0]), "r"(sysbase[1]));
+    }
+
     SystemInit();
 
     // Set flash latency
