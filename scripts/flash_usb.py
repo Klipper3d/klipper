@@ -201,16 +201,14 @@ If attempting to flash via 3.3V serial, then use:
 """
 
 def flash_stm32f4(options, binfile):
+    start = "0x%x:leave" % (options.start,)
     try:
         flash_dfuutil(options.device, binfile,
-                      ["-R", "-a", "0", "-s", str(options.start)], options.sudo)
+                      ["-R", "-a", "0", "-s", start], options.sudo)
     except error as e:
         sys.stderr.write(STM32F4_HELP % (
             options.device, str(e), options.device))
         sys.exit(-1)
-    sys.stdout.write("\n\nFlash appears successful.\n"
-                     "Device must be manually reset for new code to run.\n"
-                     "\n")
 
 MCUTYPES = {
     'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
