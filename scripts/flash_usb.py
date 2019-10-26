@@ -211,9 +211,9 @@ def flash_stm32f4(options, binfile):
         sys.exit(-1)
 
 MCUTYPES = {
-    'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
-    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1,
-    'stm32f4': flash_stm32f4, 'stm32f0': flash_stm32f4,
+    'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
+    'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
+    'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
 }
 
 
@@ -235,12 +235,19 @@ def main():
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    if options.mcutype not in MCUTYPES:
-        opts.error("Not a valid mcu type")
+    flash_func = None
+    if options.mcutype:
+        for prefix, func in MCUTYPES.items():
+            if options.mcutype.startswith(prefix):
+                flash_func = func
+                break
+    if flash_func is None:
+        opts.error("USB flashing is not supported for MCU '%s'"
+                   % (options.mcutype,))
     if not options.device:
         sys.stderr.write("\nPlease specify FLASH_DEVICE\n\n")
         sys.exit(-1)
-    MCUTYPES[options.mcutype](options, args[0])
+    flash_func(options, args[0])
 
 if __name__ == '__main__':
     main()

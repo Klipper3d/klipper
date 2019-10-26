@@ -49,9 +49,6 @@ lib/bossac/bin/bossac:
 	@echo "  Building bossac"
 	$(Q)make -C lib/bossac bin/bossac
 
-FLASH_TYPE-$(CONFIG_MACH_SAM3X) := atsam3
-FLASH_TYPE-$(CONFIG_MACH_SAM4) := atsam4
-
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
-	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(FLASH_TYPE-y) -d "$(FLASH_DEVICE)" $(OUT)klipper.bin
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(OUT)klipper.bin
