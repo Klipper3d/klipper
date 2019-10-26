@@ -208,6 +208,9 @@ def flash_stm32f4(options, binfile):
         sys.stderr.write(STM32F4_HELP % (
             options.device, str(e), options.device))
         sys.exit(-1)
+    sys.stdout.write("\n\nFlash appears successful.\n"
+                     "Device must be manually reset for new code to run.\n"
+                     "\n")
 
 MCUTYPES = {
     'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
