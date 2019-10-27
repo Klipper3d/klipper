@@ -5,11 +5,13 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <math.h> // sqrt
+#include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // unlikely
 #include "trapq.h" // move_get_coord
 
+// Allocate a new 'move' object
 struct move * __visible
 move_alloc(void)
 {
@@ -84,4 +86,48 @@ move_get_coord(struct move *m, double move_time)
         .x = m->start_pos.x + m->axes_r.x * move_dist,
         .y = m->start_pos.y + m->axes_r.y * move_dist,
         .z = m->start_pos.z + m->axes_r.z * move_dist };
+}
+
+// Allocate a new 'trapq' object
+struct trapq * __visible
+trapq_alloc(void)
+{
+    struct trapq *tq = malloc(sizeof(*tq));
+    memset(tq, 0, sizeof(*tq));
+    list_init(&tq->moves);
+    return tq;
+}
+
+// Free memory associated with a 'trapq' object
+void __visible
+trapq_free(struct trapq *tq)
+{
+    while (!list_empty(&tq->moves)) {
+        struct move *m = list_first_entry(&tq->moves, struct move, node);
+        list_del(&m->node);
+        free(m);
+    }
+    free(tq);
+}
+
+// Add a move to the trapezoid velocity queue
+void __visible
+trapq_add_move(struct trapq *tq, struct move *m)
+{
+    struct move *nm = move_alloc();
+    memcpy(nm, m, sizeof(*nm));
+    list_add_tail(&nm->node, &tq->moves);
+}
+
+// Free any moves older than `print_time` from the trapezoid velocity queue
+void __visible
+trapq_free_moves(struct trapq *tq, double print_time)
+{
+    while (!list_empty(&tq->moves)) {
+        struct move *m = list_first_entry(&tq->moves, struct move, node);
+        if (m->print_time + m->move_t > print_time)
+            return;
+        list_del(&m->node);
+        free(m);
+    }
 }

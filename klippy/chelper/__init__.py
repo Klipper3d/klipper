@@ -60,6 +60,10 @@ defs_trapq = """
         , double start_pos_x, double start_pos_y, double start_pos_z
         , double axes_d_x, double axes_d_y, double axes_d_z
         , double start_v, double cruise_v, double accel);
+    struct trapq *trapq_alloc(void);
+    void trapq_free(struct trapq *tq);
+    void trapq_add_move(struct trapq *tq, struct move *m);
+    void trapq_free_moves(struct trapq *tq, double print_time);
 """
 
 defs_kin_cartesian = """

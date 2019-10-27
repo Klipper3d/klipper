@@ -1,6 +1,6 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
@@ -103,6 +103,7 @@ class Move:
                 self.start_pos[0], self.start_pos[1], self.start_pos[2],
                 self.axes_d[0], self.axes_d[1], self.axes_d[2],
                 self.start_v, self.cruise_v, self.accel)
+            self.toolhead.trapq_add_move(self.toolhead.trapq, self.cmove)
             self.toolhead.kin.move(next_move_time, self)
         if self.axes_d[3]:
             self.toolhead.extruder.move(next_move_time, self)
@@ -249,6 +250,10 @@ class ToolHead:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.move_fill = ffi_lib.move_fill
+        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_add_move = ffi_lib.trapq_add_move
+        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.move_handlers = []
         # Create kinematics class
         self.extruder = kinematics.extruder.DummyExtruder()
         self.move_queue.set_extruder(self.extruder)
@@ -276,9 +281,13 @@ class ToolHead:
         self.printer.try_load_module(config, "manual_probe")
         self.printer.try_load_module(config, "tuning_tower")
     # Print time tracking
-    def update_move_time(self, movetime):
-        self.print_time += movetime
-        flush_to_time = self.print_time - self.move_flush_time
+    def update_move_time(self, movetime, lazy=True):
+        self.print_time = flush_to_time = self.print_time + movetime
+        for mh in self.move_handlers:
+            mh(flush_to_time)
+        self.trapq_free_moves(self.trapq, flush_to_time)
+        if lazy:
+            flush_to_time -= self.move_flush_time
         for m in self.all_mcus:
             m.flush_moves(flush_to_time)
     def _calc_print_time(self):
@@ -317,8 +326,7 @@ class ToolHead:
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
-        for m in self.all_mcus:
-            m.flush_moves(self.print_time)
+        self.update_move_time(0., lazy=False)
     def _flush_lookahead(self):
         if self.special_queuing_state:
             return self._full_flush()
@@ -490,6 +498,10 @@ class ToolHead:
         self.move_queue.reset()
     def get_kinematics(self):
         return self.kin
+    def get_trapq(self):
+        return self.trapq
+    def register_move_handler(self, handler):
+        self.move_handlers.append(handler)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):
