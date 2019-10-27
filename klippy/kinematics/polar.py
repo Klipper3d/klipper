@@ -120,14 +120,7 @@ class PolarKinematics:
         cmove = move.cmove
         if axes_d[0] or axes_d[1]:
             self.rails[0].step_itersolve(cmove)
-            stepper_bed = self.steppers[0]
-            stepper_bed.step_itersolve(cmove)
-            # Normalize the stepper_bed angle
-            angle = stepper_bed.get_commanded_position()
-            if angle < -math.pi:
-                stepper_bed.set_commanded_position(angle + 2. * math.pi)
-            elif angle > math.pi:
-                stepper_bed.set_commanded_position(angle - 2. * math.pi)
+            self.steppers[0].step_itersolve(cmove)
         if axes_d[2]:
             self.rails[1].step_itersolve(cmove)
     def get_status(self):

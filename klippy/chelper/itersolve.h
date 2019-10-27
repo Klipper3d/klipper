@@ -32,10 +32,12 @@ struct coord move_get_coord(struct move *m, double move_time);
 struct stepper_kinematics;
 typedef double (*sk_calc_callback)(struct stepper_kinematics *sk, struct move *m
                                    , double move_time);
+typedef void (*sk_post_callback)(struct stepper_kinematics *sk);
 struct stepper_kinematics {
     double step_dist, commanded_pos;
     struct stepcompress *sc;
     sk_calc_callback calc_position_cb;
+    sk_post_callback post_cb;
 };
 
 int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);

@@ -206,6 +206,8 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
     }
     queue_append_finish(qa);
     sk->commanded_pos = last.position;
+    if (sk->post_cb)
+        sk->post_cb(sk);
     return 0;
 }
 
