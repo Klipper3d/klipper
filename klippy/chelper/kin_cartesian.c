@@ -7,8 +7,9 @@
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
-#include "itersolve.h" // move_get_coord
+#include "itersolve.h" // struct stepper_kinematics
 #include "pyhelper.h" // errorf
+#include "trapq.h" // move_get_coord
 
 static double
 cart_stepper_x_calc_position(struct stepper_kinematics *sk, struct move *m

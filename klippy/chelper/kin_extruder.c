@@ -9,6 +9,7 @@
 #include "compiler.h" // __visible
 #include "itersolve.h" // struct stepper_kinematics
 #include "pyhelper.h" // errorf
+#include "trapq.h" // move_get_distance
 
 static double
 extruder_calc_position(struct stepper_kinematics *sk, struct move *m
