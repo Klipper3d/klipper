@@ -16,7 +16,7 @@
 DECL_CONSTANT("ADC_MAX", 4095);
 
 static uint32_t adc_current_channel;
-static uint32_t adc_busy = 0; 
+static uint32_t adc_busy = 0;
 
 static const uint32_t adc_pins[][2] = {
     {GPIO('A', 0), ADC_CHSELR_CHSEL0},
@@ -59,12 +59,12 @@ gpio_adc_setup(uint32_t pin)
 
         // 100: 41.5 ADC clock cycles
         adc->SMPR |= (~ADC_SMPR_SMP_Msk | ADC_SMPR_SMP_2 );
-        adc->CFGR2 |= ADC_CFGR2_CKMODE_1; 
+        adc->CFGR2 |= ADC_CFGR2_CKMODE_1;
         adc->CFGR1 &= ~ADC_CFGR1_AUTOFF;
         adc->CFGR1 |= ADC_CFGR1_EXTSEL;
 
-        // do not enable ADC before calibration 
-        adc->CR &= ~ADC_CR_ADEN;  
+        // do not enable ADC before calibration
+        adc->CR &= ~ADC_CR_ADEN;
         while (adc->CR & ADC_CR_ADEN)
             ;
         while (adc->CFGR1 & ADC_CFGR1_DMAEN)
@@ -89,11 +89,11 @@ gpio_adc_sample(struct gpio_adc g)
     if (adc->CR & ADC_CR_ADCAL){
         goto need_delay;
     }
-    // if not enabled 
+    // if not enabled
     if (!(adc->CR & ADC_CR_ADEN)){
         adc->ISR |= ADC_ISR_ADRDY;
         adc->CR |= ADC_CR_ADEN;
-        while (!(ADC1->ISR & ADC_ISR_ADRDY)) 
+        while (!(ADC1->ISR & ADC_ISR_ADRDY))
             ;
     }
     if(adc_busy) {
@@ -117,7 +117,7 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    adc_busy = 0; 
+    adc_busy = 0;
     return adc->DR;
 }
 
