@@ -104,7 +104,8 @@ pll_setup(void)
     if (CONFIG_CLOCK_REF_8M) {
         // Configure 48Mhz PLL from external 8Mhz crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((6 - 2) << RCC_CFGR_PLLMUL_Pos);
+        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((6 - 2) << RCC_CFGR_PLLMUL_Pos)
+             | RCC_CFGR_ADCPRE_DIV2;
     } else {
         // Configure 48Mhz PLL from internal 8Mhz oscillator (HSI)
         cfgr = RCC_CFGR_PLLSRC_HSI_DIV2 | ((12 - 2) << RCC_CFGR_PLLMUL_Pos);

@@ -1,0 +1,135 @@
+// ADC functions on STM32
+//
+// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+//
+// This file may be distributed under the terms of the GNU GPLv3 license.
+
+#include "board/irq.h" // irq_save
+#include "board/misc.h" // timer_from_us
+#include "command.h" // shutdown
+#include "compiler.h" // ARRAY_SIZE
+#include "generic/armcm_timer.h" // udelay
+#include "gpio.h" // gpio_adc_setup
+#include "internal.h" // GPIO
+#include "sched.h" // sched_shutdown
+
+DECL_CONSTANT("ADC_MAX", 4095);
+
+static uint32_t adc_current_channel;
+static uint32_t adc_busy = 0; 
+
+static const uint32_t adc_pins[][2] = {
+    {GPIO('A', 0), ADC_CHSELR_CHSEL0},
+    {GPIO('A', 1), ADC_CHSELR_CHSEL1},
+    {GPIO('A', 2), ADC_CHSELR_CHSEL2},
+    {GPIO('A', 3), ADC_CHSELR_CHSEL3},
+    {GPIO('A', 4), ADC_CHSELR_CHSEL4},
+    {GPIO('A', 5), ADC_CHSELR_CHSEL5},
+    {GPIO('A', 6), ADC_CHSELR_CHSEL6},
+    {GPIO('A', 7), ADC_CHSELR_CHSEL7},
+    {GPIO('B', 0), ADC_CHSELR_CHSEL8},
+    {GPIO('B', 1), ADC_CHSELR_CHSEL9},
+    {GPIO('C', 0), ADC_CHSELR_CHSEL10},
+    {GPIO('C', 1), ADC_CHSELR_CHSEL11},
+    {GPIO('C', 2), ADC_CHSELR_CHSEL12},
+    {GPIO('C', 3), ADC_CHSELR_CHSEL13},
+    {GPIO('C', 4), ADC_CHSELR_CHSEL14},
+    {GPIO('C', 5), ADC_CHSELR_CHSEL15}
+};
+
+struct gpio_adc
+gpio_adc_setup(uint32_t pin)
+{
+    // Find pin in adc_pins table
+    int chan;
+    for (chan=0; ; chan++) {
+        if (chan >= ARRAY_SIZE(adc_pins))
+            shutdown("Not a valid ADC pin");
+        if (adc_pins[chan][0] == pin)
+            break;
+    }
+
+    // Determine which ADC block to use
+    ADC_TypeDef *adc = ADC1;
+    uint32_t adc_base = ADC1_BASE;
+
+    // Enable the ADC
+    if (!is_enabled_pclock(adc_base)) {
+        enable_pclock(adc_base);
+
+        // 100: 41.5 ADC clock cycles
+        adc->SMPR |= (~ADC_SMPR_SMP_Msk | ADC_SMPR_SMP_2 );
+        adc->CFGR2 |= ADC_CFGR2_CKMODE_1; 
+        adc->CFGR1 &= ~ADC_CFGR1_AUTOFF;
+        adc->CFGR1 |= ADC_CFGR1_EXTSEL;
+
+        // do not enable ADC before calibration 
+        adc->CR &= ~ADC_CR_ADEN;  
+        while (adc->CR & ADC_CR_ADEN)
+            ;
+        while (adc->CFGR1 & ADC_CFGR1_DMAEN)
+            ;
+        // start calibration and continue
+        adc->CR |= ADC_CR_ADCAL;
+    }
+
+    gpio_peripheral(pin, GPIO_ANALOG, 0);
+
+    return (struct gpio_adc){ .adc = adc, .chan = adc_pins[chan][1] };
+}
+
+// Try to sample a value. Returns zero if sample ready, otherwise
+// returns the number of clock ticks the caller should wait before
+// retrying this function.
+uint32_t
+gpio_adc_sample(struct gpio_adc g)
+{
+    ADC_TypeDef *adc = g.adc;
+    // if calibration still running
+    if (adc->CR & ADC_CR_ADCAL){
+        goto need_delay;
+    }
+    // if not enabled 
+    if (!(adc->CR & ADC_CR_ADEN)){
+        adc->ISR |= ADC_ISR_ADRDY;
+        adc->CR |= ADC_CR_ADEN;
+        while (!(ADC1->ISR & ADC_ISR_ADRDY)) 
+            ;
+    }
+    if(adc_busy) {
+        if (!(adc->ISR & ADC_ISR_EOC))
+            goto need_delay;
+        if (adc_current_channel != g.chan)
+            goto need_delay;
+        return 0;
+    }
+    adc->CHSELR = g.chan;
+    adc_current_channel = g.chan;
+    adc_busy = 1;
+    adc->CR |= ADC_CR_ADSTART;
+
+need_delay:
+    return timer_from_us(10);
+}
+
+// Read a value; use only after gpio_adc_sample() returns zero
+uint16_t
+gpio_adc_read(struct gpio_adc g)
+{
+    ADC_TypeDef *adc = g.adc;
+    adc_busy = 0; 
+    return adc->DR;
+}
+
+// Cancel a sample that may have been started with gpio_adc_sample()
+void
+gpio_adc_cancel_sample(struct gpio_adc g)
+{
+    ADC_TypeDef *adc = g.adc;
+    //irqstatus_t flag = irq_save();
+    if ( adc_busy && (g.chan == adc_current_channel)){
+        adc->CR |= ADC_CR_ADSTP;
+        adc_busy = 0;
+    }
+    //irq_restore(flag);
+}
