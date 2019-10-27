@@ -22,7 +22,7 @@ extruder_stepper_alloc(void)
 {
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
-    sk->calc_position = extruder_calc_position;
+    sk->calc_position_cb = extruder_calc_position;
     return sk;
 }
 

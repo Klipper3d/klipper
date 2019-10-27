@@ -35,6 +35,6 @@ winch_stepper_alloc(double anchor_x, double anchor_y, double anchor_z)
     hs->anchor.x = anchor_x;
     hs->anchor.y = anchor_y;
     hs->anchor.z = anchor_z;
-    hs->sk.calc_position = winch_stepper_calc_position;
+    hs->sk.calc_position_cb = winch_stepper_calc_position;
     return &hs->sk;
 }

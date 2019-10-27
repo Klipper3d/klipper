@@ -38,8 +38,8 @@ polar_stepper_alloc(char type)
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
     if (type == 'r')
-        sk->calc_position = polar_stepper_radius_calc_position;
+        sk->calc_position_cb = polar_stepper_radius_calc_position;
     else if (type == 'a')
-        sk->calc_position = polar_stepper_angle_calc_position;
+        sk->calc_position_cb = polar_stepper_angle_calc_position;
     return sk;
 }

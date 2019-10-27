@@ -34,6 +34,6 @@ delta_stepper_alloc(double arm2, double tower_x, double tower_y)
     ds->arm2 = arm2;
     ds->tower_x = tower_x;
     ds->tower_y = tower_y;
-    ds->sk.calc_position = delta_stepper_calc_position;
+    ds->sk.calc_position_cb = delta_stepper_calc_position;
     return &ds->sk;
 }

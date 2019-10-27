@@ -37,10 +37,10 @@ cartesian_stepper_alloc(char axis)
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
     if (axis == 'x')
-        sk->calc_position = cart_stepper_x_calc_position;
+        sk->calc_position_cb = cart_stepper_x_calc_position;
     else if (axis == 'y')
-        sk->calc_position = cart_stepper_y_calc_position;
+        sk->calc_position_cb = cart_stepper_y_calc_position;
     else if (axis == 'z')
-        sk->calc_position = cart_stepper_z_calc_position;
+        sk->calc_position_cb = cart_stepper_z_calc_position;
     return sk;
 }

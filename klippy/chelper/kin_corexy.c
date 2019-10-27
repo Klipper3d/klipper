@@ -31,8 +31,8 @@ corexy_stepper_alloc(char type)
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
     if (type == '+')
-        sk->calc_position = corexy_stepper_plus_calc_position;
+        sk->calc_position_cb = corexy_stepper_plus_calc_position;
     else if (type == '-')
-        sk->calc_position = corexy_stepper_minus_calc_position;
+        sk->calc_position_cb = corexy_stepper_minus_calc_position;
     return sk;
 }

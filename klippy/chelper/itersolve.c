@@ -1,6 +1,6 @@
 // Iterative solver for kinematic moves
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -108,7 +108,7 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
                     , struct timepos low, struct timepos high
                     , double target)
 {
-    sk_callback calc_position = sk->calc_position;
+    sk_calc_callback calc_position_cb = sk->calc_position_cb;
     struct timepos best_guess = high;
     low.position -= target;
     high.position -= target;
@@ -125,7 +125,7 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
         if (fabs(guess_time - best_guess.time) <= .000000001)
             break;
         best_guess.time = guess_time;
-        best_guess.position = calc_position(sk, m, guess_time);
+        best_guess.position = calc_position_cb(sk, m, guess_time);
         double guess_position = best_guess.position - target;
         int guess_sign = signbit(guess_position);
         if (guess_sign == high_sign) {
@@ -144,7 +144,7 @@ int32_t __visible
 itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
 {
     struct stepcompress *sc = sk->sc;
-    sk_callback calc_position = sk->calc_position;
+    sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
     double mcu_freq = stepcompress_get_mcu_freq(sc);
     struct timepos last = { 0., sk->commanded_pos }, low = last, high = last;
@@ -165,7 +165,7 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
             seek_time_delta += seek_time_delta;
             if (high.time > m->move_t)
                 high.time = m->move_t;
-            high.position = calc_position(sk, m, high.time);
+            high.position = calc_position_cb(sk, m, high.time);
             continue;
         }
         int next_sdir = dist > 0.;
@@ -179,7 +179,7 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
                 if (high.time < last.time + .000000001)
                     goto seek_new_high_range;
                 high.time = (last.time + high.time) * .5;
-                high.position = calc_position(sk, m, high.time);
+                high.position = calc_position_cb(sk, m, high.time);
                 continue;
             }
             int ret = queue_append_set_next_step_dir(&qa, next_sdir);
@@ -224,7 +224,7 @@ itersolve_calc_position_from_coord(struct stepper_kinematics *sk
     struct move m;
     memset(&m, 0, sizeof(m));
     move_fill(&m, 0., 0., 1., 0., x, y, z, 0., 1., 0., 0., 1., 0.);
-    return sk->calc_position(sk, &m, 0.);
+    return sk->calc_position_cb(sk, &m, 0.);
 }
 
 void __visible
