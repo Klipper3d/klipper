@@ -91,7 +91,9 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103
+    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103 || MACH_STM32F070
+    config STM32_FLASH_START_2000
+        bool "8KiB bootloader (malyan)" if MACH_STM32F070
     config STM32_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)" if MACH_STM32F103
     config STM32_FLASH_START_7000
