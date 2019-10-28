@@ -45,6 +45,11 @@ defs_stepcompress = """
 
 defs_itersolve = """
     int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
+    int32_t itersolve_generate_steps(struct stepper_kinematics *sk
+        , double flush_time);
+    double itersolve_check_active(struct stepper_kinematics *sk
+        , double flush_time);
+    void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
     void itersolve_set_stepcompress(struct stepper_kinematics *sk
         , struct stepcompress *sc, double step_dist);
     double itersolve_calc_position_from_coord(struct stepper_kinematics *sk

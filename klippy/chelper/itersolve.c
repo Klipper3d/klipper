@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <math.h> // fabs
+#include <stddef.h> // offsetof
 #include <string.h> // memset
 #include "compiler.h" // __visible
 #include "itersolve.h" // itersolve_gen_steps
@@ -53,15 +54,17 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
     return best_guess;
 }
 
-// Generate step times for a stepper during a move
-int32_t __visible
-itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
+// Generate step times for a portion of a move
+static int32_t
+itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
+                          , double move_start, double move_end)
 {
     struct stepcompress *sc = sk->sc;
     sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
     double mcu_freq = stepcompress_get_mcu_freq(sc);
-    struct timepos last = { 0., sk->commanded_pos }, low = last, high = last;
+    double start = move_start - m->print_time, end = move_end - m->print_time;
+    struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = 0.000100;
     int sdir = stepcompress_get_step_dir(sc);
     struct queue_append qa = queue_append_start(sc, m->print_time, .5);
@@ -70,15 +73,15 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
         double dist = high.position - last.position;
         if (fabs(dist) < half_step) {
         seek_new_high_range:
-            if (high.time >= m->move_t)
+            if (high.time >= end)
                 // At end of move
                 break;
             // Need to increase next step search range
             low = high;
             high.time = last.time + seek_time_delta;
             seek_time_delta += seek_time_delta;
-            if (high.time > m->move_t)
-                high.time = m->move_t;
+            if (high.time > end)
+                high.time = end;
             high.position = calc_position_cb(sk, m, high.time);
             continue;
         }
@@ -123,6 +126,87 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
     if (sk->post_cb)
         sk->post_cb(sk);
     return 0;
+}
+
+// Generate step times for a move
+int32_t __visible
+itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
+{
+    return itersolve_gen_steps_range(sk, m, m->print_time
+                                     , m->print_time + m->move_t);
+}
+
+// Check if a move is likely to cause movement on a stepper
+static inline int
+check_active(struct stepper_kinematics *sk, struct move *m)
+{
+    int af = sk->active_flags;
+    return ((af & AF_X && m->axes_r.x != 0.)
+            || (af & AF_Y && m->axes_r.y != 0.)
+            || (af & AF_Z && m->axes_r.z != 0.));
+}
+
+// Generate step times for a range of moves on the trapq
+int32_t __visible
+itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
+{
+    double last_flush_time = sk->last_flush_time;
+    sk->last_flush_time = flush_time;
+    if (!sk->tq || list_empty(&sk->tq->moves))
+        return 0;
+    struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
+    for (;;) {
+        double move_print_time = m->print_time;
+        double move_end_time = move_print_time + m->move_t;
+        if (last_flush_time >= move_end_time) {
+            if (list_is_last(&m->node, &sk->tq->moves))
+                break;
+            m = list_next_entry(m, node);
+            continue;
+        }
+        double start = move_print_time, end = move_end_time;
+        if (start < last_flush_time)
+            start = last_flush_time;
+        if (start >= flush_time)
+            break;
+        if (end > flush_time)
+            end = flush_time;
+        if (check_active(sk, m)) {
+            int32_t ret = itersolve_gen_steps_range(sk, m, start, end);
+            if (ret)
+                return ret;
+        }
+        last_flush_time = end;
+    }
+    return 0;
+}
+
+// Check if the given stepper is likely to be active in the given time range
+double __visible
+itersolve_check_active(struct stepper_kinematics *sk, double flush_time)
+{
+    if (!sk->tq || list_empty(&sk->tq->moves))
+        return 0.;
+    struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
+    while (sk->last_flush_time >= m->print_time + m->move_t) {
+        if (list_is_last(&m->node, &sk->tq->moves))
+            return 0.;
+        m = list_next_entry(m, node);
+    }
+    while (m->print_time < flush_time) {
+        if (check_active(sk, m))
+            return m->print_time;
+        if (list_is_last(&m->node, &sk->tq->moves))
+            return 0.;
+        m = list_next_entry(m, node);
+    }
+    return 0.;
+}
+
+void __visible
+itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq)
+{
+    sk->tq = tq;
 }
 
 void __visible
