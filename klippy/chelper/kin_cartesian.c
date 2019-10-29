@@ -1,6 +1,6 @@
 // Cartesian kinematics stepper pulse time generation
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -37,11 +37,15 @@ cartesian_stepper_alloc(char axis)
 {
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
-    if (axis == 'x')
+    if (axis == 'x') {
         sk->calc_position_cb = cart_stepper_x_calc_position;
-    else if (axis == 'y')
+        sk->active_flags = AF_X;
+    } else if (axis == 'y') {
         sk->calc_position_cb = cart_stepper_y_calc_position;
-    else if (axis == 'z')
+        sk->active_flags = AF_Y;
+    } else if (axis == 'z') {
         sk->calc_position_cb = cart_stepper_z_calc_position;
+        sk->active_flags = AF_Z;
+    }
     return sk;
 }
