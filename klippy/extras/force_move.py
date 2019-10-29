@@ -1,6 +1,6 @@
 # Utility for manually moving a stepper for diagnostic purposes
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -30,8 +30,12 @@ class ForceMove:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.move_fill = ffi_lib.move_fill
+        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_add_move = ffi_lib.trapq_add_move
+        self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
+        ffi_lib.itersolve_set_trapq(self.stepper_kinematics, self.trapq)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
@@ -70,7 +74,10 @@ class ForceMove:
         accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
         self.move_fill(self.cmove, print_time, accel_t, cruise_t, accel_t,
                        0., 0., 0., dist, 0., 0., 0., cruise_v, accel)
-        stepper.step_itersolve(self.cmove)
+        self.trapq_add_move(self.trapq, self.cmove)
+        print_time += accel_t + cruise_t + accel_t
+        stepper.generate_steps(print_time)
+        self.trapq_free_moves(self.trapq, print_time)
         stepper.set_stepper_kinematics(prev_sk)
         toolhead.dwell(accel_t + cruise_t + accel_t)
     def _lookup_stepper(self, params):
