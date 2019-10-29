@@ -1,6 +1,6 @@
 # Code for handling the kinematics of cable winch robots
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import stepper, mathutil
@@ -20,13 +20,14 @@ class WinchKinematics:
             a = tuple([stepper_config.getfloat('anchor_' + n) for n in 'xyz'])
             self.anchors.append(a)
             s.setup_itersolve('winch_stepper_alloc', *a)
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_move_handler(s.generate_steps)
         # Setup stepper max halt velocity
         max_velocity, max_accel = toolhead.get_max_velocity()
         max_halt_velocity = toolhead.get_max_axis_halt()
         for s in self.steppers:
             s.set_max_jerk(max_halt_velocity, max_accel)
         # Setup boundary checks
-        self.need_motor_enable = True
         self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return list(self.steppers)
@@ -44,19 +45,11 @@ class WinchKinematics:
     def motor_off(self, print_time):
         for s in self.steppers:
             s.motor_enable(print_time, 0)
-        self.need_motor_enable = True
-    def _check_motor_enable(self, print_time):
-        for s in self.steppers:
-            s.motor_enable(print_time, 1)
-        self.need_motor_enable = False
     def check_move(self, move):
         # XXX - boundary checks and speed limits not implemented
         pass
     def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time)
-        for s in self.steppers:
-            s.step_itersolve(move.cmove)
+        pass
     def get_status(self):
         # XXX - homed_checks and rail limits not implemented
         return {'homed_axes': 'XYZ'}

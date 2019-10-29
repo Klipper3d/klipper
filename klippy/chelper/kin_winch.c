@@ -1,6 +1,6 @@
 // Cable winch stepper kinematics
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -37,5 +37,6 @@ winch_stepper_alloc(double anchor_x, double anchor_y, double anchor_z)
     hs->anchor.y = anchor_y;
     hs->anchor.z = anchor_z;
     hs->sk.calc_position_cb = winch_stepper_calc_position;
+    hs->sk.active_flags = AF_X | AF_Y | AF_Z;
     return &hs->sk;
 }
