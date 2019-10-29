@@ -1,6 +1,6 @@
 // Extruder stepper pulse time generation
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -24,6 +24,7 @@ extruder_stepper_alloc(void)
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
     sk->calc_position_cb = extruder_calc_position;
+    sk->active_flags = AF_X;
     return sk;
 }
 
@@ -52,4 +53,5 @@ extruder_move_fill(struct move *m, double print_time
 
     // Setup start distance
     m->start_pos.x = start_pos;
+    m->axes_r.x = 1.;
 }

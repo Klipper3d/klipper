@@ -1,6 +1,6 @@
 # Code for handling printer nozzle extruders
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -50,13 +50,18 @@ class PrinterExtruder:
             'pressure_advance', 0., minval=0.)
         self.pressure_advance_lookahead_time = config.getfloat(
             'pressure_advance_lookahead_time', 0.010, minval=0.)
-        self.need_motor_enable = True
         self.extrude_pos = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.extruder_move_fill = ffi_lib.extruder_move_fill
+        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_add_move = ffi_lib.trapq_add_move
+        self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.stepper.setup_itersolve('extruder_stepper_alloc')
+        self.stepper.set_trapq(self.trapq)
+        toolhead.register_move_handler(self.stepper.generate_steps)
+        toolhead.register_move_handler(self._free_moves)
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
         if self.name in ('extruder', 'extruder0'):
@@ -66,6 +71,8 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+    def _free_moves(self, flush_time):
+        self.trapq_free_moves(self.trapq, flush_time)
     def get_status(self, eventtime):
         return dict(
             self.get_heater().get_status(eventtime),
@@ -84,7 +91,6 @@ class PrinterExtruder:
         return self.heater.stats(eventtime)
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
-        self.need_motor_enable = True
     def check_move(self, move):
         move.extrude_r = move.axes_d[3] / move.move_d
         move.extrude_max_corner_v = 0.
@@ -167,9 +173,6 @@ class PrinterExtruder:
             move.extrude_max_corner_v = max_corner_v
         return flush_count
     def move(self, print_time, move):
-        if self.need_motor_enable:
-            self.stepper.motor_enable(print_time, 1)
-            self.need_motor_enable = False
         axis_d = move.axes_d[3]
         axis_r = axis_d / move.move_d
         accel = move.accel * axis_r
@@ -205,7 +208,7 @@ class PrinterExtruder:
         self.extruder_move_fill(
             self.cmove, print_time, accel_t, cruise_t, decel_t, start_pos,
             start_v, cruise_v, accel, extra_accel_v, extra_decel_v)
-        self.stepper.step_itersolve(self.cmove)
+        self.trapq_add_move(self.trapq, self.cmove)
         self.extrude_pos = start_pos + axis_d
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
