@@ -28,10 +28,8 @@ class ForceMove:
         self.steppers = {}
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_add_move = ffi_lib.trapq_add_move
+        self.trapq_append = ffi_lib.trapq_append
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
@@ -70,9 +68,8 @@ class ForceMove:
         prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
         stepper.set_position((0., 0., 0.))
         accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
-        self.move_fill(self.cmove, print_time, accel_t, cruise_t, accel_t,
-                       0., 0., 0., dist, 0., 0., 0., cruise_v, accel)
-        self.trapq_add_move(self.trapq, self.cmove)
+        self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
+                          0., 0., 0., dist, 0., 0., 0., cruise_v, accel)
         print_time += accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
         self.trapq_free_moves(self.trapq, print_time)

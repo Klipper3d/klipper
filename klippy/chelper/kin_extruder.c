@@ -30,12 +30,14 @@ extruder_stepper_alloc(void)
 
 // Populate a 'struct move' with an extruder velocity trapezoid
 void __visible
-extruder_move_fill(struct move *m, double print_time
-                   , double accel_t, double cruise_t, double decel_t
-                   , double start_pos
-                   , double start_v, double cruise_v, double accel
-                   , double extra_accel_v, double extra_decel_v)
+extruder_add_move(struct trapq *tq, double print_time
+                  , double accel_t, double cruise_t, double decel_t
+                  , double start_pos
+                  , double start_v, double cruise_v, double accel
+                  , double extra_accel_v, double extra_decel_v)
 {
+    struct move *m = move_alloc();
+
     // Setup velocity trapezoid
     m->print_time = print_time;
     m->move_t = accel_t + cruise_t + decel_t;
@@ -54,4 +56,6 @@ extruder_move_fill(struct move *m, double print_time
     // Setup start distance
     m->start_pos.x = start_pos;
     m->axes_r.x = 1.;
+
+    trapq_add_move(tq, m);
 }

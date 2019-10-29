@@ -12,7 +12,7 @@
 #include "trapq.h" // move_get_coord
 
 // Allocate a new 'move' object
-struct move * __visible
+struct move *
 move_alloc(void)
 {
     struct move *m = malloc(sizeof(*m));
@@ -20,14 +20,16 @@ move_alloc(void)
     return m;
 }
 
-// Populate a 'struct move' with a velocity trapezoid
+// Fill and add a move to the trapezoid velocity queue
 void __visible
-move_fill(struct move *m, double print_time
-          , double accel_t, double cruise_t, double decel_t
-          , double start_pos_x, double start_pos_y, double start_pos_z
-          , double axes_d_x, double axes_d_y, double axes_d_z
-          , double start_v, double cruise_v, double accel)
+trapq_append(struct trapq *tq, double print_time
+             , double accel_t, double cruise_t, double decel_t
+             , double start_pos_x, double start_pos_y, double start_pos_z
+             , double axes_d_x, double axes_d_y, double axes_d_z
+             , double start_v, double cruise_v, double accel)
 {
+    struct move *m = move_alloc();
+
     // Setup velocity trapezoid
     m->print_time = print_time;
     m->move_t = accel_t + cruise_t + decel_t;
@@ -52,6 +54,8 @@ move_fill(struct move *m, double print_time
     m->axes_r.x = axes_d_x * inv_move_d;
     m->axes_r.y = axes_d_y * inv_move_d;
     m->axes_r.z = axes_d_z * inv_move_d;
+
+    trapq_add_move(tq, m);
 }
 
 // Find the distance travel during acceleration/deceleration
@@ -111,12 +115,10 @@ trapq_free(struct trapq *tq)
 }
 
 // Add a move to the trapezoid velocity queue
-void __visible
+void
 trapq_add_move(struct trapq *tq, struct move *m)
 {
-    struct move *nm = move_alloc();
-    memcpy(nm, m, sizeof(*nm));
-    list_add_tail(&nm->node, &tq->moves);
+    list_add_tail(&m->node, &tq->moves);
 }
 
 // Free any moves older than `print_time` from the trapezoid velocity queue

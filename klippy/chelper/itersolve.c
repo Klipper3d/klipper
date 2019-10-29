@@ -215,7 +215,9 @@ itersolve_calc_position_from_coord(struct stepper_kinematics *sk
 {
     struct move m;
     memset(&m, 0, sizeof(m));
-    move_fill(&m, 0., 0., 1., 0., x, y, z, 0., 1., 0., 0., 1., 0.);
+    m.start_pos.x = x;
+    m.start_pos.y = y;
+    m.start_pos.z = z;
     return sk->calc_position_cb(sk, &m, 0.);
 }
 

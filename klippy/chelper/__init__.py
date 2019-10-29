@@ -58,15 +58,13 @@ defs_itersolve = """
 """
 
 defs_trapq = """
-    struct move *move_alloc(void);
-    void move_fill(struct move *m, double print_time
+    void trapq_append(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z
         , double axes_d_x, double axes_d_y, double axes_d_z
         , double start_v, double cruise_v, double accel);
     struct trapq *trapq_alloc(void);
     void trapq_free(struct trapq *tq);
-    void trapq_add_move(struct trapq *tq, struct move *m);
     void trapq_free_moves(struct trapq *tq, double print_time);
 """
 
@@ -94,7 +92,7 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_move_fill(struct move *m, double print_time
+    void extruder_add_move(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t, double start_pos
         , double start_v, double cruise_v, double accel
         , double extra_accel_v, double extra_decel_v);

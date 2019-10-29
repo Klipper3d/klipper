@@ -18,7 +18,6 @@ class Move:
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
         velocity = min(speed, toolhead.max_velocity)
-        self.cmove = toolhead.cmove
         self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
         self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
@@ -97,13 +96,12 @@ class Move:
         # Generate step times for the move
         next_move_time = self.toolhead.get_next_move_time()
         if self.is_kinematic_move:
-            self.toolhead.move_fill(
-                self.cmove, next_move_time,
+            self.toolhead.trapq_append(
+                self.toolhead.trapq, next_move_time,
                 self.accel_t, self.cruise_t, self.decel_t,
                 self.start_pos[0], self.start_pos[1], self.start_pos[2],
                 self.axes_d[0], self.axes_d[1], self.axes_d[2],
                 self.start_v, self.cruise_v, self.accel)
-            self.toolhead.trapq_add_move(self.toolhead.trapq, self.cmove)
         if self.axes_d[3]:
             self.toolhead.extruder.move(next_move_time, self)
         self.toolhead.update_move_time(
@@ -247,10 +245,8 @@ class ToolHead:
         self.drip_completion = None
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_add_move = ffi_lib.trapq_add_move
+        self.trapq_append = ffi_lib.trapq_append
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.move_handlers = []
         # Create kinematics class
