@@ -76,7 +76,6 @@ class PrinterStepper:
         force_move = printer.try_load_module(config, 'force_move')
         force_move.register_stepper(self)
         # Wrappers
-        self.step_itersolve = mcu_stepper.step_itersolve
         self.setup_itersolve = mcu_stepper.setup_itersolve
         self.generate_steps = mcu_stepper.generate_steps
         self.set_trapq = mcu_stepper.set_trapq
@@ -133,7 +132,6 @@ class PrinterRail:
         stepper = PrinterStepper(config)
         self.steppers = [stepper]
         self.name = stepper.get_name(short=True)
-        self.step_itersolve = stepper.step_itersolve
         self.get_commanded_position = stepper.get_commanded_position
         self.is_motor_enabled = stepper.is_motor_enabled
         # Primary endstop and its position
@@ -199,7 +197,6 @@ class PrinterRail:
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config)
         self.steppers.append(stepper)
-        self.step_itersolve = self.step_multi_itersolve
         mcu_endstop = self.endstops[0][0]
         endstop_pin = config.get('endstop_pin', None)
         if endstop_pin is not None:
@@ -214,9 +211,6 @@ class PrinterRail:
     def add_to_endstop(self, mcu_endstop):
         for stepper in self.steppers:
             stepper.add_to_endstop(mcu_endstop)
-    def step_multi_itersolve(self, cmove):
-        for stepper in self.steppers:
-            stepper.step_itersolve(cmove)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)

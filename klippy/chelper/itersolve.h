@@ -24,7 +24,6 @@ struct stepper_kinematics {
     sk_post_callback post_cb;
 };
 
-int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
 int32_t itersolve_generate_steps(struct stepper_kinematics *sk
                                  , double flush_time);
 double itersolve_check_active(struct stepper_kinematics *sk, double flush_time);

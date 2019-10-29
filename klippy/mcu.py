@@ -27,7 +27,6 @@ class MCU_stepper:
                                       self._ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
         self._stepper_kinematics = None
-        self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
         self._itersolve_generate_steps = self._ffi_lib.itersolve_generate_steps
         self._itersolve_check_active = self._ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
@@ -116,10 +115,6 @@ class MCU_stepper:
             mcu_pos_dist = -mcu_pos_dist
         self._ffi_lib.itersolve_set_commanded_pos(
             self._stepper_kinematics, mcu_pos_dist - self._mcu_position_offset)
-    def step_itersolve(self, cmove):
-        ret = self._itersolve_gen_steps(self._stepper_kinematics, cmove)
-        if ret:
-            raise error("Internal error in stepcompress")
     def set_trapq(self, tq):
         if tq is None:
             ffi_main, self._ffi_lib = chelper.get_ffi()

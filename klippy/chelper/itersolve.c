@@ -8,7 +8,7 @@
 #include <stddef.h> // offsetof
 #include <string.h> // memset
 #include "compiler.h" // __visible
-#include "itersolve.h" // itersolve_gen_steps
+#include "itersolve.h" // itersolve_generate_steps
 #include "pyhelper.h" // errorf
 #include "stepcompress.h" // queue_append_start
 #include "trapq.h" // struct move
@@ -126,14 +126,6 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     if (sk->post_cb)
         sk->post_cb(sk);
     return 0;
-}
-
-// Generate step times for a move
-int32_t __visible
-itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
-{
-    return itersolve_gen_steps_range(sk, m, m->print_time
-                                     , m->print_time + m->move_t);
 }
 
 // Check if a move is likely to cause movement on a stepper
