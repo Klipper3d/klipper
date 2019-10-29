@@ -54,5 +54,6 @@ polar_stepper_alloc(char type)
         sk->calc_position_cb = polar_stepper_angle_calc_position;
         sk->post_cb = polar_stepper_angle_post_fixup;
     }
+    sk->active_flags = AF_X | AF_Y;
     return sk;
 }

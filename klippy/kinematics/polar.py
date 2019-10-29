@@ -18,13 +18,15 @@ class PolarKinematics:
         self.rails = [rail_arm, rail_z]
         self.steppers = [stepper_bed] + [ s for r in self.rails
                                           for s in r.get_steppers() ]
+        for s in self.get_steppers():
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_move_handler(s.generate_steps)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
-        self.need_motor_enable = True
         self.limit_z = [(1.0, -1.0)]
         self.limit_xy2 = -1.
         # Setup stepper max halt velocity
@@ -85,17 +87,6 @@ class PolarKinematics:
         self.limit_xy2 = -1.
         for s in self.steppers:
             s.motor_enable(print_time, 0)
-        self.need_motor_enable = True
-    def _check_motor_enable(self, print_time, move):
-        if move.axes_d[0] or move.axes_d[1]:
-            self.steppers[0].motor_enable(print_time, 1)
-            self.rails[0].motor_enable(print_time, 1)
-        if move.axes_d[2]:
-            self.rails[1].motor_enable(print_time, 1)
-        need_motor_enable = not self.steppers[0].is_motor_enabled()
-        for rail in self.rails:
-            need_motor_enable |= not rail.is_motor_enabled()
-        self.need_motor_enable = need_motor_enable
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0]**2 + end_pos[1]**2
@@ -114,15 +105,7 @@ class PolarKinematics:
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time, move)
-        axes_d = move.axes_d
-        cmove = move.cmove
-        if axes_d[0] or axes_d[1]:
-            self.rails[0].step_itersolve(cmove)
-            self.steppers[0].step_itersolve(cmove)
-        if axes_d[2]:
-            self.rails[1].step_itersolve(cmove)
+        pass
     def get_status(self):
         return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
                         ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}
