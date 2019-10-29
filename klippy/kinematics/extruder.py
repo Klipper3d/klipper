@@ -213,10 +213,6 @@ class PrinterExtruder:
             s.step_itersolve(self.cmove)
         self.extrude_pos = start_pos + axis_d
     def add_stepper(self, stepper):
-        if stepper == None:
-            return
-        stepper.set_max_jerk(9999999.9, 9999999.9)
-        stepper.setup_itersolve('extruder_stepper_alloc')
         self.stepper_list.append(stepper)
         logging.info("Added stepper to '%s'" % self.name)
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
