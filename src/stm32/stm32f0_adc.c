@@ -69,8 +69,18 @@ gpio_adc_setup(uint32_t pin)
             ;
         while (adc->CFGR1 & ADC_CFGR1_DMAEN)
             ;
-        // start calibration and continue
+        // start calibration and wait for completion
         adc->CR |= ADC_CR_ADCAL;
+        while (adc->CR & ADC_CR_ADCAL)
+            ;
+
+        // if not enabled
+        if (!(adc->CR & ADC_CR_ADEN)){
+            adc->ISR |= ADC_ISR_ADRDY;
+            adc->CR |= ADC_CR_ADEN;
+            while (!(ADC1->ISR & ADC_ISR_ADRDY))
+                ;
+        }
     }
 
     gpio_peripheral(pin, GPIO_ANALOG, 0);
@@ -85,17 +95,6 @@ uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    // if calibration still running
-    if (adc->CR & ADC_CR_ADCAL){
-        goto need_delay;
-    }
-    // if not enabled
-    if (!(adc->CR & ADC_CR_ADEN)){
-        adc->ISR |= ADC_ISR_ADRDY;
-        adc->CR |= ADC_CR_ADEN;
-        while (!(ADC1->ISR & ADC_ISR_ADRDY))
-            ;
-    }
     if(adc_busy) {
         if (!(adc->ISR & ADC_ISR_EOC))
             goto need_delay;
@@ -126,10 +125,12 @@ void
 gpio_adc_cancel_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    //irqstatus_t flag = irq_save();
+    irqstatus_t flag = irq_save();
     if ( adc_busy && (g.chan == adc_current_channel)){
         adc->CR |= ADC_CR_ADSTP;
+        while (ADC1->CR & ADC_CR_ADSTP)
+            ;
         adc_busy = 0;
     }
-    //irq_restore(flag);
+    irq_restore(flag);
 }
