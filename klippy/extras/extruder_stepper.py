@@ -1,6 +1,6 @@
 # Code for supporting multiple steppers in single filament extruder.
 #
-# Copyright (C) 2019-2020  Simo Apell <simo.apell@live.fi>
+# Copyright (C) 2019 Simo Apell <simo.apell@live.fi>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -12,6 +12,8 @@ class ExtruderStepper:
         self.name = config.get_name()
         self.extruder_name = config.get('add_to_extruder')
         self.stepper = stepper.PrinterStepper(config)
+        self.stepper.set_max_jerk(9999999.9, 9999999.9)
+        self.stepper.setup_itersolve('extruder_stepper_alloc')
         self.printer.register_event_handler("klippy:connect", \
                                             self.add_stepper_to_extruder)
     def add_stepper_to_extruder(self):
