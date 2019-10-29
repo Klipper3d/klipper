@@ -48,8 +48,6 @@ class WinchKinematics:
     def check_move(self, move):
         # XXX - boundary checks and speed limits not implemented
         pass
-    def move(self, print_time, move):
-        pass
     def get_status(self):
         # XXX - homed_checks and rail limits not implemented
         return {'homed_axes': 'XYZ'}

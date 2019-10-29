@@ -104,7 +104,6 @@ class Move:
                 self.axes_d[0], self.axes_d[1], self.axes_d[2],
                 self.start_v, self.cruise_v, self.accel)
             self.toolhead.trapq_add_move(self.toolhead.trapq, self.cmove)
-            self.toolhead.kin.move(next_move_time, self)
         if self.axes_d[3]:
             self.toolhead.extruder.move(next_move_time, self)
         self.toolhead.update_move_time(

@@ -114,8 +114,6 @@ class CartKinematics:
         z_ratio = move.move_d / abs(move.axes_d[2])
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def move(self, print_time, move):
-        pass
     def get_status(self):
         return {'homed_axes': "".join([a
                     for a, (l, h) in zip("XYZ", self.limits) if l <= h])
