@@ -59,7 +59,7 @@ gpio_adc_setup(uint32_t pin)
 
         // 100: 41.5 ADC clock cycles
         adc->SMPR |= (~ADC_SMPR_SMP_Msk | ADC_SMPR_SMP_2 );
-        adc->CFGR2 |= ADC_CFGR2_CKMODE_1;
+        adc->CFGR2 |= ADC_CFGR2_CKMODE;
         adc->CFGR1 &= ~ADC_CFGR1_AUTOFF;
         adc->CFGR1 |= ADC_CFGR1_EXTSEL;
 

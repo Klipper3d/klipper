@@ -104,8 +104,7 @@ pll_setup(void)
     if (CONFIG_CLOCK_REF_8M) {
         // Configure 48Mhz PLL from external 8Mhz crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((6 - 2) << RCC_CFGR_PLLMUL_Pos)
-             | RCC_CFGR_ADCPRE_DIV2;
+        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((6 - 2) << RCC_CFGR_PLLMUL_Pos);
     } else {
         // Configure 48Mhz PLL from internal 8Mhz oscillator (HSI)
         cfgr = RCC_CFGR_PLLSRC_HSI_DIV2 | ((12 - 2) << RCC_CFGR_PLLMUL_Pos);
@@ -150,6 +149,16 @@ hsi48_setup(void)
 #endif
 }
 
+// Enable high speed internal 14Mhz clock for ADC
+static void
+hsi14_setup(void)
+{
+    // Enable HSI14 for ADC
+    RCC->CR2 = RCC_CR2_HSI14ON;
+    while (!(RCC->CR2 & RCC_CR2_HSI14RDY))
+        ;
+}
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
@@ -164,6 +173,9 @@ armcm_main(void)
         hsi48_setup();
     else
         pll_setup();
+
+    // Turn on hsi14 oscillator for ADC
+    hsi14_setup();
 
     // Support alternate USB pins on stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
