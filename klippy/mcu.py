@@ -26,10 +26,11 @@ class MCU_stepper:
         self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
                                       self._ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
-        self._stepper_kinematics = self._itersolve_gen_steps = None
-        self._itersolve_generate_steps = self._itersolve_check_active = None
+        self._stepper_kinematics = None
+        self._itersolve_gen_steps = self._ffi_lib.itersolve_gen_steps
+        self._itersolve_generate_steps = self._ffi_lib.itersolve_generate_steps
+        self._itersolve_check_active = self._ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
-        self.set_ignore_move(False)
     def get_mcu(self):
         return self._mcu
     def setup_dir_pin(self, pin_params):
@@ -97,18 +98,6 @@ class MCU_stepper:
             self._ffi_lib.itersolve_set_stepcompress(
                 sk, self._stepqueue, self._step_dist)
         return old_sk
-    def set_ignore_move(self, ignore_move):
-        fl = self._ffi_lib
-        was_ignore = self._itersolve_gen_steps is not fl.itersolve_gen_steps
-        if ignore_move:
-            self._itersolve_gen_steps = (lambda *args: 0)
-            self._itersolve_generate_steps = (lambda *args: 0)
-            self._itersolve_check_active = (lambda *args: 0.)
-        else:
-            self._itersolve_gen_steps = fl.itersolve_gen_steps
-            self._itersolve_generate_steps = fl.itersolve_generate_steps
-            self._itersolve_check_active = fl.itersolve_check_active
-        return was_ignore
     def note_homing_end(self, did_trigger=False):
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:

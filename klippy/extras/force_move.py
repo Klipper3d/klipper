@@ -56,10 +56,8 @@ class ForceMove:
         if not was_enable:
             stepper.motor_enable(print_time, 1)
             toolhead.dwell(STALL_TIME)
-        was_ignore = stepper.set_ignore_move(False)
-        return was_enable, was_ignore
-    def restore_enable(self, stepper, was_enable, was_ignore):
-        stepper.set_ignore_move(was_ignore)
+        return was_enable
+    def restore_enable(self, stepper, was_enable):
         if not was_enable:
             toolhead = self.printer.lookup_object('toolhead')
             toolhead.dwell(STALL_TIME)
@@ -89,14 +87,14 @@ class ForceMove:
     def cmd_STEPPER_BUZZ(self, params):
         stepper = self._lookup_stepper(params)
         logging.info("Stepper buzz %s", stepper.get_name())
-        was_enable, was_ignore = self.force_enable(stepper)
+        was_enable = self.force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
         for i in range(10):
             self.manual_move(stepper, 1., BUZZ_VELOCITY)
             toolhead.dwell(.050)
             self.manual_move(stepper, -1., BUZZ_VELOCITY)
             toolhead.dwell(.450)
-        self.restore_enable(stepper, was_enable, was_ignore)
+        self.restore_enable(stepper, was_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"
     def cmd_FORCE_MOVE(self, params):
         stepper = self._lookup_stepper(params)
@@ -105,9 +103,8 @@ class ForceMove:
         accel = self.gcode.get_float('ACCEL', params, 0., minval=0.)
         logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f accel=%.3f",
                      stepper.get_name(), distance, speed, accel)
-        was_enable, was_ignore = self.force_enable(stepper)
+        self.force_enable(stepper)
         self.manual_move(stepper, distance, speed, accel)
-        self.restore_enable(stepper, True, was_ignore)
     cmd_SET_KINEMATIC_POSITION_help = "Force a low-level kinematic position"
     def cmd_SET_KINEMATIC_POSITION(self, params):
         toolhead = self.printer.lookup_object('toolhead')
