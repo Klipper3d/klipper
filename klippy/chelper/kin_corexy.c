@@ -1,6 +1,6 @@
 // CoreXY kinematics stepper pulse time generation
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -35,5 +35,6 @@ corexy_stepper_alloc(char type)
         sk->calc_position_cb = corexy_stepper_plus_calc_position;
     else if (type == '-')
         sk->calc_position_cb = corexy_stepper_minus_calc_position;
+    sk->active_flags = AF_X | AF_Y;
     return sk;
 }

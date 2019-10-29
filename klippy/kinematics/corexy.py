@@ -1,6 +1,6 @@
 # Code for handling the kinematics of corexy robots
 #
-# Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -17,13 +17,15 @@ class CoreXYKinematics:
         self.rails[0].setup_itersolve('corexy_stepper_alloc', '+')
         self.rails[1].setup_itersolve('corexy_stepper_alloc', '-')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', 'z')
+        for s in self.get_steppers():
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_move_handler(s.generate_steps)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
-        self.need_motor_enable = True
         self.limits = [(1.0, -1.0)] * 3
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
@@ -65,17 +67,6 @@ class CoreXYKinematics:
         self.limits = [(1.0, -1.0)] * 3
         for rail in self.rails:
             rail.motor_enable(print_time, 0)
-        self.need_motor_enable = True
-    def _check_motor_enable(self, print_time, move):
-        if move.axes_d[0] or move.axes_d[1]:
-            self.rails[0].motor_enable(print_time, 1)
-            self.rails[1].motor_enable(print_time, 1)
-        if move.axes_d[2]:
-            self.rails[2].motor_enable(print_time, 1)
-        need_motor_enable = False
-        for rail in self.rails:
-            need_motor_enable |= not rail.is_motor_enabled()
-        self.need_motor_enable = need_motor_enable
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):
@@ -101,16 +92,7 @@ class CoreXYKinematics:
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time, move)
-        axes_d = move.axes_d
-        cmove = move.cmove
-        rail_x, rail_y, rail_z = self.rails
-        if axes_d[0] or axes_d[1]:
-            rail_x.step_itersolve(cmove)
-            rail_y.step_itersolve(cmove)
-        if axes_d[2]:
-            rail_z.step_itersolve(cmove)
+        pass
     def get_status(self):
         return {'homed_axes': "".join([a
                     for a, (l, h) in zip("XYZ", self.limits) if l <= h])
