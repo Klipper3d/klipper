@@ -6,7 +6,6 @@
 import os, logging
 
 class VirtualSD:
-
     def __init__(self, config):
         printer = config.get_printer()
         printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
@@ -65,6 +64,8 @@ class VirtualSD:
     def do_pause(self):
         if self.work_timer is not None:
             self.must_pause_work = True
+            while self.work_timer is not None:
+                self.reactor.pause(self.reactor.monotonic() + .001)
     # G-Code commands
     def cmd_error(self, params):
         raise self.gcode.error("SD write not supported")
