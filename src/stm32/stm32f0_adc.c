@@ -15,9 +15,6 @@
 
 DECL_CONSTANT("ADC_MAX", 4095);
 
-static uint32_t adc_current_channel;
-static uint32_t adc_busy = 0;
-
 static const uint32_t adc_pins[][2] = {
     {GPIO('A', 0), ADC_CHSELR_CHSEL0},
     {GPIO('A', 1), ADC_CHSELR_CHSEL1},
@@ -95,16 +92,13 @@ uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    if(adc_busy) {
-        if (!(adc->ISR & ADC_ISR_EOC))
-            goto need_delay;
-        if (adc_current_channel != g.chan)
-            goto need_delay;
+    if ((adc->ISR & ADC_ISR_EOC) && (adc->CHSELR == g.chan)){
         return 0;
     }
+    if (adc->CR & ADC_CR_ADSTART){
+       goto need_delay;
+    }
     adc->CHSELR = g.chan;
-    adc_current_channel = g.chan;
-    adc_busy = 1;
     adc->CR |= ADC_CR_ADSTART;
 
 need_delay:
@@ -116,7 +110,7 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    adc_busy = 0;
+    adc->ISR &= ~ADC_ISR_EOSEQ;
     return adc->DR;
 }
 
@@ -126,11 +120,8 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
     irqstatus_t flag = irq_save();
-    if ( adc_busy && (g.chan == adc_current_channel)){
+    if (!(adc->ISR & ADC_ISR_EOC) && (adc->CHSELR == g.chan)){
         adc->CR |= ADC_CR_ADSTP;
-        while (ADC1->CR & ADC_CR_ADSTP)
-            ;
-        adc_busy = 0;
     }
     irq_restore(flag);
 }
