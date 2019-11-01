@@ -86,6 +86,8 @@ move_get_coord(struct move *m, double move_time)
         .z = m->start_pos.z + m->axes_r.z * move_dist };
 }
 
+#define NEVER_TIME 9999999999999999.9
+
 // Allocate a new 'trapq' object
 struct trapq * __visible
 trapq_alloc(void)
@@ -93,6 +95,10 @@ trapq_alloc(void)
     struct trapq *tq = malloc(sizeof(*tq));
     memset(tq, 0, sizeof(*tq));
     list_init(&tq->moves);
+    struct move *head_sentinel = move_alloc(), *tail_sentinel = move_alloc();
+    tail_sentinel->print_time = tail_sentinel->move_t = NEVER_TIME;
+    list_add_head(&head_sentinel->node, &tq->moves);
+    list_add_tail(&tail_sentinel->node, &tq->moves);
     return tq;
 }
 
@@ -108,19 +114,55 @@ trapq_free(struct trapq *tq)
     free(tq);
 }
 
+// Update the list sentinels
+void
+trapq_check_sentinels(struct trapq *tq)
+{
+    struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
+    if (tail_sentinel->print_time)
+        // Already up to date
+        return;
+    struct move *m = list_prev_entry(tail_sentinel, node);
+    struct move *head_sentinel = list_first_entry(&tq->moves, struct move,node);
+    if (m == head_sentinel) {
+        // No moves at all on this list
+        tail_sentinel->print_time = NEVER_TIME;
+        return;
+    }
+    tail_sentinel->print_time = m->print_time + m->move_t;
+    tail_sentinel->start_pos = move_get_coord(m, m->move_t);
+}
+
 // Add a move to the trapezoid velocity queue
 void
 trapq_add_move(struct trapq *tq, struct move *m)
 {
-    list_add_tail(&m->node, &tq->moves);
+    struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
+    struct move *prev = list_prev_entry(tail_sentinel, node);
+    if (prev->print_time + prev->move_t < m->print_time) {
+        // Add a null move to fill time gap
+        struct move *null_move = move_alloc();
+        null_move->start_pos = m->start_pos;
+        null_move->print_time = prev->print_time + prev->move_t;
+        null_move->move_t = m->print_time - null_move->print_time;
+        list_add_before(&null_move->node, &tail_sentinel->node);
+    }
+    list_add_before(&m->node, &tail_sentinel->node);
+    tail_sentinel->print_time = 0.;
 }
 
 // Free any moves older than `print_time` from the trapezoid velocity queue
 void __visible
 trapq_free_moves(struct trapq *tq, double print_time)
 {
-    while (!list_empty(&tq->moves)) {
-        struct move *m = list_first_entry(&tq->moves, struct move, node);
+    struct move *head_sentinel = list_first_entry(&tq->moves, struct move,node);
+    struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
+    for (;;) {
+        struct move *m = list_next_entry(head_sentinel, node);
+        if (m == tail_sentinel) {
+            tail_sentinel->print_time = NEVER_TIME;
+            return;
+        }
         if (m->print_time + m->move_t > print_time)
             return;
         list_del(&m->node);
