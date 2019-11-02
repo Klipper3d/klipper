@@ -16,7 +16,8 @@ struct stepper_kinematics {
     double step_dist, commanded_pos;
     struct stepcompress *sc;
 
-    double last_flush_time;
+    double last_flush_time, last_move_time;
+    double scan_past, scan_future;
     struct trapq *tq;
     int active_flags;
 
