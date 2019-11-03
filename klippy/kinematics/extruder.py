@@ -135,8 +135,6 @@ class PrinterExtruder:
         if diff_r:
             return (self.instant_corner_v / abs(diff_r))**2
         return move.max_cruise_v2
-    def lookahead(self, moves, flush_count, lazy):
-        return flush_count
     def move(self, print_time, move):
         axis_r = move.axes_r[3]
         accel = move.accel * axis_r
@@ -183,8 +181,6 @@ class DummyExtruder:
             move.end_pos, "Extrude when no extruder present")
     def calc_junction(self, prev_move, move):
         return move.max_cruise_v2
-    def lookahead(self, moves, flush_count, lazy):
-        return flush_count
     def get_heater(self):
         raise homing.CommandError("Extruder not configured")
 
