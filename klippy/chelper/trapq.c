@@ -130,6 +130,27 @@ trapq_integrate(struct move *m, int axis, double start, double end)
     return res;
 }
 
+// Find a move associated with a given time
+struct move *
+trapq_find_move(struct move *m, double *ptime)
+{
+    double move_time = *ptime;
+    for (;;) {
+        if (unlikely(move_time < 0.)) {
+            // Check previous move in list
+            m = list_prev_entry(m, node);
+            move_time += m->move_t;
+        } else if (unlikely(move_time > m->move_t)) {
+            // Check next move in list
+            move_time -= m->move_t;
+            m = list_next_entry(m, node);
+        } else {
+            *ptime = move_time;
+            return m;
+        }
+    }
+}
+
 #define NEVER_TIME 9999999999999999.9
 
 // Allocate a new 'trapq' object
