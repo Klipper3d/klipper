@@ -174,8 +174,10 @@ itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m)
             if (fabs(dist) < half_step + .000000001)
                 // Only change direction if going past midway point
                 goto seek_new_high_range;
-            if (last.time >= low.time && high.time > last.time) {
+            if (last.time >= low.time) {
                 // Must seek new low range to avoid re-finding previous time
+                if (high.time < last.time + .000000001)
+                    goto seek_new_high_range;
                 high.time = (last.time + high.time) * .5;
                 high.position = calc_position(sk, m, high.time);
                 continue;
