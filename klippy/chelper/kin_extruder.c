@@ -32,30 +32,49 @@ extruder_stepper_alloc(void)
 void __visible
 extruder_add_move(struct trapq *tq, double print_time
                   , double accel_t, double cruise_t, double decel_t
-                  , double start_pos
+                  , double start_e_pos
                   , double start_v, double cruise_v, double accel
                   , double extra_accel_v, double extra_decel_v)
 {
-    struct move *m = move_alloc();
+    struct coord start_pos, axes_r;
+    start_pos.x = start_e_pos;
+    axes_r.x = 1.;
+    start_pos.y = start_pos.z = axes_r.y = axes_r.z = 0.;
 
-    // Setup velocity trapezoid
-    m->print_time = print_time;
-    m->move_t = accel_t + cruise_t + decel_t;
-    m->accel_t = accel_t;
-    m->cruise_t = cruise_t;
-    m->cruise_start_d = accel_t * (.5 * (cruise_v + start_v) + extra_accel_v);
-    m->decel_start_d = m->cruise_start_d + cruise_t * cruise_v;
+    if (accel_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = accel_t;
+        m->start_v = start_v + extra_accel_v;
+        m->half_accel = .5 * accel;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
 
-    // Setup for accel/cruise/decel phases
-    m->cruise_v = cruise_v;
-    m->accel.c1 = start_v + extra_accel_v;
-    m->accel.c2 = .5 * accel;
-    m->decel.c1 = cruise_v + extra_decel_v;
-    m->decel.c2 = -m->accel.c2;
+        print_time += accel_t;
+        start_pos.x += move_get_distance(m, accel_t);
+    }
+    if (cruise_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = cruise_t;
+        m->start_v = cruise_v;
+        m->half_accel = 0.;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
 
-    // Setup start distance
-    m->start_pos.x = start_pos;
-    m->axes_r.x = 1.;
-
-    trapq_add_move(tq, m);
+        print_time += cruise_t;
+        start_pos.x += move_get_distance(m, cruise_t);
+    }
+    if (decel_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = decel_t;
+        m->start_v = cruise_v + extra_decel_v;
+        m->half_accel = -.5 * accel;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
+    }
 }

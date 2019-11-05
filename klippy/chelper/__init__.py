@@ -93,7 +93,7 @@ defs_kin_winch = """
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
     void extruder_add_move(struct trapq *tq, double print_time
-        , double accel_t, double cruise_t, double decel_t, double start_pos
+        , double accel_t, double cruise_t, double decel_t, double start_e_pos
         , double start_v, double cruise_v, double accel
         , double extra_accel_v, double extra_decel_v);
 """

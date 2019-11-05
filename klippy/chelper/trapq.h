@@ -7,16 +7,9 @@ struct coord {
     double x, y, z;
 };
 
-struct move_accel {
-    double c1, c2;
-};
-
 struct move {
     double print_time, move_t;
-    double accel_t, cruise_t;
-    double cruise_start_d, decel_start_d;
-    double cruise_v;
-    struct move_accel accel, decel;
+    double start_v, half_accel;
     struct coord start_pos, axes_r;
 
     struct list_node node;

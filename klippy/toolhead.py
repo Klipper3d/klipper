@@ -306,7 +306,8 @@ class ToolHead:
                     move.start_v, move.cruise_v, move.accel)
             if move.axes_d[3]:
                 self.extruder.move(next_move_time, move)
-            next_move_time += move.accel_t + move.cruise_t + move.decel_t
+            next_move_time = (next_move_time + move.accel_t
+                              + move.cruise_t + move.decel_t)
         # Generate steps for moves
         if self.special_queuing_state == "Drip":
             self._update_drip_move_time(next_move_time)

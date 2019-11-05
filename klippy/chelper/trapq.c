@@ -28,57 +28,59 @@ trapq_append(struct trapq *tq, double print_time
              , double axes_d_x, double axes_d_y, double axes_d_z
              , double start_v, double cruise_v, double accel)
 {
-    struct move *m = move_alloc();
-
-    // Setup velocity trapezoid
-    m->print_time = print_time;
-    m->move_t = accel_t + cruise_t + decel_t;
-    m->accel_t = accel_t;
-    m->cruise_t = cruise_t;
-    m->cruise_start_d = accel_t * .5 * (cruise_v + start_v);
-    m->decel_start_d = m->cruise_start_d + cruise_t * cruise_v;
-
-    // Setup for accel/cruise/decel phases
-    m->cruise_v = cruise_v;
-    m->accel.c1 = start_v;
-    m->accel.c2 = .5 * accel;
-    m->decel.c1 = cruise_v;
-    m->decel.c2 = -m->accel.c2;
-
-    // Setup for move_get_coord()
-    m->start_pos.x = start_pos_x;
-    m->start_pos.y = start_pos_y;
-    m->start_pos.z = start_pos_z;
+    struct coord axes_r, start_pos;
     double inv_move_d = 1. / sqrt(axes_d_x*axes_d_x + axes_d_y*axes_d_y
                                   + axes_d_z*axes_d_z);
-    m->axes_r.x = axes_d_x * inv_move_d;
-    m->axes_r.y = axes_d_y * inv_move_d;
-    m->axes_r.z = axes_d_z * inv_move_d;
+    axes_r.x = axes_d_x * inv_move_d;
+    axes_r.y = axes_d_y * inv_move_d;
+    axes_r.z = axes_d_z * inv_move_d;
+    start_pos.x = start_pos_x;
+    start_pos.y = start_pos_y;
+    start_pos.z = start_pos_z;
 
-    trapq_add_move(tq, m);
-}
+    if (accel_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = accel_t;
+        m->start_v = start_v;
+        m->half_accel = .5 * accel;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
 
-// Find the distance travel during acceleration/deceleration
-static inline double
-move_eval_accel(struct move_accel *ma, double move_time)
-{
-    return (ma->c1 + ma->c2 * move_time) * move_time;
+        print_time += accel_t;
+        start_pos = move_get_coord(m, accel_t);
+    }
+    if (cruise_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = cruise_t;
+        m->start_v = cruise_v;
+        m->half_accel = 0.;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
+
+        print_time += cruise_t;
+        start_pos = move_get_coord(m, cruise_t);
+    }
+    if (decel_t) {
+        struct move *m = move_alloc();
+        m->print_time = print_time;
+        m->move_t = decel_t;
+        m->start_v = cruise_v;
+        m->half_accel = -.5 * accel;
+        m->start_pos = start_pos;
+        m->axes_r = axes_r;
+        trapq_add_move(tq, m);
+    }
 }
 
 // Return the distance moved given a time in a move
 inline double
 move_get_distance(struct move *m, double move_time)
 {
-    if (unlikely(move_time < m->accel_t))
-        // Acceleration phase of move
-        return move_eval_accel(&m->accel, move_time);
-    move_time -= m->accel_t;
-    if (likely(move_time <= m->cruise_t))
-        // Cruising phase
-        return m->cruise_start_d + m->cruise_v * move_time;
-    // Deceleration phase
-    move_time -= m->cruise_t;
-    return m->decel_start_d + move_eval_accel(&m->decel, move_time);
+    return (m->start_v + m->half_accel * move_time) * move_time;
 }
 
 // Return the XYZ coordinates given a time in a move
