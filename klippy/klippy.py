@@ -132,6 +132,7 @@ class Printer:
     def _connect(self, eventtime):
         try:
             self._read_config()
+            self.send_event("klippy:mcu_identify")
             for cb in self.event_handlers.get("klippy:connect", []):
                 if self.state_message is not message_startup:
                     return

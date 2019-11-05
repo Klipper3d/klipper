@@ -456,6 +456,8 @@ class MCU:
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
         self._printer.register_event_handler("klippy:connect", self._connect)
+        self._printer.register_event_handler("klippy:mcu_identify",
+                                             self._mcu_identify)
         self._printer.register_event_handler("klippy:shutdown", self._shutdown)
         self._printer.register_event_handler("klippy:disconnect",
                                              self._disconnect)
@@ -490,7 +492,6 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
-        self._move_count = 0
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -603,7 +604,16 @@ class MCU:
             raise error("Can not update MCU '%s' config as it is shutdown" % (
                 self._name,))
         return config_params
-    def _check_config(self):
+    def _log_info(self):
+        msgparser = self._serial.get_msgparser()
+        log_info = [
+            "Loaded MCU '%s' %d commands (%s / %s)" % (
+                self._name, len(msgparser.messages_by_id),
+                msgparser.version, msgparser.build_versions),
+            "MCU '%s' config: %s" % (self._name, " ".join(
+                ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
+        return "\n".join(log_info)
+    def _connect(self):
         config_params = self._send_get_config()
         if not config_params['is_config']:
             if self._restart_method == 'rpi_usb':
@@ -622,13 +632,18 @@ class MCU:
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
-        self._move_count = config_params['move_count']
+        move_count = config_params['move_count']
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            self._move_count)
+            move_count)
         self._ffi_lib.steppersync_set_time(
             self._steppersync, 0., self._mcu_freq)
-    def _connect(self):
+        # Log config information
+        move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
+        logging.info(move_msg)
+        log_info = self._log_info() + "\n" + move_msg
+        self._printer.set_rollover_info(self._name, log_info, log=False)
+    def _mcu_identify(self):
         if self.is_fileoutput():
             self._connect_file()
         else:
@@ -641,17 +656,9 @@ class MCU:
                 self._clocksync.connect(self._serial)
             except serialhdl.error as e:
                 raise error(str(e))
-        msgparser = self._serial.get_msgparser()
-        name = self._name
-        log_info = [
-            "Loaded MCU '%s' %d commands (%s / %s)" % (
-                name, len(msgparser.messages_by_id),
-                msgparser.version, msgparser.build_versions),
-            "MCU '%s' config: %s" % (name, " ".join(
-                ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
-        logging.info("\n".join(log_info))
+        logging.info(self._log_info())
         ppins = self._printer.lookup_object('pins')
-        pin_resolver = ppins.get_pin_resolver(name)
+        pin_resolver = ppins.get_pin_resolver(self._name)
         for cname, value in self.get_constants().items():
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
@@ -661,6 +668,7 @@ class MCU:
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._reset_cmd = self.try_lookup_command("reset")
         self._config_reset_cmd = self.try_lookup_command("config_reset")
+        msgparser = self._serial.get_msgparser()
         if (self._restart_method is None
             and (self._reset_cmd is not None
                  or self._config_reset_cmd is not None)
@@ -669,11 +677,6 @@ class MCU:
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
         self.register_response(self._handle_mcu_stats, 'stats')
-        self._check_config()
-        move_msg = "Configured MCU '%s' (%d moves)" % (name, self._move_count)
-        logging.info(move_msg)
-        log_info.append(move_msg)
-        self._printer.set_rollover_info(name, "\n".join(log_info), log=False)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
