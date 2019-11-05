@@ -156,6 +156,16 @@ hsi48_setup(void)
 #endif
 }
 
+// Enable high speed internal 14Mhz clock for ADC
+static void
+hsi14_setup(void)
+{
+    // Enable HSI14 for ADC
+    RCC->CR2 = RCC_CR2_HSI14ON;
+    while (!(RCC->CR2 & RCC_CR2_HSI14RDY))
+        ;
+}
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
@@ -178,6 +188,9 @@ armcm_main(void)
         hsi48_setup();
     else
         pll_setup();
+
+    // Turn on hsi14 oscillator for ADC
+    hsi14_setup();
 
     // Support alternate USB pins on stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
