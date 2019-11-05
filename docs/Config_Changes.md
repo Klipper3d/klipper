@@ -10,6 +10,9 @@ All dates in this document are approximate.
 chip id by default.  Update the "serial" setting in the "mcu" config
 section accordingly.
 
+20191121: The pressure_advance_lookahead_time parameter has been
+removed.  See example.cfg for alternate configuration settings.
+
 20191112: The tmc stepper driver virtual enable capability is now
 automatically enabled if the stepper does not have a dedicated stepper
 enable pin.  Remove references to tmcXXXX:virtual_enable from the

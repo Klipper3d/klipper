@@ -156,9 +156,9 @@ The following standard commands are supported:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
-  [ADVANCE_LOOKAHEAD_TIME=<pressure_advance_lookahead_time>]`:
-  Set pressure advance parameters. If EXTRUDER is not specified, it
-  defaults to the active extruder.
+  [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
+  parameters. If EXTRUDER is not specified, it defaults to the active
+  extruder.
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.

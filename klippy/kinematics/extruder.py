@@ -46,19 +46,23 @@ class PrinterExtruder:
             config, 'activate_gcode', '')
         self.deactivate_gcode = gcode_macro.load_template(
             config, 'deactivate_gcode', '')
-        self.pressure_advance = config.getfloat(
-            'pressure_advance', 0., minval=0.)
-        self.pressure_advance_lookahead_time = config.getfloat(
-            'pressure_advance_lookahead_time', 0.010, minval=0.)
-        self.extrude_pos = 0.
+        self.pressure_advance = self.pressure_advance_smooth_time = 0.
+        pressure_advance = config.getfloat('pressure_advance', 0., minval=0.)
+        smooth_time = config.getfloat('pressure_advance_smooth_time',
+                                      0.040, above=0., maxval=.200)
+        self.extrude_pos = self.extrude_pa_pos = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.extruder_add_move = ffi_lib.extruder_add_move
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_append = ffi_lib.trapq_append
         self.trapq_free_moves = ffi_lib.trapq_free_moves
-        self.stepper.setup_itersolve('extruder_stepper_alloc')
+        self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
+                                       ffi_lib.free)
+        self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
         toolhead.register_step_generator(self.stepper.generate_steps)
+        self.extruder_set_pressure = ffi_lib.extruder_set_pressure
+        self._set_pressure_advance(pressure_advance, smooth_time)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
@@ -71,12 +75,24 @@ class PrinterExtruder:
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
     def update_move_time(self, flush_time):
         self.trapq_free_moves(self.trapq, flush_time)
+    def _set_pressure_advance(self, pressure_advance, smooth_time):
+        old_smooth_time = self.pressure_advance_smooth_time * .5
+        if not self.pressure_advance:
+            old_smooth_time = 0.
+        new_smooth_time = smooth_time * .5
+        if not pressure_advance:
+            new_smooth_time = 0.
+        toolhead = self.printer.lookup_object("toolhead")
+        toolhead.note_step_generation_scan_time(new_smooth_time,
+                                                old_delay=old_smooth_time)
+        self.extruder_set_pressure(self.sk_extruder,
+                                   pressure_advance, new_smooth_time)
+        self.pressure_advance = pressure_advance
+        self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
-        return dict(
-            self.get_heater().get_status(eventtime),
-            pressure_advance=self.pressure_advance,
-            lookahead_time=self.pressure_advance_lookahead_time
-        )
+        return dict(self.get_heater().get_status(eventtime),
+                    pressure_advance=self.pressure_advance,
+                    smooth_time=self.pressure_advance_smooth_time)
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
@@ -89,7 +105,6 @@ class PrinterExtruder:
         return self.heater.stats(eventtime)
     def check_move(self, move):
         move.extrude_r = move.axes_r[3]
-        move.extrude_max_corner_v = 0.
         if not self.heater.can_extrude:
             raise homing.EndstopError(
                 "Extrude below minimum temp\n"
@@ -107,7 +122,6 @@ class PrinterExtruder:
         elif move.extrude_r > self.max_extrude_ratio:
             if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
                 # Permit extrusion if amount extruded is tiny
-                move.extrude_r = self.max_extrude_ratio
                 return
             area = move.axes_r[3] * self.filament_area
             logging.debug("Overextrude: %s vs %s (area=%.3f dist=%.3f)",
@@ -129,99 +143,41 @@ class PrinterExtruder:
                 and abs(move.move_d * prev_move.extrude_r - extrude) >= .001):
                 # Extrude ratio between moves is too different
                 return 0.
-            move.extrude_r = prev_move.extrude_r
         return move.max_cruise_v2
     def lookahead(self, moves, flush_count, lazy):
-        lookahead_t = self.pressure_advance_lookahead_time
-        if not self.pressure_advance or not lookahead_t:
-            return flush_count
-        # Calculate max_corner_v - the speed the head will accelerate
-        # to after cornering.
-        for i in range(flush_count):
-            move = moves[i]
-            if not move.decel_t:
-                continue
-            cruise_v = move.cruise_v
-            max_corner_v = 0.
-            sum_t = lookahead_t
-            for j in range(i+1, flush_count):
-                fmove = moves[j]
-                if not fmove.max_start_v2:
-                    break
-                if fmove.cruise_v > max_corner_v:
-                    if (not max_corner_v
-                        and not fmove.accel_t and not fmove.cruise_t):
-                        # Start timing after any full decel moves
-                        continue
-                    if sum_t >= fmove.accel_t:
-                        max_corner_v = fmove.cruise_v
-                    else:
-                        max_corner_v = max(
-                            max_corner_v, fmove.start_v + fmove.accel * sum_t)
-                    if max_corner_v >= cruise_v:
-                        break
-                sum_t -= fmove.accel_t + fmove.cruise_t + fmove.decel_t
-                if sum_t <= 0.:
-                    break
-            else:
-                if lazy:
-                    return i
-            move.extrude_max_corner_v = max_corner_v
         return flush_count
     def move(self, print_time, move):
-        axis_d = move.axes_d[3]
         axis_r = move.axes_r[3]
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
-        accel_t, cruise_t, decel_t = move.accel_t, move.cruise_t, move.decel_t
-
-        # Update for pressure advance
-        extra_accel_v = extra_decel_v = 0.
-        start_pos = self.extrude_pos
-        if (axis_d >= 0. and (move.axes_d[0] or move.axes_d[1])
-            and self.pressure_advance):
-            # Calculate extra_accel_v
-            pressure_advance = self.pressure_advance * move.extrude_r
-            prev_pressure_d = start_pos - move.start_pos[3]
-            if accel_t:
-                npd = move.cruise_v * pressure_advance
-                extra_accel_d = npd - prev_pressure_d
-                if extra_accel_d > 0.:
-                    extra_accel_v = extra_accel_d / accel_t
-                    axis_d += extra_accel_d
-                    prev_pressure_d += extra_accel_d
-            # Calculate extra_decel_v
-            emcv = move.extrude_max_corner_v
-            if decel_t and emcv < move.cruise_v:
-                npd = max(emcv, move.end_v) * pressure_advance
-                extra_decel_d = npd - prev_pressure_d
-                if extra_decel_d < 0.:
-                    axis_d += extra_decel_d
-                    extra_decel_v = extra_decel_d / decel_t
-
-        # Generate steps
-        self.extruder_add_move(
-            self.trapq, print_time, accel_t, cruise_t, decel_t, start_pos,
-            start_v, cruise_v, accel, extra_accel_v, extra_decel_v)
-        self.extrude_pos = start_pos + axis_d
+        is_pa = 0.
+        if axis_r > 0. and (move.axes_d[0] or move.axes_d[1]):
+            is_pa = 1.
+        # Queue movement (x is extruder movement, y is movement with pa)
+        self.trapq_append(self.trapq, print_time,
+                          move.accel_t, move.cruise_t, move.decel_t,
+                          move.start_pos[3], self.extrude_pa_pos, 0.,
+                          1., is_pa, 0.,
+                          start_v, cruise_v, accel)
+        self.extrude_pos = move.end_pos[3]
+        if is_pa:
+            self.extrude_pa_pos += move.axes_d[3]
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
         extruder.cmd_SET_PRESSURE_ADVANCE(params)
     def cmd_SET_PRESSURE_ADVANCE(self, params):
-        self.printer.lookup_object('toolhead').get_last_move_time()
         gcode = self.printer.lookup_object('gcode')
         pressure_advance = gcode.get_float(
             'ADVANCE', params, self.pressure_advance, minval=0.)
-        pressure_advance_lookahead_time = gcode.get_float(
-            'ADVANCE_LOOKAHEAD_TIME', params,
-            self.pressure_advance_lookahead_time, minval=0.)
-        self.pressure_advance = pressure_advance
-        self.pressure_advance_lookahead_time = pressure_advance_lookahead_time
+        smooth_time = gcode.get_float(
+            'SMOOTH_TIME', params,
+            self.pressure_advance_smooth_time, minval=0., maxval=.200)
+        self._set_pressure_advance(pressure_advance, smooth_time)
         msg = ("pressure_advance: %.6f\n"
-               "pressure_advance_lookahead_time: %.6f" % (
-                   pressure_advance, pressure_advance_lookahead_time))
+               "pressure_advance_smooth_time: %.6f" % (
+                   pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg, log=False)
 
