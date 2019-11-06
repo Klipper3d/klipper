@@ -79,19 +79,19 @@ class Move:
             , prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
     def set_junction(self, start_v2, cruise_v2, end_v2):
         # Determine accel, cruise, and decel portions of the move distance
-        inv_delta_v2 = 1. / self.delta_v2
-        self.accel_r = accel_r = (cruise_v2 - start_v2) * inv_delta_v2
-        self.decel_r = decel_r = (cruise_v2 - end_v2) * inv_delta_v2
-        self.cruise_r = cruise_r = 1. - accel_r - decel_r
+        half_inv_accel = .5 / self.accel
+        accel_d = (cruise_v2 - start_v2) * half_inv_accel
+        decel_d = (cruise_v2 - end_v2) * half_inv_accel
+        cruise_d = self.move_d - accel_d - decel_d
         # Determine move velocities
         self.start_v = start_v = math.sqrt(start_v2)
         self.cruise_v = cruise_v = math.sqrt(cruise_v2)
         self.end_v = end_v = math.sqrt(end_v2)
         # Determine time spent in each portion of move (time is the
         # distance divided by average velocity)
-        self.accel_t = accel_r * self.move_d / ((start_v + cruise_v) * 0.5)
-        self.cruise_t = cruise_r * self.move_d / cruise_v
-        self.decel_t = decel_r * self.move_d / ((end_v + cruise_v) * 0.5)
+        self.accel_t = accel_d / ((start_v + cruise_v) * 0.5)
+        self.cruise_t = cruise_d / cruise_v
+        self.decel_t = decel_d / ((end_v + cruise_v) * 0.5)
 
 LOOKAHEAD_FLUSH_TIME = 0.250
 
