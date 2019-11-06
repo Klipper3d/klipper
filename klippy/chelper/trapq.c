@@ -25,19 +25,11 @@ void __visible
 trapq_append(struct trapq *tq, double print_time
              , double accel_t, double cruise_t, double decel_t
              , double start_pos_x, double start_pos_y, double start_pos_z
-             , double axes_d_x, double axes_d_y, double axes_d_z
+             , double axes_r_x, double axes_r_y, double axes_r_z
              , double start_v, double cruise_v, double accel)
 {
-    struct coord axes_r, start_pos;
-    double inv_move_d = 1. / sqrt(axes_d_x*axes_d_x + axes_d_y*axes_d_y
-                                  + axes_d_z*axes_d_z);
-    axes_r.x = axes_d_x * inv_move_d;
-    axes_r.y = axes_d_y * inv_move_d;
-    axes_r.z = axes_d_z * inv_move_d;
-    start_pos.x = start_pos_x;
-    start_pos.y = start_pos_y;
-    start_pos.z = start_pos_z;
-
+    struct coord start_pos = { x: start_pos_x, y: start_pos_y, z: start_pos_z };
+    struct coord axes_r = { x: axes_r_x, y: axes_r_y, z: axes_r_z };
     if (accel_t) {
         struct move *m = move_alloc();
         m->print_time = print_time;

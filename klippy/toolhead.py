@@ -27,9 +27,15 @@ class Move:
                             end_pos[3])
             axes_d[0] = axes_d[1] = axes_d[2] = 0.
             self.move_d = move_d = abs(axes_d[3])
+            inv_move_d = 0.
+            if move_d:
+                inv_move_d = 1. / move_d
             self.accel = 99999999.9
             velocity = speed
             self.is_kinematic_move = False
+        else:
+            inv_move_d = 1. / move_d
+        self.axes_r = [d * inv_move_d for d in axes_d]
         self.min_move_t = move_d / velocity
         # Junction speeds are tracked in velocity squared.  The
         # delta_v2 is the maximum amount of this squared-velocity that
@@ -53,12 +59,11 @@ class Move:
         # Allow extruder to calculate its maximum junction
         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
         # Find max velocity using "approximated centripetal velocity"
-        axes_d = self.axes_d
-        prev_axes_d = prev_move.axes_d
-        junction_cos_theta = -((axes_d[0] * prev_axes_d[0]
-                                + axes_d[1] * prev_axes_d[1]
-                                + axes_d[2] * prev_axes_d[2])
-                               / (self.move_d * prev_move.move_d))
+        axes_r = self.axes_r
+        prev_axes_r = prev_move.axes_r
+        junction_cos_theta = -(axes_r[0] * prev_axes_r[0]
+                               + axes_r[1] * prev_axes_r[1]
+                               + axes_r[2] * prev_axes_r[2])
         if junction_cos_theta > 0.999999:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
@@ -302,7 +307,7 @@ class ToolHead:
                     self.trapq, next_move_time,
                     move.accel_t, move.cruise_t, move.decel_t,
                     move.start_pos[0], move.start_pos[1], move.start_pos[2],
-                    move.axes_d[0], move.axes_d[1], move.axes_d[2],
+                    move.axes_r[0], move.axes_r[1], move.axes_r[2],
                     move.start_v, move.cruise_v, move.accel)
             if move.axes_d[3]:
                 self.extruder.move(next_move_time, move)

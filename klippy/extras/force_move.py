@@ -11,16 +11,19 @@ STALL_TIME = 0.100
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
 def calc_move_time(dist, speed, accel):
-    dist = abs(dist)
+    axis_r = 1.
+    if dist < 0.:
+        axis_r = -1.
+        dist = -dist
     if not accel or not dist:
-        return 0., dist / speed, speed
+        return axis_r, 0., dist / speed, speed
     max_cruise_v2 = dist * accel
     if max_cruise_v2 < speed**2:
         speed = math.sqrt(max_cruise_v2)
     accel_t = speed / accel
     accel_decel_d = accel_t * speed
     cruise_t = (dist - accel_decel_d) / speed
-    return accel_t, cruise_t, speed
+    return axis_r, accel_t, cruise_t, speed
 
 class ForceMove:
     def __init__(self, config):
@@ -67,9 +70,9 @@ class ForceMove:
         print_time = toolhead.get_last_move_time()
         prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
         stepper.set_position((0., 0., 0.))
-        accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
+        axis_r, accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
-                          0., 0., 0., dist, 0., 0., 0., cruise_v, accel)
+                          0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
         print_time += accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
         self.trapq_free_moves(self.trapq, print_time)

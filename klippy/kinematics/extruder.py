@@ -90,7 +90,7 @@ class PrinterExtruder:
     def motor_off(self, print_time):
         self.stepper.motor_enable(print_time, 0)
     def check_move(self, move):
-        move.extrude_r = move.axes_d[3] / move.move_d
+        move.extrude_r = move.axes_r[3]
         move.extrude_max_corner_v = 0.
         if not self.heater.can_extrude:
             raise homing.EndstopError(
@@ -111,7 +111,7 @@ class PrinterExtruder:
                 # Permit extrusion if amount extruded is tiny
                 move.extrude_r = self.max_extrude_ratio
                 return
-            area = move.axes_d[3] * self.filament_area / move.move_d
+            area = move.axes_r[3] * self.filament_area
             logging.debug("Overextrude: %s vs %s (area=%.3f dist=%.3f)",
                           move.extrude_r, self.max_extrude_ratio,
                           area, move.move_d)
@@ -172,7 +172,7 @@ class PrinterExtruder:
         return flush_count
     def move(self, print_time, move):
         axis_d = move.axes_d[3]
-        axis_r = axis_d / move.move_d
+        axis_r = move.axes_r[3]
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
