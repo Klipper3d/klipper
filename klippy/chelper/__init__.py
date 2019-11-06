@@ -17,7 +17,7 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
-    'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
+    'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c', 'kin_smooth_axis.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -104,6 +104,14 @@ defs_kin_extruder = """
         , double smooth_time);
 """
 
+defs_kin_smooth_axis = """
+    void smooth_axis_set_time(struct stepper_kinematics *sk
+        , double smooth_x, double smooth_y);
+    int smooth_axis_set_sk(struct stepper_kinematics *sk
+        , struct stepper_kinematics *orig_sk);
+    struct stepper_kinematics * smooth_axis_alloc(void);
+"""
+
 defs_serialqueue = """
     #define MESSAGE_MAX 64
     struct pull_queue_message {
@@ -145,7 +153,8 @@ defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std,
     defs_stepcompress, defs_itersolve, defs_trapq,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
-    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder
+    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder,
+    defs_kin_smooth_axis,
 ]
 
 # Return the list of file modification times
