@@ -28,8 +28,8 @@ trapq_append(struct trapq *tq, double print_time
              , double axes_r_x, double axes_r_y, double axes_r_z
              , double start_v, double cruise_v, double accel)
 {
-    struct coord start_pos = { x: start_pos_x, y: start_pos_y, z: start_pos_z };
-    struct coord axes_r = { x: axes_r_x, y: axes_r_y, z: axes_r_z };
+    struct coord start_pos = { .x=start_pos_x, .y=start_pos_y, .z=start_pos_z };
+    struct coord axes_r = { .x=axes_r_x, .y=axes_r_y, .z=axes_r_z };
     if (accel_t) {
         struct move *m = move_alloc();
         m->print_time = print_time;
