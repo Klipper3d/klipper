@@ -5,8 +5,8 @@ Directory Layout
 ================
 
 The **src/** directory contains the C source for the micro-controller
-code. The **src/avr/**, **src/sam3/**, **src/samd21/**,
-**src/lpc176x/**, **src/stm32f1/**, **src/pru/**, and **src/linux/**
+code. The **src/atsam/**, **src/atsamd/**, **src/avr/**,
+**src/linux/**, **src/lpc176x/**, **src/pru/**, and **src/stm32/**
 directories contain architecture specific micro-controller code. The
 **src/simulator/** contains code stubs that allow the micro-controller
 to be test compiled on other architectures. The **src/generic/**
@@ -50,10 +50,11 @@ DECL_TASK() macro.
 
 One of the main task functions is command_dispatch() located in
 **src/command.c**. This function is called from the board specific
-input/output code (eg, **src/avr/serial.c**) and it runs the command
-functions associated with the commands found in the input
-stream. Command functions are declared using the DECL_COMMAND() macro
-(see the [protocol](Protocol.md) document for more information).
+input/output code (eg, **src/avr/serial.c**,
+**src/generic/serial_irq.c**) and it runs the command functions
+associated with the commands found in the input stream. Command
+functions are declared using the DECL_COMMAND() macro (see the
+[protocol](Protocol.md) document for more information).
 
 Task, init, and command functions always run with interrupts enabled
 (however, they can temporarily disable interrupts if needed). These
