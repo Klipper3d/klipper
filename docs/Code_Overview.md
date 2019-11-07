@@ -128,16 +128,22 @@ provides further information on the mechanics of moves.
   gcode.py is to translate G-code into internal calls. Changes in
   origin (eg, G92), changes in relative vs absolute positions (eg,
   G90), and unit changes (eg, F6000=100mm/s) are handled here. The
-  code path for a move is: `process_data() -> process_commands() ->
+  code path for a move is: `_process_data() -> _process_commands() ->
   cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
   actual request: `cmd_G1() -> ToolHead.move()`
 
 * The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
-  the timing of printing actions. The codepath for a move is:
+  the timing of printing actions. The main codepath for a move is:
   `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
-  Move.set_junction() -> Move.move()`.
+  Move.set_junction() -> ToolHead._process_moves()`.
   * ToolHead.move() creates a Move() object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
+  * The kinematics class is given the opportunity to audit each move
+  (`ToolHead.move() -> kin.check_move()`). The kinematics classes are
+  located in the klippy/kinematics/ directory. The check_move() code
+  may raise an error if the move is not valid. If check_move()
+  completes successfully then the underlying kinematics must be able
+  to handle the move.
   * MoveQueue.add_move() places the move object on the "look-ahead"
   queue.
   * MoveQueue.flush() determines the start and end velocities of each
@@ -148,47 +154,41 @@ provides further information on the mechanics of moves.
   phase, followed by a constant deceleration phase. Every move
   contains these three phases in this order, but some phases may be of
   zero duration.
-  * When Move.move() is called, everything about the move is known -
-  its start location, its end location, its acceleration, its
-  start/cruising/end velocity, and distance traveled during
-  acceleration/cruising/deceleration. All the information is stored in
-  the Move() class and is in cartesian space in units of millimeters
-  and seconds.
-
-  The move is then handed off to the kinematics classes: `Move.move()
-  -> kin.move()`
-
-* The goal of the kinematics classes is to translate the movement in
-  cartesian space to movement on each stepper. The kinematics classes
-  are located in the klippy/kinematics/ directory. The kinematic class
-  is given a chance to audit the move (`ToolHead.move() ->
-  kin.check_move()`) before it goes on the look-ahead queue, but once
-  the move arrives in *kin*.move() the kinematic class is required to
-  handle the move as specified. Note that the extruder is handled in
-  its own kinematic class. Since the Move() class specifies the exact
-  movement time and since step pulses are sent to the micro-controller
-  with specific timing, stepper movements produced by the extruder
-  class will be in sync with head movement even though the code is
-  kept separate.
+  * When ToolHead._process_moves() is called, everything about the
+  move is known - its start location, its end location, its
+  acceleration, its start/cruising/end velocity, and distance traveled
+  during acceleration/cruising/deceleration. All the information is
+  stored in the Move() class and is in cartesian space in units of
+  millimeters and seconds.
 
 * Klipper uses an
   [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
   to generate the step times for each stepper. For efficiency reasons,
-  the stepper pulse times are generated in C code. The code flow is:
-  `kin.move() -> MCU_Stepper.step_itersolve() ->
-  itersolve_gen_steps()` (in klippy/chelper/itersolve.c). The goal of
-  the iterative solver is to find step times given a function that
-  calculates a stepper position from a time. This is done by
-  repeatedly "guessing" various times until the stepper position
-  formula returns the desired position of the next step on the
-  stepper. The feedback produced from each guess is used to improve
-  future guesses so that the process rapidly converges to the desired
-  time. The kinematic stepper position formulas are located in the
-  klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
-  kin_delta.c, kin_extruder.c).
+  the stepper pulse times are generated in C code. The moves are first
+  placed on a "trapezoid motion queue": `ToolHead._process_moves() ->
+  trapq_append()` (in klippy/chelper/trapq.c). The step times are then
+  generated: `ToolHead._process_moves() ->
+  ToolHead._update_move_time() -> MCU_Stepper.generate_steps() ->
+  itersolve_generate_steps() -> itersolve_gen_steps_range()` (in
+  klippy/chelper/itersolve.c). The goal of the iterative solver is to
+  find step times given a function that calculates a stepper position
+  from a time. This is done by repeatedly "guessing" various times
+  until the stepper position formula returns the desired position of
+  the next step on the stepper. The feedback produced from each guess
+  is used to improve future guesses so that the process rapidly
+  converges to the desired time. The kinematic stepper position
+  formulas are located in the klippy/chelper/ directory (eg,
+  kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).
+
+* Note that the extruder is handled in its own kinematic class:
+  `ToolHead._process_moves() -> PrinterExtruder.move()`. Since
+  the Move() class specifies the exact movement time and since step
+  pulses are sent to the micro-controller with specific timing,
+  stepper movements produced by the extruder class will be in sync
+  with head movement even though the code is kept separate.
 
 * After the iterative solver calculates the step times they are added
-  to an array: `itersolve_gen_steps() -> queue_append()` (in
+  to an array: `itersolve_gen_steps_range() -> queue_append()` (in
   klippy/chelper/stepcompress.c). The array (struct
   stepcompress.queue) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
@@ -335,7 +335,7 @@ Useful steps:
    coordinates from the current position of each stepper. It does not
    need to be efficient as it is typically only called during homing
    and probing operations.
-5. Other methods. Implement the `move()`, `check_move()`, `home()`,
+5. Other methods. Implement the `check_move()`, `home()`,
    `motor_off()`, `set_position()`, and `get_steppers()` methods.
    These functions are typically used to provide kinematic specific
    checks.  However, at the start of development one can use
