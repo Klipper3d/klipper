@@ -115,42 +115,38 @@ class MCU_ADC_buttons:
 
     def adc_callback(self, read_time, read_value):
         adc = max(.00001, min(.99999, read_value))
-        r = self.pullup * adc / (1.0 - adc)
-        self.reactor.register_async_callback(
-            (lambda e, s=self, v=r: s.handle_button(e, v)))
+        value = self.pullup * adc / (1.0 - adc)
 
-    def get_button(self, value):
+        # Determine button pressed
+        btn = None
         if self.min_value <= value <= self.max_value:
             for i, (min_value, max_value, cb) in enumerate(self.buttons):
                 if min_value < value < max_value:
-                    return i
-        return None
-
-    def handle_button(self, eventtime, value):
-        btn = self.get_button(int(value))
+                    btn = i
+                    break
 
         # If the button changed, due to noise or pressing:
         if btn != self.last_button:
             # reset the debouncing timer
-            self.last_debouncetime = eventtime
+            self.last_debouncetime = read_time
 
         # button debounce check & new button pressed
-        if ((eventtime - self.last_debouncetime) >= ADC_DEBOUNCE_TIME
+        if ((read_time - self.last_debouncetime) >= ADC_DEBOUNCE_TIME
             and self.last_button == btn and self.last_pressed != btn):
             # release last_pressed
             if self.last_pressed is not None:
-                self.call_button(eventtime, self.last_pressed, False)
+                self.call_button(self.last_pressed, False)
                 self.last_pressed = None
             if btn is not None:
-                self.call_button(eventtime, btn, True)
+                self.call_button(btn, True)
                 self.last_pressed = btn
 
         self.last_button = btn
 
-    def call_button(self, eventtime, button, state):
-        if button < len(self.buttons):
-            minval, maxval, callback = self.buttons[button]
-            callback(eventtime, state)
+    def call_button(self, button, state):
+        minval, maxval, callback = self.buttons[button]
+        self.reactor.register_async_callback(
+            (lambda e, cb=callback, s=state: cb(e, s)))
 
 
 ######################################################################
