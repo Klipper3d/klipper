@@ -404,7 +404,10 @@ class GCodeParser:
             heater = self.printer.lookup_object('heater_bed', None)
         elif 'T' in params:
             index = self.get_int('T', params, minval=0)
-            extruder = self.printer.lookup_object('extruder%d' % (index,), None)
+            section = 'extruder'
+            if index:
+                section = 'extruder%d' % (index,)
+            extruder = self.printer.lookup_object(section, None)
             if extruder is not None:
                 heater = extruder.get_heater()
         elif self.extruder is not None:

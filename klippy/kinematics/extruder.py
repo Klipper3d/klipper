@@ -62,7 +62,7 @@ class PrinterExtruder:
         toolhead.register_step_generator(self._free_moves)
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
-        if self.name in ('extruder', 'extruder0'):
+        if self.name == 'extruder':
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
@@ -244,12 +244,10 @@ class DummyExtruder:
 def add_printer_objects(config):
     printer = config.get_printer()
     for i in range(99):
-        section = 'extruder%d' % (i,)
+        section = 'extruder'
+        if i:
+            section = 'extruder%d' % (i,)
         if not config.has_section(section):
-            if not i and config.has_section('extruder'):
-                pe = PrinterExtruder(config.getsection('extruder'), 0)
-                printer.add_object('extruder0', pe)
-                continue
             break
         pe = PrinterExtruder(config.getsection(section), i)
         printer.add_object(section, pe)
@@ -257,7 +255,10 @@ def add_printer_objects(config):
 def get_printer_extruders(printer):
     out = []
     for i in range(99):
-        extruder = printer.lookup_object('extruder%d' % (i,), None)
+        section = 'extruder'
+        if i:
+            section = 'extruder%d' % (i,)
+        extruder = printer.lookup_object(section, None)
         if extruder is None:
             break
         out.append(extruder)

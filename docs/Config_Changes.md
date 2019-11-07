@@ -6,6 +6,13 @@ All dates in this document are approximate.
 
 # Changes
 
+20191107: The primary extruder config section must be specified as
+"extruder" and may no longer be specified as "extruder0". Gcode
+command templates that query the extruder status are now accessed via
+"{printer.extruder}".
+
+20191021: Klipper v0.8.0 released
+
 20191003: The move_to_previous option in [safe_z_homing] now defaults
 to False.  (It was effectively False prior to 20190918.)
 

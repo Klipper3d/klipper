@@ -243,8 +243,6 @@ class PrinterHeaters:
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
         heater_name = config.get_name().split()[-1]
-        if heater_name == 'extruder':
-            heater_name = 'extruder0'
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
@@ -254,8 +252,6 @@ class PrinterHeaters:
         self.register_sensor(config, heater, gcode_id)
         return heater
     def lookup_heater(self, heater_name):
-        if heater_name == 'extruder':
-            heater_name = 'extruder0'
         if heater_name not in self.heaters:
             raise self.printer.config_error(
                 "Unknown heater '%s'" % (heater_name,))
