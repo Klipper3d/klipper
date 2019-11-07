@@ -198,6 +198,9 @@ class ToolHead:
         self.all_mcus = [
             m for n, m in self.printer.lookup_objects(module='mcu')]
         self.mcu = self.all_mcus[0]
+        self.can_pause = True
+        if self.mcu.is_fileoutput():
+            self.can_pause = False
         self.move_queue = MoveQueue(self)
         self.commanded_pos = [0., 0., 0., 0.]
         self.printer.register_event_handler("gcode:request_restart",
@@ -356,7 +359,7 @@ class ToolHead:
             stall_time = buffer_time - self.buffer_time_high
             if stall_time <= 0.:
                 break
-            if self.mcu.is_fileoutput():
+            if not self.can_pause:
                 self.need_check_stall = self.reactor.NEVER
                 return
             eventtime = self.reactor.pause(eventtime + min(1., stall_time))
@@ -413,11 +416,11 @@ class ToolHead:
         logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):
         self._flush_lookahead()
-        if self.mcu.is_fileoutput():
-            return
         eventtime = self.reactor.monotonic()
         while (not self.special_queuing_state
                or self.print_time >= self.mcu.estimated_print_time(eventtime)):
+            if not self.can_pause:
+                break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder):
         last_move_time = self.get_last_move_time()
@@ -436,7 +439,7 @@ class ToolHead:
             curtime = self.reactor.monotonic()
             est_print_time = self.mcu.estimated_print_time(curtime)
             wait_time = self.print_time - est_print_time - DRIP_TIME
-            if wait_time > 0. and not self.mcu.is_fileoutput():
+            if wait_time > 0. and self.can_pause:
                 # Pause before sending more steps
                 self.drip_completion.wait(curtime + wait_time)
                 continue
@@ -493,6 +496,7 @@ class ToolHead:
     def _handle_request_restart(self, print_time):
         self.motor_off()
     def _handle_shutdown(self):
+        self.can_pause = False
         self.move_queue.reset()
     def get_kinematics(self):
         return self.kin
