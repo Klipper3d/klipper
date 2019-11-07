@@ -58,8 +58,8 @@ class PrinterExtruder:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         self.stepper.set_trapq(self.trapq)
-        toolhead.register_move_handler(self.stepper.generate_steps)
-        toolhead.register_move_handler(self._free_moves)
+        toolhead.register_step_generator(self.stepper.generate_steps)
+        toolhead.register_step_generator(self._free_moves)
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object('gcode')
         if self.name in ('extruder', 'extruder0'):

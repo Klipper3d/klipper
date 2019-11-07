@@ -240,7 +240,7 @@ class ToolHead:
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
         self.trapq_free_moves = ffi_lib.trapq_free_moves
-        self.move_handlers = []
+        self.step_generators = []
         # Create kinematics class
         self.extruder = kinematics.extruder.DummyExtruder()
         self.move_queue.set_extruder(self.extruder)
@@ -273,8 +273,8 @@ class ToolHead:
         while 1:
             flush_to_time = min(self.print_time + batch_time, next_print_time)
             self.print_time = flush_to_time
-            for mh in self.move_handlers:
-                mh(flush_to_time)
+            for sg in self.step_generators:
+                sg(flush_to_time)
             self.trapq_free_moves(self.trapq, flush_to_time)
             if lazy:
                 flush_to_time -= self.move_flush_time
@@ -498,8 +498,8 @@ class ToolHead:
         return self.kin
     def get_trapq(self):
         return self.trapq
-    def register_move_handler(self, handler):
-        self.move_handlers.append(handler)
+    def register_step_generator(self, handler):
+        self.step_generators.append(handler)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):

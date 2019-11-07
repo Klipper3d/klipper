@@ -16,7 +16,7 @@ class CartKinematics:
             rail.setup_itersolve('cartesian_stepper_alloc', axis)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_move_handler(s.generate_steps)
+            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -40,7 +40,7 @@ class CartKinematics:
             dc_rail = stepper.LookupMultiRail(dc_config)
             dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis)
             for s in dc_rail.get_steppers():
-                toolhead.register_move_handler(s.generate_steps)
+                toolhead.register_step_generator(s.generate_steps)
             dc_rail.set_max_jerk(max_halt_velocity, max_accel)
             self.dual_carriage_rails = [
                 self.rails[self.dual_carriage_axis], dc_rail]
