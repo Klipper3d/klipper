@@ -96,7 +96,7 @@ class PrinterExtruder:
             raise homing.EndstopError(
                 "Extrude below minimum temp\n"
                 "See the 'min_extrude_temp' config option for details")
-        if not move.is_kinematic_move or move.extrude_r < 0.:
+        if (not move.axes_d[0] and not move.axes_d[1]) or move.extrude_r < 0.:
             # Extrude only move (or retraction move) - limit accel and velocity
             if abs(move.axes_d[3]) > self.max_e_dist:
                 raise homing.EndstopError(
