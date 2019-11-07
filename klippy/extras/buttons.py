@@ -93,14 +93,13 @@ ADC_SAMPLE_TIME = 0.001
 ADC_SAMPLE_COUNT = 6
 
 class MCU_ADC_buttons:
-    def __init__(self, printer, pin, pullup, debug=False):
+    def __init__(self, printer, pin, pullup):
         self.reactor = printer.get_reactor()
         self.buttons = []
         self.last_button = None
         self.last_pressed = None
         self.last_debouncetime = 0
         self.pullup = pullup
-        self.debug = debug
         self.pin = pin
         self.min_value = self.max_value = None
         ppins = printer.lookup_object('pins')
@@ -155,9 +154,6 @@ class MCU_ADC_buttons:
                     self.last_pressed = btn
 
         self.last_button = btn
-        if self.debug is True:
-            logging.info(
-                "analog pin: %s value: %d" % (self.pin, int(value)))
 
     def call_button(self, eventtime, button, state):
         if button < len(self.buttons):
@@ -223,19 +219,17 @@ class PrinterButtons:
         self.printer = config.get_printer()
         self.mcu_buttons = {}
         self.adc_buttons = {}
-    def register_adc_button(
-            self, pin, min_val, max_val, pullup, callback, debug=False):
+    def register_adc_button(self, pin, min_val, max_val, pullup, callback):
         adc_buttons = self.adc_buttons.get(pin)
         if adc_buttons is None:
             self.adc_buttons[pin] = adc_buttons = MCU_ADC_buttons(
-                self.printer, pin, pullup, debug)
+                self.printer, pin, pullup)
         adc_buttons.setup_button(min_val, max_val, callback)
-    def register_adc_button_push(
-            self, pin, min_val, max_val, pullup, callback, debug=False):
+    def register_adc_button_push(self, pin, min_val, max_val, pullup, callback):
         def helper(eventtime, state, callback=callback):
             if state:
                 callback(eventtime)
-        self.register_adc_button(pin, min_val, max_val, pullup, helper, debug)
+        self.register_adc_button(pin, min_val, max_val, pullup, helper)
     def register_buttons(self, pins, callback):
         # Parse pins
         ppins = self.printer.lookup_object('pins')
