@@ -43,8 +43,8 @@ possible G-Code command. Instead, Klipper prefers human readable
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
 [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details). For example, one might use this to implement: `G10`,
-`G11`, `G12`, `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
+for details). For example, one might use this to implement: `G12`,
+`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
 
 ## G-Code SD card commands
 
@@ -57,6 +57,20 @@ Klipper also supports the following standard G-Code commands if the
 - Pause SD print: `M25`
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
+
+## G-Code arcs
+
+The following standard G-Code commands are available if a "gcode_arcs"
+config section is enabled:
+- Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
+  [E<pos>] [F<speed>] I<value> J<value>`
+
+## G-Code firmware retraction
+
+The following standard G-Code commands are available if a
+"firmware_retraction" config section is enabled:
+- Retract: `G10`
+- Unretract: `G11`
 
 ## G-Code display commands
 
