@@ -162,7 +162,11 @@ def check_build_code(srcdir, target, sources, cmd, other_files=[]):
         logging.info("Building C code module %s", target)
         srcfiles = [os.path.join(srcdir, fname) for fname in sources]
         destlib = os.path.join(srcdir, target)
-        os.system(cmd % (destlib, ' '.join(srcfiles)))
+        res = os.system(cmd % (destlib, ' '.join(srcfiles)))
+        if res:
+            msg = "Unable to build C code module (error=%s)" % (res,)
+            logging.error(msg)
+            raise Exception(msg)
 
 FFI_main = None
 FFI_lib = None
