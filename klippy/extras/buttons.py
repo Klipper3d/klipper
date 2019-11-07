@@ -101,23 +101,16 @@ class MCU_ADC_buttons:
         self.last_debouncetime = 0
         self.pullup = pullup
         self.pin = pin
-        self.min_value = self.max_value = None
+        self.min_value = 999999999999.9
+        self.max_value = 0.
         ppins = printer.lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', self.pin)
         self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
 
     def setup_button(self, min_value, max_value, callback):
-        if self.min_value is None:
-            self.min_value = min_value
-        else:
-            self.min_value = min(self.min_value, min_value)
-
-        if self.max_value is None:
-            self.max_value = max_value
-        else:
-            self.max_value = max(self.max_value, max_value)
-
+        self.min_value = min(self.min_value, min_value)
+        self.max_value = max(self.max_value, max_value)
         self.buttons.append((min_value, max_value, callback))
 
     def adc_callback(self, read_time, read_value):
@@ -127,8 +120,7 @@ class MCU_ADC_buttons:
             (lambda e, s=self, v=r: s.handle_button(e, v)))
 
     def get_button(self, value):
-        if (self.min_value is not None and self.max_value is not None
-                and self.min_value <= value <= self.max_value):
+        if self.min_value <= value <= self.max_value:
             for i, (min_value, max_value, cb) in enumerate(self.buttons):
                 if min_value < value < max_value:
                     return i
@@ -144,14 +136,14 @@ class MCU_ADC_buttons:
 
         # button debounce check & new button pressed
         if ((eventtime - self.last_debouncetime) >= ADC_DEBOUNCE_TIME
-                and self.last_button == btn and self.last_pressed != btn):
-                # release last_pressed
-                if self.last_pressed is not None:
-                    self.call_button(eventtime, self.last_pressed, False)
-                    self.last_pressed = None
-                if btn is not None:
-                    self.call_button(eventtime, btn, True)
-                    self.last_pressed = btn
+            and self.last_button == btn and self.last_pressed != btn):
+            # release last_pressed
+            if self.last_pressed is not None:
+                self.call_button(eventtime, self.last_pressed, False)
+                self.last_pressed = None
+            if btn is not None:
+                self.call_button(eventtime, btn, True)
+                self.last_pressed = btn
 
         self.last_button = btn
 
