@@ -392,6 +392,7 @@ class MCU_adc:
         self._sample_time = self._report_time = 0.
         self._sample_count = self._range_check_count = 0
         self._report_clock = 0
+        self._last_state = (0., 0.)
         self._oid = self._callback = None
         self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
@@ -407,6 +408,8 @@ class MCU_adc:
     def setup_adc_callback(self, report_time, callback):
         self._report_time = report_time
         self._callback = callback
+    def get_last_value(self):
+        return self._last_state
     def _build_config(self):
         if not self._sample_count:
             return
@@ -435,6 +438,7 @@ class MCU_adc:
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
+        self._last_state = (last_value, last_read_time)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 

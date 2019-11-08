@@ -107,6 +107,8 @@ class MCU_ADC_buttons:
         self.mcu_adc = ppins.setup_pin('adc', self.pin)
         self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
+        query_adc = printer.lookup_object('query_adc')
+        query_adc.register_adc('adc_button:' + pin.strip(), self.mcu_adc)
 
     def setup_button(self, min_value, max_value, callback):
         self.min_value = min(self.min_value, min_value)
@@ -205,6 +207,7 @@ class RotaryEncoder:
 class PrinterButtons:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.try_load_module(config, 'query_adc')
         self.mcu_buttons = {}
         self.adc_buttons = {}
     def register_adc_button(self, pin, min_val, max_val, pullup, callback):

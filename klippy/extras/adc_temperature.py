@@ -22,6 +22,8 @@ class PrinterADCtoTemperature:
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        query_adc = config.get_printer().try_load_module(config, 'query_adc')
+        query_adc.register_adc(config.get_name(), self.mcu_adc)
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):

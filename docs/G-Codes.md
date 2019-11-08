@@ -101,6 +101,11 @@ The following standard commands are supported:
 - `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
   "triggered" or in an "open" state. This command is typically used to
   verify that an endstop is working correctly.
+- `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
+  analog value received for a configured analog pin. If NAME is not
+  provided, the list of available adc names are reported. If PULLUP is
+  provided (as a value in Ohms), the raw analog value along with the
+  equivalent resistance given that pullup is reported.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
