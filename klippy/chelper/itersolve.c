@@ -147,20 +147,17 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
     if (!sk->tq || list_empty(&sk->tq->moves))
         return 0;
     struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
+    while (last_flush_time >= m->print_time + m->move_t) {
+        if (list_is_last(&m->node, &sk->tq->moves))
+            return 0;
+        m = list_next_entry(m, node);
+    }
     for (;;) {
-        double move_print_time = m->print_time;
-        double move_end_time = move_print_time + m->move_t;
-        if (last_flush_time >= move_end_time) {
-            if (list_is_last(&m->node, &sk->tq->moves))
-                break;
-            m = list_next_entry(m, node);
-            continue;
-        }
-        double start = move_print_time, end = move_end_time;
+        double start = m->print_time, end = start + m->move_t;
         if (start < last_flush_time)
             start = last_flush_time;
         if (start >= flush_time)
-            break;
+            return 0;
         if (end > flush_time)
             end = flush_time;
         if (check_active(sk, m)) {
@@ -169,8 +166,10 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
                 return ret;
         }
         last_flush_time = end;
+        if (list_is_last(&m->node, &sk->tq->moves))
+            return 0;
+        m = list_next_entry(m, node);
     }
-    return 0;
 }
 
 // Check if the given stepper is likely to be active in the given time range
