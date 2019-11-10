@@ -70,6 +70,8 @@ class PrinterStepper:
         mcu_stepper.setup_dir_pin(dir_pin_params)
         step_dist = config.getfloat('step_distance', above=0.)
         mcu_stepper.setup_step_distance(step_dist)
+        # Enable pin handling
+        stepper_enable = printer.try_load_module(config, 'stepper_enable')
         mcu_stepper.add_active_callback(self._stepper_active)
         self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
         # Register STEPPER_BUZZ command

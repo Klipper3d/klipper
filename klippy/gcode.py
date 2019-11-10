@@ -475,7 +475,7 @@ class GCodeParser:
                 key_param, key))
         values[key_param](params)
     all_handlers = [
-        'G1', 'G4', 'G28', 'M18', 'M400',
+        'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'M206', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
         'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
@@ -536,10 +536,6 @@ class GCodeParser:
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
         self.reset_last_position()
-    cmd_M18_aliases = ["M84"]
-    def cmd_M18(self, params):
-        # Turn off motors
-        self.toolhead.motor_off()
     def cmd_M400(self, params):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
