@@ -31,9 +31,9 @@ class PrinterFan:
     def handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
     def set_speed(self, print_time, value):
-        if value < self.off_below:
-            value = 0.
-        value = max(0., min(self.max_power, value * self.max_power))
+        if value != 0.:
+          value = max(self.off_below, min(self.max_power,
+                   self.off_below + value * (self.max_power - self.off_below)))
         if value == self.last_fan_value:
             return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
