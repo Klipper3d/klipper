@@ -9,7 +9,9 @@ All dates in this document are approximate.
 20191112: The tmc stepper driver virtual enable capability is now
 automatically enabled if the stepper does not have a dedicated stepper
 enable pin.  Remove references to tmcXXXX:virtual_enable from the
-config.
+config.  The ability to control multiple pins in the stepper
+enable_pin config has been removed.  If multiple pins are needed then
+use a multi_pin config section.
 
 20191107: The primary extruder config section must be specified as
 "extruder" and may no longer be specified as "extruder0". Gcode
