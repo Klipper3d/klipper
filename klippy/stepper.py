@@ -14,16 +14,22 @@ class error(Exception):
 # Steppers
 ######################################################################
 
+# Interface to low-level mcu and chelper code
 class MCU_stepper:
-    def __init__(self, pin_params):
-        self._mcu = pin_params['chip']
+    def __init__(self, name, step_pin_params, dir_pin_params, step_dist):
+        self._name = name
+        self._step_dist = step_dist
+        self._mcu = step_pin_params['chip']
         self._oid = oid = self._mcu.create_oid()
         self._mcu.register_config_callback(self._build_config)
-        self._step_pin = pin_params['pin']
-        self._invert_step = pin_params['invert']
-        self._dir_pin = self._invert_dir = None
+        self._step_pin = step_pin_params['pin']
+        self._invert_step = step_pin_params['invert']
+        if dir_pin_params['chip'] is not self._mcu:
+            raise self._mcu.get_printer().config_error(
+                "Stepper dir pin must be on same mcu as step pin")
+        self._dir_pin = dir_pin_params['pin']
+        self._invert_dir = dir_pin_params['invert']
         self._mcu_position_offset = 0.
-        self._step_dist = 0.
         self._min_stop_interval = 0.
         self._reset_cmd_id = self._get_position_cmd = None
         self._active_callbacks = []
@@ -37,16 +43,23 @@ class MCU_stepper:
         self._trapq = ffi_main.NULL
     def get_mcu(self):
         return self._mcu
-    def setup_dir_pin(self, pin_params):
-        if pin_params['chip'] is not self._mcu:
-            raise self._mcu.get_printer().config_error(
-                "Stepper dir pin must be on same mcu as step pin")
-        self._dir_pin = pin_params['pin']
-        self._invert_dir = pin_params['invert']
-    def setup_min_stop_interval(self, min_stop_interval):
-        self._min_stop_interval = min_stop_interval
-    def setup_step_distance(self, step_dist):
-        self._step_dist = step_dist
+    def get_name(self, short=False):
+        if short and self._name.startswith('stepper_'):
+            return self._name[8:]
+        return self._name
+    def add_to_endstop(self, mcu_endstop):
+        mcu_endstop.add_stepper(self)
+    def _dist_to_time(self, dist, start_velocity, accel):
+        # Calculate the time it takes to travel a distance with constant accel
+        time_offset = start_velocity / accel
+        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
+    def set_max_jerk(self, max_halt_velocity, max_accel):
+        # Calculate the firmware's maximum halt interval time
+        last_step_time = self._dist_to_time(self._step_dist,
+                                            max_halt_velocity, max_accel)
+        second_last_step_time = self._dist_to_time(2. * self._step_dist,
+                                                   max_halt_velocity, max_accel)
+        self._min_stop_interval = second_last_step_time - last_step_time
     def setup_itersolve(self, alloc_func, *params):
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
@@ -147,59 +160,25 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
 
-# Code storing the definitions for a stepper motor
-class PrinterStepper:
-    def __init__(self, config):
-        printer = config.get_printer()
-        self.name = config.get_name()
-        # Stepper definition
-        ppins = printer.lookup_object('pins')
-        step_pin = config.get('step_pin')
-        step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
-        self.mcu_stepper = mcu_stepper = MCU_stepper(step_pin_params)
-        dir_pin = config.get('dir_pin')
-        dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
-        mcu_stepper.setup_dir_pin(dir_pin_params)
-        step_dist = config.getfloat('step_distance', above=0.)
-        mcu_stepper.setup_step_distance(step_dist)
-        # Wrappers
-        self.setup_itersolve = mcu_stepper.setup_itersolve
-        self.generate_steps = mcu_stepper.generate_steps
-        self.set_trapq = mcu_stepper.set_trapq
-        self.set_stepper_kinematics = mcu_stepper.set_stepper_kinematics
-        self.add_active_callback = mcu_stepper.add_active_callback
-        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
-        self.set_position = mcu_stepper.set_position
-        self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.set_commanded_position = mcu_stepper.set_commanded_position
-        self.get_mcu_position = mcu_stepper.get_mcu_position
-        self.get_step_dist = mcu_stepper.get_step_dist
-        self.is_dir_inverted = mcu_stepper.is_dir_inverted
-        # Enable pin handling
-        stepper_enable = printer.try_load_module(config, 'stepper_enable')
-        stepper_enable.register_stepper(self, config.get('enable_pin', None))
-        # Register STEPPER_BUZZ command
-        force_move = printer.try_load_module(config, 'force_move')
-        force_move.register_stepper(self)
-    def get_name(self, short=False):
-        if short and self.name.startswith('stepper_'):
-            return self.name[8:]
-        return self.name
-    def add_to_endstop(self, mcu_endstop):
-        mcu_endstop.add_stepper(self.mcu_stepper)
-    def _dist_to_time(self, dist, start_velocity, accel):
-        # Calculate the time it takes to travel a distance with constant accel
-        time_offset = start_velocity / accel
-        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
-    def set_max_jerk(self, max_halt_velocity, max_accel):
-        # Calculate the firmware's maximum halt interval time
-        step_dist = self.get_step_dist()
-        last_step_time = self._dist_to_time(
-            step_dist, max_halt_velocity, max_accel)
-        second_last_step_time = self._dist_to_time(
-            2. * step_dist, max_halt_velocity, max_accel)
-        min_stop_interval = second_last_step_time - last_step_time
-        self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
+# Helper code to build a stepper object from a config section
+def PrinterStepper(config):
+    printer = config.get_printer()
+    name = config.get_name()
+    # Stepper definition
+    ppins = printer.lookup_object('pins')
+    step_pin = config.get('step_pin')
+    step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
+    dir_pin = config.get('dir_pin')
+    dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
+    step_dist = config.getfloat('step_distance', above=0.)
+    mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist)
+    # Support for stepper enable pin handling
+    stepper_enable = printer.try_load_module(config, 'stepper_enable')
+    stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
+    # Register STEPPER_BUZZ command
+    force_move = printer.try_load_module(config, 'force_move')
+    force_move.register_stepper(mcu_stepper)
+    return mcu_stepper
 
 
 ######################################################################
