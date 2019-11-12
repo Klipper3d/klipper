@@ -242,7 +242,7 @@ class ProbeEndstopWrapper:
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers('Z'):
-            stepper.add_to_endstop(self)
+            self.add_stepper(stepper)
     def home_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()

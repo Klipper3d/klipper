@@ -47,8 +47,6 @@ class MCU_stepper:
         if short and self._name.startswith('stepper_'):
             return self._name[8:]
         return self._name
-    def add_to_endstop(self, mcu_endstop):
-        mcu_endstop.add_stepper(self)
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -254,19 +252,16 @@ class PrinterRail:
         self.steppers.append(stepper)
         if self.endstops and config.get('endstop_pin', None) is None:
             # No endstop defined - use primary endstop
-            stepper.add_to_endstop(self.endstops[0][0])
+            self.endstops[0][0].add_stepper(stepper)
             return
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
         mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
-        stepper.add_to_endstop(mcu_endstop)
+        mcu_endstop.add_stepper(stepper)
         name = stepper.get_name(short=True)
         self.endstops.append((mcu_endstop, name))
         query_endstops = printer.try_load_module(config, 'query_endstops')
         query_endstops.register_endstop(mcu_endstop, name)
-    def add_to_endstop(self, mcu_endstop):
-        for stepper in self.steppers:
-            stepper.add_to_endstop(mcu_endstop)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)
