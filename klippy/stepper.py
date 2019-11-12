@@ -8,50 +8,6 @@ import homing
 
 
 ######################################################################
-# Stepper enable pins
-######################################################################
-
-# Tracking of shared stepper enable pins
-class StepperEnablePin:
-    def __init__(self, mcu_enable, enable_count=0):
-        self.mcu_enable = mcu_enable
-        self.enable_count = enable_count
-    def set_enable(self, print_time, enable):
-        if enable:
-            if not self.enable_count:
-                self.mcu_enable.set_digital(print_time, 1)
-            self.enable_count += 1
-        else:
-            self.enable_count -= 1
-            if not self.enable_count:
-                self.mcu_enable.set_digital(print_time, 0)
-
-class StepperMultiEnablePin:
-    def __init__(self, enable_list):
-        self.enable_list = enable_list
-    def set_enable(self, print_time, enable):
-        for en in self.enable_list:
-            en.set_enable(print_time, enable)
-
-def lookup_enable_pin(ppins, pin_list):
-    if pin_list is None:
-        return StepperEnablePin(None, 9999)
-    enable_list = []
-    for pin in pin_list.split(','):
-        pin_params = ppins.lookup_pin(pin, can_invert=True,
-                                      share_type='stepper_enable')
-        enable = pin_params.get('class')
-        if enable is None:
-            mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
-            mcu_enable.setup_max_duration(0.)
-            pin_params['class'] = enable = StepperEnablePin(mcu_enable)
-        enable_list.append(enable)
-    if len(enable_list) == 1:
-        return enable_list[0]
-    return StepperMultiEnablePin(enable_list)
-
-
-######################################################################
 # Steppers
 ######################################################################
 
@@ -60,7 +16,6 @@ class PrinterStepper:
     def __init__(self, config):
         printer = config.get_printer()
         self.name = config.get_name()
-        self.need_motor_enable = True
         # Stepper definition
         ppins = printer.lookup_object('pins')
         step_pin = config.get('step_pin')
@@ -70,19 +25,12 @@ class PrinterStepper:
         mcu_stepper.setup_dir_pin(dir_pin_params)
         step_dist = config.getfloat('step_distance', above=0.)
         mcu_stepper.setup_step_distance(step_dist)
-        # Enable pin handling
-        stepper_enable = printer.try_load_module(config, 'stepper_enable')
-        stepper_enable.register_stepper(self)
-        mcu_stepper.add_active_callback(self._stepper_active)
-        self.enable = lookup_enable_pin(ppins, config.get('enable_pin', None))
-        # Register STEPPER_BUZZ command
-        force_move = printer.try_load_module(config, 'force_move')
-        force_move.register_stepper(self)
         # Wrappers
         self.setup_itersolve = mcu_stepper.setup_itersolve
         self.generate_steps = mcu_stepper.generate_steps
         self.set_trapq = mcu_stepper.set_trapq
         self.set_stepper_kinematics = mcu_stepper.set_stepper_kinematics
+        self.add_active_callback = mcu_stepper.add_active_callback
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         self.set_position = mcu_stepper.set_position
         self.get_commanded_position = mcu_stepper.get_commanded_position
@@ -90,6 +38,12 @@ class PrinterStepper:
         self.get_mcu_position = mcu_stepper.get_mcu_position
         self.get_step_dist = mcu_stepper.get_step_dist
         self.is_dir_inverted = mcu_stepper.is_dir_inverted
+        # Enable pin handling
+        stepper_enable = printer.try_load_module(config, 'stepper_enable')
+        stepper_enable.register_stepper(self, config.get('enable_pin', None))
+        # Register STEPPER_BUZZ command
+        force_move = printer.try_load_module(config, 'force_move')
+        force_move.register_stepper(self)
     def get_name(self, short=False):
         if short and self.name.startswith('stepper_'):
             return self.name[8:]
@@ -109,17 +63,6 @@ class PrinterStepper:
             2. * step_dist, max_halt_velocity, max_accel)
         min_stop_interval = second_last_step_time - last_step_time
         self.mcu_stepper.setup_min_stop_interval(min_stop_interval)
-    def _stepper_active(self, active_time):
-        self.motor_enable(active_time, 1)
-    def motor_enable(self, print_time, enable=0):
-        if self.need_motor_enable != (not enable):
-            self.enable.set_enable(print_time, enable)
-        self.need_motor_enable = not enable
-        if not enable:
-            # Enable stepper on future stepper movement
-            self.mcu_stepper.add_active_callback(self._stepper_active)
-    def is_motor_enabled(self):
-        return not self.need_motor_enable
 
 
 ######################################################################
@@ -136,7 +79,6 @@ class PrinterRail:
         self.steppers = [stepper]
         self.name = stepper.get_name(short=True)
         self.get_commanded_position = stepper.get_commanded_position
-        self.is_motor_enabled = stepper.is_motor_enabled
         # Primary endstop and its position
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
@@ -232,9 +174,6 @@ class PrinterRail:
     def set_position(self, coord):
         for stepper in self.steppers:
             stepper.set_position(coord)
-    def motor_enable(self, print_time, enable=0):
-        for stepper in self.steppers:
-            stepper.motor_enable(print_time, enable)
 
 # Wrapper for dual stepper motor support
 def LookupMultiRail(config):

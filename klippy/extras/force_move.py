@@ -53,9 +53,10 @@ class ForceMove:
     def force_enable(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
-        was_enable = stepper.is_motor_enabled()
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        was_enable = stepper_enable.is_motor_enabled(stepper.get_name())
         if not was_enable:
-            stepper.motor_enable(print_time, 1)
+            stepper_enable.motor_enable(stepper.get_name(), print_time)
             toolhead.dwell(STALL_TIME)
         return was_enable
     def restore_enable(self, stepper, was_enable):
@@ -63,7 +64,8 @@ class ForceMove:
             toolhead = self.printer.lookup_object('toolhead')
             toolhead.dwell(STALL_TIME)
             print_time = toolhead.get_last_move_time()
-            stepper.motor_enable(print_time, 0)
+            stepper_enable = self.printer.lookup_object('stepper_enable')
+            stepper_enable.motor_disable(stepper.get_name(), print_time)
             toolhead.dwell(STALL_TIME)
     def manual_move(self, stepper, dist, speed, accel=0.):
         toolhead = self.printer.lookup_object('toolhead')
