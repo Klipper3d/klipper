@@ -74,17 +74,13 @@ class PrinterStepper:
 class PrinterRail:
     def __init__(self, config, need_position_minmax=True,
                  default_position_endstop=None):
-        # Primary stepper
-        stepper = PrinterStepper(config)
-        self.steppers = [stepper]
-        self.name = stepper.get_name(short=True)
-        self.get_commanded_position = stepper.get_commanded_position
-        # Primary endstop and its position
-        printer = config.get_printer()
-        ppins = printer.lookup_object('pins')
-        mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
-        self.endstops = [(mcu_endstop, self.name)]
-        stepper.add_to_endstop(mcu_endstop)
+        # Primary stepper and endstop
+        self.steppers = []
+        self.endstops = []
+        self.add_extra_stepper(config)
+        self.get_commanded_position = self.steppers[0].get_commanded_position
+        # Primary endstop position
+        mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):
             self.position_endstop = mcu_endstop.get_position_endstop()
         elif default_position_endstop is None:
@@ -92,8 +88,6 @@ class PrinterRail:
         else:
             self.position_endstop = config.getfloat(
                 'position_endstop', default_position_endstop)
-        query_endstops = printer.try_load_module(config, 'query_endstops')
-        query_endstops.register_endstop(mcu_endstop, self.name)
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat('position_min', 0.)
@@ -142,17 +136,18 @@ class PrinterRail:
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config)
         self.steppers.append(stepper)
-        mcu_endstop = self.endstops[0][0]
-        endstop_pin = config.get('endstop_pin', None)
-        if endstop_pin is not None:
-            printer = config.get_printer()
-            ppins = printer.lookup_object('pins')
-            mcu_endstop = ppins.setup_pin('endstop', endstop_pin)
-            name = stepper.get_name(short=True)
-            self.endstops.append((mcu_endstop, name))
-            query_endstops = printer.try_load_module(config, 'query_endstops')
-            query_endstops.register_endstop(mcu_endstop, name)
+        if self.endstops and config.get('endstop_pin', None) is None:
+            # No endstop defined - use primary endstop
+            stepper.add_to_endstop(self.endstops[0][0])
+            return
+        printer = config.get_printer()
+        ppins = printer.lookup_object('pins')
+        mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
         stepper.add_to_endstop(mcu_endstop)
+        name = stepper.get_name(short=True)
+        self.endstops.append((mcu_endstop, name))
+        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops.register_endstop(mcu_endstop, name)
     def add_to_endstop(self, mcu_endstop):
         for stepper in self.steppers:
             stepper.add_to_endstop(mcu_endstop)
