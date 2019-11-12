@@ -35,8 +35,6 @@ class ManualStepper:
         self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                         stepper_name, self.cmd_MANUAL_STEPPER,
                                         desc=self.cmd_MANUAL_STEPPER_help)
-        self.printer.register_event_handler(
-            "toolhead:motor_off", self.handle_motor_off)
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -114,8 +112,6 @@ class ManualStepper:
         elif 'MOVE' in params:
             movepos = self.gcode.get_float('MOVE', params)
             self.do_move(movepos, speed, accel)
-    def handle_motor_off(self, print_time):
-        self.do_enable(0)
 
 def load_config_prefix(config):
     return ManualStepper(config)

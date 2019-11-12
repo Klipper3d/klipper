@@ -87,8 +87,6 @@ class PrinterExtruder:
         return self.deactivate_gcode.render()
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
-    def motor_off(self, print_time):
-        self.stepper.motor_enable(print_time, 0)
     def check_move(self, move):
         move.extrude_r = move.axes_r[3]
         move.extrude_max_corner_v = 0.
@@ -231,8 +229,6 @@ class PrinterExtruder:
 class DummyExtruder:
     def set_active(self, print_time, is_active):
         return 0.
-    def motor_off(self, move_time):
-        pass
     def check_move(self, move):
         raise homing.EndstopMoveError(
             move.end_pos, "Extrude when no extruder present")

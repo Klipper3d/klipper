@@ -182,7 +182,6 @@ class MoveQueue:
             # Enough moves have been queued to reach the target flush time.
             self.flush(lazy=True)
 
-STALL_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 
 DRIP_SEGMENT_TIME = 0.050
@@ -203,8 +202,6 @@ class ToolHead:
             self.can_pause = False
         self.move_queue = MoveQueue(self)
         self.commanded_pos = [0., 0., 0., 0.]
-        self.printer.register_event_handler("gcode:request_restart",
-                                            self._handle_request_restart)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
         # Velocity and acceleration control
@@ -405,15 +402,6 @@ class ToolHead:
         next_print_time = self.get_last_move_time() + max(0., delay)
         self._update_move_time(next_print_time)
         self._check_stall()
-    def motor_off(self):
-        self.dwell(STALL_TIME)
-        last_move_time = self.get_last_move_time()
-        self.kin.motor_off(last_move_time)
-        for ext in kinematics.extruder.get_printer_extruders(self.printer):
-            ext.motor_off(last_move_time)
-        self.printer.send_event("toolhead:motor_off", last_move_time)
-        self.dwell(STALL_TIME)
-        logging.debug('; Max time of %f', last_move_time)
     def wait_moves(self):
         self._flush_lookahead()
         eventtime = self.reactor.monotonic()
@@ -493,8 +481,6 @@ class ToolHead:
                  'estimated_print_time': estimated_print_time,
                  'position': homing.Coord(*self.commanded_pos),
                  'printing_time': print_time - last_print_start_time }
-    def _handle_request_restart(self, print_time):
-        self.motor_off()
     def _handle_shutdown(self):
         self.can_pause = False
         self.move_queue.reset()

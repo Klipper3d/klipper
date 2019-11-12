@@ -125,7 +125,7 @@ class Homing:
         try:
             self.toolhead.get_kinematics().home(self)
         except CommandError:
-            self.toolhead.motor_off()
+            self.printer.lookup_object('stepper_enable').motor_off()
             raise
 
 class CommandError(Exception):

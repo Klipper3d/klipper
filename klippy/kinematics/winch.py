@@ -42,9 +42,6 @@ class WinchKinematics:
         # XXX - homing not implemented
         homing_state.set_axes([0, 1, 2])
         homing_state.set_homed_position([0., 0., 0.])
-    def motor_off(self, print_time):
-        for s in self.steppers:
-            s.motor_enable(print_time, 0)
     def check_move(self, move):
         # XXX - boundary checks and speed limits not implemented
         pass

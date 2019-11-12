@@ -15,8 +15,6 @@ class NoneKinematics:
         pass
     def home(self, homing_state):
         pass
-    def motor_off(self, print_time):
-        pass
     def check_move(self, move):
         pass
     def get_status(self):
