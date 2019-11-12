@@ -54,19 +54,21 @@ def lookup_enable_pin(ppins, pin_list):
 class EnableTracking:
     def __init__(self, printer, stepper, pin):
         self.stepper = stepper
-        self.is_motor_enabled = False
+        self.is_enabled = False
         self.stepper.add_active_callback(self.motor_enable)
         self.enable = lookup_enable_pin(printer.lookup_object('pins'), pin)
     def motor_enable(self, print_time):
-        if not self.is_motor_enabled:
+        if not self.is_enabled:
             self.enable.set_enable(print_time)
-            self.is_motor_enabled = True
+            self.is_enabled = True
     def motor_disable(self, print_time):
-        if self.is_motor_enabled:
+        if self.is_enabled:
             # Enable stepper on future stepper movement
             self.enable.set_disable(print_time)
-            self.is_motor_enabled = False
+            self.is_enabled = False
             self.stepper.add_active_callback(self.motor_enable)
+    def is_motor_enabled(self):
+        return self.is_enabled
 
 class PrinterStepperEnable:
     def __init__(self, config):
@@ -95,12 +97,8 @@ class PrinterStepperEnable:
     def cmd_M18(self, params):
         # Turn off motors
         self.motor_off()
-    def is_motor_enabled(self, name):
-        return self.enable_lines[name].is_motor_enabled
-    def motor_enable(self, name, print_time):
-        self.enable_lines[name].motor_enable(print_time)
-    def motor_disable(self, name, print_time):
-        self.enable_lines[name].motor_disable(print_time)
+    def lookup_enable(self, name):
+        return self.enable_lines[name]
 
 def load_config(config):
     return PrinterStepperEnable(config)

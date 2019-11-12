@@ -9,138 +9,6 @@ import serialhdl, pins, chelper, clocksync
 class error(Exception):
     pass
 
-class MCU_stepper:
-    def __init__(self, mcu, pin_params):
-        self._mcu = mcu
-        self._oid = oid = self._mcu.create_oid()
-        self._mcu.register_config_callback(self._build_config)
-        self._step_pin = pin_params['pin']
-        self._invert_step = pin_params['invert']
-        self._dir_pin = self._invert_dir = None
-        self._mcu_position_offset = 0.
-        self._step_dist = 0.
-        self._min_stop_interval = 0.
-        self._reset_cmd_id = self._get_position_cmd = None
-        self._active_callbacks = []
-        ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
-                                      self._ffi_lib.stepcompress_free)
-        self._mcu.register_stepqueue(self._stepqueue)
-        self._stepper_kinematics = None
-        self._itersolve_generate_steps = self._ffi_lib.itersolve_generate_steps
-        self._itersolve_check_active = self._ffi_lib.itersolve_check_active
-        self._trapq = ffi_main.NULL
-    def get_mcu(self):
-        return self._mcu
-    def setup_dir_pin(self, pin_params):
-        if pin_params['chip'] is not self._mcu:
-            raise pins.error("Stepper dir pin must be on same mcu as step pin")
-        self._dir_pin = pin_params['pin']
-        self._invert_dir = pin_params['invert']
-    def setup_min_stop_interval(self, min_stop_interval):
-        self._min_stop_interval = min_stop_interval
-    def setup_step_distance(self, step_dist):
-        self._step_dist = step_dist
-    def setup_itersolve(self, alloc_func, *params):
-        ffi_main, ffi_lib = chelper.get_ffi()
-        sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
-        self.set_stepper_kinematics(sk)
-    def _build_config(self):
-        max_error = self._mcu.get_max_stepper_error()
-        min_stop_interval = max(0., self._min_stop_interval - max_error)
-        self._mcu.add_config_cmd(
-            "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=%d invert_step=%d" % (
-                self._oid, self._step_pin, self._dir_pin,
-                self._mcu.seconds_to_clock(min_stop_interval),
-                self._invert_step))
-        self._mcu.add_config_cmd(
-            "reset_step_clock oid=%d clock=0" % (self._oid,), is_init=True)
-        step_cmd_id = self._mcu.lookup_command_id(
-            "queue_step oid=%c interval=%u count=%hu add=%hi")
-        dir_cmd_id = self._mcu.lookup_command_id(
-            "set_next_step_dir oid=%c dir=%c")
-        self._reset_cmd_id = self._mcu.lookup_command_id(
-            "reset_step_clock oid=%c clock=%u")
-        self._get_position_cmd = self._mcu.lookup_command(
-            "stepper_get_position oid=%c")
-        self._ffi_lib.stepcompress_fill(
-            self._stepqueue, self._mcu.seconds_to_clock(max_error),
-            self._invert_dir, step_cmd_id, dir_cmd_id)
-    def get_oid(self):
-        return self._oid
-    def get_step_dist(self):
-        return self._step_dist
-    def is_dir_inverted(self):
-        return self._invert_dir
-    def calc_position_from_coord(self, coord):
-        return self._ffi_lib.itersolve_calc_position_from_coord(
-            self._stepper_kinematics, coord[0], coord[1], coord[2])
-    def set_position(self, coord):
-        self.set_commanded_position(self.calc_position_from_coord(coord))
-    def get_commanded_position(self):
-        return self._ffi_lib.itersolve_get_commanded_pos(
-            self._stepper_kinematics)
-    def set_commanded_position(self, pos):
-        self._mcu_position_offset += self.get_commanded_position() - pos
-        self._ffi_lib.itersolve_set_commanded_pos(self._stepper_kinematics, pos)
-    def get_mcu_position(self):
-        mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
-        mcu_pos = mcu_pos_dist / self._step_dist
-        if mcu_pos >= 0.:
-            return int(mcu_pos + 0.5)
-        return int(mcu_pos - 0.5)
-    def set_stepper_kinematics(self, sk):
-        old_sk = self._stepper_kinematics
-        self._stepper_kinematics = sk
-        if sk is not None:
-            self._ffi_lib.itersolve_set_stepcompress(
-                sk, self._stepqueue, self._step_dist)
-        return old_sk
-    def note_homing_end(self, did_trigger=False):
-        ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
-        if ret:
-            raise error("Internal error in stepcompress")
-        data = (self._reset_cmd_id, self._oid, 0)
-        ret = self._ffi_lib.stepcompress_queue_msg(
-            self._stepqueue, data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
-        if not did_trigger or self._mcu.is_fileoutput():
-            return
-        params = self._get_position_cmd.send_with_response(
-            [self._oid], response='stepper_position', response_oid=self._oid)
-        mcu_pos_dist = params['pos'] * self._step_dist
-        if self._invert_dir:
-            mcu_pos_dist = -mcu_pos_dist
-        self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, mcu_pos_dist - self._mcu_position_offset)
-    def set_trapq(self, tq):
-        if tq is None:
-            ffi_main, self._ffi_lib = chelper.get_ffi()
-            tq = ffi_main.NULL
-        self._ffi_lib.itersolve_set_trapq(self._stepper_kinematics, tq)
-        old_tq = self._trapq
-        self._trapq = tq
-        return old_tq
-    def add_active_callback(self, cb):
-        self._active_callbacks.append(cb)
-    def generate_steps(self, flush_time):
-        # Check for activity if necessary
-        if self._active_callbacks:
-            ret = self._itersolve_check_active(self._stepper_kinematics,
-                                               flush_time)
-            if ret:
-                cbs = self._active_callbacks
-                self._active_callbacks = []
-                for cb in cbs:
-                    cb(ret)
-        # Generate steps
-        ret = self._itersolve_generate_steps(self._stepper_kinematics,
-                                             flush_time)
-        if ret:
-            raise error("Internal error in stepcompress")
-
 class MCU_endstop:
     class TimeoutError(Exception):
         pass
@@ -699,7 +567,7 @@ class MCU:
         self.register_response(self._handle_mcu_stats, 'stats')
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
-        pcs = {'stepper': MCU_stepper, 'endstop': MCU_endstop,
+        pcs = {'endstop': MCU_endstop,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))

@@ -49,10 +49,12 @@ class ManualStepper:
         stepper_enable = self.printer.lookup_object('stepper_enable')
         if enable:
             for s in self.steppers:
-                stepper_enable.motor_enable(s.get_name(), self.next_cmd_time)
+                se = stepper_enable.lookup_enable(s.get_name())
+                se.motor_enable(self.next_cmd_time)
         else:
             for s in self.steppers:
-                stepper_enable.motor_disable(s.get_name(), self.next_cmd_time)
+                se = stepper_enable.lookup_enable(s.get_name())
+                se.motor_disable(self.next_cmd_time)
         self.sync_print_time()
     def do_set_position(self, setpos):
         self.rail.set_position([setpos, 0., 0.])

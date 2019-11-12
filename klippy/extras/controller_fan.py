@@ -38,7 +38,7 @@ class ControllerFan:
         power = 0.
         active = False
         for name in self.stepper_names:
-            active |= self.stepper_enable.is_motor_enabled(name)
+            active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
         for heater in self.heaters:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:
