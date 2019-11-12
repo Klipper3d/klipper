@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20191112: The tmc stepper driver virtual enable capability is now
+automatically enabled if the stepper does not have a dedicated stepper
+enable pin.  Remove references to tmcXXXX:virtual_enable from the
+config.
+
 20191107: The primary extruder config section must be specified as
 "extruder" and may no longer be specified as "extruder0". Gcode
 command templates that query the extruder status are now accessed via

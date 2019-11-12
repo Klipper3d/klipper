@@ -12,6 +12,7 @@ class StepperEnablePin:
     def __init__(self, mcu_enable, enable_count=0):
         self.mcu_enable = mcu_enable
         self.enable_count = enable_count
+        self.is_dedicated = enable_count == 0
     def set_enable(self, print_time):
         if not self.enable_count:
             self.mcu_enable.set_digital(print_time, 1)
@@ -25,6 +26,7 @@ class StepperEnablePin:
 class StepperMultiEnablePin:
     def __init__(self, enable_list):
         self.enable_list = enable_list
+        self.is_dedicated = False
     def set_enable(self, print_time):
         for en in self.enable_list:
             en.set_enable(print_time)
@@ -45,6 +47,8 @@ def lookup_enable_pin(ppins, pin_list):
             mcu_enable = pin_params['chip'].setup_pin('digital_out', pin_params)
             mcu_enable.setup_max_duration(0.)
             pin_params['class'] = enable = StepperEnablePin(mcu_enable)
+        else:
+            enable.is_dedicated = False
         enable_list.append(enable)
     if len(enable_list) == 1:
         return enable_list[0]
@@ -54,21 +58,30 @@ def lookup_enable_pin(ppins, pin_list):
 class EnableTracking:
     def __init__(self, printer, stepper, pin):
         self.stepper = stepper
+        self.callbacks = []
         self.is_enabled = False
         self.stepper.add_active_callback(self.motor_enable)
         self.enable = lookup_enable_pin(printer.lookup_object('pins'), pin)
+    def register_state_callback(self, callback):
+        self.callbacks.append(callback)
     def motor_enable(self, print_time):
         if not self.is_enabled:
+            for cb in self.callbacks:
+                cb(print_time, True)
             self.enable.set_enable(print_time)
             self.is_enabled = True
     def motor_disable(self, print_time):
         if self.is_enabled:
             # Enable stepper on future stepper movement
+            for cb in self.callbacks:
+                cb(print_time, False)
             self.enable.set_disable(print_time)
             self.is_enabled = False
             self.stepper.add_active_callback(self.motor_enable)
     def is_motor_enabled(self):
         return self.is_enabled
+    def has_dedicated_enable(self):
+        return self.enable.is_dedicated
 
 class PrinterStepperEnable:
     def __init__(self, config):
