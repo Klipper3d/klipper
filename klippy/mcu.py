@@ -556,11 +556,9 @@ class MCU:
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self._reset_cmd = self.try_lookup_command("reset")
         self._config_reset_cmd = self.try_lookup_command("config_reset")
-        msgparser = self._serial.get_msgparser()
-        if (self._restart_method is None
-            and (self._reset_cmd is not None
-                 or self._config_reset_cmd is not None)
-            and msgparser.get_constant('SERIAL_BAUD', None) is None):
+        ext_only = self._reset_cmd is None and self._config_reset_cmd is None
+        mbaud = self._serial.get_msgparser().get_constant('SERIAL_BAUD', None)
+        if self._restart_method is None and mbaud is None and not ext_only:
             self._restart_method = 'command'
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
