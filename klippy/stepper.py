@@ -134,8 +134,7 @@ class MCU_stepper:
         mcu_pos_dist = params['pos'] * self._step_dist
         if self._invert_dir:
             mcu_pos_dist = -mcu_pos_dist
-        self._ffi_lib.itersolve_set_commanded_pos(
-            self._stepper_kinematics, mcu_pos_dist - self._mcu_position_offset)
+        self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
     def set_trapq(self, tq):
         if tq is None:
             ffi_main, self._ffi_lib = chelper.get_ffi()
