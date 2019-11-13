@@ -67,8 +67,10 @@ class Homing:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
         if probe_pos:
-            self.set_homed_position(
-                list(self.toolhead.get_kinematics().calc_position()) + [None])
+            kin = self.toolhead.get_kinematics()
+            for s in kin.get_steppers():
+                s.set_tag_position(s.get_commanded_position())
+            self.set_homed_position(kin.calc_tag_position())
         else:
             self.toolhead.set_position(movepos)
         for mcu_endstop, name in endstops:
@@ -116,7 +118,10 @@ class Homing:
         ret = self.printer.send_event("homing:homed_rails", self, rails)
         if any(ret):
             # Apply any homing offsets
-            adjustpos = self.toolhead.get_kinematics().calc_position()
+            kin = self.toolhead.get_kinematics()
+            for s in kin.get_steppers():
+                s.set_tag_position(s.get_commanded_position())
+            adjustpos = kin.calc_tag_position()
             for axis in homing_axes:
                 movepos[axis] = adjustpos[axis]
             self.toolhead.set_position(movepos)

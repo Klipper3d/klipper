@@ -690,11 +690,12 @@ class GCodeParser:
         steppers = kin.get_steppers()
         mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
                             for s in steppers])
-        stepper_pos = " ".join(
-            ["%s:%.6f" % (s.get_name(), s.get_commanded_position())
-             for s in steppers])
-        kinematic_pos = " ".join(["%s:%.6f"  % (a, v)
-                                  for a, v in zip("XYZE", kin.calc_position())])
+        for s in steppers:
+            s.set_tag_position(s.get_commanded_position())
+        stepper_pos = " ".join(["%s:%.6f" % (s.get_name(), s.get_tag_position())
+                                for s in steppers])
+        kin_pos = " ".join(["%s:%.6f" % (a, v)
+                            for a, v in zip("XYZ", kin.calc_tag_position())])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", self.toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)
@@ -703,16 +704,15 @@ class GCodeParser:
                              for a, v in zip("XYZE", self.base_position)])
         homing_pos = " ".join(["%s:%.6f"  % (a, v)
                                for a, v in zip("XYZ", self.homing_position)])
-        self.respond_info(
-            "mcu: %s\n"
-            "stepper: %s\n"
-            "kinematic: %s\n"
-            "toolhead: %s\n"
-            "gcode: %s\n"
-            "gcode base: %s\n"
-            "gcode homing: %s" % (
-                mcu_pos, stepper_pos, kinematic_pos, toolhead_pos,
-                gcode_pos, base_pos, homing_pos))
+        self.respond_info("mcu: %s\n"
+                          "stepper: %s\n"
+                          "kinematic: %s\n"
+                          "toolhead: %s\n"
+                          "gcode: %s\n"
+                          "gcode base: %s\n"
+                          "gcode homing: %s"
+                          % (mcu_pos, stepper_pos, kin_pos, toolhead_pos,
+                             gcode_pos, base_pos, homing_pos))
     def request_restart(self, result):
         if self.is_printer_ready:
             print_time = self.toolhead.get_last_move_time()

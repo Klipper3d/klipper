@@ -40,10 +40,10 @@ class PolarKinematics:
         if flags == "Z":
             return self.rails[1].get_steppers()
         return list(self.steppers)
-    def calc_position(self):
-        bed_angle = self.steppers[0].get_commanded_position()
-        arm_pos = self.rails[0].get_commanded_position()
-        z_pos = self.rails[1].get_commanded_position()
+    def calc_tag_position(self):
+        bed_angle = self.steppers[0].get_tag_position()
+        arm_pos = self.rails[0].get_tag_position()
+        z_pos = self.rails[1].get_tag_position()
         return [math.cos(bed_angle) * arm_pos, math.sin(bed_angle) * arm_pos,
                 z_pos]
     def set_position(self, newpos, homing_axes):

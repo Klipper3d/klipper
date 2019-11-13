@@ -29,7 +29,7 @@ class MCU_stepper:
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = dir_pin_params['invert']
-        self._mcu_position_offset = 0.
+        self._mcu_position_offset = self._tag_position = 0.
         self._min_stop_interval = 0.
         self._reset_cmd_id = self._get_position_cmd = None
         self._active_callbacks = []
@@ -107,6 +107,10 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
+    def get_tag_position(self):
+        return self._tag_position
+    def set_tag_position(self, position):
+        self._tag_position = position
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
@@ -193,6 +197,8 @@ class PrinterRail:
         self.endstops = []
         self.add_extra_stepper(config)
         self.get_commanded_position = self.steppers[0].get_commanded_position
+        self.get_tag_position = self.steppers[0].get_tag_position
+        self.set_tag_position = self.steppers[0].set_tag_position
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):

@@ -31,9 +31,9 @@ class WinchKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return list(self.steppers)
-    def calc_position(self):
+    def calc_tag_position(self):
         # Use only first three steppers to calculate cartesian position
-        spos = [s.get_commanded_position() for s in self.steppers[:3]]
+        spos = [s.get_tag_position() for s in self.steppers[:3]]
         return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in spos])
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:

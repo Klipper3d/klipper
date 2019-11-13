@@ -9,7 +9,7 @@ class NoneKinematics:
         pass
     def get_steppers(self, flags=""):
         return []
-    def calc_position(self):
+    def calc_tag_position(self):
         return [0, 0, 0]
     def set_position(self, newpos, homing_axes):
         pass

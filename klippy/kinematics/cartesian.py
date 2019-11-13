@@ -53,8 +53,8 @@ class CartKinematics:
         if flags == "Z":
             return self.rails[2].get_steppers()
         return [s for rail in self.rails for s in rail.get_steppers()]
-    def calc_position(self):
-        return [rail.get_commanded_position() for rail in self.rails]
+    def calc_tag_position(self):
+        return [rail.get_tag_position() for rail in self.rails]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
@@ -125,8 +125,9 @@ class CartKinematics:
         self.rails[dc_axis].set_trapq(None)
         dc_rail.set_trapq(toolhead.get_trapq())
         self.rails[dc_axis] = dc_rail
-        extruder_pos = toolhead.get_position()[3]
-        toolhead.set_position(self.calc_position() + [extruder_pos])
+        pos = toolhead.get_position()
+        pos[dc_axis] = dc_rail.get_commanded_position()
+        toolhead.set_position(pos)
         if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
             self.limits[dc_axis] = dc_rail.get_range()
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
