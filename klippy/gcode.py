@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
-import homing, kinematics.extruder
+import homing
 
 # Parse and handle G-Code commands
 class GCodeParser:
@@ -56,7 +56,7 @@ class GCodeParser:
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
         self.need_ack = False
-        self.toolhead = self.fan = self.extruder = None
+        self.toolhead = self.fan = None
         self.heaters = None
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
@@ -171,10 +171,6 @@ class GCodeParser:
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
             self.position_with_transform = self.toolhead.get_position
-        extruders = kinematics.extruder.get_printer_extruders(self.printer)
-        if extruders:
-            self.extruder = extruders[0]
-            self.toolhead.set_extruder(self.extruder)
         self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
@@ -410,8 +406,8 @@ class GCodeParser:
             extruder = self.printer.lookup_object(section, None)
             if extruder is not None:
                 heater = extruder.get_heater()
-        elif self.extruder is not None:
-            heater = self.extruder.get_heater()
+        else:
+            heater = self.toolhead.get_extruder().get_heater()
         if heater is None:
             if temp > 0.:
                 self.respond_error("Heater not configured")
@@ -452,18 +448,25 @@ class GCodeParser:
         self.respond_info('Unknown command:"%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
-        extruders = kinematics.extruder.get_printer_extruders(self.printer)
-        index = self.get_int('T', params, minval=0, maxval=len(extruders)-1)
-        e = extruders[index]
-        if self.extruder is e:
+        index = self.get_int('T', params, minval=0)
+        section = 'extruder'
+        if index:
+            section = 'extruder%d' % (index,)
+        new_extruder = self.printer.lookup_object(section, None)
+        if new_extruder is None:
+            raise self.error("Unknown extruder %d on Tn command" % (index,))
+        old_extruder = self.toolhead.get_extruder()
+        if old_extruder is new_extruder:
             return
-        self.run_script_from_command(self.extruder.get_activate_gcode(False))
-        self.toolhead.set_extruder(e)
-        self.extruder = e
+        self.run_script_from_command(old_extruder.get_activate_gcode(False))
+        print_time = self.toolhead.get_last_move_time()
+        old_extruder.set_active(print_time, False)
+        extrude_pos = new_extruder.set_active(print_time, True)
+        self.toolhead.set_extruder(new_extruder, extrude_pos)
         self.reset_last_position()
         self.extrude_factor = 1.
         self.base_position[3] = self.last_position[3]
-        self.run_script_from_command(self.extruder.get_activate_gcode(True))
+        self.run_script_from_command(new_extruder.get_activate_gcode(True))
     def _cmd_mux(self, params):
         key, values = self.mux_commands[params['#command']]
         if None in values:

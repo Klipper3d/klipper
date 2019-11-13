@@ -410,10 +410,7 @@ class ToolHead:
             if not self.can_pause:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
-    def set_extruder(self, extruder):
-        last_move_time = self.get_last_move_time()
-        self.extruder.set_active(last_move_time, False)
-        extrude_pos = extruder.set_active(last_move_time, True)
+    def set_extruder(self, extruder, extrude_pos):
         self.extruder = extruder
         self.move_queue.set_extruder(extruder)
         self.commanded_pos[3] = extrude_pos

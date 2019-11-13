@@ -60,9 +60,10 @@ class PrinterExtruder:
         self.stepper.set_trapq(self.trapq)
         toolhead.register_step_generator(self.stepper.generate_steps)
         toolhead.register_step_generator(self._free_moves)
-        # Setup SET_PRESSURE_ADVANCE command
+        # Register commands
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
+            toolhead.set_extruder(self, self.extrude_pos)
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
@@ -236,6 +237,8 @@ class DummyExtruder:
         return move.max_cruise_v2
     def lookahead(self, moves, flush_count, lazy):
         return flush_count
+    def get_heater(self):
+        raise homing.CommandError("Extruder not configured")
 
 def add_printer_objects(config):
     printer = config.get_printer()
@@ -247,15 +250,3 @@ def add_printer_objects(config):
             break
         pe = PrinterExtruder(config.getsection(section), i)
         printer.add_object(section, pe)
-
-def get_printer_extruders(printer):
-    out = []
-    for i in range(99):
-        section = 'extruder'
-        if i:
-            section = 'extruder%d' % (i,)
-        extruder = printer.lookup_object(section, None)
-        if extruder is None:
-            break
-        out.append(extruder)
-    return out
