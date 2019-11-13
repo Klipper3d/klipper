@@ -90,8 +90,6 @@ class BLTouchEndstopWrapper:
         return self.next_cmd_time
     def verify_state(self, check_start_time, check_end_time, triggered, msg):
         # Perform endstop check to verify bltouch reports desired state
-        prev_positions = [s.get_commanded_position()
-                          for s in self.mcu_endstop.get_steppers()]
         self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
                                     triggered=triggered)
@@ -99,8 +97,6 @@ class BLTouchEndstopWrapper:
             self.mcu_endstop.home_wait(check_end_time)
         except self.mcu_endstop.TimeoutError as e:
             raise homing.EndstopError("BLTouch failed to %s" % (msg,))
-        for s, pos in zip(self.mcu_endstop.get_steppers(), prev_positions):
-            s.set_commanded_position(pos)
     def raise_probe(self):
         for retry in range(3):
             self.sync_mcu_print_time()
