@@ -66,4 +66,8 @@ config SERIAL
     bool
     default y
 
+config CHIPID_LEN
+    int
+    default 16
+
 endif

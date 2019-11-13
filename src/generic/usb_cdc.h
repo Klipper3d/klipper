@@ -22,6 +22,7 @@ void usb_stall_ep0(void);
 void usb_set_address(uint_fast8_t addr);
 void usb_set_configure(void);
 void usb_request_bootloader(void);
+void usb_set_serial(uint8_t *);
 
 // usb_cdc.c
 void usb_notify_bulk_in(void);
