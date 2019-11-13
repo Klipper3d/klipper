@@ -115,12 +115,12 @@ class Homing:
             self.homing_move(movepos, endstops, hi.second_homing_speed,
                              verify_movement=self.verify_retract)
         # Signal home operation complete
+        kin = self.toolhead.get_kinematics()
+        for s in kin.get_steppers():
+            s.set_tag_position(s.get_commanded_position())
         ret = self.printer.send_event("homing:homed_rails", self, rails)
         if any(ret):
             # Apply any homing offsets
-            kin = self.toolhead.get_kinematics()
-            for s in kin.get_steppers():
-                s.set_tag_position(s.get_commanded_position())
             adjustpos = kin.calc_tag_position()
             for axis in homing_axes:
                 movepos[axis] = adjustpos[axis]
