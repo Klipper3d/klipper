@@ -56,7 +56,7 @@ class GCodeParser:
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
         self.need_ack = False
-        self.toolhead = self.fan = None
+        self.toolhead = None
         self.heaters = None
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
@@ -171,7 +171,6 @@ class GCodeParser:
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
             self.position_with_transform = self.toolhead.get_position
-        self.fan = self.printer.lookup_object('fan', None)
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
@@ -419,13 +418,6 @@ class GCodeParser:
             raise self.error(str(e))
         if wait and temp:
             self.bg_temp(heater)
-    def _set_fan_speed(self, speed):
-        if self.fan is None:
-            if speed and not self.is_fileinput:
-                self.respond_info("Fan not configured")
-            return
-        print_time = self.toolhead.get_last_move_time()
-        self.fan.set_speed(print_time, speed)
     # G-Code special command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
@@ -445,6 +437,10 @@ class GCodeParser:
             if handler is not None:
                 handler(params)
                 return
+        elif cmd == 'M107' or (cmd == 'M106' and (
+                not self.get_float('S', params, 1.) or self.is_fileinput)):
+            # Don't warn about requests to turn off fan when fan not present
+            return
         self.respond_info('Unknown command:"%s"' % (cmd,))
     def cmd_Tn(self, params):
         # Select Tool
@@ -481,7 +477,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'M206', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M104', 'M109', 'M140', 'M190', 'M106', 'M107',
+        'M105', 'M104', 'M109', 'M140', 'M190',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
@@ -648,7 +644,7 @@ class GCodeParser:
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
-    # G-Code temperature and fan commands
+    # G-Code temperature commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
@@ -669,12 +665,6 @@ class GCodeParser:
     def cmd_M190(self, params):
         # Set Bed Temperature and Wait
         self._set_temp(params, is_bed=True, wait=True)
-    def cmd_M106(self, params):
-        # Set fan speed
-        self._set_fan_speed(self.get_float('S', params, 255., minval=0.) / 255.)
-    def cmd_M107(self, params):
-        # Turn fan off
-        self._set_fan_speed(0.)
     # G-Code miscellaneous commands
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
