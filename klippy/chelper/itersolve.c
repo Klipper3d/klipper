@@ -208,7 +208,7 @@ itersolve_set_stepcompress(struct stepper_kinematics *sk
     sk->step_dist = step_dist;
 }
 
-double __visible
+static double
 itersolve_calc_position_from_coord(struct stepper_kinematics *sk
                                    , double x, double y, double z)
 {
@@ -221,9 +221,10 @@ itersolve_calc_position_from_coord(struct stepper_kinematics *sk
 }
 
 void __visible
-itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos)
+itersolve_set_position(struct stepper_kinematics *sk
+                       , double x, double y, double z)
 {
-    sk->commanded_pos = pos;
+    sk->commanded_pos = itersolve_calc_position_from_coord(sk, x, y, z);
 }
 
 double __visible
