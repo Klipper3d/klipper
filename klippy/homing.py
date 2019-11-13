@@ -40,10 +40,14 @@ class Homing:
         # Notify endstops of upcoming home
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
-        # Start endstop checking
+        # Note start location
         print_time = self.toolhead.get_last_move_time()
+        kin = self.toolhead.get_kinematics()
+        for s in kin.get_steppers():
+            s.set_tag_position(s.get_commanded_position())
         start_mcu_pos = [(s, name, s.get_mcu_position())
                          for es, name in endstops for s in es.get_steppers()]
+        # Start endstop checking
         self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
@@ -66,13 +70,17 @@ class Homing:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
+        # Determine stepper halt positions
+        end_mcu_pos = [(s, name, spos, s.get_mcu_position())
+                       for s, name, spos in start_mcu_pos]
         if probe_pos:
-            kin = self.toolhead.get_kinematics()
-            for s in kin.get_steppers():
-                s.set_tag_position(s.get_commanded_position())
+            for s, name, spos, epos in end_mcu_pos:
+                md = (epos - spos) * s.get_step_dist()
+                s.set_tag_position(s.get_tag_position() + md)
             self.set_homed_position(kin.calc_tag_position())
         else:
             self.toolhead.set_position(movepos)
+        # Signal homing complete
         for mcu_endstop, name in endstops:
             try:
                 mcu_endstop.home_finalize()
@@ -83,8 +91,8 @@ class Homing:
             raise CommandError(error)
         # Check if some movement occurred
         if verify_movement:
-            for s, name, pos in start_mcu_pos:
-                if s.get_mcu_position() == pos:
+            for s, name, spos, epos in end_mcu_pos:
+                if spos == epos:
                     if probe_pos:
                         raise EndstopError("Probe triggered prior to movement")
                     raise EndstopError(
