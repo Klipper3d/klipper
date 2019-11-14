@@ -5,8 +5,12 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
+#include "board/irq.h" // irq_disable
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
+#include "sched.h" // sched_main
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
@@ -83,6 +87,18 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+}
+
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
 }
 
 #if CONFIG_CLOCK_REF_8M
@@ -166,9 +182,10 @@ enable_clock_stm32f446(void)
 }
 
 // Main clock setup called at chip startup
-void
+static void
 clock_setup(void)
 {
+    // Configure and enable PLL
     if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
         enable_clock_stm32f40x();
     else
@@ -186,4 +203,24 @@ clock_setup(void)
     RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
+}
+
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
+{
+    if (CONFIG_USBSERIAL && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
+        *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+        uint32_t *sysbase = (uint32_t*)0x1fff0000;
+        asm volatile("mov sp, %0\n bx %1"
+                     : : "r"(sysbase[0]), "r"(sysbase[1]));
+    }
+
+    // Run SystemInit() and then restore VTOR
+    SystemInit();
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    clock_setup();
+
+    sched_main();
 }

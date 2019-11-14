@@ -5,7 +5,11 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "board/armcm_boot.h" // VectorTable
+#include "board/irq.h" // irq_disable
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "internal.h" // enable_pclock
+#include "sched.h" // sched_main
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
 
@@ -104,10 +108,26 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE;
 }
 
-// Main clock setup called at chip startup
+// Handle USB reboot requests
 void
+usb_request_bootloader(void)
+{
+    if (!CONFIG_STM32_FLASH_START_2000)
+        return;
+    // Enter "stm32duino" bootloader
+    irq_disable();
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+    PWR->CR |= PWR_CR_DBP;
+    BKP->DR10 = 0x01;
+    PWR->CR &=~ PWR_CR_DBP;
+    NVIC_SystemReset();
+}
+
+// Main clock setup called at chip startup
+static void
 clock_setup(void)
 {
+    // Configure and enable PLL
     uint32_t cfgr;
     if (CONFIG_CLOCK_REF_8M) {
         // Configure 72Mhz PLL from external 8Mhz crystal (HSE)
@@ -135,8 +155,22 @@ clock_setup(void)
     RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
+}
+
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
+{
+    // Run SystemInit() and then restore VTOR
+    SystemInit();
+    SCB->VTOR = (uint32_t)VectorTable;
+
+    // Setup clocks
+    clock_setup();
 
     // Disable JTAG to free PA15, PB3, PB4
     enable_pclock(AFIO_BASE);
     AFIO->MAPR = AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+
+    sched_main();
 }

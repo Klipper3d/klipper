@@ -23,6 +23,11 @@ choice
         bool "lpc1769 (120 Mhz)"
 endchoice
 
+config MCU
+    string
+    default "lpc1768" if MACH_LPC1768
+    default "lpc1769" if MACH_LPC1769
+
 config CLOCK_FREQ
     int
     default 100000000 if MACH_LPC1768

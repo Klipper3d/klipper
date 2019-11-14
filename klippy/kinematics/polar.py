@@ -18,13 +18,17 @@ class PolarKinematics:
         self.rails = [rail_arm, rail_z]
         self.steppers = [stepper_bed] + [ s for r in self.rails
                                           for s in r.get_steppers() ]
+        for s in self.get_steppers():
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_step_generator(s.generate_steps)
+        config.get_printer().register_event_handler("stepper_enable:motor_off",
+                                                    self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
-        self.need_motor_enable = True
         self.limit_z = [(1.0, -1.0)]
         self.limit_xy2 = -1.
         # Setup stepper max halt velocity
@@ -36,10 +40,10 @@ class PolarKinematics:
         if flags == "Z":
             return self.rails[1].get_steppers()
         return list(self.steppers)
-    def calc_position(self):
-        bed_angle = self.steppers[0].get_commanded_position()
-        arm_pos = self.rails[0].get_commanded_position()
-        z_pos = self.rails[1].get_commanded_position()
+    def calc_tag_position(self):
+        bed_angle = self.steppers[0].get_tag_position()
+        arm_pos = self.rails[0].get_tag_position()
+        z_pos = self.rails[1].get_tag_position()
         return [math.cos(bed_angle) * arm_pos, math.sin(bed_angle) * arm_pos,
                 z_pos]
     def set_position(self, newpos, homing_axes):
@@ -80,22 +84,9 @@ class PolarKinematics:
             self._home_axis(homing_state, 0, self.rails[0])
         if home_z:
             self._home_axis(homing_state, 2, self.rails[1])
-    def motor_off(self, print_time):
+    def _motor_off(self, print_time):
         self.limit_z = [(1.0, -1.0)]
         self.limit_xy2 = -1.
-        for s in self.steppers:
-            s.motor_enable(print_time, 0)
-        self.need_motor_enable = True
-    def _check_motor_enable(self, print_time, move):
-        if move.axes_d[0] or move.axes_d[1]:
-            self.steppers[0].motor_enable(print_time, 1)
-            self.rails[0].motor_enable(print_time, 1)
-        if move.axes_d[2]:
-            self.rails[1].motor_enable(print_time, 1)
-        need_motor_enable = not self.steppers[0].is_motor_enabled()
-        for rail in self.rails:
-            need_motor_enable |= not rail.is_motor_enabled()
-        self.need_motor_enable = need_motor_enable
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0]**2 + end_pos[1]**2
@@ -113,23 +104,6 @@ class PolarKinematics:
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time, move)
-        axes_d = move.axes_d
-        cmove = move.cmove
-        if axes_d[0] or axes_d[1]:
-            self.rails[0].step_itersolve(cmove)
-            stepper_bed = self.steppers[0]
-            stepper_bed.step_itersolve(cmove)
-            # Normalize the stepper_bed angle
-            angle = stepper_bed.get_commanded_position()
-            if angle < -math.pi:
-                stepper_bed.set_commanded_position(angle + 2. * math.pi)
-            elif angle > math.pi:
-                stepper_bed.set_commanded_position(angle - 2. * math.pi)
-        if axes_d[2]:
-            self.rails[1].step_itersolve(cmove)
     def get_status(self):
         return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
                         ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}

@@ -93,22 +93,23 @@ Recv: // probe at -0.003,0.005 is z=2.506948
 Recv: // probe at -0.003,0.005 is z=2.506948
 Recv: // probe at -0.003,0.005 is z=2.519448
 Recv: // probe at -0.003,0.005 is z=2.506948
-Recv: // probe accuracy results: maximum 2.506948, minimum 2.519448, average 2.513198, median 2.513198, standard deviation 0.006250
+Recv: // probe accuracy results: maximum 2.519448, minimum 2.506948, range 0.012500, average 2.513198, median 2.513198, standard deviation 0.006250
 ```
 
 Ideally the tool will report an identical maximum and minimum value.
 (That is, ideally the probe obtains an identical result on all ten
-probes.) However, it's normal for the minimum/maximum distance to
-differ by one Z step_distance or up to 5 microns (.005mm). So, in the
-above example, since the printer uses a Z step_distance of .0125, the
-results would be considered normal.
+probes.) However, it's normal for the minimum and maximum values
+to differ by one Z step_distance or up to 5 microns (.005mm).
+The distance between the minimum and the maximum value is called the
+range. So, in the above example, since the printer uses a
+Z step_distance of .0125, a range of 0.012500 would be considered normal.
 
-If the results of the test show a minimum and maximum distance that
-differs by more than 25 microns (.025mm) then the probe does not have
-sufficient accuracy for typical bed leveling procedures. It may be
-possible to tune the probe speed and/or probe start height to improve
-the repeatability of the probe. The `PROBE_ACCURACY` command allows
-one to run tests with different parameters to see their impact - see
+If the results of the test show a range value that is greater than
+25 microns (.025mm) then the probe does not have sufficient accuracy
+for typical bed leveling procedures. It may be possible to tune the
+probe speed and/or probe start height to improve the repeatability
+of the probe. The `PROBE_ACCURACY` command allows one to run tests
+with different parameters to see their impact - see
 the [G-Codes document](G-Codes.md) for further details. If the probe
 generally obtains repeatable results but has an occasional outlier,
 then it may be possible to account for that by using multiple samples

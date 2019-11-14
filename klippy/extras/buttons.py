@@ -93,76 +93,62 @@ ADC_SAMPLE_TIME = 0.001
 ADC_SAMPLE_COUNT = 6
 
 class MCU_ADC_buttons:
-    def __init__(self, printer, pin, pullup, debug=False):
+    def __init__(self, printer, pin, pullup):
         self.reactor = printer.get_reactor()
         self.buttons = []
         self.last_button = None
         self.last_pressed = None
         self.last_debouncetime = 0
         self.pullup = pullup
-        self.debug = debug
         self.pin = pin
-        self.min_value = self.max_value = None
+        self.min_value = 999999999999.9
+        self.max_value = 0.
         ppins = printer.lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', self.pin)
         self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
+        query_adc = printer.lookup_object('query_adc')
+        query_adc.register_adc('adc_button:' + pin.strip(), self.mcu_adc)
 
     def setup_button(self, min_value, max_value, callback):
-        if self.min_value is None:
-            self.min_value = min_value
-        else:
-            self.min_value = min(self.min_value, min_value)
-
-        if self.max_value is None:
-            self.max_value = max_value
-        else:
-            self.max_value = max(self.max_value, max_value)
-
+        self.min_value = min(self.min_value, min_value)
+        self.max_value = max(self.max_value, max_value)
         self.buttons.append((min_value, max_value, callback))
 
     def adc_callback(self, read_time, read_value):
         adc = max(.00001, min(.99999, read_value))
-        r = self.pullup * adc / (1.0 - adc)
-        self.reactor.register_async_callback(
-            (lambda e, s=self, v=r: s.handle_button(e, v)))
+        value = self.pullup * adc / (1.0 - adc)
 
-    def get_button(self, value):
-        if (self.min_value is not None and self.max_value is not None
-                and self.min_value <= value <= self.max_value):
+        # Determine button pressed
+        btn = None
+        if self.min_value <= value <= self.max_value:
             for i, (min_value, max_value, cb) in enumerate(self.buttons):
                 if min_value < value < max_value:
-                    return i
-        return None
-
-    def handle_button(self, eventtime, value):
-        btn = self.get_button(int(value))
+                    btn = i
+                    break
 
         # If the button changed, due to noise or pressing:
         if btn != self.last_button:
             # reset the debouncing timer
-            self.last_debouncetime = eventtime
+            self.last_debouncetime = read_time
 
         # button debounce check & new button pressed
-        if ((eventtime - self.last_debouncetime) >= ADC_DEBOUNCE_TIME
-                and self.last_button == btn and self.last_pressed != btn):
-                # release last_pressed
-                if self.last_pressed is not None:
-                    self.call_button(eventtime, self.last_pressed, False)
-                    self.last_pressed = None
-                if btn is not None:
-                    self.call_button(eventtime, btn, True)
-                    self.last_pressed = btn
+        if ((read_time - self.last_debouncetime) >= ADC_DEBOUNCE_TIME
+            and self.last_button == btn and self.last_pressed != btn):
+            # release last_pressed
+            if self.last_pressed is not None:
+                self.call_button(self.last_pressed, False)
+                self.last_pressed = None
+            if btn is not None:
+                self.call_button(btn, True)
+                self.last_pressed = btn
 
         self.last_button = btn
-        if self.debug is True:
-            logging.info(
-                "analog pin: %s value: %d" % (self.pin, int(value)))
 
-    def call_button(self, eventtime, button, state):
-        if button < len(self.buttons):
-            minval, maxval, callback = self.buttons[button]
-            callback(eventtime, state)
+    def call_button(self, button, state):
+        minval, maxval, callback = self.buttons[button]
+        self.reactor.register_async_callback(
+            (lambda e, cb=callback, s=state: cb(e, s)))
 
 
 ######################################################################
@@ -221,21 +207,20 @@ class RotaryEncoder:
 class PrinterButtons:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.try_load_module(config, 'query_adc')
         self.mcu_buttons = {}
         self.adc_buttons = {}
-    def register_adc_button(
-            self, pin, min_val, max_val, pullup, callback, debug=False):
+    def register_adc_button(self, pin, min_val, max_val, pullup, callback):
         adc_buttons = self.adc_buttons.get(pin)
         if adc_buttons is None:
             self.adc_buttons[pin] = adc_buttons = MCU_ADC_buttons(
-                self.printer, pin, pullup, debug)
+                self.printer, pin, pullup)
         adc_buttons.setup_button(min_val, max_val, callback)
-    def register_adc_button_push(
-            self, pin, min_val, max_val, pullup, callback, debug=False):
+    def register_adc_button_push(self, pin, min_val, max_val, pullup, callback):
         def helper(eventtime, state, callback=callback):
             if state:
                 callback(eventtime)
-        self.register_adc_button(pin, min_val, max_val, pullup, helper, debug)
+        self.register_adc_button(pin, min_val, max_val, pullup, helper)
     def register_buttons(self, pins, callback):
         # Parse pins
         ppins = self.printer.lookup_object('pins')

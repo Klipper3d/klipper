@@ -3,6 +3,8 @@
 
 #include "ctr.h" // DECL_CTR_INT
 
+void armcm_main(void);
+
 // Declare an IRQ handler
 #define DECL_ARMCM_IRQ(FUNC, NUM)                                       \
     DECL_CTR_INT("DECL_ARMCM_IRQ " __stringify(FUNC), 1, CTR_INT(NUM))

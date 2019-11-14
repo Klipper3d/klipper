@@ -11,7 +11,7 @@ class PrinterHeaterFan:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
-        self.heater_name = config.get("heater", "extruder0")
+        self.heater_name = config.get("heater", "extruder")
         self.heater_temp = config.getfloat("heater_temp", 50.0)
         self.heaters = []
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)

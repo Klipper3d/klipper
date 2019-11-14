@@ -26,7 +26,7 @@ class PrinterLCD:
         self.menu = menu.MenuManager(config, self.lcd_chip)
         # printer objects
         self.toolhead = self.sdcard = None
-        self.fan = self.extruder0 = self.extruder1 = self.heater_bed = None
+        self.fan = self.extruder = self.extruder1 = self.heater_bed = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # screen updating
         self.screen_update_timer = self.reactor.register_timer(
@@ -42,7 +42,7 @@ class PrinterLCD:
         self.toolhead = self.printer.lookup_object('toolhead')
         self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
         self.fan = self.printer.lookup_object('fan', None)
-        self.extruder0 = self.printer.lookup_object('extruder0', None)
+        self.extruder = self.printer.lookup_object('extruder', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
         self.prg_time = .0
@@ -97,8 +97,8 @@ class PrinterLCD:
     def screen_update_hd44780(self, eventtime):
         lcd_chip = self.lcd_chip
         # Heaters
-        if self.extruder0 is not None:
-            info = self.extruder0.get_heater().get_status(eventtime)
+        if self.extruder is not None:
+            info = self.extruder.get_heater().get_status(eventtime)
             lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(1, 0, info)
         if self.extruder1 is not None:
@@ -140,8 +140,8 @@ class PrinterLCD:
         self.draw_status(0, 3, gcode_info, toolhead_info)
     def screen_update_128x64(self, eventtime):
         # Heaters
-        if self.extruder0 is not None:
-            info = self.extruder0.get_heater().get_status(eventtime)
+        if self.extruder is not None:
+            info = self.extruder.get_heater().get_status(eventtime)
             self.lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(2, 0, info)
         extruder_count = 1

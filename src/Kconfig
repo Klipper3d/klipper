@@ -20,9 +20,9 @@ choice
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32
-        bool "STMicroelectronics STM32F1/F4"
-    config MACH_STM32F0
-        bool "STMicroelectronics STM32F042"
+        bool "STMicroelectronics STM32"
+    config MACH_STM32F0_HAL
+        bool "STMicroelectronics STM32F042 (with CAN)"
     config MACH_PRU
         bool "Beaglebone PRU"
     config MACH_LINUX

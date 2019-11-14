@@ -62,8 +62,6 @@ communication with the Klipper developers.
 
 - [Bootloaders](Bootloaders.md): Developer information on
   micro-controller flashing.
-- [stm32f1](stm32f1.md): Information on the STM32F1 micro-controller
-  port.
 - [Beaglebone](beaglebone.md): Details for running Klipper on the
   Beaglebone PRU.
 - [stm32f0](stm32f0_CAN.md): Information on the STM32F0 micro-controller

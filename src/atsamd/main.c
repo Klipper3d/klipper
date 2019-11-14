@@ -4,23 +4,14 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "command.h" // DECL_CONSTANT_STR
-#include "internal.h" // NVIC_SystemReset
+#include "board/armcm_boot.h" // armcm_main
+#include "internal.h" // SystemInit
 #include "sched.h" // sched_main
 
-DECL_CONSTANT_STR("MCU", CONFIG_MCU);
-
+// Main entry point - called from armcm_boot.c:ResetHandler()
 void
-command_reset(uint32_t *args)
+armcm_main(void)
 {
-    NVIC_SystemReset();
-}
-DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
-
-// Main entry point
-int
-main(void)
-{
+    SystemInit();
     sched_main();
-    return 0;
 }

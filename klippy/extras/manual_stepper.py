@@ -13,28 +13,30 @@ class ManualStepper:
         self.printer = config.get_printer()
         if config.get('endstop_pin', None) is not None:
             self.can_home = True
-            self.stepper = stepper.PrinterRail(
+            self.rail = stepper.PrinterRail(
                 config, need_position_minmax=False, default_position_endstop=0.)
+            self.steppers = self.rail.get_steppers()
         else:
             self.can_home = False
-            self.stepper = stepper.PrinterStepper(config)
+            self.rail = stepper.PrinterStepper(config)
+            self.steppers = [self.rail]
         self.velocity = config.getfloat('velocity', 5., above=0.)
         self.accel = config.getfloat('accel', 0., minval=0.)
         self.next_cmd_time = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
-        self.move_fill = ffi_lib.move_fill
-        self.stepper.setup_itersolve('cartesian_stepper_alloc', 'x')
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
+        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_append = ffi_lib.trapq_append
+        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.rail.setup_itersolve('cartesian_stepper_alloc', 'x')
+        self.rail.set_trapq(self.trapq)
+        self.rail.set_max_jerk(9999999.9, 9999999.9)
         # Register commands
         stepper_name = config.get_name().split()[1]
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                         stepper_name, self.cmd_MANUAL_STEPPER,
                                         desc=self.cmd_MANUAL_STEPPER_help)
-        self.printer.register_event_handler(
-            "toolhead:motor_off", self.handle_motor_off)
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -44,28 +46,37 @@ class ManualStepper:
             self.next_cmd_time = print_time
     def do_enable(self, enable):
         self.sync_print_time()
-        self.stepper.motor_enable(self.next_cmd_time, enable)
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        if enable:
+            for s in self.steppers:
+                se = stepper_enable.lookup_enable(s.get_name())
+                se.motor_enable(self.next_cmd_time)
+        else:
+            for s in self.steppers:
+                se = stepper_enable.lookup_enable(s.get_name())
+                se.motor_disable(self.next_cmd_time)
         self.sync_print_time()
     def do_set_position(self, setpos):
-        self.stepper.set_position([setpos, 0., 0.])
+        self.rail.set_position([setpos, 0., 0.])
     def do_move(self, movepos, speed, accel):
         self.sync_print_time()
-        cp = self.stepper.get_commanded_position()
+        cp = self.rail.get_commanded_position()
         dist = movepos - cp
-        accel_t, cruise_t, cruise_v = force_move.calc_move_time(
+        axis_r, accel_t, cruise_t, cruise_v = force_move.calc_move_time(
             dist, speed, accel)
-        self.move_fill(self.cmove, self.next_cmd_time,
-                       accel_t, cruise_t, accel_t,
-                       cp, 0., 0., dist, 0., 0.,
-                       0., cruise_v, accel)
-        self.stepper.step_itersolve(self.cmove)
+        self.trapq_append(self.trapq, self.next_cmd_time,
+                          accel_t, cruise_t, accel_t,
+                          cp, 0., 0., axis_r, 0., 0.,
+                          0., cruise_v, accel)
         self.next_cmd_time += accel_t + cruise_t + accel_t
+        self.rail.generate_steps(self.next_cmd_time)
+        self.trapq_free_moves(self.trapq, self.next_cmd_time)
         self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
         # Notify endstops of upcoming home
-        endstops = self.stepper.get_endstops()
+        endstops = self.rail.get_endstops()
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
         # Start endstop checking
@@ -107,16 +118,10 @@ class ManualStepper:
         accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
         if homing_move:
             movepos = self.gcode.get_float('MOVE', params)
-            if 'ENABLE' not in params and not self.stepper.is_motor_enabled():
-                self.do_enable(True)
             self.do_homing_move(movepos, speed, accel, homing_move > 0)
         elif 'MOVE' in params:
             movepos = self.gcode.get_float('MOVE', params)
-            if 'ENABLE' not in params and not self.stepper.is_motor_enabled():
-                self.do_enable(True)
             self.do_move(movepos, speed, accel)
-    def handle_motor_off(self, print_time):
-        self.do_enable(0)
 
 def load_config_prefix(config):
     return ManualStepper(config)

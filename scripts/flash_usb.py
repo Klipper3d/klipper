@@ -135,7 +135,7 @@ def flash_atsam4(options, binfile):
         sys.exit(-1)
 
 def flash_atsamd(options, binfile):
-    extra_flags = ["--offset=" + options.offset, "-b", "-R"]
+    extra_flags = ["--offset=0x%x" % (options.start,), "-b", "-R"]
     try:
         flash_bossac(options.device, binfile, extra_flags)
     except error as e:
@@ -189,7 +189,11 @@ def flash_stm32f1(options, binfile):
         sys.exit(-1)
 
 STM32F4_HELP = """
-USB flash is not supported on the STM32F4!
+Failed to flash to %s: %s
+
+If the device is already in bootloader mode it can be flashed with the
+following command:
+  make flash FLASH_DEVICE=0483:df11
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -197,12 +201,19 @@ If attempting to flash via 3.3V serial, then use:
 """
 
 def flash_stm32f4(options, binfile):
-    sys.stderr.write(STM32F4_HELP % (options.device,))
-    sys.exit(-1)
+    start = "0x%x:leave" % (options.start,)
+    try:
+        flash_dfuutil(options.device, binfile,
+                      ["-R", "-a", "0", "-s", start], options.sudo)
+    except error as e:
+        sys.stderr.write(STM32F4_HELP % (
+            options.device, str(e), options.device))
+        sys.exit(-1)
 
 MCUTYPES = {
-    'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
-    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1, 'stm32f4': flash_stm32f4
+    'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
+    'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
+    'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
 }
 
 
@@ -217,19 +228,26 @@ def main():
                     help="micro-controller type")
     opts.add_option("-d", "--device", type="string", dest="device",
                     help="serial port device")
-    opts.add_option("-o", "--offset", type="string", dest="offset",
-                    help="flash offset")
+    opts.add_option("-s", "--start", type="int", dest="start",
+                    help="start address in flash")
     opts.add_option("--no-sudo", action="store_false", dest="sudo",
                     default=True, help="do not run sudo")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    if options.mcutype not in MCUTYPES:
-        opts.error("Not a valid mcu type")
+    flash_func = None
+    if options.mcutype:
+        for prefix, func in MCUTYPES.items():
+            if options.mcutype.startswith(prefix):
+                flash_func = func
+                break
+    if flash_func is None:
+        opts.error("USB flashing is not supported for MCU '%s'"
+                   % (options.mcutype,))
     if not options.device:
         sys.stderr.write("\nPlease specify FLASH_DEVICE\n\n")
         sys.exit(-1)
-    MCUTYPES[options.mcutype](options, args[0])
+    flash_func(options, args[0])
 
 if __name__ == '__main__':
     main()

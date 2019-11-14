@@ -1,10 +1,9 @@
 #!/bin/bash
 # This script installs Klipper on an Ubuntu 18.04 machine with Octoprint
-# Assumes the user running this is named "octoprint"
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
-KLIPPER_USER="octoprint"
+KLIPPER_USER=$USER
 KLIPPER_GROUP=$KLIPPER_USER
 
 # Step 1: Install system packages

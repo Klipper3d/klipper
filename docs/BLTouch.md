@@ -20,24 +20,20 @@ control_pin: P1.26
 
 If the BL-Touch will be used to home the Z axis then set `endstop_pin:
 probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
-`[homing_override]` config section to raise the z-axis, home the
-x/y-axis, move to the center of the bed, and home the z-axis. For
-example:
+`[safe_z_home]` config section to raise the z axis, home the xy axes,
+move to the center of the bed, and home the z axis. For example:
 
 ```
-[homing_override]
-gcode:
-    G90 ; Use absolute position mode
-    G1 Z10 ; Move up 10mm
-    G28 X Y
-    G1 X166 Y120 F6000 ; Change the X and Y coordinates to the center of your print bed
-    G28 Z
-set_position_z: 0.0
+[safe_z_home]
+home_xy_position: 100,100 # Change coordinates to the center of your print bed
+speed: 50
+z_hop: 10                 # Move up 10mm
+z_hop_speed: 5
 ```
 
-It's important that the initial Z upwards movement in the
-homing_override is high enough that the probe doesn't hit anything
-even if the probe pin happens to be in its lowest state.
+It's important that the z_hop movement in safe_z_home is high enough
+that the probe doesn't hit anything even if the probe pin happens to
+be in its lowest state.
 
 Initial tests
 =============

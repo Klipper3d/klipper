@@ -14,6 +14,18 @@
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 
+static void
+usb_irq_disable(void)
+{
+    NVIC_DisableIRQ(OTG_FS_IRQn);
+}
+
+static void
+usb_irq_enable(void)
+{
+    NVIC_EnableIRQ(OTG_FS_IRQn);
+}
+
 
 /****************************************************************
  * USB transfer memory
@@ -64,6 +76,7 @@ fifo_write_packet(uint32_t ep, const uint8_t *src, uint32_t len)
 {
     void *fifo = EPFIFO(ep);
     USB_OTG_INEndpointTypeDef *epi = EPIN(ep);
+    epi->DIEPINT = USB_OTG_DIEPINT_XFRC;
     epi->DIEPTSIZ = len | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos);
     epi->DIEPCTL |= USB_OTG_DIEPCTL_EPENA | USB_OTG_DIEPCTL_CNAK;
     int32_t count = len;
@@ -153,53 +166,73 @@ peek_rx_queue(uint32_t ep)
 int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
+    usb_irq_disable();
     uint32_t grx = peek_rx_queue(USB_CDC_EP_BULK_OUT);
     if (!grx) {
         // Wait for packet
         OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
+        usb_irq_enable();
         return -1;
     }
-    return fifo_read_packet(data, max_len);
+    int_fast8_t ret = fifo_read_packet(data, max_len);
+    usb_irq_enable();
+    return ret;
 }
 
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
+    usb_irq_disable();
     uint32_t ctl = EPIN(USB_CDC_EP_BULK_IN)->DIEPCTL;
-    if (!(ctl & USB_OTG_DIEPCTL_USBAEP))
+    if (!(ctl & USB_OTG_DIEPCTL_USBAEP)) {
         // Controller not enabled - discard data
+        usb_irq_enable();
         return len;
-    if (ctl & USB_OTG_DIEPCTL_EPENA)
+    }
+    if (ctl & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
+        OTGD->DAINTMSK |= 1 << USB_CDC_EP_BULK_IN;
+        usb_irq_enable();
         return -1;
-    return fifo_write_packet(USB_CDC_EP_BULK_IN, data, len);
+    }
+    int_fast8_t ret = fifo_write_packet(USB_CDC_EP_BULK_IN, data, len);
+    usb_irq_enable();
+    return ret;
 }
 
 int_fast8_t
 usb_read_ep0(void *data, uint_fast8_t max_len)
 {
+    usb_irq_disable();
     uint32_t grx = peek_rx_queue(0);
     if (!grx) {
         // Wait for packet
         OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
+        usb_irq_enable();
         return -1;
     }
     uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                        >> USB_OTG_GRXSTSP_PKTSTS_Pos);
-    if (pktsts != 2)
+    if (pktsts != 2) {
         // Transfer interrupted
+        usb_irq_enable();
         return -2;
-    return fifo_read_packet(data, max_len);
+    }
+    int_fast8_t ret = fifo_read_packet(data, max_len);
+    usb_irq_enable();
+    return ret;
 }
 
 int_fast8_t
 usb_read_ep0_setup(void *data, uint_fast8_t max_len)
 {
+    usb_irq_disable();
     for (;;) {
         uint32_t grx = peek_rx_queue(0);
         if (!grx) {
             // Wait for packet
             OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
+            usb_irq_enable();
             return -1;
         }
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
@@ -220,30 +253,40 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
             ;
     }
-    return fifo_read_packet(data, max_len);
+    int_fast8_t ret = fifo_read_packet(data, max_len);
+    usb_irq_enable();
+    return ret;
 }
 
 int_fast8_t
 usb_send_ep0(const void *data, uint_fast8_t len)
 {
+    usb_irq_disable();
     uint32_t grx = peek_rx_queue(0);
     if (grx) {
         // Transfer interrupted
+        usb_irq_enable();
         return -2;
     }
     if (EPIN(0)->DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
         // Wait for space to transmit
         OTG->GINTMSK |= USB_OTG_GINTMSK_RXFLVLM;
+        OTGD->DAINTMSK |= 1 << 0;
+        usb_irq_enable();
         return -1;
     }
-    return fifo_write_packet(0, data, len);
+    int_fast8_t ret = fifo_write_packet(0, data, len);
+    usb_irq_enable();
+    return ret;
 }
 
 void
 usb_stall_ep0(void)
 {
+    usb_irq_disable();
     EPIN(0)->DIEPCTL |= USB_OTG_DIEPCTL_STALL;
     usb_notify_ep0(); // XXX - wake from main usb_cdc.c code?
+    usb_irq_enable();
 }
 
 void
@@ -258,6 +301,7 @@ usb_set_address(uint_fast8_t addr)
 void
 usb_set_configure(void)
 {
+    usb_irq_disable();
     // Configure and enable USB_CDC_EP_ACM
     USB_OTG_INEndpointTypeDef *epi = EPIN(USB_CDC_EP_ACM);
     epi->DIEPTSIZ = (USB_CDC_EP_ACM_SIZE
@@ -291,11 +335,7 @@ usb_set_configure(void)
                     | USB_OTG_GRSTCTL_TXFFLSH);
     while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
         ;
-}
-
-void
-usb_request_bootloader(void)
-{
+    usb_irq_enable();
 }
 
 
@@ -320,16 +360,11 @@ OTG_FS_IRQHandler(void)
     if (sts & USB_OTG_GINTSTS_IEPINT) {
         // Can transmit data - disable irq and notify endpoint
         uint32_t daint = OTGD->DAINT;
-        if (daint & (1 << 0)) {
-            USB_OTG_INEndpointTypeDef *epi = EPIN(0);
-            epi->DIEPINT = epi->DIEPINT;
+        OTGD->DAINTMSK &= ~daint;
+        if (daint & (1 << 0))
             usb_notify_ep0();
-        }
-        if (daint & (1 << USB_CDC_EP_BULK_IN)) {
-            USB_OTG_INEndpointTypeDef *epi = EPIN(USB_CDC_EP_BULK_IN);
-            epi->DIEPINT = epi->DIEPINT;
+        if (daint & (1 << USB_CDC_EP_BULK_IN))
             usb_notify_bulk_in();
-        }
     }
 }
 
@@ -371,7 +406,6 @@ usb_init(void)
     epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
 
     // Enable interrupts
-    OTGD->DAINTMSK = (1 << 0) | (1 << USB_CDC_EP_BULK_IN);
     OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
     OTG->GINTMSK = USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT;
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;

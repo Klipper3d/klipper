@@ -13,58 +13,65 @@ uses the second feature (reducing blobbing during cornering) as a
 mechanism for tuning.
 
 In order to calibrate pressure advance the printer must be configured
-and operational. The tuning test involves printing objects and
-inspecting the differences between objects. It is a good idea to read
-this document in full prior to running the test.
+and operational as the tuning test involves printing and inspecting a
+test object. It is a good idea to read this document in full prior to
+running the test.
 
 Use a slicer to generate g-code for the large hollow square found in
-[docs/prints/square.stl](prints/square.stl). Use a high speed (eg,
-100mm/s) and a coarse layer height (the layer height should be around
-75% of the nozzle diameter). It is fine to use a low infill (eg, 10%).
+[docs/prints/square_tower.stl](prints/square_tower.stl). Use a high
+speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
+height should be around 75% of the nozzle diameter).
 
 Prepare for the test by issuing the following G-Code commands:
-`SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500` and
-`SET_PRESSURE_ADVANCE ADVANCE_LOOKAHEAD_TIME=0`. These commands make
-the nozzle travel slower through corners and they emphasize the
-effects of extruder pressure.
+```
+SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
+SET_PRESSURE_ADVANCE ADVANCE_LOOKAHEAD_TIME=0
+```
+These commands make the nozzle travel slower through corners and they
+emphasize the effects of extruder pressure. Then for printers with a
+direct drive extruder run the command:
+```
+TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.005
+```
+For long bowden extruders use:
+```
+TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.020
+```
+Then print the object. When fully printed the test print looks like:
 
-For the first print use a pressure advance of zero by running
-`SET_PRESSURE_ADVANCE ADVANCE=0.000`. Then print at least 10 layers of
-the test object. While the object is printing, make a note of which
-direction the head is moving during external perimeters. What many
-people see here is blobbing occurring at the corners - extra filament
-at the corner in the direction the head travels followed by a possible
-lack of filament on the side immediately after that corner:
+![tuning_tower](img/tuning_tower.jpg)
 
-![corner-blob](img/corner-blob.jpg)
+The above TUNING_TOWER command instructs Klipper to alter the
+pressure_advance setting on each layer of the print. Higher layers in
+the print will have a larger pressure advance value set. Layers below
+the ideal pressure_advance setting will have blobbing at the corners,
+and layers above the ideal setting can lead to rounded corners and
+poor extrusion leading up to the corner.
 
-This blobbing is the result of pressure in the extruder being released
-as a blob when the head slows down to corner.
+One can cancel the print early if one observes that the corners are no
+longer printing well (and thus one can avoid printing layers that are
+known to be above the ideal pressure_advance value).
 
-The next step is to increase pressure advance (start with
-`SET_PRESSURE_ADVANCE ADVANCE=0.050`) and reprint the test object.
-With pressure advance, the extruder will retract when the head slows
-down, thus countering the pressure buildup and ideally eliminate the
-blobbing.
+Inspect the print and then use a digital calipers to find the height
+that has the best quality corners. When in doubt, prefer a lower
+height.
 
-If a test run is done with a pressure advance setting that is too
-high, one typically sees a dimple in the corner followed by possible
-blobbing after the corner (too much filament is retracted during slow
-down and then too much filament is extruded during the following speed
-up after cornering):
+![tune_pa](img/tune_pa.jpg)
 
-![corner-dimple](img/corner-dimple.jpg)
+The pressure_advance value can then be calculated as `pressure_advance
+= <start> + <measured_height> * <factor>`. (For example, `0 + 12.90 *
+.020` would be `.258`.)
 
-The goal is to find the smallest pressure advance value that results
-in good quality corners:
-
-![corner-good](img/corner-good.jpg)
+It is possible to choose custom settings for START and FACTOR if that
+helps identify the best pressure advance setting. When doing this, be
+sure to issue the TUNING_TOWER command at the start of each test
+print.
 
 Typical pressure advance values are between 0.050 and 1.000 (the high
 end usually only with bowden extruders). If there is no significant
-improvement after gradually increasing pressure advance to 1.000, then
-pressure advance is unlikely to improve the quality of prints. Return
-to a default configuration with pressure advance disabled.
+improvement with a pressure advance up to 1.000, then pressure advance
+is unlikely to improve the quality of prints. Return to a default
+configuration with pressure advance disabled.
 
 Although this tuning exercise directly improves the quality of
 corners, it's worth remembering that a good pressure advance
@@ -72,8 +79,8 @@ configuration also reduces ooze throughout the print.
 
 At the completion of this test, update the extruder's pressure_advance
 setting in the configuration file and issue a RESTART command. The
-RESTART command will also return the acceleration, cornering speeds,
-and look-ahead times to their normal values.
+RESTART command will clear the test state and return the acceleration
+and cornering speeds to their normal values.
 
 Important Notes
 ===============
@@ -91,20 +98,16 @@ Important Notes
   [nozzle temperature](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature)
   prior to tuning pressure advance.
 
-* It is not unusual for one corner of the test print to be
-  consistently different than the other three corners. This typically
-  occurs when the slicer arranges to always change Z height at that
-  corner. If this occurs, then ignore that corner and tune pressure
-  advance using the other three corners.
-
-* Check for warping at the corners during the test prints (the corners
-  detaching from the bed and rising a small distance upwards during
-  the print). If one corner appears warped then ignore that corner
-  when tuning. If significant warping is seen throughout the test then
-  typical solutions are to reduce the slicer's first layer speed,
-  adjust the bed temperature, and/or to use the slicer's brim feature.
-  Pressure advance itself is unlikely to impact warping, but this
-  tuning test is sensitive to it.
+* It is common for the test print to show different behavior on each
+  corner. Often the slicer will arrange to change layers at one corner
+  which can result in that corner being significantly different from
+  the remaining three corners. If this occurs, then ignore that corner
+  and tune pressure advance using the other three corners. It is also
+  common for the remaining corners to vary slightly. (This can occur
+  due to small differences in how the printer's frame reacts to
+  cornering in certain directions.) Try to choose a value that works
+  well for all the remaining corners. If in doubt, prefer a lower
+  pressure advance value.
 
 * If a high pressure advance value (eg, over 0.200) is used then one
   may find that the extruder skips when returning to the printer's
@@ -134,10 +137,12 @@ Important Notes
   plastic). It is recommended to disable the slicer's "z-lift on
   retract" option.
 
-* Configuring pressure advance results in extra extruder movement
-  during move acceleration and deceleration. That extra movement is
-  not further constrained by any other other configuration parameter.
-  The pressure advance settings only impact extruder movement; they do
-  not alter toolhead XYZ movement or look-ahead calculations. A change
-  in pressure advance will not change the path or timing of the
-  toolhead nor will it change the overall printing time.
+* The pressure advance system does not change the timing or path of
+  the toolhead. A print with pressure advance enabled will take the
+  same amount of time as a print without pressure advance. Pressure
+  advance also does not change the total amount of filament extruded
+  during a print. Pressure advance results in extra extruder movement
+  during move acceleration and deceleration. A very high pressure
+  advance setting will result in a very large amount of extruder
+  movement during acceleration and deceleration, and no configuration
+  setting places a limit on the amount of that movement.
