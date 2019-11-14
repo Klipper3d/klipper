@@ -56,7 +56,7 @@ class BedMesh:
         self.printer.register_event_handler("klippy:ready",
                                             self.handle_ready)
         self.last_position = [0., 0., 0., 0.]
-        self.calibrate = BedMeshCalibrate(config, self)
+        self.bmc = BedMeshCalibrate(config, self)
         self.z_mesh = None
         self.toolhead = None
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
@@ -79,8 +79,8 @@ class BedMesh:
         self.gcode.set_move_transform(self)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.calibrate.print_generated_points(logging.info)
-        self.calibrate.load_default_profile()
+        self.bmc.print_generated_points(logging.info)
+        self.bmc.load_default_profile()
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -88,8 +88,8 @@ class BedMesh:
                 self.fade_target = mesh.avg_z
             else:
                 self.fade_target = self.base_fade_target
-                mesh_min, mesh_max = mesh.get_z_range()
-                if (not mesh_min <= self.fade_target <= mesh_max and
+                min_z, max_z = mesh.get_z_range()
+                if (not min_z <= self.fade_target <= max_z and
                         self.fade_target != 0.):
                     # fade target is non-zero, out of mesh range
                     err_target = self.fade_target
@@ -98,18 +98,18 @@ class BedMesh:
                     raise self.gcode.error(
                         "bed_mesh: ERROR, fade_target lies outside of mesh z "
                         "range\nmin: %.4f, max: %.4f, fade_target: %.4f"
-                        % (mesh_min, mesh_max, err_target))
+                        % (min_z, max_z, err_target))
             if self.fade_target:
                 mesh.offset_mesh(self.fade_target)
-            mesh_min, mesh_max = mesh.get_z_range()
-            if self.fade_dist <= max(abs(mesh_min), abs(mesh_max)):
+            min_z, max_z = mesh.get_z_range()
+            if self.fade_dist <= max(abs(min_z), abs(max_z)):
                 self.z_mesh = None
                 self.fade_target = 0.
                 raise self.gcode.error(
                     "bed_mesh:  Mesh extends outside of the fade range, "
                     "please see the fade_start and fade_end options in"
                     "example-extras.cfg. fade distance: %.2f mesh min: %.4f"
-                    "mesh max: %.4f" % (self.fade_dist, mesh_min, mesh_max))
+                    "mesh max: %.4f" % (self.fade_dist, min_z, max_z))
         else:
             self.fade_target = 0.
         self.z_mesh = mesh
@@ -173,11 +173,11 @@ class BedMesh:
     def cmd_BED_MESH_OUTPUT(self, params):
         if self.gcode.get_int('PGP', params, 0):
             # Print Generated Points instead of mesh
-            self.calibrate.print_generated_points(self.gcode.respond_info)
+            self.bmc.print_generated_points(self.gcode.respond_info)
         elif self.z_mesh is None:
             self.gcode.respond_info("Bed has not been probed")
         else:
-            self.calibrate.print_probed_positions(self.gcode.respond_info)
+            self.bmc.print_probed_positions(self.gcode.respond_info)
             self.z_mesh.print_mesh(self.gcode.respond, self.horizontal_move_z)
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
     def cmd_BED_MESH_CLEAR(self, params):
@@ -193,11 +193,11 @@ class BedMeshCalibrate:
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
         self.bedmesh = bedmesh
-        self.probed_z_table = None
+        self.probed_matrix = None
         self.build_map = False
-        self.probe_params = collections.OrderedDict()
+        self.mesh_params = collections.OrderedDict()
         self.points = self._generate_points(config)
-        self._init_probe_params(config, self.points)
+        self._init_mesh_params(config, self.points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self.points)
         self.probe_helper.minimum_points(3)
@@ -237,8 +237,8 @@ class BedMeshCalibrate:
             if max_x <= min_x or max_y <= min_y:
                 raise config.error('bed_mesh: invalid min/max points')
 
-        self.probe_params['x_count'] = x_cnt
-        self.probe_params['y_count'] = y_cnt
+        self.mesh_params['x_count'] = x_cnt
+        self.mesh_params['y_count'] = y_cnt
         x_dist = (max_x - min_x) / (x_cnt - 1)
         y_dist = (max_y - min_y) / (y_cnt - 1)
         # floor distances down to next hundredth
@@ -297,20 +297,20 @@ class BedMeshCalibrate:
                 (rri, self.points[rri][0] - x_offset,
                  self.points[rri][1] - y_offset,
                  self.points[rri][0], self.points[rri][1]))
-    def _init_probe_params(self, config, points):
-        self.probe_params['x_offset'] = 0.
-        self.probe_params['y_offset'] = 0.
+    def _init_mesh_params(self, config, points):
+        self.mesh_params['x_offset'] = 0.
+        self.mesh_params['y_offset'] = 0.
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
-        self.probe_params['mesh_x_pps'] = pps[0]
-        self.probe_params['mesh_y_pps'] = pps[1]
-        self.probe_params['algo'] = config.get('algorithm', 'lagrange') \
-                                          .strip().lower()
-        if self.probe_params['algo'] not in self.ALGOS:
+        self.mesh_params['mesh_x_pps'] = pps[0]
+        self.mesh_params['mesh_y_pps'] = pps[1]
+        self.mesh_params['algo'] = config.get('algorithm', 'lagrange') \
+                                         .strip().lower()
+        if self.mesh_params['algo'] not in self.ALGOS:
             raise config.error(
                 "bed_mesh: Unknown algorithm <%s>"
-                % (self.probe_params['algo']))
-        self.probe_params['tension'] = config.getfloat(
+                % (self.mesh_params['algo']))
+        self.mesh_params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
     def _load_storage(self, config):
         stored_profs = config.get_prefix_sections(self.name)
@@ -324,9 +324,9 @@ class BedMeshCalibrate:
             self.profiles[name]['points'] = \
                 [[float(pt.strip()) for pt in line.split(',')]
                     for line in z_values if line.strip()]
-            self.profiles[name]['probe_params'] = params = \
+            self.profiles[name]['mesh_params'] = params = \
                 collections.OrderedDict()
-            for key, value in self.probe_params.iteritems():
+            for key, value in self.mesh_params.iteritems():
                 if type(value) is int:
                     params[key] = profile.getint(key)
                 elif type(value) is float:
@@ -334,7 +334,7 @@ class BedMeshCalibrate:
                 elif type(value) is str:
                     params[key] = profile.get(key)
     def save_profile(self, prof_name):
-        if self.probed_z_table is None:
+        if self.probed_matrix is None:
             self.gcode.respond_info(
                 "Unable to save to profile [%s], the bed has not been probed"
                 % (prof_name))
@@ -343,18 +343,18 @@ class BedMeshCalibrate:
         cfg_name = self.name + " " + prof_name
         # set params
         z_values = ""
-        for line in self.probed_z_table:
+        for line in self.probed_matrix:
             z_values += "\n  "
             for p in line:
                 z_values += "%.6f, " % p
             z_values = z_values[:-2]
         configfile.set(cfg_name, 'points', z_values)
-        for key, value in self.probe_params.iteritems():
+        for key, value in self.mesh_params.iteritems():
             configfile.set(cfg_name, key, value)
         # save copy in local storage
         self.profiles[prof_name] = profile = {}
-        profile['points'] = list(self.probed_z_table)
-        profile['probe_params'] = collections.OrderedDict(self.probe_params)
+        profile['points'] = list(self.probed_matrix)
+        profile['mesh_params'] = collections.OrderedDict(self.mesh_params)
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
             "for the current session.  The SAVE_CONFIG command will\n"
@@ -365,10 +365,10 @@ class BedMeshCalibrate:
         if profile is None:
             raise self.gcode.error(
                 "bed_mesh: Unknown profile [%s]" % prof_name)
-        self.probed_z_table = profile['points']
-        zmesh = ZMesh(profile['probe_params'])
+        self.probed_matrix = profile['points']
+        zmesh = ZMesh(profile['mesh_params'])
         try:
-            zmesh.build_mesh(self.probed_z_table)
+            zmesh.build_mesh(self.probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
         self.bedmesh.set_mesh(zmesh)
@@ -418,9 +418,9 @@ class BedMeshCalibrate:
         self.bedmesh.set_mesh(None)
         self.probe_helper.start_probe(params)
     def print_probed_positions(self, print_func):
-        if self.probed_z_table is not None:
+        if self.probed_matrix is not None:
             msg = "Mesh Leveling Probed Z positions:\n"
-            for line in self.probed_z_table:
+            for line in self.probed_matrix:
                 for x in line:
                     msg += " %f" % x
                 msg += "\n"
@@ -428,29 +428,29 @@ class BedMeshCalibrate:
         else:
             print_func("bed_mesh: bed has not been probed")
     def probe_finalize(self, offsets, positions):
-        self.probe_params['x_offset'] = offsets[0]
-        self.probe_params['y_offset'] = offsets[1]
-        self.probe_params['min_x'] = min(positions, key=lambda p: p[0])[0]
-        self.probe_params['max_x'] = max(positions, key=lambda p: p[0])[0]
-        self.probe_params['min_y'] = min(positions, key=lambda p: p[1])[1]
-        self.probe_params['max_y'] = max(positions, key=lambda p: p[1])[1]
+        self.mesh_params['x_offset'] = offsets[0]
+        self.mesh_params['y_offset'] = offsets[1]
+        self.mesh_params['min_x'] = min(positions, key=lambda p: p[0])[0]
+        self.mesh_params['max_x'] = max(positions, key=lambda p: p[0])[0]
+        self.mesh_params['min_y'] = min(positions, key=lambda p: p[1])[1]
+        self.mesh_params['max_y'] = max(positions, key=lambda p: p[1])[1]
 
         z_offset = offsets[2]
-        x_cnt = self.probe_params['x_count']
-        y_cnt = self.probe_params['y_count']
+        x_cnt = self.mesh_params['x_count']
+        y_cnt = self.mesh_params['y_count']
 
         if self.relative_reference_index is not None:
             # zero out probe z offset and
             # set offset relative to reference index
             z_offset = positions[self.relative_reference_index][2]
 
-        self.probed_z_table = []
+        self.probed_matrix = []
         row = []
         prev_pos = positions[0]
         for pos in positions:
             if not isclose(pos[1], prev_pos[1], abs_tol=.1):
                 # y has changed, append row and start new
-                self.probed_z_table.append(row)
+                self.probed_matrix.append(row)
                 row = []
             if pos[0] > prev_pos[0]:
                 # probed in the positive direction
@@ -460,24 +460,24 @@ class BedMeshCalibrate:
                 row.insert(0, pos[2] - z_offset)
             prev_pos = pos
         # append last row
-        self.probed_z_table.append(row)
+        self.probed_matrix.append(row)
 
         # make sure the y-axis is the correct length
-        if len(self.probed_z_table) != y_cnt:
+        if len(self.probed_matrix) != y_cnt:
             raise self.gcode.error(
                 ("bed_mesh: Invalid y-axis table length\n"
                  "Probed table length: %d Probed Table:\n%s") %
-                (len(self.probed_z_table), str(self.probed_z_table)))
+                (len(self.probed_matrix), str(self.probed_matrix)))
 
         if self.radius is not None:
             # round bed, extrapolate probed values to create a square mesh
-            for row in self.probed_z_table:
+            for row in self.probed_matrix:
                 row_size = len(row)
                 if not row_size & 1:
                     # an even number of points in a row shouldn't be possible
                     msg = "bed_mesh: incorrect number of points sampled on X\n"
                     msg += "Probed Table:\n"
-                    msg += str(self.probed_z_table)
+                    msg += str(self.probed_matrix)
                     raise self.gcode.error(msg)
                 buf_cnt = (x_cnt - row_size) / 2
                 if buf_cnt == 0:
@@ -488,26 +488,26 @@ class BedMeshCalibrate:
                 row.extend(right_buffer)
 
         #  make sure that the x-axis is the correct length
-        for row in self.probed_z_table:
+        for row in self.probed_matrix:
             if len(row) != x_cnt:
                 raise self.gcode.error(
                     ("bed_mesh: invalid x-axis table length\n"
                         "Probed table length: %d Probed Table:\n%s") %
-                    (len(self.probed_z_table), str(self.probed_z_table)))
+                    (len(self.probed_matrix), str(self.probed_matrix)))
 
         if self.build_map:
-            params = self.probe_params
+            params = self.mesh_params
             outdict = {
                 'min_point': (params['min_x'], params['min_y']),
                 'max_point': (params['max_x'], params['max_y']),
                 'xy_offset': offsets[:2],
-                'z_positions': self.probed_z_table}
+                'z_positions': self.probed_matrix}
             self.gcode.respond(
                 "mesh_map_output " + json.dumps(outdict))
         else:
-            mesh = ZMesh(self.probe_params)
+            mesh = ZMesh(self.mesh_params)
             try:
-                mesh.build_mesh(self.probed_z_table)
+                mesh.build_mesh(self.probed_matrix)
             except BedMeshError as e:
                 raise self.gcode.error(e.message)
             self.bedmesh.set_mesh(mesh)
@@ -578,12 +578,12 @@ class MoveSplitter:
 
 class ZMesh:
     def __init__(self, params):
-        self.mesh_z_table = None
-        self.probe_params = params
+        self.mesh_matrix = None
+        self.mesh_params = params
         self.avg_z = 0.
         self.mesh_offset = 0.
         logging.debug('bed_mesh: probe/mesh parameters:')
-        for key, value in self.probe_params.iteritems():
+        for key, value in self.mesh_params.iteritems():
             logging.debug("%s :  %s" % (key, value))
         self.mesh_x_min = params['min_x'] + params['x_offset']
         self.mesh_x_max = params['max_x'] + params['x_offset']
@@ -606,11 +606,11 @@ class ZMesh:
             # a mesh with 3 points on either axis defaults to legrange
             # upsampling
             self._sample = self._sample_lagrange
-            self.probe_params['algo'] = 'lagrange'
+            self.mesh_params['algo'] = 'lagrange'
         if mesh_x_pps == 0 and mesh_y_pps == 0:
             # No interpolation, sample the probed points directly
             self._sample = self._sample_direct
-            self.probe_params['algo'] = 'direct'
+            self.mesh_params['algo'] = 'direct'
         self.mesh_x_count = (px_cnt - 1) * mesh_x_pps + px_cnt
         self.mesh_y_count = (py_cnt - 1) * mesh_y_pps + py_cnt
         self.x_mult = mesh_x_pps + 1
@@ -622,7 +622,7 @@ class ZMesh:
         self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
                            (self.mesh_y_count - 1)
     def print_mesh(self, print_func, move_z=None):
-        if self.mesh_z_table is not None:
+        if self.mesh_matrix is not None:
             msg = "Mesh X,Y: %d,%d\n" % (self.mesh_x_count, self.mesh_y_count)
             if move_z is not None:
                 msg += "Search Height: %d\n" % (move_z)
@@ -630,28 +630,28 @@ class ZMesh:
             rng = self.get_z_range()
             msg += "Mesh Range: min=%.4f max=%.4f\n" % (rng[0], rng[1])
             msg += "Interpolation Algorithm: %s\n" \
-                   % (self.probe_params['algo'])
+                   % (self.mesh_params['algo'])
             msg += "Measured points:\n"
             for y_line in range(self.mesh_y_count - 1, -1, -1):
-                for z in self.mesh_z_table[y_line]:
+                for z in self.mesh_matrix[y_line]:
                     msg += "  %f" % (z + self.mesh_offset)
                 msg += "\n"
             print_func(msg)
         else:
             print_func("bed_mesh: Z Mesh not generated")
-    def build_mesh(self, z_table):
-        self._sample(z_table)
-        self.avg_z = (sum([sum(x) for x in self.mesh_z_table]) /
-                      sum([len(x) for x in self.mesh_z_table]))
+    def build_mesh(self, z_matrix):
+        self._sample(z_matrix)
+        self.avg_z = (sum([sum(x) for x in self.mesh_matrix]) /
+                      sum([len(x) for x in self.mesh_matrix]))
         # Round average to the nearest 100th.  This
         # should produce an offset that is divisible by common
         # z step distances
         self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
     def offset_mesh(self, offset):
-        if self.mesh_z_table:
+        if self.mesh_matrix:
             self.mesh_offset = offset
-            for y_line in self.mesh_z_table:
+            for y_line in self.mesh_matrix:
                 for idx, z in enumerate(y_line):
                     y_line[idx] = z - self.mesh_offset
     def get_x_coordinate(self, index):
@@ -659,8 +659,8 @@ class ZMesh:
     def get_y_coordinate(self, index):
         return self.mesh_y_min + self.mesh_y_dist * index
     def calc_z(self, x, y):
-        if self.mesh_z_table is not None:
-            tbl = self.mesh_z_table
+        if self.mesh_matrix is not None:
+            tbl = self.mesh_matrix
             tx, xidx = self._get_linear_index(x, 0)
             ty, yidx = self._get_linear_index(y, 1)
             z0 = lerp(tx, tbl[yidx][xidx], tbl[yidx][xidx+1])
@@ -670,9 +670,9 @@ class ZMesh:
             # No mesh table generated, no z-adjustment
             return 0.
     def get_z_range(self):
-        if self.mesh_z_table is not None:
-            mesh_min = min([min(x) for x in self.mesh_z_table])
-            mesh_max = max([max(x) for x in self.mesh_z_table])
+        if self.mesh_matrix is not None:
+            mesh_min = min([min(x) for x in self.mesh_matrix])
+            mesh_max = max([max(x) for x in self.mesh_matrix])
             return mesh_min, mesh_max
         else:
             return 0., 0.
@@ -694,17 +694,17 @@ class ZMesh:
         idx = constrain(idx, 0, mesh_cnt - 2)
         t = (coord - cfunc(idx)) / mesh_dist
         return constrain(t, 0., 1.), idx
-    def _sample_direct(self, z_table):
-        self.mesh_z_table = z_table
-    def _sample_lagrange(self, z_table):
+    def _sample_direct(self, z_matrix):
+        self.mesh_matrix = z_matrix
+    def _sample_lagrange(self, z_matrix):
         x_mult = self.x_mult
         y_mult = self.y_mult
-        self.mesh_z_table = \
+        self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_table[j/y_mult][i/x_mult]
+             else z_matrix[j/y_mult][i/x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
-        xpts, ypts = self._get_lagrange_coords(z_table)
+        xpts, ypts = self._get_lagrange_coords()
         # Interpolate X coordinates
         for i in range(self.mesh_y_count):
             # only interpolate X-rows that have probed coordinates
@@ -714,20 +714,20 @@ class ZMesh:
                 if j % x_mult == 0:
                     continue
                 x = self.get_x_coordinate(j)
-                self.mesh_z_table[i][j] = self._calc_lagrange(xpts, x, i, 0)
+                self.mesh_matrix[i][j] = self._calc_lagrange(xpts, x, i, 0)
         # Interpolate Y coordinates
         for i in range(self.mesh_x_count):
             for j in range(self.mesh_y_count):
                 if j % y_mult == 0:
                     continue
                 y = self.get_y_coordinate(j)
-                self.mesh_z_table[j][i] = self._calc_lagrange(ypts, y, i, 1)
-    def _get_lagrange_coords(self, z_table):
+                self.mesh_matrix[j][i] = self._calc_lagrange(ypts, y, i, 1)
+    def _get_lagrange_coords(self):
         xpts = []
         ypts = []
-        for i in range(self.probe_params['x_count']):
+        for i in range(self.mesh_params['x_count']):
             xpts.append(self.get_x_coordinate(i * self.x_mult))
-        for j in range(self.probe_params['y_count']):
+        for j in range(self.mesh_params['y_count']):
             ypts.append(self.get_y_coordinate(j * self.y_mult))
         return xpts, ypts
     def _calc_lagrange(self, lpts, c, vec, axis=0):
@@ -743,20 +743,20 @@ class ZMesh:
                 d *= (lpts[i] - lpts[j])
             if axis == 0:
                 # Calc X-Axis
-                z = self.mesh_z_table[vec][i*self.x_mult]
+                z = self.mesh_matrix[vec][i*self.x_mult]
             else:
                 # Calc Y-Axis
-                z = self.mesh_z_table[i*self.y_mult][vec]
+                z = self.mesh_matrix[i*self.y_mult][vec]
             total += z * n / d
         return total
-    def _sample_bicubic(self, z_table):
+    def _sample_bicubic(self, z_matrix):
         # should work for any number of probe points above 3x3
         x_mult = self.x_mult
         y_mult = self.y_mult
-        c = self.probe_params['tension']
-        self.mesh_z_table = \
+        c = self.mesh_params['tension']
+        self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_table[j/y_mult][i/x_mult]
+             else z_matrix[j/y_mult][i/x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
         # Interpolate X values
@@ -767,18 +767,18 @@ class ZMesh:
                 if x % x_mult == 0:
                     continue
                 pts = self._get_x_ctl_pts(x, y)
-                self.mesh_z_table[y][x] = self._cardinal_spline(pts, c)
+                self.mesh_matrix[y][x] = self._cardinal_spline(pts, c)
         # Interpolate Y values
         for x in range(self.mesh_x_count):
             for y in range(self.mesh_y_count):
                 if y % y_mult == 0:
                     continue
                 pts = self._get_y_ctl_pts(x, y)
-                self.mesh_z_table[y][x] = self._cardinal_spline(pts, c)
+                self.mesh_matrix[y][x] = self._cardinal_spline(pts, c)
     def _get_x_ctl_pts(self, x, y):
         # Fetch control points and t for a X value in the mesh
         x_mult = self.x_mult
-        x_row = self.mesh_z_table[y]
+        x_row = self.mesh_matrix[y]
         last_pt = self.mesh_x_count - 1 - x_mult
         if x < x_mult:
             p0 = p1 = x_row[0]
@@ -809,7 +809,7 @@ class ZMesh:
         # Fetch control points and t for a Y value in the mesh
         y_mult = self.y_mult
         last_pt = self.mesh_y_count - 1 - y_mult
-        y_col = self.mesh_z_table
+        y_col = self.mesh_matrix
         if y < y_mult:
             p0 = p1 = y_col[0][x]
             p2 = y_col[y_mult][x]
