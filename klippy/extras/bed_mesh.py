@@ -298,8 +298,6 @@ class BedMeshCalibrate:
                  self.points[rri][1] - y_offset,
                  self.points[rri][0], self.points[rri][1]))
     def _init_mesh_params(self, config, points):
-        self.mesh_params['x_offset'] = 0.
-        self.mesh_params['y_offset'] = 0.
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
         self.mesh_params['mesh_x_pps'] = pps[0]
@@ -428,16 +426,14 @@ class BedMeshCalibrate:
         else:
             print_func("bed_mesh: bed has not been probed")
     def probe_finalize(self, offsets, positions):
-        self.mesh_params['x_offset'] = offsets[0]
-        self.mesh_params['y_offset'] = offsets[1]
-        self.mesh_params['min_x'] = min(positions, key=lambda p: p[0])[0]
-        self.mesh_params['max_x'] = max(positions, key=lambda p: p[0])[0]
-        self.mesh_params['min_y'] = min(positions, key=lambda p: p[1])[1]
-        self.mesh_params['max_y'] = max(positions, key=lambda p: p[1])[1]
-
-        z_offset = offsets[2]
-        x_cnt = self.mesh_params['x_count']
-        y_cnt = self.mesh_params['y_count']
+        x_offset, y_offset, z_offset = offsets
+        params = self.mesh_params
+        params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
+        params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
+        params['min_y'] = min(positions, key=lambda p: p[1])[1] + y_offset
+        params['max_y'] = max(positions, key=lambda p: p[1])[1] + y_offset
+        x_cnt = params['x_count']
+        y_cnt = params['y_count']
 
         if self.relative_reference_index is not None:
             # zero out probe z offset and
@@ -496,7 +492,6 @@ class BedMeshCalibrate:
                     (len(self.probed_matrix), str(self.probed_matrix)))
 
         if self.build_map:
-            params = self.mesh_params
             outdict = {
                 'min_point': (params['min_x'], params['min_y']),
                 'max_point': (params['max_x'], params['max_y']),
@@ -505,7 +500,7 @@ class BedMeshCalibrate:
             self.gcode.respond(
                 "mesh_map_output " + json.dumps(outdict))
         else:
-            mesh = ZMesh(self.mesh_params)
+            mesh = ZMesh(params)
             try:
                 mesh.build_mesh(self.probed_matrix)
             except BedMeshError as e:
@@ -585,10 +580,10 @@ class ZMesh:
         logging.debug('bed_mesh: probe/mesh parameters:')
         for key, value in self.mesh_params.iteritems():
             logging.debug("%s :  %s" % (key, value))
-        self.mesh_x_min = params['min_x'] + params['x_offset']
-        self.mesh_x_max = params['max_x'] + params['x_offset']
-        self.mesh_y_min = params['min_y'] + params['y_offset']
-        self.mesh_y_max = params['max_y'] + params['y_offset']
+        self.mesh_x_min = params['min_x']
+        self.mesh_x_max = params['max_x']
+        self.mesh_y_min = params['min_y']
+        self.mesh_y_max = params['max_y']
         logging.debug(
             "bed_mesh: Mesh Min: (%.2f,%.2f) Mesh Max: (%.2f,%.2f)"
             % (self.mesh_x_min, self.mesh_y_min,
