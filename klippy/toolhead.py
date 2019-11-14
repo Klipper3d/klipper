@@ -433,11 +433,13 @@ class ToolHead:
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
             self._update_move_time(npt)
     def drip_move(self, newpos, speed):
-        # Transition to "Flushed" state and then to "Drip" state
-        self._full_flush()
+        # Transition from "Flushed"/"Priming"/main state to "Drip" state
+        self.move_queue.flush()
         self.special_queuing_state = "Drip"
         self.need_check_stall = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
+        self.move_queue.set_flush_time(self.buffer_time_high)
+        self.idle_flush_print_time = 0.
         self.drip_completion = self.reactor.completion()
         # Submit move
         try:
@@ -451,7 +453,7 @@ class ToolHead:
         except DripModeEndSignal as e:
             self.move_queue.reset()
             self.trapq_free_moves(self.trapq, self.reactor.NEVER)
-        # Return to "Flushed" state
+        # Exit "Drip" state
         self._full_flush()
     def signal_drip_mode_end(self):
         self.drip_completion.complete(True)
