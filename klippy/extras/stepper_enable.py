@@ -95,6 +95,8 @@ class PrinterStepperEnable:
         # Turn off motors
         self.motor_off()
     def lookup_enable(self, name):
+        if name not in self.enable_lines:
+            raise self.printer.config_error("Unknown stepper '%s'" % (name,))
         return self.enable_lines[name]
 
 def load_config(config):
