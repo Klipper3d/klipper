@@ -1,7 +1,7 @@
 # Mesh Bed Leveling
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2018 Eric Callahan <arksine.code@gmail.com>
+# Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -185,7 +185,7 @@ class BedMeshCalibrate:
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
         self.name = config.get_name()
-        self.radius = None
+        self.radius = self.origin = None
         self.relative_reference_index = None
         self.bedmesh = bedmesh
         self.probed_z_table = None
@@ -196,6 +196,7 @@ class BedMeshCalibrate:
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, points)
         self.probe_helper.minimum_points(3)
+        self.probe_helper.use_xy_offsets(True)
         # setup persistent storage
         self.profiles = {}
         self._load_storage(config)
@@ -210,8 +211,9 @@ class BedMeshCalibrate:
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
     def _generate_points(self, config):
-        self.radius = config.getfloat('bed_radius', None, above=0.)
+        self.radius = config.getfloat('mesh_radius', None, above=0.)
         if self.radius is not None:
+            self.origin = parse_pair(config, ('mesh_origin', "0, 0"))
             x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
@@ -225,8 +227,8 @@ class BedMeshCalibrate:
             # rectangular
             x_cnt, y_cnt = parse_pair(
                 config, ('probe_count', '3'), check=False, cast=int, minval=3)
-            min_x, min_y = parse_pair(config, ('min_point',))
-            max_x, max_y = parse_pair(config, ('max_point',))
+            min_x, min_y = parse_pair(config, ('mesh_min',))
+            max_x, max_y = parse_pair(config, ('mesh_max',))
             if max_x <= min_x or max_y <= min_y:
                 raise config.error('bed_mesh: invalid min/max points')
 
@@ -266,7 +268,8 @@ class BedMeshCalibrate:
                     # round bed, check distance from origin
                     dist_from_origin = math.sqrt(pos_x*pos_x + pos_y*pos_y)
                     if dist_from_origin <= self.radius:
-                        points.append((pos_x, pos_y))
+                        points.append(
+                            (self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
         logging.info('bed_mesh: generated points')
         for i, p in enumerate(points):
@@ -282,10 +285,6 @@ class BedMeshCalibrate:
             self.relative_reference_index = rref_index
         return points
     def _init_probe_params(self, config, points):
-        self.probe_params['min_x'] = min(points, key=lambda p: p[0])[0]
-        self.probe_params['max_x'] = max(points, key=lambda p: p[0])[0]
-        self.probe_params['min_y'] = min(points, key=lambda p: p[1])[1]
-        self.probe_params['max_y'] = max(points, key=lambda p: p[1])[1]
         self.probe_params['x_offset'] = 0.
         self.probe_params['y_offset'] = 0.
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
@@ -418,6 +417,11 @@ class BedMeshCalibrate:
     def probe_finalize(self, offsets, positions):
         self.probe_params['x_offset'] = offsets[0]
         self.probe_params['y_offset'] = offsets[1]
+        self.probe_params['min_x'] = min(positions, key=lambda p: p[0])[0]
+        self.probe_params['max_x'] = max(positions, key=lambda p: p[0])[0]
+        self.probe_params['min_y'] = min(positions, key=lambda p: p[1])[1]
+        self.probe_params['max_y'] = max(positions, key=lambda p: p[1])[1]
+
         z_offset = offsets[2]
         x_cnt = self.probe_params['x_count']
         y_cnt = self.probe_params['y_count']
