@@ -74,6 +74,9 @@ class BedMesh:
             'BED_MESH_OUTPUT', self.cmd_BED_MESH_OUTPUT,
             desc=self.cmd_BED_MESH_OUTPUT_help)
         self.gcode.register_command(
+            'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
+            desc=self.cmd_BED_MESH_MAP_help)
+        self.gcode.register_command(
             'BED_MESH_CLEAR', self.cmd_BED_MESH_CLEAR,
             desc=self.cmd_BED_MESH_CLEAR_help)
         self.gcode.set_move_transform(self)
@@ -179,6 +182,18 @@ class BedMesh:
         else:
             self.bmc.print_probed_positions(self.gcode.respond_info)
             self.z_mesh.print_mesh(self.gcode.respond, self.horizontal_move_z)
+    cmd_BED_MESH_MAP_help = "Serialize mesh and output to terminal"
+    def cmd_BED_MESH_MAP(self, params):
+        if self.z_mesh is not None:
+            params = self.z_mesh.mesh_params
+            outdict = {
+                'mesh_min': (params['min_x'], params['min_y']),
+                'mesh_max': (params['max_x'], params['max_y']),
+                'z_positions': self.bmc.probed_matrix}
+            self.gcode.respond(
+                "mesh_map_output " + json.dumps(outdict))
+        else:
+            self.gcode.respond_info("Bed has not been probed")
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
     def cmd_BED_MESH_CLEAR(self, params):
         self.set_mesh(None)
@@ -194,7 +209,6 @@ class BedMeshCalibrate:
             'relative_reference_index', None)
         self.bedmesh = bedmesh
         self.probed_matrix = None
-        self.build_map = False
         self.mesh_params = collections.OrderedDict()
         self.points = self._generate_points(config)
         self._init_mesh_params(config, self.points)
@@ -209,9 +223,6 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-        self.gcode.register_command(
-            'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
-            desc=self.cmd_BED_MESH_MAP_help)
         self.gcode.register_command(
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
@@ -404,15 +415,9 @@ class BedMeshCalibrate:
                 return
         self.gcode.respond_info(
             "Invalid syntax '%s'" % (params['#original']))
-    cmd_BED_MESH_MAP_help = "Probe the bed and serialize output"
-    def cmd_BED_MESH_MAP(self, params):
-        self.build_map = True
-        self.start_calibration(params)
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, params):
         self.build_map = False
-        self.start_calibration(params)
-    def start_calibration(self, params):
         self.bedmesh.set_mesh(None)
         self.probe_helper.start_probe(params)
     def print_probed_positions(self, print_func):
@@ -491,23 +496,14 @@ class BedMeshCalibrate:
                         "Probed table length: %d Probed Table:\n%s") %
                     (len(self.probed_matrix), str(self.probed_matrix)))
 
-        if self.build_map:
-            outdict = {
-                'min_point': (params['min_x'], params['min_y']),
-                'max_point': (params['max_x'], params['max_y']),
-                'xy_offset': offsets[:2],
-                'z_positions': self.probed_matrix}
-            self.gcode.respond(
-                "mesh_map_output " + json.dumps(outdict))
-        else:
-            mesh = ZMesh(params)
-            try:
-                mesh.build_mesh(self.probed_matrix)
-            except BedMeshError as e:
-                raise self.gcode.error(e.message)
-            self.bedmesh.set_mesh(mesh)
-            self.gcode.respond_info("Mesh Bed Leveling Complete")
-            self.save_profile("default")
+        mesh = ZMesh(params)
+        try:
+            mesh.build_mesh(self.probed_matrix)
+        except BedMeshError as e:
+            raise self.gcode.error(e.message)
+        self.bedmesh.set_mesh(mesh)
+        self.gcode.respond_info("Mesh Bed Leveling Complete")
+        self.save_profile("default")
 
 
 class MoveSplitter:
