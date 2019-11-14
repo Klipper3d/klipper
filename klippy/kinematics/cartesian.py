@@ -123,7 +123,7 @@ class CartKinematics:
     # Dual carriage support
     def _activate_carriage(self, carriage):
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.get_last_move_time()
+        toolhead.flush_step_generation()
         dc_rail = self.dual_carriage_rails[carriage]
         dc_axis = self.dual_carriage_axis
         self.rails[dc_axis].set_trapq(None)

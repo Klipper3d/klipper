@@ -41,13 +41,14 @@ class Homing:
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
         # Note start location
-        print_time = self.toolhead.get_last_move_time()
+        self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())
         start_mcu_pos = [(s, name, s.get_mcu_position())
                          for es, name in endstops for s in es.get_steppers()]
         # Start endstop checking
+        print_time = self.toolhead.get_last_move_time()
         self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
@@ -71,6 +72,7 @@ class Homing:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
         # Determine stepper halt positions
+        self.toolhead.flush_step_generation()
         end_mcu_pos = [(s, name, spos, s.get_mcu_position())
                        for s, name, spos in start_mcu_pos]
         if probe_pos:
@@ -123,6 +125,7 @@ class Homing:
             self.homing_move(movepos, endstops, hi.second_homing_speed,
                              verify_movement=self.verify_retract)
         # Signal home operation complete
+        self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())

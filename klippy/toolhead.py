@@ -320,7 +320,7 @@ class ToolHead:
             self._update_drip_move_time(next_move_time)
         else:
             self._update_move_time(next_move_time)
-    def _full_flush(self):
+    def flush_step_generation(self):
         # Transition from "Flushed"/"Priming"/main state to "Flushed" state
         self.move_queue.flush()
         self.special_queuing_state = "Flushed"
@@ -331,7 +331,7 @@ class ToolHead:
         self._update_move_time(self.print_time, lazy=False)
     def _flush_lookahead(self):
         if self.special_queuing_state:
-            return self._full_flush()
+            return self.flush_step_generation()
         self.move_queue.flush()
     def get_last_move_time(self):
         self._flush_lookahead()
@@ -374,7 +374,7 @@ class ToolHead:
                 # Running normally - reschedule check
                 return eventtime + buffer_time - self.buffer_time_low
             # Under ran low buffer mark - flush lookahead queue
-            self._full_flush()
+            self.flush_step_generation()
             if print_time != self.print_time:
                 self.idle_flush_print_time = self.print_time
         except:
@@ -385,7 +385,8 @@ class ToolHead:
     def get_position(self):
         return list(self.commanded_pos)
     def set_position(self, newpos, homing_axes=()):
-        self._flush_lookahead()
+        self.flush_step_generation()
+        self.trapq_free_moves(self.trapq, self.reactor.NEVER)
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
     def move(self, newpos, speed):
@@ -445,7 +446,7 @@ class ToolHead:
         try:
             self.move(newpos, speed)
         except homing.CommandError as e:
-            self._full_flush()
+            self.flush_step_generation()
             raise
         # Transmit move in "drip" mode
         try:
@@ -454,7 +455,7 @@ class ToolHead:
             self.move_queue.reset()
             self.trapq_free_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
-        self._full_flush()
+        self.flush_step_generation()
     def signal_drip_mode_end(self):
         self.drip_completion.complete(True)
     # Misc commands
