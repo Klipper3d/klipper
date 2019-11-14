@@ -7,7 +7,7 @@ config STM32_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
-    select HAVE_GPIO_I2C if !MACH_STM32F0
+    select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
     select HAVE_GPIO_BITBANGING
 

@@ -128,9 +128,12 @@ pll_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
 
-    // Select PLL as source for USB clock
+    // Setup CFGR3 register
+    uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
     if (CONFIG_USBSERIAL)
-        RCC->CFGR3 = RCC_CFGR3_USBSW;
+        // Select PLL as source for USB clock
+        cfgr3 |= RCC_CFGR3_USBSW;
+    RCC->CFGR3 = cfgr3;
 }
 
 // Configure and enable internal 48Mhz clock on the stm32f042
@@ -153,6 +156,9 @@ hsi48_setup(void)
         enable_pclock(CRS_BASE);
         CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
     }
+
+    // Setup I2C1 clock
+    RCC->CFGR3 = RCC_CFGR3_I2C1SW;
 #endif
 }
 
