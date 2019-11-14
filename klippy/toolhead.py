@@ -167,10 +167,12 @@ class MoveQueue:
             return
         # Allow extruder to do its lookahead
         move_count = self.extruder_lookahead(queue, flush_count, lazy)
+        self.leftover = flush_count - move_count
+        if not move_count:
+            return
         # Generate step times for all moves ready to be flushed
         self.toolhead._process_moves(queue[:move_count])
         # Remove processed moves from the queue
-        self.leftover = flush_count - move_count
         del queue[:move_count]
     def add_move(self, move):
         self.queue.append(move)
