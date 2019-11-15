@@ -88,7 +88,7 @@ endchoice
 
 choice
     depends on MACH_SAMD51
-	prompt "Processor speed" if CLOCK_REF_INTERNAL
+    prompt "Processor speed" if CLOCK_REF_INTERNAL
     config CLOCK_FREQ_120
         bool "120 MHz (standard)"
     config CLOCK_FREQ_150
@@ -101,11 +101,11 @@ endchoice
 
 config CLOCK_FREQ
     int
-	default 48000000 if MACH_SAMD21
-	default 120000000 if CLOCK_FREQ_120
-	default 150000000 if CLOCK_FREQ_150
-	default 180000000 if CLOCK_FREQ_180
-	default 200000000 if CLOCK_FREQ_200
+    default 48000000 if MACH_SAMD21
+    default 120000000 if CLOCK_FREQ_120
+    default 150000000 if CLOCK_FREQ_150
+    default 180000000 if CLOCK_FREQ_180
+    default 200000000 if CLOCK_FREQ_200
 
 choice
     prompt "Bootloader offset"
