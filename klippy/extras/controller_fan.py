@@ -11,7 +11,9 @@ class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
-        self.steppers = []
+        self.stepper_names = []
+        self.stepper_enable = self.printer.try_load_module(config,
+                                                           'stepper_enable')
         self.heaters = []
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
@@ -29,14 +31,14 @@ class ControllerFan:
         self.heaters = [pheater.lookup_heater(n.strip())
                         for n in self.heater_name.split(',')]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        self.steppers = kin.get_steppers()
+        self.stepper_names = [s.get_name() for s in kin.get_steppers()]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.NOW)
     def callback(self, eventtime):
         power = 0.
         active = False
-        for stepper in self.steppers:
-            active |= stepper.is_motor_enabled()
+        for name in self.stepper_names:
+            active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
         for heater in self.heaters:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:

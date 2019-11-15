@@ -242,8 +242,6 @@ class TMC2660:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.fields.set_field("SDOFF", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
-        # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)

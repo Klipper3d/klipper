@@ -190,7 +190,7 @@ class OutputFormat:
                         self.param_types.append(t)
                         break
                 else:
-                    raise error("Invalid output format for '%s'" % (msg,))
+                    raise error("Invalid output format for '%s'" % (msgformat,))
             args = args[pos+1:]
     def parse(self, s, pos):
         pos += 1

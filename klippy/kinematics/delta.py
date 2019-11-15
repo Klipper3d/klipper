@@ -1,6 +1,6 @@
 # Code for handling the kinematics of linear delta robots
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -23,6 +23,8 @@ class DeltaKinematics:
             stepper_configs[2], need_position_minmax = False,
             default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
+        config.get_printer().register_event_handler("stepper_enable:motor_off",
+                                                    self._motor_off)
         # Setup stepper max halt velocity
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -51,8 +53,11 @@ class DeltaKinematics:
                        for angle in self.angles]
         for r, a, t in zip(self.rails, self.arm2, self.towers):
             r.setup_itersolve('delta_stepper_alloc', a, t[0], t[1])
+        for s in self.get_steppers():
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
-        self.need_motor_enable = self.need_home = True
+        self.need_home = True
         self.limit_xy2 = -1.
         self.home_position = tuple(
             self._actuator_to_cartesian(self.abs_endstops))
@@ -87,8 +92,8 @@ class DeltaKinematics:
     def _actuator_to_cartesian(self, spos):
         sphere_coords = [(t[0], t[1], sp) for t, sp in zip(self.towers, spos)]
         return mathutil.trilateration(sphere_coords, self.arm2)
-    def calc_position(self):
-        spos = [rail.get_commanded_position() for rail in self.rails]
+    def calc_tag_position(self):
+        spos = [rail.get_tag_position() for rail in self.rails]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
@@ -102,15 +107,9 @@ class DeltaKinematics:
         forcepos = list(self.home_position)
         forcepos[2] = -1.5 * math.sqrt(max(self.arm2)-self.max_xy2)
         homing_state.home_rails(self.rails, forcepos, self.home_position)
-    def motor_off(self, print_time):
+    def _motor_off(self, print_time):
         self.limit_xy2 = -1.
-        for rail in self.rails:
-            rail.motor_enable(print_time, 0)
-        self.need_motor_enable = self.need_home = True
-    def _check_motor_enable(self, print_time):
-        for rail in self.rails:
-            rail.motor_enable(print_time, 1)
-        self.need_motor_enable = False
+        self.need_home = True
     def check_move(self, move):
         end_pos = move.end_pos
         end_xy2 = end_pos[0]**2 + end_pos[1]**2
@@ -145,11 +144,6 @@ class DeltaKinematics:
             move.limit_speed(max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
-    def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time)
-        for rail in self.rails:
-            rail.step_itersolve(move.cmove)
     def get_status(self):
         return {'homed_axes': '' if self.need_home else 'XYZ'}
 

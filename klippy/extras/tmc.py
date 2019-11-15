@@ -82,10 +82,15 @@ class FieldHelper:
 class TMCCommandHelper:
     def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
+        self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
+        self.toff = None
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
+        # Register commands
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_mux_command(
             "SET_TMC_FIELD", "STEPPER", self.name,
@@ -93,13 +98,21 @@ class TMCCommandHelper:
         self.gcode.register_mux_command(
             "INIT_TMC", "STEPPER", self.name,
             self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
-        self.printer.register_event_handler("klippy:connect",
-                                            self._handle_connect)
     def _init_registers(self, print_time=None):
         # Send registers
         for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
     def _handle_connect(self):
+        # Check for soft stepper enable/disable
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable_line = stepper_enable.lookup_enable(self.stepper_name)
+        if not enable_line.has_dedicated_enable():
+            self.toff = self.fields.get_field("toff")
+            self.fields.set_field("toff", 0)
+            enable_line.register_state_callback(self.handle_stepper_enable)
+            logging.info("Enabling TMC virtual enable for '%s'",
+                         self.stepper_name)
+        # Send init
         retry_count = 0
         while 1:
             try:
@@ -129,6 +142,18 @@ class TMCCommandHelper:
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
+    # Stepper enable/disable via comms
+    def _do_enable(self, print_time, is_enable):
+        toff_val = 0
+        if is_enable:
+            toff_val = self.toff
+            print_time -= 0.100 # Schedule slightly before deadline
+        val = self.fields.set_field("toff", toff_val)
+        reg_name = self.fields.lookup_register("toff")
+        self.mcu_tmc.set_register(reg_name, val, print_time)
+    def handle_stepper_enable(self, print_time, is_enable):
+        cb = (lambda ev: self._do_enable(print_time, is_enable))
+        self.printer.get_reactor().register_callback(cb)
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
@@ -203,30 +228,8 @@ class TMCVirtualEndstop:
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
         self.mcu_endstop.home_finalize()
 
-# Digital output wrapper for virtual enable
-class TMCVirtualEnable:
-    def __init__(self, printer, mcu_tmc):
-        self.reactor = printer.get_reactor()
-        self.mcu_tmc = mcu_tmc
-        self.fields = mcu_tmc.get_fields()
-        self.toff = self.fields.get_field("toff")
-        self.fields.set_field("toff", 0)
-    def setup_max_duration(self, max_duration):
-        pass
-    def _do_set_digital(self, print_time, value):
-        toff_val = 0
-        if value:
-            toff_val = self.toff
-            print_time -= 0.100 # Schedule slightly before deadline
-        val = self.fields.set_field("toff", toff_val)
-        reg_name = self.fields.lookup_register("toff")
-        self.mcu_tmc.set_register(reg_name, val, print_time)
-    def set_digital(self, print_time, value):
-        self.reactor.register_callback(
-            (lambda ev: self._do_set_digital(print_time, value)))
-
 class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc, diag_pin=None):
+    def __init__(self, config, mcu_tmc, diag_pin):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.diag_pin = diag_pin
@@ -235,18 +238,12 @@ class TMCVirtualPinHelper:
         ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
     def setup_pin(self, pin_type, pin_params):
         ppins = self.printer.lookup_object('pins')
-        if pin_params['pin'] not in ('virtual_endstop', 'virtual_enable'):
-            raise ppins.error("Unknown tmc virtual pin")
+        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
+            raise ppins.error("tmc virtual endstop only useful as endstop")
         if pin_params['invert'] or pin_params['pullup']:
             raise ppins.error("Can not pullup/invert tmc virtual pin")
-        if pin_params['pin'] == 'virtual_enable':
-            if pin_type != 'digital_out':
-                raise ppins.error("tmc virtual enable only useful for enable")
-            return TMCVirtualEnable(self.printer, self.mcu_tmc)
         if self.diag_pin is None:
             raise ppins.error("tmc virtual endstop requires diag pin config")
-        if pin_type != 'endstop':
-            raise ppins.error("tmc virtual endstop only useful as endstop")
         mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
         return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
 

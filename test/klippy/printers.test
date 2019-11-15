@@ -25,7 +25,10 @@ CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
+CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
+CONFIG ../../config/printer-lulzbot-mini1-2016.cfg
 CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
+CONFIG ../../config/printer-lulzbot-taz6-dual-v3-2017.cfg
 CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
@@ -85,7 +88,9 @@ CONFIG ../../config/generic-smoothieboard.cfg
 # Printers using the stm32f103
 DICTIONARY stm32f1.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
-CONFIG ../../config/generic-bigtreetech-skr-mini-e3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f1-serial.dict

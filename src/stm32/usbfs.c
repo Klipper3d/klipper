@@ -21,22 +21,28 @@
  * USB transfer memory
  ****************************************************************/
 
+#if CONFIG_MACH_STM32F103
+typedef volatile uint32_t epmword_t;
+#else
+typedef volatile uint16_t epmword_t;
+#endif
+
 struct ep_desc {
-    uint32_t addr_tx, count_tx, addr_rx, count_rx;
+    epmword_t addr_tx, count_tx, addr_rx, count_rx;
 };
 
 struct ep_mem {
     struct ep_desc ep0, ep_acm, ep_bulk_out, ep_bulk_in;
-    uint32_t ep0_tx[USB_CDC_EP0_SIZE / 2];
-    uint32_t ep0_rx[USB_CDC_EP0_SIZE / 2 + 1];
-    uint32_t ep_acm_tx[USB_CDC_EP_ACM_SIZE / 2];
-    uint32_t ep_bulk_out_rx[USB_CDC_EP_BULK_OUT_SIZE / 2 + 1];
-    uint32_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
+    epmword_t ep0_tx[USB_CDC_EP0_SIZE / 2];
+    epmword_t ep0_rx[USB_CDC_EP0_SIZE / 2 + 1];
+    epmword_t ep_acm_tx[USB_CDC_EP_ACM_SIZE / 2];
+    epmword_t ep_bulk_out_rx[USB_CDC_EP_BULK_OUT_SIZE / 2 + 1];
+    epmword_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
 };
 
-#define EPM ((struct ep_mem *)(USB_BASE + 0x400))
+#define EPM ((struct ep_mem *)USB_PMAADDR)
 
-#define CALC_ADDR(p) (((void*)(p) - (void*)EPM) / 2)
+#define CALC_ADDR(p) (((epmword_t*)(p) - (epmword_t*)EPM) * 2)
 #define CALC_SIZE(s) ((s) > 32 ? (DIV_ROUND_UP((s), 32) << 10) | 0x8000 \
                       : DIV_ROUND_UP((s), 2) << 10)
 
@@ -61,7 +67,7 @@ btable_configure(void)
 
 // Read a packet stored in dedicated usb memory
 static void
-btable_read_packet(uint8_t *dest, uint32_t *src, int count)
+btable_read_packet(uint8_t *dest, epmword_t *src, int count)
 {
     uint_fast8_t i;
     for (i=0; i<(count/2); i++) {
@@ -75,7 +81,7 @@ btable_read_packet(uint8_t *dest, uint32_t *src, int count)
 
 // Write a packet to dedicated usb memory
 static void
-btable_write_packet(uint32_t *dest, const uint8_t *src, int count)
+btable_write_packet(epmword_t *dest, const uint8_t *src, int count)
 {
     int i;
     for (i=0; i<(count/2); i++) {
@@ -229,7 +235,7 @@ usb_reset(void)
 
 // Main irq handler
 void
-USB_LP_CAN1_RX0_IRQHandler(void)
+USB_IRQHandler(void)
 {
     uint32_t istr = USB->ISTR;
     if (istr & USB_ISTR_CTR) {
@@ -263,16 +269,23 @@ DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
 void
 usb_init(void)
 {
-    // Pull the D+ pin low briefly to signal a new connection
-    gpio_out_setup(GPIO('A', 12), 0);
-    udelay(5000);
-    gpio_in_setup(GPIO('A', 12), 0);
+    if (CONFIG_MACH_STM32F1) {
+        // Pull the D+ pin low briefly to signal a new connection
+        gpio_out_setup(GPIO('A', 12), 0);
+        udelay(5000);
+        gpio_in_setup(GPIO('A', 12), 0);
+    }
+
+    // Enable USB clock
+    enable_pclock(USB_BASE);
 
     // Setup USB packet memory
     btable_configure();
 
-    // Enable USB clock
-    enable_pclock(USB_BASE);
+    // Enable USB pullup
+#ifdef USB_BCDR_DPPU
+    USB->BCDR = USB_BCDR_DPPU;
+#endif
 
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
@@ -280,6 +293,10 @@ usb_init(void)
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
-    armcm_enable_irq(USB_LP_CAN1_RX0_IRQHandler, USB_LP_CAN1_RX0_IRQn, 1);
+#if CONFIG_MACH_STM32F103
+    armcm_enable_irq(USB_IRQHandler, USB_LP_IRQn, 1);
+#elif CONFIG_MACH_STM32F0
+    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
+#endif
 }
 DECL_INIT(usb_init);

@@ -43,8 +43,8 @@ possible G-Code command. Instead, Klipper prefers human readable
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
 [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details). For example, one might use this to implement: `G10`,
-`G11`, `G12`, `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
+for details). For example, one might use this to implement: `G12`,
+`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
 
 ## G-Code SD card commands
 
@@ -57,6 +57,20 @@ Klipper also supports the following standard G-Code commands if the
 - Pause SD print: `M25`
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
+
+## G-Code arcs
+
+The following standard G-Code commands are available if a "gcode_arcs"
+config section is enabled:
+- Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
+  [E<pos>] [F<speed>] I<value> J<value>`
+
+## G-Code firmware retraction
+
+The following standard G-Code commands are available if a
+"firmware_retraction" config section is enabled:
+- Retract: `G10`
+- Unretract: `G11`
 
 ## G-Code display commands
 
@@ -87,6 +101,11 @@ The following standard commands are supported:
 - `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
   "triggered" or in an "open" state. This command is typically used to
   verify that an endstop is working correctly.
+- `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
+  analog value received for a configured analog pin. If NAME is not
+  provided, the list of available adc names are reported. If PULLUP is
+  provided (as a value in Ohms), the raw analog value along with the
+  equivalent resistance given that pullup is reported.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
@@ -160,6 +179,14 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
+  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
+  each Z height during a print. The tool will run the given COMMAND
+  with the given PARAMETER assigned to the value using the formula
+  `value = start + factor * z_height`. If BAND is provided then the
+  adjustment will only be made every BAND millimeters of z height - in
+  that case the formula used is `value = start + factor *
+  ((floor(z_height / band) + .5) * band)`.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
@@ -362,10 +389,9 @@ section is enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130, TMC2660 and TMC2208
+## TMC2130, TMC2660, TMC2208, TMC2209 and TMC5160
 
-The following commands are available when the "tmc2130", "tmc2660"
-or "tmc2208" config section is enabled:
+The following commands are available when any of the "tmcXXXX" config sections is enabled:
 - `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
   registers and report their values.
 - `INIT_TMC STEPPER=<name>`: This command will intitialize the TMC
@@ -373,7 +399,7 @@ or "tmc2208" config section is enabled:
   turned off then back on.
 - `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
   This will adjust the run and hold currents of the TMC driver.
-  HOLDCURRENT is applicable only to the tmc2130 and tmc2208.
+  HOLDCURRENT is applicable only to the tmc2130, tmc2208, tmc2209 and tmc5160.
 - `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
   alter the value of the specified register field of the TMC driver.
   This command is intended for low-level diagnostics and debugging only because

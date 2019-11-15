@@ -88,12 +88,12 @@ class EndstopPhase:
             stepper = rail.get_steppers()[0]
             if stepper.get_name() != self.name:
                 continue
-            orig_pos = rail.get_commanded_position()
+            orig_pos = rail.get_tag_position()
             offset = self.get_homed_offset(stepper)
             pos = self.align_endstop(orig_pos) + offset
             if pos == orig_pos:
                 return False
-            rail.set_commanded_position(pos)
+            rail.set_tag_position(pos)
             return True
 
 class EndstopPhases:

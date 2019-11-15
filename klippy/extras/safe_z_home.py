@@ -19,7 +19,7 @@ class SafeZHoming:
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
-        self.move_to_previous = config.getboolean('move_to_previous', True)
+        self.move_to_previous = config.getboolean('move_to_previous', False)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
@@ -70,10 +70,8 @@ class SafeZHoming:
             pos = toolhead.get_position()
             prev_x = pos[0]
             prev_y = pos[1]
-            if self.home_x_pos:
-                pos[0] = self.home_x_pos
-            if self.home_y_pos:
-                pos[1] = self.home_y_pos
+            pos[0] = self.home_x_pos
+            pos[1] = self.home_y_pos
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
             # Home Z
