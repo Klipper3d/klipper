@@ -72,6 +72,10 @@ class ManualStepper:
         self.rail.generate_steps(self.next_cmd_time)
         self.trapq_free_moves(self.trapq, self.next_cmd_time)
         self.sync_print_time()
+    def get_status(self, eventtime):
+        endstops = self.rail.get_endstops()
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        return {'endstop': ["open", "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
     def do_homing_move(self, movepos, speed, accel, triggered):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
