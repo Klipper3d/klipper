@@ -147,7 +147,7 @@ class TMCCurrentHelper:
             hold_current = self._calc_current_from_field("IHOLD")
         if 'CURRENT' in params:
             run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
+                'CURRENT', params, minval=0., maxval=MAX_CURRENT)
         else:
             run_current = self._calc_current_from_field("IRUN")
         if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
@@ -155,6 +155,10 @@ class TMCCurrentHelper:
             gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                                % (run_current, hold_current))
             return
+        if run_current < hold_current:
+            gcode.respond_info("SET_TMC_CURRENT ignored. Run Current lower" +
+                               " than Hold Current")
+            return    
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
