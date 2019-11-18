@@ -250,7 +250,7 @@ class TMC5160CurrentHelper:
         return max(0, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         irun = self._calc_current_bits(run_current)
-        ihold = self._calc_current_bits(hold_current)
+        ihold = self._calc_current_bits(min(hold_current, run_current))
         return irun, ihold
     def _calc_current_from_field(self, field_name):
         bits = self.fields.get_field(field_name)
@@ -274,10 +274,6 @@ class TMC5160CurrentHelper:
             # Query only
             gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                                % (run_current, hold_current))
-            return
-        if run_current < hold_current:
-            gcode.respond_info("SET_TMC_CURRENT ignored. Run Current lower" +
-                               " than Hold Current")
             return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         irun, ihold = self._calc_current(run_current, hold_current)
