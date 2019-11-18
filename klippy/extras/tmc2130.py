@@ -158,7 +158,7 @@ class TMCCurrentHelper:
         if run_current < hold_current:
             gcode.respond_info("SET_TMC_CURRENT ignored. Run Current lower" +
                                " than Hold Current")
-            return    
+            return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
