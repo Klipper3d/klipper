@@ -123,11 +123,13 @@ class TMCCurrentHelper:
     def _calc_current(self, run_current, hold_current):
         vsense = False
         irun = self._calc_current_bits(run_current, vsense)
-        ihold = self._calc_current_bits(min(hold_current, run_current), vsense)
+        ihold = self._calc_current_bits(min(hold_current, run_current),
+                                        vsense)
         if irun < 16 and ihold < 16:
             vsense = True
             irun = self._calc_current_bits(run_current, vsense)
-            ihold = self._calc_current_bits(min(hold_current, run_current), vsense)
+            ihold = self._calc_current_bits(min(hold_current, run_current),
+                                            vsense)
         return vsense, irun, ihold
     def _calc_current_from_field(self, field_name):
         bits = self.fields.get_field(field_name)
