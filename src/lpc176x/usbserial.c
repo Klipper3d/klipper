@@ -287,31 +287,24 @@ usbserial_get_serialid(void)
  * Setup and interrupts
  ****************************************************************/
 static void
-platform_get_uid(uint32_t *serial) {
+usb_set_serial(void)
+{
     uint32_t iap_cmd_uid[5] = {IAP_CMD_READ_UID, 0, 0, 0, 0};
     uint32_t iap_resp[5];
-    uint8_t i;
 
     IAP iap_entry = (IAP)IAP_LOCATION;
     __disable_irq();
     iap_entry(iap_cmd_uid, iap_resp);
     __enable_irq();
 
-    for (i = 0; i < 4; i++)
-        serial[i] = iap_resp[i+1];
-}
-
-static void
-usb_set_serial(uint8_t *serial, uint8_t len)
-{
+    uint8_t *chipid = (uint8_t *)&iap_resp[1];
     uint8_t i, j, c;
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < IAP_UID_LEN; i++) {
         for (j = 0; j < 2; j++) {
-            c = (*serial >> 4*j) & 0xF;
+            c = (chipid[i] >> 4*j) & 0xF;
             c = (c < 10) ? '0'+c : 'A'-10+c;
             cdc_string_serial_chipid.data[2*i+((j)?0:1)] = c;
         }
-        serial++;
     }
 }
 
@@ -350,11 +343,8 @@ DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
 void
 usbserial_init(void)
 {
-    if (CONFIG_USB_SERIAL_NUMBER_CHIPID) {
-        uint32_t serial[IAP_UID_LEN/sizeof(uint32_t)];
-        platform_get_uid(serial);
-        usb_set_serial((uint8_t *)serial, IAP_UID_LEN);
-    }
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
+        usb_set_serial();
 
     usb_irq_disable();
     // enable power

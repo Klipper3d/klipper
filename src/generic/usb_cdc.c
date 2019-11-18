@@ -359,12 +359,12 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
     if (req->bRequestType != USB_DIR_IN)
         goto fail;
     void *desc = NULL;
-    uint_fast8_t size;
-    uint_fast8_t i;
+    uint_fast8_t flags, size, i;
     for (i=0; i<ARRAY_SIZE(cdc_descriptors); i++) {
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
+            flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
             size = READP(d->size);
             desc = (void*)READP(d->desc);
         }
@@ -374,11 +374,11 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
         && req->wIndex == USB_LANGID_ENGLISH_US) {
             struct usb_string_descriptor *usbserial_serialid;
             usbserial_serialid = usbserial_get_serialid();
+            flags = UX_SEND;
             size = usbserial_serialid->bLength;
-            desc = (void*)READP(usbserial_serialid);
+            desc = (void*)usbserial_serialid;
     }
     if (desc) {
-        uint_fast8_t flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
         if (size > req->wLength)
             size = req->wLength;
         else if (size < req->wLength)
