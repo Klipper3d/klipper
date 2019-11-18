@@ -50,9 +50,9 @@ config SERIAL_BAUD
         Specify the baud rate of the serial port. This should be set
         to 250000. Read the FAQ before changing this value.
 
-config CHIPID_LEN
-    int
-    default 0
+config HAVE_CHIPID
+    bool
+    default n
 
 # Generic configuration options for USB
 menu "USB ids"
@@ -65,12 +65,12 @@ config USB_DEVICE_ID
     hex "USB device ID"
     default 0xabcd
 config USB_SERIAL_NUMBER
-    string "USB serial number"
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
     default "12345"
 config USB_SERIAL_NUMBER_CHIPID
-    depends on CHIPID_LEN != 0
+    depends on HAVE_CHIPID
     bool "USB serial number from CHIPID"
-    default 0
+    default y
 
 endmenu
 

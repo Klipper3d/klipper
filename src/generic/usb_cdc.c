@@ -126,8 +126,6 @@ DECL_TASK(usb_bulk_out_task);
 #define USB_STR_MANUFACTURER u"Klipper"
 #define USB_STR_PRODUCT u"Klipper firmware"
 #define USB_STR_SERIAL CONCAT(u,CONFIG_USB_SERIAL_NUMBER)
-#define USB_STR_SERIAL_CHIPID CONCAT(u,"0123456789ABCDEF0123456789ABCDEF")
-
 
 // String descriptors
 enum {
@@ -167,15 +165,6 @@ static const struct usb_string_descriptor cdc_string_serial PROGMEM = {
     .bLength = SIZE_cdc_string_serial,
     .bDescriptorType = USB_DT_STRING,
     .data = USB_STR_SERIAL,
-};
-
-#define SIZE_cdc_string_serial_chipid \
-    (sizeof(cdc_string_serial_chipid) + sizeof(USB_STR_SERIAL_CHIPID) - 2)
-
-static struct usb_string_descriptor cdc_string_serial_chipid = {
-    .bLength = SIZE_cdc_string_serial_chipid,
-    .bDescriptorType = USB_DT_STRING,
-    .data = USB_STR_SERIAL_CHIPID,
 };
 
 // Device descriptor
@@ -369,27 +358,33 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
 {
     if (req->bRequestType != USB_DIR_IN)
         goto fail;
+    void *desc = NULL;
+    uint_fast8_t size;
     uint_fast8_t i;
     for (i=0; i<ARRAY_SIZE(cdc_descriptors); i++) {
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            uint_fast8_t size = READP(d->size);
-            uint_fast8_t flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
-            void *desc = (void*)READP(d->desc);
-            if (CONFIG_USB_SERIAL_NUMBER_CHIPID
-                && READP(d->wValue) == ((USB_DT_STRING<<8) | USB_STR_ID_SERIAL)
-                && READP(d->wIndex) == USB_LANGID_ENGLISH_US) {
-                    size = SIZE_cdc_string_serial_chipid;
-                    desc = &cdc_string_serial_chipid;
-                }
-            if (size > req->wLength)
-                size = req->wLength;
-            else if (size < req->wLength)
-                flags |= UX_SEND_ZLP;
-            usb_do_xfer(desc, size, flags);
-            return;
+            size = READP(d->size);
+            desc = (void*)READP(d->desc);
         }
+    }
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID
+        && req->wValue == ((USB_DT_STRING<<8) | USB_STR_ID_SERIAL)
+        && req->wIndex == USB_LANGID_ENGLISH_US) {
+            struct usb_string_descriptor *usbserial_serialid;
+            usbserial_serialid = usbserial_get_serialid();
+            size = usbserial_serialid->bLength;
+            desc = (void*)READP(usbserial_serialid);
+    }
+    if (desc) {
+        uint_fast8_t flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
+        if (size > req->wLength)
+            size = req->wLength;
+        else if (size < req->wLength)
+            flags |= UX_SEND_ZLP;
+        usb_do_xfer(desc, size, flags);
+        return;
     }
 fail:
     usb_do_stall();
@@ -480,21 +475,6 @@ usb_state_ready(void)
     case USB_CDC_REQ_SET_CONTROL_LINE_STATE: usb_req_set_line(&req); break;
     default: usb_do_stall(); break;
     }
-}
-
-void
-usb_set_serial(uint8_t *serial)
-{
-    uint8_t i, j, c;
-    for (i = 0; i < CONFIG_CHIPID_LEN; i++) {
-        for (j = 0; j < 2; j++) {
-            c = (*serial >> 4*j) & 0xF;
-            c = (c < 10) ? '0'+c : 'A'-10+c;
-            cdc_string_serial_chipid.data[2*i+((j)?0:1)] = c;
-        }
-        serial++;
-    }
-
 }
 
 // State tracking dispatch

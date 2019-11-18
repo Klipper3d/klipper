@@ -13,10 +13,10 @@
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/usb_cdc.h" // usb_notify_ep0
+#include "generic/usbstd.h" // usb_string_descriptor
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
 #include "usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
-#include "uid.h" // platform_get_uid
 
 // Internal endpoint addresses
 #define EP0OUT 0x00
@@ -34,6 +34,12 @@
 
 #define RD_EN (1<<0)
 #define WR_EN (1<<1)
+
+// IAP interface
+#define IAP_LOCATION        0x1fff1ff1
+#define IAP_CMD_READ_UID    58
+#define IAP_UID_LEN         16
+typedef void (*IAP)(uint32_t *, uint32_t *);
 
 static void
 usb_irq_disable(void)
@@ -105,6 +111,16 @@ sie_select_and_clear(uint32_t idx)
 /****************************************************************
  * Interface
  ****************************************************************/
+#define USB_STR_SERIAL_CHIPID u"0123456789ABCDEF0123456789ABCDEF"
+
+#define SIZE_cdc_string_serial_chipid \
+    (sizeof(cdc_string_serial_chipid) + sizeof(USB_STR_SERIAL_CHIPID) - 2)
+
+static struct usb_string_descriptor cdc_string_serial_chipid = {
+    .bLength = SIZE_cdc_string_serial_chipid,
+    .bDescriptorType = USB_DT_STRING,
+    .data = USB_STR_SERIAL_CHIPID,
+};
 
 static int_fast8_t
 usb_write_packet(uint32_t ep, const void *data, uint_fast8_t len)
@@ -261,10 +277,43 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
+struct usb_string_descriptor *
+usbserial_get_serialid(void)
+{
+   return &cdc_string_serial_chipid;
+}
 
 /****************************************************************
  * Setup and interrupts
  ****************************************************************/
+static void
+platform_get_uid(uint32_t *serial) {
+    uint32_t iap_cmd_uid[5] = {IAP_CMD_READ_UID, 0, 0, 0, 0};
+    uint32_t iap_resp[5];
+    uint8_t i;
+
+    IAP iap_entry = (IAP)IAP_LOCATION;
+    __disable_irq();
+    iap_entry(iap_cmd_uid, iap_resp);
+    __enable_irq();
+
+    for (i = 0; i < 4; i++)
+        serial[i] = iap_resp[i+1];
+}
+
+static void
+usb_set_serial(uint8_t *serial, uint8_t len)
+{
+    uint8_t i, j, c;
+    for (i = 0; i < len; i++) {
+        for (j = 0; j < 2; j++) {
+            c = (*serial >> 4*j) & 0xF;
+            c = (c < 10) ? '0'+c : 'A'-10+c;
+            cdc_string_serial_chipid.data[2*i+((j)?0:1)] = c;
+        }
+        serial++;
+    }
+}
 
 void
 USB_IRQHandler(void)
@@ -302,9 +351,9 @@ void
 usbserial_init(void)
 {
     if (CONFIG_USB_SERIAL_NUMBER_CHIPID) {
-        uint32_t serial[CONFIG_CHIPID_LEN/sizeof(uint32_t)];
+        uint32_t serial[IAP_UID_LEN/sizeof(uint32_t)];
         platform_get_uid(serial);
-        usb_set_serial((uint8_t *)serial);
+        usb_set_serial((uint8_t *)serial, IAP_UID_LEN);
     }
 
     usb_irq_disable();
