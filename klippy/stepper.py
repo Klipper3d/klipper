@@ -95,6 +95,9 @@ class MCU_stepper:
         return self._step_dist
     def is_dir_inverted(self):
         return self._invert_dir
+    def calc_position_from_coord(self, coord):
+        return self._ffi_lib.itersolve_calc_position_from_coord(
+            self._stepper_kinematics, coord[0], coord[1], coord[2])
     def set_position(self, coord):
         opos = self.get_commanded_position()
         sk = self._stepper_kinematics
@@ -199,9 +202,11 @@ class PrinterRail:
         self.steppers = []
         self.endstops = []
         self.add_extra_stepper(config)
-        self.get_commanded_position = self.steppers[0].get_commanded_position
-        self.get_tag_position = self.steppers[0].get_tag_position
-        self.set_tag_position = self.steppers[0].set_tag_position
+        mcu_stepper = self.steppers[0]
+        self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.get_tag_position = mcu_stepper.get_tag_position
+        self.set_tag_position = mcu_stepper.set_tag_position
+        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):
