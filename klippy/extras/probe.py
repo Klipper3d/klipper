@@ -18,6 +18,7 @@ class PrinterProbe:
         self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat('speed', 5.0)
+        self.lift_speed = config.getfloat('lift_speed', self.speed)
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
@@ -283,8 +284,8 @@ class ProbePointsHelper:
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
+        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
         # Internal probing state
-        self.lift_speed = self.speed
         self.probe_offsets = (0., 0., 0.)
         self.results = []
     def minimum_points(self,n):
@@ -329,7 +330,7 @@ class ProbePointsHelper:
             self._manual_probe_start()
             return
         # Perform automatic probing
-        self.lift_speed = min(self.speed, probe.speed)
+        self.lift_speed = min(self.lift_speed, probe.lift_speed)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"
