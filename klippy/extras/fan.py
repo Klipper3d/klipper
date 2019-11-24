@@ -42,8 +42,8 @@ class PrinterFan:
         if value == self.last_fan_value:
             return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
-        if (value and value < self.max_power
-            and not self.last_fan_value and self.kick_start_time):
+        if (value and value < self.max_power and self.kick_start_time
+            and (not self.last_fan_value or value - self.last_fan_value > .5)):
             # Run fan at full speed for specified kick_start_time
             self.mcu_fan.set_pwm(print_time, self.max_power)
             print_time += self.kick_start_time
