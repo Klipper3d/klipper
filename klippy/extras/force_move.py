@@ -78,10 +78,11 @@ class ForceMove:
         print_time = toolhead.get_last_move_time()
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
-        print_time += accel_t + cruise_t + accel_t
+        print_time = print_time + accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
-        self.trapq_free_moves(self.trapq, print_time)
+        self.trapq_free_moves(self.trapq, print_time + 99999.9)
         stepper.set_stepper_kinematics(prev_sk)
+        toolhead.note_kinematic_activity(print_time)
         toolhead.dwell(accel_t + cruise_t + accel_t)
     def _lookup_stepper(self, params):
         name = self.gcode.get_str('STEPPER', params)

@@ -504,6 +504,8 @@ class ToolHead:
             self.kin_flush_times.append(delay)
         new_delay = max(self.kin_flush_times + [0.])
         self.kin_flush_delay = new_delay
+    def note_kinematic_activity(self, kin_time):
+        self.last_kin_move_time = max(self.last_kin_move_time, kin_time)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def get_max_axis_halt(self):
