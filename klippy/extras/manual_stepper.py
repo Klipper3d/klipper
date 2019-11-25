@@ -37,12 +37,12 @@ class ManualStepper:
         self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                         stepper_name, self.cmd_MANUAL_STEPPER,
                                         desc=self.cmd_MANUAL_STEPPER_help)
-   def get_status(self, eventtime):
-        endstops = self.rail.get_endstops()
-        self.sync_print_time()
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        return {'endstop': ["open", "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
-   def sync_print_time(self):
+    def get_status(self, eventtime):
+         endstops = self.rail.get_endstops()
+         self.sync_print_time()
+         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+         return {'endstop': ["open", "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
+    def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         if self.next_cmd_time > print_time:
@@ -73,9 +73,11 @@ class ManualStepper:
                           accel_t, cruise_t, accel_t,
                           cp, 0., 0., axis_r, 0., 0.,
                           0., cruise_v, accel)
-        self.next_cmd_time += accel_t + cruise_t + accel_t
+        self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
         self.rail.generate_steps(self.next_cmd_time)
-        self.trapq_free_moves(self.trapq, self.next_cmd_time)
+        self.trapq_free_moves(self.trapq, self.next_cmd_time + 99999.9)
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.note_kinematic_activity(self.next_cmd_time)
         self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered):
         if not self.can_home:
@@ -127,8 +129,6 @@ class ManualStepper:
             self.do_homing_move(movepos, speed, accel, homing_move > 0)
         elif try_homing_move:
             movepos = self.gcode.get_float('MOVE', params)
-            if 'ENABLE' not in params and not self.stepper.is_motor_enabled():
-                self.do_enable(True)
             try:
                 self.do_homing_move(movepos, speed, accel, try_homing_move > 0)
             except homing.CommandError as e:
