@@ -9,10 +9,13 @@
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // writel
 #include "board/usb_cdc.h" // usb_notify_ep0
+#include "generic/usbstd.h" // usb_string_descriptor
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
+
+#define CHIP_UID_LEN            12
 
 static void
 usb_irq_disable(void)
@@ -162,6 +165,16 @@ peek_rx_queue(uint32_t ep)
 /****************************************************************
  * USB interface
  ****************************************************************/
+#define USB_STR_SERIAL_CHIPID u"0123456789ABCDEF01234567"
+
+#define SIZE_cdc_string_serial_chipid \
+    (sizeof(cdc_string_serial_chipid) + sizeof(USB_STR_SERIAL_CHIPID) - 2)
+
+static struct usb_string_descriptor cdc_string_serial_chipid = {
+    .bLength = SIZE_cdc_string_serial_chipid,
+    .bDescriptorType = USB_DT_STRING,
+    .data = USB_STR_SERIAL_CHIPID,
+};
 
 int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
@@ -338,10 +351,28 @@ usb_set_configure(void)
     usb_irq_enable();
 }
 
+struct usb_string_descriptor *
+usbserial_get_serialid(void)
+{
+   return &cdc_string_serial_chipid;
+}
 
 /****************************************************************
  * Setup and interrupts
  ****************************************************************/
+static void
+usb_set_serial(void)
+{
+    uint8_t *chipid = (uint8_t *)UID_BASE;
+    uint8_t i, j, c;
+    for (i = 0; i < CHIP_UID_LEN; i++) {
+        for (j = 0; j < 2; j++) {
+            c = (chipid[i] >> 4*j) & 0xF;
+            c = (c < 10) ? '0'+c : 'A'-10+c;
+            cdc_string_serial_chipid.data[2*i+((j)?0:1)] = c;
+        }
+    }
+}
 
 // Main irq handler
 void
@@ -374,6 +405,9 @@ DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
 void
 usb_init(void)
 {
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
+        usb_set_serial();
+
     // Enable USB clock
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
     while (!(OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL))
