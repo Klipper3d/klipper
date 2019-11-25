@@ -482,11 +482,13 @@ class ToolHead:
             status = "Printing"
         else:
             status = "Ready"
-        return { 'status': status, 'print_time': print_time,
-                 'estimated_print_time': estimated_print_time,
-                 'extruder': self.extruder.get_name(),
-                 'position': homing.Coord(*self.commanded_pos),
-                 'printing_time': print_time - last_print_start_time }
+        res = dict(self.kin.get_status(eventtime))
+        res.update({ 'status': status, 'print_time': print_time,
+                     'estimated_print_time': estimated_print_time,
+                     'extruder': self.extruder.get_name(),
+                     'position': homing.Coord(*self.commanded_pos),
+                     'printing_time': print_time - last_print_start_time })
+        return res
     def _handle_shutdown(self):
         self.can_pause = False
         self.move_queue.reset()

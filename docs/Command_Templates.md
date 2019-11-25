@@ -157,6 +157,9 @@ The following are common printer attributes:
   extruder. For example, one could use
   `printer[printer.toolhead.extruder].target` to get the target
   temperature of the current extruder.
+- `printer.toolhead.homed_axes`: The current cartesian axes considered
+  to be in a "homed" state. This is a string containing one or more of
+  "x", "y", "z".
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading

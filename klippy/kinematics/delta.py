@@ -144,8 +144,8 @@ class DeltaKinematics:
             move.limit_speed(max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
-    def get_status(self):
-        return {'homed_axes': '' if self.need_home else 'XYZ'}
+    def get_status(self, eventtime):
+        return {'homed_axes': '' if self.need_home else 'xyz'}
 
     # Helper function for DELTA_CALIBRATE script
     def get_calibrate_params(self):
