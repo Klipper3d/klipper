@@ -91,11 +91,20 @@ Important Notes
   pressure advance on each printer and with each spool of filament.
 
 * Printing temperature and extrusion rates can impact pressure
-  advance.  Be sure to tune the extruder
+  advance. Be sure to tune the extruder
   [E steps](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#E_steps)
   and
   [nozzle temperature](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature)
   prior to tuning pressure advance.
+
+* The test print is designed to run with a high extruder flow rate,
+  but otherwise "normal" slicer settings. A high flow rate is obtained
+  by using a high printing speed (eg, 100mm/s) and a coarse layer
+  height (typically around 75% of the nozzle diameter). Other slicer
+  settings should be similar to their defaults (eg, perimeters of 2 or
+  3 layers, normal retraction amount). It can be useful to set the
+  external perimeter speed to be the same speed as the rest of the
+  print, but it is not a requirement.
 
 * It is common for the test print to show different behavior on each
   corner. Often the slicer will arrange to change layers at one corner
