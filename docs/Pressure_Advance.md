@@ -102,7 +102,7 @@ Important Notes
   by using a high printing speed (eg, 100mm/s) and a coarse layer
   height (typically around 75% of the nozzle diameter). Other slicer
   settings should be similar to their defaults (eg, perimeters of 2 or
-  3 layers, normal retraction amount). It can be useful to set the
+  3 lines, normal retraction amount). It can be useful to set the
   external perimeter speed to be the same speed as the rest of the
   print, but it is not a requirement.
 
