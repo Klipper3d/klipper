@@ -284,9 +284,26 @@ static const struct descriptor_s {
       &cdc_string_manufacturer, SIZE_cdc_string_manufacturer },
     { (USB_DT_STRING<<8) | USB_STR_ID_PRODUCT, USB_LANGID_ENGLISH_US,
       &cdc_string_product, SIZE_cdc_string_product },
+#if !CONFIG_USB_SERIAL_NUMBER_CHIPID
     { (USB_DT_STRING<<8) | USB_STR_ID_SERIAL, USB_LANGID_ENGLISH_US,
       &cdc_string_serial, SIZE_cdc_string_serial },
+#endif
 };
+
+// Fill in a USB serial string descriptor from a chip id
+void
+usb_fill_serial(struct usb_string_descriptor *desc, int strlen, void *id)
+{
+    desc->bLength = sizeof(*desc) + strlen * sizeof(desc->data[0]);
+    desc->bDescriptorType = USB_DT_STRING;
+
+    uint8_t *src = id;
+    int i;
+    for (i = 0; i < strlen; i++) {
+        uint8_t c = i & 1 ? src[i/2] & 0x0f : src[i/2] >> 4;
+        desc->data[i] = c < 10 ? c + '0' : c - 10 + 'A';
+    }
+}
 
 
 /****************************************************************
