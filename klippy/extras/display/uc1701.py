@@ -13,11 +13,12 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class DisplayBase:
-    def __init__(self, io):
+    def __init__(self, io, columns=128):
         self.send = io.send
         # framebuffers
-        self.vram = [bytearray(128) for i in range(8)]
-        self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
+        self.columns = columns
+        self.vram = [bytearray(self.columns) for i in range(8)]
+        self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
         self.font = [self._swizzle_bits(bytearray(c))
@@ -99,7 +100,7 @@ class DisplayBase:
             return 1
         return 0
     def clear(self):
-        zeros = bytearray(128)
+        zeros = bytearray(self.columns)
         for page in self.vram:
             page[:] = zeros
     def get_dimensions(self):
@@ -196,7 +197,7 @@ class ST7567(DisplayBase):
 
 # The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(DisplayBase):
-    def __init__(self, config):
+    def __init__(self, config, columns=128):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
             io = I2C(config, 60)
@@ -209,7 +210,7 @@ class SSD1306(DisplayBase):
         if reset_pin_desc is not None:
             self.mcu_reset = extras.bus.MCU_bus_digital_out(
                 io_bus.get_mcu(), reset_pin_desc, io_bus.get_command_queue())
-        DisplayBase.__init__(self, io)
+        DisplayBase.__init__(self, io, columns)
     def init(self):
         if self.mcu_reset is not None:
             mcu = self.mcu_reset.get_mcu()
@@ -240,3 +241,8 @@ class SSD1306(DisplayBase):
         ]
         self.send(init_cmds)
         self.flush()
+
+# the SH1106 is SSD1306 compatible with up to 132 columns
+class SH1106(SSD1306):
+    def __init__(self, config):
+        SSD1306.__init__(self, config, 132)
