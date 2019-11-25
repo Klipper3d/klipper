@@ -278,7 +278,8 @@ class ProbePointsHelper:
                 points = [line.split(',', 2) for line in points if line.strip()]
                 self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
                                      for p in points]
-                #if a z coordinate was specified treat it as a replacement z_offset at this point
+                #if a z coordinate was specified treat it as a replacement 
+		#z_offset at this point
                 if len(points[0])==3:
                     self.probe_point_zoff = [(float(p[2].strip()))
                             for p in points]
@@ -350,7 +351,7 @@ class ProbePointsHelper:
                 raw=pos
                 my_offset=self.probe_point_zoff[len(self.results)]
                 self.gcode.respond_info("Adjusting raw point: " + str(pos) +
-                        " for point zoffset: " + str(my_offset) + 
+                        " for point zoffset: " + str(my_offset) +
                         " instead of z_offset: " + str(self.probe_offsets[2]))
                 pos[2]=pos[2]+(self.probe_offsets[2]-my_offset)
                 self.gcode.respond_info("cooked point: " + str(pos))
