@@ -17,6 +17,8 @@ class GCodeParser:
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         printer.register_event_handler("klippy:disconnect",
                                        self._handle_disconnect)
+        printer.register_event_handler("extruder:activate_extruder",
+                                       self._handle_activate_extruder)
         # Input handling
         self.reactor = printer.get_reactor()
         self.is_processing_data = False
@@ -175,6 +177,10 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
         self._respond_state("Ready")
+    def _handle_activate_extruder(self):
+        self.reset_last_position()
+        self.extrude_factor = 1.
+        self.base_position[3] = self.last_position[3]
     def reset_last_position(self):
         self.last_position = self.position_with_transform()
     def _dump_debug(self):

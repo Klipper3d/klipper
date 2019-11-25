@@ -73,6 +73,9 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
+                                   self.name, self.cmd_ACTIVATE_EXTRUDER,
+                                   desc=self.cmd_ACTIVATE_EXTRUDER_help)
     def update_move_time(self, flush_time):
         self.trapq_free_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
@@ -168,6 +171,16 @@ class PrinterExtruder:
                    pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg, log=False)
+    cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
+    def cmd_ACTIVATE_EXTRUDER(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        toolhead = self.printer.lookup_object('toolhead')
+        if toolhead.get_extruder() is self:
+            gcode.respond_info("Extruder %s already active" % (self.name))
+            return
+        gcode.respond_info("Activating extruder %s" % (self.name))
+        toolhead.set_extruder(self, self.extrude_pos)
+        self.printer.send_event("extruder:activate_extruder")
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
