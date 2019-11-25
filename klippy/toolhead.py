@@ -484,6 +484,7 @@ class ToolHead:
             status = "Ready"
         return { 'status': status, 'print_time': print_time,
                  'estimated_print_time': estimated_print_time,
+                 'extruder': self.extruder.get_name(),
                  'position': homing.Coord(*self.commanded_pos),
                  'printing_time': print_time - last_print_start_time }
     def _handle_shutdown(self):

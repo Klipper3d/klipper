@@ -93,6 +93,8 @@ class PrinterExtruder:
         return dict(self.get_heater().get_status(eventtime),
                     pressure_advance=self.pressure_advance,
                     smooth_time=self.pressure_advance_smooth_time)
+    def get_name(self):
+        return self.name
     def get_heater(self):
         return self.heater
     def set_active(self, print_time, is_active):
@@ -181,6 +183,8 @@ class DummyExtruder:
             move.end_pos, "Extrude when no extruder present")
     def calc_junction(self, prev_move, move):
         return move.max_cruise_v2
+    def get_name(self):
+        return ""
     def get_heater(self):
         raise homing.CommandError("Extruder not configured")
 
