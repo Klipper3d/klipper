@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20191210: Support for the M206 command has been removed.  Replace with
+calls to SET_GCODE_OFFSET.  If support for M206 is needed, add a
+[gcode_macro M206] config section that calls SET_GCODE_OFFSET.  (For
+example "SET_GCODE_OFFSET Z=-{params.Z}".)
+
 20191202: Support for the undocumented "S" parameter of the "G4"
 command has been removed.  Replace any occurrences of S with the
 standard "P" parameter (the delay specified in milliseconds).

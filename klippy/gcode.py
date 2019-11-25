@@ -476,7 +476,7 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'SET_GCODE_OFFSET', 'M206', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
+        'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
         'M105', 'M104', 'M109', 'M140', 'M190',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -599,14 +599,6 @@ class GCodeParser:
             for pos, delta in enumerate(move_delta):
                 self.last_position[pos] += delta
             self.move_with_transform(self.last_position, speed)
-    def cmd_M206(self, params):
-        # Offset axes
-        offsets = { self.axis2pos[a]: -self.get_float(a, params)
-                    for a in 'XYZ' if a in params }
-        for pos, offset in offsets.items():
-            delta = offset - self.homing_position[pos]
-            self.base_position[pos] += delta
-            self.homing_position[pos] = offset
     cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
     def cmd_SAVE_GCODE_STATE(self, params):
         state_name = self.get_str('NAME', params, 'default')
