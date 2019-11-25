@@ -42,7 +42,7 @@ class ManualStepper:
          self.sync_print_time()
          print_time = self.printer.lookup_object(
                   'toolhead').get_last_move_time()
-         return {'endstop': ["open", 
+         return {'endstop': ["open",
                  "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
