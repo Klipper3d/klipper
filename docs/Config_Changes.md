@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20191202: Support for the undocumented "S" parameter of the "G4"
+command has been removed.  Replace any occurrences of S with the
+standard "P" parameter (the delay specified in milliseconds).
+
 20191126: The USB names have changed on micro-controllers with native
 USB support.  They now use a unique chip id by default (where
 available).  If an "mcu" config section uses a "serial" setting that
