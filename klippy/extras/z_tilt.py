@@ -35,6 +35,7 @@ class ZAdjustHelper:
         msg = "Making the following Z adjustments:\n%s" % ("\n".join(stepstrs),)
         gcode.respond_info(msg)
         # Disable Z stepper movements
+        toolhead.flush_step_generation()
         for s in self.z_steppers:
             s.set_trapq(None)
         # Move each z stepper (sorted from lowest to highest) until they match
@@ -45,6 +46,7 @@ class ZAdjustHelper:
         for i in range(len(positions)-1):
             stepper_offset, stepper = positions[i]
             next_stepper_offset, next_stepper = positions[i+1]
+            toolhead.flush_step_generation()
             stepper.set_trapq(toolhead.get_trapq())
             curpos[2] = z_low + next_stepper_offset
             try:
@@ -52,11 +54,13 @@ class ZAdjustHelper:
                 toolhead.set_position(curpos)
             except:
                 logging.exception("ZAdjustHelper adjust_steppers")
+                toolhead.flush_step_generation()
                 for s in self.z_steppers:
                     s.set_trapq(toolhead.get_trapq())
                 raise
         # Z should now be level - do final cleanup
         last_stepper_offset, last_stepper = positions[-1]
+        toolhead.flush_step_generation()
         last_stepper.set_trapq(toolhead.get_trapq())
         curpos[2] += first_stepper_offset
         toolhead.set_position(curpos)

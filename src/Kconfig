@@ -60,8 +60,12 @@ config USB_VENDOR_ID
 config USB_DEVICE_ID
     hex "USB device ID"
     default 0xabcd
+config USB_SERIAL_NUMBER_CHIPID
+    depends on HAVE_CHIPID
+    bool "USB serial number from CHIPID"
+    default y
 config USB_SERIAL_NUMBER
-    string "USB serial number"
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
     default "12345"
 
 endmenu
@@ -100,8 +104,8 @@ config INITIAL_PINS
         pins will be set to output high - preface a pin with a '!'
         character to set that pin to output low.
 
-# The HAVE_GPIO_x options allow boards to disable support for some
-# commands if the hardware does not support the feature.
+# The HAVE_x options allow boards to disable support for some commands
+# if the hardware does not support the feature.
 config HAVE_GPIO
     bool
     default n
@@ -118,6 +122,9 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 config HAVE_GPIO_BITBANGING
+    bool
+    default n
+config HAVE_CHIPID
     bool
     default n
 

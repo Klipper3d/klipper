@@ -250,7 +250,7 @@ class TMC5160CurrentHelper:
         return max(0, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         irun = self._calc_current_bits(run_current)
-        ihold = self._calc_current_bits(hold_current)
+        ihold = self._calc_current_bits(min(hold_current, run_current))
         return irun, ihold
     def _calc_current_from_field(self, field_name):
         bits = self.fields.get_field(field_name)
@@ -267,7 +267,7 @@ class TMC5160CurrentHelper:
             hold_current = self._calc_current_from_field("IHOLD")
         if 'CURRENT' in params:
             run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
+                'CURRENT', params, minval=0., maxval=MAX_CURRENT)
         else:
             run_current = self._calc_current_from_field("IRUN")
         if 'HOLDCURRENT' not in params and 'CURRENT' not in params:

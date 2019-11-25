@@ -22,12 +22,11 @@ Use a slicer to generate g-code for the large hollow square found in
 speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
 height should be around 75% of the nozzle diameter).
 
-Prepare for the test by issuing the following G-Code commands:
+Prepare for the test by issuing the following G-Code command:
 ```
 SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
-SET_PRESSURE_ADVANCE ADVANCE_LOOKAHEAD_TIME=0
 ```
-These commands make the nozzle travel slower through corners and they
+This command makes the nozzle travel slower through corners to
 emphasize the effects of extruder pressure. Then for printers with a
 direct drive extruder run the command:
 ```
@@ -117,17 +116,6 @@ Important Notes
   acceleration and high pressure advance the extruder may not have
   enough torque to push the required filament. If this occurs, either
   use a lower acceleration value or disable pressure advance.
-
-* The pressure_advance_lookahead_time parameter controls how far in
-  advance to check if a head slow-down is immediately followed by a
-  speed-up - it reduces pointless pressure changes in the head. It is
-  recommended to follow the steps above so that it is set to zero
-  during tuning and to use the default (0.010) during normal prints.
-  It is possible to tune this setting - higher values will reduce the
-  amount of pressure change in the nozzle during cornering, but
-  setting it too high can cause blobbing during cornering. (Tuning
-  this value is unlikely to impact ooze.) The default of 10ms should
-  work well on most printers.
 
 * Once pressure advance is tuned in Klipper, it may still be useful to
   configure a small retract value in the slicer (eg, 0.75mm) and to

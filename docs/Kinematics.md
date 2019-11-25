@@ -92,10 +92,6 @@ desired speed that a 90° corner should have (the "square corner
 velocity"), and the junction speeds for other angles are derived from
 that.
 
-Klipper implements look-ahead between moves that have similar extruder
-flow rates. Other moves are relatively rare and implementing
-look-ahead between them is unnecessary.
-
 Key formula for look-ahead:
 ```
 end_velocity^2 = start_velocity^2 + 2*accel*move_distance

@@ -30,12 +30,12 @@ class TuningTower:
         self.factor = gcode.get_float('FACTOR', params)
         self.band = gcode.get_float('BAND', params, 0., minval=0.)
         # Enable test mode
-        logging.info("Starting tuning test (start=%.6f factor=%.6f)",
-                     self.start, self.factor)
         self.normal_transform = gcode.set_move_transform(self, force=True)
         self.last_z = -99999999.9
         gcode.reset_last_position()
         self.get_position()
+        gcode.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
+                           % (self.start, self.factor))
     def get_position(self):
         pos = self.normal_transform.get_position()
         self.last_postition = list(pos)

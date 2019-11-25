@@ -333,26 +333,32 @@ micro-controller.
 
 The following configuration sequence is used on the SAMD51:
 ```
-allocate_oids count=4
+allocate_oids count=5
 config_stepper oid=0 step_pin=PA22 dir_pin=PA20 min_stop_interval=0 invert_step=0
 config_stepper oid=1 step_pin=PA22 dir_pin=PA21 min_stop_interval=0 invert_step=0
 config_stepper oid=2 step_pin=PA22 dir_pin=PA19 min_stop_interval=0 invert_step=0
 config_stepper oid=3 step_pin=PA22 dir_pin=PA18 min_stop_interval=0 invert_step=0
+config_stepper oid=4 step_pin=PA23 dir_pin=PA17 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0` on a SAMD51G19A
+The test was last run on commit `524ebbc7` with gcc version
+`arm-none-eabi-gcc (Fedora 9.2.0-1.fc30) 9.2.0` on a SAMD51J19A
 micro-controller.
 
 | samd51               | ticks |
 | -------------------- | ----- |
 | 1 stepper            | 516   |
 | 2 stepper            | 520   |
-| 3 stepper            | 519   |
-| 4 stepper            | 655   |
-| 1 stepper (no delay) | 41    |
-| 3 stepper (no delay) | 197   |
+| 3 stepper            | 520   |
+| 4 stepper            | 631   |
+| 1 stepper (200Mhz)   | 839   |
+| 2 stepper (200Mhz)   | 838   |
+| 3 stepper (200Mhz)   | 838   |
+| 4 stepper (200Mhz)   | 838   |
+| 5 stepper (200Mhz)   | 891   |
+| 1 stepper (no delay) | 42    |
+| 3 stepper (no delay) | 194   |
 
 ## Command dispatch benchmark ##
 
