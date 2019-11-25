@@ -91,7 +91,7 @@ with Klippy, and send it to Klipper running in simulavr (see
 python virtual environment):
 
 ```
-~/klippy-env/bin/python ./klippy/klippy.py config/avrsim.cfg -i test.gcode -v
+~/klippy-env/bin/python ./klippy/klippy.py config/generic-simulavr.cfg -i test.gcode -v
 ```
 
 Using simulavr with gtkwave
