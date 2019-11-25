@@ -18,9 +18,16 @@ test object. It is a good idea to read this document in full prior to
 running the test.
 
 Use a slicer to generate g-code for the large hollow square found in
-[docs/prints/square_tower.stl](prints/square_tower.stl). Use a high
-speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
-height should be around 75% of the nozzle diameter).
+[docs/prints/square_tower.stl](prints/square_tower.stl).
+
+Slicer settings:
+
+* use a high speed (eg, 100mm/s)
+* zero infill
+* wall count of 1
+* low retraction of ~0.5mm
+* a coarse layer height (the layer height should be around 75% of the
+  nozzle diameter).
 
 Prepare for the test by issuing the following G-Code command:
 ```
