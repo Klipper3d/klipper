@@ -112,13 +112,19 @@ choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
     config STM32_CLOCK_REF_8M
         bool "8Mhz crystal"
+    config STM32_CLOCK_REF_12M
+        bool "12Mhz crystal"
+    config STM32_CLOCK_REF_16M
+        bool "16Mhz crystal"
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
-config CLOCK_REF_8M
-    bool
-    default n if STM32_CLOCK_REF_INTERNAL
-    default y
+config CLOCK_REF_FREQ
+    int
+    default 16000000 if STM32_CLOCK_REF_16M
+    default 12000000 if STM32_CLOCK_REF_12M
+    default 1 if STM32_CLOCK_REF_INTERNAL
+    default 8000000
 
 config USBSERIAL
     bool "Use USB for communication (instead of serial)"

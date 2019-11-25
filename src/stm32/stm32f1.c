@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
@@ -129,19 +129,19 @@ clock_setup(void)
 {
     // Configure and enable PLL
     uint32_t cfgr;
-    if (CONFIG_CLOCK_REF_8M) {
-        // Configure 72Mhz PLL from external 8Mhz crystal (HSE)
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 72Mhz PLL from external crystal (HSE)
+        uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = ((1 << RCC_CFGR_PLLSRC_Pos) | ((9 - 2) << RCC_CFGR_PLLMULL_Pos)
-                | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2
-                | RCC_CFGR_ADCPRE_DIV4);
+        cfgr = (1 << RCC_CFGR_PLLSRC_Pos) | ((div - 2) << RCC_CFGR_PLLMULL_Pos);
     } else {
         // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
-        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos) | ((18 - 2) << RCC_CFGR_PLLMULL_Pos)
-                | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2
-                | RCC_CFGR_ADCPRE_DIV4);
+        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
+        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
+                | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
     }
-    RCC->CFGR = cfgr;
+    RCC->CFGR = (cfgr | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2
+                 | RCC_CFGR_ADCPRE_DIV4);
     RCC->CR |= RCC_CR_PLLON;
 
     // Set flash latency
