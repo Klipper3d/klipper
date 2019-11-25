@@ -41,11 +41,6 @@ class PrinterExtruder:
             'max_extrude_only_distance', 50., minval=0.)
         self.instant_corner_v = config.getfloat(
             'instantaneous_corner_velocity', 1., minval=0.)
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
-        self.activate_gcode = gcode_macro.load_template(
-            config, 'activate_gcode', '')
-        self.deactivate_gcode = gcode_macro.load_template(
-            config, 'deactivate_gcode', '')
         self.pressure_advance = self.pressure_advance_smooth_time = 0.
         pressure_advance = config.getfloat('pressure_advance', 0., minval=0.)
         smooth_time = config.getfloat('pressure_advance_smooth_time',
@@ -99,12 +94,6 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
-    def set_active(self, print_time, is_active):
-        return self.extrude_pos
-    def get_activate_gcode(self, is_active):
-        if is_active:
-            return self.activate_gcode.render()
-        return self.deactivate_gcode.render()
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
@@ -184,8 +173,6 @@ class PrinterExtruder:
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
-    def set_active(self, print_time, is_active):
-        return 0.
     def update_move_time(self, flush_time):
         pass
     def check_move(self, move):

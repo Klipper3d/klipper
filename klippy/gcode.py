@@ -433,11 +433,7 @@ class GCodeParser:
         if not cmd:
             logging.debug(params['#original'])
             return
-        if cmd[0] == 'T' and len(cmd) > 1 and cmd[1].isdigit():
-            # Tn command has to be handled specially
-            self.cmd_Tn(params)
-            return
-        elif cmd.startswith("M117 "):
+        if cmd.startswith("M117 "):
             # Handle M117 gcode with numeric and special characters
             handler = self.gcode_handlers.get("M117", None)
             if handler is not None:
@@ -448,27 +444,6 @@ class GCodeParser:
             # Don't warn about requests to turn off fan when fan not present
             return
         self.respond_info('Unknown command:"%s"' % (cmd,))
-    def cmd_Tn(self, params):
-        # Select Tool
-        index = self.get_int('T', params, minval=0)
-        section = 'extruder'
-        if index:
-            section = 'extruder%d' % (index,)
-        new_extruder = self.printer.lookup_object(section, None)
-        if new_extruder is None:
-            raise self.error("Unknown extruder %d on Tn command" % (index,))
-        old_extruder = self.toolhead.get_extruder()
-        if old_extruder is new_extruder:
-            return
-        self.run_script_from_command(old_extruder.get_activate_gcode(False))
-        print_time = self.toolhead.get_last_move_time()
-        old_extruder.set_active(print_time, False)
-        extrude_pos = new_extruder.set_active(print_time, True)
-        self.toolhead.set_extruder(new_extruder, extrude_pos)
-        self.reset_last_position()
-        self.extrude_factor = 1.
-        self.base_position[3] = self.last_position[3]
-        self.run_script_from_command(new_extruder.get_activate_gcode(True))
     def _cmd_mux(self, params):
         key, values = self.mux_commands[params['#command']]
         if None in values:

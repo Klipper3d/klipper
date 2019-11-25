@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20191210: The builtin T0, T1, T2, ... commands have been removed.  The
+extruder activate_gcode and deactivate_gcode config options have been
+removed.  If these commands (and scripts) are needed then define
+individual [gcode_macro T0] style macros that call the
+ACTIVATE_EXTRUDER command.
+
 20191210: Support for the M206 command has been removed.  Replace with
 calls to SET_GCODE_OFFSET.  If support for M206 is needed, add a
 [gcode_macro M206] config section that calls SET_GCODE_OFFSET.  (For

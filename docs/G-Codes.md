@@ -9,7 +9,6 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
-- Select tool: `T<index>`
 - Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
@@ -44,7 +43,7 @@ If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
 [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
 for details). For example, one might use this to implement: `G12`,
-`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
+`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
 
 ## G-Code SD card commands
 
