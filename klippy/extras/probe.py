@@ -275,9 +275,15 @@ class ProbePointsHelper:
         if default_points is None or config.get('points', None) is not None:
             points = config.get('points').split('\n')
             try:
-                points = [line.split(',', 1) for line in points if line.strip()]
+                points = [line.split(',', 2) for line in points if line.strip()]
                 self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
                                      for p in points]
+                #if a z coordinate was specified treat it as a replacement
+                #z_offset at this point Needs to be specified on all points
+                #if used
+                if len(points[0])==3:
+                    self.probe_point_z_offset = [(float(p[2].strip()))
+                            for p in points]
             except:
                 raise config.error("Unable to parse probe points in %s" % (
                     self.name))
@@ -313,10 +319,12 @@ class ProbePointsHelper:
             self.results = []
         # Move to next XY probe point
         curpos[:2] = self.probe_points[len(self.results)]
+        self.gcode.respond_info("moving to probe point %i" % len(self.results))
         toolhead.move(curpos, self.speed)
         self.gcode.reset_last_position()
         return False
     def start_probe(self, params):
+        self.gcode.respond_info("start_probe")
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object('probe', None)
@@ -331,6 +339,8 @@ class ProbePointsHelper:
         # Perform automatic probing
         self.lift_speed = min(self.speed, probe.speed)
         self.probe_offsets = probe.get_offsets()
+        self.gcode.respond_info("configured global z_offset: %.3f" +
+                self.probe_offsets[2])
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"
                                    " probe's z_offset")
@@ -339,6 +349,16 @@ class ProbePointsHelper:
             if done:
                 break
             pos = probe.run_probe(params)
+            if self.probe_point_z_offset:
+                raw=pos
+                point_z_offset=self.probe_point_z_offset[len(self.results)]
+                global_z_offset=self.probe_offsets[2]
+                self.gcode.respond_info(("adjusting raw point (%.3f, %.3f, " +
+                    "%.6f) for point z_offset %.3f instead of z_offset %.3f.") %
+                    (pos[0], pos[1], pos[2], point_z_offset, global_z_offset))
+                pos[2]=pos[2] + (global_z_offset - point_z_offset)
+                self.gcode.respond_info("adjusted point: (%.3f, %.3f, %.6f)" %
+                        (pos[0], pos[1], pos[2]))
             self.results.append(pos)
     def _manual_probe_start(self):
         done = self._move_next()
