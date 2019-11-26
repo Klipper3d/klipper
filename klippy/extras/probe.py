@@ -349,7 +349,7 @@ class ProbePointsHelper:
             if done:
                 break
             pos = probe.run_probe(params)
-            if self.probe_point_z_offset:
+            if hasattr(self, 'probe_point_z_offset'):
                 raw=pos
                 point_z_offset=self.probe_point_z_offset[len(self.results)]
                 global_z_offset=self.probe_offsets[2]
