@@ -124,11 +124,7 @@ DECL_TASK(usb_bulk_out_task);
 #define CONCAT1(a, b) a ## b
 #define CONCAT(a, b) CONCAT1(a, b)
 #define USB_STR_MANUFACTURER u"Klipper"
-#if CONFIG_HAVE_CHIPID // Temporarily limit new names to boards with CHIPID
 #define USB_STR_PRODUCT CONCAT(u,CONFIG_MCU)
-#else
-#define USB_STR_PRODUCT u"Klipper firmware"
-#endif
 #define USB_STR_SERIAL CONCAT(u,CONFIG_USB_SERIAL_NUMBER)
 
 // String descriptors

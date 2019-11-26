@@ -6,9 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
-20191124: The USB names have changed on lpc176x, stm32, atsamd, and
-atsam.  They now use the unique chip id by default.  Update the
-"serial" setting in the "mcu" config section accordingly.
+20191126: The USB names have changed on micro-controllers with native
+USB support.  They now use a unique chip id by default (where
+available).  Update the "serial" setting in the "mcu" config section
+accordingly.
 
 20191121: The pressure_advance_lookahead_time parameter has been
 removed.  See example.cfg for alternate configuration settings.
