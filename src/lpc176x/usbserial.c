@@ -13,7 +13,6 @@
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/usb_cdc.h" // usb_notify_ep0
-#include "generic/usbstd.h" // usb_string_descriptor
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
 #include "usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -34,12 +33,6 @@
 
 #define RD_EN (1<<0)
 #define WR_EN (1<<1)
-
-// IAP interface
-#define IAP_LOCATION        0x1fff1ff1
-#define IAP_CMD_READ_UID    58
-#define IAP_UID_LEN         16
-typedef void (*IAP)(uint32_t *, uint32_t *);
 
 static void
 usb_irq_disable(void)
@@ -267,38 +260,10 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
-static struct {
-    struct usb_string_descriptor desc;
-    uint16_t data[IAP_UID_LEN * 2];
-} cdc_chipid;
-
-struct usb_string_descriptor *
-usbserial_get_serialid(void)
-{
-   return &cdc_chipid.desc;
-}
-
 
 /****************************************************************
  * Setup and interrupts
  ****************************************************************/
-
-static void
-usb_set_serial(void)
-{
-    if (!CONFIG_USB_SERIAL_NUMBER_CHIPID)
-        return;
-
-    uint32_t iap_cmd_uid[5] = {IAP_CMD_READ_UID, 0, 0, 0, 0};
-    uint32_t iap_resp[5];
-    IAP iap_entry = (IAP)IAP_LOCATION;
-    __disable_irq();
-    iap_entry(iap_cmd_uid, iap_resp);
-    __enable_irq();
-
-    usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
-                    , &iap_resp[1]);
-}
 
 void
 USB_IRQHandler(void)
@@ -335,8 +300,6 @@ DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
 void
 usbserial_init(void)
 {
-    usb_set_serial();
-
     usb_irq_disable();
     // enable power
     enable_pclock(PCLK_USB);
