@@ -54,7 +54,7 @@ hd44780_xmit_bits(uint8_t toggle, struct gpio_out e, struct gpio_out d4
         gpio_out_toggle(d6);
     if (toggle & 0x80)
         gpio_out_toggle(d7);
-    ndelay(80);
+    ndelay(230);
     gpio_out_toggle(e);
 }
 
@@ -65,7 +65,7 @@ hd44780_xmit_byte(struct hd44780 *h, uint8_t data)
     struct gpio_out e = h->e, d4 = h->d4, d5 = h->d5, d6 = h->d6, d7 = h->d7;
     hd44780_xmit_bits(h->last ^ data, e, d4, d5, d6, d7);
     h->last = data << 4;
-    ndelay(500 - 80);
+    ndelay(500 - 230);
     hd44780_xmit_bits(data ^ h->last, e, d4, d5, d6, d7);
 }
 
