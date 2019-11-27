@@ -324,7 +324,6 @@ class ProbePointsHelper:
         self.gcode.reset_last_position()
         return False
     def start_probe(self, params):
-        self.gcode.respond_info("start_probe")
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object('probe', None)
@@ -339,8 +338,6 @@ class ProbePointsHelper:
         # Perform automatic probing
         self.lift_speed = min(self.speed, probe.speed)
         self.probe_offsets = probe.get_offsets()
-        self.gcode.respond_info("configured global z_offset: %.3f" %
-                self.probe_offsets[2])
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"
                                    " probe's z_offset")
@@ -350,6 +347,8 @@ class ProbePointsHelper:
                 break
             pos = probe.run_probe(params)
             if hasattr(self, 'probe_point_z_offset'):
+                self.gcode.respond_info("overriding global z_offset: %.3f" %
+                    self.probe_offsets[2])
                 raw=pos
                 point_z_offset=self.probe_point_z_offset[len(self.results)]
                 global_z_offset=self.probe_offsets[2]
