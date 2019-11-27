@@ -46,8 +46,8 @@ read_chip_id(uint32_t *id)
     // Copy the id
     id[0] = *(uint32_t*)(IFLASH0_ADDR + 0x00);
     id[1] = *(uint32_t*)(IFLASH0_ADDR + 0x04);
-    id[1] = *(uint32_t*)(IFLASH0_ADDR + 0x08);
-    id[1] = *(uint32_t*)(IFLASH0_ADDR + 0x0c);
+    id[2] = *(uint32_t*)(IFLASH0_ADDR + 0x08);
+    id[3] = *(uint32_t*)(IFLASH0_ADDR + 0x0c);
 
     // Send the SPUI command
     EFC0->EEFC_FCR = EEFC_FCR_FKEY_PASSWD | EEFC_FCR_FCMD_SPUI;
