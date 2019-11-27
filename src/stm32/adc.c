@@ -69,7 +69,8 @@ gpio_adc_setup(uint32_t pin)
         uint32_t aticks = 3; // 2.5-3.2us (depending on stm32 chip)
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
-                      | (aticks << 21) | (aticks << 24));
+                      | (aticks << 21)
+                      | (CONFIG_MACH_STM32F4 ? aticks << 24 : 0));
         adc->SMPR2 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21) | (aticks << 24) | (aticks << 27));
