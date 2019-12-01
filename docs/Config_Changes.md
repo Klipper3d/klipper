@@ -8,8 +8,10 @@ All dates in this document are approximate.
 
 20191126: The USB names have changed on micro-controllers with native
 USB support.  They now use a unique chip id by default (where
-available).  Update the "serial" setting in the "mcu" config section
-accordingly.
+available).  If an "mcu" config section uses a "serial" setting that
+starts with "/dev/serial/by-id/" then it may be necessary to update
+the config.  Run "ls -l /dev/serial/by-id/" in an ssh terminal to
+determine the new id.
 
 20191121: The pressure_advance_lookahead_time parameter has been
 removed.  See example.cfg for alternate configuration settings.
