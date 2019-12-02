@@ -162,6 +162,49 @@ class UC1701(DisplayBase):
         self.flush()
         logging.info("uc1701 initialized")
 
+# The ST7565 is a "4-wire" SPI display device
+class ST7565(DisplayBase):
+    def __init__(self, config):
+        io = SPI4wire(config, "a0_pin")
+        self.contrast = config.getint('contrast', 60, minval=0, maxval=63)
+        self.mcu_reset = None
+        reset_pin_desc = config.get("reset_pin", None)
+        if reset_pin_desc is not None:
+            self.mcu_reset = extras.bus.MCU_bus_digital_out(
+                io.spi.get_mcu(), reset_pin_desc, io.spi.get_command_queue())
+        DisplayBase.__init__(self, io)
+    def init(self):
+        if self.mcu_reset is not None:
+            mcu = self.mcu_reset.get_mcu()
+            curtime = mcu.get_printer().get_reactor().monotonic()
+            print_time = mcu.estimated_print_time(curtime)
+            minclock = mcu.print_time_to_clock(print_time + .100)
+            self.mcu_reset.update_digital_out(0, minclock=minclock)
+            minclock = mcu.print_time_to_clock(print_time + .200)
+            self.mcu_reset.update_digital_out(1, minclock=minclock)
+        init_cmds = [0xE2, # System reset
+                     0x40, # Set display to start at line 0
+                     0xA0, # Set SEG direction
+                     0xC8, # Set COM Direction
+                     0xA2, # Set Bias = 1/9
+                     0x2C, # Boost ON
+                     0x2E, # Voltage regulator on
+                     0x2F, # Voltage follower on
+                     0xF8, # Set booster ratio
+                     0x00, # Booster ratio value (4x)
+                     0x23, # Set resistor ratio (3)
+                     0x81, # Set Electronic Volume
+                     self.contrast, # Electronic Volume value
+                     0xAC, # Set static indicator off
+                     0x00, # NOP
+                     0xA6, # Disable Inverse
+                     0xAF] # Set display enable
+        self.send(init_cmds)
+        self.send([0xA5]) # display all
+        self.send([0xA4]) # normal display
+        self.flush()
+        logging.info("st7565 initialized")
+
 # The ST7567 is a "4-wire" SPI display device
 class ST7567(DisplayBase):
     def __init__(self, config):
