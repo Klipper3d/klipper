@@ -133,12 +133,34 @@ class I2C:
         cmds.insert(0, hdr)
         self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
+# Helper code for toggling a reset pin on startup
+class ResetHelper:
+    def __init__(self, pin_desc, io_bus):
+        self.mcu_reset = None
+        if pin_desc is None:
+            return
+        self.mcu_reset = extras.bus.MCU_bus_digital_out(
+            io_bus.get_mcu(), pin_desc, io_bus.get_command_queue())
+    def init(self):
+        if self.mcu_reset is None:
+            return
+        mcu = self.mcu_reset.get_mcu()
+        curtime = mcu.get_printer().get_reactor().monotonic()
+        print_time = mcu.estimated_print_time(curtime)
+        minclock = mcu.print_time_to_clock(print_time + .100)
+        self.mcu_reset.update_digital_out(0, minclock=minclock)
+        minclock = mcu.print_time_to_clock(print_time + .200)
+        self.mcu_reset.update_digital_out(1, minclock=minclock)
+
 # The UC1701 is a "4-wire" SPI display device
 class UC1701(DisplayBase):
     def __init__(self, config):
-        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
+        io = SPI4wire(config, "a0_pin")
+        DisplayBase.__init__(self, io)
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
+        self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
+        self.reset.init()
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
                      0xA0, # Set SEG direction
@@ -160,7 +182,6 @@ class UC1701(DisplayBase):
         self.send([0xA5]) # display all
         self.send([0xA4]) # normal display
         self.flush()
-        logging.info("uc1701 initialized")
 
 # The ST7567 is a "4-wire" SPI display device
 class ST7567(DisplayBase):
@@ -205,21 +226,10 @@ class SSD1306(DisplayBase):
         else:
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
-        self.mcu_reset = None
-        reset_pin_desc = config.get("reset_pin", None)
-        if reset_pin_desc is not None:
-            self.mcu_reset = extras.bus.MCU_bus_digital_out(
-                io_bus.get_mcu(), reset_pin_desc, io_bus.get_command_queue())
+        self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
         DisplayBase.__init__(self, io, columns)
     def init(self):
-        if self.mcu_reset is not None:
-            mcu = self.mcu_reset.get_mcu()
-            curtime = mcu.get_printer().get_reactor().monotonic()
-            print_time = mcu.estimated_print_time(curtime)
-            minclock = mcu.print_time_to_clock(print_time + .100)
-            self.mcu_reset.update_digital_out(0, minclock=minclock)
-            minclock = mcu.print_time_to_clock(print_time + .200)
-            self.mcu_reset.update_digital_out(1, minclock=minclock)
+        self.reset.init()
         init_cmds = [
             0xAE,       # Display off
             0xD5, 0x80, # Set oscillator frequency
