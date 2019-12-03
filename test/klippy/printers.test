@@ -34,6 +34,7 @@ CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
