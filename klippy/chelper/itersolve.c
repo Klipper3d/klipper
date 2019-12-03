@@ -78,8 +78,10 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                 break;
             // Need to increase next step search range
             low = high;
-            high.time = last.time + seek_time_delta;
-            seek_time_delta += seek_time_delta;
+            do {
+                high.time = last.time + seek_time_delta;
+                seek_time_delta += seek_time_delta;
+            } while (unlikely(high.time <= low.time));
             if (high.time > end)
                 high.time = end;
             high.position = calc_position_cb(sk, m, high.time);
