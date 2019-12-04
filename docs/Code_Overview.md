@@ -439,7 +439,7 @@ queue.
 The "stepper" position (`stepper.get_commanded_position()`) is the
 position of the given stepper as tracked by the kinematics code. This
 generally corresponds to the position (in mm) of the carriage along
-its rail, relative to the endstop_position specified in the config
+its rail, relative to the position_endstop specified in the config
 file. (Some kinematics track stepper positions in radians instead of
 millimeters.) If the robot is in motion when the query is issued then
 the reported value includes moves buffered on the micro-controller,
