@@ -27,6 +27,8 @@ class FieldHelper:
                                    for f in fields }
     def lookup_register(self, field_name, default=None):
         return self.field_to_register.get(field_name, default)
+    def has_register(self, reg_name):
+        return reg_name in self.all_fields
     def get_field(self, field_name, reg_value=None, reg_name=None):
         # Returns value of the register field
         if reg_name is None:
@@ -102,6 +104,8 @@ class TMCCommandHelper:
         # Send registers
         for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
+        if self.fields.has_register("GSTAT"):
+            self.mcu_tmc.set_register("GSTAT", 7) # reset status
     def _handle_connect(self):
         # Check for soft stepper enable/disable
         stepper_enable = self.printer.lookup_object('stepper_enable')
@@ -176,6 +180,8 @@ class TMCCommandHelper:
             if self.read_translate is not None:
                 reg_name, val = self.read_translate(reg_name, val)
             self.gcode.respond_info(self.fields.pretty_format(reg_name, val))
+        if self.fields.has_register("GSTAT"):
+            self.mcu_tmc.set_register("GSTAT", 7) # reset status
 
 
 ######################################################################
