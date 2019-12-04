@@ -403,12 +403,13 @@ Useful steps:
 Coordinate Systems
 ==================
 
-The position of the toolhead is primarily tracked in cartesian
-coordinates that are relative to the coordinate system specified in
-the config file. That is, the coordinate system generally does not
-change during run-time. If a request is made to alter the origin (eg,
-a `G92` command) then that effect is obtained by translating future
-commands to the existing coordinate system.
+Internally, Klipper primarily tracks the position of the toolhead in
+cartesian coordinates that are relative to the coordinate system
+specified in the config file. That is, most of the Klipper code will
+never experience a change in coordinate systems. If the user makes a
+request to change the origin (eg, a `G92` command) then that effect is
+obtained by translating future commands to the primary coordinate
+system.
 
 However, in some cases it is useful to obtain the toolhead position in
 some other coordinate system and Klipper has several tools to
@@ -436,16 +437,15 @@ the micro-controller, but does not include moves on the look-ahead
 queue.
 
 The "stepper" position (`stepper.get_commanded_position()`) is the
-position for the given stepper as tracked by the kinematics code. This
-generally corresponds to the position of the carriage along its rail
-in units of millimeters and is generally relative to the
-endstop_position specified in the config file. (Some kinematics track
-the position in radians instead of millimeters.) If the robot is in
-motion when the query is issued then the reported value includes moves
-buffered on the micro-controller, but does not include moves on the
-look-ahead queue. One may use the `toolhead.flush_step_generation()`
-or `toolhead.wait_moves()` calls to fully flush the look-ahead and
-step generation code.
+position of the given stepper as tracked by the kinematics code. This
+generally corresponds to the position (in mm) of the carriage along
+its rail, relative to the endstop_position specified in the config
+file. (Some kinematics track stepper positions in radians instead of
+millimeters.) If the robot is in motion when the query is issued then
+the reported value includes moves buffered on the micro-controller,
+but does not include moves on the look-ahead queue. One may use the
+`toolhead.flush_step_generation()` or `toolhead.wait_moves()` calls to
+fully flush the look-ahead and step generation code.
 
 The "kinematic" position (`kin.set_tag_position()` and
 `kin.calc_tag_position()`) is the cartesian position of the toolhead
