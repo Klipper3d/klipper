@@ -38,7 +38,7 @@ class TuningTower:
                            % (self.start, self.factor))
     def get_position(self):
         pos = self.normal_transform.get_position()
-        self.last_postition = list(pos)
+        self.last_position = list(pos)
         return pos
     def calc_value(self, z):
         if self.band:
