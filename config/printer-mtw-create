@@ -5,24 +5,24 @@
 
 [stepper_x]
 step_pin: PC0
-dir_pin: PL1
+dir_pin: !PL1
 enable_pin: !PA7
 step_distance: .01
 endstop_pin: ^PB6
 #endstop_pin: ^PA2
 position_endstop: 0
-position_max: 200
+position_max: 250
 homing_speed: 50
 
 [stepper_y]
 step_pin: PC1
-dir_pin: !PL0
+dir_pin: PL0
 enable_pin: !PA6
 step_distance: .01
 endstop_pin: ^PB5
 #endstop_pin: ^PA1
 position_endstop: 0
-position_max: 200
+position_max: 320
 homing_speed: 50
 
 [stepper_z]
@@ -30,25 +30,25 @@ step_pin: PC2
 dir_pin: PL2
 enable_pin: !PA5
 step_distance: .00125
-endstop_pin: probe:z_virtual_endstop 
+endstop_pin: probe:z_virtual_endstop
 #endstop_pin: ^PC7
 position_endstop: 0.5
-position_max: 200
+position_max: 225
 
 [extruder]
 step_pin: PC3
 dir_pin: PL6
 enable_pin: !PA4
 step_distance: .0102
-nozzle_diameter: 0.400
+nozzle_diameter: 0.600
 filament_diameter: 1.750
 heater_pin: PH6
 sensor_type: ATC Semitec 104GT-2
 sensor_pin: PF0
-control: pid
-pid_Kp: 22.2
-pid_Ki: 1.08
-pid_Kd: 114
+#control: pid
+#pid_Kp: 22.2
+#pid_Ki: 1.08
+#pid_Kd: 114
 min_temp: 0
 max_temp: 275
 
@@ -64,7 +64,7 @@ max_temp: 275
 heater_pin: PE5
 sensor_type: NTC 100K beta 3950
 sensor_pin: PF2
-control: watermark
+#control: watermark
 min_temp: 0
 max_temp: 130
 
@@ -93,9 +93,9 @@ pin_up_touch_mode_reports_triggered: True
 #   the commands "pin_up" followed by "touch_mode". This should be
 #   True for a genuine BLTouch v2 and earlier; the BLTouch v3 and some
 #   BLTouch clones require False. The default is True.
-x_offset: -15
-y_offset: 23
-z_offset: 1.0
+x_offset: -17
+y_offset: 37
+z_offset: 2.0
 #speed:
 #samples:
 #sample_retract_dist:
@@ -109,9 +109,11 @@ z_offset: 1.0
 #control_pin: PB4
 
 [safe_z_home]
-home_xy_position: 125,150 # Change coordinates to the center of your print bed
+home_xy_position: 125,150
+# Change coordinates to the center of your print bed
 speed: 50
-z_hop: 10                 # Move up 10mm
+z_hop: 10
+# Move up 10mm
 z_hop_speed: 5
 
 # Mesh Bed Leveling. One may define a [bed_mesh] config section
@@ -208,11 +210,10 @@ bicubic_tension: .2
 #   may be applied to change the amount of slope interpolated.
 #   Larger numbers will increase the amount of slope, which
 #   results in more curvature in the mesh. Default is .2.
-# relative_reference_index:
+#relative_reference_index:
 #   A point index in the mesh to reference all z values to. Enabling
 #   this parameter produces a mesh relative to the probed z position
 #   at the provided index.
-
 
 [fan]
 pin: PH5
@@ -266,6 +267,3 @@ aliases:
     # Pins EXP2_1, EXP2_6, EXP2_2 are also MISO, MOSI, SCK of bus "spi"
 
 # See the sample-lcd.cfg file for definitions of common LCD displays.
-
-
-
