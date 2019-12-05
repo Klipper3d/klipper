@@ -30,7 +30,7 @@ step_pin: PC2
 dir_pin: PL2
 enable_pin: !PA5
 step_distance: .00125
-#endstop_pin: ^PB4
+endstop_pin: probe:z_virtual_endstop 
 #endstop_pin: ^PC7
 position_endstop: 0.5
 position_max: 200
@@ -181,7 +181,7 @@ fade_end: 0.0
 #   noted that fade may add unwanted scaling along the z-axis of a
 #   print.  If a user wishes to enable fade, a value of 10.0 is
 #   recommended. Default is 0.0, which disables fade.
-fade_target:
+#fade_target:
 #   The z position in which fade should converge. When this value is set
 #   to a non-zero value it must be within the range of z-values in the mesh.
 #   Users that wish to converge to the z homing position should set this to 0.
@@ -208,7 +208,7 @@ bicubic_tension: .2
 #   may be applied to change the amount of slope interpolated.
 #   Larger numbers will increase the amount of slope, which
 #   results in more curvature in the mesh. Default is .2.
-relative_reference_index:
+# relative_reference_index:
 #   A point index in the mesh to reference all z values to. Enabling
 #   this parameter produces a mesh relative to the probed z position
 #   at the provided index.
