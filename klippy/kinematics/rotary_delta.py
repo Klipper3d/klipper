@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, mathutil
+import stepper, homing, mathutil, chelper
 
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
@@ -30,23 +30,30 @@ class RotaryDeltaKinematics:
         for rail in self.rails:
             rail.set_max_jerk(9999999.9, 9999999.9)
         # Read config
-        self.shoulder_radius = config.getfloat('shoulder_radius', above=0.)
-        self.shoulder_height = config.getfloat('shoulder_height', above=0.)
+        shoulder_radius = config.getfloat('shoulder_radius', above=0.)
+        shoulder_height = config.getfloat('shoulder_height', above=0.)
         a_upper_arm = stepper_configs[0].getfloat('upper_arm_length', above=0.)
-        self.upper_arms = upper_arms = [
+        upper_arms = [
             sconfig.getfloat('upper_arm_length', a_upper_arm, above=0.)
             for sconfig in stepper_configs]
         a_lower_arm = stepper_configs[0].getfloat('lower_arm_length', above=0.)
-        self.lower_arms = lower_arms = [
+        lower_arms = [
             sconfig.getfloat('lower_arm_length', a_lower_arm, above=0.)
             for sconfig in stepper_configs]
-        self.angles = angles = [sconfig.getfloat('angle', angle)
-                                for sconfig, angle in zip(stepper_configs,
-                                                          [30., 150., 270.])]
+        angles = [sconfig.getfloat('angle', angle)
+                  for sconfig, angle in zip(stepper_configs, [30., 150., 270.])]
+        # Setup rotary delta calibration helper
+        endstops = [rail.get_homing_info().position_endstop
+                    for rail in self.rails]
+        stepdists = [rail.get_steppers()[0].get_step_dist()
+                     for rail in self.rails]
+        self.calibration = RotaryDeltaCalibration(
+            shoulder_radius, shoulder_height, angles, upper_arms, lower_arms,
+            endstops, stepdists)
         # Setup iterative solver
         for r, a, ua, la in zip(self.rails, angles, upper_arms, lower_arms):
             r.setup_itersolve('rotary_delta_stepper_alloc',
-                              self.shoulder_radius, self.shoulder_height,
+                              shoulder_radius, shoulder_height,
                               math.radians(a), ua, la)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
@@ -54,16 +61,17 @@ class RotaryDeltaKinematics:
         # Setup boundary checks
         self.need_home = True
         self.limit_xy2 = -1.
-        epos = [r.get_homing_info().position_endstop for r in self.rails]
         eangles = [r.calc_position_from_coord([0., 0., ep])
-                   for r, ep in zip(self.rails, epos)]
-        self.home_position = tuple(self._actuator_to_cartesian(eangles))
-        self.max_z = min(epos)
+                   for r, ep in zip(self.rails, endstops)]
+        self.home_position = tuple(
+            self.calibration.actuator_to_cartesian(eangles))
+        self.max_z = min(endstops)
         self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
-        min_ua = min([self.shoulder_radius + ua for ua in upper_arms])
-        min_la = min([la - self.shoulder_radius for la in lower_arms])
+        min_ua = min([shoulder_radius + ua for ua in upper_arms])
+        min_la = min([la - shoulder_radius for la in lower_arms])
         self.max_xy2 = min(min_ua, min_la)**2
-        arm_z = [self._elbow_coord(i, ea)[2] for i, ea in enumerate(eangles)]
+        arm_z = [self.calibration.elbow_coord(i, ea)[2]
+                 for i, ea in enumerate(eangles)]
         self.limit_z = min([az - la for az, la in zip(arm_z, lower_arms)])
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
@@ -71,23 +79,9 @@ class RotaryDeltaKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return [s for rail in self.rails for s in rail.get_steppers()]
-    def _elbow_coord(self, elbow_id, spos):
-        # Calculate elbow position in coordinate system at shoulder joint
-        sj_elbow_x = self.upper_arms[elbow_id] * math.cos(spos)
-        sj_elbow_y = self.upper_arms[elbow_id] * math.sin(spos)
-        # Shift and rotate to main cartesian coordinate system
-        angle = math.radians(self.angles[elbow_id])
-        x = (sj_elbow_x + self.shoulder_radius) * math.cos(angle)
-        y = (sj_elbow_x + self.shoulder_radius) * math.sin(angle)
-        z = sj_elbow_y + self.shoulder_height
-        return (x, y, z)
-    def _actuator_to_cartesian(self, spos):
-        sphere_coords = [self._elbow_coord(i, sp) for i, sp in enumerate(spos)]
-        lower_arm2 = [la**2 for la in self.lower_arms]
-        return mathutil.trilateration(sphere_coords, lower_arm2)
     def calc_tag_position(self):
         spos = [rail.get_tag_position() for rail in self.rails]
-        return self._actuator_to_cartesian(spos)
+        return self.calibration.actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
             rail.set_position(newpos)
@@ -127,6 +121,104 @@ class RotaryDeltaKinematics:
         self.limit_xy2 = limit_xy2
     def get_status(self):
         return {'homed_axes': '' if self.need_home else 'XYZ'}
+    def get_calibration(self):
+        return self.calibration
+
+# Rotary delta parameter calibration for DELTA_CALIBRATE tool
+class RotaryDeltaCalibration:
+    def __init__(self, shoulder_radius, shoulder_height, angles,
+                 upper_arms, lower_arms, endstops, stepdists):
+        self.shoulder_radius = shoulder_radius
+        self.shoulder_height = shoulder_height
+        self.angles = angles
+        self.upper_arms = upper_arms
+        self.lower_arms = lower_arms
+        self.endstops = endstops
+        self.stepdists = stepdists
+        # Calculate the absolute angle of each endstop
+        ffi_main, self.ffi_lib = chelper.get_ffi()
+        self.sks = [ffi_main.gc(self.ffi_lib.rotary_delta_stepper_alloc(
+            shoulder_radius, shoulder_height, math.radians(a), ua, la),
+                                self.ffi_lib.free)
+                    for a, ua, la in zip(angles, upper_arms, lower_arms)]
+        self.abs_endstops = [
+            self.ffi_lib.itersolve_calc_position_from_coord(sk, 0., 0., es)
+            for sk, es in zip(self.sks, endstops)]
+    def coordinate_descent_params(self, is_extended):
+        # Determine adjustment parameters (for use with coordinate_descent)
+        adj_params = ('endstop_a', 'endstop_b', 'endstop_c')
+        if is_extended:
+            adj_params += ('lower_arm_a', 'lower_arm_b', 'lower_arm_c')
+        params = { 'shoulder_radius': self.shoulder_radius,
+                   'shoulder_height': self.shoulder_height }
+        for i, axis in enumerate('abc'):
+            params['angle_'+axis] = self.angles[i]
+            params['upper_arm_'+axis] = self.upper_arms[i]
+            params['lower_arm_'+axis] = self.lower_arms[i]
+            params['endstop_'+axis] = self.endstops[i]
+            params['stepdist_'+axis] = self.stepdists[i]
+        return adj_params, params
+    def new_calibration(self, params):
+        # Create a new calibration object from coordinate_descent params
+        shoulder_radius = params['shoulder_radius']
+        shoulder_height = params['shoulder_height']
+        angles = [params['angle_'+a] for a in 'abc']
+        upper_arms = [params['upper_arm_'+a] for a in 'abc']
+        lower_arms = [params['lower_arm_'+a] for a in 'abc']
+        endstops = [params['endstop_'+a] for a in 'abc']
+        stepdists = [params['stepdist_'+a] for a in 'abc']
+        return RotaryDeltaCalibration(
+            shoulder_radius, shoulder_height, angles, upper_arms, lower_arms,
+            endstops, stepdists)
+    def elbow_coord(self, elbow_id, spos):
+        # Calculate elbow position in coordinate system at shoulder joint
+        sj_elbow_x = self.upper_arms[elbow_id] * math.cos(spos)
+        sj_elbow_y = self.upper_arms[elbow_id] * math.sin(spos)
+        # Shift and rotate to main cartesian coordinate system
+        angle = math.radians(self.angles[elbow_id])
+        x = (sj_elbow_x + self.shoulder_radius) * math.cos(angle)
+        y = (sj_elbow_x + self.shoulder_radius) * math.sin(angle)
+        z = sj_elbow_y + self.shoulder_height
+        return (x, y, z)
+    def actuator_to_cartesian(self, spos):
+        sphere_coords = [self.elbow_coord(i, sp) for i, sp in enumerate(spos)]
+        lower_arm2 = [la**2 for la in self.lower_arms]
+        return mathutil.trilateration(sphere_coords, lower_arm2)
+    def get_position_from_stable(self, stable_position):
+        # Return cartesian coordinates for the given stable_position
+        spos = [ea - sp * sd
+                for ea, sp, sd in zip(self.abs_endstops, stable_position,
+                                      self.stepdists)]
+        return self.actuator_to_cartesian(spos)
+    def calc_stable_position(self, coord):
+        # Return a stable_position from a cartesian coordinate
+        pos = [ self.ffi_lib.itersolve_calc_position_from_coord(
+            sk, coord[0], coord[1], coord[2])
+                for sk in self.sks ]
+        return [(ep - sp) / sd
+                for sd, ep, sp in zip(self.stepdists, self.abs_endstops, pos)]
+    def save_state(self, configfile):
+        # Save the current parameters (for use with SAVE_CONFIG)
+        configfile.set('printer', 'shoulder_radius', "%.6f"
+                       % (self.shoulder_radius,))
+        configfile.set('printer', 'shoulder_height', "%.6f"
+                       % (self.shoulder_height,))
+        for i, axis in enumerate('abc'):
+            configfile.set('stepper_'+axis, 'angle', "%.6f" % (self.angles[i],))
+            configfile.set('stepper_'+axis, 'lower_arm',
+                           "%.6f" % (self.lower_arms[i],))
+            configfile.set('stepper_'+axis, 'position_endstop',
+                           "%.6f" % (self.endstops[i],))
+        gcode = configfile.get_printer().lookup_object("gcode")
+        gcode.respond_info(
+            "stepper_a: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
+            "stepper_b: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
+            "stepper_c: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
+            "shoulder_radius: %.6f shoulder_height: %.6f"
+            % (self.endstops[0], self.angles[0], self.lower_arms[0],
+               self.endstops[1], self.angles[1], self.lower_arms[1],
+               self.endstops[2], self.angles[2], self.lower_arms[2],
+               self.shoulder_radius, self.shoulder_height))
 
 def load_kinematics(toolhead, config):
     return RotaryDeltaKinematics(toolhead, config)
