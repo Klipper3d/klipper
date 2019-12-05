@@ -1,7 +1,4 @@
-# This file contains common pin mappings for RAMBo boards. To use this
-# config, the firmware should be compiled for the AVR atmega2560.
-
-# See the example.cfg file for a description of available parameters.
+# Klipper configuration for the MTW Create Printer
 
 [stepper_x]
 step_pin: PC0
@@ -40,7 +37,7 @@ step_pin: PC3
 dir_pin: PL6
 enable_pin: !PA4
 step_distance: .0102
-nozzle_diameter: 0.600
+nozzle_diameter: 0.400
 filament_diameter: 1.750
 heater_pin: PH6
 sensor_type: ATC Semitec 104GT-2
@@ -52,13 +49,26 @@ sensor_pin: PF0
 min_temp: 0
 max_temp: 275
 
+#Uncomment below for dual extruder printers
 #[extruder1]
 #step_pin: PC4
 #dir_pin: PL7
 #enable_pin: !PA3
 #heater_pin: PH4
 #sensor_pin: PF1
-#...
+#step_distance: .0102
+#nozzle_diameter: 0.400
+#filament_diameter: 1.750
+#sensor_type: ATC Semitec 104GT-2
+#sensor_pin: PF0
+#control: pid
+#pid_Kp: 22.2
+#pid_Ki: 1.08
+#pid_Kd: 114
+#min_temp: 0
+#max_temp: 275
+
+
 
 [heater_bed]
 heater_pin: PE5
