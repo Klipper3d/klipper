@@ -6,6 +6,7 @@ DICTIONARY atmega2560.dict
 G28
 
 # Run basic delta calibration (in manual mode)
+DELTA_ANALYZE MANUAL_HEIGHT=252
 DELTA_CALIBRATE METHOD=manual
 G1 Z0.1
 ACCEPT
