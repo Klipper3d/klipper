@@ -104,10 +104,6 @@ z_offset: 2.0
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
 
-#[bltouch]
-#sensor_pin: PL5
-#control_pin: PB4
-
 [safe_z_home]
 home_xy_position: 125,150
 # Change coordinates to the center of your print bed
