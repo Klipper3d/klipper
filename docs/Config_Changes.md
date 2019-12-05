@@ -6,9 +6,16 @@ All dates in this document are approximate.
 
 # Changes
 
-20191121: The USB name has changed on lpc176x.  It now uses the unique
-chip id by default.  Update the "serial" setting in the "mcu" config
-section accordingly.
+20191202: Support for the undocumented "S" parameter of the "G4"
+command has been removed.  Replace any occurrences of S with the
+standard "P" parameter (the delay specified in milliseconds).
+
+20191126: The USB names have changed on micro-controllers with native
+USB support.  They now use a unique chip id by default (where
+available).  If an "mcu" config section uses a "serial" setting that
+starts with "/dev/serial/by-id/" then it may be necessary to update
+the config.  Run "ls /dev/serial/by-id/*" in an ssh terminal to
+determine the new id.
 
 20191121: The pressure_advance_lookahead_time parameter has been
 removed.  See example.cfg for alternate configuration settings.

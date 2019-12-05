@@ -30,14 +30,14 @@ class SafeZHoming:
 
     def cmd_G28(self, params):
         toolhead = self.printer.lookup_object('toolhead')
-        kinematics = toolhead.get_kinematics()
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
             pos = toolhead.get_position()
-            kin_status = kinematics.get_status()
+            curtime = self.printer.get_reactor().monotonic()
+            kin_status = toolhead.get_kinematics().get_status(curtime)
             # Check if Z axis is homed or has a known position
-            if 'Z' in kin_status['homed_axes']:
+            if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
                 if pos[2] + self.z_hop > self.max_z:
                     self.gcode.respond_info(

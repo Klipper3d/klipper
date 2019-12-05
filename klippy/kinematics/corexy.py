@@ -93,10 +93,9 @@ class CoreXYKinematics:
         z_ratio = move.move_d / abs(move.axes_d[2])
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def get_status(self):
-        return {'homed_axes': "".join([a
-                    for a, (l, h) in zip("XYZ", self.limits) if l <= h])
-        }
+    def get_status(self, eventtime):
+        axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
+        return {'homed_axes': "".join(axes)}
 
 def load_kinematics(toolhead, config):
     return CoreXYKinematics(toolhead, config)

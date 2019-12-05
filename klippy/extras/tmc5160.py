@@ -74,7 +74,7 @@ Registers = {
 
 ReadRegisters = [
     "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN",
-    "LOST_STEPS", "MSCNT", "MSCURACT", "OTP_READ", "PWMCONF", "PWM_SCALE",
+    "LOST_STEPS", "MSCNT", "MSCURACT", "OTP_READ", "PWM_SCALE",
     "PWM_AUTO", "TSTEP"
 ]
 

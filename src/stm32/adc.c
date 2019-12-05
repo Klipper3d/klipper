@@ -34,6 +34,11 @@ static const uint8_t adc_pins[] = {
 #define CR2_FLAGS ADC_CR2_ADON
 #endif
 
+// ADC timing:
+// stm32f103: ADC clock=9Mhz, Tconv=12.5, Tsamp=28.5, total=4.556us
+// stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=56, total=3.238us
+// stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=56, total=3.022us
+
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
 {
@@ -64,7 +69,8 @@ gpio_adc_setup(uint32_t pin)
         uint32_t aticks = 3; // 2.5-3.2us (depending on stm32 chip)
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
-                      | (aticks << 21) | (aticks << 24));
+                      | (aticks << 21)
+                      | (CONFIG_MACH_STM32F4 ? aticks << 24 : 0));
         adc->SMPR2 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21) | (aticks << 24) | (aticks << 27));
@@ -72,7 +78,7 @@ gpio_adc_setup(uint32_t pin)
 
 #if CONFIG_MACH_STM32F1
         // Perform calibration
-        udelay(timer_from_us(1));
+        udelay(10);
         adc->CR2 = ADC_CR2_CAL | CR2_FLAGS;
         while (adc->CR2 & ADC_CR2_CAL)
             ;
