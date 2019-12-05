@@ -95,7 +95,7 @@ pin_up_touch_mode_reports_triggered: True
 #   BLTouch clones require False. The default is True.
 x_offset: -15
 y_offset: 23
-z_offset:
+z_offset: 1.0
 #speed:
 #samples:
 #sample_retract_dist:
