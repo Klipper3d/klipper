@@ -105,6 +105,15 @@ class DeltaCalibrate:
                 break
             height_pos = load_config_stable(config, "height%d_pos" % (i,))
             self.last_probe_positions.append((height, height_pos))
+        # Restore manually entered heights
+        self.manual_heights = []
+        for i in range(999):
+            height = config.getfloat("manual_height%d" % (i,), None)
+            if height is None:
+                break
+            height_pos = load_config_stable(config, "manual_height%d_pos"
+                                            % (i,))
+            self.manual_heights.append((height, height_pos))
         # Restore distance measurements
         self.delta_analyze_entry = {'SCALE': (1.,)}
         self.last_distances = []
@@ -137,6 +146,11 @@ class DeltaCalibrate:
             configfile.set(section, "height%d" % (i,), z_offset)
             configfile.set(section, "height%d_pos" % (i,),
                            "%.3f,%.3f,%.3f" % tuple(spos))
+        # Save manually entered heights
+        for i, (z_offset, spos) in enumerate(self.manual_heights):
+            configfile.set(section, "manual_height%d" % (i,), z_offset)
+            configfile.set(section, "manual_height%d_pos" % (i,),
+                           "%.3f,%.3f,%.3f" % tuple(spos))
         # Save distance measurements
         for i, (dist, spos1, spos2) in enumerate(distances):
             configfile.set(section, "distance%d" % (i,), dist)
@@ -154,13 +168,14 @@ class DeltaCalibrate:
         # Perform analysis
         self.calculate_params(probe_positions, self.last_distances)
     def calculate_params(self, probe_positions, distances):
+        height_positions = self.manual_heights + probe_positions
         # Setup for coordinate descent analysis
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         orig_delta_params = odp = kin.get_calibration()
         adj_params, params = odp.coordinate_descent_params(distances)
         logging.info("Calculating delta_calibrate with:\n%s\n%s\n"
                      "Initial delta_calibrate parameters: %s",
-                     probe_positions, distances, params)
+                     height_positions, distances, params)
         z_weight = 1.
         if distances:
             z_weight = len(distances) / (MEASURE_WEIGHT * len(probe_positions))
@@ -170,7 +185,7 @@ class DeltaCalibrate:
             delta_params = orig_delta_params.new_calibration(params)
             # Calculate z height errors
             total_error = 0.
-            for z_offset, stable_pos in probe_positions:
+            for z_offset, stable_pos in height_positions:
                 x, y, z = delta_params.get_position_from_stable(stable_pos)
                 total_error += (z - z_offset)**2
             total_error *= z_weight
@@ -186,7 +201,7 @@ class DeltaCalibrate:
         # Log and report results
         logging.info("Calculated delta_calibrate parameters: %s", new_params)
         new_delta_params = orig_delta_params.new_calibration(new_params)
-        for z_offset, spos in probe_positions:
+        for z_offset, spos in height_positions:
             logging.info("height orig: %.6f new: %.6f goal: %.6f",
                          orig_delta_params.get_position_from_stable(spos)[2],
                          new_delta_params.get_position_from_stable(spos)[2],
@@ -208,6 +223,22 @@ class DeltaCalibrate:
     cmd_DELTA_CALIBRATE_help = "Delta calibration script"
     def cmd_DELTA_CALIBRATE(self, params):
         self.probe_helper.start_probe(params)
+    def add_manual_height(self, height):
+        # Determine current location of toolhead
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        kin = toolhead.get_kinematics()
+        for s in kin.get_steppers():
+            s.set_tag_position(s.get_commanded_position())
+        kin_pos = kin.calc_tag_position()
+        # Convert location to a stable position
+        delta_params = kin.get_calibration()
+        stable_pos = tuple(delta_params.calc_stable_position(kin_pos))
+        # Add to list of manual heights
+        self.manual_heights.append((height, stable_pos))
+        self.gcode.respond_info(
+            "Adding manual height: %.3f,%.3f,%.3f is actually z=%.3f"
+            % (kin_pos[0], kin_pos[1], kin_pos[2], height))
     def do_extended_calibration(self):
         # Extract distance positions
         if len(self.delta_analyze_entry) <= 1:
@@ -226,6 +257,11 @@ class DeltaCalibrate:
         self.calculate_params(self.last_probe_positions, distances)
     cmd_DELTA_ANALYZE_help = "Extended delta calibration tool"
     def cmd_DELTA_ANALYZE(self, params):
+        # Check for manual height entry
+        mheight = self.gcode.get_float('MANUAL_HEIGHT', params, None)
+        if mheight is not None:
+            self.add_manual_height(mheight)
+            return
         # Parse distance measurements
         args = {'CENTER_DISTS': 6, 'CENTER_PILLAR_WIDTHS': 3,
                 'OUTER_DISTS': 6, 'OUTER_PILLAR_WIDTHS': 6, 'SCALE': 1}
