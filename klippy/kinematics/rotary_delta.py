@@ -146,7 +146,7 @@ class RotaryDeltaCalibration:
             for sk, es in zip(self.sks, endstops)]
     def coordinate_descent_params(self, is_extended):
         # Determine adjustment parameters (for use with coordinate_descent)
-        adj_params = ('endstop_a', 'endstop_b', 'endstop_c')
+        adj_params = ('shoulder_height', 'endstop_a', 'endstop_b', 'endstop_c')
         if is_extended:
             adj_params += ('lower_arm_a', 'lower_arm_b', 'lower_arm_c')
         params = { 'shoulder_radius': self.shoulder_radius,
