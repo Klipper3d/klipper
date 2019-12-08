@@ -33,7 +33,10 @@ def list_cross_product(v1, v2):
 def get_estimated_z_value(normal_v, base_point_v, xy_for_estimate):
     x = xy_for_estimate[0]
     y = xy_for_estimate[1]
-    return base_point_v[2] - ((((x - base_point_v[0]) * normal_v[0]) + ((y - base_point_v[1]) * normal_v[1])) / normal_v[2])
+    return (base_point_v[2] -
+            ((((x - base_point_v[0]) * normal_v[0])
+              + ((y - base_point_v[1]) * normal_v[1]))
+             / normal_v[2]))
 
 
 class QuadGantryLevel:
@@ -51,7 +54,8 @@ class QuadGantryLevel:
         try:
             gantry_corners = [line.split(',', 1)
                               for line in gantry_corners if line.strip()]
-            self.gantry_corners = [(Decimal(zp[0].strip()), Decimal(zp[1].strip()))
+            self.gantry_corners = [(Decimal(zp[0].strip()),
+                                    Decimal(zp[1].strip()))
                                    for zp in gantry_corners]
         except:
             raise config.error("Unable to parse gantry_corners in %s" % (
@@ -101,15 +105,18 @@ class QuadGantryLevel:
             self.gcode.respond_info(traceback.format_exc())
 
     def probe_finalize(self, offsets, positions):
-        # Build plate should be parallel with gantry, so don't flip. make it simple.
+        # Build plate should be parallel with gantry,
+        # so don't flip. make it simple.
         # + is upward.
         # offsets -> offset of probe from nozzle.
-        #           all positions should be considered nozzle position based. (for voron2, (0, 25, 0))
+        #           all positions should be considered nozzle position based.
+        #           (for voron2, (0, 25, 0))
         # positions -> 4 probing result height
 
         # get 4 normal vectors from each probed point.
         # all of direction of normal vector is upward from build plate.
-        # Theoretically, 4 normal vector which will be use to get plane equation of build plate should be same.
+        # Theoretically, 4 normal vector which will be use to get
+        # plane equation of build plate should be same.
         # but practically, different.
         # decided to use 4 planes to estimate each corner adjustment.
 
@@ -122,8 +129,10 @@ class QuadGantryLevel:
             probe_points.append(list_plus(ps, os))
 
         points_message = "probe points:\n%s\n" % (
-            " ".join(["%s: (%s)" % (z_id, ", ".join(['{:.6f}'.format(val) for val in probe_points[z_id]]))
-                      for z_id in range(len(probe_points))]))
+            " ".join(
+                ["%s: (%s)" % (z_id, ", ".join(
+                    ['{:.6f}'.format(val) for val in probe_points[z_id]]))
+                 for z_id in range(len(probe_points))]))
         self.gcode.respond_info(points_message)
 
         # get normal vectors. upward. right-hand rule
@@ -141,8 +150,10 @@ class QuadGantryLevel:
             normal_vectors.append(list_cross_product(f1, f2))
 
         points_message = "normal_vectors of each point:\n%s\n" % (
-            " ".join(["%s: (%s)" % (z_id, ", ".join(['{:.6f}'.format(val) for val in normal_vectors[z_id]]))
-                      for z_id in range(len(normal_vectors))]))
+            " ".join(
+                ["%s: (%s)" % (z_id, ", ".join(
+                    ['{:.6f}'.format(val) for val in normal_vectors[z_id]]))
+                 for z_id in range(len(normal_vectors))]))
         self.gcode.respond_info(points_message)
 
         # center position of belts.
@@ -154,15 +165,17 @@ class QuadGantryLevel:
                        [belt_min_x, belt_max_y],
                        [belt_max_x, belt_max_y],
                        [belt_max_x, belt_min_y]]
-        z_corner_heights = [get_estimated_z_value(normal_vectors[idx], probe_points[idx], bt)
-                            for idx, bt in enumerate(belt_points)]
+        z_corner_heights =\
+            [get_estimated_z_value(normal_vectors[idx], probe_points[idx], bt)
+             for idx, bt in enumerate(belt_points)]
         points_message = "corner_heights of each point:\n%s\n" % (
             " ".join(["%s: %.6f" % (z_id, z_corner_heights[z_id])
                       for z_id in range(len(z_corner_heights))]))
         self.gcode.respond_info(points_message)
 
         z_ave = sum(z_corner_heights) / len(z_corner_heights)
-        # higher than average height means gantry came down less, so have to lift up the corner
+        # higher than average height means gantry came down less,
+        # so have to lift up the corner.
         # (adjust value should be +)
         z_adjust = [z - z_ave for z in z_corner_heights]
 
