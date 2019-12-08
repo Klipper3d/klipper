@@ -48,9 +48,6 @@ class ManualStepper:
                  "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
     def get_status(self, eventtime):
          return self.endstop_status
-    def get_enstop_status(self):
-         self.update_endstop_status()
-         return self.endstop_status
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
