@@ -8,6 +8,7 @@ import logging
 import probe
 import z_tilt
 import traceback
+import json
 from decimal import Decimal
 
 
@@ -63,13 +64,41 @@ class QuadGantryLevel:
         self.gcode.register_command(
             'QUAD_GANTRY_LEVEL', self.cmd_QUAD_GANTRY_LEVEL,
             desc=self.cmd_QUAD_GANTRY_LEVEL_help)
+        self.gcode.register_command(
+            'QUAD_GANTRY_MANUAL', self.cmd_QUAD_GANTRY_MANUAL,
+            desc=self.cmd_QUAD_GANTRY_MANUAL_help)
 
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
+    cmd_QUAD_GANTRY_MANUAL_help = (
+        "Adjust each Z stepper manually")
 
     def cmd_QUAD_GANTRY_LEVEL(self, params):
         self.retry_helper.start(params)
         self.probe_helper.start_probe(params)
+
+    def cmd_QUAD_GANTRY_MANUAL(self, params):
+        try:
+            z_adjusts = []
+            self.gcode.respond_info("** QUAD_GANTRY_MANUAL **")
+            self.gcode.respond_info(json.dumps(params))
+            for idx in range(4):
+                k = 'Z' + str(idx)
+                val = 0
+                if k in params:
+                    val = float(params[k])
+                z_adjusts.append(val)
+
+            adjust_max = max([abs(v) for v in z_adjusts])
+            if adjust_max > self.max_adjust:
+                self.gcode.respond_error(
+                    "Aborting quad_gantry_level " +
+                    "required adjustment %0.6f " % (adjust_max) +
+                    "is greater than max_adjust %0.6f" % (self.max_adjust))
+                return
+            self.adjust_z_steppers(z_adjusts)
+        except:
+            self.gcode.respond_info(traceback.format_exc())
 
     def probe_finalize(self, offsets, positions):
         # Build plate should be parallel with gantry, so don't flip. make it simple.
