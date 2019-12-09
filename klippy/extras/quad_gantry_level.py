@@ -50,6 +50,7 @@ class QuadGantryLevel:
         if len(self.probe_helper.probe_points) != 4:
             raise config.error(
                 "Need exactly 4 probe points for quad_gantry_level")
+        self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
             gantry_corners = [line.split(',', 1)
