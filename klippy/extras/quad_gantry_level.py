@@ -100,7 +100,8 @@ class QuadGantryLevel:
                     "required adjustment %0.6f " % (adjust_max) +
                     "is greater than max_adjust %0.6f" % (self.max_adjust))
                 return
-            self.adjust_z_steppers(z_adjusts)
+            speed = self.probe_helper.get_lift_speed()
+            self.z_helper.adjust_steppers(z_adjusts, speed)
         except:
             self.gcode.respond_info(traceback.format_exc())
 
@@ -191,49 +192,9 @@ class QuadGantryLevel:
                 "required adjustment %0.6f " % (adjust_max) +
                 "is greater than max_adjust %0.6f" % (self.max_adjust))
             return
-
-        self.adjust_z_steppers(z_adjust)
-        return self.retry_helper.check_retry([p[2] for p in probe_points])
-
-    # don't merge with z_tilt.ZAdjustHelper.adjust_steppers until logic is same.
-    def adjust_z_steppers(self, adjust_heights):
-        tool_head = self.printer.lookup_object('toolhead')
-        kin = tool_head.get_kinematics()
-        z_steppers = kin.get_steppers('Z')
-        current_position = tool_head.get_position()
-        # Report on movements
-        step_strs = ["%s = %.6f" % (s.get_name(), float(a))
-                     for s, a in zip(z_steppers, adjust_heights)]
-        msg = "Making the following Z adjustments:\n%s" % ("\n".join(step_strs))
-        self.gcode.respond_info(msg)
-
-        # Move each z stepper (sorted from lowest to highest) until they match
-        positions = [(float(a), s) for a, s in zip(adjust_heights, z_steppers)]
         speed = self.probe_helper.get_lift_speed()
-
-        try:
-            for v in positions:
-                tool_head.flush_step_generation()
-                for s in z_steppers:
-                    s.set_trapq(None)
-                stepper_offset, stepper = v
-                stepper.set_trapq(tool_head.get_trapq())
-                new_pos = current_position
-                new_pos[2] = new_pos[2] + stepper_offset
-                tool_head.move(new_pos, speed)
-                tool_head.set_position(current_position)
-        except Exception as e:
-            self.gcode.respond_info(str(e))
-            self.gcode.respond_info(traceback.format_exc())
-            logging.exception("ZAdjustHelper adjust_steppers")
-            raise
-        finally:
-            tool_head.flush_step_generation()
-            for s in z_steppers:
-                s.set_trapq(tool_head.get_trapq())
-            tool_head.set_position(current_position)
-            self.gcode.reset_last_position()
-
+        self.z_helper.adjust_steppers(z_adjust, speed)
+        return self.retry_helper.check_retry([p[2] for p in probe_points])
 
 def load_config(config):
     return QuadGantryLevel(config)
