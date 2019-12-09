@@ -50,7 +50,7 @@ class PrinterExtruder:
         pressure_advance = config.getfloat('pressure_advance', 0., minval=0.)
         smooth_time = config.getfloat('pressure_advance_smooth_time',
                                       0.040, above=0., maxval=.200)
-        self.extrude_pos = self.extrude_pa_pos = 0.
+        self.extrude_pos = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -61,7 +61,7 @@ class PrinterExtruder:
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
         toolhead.register_step_generator(self.stepper.generate_steps)
-        self.extruder_set_pressure = ffi_lib.extruder_set_pressure
+        self.extruder_set_smooth_time = ffi_lib.extruder_set_smooth_time
         self._set_pressure_advance(pressure_advance, smooth_time)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
@@ -76,17 +76,16 @@ class PrinterExtruder:
     def update_move_time(self, flush_time):
         self.trapq_free_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
-        old_smooth_time = self.pressure_advance_smooth_time * .5
+        old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
             old_smooth_time = 0.
-        new_smooth_time = smooth_time * .5
+        new_smooth_time = smooth_time
         if not pressure_advance:
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
-        toolhead.note_step_generation_scan_time(new_smooth_time,
-                                                old_delay=old_smooth_time)
-        self.extruder_set_pressure(self.sk_extruder,
-                                   pressure_advance, new_smooth_time)
+        toolhead.note_step_generation_scan_time(new_smooth_time * .5,
+                                                old_delay=old_smooth_time * .5)
+        self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
@@ -142,18 +141,16 @@ class PrinterExtruder:
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
-        is_pa = 0.
+        pressure_advance = 0.
         if axis_r > 0. and (move.axes_d[0] or move.axes_d[1]):
-            is_pa = 1.
-        # Queue movement (x is extruder movement, y is movement with pa)
+            pressure_advance = self.pressure_advance
+        # Queue movement (x is extruder movement, y is pressure advance)
         self.trapq_append(self.trapq, print_time,
                           move.accel_t, move.cruise_t, move.decel_t,
-                          move.start_pos[3], self.extrude_pa_pos, 0.,
-                          1., is_pa, 0.,
+                          move.start_pos[3], 0., 0.,
+                          1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
         self.extrude_pos = move.end_pos[3]
-        if is_pa:
-            self.extrude_pa_pos += move.axes_d[3]
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()

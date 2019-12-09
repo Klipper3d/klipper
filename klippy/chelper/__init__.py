@@ -91,8 +91,8 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_set_pressure(struct stepper_kinematics *sk
-        , double pressure_advance, double half_smooth_time);
+    void extruder_set_smooth_time(struct stepper_kinematics *sk
+        , double smooth_time);
 """
 
 defs_serialqueue = """
