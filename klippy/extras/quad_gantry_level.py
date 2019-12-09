@@ -179,7 +179,7 @@ class QuadGantryLevel:
         # higher than average height means gantry came down less,
         # so have to lift up the corner.
         # (adjust value should be +)
-        z_adjust = [z - z_ave for z in z_corner_heights]
+        z_adjust = [float(z - z_ave) for z in z_corner_heights]
 
         points_message = "z_adjust:\n%s\n" % (
             " ".join(["%s: %.6f" % (z_id, z_adjust[z_id])
