@@ -152,7 +152,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
     struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
     while (last_flush_time >= m->print_time + m->move_t)
         m = list_next_entry(m, node);
-    double force_steps_time = sk->last_move_time + sk->scan_past;
+    double force_steps_time = sk->last_move_time + sk->gen_steps_post_active;
     for (;;) {
         if (last_flush_time >= flush_time)
             return 0;
@@ -162,11 +162,11 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
         if (end > flush_time)
             end = flush_time;
         if (check_active(sk, m)) {
-            if (sk->scan_future && start > last_flush_time) {
+            if (sk->gen_steps_pre_active && start > last_flush_time) {
                 // Must generate steps leading up to stepper activity
                 force_steps_time = start;
-                if (last_flush_time < start - sk->scan_future)
-                    last_flush_time = start - sk->scan_future;
+                if (last_flush_time < start - sk->gen_steps_pre_active)
+                    last_flush_time = start - sk->gen_steps_pre_active;
                 while (m->print_time > last_flush_time)
                     m = list_prev_entry(m, node);
                 continue;
@@ -176,7 +176,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
             if (ret)
                 return ret;
             sk->last_move_time = last_flush_time = end;
-            force_steps_time = end + sk->scan_past;
+            force_steps_time = end + sk->gen_steps_post_active;
         } else if (start < force_steps_time) {
             // Must generates steps just past stepper activity
             if (end > force_steps_time)
@@ -186,7 +186,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
                 return ret;
             last_flush_time = end;
         }
-        if (flush_time + sk->scan_future <= m->print_time + m->move_t)
+        if (flush_time + sk->gen_steps_pre_active <= m->print_time + m->move_t)
             return 0;
         m = list_next_entry(m, node);
     }

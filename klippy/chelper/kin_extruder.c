@@ -82,7 +82,8 @@ extruder_set_smooth_time(struct stepper_kinematics *sk, double smooth_time)
 {
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
     double hst = smooth_time * .5;
-    es->sk.scan_past = es->sk.scan_future = es->half_smooth_time = hst;
+    es->half_smooth_time = hst;
+    es->sk.gen_steps_pre_active = es->sk.gen_steps_post_active = hst;
     if (! hst)
         return;
     es->inv_smooth_time = 1. / smooth_time;

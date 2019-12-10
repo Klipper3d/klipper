@@ -4,7 +4,7 @@
 #include <stdint.h> // int32_t
 
 enum {
-    AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 <<2,
+    AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 << 2,
 };
 
 struct stepper_kinematics;
@@ -17,9 +17,9 @@ struct stepper_kinematics {
     struct stepcompress *sc;
 
     double last_flush_time, last_move_time;
-    double scan_past, scan_future;
     struct trapq *tq;
     int active_flags;
+    double gen_steps_pre_active, gen_steps_post_active;
 
     sk_calc_callback calc_position_cb;
     sk_post_callback post_cb;
