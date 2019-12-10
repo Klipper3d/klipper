@@ -19,13 +19,23 @@ SECTIONS
 {
     .text : {
         . = ALIGN(4);
+        _text_vectortable_start = .;
         KEEP(*(.vector_table))
+        _text_vectortable_end = .;
         *(.text .text.*)
         *(.rodata .rodata*)
     } > rom
 
     . = ALIGN(4);
     _data_flash = .;
+
+#if CONFIG_ARMCM_RAM_VECTORTABLE
+    .ram_vectortable (NOLOAD) : {
+        _ram_vectortable_start = .;
+        . = . + ( _text_vectortable_end - _text_vectortable_start ) ;
+        _ram_vectortable_end = .;
+    } > ram
+#endif
 
     .data : AT (_data_flash)
     {

@@ -99,6 +99,22 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
+// Copy vector table and remap ram so new vector table is used
+static void
+enable_ram_vectortable(void)
+{
+    // Symbols created by armcm_link.lds.S linker script
+    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
+    extern uint32_t _text_vectortable_start;
+
+    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
+    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
+    barrier();
+
+    enable_pclock(SYSCFG_BASE);
+    SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
+}
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif
@@ -187,6 +203,9 @@ armcm_main(void)
     }
 
     SystemInit();
+
+    if (CONFIG_ARMCM_RAM_VECTORTABLE)
+        enable_ram_vectortable();
 
     // Set flash latency
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;

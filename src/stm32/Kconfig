@@ -93,9 +93,9 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103
+    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103
+        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_8000
@@ -109,6 +109,11 @@ config FLASH_START
     default 0x8007000 if STM32_FLASH_START_7000
     default 0x8008000 if STM32_FLASH_START_8000
     default 0x8000000
+
+config ARMCM_RAM_VECTORTABLE
+    bool
+    default y if MACH_STM32F0 && FLASH_START != 0x8000000
+    default n
 
 choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
