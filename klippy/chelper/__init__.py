@@ -11,7 +11,7 @@ import cffi
 # c_helper.so compiling
 ######################################################################
 
-COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
+COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC -mpc64"
                " -flto -fwhole-program -fno-use-linker-plugin"
                " -o %s %s")
 SOURCE_FILES = [
