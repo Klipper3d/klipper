@@ -462,7 +462,14 @@ step counter being off by a multiple of 64 microsteps.)
 
 ### How do I upgrade to the latest software?
 
-The general way to upgrade is to ssh into the Raspberry Pi and run:
+The first step to upgrading the software is to review the latest
+[config changes](Config_Changes.md) document. On occasion, changes are
+made to the software that require users to update their settings as
+part of a software upgrade. It is a good idea to review this document
+prior to upgrading.
+
+When ready to upgrade, the general method is to ssh into the Raspberry
+Pi and run:
 
 ```
 cd ~/klipper
@@ -494,11 +501,12 @@ sudo service klipper restart
 
 If after using this shortcut the software warns about needing to
 reflash the micro-controller or some other unusual error occurs, then
-follow the full upgrade steps outlined above. Note that the RESTART
-and FIRMWARE_RESTART g-code commands do not load new software - the
-above "sudo service klipper restart" and "make flash" commands are
-needed for a software change to take effect.
+follow the full upgrade steps outlined above.
 
-When upgrading the software, be sure to check the
-[config changes](Config_Changes.md) document for information on
-software changes that may require updates to your printer.cfg file.
+If any errors persist then double check the
+[config changes](Config_Changes.md) document, as you may need to
+modify the printer configuration.
+
+Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
+new software - the above "sudo service klipper restart" and "make
+flash" commands are needed for a software change to take effect.
