@@ -162,7 +162,8 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
         if (end > flush_time)
             end = flush_time;
         if (check_active(sk, m)) {
-            if (sk->gen_steps_pre_active && start > last_flush_time) {
+            if (sk->gen_steps_pre_active
+                && start > last_flush_time + .000000001) {
                 // Must generate steps leading up to stepper activity
                 force_steps_time = start;
                 if (last_flush_time < start - sk->gen_steps_pre_active)
