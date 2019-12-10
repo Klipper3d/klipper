@@ -74,8 +74,8 @@ class RotaryDeltaKinematics:
                  for i, ea in enumerate(eangles)]
         self.limit_z = min([az - la for az, la in zip(arm_z, lower_arms)])
         logging.info(
-            "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
-                self.max_z, self.limit_z))
+            "Delta max build height %.2fmm (radius tapered above %.2fmm)"
+            % (self.max_z, self.limit_z))
         self.set_position([0., 0., 0.], ())
     def get_steppers(self, flags=""):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -92,7 +92,8 @@ class RotaryDeltaKinematics:
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
         forcepos = list(self.home_position)
-        forcepos[2] = -1.0
+        min_angles = [-.5 * math.pi] * 3
+        forcepos[2] = self.calibration.actuator_to_cartesian(min_angles)[2]
         homing_state.home_rails(self.rails, forcepos, self.home_position)
     def _motor_off(self, print_time):
         self.limit_xy2 = -1.
