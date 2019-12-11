@@ -59,7 +59,7 @@ homing_retract_dist: 0
 
 The name of the virtual end stop pin is derived from the name of the TMC2130 section. The `homing_retract_dist` setting should be set to zero to disable the second homing move as a second pass is not needed, and attempts to do so are error prone.
 
-ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at `config/example-extras.cfg` for all the available options.
+ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at `config/example-extras/motor-drivers.cfg` for all the available options.
 
 ## Testing of SPI/UART communication
 Now that the stepper driver is configured, let's make sure that Klipper can communicate with the TMC2130 by sending the following extended G-Code command to the printer:

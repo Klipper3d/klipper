@@ -145,7 +145,7 @@ machines (the printer may move faster than OctoPrint can send movement
 commands) when printing directly from OctoPrint. If you wish to run on
 one one of these slower boards anyway, consider using the
 "virtual_sdcard" feature (see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[config/example-extras/macros-and-events.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras/macros-and-events.cfg)
 for details) when printing.
 
 For running on the Beaglebone, see the
@@ -215,7 +215,7 @@ consider using a safe_z_home or homing_override section in the config
 file. If you need to move a stepper for diagnostic or debugging
 purposes then consider adding a force_move section to the config
 file. See
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[example-extras/customized-homing.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras/customized-homing.cfg)
 for further details on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
@@ -380,7 +380,7 @@ temperature is outside of that range then it will also enter a
 Separately, the host software also implements code to check that
 heaters and temperature sensors are functioning correctly. See the
 "verify_heater" section of the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[example-extras/heaters-and-sensors.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras/heaters-and-sensors.cfg)
 for further details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?

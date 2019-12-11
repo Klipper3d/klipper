@@ -6,8 +6,8 @@
 import logging
 
 HINT_THERMAL = """
-See the 'verify_heater' section in config/example-extras.cfg
-for the parameters that control this check.
+See the 'verify_heater' section in config/example-extras/heaters-and-
+sensors.cfg for the parameters that control this check.
 """
 
 class HeaterCheck:

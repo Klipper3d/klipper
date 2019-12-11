@@ -100,5 +100,5 @@ OctoPrint well. Print stalls have been known to occur on complex
 prints (the printer may move faster than OctoPrint can send movement
 commands). If this occurs, consider using the "virtual_sdcard" feature
 (see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[config/example-extras/macros-and-events.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras/macros-and-events.cfg)
 for details) to print directly from Klipper.

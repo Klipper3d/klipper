@@ -19,7 +19,9 @@ Klipper configuration may make it easier to tweak the printer's start
 and end steps as changes do not require re-slicing.
 
 See the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[example-extras/macros-and-events.cfg](https://github.com/
+KevinOConnor/klipper/tree/master/config/example-extras/
+macros-and-events.cfg)
 file for details on defining a gcode_macro.
 
 # Large retraction settings may require tuning Klipper
