@@ -107,7 +107,8 @@ class BedMesh:
                 raise self.gcode.error(
                     "bed_mesh:  Mesh extends outside of the fade range, "
                     "please see the fade_start and fade_end options in"
-                    "example-extras/bed-leveling.cfg. fade distance: %.2f mesh min: %.4f"
+                    "example-extras/bed-leveling.cfg. "
+                    "fade distance: %.2f mesh min: %.4f"
                     "mesh max: %.4f" % (self.fade_dist, mesh_min, mesh_max))
         else:
             self.fade_target = 0.

@@ -122,5 +122,5 @@ Additional notes
   power reset, which would arrange for both the micro-controller and
   stepper motor drivers to be reset together. If using this mechanism,
   one would then need to manually configure the "endstop_phase" config
-  sections (see config/example-extras/customized-homing.cfg for the 
+  sections (see config/example-extras/customized-homing.cfg for the
   details).
