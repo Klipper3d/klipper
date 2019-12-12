@@ -233,6 +233,8 @@ class PrinterHeaters:
         self.sensor_factories = {}
         self.heaters = {}
         self.gcode_id_to_sensor = {}
+        self.available_heaters = []
+        self.available_sensors = []
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
         # Register TURN_OFF_HEATERS command
@@ -250,6 +252,7 @@ class PrinterHeaters:
         # Create heater
         self.heaters[heater_name] = heater = Heater(config, sensor)
         self.register_sensor(config, heater, gcode_id)
+        self.available_heaters.append(config.get_name())
         return heater
     def lookup_heater(self, heater_name):
         if heater_name not in self.heaters:
@@ -276,6 +279,7 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
+        self.available_sensors.append(config.get_name())
     def turn_off_all_heaters(self, print_time):
         for heater in self.heaters.values():
             heater.set_temp(print_time, 0.)
@@ -283,6 +287,9 @@ class PrinterHeaters:
     def cmd_TURN_OFF_HEATERS(self, params):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.turn_off_all_heaters(print_time)
+    def get_status(self, eventtime):
+        return {'available_heaters': self.available_heaters,
+                'available_sensors': self.available_sensors}
 
 def add_printer_objects(config):
     config.get_printer().add_object('heater', PrinterHeaters(config))
