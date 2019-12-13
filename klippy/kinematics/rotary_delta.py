@@ -92,8 +92,9 @@ class RotaryDeltaKinematics:
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
         forcepos = list(self.home_position)
-        min_angles = [-.5 * math.pi] * 3
-        forcepos[2] = self.calibration.actuator_to_cartesian(min_angles)[2]
+        #min_angles = [-.5 * math.pi] * 3
+        #forcepos[2] = self.calibration.actuator_to_cartesian(min_angles)[2]
+        forcepos[2] = -1.
         homing_state.home_rails(self.rails, forcepos, self.home_position)
     def _motor_off(self, print_time):
         self.limit_xy2 = -1.
