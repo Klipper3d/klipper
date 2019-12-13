@@ -10,7 +10,8 @@ All dates in this document are approximate.
 extruder activate_gcode and deactivate_gcode config options have been
 removed.  If these commands (and scripts) are needed then define
 individual [gcode_macro T0] style macros that call the
-ACTIVATE_EXTRUDER command.
+ACTIVATE_EXTRUDER command.  See the config/sample-idex.cfg and
+sample-multi-extruder.cfg files for examples.
 
 20191210: Support for the M206 command has been removed.  Replace with
 calls to SET_GCODE_OFFSET.  If support for M206 is needed, add a
