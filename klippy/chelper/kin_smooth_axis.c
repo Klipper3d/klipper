@@ -12,46 +12,68 @@
 #include "pyhelper.h" // errorf
 #include "trapq.h" // trapq_integrate
 
-// Calculate the definitive integral of the move distance
+// Calculate the definitive integral of the axis position
 static double
-move_integrate_distance(struct move *m, double start, double end)
+move_integrate_distance(struct move *m, double start, double end
+                        , double base, double axis_r)
 {
     double half_v = .5 * m->start_v, sixth_a = (1. / 3.) * m->half_accel;
-    double si = start * start * (half_v + sixth_a * start);
-    double ei = end * end * (half_v + sixth_a * end);
+    double si = start * (base + start * axis_r * (half_v + sixth_a * start));
+    double ei = end * (base + end * axis_r * (half_v + sixth_a * end));
+    return ei - si;
+}
+
+// Calculate the definitive integral of time weighted axis position
+static double
+move_integrate_time_distance(struct move *m, double start, double end
+                             , double base, double axis_r)
+{
+    double half_b = .5 * base, third_v = (1. / 3.) * m->start_v;
+    double eighth_a = .25 * m->half_accel;
+    double si = start * start * (half_b + start * axis_r * (
+                                     third_v + eighth_a * start));
+    double ei = end * end * (half_b + end * axis_r * (
+                                 third_v + eighth_a * end));
     return ei - si;
 }
 
 // Calculate the definitive integral on part of a move
 static double
-move_integrate(struct move *m, int axis, double start, double end)
+move_integrate(struct move *m, int axis, double start, double end
+               , double time_offset)
 {
     if (start < 0.)
         start = 0.;
     if (end > m->move_t)
         end = m->move_t;
-    double base = m->start_pos.axis[axis - 'x'] * (end - start);
-    double integral = move_integrate_distance(m, start, end);
-    return base + integral * m->axes_r.axis[axis - 'x'];
+    double start_pos = m->start_pos.axis[axis - 'x'];
+    double axis_r = m->axes_r.axis[axis - 'x'];
+    double iaxis = move_integrate_distance(m, start, end, start_pos, axis_r);
+    double wgt_iaxis = move_integrate_time_distance(m, start, end
+                                                    , start_pos, axis_r);
+    return wgt_iaxis - time_offset * iaxis;
 }
 
 // Calculate the definitive integral for a range of moves
 static double
-range_integrate(struct move *m, int axis, double start, double end)
+range_integrate(struct move *m, int axis, double move_time, double hst)
 {
-    double res = move_integrate(m, axis, start, end);
+    // Calculate integral for the current move
+    double res = 0., start = move_time - hst, end = move_time + hst;
+    res += move_integrate(m, axis, start, move_time, start);
+    res -= move_integrate(m, axis, move_time, end, end);
     // Integrate over previous moves
     struct move *prev = m;
     while (unlikely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
-        res += move_integrate(prev, axis, start, prev->move_t);
+        res += move_integrate(prev, axis, start, prev->move_t, start);
     }
     // Integrate over future moves
     while (unlikely(end > m->move_t)) {
         end -= m->move_t;
         m = list_next_entry(m, node);
-        res += move_integrate(m, axis, 0., end);
+        res -= move_integrate(m, axis, 0., end, end);
     }
     return res;
 }
@@ -59,17 +81,17 @@ range_integrate(struct move *m, int axis, double start, double end)
 // Calculate average position over smooth_time window
 static inline double
 calc_position(struct move *m, int axis, double move_time
-              , double hst, double inv_smooth_time)
+              , double hst, double inv_half_smooth_time2)
 {
-    double area = range_integrate(m, axis, move_time - hst, move_time + hst);
-    return area * inv_smooth_time;
+    double area = range_integrate(m, axis, move_time, hst);
+    return area * inv_half_smooth_time2;
 }
 
 struct smooth_axis {
     struct stepper_kinematics sk;
     struct stepper_kinematics *orig_sk;
-    double x_half_smooth_time, x_inv_smooth_time;
-    double y_half_smooth_time, y_inv_smooth_time;
+    double x_half_smooth_time, x_inv_half_smooth_time2;
+    double y_half_smooth_time, y_inv_half_smooth_time2;
     struct move m;
 };
 
@@ -85,7 +107,7 @@ smooth_x_calc_position(struct stepper_kinematics *sk, struct move *m
     if (!hst)
         return sa->orig_sk->calc_position_cb(sa->orig_sk, m, move_time);
     sa->m.start_pos.x = calc_position(m, 'x', move_time, hst
-                                      , sa->x_inv_smooth_time);
+                                      , sa->x_inv_half_smooth_time2);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -99,7 +121,7 @@ smooth_y_calc_position(struct stepper_kinematics *sk, struct move *m
     if (!hst)
         return sa->orig_sk->calc_position_cb(sa->orig_sk, m, move_time);
     sa->m.start_pos.y = calc_position(m, 'y', move_time, hst
-                                      , sa->y_inv_smooth_time);
+                                      , sa->y_inv_half_smooth_time2);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -116,10 +138,10 @@ smooth_xy_calc_position(struct stepper_kinematics *sk, struct move *m
     sa->m.start_pos = move_get_coord(m, move_time);
     if (x_hst)
         sa->m.start_pos.x = calc_position(m, 'x', move_time, x_hst
-                                          , sa->x_inv_smooth_time);
+                                          , sa->x_inv_half_smooth_time2);
     if (y_hst)
         sa->m.start_pos.y = calc_position(m, 'y', move_time, y_hst
-                                          , sa->y_inv_smooth_time);
+                                          , sa->y_inv_half_smooth_time2);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -128,16 +150,17 @@ smooth_axis_set_time(struct stepper_kinematics *sk
                      , double smooth_x, double smooth_y)
 {
     struct smooth_axis *sa = container_of(sk, struct smooth_axis, sk);
-    sa->x_half_smooth_time = .5 * smooth_x;
-    sa->x_inv_smooth_time = 1. / smooth_x;
-    sa->y_half_smooth_time = .5 * smooth_y;
-    sa->y_inv_smooth_time = 1. / smooth_y;
+    double x_hst = .5 * smooth_x, y_hst = .5 * smooth_y;
+    sa->x_half_smooth_time = x_hst;
+    sa->x_inv_half_smooth_time2 = 1. / (x_hst * x_hst);
+    sa->y_half_smooth_time = y_hst;
+    sa->y_inv_half_smooth_time2 = 1. / (y_hst * y_hst);
 
     double hst = 0.;
     if (sa->sk.active_flags & AF_X)
-        hst = sa->x_half_smooth_time;
+        hst = x_hst;
     if (sa->sk.active_flags & AF_Y)
-        hst = sa->y_half_smooth_time > hst ? sa->y_half_smooth_time : hst;
+        hst = y_hst > hst ? y_hst : hst;
     sa->sk.gen_steps_pre_active = sa->sk.gen_steps_post_active = hst;
 }
 
