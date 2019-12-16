@@ -46,6 +46,7 @@ CONFIG ../../config/generic-minitronics1.cfg
 # Printers using the atmega1284p
 DICTIONARY atmega1284p.dict
 CONFIG ../../config/generic-melzi.cfg
+CONFIG ../../config/printer-anet-a4-2018.cfg
 CONFIG ../../config/printer-anet-a8-2017.cfg
 CONFIG ../../config/printer-anet-e10-2018.cfg
 CONFIG ../../config/printer-creality-cr10-2017.cfg
