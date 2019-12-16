@@ -222,13 +222,16 @@ is enabled:
 
 The following command is available when "neopixel" or "dotstar" config
 sections are enabled:
-- `SET_LED LED=<config_name> INDEX=<index> RED=<value> GREEN=<value>
-  BLUE=<value>`: This sets the LED output. Each color <value> must be
-  between 0.0 and 1.0. If multiple LED chips are daisy-chained then
-  one may specify INDEX to alter the color of just the given chip (1
-  for the first chip, 2 for the second, etc.). If INDEX is not
-  provided then all LEDs in the daisy-chain will be set to the
-  provided color.
+- `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+  [INDEX=<index>] [TRANSMIT=0]`: This sets the LED output. Each color
+  <value> must be between 0.0 and 1.0. If multiple LED chips are
+  daisy-chained then one may specify INDEX to alter the color of just
+  the given chip (1 for the first chip, 2 for the second, etc.). If
+  INDEX is not provided then all LEDs in the daisy-chain will be set
+  to the provided color. If TRANSMIT=0 is specified then the color
+  change will only be made on the next SET_LED command that does not
+  specify TRANSMIT=0; this may be useful in combination with the INDEX
+  parameter to batch multiple updates in a daisy-chain.
 
 ## Servo Commands
 
