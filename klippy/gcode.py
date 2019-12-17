@@ -399,12 +399,10 @@ class GCodeParser:
             print_time = self.toolhead.get_last_move_time()
             self.respond(self._get_temp(eventtime))
             eventtime = self.reactor.pause(eventtime + 1.)
-    def _set_temp(self, params, is_bed=False, wait=False):
+    def _set_temp(self, params, wait=False):
         temp = self.get_float('S', params, 0.)
         heater = None
-        if is_bed:
-            heater = self.printer.lookup_object('heater_bed', None)
-        elif 'T' in params:
+        if 'T' in params:
             index = self.get_int('T', params, minval=0)
             section = 'extruder'
             if index:
@@ -437,6 +435,9 @@ class GCodeParser:
             if handler is not None:
                 handler(params)
                 return
+        elif cmd == 'M140' and not self.get_float('S', params, 0.):
+            # Don't warn about requests to turn off heaters when not present
+            return
         elif cmd == 'M107' or (cmd == 'M106' and (
                 not self.get_float('S', params, 1.) or self.is_fileinput)):
             # Don't warn about requests to turn off fan when fan not present
@@ -456,7 +457,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M104', 'M109', 'M140', 'M190',
+        'M105', 'M104', 'M109',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
@@ -627,12 +628,6 @@ class GCodeParser:
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self._set_temp(params, wait=True)
-    def cmd_M140(self, params):
-        # Set Bed Temperature
-        self._set_temp(params, is_bed=True)
-    def cmd_M190(self, params):
-        # Set Bed Temperature and Wait
-        self._set_temp(params, is_bed=True, wait=True)
     # G-Code miscellaneous commands
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
