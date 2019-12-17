@@ -10,6 +10,12 @@ import json
 import probe
 import collections
 
+PROFILE_OPTIONS = {
+    'min_x': float, 'max_x': float, 'min_y': float, 'max_y': float,
+    'x_count': int, 'y_count': int, 'mesh_x_pps': int, 'mesh_y_pps': int,
+    'algo': str, 'tension': float
+}
+
 class BedMeshError(Exception):
     pass
 
@@ -363,12 +369,12 @@ class BedMeshCalibrate:
                     for line in z_values if line.strip()]
             self.profiles[name]['mesh_params'] = params = \
                 collections.OrderedDict()
-            for key, value in self.mesh_params.iteritems():
-                if type(value) is int:
+            for key, t in PROFILE_OPTIONS.iteritems():
+                if t is int:
                     params[key] = profile.getint(key)
-                elif type(value) is float:
+                elif t is float:
                     params[key] = profile.getfloat(key)
-                elif type(value) is str:
+                elif t is str:
                     params[key] = profile.get(key)
     def save_profile(self, prof_name):
         if self.probed_matrix is None:
