@@ -390,7 +390,8 @@ class GCodeParser:
         if not out:
             return "T:0"
         return " ".join(out)
-    def bg_temp(self, heater):
+    def wait_for_temperature(self, heater):
+        # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.is_fileinput:
             return
         eventtime = self.reactor.monotonic()
@@ -420,7 +421,7 @@ class GCodeParser:
         print_time = self.toolhead.get_last_move_time()
         heater.set_temp(print_time, temp)
         if wait and temp:
-            self.bg_temp(heater)
+            self.wait_for_temperature(heater)
     # G-Code special command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
