@@ -195,6 +195,7 @@ class PrinterExtruder:
             gcode.respond_info("Extruder %s already active" % (self.name))
             return
         gcode.respond_info("Activating extruder %s" % (self.name))
+        toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.extrude_pos)
         self.printer.send_event("extruder:activate_extruder")
 
