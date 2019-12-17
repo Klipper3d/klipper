@@ -311,15 +311,43 @@ class BedMeshCalibrate:
     def _init_mesh_params(self, config, points):
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
-        self.mesh_params['mesh_x_pps'] = pps[0]
-        self.mesh_params['mesh_y_pps'] = pps[1]
-        self.mesh_params['algo'] = config.get('algorithm', 'lagrange') \
-                                         .strip().lower()
-        if self.mesh_params['algo'] not in self.ALGOS:
+        params = self.mesh_params
+        params['mesh_x_pps'] = pps[0]
+        params['mesh_y_pps'] = pps[1]
+        params['algo'] = config.get('algorithm', 'lagrange').strip().lower()
+        if params['algo'] not in self.ALGOS:
             raise config.error(
                 "bed_mesh: Unknown algorithm <%s>"
                 % (self.mesh_params['algo']))
-        self.mesh_params['tension'] = config.getfloat(
+        # Check the algorithm against the current configuration
+        max_probe_cnt = max(params['x_count'], params['y_count'])
+        min_probe_cnt = min(params['x_count'], params['y_count'])
+        if max(pps[0], pps[1]) == 0:
+            # Interpolation disabled
+            self.mesh_params['algo'] = 'direct'
+        elif params['algo'] == 'lagrange' and max_probe_cnt > 6:
+            # Lagrange interpolation tends to oscillate when using more
+            # than 6 samples
+            raise config.error(
+                "bed_mesh: cannot exceed a probe_count of 6 when using "
+                "langrange interpolation. Configured Probe Count: %d, %d" %
+                (self.mesh_params['x_count'], self.mesh_params['y_count']))
+        elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
+            if max_probe_cnt > 6:
+                raise config.error(
+                    "bed_mesh: invalid probe_count option when using bicubic "
+                    "interpolation.  Combination of 3 points on one axis with "
+                    "more than 6 on another is not permitted. "
+                    "Configured Probe Count: %d, %d" %
+                    (self.mesh_params['x_count'], self.mesh_params['y_count']))
+            else:
+                logging.info(
+                    "bed_mesh: bicubic interpolation with a probe_count of "
+                    "less than 4 points detected.  Forcing lagrange "
+                    "interpolation. Configured Probe Count: %d, %d" %
+                    (self.mesh_params['x_count'], self.mesh_params['y_count']))
+                params['algo'] = 'lagrange'
+        params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
     def _load_storage(self, config):
         stored_profs = config.get_prefix_sections(self.name)
@@ -584,24 +612,18 @@ class ZMesh:
             "bed_mesh: Mesh Min: (%.2f,%.2f) Mesh Max: (%.2f,%.2f)"
             % (self.mesh_x_min, self.mesh_y_min,
                self.mesh_x_max, self.mesh_y_max))
-        if params['algo'] == 'bicubic':
-            self._sample = self._sample_bicubic
-        else:
-            self._sample = self._sample_lagrange
-        # Nummber of points to interpolate per segment
+        # Set the interpolation algorithm
+        interpolation_algos = {
+            'lagrange': self._sample_lagrange,
+            'bicubic': self._sample_bicubic,
+            'direct': self._sample_direct
+        }
+        self._sample = interpolation_algos.get(params['algo'])
+        # Number of points to interpolate per segment
         mesh_x_pps = params['mesh_x_pps']
         mesh_y_pps = params['mesh_y_pps']
         px_cnt = params['x_count']
         py_cnt = params['y_count']
-        if px_cnt == 3 or py_cnt == 3:
-            # a mesh with 3 points on either axis defaults to legrange
-            # upsampling
-            self._sample = self._sample_lagrange
-            self.mesh_params['algo'] = 'lagrange'
-        if mesh_x_pps == 0 and mesh_y_pps == 0:
-            # No interpolation, sample the probed points directly
-            self._sample = self._sample_direct
-            self.mesh_params['algo'] = 'direct'
         self.mesh_x_count = (px_cnt - 1) * mesh_x_pps + px_cnt
         self.mesh_y_count = (py_cnt - 1) * mesh_y_pps + py_cnt
         self.x_mult = mesh_x_pps + 1
