@@ -14,6 +14,14 @@ class PauseResume:
         self.sd_paused = False
         self.pause_command_sent = False
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.pause_gcode = self.resume_gcode = None
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        if config.get('pause_gcode', None) is not None:
+            self.pause_gcode = gcode_macro.load_template(
+                config, 'pause_gcode')
+        if config.get('resume_gcode', None) is not None:
+            self.resume_gcode = gcode_macro.load_template(
+                config, 'resume_gcode')
         self.gcode.register_command("PAUSE", self.cmd_PAUSE)
         self.gcode.register_command("RESUME", self.cmd_RESUME)
         self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE)
@@ -43,11 +51,17 @@ class PauseResume:
         self.send_pause_command()
         self.gcode.run_script_from_command(
             "SAVE_GCODE_STATE STATE=PAUSE_STATE")
+        if self.pause_gcode is not None:
+            script = self.pause_gcode.render()
+            self.gcode.run_script_from_command(script)
         self.is_paused = True
     def cmd_RESUME(self, params):
         if not self.is_paused:
             self.gcode.respond_info("Print is not paused, resume aborted")
             return
+        if self.resume_gcode is not None:
+            script = self.resume_gcode.render()
+            self.gcode.run_script_from_command(script)
         velocity = self.gcode.get_float(
             'VELOCITY', params, self.recover_velocity)
         self.gcode.run_script_from_command(
