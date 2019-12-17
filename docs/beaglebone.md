@@ -5,8 +5,8 @@ Building an OS image
 ====================
 
 Start by installing the
-[latest Stretch IoT](https://beagleboard.org/latest-images) image
-with a 4.14.x-ti kernel (2018-01-28 or later).
+[Debian 9.9 2019-08-03 4GB SD IoT]
+(https://beagleboard.org/latest-images) image.
 One may run the image from either a micro-SD card or from
 builtin eMMC. If using the eMMC, install it to eMMC now by
 following the instructions from the above link.
