@@ -19,9 +19,9 @@ config BOARD_DIRECTORY
 choice
     prompt "Processor model"
     config MACH_LPC1768
-        bool "lpc1768 (100 Mhz)"
+        bool "lpc1768 (100 MHz)"
     config MACH_LPC1769
-        bool "lpc1769 (120 Mhz)"
+        bool "lpc1769 (120 MHz)"
 endchoice
 
 config MCU
