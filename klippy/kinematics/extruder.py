@@ -62,6 +62,8 @@ class PrinterExtruder:
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
             toolhead.set_extruder(self, self.extrude_pos)
+            gcode.register_command("M104", self.cmd_M104)
+            gcode.register_command("M109", self.cmd_M109)
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
@@ -87,7 +89,7 @@ class PrinterExtruder:
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
-        return dict(self.get_heater().get_status(eventtime),
+        return dict(self.heater.get_status(eventtime),
                     pressure_advance=self.pressure_advance,
                     smooth_time=self.pressure_advance_smooth_time)
     def get_name(self):
@@ -143,6 +145,31 @@ class PrinterExtruder:
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
         self.extrude_pos = move.end_pos[3]
+    def cmd_M104(self, params, wait=False):
+        # Set Extruder Temperature
+        toolhead = self.printer.lookup_object('toolhead')
+        gcode = self.printer.lookup_object('gcode')
+        temp = gcode.get_float('S', params, 0.)
+        if 'T' in params:
+            index = gcode.get_int('T', params, minval=0)
+            section = 'extruder'
+            if index:
+                section = 'extruder%d' % (index,)
+            extruder = self.printer.lookup_object(section, None)
+            if extruder is None:
+                if temp <= 0.:
+                    return
+                raise gcode.error("Extruder not configured")
+        else:
+            extruder = toolhead.get_extruder()
+        print_time = toolhead.get_last_move_time()
+        heater = extruder.get_heater()
+        heater.set_temp(print_time, temp)
+        if wait and temp:
+            gcode.wait_for_temperature(heater)
+    def cmd_M109(self, params):
+        # Set Extruder Temperature and Wait
+        self.cmd_M104(params, wait=True)
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()

@@ -399,27 +399,6 @@ class GCodeParser:
             print_time = self.toolhead.get_last_move_time()
             self.respond(self._get_temp(eventtime))
             eventtime = self.reactor.pause(eventtime + 1.)
-    def _set_temp(self, params, wait=False):
-        temp = self.get_float('S', params, 0.)
-        heater = None
-        if 'T' in params:
-            index = self.get_int('T', params, minval=0)
-            section = 'extruder'
-            if index:
-                section = 'extruder%d' % (index,)
-            extruder = self.printer.lookup_object(section, None)
-            if extruder is not None:
-                heater = extruder.get_heater()
-        else:
-            heater = self.toolhead.get_extruder().get_heater()
-        if heater is None:
-            if temp > 0.:
-                self.respond_error("Heater not configured")
-            return
-        print_time = self.toolhead.get_last_move_time()
-        heater.set_temp(print_time, temp)
-        if wait and temp:
-            self.wait_for_temperature(heater)
     # G-Code special command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
@@ -435,7 +414,7 @@ class GCodeParser:
             if handler is not None:
                 handler(params)
                 return
-        elif cmd == 'M140' and not self.get_float('S', params, 0.):
+        elif cmd in ['M140', 'M104'] and not self.get_float('S', params, 0.):
             # Don't warn about requests to turn off heaters when not present
             return
         elif cmd == 'M107' or (cmd == 'M106' and (
@@ -457,8 +436,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M104', 'M109',
-        'M112', 'M115', 'IGNORE', 'GET_POSITION',
+        'M105', 'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -613,7 +591,7 @@ class GCodeParser:
             speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
-    # G-Code temperature commands
+    # G-Code miscellaneous commands
     cmd_M105_when_not_ready = True
     def cmd_M105(self, params):
         # Get Extruder Temperature
@@ -622,13 +600,6 @@ class GCodeParser:
             self.ack(msg)
         else:
             self.respond(msg)
-    def cmd_M104(self, params):
-        # Set Extruder Temperature
-        self._set_temp(params)
-    def cmd_M109(self, params):
-        # Set Extruder Temperature and Wait
-        self._set_temp(params, wait=True)
-    # G-Code miscellaneous commands
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
         # Emergency Stop
