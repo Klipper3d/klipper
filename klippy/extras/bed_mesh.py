@@ -434,7 +434,7 @@ class BedMeshCalibrate:
         for key in options:
             name = self.gcode.get_str(key, params, None)
             if name is not None:
-                if name == "default" and key != 'LOAD':
+                if name == "default" and key == 'SAVE':
                     self.gcode.respond_info(
                         "Profile 'default' is reserved, please chose"
                         " another profile name.")
