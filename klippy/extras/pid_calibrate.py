@@ -28,9 +28,9 @@ class PIDCalibrate:
         old_control = heater.set_control(calibrate)
         try:
             heater.set_temp(print_time, target)
-        except heater.error as e:
+        except self.printer.command_error as e:
             heater.set_control(old_control)
-            raise self.gcode.error(str(e))
+            raise
         self.gcode.bg_temp(heater)
         heater.set_control(old_control)
         if write_file:

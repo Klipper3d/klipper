@@ -15,11 +15,7 @@ MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 
-class error(Exception):
-    pass
-
 class Heater:
-    error = error
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
@@ -103,8 +99,9 @@ class Heater:
         return self.smooth_time
     def set_temp(self, print_time, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
-            raise error("Requested temperature (%.1f) out of range (%.1f:%.1f)"
-                        % (degrees, self.min_temp, self.max_temp))
+            raise self.printer.command_error(
+                "Requested temperature (%.1f) out of range (%.1f:%.1f)"
+                % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):

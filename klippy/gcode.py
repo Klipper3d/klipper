@@ -418,10 +418,7 @@ class GCodeParser:
                 self.respond_error("Heater not configured")
             return
         print_time = self.toolhead.get_last_move_time()
-        try:
-            heater.set_temp(print_time, temp)
-        except heater.error as e:
-            raise self.error(str(e))
+        heater.set_temp(print_time, temp)
         if wait and temp:
             self.bg_temp(heater)
     # G-Code special command handlers
