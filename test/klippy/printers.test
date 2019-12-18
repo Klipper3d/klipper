@@ -103,6 +103,10 @@ CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 
+# Printers using the stm32f446
+DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-fysetc-s6.cfg
+
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
 CONFIG ../../config/generic-cramps.cfg
