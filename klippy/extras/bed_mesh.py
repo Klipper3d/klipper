@@ -300,20 +300,17 @@ class BedMeshCalibrate:
         if probe is not None:
             x_offset, y_offset = probe.get_offsets()[:2]
         print_func("bed_mesh: generated points\nIndex"
-                   " |    Automatic    |   Manual")
+                   " |  Tool Adjusted  |   Probe")
         for i, (x, y) in enumerate(self.points):
-            auto_pt = "(%.1f, %.1f)" % (x - x_offset, y - y_offset)
-            man_pt = "(%.1f, %.1f)" % (x, y)
+            adj_pt = "(%.1f, %.1f)" % (x - x_offset, y - y_offset)
+            mesh_pt = "(%.1f, %.1f)" % (x, y)
             print_func(
-                "  %-4d| %-16s| %s" % (i, auto_pt, man_pt))
+                "  %-4d| %-16s| %s" % (i, adj_pt, mesh_pt))
         if self.relative_reference_index is not None:
             rri = self.relative_reference_index
             print_func(
-                "bed_mesh: relative_reference_index %d is (%.2f, %.2f),"
-                " (%.2f, %.2f)" %
-                (rri, self.points[rri][0] - x_offset,
-                 self.points[rri][1] - y_offset,
-                 self.points[rri][0], self.points[rri][1]))
+                "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
+                % (rri, self.points[rri][0], self.points[rri][1]))
     def _init_mesh_params(self, config, points):
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
