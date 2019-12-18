@@ -1,5 +1,7 @@
 # Klipper configuration for the MTW Create Printer 
 # See the example.cfg file for a description of available parameters.
+# This file contains common pin mappings for RAMBo boards. To use this
+# config, the firmware should be compiled for the AVR atmega2560.
 
 [stepper_x]
 step_pin: PC0
@@ -113,7 +115,7 @@ speed: 50
 horizontal_move_z: 5
 min_point: 5,5
 max_point: 225,265
-probe_count: 3,3
+probe_count: 5,7
 fade_start: 1.0
 fade_end: 0.0
 #fade_target:
