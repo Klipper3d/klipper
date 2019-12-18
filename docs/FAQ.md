@@ -20,8 +20,8 @@ Frequently asked questions
 17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
 19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-20. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
-21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+20. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+21. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -442,9 +442,34 @@ terminal tab and issue a FIRMWARE_RESTART command to clear the Klipper
 error state.  After completing this sequence, the previous heating
 request will be canceled and a new print may be started.
 
+### Can I find out whether the printer has lost steps?
+
+In a way, yes. Home the printer, issue a `GET_POSITION` command, run
+your print, home again and issue another `GET_POSITION`. Then compare
+the values in the `mcu:` line.
+
+This might be helpful to tune settings like stepper motor currents,
+accelerations and speeds without needing to actually print something
+and waste filament: just run some high-speed moves in between the
+`GET_POSITION` commands.
+
+Note that endstop switches themselves tend to trigger at slightly
+different positions, so a difference of a couple of microsteps is
+likely the result of endstop inaccuracies. A stepper motor itself can
+only lose steps in increments of 4 full steps. (So, if one is using 16
+microsteps, then a lost step on the stepper would result in the "mcu:"
+step counter being off by a multiple of 64 microsteps.)
+
 ### How do I upgrade to the latest software?
 
-The general way to upgrade is to ssh into the Raspberry Pi and run:
+The first step to upgrading the software is to review the latest
+[config changes](Config_Changes.md) document. On occasion, changes are
+made to the software that require users to update their settings as
+part of a software upgrade. It is a good idea to review this document
+prior to upgrading.
+
+When ready to upgrade, the general method is to ssh into the Raspberry
+Pi and run:
 
 ```
 cd ~/klipper
@@ -476,29 +501,12 @@ sudo service klipper restart
 
 If after using this shortcut the software warns about needing to
 reflash the micro-controller or some other unusual error occurs, then
-follow the full upgrade steps outlined above. Note that the RESTART
-and FIRMWARE_RESTART g-code commands do not load new software - the
-above "sudo service klipper restart" and "make flash" commands are
-needed for a software change to take effect.
+follow the full upgrade steps outlined above.
 
-When upgrading the software, be sure to check the
-[config changes](Config_Changes.md) document for information on
-software changes that may require updates to your printer.cfg file.
+If any errors persist then double check the
+[config changes](Config_Changes.md) document, as you may need to
+modify the printer configuration.
 
-### Can I find out whether the printer has lost steps?
-
-In a way, yes. Home the printer, issue a `GET_POSITION` command, run
-your print, home again and issue another `GET_POSITION`. Then compare
-the values in the `mcu:` line.
-
-This might be helpful to tune settings like stepper motor currents,
-accelerations and speeds without needing to actually print something
-and waste filament: just run some high-speed moves in between the
-`GET_POSITION` commands.
-
-Note that endstop switches themselves tend to trigger at slightly
-different positions, so a difference of a couple of microsteps is
-likely the result of endstop inaccuracies. A stepper motor itself can
-only lose steps in increments of 4 full steps. (So, if one is using 16
-microsteps, then a lost step on the stepper would result in the "mcu:"
-step counter being off by a multiple of 64 microsteps.)
+Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
+new software - the above "sudo service klipper restart" and "make
+flash" commands are needed for a software change to take effect.

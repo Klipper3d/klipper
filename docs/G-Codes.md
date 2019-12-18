@@ -9,7 +9,6 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
-- Select tool: `T<index>`
 - Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
@@ -44,7 +43,7 @@ If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
 [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
 for details). For example, one might use this to implement: `G12`,
-`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
+`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
 
 ## G-Code SD card commands
 
@@ -83,8 +82,6 @@ config section is enabled:
 
 The following standard G-Code commands are currently available, but
 using them is not recommended:
-- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>]` (Use
-  SET_GCODE_OFFSET instead.)
 - Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
 
 # Extended G-Code Commands
@@ -155,6 +152,9 @@ The following standard commands are supported:
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
+- `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with
+  multiple extruders this command is used to change the active
+  extruder.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
@@ -222,13 +222,16 @@ is enabled:
 
 The following command is available when "neopixel" or "dotstar" config
 sections are enabled:
-- `SET_LED LED=<config_name> INDEX=<index> RED=<value> GREEN=<value>
-  BLUE=<value>`: This sets the LED output. Each color <value> must be
-  between 0.0 and 1.0. If multiple LED chips are daisy-chained then
-  one may specify INDEX to alter the color of just the given chip (1
-  for the first chip, 2 for the second, etc.). If INDEX is not
-  provided then all LEDs in the daisy-chain will be set to the
-  provided color.
+- `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+  [INDEX=<index>] [TRANSMIT=0]`: This sets the LED output. Each color
+  <value> must be between 0.0 and 1.0. If multiple LED chips are
+  daisy-chained then one may specify INDEX to alter the color of just
+  the given chip (1 for the first chip, 2 for the second, etc.). If
+  INDEX is not provided then all LEDs in the daisy-chain will be set
+  to the provided color. If TRANSMIT=0 is specified then the color
+  change will only be made on the next SET_LED command that does not
+  specify TRANSMIT=0; this may be useful in combination with the INDEX
+  parameter to batch multiple updates in a daisy-chain.
 
 ## Servo Commands
 

@@ -34,6 +34,7 @@ CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
@@ -45,6 +46,7 @@ CONFIG ../../config/generic-minitronics1.cfg
 # Printers using the atmega1284p
 DICTIONARY atmega1284p.dict
 CONFIG ../../config/generic-melzi.cfg
+CONFIG ../../config/printer-anet-a4-2018.cfg
 CONFIG ../../config/printer-anet-a8-2017.cfg
 CONFIG ../../config/printer-anet-e10-2018.cfg
 CONFIG ../../config/printer-creality-cr10-2017.cfg
@@ -86,20 +88,24 @@ CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
 
 # Printers using the stm32f103
-DICTIONARY stm32f1.dict
+DICTIONARY stm32f103.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
 CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 
 # Printers using the stm32f103 via serial
-DICTIONARY stm32f1-serial.dict
+DICTIONARY stm32f103-serial.dict
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
+
+# Printers using the stm32f446
+DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-fysetc-s6.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict

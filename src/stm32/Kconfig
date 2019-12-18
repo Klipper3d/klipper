@@ -112,11 +112,11 @@ config FLASH_START
 choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
     config STM32_CLOCK_REF_8M
-        bool "8Mhz crystal"
+        bool "8 MHz crystal"
     config STM32_CLOCK_REF_12M
-        bool "12Mhz crystal"
+        bool "12 MHz crystal"
     config STM32_CLOCK_REF_16M
-        bool "16Mhz crystal"
+        bool "16 MHz crystal"
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice

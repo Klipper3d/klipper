@@ -60,8 +60,11 @@ class PrinterNeoPixel:
         blue = self.gcode.get_float('BLUE', params, 0., minval=0., maxval=1.)
         index = self.gcode.get_int('INDEX', params, None,
                                    minval=1, maxval=self.chain_count)
+        transmit = self.gcode.get_int('TRANSMIT', params, 1)
         self.update_color_data(red, green, blue, index)
         # Send command
+        if not transmit:
+            return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.send_data(self.mcu.print_time_to_clock(print_time))
 

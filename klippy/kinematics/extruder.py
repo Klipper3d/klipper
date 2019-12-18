@@ -41,16 +41,10 @@ class PrinterExtruder:
             'max_extrude_only_distance', 50., minval=0.)
         self.instant_corner_v = config.getfloat(
             'instantaneous_corner_velocity', 1., minval=0.)
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
-        self.activate_gcode = gcode_macro.load_template(
-            config, 'activate_gcode', '')
-        self.deactivate_gcode = gcode_macro.load_template(
-            config, 'deactivate_gcode', '')
         self.pressure_advance = self.pressure_advance_smooth_time = 0.
         pressure_advance = config.getfloat('pressure_advance', 0., minval=0.)
         smooth_time = config.getfloat('pressure_advance_smooth_time',
                                       0.040, above=0., maxval=.200)
-        self.extrude_pos = self.extrude_pa_pos = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -61,48 +55,46 @@ class PrinterExtruder:
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
         toolhead.register_step_generator(self.stepper.generate_steps)
-        self.extruder_set_pressure = ffi_lib.extruder_set_pressure
+        self.extruder_set_smooth_time = ffi_lib.extruder_set_smooth_time
         self._set_pressure_advance(pressure_advance, smooth_time)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
-            toolhead.set_extruder(self, self.extrude_pos)
+            toolhead.set_extruder(self, 0.)
+            gcode.register_command("M104", self.cmd_M104)
+            gcode.register_command("M109", self.cmd_M109)
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
+                                   self.name, self.cmd_ACTIVATE_EXTRUDER,
+                                   desc=self.cmd_ACTIVATE_EXTRUDER_help)
     def update_move_time(self, flush_time):
         self.trapq_free_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
-        old_smooth_time = self.pressure_advance_smooth_time * .5
+        old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
             old_smooth_time = 0.
-        new_smooth_time = smooth_time * .5
+        new_smooth_time = smooth_time
         if not pressure_advance:
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
-        toolhead.note_step_generation_scan_time(new_smooth_time,
-                                                old_delay=old_smooth_time)
-        self.extruder_set_pressure(self.sk_extruder,
-                                   pressure_advance, new_smooth_time)
+        toolhead.note_step_generation_scan_time(new_smooth_time * .5,
+                                                old_delay=old_smooth_time * .5)
+        self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
-        return dict(self.get_heater().get_status(eventtime),
+        return dict(self.heater.get_status(eventtime),
                     pressure_advance=self.pressure_advance,
                     smooth_time=self.pressure_advance_smooth_time)
     def get_name(self):
         return self.name
     def get_heater(self):
         return self.heater
-    def set_active(self, print_time, is_active):
-        return self.extrude_pos
-    def get_activate_gcode(self, is_active):
-        if is_active:
-            return self.activate_gcode.render()
-        return self.deactivate_gcode.render()
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
@@ -142,18 +134,40 @@ class PrinterExtruder:
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
-        is_pa = 0.
+        pressure_advance = 0.
         if axis_r > 0. and (move.axes_d[0] or move.axes_d[1]):
-            is_pa = 1.
-        # Queue movement (x is extruder movement, y is movement with pa)
+            pressure_advance = self.pressure_advance
+        # Queue movement (x is extruder movement, y is pressure advance)
         self.trapq_append(self.trapq, print_time,
                           move.accel_t, move.cruise_t, move.decel_t,
-                          move.start_pos[3], self.extrude_pa_pos, 0.,
-                          1., is_pa, 0.,
+                          move.start_pos[3], 0., 0.,
+                          1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
-        self.extrude_pos = move.end_pos[3]
-        if is_pa:
-            self.extrude_pa_pos += move.axes_d[3]
+    def cmd_M104(self, params, wait=False):
+        # Set Extruder Temperature
+        toolhead = self.printer.lookup_object('toolhead')
+        gcode = self.printer.lookup_object('gcode')
+        temp = gcode.get_float('S', params, 0.)
+        if 'T' in params:
+            index = gcode.get_int('T', params, minval=0)
+            section = 'extruder'
+            if index:
+                section = 'extruder%d' % (index,)
+            extruder = self.printer.lookup_object(section, None)
+            if extruder is None:
+                if temp <= 0.:
+                    return
+                raise gcode.error("Extruder not configured")
+        else:
+            extruder = toolhead.get_extruder()
+        print_time = toolhead.get_last_move_time()
+        heater = extruder.get_heater()
+        heater.set_temp(print_time, temp)
+        if wait and temp:
+            gcode.wait_for_temperature(heater)
+    def cmd_M109(self, params):
+        # Set Extruder Temperature and Wait
+        self.cmd_M104(params, wait=True)
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
     def cmd_default_SET_PRESSURE_ADVANCE(self, params):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
@@ -171,11 +185,20 @@ class PrinterExtruder:
                    pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg, log=False)
+    cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
+    def cmd_ACTIVATE_EXTRUDER(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        toolhead = self.printer.lookup_object('toolhead')
+        if toolhead.get_extruder() is self:
+            gcode.respond_info("Extruder %s already active" % (self.name))
+            return
+        gcode.respond_info("Activating extruder %s" % (self.name))
+        toolhead.flush_step_generation()
+        toolhead.set_extruder(self, self.stepper.get_commanded_position())
+        self.printer.send_event("extruder:activate_extruder")
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
-    def set_active(self, print_time, is_active):
-        return 0.
     def update_move_time(self, flush_time):
         pass
     def check_move(self, move):

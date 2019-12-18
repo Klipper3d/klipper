@@ -160,6 +160,13 @@ The following are common printer attributes:
 - `printer.toolhead.homed_axes`: The current cartesian axes considered
   to be in a "homed" state. This is a string containing one or more of
   "x", "y", "z".
+- `printer.heater.available_heaters`: Returns a list of all currently
+  available heaters by their full config section names,
+  e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
+- `printer.heater.available_sensors`: Returns a list of all currently
+  available temperature sensors by their full config section names,
+  e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
+  "temperature_sensor electronics_temp"]`.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
