@@ -11,8 +11,7 @@ import menu
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
-    'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306,
-    'st7567': uc1701.ST7567, 'sh1106': uc1701.SH1106,
+    'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
 }
 M73_TIMEOUT = 5.
 

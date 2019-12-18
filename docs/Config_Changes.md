@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20191218: The display config section no longer supports "lcd_type:
+st7567".  Use the "uc1701" display type instead - set "lcd_type:
+uc1701" and change the "rs_pin: some_pin" to "rst_pin: some_pin".  It
+may also be necessary to add a "contrast: 60" config setting.
+
 20191210: The builtin T0, T1, T2, ... commands have been removed.  The
 extruder activate_gcode and deactivate_gcode config options have been
 removed.  If these commands (and scripts) are needed then define

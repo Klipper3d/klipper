@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
-# Copyright (C) 2019  Dmitry Budaev <condemil@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -186,39 +185,6 @@ class UC1701(DisplayBase):
         self.send([0xA5]) # display all
         self.send([0xA4]) # normal display
         self.flush()
-
-# The ST7567 is a "4-wire" SPI display device
-class ST7567(DisplayBase):
-    def __init__(self, config):
-        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
-        self.contrast = config.getint('contrast', 60, minval=0, maxval=63)
-        ppins = config.get_printer().lookup_object('pins')
-        rs_pin = config.get('rs_pin')
-        self.reset_pin = ppins.setup_pin('digital_out', rs_pin)
-        self.reset_pin.setup_start_value(start_value=1., shutdown_value=0.,
-                                         is_static=False)
-    def init(self):
-        # Send init commands
-        init_cmds = [0xE2, # System reset
-                     0x40, # Set display to start at line 0
-                     0xA0, # Set SEG direction
-                     0xC8, # Set COM Direction
-                     0xA2, # Set Bias = 1/9
-                     0x2F, # Boost, regulator, follower on
-                     0xF8, # Set booster ratio
-                     0x00, # Booster ratio value (4x)
-                     0x23, # Set regulation ratio (3)
-                     0x81, # Set Electronic Volume
-                     self.contrast, # Electronic Volume value
-                     # 0xAC, # Set static indicator off
-                     # 0x00, # NOP
-                     0xA6, # Disable Inverse
-                     0xAF] # Set display enable
-        self.send(init_cmds)
-        self.send([0xA5]) # display all
-        self.send([0xA4]) # normal display
-        self.flush()
-        logging.info("st7567 initialized")
 
 # The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(DisplayBase):
