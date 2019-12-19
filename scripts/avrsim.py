@@ -71,6 +71,46 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
             self.pos = 0
         return self.delay
 
+class VirtualStepperMotorPin(pysimulavr.Pin):
+    def __init__(self, motor, dev, name):
+        pysimulavr.Pin.__init__(self)
+        self.motor = motor
+        self.name = name
+        self.ishigh = False
+        self.changed = False
+        self.__net = pysimulavr.Net()
+        self.__net.Add(self)
+        self.__net.Add(dev.GetPin(name))
+
+    def SetInState(self, pin):
+        pysimulavr.Pin.SetInState(self, pin)
+        ishigh = (pin.outState == self.HIGH)
+        self.changed = (ishigh != self.ishigh)
+        self.ishigh = ishigh
+        # print "Pin [%s] = %s" % (self.name, self.ishigh)
+        self.motor.update()
+        self.changed = False
+
+class VirtualStepperMotor:
+    def __init__(self, axisname):
+        self.axisname = axisname
+        self.axispos = 0
+        self.ready = False
+    def connect(self, dev, step, dir, en):
+        self.step = VirtualStepperMotorPin(self, dev, step)
+        self.dir = VirtualStepperMotorPin(self, dev, dir)
+        self.en = VirtualStepperMotorPin(self, dev, en)
+        self.ready = True
+    def update(self):
+        if not self.ready:
+            return
+        if self.en.ishigh:
+            return
+        if self.step.changed and self.step.ishigh:
+            if self.dir.ishigh: self.axispos -= 1
+            else: self.axispos += 1
+            print "Step... " + self.axisname + str(self.axispos)
+
 # Support for creating VCD trace files
 class Tracing:
     def __init__(self, filename, signals):
@@ -174,6 +214,8 @@ def main():
     deffile = os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".vcd"
     opts.add_option("-f", "--tracefile", type="string", dest="tracefile",
                     default=deffile, help="filename to write signal trace to")
+    opts.add_option("-M", action="store_true", dest="motorsim",
+                    help="enable stepper motor simulation")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
@@ -211,6 +253,16 @@ def main():
     net2 = pysimulavr.Net()
     net2.Add(dev.GetPin("D0"))
     net2.Add(txpin)
+
+    if options.motorsim:
+        mX = VirtualStepperMotor("X")
+        mX.connect(dev, "A5", "A4", "A1")
+        mY = VirtualStepperMotor("Y")
+        mY.connect(dev, "A3", "A2", "A1")
+        mZ = VirtualStepperMotor("Z")
+        mZ.connect(dev, "C7", "C6", "A1")
+        mE = VirtualStepperMotor("E")
+        mE.connect(dev, "C3", "C2", "A1")
 
     # Display start banner
     msg = "Starting AVR simulation: machine=%s speed=%d\n" % (proc, speed)
