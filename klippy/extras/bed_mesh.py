@@ -10,6 +10,7 @@ import json
 import probe
 import collections
 
+PROFILE_VERSION = 1
 PROFILE_OPTIONS = {
     'min_x': float, 'max_x': float, 'min_y': float, 'max_y': float,
     'x_count': int, 'y_count': int, 'mesh_x_pps': int, 'mesh_y_pps': int,
@@ -88,8 +89,7 @@ class BedMesh:
         self.gcode.set_move_transform(self)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.bmc.print_generated_points(logging.info)
-        self.bmc.load_default_profile()
+        self.bmc.handle_ready()
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -224,6 +224,7 @@ class BedMeshCalibrate:
         self.probe_helper.use_xy_offsets(True)
         # setup persistent storage
         self.profiles = {}
+        self.incompatible_profiles = []
         self._load_storage(config)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -232,6 +233,11 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
+    def handle_ready(self):
+        self.print_generated_points(logging.info)
+        self._check_incompatible_profiles()
+        if "default" in self.profiles:
+            self.load_profile("default")
     def _generate_points(self, config):
         self.radius = config.getfloat('mesh_radius', None, above=0.)
         if self.radius is not None:
@@ -352,6 +358,17 @@ class BedMeshCalibrate:
                 params['algo'] = 'lagrange'
         params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
+    def _check_incompatible_profiles(self):
+        if self.incompatible_profiles:
+            configfile = self.printer.lookup_object('configfile')
+            for profile in self.incompatible_profiles:
+                configfile.remove_section('bed_mesh ' + profile)
+            self.gcode.respond_info(
+                "The following incompatible profiles have been detected\n"
+                "and are scheduled for removal:\n%s\n"
+                "The SAVE_CONFIG command will update the printer config\n"
+                "file and restart the printer" %
+                (('\n').join(self.incompatible_profiles)))
     def _load_storage(self, config):
         stored_profs = config.get_prefix_sections(self.name)
         # Remove primary bed_mesh section, as it is not a stored profile
@@ -359,6 +376,14 @@ class BedMeshCalibrate:
                         if s.get_name() != self.name]
         for profile in stored_profs:
             name = profile.get_name().split(' ', 1)[1]
+            version = profile.getint('version', 0)
+            if version != PROFILE_VERSION:
+                logging.info(
+                    "bed_mesh: Profile [%s] not compatible with this version\n"
+                    "of bed_mesh.  Profile Version: %d Current Version: %d "
+                    % (name, version, PROFILE_VERSION))
+                self.incompatible_profiles.append(name)
+                continue
             self.profiles[name] = {}
             z_values = profile.get('points').split('\n')
             self.profiles[name]['points'] = \
@@ -388,6 +413,7 @@ class BedMeshCalibrate:
             for p in line:
                 z_values += "%.6f, " % p
             z_values = z_values[:-2]
+        configfile.set(cfg_name, 'version', PROFILE_VERSION)
         configfile.set(cfg_name, 'points', z_values)
         for key, value in self.mesh_params.iteritems():
             configfile.set(cfg_name, key, value)
@@ -424,9 +450,6 @@ class BedMeshCalibrate:
         else:
             self.gcode.respond_info(
                 "No profile named [%s] to remove" % (prof_name))
-    def load_default_profile(self):
-        if "default" in self.profiles:
-            self.load_profile("default")
     cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
     def cmd_BED_MESH_PROFILE(self, params):
         options = collections.OrderedDict({
