@@ -37,7 +37,8 @@ class BedScrews:
             raise config.error("bed_screws: Must have at least three screws")
         self.states = {'adjust': screws, 'fine': fine_adjust}
         self.speed = config.getfloat('speed', 50., above=0.)
-        self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
+        self.probe_speed = config.getfloat('probe_speed', 5., above=0.)
+        self.lift_speed = config.getfloat('z_hop_speed', 20., above=0.)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.probe_z = config.getfloat('probe_height', 0.)
         # Register command
@@ -58,7 +59,7 @@ class BedScrews:
         self.move((None, None, self.horizontal_move_z), self.lift_speed)
         coord, name = self.states[state][screw]
         self.move((coord[0], coord[1], self.horizontal_move_z), self.speed)
-        self.move((coord[0], coord[1], self.probe_z), self.lift_speed)
+        self.move((coord[0], coord[1], self.probe_z), self.probe_speed)
         # Update state
         self.state = state
         self.current_screw = screw
