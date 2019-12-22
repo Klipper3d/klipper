@@ -345,13 +345,14 @@ class ProbePointsHelper:
         # Lookup objects
         probe = self.printer.lookup_object('probe', None)
         method = self.gcode.get_str('METHOD', params, 'automatic').lower()
-        self.retract_speed = probe.retract_speed
         self.results = []
         if probe is None or method != 'automatic':
             # Manual probe
             self.probe_offsets = (0., 0., 0.)
             self._manual_probe_start()
             return
+        else:
+            self.retract_speed = probe.retract_speed
         # Perform automatic probing
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
