@@ -114,7 +114,8 @@ class BLTouchEndstopWrapper:
             'test_sensor_before_use', True)
         self.start_mcu_pos = []
         # Calculate user requested minimum cmd time
-        self.min_cmd_time = max(config.getfloat('min_cmd_time', 0.650), CMD_TIME)
+        self.min_cmd_time = max(config.getfloat('min_cmd_time', 0.650),
+                                CMD_TIME)
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper

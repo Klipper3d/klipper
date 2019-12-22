@@ -124,7 +124,7 @@ class PrinterProbe:
             tmp_deploy = need_deploy and (len(positions) == 0)
             tmp_stow = need_stow and (len(positions) == sample_count - 1)
             # Probe position
-            pos = self._probe(speed, 
+            pos = self._probe(speed,
                               need_deploy = tmp_deploy, need_stow = tmp_stow)
             positions.append(pos)
             # Check samples tolerance
@@ -363,7 +363,8 @@ class ProbePointsHelper:
             if done:
                 probe.finalize_probe()
                 break
-            pos = probe.run_probe(params, need_deploy = first, need_stow = False)
+            pos = probe.run_probe(params, need_deploy = first,
+                                  need_stow = False)
             first = False
             self.results.append(pos)
     def _manual_probe_start(self):

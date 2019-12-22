@@ -40,7 +40,7 @@ class Homing:
                     need_deploy=True, need_stow=True):
         probe_instance, name = endstops[0]
         # This logic only on an axis relevant to a BLTouch
-		# ('z', 'z1', etc. or 'probe')
+        # ('z', 'z1', etc. or 'probe')
         bltouch = (name[0] == 'z') or (name == 'probe')
         if bltouch:
             pwroff = probe_instance.heaters_off

@@ -244,7 +244,7 @@ class PrinterRail:
             'speed', 'position_endstop', 'retract_speed', 'retract_dist',
             'positive_dir', 'second_homing_speed'])(
                 self.homing_speed, self.position_endstop,
-                self.homing_retract_speed, self.homing_retract_dist, 
+                self.homing_retract_speed, self.homing_retract_dist,
                 self.homing_positive_dir, self.second_homing_speed)
         return homing_info
     def get_steppers(self):
