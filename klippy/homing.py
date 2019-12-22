@@ -43,7 +43,8 @@ class Homing:
         # ('z', 'z1', etc. or 'probe')
         bltouch = (name[0] == 'z') or (name == 'probe')
         if bltouch:
-            pwroff = probe_instance.heaters_off
+            pwroff = (hasattr(probe_instance, 'heaters_off') and
+                      probe_instance.heaters_off)
             if pwroff:
                 p_heaters = self.printer.lookup_object('heater')
                 heaters = p_heaters.heaters
