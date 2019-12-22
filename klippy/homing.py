@@ -52,7 +52,10 @@ class Homing:
                 for heater in heaters.values():
                     heater.target_store = heater.target_temp
                     heater.set_temp(print_time, 0.)
-            hsmode = probe_instance.hsmode
+            if hasattr(probe_instance, 'hsmode'):
+                hsmode = probe_instance.hsmode
+            else:
+                hsmode = 0
             if (hsmode < 2) or need_deploy:
                 probe_instance.deploy_probe()
         # Notify endstops of upcoming home
