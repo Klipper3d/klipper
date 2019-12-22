@@ -148,7 +148,8 @@ class PrinterProbe:
     def finalize_probe(self):
         endstops = [(self.mcu_probe, "probe")]
         probe_instance, name = endstops[0]
-        probe_instance.stow_probe()
+        if hasattr(probe_instance, 'stow_probe'):
+            probe_instance.stow_probe()
         error = None
         for mcu_endstop, name in endstops:
             try:
