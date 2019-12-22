@@ -133,7 +133,8 @@ class BLTouchEndstopWrapper:
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
         est_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
-        self.next_cmd_time = max(self.next_cmd_time, est_time + self.min_cmd_time)
+        self.next_cmd_time = max(self.next_cmd_time,
+                                 est_time + self.min_cmd_time)
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -257,9 +258,14 @@ class BLTouchEndstopWrapper:
             self.send_cmd(None)
         self.sync_print_time()
     def set_mode(self, mode):
-        # BLTOUCH pre V3.0 and clones: No reaction at all to this sequence apart from a DEPLOY -> STOW
-        # BLTOUCH V3.0: This will set the mode (twice) and sadly, a STOW is needed at the end, because of the deploy
-        # BLTOUCH V3.1: This will set the mode and store it in the eeprom. The STOW is not needed but does not hurt
+        # BLTOUCH pre V3.0 and clones:
+        #   No reaction at all to this sequence apart from a DEPLOY -> STOW
+        # BLTOUCH V3.0:
+        #   This will set the mode (twice) and sadly, a STOW is needed at
+        #   the end, because of the deploy
+        # BLTOUCH V3.1:
+        #   This will set the mode and store it in the eeprom.
+        #   The STOW is not needed but does not hurt
         self.sync_print_time()
         self.send_cmd('DEPLOY')
         if mode == '5V':
