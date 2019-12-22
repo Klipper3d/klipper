@@ -41,7 +41,8 @@ class Homing:
         probe_instance, name = endstops[0]
         # This logic only on an axis relevant to a BLTouch
         # ('z', 'z1', etc. or 'probe')
-        bltouch = (name[0] == 'z') or (name == 'probe')
+        bltouch = (hasattr(probe_instance, 'deploy_probe') and
+                   ((name[0] == 'z') or (name == 'probe')))
         if bltouch:
             pwroff = (hasattr(probe_instance, 'heaters_off') and
                       probe_instance.heaters_off)
