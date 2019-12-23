@@ -15,8 +15,10 @@ class PrinterExtruder:
         gcode_id = 'T%d' % (extruder_num,)
         if shared_heater is None:
             self.heater = pheater.setup_heater(config, gcode_id)
+            self.has_shared_heater = False
         else:
             self.heater = pheater.lookup_heater(shared_heater)
+            self.has_shared_heater = True
         self.stepper = stepper.PrinterStepper(config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
@@ -95,6 +97,8 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
+    def get_has_shared_heater(self):
+        return self.has_shared_heater
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):

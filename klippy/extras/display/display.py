@@ -43,6 +43,7 @@ class PrinterLCD:
         self.fan = self.printer.lookup_object('fan', None)
         self.extruder = self.printer.lookup_object('extruder', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
+        self.shared_heater = self.extruder1.get_has_shared_heater()
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
         self.prg_time = .0
         self.progress = None
@@ -100,7 +101,7 @@ class PrinterLCD:
             info = self.extruder.get_heater().get_status(eventtime)
             lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(1, 0, info)
-        if self.extruder1 is not None:
+        if self.extruder1 is not None and self.shared_heater is False:
             info = self.extruder1.get_heater().get_status(eventtime)
             lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(1, 1, info)
@@ -144,7 +145,7 @@ class PrinterLCD:
             self.lcd_chip.write_glyph(0, 0, 'extruder')
             self.draw_heater(2, 0, info)
         extruder_count = 1
-        if self.extruder1 is not None:
+        if self.extruder1 is not None and self.shared_heater is False:
             info = self.extruder1.get_heater().get_status(eventtime)
             self.lcd_chip.write_glyph(0, 1, 'extruder')
             self.draw_heater(2, 1, info)
