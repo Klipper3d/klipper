@@ -43,7 +43,10 @@ class PrinterLCD:
         self.fan = self.printer.lookup_object('fan', None)
         self.extruder = self.printer.lookup_object('extruder', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
-        self.shared_heater = self.extruder1.get_has_shared_heater()
+        if self.extruder1 is not None:
+            self.shared_heater = self.extruder1.get_has_shared_heater()
+        else:
+            self.shared_heater = False
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
         self.prg_time = .0
         self.progress = None
