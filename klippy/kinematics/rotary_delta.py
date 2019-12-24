@@ -150,7 +150,7 @@ class RotaryDeltaCalibration:
         # Determine adjustment parameters (for use with coordinate_descent)
         adj_params = ('shoulder_height', 'endstop_a', 'endstop_b', 'endstop_c')
         if is_extended:
-            adj_params += ('lower_arm_a', 'lower_arm_b', 'lower_arm_c')
+            adj_params += ('shoulder_radius', 'angle_a', 'angle_b')
         params = { 'shoulder_radius': self.shoulder_radius,
                    'shoulder_height': self.shoulder_height }
         for i, axis in enumerate('abc'):
@@ -207,19 +207,17 @@ class RotaryDeltaCalibration:
                        % (self.shoulder_height,))
         for i, axis in enumerate('abc'):
             configfile.set('stepper_'+axis, 'angle', "%.6f" % (self.angles[i],))
-            configfile.set('stepper_'+axis, 'lower_arm',
-                           "%.6f" % (self.lower_arms[i],))
             configfile.set('stepper_'+axis, 'position_endstop',
                            "%.6f" % (self.endstops[i],))
         gcode = configfile.get_printer().lookup_object("gcode")
         gcode.respond_info(
-            "stepper_a: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
-            "stepper_b: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
-            "stepper_c: position_endstop: %.6f angle: %.6f lower_arm: %.6f\n"
+            "stepper_a: position_endstop: %.6f angle: %.6f\n"
+            "stepper_b: position_endstop: %.6f angle: %.6f\n"
+            "stepper_c: position_endstop: %.6f angle: %.6f\n"
             "shoulder_radius: %.6f shoulder_height: %.6f"
-            % (self.endstops[0], self.angles[0], self.lower_arms[0],
-               self.endstops[1], self.angles[1], self.lower_arms[1],
-               self.endstops[2], self.angles[2], self.lower_arms[2],
+            % (self.endstops[0], self.angles[0],
+               self.endstops[1], self.angles[1],
+               self.endstops[2], self.angles[2],
                self.shoulder_radius, self.shoulder_height))
 
 def load_kinematics(toolhead, config):
