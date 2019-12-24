@@ -43,7 +43,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+[example-extras/macros-and-events.cfg](https://github.com/
+KevinOConnor/klipper/tree/master/config/example-extras/
+macros-and-events.cfg)
 for details). For example, one might use this to implement: `G12`,
 `G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
 
@@ -271,7 +273,8 @@ enabled:
   the probe triggers. If any of the optional parameters are provided
   they override their equivalent setting in the probe config section
   (see
-  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+  [example-extras/bed-leveling.cfg](https://github.com/KevinOConnor/
+  klipper/tree/master/config/example-extras/bed-leveling.cfg)
   for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
