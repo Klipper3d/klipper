@@ -57,3 +57,12 @@ flash: $(OUT)klipper.bin
 serialflash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
 	$(Q)stm32flash -w $< -v -g 0 $(FLASH_DEVICE)
+
+jflash: $(OUT)klipper.elf
+	@echo "  Flashing $< to $(CONFIG_MCU)"
+	$(OBJCOPY) -O ihex $< $(<:.elf=.hex)
+	$(Q)JLinkExe -if swd -device $(CONFIG_MCU) -speed 2000 -autoconnect 1 -CommanderScript scripts/upload.jlink
+
+gdb: $(OUT)klipper.elf
+	@echo "  Starting GDB server for remote debug"
+	$(Q)JLinkGDBServer -if swd -speed 2000 -device $(CONFIG_MCU)

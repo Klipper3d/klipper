@@ -1,0 +1,5 @@
+r
+loadfile out/klipper.hex
+g
+r
+exit
