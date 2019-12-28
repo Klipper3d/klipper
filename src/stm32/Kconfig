@@ -135,9 +135,13 @@ config CANSERIAL
     bool "Use CAN for communication (instead of serial)"
     depends on MACH_STM32F042 && !USBSERIAL
     default n
+config SERIAL_BAUD
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000 if CANSERIAL
 config STM32F042_PIN_SWAP
     bool "Use PA9/PA10 for USB or CAN" if MACH_STM32F042
     depends on (USBSERIAL || CANSERIAL) && MACH_STM32F042
+    default y if (USBSERIAL || CANSERIAL)
     default n
 config SERIAL
     depends on !USBSERIAL && !CANSERIAL
