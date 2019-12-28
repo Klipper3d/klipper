@@ -192,7 +192,7 @@ armcm_main(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL)
+    if (CONFIG_MACH_STM32F042 || CONFIG_STM32_CLOCK_REF_INTERNAL)
         hsi48_setup();
     else
         pll_setup();
@@ -200,9 +200,9 @@ armcm_main(void)
     // Turn on hsi14 oscillator for ADC
     hsi14_setup();
 
-    // Support alternate USB pins on stm32f042
+    // Support alternate USB/CAN pins on stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_USB_PIN_SWAP) {
+    if (CONFIG_STM32F042_PIN_SWAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }
