@@ -6,11 +6,11 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import hd44780, st7920, uc1701
+import hd44780, st7920, uc1701, sailfish
 import menu
 
 LCD_chips = {
-    'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
+    'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780, 'sailfish': sailfish.Sailfish,
     'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
 }
 M73_TIMEOUT = 5.
@@ -87,7 +87,7 @@ class PrinterLCD:
             return ret
         # update all else
         self.lcd_chip.clear()
-        if self.lcd_type == 'hd44780':
+        if self.lcd_type == 'hd44780' or self.lcd_type == 'sailfish':
             self.screen_update_hd44780(eventtime)
         else:
             self.screen_update_128x64(eventtime)
