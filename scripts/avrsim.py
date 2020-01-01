@@ -71,6 +71,13 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
             self.pos = 0
         return self.delay
 
+class VirtualEndStopPin(pysimulavr.Pin):
+    def __init__(self, dev, name):
+        pysimulavr.Pin.__init__(self)
+        self.__net = pysimulavr.Net()
+        self.__net.Add(self)
+        self.__net.Add(dev.GetPin(name))
+
 class VirtualStepperMotorPin(pysimulavr.Pin):
     def __init__(self, motor, dev, name):
         pysimulavr.Pin.__init__(self)
@@ -87,19 +94,22 @@ class VirtualStepperMotorPin(pysimulavr.Pin):
         ishigh = (pin.outState == self.HIGH)
         self.changed = (ishigh != self.ishigh)
         self.ishigh = ishigh
-        # print "Pin [%s] = %s" % (self.name, self.ishigh)
-        self.motor.update()
-        self.changed = False
+        if self.changed:
+            self.motor.update()
+            self.changed = False
 
 class VirtualStepperMotor:
     def __init__(self, axisname):
         self.axisname = axisname
         self.axispos = 0
         self.ready = False
-    def connect(self, dev, step, dir, en):
+    def connect(self, dev, step, dir, en, endstop = None):
         self.step = VirtualStepperMotorPin(self, dev, step)
         self.dir = VirtualStepperMotorPin(self, dev, dir)
         self.en = VirtualStepperMotorPin(self, dev, en)
+        if endstop is not None:
+            self.endstop = VirtualEndStopPin(dev, endstop)
+            self.endstop.SetPin('L')
         self.ready = True
     def update(self):
         if not self.ready:
@@ -107,9 +117,15 @@ class VirtualStepperMotor:
         if self.en.ishigh:
             return
         if self.step.changed and self.step.ishigh:
-            if self.dir.ishigh: self.axispos -= 1
-            else: self.axispos += 1
-            print "Step... " + self.axisname + str(self.axispos)
+            if self.dir.ishigh:
+                self.axispos -= 1
+            else:
+                self.axispos += 1
+            if self.axispos >= 500:
+                self.endstop.SetPin('H')
+            else:
+                self.endstop.SetPin('L')
+            ##print "Step: " + self.axisname + str(self.axispos)
 
 # Support for creating VCD trace files
 class Tracing:
@@ -256,11 +272,11 @@ def main():
 
     if options.motorsim:
         mX = VirtualStepperMotor("X")
-        mX.connect(dev, "A5", "A4", "A1")
+        mX.connect(dev, "A5", "A4", "A1", "B0")
         mY = VirtualStepperMotor("Y")
-        mY.connect(dev, "A3", "A2", "A1")
+        mY.connect(dev, "A3", "A2", "A1", "B1")
         mZ = VirtualStepperMotor("Z")
-        mZ.connect(dev, "C7", "C6", "A1")
+        mZ.connect(dev, "C7", "C6", "A1", "B2")
         mE = VirtualStepperMotor("E")
         mE.connect(dev, "C3", "C2", "A1")
 
