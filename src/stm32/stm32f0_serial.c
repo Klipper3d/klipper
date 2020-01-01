@@ -24,6 +24,12 @@ DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
 #define GPIO_Tx GPIO('A', 2)
 #define USARTx USART2
 #define USARTx_IRQn USART2_IRQn
+#elif CONFIG_SERIAL_PORT == 102
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA15,PA14");
+#define GPIO_Rx GPIO('A', 15)
+#define GPIO_Tx GPIO('A', 14)
+#define USARTx USART2
+#define USARTx_IRQn USART2_IRQn
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
