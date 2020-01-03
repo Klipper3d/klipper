@@ -20,8 +20,7 @@ class PrinterHeaterBed:
         gcode = self.printer.lookup_object('gcode')
         temp = gcode.get_float('S', params, 0.)
         toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        self.heater.set_temp(print_time, temp)
+        self.heater.set_temp(temp)
         if wait and temp:
             gcode.wait_for_temperature(self.heater)
     def cmd_M190(self, params):
