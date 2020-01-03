@@ -145,7 +145,6 @@ class PrinterExtruder:
                           start_v, cruise_v, accel)
     def cmd_M104(self, params, wait=False):
         # Set Extruder Temperature
-        toolhead = self.printer.lookup_object('toolhead')
         gcode = self.printer.lookup_object('gcode')
         temp = gcode.get_float('S', params, 0.)
         if 'T' in params:
@@ -159,10 +158,9 @@ class PrinterExtruder:
                     return
                 raise gcode.error("Extruder not configured")
         else:
-            extruder = toolhead.get_extruder()
-        print_time = toolhead.get_last_move_time()
+            extruder = self.printer.lookup_object('toolhead').get_extruder()
         heater = extruder.get_heater()
-        heater.set_temp(print_time, temp)
+        heater.set_temp(temp)
         if wait and temp:
             gcode.wait_for_temperature(heater)
     def cmd_M109(self, params):

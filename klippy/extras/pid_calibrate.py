@@ -23,11 +23,11 @@ class PIDCalibrate:
             heater = pheater.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise self.gcode.error(str(e))
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.printer.lookup_object('toolhead').get_last_move_time()
         calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
         try:
-            heater.set_temp(print_time, target)
+            heater.set_temp(target)
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise

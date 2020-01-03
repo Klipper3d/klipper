@@ -97,7 +97,7 @@ class Heater:
         return self.max_power
     def get_smooth_time(self):
         return self.smooth_time
-    def set_temp(self, print_time, degrees):
+    def set_temp(self, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
             raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
@@ -139,9 +139,8 @@ class Heater:
         return {'temperature': smoothed_temp, 'target': target_temp}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, params):
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         temp = self.gcode.get_float('TARGET', params, 0.)
-        self.set_temp(print_time, temp)
+        self.set_temp(temp)
 
 
 ######################################################################
@@ -277,13 +276,12 @@ class PrinterHeaters:
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
         self.available_sensors.append(config.get_name())
-    def turn_off_all_heaters(self, print_time):
+    def turn_off_all_heaters(self, print_time=0.):
         for heater in self.heaters.values():
-            heater.set_temp(print_time, 0.)
+            heater.set_temp(0.)
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
     def cmd_TURN_OFF_HEATERS(self, params):
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.turn_off_all_heaters(print_time)
+        self.turn_off_all_heaters()
     def get_status(self, eventtime):
         return {'available_heaters': self.available_heaters,
                 'available_sensors': self.available_sensors}
