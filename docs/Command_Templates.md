@@ -1,6 +1,12 @@
 This document provides information on implementing G-Code command
 sequences in gcode_macro (and similar) config sections.
 
+### G-Code Macro Naming
+Case is not important when creating a G-Code macro name. MY_MACRO and
+my_macro will evaluate the same and may be called in either upper or
+lower case. If any numerical digits are used in the macro name they
+must all be placed at the end of the name.
+
 ### Formatting of G-Code in the config
 
 Indentation is important when defining a macro in the config file. To
@@ -178,7 +184,8 @@ in future Klipper releases.
 ### Variables
 
 The SET_GCODE_VARIABLE command may be useful for saving state between
-macro calls. For example:
+macro calls. Variable names may not contain any upper case characters.
+For example:
 
 ```
 [gcode_macro start_probe]
