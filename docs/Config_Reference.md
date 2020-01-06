@@ -127,9 +127,24 @@ enable_pin:
 #   Enable pin (default is enable high; use ! to indicate enable
 #   low). If this parameter is not provided then the stepper motor
 #   driver must always be enabled.
-step_distance:
-#   Distance in mm that each step causes the axis to travel. This
+rotation_distance:
+#   Distance (in mm) that the axis travels with one full rotation of
+#   the stepper motor. This parameter must be provided.
+microsteps:
+#   The number of microsteps the stepper motor driver uses. This
 #   parameter must be provided.
+#full_steps_per_rotation: 200
+#   The number of full steps for one rotation of the stepper motor.
+#   Set this to 200 for a 1.8 degree stepper motor or set to 400 for a
+#   0.9 degree motor. The default is 200.
+#gear_ratio:
+#   The gear ratio if the stepper motor is connected to the axis via a
+#   gearbox. For example, one may specify "5:1" if a 5 to 1 gearbox is
+#   in use. If the axis has multiple gearboxes one may specify a comma
+#   separated list of gear ratios (for example, "57:11, 2:1"). If a
+#   gear_ratio is specified then rotation_distance specifies the
+#   distance the axis travels for one full rotation of the final gear.
+#   The default is to not use a gear ratio.
 endstop_pin:
 #   Endstop switch detection pin. This parameter must be provided for
 #   the X, Y, and Z steppers on cartesian style printers.
@@ -367,11 +382,11 @@ kinematics: polar
 # The stepper_bed section is used to describe the stepper controlling
 # the bed.
 [stepper_bed]
-step_distance:
-#   On a polar printer the step_distance is the amount each step pulse
-#   moves the bed in radians (for example, a 1.8 degree stepper with
-#   16 micro-steps would be 2 * pi * (1.8 / 360) / 16 == 0.001963495).
-#   This parameter must be provided.
+gear_ratio:
+#   A gear_ratio must be specified and rotation_distance may not be
+#   specified. For example, if the bed has an 80 toothed pulley driven
+#   by a stepper with a 16 toothed pulley then one would specify a
+#   gear ratio of "80:16". This parameter must be provided.
 max_z_velocity:
 #   This sets the maximum velocity (in mm/s) of movement along the z
 #   axis. This setting can be used to restrict the maximum speed of
@@ -429,11 +444,13 @@ shoulder_height:
 # right arm (at 30 degrees). This section also controls the homing
 # parameters (homing_speed, homing_retract_dist) for all arms.
 [stepper_a]
-step_distance:
-#   On a rotary delta printer the step_distance is the amount each
-#   step pulse moves the upper arm in radians (for example, a directly
-#   connected 1.8 degree stepper with 16 micro-steps would be 2 * pi *
-#   (1.8 / 360) / 16 == 0.001963495). This parameter must be provided.
+gear_ratio:
+#   A gear_ratio must be specified and rotation_distance may not be
+#   specified. For example, if the arm has an 80 toothed pulley driven
+#   by a pulley with 16 teeth, which is in turn connected to a 60
+#   toothed pulley driven by a stepper with a 16 toothed pulley, then
+#   one would specify a gear ratio of "80:16, 60:16". This parameter
+#   must be provided.
 position_endstop:
 #   Distance (in mm) between the nozzle and the bed when the nozzle is
 #   in the center of the build area and the endstop triggers. This
@@ -501,10 +518,10 @@ kinematics: winch
 # cable winch. A minimum of 3 and a maximum of 26 cable winches may be
 # defined (stepper_a to stepper_z) though it is common to define 4.
 [stepper_a]
-step_distance:
-#   The step_distance is the nominal distance (in mm) the toolhead
-#   moves towards the cable winch on each step pulse. This parameter
-#   must be provided.
+rotation_distance:
+#   The rotation_distance is the nominal distance (in mm) the toolhead
+#   moves towards the cable winch for each full rotation of the
+#   stepper motor. This parameter must be provided.
 anchor_x:
 anchor_y:
 anchor_z:
@@ -541,7 +558,8 @@ tuning pressure advance.
 step_pin:
 dir_pin:
 enable_pin:
-step_distance:
+microsteps:
+rotation_distance:
 #   See the "stepper" section for a description of the above parameters.
 nozzle_diameter:
 #   Diameter of the nozzle orifice (in mm). This parameter must be
@@ -1613,7 +1631,8 @@ at 1 (for example, "stepper_z1", "stepper_z2", etc.).
 #step_pin:
 #dir_pin:
 #enable_pin:
-#step_distance:
+#microsteps:
+#rotation_distance:
 #   See the "stepper" section for the definition of the above parameters.
 #endstop_pin:
 #   If an endstop_pin is defined for the additional stepper then the
@@ -1670,7 +1689,8 @@ axis:
 #step_pin:
 #dir_pin:
 #enable_pin:
-#step_distance:
+#microsteps:
+#rotation_distance:
 #endstop_pin:
 #position_endstop:
 #position_min:
@@ -1695,7 +1715,8 @@ more information.
 #step_pin:
 #dir_pin:
 #enable_pin:
-#step_distance:
+#microsteps:
+#rotation_distance:
 #   See the "stepper" section for the definition of the above
 #   parameters.
 ```
@@ -1715,7 +1736,8 @@ normal printer kinematics.
 #step_pin:
 #dir_pin:
 #enable_pin:
-#step_distance:
+#microsteps:
+#rotation_distance:
 #   See the "stepper" section for a description of these parameters.
 #velocity:
 #   Set the default velocity (in mm/s) for the stepper. This value
@@ -2531,10 +2553,6 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
-microsteps:
-#   The number of microsteps to configure the driver to use. Valid
-#   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
-#   be provided.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.
@@ -2601,10 +2619,6 @@ uart_pin:
 #   A comma separated list of pins to set prior to accessing the
 #   tmc2208 UART. This may be useful for configuring an analog mux for
 #   UART communication. The default is to not configure any pins.
-microsteps:
-#   The number of microsteps to configure the driver to use. Valid
-#   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
-#   be provided.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.
@@ -2654,7 +2668,6 @@ by the name of the corresponding stepper config section (for example,
 uart_pin:
 #tx_pin:
 #select_pins:
-#microsteps:
 #interpolate: True
 run_current:
 #hold_current:
@@ -2715,10 +2728,6 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
-microsteps:
-#   The number of microsteps to configure the driver to use. Valid
-#   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
-#   be provided.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This only works if microsteps
@@ -2786,10 +2795,6 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
-microsteps:
-#   The number of microsteps to configure the driver to use. Valid
-#   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
-#   be provided.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.

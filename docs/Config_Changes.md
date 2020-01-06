@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20201218: Rotary delta and polar printers must now specify a
+`gear_ratio` for their rotary steppers, and they may no longer specify
+a `step_distance` parameter.  See the
+[config reference](Config_Reference.md#stepper) for the format of the
+new gear_ratio paramter.
+
 20201213: It is not valid to specify a Z "position_endstop" when using
 "probe:z_virtual_endstop".  An error will now be raised if a Z
 "position_endstop" is specified with "probe:z_virtual_endstop".

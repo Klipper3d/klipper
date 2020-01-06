@@ -262,9 +262,9 @@ around 10000 steps per second. If it is requested to move at a speed
 that would require a higher step rate then Marlin will generally just
 step as fast as it can. Klipper is able to achieve much higher step
 rates, but the stepper motor may not have sufficient torque to move at
-a higher speed. So, for a Z axis with a very precise step_distance the
-actual obtainable max_z_velocity may be smaller than what is
-configured in Marlin.
+a higher speed. So, for a Z axis with a high gearing ratio or high
+microsteps setting the actual obtainable max_z_velocity may be smaller
+than what is configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
