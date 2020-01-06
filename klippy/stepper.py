@@ -176,7 +176,13 @@ def PrinterStepper(config, units_in_radians=False):
     step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
     dir_pin = config.get('dir_pin')
     dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
-    step_dist = config.getfloat('step_distance', above=0.)
+    step_dist = config.getfloat('step_distance', None, above=0.)
+    if step_dist is None:
+        microsteps = config.getint('microsteps', minval=1)
+        full_steps = config.getint('full_steps_per_rotation', 200, minval=1)
+        gearing = parse_gear_ratio(config)
+        rotation_dist = config.getfloat('rotation_distance', above=0.)
+        step_dist = rotation_dist / (full_steps * microsteps * gearing)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
     # Support for stepper enable pin handling
@@ -186,6 +192,21 @@ def PrinterStepper(config, units_in_radians=False):
     force_move = printer.try_load_module(config, 'force_move')
     force_move.register_stepper(mcu_stepper)
     return mcu_stepper
+
+# Parser stepper gear_ratio config parameter
+def parse_gear_ratio(config):
+    gear_ratio = config.get('gear_ratio', None)
+    if gear_ratio is None:
+        return 1.
+    result = 1.
+    try:
+        gears = gear_ratio.split(',')
+        for gear in gears:
+            g1, g2 = [float(v.strip()) for v in gear.split(':')]
+            result *= g1 / g2
+    except:
+        raise config.error("Unable to parse gear_ratio: %s" % (gear_ratio,))
+    return result
 
 
 ######################################################################
