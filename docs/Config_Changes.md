@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20201218: The `endstop_phase` setting in the endstop_phase module has
+been replaced with `trigger_phase`. If using the endstop phases module
+then it will be necessary to recalibrate any endstop phases by running
+the ENDSTOP_PHASE_CALIBRATE command.
+
 20201218: Rotary delta and polar printers must now specify a
 `gear_ratio` for their rotary steppers, and they may no longer specify
 a `step_distance` parameter.  See the

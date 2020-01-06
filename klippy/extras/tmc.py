@@ -283,7 +283,7 @@ class TMCMicrostepHelper:
             field_name = "MSTEP"
         reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
         mscnt = self.fields.get_field(field_name, reg)
-        return (1023 - mscnt) >> self.fields.get_field("MRES")
+        return 1023 - mscnt, 1024
 
 # Helper to configure "stealthchop" mode
 def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):

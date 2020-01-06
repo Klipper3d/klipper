@@ -1112,21 +1112,17 @@ for additional information.
 
 ```
 [endstop_phase stepper_z]
-#phases:
-#   This specifies the number of phases of the given stepper motor
-#   driver (which is the number of micro-steps multiplied by four).
-#   This setting is automatically determined if one uses a TMC driver
-#   with run-time configuration. Otherwise, this parameter must be
-#   provided.
 #endstop_accuracy:
 #   Sets the expected accuracy (in mm) of the endstop. This represents
 #   the maximum error distance the endstop may trigger (eg, if an
 #   endstop may occasionally trigger 100um early or up to 100um late
 #   then set this to 0.200 for 200um). The default is
-#   phases*step_distance.
-#endstop_phase:
+#   4*rotation_distance/full_steps_per_rotation.
+#trigger_phase:
 #   This specifies the phase of the stepper motor driver to expect
-#   when hitting the endstop. Only set this value if one is sure the
+#   when hitting the endstop. It is composed of two numbers separated
+#   by a forward slash character - the phase and the total number of
+#   phases (eg, "7/64"). Only set this value if one is sure the
 #   stepper motor driver is reset every time the mcu is reset. If this
 #   is not set, then the stepper phase will be detected on the first
 #   home and that phase will be used on all subsequent homes.
