@@ -2,10 +2,10 @@ This document provides information on implementing G-Code command
 sequences in gcode_macro (and similar) config sections.
 
 ### G-Code Macro Naming
-Case is not important when creating a G-Code macro name. MY_MACRO and
+
+Case is not important for the G-Code macro name - MY_MACRO and
 my_macro will evaluate the same and may be called in either upper or
-lower case. If any numerical digits are used in the macro name they
-must all be placed at the end of the name.
+lower case.
 
 ### Formatting of G-Code in the config
 
