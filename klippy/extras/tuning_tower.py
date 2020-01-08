@@ -13,7 +13,7 @@ class TuningTower:
         self.normal_transform = None
         self.last_position = [0., 0., 0., 0.]
         self.last_z = self.start = self.factor = self.band = 0.
-        self.command = self.parameter = ""
+        self.command_fmt = ""
         # Register command
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
@@ -24,12 +24,16 @@ class TuningTower:
             self.end_test()
         # Get parameters
         gcode = self.printer.lookup_object("gcode")
-        self.command = gcode.get_str('COMMAND', params)
-        self.parameter = gcode.get_str('PARAMETER', params)
+        command = gcode.get_str('COMMAND', params)
+        parameter = gcode.get_str('PARAMETER', params)
         self.start = gcode.get_float('START', params, 0.)
         self.factor = gcode.get_float('FACTOR', params)
         self.band = gcode.get_float('BAND', params, 0., minval=0.)
         # Enable test mode
+        if gcode.is_traditional_gcode(command):
+            self.command_fmt = "%s %s%%.9f" % (command, parameter)
+        else:
+            self.command_fmt = "%s %s=%%.9f" % (command, parameter)
         self.normal_transform = gcode.set_move_transform(self, force=True)
         self.last_z = -99999999.9
         gcode.reset_last_position()
@@ -60,8 +64,7 @@ class TuningTower:
                 self.last_z = z
                 if newval != oldval:
                     gcode = self.printer.lookup_object("gcode")
-                    gcode.run_script_from_command("%s %s=%.9f" % (
-                        self.command, self.parameter, newval))
+                    gcode.run_script_from_command(self.command_fmt % (newval,))
         # Forward move to actual handler
         self.last_position[:] = newpos
         normal_transform.move(newpos, speed)
