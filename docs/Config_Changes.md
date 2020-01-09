@@ -6,7 +6,7 @@ All dates in this document are approximate.
 
 # Changes
 
-20191220:  The bed_mesh module now references the probe's location
+20200109:  The bed_mesh module now references the probe's location
 in for the mesh configuration.  As such, some configuration options
 have been renamed to more accurately reflect their intended
 functionality.  For rectangular beds, `min_point` and `max_point`
