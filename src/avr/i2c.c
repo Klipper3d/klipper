@@ -85,6 +85,14 @@ i2c_send_byte(uint8_t b, uint32_t timeout)
 }
 
 static void
+i2c_receive_byte(uint8_t *read, uint32_t timeout, uint8_t send_ack)
+{
+    TWCR = (1<<TWEN) | (1<<TWINT) | ((send_ack?1:0)<<TWEA);
+    i2c_wait(timeout);
+    *read = TWDR;
+}
+
+static void
 i2c_stop(uint32_t timeout)
 {
     TWCR = (1<<TWEN) | (1<<TWINT) | (1<<TWSTO);
@@ -106,5 +114,14 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    shutdown("i2c_read not supported on avr");
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    i2c_start(timeout);
+    i2c_send_byte(config.addr, timeout);
+    while (reg_len--)
+        i2c_send_byte(*reg++, timeout);
+    i2c_start(timeout);
+    i2c_send_byte(config.addr | 0x1, timeout);
+    while (read_len--)
+        i2c_receive_byte(read++, timeout, read_len);
+    i2c_stop(timeout);
 }
