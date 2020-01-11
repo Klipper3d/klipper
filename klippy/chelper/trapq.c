@@ -133,6 +133,8 @@ trapq_check_sentinels(struct trapq *tq)
     tail_sentinel->start_pos = move_get_coord(m, m->move_t);
 }
 
+#define MAX_NULL_MOVE 1.0
+
 // Add a move to the trapezoid velocity queue
 void
 trapq_add_move(struct trapq *tq, struct move *m)
@@ -143,7 +145,11 @@ trapq_add_move(struct trapq *tq, struct move *m)
         // Add a null move to fill time gap
         struct move *null_move = move_alloc();
         null_move->start_pos = m->start_pos;
-        null_move->print_time = prev->print_time + prev->move_t;
+        if (!prev->print_time && m->print_time > MAX_NULL_MOVE)
+            // Limit the first null move to improve numerical stability
+            null_move->print_time = m->print_time - MAX_NULL_MOVE;
+        else
+            null_move->print_time = prev->print_time + prev->move_t;
         null_move->move_t = m->print_time - null_move->print_time;
         list_add_before(&null_move->node, &tail_sentinel->node);
     }

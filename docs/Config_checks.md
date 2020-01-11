@@ -12,8 +12,8 @@ config file is successfully loaded.
 
 ### Verify temperature
 
-Start by verifying that temperatures are being properly
-reported. Navigate to the Octoprint temperature tab.
+Start by verifying that temperatures are being properly reported.
+Navigate to the Octoprint temperature tab.
 
 ![octoprint-temperature](img/octoprint-temperature.png)
 
@@ -85,7 +85,7 @@ resistor and the '^' should be present).
 
 Use the STEPPER_BUZZ command to verify the connectivity of each
 stepper motor. Start by manually positioning the given axis to a
-midway point and then run `STEPPER_BUZZ STEPPER=stepper_x` . The
+midway point and then run `STEPPER_BUZZ STEPPER=stepper_x`. The
 STEPPER_BUZZ command will cause the given stepper to move one
 millimeter in a positive direction and then it will return to its
 starting position. (If the endstop is defined at position_endstop=0

@@ -16,9 +16,11 @@ class error(Exception):
 
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
-    def __init__(self, name, step_pin_params, dir_pin_params, step_dist):
+    def __init__(self, name, step_pin_params, dir_pin_params, step_dist,
+                 units_in_radians=False):
         self._name = name
         self._step_dist = step_dist
+        self._units_in_radians = units_in_radians
         self._mcu = step_pin_params['chip']
         self._oid = oid = self._mcu.create_oid()
         self._mcu.register_config_callback(self._build_config)
@@ -47,6 +49,9 @@ class MCU_stepper:
         if short and self._name.startswith('stepper_'):
             return self._name[8:]
         return self._name
+    def units_in_radians(self):
+        # Returns true if distances are in radians instead of millimeters
+        return self._units_in_radians
     def _dist_to_time(self, dist, start_velocity, accel):
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
@@ -90,6 +95,9 @@ class MCU_stepper:
         return self._step_dist
     def is_dir_inverted(self):
         return self._invert_dir
+    def calc_position_from_coord(self, coord):
+        return self._ffi_lib.itersolve_calc_position_from_coord(
+            self._stepper_kinematics, coord[0], coord[1], coord[2])
     def set_position(self, coord):
         opos = self.get_commanded_position()
         sk = self._stepper_kinematics
@@ -159,7 +167,7 @@ class MCU_stepper:
             raise error("Internal error in stepcompress")
 
 # Helper code to build a stepper object from a config section
-def PrinterStepper(config):
+def PrinterStepper(config, units_in_radians=False):
     printer = config.get_printer()
     name = config.get_name()
     # Stepper definition
@@ -169,7 +177,8 @@ def PrinterStepper(config):
     dir_pin = config.get('dir_pin')
     dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
     step_dist = config.getfloat('step_distance', above=0.)
-    mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist)
+    mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
+                              units_in_radians)
     # Support for stepper enable pin handling
     stepper_enable = printer.try_load_module(config, 'stepper_enable')
     stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
@@ -187,14 +196,17 @@ def PrinterStepper(config):
 # endstops.
 class PrinterRail:
     def __init__(self, config, need_position_minmax=True,
-                 default_position_endstop=None):
+                 default_position_endstop=None, units_in_radians=False):
         # Primary stepper and endstop
+        self.stepper_units_in_radians = units_in_radians
         self.steppers = []
         self.endstops = []
         self.add_extra_stepper(config)
-        self.get_commanded_position = self.steppers[0].get_commanded_position
-        self.get_tag_position = self.steppers[0].get_tag_position
-        self.set_tag_position = self.steppers[0].set_tag_position
+        mcu_stepper = self.steppers[0]
+        self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.get_tag_position = mcu_stepper.get_tag_position
+        self.set_tag_position = mcu_stepper.set_tag_position
+        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):
@@ -250,7 +262,7 @@ class PrinterRail:
     def get_endstops(self):
         return list(self.endstops)
     def add_extra_stepper(self, config):
-        stepper = PrinterStepper(config)
+        stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
         if self.endstops and config.get('endstop_pin', None) is None:
             # No endstop defined - use primary endstop

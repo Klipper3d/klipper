@@ -6,7 +6,10 @@
 import math, logging
 import chelper
 
-BUZZ_VELOCITY = 4.
+BUZZ_DISTANCE = 1.
+BUZZ_VELOCITY = BUZZ_DISTANCE / .250
+BUZZ_RADIANS_DISTANCE = math.radians(1.)
+BUZZ_RADIANS_VELOCITY = BUZZ_RADIANS_DISTANCE / .250
 STALL_TIME = 0.100
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
@@ -95,10 +98,13 @@ class ForceMove:
         logging.info("Stepper buzz %s", stepper.get_name())
         was_enable = self.force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
+        dist, speed = BUZZ_DISTANCE, BUZZ_VELOCITY
+        if stepper.units_in_radians():
+            dist, speed = BUZZ_RADIANS_DISTANCE, BUZZ_RADIANS_VELOCITY
         for i in range(10):
-            self.manual_move(stepper, 1., BUZZ_VELOCITY)
+            self.manual_move(stepper, dist, speed)
             toolhead.dwell(.050)
-            self.manual_move(stepper, -1., BUZZ_VELOCITY)
+            self.manual_move(stepper, -dist, speed)
             toolhead.dwell(.450)
         self.restore_enable(stepper, was_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"

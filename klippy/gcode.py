@@ -61,6 +61,14 @@ class GCodeParser:
         self.toolhead = None
         self.heaters = None
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
+    def is_traditional_gcode(self, cmd):
+        # A "traditional" g-code command is a letter and followed by a number
+        try:
+            cmd = cmd.upper().split()[0]
+            val = float(cmd[1:])
+            return cmd[0].isupper() and cmd[1].isdigit()
+        except:
+            return False
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
             if cmd in self.ready_gcode_handlers:
@@ -71,7 +79,7 @@ class GCodeParser:
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(
                 "gcode command %s already registered" % (cmd,))
-        if not (len(cmd) >= 2 and not cmd[0].isupper() and cmd[1].isdigit()):
+        if not self.is_traditional_gcode(cmd):
             origfunc = func
             func = lambda params: origfunc(self._get_extended_params(params))
         self.ready_gcode_handlers[cmd] = func
@@ -363,14 +371,13 @@ class GCodeParser:
                             maxval=maxval, above=above, below=below)
     extended_r = re.compile(
         r'^\s*(?:N[0-9]+\s*)?'
-        r'(?P<cmd>[a-zA-Z_][a-zA-Z_]+)(?:\s+|$)'
+        r'(?P<cmd>[a-zA-Z_][a-zA-Z0-9_]+)(?:\s+|$)'
         r'(?P<args>[^#*;]*?)'
         r'\s*(?:[#*;].*)?$')
     def _get_extended_params(self, params):
         m = self.extended_r.match(params['#original'])
         if m is None:
-            # Not an "extended" command
-            return params
+            raise self.error("Malformed command '%s'" % (params['#original'],))
         eargs = m.group('args')
         try:
             eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]

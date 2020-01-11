@@ -67,13 +67,16 @@ def calc_pa_raw(t, positions):
     i = time_to_index(t)
     return positions[i] + pa * (positions[i+1] - positions[i])
 
-def calc_pa_smooth(t, positions):
+def calc_pa_weighted(t, positions):
+    base_index = time_to_index(t)
     start_index = time_to_index(t - PA_HALF_SMOOTH_T) + 1
     end_index = time_to_index(t + PA_HALF_SMOOTH_T)
+    diff = .5 * (end_index - start_index)
     pa = PRESSURE_ADVANCE * INV_SEG_TIME
-    pa_data = [positions[i] + pa * (positions[i+1] - positions[i])
+    pa_data = [(positions[i] + pa * (positions[i+1] - positions[i]))
+               * (diff - abs(i-base_index))
                for i in range(start_index, end_index)]
-    return sum(pa_data) / (end_index - start_index)
+    return sum(pa_data) / diff**2
 
 
 ######################################################################
@@ -92,7 +95,7 @@ def plot_motion():
     pa_positions = [calc_pa_raw(t, positions) for t in times]
     pa_velocities = gen_deriv(pa_positions)
     # Smoothed motion
-    sm_positions = [calc_pa_smooth(t, positions) for t in times]
+    sm_positions = [calc_pa_weighted(t, positions) for t in times]
     sm_velocities = gen_deriv(sm_positions)
     # Build plot
     shift_times = [t - MARGIN_TIME for t in times]
