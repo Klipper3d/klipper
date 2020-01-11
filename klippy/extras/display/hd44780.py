@@ -12,13 +12,17 @@ HD44780_DELAY = .000037
 
 class HD44780:
     def __init__(self, config):
+        self.isSrDisplay = False
         self.printer = config.get_printer()
         # pin config
         ppins = self.printer.lookup_object('pins')
 
-        if config.get('sclk_pin'):
+        if config.get('clk_pin'):
+            self.isSrDisplay = True
+
+        if self.isSrDisplay:
             pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                    for name in ['sclk', 'data', 'strobe']]
+                    for name in ['strobe', 'data', 'clk']]
         else:
             pins = [ppins.lookup_pin(config.get(name + '_pin'))
                     for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
@@ -32,7 +36,7 @@ class HD44780:
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
 
-        if config.get('sclk_pin'):
+        if self.isSrDisplay:
             self.mcu.register_config_callback(self.build_config_sr)
         else:
             self.mcu.register_config_callback(self.build_config)
@@ -61,8 +65,8 @@ class HD44780:
             "hd44780_send_data oid=%c data=%*s", cq=cmd_queue)
     def build_config_sr(self):
         self.mcu.add_config_cmd(
-            "config_hd44780_sr oid=%d sclk_pin=%s data_pin=%s"
-            " strobe_pin=%s delay_ticks=%d" % (
+            "config_hd44780_sr oid=%d strobe_pin=%s data_pin=%s"
+            " clk_pin=%s delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1],
                 self.pins[2], self.mcu.seconds_to_clock(HD44780_DELAY)))
         cmd_queue = self.mcu.alloc_command_queue()
@@ -70,7 +74,6 @@ class HD44780:
             "hd44780_sr_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
         self.send_data_cmd = self.mcu.lookup_command(
             "hd44780_sr_send_data oid=%c data=%*s", cq=cmd_queue)
-
     def send(self, cmds, is_data=False):
         cmd_type = self.send_cmds_cmd
         if is_data:
@@ -102,8 +105,12 @@ class HD44780:
         curtime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(curtime)
         # Program 4bit / 2-line mode and then issue 0x02 "Home" command
-        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
+        init = None
         # Reset (set positive direction ; enable display and hide cursor)
+        if self.isSrDisplay:
+            init = [[0x22, 0x28, 0x02]]
+        else:
+            init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
