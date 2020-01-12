@@ -38,6 +38,7 @@ create_virtualenv()
     [ ! -x ${PYTHONDIR}/bin/pip ] && virtualenv ${PYTHONDIR}
 
     # Install/update dependencies
+    ${PYTHONDIR}/bin/pip install setuptools==44.0.0
     ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
