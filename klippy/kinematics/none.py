@@ -7,7 +7,7 @@
 class NoneKinematics:
     def __init__(self, toolhead, config):
         pass
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return []
     def calc_tag_position(self):
         return [0, 0, 0]

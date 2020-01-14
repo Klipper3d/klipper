@@ -62,8 +62,9 @@ class BLTouchEndstopWrapper:
                                     desc=self.cmd_BLTOUCH_DEBUG_help)
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers('Z'):
-            self.add_stepper(stepper)
+        for stepper in kin.get_steppers():
+            if stepper.is_active_axis('z'):
+                self.add_stepper(stepper)
     def handle_connect(self):
         try:
             self.raise_probe()
