@@ -67,19 +67,4 @@ config SERIAL
     bool
     default y
 
-choice
-    prompt "Hardware SPI"
-    depends on HAVE_GPIO_SPI
-    default GPIO_SPI_SSP0
-    config GPIO_SPI_SSP0
-        bool "ssp0"
-        help
-            Pins P0.17,P0.18,P0.15.
-    config GPIO_SPI_SSP1
-        bool "ssp1"
-        help
-            Makerbase MKS SGEN L board uses ssp1 on pins P0.8, P0.9
-            and P0.7 for display connection.
-endchoice
-
 endif
