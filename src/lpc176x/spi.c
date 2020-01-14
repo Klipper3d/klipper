@@ -9,8 +9,24 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+#if CONFIG_GPIO_SPI_SSP0
+#define MISOx 17
+#define MOSIx 18
+#define SCKx  15
+#define PCLK_SSPx PCLK_SSP0
+#define LPC_SSPx LPC_SSP0
 DECL_ENUMERATION("spi_bus", "ssp0", 0);
 DECL_CONSTANT_STR("BUS_PINS_ssp0", "P0.17,P0.18,P0.15");
+#else
+#define MISOx 8
+#define MOSIx 9
+#define SCKx  7
+#define PCLK_SSPx PCLK_SSP1
+#define LPC_SSPx LPC_SSP1
+DECL_ENUMERATION("spi_bus", "ssp1", 0);
+DECL_CONSTANT_STR("BUS_PINS_ssp1", "P0.8,P0.9,P0.7");
+#endif
+
 
 static void
 spi_init(void)
@@ -21,17 +37,17 @@ spi_init(void)
     have_run_init = 1;
 
     // Configure MISO0, MOSI0, SCK0 pins
-    gpio_peripheral(GPIO(0, 17), 2, 0);
-    gpio_peripheral(GPIO(0, 18), 2, 0);
-    gpio_peripheral(GPIO(0, 15), 2, 0);
+    gpio_peripheral(GPIO(0, MISOx), 2, 0);
+    gpio_peripheral(GPIO(0, MOSIx), 2, 0);
+    gpio_peripheral(GPIO(0, SCKx), 2, 0);
 
     // Setup clock
-    enable_pclock(PCLK_SSP0);
+    enable_pclock(PCLK_SSPx);
 
     // Set initial registers
-    LPC_SSP0->CR0 = 0x07;
-    LPC_SSP0->CPSR = 254;
-    LPC_SSP0->CR1 = 1<<1;
+    LPC_SSPx->CR0 = 0x07;
+    LPC_SSPx->CPSR = 254;
+    LPC_SSPx->CR1 = 1<<1;
 }
 
 struct spi_config
@@ -56,8 +72,8 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 void
 spi_prepare(struct spi_config config)
 {
-    LPC_SSP0->CR0 = config.cr0;
-    LPC_SSP0->CPSR = config.cpsr;
+    LPC_SSPx->CR0 = config.cr0;
+    LPC_SSPx->CPSR = config.cpsr;
 }
 
 void
@@ -66,21 +82,21 @@ spi_transfer(struct spi_config config, uint8_t receive_data
 {
     if (receive_data) {
         while (len--) {
-            LPC_SSP0->DR = *data;
+            LPC_SSPx->DR = *data;
             // wait for read data to be ready
-            while (!(LPC_SSP0->SR & (1<<2)))
+            while (!(LPC_SSPx->SR & (1<<2)))
                 ;
             // get data
-            *data++ = LPC_SSP0->DR;
+            *data++ = LPC_SSPx->DR;
         }
     } else {
         while (len--) {
-            LPC_SSP0->DR = *data++;
+            LPC_SSPx->DR = *data++;
             // wait for read data to be ready
-            while (!(LPC_SSP0->SR & (1<<2)))
+            while (!(LPC_SSPx->SR & (1<<2)))
                 ;
             // read data (to clear receive fifo)
-            LPC_SSP0->DR;
+            LPC_SSPx->DR;
         }
     }
 }
