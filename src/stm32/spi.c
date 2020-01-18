@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/io.h" // readb, writeb
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
 #include "internal.h" // gpio_peripheral
@@ -53,6 +54,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].function, 1);
         gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].function, 0);
         gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].function, 0);
+
+        // Configure CR2 on stm32f0
+#if CONFIG_MACH_STM32F0
+        spi->CR2 = SPI_CR2_FRXTH | (7 << SPI_CR2_DS_Pos);
+#endif
     }
 
     // Calculate CR1 register
@@ -79,10 +85,10 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
 {
     SPI_TypeDef *spi = config.spi;
     while (len--) {
-        spi->DR = *data;
+        writeb((void *)&spi->DR, *data);
         while (!(spi->SR & SPI_SR_RXNE))
             ;
-        uint8_t rdata = spi->DR;
+        uint8_t rdata = readb((void *)&spi->DR);
         if (receive_data)
             *data = rdata;
         data++;
