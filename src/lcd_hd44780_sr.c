@@ -83,8 +83,9 @@ static void
 hd44780_sr_begin(struct hd44780_sr *h)
 {
     // SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
-    // according to datasheet, we need at least 40ms after power rises above 2.7V
-    // before sending commands. Arduino can turn on way befer 4.5V so we'll wait 50
+    // according to datasheet, we need at least 40ms after power rises above
+    // 2.7V before sending commands. Arduino can turn on way before 4.5V so
+    // we'll wait 50
     usdelay(50000);
 
     // Now we pull both RS and R/W low to begin commands
@@ -172,7 +173,8 @@ hd44780_sr_write_serial(struct hd44780_sr *h, uint8_t value)
 void
 command_config_hd44780_sr(uint32_t *args)
 {
-    struct hd44780_sr *h = oid_alloc(args[0], command_config_hd44780_sr, sizeof(*h));
+    struct hd44780_sr *h = oid_alloc(args[0],
+            command_config_hd44780_sr, sizeof(*h));
     h->strobe = gpio_out_setup(args[1], 0);
     h->data = gpio_out_setup(args[2], 0);
     h->clk = gpio_out_setup(args[3], 0);
@@ -207,7 +209,8 @@ command_hd44780_sr_send_cmds(uint32_t *args)
         last_cmd_time = timer_read_time();
     }
 }
-DECL_COMMAND(command_hd44780_sr_send_cmds, "hd44780_sr_send_cmds oid=%c cmds=%*s");
+DECL_COMMAND(command_hd44780_sr_send_cmds,
+        "hd44780_sr_send_cmds oid=%c cmds=%*s");
 
 void
 command_hd44780_sr_send_data(uint32_t *args)
@@ -223,4 +226,5 @@ command_hd44780_sr_send_data(uint32_t *args)
         last_cmd_time = timer_read_time();
     }
 }
-DECL_COMMAND(command_hd44780_sr_send_data, "hd44780_sr_send_data oid=%c data=%*s");
+DECL_COMMAND(command_hd44780_sr_send_data,
+        "hd44780_sr_send_data oid=%c data=%*s");
