@@ -17,7 +17,7 @@ class HD44780:
         # pin config
         ppins = self.printer.lookup_object('pins')
 
-        if config.get('clk_pin'):
+        if config.get('clk_pin', None):
             self.isSrDisplay = True
 
         if self.isSrDisplay:
