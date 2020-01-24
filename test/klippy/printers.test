@@ -91,6 +91,10 @@ CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
 
+# Printers using the stm32f070
+DICTIONARY stm32f070.dict
+CONFIG ../../config/printer-monoprice-mini-delta-2017.cfg
+
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
