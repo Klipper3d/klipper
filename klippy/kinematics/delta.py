@@ -36,6 +36,7 @@ class DeltaKinematics:
             rail.set_max_jerk(max_halt_velocity, max_halt_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
+        print_radius = config.getfloat('print_radius', radius, above=0.)
         arm_length_a = stepper_configs[0].getfloat('arm_length', above=radius)
         self.arm_lengths = arm_lengths = [
             sconfig.getfloat('arm_length', arm_length_a, above=radius)
@@ -80,7 +81,7 @@ class DeltaKinematics:
                     + half_min_step_dist)
         self.slow_xy2 = (ratio_to_dist(SLOW_RATIO) - radius)**2
         self.very_slow_xy2 = (ratio_to_dist(2. * SLOW_RATIO) - radius)**2
-        self.max_xy2 = min(radius, min_arm_length - radius,
+        self.max_xy2 = min(print_radius, min_arm_length - radius,
                            ratio_to_dist(4. * SLOW_RATIO) - radius)**2
         logging.info("Delta max build radius %.2fmm (moves slowed past %.2fmm"
                      " and %.2fmm)" % (
