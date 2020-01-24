@@ -106,6 +106,7 @@ CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
+CONFIG ../../config/generic-flyboard.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict
