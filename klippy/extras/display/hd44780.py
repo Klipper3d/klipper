@@ -8,7 +8,7 @@ import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
-HD44780_DELAY = .000037
+HD44780_DELAY = .000040
 
 class HD44780:
     def __init__(self, config):
