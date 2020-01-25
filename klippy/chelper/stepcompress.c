@@ -115,9 +115,9 @@ compress_bisect_add(struct stepcompress *sc)
             int32_t nextaddfactor = nextcount*(nextcount-1)/2;
             int32_t c = add*nextaddfactor;
             if (nextmininterval*nextcount < nextpoint.minp - c)
-                nextmininterval = DIV_ROUND_UP(nextpoint.minp - c, nextcount);
+                nextmininterval = idiv_up(nextpoint.minp - c, nextcount);
             if (nextmaxinterval*nextcount > nextpoint.maxp - c)
-                nextmaxinterval = (nextpoint.maxp - c) / nextcount;
+                nextmaxinterval = idiv_down(nextpoint.maxp - c, nextcount);
             if (nextmininterval > nextmaxinterval)
                 break;
             interval = nextmaxinterval;
