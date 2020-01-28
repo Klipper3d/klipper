@@ -92,6 +92,7 @@ DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
 CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
