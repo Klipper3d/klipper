@@ -335,7 +335,7 @@ class ProbePointsHelper:
             self._manual_probe_start()
             return
         # Perform automatic probing
-        lift_speed = self.gcode.get_float(
+        self.lift_speed = self.gcode.get_float(
             "PROBE_SPEED", params, probe.speed, above=0.)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
