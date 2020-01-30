@@ -264,7 +264,7 @@ section is enabled:
 
 The following commands are available when a "probe" config section is
 enabled:
-- `PROBE [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+- `PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
   [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
   [SAMPLES_TOLERANCE_RETRIES=<count>]
   [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
