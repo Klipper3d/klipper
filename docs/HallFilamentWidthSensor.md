@@ -58,7 +58,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     **hall_filament_width_sensor.Raw** current raw measured filament width in units
     **hall_filament_width_sensor.is_active** Sensor on or off
 
-## template for menu
+## Template for menu variables
     [menu __filament_width_current]
     type: item
     name: "Dia:{0:4.2f} mm"
@@ -68,10 +68,21 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     type: item
     name: "RAW:{0:4.0f}"
     parameter:  hall_filament_width_sensor.Raw
+    
+    [menu __filament]
+    type: list
+    name: Filament
+    items:
+    __temp __hotend0_current, __temp __hotend0_target
+    .__unload
+    .__load
+    .__feed
+    __filament_width_current
+    __filament_raw_width_current
 
  ## Calibration procedure
- Insert first  calibration rod (1.5 mm size) get first  raw sensor value
- 
+ Insert first  calibration rod (1.5 mm size) get first  raw sensor value 
+ To get raw sensor value you can use menu item or  **QUERY_RAW_FILAMENT_WIDTH** command in terminal
  Insert second calibration rod (2.0 mm size) get second raw sensor value
  
  Save raw values in config
