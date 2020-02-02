@@ -18,7 +18,7 @@ class HallFilamentWidthSensor:
         self.dia2=config.getfloat('Cal_dia2', 2.0)
         self.rawdia1=config.getint('Raw_dia1', 9500)
         self.rawdia2=config.getint('Raw_dia2', 10500)
-	self.MEASUREMENT_INTERVAL_MM=config.getint('Mearement_interval',10)
+	self.MEASUREMENT_INTERVAL_MM=config.getint('measurement_interval',10)
         self.nominal_filament_dia = config.getfloat(
             'default_nominal_filament_diameter', above=1)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
