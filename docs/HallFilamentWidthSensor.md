@@ -8,34 +8,35 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
       
     adc1: analog11 
     adc2: analog12 
-    #  adc1 and adc2 channels select own pins Analog input pin for sensor output on board
-    #  Sensor power supply can be 3.3v or 5v
+    # adc1 and adc2 channels select own pins Analog input pin for sensor output on board
+    # Sensor power supply can be 3.3v or 5v
 
-    Cal_dia1: 1.50 
-    Cal_dia2: 2.00 
-    #  The measurement principle provides for two-point calibration
-    #  In calibration process you must use rods of known diameter 
-    #  I use drill rods as the base diameter.
-    #  nominal filament diameter must be between Cal_dia1 and Cal_dia2
+    Cal_dia1: 1.50 # Reference diameter point 1 (mm)
+    Cal_dia2: 2.00 # Reference diameter point 2 (mm)
+    
+    # The measurement principle provides for two-point calibration
+    # In calibration process you must use rods of known diameter 
+    # I use drill rods as the base diameter.
+    # nominal filament diameter must be between Cal_dia1 and Cal_dia2
 
-    Raw_dia1:9630 #RAW VALUE FOR REFERENCE DIAMETER 1
-    Raw_dia2:8300 #RAW VALUE FOR REFERENCE DIAMETER 2
+    Raw_dia1:9630 # Raw sensor value for reference point 1
+    Raw_dia2:8300 # Raw sensor value for reference point 2 
 
-    #  Raw value of sensor in units
-    #  can be readed by command QUERY_RAW_FILAMENT_WIDTH
+    # Raw value of sensor in units
+    # can be readed by command QUERY_RAW_FILAMENT_WIDTH
 
     default_nominal_filament_diameter: 1.75 # This parameter is in millimeters (mm)
 
     max_difference: 0.15     
-    #  Maximum allowed filament diameter difference in millimeters (mm)
-    #  If difference between nominal filament diameter and sensor output is more
-    #  than +- max_difference, extrusion multiplier set back to %100 
+    # Maximum allowed filament diameter difference in millimeters (mm)
+    # If difference between nominal filament diameter and sensor output is more
+    # than +- max_difference, extrusion multiplier set back to %100 
 
     measurement_delay: 70 
-    #  The distance from sensor to the melting chamber/hot-end in millimeters (mm).
-    #  The filament between the sensor and the hot-end will be treated as the default_nominal_filament_diameter.
-    #  Host module works with FIFO logic. It keeps each sensor value and position in
-    #  an array and POP them back in correct position.
+    # The distance from sensor to the melting chamber/hot-end in millimeters (mm).
+    # The filament between the sensor and the hot-end will be treated as the default_nominal_filament_diameter.
+    # Host module works with FIFO logic. It keeps each sensor value and position in
+    # an array and POP them back in correct position.
     
     # Mearement_interval:10 
     # Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting   
