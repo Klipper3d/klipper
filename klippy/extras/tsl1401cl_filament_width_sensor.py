@@ -143,6 +143,9 @@ class FilamentWidthSensor:
             # Set extrude multiplier to 100%
             self.gcode.run_script_from_command("M221 S100")
         self.gcode.respond(response)
+    
+    def get_status(self, eventtime):
+		return {'Diameter': self.lastFilamentWidthReading}        
 
 def load_config(config):
     return FilamentWidthSensor(config)
