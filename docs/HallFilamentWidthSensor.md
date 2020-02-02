@@ -18,9 +18,10 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     # In calibration process you must use rods of known diameter 
     # I use drill rods as the base diameter.
     # nominal filament diameter must be between Cal_dia1 and Cal_dia2
+    # Your size may differ from the indicated ones, for example 2.05
 
-    Raw_dia1:9630 # Raw sensor value for reference point 1
-    Raw_dia2:8300 # Raw sensor value for reference point 2 
+    Raw_dia1:10630 # Raw sensor value for reference point 1
+    Raw_dia2:8300  # Raw sensor value for reference point 2 
 
     # Raw value of sensor in units
     # can be readed by command QUERY_RAW_FILAMENT_WIDTH
@@ -54,3 +55,9 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **hall_filament_width_sensor.Raw** current raw measured filament width in units
 
 **hall_filament_width_sensor.is_active** Sensor on or off
+
+ ## Calibration procedure
+ Insert first  calibration rod (1.5 mm size) get first  raw sensor value
+ Insert second calibration rod (2.0 mm size) get second raw sensor value
+ Save raw values in config
+  
