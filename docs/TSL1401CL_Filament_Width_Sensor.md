@@ -32,4 +32,4 @@ Sensor readings done with 10 mm intervals by default. If necessary you are free 
 
 ## Menu variables
 
-**filament_width_sensor.Diameter** current measured filament width in mm 
+**tsl1401cl_filament_width_sensor.Diameter** current measured filament width in mm 
