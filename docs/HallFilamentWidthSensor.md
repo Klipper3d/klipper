@@ -56,7 +56,9 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 ## Menu variables
 
 **hall_filament_width_sensor.Diameter** current measured filament width in mm
+
 **hall_filament_width_sensor.Raw** current raw measured filament width in units
+
 **hall_filament_width_sensor.is_active** Sensor on or off
 
 ## Template for menu variables
