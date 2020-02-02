@@ -47,11 +47,11 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 
  ## Commands
-**QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
-**RESET_FILAMENT_WIDTH_SENSOR** – Clear all sensor readings. Can be used after filament change.
-**DISABLE_FILAMENT_WIDTH_SENSOR** – Turn off the filament width sensor and stop using it to do flow control
-**ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
-**QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
+    **QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
+    **RESET_FILAMENT_WIDTH_SENSOR** – Clear all sensor readings. Can be used after filament change.
+    **DISABLE_FILAMENT_WIDTH_SENSOR** – Turn off the filament width sensor and stop using it to do flow control
+    **ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
+    **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
 
 ## Menu variables
     **hall_filament_width_sensor.Diameter** current measured filament width in mm
@@ -81,11 +81,11 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     __filament_raw_width_current
 
  ## Calibration procedure
- Insert first  calibration rod (1.5 mm size) get first  raw sensor value 
- To get raw sensor value you can use menu item or  **QUERY_RAW_FILAMENT_WIDTH** command in terminal
- Insert second calibration rod (2.0 mm size) get second raw sensor value
+    Insert first  calibration rod (1.5 mm size) get first  raw sensor value 
+     To get raw sensor value you can use menu item or  **QUERY_RAW_FILAMENT_WIDTH** command in terminal
+     Insert second calibration rod (2.0 mm size) get second raw sensor value
  
- Save raw values in config
+    Save raw values in config
   
  ## How to work
- After power on by default sensor disabled. Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change parameter in config
+    After power on by default sensor disabled. Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change parameter in config
