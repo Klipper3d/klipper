@@ -49,5 +49,7 @@ Sensor readings done with 10 mm intervals by default. If necessary you are free 
 
 ## Menu support
 **hall_filament_width_sensor.Diameter** current measured filament width in mm
+
 **hall_filament_width_sensor.Raw** current raw measured filament width in units
+
 **hall_filament_width_sensor.is_active** Sensor on or off
