@@ -54,11 +54,20 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
 
 ## Menu variables
-**hall_filament_width_sensor.Diameter** current measured filament width in mm
+    **hall_filament_width_sensor.Diameter** current measured filament width in mm
+    **hall_filament_width_sensor.Raw** current raw measured filament width in units
+    **hall_filament_width_sensor.is_active** Sensor on or off
 
-**hall_filament_width_sensor.Raw** current raw measured filament width in units
-
-**hall_filament_width_sensor.is_active** Sensor on or off
+#template for menu
+    [menu __filament_width_current]
+    type: item
+    name: "Dia:{0:4.2f} mm"
+    parameter:  hall_filament_width_sensor.Diameter
+    
+    [menu __filament_raw_width_current]
+    type: item
+    name: "RAW:{0:4.0f}"
+    parameter:  hall_filament_width_sensor.Raw
 
  ## Calibration procedure
  Insert first  calibration rod (1.5 mm size) get first  raw sensor value
