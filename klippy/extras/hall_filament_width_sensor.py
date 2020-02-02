@@ -7,7 +7,6 @@
 ADC_REPORT_TIME = 0.500
 ADC_SAMPLE_TIME = 0.001
 ADC_SAMPLE_COUNT = 5
-MEASUREMENT_INTERVAL_MM = 10
 
 class HallFilamentWidthSensor:
     def __init__(self, config):
@@ -19,7 +18,7 @@ class HallFilamentWidthSensor:
         self.dia2=config.getfloat('Cal_dia2', 2.0)
         self.rawdia1=config.getint('Raw_dia1', 9500)
         self.rawdia2=config.getint('Raw_dia2', 10500)
-
+	self.MEASUREMENT_INTERVAL_MM=config.getint('Mearement_interval',10)
         self.nominal_filament_dia = config.getfloat(
             'default_nominal_filament_diameter', above=1)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
@@ -84,7 +83,7 @@ class HallFilamentWidthSensor:
              
             self.diameter = round((self.dia2 - self.dia1)/(self.rawdia2-self.rawdia1)*((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)-self.rawdia1)+self.dia1,2)
             next_reading_position = (self.filament_array[-1][0]
-                                     + MEASUREMENT_INTERVAL_MM)
+                                     + self.MEASUREMENT_INTERVAL_MM)
             if next_reading_position <= (last_epos + self.measurement_delay):
                 self.filament_array.append([last_epos + self.measurement_delay,
                                             self.diameter])
@@ -171,7 +170,8 @@ class HallFilamentWidthSensor:
                         +str(self.lastFilamentWidthReading+self.lastFilamentWidthReading2))
         self.gcode.respond(response)
     def get_status(self, eventtime):
-		return {'Diameter': self.diameter,'Raw':(self.lastFilamentWidthReading+self.lastFilamentWidthReading2)}
+		return {'Diameter': self.diameter,'Raw':(self.lastFilamentWidthReading+self.lastFilamentWidthReading2),
+		       'is_active':self.is_active}
 		
 		
 
