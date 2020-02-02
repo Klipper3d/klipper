@@ -4,7 +4,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 ## Configuration
 
-      [hall_filament_width_sensor]
+    [hall_filament_width_sensor]
       
     adc1: analog11 
     adc2: analog12 
@@ -16,7 +16,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     #  The measurement principle provides for two-point calibration
     #  In calibration process you must use rods of known diameter 
     #  I use drill rods as the base diameter.
-    #nominal filament diameter must be between Cal_dia1 and Cal_dia2
+    #  nominal filament diameter must be between Cal_dia1 and Cal_dia2
 
     Raw_dia1:9630 #RAW VALUE FOR REFERENCE DIAMETER 1
     Raw_dia2:8300 #RAW VALUE FOR REFERENCE DIAMETER 2
