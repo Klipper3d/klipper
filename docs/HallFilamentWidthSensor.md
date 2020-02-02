@@ -1,0 +1,50 @@
+This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on Two Hall liniar sensors (ss49e for example). Principle of operation : two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed. You can find designs at [thingiverse.com](https://www.thingiverse.com/thing:4138933)
+## How does it work?
+Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width . Host module monitors voltage changes and adjusts extrusion multiplier.
+
+## Configuration
+[hall_filament_width_sensor]
+adc1: analog11 
+adc2: analog12 
+#adc1 and adc2 channels select own pins Analog input pin for sensor output on board
+#Sensor power supply can be 3.3v or 5v
+
+Cal_dia1: 1.50 
+Cal_dia2: 2.00 
+#The measurement principle provides for two-point calibration
+#In calibration process you must use rods of known diameter 
+#I use drill rods as the base diameter.
+#nominal filament diameter must be between Cal_dia1 and Cal_dia2
+
+Raw_dia1:9630 #RAW VALUE FOR REFERENCE DIAMETER 1
+Raw_dia2:8300 #RAW VALUE FOR REFERENCE DIAMETER 2
+
+#Raw value of sensor in units
+#can be readed by command QUERY_RAW_FILAMENT_WIDTH
+
+default_nominal_filament_diameter: 1.75 # This parameter is in millimeters (mm)
+
+max_difference: 0.15     
+#  Maximum allowed filament diameter difference in millimeters (mm)
+#  If difference between nominal filament diameter and sensor output is more
+#  than +- max_difference, extrusion multiplier set back to %100 
+
+measurement_delay: 70 
+#  The distance from sensor to the melting chamber/hot-end in millimeters (mm).
+#  The filament between the sensor and the hot-end will be treated as the default_nominal_filament_diameter.
+#  Host module works with FIFO logic. It keeps each sensor value and position in
+#  an array and POP them back in correct position.
+
+Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting by editing ***MEASUREMENT_INTERVAL_MM*** parameter in **filament_width_sensor.py** file.
+
+## Commands
+**QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
+**RESET_FILAMENT_WIDTH_SENSOR** – Clear all sensor readings. Can be used after filament change.
+**DISABLE_FILAMENT_WIDTH_SENSOR** – Turn off the filament width sensor and stop using it to do flow control
+**ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
+**QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
+
+## Menu support
+**hall_filament_width_sensor.Diameter** current measured filament width in mm
+**hall_filament_width_sensor.Raw** current raw measured filament width in units
+**hall_filament_width_sensor.is_active** Sensor on or off
