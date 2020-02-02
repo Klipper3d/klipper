@@ -39,8 +39,12 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     # Host module works with FIFO logic. It keeps each sensor value and position in
     # an array and POP them back in correct position.
     
+    #enable:False
+    # Sensor enabled or disabled after power on. Disabled by default
+    
     # measurement_interval:10 
     # Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting   
+
 
  ## Commands
 **QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
@@ -49,7 +53,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
 **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
 
-## Menu support
+## Menu variables
 **hall_filament_width_sensor.Diameter** current measured filament width in mm
 
 **hall_filament_width_sensor.Raw** current raw measured filament width in units
@@ -63,3 +67,5 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
  
  Save raw values in config
   
+ ## How to work
+ After power on by default sensor disabled. Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change parameter in config
