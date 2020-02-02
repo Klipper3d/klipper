@@ -58,6 +58,8 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
  ## Calibration procedure
  Insert first  calibration rod (1.5 mm size) get first  raw sensor value
+ 
  Insert second calibration rod (2.0 mm size) get second raw sensor value
+ 
  Save raw values in config
   
