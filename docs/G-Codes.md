@@ -161,7 +161,7 @@ The following standard commands are supported:
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
-- `STEPPER_DISABLE STEPPER=<config_name>`: Disable only the given 
+- `STEPPER_DISABLE STEPPER=<config_name>`: Disable only the given
   stepper. Disabling the X, Y, or Z steppers will require printer
   to be re-homed.
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
