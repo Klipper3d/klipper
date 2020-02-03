@@ -62,11 +62,30 @@ def time_to_index(t):
 PA_HALF_SMOOTH_T = .040 / 2.
 PRESSURE_ADVANCE = .045
 
+# Calculate raw pressure advance positions
 def calc_pa_raw(t, positions):
     pa = PRESSURE_ADVANCE * INV_SEG_TIME
     i = time_to_index(t)
     return positions[i] + pa * (positions[i+1] - positions[i])
 
+# Pressure advance smoothed using average velocity (for reference only)
+def calc_pa_average(t, positions):
+    pa_factor = PRESSURE_ADVANCE / (2. * PA_HALF_SMOOTH_T)
+    base_pos = positions[time_to_index(t)]
+    start_pos = positions[time_to_index(t - PA_HALF_SMOOTH_T)]
+    end_pos = positions[time_to_index(t + PA_HALF_SMOOTH_T)]
+    return base_pos + (end_pos - start_pos) * pa_factor
+
+# Pressure advance with simple time smoothing (for reference only)
+def calc_pa_smooth(t, positions):
+    start_index = time_to_index(t - PA_HALF_SMOOTH_T) + 1
+    end_index = time_to_index(t + PA_HALF_SMOOTH_T)
+    pa = PRESSURE_ADVANCE * INV_SEG_TIME
+    pa_data = [positions[i] + pa * (positions[i+1] - positions[i])
+               for i in range(start_index, end_index)]
+    return sum(pa_data) / (end_index - start_index)
+
+# Calculate pressure advance smoothed using a "weighted average"
 def calc_pa_weighted(t, positions):
     base_index = time_to_index(t)
     start_index = time_to_index(t - PA_HALF_SMOOTH_T) + 1
