@@ -77,15 +77,20 @@ class PrinterStepperEnable:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("M18", self.cmd_M18)
         gcode.register_command("M84", self.cmd_M18)
+        gcode.register_command("STEPPER_DISABLE", self.cmd_STEPPER_DISABLE)
     def register_stepper(self, stepper, pin):
         name = stepper.get_name()
         self.enable_lines[name] = EnableTracking(self.printer, stepper, pin)
-    def motor_off(self):
+    def motor_off(self, stepper=None):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.dwell(DISABLE_STALL_TIME)
         print_time = toolhead.get_last_move_time()
-        for el in self.enable_lines.values():
+        if stepper is not None:
+            el = self.enable_lines.get(stepper, "")
             el.motor_disable(print_time)
+        else:
+            for el in self.enable_lines.values():
+                el.motor_disable(print_time)
         self.printer.send_event("stepper_enable:motor_off", print_time)
         toolhead.dwell(DISABLE_STALL_TIME)
         logging.debug('; Max time of %f', print_time)
@@ -94,6 +99,11 @@ class PrinterStepperEnable:
     def cmd_M18(self, params):
         # Turn off motors
         self.motor_off()
+    cmd_STEPPER_DISABLE_help = "Disable individual stepper by name"
+    def cmd_STEPPER_DISABLE(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        stepper_name = gcode.get_str('STEPPER', params, None)
+        self.motor_off(stepper_name)
     def lookup_enable(self, name):
         if name not in self.enable_lines:
             raise self.printer.config_error("Unknown stepper '%s'" % (name,))
