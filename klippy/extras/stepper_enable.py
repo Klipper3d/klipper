@@ -71,9 +71,6 @@ class PrinterStepperEnable:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.enable_lines = {}
-        self.homed_steppers = ['stepper_a','stepper_b','stepper_c',
-                          'stepper_x','stepper_y','stepper_z',
-                          'stepper_bed','stepper_arm']
         self.printer.register_event_handler("gcode:request_restart",
                                             self._handle_request_restart)
         # Register M18/M84 commands
@@ -92,8 +89,7 @@ class PrinterStepperEnable:
         if stepper is not None:
             el = self.enable_lines.get(stepper, "")
             el.motor_disable(print_time)
-            if stepper in self.homed_steppers:
-                self.printer.send_event("stepper_enable:motor_off", print_time)
+            logging.info("%s has been manually disabled", stepper)
         else:
             for el in self.enable_lines.values():
                 el.motor_disable(print_time)

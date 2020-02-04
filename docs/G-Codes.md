@@ -162,8 +162,11 @@ The following standard commands are supported:
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
 - `STEPPER_DISABLE STEPPER=<config_name>`: Disable only the given
-  stepper. Disabling the X, Y, or Z steppers will require printer
-  to be re-homed.
+  stepper. This is a diagnostic and debugging tool and must be used
+  with care. Disabling an axis motor does not reset the homing
+  information. Manually moving a disabled stepper may cause the
+  machine to operate the motor outside of safe limits. This can lead
+  to damage to axis components, hot ends, and print surface.
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.
