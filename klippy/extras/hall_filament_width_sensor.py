@@ -163,7 +163,7 @@ class HallFilamentWidthSensor:
     def cmd_Get_Raw_Values(self, params):
         response = "ADC1="
         response +=  (" "+str(self.lastFilamentWidthReading))
-        response +=  (" ADC2="str(self.lastFilamentWidthReading2))
+        response +=  (" ADC2="+str(self.lastFilamentWidthReading2))
         response +=  (" RAW="+str(self.lastFilamentWidthReading+self.lastFilamentWidthReading2))
         self.gcode.respond(response)
     def get_status(self, eventtime):
