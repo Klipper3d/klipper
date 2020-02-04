@@ -44,7 +44,8 @@ class PrinterLCD:
         self.extruder = self.printer.lookup_object('extruder', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
-        self.fwidth = self.printer.lookup_object('hall_filament_width_sensor', None)
+        self.fwidth = self.printer.lookup_object(
+            'hall_filament_width_sensor', None)
         self.prg_time = .0
         self.progress = None
         self.msg_time = None
