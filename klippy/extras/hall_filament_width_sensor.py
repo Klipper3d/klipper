@@ -67,23 +67,22 @@ class HallFilamentWidthSensor:
     def adc_callback(self, read_time, read_value):
         # read sensor value
         self.lastFilamentWidthReading = round(read_value * 10000)
-  
+
     def adc2_callback(self, read_time, read_value):
         # read sensor value
         self.lastFilamentWidthReading2 = round(read_value * 10000)
-  
+
     def update_filament_array(self, last_epos):
         # Fill array
         if len(self.filament_array) > 0:
             # Get last reading position in array & calculate next
             # reading position
-             
-            self.diameter = round((self.dia2 - self.dia1)/(self.rawdia2-self.rawdia1)*
-                           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)-self.rawdia1)+self.dia1,2)
-            next_reading_position = (self.filament_array[-1][0]
-                                     + self.MEASUREMENT_INTERVAL_MM)
-            if next_reading_position <= (last_epos + self.measurement_delay):
-                self.filament_array.append([last_epos + self.measurement_delay,
+
+          self.diameter = round((self.dia2 - self.dia1)/(self.rawdia2-self.rawdia1)*
+          ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)-self.rawdia1)+self.dia1,2)
+          next_reading_position = (self.filament_array[-1][0] + self.MEASUREMENT_INTERVAL_MM)
+          if next_reading_position <= (last_epos + self.measurement_delay):
+            self.filament_array.append([last_epos + self.measurement_delay,
                                             self.diameter])
         else:
             # add first item to array
