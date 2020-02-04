@@ -39,6 +39,7 @@ class Heater:
         self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.
+        self.target_store = 0.
         self.last_temp_time = 0.
         # pwm caching
         self.next_pwm_time = 0.

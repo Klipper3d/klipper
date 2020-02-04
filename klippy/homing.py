@@ -45,8 +45,31 @@ class Homing:
         self.endstops_pending -= 1
         if not self.endstops_pending:
             self.toolhead.signal_drip_mode_end()
+
     def homing_move(self, movepos, endstops, speed,
-                    probe_pos=False, verify_movement=False):
+                    probe_pos=False, verify_movement=False,
+                    need_deploy=True, need_stow=True):
+        probe_instance, name = endstops[0]
+        # This logic only on an axis relevant to a BLTouch
+        # ('z', 'z1', etc. or 'probe')
+        bltouch = (hasattr(probe_instance, 'deploy_probe') and
+                   ((name[0] == 'z') or (name == 'probe')))
+        if bltouch:
+            pwroff = (hasattr(probe_instance, 'heaters_off') and
+                      probe_instance.heaters_off)
+            if pwroff:
+                p_heaters = self.printer.lookup_object('heater')
+                heaters = p_heaters.heaters
+                print_time = self.toolhead.get_last_move_time()
+                for heater in heaters.values():
+                    heater.target_store = heater.target_temp
+                    heater.set_temp(print_time, 0.)
+            if hasattr(probe_instance, 'hsmode'):
+                hsmode = probe_instance.hsmode
+            else:
+                hsmode = 0
+            if (hsmode < 2) or need_deploy:
+                probe_instance.deploy_probe()
         # Notify endstops of upcoming home
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
@@ -72,6 +95,8 @@ class Homing:
             self.toolhead.drip_move(movepos, speed)
         except CommandError as e:
             error = "Error during homing move: %s" % (str(e),)
+            if bltouch:
+                probe_instance.stow_probe(nocheck=True)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in endstops:
@@ -91,6 +116,13 @@ class Homing:
             self.set_homed_position(kin.calc_tag_position())
         else:
             self.toolhead.set_position(movepos)
+        if bltouch:
+            if pwroff:
+                print_time = self.toolhead.get_last_move_time()
+                for heater in heaters.values():
+                    heater.set_temp(print_time, heater.target_store)
+            if (hsmode < 2) or need_stow:
+                probe_instance.stow_probe(nocheck=(hsmode >= 1))
         # Signal homing complete
         for mcu_endstop, name in endstops:
             try:
@@ -117,22 +149,24 @@ class Homing:
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
-        self.homing_move(movepos, endstops, hi.speed)
+        self.homing_move(movepos, endstops, hi.speed,
+                         need_deploy=True, need_stow=not hi.retract_dist)
         # Perform second home
         if hi.retract_dist:
             # Retract
             axes_d = [mp - fp for mp, fp in zip(movepos, forcepos)]
-            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
             retract_r = min(1., hi.retract_dist / move_d)
             retractpos = [mp - ad * retract_r
                           for mp, ad in zip(movepos, axes_d)]
-            self.toolhead.move(retractpos, hi.speed)
+            self.toolhead.move(retractpos, hi.retract_speed)
             # Home again
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
             self.homing_move(movepos, endstops, hi.second_homing_speed,
-                             verify_movement=self.verify_retract)
+                             verify_movement=self.verify_retract,
+                             need_deploy=False, need_stow=True)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
