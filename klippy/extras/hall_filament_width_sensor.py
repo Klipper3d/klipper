@@ -82,7 +82,7 @@ class HallFilamentWidthSensor:
             (self.rawdia2-self.rawdia1)*
           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
            -self.rawdia1)+self.dia1,2)
-          next_reading_position = (self.filament_array[-1][0] + 
+          next_reading_position = (self.filament_array[-1][0] +
           self.MEASUREMENT_INTERVAL_MM)
           if next_reading_position <= (last_epos + self.measurement_delay):
             self.filament_array.append([last_epos + self.measurement_delay,
@@ -164,11 +164,14 @@ class HallFilamentWidthSensor:
         response = "ADC1="
         response +=  (" "+str(self.lastFilamentWidthReading))
         response +=  (" ADC2="+str(self.lastFilamentWidthReading2))
-        response +=  (" RAW="+str(self.lastFilamentWidthReading+self.lastFilamentWidthReading2))
+        response +=  (" RAW="+
+                      str(self.lastFilamentWidthReading
+                      +self.lastFilamentWidthReading2))
         self.gcode.respond(response)
     def get_status(self, eventtime):
         return {'Diameter': self.diameter,
-                'Raw':(self.lastFilamentWidthReading+self.lastFilamentWidthReading2),
+                'Raw':(self.lastFilamentWidthReading+
+                 self.lastFilamentWidthReading2),
                 'is_active':self.is_active}
 
 def load_config(config):
