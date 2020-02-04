@@ -7,7 +7,7 @@ ADC_SAMPLE_TIME = 0.001
 ADC_SAMPLE_COUNT = 5
 
 class HallFilamentWidthSensor:
-        def __init__(self, config):
+    def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.pin1 = config.get('adc1')
