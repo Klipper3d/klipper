@@ -193,6 +193,10 @@ class PrinterLCD:
         if progress is not None and progress > 0:
             remaining_time = int(printing_time / progress) - printing_time
         # switch mode every 6s
+        if self.fwidth is not None:
+            info = self.fwidth.diameter
+            dia = "Dia:"
+            self.draw_text(0, 2,dia+str(info))
         if remaining_time is not None and int(eventtime) % 12 < 6:
             self.lcd_chip.write_text(10, 2, "-")
             self.draw_time(11, 2, remaining_time)
