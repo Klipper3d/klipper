@@ -10,6 +10,8 @@ import matplotlib
 SEG_TIME = .000100
 INV_SEG_TIME = 1. / SEG_TIME
 
+SPRING_FREQ=35.0
+DAMPING=30.
 
 ######################################################################
 # Basic trapezoid motion
@@ -24,6 +26,14 @@ Moves = [
     (0., 0., .300)
 ]
 ACCEL = 3000.
+MAX_JERK = ACCEL * 0.6 * SPRING_FREQ
+
+def get_accel(start_v, end_v):
+    return ACCEL
+
+def get_accel_jerk_limit(start_v, end_v):
+    effective_accel = math.sqrt(MAX_JERK * abs(end_v - start_v) / 6.)
+    return min(effective_accel, ACCEL)
 
 # Standard constant acceleration generator
 def get_acc_pos_ao2(rel_t, start_v, accel, move_t):
@@ -55,7 +65,8 @@ def get_acc_pos_ao6(rel_t, start_v, accel, move_t):
     return (((c6 * rel_t + c5) * rel_t + c4)
             * rel_t * rel_t * rel_t + c1) * rel_t
 
-get_acc_pos = get_acc_pos_ao2
+get_acc_pos = get_acc_pos_ao6
+get_acc = get_accel_jerk_limit
 
 # Calculate positions based on 'Moves' list
 def gen_positions():
@@ -63,12 +74,8 @@ def gen_positions():
     start_d = start_t = t = 0.
     for start_v, end_v, move_t in Moves:
         if move_t is None:
-            move_t = abs(end_v - start_v) / ACCEL
-        accel = 0.
-        if end_v > start_v:
-            accel = ACCEL
-        elif start_v > end_v:
-            accel = -ACCEL
+            move_t = abs(end_v - start_v) / get_acc(start_v, end_v)
+        accel = (end_v - start_v) / move_t
         end_t = start_t + move_t
         while t <= end_t:
             rel_t = t - start_t
@@ -82,9 +89,6 @@ def gen_positions():
 ######################################################################
 # Estimated motion with belt as spring
 ######################################################################
-
-SPRING_FREQ = 35.0
-DAMPING = 30.
 
 def estimate_spring(positions):
     ang_freq2 = (SPRING_FREQ * 2. * math.pi)**2
