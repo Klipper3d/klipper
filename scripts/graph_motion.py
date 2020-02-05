@@ -148,10 +148,25 @@ def calc_spring_weighted(t, positions):
                for i in range(start_index, end_index)]
     return sum(sa_data) / diff**2
 
-def calc_spring_double_weighted(t, positions):
+def calc_spring_weighted2(t, positions):
     base_index = time_to_index(t)
     start_index = time_to_index(t - HALF_SMOOTH_T)
     end_index = time_to_index(t + HALF_SMOOTH_T)
+    diff = .5 * (end_index - start_index)
+    sa = SPRING_ADVANCE * INV_SEG_TIME * INV_SEG_TIME
+    ra = RESISTANCE_ADVANCE * INV_SEG_TIME
+    sa_data = [(positions[i]
+                + sa * (positions[i-1] - 2.*positions[i] + positions[i+1])
+                + ra * (positions[i+1] - positions[i]))
+               * (diff - abs(i-base_index))**2
+               * (2.*abs(i-base_index) + diff)
+               for i in range(start_index, end_index)]
+    return sum(sa_data) / diff**4
+
+def calc_spring_double_weighted(t, positions):
+    base_index = time_to_index(t)
+    start_index = time_to_index(t - HALF_SMOOTH_T * .5)
+    end_index = time_to_index(t + HALF_SMOOTH_T * .5)
     avg_v = base_index - start_index
     diff = .5 * (end_index - start_index)
     sa = SPRING_ADVANCE * (INV_SEG_TIME / avg_v)**2
@@ -167,7 +182,7 @@ def calc_spring_double_weighted(t, positions):
 # Ideal values
 SPRING_ADVANCE = 1. / ((SPRING_FREQ * 2. * math.pi)**2)
 RESISTANCE_ADVANCE = DAMPING * SPRING_ADVANCE
-HALF_SMOOTH_T = (1./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE) / 2.
+HALF_SMOOTH_T = (2./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE) / 2.
 
 
 ######################################################################
@@ -175,7 +190,7 @@ HALF_SMOOTH_T = (1./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE) / 2.
 ######################################################################
 
 #gen_updated_position = calc_position_weighted
-gen_updated_position = calc_spring_double_weighted
+gen_updated_position = calc_spring_weighted2
 
 MARGIN_TIME = 0.100
 
