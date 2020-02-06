@@ -87,9 +87,14 @@ class PrinterStepperEnable:
         toolhead.dwell(DISABLE_STALL_TIME)
         print_time = toolhead.get_last_move_time()
         if stepper is not None:
-            el = self.enable_lines.get(stepper, "")
-            el.motor_disable(print_time)
-            logging.info("%s has been manually disabled", stepper)
+            if stepper in self.enable_lines:
+                el = self.enable_lines.get(stepper, "")
+                el.motor_disable(print_time)
+                logging.info("%s has been manually disabled", stepper)
+            else:
+                gcode = self.printer.lookup_object('gcode')
+                gcode.respond_info('STEPPER_DISABLE: Invalid stepper "%s"'
+                                    % (stepper))
         else:
             for el in self.enable_lines.values():
                 el.motor_disable(print_time)
