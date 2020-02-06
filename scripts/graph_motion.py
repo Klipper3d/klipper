@@ -18,7 +18,7 @@ INV_SEG_TIME = 1. / SEG_TIME
 # List of moves: [(start_v, end_v, move_t), ...]
 Moves = [
     # X velocities from: 0,0 -> 0,20 -> 40,40 -> 80,40 -> 80,80
-    (0., 0., .200),
+    (0., 0., .100),
     (6.869, 89.443, None), (89.443, 89.443, .200), (89.443, 17.361, None),
     (19.410, 100., None), (100., 100., .200), (100., 5., None),
     (0., 0., .300)
@@ -78,13 +78,6 @@ def gen_positions():
         start_t = end_t
     return out
 
-def gen_deriv(data):
-    return [0.] + [(data[i+1] - data[i]) * INV_SEG_TIME
-                   for i in range(len(data)-1)]
-
-def time_to_index(t):
-    return int(t * INV_SEG_TIME + .5)
-
 
 ######################################################################
 # Estimated motion with belt as spring
@@ -107,140 +100,166 @@ def estimate_spring(positions):
 
 
 ######################################################################
-# Motion functions
+# List helper functions
 ######################################################################
 
-HALF_SMOOTH_T = .040 / 2.
+MARGIN_TIME = 0.050
 
-def calc_position_average(t, positions):
-    start_pos = positions[time_to_index(t - HALF_SMOOTH_T)]
-    end_pos = positions[time_to_index(t + HALF_SMOOTH_T)]
-    return .5 * (start_pos + end_pos)
+def time_to_index(t):
+    return int(t * INV_SEG_TIME + .5)
 
-def calc_position_smooth(t, positions):
-    start_index = time_to_index(t - HALF_SMOOTH_T) + 1
-    end_index = time_to_index(t + HALF_SMOOTH_T)
-    return sum(positions[start_index:end_index]) / (end_index - start_index)
+def indexes(positions):
+    drop = time_to_index(MARGIN_TIME)
+    return range(drop, len(positions)-drop)
 
-def calc_position_weighted(t, positions):
-    base_index = time_to_index(t)
-    start_index = time_to_index(t - HALF_SMOOTH_T) + 1
-    end_index = time_to_index(t + HALF_SMOOTH_T)
-    diff = .5 * (end_index - start_index)
-    weighted_data = [positions[i] * (diff - abs(i-base_index))
-                     for i in range(start_index, end_index)]
-    return sum(weighted_data) / diff**2
+def trim_lists(*lists):
+    keep = len(lists[0]) - time_to_index(2. * MARGIN_TIME)
+    for l in lists:
+        del l[keep:]
+
+
+######################################################################
+# Common data filters
+######################################################################
+
+# Generate estimated first order derivative
+def gen_deriv(data):
+    return [0.] + [(data[i+1] - data[i]) * INV_SEG_TIME
+                   for i in range(len(data)-1)]
+
+# Simple average between two points smooth_time away
+def calc_average(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        out[i] = .5 * (positions[i-offset] + positions[i+offset])
+    return out
+
+# Average (via integration) of smooth_time range
+def calc_smooth(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    weight = 1. / (2*offset - 1)
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        out[i] = sum(positions[i-offset+1:i+offset]) * weight
+    return out
+
+# Time weighted average (via integration) of smooth_time range
+def calc_weighted(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    weight = 1. / offset**2
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        weighted_data = [positions[j] * (offset - abs(j-i))
+                         for j in range(i-offset, i+offset)]
+        out[i] = sum(weighted_data) * weight
+    return out
+
+# Exponential time weighted average (via integration) of smooth_time range
+def calc_weighted2(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    weight = 1. / offset**4
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        weighted_data = [positions[j] * (offset - abs(j-i))**2
+                         * (2. * abs(j-i) + offset)
+                         for j in range(i-offset, i+offset)]
+        out[i] = sum(weighted_data) * weight
+    return out
+
+
+######################################################################
+# Spring motion estimation
+######################################################################
 
 SPRING_ADVANCE = .000020
 RESISTANCE_ADVANCE = 0.
 
-def calc_spring_weighted(t, positions):
-    base_index = time_to_index(t)
-    start_index = time_to_index(t - HALF_SMOOTH_T)
-    end_index = time_to_index(t + HALF_SMOOTH_T)
-    diff = .5 * (end_index - start_index)
+def calc_spring_raw(positions):
     sa = SPRING_ADVANCE * INV_SEG_TIME * INV_SEG_TIME
     ra = RESISTANCE_ADVANCE * INV_SEG_TIME
-    sa_data = [(positions[i]
-                + sa * (positions[i-1] - 2.*positions[i] + positions[i+1])
-                + ra * (positions[i+1] - positions[i]))
-               * (diff - abs(i-base_index))
-               for i in range(start_index, end_index)]
-    return sum(sa_data) / diff**2
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        out[i] = (positions[i]
+                  + sa * (positions[i-1] - 2.*positions[i] + positions[i+1])
+                  + ra * (positions[i+1] - positions[i]))
+    return out
 
-def calc_spring_weighted2(t, positions):
-    base_index = time_to_index(t)
-    start_index = time_to_index(t - HALF_SMOOTH_T)
-    end_index = time_to_index(t + HALF_SMOOTH_T)
-    diff = .5 * (end_index - start_index)
-    sa = SPRING_ADVANCE * INV_SEG_TIME * INV_SEG_TIME
+def calc_spring_double_weighted(positions, smooth_time):
+    offset = time_to_index(smooth_time * .25)
+    sa = SPRING_ADVANCE * (INV_SEG_TIME / offset)**2
     ra = RESISTANCE_ADVANCE * INV_SEG_TIME
-    sa_data = [(positions[i]
-                + sa * (positions[i-1] - 2.*positions[i] + positions[i+1])
-                + ra * (positions[i+1] - positions[i]))
-               * (diff - abs(i-base_index))**2
-               * (2.*abs(i-base_index) + diff)
-               for i in range(start_index, end_index)]
-    return sum(sa_data) / diff**4
-
-def calc_spring_double_weighted(t, positions):
-    base_index = time_to_index(t)
-    start_index = time_to_index(t - HALF_SMOOTH_T * .5)
-    end_index = time_to_index(t + HALF_SMOOTH_T * .5)
-    avg_v = base_index - start_index
-    diff = .5 * (end_index - start_index)
-    sa = SPRING_ADVANCE * (INV_SEG_TIME / avg_v)**2
-    ra = RESISTANCE_ADVANCE * INV_SEG_TIME
-    sa_data = [(positions[i]
-                + sa * (positions[i-avg_v] - 2.*positions[i]
-                        + positions[i+avg_v])
-                + ra * (positions[i+1] - positions[i]))
-               * (diff - abs(i-base_index))
-               for i in range(start_index, end_index)]
-    return sum(sa_data) / diff**2
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        out[i] = (positions[i]
+                  + sa * (positions[i-offset] - 2.*positions[i]
+                          + positions[i+offset])
+                  + ra * (positions[i+1] - positions[i]))
+    return calc_weighted(out, smooth_time=.5 * smooth_time)
 
 # Ideal values
 SPRING_ADVANCE = 1. / ((SPRING_FREQ * 2. * math.pi)**2)
 RESISTANCE_ADVANCE = DAMPING * SPRING_ADVANCE
-HALF_SMOOTH_T = (2./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE) / 2.
+SMOOTH_TIME = (2./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE)
+
+def gen_updated_position(positions):
+    #return calc_weighted(positions, 0.040)
+    #return calc_spring_double_weighted(positions, SMOOTH_TIME)
+    return calc_weighted2(calc_spring_raw(positions), SMOOTH_TIME)
 
 
 ######################################################################
 # Plotting and startup
 ######################################################################
 
-#gen_updated_position = calc_position_weighted
-gen_updated_position = calc_spring_weighted2
-
-MARGIN_TIME = 0.100
-
 def plot_motion():
     # Nominal motion
     positions = gen_positions()
-    drop = int(MARGIN_TIME * INV_SEG_TIME)
-    times = [SEG_TIME * t for t in range(len(positions))][drop:-drop]
-    margin_positions = positions[drop:-drop]
-    velocities = gen_deriv(margin_positions)
+    velocities = gen_deriv(positions)
     accels = gen_deriv(velocities)
     # Updated motion
-    upd_positions = [gen_updated_position(t, positions) for t in times]
+    upd_positions = gen_updated_position(positions)
     upd_velocities = gen_deriv(upd_positions)
     upd_accels = gen_deriv(upd_velocities)
     # Estimated position with model of belt as spring
-    spring_orig = estimate_spring(margin_positions)
+    spring_orig = estimate_spring(positions)
     spring_upd = estimate_spring(upd_positions)
-    spring_diff_orig = [n-o for n, o in zip(spring_orig, margin_positions)]
-    spring_diff_upd = [n-o for n, o in zip(spring_upd, margin_positions)]
+    spring_diff_orig = [n-o for n, o in zip(spring_orig, positions)]
+    spring_diff_upd = [n-o for n, o in zip(spring_upd, positions)]
     head_velocities = gen_deriv(spring_orig)
     head_accels = gen_deriv(head_velocities)
     head_upd_velocities = gen_deriv(spring_upd)
     head_upd_accels = gen_deriv(head_upd_velocities)
     # Build plot
-    shift_times = [t - MARGIN_TIME for t in times]
+    times = [SEG_TIME * i for i in range(len(positions))]
+    trim_lists(times, velocities, accels,
+               upd_velocities, upd_velocities, upd_accels,
+               spring_diff_orig, spring_diff_upd,
+               head_velocities, head_upd_velocities,
+               head_accels, head_upd_accels)
     fig, (ax1, ax2, ax3) = matplotlib.pyplot.subplots(nrows=3, sharex=True)
     ax1.set_title("Simulation (belt frequency=%.3f, damping=%.3f)"
                   % (SPRING_FREQ, DAMPING))
     ax1.set_ylabel('Velocity (mm/s)')
-    ax1.plot(shift_times, upd_velocities, 'r', label='New Velocity', alpha=0.8)
-    ax1.plot(shift_times, velocities, 'g', label='Nominal Velocity', alpha=0.8)
-    ax1.plot(shift_times, head_velocities, label='Head Velocity', alpha=0.4)
-    ax1.plot(shift_times, head_upd_velocities, label='New Head Velocity',
-             alpha=0.4)
+    ax1.plot(times, upd_velocities, 'r', label='New Velocity', alpha=0.8)
+    ax1.plot(times, velocities, 'g', label='Nominal Velocity', alpha=0.8)
+    ax1.plot(times, head_velocities, label='Head Velocity', alpha=0.4)
+    ax1.plot(times, head_upd_velocities, label='New Head Velocity', alpha=0.4)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
     ax1.legend(loc='best', prop=fontP)
     ax1.grid(True)
     ax2.set_ylabel('Acceleration (mm/s^2)')
-    ax2.plot(shift_times, upd_accels, 'r', label='New Accel', alpha=0.8)
-    ax2.plot(shift_times, accels, 'g', label='Nominal Accel', alpha=0.8)
-    ax2.plot(shift_times, head_accels, alpha=0.4)
-    ax2.plot(shift_times, head_upd_accels, alpha=0.4)
+    ax2.plot(times, upd_accels, 'r', label='New Accel', alpha=0.8)
+    ax2.plot(times, accels, 'g', label='Nominal Accel', alpha=0.8)
+    ax2.plot(times, head_accels, alpha=0.4)
+    ax2.plot(times, head_upd_accels, alpha=0.4)
     ax2.set_ylim([-5. * ACCEL, 5. * ACCEL])
     ax2.legend(loc='best', prop=fontP)
     ax2.grid(True)
     ax3.set_ylabel('Deviation (mm)')
-    ax3.plot(shift_times, spring_diff_upd, 'r', label='New', alpha=0.8)
-    ax3.plot(shift_times, spring_diff_orig, 'g', label='Nominal', alpha=0.8)
+    ax3.plot(times, spring_diff_upd, 'r', label='New', alpha=0.8)
+    ax3.plot(times, spring_diff_orig, 'g', label='Nominal', alpha=0.8)
     ax3.grid(True)
     ax3.legend(loc='best', prop=fontP)
     ax3.set_xlabel('Time (s)')
