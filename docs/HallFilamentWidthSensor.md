@@ -100,4 +100,4 @@ Save raw values in config
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
 
-[Hall based filament width sensor assembly](https://www.youtube.com/watch?v=TDO9tME8vp4)
+[Hall based filament width sensor assembly video](https://www.youtube.com/watch?v=TDO9tME8vp4)
