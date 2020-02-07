@@ -8,7 +8,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
     adc1: analog11
     adc2: analog12
-    # adc1 and adc2 channels select own pins Analog input pin for sensor output on board
+    # adc1 and adc2 channels select own pins Analog input pins on 3d printer board
     # Sensor power supply can be 3.3v or 5v
 
     Cal_dia1: 1.50 # Reference diameter point 1 (mm)
