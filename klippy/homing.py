@@ -130,7 +130,7 @@ class Homing:
             retract_r = min(1., hi.retract_dist / move_d)
             retractpos = [mp - ad * retract_r
                           for mp, ad in zip(movepos, axes_d)]
-            self.toolhead.move(retractpos, hi.speed)
+            self.toolhead.move(retractpos, hi.retract_speed)
             # Home again
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
