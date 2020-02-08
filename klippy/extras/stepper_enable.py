@@ -83,7 +83,7 @@ class PrinterStepperEnable:
     def register_stepper(self, stepper, pin):
         name = stepper.get_name()
         self.enable_lines[name] = EnableTracking(self.printer, stepper, pin)
-    def motor_off(self, stepper=None, enable=1):
+    def motor_off(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.dwell(DISABLE_STALL_TIME)
         print_time = toolhead.get_last_move_time()
