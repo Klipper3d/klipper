@@ -6,6 +6,7 @@
 import logging
 import chelper
 
+MAX_DAMPING_COMPENSATION = 0.05
 MAX_ACCEL_COMPENSATION = 0.005
 
 class SmoothAxis:
@@ -13,6 +14,10 @@ class SmoothAxis:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.toolhead = None
+        self.damping_comp_x = config.getfloat('damping_comp_x'
+                , 0., minval=0., maxval=MAX_DAMPING_COMPENSATION)
+        self.damping_comp_y = config.getfloat('damping_comp_y'
+                , 0., minval=0., maxval=MAX_DAMPING_COMPENSATION)
         self.accel_comp_x = config.getfloat('accel_comp_x'
                 , 0., minval=0., maxval=MAX_ACCEL_COMPENSATION)
         self.accel_comp_y = config.getfloat('accel_comp_y'
@@ -50,24 +55,43 @@ class SmoothAxis:
         config_smooth_x = self.smooth_x
         config_smooth_y = self.smooth_y
         self.smooth_x = self.smooth_y = 0.
-        self._set_smoothing(self.accel_comp_x, self.accel_comp_y,
+        self._set_smoothing(self.damping_comp_x, self.damping_comp_y,
+                            self.accel_comp_x, self.accel_comp_y,
                             config_smooth_x, config_smooth_y)
-    def _set_smoothing(self, accel_comp_x, accel_comp_y, smooth_x, smooth_y):
+    def _set_smoothing(self, damping_comp_x, damping_comp_y
+                       , accel_comp_x, accel_comp_y
+                       , smooth_x, smooth_y):
         old_smooth_time = max(self.smooth_x, self.smooth_y) * .5
         new_smooth_time = max(smooth_x, smooth_y) * .5
         self.toolhead.note_step_generation_scan_time(new_smooth_time,
                                                      old_delay=old_smooth_time)
         self.smooth_x = smooth_x
         self.smooth_y = smooth_y
+        self.damping_comp_x = damping_comp_x
+        self.damping_comp_y = damping_comp_y
         self.accel_comp_x = accel_comp_x
         self.accel_comp_y = accel_comp_y
         ffi_main, ffi_lib = chelper.get_ffi()
         for sk in self.stepper_kinematics:
             ffi_lib.smooth_axis_set_time(sk, smooth_x, smooth_y)
+            ffi_lib.smooth_axis_set_damping_comp(sk, damping_comp_x,
+                                                 damping_comp_y)
             ffi_lib.smooth_axis_set_accel_comp(sk, accel_comp_x, accel_comp_y)
     cmd_SET_SMOOTH_AXIS_help = "Set cartesian time smoothing parameters"
     def cmd_SET_SMOOTH_AXIS(self, params):
         gcode = self.printer.lookup_object('gcode')
+        damping_comp_xy = gcode.get_float(
+                'DAMPING_COMP_XY', params, -1.0,
+                minval=-1.0, maxval=MAX_DAMPING_COMPENSATION)
+        if damping_comp_xy < 0:
+            damping_comp_x = gcode.get_float(
+                    'DAMPING_COMP_X', params, self.damping_comp_x,
+                    minval=0., maxval=MAX_DAMPING_COMPENSATION)
+            damping_comp_y = gcode.get_float(
+                    'DAMPING_COMP_Y', params, self.damping_comp_y,
+                    minval=0., maxval=MAX_DAMPING_COMPENSATION)
+        else:
+            damping_comp_x = damping_comp_y = damping_comp_xy
         accel_comp_xy = gcode.get_float(
                 'ACCEL_COMP_XY', params, -1.0,
                 minval=-1.0, maxval=MAX_ACCEL_COMPENSATION)
@@ -89,10 +113,15 @@ class SmoothAxis:
                                        minval=0., maxval=.200)
         else:
             smooth_x = smooth_y = smooth_xy
-        self._set_smoothing(accel_comp_x, accel_comp_y, smooth_x, smooth_y)
-        gcode.respond_info("accel_comp_x:%.9f accel_comp_y:%.9f "
+        self._set_smoothing(damping_comp_x, damping_comp_y,
+                            accel_comp_x, accel_comp_y,
+                            smooth_x, smooth_y)
+        gcode.respond_info("damping_comp_x:%.9f damping_comp_y:%.9f "
+                           "accel_comp_x:%.9f accel_comp_y:%.9f "
                            "smooth_x:%.6f smooth_y:%.6f" % (
-                               accel_comp_x, accel_comp_y, smooth_x, smooth_y))
+                               damping_comp_x, damping_comp_y
+                               , accel_comp_x, accel_comp_y
+                               , smooth_x, smooth_y))
 
 def load_config(config):
     return SmoothAxis(config)
