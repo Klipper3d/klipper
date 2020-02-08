@@ -121,7 +121,11 @@ class Homing:
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
+        # do the move
+        self.printer.send_event("probe:deploy_needed", True, endstops)
         self.homing_move(movepos, endstops, hi.speed)
+        self.printer.send_event("probe:stow_needed", not hi.retract_dist,
+                                endstops)
         # Perform second home
         if hi.retract_dist:
             # Retract
@@ -135,8 +139,10 @@ class Homing:
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
+            self.printer.send_event("probe:deploy_needed", False, endstops)
             self.homing_move(movepos, endstops, hi.second_homing_speed,
                              verify_movement=self.verify_retract)
+            self.printer.send_event("probe:stow_needed", True, endstops)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()

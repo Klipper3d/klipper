@@ -27,6 +27,7 @@ class BLTouchEndstopWrapper:
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.position_endstop = config.getfloat('z_offset')
+        self.hs_mode = config.getboolean('high_speed_mode', False)
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', config.get('control_pin'))
@@ -45,6 +46,7 @@ class BLTouchEndstopWrapper:
             'pin_up_reports_not_triggered', True)
         self.pin_up_touch_triggered = config.getboolean(
             'pin_up_touch_mode_reports_triggered', True)
+        self.hsmode = config.getint('hsmode', 0, minval=0, maxval=2)
         self.start_mcu_pos = []
         # Calculate pin move time
         pmt = max(config.getfloat('pin_move_time', 0.675), MIN_CMD_TIME)
@@ -60,6 +62,11 @@ class BLTouchEndstopWrapper:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
                                     desc=self.cmd_BLTOUCH_DEBUG_help)
+        # Register deploy and stow event handlers
+        self.printer.register_event_handler("probe:deploy_needed",
+                                            self.handle_deploy_needed)
+        self.printer.register_event_handler("probe:stow_needed",
+                                            self.handle_stow_needed)
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
@@ -118,6 +125,32 @@ class BLTouchEndstopWrapper:
                     self.next_cmd_time += RETRY_RESET_TIME
                     continue
             break
+    def check_eligible(self, endstops):
+        if endstops == []:
+            return True
+        endstop_instance, name = endstops[0]
+        return name == 'z' or name == 'probe'
+    def handle_deploy_needed(self, really_needed, endstops):
+        if not self.check_eligible(endstops):
+            return
+        hs_mode = True
+        if really_needed or not self.hs_mode:
+            self.deploy_probe()
+    def deploy_probe(self):
+        self.test_sensor()
+        self.sync_print_time()
+        duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
+        self.send_cmd('pin_down', duration=duration)
+        self.send_cmd(None)
+        self.sync_print_time()
+    def handle_stow_needed(self, really_needed, endstops):
+        if not self.check_eligible(endstops):
+            return
+        if really_needed or not self.hs_mode:
+            self.stow_probe()
+    def stow_probe(self):
+        self.raise_probe()
+        self.sync_print_time()
     def test_sensor(self):
         if not self.pin_up_touch_triggered:
             # Nothing to test
@@ -138,20 +171,12 @@ class BLTouchEndstopWrapper:
         self.next_test_time = check_end_time + TEST_TIME
         self.sync_print_time()
     def home_prepare(self):
-        self.test_sensor()
-        self.sync_print_time()
-        duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
-        self.send_cmd('pin_down', duration=duration)
-        self.send_cmd(None)
-        self.sync_print_time()
         self.mcu_endstop.home_prepare()
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
     def home_finalize(self):
-        self.raise_probe()
-        self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
             if s.get_mcu_position() == mcu_pos:

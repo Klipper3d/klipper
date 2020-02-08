@@ -106,7 +106,7 @@ class PrinterProbe:
             return z_sorted[middle]
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
-    def run_probe(self, params={}):
+    def run_probe(self, params={}, need_deploy=True, need_stow=True):
         speed = self.gcode.get_float(
             "PROBE_SPEED", params, self.speed, above=0.)
         lift_speed = self.get_lift_speed(params)
@@ -123,8 +123,12 @@ class PrinterProbe:
         retries = 0
         positions = []
         while len(positions) < sample_count:
+            tmp_deploy = need_deploy and (len(positions) == 0)
+            tmp_stow = need_stow and (len(positions) == sample_count - 1)
             # Probe position
+            self.printer.send_event("probe:deploy_needed", tmp_deploy, [])
             pos = self._probe(speed)
+            self.printer.send_event("probe:stow_needed", tmp_stow, [])
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -137,7 +141,7 @@ class PrinterProbe:
                 retries += 1
                 positions = []
             # Retract
-            if len(positions) < sample_count:
+            if len(positions) <= sample_count:
                 liftpos = [None, None, pos[2] + sample_retract_dist]
                 self._move(liftpos, lift_speed)
         # Calculate and return result
@@ -174,8 +178,12 @@ class PrinterProbe:
         # Probe bed sample_count times
         positions = []
         while len(positions) < sample_count:
+            tmp_deploy = len(positions) == 0
+            tmp_stow = len(positions) == (sample_count - 1)
             # Probe position
+            self.printer.send_event("probe:deploy_needed", tmp_deploy, [])
             pos = self._probe(speed)
+            self.printer.send_event("probe:stow_needed", tmp_stow, [])
             positions.append(pos)
             # Retract
             liftpos = [None, None, pos[2] + sample_retract_dist]
@@ -311,13 +319,9 @@ class ProbePointsHelper:
     def _move_next(self):
         toolhead = self.printer.lookup_object('toolhead')
         # Lift toolhead
-        speed = self.lift_speed
-        if not self.results:
-            # Use full speed to first probe position
-            speed = self.speed
         curpos = toolhead.get_position()
         curpos[2] = self.horizontal_move_z
-        toolhead.move(curpos, speed)
+        toolhead.move(curpos, self.lift_speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             self.gcode.reset_last_position()
@@ -346,17 +350,22 @@ class ProbePointsHelper:
             self.probe_offsets = (0., 0., 0.)
             self._manual_probe_start()
             return
+        else:
+            self.lift_speed = probe.lift_speed
         # Perform automatic probing
         self.lift_speed = probe.get_lift_speed(params)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"
                                    " probe's z_offset")
+        first = True
         while 1:
             done = self._move_next()
             if done:
+                self.printer.send_event("probe:stow_needed", True, [])
                 break
-            pos = probe.run_probe(params)
+            pos = probe.run_probe(params, need_deploy=first, need_stow=False)
+            first = False
             self.results.append(pos)
     def _manual_probe_start(self):
         done = self._move_next()
