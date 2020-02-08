@@ -6,11 +6,17 @@
 import logging
 import chelper
 
+MAX_ACCEL_COMPENSATION = 0.005
+
 class SmoothAxis:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.toolhead = None
+        self.accel_comp_x = config.getfloat('accel_comp_x'
+                , 0., minval=0., maxval=MAX_ACCEL_COMPENSATION)
+        self.accel_comp_y = config.getfloat('accel_comp_y'
+                , 0., minval=0., maxval=MAX_ACCEL_COMPENSATION)
         self.smooth_x = config.getfloat('smooth_x', 0., minval=0., maxval=.200)
         self.smooth_y = config.getfloat('smooth_y', 0., minval=0., maxval=.200)
         self.stepper_kinematics = []
@@ -44,26 +50,49 @@ class SmoothAxis:
         config_smooth_x = self.smooth_x
         config_smooth_y = self.smooth_y
         self.smooth_x = self.smooth_y = 0.
-        self._set_smooth_time(config_smooth_x, config_smooth_y)
-    def _set_smooth_time(self, smooth_x, smooth_y):
+        self._set_smoothing(self.accel_comp_x, self.accel_comp_y,
+                            config_smooth_x, config_smooth_y)
+    def _set_smoothing(self, accel_comp_x, accel_comp_y, smooth_x, smooth_y):
         old_smooth_time = max(self.smooth_x, self.smooth_y) * .5
         new_smooth_time = max(smooth_x, smooth_y) * .5
         self.toolhead.note_step_generation_scan_time(new_smooth_time,
                                                      old_delay=old_smooth_time)
         self.smooth_x = smooth_x
         self.smooth_y = smooth_y
+        self.accel_comp_x = accel_comp_x
+        self.accel_comp_y = accel_comp_y
         ffi_main, ffi_lib = chelper.get_ffi()
         for sk in self.stepper_kinematics:
             ffi_lib.smooth_axis_set_time(sk, smooth_x, smooth_y)
+            ffi_lib.smooth_axis_set_accel_comp(sk, accel_comp_x, accel_comp_y)
     cmd_SET_SMOOTH_AXIS_help = "Set cartesian time smoothing parameters"
     def cmd_SET_SMOOTH_AXIS(self, params):
         gcode = self.printer.lookup_object('gcode')
-        smooth_x = gcode.get_float('SMOOTH_X', params, self.smooth_x,
-                                   minval=0., maxval=.200)
-        smooth_y = gcode.get_float('SMOOTH_Y', params, self.smooth_y,
-                                   minval=0., maxval=.200)
-        self._set_smooth_time(smooth_x, smooth_y)
-        gcode.respond_info("smooth_x:%.6f smooth_y:%.6f" % (smooth_x, smooth_y))
+        accel_comp_xy = gcode.get_float(
+                'ACCEL_COMP_XY', params, -1.0,
+                minval=-1.0, maxval=MAX_ACCEL_COMPENSATION)
+        if accel_comp_xy < 0:
+            accel_comp_x = gcode.get_float(
+                    'ACCEL_COMP_X', params, self.accel_comp_x,
+                    minval=0., maxval=MAX_ACCEL_COMPENSATION)
+            accel_comp_y = gcode.get_float(
+                    'ACCEL_COMP_Y', params, self.accel_comp_y,
+                    minval=0., maxval=MAX_ACCEL_COMPENSATION)
+        else:
+            accel_comp_x = accel_comp_y = accel_comp_xy
+        smooth_xy = gcode.get_float('SMOOTH_XY', params, -1.0,
+                                    minval=-1.0, maxval=.200)
+        if smooth_xy < 0:
+            smooth_x = gcode.get_float('SMOOTH_X', params, self.smooth_x,
+                                       minval=0., maxval=.200)
+            smooth_y = gcode.get_float('SMOOTH_Y', params, self.smooth_y,
+                                       minval=0., maxval=.200)
+        else:
+            smooth_x = smooth_y = smooth_xy
+        self._set_smoothing(accel_comp_x, accel_comp_y, smooth_x, smooth_y)
+        gcode.respond_info("accel_comp_x:%.9f accel_comp_y:%.9f "
+                           "smooth_x:%.6f smooth_y:%.6f" % (
+                               accel_comp_x, accel_comp_y, smooth_x, smooth_y))
 
 def load_config(config):
     return SmoothAxis(config)

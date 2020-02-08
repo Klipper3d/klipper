@@ -16,33 +16,37 @@
 // Calculate the definitive integral on part of a move
 static double
 move_integrate(struct move *m, int axis, double start, double end
-               , double time_offset, double hst)
+               , double time_offset, double hst
+               , double accel_comp)
 {
     if (start < 0.)
         start = 0.;
     if (end > m->move_t)
         end = m->move_t;
-    double start_pos = m->start_pos.axis[axis - 'x'];
     double axis_r = m->axes_r.axis[axis - 'x'];
+    double start_pos = m->start_pos.axis[axis - 'x']
+        + 2. * axis_r * m->half_accel * accel_comp;
     return integrate_weighted(start_pos, axis_r * m->start_v
             , axis_r * m->half_accel, start, end, time_offset, hst);
 }
 
 // Calculate the definitive integral for a range of moves
 static double
-range_integrate(struct move *m, int axis, double move_time, double hst)
+range_integrate(struct move *m, int axis, double move_time, double hst
+                , double accel_comp)
 {
     // Calculate integral for the current move
     double res = 0., start = move_time - hst, end = move_time + hst;
     double offset = -move_time;
-    res += move_integrate(m, axis, start, end, offset, hst);
+    res += move_integrate(m, axis, start, end, offset, hst, accel_comp);
     // Integrate over previous moves
     struct move *prev = m;
     while (unlikely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
         offset -= prev->move_t;
-        res += move_integrate(prev, axis, start, prev->move_t, offset, hst);
+        res += move_integrate(prev, axis, start, prev->move_t, offset, hst,
+                              accel_comp);
     }
     // Integrate over future moves
     offset = -move_time;
@@ -50,7 +54,7 @@ range_integrate(struct move *m, int axis, double move_time, double hst)
         end -= m->move_t;
         offset += m->move_t;
         m = list_next_entry(m, node);
-        res += move_integrate(m, axis, 0., end, offset, hst);
+        res += move_integrate(m, axis, 0., end, offset, hst, accel_comp);
     }
     return res;
 }
@@ -58,9 +62,10 @@ range_integrate(struct move *m, int axis, double move_time, double hst)
 // Calculate average position over smooth_time window
 static inline double
 calc_position(struct move *m, int axis, double move_time
-              , double hst, double inv_norm)
+              , double hst, double inv_norm
+              , double accel_comp)
 {
-    double area = range_integrate(m, axis, move_time, hst);
+    double area = range_integrate(m, axis, move_time, hst, accel_comp);
     return area * inv_norm;
 }
 
@@ -69,6 +74,7 @@ struct smooth_axis {
     struct stepper_kinematics *orig_sk;
     double x_half_smooth_time, x_inv_norm;
     double y_half_smooth_time, y_inv_norm;
+    double x_accel_comp, y_accel_comp;
     struct move m;
 };
 
@@ -84,7 +90,8 @@ smooth_x_calc_position(struct stepper_kinematics *sk, struct move *m
     if (!hst)
         return sa->orig_sk->calc_position_cb(sa->orig_sk, m, move_time);
     sa->m.start_pos.x = calc_position(m, 'x', move_time, hst
-                                      , sa->x_inv_norm);
+                                      , sa->x_inv_norm
+                                      , sa->x_accel_comp);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -98,7 +105,8 @@ smooth_y_calc_position(struct stepper_kinematics *sk, struct move *m
     if (!hst)
         return sa->orig_sk->calc_position_cb(sa->orig_sk, m, move_time);
     sa->m.start_pos.y = calc_position(m, 'y', move_time, hst
-                                      , sa->y_inv_norm);
+                                      , sa->y_inv_norm
+                                      , sa->y_accel_comp);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -115,10 +123,12 @@ smooth_xy_calc_position(struct stepper_kinematics *sk, struct move *m
     sa->m.start_pos = move_get_coord(m, move_time);
     if (x_hst)
         sa->m.start_pos.x = calc_position(m, 'x', move_time, x_hst
-                                          , sa->x_inv_norm);
+                                          , sa->x_inv_norm
+                                          , sa->x_accel_comp);
     if (y_hst)
         sa->m.start_pos.y = calc_position(m, 'y', move_time, y_hst
-                                          , sa->y_inv_norm);
+                                          , sa->y_inv_norm
+                                          , sa->y_accel_comp);
     return sa->orig_sk->calc_position_cb(sa->orig_sk, &sa->m, DUMMY_T);
 }
 
@@ -139,6 +149,15 @@ smooth_axis_set_time(struct stepper_kinematics *sk
     if (sa->sk.active_flags & AF_Y)
         hst = y_hst > hst ? y_hst : hst;
     sa->sk.gen_steps_pre_active = sa->sk.gen_steps_post_active = hst;
+}
+
+void __visible
+smooth_axis_set_accel_comp(struct stepper_kinematics *sk
+                           , double accel_comp_x, double accel_comp_y)
+{
+    struct smooth_axis *sa = container_of(sk, struct smooth_axis, sk);
+    sa->x_accel_comp = accel_comp_x;
+    sa->y_accel_comp = accel_comp_y;
 }
 
 int __visible

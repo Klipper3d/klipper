@@ -108,6 +108,8 @@ defs_kin_extruder = """
 defs_kin_smooth_axis = """
     void smooth_axis_set_time(struct stepper_kinematics *sk
         , double smooth_x, double smooth_y);
+    void smooth_axis_set_accel_comp(struct stepper_kinematics *sk
+        , double accel_comp_x, double accel_comp_y);
     int smooth_axis_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * smooth_axis_alloc(void);
