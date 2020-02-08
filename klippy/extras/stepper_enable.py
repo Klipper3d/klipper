@@ -77,8 +77,9 @@ class PrinterStepperEnable:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("M18", self.cmd_M18)
         self.gcode.register_command("M84", self.cmd_M18)
-        self.gcode.register_command("SET_STEPPER_ENABLE", self.cmd_SET_STEPPER_ENABLE,
-                                desc = self.cmd_SET_STEPPER_ENABLE_help)
+        self.gcode.register_command("SET_STEPPER_ENABLE",
+                                    self.cmd_SET_STEPPER_ENABLE,
+                                    desc = self.cmd_SET_STEPPER_ENABLE_help)
     def register_stepper(self, stepper, pin):
         name = stepper.get_name()
         self.enable_lines[name] = EnableTracking(self.printer, stepper, pin)
