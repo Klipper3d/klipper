@@ -166,6 +166,17 @@ def calc_weighted2(positions, smooth_time):
         out[i] = sum(weighted_data) * weight
     return out
 
+# Weighted average (`(h**2 - (t-T)**2)**2`) of smooth_time range
+def calc_weighted4(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    weight = 15 / (16. * offset**5)
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        weighted_data = [positions[j] * ((offset**2 - (j-i)**2))**2
+                         for j in range(i-offset, i+offset)]
+        out[i] = sum(weighted_data) * weight
+    return out
+
 # Weighted average (`(h - abs(t-T))**2 * (2 * abs(t-T) + h)`) of range
 def calc_weighted3(positions, smooth_time):
     offset = time_to_index(smooth_time * .5)
@@ -216,7 +227,7 @@ SMOOTH_TIME = (2./3.) * 2. * math.pi * math.sqrt(SPRING_ADVANCE)
 def gen_updated_position(positions):
     #return calc_weighted(positions, 0.040)
     #return calc_spring_double_weighted(positions, SMOOTH_TIME)
-    return calc_weighted3(calc_spring_raw(positions), SMOOTH_TIME)
+    return calc_weighted4(calc_spring_raw(positions), SMOOTH_TIME)
 
 
 ######################################################################
