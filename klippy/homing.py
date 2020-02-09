@@ -66,6 +66,8 @@ class Homing:
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
                 rest_time, notify=self._endstop_notify)
         self.toolhead.dwell(HOMING_START_DELAY)
+        # notify anyone out there of move start
+        self.printer.send_event("homing:move_begin", endstops)
         # Issue move
         error = None
         try:
@@ -80,6 +82,8 @@ class Homing:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
+        # notify anyone out there of move end
+        self.printer.send_event("homing:move_end", endstops)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
         end_mcu_pos = [(s, name, spos, s.get_mcu_position())
