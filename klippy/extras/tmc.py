@@ -284,7 +284,8 @@ class TMCStealthchopHelper:
         en_pwm_mode = False
         self.velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
         if self.velocity:
-            printer.register_event_handler("connect", self.handle_connect)
+            printer.register_event_handler("klippy:connect",
+                                           self.handle_connect)
             en_pwm_mode = True
         reg = fields.lookup_register("en_pwm_mode", None)
         if reg is not None:
@@ -296,6 +297,6 @@ class TMCStealthchopHelper:
         stepper_name = " ".join(self.name.split()[1:])
         stepper = self.force_move.lookup_stepper(stepper_name)
         step_dist = stepper.get_step_dist()
-        step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
+        step_dist_256 = step_dist / (1 << self.fields.get_field("MRES"))
         threshold = int(self.tmc_freq * step_dist_256 / self.velocity + .5)
         self.fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
