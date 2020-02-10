@@ -13,6 +13,21 @@
 #include "pyhelper.h" // errorf
 #include "trapq.h" // trapq_integrate
 
+// Determine the start velocity of a move
+static double
+calc_start_velocity(struct move *m, int axis)
+{
+    return m->axes_r.axis[axis - 'x'] * m->start_v;
+}
+
+// Determine the final velocity of a move
+static double
+calc_end_velocity(struct move *m, int axis)
+{
+    double axis_r = m->axes_r.axis[axis - 'x'];
+    return axis_r * (m->start_v + 2. * m->half_accel * m->move_t);
+}
+
 // Calculate the definitive integral on part of a move
 static double
 move_integrate(struct move *m, int axis, double start, double end
@@ -45,7 +60,10 @@ range_integrate(struct move *m, int axis, double move_time, double hst
     // Integrate over previous moves
     struct move *prev = m;
     while (unlikely(start < 0.)) {
+        double next_start_v = calc_start_velocity(prev, axis);
         prev = list_prev_entry(prev, node);
+        res += ((next_start_v - calc_end_velocity(prev, axis)) * accel_comp
+                * integrate_time_weight(offset, hst));
         start += prev->move_t;
         offset -= prev->move_t;
         res += move_integrate(prev, axis, start, prev->move_t, offset, hst
@@ -54,9 +72,12 @@ range_integrate(struct move *m, int axis, double move_time, double hst
     // Integrate over future moves
     offset = -move_time;
     while (unlikely(end > m->move_t)) {
+        double prev_end_v = calc_end_velocity(m, axis);
         end -= m->move_t;
         offset += m->move_t;
         m = list_next_entry(m, node);
+        res += ((calc_start_velocity(m, axis) - prev_end_v) * accel_comp
+                * integrate_time_weight(offset, hst));
         res += move_integrate(m, axis, 0., end, offset, hst
                               , damping_comp, accel_comp);
     }

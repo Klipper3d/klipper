@@ -59,3 +59,11 @@ calc_inv_norm(double hst)
 {
     return 15. / (16. * hst * hst * hst * hst * hst);
 }
+
+// Return the instantaneous weighting of the function ((t-T)^2-h^2)^2
+double
+integrate_time_weight(double toff, double hst)
+{
+    double v = toff*toff - hst*hst;
+    return v*v;
+}
