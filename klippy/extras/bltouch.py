@@ -190,7 +190,6 @@ class BLTouchEndstopWrapper:
     def handle_deploy_needed(self, really_needed, endstops):
         if not self.check_eligible(endstops):
             return
-        hs_mode = True
         if really_needed or not self.hs_mode:
             self.deploy_probe()
     def deploy_probe(self):
