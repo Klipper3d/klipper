@@ -29,7 +29,7 @@ class HomingHeaters:
     def bld_heater_list(self):
         heaters = [n.strip() for n in self.heaters_to_disable.split(',')]
         if heaters == [""]:
-            heaters = self.pheater.available_heaters
+            heaters = self.pheater.get_all_heaters()
         return heaters
     def handle_homing_move_begin(self, endstops):
         if not self.check_eligible(endstops):
