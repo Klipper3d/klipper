@@ -102,4 +102,3 @@ Save raw values in config
 ## How to enable sensor
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
-
