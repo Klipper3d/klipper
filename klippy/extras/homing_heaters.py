@@ -17,20 +17,15 @@ class HomingHeaters:
         self.steppers_needing_quiet = config.get("steppers", "")
         self.last_target = {}
         self.pheater = self.printer.lookup_object('heater')
-
     def check_eligible(self, endstops):
         flaky_steppers = [n.strip()
                          for n in self.steppers_needing_quiet.split(',')]
         if flaky_steppers == [""]:
             return True
-        endstop_instances, dummy = zip(*endstops)
-        steppers_being_homed = list()
-        for n in endstop_instances:
-            steppers_being_homed = steppers_being_homed + n.get_steppers()
-        steppernames_being_homed = list()
-        for n in steppers_being_homed:
-            steppernames_being_homed.append(n.get_name())
-        return any(x in flaky_steppers for x in steppernames_being_homed)
+        steppers_being_homed = [s.get_name()
+                                for es, name in endstops
+                                for s in es.get_steppers()]
+        return any(x in flaky_steppers for x in steppers_being_homed)
     def bld_heater_list(self):
         heaters = [n.strip() for n in self.heaters_to_disable.split(',')]
         if heaters == [""]:
