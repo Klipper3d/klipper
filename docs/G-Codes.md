@@ -161,6 +161,12 @@ The following standard commands are supported:
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
+- `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
+  disable only the given stepper. This is a diagnostic and debugging
+  tool and must be used with care. Disabling an axis motor does not
+  reset the homing information. Manually moving a disabled stepper may
+  cause the machine to operate the motor outside of safe limits. This
+  can lead to damage to axis components, hot ends, and print surface.
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.
