@@ -235,6 +235,7 @@ class GCodeParser:
             except self.error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
+                self.printer.send_event("gcode:command_error")
                 if not need_ack:
                     raise
             except:
