@@ -54,8 +54,6 @@ class MCU_endstop:
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_command(
             "endstop_query_state oid=%c", cq=cmd_queue)
-    def home_prepare(self):
-        pass
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True, notify=None):
         clock = self._mcu.print_time_to_clock(print_time)
@@ -112,8 +110,6 @@ class MCU_endstop:
             s.note_homing_end(did_trigger=did_trigger)
         if not did_trigger:
             raise self.TimeoutError("Timeout during endstop homing")
-    def home_finalize(self):
-        pass
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
