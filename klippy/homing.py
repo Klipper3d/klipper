@@ -109,6 +109,8 @@ class Homing:
                     raise EndstopError(
                         "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
+        # Notify of upcoming homing operation
+        ret = self.printer.send_event("homing:home_rails_begin", rails)
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         forcepos = self._fill_coord(forcepos)
@@ -138,7 +140,7 @@ class Homing:
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())
-        ret = self.printer.send_event("homing:homed_rails", self, rails)
+        ret = self.printer.send_event("homing:home_rails_end", rails)
         if any(ret):
             # Apply any homing offsets
             adjustpos = kin.calc_tag_position()
