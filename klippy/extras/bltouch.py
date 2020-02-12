@@ -137,6 +137,10 @@ class BLTouchEndstopWrapper:
         # Test was successful
         self.next_test_time = check_end_time + TEST_TIME
         self.sync_print_time()
+    def multi_probe_begin(self):
+        pass
+    def multi_probe_end(self):
+        pass
     def probe_prepare(self):
         self.test_sensor()
         self.sync_print_time()
