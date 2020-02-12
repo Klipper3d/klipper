@@ -77,12 +77,9 @@ class ManualStepper:
     def do_homing_move(self, movepos, speed, accel, triggered):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
-        # Notify endstops of upcoming home
-        endstops = self.rail.get_endstops()
-        for mcu_endstop, name in endstops:
-            mcu_endstop.home_prepare()
         # Start endstop checking
         self.sync_print_time()
+        endstops = self.rail.get_endstops()
         for mcu_endstop, name in endstops:
             min_step_dist = min([s.get_step_dist()
                                  for s in mcu_endstop.get_steppers()])
@@ -99,12 +96,6 @@ class ManualStepper:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
-        for mcu_endstop, name in endstops:
-            try:
-                mcu_endstop.home_finalize()
-            except homing.CommandError as e:
-                if error is None:
-                    error = str(e)
         self.sync_print_time()
         if error is not None:
             raise homing.CommandError(error)

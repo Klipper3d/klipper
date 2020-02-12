@@ -43,6 +43,11 @@ class PrinterProbe:
                                              minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
+        # Register homing event handlers
+        self.printer.register_event_handler("homing:homing_move_begin",
+                                            self._handle_homing_move_begin)
+        self.printer.register_event_handler("homing:homing_move_end",
+                                            self._handle_homing_move_end)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('PROBE', self.cmd_PROBE,
@@ -53,6 +58,12 @@ class PrinterProbe:
                                     desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                     desc=self.cmd_PROBE_ACCURACY_help)
+    def _handle_homing_move_begin(self, endstops):
+        if self.mcu_probe in endstops:
+            self.mcu_probe.probe_prepare()
+    def _handle_homing_move_end(self, endstops):
+        if self.mcu_probe in endstops:
+            self.mcu_probe.probe_finalize()
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
@@ -255,22 +266,20 @@ class ProbeEndstopWrapper:
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):
                 self.add_stepper(stepper)
-    def home_prepare(self):
+    def probe_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
         self.activate_gcode.run_gcode_from_command()
         if toolhead.get_position()[:3] != start_pos[:3]:
             raise homing.CommandError(
                 "Toolhead moved during probe activate_gcode script")
-        self.mcu_endstop.home_prepare()
-    def home_finalize(self):
+    def probe_finalize(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
         self.deactivate_gcode.run_gcode_from_command()
         if toolhead.get_position()[:3] != start_pos[:3]:
             raise homing.CommandError(
                 "Toolhead moved during probe deactivate_gcode script")
-        self.mcu_endstop.home_finalize()
     def get_position_endstop(self):
         return self.position_endstop
 

@@ -137,26 +137,24 @@ class BLTouchEndstopWrapper:
         # Test was successful
         self.next_test_time = check_end_time + TEST_TIME
         self.sync_print_time()
-    def home_prepare(self):
+    def probe_prepare(self):
         self.test_sensor()
         self.sync_print_time()
         duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
         self.send_cmd('pin_down', duration=duration)
         self.send_cmd(None)
         self.sync_print_time()
-        self.mcu_endstop.home_prepare()
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
-    def home_finalize(self):
+    def probe_finalize(self):
         self.raise_probe()
         self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
             if s.get_mcu_position() == mcu_pos:
                 raise homing.EndstopError("BLTouch failed to deploy")
-        self.mcu_endstop.home_finalize()
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    notify=None):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
