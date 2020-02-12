@@ -62,7 +62,7 @@ class CartKinematics:
             rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
-    def reset_position(self, homing_axes):
+    def reset_limits(self, homing_axes):
         for i, rail in enumerate(self.rails):
             if i in homing_axes:
                 self.limits[i] = (1.0, -1.0)
