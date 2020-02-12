@@ -11,9 +11,9 @@ class HomingHeaters:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.printer.register_event_handler("homing:move_begin",
+        self.printer.register_event_handler("homing:homing_move_begin",
                                             self.handle_homing_move_begin)
-        self.printer.register_event_handler("homing:move_end",
+        self.printer.register_event_handler("homing:homing_move_end",
                                             self.handle_homing_move_end)
         self.heaters_to_disable = config.get("heaters", "")
         self.disable_heaters = []
@@ -49,7 +49,7 @@ class HomingHeaters:
         if self.flaky_steppers == [""]:
             return True
         steppers_being_homed = [s.get_name()
-                                for es, name in endstops
+                                for es in endstops
                                 for s in es.get_steppers()]
         return any(x in self.flaky_steppers for x in steppers_being_homed)
     def handle_homing_move_begin(self, endstops):

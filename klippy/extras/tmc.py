@@ -182,12 +182,30 @@ class TMCCommandHelper:
 # TMC virtual pins
 ######################################################################
 
-# Endstop wrapper that enables "sensorless homing"
-class TMCVirtualEndstop:
-    def __init__(self, mcu_tmc, mcu_endstop):
+# Helper class for "sensorless homing"
+class TMCVirtualPinHelper:
+    def __init__(self, config, mcu_tmc, diag_pin):
+        self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.mcu_endstop = mcu_endstop
+        self.diag_pin = diag_pin
+        self.mcu_endstop = None
+        self.en_pwm = False
+        self.pwmthrs = 0
+        # Register virtual_endstop pin
+        name_parts = config.get_name().split()
+        ppins = self.printer.lookup_object("pins")
+        ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
+    def setup_pin(self, pin_type, pin_params):
+        # Validate pin
+        ppins = self.printer.lookup_object('pins')
+        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
+            raise ppins.error("tmc virtual endstop only useful as endstop")
+        if pin_params['invert'] or pin_params['pullup']:
+            raise ppins.error("Can not pullup/invert tmc virtual pin")
+        if self.diag_pin is None:
+            raise ppins.error("tmc virtual endstop requires diag pin config")
+        # Setup for sensorless homing
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             self.en_pwm = not self.fields.get_field("en_spreadCycle")
@@ -195,15 +213,15 @@ class TMCVirtualEndstop:
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
-        # Wrappers
-        self.get_mcu = self.mcu_endstop.get_mcu
-        self.add_stepper = self.mcu_endstop.add_stepper
-        self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
-        self.home_wait = self.mcu_endstop.home_wait
-        self.query_endstop = self.mcu_endstop.query_endstop
-        self.TimeoutError = self.mcu_endstop.TimeoutError
-    def home_prepare(self):
+        self.printer.register_event_handler("homing:homing_move_begin",
+                                            self.handle_homing_move_begin)
+        self.printer.register_event_handler("homing:homing_move_end",
+                                            self.handle_homing_move_end)
+        self.mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
+        return self.mcu_endstop
+    def handle_homing_move_begin(self, endstops):
+        if self.mcu_endstop not in endstops:
+            return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
@@ -215,8 +233,9 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
-        self.mcu_endstop.home_prepare()
-    def home_finalize(self):
+    def handle_homing_move_end(self, endstops):
+        if self.mcu_endstop not in endstops:
+            return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             self.mcu_tmc.set_register("TPWMTHRS", self.pwmthrs)
@@ -226,26 +245,6 @@ class TMCVirtualEndstop:
             val = self.fields.set_field("diag1_stall", 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
-        self.mcu_endstop.home_finalize()
-
-class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc, diag_pin):
-        self.printer = config.get_printer()
-        self.mcu_tmc = mcu_tmc
-        self.diag_pin = diag_pin
-        name_parts = config.get_name().split()
-        ppins = self.printer.lookup_object("pins")
-        ppins.register_chip("%s_%s" % (name_parts[0], name_parts[-1]), self)
-    def setup_pin(self, pin_type, pin_params):
-        ppins = self.printer.lookup_object('pins')
-        if pin_type != 'endstop' or pin_params['pin'] != 'virtual_endstop':
-            raise ppins.error("tmc virtual endstop only useful as endstop")
-        if pin_params['invert'] or pin_params['pullup']:
-            raise ppins.error("Can not pullup/invert tmc virtual pin")
-        if self.diag_pin is None:
-            raise ppins.error("tmc virtual endstop requires diag pin config")
-        mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
-        return TMCVirtualEndstop(self.mcu_tmc, mcu_endstop)
 
 
 ######################################################################

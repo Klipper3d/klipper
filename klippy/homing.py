@@ -47,9 +47,9 @@ class Homing:
             self.toolhead.signal_drip_mode_end()
     def homing_move(self, movepos, endstops, speed,
                     probe_pos=False, verify_movement=False):
-        # Notify endstops of upcoming home
-        for mcu_endstop, name in endstops:
-            mcu_endstop.home_prepare()
+        # Notify start of homing/probing move
+        self.printer.send_event("homing:homing_move_begin",
+                                [es for es, name in endstops])
         # Note start location
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
@@ -66,8 +66,6 @@ class Homing:
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
                 rest_time, notify=self._endstop_notify)
         self.toolhead.dwell(HOMING_START_DELAY)
-        # notify anyone out there of move start
-        self.printer.send_event("homing:move_begin", endstops)
         # Issue move
         error = None
         try:
@@ -82,8 +80,6 @@ class Homing:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
-        # notify anyone out there of move end
-        self.printer.send_event("homing:move_end", endstops)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
         end_mcu_pos = [(s, name, spos, s.get_mcu_position())
@@ -95,13 +91,13 @@ class Homing:
             self.set_homed_position(kin.calc_tag_position())
         else:
             self.toolhead.set_position(movepos)
-        # Signal homing complete
-        for mcu_endstop, name in endstops:
-            try:
-                mcu_endstop.home_finalize()
-            except CommandError as e:
-                if error is None:
-                    error = str(e)
+        # Signal homing/probing move complete
+        try:
+            self.printer.send_event("homing:homing_move_end",
+                                    [es for es, name in endstops])
+        except CommandError as e:
+            if error is None:
+                error = str(e)
         if error is not None:
             raise CommandError(error)
         # Check if some movement occurred
