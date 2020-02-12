@@ -15,8 +15,8 @@ class EndstopPhase:
         # Register event handlers
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.printer.register_event_handler("homing:homed_rails",
-                                            self.handle_homed_rails)
+        self.printer.register_event_handler("homing:home_rails_end",
+                                            self.handle_home_rails_end)
         self.printer.try_load_module(config, "endstop_phase")
         self.printer.try_load_module(config, "force_move")
         # Read config
@@ -99,7 +99,7 @@ class EndstopPhase:
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
-    def handle_homed_rails(self, homing_state, rails):
+    def handle_home_rails_end(self, rails):
         for rail in rails:
             stepper = rail.get_steppers()[0]
             if stepper.get_name() != self.name:
@@ -122,7 +122,7 @@ class EndstopPhases:
         self.tracking = {}
         # Register event handler
         self.printer.register_event_handler(
-            "homing:homed_rails", self.handle_homed_rails)
+            "homing:home_rails_end", self.handle_home_rails_end)
     def lookup_rail(self, stepper, stepper_name):
         mod_name = "endstop_phase %s" % (stepper_name,)
         m = self.printer.lookup_object(mod_name, None)
@@ -146,7 +146,7 @@ class EndstopPhases:
             logging.exception("Error in EndstopPhases get_phase")
             return
         phase_history[phase] += 1
-    def handle_homed_rails(self, homing_state, rails):
+    def handle_home_rails_end(self, rails):
         for rail in rails:
             stepper = rail.get_steppers()[0]
             stepper_name = stepper.get_name()
