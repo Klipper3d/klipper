@@ -27,6 +27,8 @@ class BLTouchEndstopWrapper:
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.position_endstop = config.getfloat('z_offset')
+        self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
+                                                     True)
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', config.get('control_pin'))
@@ -60,6 +62,8 @@ class BLTouchEndstopWrapper:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
                                     desc=self.cmd_BLTOUCH_DEBUG_help)
+        # multi probes state
+        self.multi = 'OFF'
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
@@ -118,6 +122,12 @@ class BLTouchEndstopWrapper:
                     self.next_cmd_time += RETRY_RESET_TIME
                     continue
             break
+    def lower_probe(self):
+        self.test_sensor()
+        self.sync_print_time()
+        duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
+        self.send_cmd('pin_down', duration=duration)
+        self.send_cmd(None)
     def test_sensor(self):
         if not self.pin_up_touch_triggered:
             # Nothing to test
@@ -138,22 +148,27 @@ class BLTouchEndstopWrapper:
         self.next_test_time = check_end_time + TEST_TIME
         self.sync_print_time()
     def multi_probe_begin(self):
-        pass
+        if self.stow_on_each_sample:
+            return
+        self.multi = 'FIRST'
     def multi_probe_end(self):
-        pass
+        if self.stow_on_each_sample:
+            return
+        self.raise_probe()
+        self.multi = 'OFF'
     def probe_prepare(self):
-        self.test_sensor()
-        self.sync_print_time()
-        duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
-        self.send_cmd('pin_down', duration=duration)
-        self.send_cmd(None)
+        if self.multi == 'OFF' or self.multi == 'FIRST':
+            self.lower_probe()
+            if self.multi == 'FIRST':
+                self.multi = 'ON'
         self.sync_print_time()
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
     def probe_finalize(self):
-        self.raise_probe()
+        if self.multi == 'OFF':
+            self.raise_probe()
         self.sync_print_time()
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
