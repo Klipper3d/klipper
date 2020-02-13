@@ -55,7 +55,7 @@ class PolarKinematics:
     def reset_limits(self, homing_axes):
         if 2 in homing_axes:
             self.limit_z = (1.0, -1.0)
-        if 0 in homing_axes and 1 in homing_axes:
+        if 0 in homing_axes or 1 in homing_axes:
             self.limit_xy2 = -1
     def _home_axis(self, homing_state, axis, rail):
         # Determine movement
