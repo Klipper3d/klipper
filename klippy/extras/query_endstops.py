@@ -24,10 +24,11 @@ class QueryEndstops:
         self.last_state = [(name, mcu_endstop.query_endstop(print_time))
                            for mcu_endstop, name in self.endstops]
         # Report results
-        msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
-                        for name, t in self.last_state])
-        gcode = self.printer.lookup_object('gcode')
-        gcode.respond(msg)
+        if not 'QUIET' in params:
+            msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
+                            for name, t in self.last_state])
+            gcode = self.printer.lookup_object('gcode')
+            gcode.respond(msg)
 
 def load_config(config):
     return QueryEndstops(config)

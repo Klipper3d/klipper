@@ -97,9 +97,11 @@ they are not case sensitive. (So, "SET_SERVO" and "set_servo" both run
 the same command.)
 
 The following standard commands are supported:
-- `QUERY_ENDSTOPS`: Probe the axis endstops and report if they are
+- `QUERY_ENDSTOPS [QUIET=<value>]`: Probe the axis endstops and report if they are
   "triggered" or in an "open" state. This command is typically used to
-  verify that an endstop is working correctly.
+  verify that an endstop is working correctly. If the QUIET parameter is
+  provided, the QUERY_ENDSTOPS only update the last status of each endstop
+  and report nothing.
 - `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
   analog value received for a configured analog pin. If NAME is not
   provided, the list of available adc names are reported. If PULLUP is

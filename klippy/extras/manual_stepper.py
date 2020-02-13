@@ -23,8 +23,6 @@ class ManualStepper:
         self.velocity = config.getfloat('velocity', 5., above=0.)
         self.accel = config.getfloat('accel', 0., minval=0.)
         self.next_cmd_time = 0.
-        # Endstop status
-        self.endstop_status = {'endstop': "None"}
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -39,15 +37,6 @@ class ManualStepper:
         self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                         stepper_name, self.cmd_MANUAL_STEPPER,
                                         desc=self.cmd_MANUAL_STEPPER_help)
-    def update_endstop_status(self):
-         endstops = self.rail.get_endstops()
-         self.sync_print_time()
-         print_time = self.printer.lookup_object(
-                  'toolhead').get_last_move_time()
-         self.endstop_status = {'endstop': ["open",
-                 "TRIGGERED"][not not endstops[0][0].query_endstop(print_time)]}
-    def get_status(self, eventtime):
-         return self.endstop_status
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -127,9 +116,9 @@ class ManualStepper:
             setpos = self.gcode.get_float('SET_POSITION', params)
             self.do_set_position(setpos)
         homing_move = self.gcode.get_int('STOP_ON_ENDSTOP', params, 0)
-        try_homing_move = self.gcode.get_int('TRY_STOP_ON_ENDSTOP', params, 0)
         speed = self.gcode.get_float('SPEED', params, self.velocity, above=0.)
         accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
+        try_homing_move = self.gcode.get_int('TRY_STOP_ON_ENDSTOP', params, 0)
         if homing_move:
             movepos = self.gcode.get_float('MOVE', params)
             self.do_homing_move(movepos, speed, accel, homing_move > 0)
@@ -142,8 +131,6 @@ class ManualStepper:
         elif 'MOVE' in params:
             movepos = self.gcode.get_float('MOVE', params)
             self.do_move(movepos, speed, accel)
-        elif 'UPDATE_ENDSTOP_STATUS' in params:
-            self.update_endstop_status()
 
 def load_config_prefix(config):
     return ManualStepper(config)
