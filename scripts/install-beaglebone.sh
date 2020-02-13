@@ -5,9 +5,9 @@
 # Step 1: Do main install
 install_main()
 {
-    # Run the octopi script - raspbian is close enough to debian for
-    # this to work.
-    ${SRCDIR}/scripts/install-octopi.sh
+    # Run the debian script - should
+    # work.
+    ${SRCDIR}/scripts/install-debian.sh
 }
 
 # Step 2: Install additional system packages

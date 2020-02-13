@@ -17,7 +17,7 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
-    'kin_winch.c', 'kin_extruder.c',
+    'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -48,9 +48,12 @@ defs_itersolve = """
         , double flush_time);
     double itersolve_check_active(struct stepper_kinematics *sk
         , double flush_time);
+    int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
     void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
     void itersolve_set_stepcompress(struct stepper_kinematics *sk
         , struct stepcompress *sc, double step_dist);
+    double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
+        , double x, double y, double z);
     void itersolve_set_position(struct stepper_kinematics *sk
         , double x, double y, double z);
     double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
@@ -84,6 +87,12 @@ defs_kin_polar = """
     struct stepper_kinematics *polar_stepper_alloc(char type);
 """
 
+defs_kin_rotary_delta = """
+    struct stepper_kinematics *rotary_delta_stepper_alloc(
+        double shoulder_radius, double shoulder_height
+        , double angle, double upper_arm, double lower_arm);
+"""
+
 defs_kin_winch = """
     struct stepper_kinematics *winch_stepper_alloc(double anchor_x
         , double anchor_y, double anchor_z);
@@ -91,8 +100,8 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_set_pressure(struct stepper_kinematics *sk
-        , double pressure_advance, double half_smooth_time);
+    void extruder_set_smooth_time(struct stepper_kinematics *sk
+        , double smooth_time);
 """
 
 defs_serialqueue = """
@@ -136,7 +145,7 @@ defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std,
     defs_stepcompress, defs_itersolve, defs_trapq,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
-    defs_kin_winch, defs_kin_extruder
+    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder
 ]
 
 # Return the list of file modification times

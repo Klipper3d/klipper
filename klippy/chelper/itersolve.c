@@ -78,8 +78,10 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                 break;
             // Need to increase next step search range
             low = high;
-            high.time = last.time + seek_time_delta;
-            seek_time_delta += seek_time_delta;
+            do {
+                high.time = last.time + seek_time_delta;
+                seek_time_delta += seek_time_delta;
+            } while (unlikely(high.time <= low.time));
             if (high.time > end)
                 high.time = end;
             high.position = calc_position_cb(sk, m, high.time);
@@ -150,7 +152,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
     struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
     while (last_flush_time >= m->print_time + m->move_t)
         m = list_next_entry(m, node);
-    double force_steps_time = sk->last_move_time + sk->scan_past;
+    double force_steps_time = sk->last_move_time + sk->gen_steps_post_active;
     for (;;) {
         if (last_flush_time >= flush_time)
             return 0;
@@ -160,11 +162,12 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
         if (end > flush_time)
             end = flush_time;
         if (check_active(sk, m)) {
-            if (sk->scan_future && start > last_flush_time) {
+            if (sk->gen_steps_pre_active
+                && start > last_flush_time + .000000001) {
                 // Must generate steps leading up to stepper activity
                 force_steps_time = start;
-                if (last_flush_time < start - sk->scan_future)
-                    last_flush_time = start - sk->scan_future;
+                if (last_flush_time < start - sk->gen_steps_pre_active)
+                    last_flush_time = start - sk->gen_steps_pre_active;
                 while (m->print_time > last_flush_time)
                     m = list_prev_entry(m, node);
                 continue;
@@ -174,7 +177,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
             if (ret)
                 return ret;
             sk->last_move_time = last_flush_time = end;
-            force_steps_time = end + sk->scan_past;
+            force_steps_time = end + sk->gen_steps_post_active;
         } else if (start < force_steps_time) {
             // Must generates steps just past stepper activity
             if (end > force_steps_time)
@@ -184,7 +187,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
                 return ret;
             last_flush_time = end;
         }
-        if (flush_time + sk->scan_future <= m->print_time + m->move_t)
+        if (flush_time + sk->gen_steps_pre_active <= m->print_time + m->move_t)
             return 0;
         m = list_next_entry(m, node);
     }
@@ -209,6 +212,15 @@ itersolve_check_active(struct stepper_kinematics *sk, double flush_time)
     }
 }
 
+// Report if the given stepper is registered for the given axis
+int32_t __visible
+itersolve_is_active_axis(struct stepper_kinematics *sk, char axis)
+{
+    if (axis < 'x' || axis > 'z')
+        return 0;
+    return (sk->active_flags & (AF_X << (axis - 'x'))) != 0;
+}
+
 void __visible
 itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq)
 {
@@ -223,7 +235,7 @@ itersolve_set_stepcompress(struct stepper_kinematics *sk
     sk->step_dist = step_dist;
 }
 
-static double
+double __visible
 itersolve_calc_position_from_coord(struct stepper_kinematics *sk
                                    , double x, double y, double z)
 {

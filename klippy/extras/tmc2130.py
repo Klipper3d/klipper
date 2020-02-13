@@ -194,7 +194,7 @@ class MCU_TMC_SPI:
         minclock = 0
         if print_time is not None:
             minclock = self.spi.get_mcu().print_time_to_clock(print_time)
-        reg = Registers[reg_name]
+        reg = self.name_to_reg[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
         with self.mutex:

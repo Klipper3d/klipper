@@ -21,7 +21,7 @@ class DelayedGcode:
         self.gcode.register_mux_command(
             "UPDATE_DELAYED_GCODE", "ID", self.name,
             self.cmd_UPDATE_DELAYED_GCODE,
-            desc=self.cmd_UPDATE_DELAYED_GCODE)
+            desc=self.cmd_UPDATE_DELAYED_GCODE_help)
     def _handle_ready(self):
         waketime = self.reactor.NEVER
         if self.duration:

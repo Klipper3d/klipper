@@ -91,6 +91,8 @@ class PrinterConfig:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
                                desc=self.cmd_SAVE_CONFIG_help)
+    def get_printer(self):
+        return self.printer
     def _read_config_file(self, filename):
         try:
             f = open(filename, 'rb')

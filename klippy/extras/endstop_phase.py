@@ -12,42 +12,58 @@ class EndstopPhase:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[1]
+        # Register event handlers
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        self.printer.register_event_handler("homing:homed_rails",
+                                            self.handle_homed_rails)
+        self.printer.try_load_module(config, "endstop_phase")
+        self.printer.try_load_module(config, "force_move")
+        # Read config
+        self.phases = config.getint('phases', None, minval=1)
+        self.endstop_phase = config.getint('endstop_phase', None, minval=0)
+        self.endstop_align_zero = config.getboolean('endstop_align_zero', False)
+        self.endstop_accuracy = config.getfloat('endstop_accuracy', None,
+                                                above=0.)
+        self.step_dist = self.endstop_phase_accuracy = None
+    def handle_connect(self):
         # Determine number of stepper phases
         for driver in TRINAMIC_DRIVERS:
             driver_name = "%s %s" % (driver, self.name)
-            if config.has_section(driver_name):
-                module = self.printer.try_load_module(config, driver_name)
+            module = self.printer.lookup_object(driver_name, None)
+            if module is not None:
                 self.get_phase = module.get_phase
+                if self.phases is not None:
+                    raise self.printer.config_error(
+                        "endstop_phase phases set with tmc driver")
                 self.phases = module.get_microsteps() * 4
                 break
         else:
             self.get_phase = None
-            self.phases = config.getint('phases', minval=1)
-        # Determine endstop phase position
-        self.endstop_phase = config.getint('endstop_phase', None,
-                                           minval=0, maxval=self.phases-1)
-        self.endstop_align_zero = config.getboolean('endstop_align_zero', False)
+            if self.phases is None:
+                raise self.printer.config_error(
+                    "endstop_phase phases must be specified")
+        if self.endstop_phase is not None and self.endstop_phase >= self.phases:
+            raise self.printer.config_error(
+                "endstop_phase endstop_phase parameter not valid")
+        # Lookup stepper step_dist
+        force_move = self.printer.lookup_object("force_move")
+        self.step_dist = force_move.lookup_stepper(self.name).get_step_dist()
         # Determine endstop accuracy
-        stepper_config = config.getsection(self.name)
-        self.step_dist = step_dist = stepper_config.getfloat('step_distance')
-        endstop_accuracy = config.getfloat('endstop_accuracy', None, above=0.)
-        if endstop_accuracy is None:
-            self.endstop_accuracy = self.phases//2 - 1
+        if self.endstop_accuracy is None:
+            self.endstop_phase_accuracy = self.phases//2 - 1
         elif self.endstop_phase is not None:
-            self.endstop_accuracy = int(
-                math.ceil(endstop_accuracy * .5 / step_dist))
+            self.endstop_phase_accuracy = int(
+                math.ceil(self.endstop_accuracy * .5 / self.step_dist))
         else:
-            self.endstop_accuracy = int(math.ceil(endstop_accuracy / step_dist))
-        if self.endstop_accuracy >= self.phases // 2:
+            self.endstop_phase_accuracy = int(
+                math.ceil(self.endstop_accuracy / self.step_dist))
+        if self.endstop_phase_accuracy >= self.phases // 2:
             raise config.error("Endstop for %s is not accurate enough for"
                                " stepper phase adjustment" % (self.name,))
         if self.printer.get_start_args().get('debugoutput') is not None:
-            self.endstop_accuracy = self.phases
+            self.endstop_phase_accuracy = self.phases
         self.phase_history = [0] * self.phases
-        # Register event handler
-        self.printer.register_event_handler(
-            "homing:homed_rails", self.handle_homed_rails)
-        self.printer.try_load_module(config, "endstop_phase")
     def align_endstop(self, pos):
         if not self.endstop_align_zero or self.endstop_phase is None:
             return pos
@@ -76,9 +92,9 @@ class EndstopPhase:
             self.endstop_phase = phase
             return 0.
         delta = (phase - self.endstop_phase) % self.phases
-        if delta >= self.phases - self.endstop_accuracy:
+        if delta >= self.phases - self.endstop_phase_accuracy:
             delta -= self.phases
-        elif delta > self.endstop_accuracy:
+        elif delta > self.endstop_phase_accuracy:
             raise homing.EndstopError(
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, phase, self.endstop_phase))

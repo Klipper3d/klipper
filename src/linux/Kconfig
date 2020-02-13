@@ -9,6 +9,7 @@ config LINUX_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM
+    select HAVE_GPIO_I2C
 
 config BOARD_DIRECTORY
     string

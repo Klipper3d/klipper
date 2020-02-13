@@ -9,7 +9,8 @@ import stepper, homing
 class PolarKinematics:
     def __init__(self, toolhead, config):
         # Setup axis steppers
-        stepper_bed = stepper.PrinterStepper(config.getsection('stepper_bed'))
+        stepper_bed = stepper.PrinterStepper(config.getsection('stepper_bed'),
+                                             units_in_radians=True)
         rail_arm = stepper.PrinterRail(config.getsection('stepper_arm'))
         rail_z = stepper.LookupMultiRail(config.getsection('stepper_z'))
         stepper_bed.setup_itersolve('polar_stepper_alloc', 'a')
@@ -36,9 +37,7 @@ class PolarKinematics:
         stepper_bed.set_max_jerk(max_halt_velocity, max_accel)
         rail_arm.set_max_jerk(max_halt_velocity, max_accel)
         rail_z.set_max_jerk(max_halt_velocity, max_accel)
-    def get_steppers(self, flags=""):
-        if flags == "Z":
-            return self.rails[1].get_steppers()
+    def get_steppers(self):
         return list(self.steppers)
     def calc_tag_position(self):
         bed_angle = self.steppers[0].get_tag_position()
@@ -104,9 +103,10 @@ class PolarKinematics:
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def get_status(self):
-        return {'homed_axes': (("XY" if self.limit_xy2 >= 0. else "") +
-                        ("Z" if self.limit_z[0] <= self.limit_z[1] else ""))}
+    def get_status(self, eventtime):
+        xy_home = "xy" if self.limit_xy2 >= 0. else ""
+        z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
+        return {'homed_axes': xy_home + z_home}
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)

@@ -6,7 +6,10 @@
 import math, logging
 import chelper
 
-BUZZ_VELOCITY = 4.
+BUZZ_DISTANCE = 1.
+BUZZ_VELOCITY = BUZZ_DISTANCE / .250
+BUZZ_RADIANS_DISTANCE = math.radians(1.)
+BUZZ_RADIANS_VELOCITY = BUZZ_RADIANS_DISTANCE / .250
 STALL_TIME = 0.100
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
@@ -50,6 +53,10 @@ class ForceMove:
     def register_stepper(self, stepper):
         name = stepper.get_name()
         self.steppers[name] = stepper
+    def lookup_stepper(self, name):
+        if name not in self.steppers:
+            raise self.printer.config_error("Unknown stepper %s" % (name,))
+        return self.steppers[name]
     def force_enable(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -95,10 +102,13 @@ class ForceMove:
         logging.info("Stepper buzz %s", stepper.get_name())
         was_enable = self.force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
+        dist, speed = BUZZ_DISTANCE, BUZZ_VELOCITY
+        if stepper.units_in_radians():
+            dist, speed = BUZZ_RADIANS_DISTANCE, BUZZ_RADIANS_VELOCITY
         for i in range(10):
-            self.manual_move(stepper, 1., BUZZ_VELOCITY)
+            self.manual_move(stepper, dist, speed)
             toolhead.dwell(.050)
-            self.manual_move(stepper, -1., BUZZ_VELOCITY)
+            self.manual_move(stepper, -dist, speed)
             toolhead.dwell(.450)
         self.restore_enable(stepper, was_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"

@@ -20,12 +20,13 @@ Frequently asked questions
 17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
 19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-20. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
-21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+20. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+21. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
-Thanks. Kevin has a Patreon page at: https://www.patreon.com/koconnor
+Thanks. Kevin has a Patreon page at:
+[https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
 
 ### How do I calculate the step_distance parameter in the printer config file?
 
@@ -49,11 +50,11 @@ units of "inverse millimeters" is felt to be quirky and unnecessary.
 
 ### Where's my serial port?
 
-The general way to find a USB serial port is to run `ls -l
-/dev/serial/by-id/` from an ssh terminal on the host machine. It will
+The general way to find a USB serial port is to run `ls
+/dev/serial/by-id/*` from an ssh terminal on the host machine. It will
 likely produce output similar to the following:
 ```
-lrwxrwxrwx 1 root root 13 Jun  1 21:12 usb-1a86_USB2.0-Serial-if00-port0 -> ../../ttyUSB0
+/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```
 
 The name found in the above command is stable and it is possible to
@@ -75,7 +76,7 @@ above as the name will be different for each printer.
 
 If you are using multiple micro-controllers and they do not have
 unique ids (common on boards with a CH340 USB chip) then follow the
-directions above using the directory `/dev/serial/by-path/` instead.
+directions above using the command `ls /dev/serial/by-path/*` instead.
 
 ### When the micro-controller restarts the device changes to /dev/ttyUSB1
 
@@ -135,29 +136,36 @@ bootloaders.
 
 ### Can I run Klipper on something other than a Raspberry Pi 3?
 
-The recommended hardware is a Raspberry Pi 2 or a Raspberry
-Pi 3.
+The recommended hardware is a Raspberry Pi 2, Raspberry Pi 3, or
+Raspberry Pi 4.
 
 Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi Zero, but
 these boards don't have enough processing power to run OctoPrint
-well. It's not uncommon for print stalls to occur on these slower
-machines (the printer may move faster than OctoPrint can send movement
-commands) when printing directly from OctoPrint. If you wish to run on
-one one of these slower boards anyway, consider using the
-"virtual_sdcard" feature (see
+well. It is common for print stalls to occur on these slower machines
+when printing directly from OctoPrint. (The printer may move faster
+than OctoPrint can send movement commands.) If you wish to run on one
+one of these slower boards anyway, consider using the "virtual_sdcard"
+feature when printing (see
 [config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details) when printing.
+for details).
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
 
-Klipper has been run on other machines.  The Klipper host software
-only requires Python running on a Linux (or similar)
-computer. However, if you wish to run it on a different machine you
-will need Linux admin knowledge to install the system prerequisites
-for that particular machine. See the
+Klipper has been run on other machines. The Klipper host software only
+requires Python running on a Linux (or similar) computer. However, if
+you wish to run it on a different machine you will need Linux admin
+knowledge to install the system prerequisites for that particular
+machine. See the
 [install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
+
+Note: If you are not using an OctoPi image, be aware that several
+Linux distributions enable a "ModemManager" (or similar) package that
+can disrupt serial communication. (Which can cause Klipper to report
+seemingly random "Lost communication with MCU" errors.) If you install
+Klipper on one of these distributions you may need to disable that
+package.
 
 ### Can I run multiple instances of Klipper on the same host machine?
 
@@ -227,34 +235,15 @@ this reduces the potential for bed collisions). However, if one must
 home towards the bed then it is recommended to position the endstop so
 it triggers when the nozzle is still a small distance away from the
 bed. This way, when homing the axis, it will stop before the nozzle
-touches the bed.
-
-Almost all mechanical switches can still move a small distance
-(eg, 0.5mm) after they are triggered. So, for example, if the
-position_endstop is set to 0.5mm then one may still command the
-printer to move to Z0.2. The position_min config setting (which
-defaults to 0) is used to specify the minimum Z position one may
-command the printer to move to.
-
-Note, the Z position_endstop specifies the distance from the nozzle to
-the bed when the nozzle and bed (if applicable) are hot. It is typical
-for thermal expansion to cause nozzle expansion of around .1mm, which
-is also the typical thickness of a sheet of printer paper. Thus, it is
-common to use the "paper test" to confirm calibration of the Z
-height - check that the bed and nozzle are at room temperature, check
-that there is no plastic on the head or bed, home the printer, place a
-piece of paper between the nozzle and bed, and repeatedly command the
-head to move closer to the bed checking each time if you feel a small
-amount of friction when sliding the paper between bed and nozzle - if
-all is calibrated well a small amount of friction would be felt when
-the height is at Z0.
+touches the bed. See the [bed level document](Bed_Level.md) for more
+information.
 
 ### I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis
 
-Short answer: Try reducing the max_z_velocity setting in the printer
-config. Also, if the Z stepper is moving in the wrong direction, try
-inverting the dir_pin setting in the config (eg, "dir_pin: !xyz"
-instead of "dir_pin: xyz").
+Short answer: First, make sure you have verified the stepper
+configuration as described in the
+[config check document](Config_checks.md). If the problem persists,
+try reducing the max_z_velocity setting in the printer config.
 
 Long answer: In practice Marlin can typically only step at a rate of
 around 10000 steps per second. If it is requested to move at a speed
@@ -442,9 +431,34 @@ terminal tab and issue a FIRMWARE_RESTART command to clear the Klipper
 error state.  After completing this sequence, the previous heating
 request will be canceled and a new print may be started.
 
+### Can I find out whether the printer has lost steps?
+
+In a way, yes. Home the printer, issue a `GET_POSITION` command, run
+your print, home again and issue another `GET_POSITION`. Then compare
+the values in the `mcu:` line.
+
+This might be helpful to tune settings like stepper motor currents,
+accelerations and speeds without needing to actually print something
+and waste filament: just run some high-speed moves in between the
+`GET_POSITION` commands.
+
+Note that endstop switches themselves tend to trigger at slightly
+different positions, so a difference of a couple of microsteps is
+likely the result of endstop inaccuracies. A stepper motor itself can
+only lose steps in increments of 4 full steps. (So, if one is using 16
+microsteps, then a lost step on the stepper would result in the "mcu:"
+step counter being off by a multiple of 64 microsteps.)
+
 ### How do I upgrade to the latest software?
 
-The general way to upgrade is to ssh into the Raspberry Pi and run:
+The first step to upgrading the software is to review the latest
+[config changes](Config_Changes.md) document. On occasion, changes are
+made to the software that require users to update their settings as
+part of a software upgrade. It is a good idea to review this document
+prior to upgrading.
+
+When ready to upgrade, the general method is to ssh into the Raspberry
+Pi and run:
 
 ```
 cd ~/klipper
@@ -476,29 +490,12 @@ sudo service klipper restart
 
 If after using this shortcut the software warns about needing to
 reflash the micro-controller or some other unusual error occurs, then
-follow the full upgrade steps outlined above. Note that the RESTART
-and FIRMWARE_RESTART g-code commands do not load new software - the
-above "sudo service klipper restart" and "make flash" commands are
-needed for a software change to take effect.
+follow the full upgrade steps outlined above.
 
-When upgrading the software, be sure to check the
-[config changes](Config_Changes.md) document for information on
-software changes that may require updates to your printer.cfg file.
+If any errors persist then double check the
+[config changes](Config_Changes.md) document, as you may need to
+modify the printer configuration.
 
-### Can I find out whether the printer has lost steps?
-
-In a way, yes. Home the printer, issue a `GET_POSITION` command, run
-your print, home again and issue another `GET_POSITION`. Then compare
-the values in the `mcu:` line.
-
-This might be helpful to tune settings like stepper motor currents,
-accelerations and speeds without needing to actually print something
-and waste filament: just run some high-speed moves in between the
-`GET_POSITION` commands.
-
-Note that endstop switches themselves tend to trigger at slightly
-different positions, so a difference of a couple of microsteps is
-likely the result of endstop inaccuracies. A stepper motor itself can
-only lose steps in increments of 4 full steps. (So, if one is using 16
-microsteps, then a lost step on the stepper would result in the "mcu:"
-step counter being off by a multiple of 64 microsteps.)
+Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
+new software - the above "sudo service klipper restart" and "make
+flash" commands are needed for a software change to take effect.

@@ -22,6 +22,8 @@ class PrinterSensorGeneric:
         self.last_temp = temp
     def get_temp(self, eventtime):
         return self.last_temp, 0.
+    def get_status(self, eventtime):
+        return {'temperature': self.last_temp}
 
 def load_config_prefix(config):
     return PrinterSensorGeneric(config)

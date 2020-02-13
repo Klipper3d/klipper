@@ -9,13 +9,14 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
-- Select tool: `T<index>`
 - Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
 - Set speed factor override percentage: `M220 S<percent>`
 - Set extrude factor override percentage: `M221 S<percent>`
-- Set acceleration: `M204 S<value>`
+- Set acceleration: `M204 S<value>` OR `M204 P<value> T<value>`
+  - Note: If S is not specified and both P and T are specified, then
+    the acceleration is set to the minimum of P and T.
 - Get extruder temperature: `M105`
 - Set extruder temperature: `M104 [T<index>] [S<temperature>]`
 - Set extruder temperature and wait: `M109 [T<index>] S<temperature>`
@@ -44,7 +45,7 @@ If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
 [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
 for details). For example, one might use this to implement: `G12`,
-`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, etc.
+`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
 
 ## G-Code SD card commands
 
@@ -83,8 +84,6 @@ config section is enabled:
 
 The following standard G-Code commands are currently available, but
 using them is not recommended:
-- Offset axes: `M206 [X<offset>] [Y<offset>] [Z<offset>]` (Use
-  SET_GCODE_OFFSET instead.)
 - Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
 
 # Extended G-Code Commands
@@ -155,10 +154,19 @@ The following standard commands are supported:
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
+- `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with
+  multiple extruders this command is used to change the active
+  extruder.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
+- `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
+  disable only the given stepper. This is a diagnostic and debugging
+  tool and must be used with care. Disabling an axis motor does not
+  reset the homing information. Manually moving a disabled stepper may
+  cause the machine to operate the motor outside of safe limits. This
+  can lead to damage to axis components, hot ends, and print surface.
 - `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
   one mm and then backward one mm, repeated 10 times. This is a
   diagnostic tool to help verify stepper connectivity.
@@ -222,13 +230,16 @@ is enabled:
 
 The following command is available when "neopixel" or "dotstar" config
 sections are enabled:
-- `SET_LED LED=<config_name> INDEX=<index> RED=<value> GREEN=<value>
-  BLUE=<value>`: This sets the LED output. Each color <value> must be
-  between 0.0 and 1.0. If multiple LED chips are daisy-chained then
-  one may specify INDEX to alter the color of just the given chip (1
-  for the first chip, 2 for the second, etc.). If INDEX is not
-  provided then all LEDs in the daisy-chain will be set to the
-  provided color.
+- `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+  [INDEX=<index>] [TRANSMIT=0]`: This sets the LED output. Each color
+  <value> must be between 0.0 and 1.0. If multiple LED chips are
+  daisy-chained then one may specify INDEX to alter the color of just
+  the given chip (1 for the first chip, 2 for the second, etc.). If
+  INDEX is not provided then all LEDs in the daisy-chain will be set
+  to the provided color. If TRANSMIT=0 is specified then the color
+  change will only be made on the next SET_LED command that does not
+  specify TRANSMIT=0; this may be useful in combination with the INDEX
+  parameter to batch multiple updates in a daisy-chain.
 
 ## Servo Commands
 
@@ -259,7 +270,7 @@ section is enabled:
 
 The following commands are available when a "probe" config section is
 enabled:
-- `PROBE [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+- `PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
   [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
   [SAMPLES_TOLERANCE_RETRIES=<count>]
   [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
@@ -330,15 +341,15 @@ section is enabled:
   specified then the manual probing tool is activated - see the
   MANUAL_PROBE command above for details on the additional commands
   available while this tool is active.
-- `BED_MESH_OUTPUT`: This command outputs the current probed z values
-  and current mesh values to the terminal.
-- `BED_MESH_MAP`: This command probes the bed in a similar fashion
-  to BED_MESH_CALIBRATE, however no mesh is generated.  Instead,
-  the probed z values are serialized to json and output to the
-  terminal.  This allows octoprint plugins to easily capture the
-  data and generate maps approximating the bed's surface.  Note
-  that although no mesh is generated, any currently stored mesh
-  will be cleared.
+- `BED_MESH_OUTPUT PGP=[<0:1>]`: This command outputs the current probed
+  z values and current mesh values to the terminal.  If PGP=1 is specified
+  the x,y coordinates generated by bed_mesh, along with their associated
+  indices, will be output to the terminal.
+- `BED_MESH_MAP`: Like to BED_MESH_OUTPUT, this command prints the current
+  state of the mesh to the terminal.  Instead of printing the values in a
+  human readable format, the state is serialized in json format. This allows
+  octoprint plugins to easily capture the data and generate height maps
+  approximating the bed's surface.
 - `BED_MESH_CLEAR`: This command clears the mesh and removes all
   z adjustment.  It is recommended to put this in your end-gcode.
 - `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This

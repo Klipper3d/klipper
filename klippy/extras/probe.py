@@ -17,7 +17,8 @@ class PrinterProbe:
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.mcu_probe = mcu_probe
-        self.speed = config.getfloat('speed', 5.0)
+        self.speed = config.getfloat('speed', 5.0, above=0.)
+        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
@@ -58,6 +59,11 @@ class PrinterProbe:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
+    def get_lift_speed(self, params=None):
+        if params is not None:
+            return self.gcode.get_float("LIFT_SPEED", params,
+                                        self.lift_speed, above=0.)
+        return self.lift_speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
     def _probe(self, speed):
@@ -103,6 +109,7 @@ class PrinterProbe:
     def run_probe(self, params={}):
         speed = self.gcode.get_float(
             "PROBE_SPEED", params, self.speed, above=0.)
+        lift_speed = self.get_lift_speed(params)
         sample_count = self.gcode.get_int(
             "SAMPLES", params, self.sample_count, minval=1)
         sample_retract_dist = self.gcode.get_float(
@@ -132,7 +139,7 @@ class PrinterProbe:
             # Retract
             if len(positions) < sample_count:
                 liftpos = [None, None, pos[2] + sample_retract_dist]
-                self._move(liftpos, speed)
+                self._move(liftpos, lift_speed)
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
@@ -150,17 +157,20 @@ class PrinterProbe:
             "probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, params):
-        speed = self.gcode.get_float(
-            "PROBE_SPEED", params, self.speed, above=0.)
+        speed = self.gcode.get_float("PROBE_SPEED", params,
+                                     self.speed, above=0.)
+        lift_speed = self.get_lift_speed(params)
         sample_count = self.gcode.get_int("SAMPLES", params, 10, minval=1)
         sample_retract_dist = self.gcode.get_float(
             "SAMPLE_RETRACT_DIST", params, self.sample_retract_dist, above=0.)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         self.gcode.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
-                                " (samples=%d retract=%.3f speed=%.1f\n"
+                                " (samples=%d retract=%.3f"
+                                " speed=%.1f lift_speed=%.1f)\n"
                                 % (pos[0], pos[1], pos[2],
-                                   sample_count, sample_retract_dist, speed))
+                                   sample_count, sample_retract_dist,
+                                   speed, lift_speed))
         # Probe bed sample_count times
         positions = []
         while len(positions) < sample_count:
@@ -169,7 +179,7 @@ class PrinterProbe:
             positions.append(pos)
             # Retract
             liftpos = [None, None, pos[2] + sample_retract_dist]
-            self._move(liftpos, speed)
+            self._move(liftpos, lift_speed)
         # Calculate maximum, minimum and average values
         max_value = max([p[2] for p in positions])
         min_value = min([p[2] for p in positions])
@@ -200,11 +210,12 @@ class PrinterProbe:
     def cmd_PROBE_CALIBRATE(self, params):
         manual_probe.verify_no_manual_probe(self.printer)
         # Perform initial probe
+        lift_speed = self.get_lift_speed(params)
         curpos = self.run_probe(params)
         # Move away from the bed
         self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
-        self._move(curpos, self.speed)
+        self._move(curpos, lift_speed)
         # Move the nozzle over the probe point
         curpos[0] += self.x_offset
         curpos[1] += self.y_offset
@@ -241,8 +252,9 @@ class ProbeEndstopWrapper:
         self.TimeoutError = self.mcu_endstop.TimeoutError
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers('Z'):
-            self.add_stepper(stepper)
+        for stepper in kin.get_steppers():
+            if stepper.is_active_axis('z'):
+                self.add_stepper(stepper)
     def home_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
@@ -283,6 +295,7 @@ class ProbePointsHelper:
                     self.name))
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
+        self.use_offsets = False
         # Internal probing state
         self.lift_speed = self.speed
         self.probe_offsets = (0., 0., 0.)
@@ -291,6 +304,8 @@ class ProbePointsHelper:
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
+    def use_xy_offsets(self, use_offsets):
+        self.use_offsets = use_offsets
     def get_lift_speed(self):
         return self.lift_speed
     def _move_next(self):
@@ -313,6 +328,9 @@ class ProbePointsHelper:
             self.results = []
         # Move to next XY probe point
         curpos[:2] = self.probe_points[len(self.results)]
+        if self.use_offsets:
+            curpos[0] -= self.probe_offsets[0]
+            curpos[1] -= self.probe_offsets[1]
         toolhead.move(curpos, self.speed)
         self.gcode.reset_last_position()
         return False
@@ -329,7 +347,7 @@ class ProbePointsHelper:
             self._manual_probe_start()
             return
         # Perform automatic probing
-        self.lift_speed = min(self.speed, probe.speed)
+        self.lift_speed = probe.get_lift_speed(params)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise self.gcode.error("horizontal_move_z can't be less than"

@@ -29,7 +29,7 @@ class WinchKinematics:
             s.set_max_jerk(max_halt_velocity, max_accel)
         # Setup boundary checks
         self.set_position([0., 0., 0.], ())
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return list(self.steppers)
     def calc_tag_position(self):
         # Use only first three steppers to calculate cartesian position
@@ -45,9 +45,9 @@ class WinchKinematics:
     def check_move(self, move):
         # XXX - boundary checks and speed limits not implemented
         pass
-    def get_status(self):
+    def get_status(self, eventtime):
         # XXX - homed_checks and rail limits not implemented
-        return {'homed_axes': 'XYZ'}
+        return {'homed_axes': 'xyz'}
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

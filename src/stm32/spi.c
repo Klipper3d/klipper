@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/io.h" // readb, writeb
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
 #include "internal.h" // gpio_peripheral
@@ -18,11 +19,17 @@ DECL_ENUMERATION("spi_bus", "spi2", 0);
 DECL_CONSTANT_STR("BUS_PINS_spi2", "PB14,PB15,PB13");
 DECL_ENUMERATION("spi_bus", "spi1", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
+#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F4
+DECL_ENUMERATION("spi_bus", "spi2a", 2);
+DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
+DECL_ENUMERATION("spi_bus", "spi1a", 3);
+DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
+#endif
 #ifdef SPI3
-DECL_ENUMERATION("spi_bus", "spi3", 2);
+DECL_ENUMERATION("spi_bus", "spi3", 4);
 DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
  #if CONFIG_MACH_STM32F4
-DECL_ENUMERATION("spi_bus", "spi3a", 3);
+DECL_ENUMERATION("spi_bus", "spi3a", 5);
 DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
  #endif
 #endif
@@ -32,6 +39,8 @@ DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
 static const struct spi_info spi_bus[] = {
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION },
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION },
+    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION },
+    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION },
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
  #if CONFIG_MACH_STM32F4
@@ -53,6 +62,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].function, 1);
         gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].function, 0);
         gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].function, 0);
+
+        // Configure CR2 on stm32f0
+#if CONFIG_MACH_STM32F0
+        spi->CR2 = SPI_CR2_FRXTH | (7 << SPI_CR2_DS_Pos);
+#endif
     }
 
     // Calculate CR1 register
@@ -78,11 +92,15 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
     SPI_TypeDef *spi = config.spi;
-    while (len--) {
-        spi->DR = *data;
-        while (!(spi->SR & SPI_SR_RXNE))
-            ;
-        uint8_t rdata = spi->DR;
+    uint8_t *wptr = data;
+    uint8_t *end = data + len;
+
+    while (data < end) {
+        if (spi->SR & SPI_SR_TXE && wptr < end)
+            writeb((void *)&spi->DR, *wptr++);
+        if (!(spi->SR & SPI_SR_RXNE))
+            continue;
+        uint8_t rdata = readb((void *)&spi->DR);
         if (receive_data)
             *data = rdata;
         data++;

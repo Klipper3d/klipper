@@ -38,11 +38,6 @@ Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory.
 It has been modified to set the appropriate clock speeds on the
 LPC1768 and LPC1769. See lpc176x.patch for the modifications.
 
-The cmsis-stm32f0 and the hal-stm32f0 directories contain code from
-STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef0.html
-version 1.9.0 (extracted 20190116).
-
 The stm32f0 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
 version 1.10.0 (extracted 20190721).

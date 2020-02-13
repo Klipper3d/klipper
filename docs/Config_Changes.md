@@ -6,9 +6,45 @@ All dates in this document are approximate.
 
 # Changes
 
-20191121: The USB name has changed on lpc176x.  It now uses the unique
-chip id by default.  Update the "serial" setting in the "mcu" config
-section accordingly.
+20200109:  The bed_mesh module now references the probe's location
+in for the mesh configuration.  As such, some configuration options
+have been renamed to more accurately reflect their intended
+functionality.  For rectangular beds, `min_point` and `max_point`
+have been renamed to `mesh_min` and `mesh_max` respectively.  For
+round beds, `bed_radius` has been renamed to `mesh_radius`.  A new
+`mesh_origin` option has also been added for round beds.  Note that
+these changes are also incompatible with previously saved mesh profiles.
+If an incompatible profile is detected it will be ignored and scheduled
+for removal.  The removal process can be completed by issuing the
+SAVE_CONFIG command. The user will need to re-calibrate each profile.
+
+20191218: The display config section no longer supports "lcd_type:
+st7567".  Use the "uc1701" display type instead - set "lcd_type:
+uc1701" and change the "rs_pin: some_pin" to "rst_pin: some_pin".  It
+may also be necessary to add a "contrast: 60" config setting.
+
+20191210: The builtin T0, T1, T2, ... commands have been removed.  The
+extruder activate_gcode and deactivate_gcode config options have been
+removed.  If these commands (and scripts) are needed then define
+individual [gcode_macro T0] style macros that call the
+ACTIVATE_EXTRUDER command.  See the config/sample-idex.cfg and
+sample-multi-extruder.cfg files for examples.
+
+20191210: Support for the M206 command has been removed.  Replace with
+calls to SET_GCODE_OFFSET.  If support for M206 is needed, add a
+[gcode_macro M206] config section that calls SET_GCODE_OFFSET.  (For
+example "SET_GCODE_OFFSET Z=-{params.Z}".)
+
+20191202: Support for the undocumented "S" parameter of the "G4"
+command has been removed.  Replace any occurrences of S with the
+standard "P" parameter (the delay specified in milliseconds).
+
+20191126: The USB names have changed on micro-controllers with native
+USB support.  They now use a unique chip id by default (where
+available).  If an "mcu" config section uses a "serial" setting that
+starts with "/dev/serial/by-id/" then it may be necessary to update
+the config.  Run "ls /dev/serial/by-id/*" in an ssh terminal to
+determine the new id.
 
 20191121: The pressure_advance_lookahead_time parameter has been
 removed.  See example.cfg for alternate configuration settings.

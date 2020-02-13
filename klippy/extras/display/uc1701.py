@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
-# Copyright (C) 2019  Dmitry Budaev <condemil@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -13,11 +12,12 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class DisplayBase:
-    def __init__(self, io):
+    def __init__(self, io, columns=128):
         self.send = io.send
         # framebuffers
-        self.vram = [bytearray(128) for i in range(8)]
-        self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
+        self.columns = columns
+        self.vram = [bytearray(self.columns) for i in range(8)]
+        self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
         self.font = [self._swizzle_bits(bytearray(c))
@@ -99,7 +99,7 @@ class DisplayBase:
             return 1
         return 0
     def clear(self):
-        zeros = bytearray(128)
+        zeros = bytearray(self.columns)
         for page in self.vram:
             page[:] = zeros
     def get_dimensions(self):
@@ -132,12 +132,38 @@ class I2C:
         cmds.insert(0, hdr)
         self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
+# Helper code for toggling a reset pin on startup
+class ResetHelper:
+    def __init__(self, pin_desc, io_bus):
+        self.mcu_reset = None
+        if pin_desc is None:
+            return
+        self.mcu_reset = extras.bus.MCU_bus_digital_out(
+            io_bus.get_mcu(), pin_desc, io_bus.get_command_queue())
+    def init(self):
+        if self.mcu_reset is None:
+            return
+        mcu = self.mcu_reset.get_mcu()
+        curtime = mcu.get_printer().get_reactor().monotonic()
+        print_time = mcu.estimated_print_time(curtime)
+        # Toggle reset
+        minclock = mcu.print_time_to_clock(print_time + .100)
+        self.mcu_reset.update_digital_out(0, minclock=minclock)
+        minclock = mcu.print_time_to_clock(print_time + .200)
+        self.mcu_reset.update_digital_out(1, minclock=minclock)
+        # Force a delay to any subsequent commands on the command queue
+        minclock = mcu.print_time_to_clock(print_time + .300)
+        self.mcu_reset.update_digital_out(1, minclock=minclock)
+
 # The UC1701 is a "4-wire" SPI display device
 class UC1701(DisplayBase):
     def __init__(self, config):
-        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
+        io = SPI4wire(config, "a0_pin")
+        DisplayBase.__init__(self, io)
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
+        self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
+        self.reset.init()
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
                      0xA0, # Set SEG direction
@@ -159,44 +185,10 @@ class UC1701(DisplayBase):
         self.send([0xA5]) # display all
         self.send([0xA4]) # normal display
         self.flush()
-        logging.info("uc1701 initialized")
-
-# The ST7567 is a "4-wire" SPI display device
-class ST7567(DisplayBase):
-    def __init__(self, config):
-        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
-        self.contrast = config.getint('contrast', 60, minval=0, maxval=63)
-        ppins = config.get_printer().lookup_object('pins')
-        rs_pin = config.get('rs_pin')
-        self.reset_pin = ppins.setup_pin('digital_out', rs_pin)
-        self.reset_pin.setup_start_value(start_value=1., shutdown_value=0.,
-                                         is_static=False)
-    def init(self):
-        # Send init commands
-        init_cmds = [0xE2, # System reset
-                     0x40, # Set display to start at line 0
-                     0xA0, # Set SEG direction
-                     0xC8, # Set COM Direction
-                     0xA2, # Set Bias = 1/9
-                     0x2F, # Boost, regulator, follower on
-                     0xF8, # Set booster ratio
-                     0x00, # Booster ratio value (4x)
-                     0x23, # Set regulation ratio (3)
-                     0x81, # Set Electronic Volume
-                     self.contrast, # Electronic Volume value
-                     # 0xAC, # Set static indicator off
-                     # 0x00, # NOP
-                     0xA6, # Disable Inverse
-                     0xAF] # Set display enable
-        self.send(init_cmds)
-        self.send([0xA5]) # display all
-        self.send([0xA4]) # normal display
-        self.flush()
-        logging.info("st7567 initialized")
 
 # The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(DisplayBase):
-    def __init__(self, config):
+    def __init__(self, config, columns=128):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
             io = I2C(config, 60)
@@ -204,21 +196,10 @@ class SSD1306(DisplayBase):
         else:
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
-        self.mcu_reset = None
-        reset_pin_desc = config.get("reset_pin", None)
-        if reset_pin_desc is not None:
-            self.mcu_reset = extras.bus.MCU_bus_digital_out(
-                io_bus.get_mcu(), reset_pin_desc, io_bus.get_command_queue())
-        DisplayBase.__init__(self, io)
+        self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
+        DisplayBase.__init__(self, io, columns)
     def init(self):
-        if self.mcu_reset is not None:
-            mcu = self.mcu_reset.get_mcu()
-            curtime = mcu.get_printer().get_reactor().monotonic()
-            print_time = mcu.estimated_print_time(curtime)
-            minclock = mcu.print_time_to_clock(print_time + .100)
-            self.mcu_reset.update_digital_out(0, minclock=minclock)
-            minclock = mcu.print_time_to_clock(print_time + .200)
-            self.mcu_reset.update_digital_out(1, minclock=minclock)
+        self.reset.init()
         init_cmds = [
             0xAE,       # Display off
             0xD5, 0x80, # Set oscillator frequency
@@ -240,3 +221,8 @@ class SSD1306(DisplayBase):
         ]
         self.send(init_cmds)
         self.flush()
+
+# the SH1106 is SSD1306 compatible with up to 132 columns
+class SH1106(SSD1306):
+    def __init__(self, config):
+        SSD1306.__init__(self, config, 132)

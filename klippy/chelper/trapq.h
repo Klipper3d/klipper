@@ -32,8 +32,6 @@ void trapq_append(struct trapq *tq, double print_time
                   , double start_v, double cruise_v, double accel);
 double move_get_distance(struct move *m, double move_time);
 struct coord move_get_coord(struct move *m, double move_time);
-double trapq_integrate(struct move *m, int axis, double start, double end);
-struct move *trapq_find_move(struct move *m, double *ptime);
 struct trapq *trapq_alloc(void);
 void trapq_free(struct trapq *tq);
 void trapq_check_sentinels(struct trapq *tq);

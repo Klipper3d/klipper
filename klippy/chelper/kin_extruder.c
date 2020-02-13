@@ -12,9 +12,90 @@
 #include "pyhelper.h" // errorf
 #include "trapq.h" // move_get_distance
 
+// Without pressure advance, the extruder stepper position is:
+//     extruder_position(t) = nominal_position(t)
+// When pressure advance is enabled, additional filament is pushed
+// into the extruder during acceleration (and retracted during
+// deceleration). The formula is:
+//     pa_position(t) = (nominal_position(t)
+//                       + pressure_advance * nominal_velocity(t))
+// Which is then "smoothed" using a weighted average:
+//     smooth_position(t) = (
+//         definitive_integral(pa_position(x) * (smooth_time/2 - abs(t-x)) * dx,
+//                             from=t-smooth_time/2, to=t+smooth_time/2)
+//         / ((smooth_time/2)**2))
+
+// Calculate the definitive integral of the motion formula:
+//   position(t) = base + t * (start_v + t * half_accel)
+static double
+extruder_integrate(double base, double start_v, double half_accel
+                   , double start, double end)
+{
+    double half_v = .5 * start_v, sixth_a = (1. / 3.) * half_accel;
+    double si = start * (base + start * (half_v + start * sixth_a));
+    double ei = end * (base + end * (half_v + end * sixth_a));
+    return ei - si;
+}
+
+// Calculate the definitive integral of time weighted position:
+//   weighted_position(t) = t * (base + t * (start_v + t * half_accel))
+static double
+extruder_integrate_time(double base, double start_v, double half_accel
+                        , double start, double end)
+{
+    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
+    double eighth_a = .25 * half_accel;
+    double si = start * start * (half_b + start * (third_v + start * eighth_a));
+    double ei = end * end * (half_b + end * (third_v + end * eighth_a));
+    return ei - si;
+}
+
+// Calculate the definitive integral of extruder for a given move
+static double
+pa_move_integrate(struct move *m, double start, double end, double time_offset)
+{
+    if (start < 0.)
+        start = 0.;
+    if (end > m->move_t)
+        end = m->move_t;
+    // Calculate base position and velocity with pressure advance
+    double pressure_advance = m->axes_r.y;
+    double base = m->start_pos.x + pressure_advance * m->start_v;
+    double start_v = m->start_v + pressure_advance * 2. * m->half_accel;
+    // Calculate definitive integral
+    double ha = m->half_accel;
+    double iext = extruder_integrate(base, start_v, ha, start, end);
+    double wgt_ext = extruder_integrate_time(base, start_v, ha, start, end);
+    return wgt_ext - time_offset * iext;
+}
+
+// Calculate the definitive integral of the extruder over a range of moves
+static double
+pa_range_integrate(struct move *m, double move_time, double hst)
+{
+    // Calculate integral for the current move
+    double res = 0., start = move_time - hst, end = move_time + hst;
+    res += pa_move_integrate(m, start, move_time, start);
+    res -= pa_move_integrate(m, move_time, end, end);
+    // Integrate over previous moves
+    struct move *prev = m;
+    while (unlikely(start < 0.)) {
+        prev = list_prev_entry(prev, node);
+        start += prev->move_t;
+        res += pa_move_integrate(prev, start, prev->move_t, start);
+    }
+    // Integrate over future moves
+    while (unlikely(end > m->move_t)) {
+        end -= m->move_t;
+        m = list_next_entry(m, node);
+        res -= pa_move_integrate(m, 0., end, end);
+    }
+    return res;
+}
+
 struct extruder_stepper {
     struct stepper_kinematics sk;
-    double pressure_advance_factor, half_smooth_time, inv_smooth_time;
+    double half_smooth_time, inv_half_smooth_time2;
 };
 
 static double
@@ -26,36 +107,21 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
     if (!hst)
         // Pressure advance not enabled
         return m->start_pos.x + move_get_distance(m, move_time);
-    // Calculate average position over smooth_time
-    double area = trapq_integrate(m, 'x', move_time - hst, move_time + hst);
-    double base_pos = area * es->inv_smooth_time;
-    // Calculate position 'half_smooth_time' in the past
-    double start_time = move_time - hst;
-    struct move *sm = trapq_find_move(m, &start_time);
-    double start_dist = move_get_distance(sm, start_time);
-    double pa_start_pos = sm->start_pos.y + (sm->axes_r.y ? start_dist : 0.);
-    // Calculate position 'half_smooth_time' in the future
-    double end_time = move_time + hst;
-    struct move *em = trapq_find_move(m, &end_time);
-    double end_dist = move_get_distance(em, end_time);
-    double pa_end_pos = em->start_pos.y + (em->axes_r.y ? end_dist : 0.);
-    // Calculate position with pressure advance
-    return base_pos + (pa_end_pos - pa_start_pos) * es->pressure_advance_factor;
+    // Apply pressure advance and average over smooth_time
+    double area = pa_range_integrate(m, move_time, hst);
+    return area * es->inv_half_smooth_time2;
 }
 
 void __visible
-extruder_set_pressure(struct stepper_kinematics *sk
-                      , double pressure_advance, double half_smooth_time)
+extruder_set_smooth_time(struct stepper_kinematics *sk, double smooth_time)
 {
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
-    if (! half_smooth_time) {
-        es->pressure_advance_factor = es->half_smooth_time = 0.;
+    double hst = smooth_time * .5;
+    es->half_smooth_time = hst;
+    es->sk.gen_steps_pre_active = es->sk.gen_steps_post_active = hst;
+    if (! hst)
         return;
-    }
-    es->sk.scan_past = es->sk.scan_future = half_smooth_time;
-    es->half_smooth_time = half_smooth_time;
-    es->inv_smooth_time = .5 / half_smooth_time;
-    es->pressure_advance_factor = pressure_advance * es->inv_smooth_time;
+    es->inv_half_smooth_time2 = 1. / (hst * hst);
 }
 
 struct stepper_kinematics * __visible

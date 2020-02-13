@@ -31,6 +31,16 @@ class Homing:
         return thcoord
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
+    def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
+        startpos = self.toolhead.get_position()
+        axes_d = [mp - sp for mp, sp in zip(movepos, startpos)]
+        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        move_t = move_d / speed
+        max_steps = max([(abs(s.calc_position_from_coord(startpos)
+                              - s.calc_position_from_coord(movepos))
+                          / s.get_step_dist())
+                         for s in mcu_endstop.get_steppers()])
+        return move_t / max_steps
     def _endstop_notify(self):
         self.endstops_pending -= 1
         if not self.endstops_pending:
@@ -51,12 +61,13 @@ class Homing:
         print_time = self.toolhead.get_last_move_time()
         self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
-            min_step_dist = min([s.get_step_dist()
-                                 for s in mcu_endstop.get_steppers()])
+            rest_time = self._calc_endstop_rate(mcu_endstop, movepos, speed)
             mcu_endstop.home_start(
                 print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
-                min_step_dist / speed, notify=self._endstop_notify)
+                rest_time, notify=self._endstop_notify)
         self.toolhead.dwell(HOMING_START_DELAY)
+        # notify anyone out there of move start
+        self.printer.send_event("homing:move_begin", endstops)
         # Issue move
         error = None
         try:
@@ -71,6 +82,8 @@ class Homing:
             except mcu_endstop.TimeoutError as e:
                 if error is None:
                     error = "Failed to home %s: %s" % (name, str(e))
+        # notify anyone out there of move end
+        self.printer.send_event("homing:move_end", endstops)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
         end_mcu_pos = [(s, name, spos, s.get_mcu_position())
@@ -117,7 +130,7 @@ class Homing:
             retract_r = min(1., hi.retract_dist / move_d)
             retractpos = [mp - ad * retract_r
                           for mp, ad in zip(movepos, axes_d)]
-            self.toolhead.move(retractpos, hi.speed)
+            self.toolhead.move(retractpos, hi.retract_speed)
             # Home again
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
