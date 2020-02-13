@@ -13,6 +13,8 @@ class NoneKinematics:
         return [0, 0, 0]
     def set_position(self, newpos, homing_axes):
         pass
+    def reset_limits(self, homing_axes):
+        pass
     def home(self, homing_state):
         pass
     def check_move(self, move):

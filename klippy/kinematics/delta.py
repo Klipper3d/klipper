@@ -102,6 +102,8 @@ class DeltaKinematics:
         self.limit_xy2 = -1.
         if tuple(homing_axes) == (0, 1, 2):
             self.need_home = False
+    def reset_limits(self, homing_axes):
+        return
     def home(self, homing_state):
         # All axes are homed simultaneously
         homing_state.set_axes([0, 1, 2])
