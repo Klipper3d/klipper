@@ -111,13 +111,20 @@ class BME280:
         meas = self.os_temp << 5 | self.os_pres << 2 | MODE
         self.write_register('CTRL_MEAS', meas)
 
-        # wait until results are ready
-        status = self.read_register('STATUS', 1)[0]
-        while status & STATUS_MEASURING:
-            self.reactor.pause(self.reactor.monotonic() + self.max_sample_time)
+        try:
+            # wait until results are ready
             status = self.read_register('STATUS', 1)[0]
+            while status & STATUS_MEASURING:
+                self.reactor.pause(
+                    self.reactor.monotonic() + self.max_sample_time)
+                status = self.read_register('STATUS', 1)[0]
 
-        data = self.read_register('PRESSURE_MSB', 8)
+            data = self.read_register('PRESSURE_MSB', 8)
+        except Exception:
+            logging.exception("BME280: Error reading data")
+            self.temp = self.pressure = self.humidity = .0
+            return self.reactor.NEVER
+
         pressure_raw = (data[0] << 12) | (data[1] << 4) | (data[2] >> 4)
         temp_raw = (data[3] << 12) | (data[4] << 4) | (data[5] >> 4)
         humid_raw = (data[6] << 8) | data[7]
