@@ -140,11 +140,11 @@ class Heater:
     def set_pid_terms(self, Kp=None, Ki=None, Kd=None):
         if self.control is not None:
             if type(self.control) is ControlPID:
-                self.control.set_pid_terms(Kp, Ki, Kd)
+                self.control.set_terms(Kp, Ki, Kd)
     def get_pid_terms(self):
         if self.control is not None:
             if type(self.control) is ControlPID:
-                return self.control.get_pid_terms()
+                return self.control.get_terms()
     def reset_pid_integrator(self):
         if self.control is not None:
             if type(self.control) is ControlPID:

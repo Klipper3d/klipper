@@ -538,24 +538,29 @@ class GCodeParser:
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
+    cmd_SET_PID_TERMS_help = "Sets the P, I, and D terms for the specified HEATER_NAME"
     def cmd_SET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, "extruder")
         Kp = self.get_float('P', params, None)
         Ki = self.get_float('I', params, None)
         Kd = self.get_float('D', params, None)
-        if self.heaters is not None:
+        if self.heaters is not None and heater_name is not None:
             heater = self.heaters.lookup_heater(heater_name)
             if heater is not None:
-                heater.update_pid_terms(Kp, Ki, Kd)
+                heater.set_pid_terms(Kp, Ki, Kd)
+    cmd_GET_PID_TERMS_help = "Queries the specified HEATER_NAME for its current PID terms"
     def cmd_GET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, "extruder")
-        Kp = self.get_float('P', params, None)
-        Ki = self.get_float('I', params, None)
-        Kd = self.get_float('D', params, None)
-        if self.heaters is not None:
+        if self.heaters is not None and heater_name is not None:
             heater = self.heaters.lookup_heater(heater_name)
             if heater is not None:
-                heater.update_pid_terms(Kp, Ki, Kd)
+                Kp, Ki, Kd = heater.get_pid_terms()
+                self.respond_info("Heater: %s\n"
+                                  "Kp: %s\n"
+                                  "Ki: %s\n"
+                                  "Kd: %s\n"
+                                  % (heater_name, Kp, Ki, Kd))
+    cmd_RESET_PID_INTEGRATOR_help = "Clears the PID integrators history by setting it to zero"
     def cmd_RESET_PID_INTEGRATOR(self, params):
         heater_name = self.get_str('HEATER_NAME', params, "extruder")
         if self.heaters is not None:
