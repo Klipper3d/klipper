@@ -60,6 +60,7 @@ class GCodeParser:
         self.need_ack = False
         self.toolhead = None
         self.heaters = None
+        self.heaters
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
@@ -166,6 +167,7 @@ class GCodeParser:
         self._respond_state("Disconnect")
     def _handle_ready(self):
         self.is_printer_ready = True
+        self
         self.gcode_handlers = self.ready_gcode_handlers
         # Lookup printer components
         self.heaters = self.printer.lookup_object('heater')
@@ -536,6 +538,30 @@ class GCodeParser:
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
+    def cmd_SET_PID_TERMS(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, "extruder")
+        Kp = self.get_float('P', params, None)
+        Ki = self.get_float('I', params, None)
+        Kd = self.get_float('D', params, None)
+        if self.heaters is not None:
+            heater = self.heaters.lookup_heater(heater_name)
+            if heater is not None:
+                heater.update_pid_terms(Kp, Ki, Kd)
+    def cmd_GET_PID_TERMS(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, "extruder")
+        Kp = self.get_float('P', params, None)
+        Ki = self.get_float('I', params, None)
+        Kd = self.get_float('D', params, None)
+        if self.heaters is not None:
+            heater = self.heaters.lookup_heater(heater_name)
+            if heater is not None:
+                heater.update_pid_terms(Kp, Ki, Kd)
+    def cmd_RESET_PID_INTEGRATOR(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, "extruder")
+        if self.heaters is not None:
+            heater = self.heaters.lookup_heater(heater_name)
+            if heater is not None:
+                heater.reset_integrator()
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
     def cmd_SET_GCODE_OFFSET(self, params):
         move_delta = [0., 0., 0., 0.]

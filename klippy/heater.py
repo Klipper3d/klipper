@@ -10,7 +10,7 @@ import logging, threading
 # Heater
 ######################################################################
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -22,7 +22,7 @@ class Heater:
         self.name = config.get_name().split()[-1]
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
@@ -137,11 +137,22 @@ class Heater:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
         return {'temperature': smoothed_temp, 'target': target_temp}
+    def set_pid_terms(self, Kp=None, Ki=None, Kd=None):
+        if self.control is not None:
+            if type(self.control) is ControlPID:
+                self.control.set_pid_terms(Kp, Ki, Kd)
+    def get_pid_terms(self):
+        if self.control is not None:
+            if type(self.control) is ControlPID:
+                return self.control.get_pid_terms()
+    def reset_pid_integrator(self):
+        if self.control is not None:
+            if type(self.control) is ControlPID:
+                self.control.reset_pid_integrator()
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, params):
         temp = self.gcode.get_float('TARGET', params, 0.)
         self.set_temp(temp)
-
 
 ######################################################################
 # Bang-bang control algo
@@ -177,12 +188,12 @@ class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
-        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
-        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
-        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
@@ -203,7 +214,7 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
+        # logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
         self.heater.set_pwm(read_time, bounded_co)
@@ -213,6 +224,20 @@ class ControlPID:
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
+    def set_terms(self, Kp=None, Ki=None, Kd=None):
+        if Kp is not None:
+            self.Kp = Kp / PID_PARAM_BASE
+        if Ki is not None:
+            self.Ki = Ki / PID_PARAM_BASE
+            self.temp_integ_max = self.imax / self.Ki
+            self.prev_temp_integ = 0.
+        if Kd is not None:
+            self.Kd = Kd / PID_PARAM_BASE
+            self.prev_temp_deriv = 0.
+    def get_terms(self):
+        return self.Kp, self.Ki, self.Kd
+    def reset_integrator(self):
+        self.prev_temp_integ = 0.
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
