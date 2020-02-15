@@ -137,18 +137,6 @@ class Heater:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
         return {'temperature': smoothed_temp, 'target': target_temp}
-    def set_pid_terms(self, Kp=None, Ki=None, Kd=None):
-        if self.control is not None:
-            if type(self.control) is ControlPID:
-                self.control.set_terms(Kp, Ki, Kd)
-    def get_pid_terms(self):
-        if self.control is not None:
-            if type(self.control) is ControlPID:
-                return self.control.get_terms()
-    def reset_pid_integrator(self):
-        if self.control is not None:
-            if type(self.control) is ControlPID:
-                self.control.reset_pid_integrator()
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, params):
         temp = self.gcode.get_float('TARGET', params, 0.)
@@ -189,12 +177,12 @@ class ControlPID:
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
         self.min_deriv_time = heater.get_smooth_time()
-        imax = config.getfloat('pid_integral_max', self.heater_max_power,
+        self.imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
-        self.temp_integ_max = imax / self.Ki
+        self.temp_integ_max = self.imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
@@ -228,14 +216,19 @@ class ControlPID:
         if Kp is not None:
             self.Kp = Kp / PID_PARAM_BASE
         if Ki is not None:
-            self.Ki = Ki / PID_PARAM_BASE
-            self.temp_integ_max = self.imax / self.Ki
+            print type(Ki)
+            if Ki is 0:
+                self.Ki = 0.
+                self.temp_integ_max = 0.
+            else:
+                self.Ki = Ki / PID_PARAM_BASE
+                self.temp_integ_max = self.imax / self.Ki
             self.prev_temp_integ = 0.
         if Kd is not None:
             self.Kd = Kd / PID_PARAM_BASE
             self.prev_temp_deriv = 0.
     def get_terms(self):
-        return self.Kp, self.Ki, self.Kd
+        return (self.Kp * PID_PARAM_BASE), (self.Ki * PID_PARAM_BASE), (self.Kd * PID_PARAM_BASE)
     def reset_integrator(self):
         self.prev_temp_integ = 0.
     def check_busy(self, eventtime, smoothed_temp, target_temp):

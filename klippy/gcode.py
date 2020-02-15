@@ -541,26 +541,41 @@ class GCodeParser:
     cmd_SET_PID_TERMS_help = "Set the PID terms for HEATER_NAME"
     def cmd_SET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
-        Kp = self.get_float('P', params, None)
-        Ki = self.get_float('I', params, None)
-        Kd = self.get_float('D', params, None)
-        heater = self.heaters.lookup_heater(heater_name)
-        heater.set_pid_terms(Kp, Ki, Kd)
+	try:
+	    Kp = self.get_float('P', params, None)
+            Ki = self.get_float('I', params, None)
+            Kd = self.get_float('D', params, None)
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.set_terms(Kp, Ki, Kd)
+            Kp, Ki, Kd = heater.control.get_terms()
+            self.respond_info("Heater: %s\n"
+                              "Kp: %s\n"
+                              "Ki: %s\n"
+                              "Kd: %s\n"
+                              % (heater_name, Kp, Ki, Kd))
+	except Exception as e:
+	    self.respond_info(str(e))
     cmd_GET_PID_TERMS_help = "Query HEATER_NAME for its PID terms"
     def cmd_GET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
-        heater = self.heaters.lookup_heater(heater_name)
-        Kp, Ki, Kd = heater.get_pid_terms()
-        self.respond_info("Heater: %s\n"
-                          "Kp: %s\n"
-                          "Ki: %s\n"
-                          "Kd: %s\n"
-                          % (heater_name, Kp, Ki, Kd))
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            Kp, Ki, Kd = heater.control.get_terms()
+            self.respond_info("Heater: %s\n"
+                              "Kp: %s\n"
+                              "Ki: %s\n"
+                              "Kd: %s\n"
+                              % (heater_name, Kp, Ki, Kd))
+        except Exception as e:
+            self.respond_info(str(e))
     cmd_RESET_PID_INTEGRATOR_help = "Clear the PID integrator history"
     def cmd_RESET_PID_INTEGRATOR(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
-        heater = self.heaters.lookup_heater(heater_name)
-        heater.reset_integrator()
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.reset_integrator()
+        except:
+            self.respond_info("Invalid heater '%s'" % heater_name)
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
     def cmd_SET_GCODE_OFFSET(self, params):
         move_delta = [0., 0., 0., 0.]
