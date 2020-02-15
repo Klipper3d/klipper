@@ -25,7 +25,7 @@
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
 #elif CONFIG_SERIAL_PORT == 3
-  #if STM32_SERIAL_USART3_ALT
+  #if CONFIG_STM32_SERIAL_USART3_ALT
     DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
     #define GPIO_Rx GPIO('D', 9)
     #define GPIO_Tx GPIO('D', 8)

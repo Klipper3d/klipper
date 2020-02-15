@@ -1,5 +1,7 @@
 # Support for filament width sensor
+#
 # Copyright (C) 2019  Mustafa YILDIZ <mydiz@hotmail.com>
+#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 ADC_REPORT_TIME = 0.500

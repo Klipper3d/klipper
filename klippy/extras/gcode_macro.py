@@ -92,11 +92,22 @@ class GCodeMacro:
     def __init__(self, config):
         name = config.get_name().split()[1]
         self.alias = name.upper()
-        printer = config.get_printer()
+        self.printer = printer = config.get_printer()
         gcode_macro = printer.try_load_module(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
-        self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+        self.rename_existing = config.get("rename_existing", None)
+        if self.rename_existing is not None:
+            if (self.gcode.is_traditional_gcode(self.alias)
+                != self.gcode.is_traditional_gcode(self.rename_existing)):
+                raise config.error(
+                    "G-Code macro rename of different types ('%s' vs '%s')"
+                    % (self.alias, self.rename_existing))
+            printer.register_event_handler("klippy:connect",
+                                           self.handle_connect)
+        else:
+            self.gcode.register_command(self.alias, self.cmd,
+                                        desc=self.cmd_desc)
         self.gcode.register_mux_command("SET_GCODE_VARIABLE", "MACRO",
                                         name, self.cmd_SET_GCODE_VARIABLE,
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
@@ -114,6 +125,16 @@ class GCodeMacro:
                 raise config.error(
                     "Option '%s' in section '%s' is not a valid literal" % (
                         option, config.get_name()))
+    def handle_connect(self):
+        prev_cmd = self.gcode.register_command(self.alias, None)
+        if prev_cmd is None:
+            raise self.printer.config_error(
+                "Existing command '%s' not found in gcode_macro rename"
+                % (self.alias,))
+        pdesc = "Renamed builtin of '%s'" % (self.alias,)
+        self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
+        self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+        return dict(self.variables)
     def get_status(self, eventtime):
         return dict(self.variables)
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"

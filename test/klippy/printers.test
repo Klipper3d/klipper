@@ -40,6 +40,7 @@ CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
+CONFIG ../../config/printer-wanhao-duplicator-9-2018.cfg
 
 # Printers using the atmega1280
 DICTIONARY atmega1280.dict

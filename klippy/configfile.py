@@ -88,6 +88,7 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = None
+        self.status_info = {}
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
                                desc=self.cmd_SAVE_CONFIG_help)
@@ -217,9 +218,9 @@ class PrinterConfig:
         regular_config = self._build_config_wrapper(regular_data, filename)
         autosave_data = self._strip_duplicates(autosave_data, regular_config)
         self.autosave = self._build_config_wrapper(autosave_data, filename)
-        self._config = self._build_config_wrapper(regular_data + autosave_data,
-                                                  filename)
-        return self._config
+        cfg = self._build_config_wrapper(regular_data + autosave_data, filename)
+        self._build_status(cfg)
+        return cfg
     def check_unused_options(self, config):
         fileconfig = config.fileconfig
         objects = dict(self.printer.lookup_objects())
@@ -245,6 +246,15 @@ class PrinterConfig:
                  self._build_config_string(config),
                  "======================="]
         self.printer.set_rollover_info("config", "\n".join(lines))
+    # Status reporting
+    def _build_status(self, config):
+        self.status_info.clear()
+        for section in config.get_prefix_sections(''):
+            self.status_info[section.get_name()] = section_status = {}
+            for option in section.get_prefix_options(''):
+                section_status[option] = section.get(option)
+    def get_status(self, eventtime):
+        return {'config': self.status_info}
     # Autosave functions
     def set(self, section, option, value):
         if not self.autosave.fileconfig.has_section(section):
