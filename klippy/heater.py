@@ -230,7 +230,7 @@ class ControlPID:
             self.Kd = Kd / PID_PARAM_BASE
             self.prev_temp_deriv = 0.
     def reset_terms(self):
-        self.set_terms(self.INITIAL_KP, self.INITIAL_KID, self.INITIAL_KD)
+        self.set_terms(self.INITIAL_KP, self.INITIAL_KI, self.INITIAL_KD)
     def get_terms(self):
         return (self.Kp * PID_PARAM_BASE), (self.Ki * PID_PARAM_BASE), (self.Kd * PID_PARAM_BASE)
     def reset_integrator(self):
