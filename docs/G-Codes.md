@@ -107,6 +107,26 @@ The following standard commands are supported:
   equivalent resistance given that pullup is reported.
 - `GET_POSITION`: Return information on the current location of the
   toolhead.
+- `SET_PID_TERMS [HEATER_NAME=<Heater>] [P=<Kp term>] [I=<Ki term>] 
+  [D=<Kd term]`: Set the Kp, Ki, and/or Kd terms for the specified 
+  heater PID controller.  All arguments are optional and you
+  can choose to only specify the terms you want to modify instead of
+  changing them all at once.  If any term is not supplied as a
+  parameter then that term is not modified.  The default HEATER_NAME
+  is 'extruder'.  Changes to the PID terms via this command are NOT 
+  saved to the config file.  This command will reset the summation 
+  (by setting it to 0) for the Ki and Kd terms ONLY IF those terms 
+  are specified as parameters to the command.
+- `RESET_PID_TERMS [HEATER_NAME=<Heater>]`: Reset the Kp, Ki, and Kd 
+  terms on the specified heater PID controller to the values that were 
+  loaded from the printer configuration file on startup.  The default 
+  HEATER_NAME is 'extruder'.  This command will reset the summation for
+  the Ki and the Kd terms.
+- `GET_PID_TERMS [HEATER_NAME=<Heater>]`: Get the Kp, Ki, and Kd terms
+  that are currently set for the specified heater.
+- `RESET_PID_INTEGRATOR [HEATER_NAME=<Heater>]`: Set the PID integral
+  summation to 0 for the specified heater.  This is useful if the
+  controller has windup that is causing unstable steady-state control.
 - `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
   [Y=<pos>|Y_ADJUST=<adjust>] [Z=<pos>|Z_ADJUST=<adjust>]
   [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
