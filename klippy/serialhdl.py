@@ -1,6 +1,6 @@
 # Serial port management for firmware communication
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
@@ -32,13 +32,22 @@ class SerialReader:
         self.handlers = {}
         self.register_response(self._handle_unknown_init, '#unknown')
         self.register_response(self.handle_output, '#output')
+        # Sent message notification tracking
+        self.last_notify_id = 0
+        self.pending_notifications = {}
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
             count = response.len
-            if count <= 0:
+            if count < 0:
                 break
+            if response.notify_id:
+                params = {'#sent_time': response.sent_time,
+                          '#receive_time': response.receive_time}
+                completion = self.pending_notifications.pop(response.notify_id)
+                self.reactor.async_complete(completion, params)
+                continue
             params = self.msgparser.parse(response.msg[0:count])
             params['#sent_time'] = response.sent_time
             params['#receive_time'] = response.receive_time
@@ -126,6 +135,9 @@ class SerialReader:
         if self.ser is not None:
             self.ser.close()
             self.ser = None
+        for pn in self.pending_notifications.values():
+            pn.complete(None)
+        self.pending_notifications.clear()
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
@@ -145,8 +157,19 @@ class SerialReader:
                 self.handlers[name, oid] = callback
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
-        self.ffi_lib.serialqueue_send(
-            self.serialqueue, cmd_queue, cmd, len(cmd), minclock, reqclock)
+        self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
+                                      cmd, len(cmd), minclock, reqclock, 0)
+    def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
+        self.last_notify_id += 1
+        nid = self.last_notify_id
+        completion = self.reactor.completion()
+        self.pending_notifications[nid] = completion
+        self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
+                                      cmd, len(cmd), minclock, reqclock, nid)
+        params = completion.wait()
+        if params is None:
+            raise error("Serial connection closed")
+        return params
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
