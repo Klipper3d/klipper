@@ -437,7 +437,7 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'SET_PID_TERMS', 'GET_PID_TERMS', 'RESET_PID_INTEGRATOR', 'SET_GCODE_OFFSET',
+        'SET_PID_TERMS', 'RESET_PID_TERMS', 'GET_PID_TERMS', 'RESET_PID_INTEGRATOR', 'SET_GCODE_OFFSET',
         'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE', 'M105', 'M112', 'M115', 'IGNORE',
         'GET_POSITION', 'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
@@ -541,8 +541,8 @@ class GCodeParser:
     cmd_SET_PID_TERMS_help = "Set the PID terms for HEATER_NAME"
     def cmd_SET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
-	try:
-	    Kp = self.get_float('P', params, None)
+        try:
+            Kp = self.get_float('P', params, None)
             Ki = self.get_float('I', params, None)
             Kd = self.get_float('D', params, None)
             heater = self.heaters.lookup_heater(heater_name)
@@ -553,8 +553,22 @@ class GCodeParser:
                               "Ki: %s\n"
                               "Kd: %s\n"
                               % (heater_name, Kp, Ki, Kd))
-	except Exception as e:
-	    self.respond_info(str(e))
+        except Exception as e:
+            self.respond_info(str(e))
+    cmd_RESET_PID_TERMS_help = "Reset the PID terms for HEATER_NAME to default"
+    def cmd_RESET_PID_TERMS(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, 'extruder')
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.reset_terms()
+            Kp, Ki, Kd = heater.control.get_terms()
+            self.respond_info("Heater: %s\n"
+                              "Kp: %s\n"
+                              "Ki: %s\n"
+                              "Kd: %s\n"
+                              % (heater_name, Kp, Ki, Kd))
+        except Exception as e:
+            self.respond_info(str(e))
     cmd_GET_PID_TERMS_help = "Query HEATER_NAME for its PID terms"
     def cmd_GET_PID_TERMS(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
@@ -574,8 +588,8 @@ class GCodeParser:
         try:
             heater = self.heaters.lookup_heater(heater_name)
             heater.control.reset_integrator()
-        except:
-            self.respond_info("Invalid heater '%s'" % heater_name)
+        except Exception as e:
+            self.respond_info(str(e))
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
     def cmd_SET_GCODE_OFFSET(self, params):
         move_delta = [0., 0., 0., 0.]

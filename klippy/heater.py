@@ -177,12 +177,14 @@ class ControlPID:
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
         self.min_deriv_time = heater.get_smooth_time()
-        self.imax = config.getfloat('pid_integral_max', self.heater_max_power,
-                               minval=0.)
-        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
-        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
-        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
-        self.temp_integ_max = self.imax / self.Ki
+        self.IMAX = config.getfloat('pid_integral_max', self.heater_max_power, minval=0.)
+        self.INITIAL_KP = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.INITIAL_KI = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.INITIAL_KD = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.Kp = self.INITIAL_KP
+        self.Ki = self.INITIAL_KI
+        self.Kd = self.INITIAL_KD
+        self.temp_integ_max = self.IMAX / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
@@ -222,11 +224,13 @@ class ControlPID:
                 self.temp_integ_max = 0.
             else:
                 self.Ki = Ki / PID_PARAM_BASE
-                self.temp_integ_max = self.imax / self.Ki
+                self.temp_integ_max = self.IMAX / self.Ki
             self.prev_temp_integ = 0.
         if Kd is not None:
             self.Kd = Kd / PID_PARAM_BASE
             self.prev_temp_deriv = 0.
+    def reset_terms(self):
+        self.set_terms(self.INITIAL_KP, self.INITIAL_KID, self.INITIAL_KD)
     def get_terms(self):
         return (self.Kp * PID_PARAM_BASE), (self.Ki * PID_PARAM_BASE), (self.Kd * PID_PARAM_BASE)
     def reset_integrator(self):
