@@ -972,22 +972,6 @@ serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
     serialqueue_send_batch(sq, cq, &msgs);
 }
 
-// Like serialqueue_send() but also builds the message to be sent
-void
-serialqueue_encode_and_send(struct serialqueue *sq, struct command_queue *cq
-                            , uint32_t *data, int len
-                            , uint64_t min_clock, uint64_t req_clock)
-{
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->min_clock = min_clock;
-    qm->req_clock = req_clock;
-
-    struct list_head msgs;
-    list_init(&msgs);
-    list_add_tail(&qm->node, &msgs);
-    serialqueue_send_batch(sq, cq, &msgs);
-}
-
 // Return a message read from the serial port (or wait for one if none
 // available)
 void __visible
