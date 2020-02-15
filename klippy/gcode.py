@@ -437,9 +437,9 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M112', 'M115', 'IGNORE', 'GET_POSITION',
-        'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+        'SET_PID_TERMS', 'GET_PID_TERMS', 'RESET_PID_INTEGRATOR', 'SET_GCODE_OFFSET',
+        'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE', 'M105', 'M112', 'M115', 'IGNORE',
+        'GET_POSITION', 'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
