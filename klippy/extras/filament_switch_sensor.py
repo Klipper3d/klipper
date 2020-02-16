@@ -76,6 +76,7 @@ class RunoutHelper:
             self.gcode.run_script(prefix + template.render() + "\nM400")
         except Exception:
             logging.exception("Script running error")
+        self.event_running = False
     def set_enable(self, runout, insert):
         if runout and insert:
             # both cannot be enabled
@@ -93,23 +94,23 @@ class RunoutHelper:
             self.filament_present = state
             return
         self.filament_present = state
-        self.event_running = True
         if state:
             if self.insert_enabled:
                 # insert detected
+                self.event_running = True
                 self.last_event_time = eventtime
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f" %
                     (self.name, eventtime))
-                self._insert_event_handler(eventtime)
+                self.reactor.register_callback(self._insert_event_handler)
         elif self.runout_enabled:
             # runout detected
+            self.event_running = True
             self.last_event_time = eventtime
             logging.info(
                 "Filament Sensor %s: runout event detected, Time %.2f" %
                 (self.name, eventtime))
-            self._runout_event_handler(eventtime)
-        self.event_running = False
+            self.reactor.register_callback(self._runout_event_handler)
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
     def cmd_QUERY_FILAMENT_SENSOR(self, params):
         if self.filament_present:
