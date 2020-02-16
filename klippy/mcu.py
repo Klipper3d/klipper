@@ -301,6 +301,35 @@ class MCU_adc:
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
+# Class to retry sending of a query command until a given response is received
+class RetryAsyncCommand:
+    TIMEOUT_TIME = 5.0
+    RETRY_TIME = 0.500
+    def __init__(self, mcu, serial, name, oid=None):
+        self.reactor = mcu.get_printer().get_reactor()
+        self.serial = serial
+        self.name = name
+        self.oid = oid
+        self.completion = self.reactor.completion()
+        self.min_query_time = self.reactor.monotonic()
+        self.serial.register_response(self.handle_callback, name, oid)
+    def handle_callback(self, params):
+        if params['#sent_time'] >= self.min_query_time:
+            self.min_query_time = self.reactor.NEVER
+            self.reactor.async_complete(self.completion, params)
+    def get_response(self, cmd, cmd_queue, minclock=0, minsystime=0.):
+        first_query_time = query_time = max(self.min_query_time, minsystime)
+        while 1:
+            self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
+            params = self.completion.wait(query_time + self.RETRY_TIME)
+            if params is not None:
+                self.serial.register_response(None, self.name, self.oid)
+                return params
+            query_time = self.reactor.monotonic()
+            if query_time > first_query_time + self.TIMEOUT_TIME:
+                self.serial.register_response(None, self.name, self.oid)
+                raise error("Timeout on wait for '%s' response" % (self.name,))
+
 # Wrapper around command sending
 class CommandWrapper:
     def __init__(self, mcu, serial, clocksync, cmd, cmd_queue):
@@ -314,16 +343,20 @@ class CommandWrapper:
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
     def send_with_response(self, data=(), response=None, response_oid=None,
                            minclock=0):
+        cmd = self._cmd.encode(data)
+        src = serialhdl.SerialRetryCommand(self._serial, response, response_oid)
+        try:
+            return src.get_response(cmd, self._cmd_queue, minclock=minclock)
+        except serialhdl.error as e:
+            raise error(str(e))
+    def send_with_async_response(self, data=(),
+                                 response=None, response_oid=None, minclock=0):
         minsystime = 0.
         if minclock:
             minsystime = self._clocksync.estimate_clock_systime(minclock)
         cmd = self._cmd.encode(data)
-        src = serialhdl.SerialRetryCommand(self._serial, response, response_oid)
-        try:
-            return src.get_response([cmd], self._cmd_queue,
-                                    minclock=minclock, minsystime=minsystime)
-        except serialhdl.error as e:
-            raise error(str(e))
+        src = RetryAsyncCommand(self._mcu, self._serial, response, response_oid)
+        return src.get_response(cmd, self._cmd_queue, minclock, minsystime)
 
 class MCU:
     error = error

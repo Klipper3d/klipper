@@ -148,7 +148,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_read(0xf5, addr, reg)
-        params = self.tmcuart_send_cmd.send_with_response(
+        params = self.tmcuart_send_cmd.send_with_async_response(
             [self.oid, msg, 10], 'tmcuart_response', self.oid)
         return self._decode_read(reg, params['read'])
     def reg_write(self, instance_id, addr, reg, val, print_time=None):
@@ -158,7 +158,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_write(0xf5, addr, reg | 0x80, val)
-        self.tmcuart_send_cmd.send_with_response(
+        self.tmcuart_send_cmd.send_with_async_response(
             [self.oid, msg, 0], 'tmcuart_response', self.oid,
             minclock=minclock)
 
