@@ -141,6 +141,6 @@ feedrate_icon = [
 Icons16x16 = {
     'extruder': extruder_icon,
     'bed': bed_icon, 'bed_heat1': bed_heat1_icon, 'bed_heat2': bed_heat2_icon,
-    'fan1': fan1_icon, 'fan2': fan2_icon,
+    'fan': fan1_icon, 'fan1': fan1_icon, 'fan2': fan2_icon,
     'feedrate': feedrate_icon,
 }
