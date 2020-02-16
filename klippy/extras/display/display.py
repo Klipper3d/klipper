@@ -1,57 +1,181 @@
 # Basic LCD display support
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Aleph Objects, Inc <marcio@alephobjects.com>
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
-import hd44780, st7920, uc1701
-import menu
+import logging, os, ast
+import hd44780, st7920, uc1701, menu
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
     'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
 }
 
+# Storage of [display_template my_template] config sections
+class DisplayTemplate:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        name_parts = config.get_name().split()
+        if len(name_parts) != 2:
+            raise config.error("Section name '%s' is not valid"
+                               % (config.get_name(),))
+        self.name = name_parts[1]
+        self.params = {}
+        for option in config.get_prefix_options('param_'):
+            try:
+                self.params[option] = ast.literal_eval(config.get(option))
+            except ValueError as e:
+                raise config.error(
+                    "Option '%s' in section '%s' is not a valid literal" % (
+                        option, config.get_name()))
+        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        self.template = gcode_macro.load_template(config, 'text')
+    def render(self, context, **kwargs):
+        params = dict(self.params)
+        params.update(**kwargs)
+        if len(params) != len(self.params):
+            raise self.printer.command_error(
+                "Invalid parameter to display_template %s" % (self.name,))
+        context = dict(context)
+        context.update(params)
+        return self.template.render(context)
+
+# Store [display_data my_group my_item] sections (one instance per group name)
+class DisplayGroup:
+    def __init__(self, config, name, data_configs):
+        # Load and parse the position of display_data items
+        items = []
+        for c in data_configs:
+            pos = c.get('position')
+            try:
+                row, col = [int(v.strip()) for v in pos.split(',')]
+            except:
+                raise config.error("Unable to parse 'position' in section '%s'"
+                                   % (c.get_name(),))
+            items.append((row, col, c.get_name()))
+        # Load all templates and store sorted by display position
+        configs_by_name = {c.get_name(): c for c in data_configs}
+        printer = config.get_printer()
+        gcode_macro = printer.try_load_module(config, 'gcode_macro')
+        self.data_items = []
+        for row, col, name in sorted(items):
+            c = configs_by_name[name]
+            if c.get('text'):
+                template = gcode_macro.load_template(c, 'text')
+                self.data_items.append((row, col, template))
+    def show(self, display, templates, eventtime):
+        swrap = self.data_items[0][2].create_status_wrapper(eventtime)
+        context = { 'printer': swrap,
+                    'draw_progress_bar': display.draw_progress_bar }
+        def render(name, **kwargs):
+            return templates[name].render(context, **kwargs)
+        context['render'] = render
+        for row, col, template in self.data_items:
+            text = template.render(context)
+            display.draw_text(row, col, text.replace('\n', ''), eventtime)
+
 class PrinterLCD:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.lcd_type = config.get('lcd_type')
-        # menu
+        # Load menu and display_status
         self.menu = menu.MenuManager(config, self.lcd_chip)
-        # printer objects
-        self.display_status = self.printer.try_load_module(config,
-                                                           "display_status")
-        self.gcode = self.printer.lookup_object('gcode')
-        self.toolhead = self.sdcard = None
-        self.fan = self.extruder = self.extruder1 = self.heater_bed = None
+        self.printer.try_load_module(config, "display_status")
+        # Configurable display
+        self.display_templates = {}
+        self.display_data_groups = {}
+        self.load_config(config)
+        dgroup = "_default_16x4"
+        if self.lcd_chip.get_dimensions()[0] == 20:
+            dgroup = "_default_20x4"
+        dgroup = config.get('display_group', dgroup)
+        self.show_data_group = self.display_data_groups.get(dgroup)
+        if self.show_data_group is None:
+            raise config.error("Unknown display_data group '%s'"
+                               % (dgroup,))
+        # Screen updating
+        self.glyph_helpers = { 'animated_bed': self.animate_bed,
+                               'animated_fan': self.animate_fan }
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
-        # screen updating
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+    # Configurable display
+    def load_config(self, config):
+        # Load default display config file
+        pconfig = self.printer.lookup_object('configfile')
+        filename = os.path.join(os.path.dirname(__file__), 'display.cfg')
+        try:
+            dconfig = pconfig.read_config(filename)
+        except Exception:
+            raise self.printer.config_error("Cannot load config '%s'"
+                                            % (filename,))
+        # Load display_template sections
+        dt_main = config.get_prefix_sections('display_template ')
+        dt_main_names = { c.get_name(): 1 for c in dt_main }
+        dt_def = [c for c in dconfig.get_prefix_sections('display_template ')
+                  if c.get_name() not in dt_main_names]
+        for c in dt_main + dt_def:
+            dt = DisplayTemplate(c)
+            self.display_templates[dt.name] = dt
+        # Load display_data sections
+        dd_main = config.get_prefix_sections('display_data ')
+        dd_main_names = { c.get_name(): 1 for c in dd_main }
+        dd_def = [c for c in dconfig.get_prefix_sections('display_data ')
+                  if c.get_name() not in dd_main_names]
+        groups = {}
+        for c in dd_main + dd_def:
+            name_parts = c.get_name().split()
+            if len(name_parts) != 3:
+                raise config.error("Section name '%s' is not valid"
+                                   % (c.get_name(),))
+            groups.setdefault(name_parts[1], []).append(c)
+        for group_name, data_configs in groups.items():
+            dg = DisplayGroup(config, group_name, data_configs)
+            self.display_data_groups[group_name] = dg
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
-        # Load printer objects
-        self.toolhead = self.printer.lookup_object('toolhead')
-        self.sdcard = self.printer.lookup_object('virtual_sdcard', None)
-        self.fan = self.printer.lookup_object('fan', None)
-        self.extruder = self.printer.lookup_object('extruder', None)
-        self.extruder1 = self.printer.lookup_object('extruder1', None)
-        self.heater_bed = self.printer.lookup_object('heater_bed', None)
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
-    # Get menu instance
-    def get_menu(self):
-        return self.menu
-    # Graphics drawing
-    def animate_glyphs(self, eventtime, x, y, glyph_name, do_animate):
-        frame = do_animate and int(eventtime) & 1
-        self.lcd_chip.write_glyph(x, y, glyph_name + str(frame + 1))
-    def draw_progress_bar(self, x, y, width, value):
+    # Screen updating
+    def screen_update_event(self, eventtime):
+        # update menu component
+        ret = self.menu.screen_update_event(eventtime)
+        if ret:
+            return ret
+        # Update normal display
+        self.lcd_chip.clear()
+        try:
+            self.show_data_group.show(self, self.display_templates, eventtime)
+        except:
+            logging.exception("Error during display screen update")
+        self.lcd_chip.flush()
+        return eventtime + .500
+    # Rendering helpers
+    def animate_bed(self, row, col, eventtime):
+        frame = int(eventtime) & 1
+        return self.lcd_chip.write_glyph(col, row, 'bed_heat%d' % (frame + 1,))
+    def animate_fan(self, row, col, eventtime):
+        frame = int(eventtime) & 1
+        return self.lcd_chip.write_glyph(col, row, 'fan%d' % (frame + 1,))
+    def draw_text(self, row, col, mixed_text, eventtime):
+        pos = col
+        for i, text in enumerate(mixed_text.split('~')):
+            if i & 1 == 0:
+                # write text
+                self.lcd_chip.write_text(pos, row, text)
+                pos += len(text)
+            elif text in self.glyph_helpers:
+                pos += self.glyph_helpers[text](row, pos, eventtime)
+            else:
+                # write glyph
+                pos += self.lcd_chip.write_glyph(pos, row, text)
+    def draw_progress_bar(self, row, col, width, value):
         value = int(value * 100.)
         data = [0x00] * width
         char_pcnt = int(100/width)
@@ -64,148 +188,11 @@ class PrinterLCD:
                 data[i] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
         data[0] |= 0x80
         data[-1] |= 0x01
-        self.lcd_chip.write_graphics(x, y, 0, [0xff]*width)
+        self.lcd_chip.write_graphics(col, row, 0, [0xff]*width)
         for i in range(1, 15):
-            self.lcd_chip.write_graphics(x, y, i, data)
-        self.lcd_chip.write_graphics(x, y, 15, [0xff]*width)
-    # Screen updating
-    def screen_update_event(self, eventtime):
-        # update menu component
-        ret = self.menu.screen_update_event(eventtime)
-        if ret:
-            return ret
-        # update all else
-        self.lcd_chip.clear()
-        if self.lcd_type == 'hd44780':
-            self.screen_update_hd44780(eventtime)
-        else:
-            self.screen_update_128x64(eventtime)
-        self.lcd_chip.flush()
-        return eventtime + .500
-    def screen_update_hd44780(self, eventtime):
-        lcd_chip = self.lcd_chip
-        # Heaters
-        if self.extruder is not None:
-            info = self.extruder.get_heater().get_status(eventtime)
-            lcd_chip.write_glyph(0, 0, 'extruder')
-            self.draw_heater(1, 0, info)
-        if self.extruder1 is not None:
-            info = self.extruder1.get_heater().get_status(eventtime)
-            lcd_chip.write_glyph(0, 1, 'extruder')
-            self.draw_heater(1, 1, info)
-        if self.heater_bed is not None:
-            info = self.heater_bed.get_status(eventtime)
-            lcd_chip.write_glyph(10, 0, 'bed')
-            self.draw_heater(11, 0, info)
-        # Fan speed
-        if self.fan is not None:
-            info = self.fan.get_status(eventtime)
-            lcd_chip.write_text(10, 1, "Fan")
-            self.draw_percent(14, 1, 4, info['speed'])
-        # G-Code speed factor
-        gcode_info = self.gcode.get_status(eventtime)
-        lcd_chip.write_glyph(0, 2, 'feedrate')
-        self.draw_percent(1, 2, 4, gcode_info['speed_factor'])
-        # Print progress
-        if (self.sdcard is not None
-            and self.sdcard.get_status(eventtime)['progress']):
-            lcd_chip.write_glyph(8, 2, 'sd')
-        else:
-            lcd_chip.write_glyph(8, 2, 'usb')
-        display_info = self.display_status.get_status(eventtime)
-        progress = display_info['progress']
-        self.draw_percent(9, 2, 4, progress)
-        lcd_chip.write_glyph(14, 2, 'clock')
-        toolhead_info = self.toolhead.get_status(eventtime)
-        self.draw_time(15, 2, toolhead_info['printing_time'])
-        self.draw_status(0, 3, display_info, gcode_info, toolhead_info)
-    def screen_update_128x64(self, eventtime):
-        # Heaters
-        if self.extruder is not None:
-            info = self.extruder.get_heater().get_status(eventtime)
-            self.lcd_chip.write_glyph(0, 0, 'extruder')
-            self.draw_heater(2, 0, info)
-        extruder_count = 1
-        if self.extruder1 is not None:
-            info = self.extruder1.get_heater().get_status(eventtime)
-            self.lcd_chip.write_glyph(0, 1, 'extruder')
-            self.draw_heater(2, 1, info)
-            extruder_count = 2
-        if self.heater_bed is not None:
-            info = self.heater_bed.get_status(eventtime)
-            if info['target']:
-                self.animate_glyphs(eventtime, 0, extruder_count,
-                                    'bed_heat', True)
-            else:
-                self.lcd_chip.write_glyph(0, extruder_count, 'bed')
-            self.draw_heater(2, extruder_count, info)
-        # Fan speed
-        if self.fan is not None:
-            info = self.fan.get_status(eventtime)
-            self.animate_glyphs(eventtime, 10, 0, 'fan', info['speed'] != 0.)
-            self.draw_percent(12, 0, 4, info['speed'], '>')
-        # SD card print progress
-        display_info = self.display_status.get_status(eventtime)
-        progress = display_info['progress']
-        if progress is not None:
-            if extruder_count == 1:
-                x, y, width = 0, 2, 10
-            else:
-                x, y, width = 10, 1, 6
-            self.draw_percent(x, y, width, progress, '^')
-            self.draw_progress_bar(x, y, width, progress)
-        # G-Code speed factor
-        gcode_info = self.gcode.get_status(eventtime)
-        if extruder_count == 1:
-            self.lcd_chip.write_glyph(10, 1, 'feedrate')
-            self.draw_percent(12, 1, 4, gcode_info['speed_factor'], '>')
-        # Printing time and status
-        toolhead_info = self.toolhead.get_status(eventtime)
-        printing_time = toolhead_info['printing_time']
-        remaining_time = None
-        if progress is not None and progress > 0:
-            remaining_time = int(printing_time / progress) - printing_time
-        # switch mode every 6s
-        if remaining_time is not None and int(eventtime) % 12 < 6:
-            self.lcd_chip.write_text(10, 2, "-")
-            self.draw_time(11, 2, remaining_time)
-        else:
-            offset = 1 if printing_time < 100 * 60 * 60 else 0
-            self.draw_time(10 + offset, 2, printing_time)
-        self.draw_status(0, 3, display_info, gcode_info, toolhead_info)
-    # Screen update helpers
-    def draw_text(self, x, y, mixed_text):
-        pos = x
-        for i, text in enumerate(mixed_text.split('~')):
-            if i & 1 == 0:
-                # write text
-                self.lcd_chip.write_text(pos, y, text)
-                pos += len(text)
-            else:
-                # write glyph
-                pos += self.lcd_chip.write_glyph(pos, y, text)
-    def draw_heater(self, x, y, info):
-        temperature, target = info['temperature'], info['target']
-        if target and abs(temperature - target) > 2.:
-            self.draw_text(x, y, "%3.0f~right_arrow~%.0f~degrees~" % (
-                temperature, target))
-        else:
-            self.draw_text(x, y, "%3.0f~degrees~" % (temperature,))
-    def draw_percent(self, x, y, width, value, align='^'):
-        self.lcd_chip.write_text(x, y, '{:{}{}.0%}'.format(value, align, width))
-    def draw_time(self, x, y, seconds):
-        seconds = int(seconds)
-        self.lcd_chip.write_text(x, y, "%02d:%02d" % (
-            seconds // (60 * 60), (seconds // 60) % 60))
-    def draw_status(self, x, y, display_info, gcode_info, toolhead_info):
-        if display_info['message']:
-            self.lcd_chip.write_text(x, y, display_info['message'])
-            return
-        status = toolhead_info['status']
-        if status == 'Printing' or gcode_info['busy']:
-            pos = self.toolhead.get_position()
-            status = "X%-4.0fY%-4.0fZ%-5.2f" % (pos[0], pos[1], pos[2])
-        self.lcd_chip.write_text(x, y, status)
+            self.lcd_chip.write_graphics(col, row, i, data)
+        self.lcd_chip.write_graphics(col, row, 15, [0xff]*width)
+        return ""
 
 def load_config(config):
     return PrinterLCD(config)
