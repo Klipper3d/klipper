@@ -111,6 +111,8 @@ class RunoutHelper:
                 "Filament Sensor %s: runout event detected, Time %.2f" %
                 (self.name, eventtime))
             self.reactor.register_callback(self._runout_event_handler)
+    def get_status(self, eventtime):
+        return {"filament_detected": bool(self.filament_present)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
     def cmd_QUERY_FILAMENT_SENSOR(self, params):
         if self.filament_present:
@@ -129,6 +131,7 @@ class SwitchSensor:
         switch_pin = config.get('switch_pin')
         buttons.register_buttons([switch_pin], self._button_handler)
         self.runout_helper = RunoutHelper(config)
+        self.get_status = self.runout_helper.get_status
     def _button_handler(self, eventtime, state):
         self.runout_helper.note_filament_present(state)
 
