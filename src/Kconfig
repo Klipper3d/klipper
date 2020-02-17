@@ -130,3 +130,7 @@ config INLINE_STEPPER_HACK
     bool
     depends on HAVE_GPIO
     default y
+
+config BOOTLOADER_SIZE
+    hex
+    default 0x0000
