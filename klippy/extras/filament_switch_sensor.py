@@ -83,18 +83,19 @@ class RunoutHelper:
             insert = False
         self.runout_enabled = runout
         self.insert_enabled = insert
-    def note_filament_present(self, state):
+    def note_filament_present(self, is_filament_present):
+        if is_filament_present == self.filament_present:
+            return
+        self.filament_present = is_filament_present
         eventtime = self.reactor.monotonic()
-        if (eventtime < self.start_time or state == self.filament_present
+        if (eventtime < self.start_time
                 or (eventtime - self.last_event_time) < self.event_delay
                 or not self.sensor_enabled or self.event_running):
             # do not process during the initialization time, duplicates,
             # during the event delay time, while an event is running, or
             # when the sensor is disabled
-            self.filament_present = state
             return
-        self.filament_present = state
-        if state:
+        if is_filament_present:
             if self.insert_enabled:
                 # insert detected
                 self.event_running = True
