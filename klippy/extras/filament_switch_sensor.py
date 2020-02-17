@@ -24,13 +24,11 @@ class RunoutHelper:
                 config, 'insert_gcode')
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.event_delay = config.getfloat('event_delay', 3., above=0.)
-        self.start_time = self.reactor.NEVER
-        self.last_event_time = 0.
+        self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
         self.runout_enabled = False
         self.insert_enabled = self.insert_gcode is not None
         self.sensor_enabled = True
-        self.event_running = False
         self.print_status = "idle"
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler(
@@ -51,7 +49,7 @@ class RunoutHelper:
             self.cmd_SET_FILAMENT_SENSOR,
             desc=self.cmd_SET_FILAMENT_SENSOR_help)
     def _handle_ready(self):
-        self.start_time = self.reactor.monotonic() + 2.
+        self.min_event_systime = self.reactor.monotonic() + 2.
     def _update_print_status(self, eventtime, status):
         if status == "printing":
             runout_en = self.runout_gcode is not None
@@ -76,7 +74,7 @@ class RunoutHelper:
             self.gcode.run_script(prefix + template.render() + "\nM400")
         except Exception:
             logging.exception("Script running error")
-        self.event_running = False
+        self.min_event_systime = self.reactor.monotonic() + self.event_delay
     def set_enable(self, runout, insert):
         if runout and insert:
             # both cannot be enabled
@@ -88,9 +86,7 @@ class RunoutHelper:
             return
         self.filament_present = is_filament_present
         eventtime = self.reactor.monotonic()
-        if (eventtime < self.start_time
-                or (eventtime - self.last_event_time) < self.event_delay
-                or not self.sensor_enabled or self.event_running):
+        if eventtime < self.min_event_systime or not self.sensor_enabled:
             # do not process during the initialization time, duplicates,
             # during the event delay time, while an event is running, or
             # when the sensor is disabled
@@ -98,16 +94,14 @@ class RunoutHelper:
         if is_filament_present:
             if self.insert_enabled:
                 # insert detected
-                self.event_running = True
-                self.last_event_time = eventtime
+                self.min_event_systime = self.reactor.NEVER
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f" %
                     (self.name, eventtime))
                 self.reactor.register_callback(self._insert_event_handler)
         elif self.runout_enabled:
             # runout detected
-            self.event_running = True
-            self.last_event_time = eventtime
+            self.min_event_systime = self.reactor.NEVER
             logging.info(
                 "Filament Sensor %s: runout event detected, Time %.2f" %
                 (self.name, eventtime))
