@@ -11,6 +11,7 @@ class RunoutHelper:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.gcode = self.printer.lookup_object('gcode')
+        # Read config
         self.runout_pause = config.getboolean('pause_on_runout', True)
         if self.runout_pause:
             self.printer.try_load_module(config, 'pause_resume')
@@ -24,22 +25,12 @@ class RunoutHelper:
                 config, 'insert_gcode')
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.event_delay = config.getfloat('event_delay', 3., above=0.)
+        # Internal state
         self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
-        self.runout_enabled = False
-        self.insert_enabled = self.insert_gcode is not None
         self.sensor_enabled = True
-        self.print_status = "idle"
+        # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
-        self.printer.register_event_handler(
-            "idle_timeout:idle",
-            (lambda e, s=self, st="idle": s._update_print_status(e, st)))
-        self.printer.register_event_handler(
-            "idle_timeout:ready",
-            (lambda e, s=self, st="ready": s._update_print_status(e, st)))
-        self.printer.register_event_handler(
-            "idle_timeout:printing",
-            (lambda e, s=self, st="printing": s._update_print_status(e, st)))
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_SENSOR,
@@ -50,13 +41,6 @@ class RunoutHelper:
             desc=self.cmd_SET_FILAMENT_SENSOR_help)
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.
-    def _update_print_status(self, eventtime, status):
-        if status == "printing":
-            runout_en = self.runout_gcode is not None
-            self.set_enable(runout_en, False)
-        else:
-            insert_en = self.insert_gcode is not None
-            self.set_enable(False, insert_en)
     def _runout_event_handler(self, eventtime):
         # Pausing from inside an event requires that the pause portion
         # of pause_resume execute immediately.
@@ -75,12 +59,6 @@ class RunoutHelper:
         except Exception:
             logging.exception("Script running error")
         self.min_event_systime = self.reactor.monotonic() + self.event_delay
-    def set_enable(self, runout, insert):
-        if runout and insert:
-            # both cannot be enabled
-            insert = False
-        self.runout_enabled = runout
-        self.insert_enabled = insert
     def note_filament_present(self, is_filament_present):
         if is_filament_present == self.filament_present:
             return
@@ -91,15 +69,19 @@ class RunoutHelper:
             # during the event delay time, while an event is running, or
             # when the sensor is disabled
             return
+        # Determine "printing" status
+        idle_timeout = self.printer.lookup_object("idle_timeout")
+        is_printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        # Perform filament action associated with status change (if any)
         if is_filament_present:
-            if self.insert_enabled:
+            if not is_printing and self.insert_gcode is not None:
                 # insert detected
                 self.min_event_systime = self.reactor.NEVER
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f" %
                     (self.name, eventtime))
                 self.reactor.register_callback(self._insert_event_handler)
-        elif self.runout_enabled:
+        elif is_printing and self.runout_gcode is not None:
             # runout detected
             self.min_event_systime = self.reactor.NEVER
             logging.info(
