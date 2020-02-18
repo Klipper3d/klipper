@@ -19,7 +19,7 @@ INV_SEG_TIME = 1. / SEG_TIME
 Moves = [
     (0., 0., .100),
     (0., 100., None), (100., 100., .200), (100., 60., None),
-    (60., 100., None), (100., 100., .200), (100., 0., None),
+    (60., 100., None), (100., 100., .200), (100., 20., None),
     (0., 0., .300)
 ]
 EXTRUDE_R = (.4 * .4 * .75) / (math.pi * (1.75 / 2.)**2)
@@ -104,6 +104,17 @@ def calc_weighted(positions, smooth_time):
         out[i] = sum(weighted_data) * weight
     return out
 
+# Weighted average (`(h**2 - (t-T)**2)**2`) of smooth_time range
+def calc_weighted4(positions, smooth_time):
+    offset = time_to_index(smooth_time * .5)
+    weight = 15 / (16. * offset**5)
+    out = [0.] * len(positions)
+    for i in indexes(positions):
+        weighted_data = [positions[j] * ((offset**2 - (j-i)**2))**2
+                         for j in range(i-offset, i+offset)]
+        out[i] = sum(weighted_data) * weight
+    return out
+
 
 ######################################################################
 # Pressure advance
@@ -126,6 +137,21 @@ def calc_pa(positions):
 
 
 ######################################################################
+# Estimated extrusion
+######################################################################
+
+def estimate_extruder(positions):
+    extrude_rate = SEG_TIME / PRESSURE_ADVANCE
+    nozzle_pos = 0.
+    out = []
+    for stepper_pos in positions:
+        diff = max(stepper_pos - nozzle_pos, 0.)
+        nozzle_pos += diff * extrude_rate
+        out.append(nozzle_pos)
+    return out
+
+
+######################################################################
 # Plotting and startup
 ######################################################################
 
@@ -140,21 +166,34 @@ def plot_motion():
     # Smoothed motion
     sm_positions = calc_pa(positions)
     sm_velocities = gen_deriv(sm_positions)
+    # Estimated extruder flow rate using pressure model
+    est_orig = estimate_extruder(positions)
+    vel_est_orig = gen_deriv(est_orig)
+    est_pa = estimate_extruder(sm_positions)
+    vel_est_pa = gen_deriv(est_pa)
     # Build plot
     times = [SEG_TIME * i for i in range(len(positions))]
     trim_lists(times, velocities, accels,
                pa_positions, pa_velocities,
-               sm_positions, sm_velocities)
+               sm_positions, sm_velocities,
+               vel_est_orig, vel_est_pa)
     fig, ax1 = matplotlib.pyplot.subplots(nrows=1, sharex=True)
     ax1.set_title("Extruder Velocity")
     ax1.set_ylabel('Velocity (mm/s)')
+    ax1.set_ylim([1.333 * min(velocities + sm_velocities),
+                  1.333 * max(velocities + sm_velocities)])
     pa_plot, = ax1.plot(times, pa_velocities, 'r',
                         label='Pressure Advance', alpha=0.3)
     nom_plot, = ax1.plot(times, velocities, 'black', label='Nominal')
     sm_plot, = ax1.plot(times, sm_velocities, 'g', label='Smooth PA', alpha=0.9)
+    nom_flow_plot, = ax1.plot(times, vel_est_orig, 'orange',
+                              label='Original flow rate', alpha=0.3)
+    sm_flow_plot, = ax1.plot(times, vel_est_pa, 'blue',
+                             label='New flow rate', alpha=0.3)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
-    ax1.legend(handles=[nom_plot, pa_plot, sm_plot], loc='best', prop=fontP)
+    plot_lables = [nom_plot, pa_plot, sm_plot, nom_flow_plot, sm_flow_plot]
+    ax1.legend(handles=plot_lables, loc='best', prop=fontP)
     ax1.set_xlabel('Time (s)')
     ax1.grid(True)
     fig.tight_layout()
