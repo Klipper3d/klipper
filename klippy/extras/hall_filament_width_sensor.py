@@ -87,7 +87,6 @@ class HallFilamentWidthSensor:
             self.runout_helper.note_filament_present(True)
         else:
             self.runout_helper.note_filament_present(not self.runout_detect);
-            
 
     def update_filament_array(self, last_epos):
         # Fill array
