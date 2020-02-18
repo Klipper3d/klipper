@@ -1,8 +1,9 @@
 # Z-Probe support
 #
-# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import pins, homing, manual_probe
 
 HINT_TIMEOUT = """
@@ -54,7 +55,7 @@ class PrinterProbe:
         self.printer.register_event_handler("homing:home_rails_end",
                                             self._handle_home_rails_end)
         self.printer.register_event_handler("gcode:command_error",
-                                            self.multi_probe_end)
+                                            self._handle_command_error)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('PROBE', self.cmd_PROBE,
@@ -79,6 +80,11 @@ class PrinterProbe:
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
             self.multi_probe_end()
+    def _handle_command_error(self):
+        try:
+            self.multi_probe_end()
+        except:
+            logging.exception("Multi-probe end")
     def multi_probe_begin(self):
         self.mcu_probe.multi_probe_begin()
         self.multi_probe_pending = True
