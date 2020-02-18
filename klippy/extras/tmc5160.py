@@ -19,7 +19,7 @@ Registers = {
     "FACTORY_CONF":     0x08,
     "SHORT_CONF":       0x09,
     "DRV_CONF":         0x0A,
-    "GLOBAL_SCALER":    0x0B,
+    "GLOBALSCALER":     0x0B,
     "OFFSET_READ":      0x0C,
     "IHOLD_IRUN":       0x10,
     "TPOWERDOWN":       0x11,
@@ -149,6 +149,9 @@ Fields["GSTAT"] = {
     "drv_err":                  0x01 << 1,
     "uv_cp":                    0x01 << 2
 }
+Fields["GLOBALSCALER"] = {
+    "GLOBALSCALER":             0xFF << 0
+}
 Fields["IHOLD_IRUN"] = {
     "IHOLD":                    0x1F << 0,
     "IRUN":                     0x1F << 8,
@@ -237,6 +240,7 @@ class TMC5160CurrentHelper:
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
+        self._set_globalscaler(run_current)
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
@@ -244,8 +248,19 @@ class TMC5160CurrentHelper:
         gcode.register_mux_command(
             "SET_TMC_CURRENT", "STEPPER", self.name,
             self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+    def _set_globalscaler(self, current):
+        globalscaler = int((current * 256. * math.sqrt(2.)
+                            * self.sense_resistor / VREF) + .5)
+        globalscaler = max(32, globalscaler)
+        if globalscaler >= 256:
+            globalscaler = 0
+        self.fields.set_field("GLOBALSCALER", globalscaler)
     def _calc_current_bits(self, current):
-        cs = int(32. * current * self.sense_resistor * math.sqrt(2.) / VREF
+        globalscaler = self.fields.get_field("GLOBALSCALER")
+        if not globalscaler:
+            globalscaler = 256
+        cs = int((current * 256. * 32. * math.sqrt(2.) * self.sense_resistor)
+                 / (globalscaler * VREF)
                  - 1. + .5)
         return max(0, min(31, cs))
     def _calc_current(self, run_current, hold_current):
@@ -253,9 +268,12 @@ class TMC5160CurrentHelper:
         ihold = self._calc_current_bits(min(hold_current, run_current))
         return irun, ihold
     def _calc_current_from_field(self, field_name):
+        globalscaler = self.fields.get_field("GLOBALSCALER")
+        if not globalscaler:
+            globalscaler = 256
         bits = self.fields.get_field(field_name)
-        current = ((bits + 1) * VREF
-                   / (32. * math.sqrt(2.) * self.sense_resistor))
+        current = (globalscaler * (bits + 1) * VREF
+                   / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
         return round(current, 2)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, params):
