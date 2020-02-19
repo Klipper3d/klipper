@@ -145,6 +145,8 @@ class SerialReader:
         self.ffi_lib.serialqueue_get_stats(
             self.serialqueue, self.stats_buf, len(self.stats_buf))
         return self.ffi_main.string(self.stats_buf)
+    def get_reactor(self):
+        return self.reactor
     def get_msgparser(self):
         return self.msgparser
     def get_default_command_queue(self):
