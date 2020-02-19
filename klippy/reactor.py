@@ -20,18 +20,19 @@ class ReactorCompletion:
     def __init__(self, reactor):
         self.reactor = reactor
         self.result = self.sentinel
-        self.waiting = None
+        self.waiting = []
     def test(self):
         return self.result is not self.sentinel
     def complete(self, result):
         self.result = result
-        if self.waiting is not None:
-            self.reactor.update_timer(self.waiting.timer, self.reactor.NOW)
+        for wait in self.waiting:
+            self.reactor.update_timer(wait.timer, self.reactor.NOW)
     def wait(self, waketime=_NEVER, waketime_result=None):
         if self.result is self.sentinel:
-            self.waiting = greenlet.getcurrent()
+            wait = greenlet.getcurrent()
+            self.waiting.append(wait)
             self.reactor.pause(waketime)
-            self.waiting = None
+            self.waiting.remove(wait)
             if self.result is self.sentinel:
                 return waketime_result
         return self.result
