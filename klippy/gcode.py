@@ -444,9 +444,9 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M112', 'M115', 'IGNORE', 'GET_POSITION',
-        'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+        'GET_PID_INFO', 'SET_PID_TERMS', 'RESET_PID_TERMS_TO_DEFAULT', 'RESET_PID',
+        'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE', 'M105', 'M112',
+        'M115', 'IGNORE', 'GET_POSITION', 'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
@@ -545,6 +545,79 @@ class GCodeParser:
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
+    cmd_SET_PID_TERMS_help = "Set the PID terms for HEATER_NAME"
+    def cmd_SET_PID_TERMS(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, 'extruder')
+        try:
+            Kp = self.get_float('P', params, None)
+            Ki = self.get_float('I', params, None)
+            Kd = self.get_float('D', params, None)
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.set_tuning(Kp, Ki, Kd)
+            Kp, Ki, Kd = heater.control.get_tuning()
+            self.respond_info("Heater: %s\n"
+                              "Kp: %s\n"
+                              "Ki: %s\n"
+                              "Kd: %s\n"
+                              % (heater_name, Kp, Ki, Kd))
+        except Exception as e:
+            self.respond_info(str(e))
+    cmd_RESET_PID_TERMS_TO_DEFAULT_help = "Reset HEATER_NAME to default config-loaded PID terms"
+    def cmd_RESET_PID_TERMS_TO_DEFAULT(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, 'extruder')
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.reset_tuning_to_default()
+            Kp, Ki, Kd = heater.control.get_tuning()
+            self.respond_info("Heater: %s\n"
+                              "Kp: %s\n"
+                              "Ki: %s\n"
+                              "Kd: %s\n"
+                              % (heater_name, Kp, Ki, Kd))
+        except Exception as e:
+            self.respond_info(str(e))
+    cmd_GET_PID_INFO_help = "Query HEATER_NAME for its PID information"
+    def cmd_GET_PID_INFO(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, 'extruder')
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            active_Kp, active_Ki, active_Kd = heater.control.get_tuning()
+            default_Kp, default_Ki, default_Kd = heater.control.get_default_tuning()
+            PonM = heater.control.get_proportional_on_measurement()
+            p_minus, i_minus, d_minus = heater.control.get_components()
+            output = heater.control.get_output()
+            auto_mode = heater.control.get_auto_mode()
+            out_limits = heater.control.get_output_limits()
+            setpoint = heater.control.get_setpoint()
+            self.respond_info("Heater: %s\n"
+                              "active Kp term: %s\n"
+                              "active Ki term: %s\n"
+                              "active Kd term: %s\n"
+                              "auto_mode: %s\n"
+                              "component P-: %s\n"
+                              "component I-: %s\n"
+                              "component D-: %s\n"
+                              "default Kp term: %s\n"
+                              "default Ki term: %s\n"
+                              "default Kd term: %s\n"
+                              "output: %s\n"
+                              "output_high: %s\n"
+                              "output_low: %s\n"
+                              "proportional on measurement: %s\n"
+                              "setpoint: %s\n"
+                              % (heater_name, active_Kp, active_Ki, active_Kd, auto_mode, p_minus, i_minus, d_minus,
+                                 default_Kp, default_Ki, default_Kd, output, out_limits[1], out_limits[0], PonM,
+                                 setpoint))
+        except Exception as e:
+            self.respond_info(str(e))
+    cmd_RESET_PID_help = "Reset the PID controller"
+    def cmd_RESET_PID(self, params):
+        heater_name = self.get_str('HEATER_NAME', params, 'extruder')
+        try:
+            heater = self.heaters.lookup_heater(heater_name)
+            heater.control.reset()
+        except Exception as e:
+            self.respond_info(str(e))
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
     def cmd_SET_GCODE_OFFSET(self, params):
         move_delta = [0., 0., 0., 0.]

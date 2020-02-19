@@ -4,13 +4,14 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
+from simple_pid import PID
 
 
 ######################################################################
 # Heater
 ######################################################################
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -22,7 +23,7 @@ class Heater:
         self.name = config.get_name().split()[-1]
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
@@ -35,7 +36,7 @@ class Heater:
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
+        self.smooth_time = config.getfloat('smooth_time', 0.1, above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.
@@ -176,47 +177,77 @@ PID_SETTLE_SLOPE = .1
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
-        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
-        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
-        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
-        self.min_deriv_time = heater.get_smooth_time()
-        imax = config.getfloat('pid_integral_max', self.heater_max_power,
-                               minval=0.)
-        self.temp_integ_max = imax / self.Ki
-        self.prev_temp = AMBIENT_TEMP
-        self.prev_temp_time = 0.
-        self.prev_temp_deriv = 0.
-        self.prev_temp_integ = 0.
-    def temperature_update(self, read_time, temp, target_temp):
-        time_diff = read_time - self.prev_temp_time
-        # Calculate change of temperature
-        temp_diff = temp - self.prev_temp
-        if time_diff >= self.min_deriv_time:
-            temp_deriv = temp_diff / time_diff
-        else:
-            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
-                          + temp_diff) / self.min_deriv_time
-        # Calculate accumulated temperature "error"
-        temp_err = target_temp - temp
-        temp_integ = self.prev_temp_integ + temp_err * time_diff
-        temp_integ = max(0., min(self.temp_integ_max, temp_integ))
-        # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
-        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
-        bounded_co = max(0., min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
-        # Store state for next measurement
-        self.prev_temp = temp
-        self.prev_temp_time = read_time
-        self.prev_temp_deriv = temp_deriv
-        if co == bounded_co:
-            self.prev_temp_integ = temp_integ
+        self.output = None
+        self.previous_target_temp = None
+        self.INITIAL_KP = config.getfloat('pid_Kp')
+        self.INITIAL_KI = config.getfloat('pid_Ki')
+        self.INITIAL_KD = config.getfloat('pid_Kd')
+        self.INITIAL_PONM = config.getboolean('pid_PonM', default=False)
+        self.PID = PID(Kp=self.INITIAL_KP,
+                       Ki=self.INITIAL_KI,
+                       Kd=self.INITIAL_KD,
+                       setpoint=0.,
+                       sample_time=None,
+                       output_limits=(0., heater.get_max_power()),
+                       auto_mode=False,
+                       proportional_on_measurement=self.INITIAL_PONM)
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
-        return (abs(temp_diff) > PID_SETTLE_DELTA
-                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+        return abs(temp_diff) > PID_SETTLE_DELTA
+    def get_components(self):
+        return self.PID.components
+    def get_default_tuning(self):
+        return self.INITIAL_KP, self.INITIAL_KI, self.INITIAL_KD
+    def get_auto_mode(self):
+        return self.PID.auto_mode
+    def get_output(self):
+        return self.output
+    def get_output_limits(self):
+        return self.PID.output_limits
+    def get_proportional_on_measurement(self):
+        return self.INITIAL_PONM
+    def get_setpoint(self):
+        return self.PID.setpoint
+    def get_tuning(self):
+        return self.PID.Kp, self.PID.Ki, self.PID.Kd
+    def reset(self):
+        self.PID.reset()
+    def reset_tuning_to_default(self):
+        p, i, d = self.get_default_tuning()
+        self.set_tuning(p, i, d)
+        self.PID.reset()
+    def set_tuning(self, Kp=None, Ki=None, Kd=None):
+        if Kp is not None:
+            self.PID.Kp = Kp
+        if Ki is not None:
+            self.PID.Ki = Ki
+        if Kd is not None:
+            self.PID.Kd = Kd
+        if Kp is not None or Ki is not None or Kp is not None:
+            self.PID.reset()
+    def temperature_update(self, read_time, temp, target_temp):
+        logging.debug("%.3f - actual: %f target: %f out: %f",
+                      read_time, temp, target_temp, self.output)
+
+        # Runs only once to initialize setpoint.
+        if self.previous_target_temp is None:
+            self.previous_target_temp = target_temp
+
+        # Check if there was a setpoint update.
+        if self.previous_target_temp is not target_temp:
+            self.previous_target_temp = target_temp
+            self.PID.setpoint = target_temp
+            if target_temp > 0.:
+                self.PID.auto_mode = True
+            else:
+                self.PID.auto_mode = False
+
+        # Calculate new output
+        self.output = self.PID(temp)
+
+        # Only write new PWM output if PID is in auto mode.
+        if self.PID.auto_mode is True:
+            self.heater.set_pwm(read_time, self.output)
 
 
 ######################################################################
