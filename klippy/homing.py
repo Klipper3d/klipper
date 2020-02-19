@@ -71,11 +71,9 @@ class Homing:
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in endstops:
-            try:
-                mcu_endstop.home_wait(move_end_print_time)
-            except mcu_endstop.TimeoutError as e:
-                if error is None:
-                    error = "Failed to home %s: %s" % (name, str(e))
+            did_trigger = mcu_endstop.home_wait(move_end_print_time)
+            if not did_trigger and error is None:
+                error = "Failed to home %s: Timeout during homing" % (name,)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
         end_mcu_pos = [(s, name, spos, s.get_mcu_position())

@@ -295,7 +295,6 @@ class ProbeEndstopWrapper:
         self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.TimeoutError = self.mcu_endstop.TimeoutError
     def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():

@@ -91,11 +91,9 @@ class ManualStepper:
         # Wait for endstops to trigger
         error = None
         for mcu_endstop, name in endstops:
-            try:
-                mcu_endstop.home_wait(self.next_cmd_time)
-            except mcu_endstop.TimeoutError as e:
-                if error is None:
-                    error = "Failed to home %s: %s" % (name, str(e))
+            did_trigger = mcu_endstop.home_wait(self.next_cmd_time)
+            if not did_trigger and error is None:
+                error = "Failed to home %s: Timeout during homing" % (name,)
         self.sync_print_time()
         if error is not None:
             raise homing.CommandError(error)

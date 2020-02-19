@@ -57,7 +57,6 @@ class BLTouchEndstopWrapper:
         self.get_steppers = self.mcu_endstop.get_steppers
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.TimeoutError = self.mcu_endstop.TimeoutError
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
@@ -98,9 +97,8 @@ class BLTouchEndstopWrapper:
         self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
                                     triggered=triggered)
-        try:
-            self.mcu_endstop.home_wait(check_end_time)
-        except self.mcu_endstop.TimeoutError as e:
+        did_trigger = self.mcu_endstop.home_wait(check_end_time)
+        if not did_trigger:
             raise homing.EndstopError("BLTouch failed to %s" % (msg,))
     def raise_probe(self):
         for retry in range(3):

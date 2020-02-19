@@ -10,8 +10,6 @@ class error(Exception):
     pass
 
 class MCU_endstop:
-    class TimeoutError(Exception):
-        pass
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
@@ -106,8 +104,7 @@ class MCU_endstop:
             s.note_homing_end(did_trigger=did_trigger)
         if not self._trigger_completion.test():
             self._trigger_completion.complete(False)
-        if not did_trigger:
-            raise self.TimeoutError("Timeout during endstop homing")
+        return did_trigger
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
