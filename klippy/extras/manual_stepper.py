@@ -74,7 +74,7 @@ class ManualStepper:
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_kinematic_activity(self.next_cmd_time)
         self.sync_print_time()
-    def do_homing_move(self, movepos, speed, accel, triggered):
+    def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
         # Start endstop checking
@@ -92,7 +92,7 @@ class ManualStepper:
         error = None
         for mcu_endstop, name in endstops:
             did_trigger = mcu_endstop.home_wait(self.next_cmd_time)
-            if not did_trigger and error is None:
+            if not did_trigger and check_trigger and error is None:
                 error = "Failed to home %s: Timeout during homing" % (name,)
         self.sync_print_time()
         if error is not None:
@@ -109,7 +109,8 @@ class ManualStepper:
         accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
         if homing_move:
             movepos = self.gcode.get_float('MOVE', params)
-            self.do_homing_move(movepos, speed, accel, homing_move > 0)
+            self.do_homing_move(movepos, speed, accel,
+                                homing_move > 0, abs(homing_move) == 1)
         elif 'MOVE' in params:
             movepos = self.gcode.get_float('MOVE', params)
             self.do_move(movepos, speed, accel)

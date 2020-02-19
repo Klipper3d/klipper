@@ -254,17 +254,18 @@ The following command is available when a "manual_stepper" config
 section is enabled:
 - `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
   [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
-  [MOVE=<pos> [STOP_ON_ENDSTOP=1]]`: This command will alter the state
-  of the stepper. Use the ENABLE parameter to enable/disable the
-  stepper. Use the SET_POSITION parameter to force the stepper to
+  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]]`: This command will alter
+  the state of the stepper. Use the ENABLE parameter to enable/disable
+  the stepper. Use the SET_POSITION parameter to force the stepper to
   think it is at the given position. Use the MOVE parameter to request
   a movement to the given position. If SPEED and/or ACCEL is specified
   then the given values will be used instead of the defaults specified
   in the config file. If an ACCEL of zero is specified then no
-  acceleration will be preformed. If STOP_ON_ENDSTOP is specified then
-  the move will end early should the endstop report as triggered (use
-  STOP_ON_ENDSTOP=-1 to stop early should the endstop report not
-  triggered).
+  acceleration will be performed. If STOP_ON_ENDSTOP=1 is specified
+  then the move will end early should the endstop report as triggered
+  (use STOP_ON_ENDSTOP=2 to complete the move without error even if
+  the endstop does not trigger, use -1 or -2 to stop when the endstop
+  reports not triggered).
 
 ## Probe
 
