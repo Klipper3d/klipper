@@ -300,7 +300,14 @@ The following command is available when a "bltouch" config section is
 enabled:
 - `BLTOUCH_DEBUG COMMAND=<command>`: This sends a command to the
   BLTouch. It may be useful for debugging. Available commands are:
-  pin_down, touch_mode, pin_up, self_test, reset.
+  `pin_down`, `touch_mode`, `pin_up`, `self_test`, `reset`,
+  (*1): `set_5V_output_mode`, `set_OD_output_mode`, `output_mode_store`
+
+  *** Note that the commands marked by (*1) are solely supported
+      by a BL-Touch V3.0 or V3.1(+)
+
+- `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
+  EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
 
 See [Working with the BL-Touch](BLTouch.md) for more details.
 
