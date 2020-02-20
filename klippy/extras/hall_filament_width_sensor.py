@@ -30,7 +30,6 @@ class HallFilamentWidthSensor:
                              - self.measurement_max_difference)
         self.diameter =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
-        self.runout_detect =config.getboolean('runout_detect', False)
         self.runout_dia=config.getfloat('min_diameter', 1.0)
         # filament array [position, filamentWidth]
         self.filament_array = []
@@ -83,10 +82,7 @@ class HallFilamentWidthSensor:
           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
            -self.rawdia1)+self.dia1,2)
         # Check runout
-        if self.diameter > self.runout_dia:
-            self.runout_helper.note_filament_present(True)
-        else:
-            self.runout_helper.note_filament_present(not self.runout_detect);
+        self.runout_helper.note_filament_present(self.diameter > self.runout_dia)
 
     def update_filament_array(self, last_epos):
         # Fill array
