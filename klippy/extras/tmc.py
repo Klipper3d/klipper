@@ -273,29 +273,21 @@ class TMCMicrostepHelper:
         return (1023 - mscnt) >> self.fields.get_field("MRES")
 
 # Helper to configure "stealthchop" mode
-class TMCStealthchopHelper:
-    def __init__(self, config, mcu_tmc, tmc_freq):
-        self.name = config.get_name()
-        self.fields = fields = mcu_tmc.get_fields()
-        self.tmc_freq = tmc_freq
-        printer = config.get_printer()
-        self.force_move = printer.try_load_module(config, "force_move")
-        en_pwm_mode = False
-        self.velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-        if self.velocity:
-            printer.register_event_handler("klippy:connect",
-                                           self.handle_connect)
-            en_pwm_mode = True
-        reg = fields.lookup_register("en_pwm_mode", None)
-        if reg is not None:
-            fields.set_field("en_pwm_mode", en_pwm_mode)
-        else:
-            # TMC2208 uses en_spreadCycle
-            fields.set_field("en_spreadCycle", not en_pwm_mode)
-    def handle_connect(self):
-        stepper_name = " ".join(self.name.split()[1:])
-        stepper = self.force_move.lookup_stepper(stepper_name)
-        step_dist = stepper.get_step_dist()
-        step_dist_256 = step_dist / (1 << self.fields.get_field("MRES"))
-        threshold = int(self.tmc_freq * step_dist_256 / self.velocity + .5)
-        self.fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    en_pwm_mode = False
+    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
+    if velocity:
+        stepper_name = " ".join(config.get_name().split()[1:])
+        stepper_config = config.getsection(stepper_name)
+        step_dist = stepper_config.getfloat('step_distance')
+        step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
+        threshold = int(tmc_freq * step_dist_256 / velocity + .5)
+        fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+        en_pwm_mode = True
+    reg = fields.lookup_register("en_pwm_mode", None)
+    if reg is not None:
+        fields.set_field("en_pwm_mode", en_pwm_mode)
+    else:
+        # TMC2208 uses en_spreadCycle
+        fields.set_field("en_spreadCycle", not en_pwm_mode)
