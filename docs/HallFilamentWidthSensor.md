@@ -48,7 +48,6 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     # measurement_interval:10
     # Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting
 
-    #runout_detect:False
     #Virtual filament_switch_sensor suppurt. Create sensor named hall_filament_width_sensor.
     #
     #min_diameter:1.0
