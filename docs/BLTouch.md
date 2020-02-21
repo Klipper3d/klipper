@@ -118,7 +118,7 @@ BL-Touch output mode
   *** Only use the 5V mode if your controller boards input line is
   5V tolerant. This is why the default configuration of these BL-Touch
   versions is OPEN-DRAIN mode. You could potentially damage your
-  controller boards cpu ***
+  controller boards CPU ***
 
   So therefore:
   If a controller board NEEDs 5V mode AND it is 5V tolerant on its
@@ -126,14 +126,14 @@ BL-Touch output mode
 
   - you have a BL-Touch Smart V3.0, you need the use 'set_output_mode: 5V'
     parameter to ensure this setting at each startup, since the probe
-    cannot remember the needed setting
+    cannot remember the needed setting.
   - you have a BL-Touch Smart V3.1, you have the choice of using
     'set_output_mode: 5V' or storing the mode once by use of a
-    'BLTOUCH_STORE MODE=5V' command manually and using the parameter
-    'set_output_mode: None' instead
+    'BLTOUCH_STORE MODE=5V' command manually and NOT using the parameter
+    'set_output_mode:'.
   - you have some other probe: Some probes have a trace on the circuit board
     to cut or a jumper to set in order to (permanently) set the output mode.
-    In that case, omit the 'set_output_mode' parameter or set it to 'None'
+    In that case, omit the 'set_output_mode' parameter completely.
 
   If you have a V3.1, do not automate or repeat storing the output mode to
   avoid wearing out the EEPROM of the probe.The BLTouch EEPROM is good for

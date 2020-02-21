@@ -45,7 +45,7 @@ class BLTouchEndstopWrapper:
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # output mode
         self.output_mode = config.getchoice('set_output_mode',
-                                            {'5V': '5V', '0V': '0V',
+                                            {'5V': '5V', 'OD': 'OD',
                                              None: None}, None)
         # Setup for sensor test
         self.next_test_time = 0.
@@ -193,7 +193,7 @@ class BLTouchEndstopWrapper:
         #   No reaction at all.
         # BLTOUCH V3.0 and V3.1:
         #   This will set the mode.
-        if mode == 'None':
+        if mode is None:
             return
         logging.info("BLTouch set output mode: %s", mode)
         self.sync_mcu_print_time()
