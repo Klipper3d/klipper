@@ -444,9 +444,11 @@ class GCodeParser:
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
-        'GET_PID_INFO', 'SET_PID_TERMS', 'RESET_PID_TERMS_TO_DEFAULT', 'RESET_PID',
-        'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE', 'M105', 'M112',
-        'M115', 'IGNORE', 'GET_POSITION', 'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+        'GET_PID_INFO', 'SET_PID_TERMS', 'RESET_PID_TERMS_TO_DEFAULT', 
+        'RESET_PID', 'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 
+        'RESTORE_GCODE_STATE', 'M105', 'M112', 'M115', 'IGNORE', 
+        'GET_POSITION', 'RESTART', 'FIRMWARE_RESTART', 'ECHO', 
+        'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
     def cmd_G1(self, params):
@@ -562,7 +564,7 @@ class GCodeParser:
                               % (heater_name, Kp, Ki, Kd))
         except Exception as e:
             self.respond_info(str(e))
-    cmd_RESET_PID_TERMS_TO_DEFAULT_help = "Reset HEATER_NAME to default config-loaded PID terms"
+    cmd_RESET_PID_TERMS_TO_DEFAULT_help = "Reset PID terms to default values"
     def cmd_RESET_PID_TERMS_TO_DEFAULT(self, params):
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
         try:
@@ -581,10 +583,16 @@ class GCodeParser:
         heater_name = self.get_str('HEATER_NAME', params, 'extruder')
         try:
             heater = self.heaters.lookup_heater(heater_name)
-            active_Kp, active_Ki, active_Kd = heater.control.get_tuning()
-            default_Kp, default_Ki, default_Kd = heater.control.get_default_tuning()
+            active_Kp, 
+            active_Ki, 
+            active_Kd = heater.control.get_tuning()
+            default_Kp, 
+            default_Ki, 
+            default_Kd = heater.control.get_default_tuning()
             PonM = heater.control.get_proportional_on_measurement()
-            p_minus, i_minus, d_minus = heater.control.get_components()
+            p_minus, 
+            i_minus, 
+            d_minus = heater.control.get_components()
             output = heater.control.get_output()
             auto_mode = heater.control.get_auto_mode()
             out_limits = heater.control.get_output_limits()
@@ -605,8 +613,11 @@ class GCodeParser:
                               "output_low: %s\n"
                               "proportional on measurement: %s\n"
                               "setpoint: %s\n"
-                              % (heater_name, active_Kp, active_Ki, active_Kd, auto_mode, p_minus, i_minus, d_minus,
-                                 default_Kp, default_Ki, default_Kd, output, out_limits[1], out_limits[0], PonM,
+                              % (heater_name, active_Kp, active_Ki, 
+                                 active_Kd, auto_mode, p_minus, 
+                                 i_minus, d_minus, default_Kp, 
+                                 default_Ki, default_Kd, output, 
+                                 out_limits[1], out_limits[0], PonM,
                                  setpoint))
         except Exception as e:
             self.respond_info(str(e))
