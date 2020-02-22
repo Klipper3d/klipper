@@ -39,9 +39,7 @@ class CoreXYKinematics:
         self.rails[1].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
         self.rails[2].set_max_jerk(
             min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
-    def get_steppers(self, flags=""):
-        if flags == "Z":
-            return self.rails[2].get_steppers()
+    def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
         pos = [rail.get_tag_position() for rail in self.rails]

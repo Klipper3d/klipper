@@ -77,7 +77,7 @@ class RotaryDeltaKinematics:
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
         self.set_position([0., 0., 0.], ())
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
         spos = [rail.get_tag_position() for rail in self.rails]

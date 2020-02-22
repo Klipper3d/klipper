@@ -250,6 +250,8 @@ class PrinterHeaters:
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
+    def get_all_heaters(self):
+        return self.available_heaters
     def lookup_heater(self, heater_name):
         if heater_name not in self.heaters:
             raise self.printer.config_error(
@@ -259,6 +261,7 @@ class PrinterHeaters:
         self.printer.try_load_module(config, "thermistor")
         self.printer.try_load_module(config, "adc_temperature")
         self.printer.try_load_module(config, "spi_temperature")
+        self.printer.try_load_module(config, "bme280")
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensor_factories:
             raise self.printer.config_error(

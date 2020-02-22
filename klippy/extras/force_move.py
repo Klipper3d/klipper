@@ -53,6 +53,10 @@ class ForceMove:
     def register_stepper(self, stepper):
         name = stepper.get_name()
         self.steppers[name] = stepper
+    def lookup_stepper(self, name):
+        if name not in self.steppers:
+            raise self.printer.config_error("Unknown stepper %s" % (name,))
+        return self.steppers[name]
     def force_enable(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()

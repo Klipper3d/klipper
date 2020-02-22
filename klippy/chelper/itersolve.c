@@ -212,6 +212,15 @@ itersolve_check_active(struct stepper_kinematics *sk, double flush_time)
     }
 }
 
+// Report if the given stepper is registered for the given axis
+int32_t __visible
+itersolve_is_active_axis(struct stepper_kinematics *sk, char axis)
+{
+    if (axis < 'x' || axis > 'z')
+        return 0;
+    return (sk->active_flags & (AF_X << (axis - 'x'))) != 0;
+}
+
 void __visible
 itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq)
 {

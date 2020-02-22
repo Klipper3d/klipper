@@ -71,11 +71,12 @@ class GCodeParser:
             return False
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
+            old_cmd = self.ready_gcode_handlers.get(cmd)
             if cmd in self.ready_gcode_handlers:
                 del self.ready_gcode_handlers[cmd]
             if cmd in self.base_gcode_handlers:
                 del self.base_gcode_handlers[cmd]
-            return
+            return old_cmd
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(
                 "gcode command %s already registered" % (cmd,))
@@ -234,6 +235,7 @@ class GCodeParser:
             except self.error as e:
                 self.respond_error(str(e))
                 self.reset_last_position()
+                self.printer.send_event("gcode:command_error")
                 if not need_ack:
                     raise
             except:
