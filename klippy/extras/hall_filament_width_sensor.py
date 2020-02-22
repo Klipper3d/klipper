@@ -81,9 +81,6 @@ class HallFilamentWidthSensor:
             (self.rawdia2-self.rawdia1)*
           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
            -self.rawdia1)+self.dia1,2)
-        # Check runout
-        self.runout_helper.note_filament_present(
-            self.diameter > self.runout_dia)
 
     def update_filament_array(self, last_epos):
         # Fill array
@@ -106,6 +103,9 @@ class HallFilamentWidthSensor:
         last_epos = pos[3]
         # Update filament array for lastFilamentWidthReading
         self.update_filament_array(last_epos)
+        # Check runout
+        self.runout_helper.note_filament_present(
+            self.diameter > self.runout_dia)
         # Does filament exists
         if self.lastFilamentWidthReading > 0.5:
             if len(self.filament_array) > 0:
