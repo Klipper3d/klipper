@@ -105,6 +105,46 @@ to find the right position so it is able to lower and raise the pin
 and the red light turns on and of. Use the `reset`, `pin_up` and
 `pin_down` commands to achieve this.
 
+BL-Touch output mode
+====================
+
+* A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
+  a BL-Touch V3.1 supports this too, but can also store this in its
+  internal EEPROM. If your controller board needs the fixed 5V high
+  logic level of the 5V mode you may set the 'set_output_mode'
+  parameter in the [bltouch] section of the printer config file to
+  "5V".
+
+  *** Only use the 5V mode if your controller boards input line is
+  5V tolerant. This is why the default configuration of these BL-Touch
+  versions is OPEN-DRAIN mode. You could potentially damage your
+  controller boards CPU ***
+
+  So therefore:
+  If a controller board NEEDs 5V mode AND it is 5V tolerant on its
+  input signal line AND if
+
+  - you have a BL-Touch Smart V3.0, you need the use 'set_output_mode: 5V'
+    parameter to ensure this setting at each startup, since the probe
+    cannot remember the needed setting.
+  - you have a BL-Touch Smart V3.1, you have the choice of using
+    'set_output_mode: 5V' or storing the mode once by use of a
+    'BLTOUCH_STORE MODE=5V' command manually and NOT using the parameter
+    'set_output_mode:'.
+  - you have some other probe: Some probes have a trace on the circuit board
+    to cut or a jumper to set in order to (permanently) set the output mode.
+    In that case, omit the 'set_output_mode' parameter completely.
+
+  If you have a V3.1, do not automate or repeat storing the output mode to
+  avoid wearing out the EEPROM of the probe.The BLTouch EEPROM is good for
+  about 100.000 updates. 100 stores per day would add up to about 3 years
+  of operation prior to wearing it out. Thus, storing the output mode in a
+  V3.1 is designed by the vendor to be a complicated operation (the factory
+  default being a safe OPEN DRAIN mode) and is not suited to be repeatedly
+  issued by any slicer, macro or anything else, it is preferably only to be
+  used when first integrating the probe into a printers electronics.
+
+
 Troubleshooting
 ===============
 
