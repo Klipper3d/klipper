@@ -13,6 +13,65 @@
 #include "stepcompress.h" // queue_append_start
 #include "trapq.h" // struct move
 
+
+/****************************************************************
+ * Filter rapid "step + direction change + step" sequences
+ ****************************************************************/
+
+#define SDS_CHECK_TIME .001
+#define SDS_FILTER_TIME .000750
+
+static int
+sds_commit(struct stepper_kinematics *sk)
+{
+    double mtime = sk->next_move_print_time, stime = sk->next_step_time;
+    sk->next_move_print_time = 0.;
+    return stepcompress_append(sk->sc, sk->next_step_dir, mtime, stime);
+}
+
+static int
+sds_append(struct stepper_kinematics *sk, int sdir
+           , double move_print_time, double step_time)
+{
+    if (sk->next_move_print_time) {
+        if (sdir != sk->next_step_dir) {
+            double mt_diff = move_print_time - sk->next_move_print_time;
+            double st_diff = step_time - sk->next_step_time;
+            if (mt_diff + st_diff < SDS_FILTER_TIME) {
+                // Rollback last step
+                sk->next_move_print_time = 0.;
+                sk->next_step_dir = sdir;
+                return 0;
+            }
+        }
+        int ret = sds_commit(sk);
+        if (ret)
+            return ret;
+    }
+    sk->next_move_print_time = move_print_time;
+    sk->next_step_time = step_time;
+    sk->next_step_dir = sdir;
+    return 0;
+}
+
+static int
+sds_flush(struct stepper_kinematics *sk
+          , double move_print_time, double step_time)
+{
+    if (sk->next_move_print_time) {
+        double mt_diff = move_print_time - sk->next_move_print_time;
+        double st_diff = step_time - sk->next_step_time;
+        if (mt_diff + st_diff >= SDS_FILTER_TIME)
+            return sds_commit(sk);
+    }
+    return 0;
+}
+
+
+/****************************************************************
+ * Main iterative solver
+ ****************************************************************/
+
 struct timepos {
     double time, position;
 };
@@ -66,7 +125,7 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = SEEK_TIME_RESET;
-    int sdir = !!stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
+    int sdir = sk->next_step_dir, is_dir_change = 0;
     for (;;) {
         double diff = high.position - last.position, dist = sdir ? diff : -diff;
         if (dist >= half_step) {
@@ -74,8 +133,7 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             double target = last.position + (sdir ? half_step : -half_step);
             struct timepos next = itersolve_find_step(sk, m, low, high, target);
             // Add step at given time
-            int ret = stepcompress_append(sk->sc, sdir
-                                          , m->print_time, next.time);
+            int ret = sds_append(sk, sdir, m->print_time, next.time);
             if (ret)
                 return ret;
             seek_time_delta = next.time - last.time;
@@ -90,6 +148,10 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             if (low.time < high.time)
                 // The existing search range is still valid
                 continue;
+        } else if (dist > 0.) {
+            // Avoid rollback if stepper fully reaches target position
+            if (sk->next_move_print_time)
+                sds_commit(sk);
         } else if (unlikely(dist < -(half_step + .000000001))) {
             // Found direction change
             is_dir_change = 1;
@@ -121,11 +183,19 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             high.time = end;
         high.position = calc_position_cb(sk, m, high.time);
     }
+    int ret = sds_flush(sk, m->print_time, end);
+    if (ret)
+        return ret;
     sk->commanded_pos = last.position;
     if (sk->post_cb)
         sk->post_cb(sk);
     return 0;
 }
+
+
+/****************************************************************
+ * Interface functions
+ ****************************************************************/
 
 // Check if a move is likely to cause movement on a stepper
 static inline int
@@ -149,7 +219,10 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
     struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
     while (last_flush_time >= m->print_time + m->move_t)
         m = list_next_entry(m, node);
-    double force_steps_time = sk->last_move_time + sk->gen_steps_post_active;
+    double gen_steps_post_active = sk->gen_steps_post_active;
+    if (gen_steps_post_active < SDS_CHECK_TIME)
+        gen_steps_post_active = SDS_CHECK_TIME;
+    double force_steps_time = sk->last_move_time + gen_steps_post_active;
     for (;;) {
         if (last_flush_time >= flush_time)
             return 0;
@@ -174,7 +247,7 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
             if (ret)
                 return ret;
             sk->last_move_time = last_flush_time = end;
-            force_steps_time = end + sk->gen_steps_post_active;
+            force_steps_time = end + gen_steps_post_active;
         } else if (start < force_steps_time) {
             // Must generates steps just past stepper activity
             if (end > force_steps_time)
