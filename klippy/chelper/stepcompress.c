@@ -1,9 +1,9 @@
 // Stepper pulse schedule compression
 //
-// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
-//
+
 // The goal of this code is to take a series of scheduled stepper
 // pulse times and compress them into a handful of commands that can
 // be efficiently transmitted and executed on a microcontroller (mcu).
@@ -32,7 +32,7 @@ struct stepcompress {
     uint32_t *queue, *queue_end, *queue_pos, *queue_next;
     // Internal tracking
     uint32_t max_error;
-    double mcu_time_offset, mcu_freq;
+    double mcu_time_offset, mcu_freq, last_step_print_time;
     // Message generation
     uint64_t last_step_clock;
     struct list_head msg_queue;
@@ -261,6 +261,14 @@ stepcompress_free(struct stepcompress *sc)
     free(sc);
 }
 
+// Determine the "print time" of the last_step_clock
+static void
+calc_last_step_print_time(struct stepcompress *sc)
+{
+    double lsc = sc->last_step_clock;
+    sc->last_step_print_time = sc->mcu_time_offset + (lsc - .5) / sc->mcu_freq;
+}
+
 // Convert previously scheduled steps into commands for the mcu
 static int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
@@ -289,6 +297,7 @@ stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
         }
         sc->queue_pos += move.count;
     }
+    calc_last_step_print_time(sc);
     return 0;
 }
 
@@ -304,6 +313,7 @@ stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
     qm->min_clock = sc->last_step_clock;
     sc->last_step_clock = qm->req_clock = abs_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
+    calc_last_step_print_time(sc);
     return 0;
 }
 
@@ -335,6 +345,7 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
         return ret;
     sc->last_step_clock = last_step_clock;
     sc->sdir = -1;
+    calc_last_step_print_time(sc);
     return 0;
 }
 
@@ -359,12 +370,7 @@ stepcompress_set_time(struct stepcompress *sc
 {
     sc->mcu_time_offset = time_offset;
     sc->mcu_freq = mcu_freq;
-}
-
-double
-stepcompress_get_mcu_freq(struct stepcompress *sc)
-{
-    return sc->mcu_freq;
+    calc_last_step_print_time(sc);
 }
 
 uint32_t
@@ -379,33 +385,10 @@ stepcompress_get_step_dir(struct stepcompress *sc)
     return sc->sdir;
 }
 
-
-/****************************************************************
- * Queue management
- ****************************************************************/
-
 // Maximium clock delta between messages in the queue
 #define CLOCK_DIFF_MAX (3<<28)
 
-// Create a cursor for inserting clock times into the queue
-inline struct queue_append
-queue_append_start(struct stepcompress *sc, double print_time, double adjust)
-{
-    double print_clock = (print_time - sc->mcu_time_offset) * sc->mcu_freq;
-    return (struct queue_append) {
-        .sc = sc, .qnext = sc->queue_next, .qend = sc->queue_end,
-        .last_step_clock_32 = sc->last_step_clock,
-        .clock_offset = (print_clock - (double)sc->last_step_clock) + adjust };
-}
-
-// Finalize a cursor created with queue_append_start()
-inline void
-queue_append_finish(struct queue_append qa)
-{
-    qa.sc->queue_next = qa.qnext;
-}
-
-// Slow path for queue_append()
+// Slow path for stepcompress_append()
 static int
 queue_append_slow(struct stepcompress *sc, double rel_sc)
 {
@@ -453,42 +436,23 @@ queue_append_slow(struct stepcompress *sc, double rel_sc)
     return 0;
 }
 
-// Add a clock time to the queue (flushing the queue if needed)
+// Add a step time to the queue (flushing the queue if needed)
 inline int
-queue_append(struct queue_append *qa, double step_clock)
+stepcompress_append(struct stepcompress *sc, int sdir
+                    , double print_time, double step_time)
 {
-    double rel_sc = step_clock + qa->clock_offset;
-    if (likely(!(qa->qnext >= qa->qend || rel_sc >= (double)CLOCK_DIFF_MAX))) {
-        *qa->qnext++ = qa->last_step_clock_32 + (uint32_t)rel_sc;
-        return 0;
+    if (unlikely(sdir != sc->sdir)) {
+        int ret = set_next_step_dir(sc, sdir);
+        if (ret)
+            return ret;
     }
-    // Call queue_append_slow() to handle queue expansion and integer overflow
-    struct stepcompress *sc = qa->sc;
-    uint64_t old_last_step_clock = sc->last_step_clock;
-    sc->queue_next = qa->qnext;
-    int ret = queue_append_slow(sc, rel_sc);
-    if (ret)
-        return ret;
-    qa->qnext = sc->queue_next;
-    qa->qend = sc->queue_end;
-    qa->last_step_clock_32 = sc->last_step_clock;
-    qa->clock_offset -= sc->last_step_clock - old_last_step_clock;
-    return 0;
-}
-
-inline int
-queue_append_set_next_step_dir(struct queue_append *qa, int sdir)
-{
-    struct stepcompress *sc = qa->sc;
-    uint64_t old_last_step_clock = sc->last_step_clock;
-    sc->queue_next = qa->qnext;
-    int ret = set_next_step_dir(sc, sdir);
-    if (ret)
-        return ret;
-    qa->qnext = sc->queue_next;
-    qa->qend = sc->queue_end;
-    qa->last_step_clock_32 = sc->last_step_clock;
-    qa->clock_offset -= sc->last_step_clock - old_last_step_clock;
+    double offset = print_time - sc->last_step_print_time;
+    double rel_sc = (step_time + offset) * sc->mcu_freq;
+    if (unlikely(sc->queue_next >= sc->queue_end
+                 || rel_sc >= (double)CLOCK_DIFF_MAX))
+        // Slow path to handle queue expansion and integer overflow
+        return queue_append_slow(sc, rel_sc);
+    *sc->queue_next++ = (uint32_t)sc->last_step_clock + (uint32_t)rel_sc;
     return 0;
 }
 

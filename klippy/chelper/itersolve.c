@@ -1,6 +1,6 @@
 // Iterative solver for kinematic moves
 //
-// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -59,15 +59,12 @@ static int32_t
 itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                           , double move_start, double move_end)
 {
-    struct stepcompress *sc = sk->sc;
     sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
-    double mcu_freq = stepcompress_get_mcu_freq(sc);
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = 0.000100;
-    int sdir = stepcompress_get_step_dir(sc);
-    struct queue_append qa = queue_append_start(sc, m->print_time, .5);
+    int sdir = stepcompress_get_step_dir(sk->sc);
     for (;;) {
         // Determine if next step is in forward or reverse direction
         double dist = high.position - last.position;
@@ -101,16 +98,13 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                 high.position = calc_position_cb(sk, m, high.time);
                 continue;
             }
-            int ret = queue_append_set_next_step_dir(&qa, next_sdir);
-            if (ret)
-                return ret;
             sdir = next_sdir;
         }
         // Find step
         double target = last.position + (sdir ? half_step : -half_step);
         struct timepos next = itersolve_find_step(sk, m, low, high, target);
         // Add step at given time
-        int ret = queue_append(&qa, next.time * mcu_freq);
+        int ret = stepcompress_append(sk->sc, sdir, m->print_time, next.time);
         if (ret)
             return ret;
         seek_time_delta = next.time - last.time;
@@ -123,7 +117,6 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             // The high range is no longer valid - recalculate it
             goto seek_new_high_range;
     }
-    queue_append_finish(qa);
     sk->commanded_pos = last.position;
     if (sk->post_cb)
         sk->post_cb(sk);
