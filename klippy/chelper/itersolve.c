@@ -13,6 +13,11 @@
 #include "stepcompress.h" // queue_append_start
 #include "trapq.h" // struct move
 
+
+/****************************************************************
+ * Main iterative solver
+ ****************************************************************/
+
 struct timepos {
     double time, position;
 };
@@ -66,7 +71,7 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = SEEK_TIME_RESET;
-    int sdir = !!stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
+    int sdir = stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
     for (;;) {
         double diff = high.position - last.position, dist = sdir ? diff : -diff;
         if (dist >= half_step) {
@@ -90,6 +95,9 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             if (low.time < high.time)
                 // The existing search range is still valid
                 continue;
+        } else if (dist > 0.) {
+            // Avoid rollback if stepper fully reaches target position
+            stepcompress_commit(sk->sc);
         } else if (unlikely(dist < -(half_step + .000000001))) {
             // Found direction change
             is_dir_change = 1;
@@ -126,6 +134,11 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
         sk->post_cb(sk);
     return 0;
 }
+
+
+/****************************************************************
+ * Interface functions
+ ****************************************************************/
 
 // Check if a move is likely to cause movement on a stepper
 static inline int

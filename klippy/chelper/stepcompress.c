@@ -38,6 +38,9 @@ struct stepcompress {
     struct list_head msg_queue;
     uint32_t queue_step_msgid, set_next_step_dir_msgid, oid;
     int sdir, invert_sdir;
+    // Step+dir+step filter
+    uint64_t next_step_clock;
+    int next_step_dir;
 };
 
 
@@ -270,7 +273,7 @@ stepcompress_get_oid(struct stepcompress *sc)
 int
 stepcompress_get_step_dir(struct stepcompress *sc)
 {
-    return sc->sdir;
+    return sc->next_step_dir;
 }
 
 // Determine the "print time" of the last_step_clock
@@ -293,7 +296,7 @@ stepcompress_set_time(struct stepcompress *sc
 
 // Convert previously scheduled steps into commands for the mcu
 static int
-stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
+queue_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->queue_pos >= sc->queue_next)
         return 0;
@@ -346,7 +349,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     if (sc->sdir == sdir)
         return 0;
     sc->sdir = sdir;
-    int ret = stepcompress_flush(sc, UINT64_MAX);
+    int ret = queue_flush(sc, UINT64_MAX);
     if (ret)
         return ret;
     uint32_t msg[3] = {
@@ -361,26 +364,30 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
 // Maximium clock delta between messages in the queue
 #define CLOCK_DIFF_MAX (3<<28)
 
-// Slow path for stepcompress_append()
+// Slow path for queue_append() - handle next step far in future
 static int
-queue_append_slow(struct stepcompress *sc, double rel_sc)
+queue_append_far(struct stepcompress *sc)
 {
-    uint64_t abs_step_clock = (uint64_t)rel_sc + sc->last_step_clock;
-    if (abs_step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX) {
-        // Avoid integer overflow on steps far in the future
-        int ret = stepcompress_flush(sc, abs_step_clock - CLOCK_DIFF_MAX + 1);
-        if (ret)
-            return ret;
+    uint64_t step_clock = sc->next_step_clock;
+    sc->next_step_clock = 0;
+    int ret = queue_flush(sc, step_clock - CLOCK_DIFF_MAX + 1);
+    if (ret)
+        return ret;
+    if (step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
+        return stepcompress_flush_far(sc, step_clock);
+    *sc->queue_next++ = step_clock;
+    return 0;
+}
 
-        if (abs_step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
-            return stepcompress_flush_far(sc, abs_step_clock);
-    }
-
+// Slow path for queue_append() - expand the internal queue storage
+static int
+queue_append_extend(struct stepcompress *sc)
+{
     if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
         uint32_t flush = (*(sc->queue_next-65535)
                           - (uint32_t)sc->last_step_clock);
-        int ret = stepcompress_flush(sc, sc->last_step_clock + flush);
+        int ret = queue_flush(sc, sc->last_step_clock + flush);
         if (ret)
             return ret;
     }
@@ -405,28 +412,80 @@ queue_append_slow(struct stepcompress *sc, double rel_sc)
         sc->queue_next = sc->queue + in_use;
     }
 
-    *sc->queue_next++ = abs_step_clock;
+    *sc->queue_next++ = sc->next_step_clock;
+    sc->next_step_clock = 0;
     return 0;
 }
 
 // Add a step time to the queue (flushing the queue if needed)
-inline int
-stepcompress_append(struct stepcompress *sc, int sdir
-                    , double print_time, double step_time)
+static int
+queue_append(struct stepcompress *sc)
 {
-    if (unlikely(sdir != sc->sdir)) {
-        int ret = set_next_step_dir(sc, sdir);
+    if (unlikely(sc->next_step_dir != sc->sdir)) {
+        int ret = set_next_step_dir(sc, sc->next_step_dir);
         if (ret)
             return ret;
     }
+    if (unlikely(sc->next_step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX))
+        return queue_append_far(sc);
+    if (unlikely(sc->queue_next >= sc->queue_end))
+        return queue_append_extend(sc);
+    *sc->queue_next++ = sc->next_step_clock;
+    sc->next_step_clock = 0;
+    return 0;
+}
+
+#define SDS_FILTER_TIME .000750
+
+// Add next step time
+int
+stepcompress_append(struct stepcompress *sc, int sdir
+                    , double print_time, double step_time)
+{
+    // Calculate step clock
     double offset = print_time - sc->last_step_print_time;
     double rel_sc = (step_time + offset) * sc->mcu_freq;
-    if (unlikely(sc->queue_next >= sc->queue_end
-                 || rel_sc >= (double)CLOCK_DIFF_MAX))
-        // Slow path to handle queue expansion and integer overflow
-        return queue_append_slow(sc, rel_sc);
-    *sc->queue_next++ = (uint32_t)sc->last_step_clock + (uint32_t)rel_sc;
+    uint64_t step_clock = sc->last_step_clock + (uint64_t)rel_sc;
+    // Flush previous pending step (if any)
+    if (sc->next_step_clock) {
+        if (unlikely(sdir != sc->next_step_dir)) {
+            double diff = step_clock - sc->next_step_clock;
+            if (diff < SDS_FILTER_TIME * sc->mcu_freq) {
+                // Rollback last step to avoid rapid step+dir+step
+                sc->next_step_clock = 0;
+                sc->next_step_dir = sdir;
+                return 0;
+            }
+        }
+        int ret = queue_append(sc);
+        if (ret)
+            return ret;
+    }
+    // Store this step as the next pending step
+    sc->next_step_clock = step_clock;
+    sc->next_step_dir = sdir;
     return 0;
+}
+
+// Commit next pending step (ie, do not allow a rollback)
+int
+stepcompress_commit(struct stepcompress *sc)
+{
+    if (sc->next_step_clock)
+        return queue_append(sc);
+    return 0;
+}
+
+// Flush pending steps
+static int
+stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
+{
+    if (sc->next_step_clock && move_clock >= sc->next_step_clock) {
+        int ret = queue_append(sc);
+        if (ret)
+            return ret;
+    }
+    return queue_flush(sc, move_clock);
 }
 
 // Reset the internal state of the stepcompress object
