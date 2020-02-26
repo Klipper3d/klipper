@@ -54,6 +54,8 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
     return best_guess;
 }
 
+#define SEEK_TIME_RESET 0.000100
+
 // Generate step times for a portion of a move
 static int32_t
 itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
@@ -63,8 +65,8 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     double half_step = .5 * sk->step_dist;
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
-    double seek_time_delta = 0.000100;
-    int sdir = !!stepcompress_get_step_dir(sk->sc);
+    double seek_time_delta = SEEK_TIME_RESET;
+    int sdir = !!stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
     for (;;) {
         double diff = high.position - last.position, dist = sdir ? diff : -diff;
         if (dist >= half_step) {
@@ -79,6 +81,9 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             seek_time_delta = next.time - last.time;
             if (seek_time_delta < .000000001)
                 seek_time_delta = .000000001;
+            if (is_dir_change && seek_time_delta > SEEK_TIME_RESET)
+                seek_time_delta = SEEK_TIME_RESET;
+            is_dir_change = 0;
             last.position = target + (sdir ? half_step : -half_step);
             last.time = next.time;
             low = next;
@@ -87,6 +92,9 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                 continue;
         } else if (unlikely(dist < -(half_step + .000000001))) {
             // Found direction change
+            is_dir_change = 1;
+            if (seek_time_delta > SEEK_TIME_RESET)
+                seek_time_delta = SEEK_TIME_RESET;
             if (low.time > last.time) {
                 // Update direction and retry
                 sdir = !sdir;
