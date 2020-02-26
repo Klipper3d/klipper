@@ -64,58 +64,54 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = 0.000100;
-    int sdir = stepcompress_get_step_dir(sk->sc);
+    int sdir = !!stepcompress_get_step_dir(sk->sc);
     for (;;) {
-        // Determine if next step is in forward or reverse direction
-        double dist = high.position - last.position;
-        if (fabs(dist) < half_step) {
-        seek_new_high_range:
-            if (high.time >= end)
-                // At end of move
-                break;
-            // Need to increase next step search range
-            low = high;
-            do {
-                high.time = last.time + seek_time_delta;
-                seek_time_delta += seek_time_delta;
-            } while (unlikely(high.time <= low.time));
-            if (high.time > end)
-                high.time = end;
-            high.position = calc_position_cb(sk, m, high.time);
-            continue;
-        }
-        int next_sdir = dist > 0.;
-        if (unlikely(next_sdir != sdir)) {
-            // Direction change
-            if (fabs(dist) < half_step + .000000001)
-                // Only change direction if going past midway point
-                goto seek_new_high_range;
-            if (last.time >= low.time) {
-                // Must seek new low range to avoid re-finding previous time
-                if (high.time < last.time + .000000001)
-                    goto seek_new_high_range;
+        double diff = high.position - last.position, dist = sdir ? diff : -diff;
+        if (dist >= half_step) {
+            // Have valid upper bound - now find step
+            double target = last.position + (sdir ? half_step : -half_step);
+            struct timepos next = itersolve_find_step(sk, m, low, high, target);
+            // Add step at given time
+            int ret = stepcompress_append(sk->sc, sdir
+                                          , m->print_time, next.time);
+            if (ret)
+                return ret;
+            seek_time_delta = next.time - last.time;
+            if (seek_time_delta < .000000001)
+                seek_time_delta = .000000001;
+            last.position = target + (sdir ? half_step : -half_step);
+            last.time = next.time;
+            low = next;
+            if (low.time < high.time)
+                // The existing search range is still valid
+                continue;
+        } else if (unlikely(dist < -(half_step + .000000001))) {
+            // Found direction change
+            if (low.time > last.time) {
+                // Update direction and retry
+                sdir = !sdir;
+                continue;
+            }
+            // Must update range to avoid re-finding previous time
+            if (high.time > last.time + .000000001) {
+                // Reduce the high bound - it will become a better low bound
                 high.time = (last.time + high.time) * .5;
                 high.position = calc_position_cb(sk, m, high.time);
                 continue;
             }
-            sdir = next_sdir;
         }
-        // Find step
-        double target = last.position + (sdir ? half_step : -half_step);
-        struct timepos next = itersolve_find_step(sk, m, low, high, target);
-        // Add step at given time
-        int ret = stepcompress_append(sk->sc, sdir, m->print_time, next.time);
-        if (ret)
-            return ret;
-        seek_time_delta = next.time - last.time;
-        if (seek_time_delta < .000000001)
-            seek_time_delta = .000000001;
-        last.position = target + (sdir ? half_step : -half_step);
-        last.time = next.time;
-        low = next;
-        if (last.time >= high.time)
-            // The high range is no longer valid - recalculate it
-            goto seek_new_high_range;
+        // Need to increase the search range to find an upper bound
+        if (high.time >= end)
+            // At end of move
+            break;
+        low = high;
+        do {
+            high.time = last.time + seek_time_delta;
+            seek_time_delta += seek_time_delta;
+        } while (unlikely(high.time <= low.time));
+        if (high.time > end)
+            high.time = end;
+        high.position = calc_position_cb(sk, m, high.time);
     }
     sk->commanded_pos = last.position;
     if (sk->post_cb)
