@@ -32,13 +32,19 @@ class PrinterLCD:
         self.toolhead = self.sdcard = None
         self.fan = self.extruder = self.extruder1 = self.heater_bed = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler(
+            "display:progress", self.set_progress)
+        self.printer.register_event_handler(
+            "display:message", self.set_message)
         # screen updating
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('M73', self.cmd_M73)
-        self.gcode.register_command('M117', self.cmd_M117)
+        name = config.get_name()
+        # Only register if no previous display object has been instantiated
+        if name == "display":
+            DisplayCommands(config)
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
@@ -244,11 +250,20 @@ class PrinterLCD:
     def set_message(self, msg, msg_time=None):
         self.message = msg
         self.msg_time = msg_time
-    # print progress: M73 P<percent>
+    def set_progress(self, progress, prg_time):
+        self.progress = progress
+        self.prg_time = prg_time
+
+class DisplayCommands:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command('M73', self.cmd_M73)
+        self.gcode.register_command('M117', self.cmd_M117)
     def cmd_M73(self, params):
-        self.progress = min(100., max(0., self.gcode.get_float(
+        progress = min(100., max(0., self.gcode.get_float(
             'P', params, 0.)))
-        self.prg_time = M73_TIMEOUT
+        self.printer.send_event("display:progress", progress, M73_TIMEOUT)
     def cmd_M117(self, params):
         if '#original' in params:
             msg = params['#original']
@@ -260,9 +275,9 @@ class PrinterLCD:
                 msg = msg[start:end]
             if len(msg) > 5:
                 msg = msg[5:]
-                self.set_message(msg)
             else:
-                self.set_message(None)
+                msg = None
+            self.printer.send_event("display:message", msg)
 
 def load_config(config):
     return PrinterLCD(config)
