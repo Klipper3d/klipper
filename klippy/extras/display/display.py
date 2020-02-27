@@ -21,6 +21,11 @@ class PrinterLCD:
         self.reactor = self.printer.get_reactor()
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.lcd_type = config.get('lcd_type')
+        # init attributes
+        self.prg_time = .0
+        self.progress = None
+        self.msg_time = None
+        self.message = None
         # menu
         self.menu = menu.MenuManager(config, self.lcd_chip)
         # printer objects
@@ -44,10 +49,6 @@ class PrinterLCD:
         self.extruder = self.printer.lookup_object('extruder', None)
         self.extruder1 = self.printer.lookup_object('extruder1', None)
         self.heater_bed = self.printer.lookup_object('heater_bed', None)
-        self.prg_time = .0
-        self.progress = None
-        self.msg_time = None
-        self.message = None
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
     def get_status(self, eventtime):
