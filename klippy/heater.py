@@ -10,7 +10,7 @@ import logging, threading
 # Heater
 ######################################################################
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -22,7 +22,7 @@ class Heater:
         self.name = config.get_name().split()[-1]
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
