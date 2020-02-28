@@ -41,10 +41,14 @@ class PrinterLCD:
             self.screen_update_event)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        name = config.get_name()
+        name = config.get_name().split()[-1]
         # Only register if no previous display object has been instantiated
         if name == "display":
             DisplayCommands(config)
+        self.gcode.register_mux_command(
+            "SHOW_MESSAGE", "DISPLAY", name,
+            self.cmd_SHOW_MESSAGE,
+            desc=self.cmd_SHOW_MESSAGE_help)
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
@@ -253,6 +257,11 @@ class PrinterLCD:
     def set_progress(self, progress, prg_time):
         self.progress = progress
         self.prg_time = prg_time
+    cmd_SHOW_MESSAGE_help = "Show a message on a display"
+    def cmd_SHOW_MESSAGE(self, params):
+        msg = self.gcode.get_str("MESSAGE", params, None)
+        timeout = self.gcode.get_float("TIMEOUT", params, None)
+        self.set_message(msg, timeout)
 
 class DisplayCommands:
     def __init__(self, config):
