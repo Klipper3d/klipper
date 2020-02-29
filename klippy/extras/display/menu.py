@@ -1108,7 +1108,8 @@ class MenuManager:
         # Add MENU commands
         self.gcode.register_mux_command("MENU", "DO", 'dump', self.cmd_DO_DUMP,
                                         desc=self.cmd_DO_help)
-
+        self.gcode.register_command("GOTO_MENU", self.cmd_GOTO_MENU,
+                                        desc=self.cmd_GOTO_MENU_help)
         # Load local config file in same directory as current module
         self.load_config(os.path.dirname(__file__), 'menu.cfg')
         # Load items from main config
@@ -1587,6 +1588,50 @@ class MenuManager:
             else:
                 msg = "{0} = {1}".format(key1, self.parameters.get(key1))
                 self.gcode.respond_info(msg)
+
+    cmd_GOTO_MENU_help = "Force printer display to a menu or item"
+
+    def cmd_GOTO_MENU(self, params):
+        reactor = self.printer.get_reactor()
+        menu_name = self.gcode.get_str('MENU', params, None)
+        input_name = menu_name
+        time_out = self.gcode.get_int('TIMEOUT', params, 1)
+        m_item = None
+        if menu_name is None:
+            self.restart_root(None, True)
+        elif menu_name not in self.menuitems:
+            self.gcode.respond_info('"%s" is not a valid menu'
+                                                 % (menu_name))
+        else:
+            temp_name = self.menuitems[menu_name]
+            if not isinstance(temp_name, MenuContainer):
+                m_item = menu_name.rpartition(' ')[2]
+                menu_name = menu_name.rpartition(' ')[0]
+            self.begin(reactor.monotonic())
+            self.timer = 0
+            self.menustack = []
+            menu_name = self.menuitems[menu_name]
+            self.stack_push(menu_name)
+            logging.info("GOTO_MENU command changed display to '%s'"
+                                                    % input_name)
+            if m_item is not None:
+                m_item = self.menuitems[input_name]
+                container = self.stack_peek()
+                self.selected = 1
+                item_found = False
+                while self.selected > 0 and item_found is False:
+                    if m_item == container[self.selected]:
+                        item_found = True
+                        if self.selected > self.top_row + self.rows - 1:
+                            self.top_row = self.selected
+                    else:
+                        if self.selected < len(container) - 1:
+                            self.selected = (self.selected + 1)
+                        else:
+                            self.top_row = 0
+                            self.selected = 0
+            if time_out == 0:
+                self.running = False
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
