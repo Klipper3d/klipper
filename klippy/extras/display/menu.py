@@ -1110,8 +1110,8 @@ class MenuManager:
                                         desc=self.cmd_DO_help)
         self.gcode.register_command("GOTO_MENU", self.cmd_GOTO_MENU,
                                         desc=self.cmd_GOTO_MENU_help)
-        self.gcode.register_command("DISPLAY_TIMEOUT", self.cmd_DISP_TIMEOUT,
-                                        desc=self.cmd_DISP_TIMEOUT_help)
+        self.gcode.register_command("MENU_TIMEOUT", self.cmd_MENU_TIMEOUT,
+                                        desc=self.cmd_MENU_TIMEOUT_help)
 
         # Load local config file in same directory as current module
         self.load_config(os.path.dirname(__file__), 'menu.cfg')
@@ -1644,9 +1644,9 @@ class MenuManager:
                             self.top_row += 1
                             self.selected += 1
 
-    cmd_DISP_TIMEOUT_help = "Enable or Disable the display timeout"
+    cmd_MENU_TIMEOUT_help = "Enable, Disable, or change the menu timeout"
 
-    def cmd_DISP_TIMEOUT(self, params):
+    def cmd_MENU_TIMEOUT(self, params):
         time_enable = self.gcode.get_int('ENABLE', params, 1)
         if time_enable == 0:
             self.timeout_store()
@@ -1655,7 +1655,7 @@ class MenuManager:
             self.timeout = self.gcode.get_int('TIME', params, 30)
         else:
             self.timeout = self.timeout_store()
-        self.gcode.respond_info('Display Timeout set to "%d"'
+        self.gcode.respond_info('Menu Timeout set to "%d"'
                                               % (self.timeout))
 
     def timeout_store(self):

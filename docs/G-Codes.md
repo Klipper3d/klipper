@@ -197,6 +197,23 @@ The following standard commands are supported:
   ((floor(z_height / band) + .5) * band)`.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
+- `GOTO_MENU [MENU=<menu_item>]`:  Allows setting the printer display
+  to a specific list page on the printer display. If a specific list
+  item is also included the cursor will move to preset on that item.
+  You must use the entire menu name as declared in the menu file. For
+  example when pausing a print, to have the menu open to the Octoprint
+  list and highlight the resume print item the syntax would be
+  GOTO_MENU MENU="__octoprint __resume". It is not necessary to
+  specify a specific item within a list. Quotes must be used around
+  any list or item calls containing spaces. Calling 'GOTO_MENU'
+  without any arguments will return to the main display.
+- `MENU_TIMEOUT [ENABLE=0,1] [TIME=<seconds>]`:  Allows disabling
+  or changing the time of the display menu timeout. Can be used with
+  GOTO_MENU to wait for user interaction. Setting ENABLE=0 will
+  disable the menu timeout. Calling MENU_TIMEOUT without any
+  parameters or with ENABLE=1 will restore the menu timeout time to
+  the value declared in the config file. Using the TIME parameter
+  allows setting to a value other than declared in the config file.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
