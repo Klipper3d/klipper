@@ -1595,7 +1595,6 @@ class MenuManager:
         reactor = self.printer.get_reactor()
         menu_name = self.gcode.get_str('MENU', params, None)
         input_name = menu_name
-        time_out = self.gcode.get_int('TIMEOUT', params, 1)
         m_item = None
         if menu_name is None:
             self.restart_root(None, True)
@@ -1615,23 +1614,31 @@ class MenuManager:
             logging.info("GOTO_MENU command changed display to '%s'"
                                                     % input_name)
             if m_item is not None:
-                m_item = self.menuitems[input_name]
+                menu_item = self.menuitems[input_name]
                 container = self.stack_peek()
-                self.selected = 1
-                item_found = False
-                while self.selected > 0 and item_found is False:
-                    if m_item == container[self.selected]:
-                        item_found = True
-                        if self.selected > self.top_row + self.rows - 1:
-                            self.top_row = self.selected
-                    else:
-                        if self.selected < len(container) - 1:
-                            self.selected = (self.selected + 1)
-                        else:
-                            self.top_row = 0
+                self.selected = 0
+                searching = True
+                group_item = None
+                while searching is True:
+                    current = container[self.selected]
+                    if isinstance(current, MenuGroup):
+                        group_item = current.find_next_item()
+                        if menu_item == current.selected_item():
+                            searching = False
+                    if group_item is None:
+                        if menu_item == current:
+                            searching = False
+                        elif self.selected >= len(container) - 1:
                             self.selected = 0
-            if time_out == 0:
-                self.running = False
+                            self.top_row = 0
+                            searching = False
+                            self.gcode.respond_info('"%s" not currently available on page'
+                                                    % (m_item))
+                        elif self.selected < self.top_row + self.rows - 1:
+                            self.selected += 1
+                        else:
+                            self.top_row += 1
+                            self.selected += 1
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
