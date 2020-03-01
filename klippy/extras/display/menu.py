@@ -1635,8 +1635,8 @@ class MenuManager:
                             self.selected = 0
                             self.top_row = 0
                             searching = False
-                            self.gcode.respond_info('"%s" not currently available on page'
-                                                    % (m_item))
+                            self.gcode.respond_info('"%s" not currently
+                                            available on page' % (m_item))
                         elif self.selected < self.top_row + self.rows - 1:
                             self.selected += 1
                         else:
