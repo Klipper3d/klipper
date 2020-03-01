@@ -1110,6 +1110,9 @@ class MenuManager:
                                         desc=self.cmd_DO_help)
         self.gcode.register_command("GOTO_MENU", self.cmd_GOTO_MENU,
                                         desc=self.cmd_GOTO_MENU_help)
+        self.gcode.register_command("DISPLAY_TIMEOUT", self.cmd_DISP_TIMEOUT,
+                                        desc=self.cmd_DISP_TIMEOUT_help)
+
         # Load local config file in same directory as current module
         self.load_config(os.path.dirname(__file__), 'menu.cfg')
         # Load items from main config
@@ -1639,6 +1642,25 @@ class MenuManager:
                         else:
                             self.top_row += 1
                             self.selected += 1
+
+    cmd_DISP_TIMEOUT_help = "Enable or Disable the display timeout"
+
+    def cmd_DISP_TIMEOUT(self, params):
+        time_enable = self.gcode.get_int('ENABLE', params, 1)
+        if time_enable == 0:
+            self.timeout_store()
+            self.timeout = 0
+        elif 'TIME' in params:
+            self.timeout = self.gcode.get_int('TIME', params, 30)
+        else:
+            self.timeout = self.timeout_store()
+        self.gcode.respond_info('Display Timeout set to "%d"'
+                                              % (self.timeout))
+
+    def timeout_store(self):
+        if not hasattr(self, "timeout_backup"):
+            self.timeout_backup = self.timeout
+        return self.timeout_backup
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
