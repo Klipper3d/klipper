@@ -48,7 +48,8 @@ class SafeZHoming:
                     self._perform_z_hop(pos)
             else:
                 self._perform_z_hop(pos)
-                toolhead.get_kinematics().reset_limits(homing_axes=[2])
+                if hasattr(toolhead.get_kinematics(), "note_z_not_homed"):
+                    toolhead.get_kinematics().note_z_not_homed()
 
         # Determine which axes we need to home
         if not any([axis in params.keys() for axis in ['X', 'Y', 'Z']]):

@@ -49,7 +49,9 @@ class CoreXYKinematics:
             rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
-    def reset_limits(self, homing_axes):
+    def note_z_not_homed(self):
+        # Helper for Safe Z Home
+        homing_axes = 2
         for i, rail in enumerate(self.rails):
             if i in homing_axes:
                 self.limits[i] = (1.0, -1.0)
