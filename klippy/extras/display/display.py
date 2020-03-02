@@ -26,8 +26,12 @@ class PrinterLCD:
         self.progress = None
         self.msg_time = None
         self.message = None
-        # menu
-        self.menu = menu.MenuManager(config, self.lcd_chip)
+        # menu and, M117, and M73 are registered for the primary display
+        name = config.get_name().split()[-1]
+        self.menu = None
+        if name == "display":
+            self.menu = menu.MenuManager(config, self.lcd_chip)
+            DisplayCommands(config)
         # printer objects
         self.toolhead = self.sdcard = None
         self.fan = self.extruder = self.extruder1 = self.heater_bed = None
@@ -41,10 +45,7 @@ class PrinterLCD:
             self.screen_update_event)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        name = config.get_name().split()[-1]
-        # Only register if no previous display object has been instantiated
-        if name == "display":
-            DisplayCommands(config)
+        # Registered muxed gcode
         self.gcode.register_mux_command(
             "SHOW_MESSAGE", "DISPLAY", name,
             self.cmd_SHOW_MESSAGE,
@@ -93,9 +94,10 @@ class PrinterLCD:
     # Screen updating
     def screen_update_event(self, eventtime):
         # update menu component
-        ret = self.menu.screen_update_event(eventtime)
-        if ret:
-            return ret
+        if self.menu is not None:
+            ret = self.menu.screen_update_event(eventtime)
+            if ret:
+                return ret
         # update all else
         self.lcd_chip.clear()
         if self.lcd_type == 'hd44780':
