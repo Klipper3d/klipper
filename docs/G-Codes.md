@@ -77,8 +77,13 @@ The following standard G-Code commands are available if a
 
 The following standard G-Code commands are available if a "display"
 config section is enabled:
-- Display Message: `M117 <message>`
-- Set build percentage: `M73 P<percent>`
+- Display Message (on all displays): `M117 <message>`
+- Set build percentage (on all displays): `M73 P<percent>`
+- `SHOW_MESSAGE DISPLAY=<name> MESSAGE=<message> TIMEOUT=<timeout>`:  Shows
+  a message on the specified display.  If `MESSAGE` is not provided the
+  display will be cleared.  If a `TIMEOUT` is specified, the message will
+  be cleared after the specified number of seconds.  Note that the primary
+  display's name is `display`.
 
 ## Other available G-Code commands
 
