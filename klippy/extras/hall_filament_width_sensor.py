@@ -3,6 +3,7 @@
 # Copyright (C) 2019  Mustafa YILDIZ <mydiz@hotmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import filament_switch_sensor
 
 ADC_REPORT_TIME = 0.500
 ADC_SAMPLE_TIME = 0.001
@@ -29,6 +30,7 @@ class HallFilamentWidthSensor:
                              - self.measurement_max_difference)
         self.diameter =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
+        self.runout_dia=config.getfloat('min_diameter', 1.0)
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
@@ -57,6 +59,7 @@ class HallFilamentWidthSensor:
                                     self.cmd_M405)
         self.gcode.register_command('QUERY_RAW_FILAMENT_WIDTH',
                                     self.cmd_Get_Raw_Values)
+        self.runout_helper = filament_switch_sensor.RunoutHelper(config)
     # Initialization
     def handle_ready(self):
         # Load printer objects
@@ -73,17 +76,17 @@ class HallFilamentWidthSensor:
     def adc2_callback(self, read_time, read_value):
         # read sensor value
         self.lastFilamentWidthReading2 = round(read_value * 10000)
+        # calculate diameter
+        self.diameter = round((self.dia2 - self.dia1)/
+            (self.rawdia2-self.rawdia1)*
+          ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
+           -self.rawdia1)+self.dia1,2)
 
     def update_filament_array(self, last_epos):
         # Fill array
         if len(self.filament_array) > 0:
             # Get last reading position in array & calculate next
             # reading position
-
-          self.diameter = round((self.dia2 - self.dia1)/
-            (self.rawdia2-self.rawdia1)*
-          ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
-           -self.rawdia1)+self.dia1,2)
           next_reading_position = (self.filament_array[-1][0] +
           self.MEASUREMENT_INTERVAL_MM)
           if next_reading_position <= (last_epos + self.measurement_delay):
@@ -100,6 +103,9 @@ class HallFilamentWidthSensor:
         last_epos = pos[3]
         # Update filament array for lastFilamentWidthReading
         self.update_filament_array(last_epos)
+        # Check runout
+        self.runout_helper.note_filament_present(
+            self.diameter > self.runout_dia)
         # Does filament exists
         if self.lastFilamentWidthReading > 0.5:
             if len(self.filament_array) > 0:
