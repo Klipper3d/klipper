@@ -92,14 +92,10 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
     SPI_TypeDef *spi = config.spi;
-    uint8_t *wptr = data;
-    uint8_t *end = data + len;
-
-    while (data < end) {
-        if (spi->SR & SPI_SR_TXE && wptr < end)
-            writeb((void *)&spi->DR, *wptr++);
-        if (!(spi->SR & SPI_SR_RXNE))
-            continue;
+    while (len--) {
+        writeb((void *)&spi->DR, *data);
+        while (!(spi->SR & SPI_SR_RXNE))
+            ;
         uint8_t rdata = readb((void *)&spi->DR);
         if (receive_data)
             *data = rdata;
