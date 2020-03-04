@@ -84,7 +84,11 @@ class PrinterLCD:
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         self.lcd_type = config.get('lcd_type')
         # Load menu and display_status
-        self.menu = menu.MenuManager(config, self.lcd_chip)
+        self.menu = None
+        name = config.get_name()
+        if name == 'display':
+            # only load menu for primary display
+            self.menu = menu.MenuManager(config, self.lcd_chip)
         self.printer.try_load_module(config, "display_status")
         # Configurable display
         self.display_templates = {}
@@ -145,9 +149,10 @@ class PrinterLCD:
     # Screen updating
     def screen_update_event(self, eventtime):
         # update menu component
-        ret = self.menu.screen_update_event(eventtime)
-        if ret:
-            return ret
+        if self.menu is not None:
+            ret = self.menu.screen_update_event(eventtime)
+            if ret:
+                return ret
         # Update normal display
         self.lcd_chip.clear()
         try:
