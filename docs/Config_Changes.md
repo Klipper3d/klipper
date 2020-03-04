@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20200303: The menu "deck" and "card" options were removed. To
+customize the layout of an lcd screen use the new display_data config
+sections (see config/example-extras.cfg for the details).
+
 20200109:  The bed_mesh module now references the probe's location
 in for the mesh configuration.  As such, some configuration options
 have been renamed to more accurately reflect their intended
