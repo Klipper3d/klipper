@@ -1,6 +1,6 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
@@ -183,7 +183,6 @@ class MoveQueue:
 
 MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
-SDS_CHECK_TIME = 0.001 # step+dir+step filter in itersolve.c
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
@@ -237,7 +236,7 @@ class ToolHead:
         self.print_stall = 0
         self.drip_completion = None
         # Kinematic step generation scan window time tracking
-        self.kin_flush_delay = SDS_CHECK_TIME
+        self.kin_flush_delay = 0.
         self.kin_flush_times = []
         self.last_kin_flush_time = self.last_kin_move_time = 0.
         # Setup iterative solver
@@ -513,7 +512,7 @@ class ToolHead:
             self.kin_flush_times.pop(self.kin_flush_times.index(old_delay))
         if delay:
             self.kin_flush_times.append(delay)
-        new_delay = max(self.kin_flush_times + [SDS_CHECK_TIME])
+        new_delay = max(self.kin_flush_times + [0.])
         self.kin_flush_delay = new_delay
     def register_lookahead_callback(self, callback):
         last_move = self.move_queue.get_last()
