@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20200313: The default lcd layout for multi-extruder printers with a
+16x4 screen has changed.  The single extruder screen layout is now the
+default and it will show the currently active extruder.  To use the
+previous display layout set "display_group: _multiextruder_16x4" in
+the [display] section of the printer.cfg file.
+
 20200308: The menu "deck" and "card" options were removed. To
 customize the layout of an lcd screen use the new display_data config
 sections (see config/example-extras.cfg for the details).
