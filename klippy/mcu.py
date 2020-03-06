@@ -661,8 +661,6 @@ class MCU:
         return self._clocksync.clock_to_print_time(clock)
     def estimated_print_time(self, eventtime):
         return self._clocksync.estimated_print_time(eventtime)
-    def get_adjusted_freq(self):
-        return self._clocksync.get_adjusted_freq()
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
     # Restarts
