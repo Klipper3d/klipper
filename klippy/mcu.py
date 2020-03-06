@@ -58,7 +58,7 @@ class MCU_endstop:
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
-        rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
+        rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         self._next_query_print_time = print_time + self.RETRY_QUERY
         self._min_query_time = self._reactor.monotonic()
         self._last_sent_time = 0.
