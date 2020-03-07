@@ -32,6 +32,7 @@ CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
 CONFIG ../../config/printer-lulzbot-taz6-dual-v3-2017.cfg
 CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
+CONFIG ../../config/printer-mtw-create-2015.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
@@ -39,9 +40,11 @@ CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
 CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
+CONFIG ../../config/printer-wanhao-duplicator-9-2018.cfg
 
 # Printers using the atmega1280
 DICTIONARY atmega1280.dict
+CONFIG ../../config/generic-mightyboard.cfg
 CONFIG ../../config/generic-minitronics1.cfg
 
 # Printers using the atmega1284p
@@ -59,6 +62,10 @@ CONFIG ../../config/printer-tronxy-x5s-2018.cfg
 CONFIG ../../config/printer-tronxy-x8-2018.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg
 
+# Printers using the atmega644
+DICTIONARY atmega644p.dict
+CONFIG ../../config/generic-simulavr.cfg
+
 # Printers using the at90usb1286
 DICTIONARY at90usb1286.dict
 CONFIG ../../config/generic-printrboard.cfg
@@ -69,6 +76,7 @@ CONFIG ../../config/generic-printrboard-g2.cfg
 
 # Printers using the sam3x8e
 DICTIONARY sam3x8e.dict
+CONFIG ../../config/generic-archim2.cfg
 CONFIG ../../config/generic-radds.cfg
 
 # Printers using the sam4s8c
@@ -85,8 +93,14 @@ DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
+CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+
+# Printers using the stm32f070
+DICTIONARY stm32f070.dict
+CONFIG ../../config/printer-monoprice-mini-delta-2017.cfg
 
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
@@ -103,6 +117,7 @@ CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
+CONFIG ../../config/generic-flyboard.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict

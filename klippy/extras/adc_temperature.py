@@ -132,7 +132,7 @@ class LinearResistance:
     def __init__(self, config, samples):
         self.pullup = config.getfloat('pullup_resistor', 4700., above=0.)
         try:
-            self.li = LinearInterpolate(samples)
+            self.li = LinearInterpolate([(r, t) for t, r in samples])
         except ValueError as e:
             raise config.error("adc_temperature %s in heater %s" % (
                 str(e), config.get_name()))
@@ -156,7 +156,7 @@ class CustomLinearResistance:
             if t is None:
                 break
             r = config.getfloat("resistance%d" % (i,))
-            self.samples.append((r, t))
+            self.samples.append((t, r))
     def create(self, config):
         lr = LinearResistance(config, self.samples)
         return PrinterADCtoTemperature(config, lr)
@@ -266,6 +266,11 @@ PT100 = [
     (1000, 4.48), (1100, 4.73)
 ]
 
+PT1000 = [
+    (0., 1000.), (100., 1385.1), (200., 1758.6), (300., 2120.5),
+    (400., 2470.9), (500., 2809.8),
+]
+
 def load_config(config):
     # Register default sensors
     pheater = config.get_printer().lookup_object("heater")
@@ -277,6 +282,11 @@ def load_config(config):
                                 ("PT100 INA826", PT100)]:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config, LinearVoltage(config, params)))
+        pheater.add_sensor_factory(sensor_type, func)
+    for sensor_type, params in [("PT1000", PT1000)]:
+        func = (lambda config, params=params:
+                PrinterADCtoTemperature(config,
+                                        LinearResistance(config, params)))
         pheater.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):

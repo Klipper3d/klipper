@@ -1,6 +1,6 @@
 // Iterative solver for kinematic moves
 //
-// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -54,76 +54,73 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
     return best_guess;
 }
 
+#define SEEK_TIME_RESET 0.000100
+
 // Generate step times for a portion of a move
 static int32_t
 itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
                           , double move_start, double move_end)
 {
-    struct stepcompress *sc = sk->sc;
     sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
-    double mcu_freq = stepcompress_get_mcu_freq(sc);
     double start = move_start - m->print_time, end = move_end - m->print_time;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
-    double seek_time_delta = 0.000100;
-    int sdir = stepcompress_get_step_dir(sc);
-    struct queue_append qa = queue_append_start(sc, m->print_time, .5);
+    double seek_time_delta = SEEK_TIME_RESET;
+    int sdir = !!stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
     for (;;) {
-        // Determine if next step is in forward or reverse direction
-        double dist = high.position - last.position;
-        if (fabs(dist) < half_step) {
-        seek_new_high_range:
-            if (high.time >= end)
-                // At end of move
-                break;
-            // Need to increase next step search range
-            low = high;
-            do {
-                high.time = last.time + seek_time_delta;
-                seek_time_delta += seek_time_delta;
-            } while (unlikely(high.time <= low.time));
-            if (high.time > end)
-                high.time = end;
-            high.position = calc_position_cb(sk, m, high.time);
-            continue;
-        }
-        int next_sdir = dist > 0.;
-        if (unlikely(next_sdir != sdir)) {
-            // Direction change
-            if (fabs(dist) < half_step + .000000001)
-                // Only change direction if going past midway point
-                goto seek_new_high_range;
-            if (last.time >= low.time) {
-                // Must seek new low range to avoid re-finding previous time
-                if (high.time < last.time + .000000001)
-                    goto seek_new_high_range;
+        double diff = high.position - last.position, dist = sdir ? diff : -diff;
+        if (dist >= half_step) {
+            // Have valid upper bound - now find step
+            double target = last.position + (sdir ? half_step : -half_step);
+            struct timepos next = itersolve_find_step(sk, m, low, high, target);
+            // Add step at given time
+            int ret = stepcompress_append(sk->sc, sdir
+                                          , m->print_time, next.time);
+            if (ret)
+                return ret;
+            seek_time_delta = next.time - last.time;
+            if (seek_time_delta < .000000001)
+                seek_time_delta = .000000001;
+            if (is_dir_change && seek_time_delta > SEEK_TIME_RESET)
+                seek_time_delta = SEEK_TIME_RESET;
+            is_dir_change = 0;
+            last.position = target + (sdir ? half_step : -half_step);
+            last.time = next.time;
+            low = next;
+            if (low.time < high.time)
+                // The existing search range is still valid
+                continue;
+        } else if (unlikely(dist < -(half_step + .000000001))) {
+            // Found direction change
+            is_dir_change = 1;
+            if (seek_time_delta > SEEK_TIME_RESET)
+                seek_time_delta = SEEK_TIME_RESET;
+            if (low.time > last.time) {
+                // Update direction and retry
+                sdir = !sdir;
+                continue;
+            }
+            // Must update range to avoid re-finding previous time
+            if (high.time > last.time + .000000001) {
+                // Reduce the high bound - it will become a better low bound
                 high.time = (last.time + high.time) * .5;
                 high.position = calc_position_cb(sk, m, high.time);
                 continue;
             }
-            int ret = queue_append_set_next_step_dir(&qa, next_sdir);
-            if (ret)
-                return ret;
-            sdir = next_sdir;
         }
-        // Find step
-        double target = last.position + (sdir ? half_step : -half_step);
-        struct timepos next = itersolve_find_step(sk, m, low, high, target);
-        // Add step at given time
-        int ret = queue_append(&qa, next.time * mcu_freq);
-        if (ret)
-            return ret;
-        seek_time_delta = next.time - last.time;
-        if (seek_time_delta < .000000001)
-            seek_time_delta = .000000001;
-        last.position = target + (sdir ? half_step : -half_step);
-        last.time = next.time;
-        low = next;
-        if (last.time >= high.time)
-            // The high range is no longer valid - recalculate it
-            goto seek_new_high_range;
+        // Need to increase the search range to find an upper bound
+        if (high.time >= end)
+            // At end of move
+            break;
+        low = high;
+        do {
+            high.time = last.time + seek_time_delta;
+            seek_time_delta += seek_time_delta;
+        } while (unlikely(high.time <= low.time));
+        if (high.time > end)
+            high.time = end;
+        high.position = calc_position_cb(sk, m, high.time);
     }
-    queue_append_finish(qa);
     sk->commanded_pos = last.position;
     if (sk->post_cb)
         sk->post_cb(sk);
@@ -210,6 +207,15 @@ itersolve_check_active(struct stepper_kinematics *sk, double flush_time)
             return 0.;
         m = list_next_entry(m, node);
     }
+}
+
+// Report if the given stepper is registered for the given axis
+int32_t __visible
+itersolve_is_active_axis(struct stepper_kinematics *sk, char axis)
+{
+    if (axis < 'x' || axis > 'z')
+        return 0;
+    return (sk->active_flags & (AF_X << (axis - 'x'))) != 0;
 }
 
 void __visible

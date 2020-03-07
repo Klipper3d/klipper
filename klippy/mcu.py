@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -10,8 +10,6 @@ class error(Exception):
     pass
 
 class MCU_endstop:
-    class TimeoutError(Exception):
-        pass
     RETRY_QUERY = 1.000
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
@@ -20,12 +18,11 @@ class MCU_endstop:
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._reactor = mcu.get_printer().get_reactor()
-        self._oid = self._home_cmd = self._query_cmd = None
+        self._oid = self._home_cmd = self._requery_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._min_query_time = self._last_sent_time = 0.
         self._next_query_print_time = self._end_home_time = 0.
         self._trigger_completion = self._home_completion = None
-        self._trigger_notify = None
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
@@ -52,21 +49,21 @@ class MCU_endstop:
         self._home_cmd = self._mcu.lookup_command(
             "endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u pin_value=%c", cq=cmd_queue)
-        self._query_cmd = self._mcu.lookup_command(
+        self._requery_cmd = self._mcu.lookup_command(
             "endstop_query_state oid=%c", cq=cmd_queue)
-    def home_prepare(self):
-        pass
+        self._query_cmd = self._mcu.lookup_query_command(
+            "endstop_query_state oid=%c",
+            "endstop_state oid=%c homing=%c pin_value=%c", oid=self._oid,
+            cq=cmd_queue)
     def home_start(self, print_time, sample_time, sample_count, rest_time,
-                   triggered=True, notify=None):
+                   triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
-        rest_ticks = int(rest_time * self._mcu.get_adjusted_freq())
-        self._trigger_notify = notify
+        rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         self._next_query_print_time = print_time + self.RETRY_QUERY
         self._min_query_time = self._reactor.monotonic()
         self._last_sent_time = 0.
         self._home_end_time = self._reactor.NEVER
         self._trigger_completion = self._reactor.completion()
-        self._home_completion = self._reactor.completion()
         self._mcu.register_response(self._handle_endstop_state,
                                     "endstop_state", self._oid)
         self._home_cmd.send(
@@ -75,6 +72,7 @@ class MCU_endstop:
             reqclock=clock)
         self._home_completion = self._reactor.register_callback(
             self._home_retry)
+        return self._trigger_completion
     def _handle_endstop_state(self, params):
         logging.debug("endstop_state %s", params)
         if params['#sent_time'] >= self._min_query_time:
@@ -82,16 +80,14 @@ class MCU_endstop:
                 self._last_sent_time = params['#sent_time']
             else:
                 self._min_query_time = self._reactor.NEVER
-                self._reactor.async_complete(self._trigger_completion, params)
+                self._reactor.async_complete(self._trigger_completion, True)
     def _home_retry(self, eventtime):
         if self._mcu.is_fileoutput():
             return True
         while 1:
-            params = self._trigger_completion.wait(eventtime + 0.100)
-            if params is not None:
+            did_trigger = self._trigger_completion.wait(eventtime + 0.100)
+            if did_trigger is not None:
                 # Homing completed successfully
-                if self._trigger_notify is not None:
-                    self._trigger_notify()
                 return True
             # Check for timeout
             last = self._mcu.estimated_print_time(self._last_sent_time)
@@ -102,7 +98,7 @@ class MCU_endstop:
             est_print_time = self._mcu.estimated_print_time(eventtime)
             if est_print_time >= self._next_query_print_time:
                 self._next_query_print_time = est_print_time + self.RETRY_QUERY
-                self._query_cmd.send([self._oid])
+                self._requery_cmd.send([self._oid])
     def home_wait(self, home_end_time):
         self._home_end_time = home_end_time
         did_trigger = self._home_completion.wait()
@@ -110,16 +106,14 @@ class MCU_endstop:
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
         for s in self._steppers:
             s.note_homing_end(did_trigger=did_trigger)
-        if not did_trigger:
-            raise self.TimeoutError("Timeout during endstop homing")
-    def home_finalize(self):
-        pass
+        if not self._trigger_completion.test():
+            self._trigger_completion.complete(False)
+        return did_trigger
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
             return 0
-        params = self._query_cmd.send_with_response(
-            [self._oid], "endstop_state", self._oid, minclock=clock)
+        params = self._query_cmd.send([self._oid], minclock=clock)
         return params['pin_value'] ^ self._invert
 
 class MCU_digital_out:
@@ -310,29 +304,70 @@ class MCU_adc:
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
+# Class to retry sending of a query command until a given response is received
+class RetryAsyncCommand:
+    TIMEOUT_TIME = 5.0
+    RETRY_TIME = 0.500
+    def __init__(self, serial, name, oid=None):
+        self.serial = serial
+        self.name = name
+        self.oid = oid
+        self.reactor = serial.get_reactor()
+        self.completion = self.reactor.completion()
+        self.min_query_time = self.reactor.monotonic()
+        self.serial.register_response(self.handle_callback, name, oid)
+    def handle_callback(self, params):
+        if params['#sent_time'] >= self.min_query_time:
+            self.min_query_time = self.reactor.NEVER
+            self.reactor.async_complete(self.completion, params)
+    def get_response(self, cmd, cmd_queue, minclock=0):
+        self.serial.raw_send_wait_ack(cmd, minclock, minclock, cmd_queue)
+        first_query_time = query_time = self.reactor.monotonic()
+        while 1:
+            params = self.completion.wait(query_time + self.RETRY_TIME)
+            if params is not None:
+                self.serial.register_response(None, self.name, self.oid)
+                return params
+            query_time = self.reactor.monotonic()
+            if query_time > first_query_time + self.TIMEOUT_TIME:
+                self.serial.register_response(None, self.name, self.oid)
+                raise error("Timeout on wait for '%s' response" % (self.name,))
+            self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
+
+# Wrapper around query commands
+class CommandQueryWrapper:
+    def __init__(self, serial, msgformat, respformat, oid=None,
+                 cmd_queue=None, async=False):
+        self._serial = serial
+        self._cmd = serial.get_msgparser().lookup_command(msgformat)
+        serial.get_msgparser().lookup_command(respformat)
+        self._response = respformat.split()[0]
+        self._oid = oid
+        self._xmit_helper = serialhdl.SerialRetryCommand
+        if async:
+            self._xmit_helper = RetryAsyncCommand
+        if cmd_queue is None:
+            cmd_queue = serial.get_default_command_queue()
+        self._cmd_queue = cmd_queue
+    def send(self, data=(), minclock=0):
+        cmd = self._cmd.encode(data)
+        xh = self._xmit_helper(self._serial, self._response, self._oid)
+        try:
+            return xh.get_response(cmd, self._cmd_queue, minclock=minclock)
+        except serialhdl.error as e:
+            raise error(str(e))
+
 # Wrapper around command sending
 class CommandWrapper:
-    def __init__(self, mcu, serial, clocksync, cmd, cmd_queue):
-        self._mcu = mcu
+    def __init__(self, serial, msgformat, cmd_queue=None):
         self._serial = serial
-        self._clocksync = clocksync
-        self._cmd = cmd
+        self._cmd = serial.get_msgparser().lookup_command(msgformat)
+        if cmd_queue is None:
+            cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
     def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
-    def send_with_response(self, data=(), response=None, response_oid=None,
-                           minclock=0):
-        minsystime = 0.
-        if minclock:
-            minsystime = self._clocksync.estimate_clock_systime(minclock)
-        cmd = self._cmd.encode(data)
-        src = serialhdl.SerialRetryCommand(self._serial, response, response_oid)
-        try:
-            return src.get_response([cmd], self._cmd_queue,
-                                    minclock=minclock, minsystime=minsystime)
-        except serialhdl.error as e:
-            raise error(str(e))
 
 class MCU:
     error = error
@@ -481,10 +516,12 @@ class MCU:
         for c in self._init_cmds:
             self._serial.send(c)
     def _send_get_config(self):
-        get_config_cmd = self.lookup_command("get_config")
+        get_config_cmd = self.lookup_query_command(
+            "get_config",
+            "config is_config=%c crc=%u move_count=%hu is_shutdown=%c")
         if self.is_fileoutput():
             return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
-        config_params = get_config_cmd.send_with_response(response='config')
+        config_params = get_config_cmd.send()
         if self._is_shutdown:
             raise error("MCU '%s' error during config: %s" % (
                 self._name, self._shutdown_msg))
@@ -600,10 +637,11 @@ class MCU:
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
-        if cq is None:
-            cq = self._serial.get_default_command_queue()
-        cmd = self._serial.get_msgparser().lookup_command(msgformat)
-        return CommandWrapper(self, self._serial, self._clocksync, cmd, cq)
+        return CommandWrapper(self._serial, msgformat, cq)
+    def lookup_query_command(self, msgformat, respformat, oid=None,
+                             cq=None, async=False):
+        return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
+                                   cq, async)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
@@ -623,8 +661,6 @@ class MCU:
         return self._clocksync.clock_to_print_time(clock)
     def estimated_print_time(self, eventtime):
         return self._clocksync.estimated_print_time(eventtime)
-    def get_adjusted_freq(self):
-        return self._clocksync.get_adjusted_freq()
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
     # Restarts

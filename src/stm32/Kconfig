@@ -65,6 +65,7 @@ config MCU
 config CLOCK_FREQ
     int
     default 48000000 if MACH_STM32F0
+    default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
     default 72000000 if MACH_STM32F103
     default 168000000 if MACH_STM32F405 || MACH_STM32F407
     default 180000000 if MACH_STM32F446
@@ -92,9 +93,9 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103
+    prompt "Bootloader offset" if MACH_STM32F407 || MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103
+        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_8000
@@ -108,6 +109,11 @@ config FLASH_START
     default 0x8007000 if STM32_FLASH_START_7000
     default 0x8008000 if STM32_FLASH_START_8000
     default 0x8000000
+
+config ARMCM_RAM_VECTORTABLE
+    bool
+    default y if MACH_STM32F0 && FLASH_START != 0x8000000
+    default n
 
 choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
@@ -131,12 +137,20 @@ config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     default y
-config STM32F042_USB_PIN_SWAP
-    bool "Use PA9/PA10 for USB" if MACH_STM32F042
-    depends on USBSERIAL && MACH_STM32F042
+config CANSERIAL
+    bool "Use CAN for communication (instead of serial)"
+    depends on MACH_STM32F042 && !USBSERIAL
+    default n
+config SERIAL_BAUD
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000 if CANSERIAL
+config STM32F042_PIN_SWAP
+    bool "Use PA9/PA10 for USB or CAN" if MACH_STM32F042
+    depends on (USBSERIAL || CANSERIAL) && MACH_STM32F042
+    default y if (USBSERIAL || CANSERIAL)
     default n
 config SERIAL
-    depends on !USBSERIAL
+    depends on !USBSERIAL && !CANSERIAL
     bool
     default y
 choice
@@ -147,7 +161,9 @@ choice
     config STM32_SERIAL_USART1
         bool "USART1"
     config STM32_SERIAL_USART2
-        bool "USART2"
+        bool "USART2 (on PA3/PA2)"
+    config STM32_SERIAL_USART2_ALT
+        bool "USART2 (on PA15/PA14)" if MACH_STM32F0
     config STM32_SERIAL_USART3
         bool "USART3"
     config STM32_SERIAL_USART3_ALT
@@ -155,9 +171,8 @@ choice
 endchoice
 config SERIAL_PORT
     int
-    default 103 if STM32_SERIAL_USART3_ALT
-    default 3 if STM32_SERIAL_USART3
-    default 2 if STM32_SERIAL_USART2
+    default 3 if STM32_SERIAL_USART3 || STM32_SERIAL_USART3_ALT
+    default 2 if STM32_SERIAL_USART2 || STM32_SERIAL_USART2_ALT
     default 1
 
 endif

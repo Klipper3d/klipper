@@ -71,10 +71,12 @@ class Move:
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R = (self.toolhead.junction_deviation * sin_theta_d2
              / (1. - sin_theta_d2))
+        # Approximated circle must contact moves no further away than mid-move
         tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
         move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * self.accel
         prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
                                     * prev_move.accel)
+        # Apply limits
         self.max_start_v2 = min(
             R * self.accel, R * prev_move.accel,
             move_centripetal_v2, prev_move_centripetal_v2,
@@ -441,7 +443,7 @@ class ToolHead:
                 continue
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
             self._update_move_time(npt)
-    def drip_move(self, newpos, speed):
+    def drip_move(self, newpos, speed, drip_completion):
         # Transition from "Flushed"/"Priming"/main state to "Drip" state
         self.move_queue.flush()
         self.special_queuing_state = "Drip"
@@ -449,7 +451,7 @@ class ToolHead:
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
-        self.drip_completion = self.reactor.completion()
+        self.drip_completion = drip_completion
         # Submit move
         try:
             self.move(newpos, speed)
@@ -464,8 +466,6 @@ class ToolHead:
             self.trapq_free_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
         self.flush_step_generation()
-    def signal_drip_mode_end(self):
-        self.drip_completion.complete(True)
     # Misc commands
     def stats(self, eventtime):
         for m in self.all_mcus:

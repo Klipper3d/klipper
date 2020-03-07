@@ -71,12 +71,14 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
-        bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
+        bit_ticks = self.mcu.seconds_to_clock(1. / 9000.)
         self.mcu.add_config_cmd(
             "config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
             % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
-        self.tmcuart_send_cmd = self.mcu.lookup_command(
-            "tmcuart_send oid=%c write=%*s read=%c", cq=self.cmd_queue)
+        self.tmcuart_send_cmd = self.mcu.lookup_query_command(
+            "tmcuart_send oid=%c write=%*s read=%c",
+            "tmcuart_response oid=%c read=%*s", oid=self.oid,
+            cq=self.cmd_queue, async=True)
     def register_instance(self, rx_pin_params, tx_pin_params,
                           select_pins_desc, addr):
         if (rx_pin_params['pin'] != self.rx_pin
@@ -148,8 +150,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_read(0xf5, addr, reg)
-        params = self.tmcuart_send_cmd.send_with_response(
-            [self.oid, msg, 10], 'tmcuart_response', self.oid)
+        params = self.tmcuart_send_cmd.send([self.oid, msg, 10])
         return self._decode_read(reg, params['read'])
     def reg_write(self, instance_id, addr, reg, val, print_time=None):
         minclock = 0
@@ -158,9 +159,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_write(0xf5, addr, reg | 0x80, val)
-        self.tmcuart_send_cmd.send_with_response(
-            [self.oid, msg, 0], 'tmcuart_response', self.oid,
-            minclock=minclock)
+        self.tmcuart_send_cmd.send([self.oid, msg, 0], minclock=minclock)
 
 # Lookup a (possibly shared) tmc uart
 def lookup_tmc_uart_bitbang(config, max_addr):

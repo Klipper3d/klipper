@@ -29,7 +29,7 @@ class WinchKinematics:
             s.set_max_jerk(max_halt_velocity, max_accel)
         # Setup boundary checks
         self.set_position([0., 0., 0.], ())
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return list(self.steppers)
     def calc_tag_position(self):
         # Use only first three steppers to calculate cartesian position

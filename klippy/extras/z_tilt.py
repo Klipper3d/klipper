@@ -16,7 +16,7 @@ class ZAdjustHelper:
                                             self.handle_connect)
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        z_steppers = kin.get_steppers('Z')
+        z_steppers = [s for s in kin.get_steppers() if s.is_active_axis('z')]
         if len(z_steppers) != self.z_count:
             raise self.printer.config_error(
                 "%s z_positions needs exactly %d items" % (

@@ -1,6 +1,6 @@
 # Serial port management for firmware communication
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
@@ -32,13 +32,22 @@ class SerialReader:
         self.handlers = {}
         self.register_response(self._handle_unknown_init, '#unknown')
         self.register_response(self.handle_output, '#output')
+        # Sent message notification tracking
+        self.last_notify_id = 0
+        self.pending_notifications = {}
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
             count = response.len
-            if count <= 0:
+            if count < 0:
                 break
+            if response.notify_id:
+                params = {'#sent_time': response.sent_time,
+                          '#receive_time': response.receive_time}
+                completion = self.pending_notifications.pop(response.notify_id)
+                self.reactor.async_complete(completion, params)
+                continue
             params = self.msgparser.parse(response.msg[0:count])
             params['#sent_time'] = response.sent_time
             params['#receive_time'] = response.receive_time
@@ -49,20 +58,22 @@ class SerialReader:
                     hdl(params)
             except:
                 logging.exception("Exception in serial callback")
-    def _get_identify_data(self, timeout):
+    def _get_identify_data(self, eventtime):
         # Query the "data dictionary" from the micro-controller
         identify_data = ""
         while 1:
             msg = "identify offset=%d count=%d" % (len(identify_data), 40)
-            params = self.send_with_response(msg, 'identify_response')
+            try:
+                params = self.send_with_response(msg, 'identify_response')
+            except error as e:
+                logging.exception("Wait for identify_response")
+                return None
             if params['offset'] == len(identify_data):
                 msgdata = params['data']
                 if not msgdata:
                     # Done
                     return identify_data
                 identify_data += msgdata
-            if self.reactor.monotonic() > timeout:
-                raise error("Timeout during identify")
     def connect(self):
         # Initial connection
         logging.info("Starting serial connect")
@@ -88,13 +99,12 @@ class SerialReader:
             self.background_thread = threading.Thread(target=self._bg_thread)
             self.background_thread.start()
             # Obtain and load the data dictionary from the firmware
-            try:
-                identify_data = self._get_identify_data(connect_time + 5.)
-            except error as e:
-                logging.exception("Timeout on serial connect")
-                self.disconnect()
-                continue
-            break
+            completion = self.reactor.register_callback(self._get_identify_data)
+            identify_data = completion.wait(connect_time + 5.)
+            if identify_data is not None:
+                break
+            logging.info("Timeout on serial connect")
+            self.disconnect()
         msgparser = msgproto.MessageParser()
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
@@ -126,12 +136,17 @@ class SerialReader:
         if self.ser is not None:
             self.ser.close()
             self.ser = None
+        for pn in self.pending_notifications.values():
+            pn.complete(None)
+        self.pending_notifications.clear()
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
         self.ffi_lib.serialqueue_get_stats(
             self.serialqueue, self.stats_buf, len(self.stats_buf))
         return self.ffi_main.string(self.stats_buf)
+    def get_reactor(self):
+        return self.reactor
     def get_msgparser(self):
         return self.msgparser
     def get_default_command_queue(self):
@@ -145,15 +160,26 @@ class SerialReader:
                 self.handlers[name, oid] = callback
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
-        self.ffi_lib.serialqueue_send(
-            self.serialqueue, cmd_queue, cmd, len(cmd), minclock, reqclock)
+        self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
+                                      cmd, len(cmd), minclock, reqclock, 0)
+    def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
+        self.last_notify_id += 1
+        nid = self.last_notify_id
+        completion = self.reactor.completion()
+        self.pending_notifications[nid] = completion
+        self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
+                                      cmd, len(cmd), minclock, reqclock, nid)
+        params = completion.wait()
+        if params is None:
+            raise error("Serial connection closed")
+        return params
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
         self.raw_send(cmd, minclock, reqclock, self.default_cmd_queue)
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
         src = SerialRetryCommand(self, response)
-        return src.get_response([cmd], self.default_cmd_queue)
+        return src.get_response(cmd, self.default_cmd_queue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -195,34 +221,32 @@ class SerialReader:
     def __del__(self):
         self.disconnect()
 
-# Class to retry sending of a query command until a given response is received
+# Class to send a query command and return the received response
 class SerialRetryCommand:
-    TIMEOUT_TIME = 5.0
-    RETRY_TIME = 0.500
     def __init__(self, serial, name, oid=None):
         self.serial = serial
         self.name = name
         self.oid = oid
-        self.completion = serial.reactor.completion()
-        self.min_query_time = serial.reactor.monotonic()
+        self.last_params = None
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
-        if params['#sent_time'] >= self.min_query_time:
-            self.min_query_time = self.serial.reactor.NEVER
-            self.serial.reactor.async_complete(self.completion, params)
-    def get_response(self, cmds, cmd_queue, minclock=0, minsystime=0.):
-        first_query_time = query_time = max(self.min_query_time, minsystime)
+        self.last_params = params
+    def get_response(self, cmd, cmd_queue, minclock=0):
+        retries = 5
+        retry_delay = .010
         while 1:
-            for cmd in cmds:
-                self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
-            params = self.completion.wait(query_time + self.RETRY_TIME)
+            self.serial.raw_send_wait_ack(cmd, minclock, minclock, cmd_queue)
+            params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)
                 return params
-            query_time = self.serial.reactor.monotonic()
-            if query_time > first_query_time + self.TIMEOUT_TIME:
+            if retries <= 0:
                 self.serial.register_response(None, self.name, self.oid)
-                raise error("Timeout on wait for '%s' response" % (self.name,))
+                raise error("Unable to obtain '%s' response" % (self.name,))
+            reactor = self.serial.reactor
+            reactor.pause(reactor.monotonic() + retry_delay)
+            retries -= 1
+            retry_delay *= 2.
 
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):

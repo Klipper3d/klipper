@@ -84,8 +84,9 @@ class MCU_stepper:
             "set_next_step_dir oid=%c dir=%c")
         self._reset_cmd_id = self._mcu.lookup_command_id(
             "reset_step_clock oid=%c clock=%u")
-        self._get_position_cmd = self._mcu.lookup_command(
-            "stepper_get_position oid=%c")
+        self._get_position_cmd = self._mcu.lookup_query_command(
+            "stepper_get_position oid=%c",
+            "stepper_position oid=%c pos=%i", oid=self._oid)
         self._ffi_lib.stepcompress_fill(
             self._stepqueue, self._mcu.seconds_to_clock(max_error),
             self._invert_dir, step_cmd_id, dir_cmd_id)
@@ -134,8 +135,7 @@ class MCU_stepper:
             raise error("Internal error in stepcompress")
         if not did_trigger or self._mcu.is_fileoutput():
             return
-        params = self._get_position_cmd.send_with_response(
-            [self._oid], response='stepper_position', response_oid=self._oid)
+        params = self._get_position_cmd.send([self._oid])
         mcu_pos_dist = params['pos'] * self._step_dist
         if self._invert_dir:
             mcu_pos_dist = -mcu_pos_dist
@@ -165,6 +165,9 @@ class MCU_stepper:
                                              flush_time)
         if ret:
             raise error("Internal error in stepcompress")
+    def is_active_axis(self, axis):
+        return self._ffi_lib.itersolve_is_active_axis(
+            self._stepper_kinematics, axis)
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
@@ -233,6 +236,8 @@ class PrinterRail:
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.second_homing_speed = config.getfloat(
             'second_homing_speed', self.homing_speed/2., above=0.)
+        self.homing_retract_speed = config.getfloat(
+            'homing_retract_speed', self.homing_speed, above=0.)
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., minval=0.)
         self.homing_positive_dir = config.getboolean(
@@ -251,11 +256,11 @@ class PrinterRail:
         return self.position_min, self.position_max
     def get_homing_info(self):
         homing_info = collections.namedtuple('homing_info', [
-            'speed', 'position_endstop', 'retract_dist', 'positive_dir',
-            'second_homing_speed'])(
+            'speed', 'position_endstop', 'retract_speed', 'retract_dist',
+            'positive_dir', 'second_homing_speed'])(
                 self.homing_speed, self.position_endstop,
-                self.homing_retract_dist, self.homing_positive_dir,
-                self.second_homing_speed)
+                self.homing_retract_speed, self.homing_retract_dist,
+                self.homing_positive_dir, self.second_homing_speed)
         return homing_info
     def get_steppers(self):
         return list(self.steppers)

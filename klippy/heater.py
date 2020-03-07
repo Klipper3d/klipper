@@ -10,7 +10,7 @@ import logging, threading
 # Heater
 ######################################################################
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
@@ -22,7 +22,7 @@ class Heater:
         self.name = config.get_name().split()[-1]
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELCIUS)
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
@@ -250,6 +250,8 @@ class PrinterHeaters:
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
+    def get_all_heaters(self):
+        return self.available_heaters
     def lookup_heater(self, heater_name):
         if heater_name not in self.heaters:
             raise self.printer.config_error(
@@ -259,6 +261,7 @@ class PrinterHeaters:
         self.printer.try_load_module(config, "thermistor")
         self.printer.try_load_module(config, "adc_temperature")
         self.printer.try_load_module(config, "spi_temperature")
+        self.printer.try_load_module(config, "bme280")
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensor_factories:
             raise self.printer.config_error(

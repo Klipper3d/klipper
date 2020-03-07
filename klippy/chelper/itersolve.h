@@ -28,6 +28,7 @@ struct stepper_kinematics {
 int32_t itersolve_generate_steps(struct stepper_kinematics *sk
                                  , double flush_time);
 double itersolve_check_active(struct stepper_kinematics *sk, double flush_time);
+int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
 void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
 void itersolve_set_stepcompress(struct stepper_kinematics *sk
                                 , struct stepcompress *sc, double step_dist);

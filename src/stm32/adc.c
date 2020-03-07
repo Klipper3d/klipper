@@ -35,9 +35,25 @@ static const uint8_t adc_pins[] = {
 #endif
 
 // ADC timing:
-// stm32f103: ADC clock=9Mhz, Tconv=12.5, Tsamp=28.5, total=4.556us
-// stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=56, total=3.238us
-// stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=56, total=3.022us
+// stm32f103: ADC clock=9Mhz, Tconv=12.5, Tsamp=41.5, total=6.000us
+// stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=84, total=4.571us
+// stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=84, total=4.267us
+
+// Perform calibration on stm32f103
+static void
+adc_calibrate(ADC_TypeDef *adc)
+{
+#if CONFIG_MACH_STM32F1
+    adc->CR2 = ADC_CR2_ADON;
+    udelay(10);
+    adc->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
+    while (adc->CR2 & ADC_CR2_RSTCAL)
+        ;
+    adc->CR2 = ADC_CR2_ADON | ADC_CR2_CAL;
+    while (adc->CR2 & ADC_CR2_CAL)
+        ;
+#endif
+}
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -66,7 +82,8 @@ gpio_adc_setup(uint32_t pin)
     // Enable the ADC
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
-        uint32_t aticks = 3; // 2.5-3.2us (depending on stm32 chip)
+        adc_calibrate(adc);
+        uint32_t aticks = 4; // 4-6us sample time (depending on stm32 chip)
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21)
@@ -75,14 +92,6 @@ gpio_adc_setup(uint32_t pin)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21) | (aticks << 24) | (aticks << 27));
         adc->CR2 = CR2_FLAGS;
-
-#if CONFIG_MACH_STM32F1
-        // Perform calibration
-        udelay(10);
-        adc->CR2 = ADC_CR2_CAL | CR2_FLAGS;
-        while (adc->CR2 & ADC_CR2_CAL)
-            ;
-#endif
     }
 
     gpio_peripheral(pin, GPIO_ANALOG, 0);

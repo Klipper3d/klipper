@@ -49,9 +49,7 @@ class CartKinematics:
             self.printer.lookup_object('gcode').register_command(
                 'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
                 desc=self.cmd_SET_DUAL_CARRIAGE_help)
-    def get_steppers(self, flags=""):
-        if flags == "Z":
-            return self.rails[2].get_steppers()
+    def get_steppers(self):
         rails = self.rails
         if self.dual_carriage_axis is not None:
             dca = self.dual_carriage_axis
@@ -64,6 +62,9 @@ class CartKinematics:
             rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
+    def note_z_not_homed(self):
+        # Helper for Safe Z Home
+        self.limits[2] = (1.0, -1.0)
     def _home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
