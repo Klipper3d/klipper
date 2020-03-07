@@ -72,6 +72,12 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
+        gcode.register_mux_command("GET_E_STEP_DISTANCE", "EXTRUDER",
+                                   self.name, self.cmd_GET_E_STEP_DISTANCE,
+                                   desc=self.cmd_GET_E_STEP_DISTANCE_help)
+        gcode.register_mux_command("SET_E_STEP_DISTANCE", "EXTRUDER",
+                                   self.name, self.cmd_SET_E_STEP_DISTANCE,
+                                   desc=self.cmd_SET_E_STEP_DISTANCE_help)
     def update_move_time(self, flush_time):
         self.trapq_free_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
@@ -185,6 +191,24 @@ class PrinterExtruder:
                    pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg, log=False)
+    cmd_GET_E_STEP_DISTANCE_help = "Get extruder step distance"
+    def cmd_GET_E_STEP_DISTANCE(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        step_dist = self.stepper.get_step_dist()
+        gcode.respond_info("%s E step distance: %f" % (self.name, step_dist))
+    cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
+    def cmd_SET_E_STEP_DISTANCE(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        toolhead = self.printer.lookup_object('toolhead')
+        dist = gcode.get_float('DISTANCE', params, 0.)
+        self.stepper.set_step_dist(dist)
+        step_dist = self.stepper.get_step_dist()
+        gcode.respond_info("%s E step distance set: %f" %
+                                            (self.name, step_dist))
+        self.stepper.set_max_jerk(9999999.9, 9999999.9)
+        self.stepper.set_stepper_kinematics(self.sk_extruder)
+        self.stepper.set_trapq(self.trapq)
+        toolhead.register_step_generator(self.stepper.generate_steps)
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, params):
         gcode = self.printer.lookup_object('gcode')
