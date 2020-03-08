@@ -6,7 +6,7 @@ All dates in this document are approximate.
 
 # Changes
 
-20200303: The menu "deck" and "card" options were removed. To
+20200308: The menu "deck" and "card" options were removed. To
 customize the layout of an lcd screen use the new display_data config
 sections (see config/example-extras.cfg for the details).
 
