@@ -72,10 +72,10 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
-        gcode.register_mux_command("GET_E_STEP_DISTANCE", "EXTRUDER",
+        gcode.register_mux_command("GET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_GET_E_STEP_DISTANCE,
                                    desc=self.cmd_GET_E_STEP_DISTANCE_help)
-        gcode.register_mux_command("SET_E_STEP_DISTANCE", "EXTRUDER",
+        gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
     def update_move_time(self, flush_time):
@@ -214,7 +214,6 @@ class PrinterExtruder:
             self.stepper.set_max_jerk(9999999.9, 9999999.9)
             self.stepper.set_stepper_kinematics(self.sk_extruder)
             self.stepper.set_trapq(self.trapq)
-            toolhead.register_step_generator(self.stepper.generate_steps)
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, params):
         gcode = self.printer.lookup_object('gcode')
