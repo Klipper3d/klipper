@@ -261,12 +261,34 @@ stepcompress_free(struct stepcompress *sc)
     free(sc);
 }
 
+uint32_t
+stepcompress_get_oid(struct stepcompress *sc)
+{
+    return sc->oid;
+}
+
+int
+stepcompress_get_step_dir(struct stepcompress *sc)
+{
+    return sc->sdir;
+}
+
 // Determine the "print time" of the last_step_clock
 static void
 calc_last_step_print_time(struct stepcompress *sc)
 {
     double lsc = sc->last_step_clock;
     sc->last_step_print_time = sc->mcu_time_offset + (lsc - .5) / sc->mcu_freq;
+}
+
+// Set the conversion rate of 'print_time' to mcu clock
+static void
+stepcompress_set_time(struct stepcompress *sc
+                      , double time_offset, double mcu_freq)
+{
+    sc->mcu_time_offset = time_offset;
+    sc->mcu_freq = mcu_freq;
+    calc_last_step_print_time(sc);
 }
 
 // Convert previously scheduled steps into commands for the mcu
@@ -334,55 +356,6 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     qm->req_clock = sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
     return 0;
-}
-
-// Reset the internal state of the stepcompress object
-int __visible
-stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-    sc->last_step_clock = last_step_clock;
-    sc->sdir = -1;
-    calc_last_step_print_time(sc);
-    return 0;
-}
-
-// Queue an mcu command to go out in order with stepper commands
-int __visible
-stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
-    return 0;
-}
-
-// Set the conversion rate of 'print_time' to mcu clock
-static void
-stepcompress_set_time(struct stepcompress *sc
-                      , double time_offset, double mcu_freq)
-{
-    sc->mcu_time_offset = time_offset;
-    sc->mcu_freq = mcu_freq;
-    calc_last_step_print_time(sc);
-}
-
-uint32_t
-stepcompress_get_oid(struct stepcompress *sc)
-{
-    return sc->oid;
-}
-
-int
-stepcompress_get_step_dir(struct stepcompress *sc)
-{
-    return sc->sdir;
 }
 
 // Maximium clock delta between messages in the queue
@@ -453,6 +426,33 @@ stepcompress_append(struct stepcompress *sc, int sdir
         // Slow path to handle queue expansion and integer overflow
         return queue_append_slow(sc, rel_sc);
     *sc->queue_next++ = (uint32_t)sc->last_step_clock + (uint32_t)rel_sc;
+    return 0;
+}
+
+// Reset the internal state of the stepcompress object
+int __visible
+stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+    sc->last_step_clock = last_step_clock;
+    sc->sdir = -1;
+    calc_last_step_print_time(sc);
+    return 0;
+}
+
+// Queue an mcu command to go out in order with stepper commands
+int __visible
+stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+
+    struct queue_message *qm = message_alloc_and_encode(data, len);
+    qm->req_clock = sc->last_step_clock;
+    list_add_tail(&qm->node, &sc->msg_queue);
     return 0;
 }
 
