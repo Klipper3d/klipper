@@ -16,7 +16,8 @@ Klipper supports the following standard G-Code commands:
 - Set extrude factor override percentage: `M221 S<percent>`
 - Set acceleration: `M204 S<value>` OR `M204 P<value> T<value>`
   - Note: If S is not specified and both P and T are specified, then
-    the acceleration is set to the minimum of P and T.
+    the acceleration is set to the minimum of P and T. If only one of
+    P or T is specified, the command has no effect.
 - Get extruder temperature: `M105`
 - Set extruder temperature: `M104 [T<index>] [S<temperature>]`
 - Set extruder temperature and wait: `M109 [T<index>] S<temperature>`
