@@ -19,6 +19,7 @@ class SafeZHoming:
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
+        self.xy_order = config.get("xy_order", "xy").strip().lower()
         self.move_to_previous = config.getboolean('move_to_previous', False)
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
@@ -60,12 +61,15 @@ class SafeZHoming:
 
         # Home XY axes if necessary
         new_params = {}
-        if need_x:
-            new_params['X'] = '0'
-        if need_y:
-            new_params['Y'] = '0'
-        if new_params:
-            self.prev_G28(new_params)
+
+        for axis in self.xy_order:
+
+            if axis == 'x' and need_x:
+               self.prev_G28('X0')
+        
+            if axis == 'y' and need_y:
+               self.prev_G28('Y0')
+
         # Home Z axis if necessary
         if need_z:
             # Move to safe XY homing position
