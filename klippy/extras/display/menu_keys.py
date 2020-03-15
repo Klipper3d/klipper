@@ -11,6 +11,7 @@ TIMER_DELAY = .200
 class MenuKeys:
     def __init__(self, config, callback):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
         self.callback = callback
         # buttons
         self.encoder_pins = config.get('encoder_pins', None)
@@ -30,7 +31,6 @@ class MenuKeys:
             'analog_range_down_pin', None)
         self.analog_range_kill_pin = config.get(
             'analog_range_kill_pin', None)
-        self._last_click_press = 0
         self.analog_pullup = config.getfloat(
             'analog_pullup_resistor', 4700., above=0.)
         self._encoder_fast_rate = config.getfloat(
@@ -120,18 +120,14 @@ class MenuKeys:
                 else:
                     self.buttons.register_button_push(
                         self.kill_pin, self.kill_callback)
-        # start timer
-        reactor = self.printer.get_reactor()
-        reactor.register_timer(self.timer_event, reactor.NOW)
+        # long click timer
+        self.is_short_click = False
+        self.click_timer = self.reactor.register_timer(self.long_click_event)
 
-    def timer_event(self, eventtime):
-        # check long press
-        if (self._last_click_press > 0 and (
-                eventtime - self._last_click_press) >= LONG_PRESS_DURATION):
-            # long click
-            self._last_click_press = 0
-            self.callback('long_click', eventtime)
-        return eventtime + TIMER_DELAY
+    def long_click_event(self, eventtime):
+        self.is_short_click = False
+        self.callback('long_click', eventtime)
+        return self.reactor.NEVER
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
@@ -153,14 +149,13 @@ class MenuKeys:
             self.callback('down', eventtime)
 
     def click_callback(self, eventtime, state):
-        if self.click_pin:
-            if state:
-                self._last_click_press = eventtime
-            elif self._last_click_press > 0:
-                if (eventtime - self._last_click_press) < LONG_PRESS_DURATION:
-                    # short click
-                    self._last_click_press = 0
-                    self.callback('click', eventtime)
+        if state:
+            self.is_short_click = True
+            self.reactor.update_timer(self.click_timer,
+                                      eventtime + LONG_PRESS_DURATION)
+        elif self.is_short_click:
+            self.reactor.update_timer(self.click_timer, self.reactor.NEVER)
+            self.callback('click', eventtime)
 
     def back_callback(self, eventtime):
         if self.back_pin:
