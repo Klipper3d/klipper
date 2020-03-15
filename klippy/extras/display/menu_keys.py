@@ -2,6 +2,7 @@
 # Support for menu button press tracking
 #
 # Copyright (C) 2018  Janar Sööt <janar.soot@gmail.com>
+# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,140 +14,77 @@ class MenuKeys:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.callback = callback
-        # buttons
-        self.encoder_pins = config.get('encoder_pins', None)
-        self.click_pin = config.get('click_pin', None)
-        self.back_pin = config.get('back_pin', None)
-        self.up_pin = config.get('up_pin', None)
-        self.down_pin = config.get('down_pin', None)
-        self.kill_pin = config.get('kill_pin', None)
-        # analog button ranges
-        self.analog_range_click_pin = config.get(
-            'analog_range_click_pin', None)
-        self.analog_range_back_pin = config.get(
-            'analog_range_back_pin', None)
-        self.analog_range_up_pin = config.get(
-            'analog_range_up_pin', None)
-        self.analog_range_down_pin = config.get(
-            'analog_range_down_pin', None)
-        self.analog_range_kill_pin = config.get(
-            'analog_range_kill_pin', None)
-        self.analog_pullup = config.getfloat(
-            'analog_pullup_resistor', 4700., above=0.)
-        self._encoder_fast_rate = config.getfloat(
-            'encoder_fast_rate', .03, above=0.)
-        self._last_encoder_cw_eventtime = 0
-        self._last_encoder_ccw_eventtime = 0
-        # printer objects
-        self.buttons = self.printer.load_object(config, "buttons")
-        # register buttons & encoder
-        if self.buttons:
-            # digital buttons
-            if self.encoder_pins:
-                try:
-                    pin1, pin2 = self.encoder_pins.split(',')
-                except Exception:
-                    raise config.error("Unable to parse encoder_pins")
-                self.buttons.register_rotary_encoder(
-                    pin1.strip(), pin2.strip(),
-                    self.encoder_cw_callback, self.encoder_ccw_callback)
-            if self.click_pin:
-                if self.analog_range_click_pin is not None:
-                    try:
-                        p_min, p_max = map(
-                            float, self.analog_range_click_pin.split(','))
-                    except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_click_pin")
-                    self.buttons.register_adc_button(
-                        self.click_pin, p_min, p_max, self.analog_pullup,
-                        self.click_callback)
-                else:
-                    self.buttons.register_buttons(
-                        [self.click_pin], self.click_callback)
-            if self.back_pin:
-                if self.analog_range_back_pin is not None:
-                    try:
-                        p_min, p_max = map(
-                            float, self.analog_range_back_pin.split(','))
-                    except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_back_pin")
-                    self.buttons.register_adc_button_push(
-                        self.back_pin, p_min, p_max, self.analog_pullup,
-                        self.back_callback)
-                else:
-                    self.buttons.register_button_push(
-                        self.back_pin, self.back_callback)
-            if self.up_pin:
-                if self.analog_range_up_pin is not None:
-                    try:
-                        p_min, p_max = map(
-                            float, self.analog_range_up_pin.split(','))
-                    except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_up_pin")
-                    self.buttons.register_adc_button_push(
-                        self.up_pin, p_min, p_max, self.analog_pullup,
-                        self.up_callback)
-                else:
-                    self.buttons.register_button_push(
-                        self.up_pin, self.up_callback)
-            if self.down_pin:
-                if self.analog_range_down_pin is not None:
-                    try:
-                        p_min, p_max = map(
-                            float, self.analog_range_down_pin.split(','))
-                    except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_down_pin")
-                    self.buttons.register_adc_button_push(
-                        self.down_pin, p_min, p_max, self.analog_pullup,
-                        self.down_callback)
-                else:
-                    self.buttons.register_button_push(
-                        self.down_pin, self.down_callback)
-            if self.kill_pin:
-                if self.analog_range_kill_pin is not None:
-                    try:
-                        p_min, p_max = map(
-                            float, self.analog_range_kill_pin.split(','))
-                    except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_kill_pin")
-                    self.buttons.register_adc_button_push(
-                        self.kill_pin, p_min, p_max, self.analog_pullup,
-                        self.kill_callback)
-                else:
-                    self.buttons.register_button_push(
-                        self.kill_pin, self.kill_callback)
-        # long click timer
+        buttons = self.printer.load_object(config, "buttons")
+        # Register rotary encoder
+        encoder_pins = config.get('encoder_pins', None)
+        if encoder_pins is not None:
+            try:
+                pin1, pin2 = encoder_pins.split(',')
+            except:
+                raise config.error("Unable to parse encoder_pins")
+            buttons.register_rotary_encoder(pin1.strip(), pin2.strip(),
+                                            self.encoder_cw_callback,
+                                            self.encoder_ccw_callback)
+        self.encoder_fast_rate = config.getfloat('encoder_fast_rate',
+                                                 .030, above=0.)
+        self.last_encoder_cw_eventtime = 0
+        self.last_encoder_ccw_eventtime = 0
+        # Register click button
         self.is_short_click = False
         self.click_timer = self.reactor.register_timer(self.long_click_event)
+        self.register_button(config, 'click_pin', self.click_callback, False)
+        # Register other buttons
+        self.register_button(config, 'back_pin', self.back_callback)
+        self.register_button(config, 'up_pin', self.up_callback)
+        self.register_button(config, 'down_pin', self.down_callback)
+        self.register_button(config, 'kill_pin', self.kill_callback)
 
-    def long_click_event(self, eventtime):
-        self.is_short_click = False
-        self.callback('long_click', eventtime)
-        return self.reactor.NEVER
+    def register_button(self, config, name, callback, push_only=True):
+        pin = config.get(name, None)
+        if pin is None:
+            return
+        buttons = self.printer.lookup_object("buttons")
+        analog_range = config.get('analog_range_' + name, None)
+        if analog_range is None:
+            if push_only:
+                buttons.register_button_push(pin, callback)
+            else:
+                buttons.register_buttons([pin], callback)
+            return
+        try:
+            amin, amax = map(float, analog_range.split(','))
+        except:
+            raise config.error("Unable to parse analog_range_" + name)
+        pullup = config.getfloat('analog_pullup_resistor', 4700., above=0.)
+        if push_only:
+            buttons.register_adc_button_push(pin, amin, amax, pullup, callback)
+        else:
+            buttons.register_adc_button(pin, amin, amax, pullup, callback)
 
-    # buttons & encoder callbacks
+    # Rotary encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_cw_eventtime)
-                     <= self._encoder_fast_rate)
-        self._last_encoder_cw_eventtime = eventtime
+        fast_rate = ((eventtime - self.last_encoder_cw_eventtime)
+                     <= self.encoder_fast_rate)
+        self.last_encoder_cw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_up', eventtime)
         else:
             self.callback('up', eventtime)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_ccw_eventtime)
-                     <= self._encoder_fast_rate)
-        self._last_encoder_ccw_eventtime = eventtime
+        fast_rate = ((eventtime - self.last_encoder_ccw_eventtime)
+                     <= self.encoder_fast_rate)
+        self.last_encoder_ccw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_down', eventtime)
         else:
             self.callback('down', eventtime)
+
+    # Click handling
+    def long_click_event(self, eventtime):
+        self.is_short_click = False
+        self.callback('long_click', eventtime)
+        return self.reactor.NEVER
 
     def click_callback(self, eventtime, state):
         if state:
@@ -157,19 +95,15 @@ class MenuKeys:
             self.reactor.update_timer(self.click_timer, self.reactor.NEVER)
             self.callback('click', eventtime)
 
+    # Other button callbacks
     def back_callback(self, eventtime):
-        if self.back_pin:
-            self.callback('back', eventtime)
+        self.callback('back', eventtime)
 
     def up_callback(self, eventtime):
-        if self.up_pin:
-            self.callback('up', eventtime)
+        self.callback('up', eventtime)
 
     def down_callback(self, eventtime):
-        if self.down_pin:
-            self.callback('down', eventtime)
+        self.callback('down', eventtime)
 
     def kill_callback(self, eventtime):
-        if self.kill_pin:
-            # Emergency Stop
-            self.printer.invoke_shutdown("Shutdown due to kill button!")
+        self.printer.invoke_shutdown("Shutdown due to kill button!")
