@@ -12,27 +12,36 @@ class DisplayStatus:
         self.printer = config.get_printer()
         self.expire_progress = 0.
         self.progress = self.message = None
+        self.remaining = None
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M73', self.cmd_M73)
         gcode.register_command('M117', self.cmd_M117)
     def get_status(self, eventtime):
         progress = self.progress
-        if progress is not None and eventtime > self.expire_progress:
+        remaining = self.remaining
+        if (progress is not None or remaining is not None)
+                                        and eventtime > self.expire_progress:
             idle_timeout = self.printer.lookup_object('idle_timeout')
             idle_timeout_info = idle_timeout.get_status(eventtime)
             if idle_timeout_info['state'] != "Printing":
                 self.progress = progress = None
+                self.remaining = remaining = None
         if progress is None:
             progress = 0.
             sdcard = self.printer.lookup_object('virtual_sdcard', None)
             if sdcard is not None:
                 progress = sdcard.get_status(eventtime)['progress']
-        return { 'progress': progress, 'message': self.message }
+        return { 'progress': progress, 'remaining' : remaining,
+                                                    'message': self.message }
     def cmd_M73(self, params):
         gcode = self.printer.lookup_object('gcode')
-        progress = gcode.get_float('P', params, 0.) / 100.
-        self.progress = min(1., max(0., progress))
+        if 'P' in params:
+            progress = gcode.get_float('P', params, 0.) / 100.
+            self.progress = min(1., max(0., progress))
+        if 'R' in params:
+            remaining = (gcode.get_float('R', params, 0.) / 100.) * -1.
+            self.remaining = min(0., max(-1., remaining))
         curtime = self.printer.get_reactor().monotonic()
         self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, params):
