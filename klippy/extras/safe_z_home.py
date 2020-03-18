@@ -15,12 +15,27 @@ class SafeZHoming:
             raise config.error("Unable to parse home_xy_position in %s" % (
                 config.get_name()))
 
+        self.move_to_previous = config.getboolean('move_to_previous', False)
+
+        park = config.get('park_position', None)
+
+        if park:    
+        
+            try:
+                self.park_position = [float(i) for i in park.split(',')]
+
+            except:
+                raise config.error("Unable to parse park_position in %s" % (
+                            config.get_name()))
+
         self.z_hop = config.getfloat("z_hop", default=0.0)
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
-        self.xy_order = config.get("xy_order", "xy").strip().lower()
-        self.move_to_previous = config.getboolean('move_to_previous', False)
+
+        xy_orders = { "xy" : "xy", "yx" : "yx" }
+        self.xy_order = config.getchoice("xy_order", xy_orders, "xy")
+        
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
@@ -31,12 +46,13 @@ class SafeZHoming:
 
     def cmd_G28(self, params):
         toolhead = self.printer.lookup_object('toolhead')
+        curtime = self.printer.get_reactor().monotonic()
+        kin_status = toolhead.get_kinematics().get_status(curtime)
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
             pos = toolhead.get_position()
-            curtime = self.printer.get_reactor().monotonic()
-            kin_status = toolhead.get_kinematics().get_status(curtime)
+          
             # Check if Z axis is homed or has a known position
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
@@ -59,9 +75,10 @@ class SafeZHoming:
             need_x, need_y, need_z = tuple(axis in params
                                            for axis in ['X', 'Y', 'Z'])
 
-        # Home XY axes if necessary
-        new_params = {}
+       
+        prev_pos = toolhead.get_position()
 
+        # Home XY axes if necessary
         for axis in self.xy_order:
 
             if axis == 'x' and need_x:
@@ -72,27 +89,48 @@ class SafeZHoming:
 
         # Home Z axis if necessary
         if need_z:
+            
             # Move to safe XY homing position
-            pos = toolhead.get_position()
-            prev_x = pos[0]
-            prev_y = pos[1]
+            pos = toolhead.get_position()    
             pos[0] = self.home_x_pos
             pos[1] = self.home_y_pos
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
+
             # Home Z
             self.prev_G28({'Z': '0'})
-            # Perform Z Hop again for pressure-based probes
             pos = toolhead.get_position()
-            if self.z_hop:
-                pos[2] = self.z_hop
-                toolhead.move(pos, self.z_hop_speed)
-            # Move XY back to previous positions
-            if self.move_to_previous:
-                pos[0] = prev_x
-                pos[1] = prev_y
-                toolhead.move(pos, self.speed)
-            self.gcode.reset_last_position()
+            
+            if self.park_position:
+                pos[2] = self.park_position[2]
+
+            if 'z' in kin_status['homed_axes']: 
+                
+                #return z to prev position if previously homed
+                #or re-hop it for pressure based probes
+                if self.move_to_previous:
+                    pos[2] = prev_pos[2]
+                    toolhead.move(pos, self.z_hop_speed)
+
+                elif self.z_hop:
+                    pos[2] = self.z_hop
+                    toolhead.move(pos, self.z_hop_speed)
+
+        #if axis was already homed, and return is specified,
+        #return it to previous position, otherwise park it
+        #at park coordinate if parking is specified
+        if 'x' in kin_status['homed_axes'] and self.move_to_previous:
+                pos[0] = prev_pos[0]
+        elif self.park_position:
+                pos[0] = self.park_position[0]
+                
+        if 'y' in kin_status['homed_axes'] and self.move_to_previous:  
+                pos[1] = prev_pos[1]
+        elif self.park_position:
+                pos[1] = self.park_position[1]
+
+        toolhead.move(pos, self.speed)
+        self.gcode.reset_last_position()
 
     def _perform_z_hop(self, pos):
         toolhead = self.printer.lookup_object('toolhead')
