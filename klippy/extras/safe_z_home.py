@@ -19,8 +19,8 @@ class SafeZHoming:
 
         park = config.get('park_position', None)
 
-        if park:    
-        
+        if park:
+
             try:
                 self.park_position = [float(i) for i in park.split(',')]
 
@@ -35,7 +35,7 @@ class SafeZHoming:
 
         xy_orders = { "xy" : "xy", "yx" : "yx" }
         self.xy_order = config.getchoice("xy_order", xy_orders, "xy")
-        
+
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
@@ -52,7 +52,7 @@ class SafeZHoming:
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
             pos = toolhead.get_position()
-          
+
             # Check if Z axis is homed or has a known position
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
@@ -75,7 +75,7 @@ class SafeZHoming:
             need_x, need_y, need_z = tuple(axis in params
                                            for axis in ['X', 'Y', 'Z'])
 
-       
+
         prev_pos = toolhead.get_position()
 
         # Home XY axes if necessary
@@ -83,15 +83,15 @@ class SafeZHoming:
 
             if axis == 'x' and need_x:
                self.prev_G28('X0')
-        
+
             if axis == 'y' and need_y:
                self.prev_G28('Y0')
 
         # Home Z axis if necessary
         if need_z:
-            
+
             # Move to safe XY homing position
-            pos = toolhead.get_position()    
+            pos = toolhead.get_position()
             pos[0] = self.home_x_pos
             pos[1] = self.home_y_pos
             toolhead.move(pos, self.speed)
@@ -100,12 +100,12 @@ class SafeZHoming:
             # Home Z
             self.prev_G28({'Z': '0'})
             pos = toolhead.get_position()
-            
+
             if self.park_position:
                 pos[2] = self.park_position[2]
 
-            if 'z' in kin_status['homed_axes']: 
-                
+            if 'z' in kin_status['homed_axes']:
+
                 #return z to prev position if previously homed
                 #or re-hop it for pressure based probes
                 if self.move_to_previous:
@@ -123,8 +123,8 @@ class SafeZHoming:
                 pos[0] = prev_pos[0]
         elif self.park_position:
                 pos[0] = self.park_position[0]
-                
-        if 'y' in kin_status['homed_axes'] and self.move_to_previous:  
+
+        if 'y' in kin_status['homed_axes'] and self.move_to_previous:
                 pos[1] = prev_pos[1]
         elif self.park_position:
                 pos[1] = self.park_position[1]
