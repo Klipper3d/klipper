@@ -17,6 +17,7 @@ class SafeZHoming:
 
         self.move_to_previous = config.getboolean('move_to_previous', False)
 
+        self.park_position = None;
         park = config.get('park_position', None)
 
         if park:
