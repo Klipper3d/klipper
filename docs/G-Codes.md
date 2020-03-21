@@ -268,8 +268,8 @@ section is enabled:
   the endstop does not trigger, use -1 or -2 to stop when the endstop
   reports not triggered). If SYNC=0 is specified then the next moves will be done
   in asynchronous mode. SYNC=0 allows to move the manual stepper at the same time
-  than an other stepper. Use SYNC=1 to wait for the end of the current move 
-  and enable the synchronous mode. 
+  than an other stepper. Use SYNC=1 to wait for the end of the current move
+  and enable the synchronous mode.
 
 ## Probe
 
