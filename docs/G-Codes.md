@@ -255,7 +255,7 @@ The following command is available when a "manual_stepper" config
 section is enabled:
 - `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
   [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
-  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]]`: This command will alter
+  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=[0|1]]`: This command will alter
   the state of the stepper. Use the ENABLE parameter to enable/disable
   the stepper. Use the SET_POSITION parameter to force the stepper to
   think it is at the given position. Use the MOVE parameter to request
@@ -266,7 +266,10 @@ section is enabled:
   then the move will end early should the endstop report as triggered
   (use STOP_ON_ENDSTOP=2 to complete the move without error even if
   the endstop does not trigger, use -1 or -2 to stop when the endstop
-  reports not triggered).
+  reports not triggered). If SYNC=0 is specified then the move will done
+  in asynchronous mode. SYNC=0 allows to move the manual stepper at the same time
+  than an other stepper. Use SYNC=1 to wait for the end of the current move 
+  and enable the synchronous mode.
 
 ## Probe
 
