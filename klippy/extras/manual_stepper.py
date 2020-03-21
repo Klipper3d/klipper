@@ -37,6 +37,8 @@ class ManualStepper:
         self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                         stepper_name, self.cmd_MANUAL_STEPPER,
                                         desc=self.cmd_MANUAL_STEPPER_help)
+        # sync state
+        self.sync_state = 1
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -73,7 +75,12 @@ class ManualStepper:
         self.trapq_free_moves(self.trapq, self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_kinematic_activity(self.next_cmd_time)
-        self.sync_print_time()
+        if self.sync_state:
+            self.sync_print_time()
+    def _sync(self,enable):
+        self.sync_state = enable
+        if enable:
+            self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
@@ -92,6 +99,7 @@ class ManualStepper:
                 min_step_dist / speed, triggered=triggered)
         # Issue move
         self.do_move(movepos, speed, accel)
+        self.sync_print_time()
         # Wait for endstops to trigger
         error = None
         for mcu_endstop, name in endstops:
@@ -115,6 +123,8 @@ class ManualStepper:
         if 'SET_POSITION' in params:
             setpos = self.gcode.get_float('SET_POSITION', params)
             self.do_set_position(setpos)
+        if 'SYNC' in params:
+            self._sync(self.gcode.get_int('SYNC', params))
         homing_move = self.gcode.get_int('STOP_ON_ENDSTOP', params, 0)
         speed = self.gcode.get_float('SPEED', params, self.velocity, above=0.)
         accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
