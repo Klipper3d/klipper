@@ -197,20 +197,16 @@ class PrinterExtruder:
     def cmd_SET_E_STEP_DISTANCE(self, params):
         gcode = self.printer.lookup_object('gcode')
         toolhead = self.printer.lookup_object('toolhead')
-        dist = gcode.get_float('DISTANCE', params, 0.)
-        old_step_dist = self.stepper.get_step_dist()
-        if abs((dist - old_step_dist)/old_step_dist) > 0.25:
-            gcode.respond_info("Failed: step change is outside of"
-                               " safe margin. %f -> %f" %
-                                            (old_step_dist, dist))
+        if 'DISTANCE' not in params:
+            step_dist = self.stepper.get_step_dist()
+            gcode.respond_info("%s E step distance: %f" % (self.name, step_dist))
         else:
-            self.stepper.set_step_dist(dist)
+            dist = gcode.get_float('DISTANCE', params, 0.)
+            toolhead.flush_step_generation()
+            self.stepper.set_step_dist(self.sk_extruder, dist)
             step_dist = self.stepper.get_step_dist()
             gcode.respond_info("%s E step distance set: %f" %
                                                 (self.name, step_dist))
-            self.stepper.set_max_jerk(9999999.9, 9999999.9)
-            self.stepper.set_stepper_kinematics(self.sk_extruder)
-            self.stepper.set_trapq(self.trapq)
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, params):
         gcode = self.printer.lookup_object('gcode')
