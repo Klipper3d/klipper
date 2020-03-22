@@ -144,10 +144,12 @@ class Printer:
         except msgproto.error as e:
             logging.exception("Protocol error")
             self._set_state("%s%s" % (str(e), message_protocol_error))
+            util.dump_mcu_build()
             return
         except mcu.error as e:
             logging.exception("MCU error during connect")
             self._set_state("%s%s" % (str(e), message_mcu_connect_error))
+            util.dump_mcu_build()
             return
         except Exception as e:
             logging.exception("Unhandled exception during connect")
