@@ -72,9 +72,6 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
-        gcode.register_mux_command("GET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
-                                   self.name, self.cmd_GET_E_STEP_DISTANCE,
-                                   desc=self.cmd_GET_E_STEP_DISTANCE_help)
         gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
