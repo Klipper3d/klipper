@@ -50,6 +50,13 @@ between moves. This is likely to make blobbing worse, not better.
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
 
+# Do not use "extra restart distance" on Simplify3d
+
+This setting can cause dramatic changes to extrusion rates which can
+trigger Klipper's maximum extrusion cross-section check. Consider
+using Klipper's [pressure advance](Pressure_Advance.md) or the regular
+Simplify3d retract setting instead.
+
 # Disable "PreloadVE" on KISSlicer
 
 If using KISSlicer slicing software then set "PreloadVE" to
