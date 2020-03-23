@@ -16,6 +16,7 @@ def get_os_stats(eventtime):
         for line in data.split('\n'):
             if line.startswith("MemAvailable:"):
                 msg = "%s memavail=%s" % (msg, line.split()[1])
+                break
     except:
         pass
     return (False, msg)
