@@ -255,7 +255,7 @@ The following command is available when a "manual_stepper" config
 section is enabled:
 - `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
   [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
-  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]`: This command
+  [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]`: This command
   will alter the state of the stepper. Use the ENABLE parameter to
   enable/disable the stepper. Use the SET_POSITION parameter to force
   the stepper to think it is at the given position. Use the MOVE
