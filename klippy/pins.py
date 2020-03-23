@@ -144,6 +144,55 @@ def get_aliases_beaglebone(mcu):
     return beagleboneblack_mappings
 
 
+
+######################################################################
+# A64/AR100 mappings
+######################################################################
+
+ar100_mappings = {
+    'PE0': '128',
+    'PE1': '129',
+    'PE2': '130',
+    'PE3': '131',
+    'PE4': '132',
+    'PE5': '133',
+    'PE6': '134',
+    'PE7': '135',
+    'PE8': '136',
+    'PE9': '137',
+    'PE10': '138',
+    'PE11': '139',
+    'PE12': '140',
+    'PE13': '141',
+    'PE14': '142',
+    'PE15': '143',
+    'PF0': '160',
+    'PF1': '161',
+    'PF2': '162',
+    'PF3': '163',
+    'PF4': '164',
+    'PF5': '165',
+    'PL2': '2',
+    'PL3': '3',
+    'PL4': '4',
+    'PL5': '5',
+    'PL6': '6',
+    'PL7': '7',
+    'PG0': '192',    # OC Alert
+    'PG1': '193',    # OC RESET
+    'PG2': '194',    # HP-EN
+    'PG7': '199',    # EN 12V
+    'PG10': '202',    # EN Thermistors
+    'PG11': '203',    # EN Endstops
+}
+
+
+def get_aliases_ar100(mcu):
+  if mcu != 'ar100' and mcu != 'linux':
+    raise error("AR100 aliases not supported on mcu '%s'" % (mcu, ))
+  return ar100_mappings
+
+
 ######################################################################
 # Command translation
 ######################################################################
@@ -176,6 +225,8 @@ class PinResolver:
             pin_mapping = get_aliases_arduino(mcu_type)
         elif mapping_name == 'beaglebone':
             pin_mapping = get_aliases_beaglebone(mcu_type)
+        elif mapping_name == 'ar100':
+            pin_mapping = get_aliases_ar100(mcu_type)
         else:
             raise error("Unknown pin alias mapping '%s'" % (mapping_name,))
         for alias, pin in pin_mapping.items():

@@ -61,6 +61,7 @@ class MCU_TMC_uart_bitbang:
         self.pullup = rx_pin_params['pullup']
         self.rx_pin = rx_pin_params['pin']
         self.tx_pin = tx_pin_params['pin']
+        self.tty = tty
         self.oid = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.analog_mux = None
@@ -72,9 +73,11 @@ class MCU_TMC_uart_bitbang:
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
         bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
-        self.mcu.add_config_cmd(
-            "config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
-            % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
+        if self.tty:
+            self.mcu.add_config_cmd("config_tmcuart_tty oid=%d tty=%s" % (self.oid, self.tty))
+        else:
+            self.mcu.add_config_cmd("config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d" %
+                (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=self.cmd_queue)
     def register_instance(self, rx_pin_params, tx_pin_params,
@@ -126,19 +129,21 @@ class MCU_TMC_uart_bitbang:
         msg = bytearray([sync, addr, reg, (val >> 24) & 0xff,
                          (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff])
         msg.append(self._calc_crc8(msg))
-        return self._add_serial_bits(msg)
+        return msg #self._add_serial_bits(msg)
     def _decode_read(self, reg, data):
         # Extract a uart read response message
-        if len(data) != 10:
+        if len(data) != 8:
             return None
+        val = ord(data[6]) | ord(data[5]) << 8 | ord(data[4]) << 16 | ord(data[3]) << 24
+
         # Convert data into a long integer for easy manipulation
-        mval = pos = 0
-        for d in bytearray(data):
-            mval |= d << pos
-            pos += 8
+        #mval = pos = 0
+        #for d in bytearray(data):
+        #    mval |= d << pos
+        #    pos += 8
         # Extract register value
-        val = ((((mval >> 31) & 0xff) << 24) | (((mval >> 41) & 0xff) << 16)
-               | (((mval >> 51) & 0xff) << 8) | ((mval >> 61) & 0xff))
+        #val = ((((mval >> 31) & 0xff) << 24) | (((mval >> 41) & 0xff) << 16)
+        #       | (((mval >> 51) & 0xff) << 8) | ((mval >> 61) & 0xff))
         # Verify start/stop bits and crc
         encoded_data = self._encode_write(0x05, 0xff, reg, val)
         if data != encoded_data:
@@ -149,7 +154,7 @@ class MCU_TMC_uart_bitbang:
             self.analog_mux.activate(instance_id)
         msg = self._encode_read(0xf5, addr, reg)
         params = self.tmcuart_send_cmd.send_with_response(
-            [self.oid, msg, 10], 'tmcuart_response', self.oid)
+            [self.oid, msg, 8], 'tmcuart_response', self.oid)
         return self._decode_read(reg, params['read'])
     def reg_write(self, instance_id, addr, reg, val, print_time=None):
         minclock = 0
@@ -176,13 +181,15 @@ def lookup_tmc_uart_bitbang(config, max_addr):
         raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
     select_pins_desc = config.get('select_pins', None)
     addr = config.getint('uart_address', 0, minval=0, maxval=max_addr)
+    tty = config.getint('uart_tty', 1)
+    logging.info("TTY=%i" % (tty))
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:
         mcu_uart = MCU_TMC_uart_bitbang(rx_pin_params, tx_pin_params,
-                                        select_pins_desc)
+                                        select_pins_desc, tty)
         rx_pin_params['class'] = mcu_uart
     instance_id = mcu_uart.register_instance(rx_pin_params, tx_pin_params,
-                                             select_pins_desc, addr)
+                                             select_pins_desc, addr, tty)
     return instance_id, addr, mcu_uart
 
 # Helper code for communicating via TMC uart

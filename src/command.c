@@ -12,6 +12,7 @@
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
 #include "sched.h" // sched_is_shutdown
+#include <stdio.h>
 
 static uint8_t next_sequence = MESSAGE_DEST;
 
@@ -78,7 +79,9 @@ command_parsef(uint8_t *p, uint8_t *maxend
             if (p + len > maxend)
                 goto error;
             *args++ = len;
-            *args++ = (size_t)p;
+            size_t addr = (size_t)p;
+            *args++ = (uint32_t) (addr & 0xFFFFFFFF);
+            *args++ = (uint32_t) (addr >> 32);
             p += len;
             break;
         }
@@ -90,6 +93,7 @@ command_parsef(uint8_t *p, uint8_t *maxend
 error:
     shutdown("Command parser error");
 }
+
 
 // Encode a message
 uint_fast8_t
@@ -295,7 +299,7 @@ command_dispatch(uint8_t *buf, uint_fast8_t msglen)
     while (p < msgend) {
         uint_fast8_t cmdid = *p++;
         const struct command_parser *cp = command_lookup_parser(cmdid);
-        uint32_t args[READP(cp->num_args)];
+        uint32_t args[READP(cp->num_args+1)];
         p = command_parsef(p, msgend, cp, args);
         if (sched_is_shutdown() && !(READP(cp->flags) & HF_IN_SHUTDOWN)) {
             sched_report_shutdown();

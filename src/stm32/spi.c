@@ -30,7 +30,9 @@ DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
 #define SPI_FUNCTION GPIO_FUNCTION(CONFIG_MACH_STM32F0 ? 0 : 5)
 
 static const struct spi_info spi_bus[] = {
+#if !CONFIG_MACH_STM32F031
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION },
+#endif
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION },
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
