@@ -252,6 +252,13 @@ class PrinterRail:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.get_name(),))
+        elif ((self.homing_positive_dir
+               and self.position_endstop == self.position_min)
+              or (not self.homing_positive_dir
+                  and self.position_endstop == self.position_max)):
+            raise config.error(
+                "Invalid homing_positive_dir / position_endstop in '%s'"
+                % (config.get_name(),))
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
