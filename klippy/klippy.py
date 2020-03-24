@@ -190,6 +190,7 @@ class Printer:
     def invoke_shutdown(self, msg):
         if self.is_shutdown:
             return
+        logging.error("Transition to shutdown state: %s", msg)
         self.is_shutdown = True
         self._set_state("%s%s" % (msg, message_shutdown))
         for cb in self.event_handlers.get("klippy:shutdown", []):
