@@ -188,11 +188,6 @@ class PrinterExtruder:
                    pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcode.respond_info(msg, log=False)
-    cmd_GET_E_STEP_DISTANCE_help = "Get extruder step distance"
-    def cmd_GET_E_STEP_DISTANCE(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        step_dist = self.stepper.get_step_dist()
-        gcode.respond_info("%s E step distance: %f" % (self.name, step_dist))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, params):
         gcode = self.printer.lookup_object('gcode')
@@ -200,12 +195,12 @@ class PrinterExtruder:
         if 'DISTANCE' not in params:
             step_dist = self.stepper.get_step_dist()
             gcode.respond_info("%s E step distance: %f" % (self.name, step_dist))
-        else:
-            dist = gcode.get_float('DISTANCE', params, 0.)
-            toolhead.flush_step_generation()
-            self.stepper.set_step_dist(self.sk_extruder, dist)
-            step_dist = self.stepper.get_step_dist()
-            gcode.respond_info("%s E step distance set: %f" %
+            return
+        dist = gcode.get_float('DISTANCE', params, 0.)
+        toolhead.flush_step_generation()
+        self.stepper.set_step_dist(self.sk_extruder, dist)
+        step_dist = self.stepper.get_step_dist()
+        gcode.respond_info("%s E step distance set: %f" %
                                                 (self.name, step_dist))
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, params):
