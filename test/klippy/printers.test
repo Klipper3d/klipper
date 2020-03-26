@@ -114,6 +114,7 @@ DICTIONARY stm32f103-serial.dict
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-nano.cfg
+CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
