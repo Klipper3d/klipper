@@ -20,7 +20,7 @@ class DisplayStatus:
     def get_status(self, eventtime):
         progress = self.progress
         remaining = self.remaining
-        if (progress is not None or remaining is not None) and eventtime > self.expire_progress:
+        if progress is not None and eventtime > self.expire_progress:
             idle_timeout = self.printer.lookup_object('idle_timeout')
             idle_timeout_info = idle_timeout.get_status(eventtime)
             if idle_timeout_info['state'] != "Printing":
