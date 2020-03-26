@@ -36,14 +36,14 @@ class DisplayStatus:
         return { 'progress': progress, 'remaining' : remaining, 'message': self.message }
     def cmd_M73(self, params):
         gcode = self.printer.lookup_object('gcode')
-        if 'P' in params:
-            progress = gcode.get_float('P', params, 0.) / 100.
-            self.progress = min(1., max(0., progress))
-            gcode.respond_info("P = %f" % (self.progress))
+        if 'P' not in params:
+            gcode.respond_info("PM73 failed. P parameter required")
+            return
+        progress = gcode.get_float('P', params, 0.) / 100.
+        self.progress = min(1., max(0., progress))
         if 'R' in params:
-            remaining = (gcode.get_float('R', params, 0.) / 100.) * -1.
-            self.remaining = min(0., max(-1., remaining))
-            gcode.respond_info("R = %f" % (self.remaining))
+            remaining = (gcode.get_int('R', params, 0))
+            self.remaining = remaining
         curtime = self.printer.get_reactor().monotonic()
         self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, params):
