@@ -165,6 +165,11 @@ armcm_main(void)
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;
 
+    // Reset peripheral clocks (for some bootloaders that don't)
+    RCC->AHBENR = 0x14;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
+
     // Setup clocks
     clock_setup();
 

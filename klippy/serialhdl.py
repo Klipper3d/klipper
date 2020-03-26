@@ -80,7 +80,7 @@ class SerialReader:
         start_time = self.reactor.monotonic()
         while 1:
             connect_time = self.reactor.monotonic()
-            if connect_time > start_time + 150.:
+            if connect_time > start_time + 90.:
                 raise error("Unable to connect")
             try:
                 if self.baud:

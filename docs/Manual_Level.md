@@ -11,9 +11,11 @@ limiting factor. If one is using Trinamic stepper motor drivers then
 consider enabling [endstop phase](Endstop_Phase.md) detection to
 improve the accuracy of the switch.
 
-To perform a Z endstop calibration, home the printer, move the head to
-a position near the center of the bed, navigate to the OctoPrint
-terminal tab, and run:
+To perform a Z endstop calibration, home the printer, command the head
+to move to a Z position that is at least five millimeters above the
+bed (if it is not already), command the head to move to an XY position
+near the center of the bed, then navigate to the OctoPrint terminal
+tab and run:
 ```
 Z_ENDSTOP_CALIBRATE
 ```

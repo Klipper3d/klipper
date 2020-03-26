@@ -444,6 +444,10 @@ class MCU:
         if params['#name'] == 'is_shutdown':
             prefix = "Previous MCU '%s' shutdown: " % (self._name,)
         self._printer.invoke_async_shutdown(prefix + msg + error_help(msg))
+    def _handle_starting(self, params):
+        if not self._is_shutdown:
+            self._printer.invoke_async_shutdown("MCU '%s' spontaneous restart"
+                                                % (self._name,))
     # Connection phase
     def _check_restart(self, reason):
         start_reason = self._printer.get_start_args().get("start_reason")
@@ -503,15 +507,16 @@ class MCU:
         # Calculate config CRC
         config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
+        if prev_crc is not None and config_crc != prev_crc:
+            self._check_restart("CRC mismatch")
+            raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit config messages (if needed)
+        self.register_response(self._handle_starting, 'starting')
         if prev_crc is None:
             logging.info("Sending MCU '%s' printer configuration...",
                          self._name)
             for c in self._config_cmds:
                 self._serial.send(c)
-        elif config_crc != prev_crc:
-            self._check_restart("CRC mismatch")
-            raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit init messages
         for c in self._init_cmds:
             self._serial.send(c)

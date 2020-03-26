@@ -82,7 +82,6 @@ class PrinterLCD:
         self.reactor = self.printer.get_reactor()
         # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
-        self.lcd_type = config.get('lcd_type')
         # Load menu and display_status
         self.menu = None
         name = config.get_name()
@@ -100,8 +99,7 @@ class PrinterLCD:
         dgroup = config.get('display_group', dgroup)
         self.show_data_group = self.display_data_groups.get(dgroup)
         if self.show_data_group is None:
-            raise config.error("Unknown display_data group '%s'"
-                               % (dgroup,))
+            raise config.error("Unknown display_data group '%s'" % (dgroup,))
         # Screen updating
         self.glyph_helpers = { 'animated_bed': self.animate_bed,
                                'animated_fan': self.animate_fan }

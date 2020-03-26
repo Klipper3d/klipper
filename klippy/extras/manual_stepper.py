@@ -58,7 +58,7 @@ class ManualStepper:
         self.sync_print_time()
     def do_set_position(self, setpos):
         self.rail.set_position([setpos, 0., 0.])
-    def do_move(self, movepos, speed, accel):
+    def do_move(self, movepos, speed, accel, sync=True):
         self.sync_print_time()
         cp = self.rail.get_commanded_position()
         dist = movepos - cp
@@ -73,10 +73,15 @@ class ManualStepper:
         self.trapq_free_moves(self.trapq, self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_kinematic_activity(self.next_cmd_time)
-        self.sync_print_time()
+        if sync:
+            self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
         if not self.can_home:
             raise self.gcode.error("No endstop for this manual stepper")
+        # Notify start of homing/probing move
+        endstops = self.rail.get_endstops()
+        self.printer.send_event("homing:homing_move_begin",
+                                [es for es, name in endstops])
         # Start endstop checking
         self.sync_print_time()
         endstops = self.rail.get_endstops()
@@ -94,6 +99,13 @@ class ManualStepper:
             did_trigger = mcu_endstop.home_wait(self.next_cmd_time)
             if not did_trigger and check_trigger and error is None:
                 error = "Failed to home %s: Timeout during homing" % (name,)
+        # Signal homing/probing move complete
+        try:
+            self.printer.send_event("homing:homing_move_end",
+                                    [es for es, name in endstops])
+        except CommandError as e:
+            if error is None:
+                error = str(e)
         self.sync_print_time()
         if error is not None:
             raise homing.CommandError(error)
@@ -104,6 +116,7 @@ class ManualStepper:
         if 'SET_POSITION' in params:
             setpos = self.gcode.get_float('SET_POSITION', params)
             self.do_set_position(setpos)
+        sync = self.gcode.get_int('SYNC', params, 1)
         homing_move = self.gcode.get_int('STOP_ON_ENDSTOP', params, 0)
         speed = self.gcode.get_float('SPEED', params, self.velocity, above=0.)
         accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
@@ -113,7 +126,9 @@ class ManualStepper:
                                 homing_move > 0, abs(homing_move) == 1)
         elif 'MOVE' in params:
             movepos = self.gcode.get_float('MOVE', params)
-            self.do_move(movepos, speed, accel)
+            self.do_move(movepos, speed, accel, sync)
+        elif 'SYNC' in params and sync:
+            self.sync_print_time()
 
 def load_config_prefix(config):
     return ManualStepper(config)
