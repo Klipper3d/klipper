@@ -113,6 +113,7 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 DICTIONARY stm32f103-serial.dict
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
+CONFIG ../../config/generic-mks-robin-nano.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
