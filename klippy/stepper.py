@@ -94,10 +94,9 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
-    def set_step_dist(self, sk, dist):
+    def set_step_dist(self, dist):
         self._step_dist = dist
-        self.set_stepper_kinematics(sk)
-        logging.info("%s manually set to =%.6f", (self._name, dist))
+        self.set_stepper_kinematics(self._stepper_kinematics)
     def is_dir_inverted(self):
         return self._invert_dir
     def calc_position_from_coord(self, coord):

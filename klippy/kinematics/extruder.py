@@ -194,14 +194,14 @@ class PrinterExtruder:
         toolhead = self.printer.lookup_object('toolhead')
         if 'DISTANCE' not in params:
             step_dist = self.stepper.get_step_dist()
-            gcode.respond_info("%s E step distance: %f" % (self.name, step_dist))
+            gcode.respond_info("Extruder '%s' step distance is %0.6f"
+                               % (self.name, step_dist))
             return
         dist = gcode.get_float('DISTANCE', params, 0.)
         toolhead.flush_step_generation()
-        self.stepper.set_step_dist(self.sk_extruder, dist)
-        step_dist = self.stepper.get_step_dist()
-        gcode.respond_info("%s E step distance set: %f" %
-                                                (self.name, step_dist))
+        self.stepper.set_step_dist(dist)
+        gcode.respond_info("Extruder '%s' step distance set to %0.6f"
+                           % (self.name, dist))
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, params):
         gcode = self.printer.lookup_object('gcode')
