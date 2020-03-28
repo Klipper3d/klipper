@@ -197,7 +197,7 @@ class PrinterExtruder:
             gcode.respond_info("Extruder '%s' step distance is %0.6f"
                                % (self.name, step_dist))
             return
-        dist = gcode.get_float('DISTANCE', params, 0.)
+        dist = gcode.get_float('DISTANCE', params, above=0.)
         toolhead.flush_step_generation()
         self.stepper.set_step_dist(dist)
         gcode.respond_info("Extruder '%s' step distance set to %0.6f"
