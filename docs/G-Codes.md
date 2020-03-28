@@ -162,6 +162,12 @@ The following standard commands are supported:
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
+- `SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>] [DISTANCE=<distance>]`:
+  Set a new value for the provided extruder's step_distance. Value is
+  not retained on Klipper reset. Use with caution, small changes can
+  result in excessive pressure between extruder and hot end. Do proper
+  calibration steps with filament before use. If 'DISTANCE' value is
+  not included command will return current step distance.
 - `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
   disable only the given stepper. This is a diagnostic and debugging
   tool and must be used with care. Disabling an axis motor does not
