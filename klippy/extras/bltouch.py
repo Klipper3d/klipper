@@ -127,9 +127,8 @@ class BLTouchEndstopWrapper:
                 raise homing.EndstopError("BLTouch failed to raise probe")
             msg = "Failed to verify BLTouch probe is raised; retrying."
             self.gcode.respond_info(msg)
-            self.next_cmd_time += RETRY_RESET_TIME
             self.sync_mcu_print_time()
-            self.send_cmd('reset')
+            self.send_cmd('reset', duration=RETRY_RESET_TIME)
     def lower_probe(self):
         self.test_sensor()
         self.sync_print_time()
