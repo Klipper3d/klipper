@@ -33,7 +33,8 @@ class DisplayStatus:
                 progress = sdcard.get_status(eventtime)['progress']
         if remaining is None:
             remaining = 0.
-        return { 'progress': progress, 'remaining' : remaining, 'message': self.message }
+        return { 'progress': progress, 'remaining' : remaining,
+                                            'message': self.message }
     def cmd_M73(self, params):
         gcode = self.printer.lookup_object('gcode')
         if 'P' not in params:
