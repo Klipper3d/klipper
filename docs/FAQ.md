@@ -256,46 +256,11 @@ configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
-Short answer: Do not use the TMC2208 driver in "standalone mode" with
-Klipper! Do not use the TMC2224 driver in "stealthchop standalone
-mode" with Klipper!
-
-Long answer: Klipper implements very precise timing.
-
-![tmc2208](img/tmc2208.svg.png)
-
-In the above picture, if Klipper is requested to move along the red
-line and if each black line represents the nominal location to step a
-stepper, then in the middle of that movement Klipper will arrange to
-take a step, change the step direction, and then step back. Klipper
-can perform this step, direction change, and step back in a very small
-amount of time.
-
-It is our current understanding that the TMC2208 and TMC2224 will
-react poorly to this when they are in "stealthchop" mode. (It is not
-believed any other TMC drivers are impacted.) It is believed that when
-the driver sees the two step requests in a small time frame that it
-dramatically increases current in anticipation of high acceleration.
-That high current can trip the driver's internal "over current"
-detection which causes the driver to disable itself.
-
-This pattern of steps can occur on all stepper motors and on all
-robot kinematics.
-
-The TMC2208 and TMC2224 do work well with Klipper when run-time
-configuration mode is used (that is, when a wire is routed from the
-micro-controller to the PDN-UART pin and the printer config file has a
-corresponding [tmc2208] config section). When using run-time
-configuration, either configure the drivers to use "spreadcycle mode"
-or configure them to use "stealthchop mode" with a reasonable
-"stealthchop threshold". If one wishes to exclusively use
-"stealthchop" mode with run-time UART configuration then make sure the
-stealthchop_threshold is no more than about 10% greater than the
-maximum velocity of the given axis. It is speculated that with a
-reasonable stealthchop threshold, then if Klipper sends a "step,
-direction change, step back" sequence, the driver will briefly
-transition from stealthchop mode, to spreadcycle mode, and back to
-stealthchop mode, which should be harmless.
+If using the TMC2208 (or TMC2224) driver in "standalone mode" then
+make sure to use the
+[latest version of Klipper](#how-do-i-upgrade-to-the-latest-software). A
+workaround for a TMC2208 "stealthchop" driver problem was added to
+Klipper in mid-March of 2020.
 
 ### I keep getting random "Lost communication with MCU" errors
 
