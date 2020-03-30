@@ -146,15 +146,22 @@ class BLTouchEndstopWrapper:
             return
         # Raise the bltouch probe and test if probe is raised
         self.sync_print_time()
-        check_start_time = self.send_cmd('reset', duration=self.pin_move_time)
-        check_end_time = self.send_cmd('touch_mode')
-        self.send_cmd(None)
-        success = self.verify_state(check_start_time, check_end_time, True)
-        if not success:
-            raise homing.EndstopError("BLTouch failed to verify sensor state")
-        # Test was successful
-        self.next_test_time = check_end_time + TEST_TIME
-        self.sync_print_time()
+        for retry in range(3):
+            check_start_time = self.send_cmd('pin_up',
+                                             duration=self.pin_move_time)
+            self.send_cmd('touch_mode')
+            check_end_time = self.send_cmd(None)
+            success = self.verify_state(check_start_time, check_end_time, True)
+            self.sync_print_time()
+            if success:
+                # The "bltouch connection" test completed successfully
+                self.next_test_time = check_end_time + TEST_TIME
+                return
+            msg = "BLTouch failed to verify sensor state"
+            if retry >= 2:
+                raise homing.EndstopError(msg)
+            self.gcode.respond_info(msg + '; retrying.')
+            self.send_cmd('reset', duration=RETRY_RESET_TIME)
     def multi_probe_begin(self):
         if self.stow_on_each_sample:
             return
