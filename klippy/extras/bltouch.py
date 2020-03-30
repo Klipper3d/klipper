@@ -163,6 +163,7 @@ class BLTouchEndstopWrapper:
         if self.stow_on_each_sample:
             return
         self.raise_probe()
+        self.sync_print_time()
         self.multi = 'OFF'
     def probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
