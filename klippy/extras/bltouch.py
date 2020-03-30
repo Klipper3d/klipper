@@ -36,7 +36,7 @@ class BLTouchEndstopWrapper:
         self.mcu_pwm = ppins.setup_pin('pwm', config.get('control_pin'))
         self.mcu_pwm.setup_max_duration(0.)
         self.mcu_pwm.setup_cycle_time(SIGNAL_PERIOD)
-        self.next_cmd_time = 0.
+        self.next_cmd_time = self.action_end_time = 0.
         # Create an "endstop" object to handle the sensor pin
         pin = config.get('sensor_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
@@ -89,10 +89,10 @@ class BLTouchEndstopWrapper:
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
-        if self.next_cmd_time > print_time:
-            toolhead.dwell(self.next_cmd_time - print_time)
-        else:
+        if print_time > self.next_cmd_time:
             self.next_cmd_time = print_time
+        elif self.action_end_time > print_time:
+            toolhead.dwell(self.action_end_time - print_time)
     def send_cmd(self, cmd, duration=MIN_CMD_TIME):
         self.mcu_pwm.set_pwm(self.next_cmd_time, Commands[cmd] / SIGNAL_PERIOD)
         # Translate duration to ticks to avoid any secondary mcu clock skew
@@ -100,6 +100,8 @@ class BLTouchEndstopWrapper:
         cmd_clock = mcu.print_time_to_clock(self.next_cmd_time)
         cmd_clock += mcu.seconds_to_clock(max(duration, MIN_CMD_TIME))
         self.next_cmd_time = mcu.clock_to_print_time(cmd_clock)
+        if cmd is not None:
+            self.action_end_time = self.next_cmd_time
         return self.next_cmd_time
     def verify_state(self, check_start_time, check_end_time, triggered):
         # Perform endstop check to verify bltouch reports desired state
