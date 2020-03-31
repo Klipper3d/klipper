@@ -179,7 +179,7 @@ class TMCCurrentHelper:
         if 'CURRENT' in params:
             dumpinfo = False
             self.run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
+                'CURRENT', params, minval=self.hold_current, maxval=MAX_CURRENT)
         else:
             run_current = self._calc_current_from_field("IRUN")
         if dumpinfo:

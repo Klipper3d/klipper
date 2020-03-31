@@ -235,10 +235,13 @@ class TMC5160CurrentHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        run_current = config.getfloat('run_current',
-                                      above=0., maxval=MAX_CURRENT)
-        hold_current = config.getfloat('hold_current', run_current,
-                                       above=0., maxval=MAX_CURRENT)
+        self.run_current = config.getfloat('run_current',
+                                           above=0., maxval=MAX_CURRENT)
+        self.hold_current = config.getfloat('hold_current', self.run_current,
+                                           above=0., maxval=MAX_CURRENT)
+        self.homing_current = config.getfloat('homing_current',
+                                       self.run_current, above=0.,
+                                       maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
         self._set_globalscaler(run_current)
         irun, ihold = self._calc_current(run_current, hold_current)
@@ -275,30 +278,54 @@ class TMC5160CurrentHelper:
         current = (globalscaler * (bits + 1) * VREF
                    / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
         return round(current, 2)
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'HOLDCURRENT' in params:
-            hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
-        else:
-            hold_current = self._calc_current_from_field("IHOLD")
-        if 'CURRENT' in params:
-            run_current = gcode.get_float(
-                'CURRENT', params, minval=0., maxval=MAX_CURRENT)
-        else:
-            run_current = self._calc_current_from_field("IRUN")
-        if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
-            # Query only
-            gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                               % (run_current, hold_current))
-            return
+    def get_current(self):
+        run_current = self._calc_current_from_field("IRUN")
+        hold_current= self._calc_current_from_field("IHOLD")
+        return [
+            run_current,
+            hold_current,
+            self.homing_current,
+            self.run_current,
+            self.hold_current
+            ]
+    def set_current(self, run_current, hold_current):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
         val = self.fields.set_field("IRUN", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
-
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
+    def cmd_SET_TMC_CURRENT(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        dumpinfo = True
+        if 'HOMINGCURRENT' in params:
+            dumpinfo = False
+            self.homing_current = gcode.get_float(
+                'HOMINGCURRENT', params, above=0., maxval=MAX_CURRENT)
+        if 'HOLDCURRENT' in params:
+            dumpinfo = False
+            self.hold_current = gcode.get_float(
+                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
+        else:
+            hold_current = self._calc_current_from_field("IHOLD")
+        if 'CURRENT' in params:
+            dumpinfo = False
+            self.run_current = gcode.get_float(
+                'CURRENT', params, minval=self.hold_current, maxval=MAX_CURRENT)
+        else:
+            run_current = self._calc_current_from_field("IRUN")
+        if dumpinfo:
+            # Query only
+            gcode.respond_info("Run Current: %0.2fA "\
+                               "Hold Current: %0.2fA "\
+                               "Homing Current: %0.2fA"\
+                               % (
+                                   run_current,
+                                   hold_current,
+                                   self.homing_current
+                                   ))
+            return
+        self.set_current(self.run_current, self.hold_current)
 
 ######################################################################
 # TMC5160 printer object
