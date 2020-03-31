@@ -68,10 +68,10 @@ function to be called at the requested clock time. Timer interrupts
 are initially handled in an architecture specific interrupt handler
 (eg, **src/avr/timer.c**) which calls sched_timer_dispatch() located
 in **src/sched.c**. The timer interrupt leads to execution of schedule
-timer functions. Timer functions always run with interrupts
-disabled. The timer functions should always complete within a few
-micro-seconds. At completion of the timer event, the function may
-choose to reschedule itself.
+timer functions. Timer functions always run with interrupts disabled.
+The timer functions should always complete within a few micro-seconds.
+At completion of the timer event, the function may choose to
+reschedule itself.
 
 In the event an error is detected the code can invoke shutdown() (a
 macro which calls sched_shutdown() located in **src/sched.c**).
@@ -188,8 +188,8 @@ provides further information on the mechanics of moves.
   with head movement even though the code is kept separate.
 
 * After the iterative solver calculates the step times they are added
-  to an array: `itersolve_gen_steps_range() -> queue_append()` (in
-  klippy/chelper/stepcompress.c). The array (struct
+  to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
+  (in klippy/chelper/stepcompress.c). The array (struct
   stepcompress.queue) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
   counter" value directly corresponds to the micro-controller's
@@ -220,11 +220,11 @@ provides further information on the mechanics of moves.
   runs the following, 'count' times: `do_step(); next_wake_time =
   last_wake_time + interval; interval += add;`
 
-The above may seem like a lot of complexity to execute a
-movement. However, the only really interesting parts are in the
-ToolHead and kinematic classes. It's this part of the code which
-specifies the movements and their timings. The remaining parts of the
-processing is mostly just communication and plumbing.
+The above may seem like a lot of complexity to execute a movement.
+However, the only really interesting parts are in the ToolHead and
+kinematic classes. It's this part of the code which specifies the
+movements and their timings. The remaining parts of the processing is
+mostly just communication and plumbing.
 
 Adding a host module
 ====================
@@ -338,9 +338,9 @@ Useful steps:
    operations.
 5. Other methods. Implement the `check_move()`, `get_status()`,
    `get_steppers()`, `home()`, and `set_position()` methods. These
-   functions are typically used to provide kinematic specific
-   checks. However, at the start of development one can use
-   boiler-plate code here.
+   functions are typically used to provide kinematic specific checks.
+   However, at the start of development one can use boiler-plate code
+   here.
 6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file
@@ -399,6 +399,93 @@ Useful steps:
 8. Create a sample Klipper config file in the config/ directory. Test
    the micro-controller with the main klippy.py program.
 9. Consider adding build test cases in the test/ directory.
+
+Coordinate Systems
+==================
+
+Internally, Klipper primarily tracks the position of the toolhead in
+cartesian coordinates that are relative to the coordinate system
+specified in the config file. That is, most of the Klipper code will
+never experience a change in coordinate systems. If the user makes a
+request to change the origin (eg, a `G92` command) then that effect is
+obtained by translating future commands to the primary coordinate
+system.
+
+However, in some cases it is useful to obtain the toolhead position in
+some other coordinate system and Klipper has several tools to
+facilitate that. This can be seen by running the GET_POSITION
+command. For example:
+
+```
+Send: GET_POSITION
+Recv: // mcu: stepper_a:-2060 stepper_b:-1169 stepper_c:-1613
+Recv: // stepper: stepper_a:457.254159 stepper_b:466.085669 stepper_c:465.382132
+Recv: // kinematic: X:8.339144 Y:-3.131558 Z:233.347121
+Recv: // toolhead: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+```
+
+The "mcu" position (`stepper.get_mcu_position()` in the code) is the
+total number of steps the micro-controller has issued in a positive
+direction minus the number of steps issued in a negative direction
+since the micro-controller was last reset. The value reported is only
+valid after the stepper has been homed. If the robot is in motion when
+the query is issued then the reported value includes moves buffered on
+the micro-controller, but does not include moves on the look-ahead
+queue.
+
+The "stepper" position (`stepper.get_commanded_position()`) is the
+position of the given stepper as tracked by the kinematics code. This
+generally corresponds to the position (in mm) of the carriage along
+its rail, relative to the position_endstop specified in the config
+file. (Some kinematics track stepper positions in radians instead of
+millimeters.) If the robot is in motion when the query is issued then
+the reported value includes moves buffered on the micro-controller,
+but does not include moves on the look-ahead queue. One may use the
+`toolhead.flush_step_generation()` or `toolhead.wait_moves()` calls to
+fully flush the look-ahead and step generation code.
+
+The "kinematic" position (`stepper.set_tag_position()` and
+`kin.calc_tag_position()`) is the cartesian position of the toolhead
+as derived from the "stepper" position and is relative to the
+coordinate system specified in the config file. This may differ from
+the requested cartesian position due to the granularity of the stepper
+motors. If the robot is in motion when `stepper.set_tag_position()` is
+issued then the reported value includes moves buffered on the
+micro-controller, but does not include moves on the look-ahead
+queue. One may use the `toolhead.flush_step_generation()` or
+`toolhead.wait_moves()` calls to fully flush the look-ahead and step
+generation code.
+
+The "toolhead" position (`toolhead.get_position()`) is the last
+requested position of the toolhead in cartesian coordinates relative
+to the coordinate system specified in the config file. If the robot is
+in motion when the query is issued then the reported value includes
+all requested moves (even those in buffers waiting to be issued to the
+stepper motor drivers).
+
+The "gcode" position is the last requested position from a `G1` (or
+`G0`) command in cartesian coordinates relative to the coordinate
+system specified in the config file. This may differ from the
+"toolhead" position if a g-code transformation (eg, bed_mesh,
+bed_tilt, skew_correction) is in effect. This may differ from the
+actual coordinates specified in the last `G1` command if the g-code
+origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
+`M114` command (`gcode.get_status()['gcode_position']`) will report
+the last g-code position relative to the current g-code coordinate
+system.
+
+The "gcode base" is the location of the g-code origin in cartesian
+coordinates relative to the coordinate system specified in the config
+file. Commands such as `G92`, `SET_GCODE_OFFSET`, and `M221` alter
+this value.
+
+The "gcode homing" is the location to use for the g-code origin (in
+cartesian coordinates relative to the coordinate system specified in
+the config file) after a `G28` home command. The `SET_GCODE_OFFSET`
+command can alter this value.
 
 Time
 ====

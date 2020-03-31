@@ -1,6 +1,6 @@
 // Basic infrastructure commands.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -211,7 +211,6 @@ command_finalize_config(uint32_t *args)
 {
     move_finalize();
     config_crc = args[0];
-    command_get_config(NULL);
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 

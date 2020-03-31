@@ -48,6 +48,7 @@ class PrinterDotstar:
         red = self.gcode.get_float('RED', params, 0., minval=0., maxval=1.)
         green = self.gcode.get_float('GREEN', params, 0., minval=0., maxval=1.)
         blue = self.gcode.get_float('BLUE', params, 0., minval=0., maxval=1.)
+        transmit = self.gcode.get_int('TRANSMIT', params, 1)
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
@@ -59,6 +60,8 @@ class PrinterDotstar:
         else:
             self.color_data[4:-4] = color_data * self.chain_count
         # Send command
+        if not transmit:
+            return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.send_data(self.spi.get_mcu().print_time_to_clock(print_time))
 

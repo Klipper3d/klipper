@@ -79,8 +79,10 @@ class MCU_SPI:
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
-        self.spi_transfer_cmd = self.mcu.lookup_command(
-            "spi_transfer oid=%c data=%*s", cq=self.cmd_queue)
+        self.spi_transfer_cmd = self.mcu.lookup_query_command(
+            "spi_transfer oid=%c data=%*s",
+            "spi_transfer_response oid=%c response=%*s", oid=self.oid,
+            cq=self.cmd_queue)
     def spi_send(self, data, minclock=0, reqclock=0):
         if self.spi_send_cmd is None:
             # Send setup message via mcu initialization
@@ -91,8 +93,7 @@ class MCU_SPI:
         self.spi_send_cmd.send([self.oid, data],
                                minclock=minclock, reqclock=reqclock)
     def spi_transfer(self, data):
-        return self.spi_transfer_cmd.send_with_response(
-            [self.oid, data], 'spi_transfer_response', self.oid)
+        return self.spi_transfer_cmd.send([self.oid, data])
 
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
@@ -155,8 +156,10 @@ class MCU_I2C:
         self.mcu.add_config_cmd(self.config_fmt % (bus,))
         self.i2c_write_cmd = self.mcu.lookup_command(
             "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
-        self.i2c_read_cmd = self.mcu.lookup_command(
-            "i2c_read oid=%c reg=%*s read_len=%u", cq=self.cmd_queue)
+        self.i2c_read_cmd = self.mcu.lookup_query_command(
+            "i2c_read oid=%c reg=%*s read_len=%u",
+            "i2c_read_response oid=%c response=%*s", oid=self.oid,
+            cq=self.cmd_queue)
         self.i2c_modify_bits_cmd = self.mcu.lookup_command(
             "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s",
             cq=self.cmd_queue)
@@ -170,8 +173,7 @@ class MCU_I2C:
         self.i2c_write_cmd.send([self.oid, data],
                                 minclock=minclock, reqclock=reqclock)
     def i2c_read(self, write, read_len):
-        return self.i2c_read_cmd.send_with_response(
-            [self.oid, write, read_len], 'i2c_read_response', self.oid)
+        return self.i2c_read_cmd.send([self.oid, write, read_len])
     def i2c_modify_bits(self, reg, clear_bits, set_bits,
                         minclock=0, reqclock=0):
         clearset = clear_bits + set_bits

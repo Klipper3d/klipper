@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
@@ -13,6 +13,7 @@
 #include "sched.h" // sched_main
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
+#define FREQ_USB 48000000
 
 // Enable a peripheral clock
 void
@@ -101,7 +102,7 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
-#if CONFIG_CLOCK_REF_8M
+#if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
 
@@ -110,20 +111,20 @@ static void
 enable_clock_stm32f40x(void)
 {
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-    if (CONFIG_CLOCK_REF_8M) {
-        // Configure 168Mhz PLL from external 8Mhz crystal (HSE)
+    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 168Mhz PLL from external crystal (HSE)
+        uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
         RCC->CR |= RCC_CR_HSEON;
-        RCC->PLLCFGR = (
-            RCC_PLLCFGR_PLLSRC_HSE | (4 << RCC_PLLCFGR_PLLM_Pos)
-            | (168 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
-            | (7 << RCC_PLLCFGR_PLLQ_Pos));
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
     } else {
         // Configure 168Mhz PLL from internal 16Mhz oscillator (HSI)
-        RCC->PLLCFGR = (
-            RCC_PLLCFGR_PLLSRC_HSI | (8 << RCC_PLLCFGR_PLLM_Pos)
-            | (168 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
-            | (7 << RCC_PLLCFGR_PLLQ_Pos));
+        uint32_t div = 16000000 / pll_base;
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
     }
+    RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
+                    | (0 << RCC_PLLCFGR_PLLP_Pos)
+                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
     RCC->CR |= RCC_CR_PLLON;
 #endif
 }
@@ -132,20 +133,21 @@ static void
 enable_clock_stm32f446(void)
 {
 #if CONFIG_MACH_STM32F446
-    if (CONFIG_CLOCK_REF_8M) {
-        // Configure 180Mhz PLL from external 8Mhz crystal (HSE)
+    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 180Mhz PLL from external crystal (HSE)
+        uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
         RCC->CR |= RCC_CR_HSEON;
-        RCC->PLLCFGR = (
-            RCC_PLLCFGR_PLLSRC_HSE | (4 << RCC_PLLCFGR_PLLM_Pos)
-            | (180 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
-            | (7 << RCC_PLLCFGR_PLLQ_Pos) | (6 << RCC_PLLCFGR_PLLR_Pos));
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
     } else {
         // Configure 180Mhz PLL from internal 16Mhz oscillator (HSI)
-        RCC->PLLCFGR = (
-            RCC_PLLCFGR_PLLSRC_HSI | (8 << RCC_PLLCFGR_PLLM_Pos)
-            | (180 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos)
-            | (7 << RCC_PLLCFGR_PLLQ_Pos) | (6 << RCC_PLLCFGR_PLLR_Pos));
+        uint32_t div = 16000000 / pll_base;
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
     }
+    RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
+                    | (0 << RCC_PLLCFGR_PLLP_Pos)
+                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos)
+                    | (6 << RCC_PLLCFGR_PLLR_Pos));
     RCC->CR |= RCC_CR_PLLON;
 
     // Enable "over drive"
@@ -159,19 +161,14 @@ enable_clock_stm32f446(void)
 
     // Enable 48Mhz USB clock
     if (CONFIG_USBSERIAL) {
-        if (CONFIG_CLOCK_REF_8M) {
-            RCC->PLLSAICFGR = (
-                (4 << RCC_PLLSAICFGR_PLLSAIM_Pos)
-                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
-                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
-                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
-        } else {
-            RCC->PLLSAICFGR = (
-                (8 << RCC_PLLSAICFGR_PLLSAIM_Pos)
-                | (96 << RCC_PLLSAICFGR_PLLSAIN_Pos)
-                | (1 << RCC_PLLSAICFGR_PLLSAIP_Pos)
-                | (4 << RCC_PLLSAICFGR_PLLSAIQ_Pos));
-        }
+        uint32_t ref = (CONFIG_STM32_CLOCK_REF_INTERNAL
+                        ? 16000000 : CONFIG_CLOCK_REF_FREQ);
+        uint32_t plls_base = 2000000, plls_freq = FREQ_USB * 4;
+        RCC->PLLSAICFGR = (
+            ((ref/plls_base) << RCC_PLLSAICFGR_PLLSAIM_Pos)
+            | ((plls_freq/plls_base) << RCC_PLLSAICFGR_PLLSAIN_Pos)
+            | (((plls_freq/FREQ_USB)/2 - 1) << RCC_PLLSAICFGR_PLLSAIP_Pos)
+            | ((plls_freq/FREQ_USB) << RCC_PLLSAICFGR_PLLSAIQ_Pos));
         RCC->CR |= RCC_CR_PLLSAION;
         while (!(RCC->CR & RCC_CR_PLLSAIRDY))
             ;

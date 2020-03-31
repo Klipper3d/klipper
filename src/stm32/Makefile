@@ -27,20 +27,22 @@ src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
 src-$(CONFIG_MACH_STM32F0) += ../lib/stm32f0/system_stm32f0xx.c
 src-$(CONFIG_MACH_STM32F0) += generic/timer_irq.c stm32/stm32f0_timer.c
 src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0.c stm32/stm32f0_adc.c
+src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0_i2c.c
 src-$(CONFIG_MACH_STM32F1) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c generic/armcm_timer.c
-src-$(CONFIG_MACH_STM32F1) += stm32/adc.c
+src-$(CONFIG_MACH_STM32F1) += stm32/adc.c stm32/i2c.c
 src-$(CONFIG_MACH_STM32F4) += ../lib/stm32f4/system_stm32f4xx.c
 src-$(CONFIG_MACH_STM32F4) += stm32/stm32f4.c generic/armcm_timer.c
-src-$(CONFIG_MACH_STM32F4) += stm32/adc.c
-src-$(CONFIG_HAVE_GPIO_I2C) += stm32/i2c.c
+src-$(CONFIG_MACH_STM32F4) += stm32/adc.c stm32/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32/spi.c
 usb-src-$(CONFIG_HAVE_STM32_USBFS) := stm32/usbfs.c
 usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
-src-$(CONFIG_USBSERIAL) += $(usb-src-y) generic/usb_cdc.c
+src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c
 serial-src-y := stm32/serial.c
 serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
+can-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_can.c
+src-$(CONFIG_CANSERIAL) += $(can-src-y) generic/serial_irq.c
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin

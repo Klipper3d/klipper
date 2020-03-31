@@ -11,6 +11,7 @@ config ATSAMD_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if MACH_SAMD21
     select HAVE_GPIO_BITBANGING
+    select HAVE_CHIPID
 
 config BOARD_DIRECTORY
     string
@@ -56,11 +57,6 @@ config MCU
     default "samd51n19a" if MACH_SAMD51N19
     default "samd51p20a" if MACH_SAMD51P20
 
-config CLOCK_FREQ
-    int
-    default 48000000 if MACH_SAMD21
-    default 120000000 if MACH_SAMD51
-
 config FLASH_SIZE
     hex
     default 0x8000 if MACH_SAMD21E15
@@ -90,6 +86,27 @@ choice
     config CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
+
+choice
+    depends on MACH_SAMD51 && LOW_LEVEL_OPTIONS
+    prompt "Processor speed"
+    config SAMD51_FREQ_120
+        bool "120 MHz (standard)"
+    config SAMD51_FREQ_150
+        bool "150 MHz (overclock)"
+    config SAMD51_FREQ_180
+        bool "180 MHz (overclock)"
+    config SAMD51_FREQ_200
+        bool "200 MHz (overclock)"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 48000000 if MACH_SAMD21
+    default 150000000 if SAMD51_FREQ_150
+    default 180000000 if SAMD51_FREQ_180
+    default 200000000 if SAMD51_FREQ_200
+    default 120000000 if MACH_SAMD51
 
 choice
     prompt "Bootloader offset"

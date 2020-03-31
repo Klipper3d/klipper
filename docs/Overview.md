@@ -67,3 +67,4 @@ communication with the Klipper developers.
 - [stm32f0](stm32f0_CAN.md): Information on the STM32F0 micro-controller
   port.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
+- [Hall filament width sensor](HallFilamentWidthSensor.md)

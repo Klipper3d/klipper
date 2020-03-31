@@ -13,16 +13,16 @@ precision.
 
 The stepper phase adjusted endstop mechanism can use the precision of
 the stepper motors to improve the precision of the endstop switches.
-When a stepper motor moves it cycles through a series of phases until
-in completes four "full steps". So, a stepper motor using 16
-micro-steps would have 64 phases and when moving in a positive
-direction it would cycle through phases: 0, 1, 2, ... 61, 62, 63, 0,
-1, 2, etc. Crucially, when the stepper motor is at a particular
-position on a linear rail it should always be at the same stepper
-phase. Thus, when a carriage triggers the endstop switch the stepper
-controlling that carriage should always be at the same stepper motor
-phase. Klipper's endstop phase system combines the stepper phase with
-the endstop trigger to improve the accuracy of the endstop.
+A stepper motor moves by cycling through a series of phases until in
+completes four "full steps". So, a stepper motor using 16 micro-steps
+would have 64 phases and when moving in a positive direction it would
+cycle through phases: 0, 1, 2, ... 61, 62, 63, 0, 1, 2, etc.
+Crucially, when the stepper motor is at a particular position on a
+linear rail it should always be at the same stepper phase. Thus, when
+a carriage triggers the endstop switch the stepper controlling that
+carriage should always be at the same stepper motor phase. Klipper's
+endstop phase system combines the stepper phase with the endstop
+trigger to improve the accuracy of the endstop.
 
 In order to use this functionality it is necessary to be able to
 identify the phase of the stepper motor. If one is using Trinamic

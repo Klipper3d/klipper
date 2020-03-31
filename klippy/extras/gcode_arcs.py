@@ -30,7 +30,7 @@ class ArcSupport:
 
     def cmd_G2(self, params):
         # set vars
-        currentPos =  self.printer.lookup_object('toolhead').get_position()
+        currentPos =  self.gcode.get_status(None)['gcode_position']
 
         asX = params.get("X", None)
         asY = params.get("Y", None)

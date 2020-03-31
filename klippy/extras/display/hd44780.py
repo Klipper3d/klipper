@@ -8,7 +8,7 @@ import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
-HD44780_DELAY = .000037
+HD44780_DELAY = .000040
 
 class HD44780:
     def __init__(self, config):
@@ -28,11 +28,12 @@ class HD44780:
         self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
         # framebuffers
-        self.text_framebuffer = bytearray(' '*80)
+        self.text_framebuffers = [bytearray(' '*40), bytearray(' '*40)]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
-            # Text framebuffer
-            (self.text_framebuffer, bytearray('~'*80), 0x80),
+            # Text framebuffers
+            (self.text_framebuffers[0], bytearray('~'*40), 0x80),
+            (self.text_framebuffers[1], bytearray('~'*40), 0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def build_config(self):
@@ -71,8 +72,6 @@ class HD44780:
             # Transmit changes
             for pos, count in diffs:
                 chip_pos = pos
-                if fb_id == 0x80 and pos >= 40:
-                    chip_pos += 0x40 - 40
                 self.send([fb_id + chip_pos])
                 self.send(new_data[pos:pos+count], is_data=True)
             old_data[:] = new_data
@@ -89,13 +88,13 @@ class HD44780:
         # Add custom fonts
         self.glyph_framebuffer[:len(HD44780_chars)] = HD44780_chars
         for i in range(len(self.glyph_framebuffer)):
-            self.all_framebuffers[1][1][i] = self.glyph_framebuffer[i] ^ 1
+            self.all_framebuffers[2][1][i] = self.glyph_framebuffer[i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > 20:
             data = data[:20 - min(x, 20)]
-        pos = [0, 40, 20, 60][y] + x
-        self.text_framebuffer[pos:pos+len(data)] = data
+        pos = x + ((y & 0x02) >> 1) * 20
+        self.text_framebuffers[y & 1][pos:pos+len(data)] = data
     def write_glyph(self, x, y, glyph_name):
         char = TextGlyphs.get(glyph_name)
         if char is not None:
@@ -103,8 +102,12 @@ class HD44780:
             self.write_text(x, y, char)
             return 1
         return 0
+    def write_graphics(self, x, y, pixel_row, pixel_col):
+        pass
     def clear(self):
-        self.text_framebuffer[:] = ' '*80
+        spaces = ' ' * 40
+        self.text_framebuffers[0][:] = spaces
+        self.text_framebuffers[1][:] = spaces
     def get_dimensions(self):
         return (20, 4)
 
@@ -186,11 +189,11 @@ HD44780_chars = [
 TextGlyphs = {
     'right_arrow': '\x7e',
     'extruder': '\x00',
-    'bed': '\x01',
+    'bed': '\x01', 'bed_heat1': '\x01', 'bed_heat2': '\x01',
     'feedrate': '\x02',
     'clock': '\x03',
     'degrees': '\x04',
     'usb': '\x05',
     'sd': '\x06',
-    'fan': '\x07',
+    'fan': '\x07', 'fan1': '\x07', 'fan2': '\x07',
 }

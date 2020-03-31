@@ -7,7 +7,7 @@
 class NoneKinematics:
     def __init__(self, toolhead, config):
         pass
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return []
     def calc_tag_position(self):
         return [0, 0, 0]
@@ -17,7 +17,7 @@ class NoneKinematics:
         pass
     def check_move(self, move):
         pass
-    def get_status(self):
+    def get_status(self, eventtime):
         return {'homed_axes': ''}
 
 def load_kinematics(toolhead, config):

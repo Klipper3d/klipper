@@ -4,14 +4,14 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 
 class PrinterSensorGeneric:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
-        self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELCIUS,
-                                        minval=KELVIN_TO_CELCIUS)
+        self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
+                                        minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
@@ -22,6 +22,8 @@ class PrinterSensorGeneric:
         self.last_temp = temp
     def get_temp(self, eventtime):
         return self.last_temp, 0.
+    def get_status(self, eventtime):
+        return {'temperature': self.last_temp}
 
 def load_config_prefix(config):
     return PrinterSensorGeneric(config)

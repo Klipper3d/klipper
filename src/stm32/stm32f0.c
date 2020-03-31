@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_REF_8M
+#include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // armcm_main
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
@@ -99,7 +99,23 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
-#if CONFIG_CLOCK_REF_8M
+// Copy vector table and remap ram so new vector table is used
+static void
+enable_ram_vectortable(void)
+{
+    // Symbols created by armcm_link.lds.S linker script
+    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
+    extern uint32_t _text_vectortable_start;
+
+    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
+    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
+    barrier();
+
+    enable_pclock(SYSCFG_BASE);
+    SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
+}
+
+#if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif
 
@@ -108,13 +124,15 @@ static void
 pll_setup(void)
 {
     uint32_t cfgr;
-    if (CONFIG_CLOCK_REF_8M) {
-        // Configure 48Mhz PLL from external 8Mhz crystal (HSE)
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 48Mhz PLL from external crystal (HSE)
+        uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((6 - 2) << RCC_CFGR_PLLMUL_Pos);
+        cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((div - 2) << RCC_CFGR_PLLMUL_Pos);
     } else {
         // Configure 48Mhz PLL from internal 8Mhz oscillator (HSI)
-        cfgr = RCC_CFGR_PLLSRC_HSI_DIV2 | ((12 - 2) << RCC_CFGR_PLLMUL_Pos);
+        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
+        cfgr = RCC_CFGR_PLLSRC_HSI_DIV2 | ((div2 - 2) << RCC_CFGR_PLLMUL_Pos);
     }
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
@@ -128,9 +146,12 @@ pll_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
 
-    // Select PLL as source for USB clock
+    // Setup CFGR3 register
+    uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
     if (CONFIG_USBSERIAL)
-        RCC->CFGR3 = RCC_CFGR3_USBSW;
+        // Select PLL as source for USB clock
+        cfgr3 |= RCC_CFGR3_USBSW;
+    RCC->CFGR3 = cfgr3;
 }
 
 // Configure and enable internal 48Mhz clock on the stm32f042
@@ -153,6 +174,9 @@ hsi48_setup(void)
         enable_pclock(CRS_BASE);
         CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
     }
+
+    // Setup I2C1 clock
+    RCC->CFGR3 = RCC_CFGR3_I2C1SW;
 #endif
 }
 
@@ -180,11 +204,14 @@ armcm_main(void)
 
     SystemInit();
 
+    if (CONFIG_ARMCM_RAM_VECTORTABLE)
+        enable_ram_vectortable();
+
     // Set flash latency
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL)
+    if (CONFIG_MACH_STM32F042 || CONFIG_STM32_CLOCK_REF_INTERNAL)
         hsi48_setup();
     else
         pll_setup();
@@ -192,9 +219,9 @@ armcm_main(void)
     // Turn on hsi14 oscillator for ADC
     hsi14_setup();
 
-    // Support alternate USB pins on stm32f042
+    // Support alternate USB/CAN pins on stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_USB_PIN_SWAP) {
+    if (CONFIG_STM32F042_PIN_SWAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }

@@ -19,12 +19,6 @@ class ScrewsTiltAdjust:
         self.config = config
         self.printer = config.get_printer()
         self.screws = []
-        # Verify that a probe exists
-        try:
-            self.printer.lookup_object("probe")
-        except:
-            raise self.gcode.error("Error: you must have a probe on "
-                                   "your config file.")
         # Read config
         for i in range(99):
             prefix = "screw%d" % (i + 1,)

@@ -14,12 +14,12 @@ class HomingOverride:
         self.template = gcode_macro.load_template(config, 'gcode')
         self.in_script = False
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("G28", None)
+        self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
     def cmd_G28(self, params):
         if self.in_script:
             # Was called recursively - invoke the real G28 command
-            self.gcode.cmd_G28(params)
+            self.prev_G28(params)
             return
 
         # if no axis is given as parameter we assume the override
