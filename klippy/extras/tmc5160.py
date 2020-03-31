@@ -311,7 +311,6 @@ class TMC5160:
         self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual pins to be created
         diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
@@ -343,7 +342,11 @@ class TMC5160:
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
         #   IHOLDIRUN
-        TMC5160CurrentHelper(config, self.mcu_tmc)
+        TMC5160CurrentHelper(config, self.mcu_tmc,
+                             tmc.TMCVirtualPinHelper(config,
+                                                     self.mcu_tmc, diag1_pin
+                             )
+        )
         set_config_field(config, "IHOLDDELAY", 6)
         #   PWMCONF
         set_config_field(config, "PWM_OFS", 30)
