@@ -243,8 +243,8 @@ class TMC5160CurrentHelper:
                                        self.run_current, above=0.,
                                        maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
-        self._set_globalscaler(run_current)
-        irun, ihold = self._calc_current(run_current, hold_current)
+        self._set_globalscaler(self.run_current)
+        irun, ihold = self._calc_current(self.run_current, self.hold_current)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
         gcode = self.printer.lookup_object("gcode")
@@ -369,10 +369,11 @@ class TMC5160:
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
         #   IHOLDIRUN
-        TMC5160CurrentHelper(config, self.mcu_tmc,
-                             tmc.TMCVirtualPinHelper(config,
-                                                     self.mcu_tmc, diag1_pin
-                             )
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin,
+                                TMC5160CurrentHelper(
+                                    config,
+                                    self.mcu_tmc
+                                )
         )
         set_config_field(config, "IHOLDDELAY", 6)
         #   PWMCONF
