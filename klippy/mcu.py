@@ -386,16 +386,22 @@ class MCU:
                                              self._disconnect)
         # Serial port
         self._serialport = config.get('serial', '/dev/ttyS0')
+        serial_rts = True
+        if config.get('restart_method', None) == "cheetah":
+            # Special case: Cheetah boards require RTS to be deasserted, else
+            # a reset will trigger the built-in bootloader.
+            serial_rts = False
         baud = 0
         if not (self._serialport.startswith("/dev/rpmsg_")
                 or self._serialport.startswith("/tmp/klipper_host_")):
             baud = config.getint('baud', 250000, minval=2400)
         self._serial = serialhdl.SerialReader(
-            self._reactor, self._serialport, baud)
+            self._reactor, self._serialport, baud, serial_rts)
         # Restarts
         self._restart_method = 'command'
         if baud:
-            rmethods = {m: m for m in [None, 'arduino', 'command', 'rpi_usb']}
+            rmethods = {m: m for m in [None, 'arduino', 'cheetah', 'command',
+                                       'rpi_usb']}
             self._restart_method = config.getchoice(
                 'restart_method', rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
@@ -683,6 +689,10 @@ class MCU:
         logging.info("Attempting MCU '%s' reset", self._name)
         self._disconnect()
         serialhdl.arduino_reset(self._serialport, self._reactor)
+    def _restart_cheetah(self):
+        logging.info("Attempting MCU '%s' Cheetah-style reset", self._name)
+        self._disconnect()
+        serialhdl.cheetah_reset(self._serialport, self._reactor)
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
             or not self._clocksync.is_active()):
@@ -713,6 +723,8 @@ class MCU:
             self._restart_rpi_usb()
         elif self._restart_method == 'command':
             self._restart_via_command()
+        elif self._restart_method == 'cheetah':
+            self._restart_cheetah()
         else:
             self._restart_arduino()
     # Misc external commands
