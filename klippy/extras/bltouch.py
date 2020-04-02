@@ -177,7 +177,7 @@ class BLTouchEndstopWrapper:
         self.sync_print_time()
         self.multi = 'OFF'
     def probe_prepare(self):
-        if (self.multi == 'OFF' or self.multi == 'FIRST' 
+        if (self.multi == 'OFF' or self.multi == 'FIRST'
             or self.clone_needs_deploy):
             self.lower_probe()
             if self.multi == 'FIRST':
