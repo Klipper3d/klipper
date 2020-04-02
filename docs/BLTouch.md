@@ -78,26 +78,11 @@ printer, to avoid damage, if it doesn't stop when you touch the pin.
 If that was successful, do another `G28` but this time let it touch
 the bed as it should.
 
-Calibrating the BL-Touch offsets
-================================
-
-Follow the directions in the [Probe Calibrate](Probe_Calibrate.md)
-guide to set the x_offset, y_offset, and z_offset config parameters.
-
-It's a good idea to verify that the Z offset is close to 1mm. If not,
-then you probably want to move the probe up or down to fix this. You
-want it to trigger well before the nozzle hits the bed, so that
-possible stuck filament or a warped bed doesn't affect any probing
-action. But at the same time, you want the retracted position to be as
-far above the nozzle as possible to avoid it touching printed parts.
-If an adjustment is made to the probe position, then rerun the probe
-calibration steps.
-
 BL-Touch gone bad
 =================
 
-Once the BL-Touch is in inconsistent state, it starts blinking
-red. You can force it to leave that state by issuing:
+Once the BL-Touch is in inconsistent state, it starts blinking red.
+You can force it to leave that state by issuing:
 
  BLTOUCH_DEBUG COMMAND=reset
 
@@ -115,6 +100,59 @@ Carefully readjust the headless screw into place. You need to find the
 right position so it is able to lower and raise the pin and the red
 light turns on and of. Use the `reset`, `pin_up` and `pin_down`
 commands to achieve this.
+
+BL-Touch "clones"
+=================
+
+Many BL-Touch "clone" devices work correctly with Klipper using the
+default configuration. However, some "clone" devices may require
+configuration of `pin_up_reports_not_triggered` or
+`pin_up_touch_mode_reports_triggered`.
+
+Important! Do not configure `pin_up_reports_not_triggered` or
+`pin_up_touch_mode_reports_triggered` to False without first following
+these directions. Do not configure either of these to False on a
+genuine BL-Touch. Incorrectly setting these to False can increase
+probing time and can increase the risk of damaging the printer.
+
+Some "clone" devices are unable to perform Klipper's internal sensor
+verification test. On these devices, attempts to home or probe can
+result in Klipper reporting a "BLTouch failed to verify sensor state"
+error. If this occurs, then manually run the steps to confirm the
+sensor pin is working as described in the
+[initial tests section](#initial-tests). If the `QUERY_PROBE` commands
+in that test always produce the expected results and "BLTouch failed
+to verify sensor state" errors still occur, then it may be necessary
+to set `pin_up_touch_mode_reports_triggered` to False in the Klipper
+config file.
+
+A rare number of old "clone" devices are unable to report when they
+have successfully raised their probe. On these devices Klipper will
+report a "BLTouch failed to raise probe" error after every home or
+probe attempt. One can test for these devices - move the head far from
+the bed, run `BLTOUCH_DEBUG COMMAND=pin_down`, verify the pin has
+moved down, run `QUERY_PROBE`, verify that command reports "probe:
+open", run `BLTOUCH_DEBUG COMMAND=pin_up`, verify the pin has moved
+up, and run `QUERY_PROBE`. If the pin remains up, the device does not
+enter an error state, and the first query reports "probe: open" while
+the second query reports "probe: TRIGGERED" then it indicates that
+`pin_up_reports_not_triggered` should be set to False in the Klipper
+config file.
+
+Calibrating the BL-Touch offsets
+================================
+
+Follow the directions in the [Probe Calibrate](Probe_Calibrate.md)
+guide to set the x_offset, y_offset, and z_offset config parameters.
+
+It's a good idea to verify that the Z offset is close to 1mm. If not,
+then you probably want to move the probe up or down to fix this. You
+want it to trigger well before the nozzle hits the bed, so that
+possible stuck filament or a warped bed doesn't affect any probing
+action. But at the same time, you want the retracted position to be as
+far above the nozzle as possible to avoid it touching printed parts.
+If an adjustment is made to the probe position, then rerun the probe
+calibration steps.
 
 BL-Touch output mode
 ====================
@@ -157,12 +195,6 @@ BL-Touch output mode
 
 Troubleshooting
 ===============
-
-* If you are sure the wiring of the BL-Touch is correct and every
-  attempt to probe with the BL-Touch reports "BLTouch failed to verify
-  sensor state" then it may be necessary to add
-  `pin_up_touch_mode_reports_triggered: False` to the bltouch config
-  section. The BL-Touch v3 and many clones require this setting.
 
 * A BL-Touch v3 may not work correctly when its signal wire is
   connected to the Z end-stop pin on some printer boards. The symptoms
