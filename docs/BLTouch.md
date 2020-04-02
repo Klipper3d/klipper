@@ -56,13 +56,24 @@ wiring and configuration again. Next issue a `BLTOUCH_DEBUG
 COMMAND=pin_up`, verify that the pin moves up, and that the red light
 turns on again. If it's flashing then there's some problem.
 
-Now, it's time to test homing with a twist. Instead of letting the
-probe pin touch the print bed, let it touch the nail on your
-finger. So issue a `G28`, wait until it starts to move down, and stop
-the movement by very gently touching the pin with your nail. You
-probably have to do it twice, since the default configuration makes it
-probe twice. But be prepared to turn off the printer, to avoid damage,
-if it doesn't stop when you touch the pin.
+The next step is to confirm that the sensor pin is working correctly.
+Run `BLTOUCH_DEBUG COMMAND=pin_down`, verify that the pin moves down,
+run `BLTOUCH_DEBUG COMMAND=touch_mode`, run `QUERY_PROBE`, and verify
+that command reports "probe: open". Then while gently pushing the pin
+up slightly with the nail of your finger run `QUERY_PROBE` again.
+Verify the command reports "probe: TRIGGERED". If either query does
+not report the correct message then check your wiring and
+configuration again. At the completion of this test run `BLTOUCH_DEBUG
+COMMAND=pin_up` and verify that the pin moves up.
+
+After completing the BL-Touch command and sensor tests, it is now time
+to test homing, but with a twist. Instead of letting the probe pin
+touch the print bed, let it touch the nail on your finger.  Position
+the head far from the bed, issue a `G28`, wait until it starts to move
+down, and stop the movement by very gently touching the pin with your
+nail. You probably have to do it twice, since the default
+configuration makes it probe twice. But be prepared to turn off the
+printer, to avoid damage, if it doesn't stop when you touch the pin.
 
 If that was successful, do another `G28` but this time let it touch
 the bed as it should.
@@ -99,11 +110,11 @@ or the magnetic core inside the probe pin has moved. If it has moved
 up so that it sticks to the screw, it may not be able to lower its pin
 anymore. With this behavior you need to open the screw and use a
 ball-point pen to push it gently back into place. Re-Insert the pin
-into the BL-Touch so that it falls into the extracted
-position. Carefully readjust the headless screw into place. You need
-to find the right position so it is able to lower and raise the pin
-and the red light turns on and of. Use the `reset`, `pin_up` and
-`pin_down` commands to achieve this.
+into the BL-Touch so that it falls into the extracted position.
+Carefully readjust the headless screw into place. You need to find the
+right position so it is able to lower and raise the pin and the red
+light turns on and of. Use the `reset`, `pin_up` and `pin_down`
+commands to achieve this.
 
 BL-Touch output mode
 ====================
@@ -143,7 +154,6 @@ BL-Touch output mode
   default being a safe OPEN DRAIN mode) and is not suited to be repeatedly
   issued by any slicer, macro or anything else, it is preferably only to be
   used when first integrating the probe into a printers electronics.
-
 
 Troubleshooting
 ===============
