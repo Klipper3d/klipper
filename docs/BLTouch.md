@@ -51,7 +51,7 @@ off the printer and check the wiring and configuration.
 If the above is looking good, it's time to test that the probe
 responds to commands from the firmware. First run `BLTOUCH_DEBUG
 COMMAND=pin_down` in your printer terminal. Verify that the pin moves
-down, and that the red LED on the probe turns off. If not, check your
+down and that the red LED on the probe turns off. If not, check your
 wiring and configuration again. Next issue a `BLTOUCH_DEBUG
 COMMAND=pin_up`, verify that the pin moves up, and that the red light
 turns on again. If it's flashing then there's some problem.
@@ -67,16 +67,17 @@ configuration again. At the completion of this test run `BLTOUCH_DEBUG
 COMMAND=pin_up` and verify that the pin moves up.
 
 After completing the BL-Touch command and sensor tests, it is now time
-to test homing, but with a twist. Instead of letting the probe pin
-touch the print bed, let it touch the nail on your finger.  Position
-the head far from the bed, issue a `G28`, wait until it starts to move
-down, and stop the movement by very gently touching the pin with your
-nail. You probably have to do it twice, since the default
-configuration makes it probe twice. But be prepared to turn off the
-printer, to avoid damage, if it doesn't stop when you touch the pin.
+to test probing, but with a twist. Instead of letting the probe pin
+touch the print bed, let it touch the nail on your finger. Position
+the toolhead far from the bed, issue a `G28` (or `PROBE` if not using
+probe:z_virtual_endstop), wait until the toolhead starts to move down,
+and stop the movement by very gently touching the pin with your nail.
+You may have to do it twice, since the default homing configuration
+probes twice. Be prepared to turn off the printer, to avoid damage, if
+it doesn't stop when you touch the pin.
 
-If that was successful, do another `G28` but this time let it touch
-the bed as it should.
+If that was successful, do another `G28` (or `PROBE`) but this time
+let it touch the bed as it should.
 
 BL-Touch gone bad
 =================
