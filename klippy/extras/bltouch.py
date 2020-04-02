@@ -53,6 +53,8 @@ class BLTouchEndstopWrapper:
             'pin_up_reports_not_triggered', True)
         self.pin_up_touch_triggered = config.getboolean(
             'pin_up_touch_mode_reports_triggered', True)
+        self.clone_needs_deploy = config.getboolean(
+            'probe_clone_needs_deploy', False)
         self.start_mcu_pos = []
         # Calculate pin move time
         pmt = max(config.getfloat('pin_move_time', 0.675), MIN_CMD_TIME)
@@ -175,7 +177,8 @@ class BLTouchEndstopWrapper:
         self.sync_print_time()
         self.multi = 'OFF'
     def probe_prepare(self):
-        if self.multi == 'OFF' or self.multi == 'FIRST':
+        if (self.multi == 'OFF' or self.multi == 'FIRST' 
+            or self.clone_needs_deploy):
             self.lower_probe()
             if self.multi == 'FIRST':
                 self.multi = 'ON'
