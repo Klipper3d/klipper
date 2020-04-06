@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, ConfigParser, StringIO
+import os, glob, re, time, logging, subprocess, ConfigParser, StringIO
 
 error = ConfigParser.Error
 
@@ -296,23 +296,64 @@ class PrinterConfig:
             raise gcode.error(msg)
         regular_data = self._strip_duplicates(regular_data, self.autosave)
         self._disallow_include_conflicts(regular_data, cfgname, gcode)
-        data = regular_data.rstrip() + autosave_data
-        # Determine filenames
-        datestr = time.strftime("-%Y%m%d_%H%M%S")
-        backup_name = cfgname + datestr
-        temp_name = cfgname + "_autosave"
-        if cfgname.endswith(".cfg"):
-            backup_name = cfgname[:-4] + datestr + ".cfg"
-            temp_name = cfgname[:-4] + "_autosave.cfg"
-        # Create new config file with temporary name and swap with main config
-        logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
-                     cfgname, backup_name)
+
+        git_config = self.printer.get_start_args()['gitconfig']
+
+        backup_name = None
+        cfg_wd = os.path.dirname(cfgname)
+        cfg_file = os.path.basename(cfgname)
+        if not git_config:
+            data = regular_data.rstrip() + autosave_data
+            # Determine filenames
+            datestr = time.strftime("-%Y%m%d_%H%M%S")
+            backup_name = cfgname + datestr
+            temp_name = cfgname + "_autosave"
+            if cfgname.endswith(".cfg"):
+                backup_name = cfgname[:-4] + datestr + ".cfg"
+                temp_name = cfgname[:-4] + "_autosave.cfg"
+                # Create new config file with temporary name and swap with main config
+                logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
+                             cfgname, backup_name)
+        else:
+            # try to protect the user from errors, save his state of the config:
+            prog = ('git', '-C', cfg_wd, 'commit', '-m',
+            'if the file was modified before, these are your edits')
+            try:
+                process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+                ver, err = process.communicate()
+                retcode = process.wait()
+                if retcode == 0:
+                    return ver.strip()
+                else:
+                    logging.info("SAVE_CONFIG previous saving: %s %s", ver, err)
+    except OSError:
+        logging.debug("Exception on run: %s", traceback.format_exc())
+
         try:
             f = open(temp_name, 'wb')
             f.write(data)
             f.close()
-            os.rename(cfgname, backup_name)
+            if not gitconfig:
+                os.rename(cfgname, backup_name)
+            else:
+                
+                os.unlink(cfgname)
             os.rename(temp_name, cfgname)
+            if gitconfig:
+                # now we save what we changed:
+                prog = ('git', '-C', cfg_wd, 'commit', '-m',
+                        'klippy SAVE_CONFIG persisting changes')
+                try:
+                    process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
+                    ver, err = process.communicate()
+                    retcode = process.wait()
+                    if retcode == 0:
+                        return ver.strip()
+                    else:
+                        logging.info("SAVE_CONFIG git saving: %s %s", ver, err)
+                
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
