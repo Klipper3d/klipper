@@ -297,9 +297,10 @@ class PrinterConfig:
         regular_data = self._strip_duplicates(regular_data, self.autosave)
         self._disallow_include_conflicts(regular_data, cfgname, gcode)
 
-        git_config = self.printer.get_start_args()['gitconfig']
+        git_config = self.printer.get_start_args()['git_config']
 
         backup_name = None
+        temp_name = None
         cfg_wd = os.path.dirname(cfgname)
         cfg_file = os.path.basename(cfgname)
         if not git_config:
@@ -316,7 +317,7 @@ class PrinterConfig:
                              cfgname, backup_name)
         else:
             # try to protect the user from errors, save his state of the config:
-            prog = ('git', '-C', cfg_wd, 'commit', '-m',
+            prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
             'if the file was modified before, these are your edits')
             try:
                 process = subprocess.Popen(prog, stdout=subprocess.PIPE,
@@ -326,10 +327,11 @@ class PrinterConfig:
                 if retcode == 0:
                     return ver.strip()
                 else:
-                    logging.info("SAVE_CONFIG previous saving: %s %s", ver, err)
-    except OSError:
-        logging.debug("Exception on run: %s", traceback.format_exc())
-
+                    logging.info("SAVE_CONFIG saving previous changes: %s %s", ver, err)
+            except OSError:
+                logging.debug("Exception on run: %s", traceback.format_exc())
+            temp_name = cfgname
+            os.unlink(cfgname)
         try:
             f = open(temp_name, 'wb')
             f.write(data)
@@ -337,12 +339,8 @@ class PrinterConfig:
             if not gitconfig:
                 os.rename(cfgname, backup_name)
             else:
-                
-                os.unlink(cfgname)
-            os.rename(temp_name, cfgname)
-            if gitconfig:
                 # now we save what we changed:
-                prog = ('git', '-C', cfg_wd, 'commit', '-m',
+                prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
                         'klippy SAVE_CONFIG persisting changes')
                 try:
                     process = subprocess.Popen(prog, stdout=subprocess.PIPE,
@@ -353,6 +351,8 @@ class PrinterConfig:
                         return ver.strip()
                     else:
                         logging.info("SAVE_CONFIG git saving: %s %s", ver, err)
+                except OSError:
+                    logging.debug("Exception on run: %s", traceback.format_exc())
                 
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
