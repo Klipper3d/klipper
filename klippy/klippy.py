@@ -236,6 +236,8 @@ def main():
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
                     help="enable debug messages")
+    opts.add_option("-g", dest="git_config",
+                    help="manage config backups using git")
     opts.add_option("-o", "--debugoutput", dest="debugoutput",
                     help="write output to file instead of to serial port")
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
@@ -264,6 +266,11 @@ def main():
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
         logging.basicConfig(level=debuglevel)
+    if options.git_config:
+        start_args['git_config'] = True
+    else:
+        start_args['git_config'] = False
+        
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
     if bglogger is not None:
