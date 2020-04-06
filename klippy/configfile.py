@@ -338,6 +338,7 @@ class PrinterConfig:
             f.close()
             if not git_config:
                 os.rename(cfgname, backup_name)
+                os.rename(temp_name, cfgname)
             else:
                 # now we save what we changed:
                 prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
