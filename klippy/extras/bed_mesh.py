@@ -339,7 +339,7 @@ class BedMeshCalibrate:
             # than 6 samples
             raise config.error(
                 "bed_mesh: cannot exceed a probe_count of 6 when using "
-                "langrange interpolation. Configured Probe Count: %d, %d" %
+                "lagrange interpolation. Configured Probe Count: %d, %d" %
                 (self.mesh_params['x_count'], self.mesh_params['y_count']))
         elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
             if max_probe_cnt > 6:
