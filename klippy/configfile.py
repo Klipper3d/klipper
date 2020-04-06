@@ -336,7 +336,7 @@ class PrinterConfig:
             f = open(temp_name, 'wb')
             f.write(data)
             f.close()
-            if not gitconfig:
+            if not git_config:
                 os.rename(cfgname, backup_name)
             else:
                 # now we save what we changed:
