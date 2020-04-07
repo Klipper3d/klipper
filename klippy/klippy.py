@@ -270,7 +270,7 @@ def main():
         start_args['git_config'] = True
     else:
         start_args['git_config'] = False
-        
+
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
     if bglogger is not None:

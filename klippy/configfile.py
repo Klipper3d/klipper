@@ -312,7 +312,8 @@ class PrinterConfig:
             if cfgname.endswith(".cfg"):
                 backup_name = cfgname[:-4] + datestr + ".cfg"
                 temp_name = cfgname[:-4] + "_autosave.cfg"
-                # Create new config file with temporary name and swap with main config
+                # Create new config file with temporary name
+                # and swap with main config
                 logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                              cfgname, backup_name)
         else:
@@ -327,7 +328,8 @@ class PrinterConfig:
                 if retcode == 0:
                     return ver.strip()
                 else:
-                    logging.info("SAVE_CONFIG saving previous changes: %s %s", ver, err)
+                    logging.info("SAVE_CONFIG saving previous changes: %s %s",
+                                 ver, err)
             except OSError:
                 logging.debug("Exception on run: %s", traceback.format_exc())
             temp_name = cfgname
@@ -353,8 +355,9 @@ class PrinterConfig:
                     else:
                         logging.info("SAVE_CONFIG git saving: %s %s", ver, err)
                 except OSError:
-                    logging.debug("Exception on run: %s", traceback.format_exc())
-                
+                    logging.debug("Exception on run: %s",
+                                  traceback.format_exc())
+
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
