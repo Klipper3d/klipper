@@ -31,6 +31,8 @@ class BLTouchEndstopWrapper:
         self.position_endstop = config.getfloat('z_offset')
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
+        self.probe_touch_mode = config.getboolean('probe_with_touch_mode',
+                                                  False)
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', config.get('control_pin'))
@@ -134,6 +136,8 @@ class BLTouchEndstopWrapper:
         self.sync_print_time()
         duration = max(MIN_CMD_TIME, self.pin_move_time - MIN_CMD_TIME)
         self.send_cmd('pin_down', duration=duration)
+        if self.probe_touch_mode:
+            self.send_cmd('touch_mode')
         self.send_cmd(None)
     def test_sensor(self):
         if not self.pin_up_touch_triggered:
