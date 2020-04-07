@@ -323,13 +323,14 @@ class PrinterConfig:
             try:
                 process = subprocess.Popen(prog, stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)
-                ver, err = process.communicate()
+                msg, err = process.communicate()
                 retcode = process.wait()
                 if retcode == 0:
                     return ver.strip()
                 else:
-                    logging.info("SAVE_CONFIG saving previous changes: %s %s",
-                                 ver, err)
+                    if not msg.find('nothing to commit'):
+                        logging.info("SAVE_CONFIG saving previous changes: %s %s",
+                                     msg, err)
             except OSError:
                 logging.debug("Exception on run: %s", traceback.format_exc())
             temp_name = cfgname
@@ -348,12 +349,13 @@ class PrinterConfig:
                 try:
                     process = subprocess.Popen(prog, stdout=subprocess.PIPE,
                                                stderr=subprocess.PIPE)
-                    ver, err = process.communicate()
+                    msg, err = process.communicate()
                     retcode = process.wait()
                     if retcode == 0:
                         return ver.strip()
                     else:
-                        logging.info("SAVE_CONFIG git saving: %s %s", ver, err)
+                        if not msg.find('nothing to commit'):
+                            logging.info("SAVE_CONFIG git saving: %s %s", msg, err)
                 except OSError:
                     logging.debug("Exception on run: %s",
                                   traceback.format_exc())
