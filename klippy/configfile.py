@@ -303,6 +303,18 @@ class PrinterConfig:
         temp_name = None
         cfg_wd = os.path.dirname(cfgname)
         cfg_file = os.path.basename(cfgname)
+        def git_have_file_change():
+            prog = ('git', '-C', cfg_wd, 'diff', '-s', '--exit-code', cfg_file)
+            try:
+                process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+                msg, err = process.communicate()
+                retcode = process.wait()
+                return retcode != 0
+            except OSError:
+                logging.debug("Exception on run: %s", traceback.format_exc())
+            return True
+
         if not git_config:
             data = regular_data.rstrip() + autosave_data
             # Determine filenames
@@ -316,21 +328,18 @@ class PrinterConfig:
                 # and swap with main config
                 logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                              cfgname, backup_name)
-        else:
+        elif git_have_file_change():
             # try to protect the user from errors, save his state of the config:
             prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
-            'if the file was modified before, these are your edits')
+                    'the config file was modified before, these are your edits')
             try:
                 process = subprocess.Popen(prog, stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)
                 msg, err = process.communicate()
                 retcode = process.wait()
-                if retcode == 0:
-                    return ver.strip()
-                else:
-                    if not msg.find('nothing to commit'):
-                        logging.info("SAVE_CONFIG saving previous changes: %s %s",
-                                     msg, err)
+                if retcode != 0:
+                    logging.info("SAVE_CONFIG saving previous changes: %s %s",
+                                 msg, err)
             except OSError:
                 logging.debug("Exception on run: %s", traceback.format_exc())
             temp_name = cfgname
@@ -342,7 +351,7 @@ class PrinterConfig:
             if not git_config:
                 os.rename(cfgname, backup_name)
                 os.rename(temp_name, cfgname)
-            else:
+            elif git_have_file_change():
                 # now we save what we changed:
                 prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
                         'klippy SAVE_CONFIG persisting changes')
@@ -351,14 +360,13 @@ class PrinterConfig:
                                                stderr=subprocess.PIPE)
                     msg, err = process.communicate()
                     retcode = process.wait()
-                    if retcode == 0:
-                        return ver.strip()
-                    else:
-                        if not msg.find('nothing to commit'):
-                            logging.info("SAVE_CONFIG git saving: %s %s", msg, err)
+                    if retcode != 0:
+                        logging.info("SAVE_CONFIG git saving: %s %s", msg, err)
                 except OSError:
                     logging.debug("Exception on run: %s",
                                   traceback.format_exc())
+            else:
+                logging.info("SAVE_CONFIG: nothing changed.")
 
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
