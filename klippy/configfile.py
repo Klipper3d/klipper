@@ -328,20 +328,23 @@ class PrinterConfig:
                 # and swap with main config
                 logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                              cfgname, backup_name)
-        elif git_have_file_change():
-            # try to protect the user from errors, save his state of the config:
-            prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
-                    'the config file was modified before, these are your edits')
-            try:
-                process = subprocess.Popen(prog, stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
-                msg, err = process.communicate()
-                retcode = process.wait()
-                if retcode != 0:
-                    logging.info("SAVE_CONFIG saving previous changes: %s %s",
-                                 msg, err)
-            except OSError:
-                logging.debug("Exception on run: %s", traceback.format_exc())
+        else:
+            if git_have_file_change():
+                # try to protect the user from errors,
+                # save his state of the config:
+                prog = ('git', '-C', cfg_wd, 'commit', cfg_file, '-m',
+                        'saving your edits')
+                try:
+                    process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
+                    msg, err = process.communicate()
+                    retcode = process.wait()
+                    if retcode != 0:
+                        logging.info("SAVE_CONFIG saving previous changes:"
+                                     "%s %s", msg, err)
+                except OSError:
+                    logging.debug("Exception on run: %s",
+                                  traceback.format_exc())
             temp_name = cfgname
             os.unlink(cfgname)
         try:
