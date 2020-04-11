@@ -55,7 +55,7 @@ class MCU_analog_mux:
 
 # Code for sending messages on a TMC uart
 class MCU_TMC_uart_bitbang:
-    def __init__(self, rx_pin_params, tx_pin_params, select_pins_desc):
+    def __init__(self, rx_pin_params, tx_pin_params, select_pins_desc, tty=None):
         self.mcu = rx_pin_params['chip']
         self.mutex = self.mcu.get_printer().get_reactor().mutex()
         self.pullup = rx_pin_params['pullup']
@@ -81,7 +81,7 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = self.mcu.lookup_command(
             "tmcuart_send oid=%c write=%*s read=%c", cq=self.cmd_queue)
     def register_instance(self, rx_pin_params, tx_pin_params,
-                          select_pins_desc, addr):
+                          select_pins_desc, addr, tty):
         if (rx_pin_params['pin'] != self.rx_pin
             or tx_pin_params['pin'] != self.tx_pin
             or (select_pins_desc is None) != (self.analog_mux is None)):
@@ -90,7 +90,7 @@ class MCU_TMC_uart_bitbang:
         instance_id = None
         if self.analog_mux is not None:
             instance_id = self.analog_mux.get_instance_id(select_pins_desc)
-        if (instance_id, addr) in self.instances:
+        if (instance_id, addr) in self.instances and tty is None:
             raise self.mcu.get_printer().config_error(
                 "Shared TMC uarts need unique address or select_pins polarity")
         self.instances[(instance_id, addr)] = True

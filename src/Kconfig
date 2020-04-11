@@ -145,6 +145,6 @@ config HAVE_DEBUG
 
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
-    bool
+    bool "Enables gcc to inline stepper_event()"
     depends on HAVE_GPIO
     default y
