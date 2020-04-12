@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include </usr/include/sched.h> // sched_setscheduler
+#include <sched.h> // sched_setscheduler
 #include <stdio.h> // fprintf
 #include <string.h> // memset
 #include <unistd.h> // getopt

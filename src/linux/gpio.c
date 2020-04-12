@@ -15,7 +15,7 @@
 
 #include "internal.h" // report_errno
 
-#include </usr/include/linux/gpio.h>
+#include <linux/gpio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
