@@ -79,7 +79,7 @@ The following standard G-Code commands are available if a
 The following standard G-Code commands are available if a "display"
 config section is enabled:
 - Display Message: `M117 <message>`
-- Set build progress: `M73 P<percent> R<minutes remaining>`
+- Set build progress: `M73 P<percent>`
 
 ## Other available G-Code commands
 
