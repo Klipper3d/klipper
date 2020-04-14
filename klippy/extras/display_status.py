@@ -12,27 +12,39 @@ class DisplayStatus:
         self.printer = config.get_printer()
         self.expire_progress = 0.
         self.progress = self.message = None
+        self.remaining = None
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M73', self.cmd_M73)
         gcode.register_command('M117', self.cmd_M117)
     def get_status(self, eventtime):
         progress = self.progress
+        remaining = self.remaining
         if progress is not None and eventtime > self.expire_progress:
             idle_timeout = self.printer.lookup_object('idle_timeout')
             idle_timeout_info = idle_timeout.get_status(eventtime)
             if idle_timeout_info['state'] != "Printing":
                 self.progress = progress = None
+                self.remaining = remaining = None
         if progress is None:
             progress = 0.
             sdcard = self.printer.lookup_object('virtual_sdcard', None)
             if sdcard is not None:
                 progress = sdcard.get_status(eventtime)['progress']
-        return { 'progress': progress, 'message': self.message }
+        if remaining is None:
+            remaining = 0.
+        return { 'progress': progress, 'remaining' : remaining,
+                                            'message': self.message }
     def cmd_M73(self, params):
         gcode = self.printer.lookup_object('gcode')
+        if 'P' not in params:
+            gcode.respond_info("PM73 failed. P parameter required")
+            return
         progress = gcode.get_float('P', params, 0.) / 100.
         self.progress = min(1., max(0., progress))
+        if 'R' in params:
+            remaining = (gcode.get_int('R', params, 0))
+            self.remaining = remaining
         curtime = self.printer.get_reactor().monotonic()
         self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, params):
