@@ -59,6 +59,7 @@ CONFIG ../../config/printer-creality-cr10mini-2017.cfg
 CONFIG ../../config/printer-creality-ender2-2017.cfg
 CONFIG ../../config/printer-creality-ender3-2018.cfg
 CONFIG ../../config/printer-creality-ender5-2019.cfg
+CONFIG ../../config/printer-tronxy-p802e-2020.cfg
 CONFIG ../../config/printer-tronxy-x5s-2018.cfg
 CONFIG ../../config/printer-tronxy-x8-2018.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg
