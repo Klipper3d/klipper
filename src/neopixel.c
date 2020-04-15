@@ -78,8 +78,6 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 #define PULSE_LONG_TICKS  nsecs_to_ticks(650)
 #define PULSE_SHORT_TICKS nsecs_to_ticks(200)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
-#define BIT_MAX_TICKS     nsecs_to_ticks(4000)
-#define RESET_MIN_TICKS   timer_from_us(50)
 
 
 /****************************************************************
@@ -88,7 +86,8 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 struct neopixel_s {
     struct gpio_out pin;
-    uint32_t last_req_time;
+    neopixel_time_t bit_max_ticks;
+    uint32_t last_req_time, reset_min_ticks;
 };
 
 void
@@ -98,21 +97,27 @@ command_config_neopixel(uint32_t *args)
     struct neopixel_s *n = oid_alloc(args[0], command_config_neopixel
                                      , sizeof(*n));
     n->pin = pin;
+    n->bit_max_ticks = args[2];
+    n->reset_min_ticks = args[3];
 }
-DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u");
+DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
+             " bit_max_ticks=%u reset_min_ticks=%u");
 
 static int
 send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
 {
-    // Make sure at least 50us has passed since last request
-    uint32_t last_req_time = n->last_req_time, cur = timer_read_time();
-    while (cur - last_req_time < RESET_MIN_TICKS) {
+    // Make sure the reset time has elapsed since last request
+    uint32_t last_req_time = n->last_req_time, rmt = n->reset_min_ticks;
+    uint32_t cur = timer_read_time();
+    while (cur - last_req_time < rmt) {
         irq_poll();
         cur = timer_read_time();
     }
 
+    // Transmit data
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
+    neopixel_time_t bit_max_ticks = n->bit_max_ticks;
     while (data_len--) {
         uint_fast8_t byte = *data++;
         uint_fast8_t bits = 8;
@@ -125,7 +130,7 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 
-                if (neopixel_check_elapsed(last_start, start, BIT_MAX_TICKS))
+                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
                     goto fail;
                 last_start = start;
                 byte <<= 1;
@@ -144,7 +149,7 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 
-                if (neopixel_check_elapsed(last_start, start, BIT_MAX_TICKS))
+                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
                     goto fail;
                 last_start = start;
                 byte <<= 1;
