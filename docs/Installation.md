@@ -48,6 +48,7 @@ on the Raspberry Pi:
 cd ~/klipper/
 make menuconfig
 ```
+If you are unshure what to select, check your board in /config/{YourBoard}
 
 Select the appropriate micro-controller and review any other options
 provided. Once configured, run:
@@ -84,6 +85,8 @@ sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 ```
+If the board can't flash be shure to check you'r boards config for information
+on how to flash in /config/{YourBoard}
 
 Be sure to update the FLASH_DEVICE with the printer's unique serial
 port name.
