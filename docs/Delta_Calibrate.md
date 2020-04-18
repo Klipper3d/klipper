@@ -210,7 +210,7 @@ measurements no longer apply.
 
 Additional notes
 ----------------
-* You can use this [Enhanced calibration tool](https://docs.google.com/spreadsheets/d/1_ROuHkXpktTF6SVirGQZenKYvMbJCKEZjVS0XCniAMk/edit?usp=sharing), make a copy for yourself and fill in your own measurements 
+* You can use this [Enhanced calibration tool](https://docs.google.com/spreadsheets/d/1_ROuHkXpktTF6SVirGQZenKYvMbJCKEZjVS0XCniAMk/edit?usp=sharing), make a copy for yourself and fill in your own measurements
   and the tool wil create correct terminal commands for you.
   
 * If the delta printer has good dimensional accuracy then the distance
@@ -221,7 +221,7 @@ Additional notes
   inaccuracy in the part then the DELTA_ANALYZE routine will calculate
   new delta parameters using both the distance measurements and the
   previous height measurements from the last DELTA_CALIBRATE command.
-
+  
 * DELTA_ANALYZE may produce delta parameters that are surprising. For
   example, it may suggest arm lengths that do not match the printer's
   actual arm lengths. Despite this, testing has shown that
