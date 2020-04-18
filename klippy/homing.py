@@ -39,7 +39,10 @@ class Homing:
                               - s.calc_position_from_coord(movepos))
                           / s.get_step_dist())
                          for s in mcu_endstop.get_steppers()])
-        return move_t / max_steps
+        try:
+            return move_t / max_steps
+        except ZeroDivisionError:
+            return 1.0
     def homing_move(self, movepos, endstops, speed,
                     probe_pos=False, verify_movement=False):
         # Notify start of homing/probing move
