@@ -12,6 +12,10 @@ default and it will show the currently active extruder.  To use the
 previous display layout set "display_group: _multiextruder_16x4" in
 the [display] section of the printer.cfg file.
 
+20200308: The default `__test` menu item was removed. If the config
+file has a custom menu then be sure to remove all references to this
+`__test` menu item.
+
 20200308: The menu "deck" and "card" options were removed. To
 customize the layout of an lcd screen use the new display_data config
 sections (see config/example-extras.cfg for the details).
