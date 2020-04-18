@@ -210,7 +210,9 @@ measurements no longer apply.
 
 Additional notes
 ----------------
-
+* You can use this [Enhanced calibration tool](https://docs.google.com/spreadsheets/d/1_ROuHkXpktTF6SVirGQZenKYvMbJCKEZjVS0XCniAMk/edit?usp=sharing), make a copy for yourself and fill in your own measurements 
+  and the tool wil create correct terminal commands for you.
+  
 * If the delta printer has good dimensional accuracy then the distance
   between any two pillars should be around 74mm and the width of every
   pillar should be around 9mm. (Specifically, the goal is for the
