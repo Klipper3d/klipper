@@ -16,9 +16,9 @@ the [display] section of the printer.cfg file.
 customize the layout of an lcd screen use the new display_data config
 sections (see config/example-extras.cfg for the details).
 
-20200303: The menu "__test" item has been removed. Will cause LCD
-lockup if "__main" is in user config and still references "__test"
-from its default location.
+20200303: The menu "__test" item has been removed. If the "__main"
+menu code has been moved to printer.cfg be sure to remove reference
+to "__test" to prevent LCD menu lockup.
 
 20200109:  The bed_mesh module now references the probe's location
 in for the mesh configuration.  As such, some configuration options
