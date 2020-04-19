@@ -637,8 +637,11 @@ class GCodeParser:
             s.set_tag_position(s.get_commanded_position())
         stepper_pos = " ".join(["%s:%.6f" % (s.get_name(), s.get_tag_position())
                                 for s in steppers])
-        kin_pos = " ".join(["%s:%.6f" % (a, v)
-                            for a, v in zip("XYZ", kin.calc_tag_position())])
+        kin_status = kin.get_status(self.reactor.monotonic())
+        kin_homed = [a in kin_status['homed_axes'] for a in 'xyz']
+        kin_pos = " ".join(["%s:%s" % (a, v)
+            for a, v in zip("XYZ", [str(p) if h else 'Unhomed'
+            for (p, h) in zip(kin.calc_tag_position(), kin_homed)])])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", self.toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)
