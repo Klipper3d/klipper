@@ -145,7 +145,7 @@ class DeltaKinematics:
             move.limit_speed(max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
-    def get_status(self, eventtime):
+    def get_status(self):
         return {'homed_axes': '' if self.need_home else 'xyz'}
     def get_calibration(self):
         endstops = [rail.get_homing_info().position_endstop

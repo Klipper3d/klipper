@@ -34,8 +34,7 @@ class SafeZHoming:
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
             pos = toolhead.get_position()
-            curtime = self.printer.get_reactor().monotonic()
-            kin_status = toolhead.get_kinematics().get_status(curtime)
+            kin_status = toolhead.get_kinematics().get_status()
             # Check if Z axis is homed or has a known position
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits

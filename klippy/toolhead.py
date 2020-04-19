@@ -490,7 +490,7 @@ class ToolHead:
             status = "Printing"
         else:
             status = "Ready"
-        res = dict(self.kin.get_status(eventtime))
+        res = dict(self.kin.get_status())
         res.update({ 'status': status, 'print_time': print_time,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),

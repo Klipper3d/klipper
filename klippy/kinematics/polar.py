@@ -106,7 +106,7 @@ class PolarKinematics:
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-    def get_status(self, eventtime):
+    def get_status(self):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
         return {'homed_axes': xy_home + z_home}
