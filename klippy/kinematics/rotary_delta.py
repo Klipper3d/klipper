@@ -121,7 +121,7 @@ class RotaryDeltaKinematics:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
-    def get_status(self):
+    def get_status(self, eventtime):
         return {'homed_axes': '' if self.need_home else 'XYZ'}
     def get_calibration(self):
         return self.calibration
