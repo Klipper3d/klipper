@@ -53,10 +53,7 @@ neopixel_get_time(void)
     return TCNT1;
 }
 
-static inline void
-neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
-{
-}
+#define neopixel_delay(start, ticks) (void)(ticks)
 
 #else
 
@@ -139,6 +136,8 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
                 irq_disable();
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
+
+                neopixel_delay(neopixel_get_time(), PULSE_SHORT_TICKS);
             } else {
                 // Short pulse
                 neopixel_delay(last_start, BIT_MIN_TICKS);
