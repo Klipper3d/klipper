@@ -22,12 +22,15 @@ class ArcSupport:
         self.gcode.register_command("G3", self.cmd_G2)
 
     def cmd_G2(self, params):
-        currentPos = self.gcode.get_status(None)['gcode_position']
+        gcodestatus = self.gcode.get_status(None)
+        if not gcodestatus['absolute_coordinates']:
+            raise self.gcode.error("G2/G3 does not support relative move mode")
+        currentPos = gcodestatus['gcode_position']
 
         # Parse parameters
-        asX = self.gcode.get_float("X", params)
-        asY = self.gcode.get_float("Y", params)
-        asZ = self.gcode.get_float("Z", params, None)
+        asX = self.gcode.get_float("X", params, currentPos[0])
+        asY = self.gcode.get_float("Y", params, currentPos[1])
+        asZ = self.gcode.get_float("Z", params, currentPos[2])
         if self.gcode.get_float("R", params, None) is not None:
             raise self.gcode.error("G2/G3 does not support R moves")
         asI = self.gcode.get_float("I", params, 0.)
@@ -39,20 +42,23 @@ class ArcSupport:
         clockwise = (params['#command'] == 'G2')
 
         # Build list of linear coordinates to move to
-        coords = self.planArc(currentPos, [asX, asY, 0., 0.], [asI, asJ],
+        coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],
                               clockwise)
         if not coords:
             self.gcode.respond_info("G2/G3 could not translate '%s'"
                                     % (params['#original'],))
             return
+        e_per_move = e_base = 0.
+        if asE is not None:
+            if gcodestatus['absolute_extrude']:
+                e_base = currentPos[3]
+            e_per_move = (asE - e_base) / len(coords)
 
         # Convert coords into G1 commands
         for coord in coords:
-            g1_params = {'X': coord[0], 'Y': coord[1]}
-            if asZ is not None:
-                g1_params['Z'] = asZ
-            if asE is not None:
-                g1_params['E'] = asE / len(coords)
+            g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
+            if e_per_move:
+                g1_params['E'] = e_base + e_per_move
             if asF is not None:
                 g1_params['F'] = asF
             self.gcode.cmd_G1(g1_params)
