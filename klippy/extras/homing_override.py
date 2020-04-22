@@ -54,7 +54,7 @@ class HomingOverride:
         self.gcode.reset_last_position()
         # Perform homing
         kwparams = { 'printer': self.template.create_status_wrapper() }
-        kwparams['params'] = params
+        kwparams['params'] = params.get_command_parameters()
         try:
             self.in_script = True
             self.template.run_gcode_from_command(kwparams)

@@ -54,7 +54,8 @@ class ArcSupport:
                 g1_params['E'] = asE / len(coords)
             if asF is not None:
                 g1_params['F'] = asF
-            self.gcode.cmd_G1(g1_params)
+            g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
+            self.gcode.cmd_G1(g1_gcmd)
 
     # function planArc() originates from marlin plan_arc()
     # https://github.com/MarlinFirmware/Marlin

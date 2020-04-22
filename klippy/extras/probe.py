@@ -410,7 +410,8 @@ class ProbePointsHelper:
     def _manual_probe_start(self):
         done = self._move_next()
         if not done:
-            manual_probe.ManualProbeHelper(self.printer, {},
+            gcmd = self.gcode.create_gcode_command("", "", {})
+            manual_probe.ManualProbeHelper(self.printer, gcmd,
                                            self._manual_probe_finalize)
     def _manual_probe_finalize(self, kin_pos):
         if kin_pos is None:

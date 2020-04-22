@@ -63,7 +63,8 @@ class SafeZHoming:
         if need_y:
             new_params['Y'] = '0'
         if new_params:
-            self.prev_G28(new_params)
+            g28_gcmd = self.gcode.create_gcode_command("G28", "G28", new_params)
+            self.prev_G28(g28_gcmd)
         # Home Z axis if necessary
         if need_z:
             # Move to safe XY homing position
@@ -75,7 +76,8 @@ class SafeZHoming:
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
             # Home Z
-            self.prev_G28({'Z': '0'})
+            g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {'Z': '0'})
+            self.prev_G28(g28_gcmd)
             # Perform Z Hop again for pressure-based probes
             pos = toolhead.get_position()
             if self.z_hop:

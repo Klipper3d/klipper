@@ -1,10 +1,62 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
 import homing
+
+class GCodeCommand:
+    error = homing.CommandError
+    def __init__(self, gcode, command, commandline, params):
+        self._command = command
+        self._commandline = commandline
+        self._params = params
+        # Method wrappers
+        self.respond_info = gcode.respond_info
+        self.respond_raw = gcode.respond_raw
+        self.__contains__ = self._params.__contains__
+        self.__getitem__ = self._params.__getitem__
+    def get_command(self):
+        return self._command
+    def get_commandline(self):
+        return self._commandline
+    def get_command_parameters(self):
+        return self._params
+    # Parameter parsing helpers
+    class sentinel: pass
+    def get(self, name, default=sentinel, parser=str, minval=None, maxval=None,
+            above=None, below=None):
+        value = self._params.get(name)
+        if value is None:
+            if default is self.sentinel:
+                raise self.error("Error on '%s': missing %s"
+                                 % (self._commandline, name))
+            return default
+        try:
+            value = parser(value)
+        except:
+            raise self.error("Error on '%s': unable to parse %s"
+                             % (self._commandline, value))
+        if minval is not None and value < minval:
+            raise self.error("Error on '%s': %s must have minimum of %s"
+                             % (self._commandline, name, minval))
+        if maxval is not None and value > maxval:
+            raise self.error("Error on '%s': %s must have maximum of %s"
+                             % (self._commandline, name, maxval))
+        if above is not None and value <= above:
+            raise self.error("Error on '%s': %s must be above %s"
+                             % (self._commandline, name, above))
+        if below is not None and value >= below:
+            raise self.error("Error on '%s': %s must be below %s"
+                             % (self._commandline, name, below))
+        return value
+    def get_int(self, name, default=sentinel, minval=None, maxval=None):
+        return self.get(name, default, parser=int, minval=minval, maxval=maxval)
+    def get_float(self, name, default=sentinel, minval=None, maxval=None,
+                  above=None, below=None):
+        return self.get(name, default, parser=float, minval=minval,
+                        maxval=maxval, above=above, below=below)
 
 # Parse and handle G-Code commands
 class GCodeParser:
@@ -214,23 +266,26 @@ class GCodeParser:
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
-            # Break command into parts
-            parts = self.args_r.split(line.upper())[1:]
-            params = { parts[i]: parts[i+1].strip()
-                       for i in range(0, len(parts), 2) }
-            params['#original'] = origline
-            if parts and parts[0] == 'N':
+            # Break line into parts and determine command
+            parts = self.args_r.split(line.upper())
+            numparts = len(parts)
+            cmd = ""
+            if numparts >= 3 and parts[1] != 'N':
+                cmd = parts[1] + parts[2].strip()
+            elif numparts >= 5 and parts[1] == 'N':
                 # Skip line number at start of command
-                del parts[:2]
-            if not parts:
-                # Treat empty line as empty command
-                parts = ['', '']
-            params['#command'] = cmd = parts[0] + parts[1].strip()
+                cmd = parts[3] + parts[4].strip()
+            # Build gcode "params" dictionary
+            params = { parts[i]: parts[i+1].strip()
+                       for i in range(1, numparts, 2) }
+            params['#original'] = origline
+            params['#command'] = cmd
+            gcmd = GCodeCommand(self, cmd, origline, params)
             # Invoke handler for command
             self.need_ack = need_ack
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
-                handler(params)
+                handler(gcmd)
             except self.error as e:
                 self._respond_error(str(e))
                 self.reset_last_position()
@@ -273,7 +328,7 @@ class GCodeParser:
                 # Check for M112 out-of-order
                 for line in lines:
                     if self.m112_r.match(line) is not None:
-                        self.cmd_M112({})
+                        self.cmd_M112(None)
             if self.is_processing_data:
                 if len(pending_commands) >= 20:
                     # Stop reading input
@@ -302,6 +357,8 @@ class GCodeParser:
             self._process_commands(script.split('\n'), need_ack=False)
     def get_mutex(self):
         return self.mutex
+    def create_gcode_command(self, command, commandline, params):
+        return GCodeCommand(self, command, commandline, params)
     # Response handling
     def ack(self, msg=None):
         if not self.need_ack:
@@ -340,56 +397,38 @@ class GCodeParser:
     def _respond_state(self, state):
         self.respond_info("Klipper state: %s" % (state,), log=False)
     # Parameter parsing helpers
-    class sentinel: pass
-    def get_str(self, name, params, default=sentinel, parser=str,
+    def get_str(self, name, gcmd, default=GCodeCommand.sentinel, parser=str,
                 minval=None, maxval=None, above=None, below=None):
-        if name not in params:
-            if default is self.sentinel:
-                raise self.error("Error on '%s': missing %s" % (
-                    params['#original'], name))
-            return default
-        try:
-            value = parser(params[name])
-        except:
-            raise self.error("Error on '%s': unable to parse %s" % (
-                params['#original'], params[name]))
-        if minval is not None and value < minval:
-            raise self.error("Error on '%s': %s must have minimum of %s" % (
-                params['#original'], name, minval))
-        if maxval is not None and value > maxval:
-            raise self.error("Error on '%s': %s must have maximum of %s" % (
-                params['#original'], name, maxval))
-        if above is not None and value <= above:
-            raise self.error("Error on '%s': %s must be above %s" % (
-                params['#original'], name, above))
-        if below is not None and value >= below:
-            raise self.error("Error on '%s': %s must be below %s" % (
-                params['#original'], name, below))
-        return value
-    def get_int(self, name, params, default=sentinel, minval=None, maxval=None):
-        return self.get_str(name, params, default, parser=int,
-                            minval=minval, maxval=maxval)
-    def get_float(self, name, params, default=sentinel,
+        return gcmd.get(name, default, parser, minval, maxval, above, below)
+    def get_int(self, name, gcmd, default=GCodeCommand.sentinel,
+                minval=None, maxval=None):
+        return gcmd.get_int(name, default, minval=minval, maxval=maxval)
+    def get_float(self, name, gcmd, default=GCodeCommand.sentinel,
                   minval=None, maxval=None, above=None, below=None):
-        return self.get_str(name, params, default, parser=float, minval=minval,
-                            maxval=maxval, above=above, below=below)
+        return gcmd.get_float(name, default, minval=minval, maxval=maxval,
+                              above=above, below=below)
     extended_r = re.compile(
         r'^\s*(?:N[0-9]+\s*)?'
         r'(?P<cmd>[a-zA-Z_][a-zA-Z0-9_]+)(?:\s+|$)'
         r'(?P<args>[^#*;]*?)'
         r'\s*(?:[#*;].*)?$')
-    def _get_extended_params(self, params):
-        m = self.extended_r.match(params['#original'])
+    def _get_extended_params(self, gcmd):
+        m = self.extended_r.match(gcmd.get_commandline())
         if m is None:
-            raise self.error("Malformed command '%s'" % (params['#original'],))
+            raise self.error("Malformed command '%s'"
+                             % (gcmd.get_commandline(),))
         eargs = m.group('args')
         try:
             eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]
             eparams = { k.upper(): v for k, v in eparams }
-            eparams.update({k: params[k] for k in params if k.startswith('#')})
-            return eparams
+            eparams['#original'] = gcmd._params['#original']
+            eparams['#command'] = gcmd._params['#command']
+            gcmd._params.clear()
+            gcmd._params.update(eparams)
+            return gcmd
         except ValueError as e:
-            raise self.error("Malformed command '%s'" % (params['#original'],))
+            raise self.error("Malformed command '%s'"
+                             % (gcmd.get_commandline(),))
     # G-Code special command handlers
     def cmd_default(self, params):
         cmd = params.get('#command')

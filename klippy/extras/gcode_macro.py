@@ -154,10 +154,10 @@ class GCodeMacro:
                 value,))
         self.variables[variable] = literal
     cmd_desc = "G-Code macro"
-    def cmd(self, params):
+    def cmd(self, gcmd):
         if self.in_script:
-            raise self.gcode.error(
-                "Macro %s called recursively" % (self.alias,))
+            raise gcmd.error("Macro %s called recursively" % (self.alias,))
+        params = gcmd.get_command_parameters()
         kwparams = dict(self.kwparams)
         kwparams.update(params)
         kwparams.update(self.variables)
