@@ -3,7 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging
+import os, logging, tempfile, shutil
 
 class VirtualSD:
     def __init__(self, config):
@@ -11,8 +11,11 @@ class VirtualSD:
         printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
+        self.pre_spool = config.getboolean('pre_spool', False)
+        self.max_spool_size_mb = config.getint('max_spool_size', 64)
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
+        self.current_file_name = None
         self.file_position = self.file_size = 0
         # Work timer
         self.reactor = printer.get_reactor()
@@ -66,6 +69,41 @@ class VirtualSD:
             self.must_pause_work = True
             while self.work_timer is not None and not self.cmd_from_sd:
                 self.reactor.pause(self.reactor.monotonic() + .001)
+    def select_file(self, fname):
+        if self.work_timer is not None:
+            raise self.gcode.error("SD busy")
+        if self.current_file is not None:
+            self.clear_file()
+        if self.pre_spool:
+            try:
+                self.current_file = tempfile.SpooledTemporaryFile(
+                    max_size=self.max_spool_size_mb * 1024 * 1024)
+                self.current_file_name = fname
+                shutil.copyfileobj(open(fname, 'rb'), self.current_file)
+                self.read_file_size()
+            except:
+                self.clear_file()
+                logging.exception("virtual_sdcard pre_spool")
+                raise self.gcode.error("Unable to pre_spool gcode file")
+        else:
+            try:
+                self.current_file = open(fname, 'rb')
+                self.current_file_name = fname
+                self.read_file_size()
+            except:
+                self.clear_file()
+                logging.exception("virtual_sdcard file open")
+                raise self.gcode.error("Unable to open file")
+    def clear_file(self):
+        self.current_file.close()
+        self.current_file = None
+        self.current_file_name = None
+        self.file_position = self.file_size = 0
+    def read_file_size(self):
+        self.current_file.seek(0, os.SEEK_END)
+        self.file_size = self.current_file.tell()
+        self.current_file.seek(0)
+        self.file_position = 0
     # G-Code commands
     def cmd_error(self, params):
         raise self.gcode.error("SD write not supported")
@@ -83,10 +121,6 @@ class VirtualSD:
         # Select SD file
         if self.work_timer is not None:
             raise self.gcode.error("SD busy")
-        if self.current_file is not None:
-            self.current_file.close()
-            self.current_file = None
-            self.file_position = self.file_size = 0
         try:
             orig = params['#original']
             filename = orig[orig.find("M23") + 4:].split()[0].strip()
@@ -101,18 +135,13 @@ class VirtualSD:
         try:
             fname = files_by_lower[filename.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = open(fname, 'rb')
-            f.seek(0, os.SEEK_END)
-            fsize = f.tell()
-            f.seek(0)
+            self.select_file(fname)
         except:
             logging.exception("virtual_sdcard file open")
-            raise self.gcode.error("Unable to open file")
-        self.gcode.respond_raw("File opened:%s Size:%d" % (filename, fsize))
+            raise self.gcode.error("Unable to select file")
+        self.gcode.respond_raw("File opened:%s Size:%d" %
+                               (self.current_file_name, self.file_size))
         self.gcode.respond_raw("File selected")
-        self.current_file = f
-        self.file_position = 0
-        self.file_size = fsize
     def cmd_M24(self, params):
         # Start/resume SD print
         if self.work_timer is not None:
