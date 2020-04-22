@@ -6,92 +6,56 @@
 # Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import math
 
-
-# uses the plan_arc function from marlin which does steps in mm rather then
-# in degrees. # Coordinates created by this are converted into G1 commands.
+# Coordinates created by this are converted into G1 commands.
 #
 # note: only IJ version available
-
-import math
-import re
 
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mm_per_arc_segment = config.getfloat('resolution', 1, above=0.0)
+        self.mm_per_arc_segment = config.getfloat('resolution', 1., above=0.0)
 
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("G2", self.cmd_G2, desc=self.cmd_G2_help)
-        self.gcode.register_command("G3", self.cmd_G2, desc=self.cmd_G3_help)
-
-    cmd_G2_help = "Counterclockwise rotation move"
-    cmd_G3_help = "Clockwise rotaion move"
+        self.gcode.register_command("G2", self.cmd_G2)
+        self.gcode.register_command("G3", self.cmd_G2)
 
     def cmd_G2(self, params):
-        # set vars
-        currentPos =  self.gcode.get_status(None)['gcode_position']
+        currentPos = self.gcode.get_status(None)['gcode_position']
 
-        asX = params.get("X", None)
-        asY = params.get("Y", None)
-        asZ = params.get("Z", None)
+        # Parse parameters
+        asX = self.gcode.get_float("X", params)
+        asY = self.gcode.get_float("Y", params)
+        asZ = self.gcode.get_float("Z", params, None)
+        if self.gcode.get_float("R", params, None) is not None:
+            raise self.gcode.error("G2/G3 does not support R moves")
+        asI = self.gcode.get_float("I", params, 0.)
+        asJ = self.gcode.get_float("J", params, 0.)
+        if not asI and not asJ:
+            raise self.gcode.error("G2/G3 neither I nor J given")
+        asE = self.gcode.get_float("E", params, None)
+        asF = self.gcode.get_float("F", params, None)
+        clockwise = (params['#command'] == 'G2')
 
-        asR = float(params.get("R", 0.))    #radius
-        asI = float(params.get("I", 0.))
-        asJ = float(params.get("J", 0.))
+        # Build list of linear coordinates to move to
+        coords = self.planArc(currentPos, [asX, asY, 0., 0.], [asI, asJ],
+                              clockwise)
+        if not coords:
+            self.gcode.respond_info("G2/G3 could not translate '%s'"
+                                    % (params['#original'],))
+            return
 
-        asE = float(params.get("E", 0.))
-        asF = float(params.get("F", -1))
-
-        # --------- health checks of code -----------
-        if (asX is None or asY is None):
-            raise self.gcode.error("g2/g3: Coords missing")
-
-        elif asR == 0 and asI == 0 and asJ==0:
-            raise self.gcode.error("g2/g3: neither R nor I and J given")
-
-        elif asR > 0 and (asI !=0 or asJ!=0):
-            raise self.gcode.error("g2/g3: R, I and J were given. Invalid")
-        else:   # -------- execute conversion -----------
-            coords = []
-            clockwise = params['#command'].lower().startswith("g2")
-            asY = float(asY)
-            asX = float(asX)
-
-            # use radius
-            # if asR > 0:
-                # not sure if neccessary since R barely seems to be used
-
-            # use IJK
-
-            if asI != 0 or asJ!=0:
-                coords = self.planArc(currentPos,
-                            [asX,asY,0.,0.],
-                            [asI, asJ],
-                            clockwise)
-            ###############################
-            # converting coords into G1 codes (lazy aproch)
-            if len(coords)>0:
-
-                # build dict and call cmd_G1
-                for coord in coords:
-                    g1_params = {'X': coord[0], 'Y': coord[1]}
-                    if asZ!=None:
-                        g1_params['Z']= float(asZ)
-                    if asE>0:
-                        g1_params['E']= float(asE)/len(coords)
-                    if asF>0:
-                        g1_params['F']= asF
-
-                    self.gcode.cmd_G1(g1_params)
-
-
-
-
-            else:
-                self.gcode.respond_info(
-                    "could not tranlate from '" + params['#original'] + "'")
-
+        # Convert coords into G1 commands
+        for coord in coords:
+            g1_params = {'X': coord[0], 'Y': coord[1]}
+            if asZ is not None:
+                g1_params['Z'] = asZ
+            if asE is not None:
+                g1_params['E'] = asE / len(coords)
+            if asF is not None:
+                g1_params['F'] = asF
+            self.gcode.cmd_G1(g1_params)
 
     # function planArc() originates from marlin plan_arc()
     # https://github.com/MarlinFirmware/Marlin
@@ -99,13 +63,7 @@ class ArcSupport:
     # The arc is approximated by generating many small linear segments.
     # The length of each segment is configured in MM_PER_ARC_SEGMENT
     # Arcs smaller then this value, will be a Line only
-
-    def planArc(
-            self,
-            currentPos,
-            targetPos=[0.,0.,0.,0.],
-            offset=[0.,0.],
-            clockwise=False):
+    def planArc(self, currentPos, targetPos, offset, clockwise):
         # todo: sometimes produces full circles
         coords = []
         MM_PER_ARC_SEGMENT = self.mm_per_arc_segment
@@ -137,14 +95,12 @@ class ArcSupport:
             and currentPos[Y_AXIS] == targetPos[Y_AXIS]):
             angular_travel = math.radians(360)
 
-
         flat_mm = radius * angular_travel
         mm_of_travel = linear_travel
         if(mm_of_travel == linear_travel):
             mm_of_travel = math.hypot(flat_mm, linear_travel)
         else:
             mm_of_travel = math.abs(flat_mm)
-
 
         if (mm_of_travel < 0.001):
             return coords
@@ -153,14 +109,12 @@ class ArcSupport:
         if(segments<1):
             segments=1
 
-
         raw = [0.,0.,0.,0.]
         theta_per_segment = float(angular_travel / segments)
         linear_per_segment = float(linear_travel / segments)
 
         # Initialize the linear axis
         raw[Z_AXIS] = currentPos[Z_AXIS];
-
 
         for i in range(1,segments+1):
             cos_Ti = math.cos(i * theta_per_segment)
@@ -175,7 +129,6 @@ class ArcSupport:
             coords.append([raw[X_AXIS],  raw[Y_AXIS], raw[Z_AXIS] ])
 
         return coords
-
 
 def load_config(config):
     return ArcSupport(config)
