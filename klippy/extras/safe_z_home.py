@@ -52,11 +52,9 @@ class SafeZHoming:
                     toolhead.get_kinematics().note_z_not_homed()
 
         # Determine which axes we need to home
-        if not any([axis in params.keys() for axis in ['X', 'Y', 'Z']]):
-            need_x, need_y, need_z = [True] * 3
-        else:
-            need_x, need_y, need_z = tuple(axis in params
-                                           for axis in ['X', 'Y', 'Z'])
+        need_x, need_y, need_z = [axis in params for axis in "XYZ"]
+        if not need_x and not need_y and not need_z:
+            need_x = need_y = need_z = True
 
         # Home XY axes if necessary
         new_params = {}
