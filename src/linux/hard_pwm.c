@@ -37,7 +37,7 @@ DECL_ENUMERATION_RANGE("pin", "pwmchip7/pwm0", HARD_PWM(7, 0), 16);
 #define PWM_PATH "/sys/class/pwm/pwmchip%u/pwm%u/%s"
 #define PWM_PATH_BB "/sys/class/pwm/pwm-%u:%u/%s"
 
-struct gpio_pwm gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint16_t val)
+struct gpio_pwm gpio_pwm_setup(uint32_t pin, uint32_t cycle_time, uint16_t val)
 {
     char filename[256];
     char scratch[16];

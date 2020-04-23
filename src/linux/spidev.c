@@ -107,15 +107,3 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         }
     }
 }
-
-// Dummy versions of gpio_out functions
-struct gpio_out
-gpio_out_setup(uint8_t pin, uint8_t val)
-{
-    shutdown("gpio_out_setup not supported");
-}
-
-void
-gpio_out_write(struct gpio_out g, uint8_t val)
-{
-}
