@@ -26,7 +26,7 @@ class GCodeButton:
     cmd_QUERY_BUTTON_help = "Report on the state of a button"
 
     def cmd_QUERY_BUTTON(self, params):
-        self.gcode.respond(self.name + ": " + self.get_status()['state'])
+        self.gcode.respond_info(self.name + ": " + self.get_status()['state'])
 
     def button_callback(self, eventtime, state):
         self.last_state = state

@@ -134,11 +134,11 @@ class HallFilamentWidthSensor:
                          + str(self.diameter))
         else:
             response += "Filament NOT present"
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
     def cmd_ClearFilamentArray(self, params):
         self.filament_array = []
-        self.gcode.respond("Filament width measurements cleared!")
+        self.gcode.respond_info("Filament width measurements cleared!")
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
 
@@ -151,7 +151,7 @@ class HallFilamentWidthSensor:
             # Start extrude factor update timer
             self.reactor.update_timer(self.extrude_factor_update_timer,
                                       self.reactor.NOW)
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
     def cmd_M406(self, params):
         response = "Filament width sensor Turned Off"
@@ -166,7 +166,7 @@ class HallFilamentWidthSensor:
             self.filament_array = []
             # Set extrude multiplier to 100%
             self.gcode.run_script_from_command("M221 S100")
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
     def cmd_Get_Raw_Values(self, params):
         response = "ADC1="
@@ -175,7 +175,7 @@ class HallFilamentWidthSensor:
         response +=  (" RAW="+
                       str(self.lastFilamentWidthReading
                       +self.lastFilamentWidthReading2))
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
     def get_status(self, eventtime):
         return {'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+

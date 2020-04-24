@@ -316,7 +316,7 @@ class GCodeParser:
         except os.error:
             logging.exception("Write g-code ack")
         self.need_ack = False
-    def respond(self, msg):
+    def respond_raw(self, msg):
         if self.is_fileinput:
             return
         try:
@@ -327,13 +327,13 @@ class GCodeParser:
         if log:
             logging.info(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
-        self.respond("// " + "\n// ".join(lines))
+        self.respond_raw("// " + "\n// ".join(lines))
     def _respond_error(self, msg):
         logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
             self.respond_info("\n".join(lines), log=False)
-        self.respond('!! %s' % (lines[0].strip(),))
+        self.respond_raw('!! %s' % (lines[0].strip(),))
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
     def _respond_state(self, state):
@@ -407,7 +407,7 @@ class GCodeParser:
         eventtime = self.reactor.monotonic()
         while self.is_printer_ready and heater.check_busy(eventtime):
             print_time = self.toolhead.get_last_move_time()
-            self.respond(self._get_temp(eventtime))
+            self.respond_raw(self._get_temp(eventtime))
             eventtime = self.reactor.pause(eventtime + 1.)
     # G-Code special command handlers
     def cmd_default(self, params):
@@ -533,7 +533,7 @@ class GCodeParser:
     def cmd_M114(self, params):
         # Get Current Position
         p = self._get_gcode_position()
-        self.respond("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+        self.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
     def cmd_M220(self, params):
         # Set speed factor override percentage
         value = self.get_float('S', params, 100., above=0.) / (60. * 100.)
@@ -609,7 +609,7 @@ class GCodeParser:
         if self.need_ack:
             self.ack(msg)
         else:
-            self.respond(msg)
+            self.respond_raw(msg)
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
         # Emergency Stop

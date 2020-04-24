@@ -32,7 +32,7 @@ class HostResponder:
             msg = msg[5:]
         else:
             msg = ''
-        self.gcode.respond("%s %s" % (self.default_prefix, msg))
+        self.gcode.respond_raw("%s %s" % (self.default_prefix, msg))
     def cmd_RESPOND(self, params):
         respond_type = self.gcode.get_str('TYPE', params, None)
         prefix = self.default_prefix
@@ -46,7 +46,7 @@ class HostResponder:
                     " of 'echo', 'command', or 'error'" % (respond_type,))
         prefix = self.gcode.get_str('PREFIX', params, prefix)
         msg = self.gcode.get_str('MSG', params, '')
-        self.gcode.respond("%s %s" %(prefix, msg))
+        self.gcode.respond_raw("%s %s" %(prefix, msg))
 
 def load_config(config):
     return HostResponder(config)

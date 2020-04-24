@@ -110,11 +110,11 @@ class FilamentWidthSensor:
                          + str(self.lastFilamentWidthReading))
         else:
             response += "Filament NOT present"
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
     def cmd_ClearFilamentArray(self, params):
         self.filament_array = []
-        self.gcode.respond("Filament width measurements cleared!")
+        self.gcode.respond_info("Filament width measurements cleared!")
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
 
@@ -127,7 +127,7 @@ class FilamentWidthSensor:
             # Start extrude factor update timer
             self.reactor.update_timer(self.extrude_factor_update_timer,
                                       self.reactor.NOW)
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
     def cmd_M406(self, params):
         response = "Filament width sensor Turned Off"
@@ -142,7 +142,7 @@ class FilamentWidthSensor:
             self.filament_array = []
             # Set extrude multiplier to 100%
             self.gcode.run_script_from_command("M221 S100")
-        self.gcode.respond(response)
+        self.gcode.respond_info(response)
 
 def load_config(config):
     return FilamentWidthSensor(config)

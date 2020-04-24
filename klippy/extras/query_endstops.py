@@ -27,7 +27,7 @@ class QueryEndstops:
         msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                         for name, t in self.last_state])
         gcode = self.printer.lookup_object('gcode')
-        gcode.respond(msg)
+        gcode.respond_raw(msg)
 
 def load_config(config):
     return QueryEndstops(config)
