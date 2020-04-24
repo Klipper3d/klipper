@@ -21,27 +21,27 @@ class ArcSupport:
         self.gcode.register_command("G2", self.cmd_G2)
         self.gcode.register_command("G3", self.cmd_G2)
 
-    def cmd_G2(self, params):
+    def cmd_G2(self, gcmd):
         gcodestatus = self.gcode.get_status(None)
         if not gcodestatus['absolute_coordinates']:
             raise self.gcode.error("G2/G3 does not support relative move mode")
         currentPos = gcodestatus['gcode_position']
 
         # Parse parameters
-        asX = self.gcode.get_float("X", params, currentPos[0])
-        asY = self.gcode.get_float("Y", params, currentPos[1])
-        asZ = self.gcode.get_float("Z", params, currentPos[2])
-        if self.gcode.get_float("R", params, None) is not None:
-            raise self.gcode.error("G2/G3 does not support R moves")
-        asI = self.gcode.get_float("I", params, 0.)
-        asJ = self.gcode.get_float("J", params, 0.)
+        asX = gcmd.get_float("X", currentPos[0])
+        asY = gcmd.get_float("Y", currentPos[1])
+        asZ = gcmd.get_float("Z", currentPos[2])
+        if gcmd.get_float("R", None) is not None:
+            raise gcmd.error("G2/G3 does not support R moves")
+        asI = gcmd.get_float("I", 0.)
+        asJ = gcmd.get_float("J", 0.)
         if not asI and not asJ:
-            raise self.gcode.error("G2/G3 neither I nor J given")
-        asE = self.gcode.get_float("E", params, None)
+            raise gcmd.error("G2/G3 neither I nor J given")
+        asE = gcmd.get_float("E", None)
         if asE is not None and gcodestatus['absolute_extrude']:
-            raise self.gcode.error("G2/G3 only supports relative extrude mode")
-        asF = self.gcode.get_float("F", params, None)
-        clockwise = (params['#command'] == 'G2')
+            raise gcmd.error("G2/G3 only supports relative extrude mode")
+        asF = gcmd.get_float("F", None)
+        clockwise = (gcmd.get_command() == 'G2')
 
         # Build list of linear coordinates to move to
         coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],
