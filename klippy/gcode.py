@@ -506,7 +506,7 @@ class GCodeParser:
     # G-Code coordinate manipulation
     def cmd_G20(self, params):
         # Set units to inches
-        self.respond_error('Machine does not support G20 (inches) command')
+        raise self.error('Machine does not support G20 (inches) command')
     def cmd_M82(self, params):
         # Use absolute distances for extrusion
         self.absolute_extrude = True
