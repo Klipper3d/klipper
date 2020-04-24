@@ -67,33 +67,33 @@ class VirtualSD:
             while self.work_timer is not None and not self.cmd_from_sd:
                 self.reactor.pause(self.reactor.monotonic() + .001)
     # G-Code commands
-    def cmd_error(self, params):
-        raise self.gcode.error("SD write not supported")
-    def cmd_M20(self, params):
+    def cmd_error(self, gcmd):
+        raise gcmd.error("SD write not supported")
+    def cmd_M20(self, gcmd):
         # List SD card
         files = self.get_file_list()
-        self.gcode.respond_raw("Begin file list")
+        gcmd.respond_raw("Begin file list")
         for fname, fsize in files:
-            self.gcode.respond_raw("%s %d" % (fname, fsize))
-        self.gcode.respond_raw("End file list")
-    def cmd_M21(self, params):
+            gcmd.respond_raw("%s %d" % (fname, fsize))
+        gcmd.respond_raw("End file list")
+    def cmd_M21(self, gcmd):
         # Initialize SD card
-        self.gcode.respond_raw("SD card ok")
-    def cmd_M23(self, params):
+        gcmd.respond_raw("SD card ok")
+    def cmd_M23(self, gcmd):
         # Select SD file
         if self.work_timer is not None:
-            raise self.gcode.error("SD busy")
+            raise gcmd.error("SD busy")
         if self.current_file is not None:
             self.current_file.close()
             self.current_file = None
             self.file_position = self.file_size = 0
         try:
-            orig = params['#original']
+            orig = gcmd.get_commandline()
             filename = orig[orig.find("M23") + 4:].split()[0].strip()
             if '*' in filename:
                 filename = filename[:filename.find('*')].strip()
         except:
-            raise self.gcode.error("Unable to extract filename")
+            raise gcmd.error("Unable to extract filename")
         if filename.startswith('/'):
             filename = filename[1:]
         files = self.get_file_list()
@@ -107,35 +107,35 @@ class VirtualSD:
             f.seek(0)
         except:
             logging.exception("virtual_sdcard file open")
-            raise self.gcode.error("Unable to open file")
-        self.gcode.respond_raw("File opened:%s Size:%d" % (filename, fsize))
-        self.gcode.respond_raw("File selected")
+            raise gcmd.error("Unable to open file")
+        gcmd.respond_raw("File opened:%s Size:%d" % (filename, fsize))
+        gcmd.respond_raw("File selected")
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
-    def cmd_M24(self, params):
+    def cmd_M24(self, gcmd):
         # Start/resume SD print
         if self.work_timer is not None:
-            raise self.gcode.error("SD busy")
+            raise gcmd.error("SD busy")
         self.must_pause_work = False
         self.work_timer = self.reactor.register_timer(
             self.work_handler, self.reactor.NOW)
-    def cmd_M25(self, params):
+    def cmd_M25(self, gcmd):
         # Pause SD print
         self.do_pause()
-    def cmd_M26(self, params):
+    def cmd_M26(self, gcmd):
         # Set SD position
         if self.work_timer is not None:
-            raise self.gcode.error("SD busy")
-        pos = self.gcode.get_int('S', params, minval=0)
+            raise gcmd.error("SD busy")
+        pos = gcmd.get_int('S', minval=0)
         self.file_position = pos
-    def cmd_M27(self, params):
+    def cmd_M27(self, gcmd):
         # Report SD print status
         if self.current_file is None:
-            self.gcode.respond_raw("Not SD printing.")
+            gcmd.respond_raw("Not SD printing.")
             return
-        self.gcode.respond_raw("SD printing byte %d/%d" % (
-            self.file_position, self.file_size))
+        gcmd.respond_raw("SD printing byte %d/%d"
+                         % (self.file_position, self.file_size))
     # Background work timer
     def work_handler(self, eventtime):
         logging.info("Starting SD card print (position %d)", self.file_position)
