@@ -144,7 +144,6 @@ class VirtualSD:
             self.current_file.seek(self.file_position)
         except:
             logging.exception("virtual_sdcard seek")
-            self.gcode.respond_error("Unable to seek file")
             self.work_timer = None
             return self.reactor.NEVER
         gcode_mutex = self.gcode.get_mutex()
@@ -157,7 +156,6 @@ class VirtualSD:
                     data = self.current_file.read(8192)
                 except:
                     logging.exception("virtual_sdcard read")
-                    self.gcode.respond_error("Error on virtual sdcard read")
                     break
                 if not data:
                     # End of file
