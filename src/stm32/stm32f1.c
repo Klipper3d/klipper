@@ -112,13 +112,18 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 void
 usb_request_bootloader(void)
 {
-    if (!CONFIG_STM32_FLASH_START_2000)
+    if (!(CONFIG_STM32_FLASH_START_2000 || CONFIG_STM32_FLASH_START_800))
         return;
-    // Enter "stm32duino" bootloader
+    // Enter "stm32duino" or HID bootloader
     irq_disable();
     RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
     PWR->CR |= PWR_CR_DBP;
-    BKP->DR10 = 0x01;
+    if (CONFIG_STM32_FLASH_START_800)
+        // HID Bootloader magic key
+        BKP->DR4 = 0x424C;
+    else
+        // stm32duino bootloader magic key
+        BKP->DR10 = 0x01;
     PWR->CR &=~ PWR_CR_DBP;
     NVIC_SystemReset();
 }
