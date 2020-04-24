@@ -111,7 +111,6 @@ class GCodeParser:
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
         self.need_ack = False
         self.toolhead = None
-        self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def is_traditional_gcode(self, cmd):
         # A "traditional" g-code command is a letter and followed by a number
         try:
@@ -430,42 +429,42 @@ class GCodeParser:
             raise self.error("Malformed command '%s'"
                              % (gcmd.get_commandline(),))
     # G-Code special command handlers
-    def cmd_default(self, params):
-        cmd = params.get('#command')
+    def cmd_default(self, gcmd):
+        cmd = gcmd.get_command()
         if cmd == 'M105':
             # Don't warn about temperature requests when not ready
             self.ack("T:0")
             return
         if not self.is_printer_ready:
-            raise self.error(self.printer.get_state_message())
+            raise gcmd.error(self.printer.get_state_message())
             return
         if not cmd:
-            logging.debug(params['#original'])
+            logging.debug(gcmd.get_commandline())
             return
         if cmd.startswith("M117 "):
             # Handle M117 gcode with numeric and special characters
             handler = self.gcode_handlers.get("M117", None)
             if handler is not None:
-                handler(params)
+                handler(gcmd)
                 return
-        elif cmd in ['M140', 'M104'] and not self.get_float('S', params, 0.):
+        elif cmd in ['M140', 'M104'] and not gcmd.get_float('S', 0.):
             # Don't warn about requests to turn off heaters when not present
             return
         elif cmd == 'M107' or (cmd == 'M106' and (
-                not self.get_float('S', params, 1.) or self.is_fileinput)):
+                not gcmd.get_float('S', 1.) or self.is_fileinput)):
             # Don't warn about requests to turn off fan when fan not present
             return
-        self.respond_info('Unknown command:"%s"' % (cmd,))
-    def _cmd_mux(self, params):
-        key, values = self.mux_commands[params['#command']]
+        gcmd.respond_info('Unknown command:"%s"' % (cmd,))
+    def _cmd_mux(self, gcmd):
+        key, values = self.mux_commands[gcmd.get_command()]
         if None in values:
-            key_param = self.get_str(key, params, None)
+            key_param = gcmd.get(key, None)
         else:
-            key_param = self.get_str(key, params)
+            key_param = gcmd.get(key)
         if key_param not in values:
-            raise self.error("The value '%s' is not valid for %s" % (
-                key_param, key))
-        values[key_param](params)
+            raise gcmd.error("The value '%s' is not valid for %s"
+                             % (key_param, key))
+        values[key_param](gcmd)
     all_handlers = [
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
@@ -474,13 +473,13 @@ class GCodeParser:
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
-    def cmd_G1(self, params):
+    def cmd_G1(self, gcmd):
         # Move
+        params = gcmd._params
         try:
-            for axis in 'XYZ':
+            for pos, axis in enumerate('XYZ'):
                 if axis in params:
                     v = float(params[axis])
-                    pos = self.axis2pos[axis]
                     if not self.absolute_coord:
                         # value relative to position of last move
                         self.last_position[pos] += v
@@ -498,23 +497,23 @@ class GCodeParser:
             if 'F' in params:
                 gcode_speed = float(params['F'])
                 if gcode_speed <= 0.:
-                    raise self.error("Invalid speed in '%s'" % (
-                        params['#original'],))
+                    raise gcmd.error("Invalid speed in '%s'"
+                                     % (gcmd.get_commandline(),))
                 self.speed = gcode_speed * self.speed_factor
         except ValueError as e:
-            raise self.error("Unable to parse move '%s'" % (
-                params['#original'],))
+            raise gcmd.error("Unable to parse move '%s'"
+                             % (gcmd.get_commandline(),))
         self.move_with_transform(self.last_position, self.speed)
-    def cmd_G4(self, params):
+    def cmd_G4(self, gcmd):
         # Dwell
-        delay = self.get_float('P', params, 0., minval=0.) / 1000.
+        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
         self.toolhead.dwell(delay)
-    def cmd_G28(self, params):
+    def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
-        for axis in 'XYZ':
-            if axis in params:
-                axes.append(self.axis2pos[axis])
+        for pos, axis in enumerate('XYZ'):
+            if gcmd.get(axis, None) is not None:
+                axes.append(pos)
         if not axes:
             axes = [0, 1, 2]
         homing_state = homing.Homing(self.printer)
@@ -524,76 +523,75 @@ class GCodeParser:
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
         self.reset_last_position()
-    def cmd_M400(self, params):
+    def cmd_M400(self, gcmd):
         # Wait for current moves to finish
         self.toolhead.wait_moves()
     # G-Code coordinate manipulation
-    def cmd_G20(self, params):
+    def cmd_G20(self, gcmd):
         # Set units to inches
-        raise self.error('Machine does not support G20 (inches) command')
-    def cmd_M82(self, params):
+        raise gcmd.error('Machine does not support G20 (inches) command')
+    def cmd_M82(self, gcmd):
         # Use absolute distances for extrusion
         self.absolute_extrude = True
-    def cmd_M83(self, params):
+    def cmd_M83(self, gcmd):
         # Use relative distances for extrusion
         self.absolute_extrude = False
-    def cmd_G90(self, params):
+    def cmd_G90(self, gcmd):
         # Use absolute coordinates
         self.absolute_coord = True
-    def cmd_G91(self, params):
+    def cmd_G91(self, gcmd):
         # Use relative coordinates
         self.absolute_coord = False
-    def cmd_G92(self, params):
+    def cmd_G92(self, gcmd):
         # Set position
-        offsets = { p: self.get_float(a, params)
-                    for a, p in self.axis2pos.items() if a in params }
-        for p, offset in offsets.items():
-            if p == 3:
-                offset *= self.extrude_factor
-            self.base_position[p] = self.last_position[p] - offset
-        if not offsets:
+        offsets = [ gcmd.get_float(a, None) for a in 'XYZE' ]
+        for i, offset in enumerate(offsets):
+            if offset is not None:
+                if i == 3:
+                    offset *= self.extrude_factor
+                self.base_position[i] = self.last_position[i] - offset
+        if offsets == [None, None, None, None]:
             self.base_position = list(self.last_position)
     cmd_M114_when_not_ready = True
-    def cmd_M114(self, params):
+    def cmd_M114(self, gcmd):
         # Get Current Position
         p = self._get_gcode_position()
-        self.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
-    def cmd_M220(self, params):
+        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+    def cmd_M220(self, gcmd):
         # Set speed factor override percentage
-        value = self.get_float('S', params, 100., above=0.) / (60. * 100.)
+        value = gcmd.get_float('S', 100., above=0.) / (60. * 100.)
         self.speed = self._get_gcode_speed() * value
         self.speed_factor = value
-    def cmd_M221(self, params):
+    def cmd_M221(self, gcmd):
         # Set extrude factor override percentage
-        new_extrude_factor = self.get_float('S', params, 100., above=0.) / 100.
+        new_extrude_factor = gcmd.get_float('S', 100., above=0.) / 100.
         last_e_pos = self.last_position[3]
         e_value = (last_e_pos - self.base_position[3]) / self.extrude_factor
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
-    def cmd_SET_GCODE_OFFSET(self, params):
+    def cmd_SET_GCODE_OFFSET(self, gcmd):
         move_delta = [0., 0., 0., 0.]
-        for axis, pos in self.axis2pos.items():
-            if axis in params:
-                offset = self.get_float(axis, params)
-            elif axis + '_ADJUST' in params:
-                offset = self.homing_position[pos]
-                offset += self.get_float(axis + '_ADJUST', params)
-            else:
-                continue
+        for pos, axis in enumerate('XYZE'):
+            offset = gcmd.get_float(axis, None)
+            if offset is None:
+                offset = gcmd.get_float(axis + '_ADJUST', None)
+                if offset is None:
+                    continue
+                offset += self.homing_position[pos]
             delta = offset - self.homing_position[pos]
             move_delta[pos] = delta
             self.base_position[pos] += delta
             self.homing_position[pos] = offset
         # Move the toolhead the given offset if requested
-        if self.get_int('MOVE', params, 0):
-            speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
+        if gcmd.get_int('MOVE', 0):
+            speed = gcmd.get_float('MOVE_SPEED', self.speed, above=0.)
             for pos, delta in enumerate(move_delta):
                 self.last_position[pos] += delta
             self.move_with_transform(self.last_position, speed)
     cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
-    def cmd_SAVE_GCODE_STATE(self, params):
-        state_name = self.get_str('NAME', params, 'default')
+    def cmd_SAVE_GCODE_STATE(self, gcmd):
+        state_name = gcmd.get('NAME', 'default')
         self.saved_states[state_name] = {
             'absolute_coord': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
@@ -604,11 +602,11 @@ class GCodeParser:
             'extrude_factor': self.extrude_factor,
         }
     cmd_RESTORE_GCODE_STATE_help = "Restore a previously saved G-Code state"
-    def cmd_RESTORE_GCODE_STATE(self, params):
-        state_name = self.get_str('NAME', params, 'default')
+    def cmd_RESTORE_GCODE_STATE(self, gcmd):
+        state_name = gcmd.get('NAME', 'default')
         state = self.saved_states.get(state_name)
         if state is None:
-            raise self.error("Unknown g-code state: %s" % (state_name,))
+            raise gcmd.error("Unknown g-code state: %s" % (state_name,))
         # Restore state
         self.absolute_coord = state['absolute_coord']
         self.absolute_extrude = state['absolute_extrude']
@@ -621,30 +619,30 @@ class GCodeParser:
         e_diff = self.last_position[3] - state['last_position'][3]
         self.base_position[3] += e_diff
         # Move the toolhead back if requested
-        if self.get_int('MOVE', params, 0):
-            speed = self.get_float('MOVE_SPEED', params, self.speed, above=0.)
+        if gcmd.get_int('MOVE', 0):
+            speed = gcmd.get_float('MOVE_SPEED', self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
     # G-Code miscellaneous commands
     cmd_M112_when_not_ready = True
-    def cmd_M112(self, params):
+    def cmd_M112(self, gcmd):
         # Emergency Stop
         self.printer.invoke_shutdown("Shutdown due to M112 command")
     cmd_M115_when_not_ready = True
-    def cmd_M115(self, params):
+    def cmd_M115(self, gcmd):
         # Get Firmware Version and Capabilities
         software_version = self.printer.get_start_args().get('software_version')
         kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
         self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
     cmd_IGNORE_when_not_ready = True
     cmd_IGNORE_aliases = ["G21", "M110", "M21"]
-    def cmd_IGNORE(self, params):
+    def cmd_IGNORE(self, gcmd):
         # Commands that are just silently accepted
         pass
     cmd_GET_POSITION_when_not_ready = True
-    def cmd_GET_POSITION(self, params):
+    def cmd_GET_POSITION(self, gcmd):
         if self.toolhead is None:
-            self.cmd_default(params)
+            self.cmd_default(gcmd)
             return
         kin = self.toolhead.get_kinematics()
         steppers = kin.get_steppers()
@@ -664,7 +662,7 @@ class GCodeParser:
                              for a, v in zip("XYZE", self.base_position)])
         homing_pos = " ".join(["%s:%.6f"  % (a, v)
                                for a, v in zip("XYZ", self.homing_position)])
-        self.respond_info("mcu: %s\n"
+        gcmd.respond_info("mcu: %s\n"
                           "stepper: %s\n"
                           "kinematic: %s\n"
                           "toolhead: %s\n"
@@ -682,26 +680,26 @@ class GCodeParser:
         self.printer.request_exit(result)
     cmd_RESTART_when_not_ready = True
     cmd_RESTART_help = "Reload config file and restart host software"
-    def cmd_RESTART(self, params):
+    def cmd_RESTART(self, gcmd):
         self.request_restart('restart')
     cmd_FIRMWARE_RESTART_when_not_ready = True
     cmd_FIRMWARE_RESTART_help = "Restart firmware, host, and reload config"
-    def cmd_FIRMWARE_RESTART(self, params):
+    def cmd_FIRMWARE_RESTART(self, gcmd):
         self.request_restart('firmware_restart')
     cmd_ECHO_when_not_ready = True
-    def cmd_ECHO(self, params):
-        self.respond_info(params['#original'], log=False)
+    def cmd_ECHO(self, gcmd):
+        gcmd.respond_info(gcmd.get_commandline(), log=False)
     cmd_STATUS_when_not_ready = True
     cmd_STATUS_help = "Report the printer status"
-    def cmd_STATUS(self, params):
+    def cmd_STATUS(self, gcmd):
         if self.is_printer_ready:
             self._respond_state("Ready")
             return
         msg = self.printer.get_state_message()
         msg = msg.rstrip() + "\nKlipper state: Not ready"
-        raise self.error(msg)
+        raise gcmd.error(msg)
     cmd_HELP_when_not_ready = True
-    def cmd_HELP(self, params):
+    def cmd_HELP(self, gcmd):
         cmdhelp = []
         if not self.is_printer_ready:
             cmdhelp.append("Printer is not ready - not all commands available.")
@@ -709,4 +707,4 @@ class GCodeParser:
         for cmd in sorted(self.gcode_handlers):
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
-        self.respond_info("\n".join(cmdhelp), log=False)
+        gcmd.respond_info("\n".join(cmdhelp), log=False)
