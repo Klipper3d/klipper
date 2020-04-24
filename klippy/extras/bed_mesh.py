@@ -179,29 +179,28 @@ class BedMesh:
                         "Mesh Leveling: Error splitting move ")
         self.last_position[:] = newpos
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
-    def cmd_BED_MESH_OUTPUT(self, params):
-        if self.gcode.get_int('PGP', params, 0):
+    def cmd_BED_MESH_OUTPUT(self, gcmd):
+        if gcmd.get_int('PGP', 0):
             # Print Generated Points instead of mesh
-            self.bmc.print_generated_points(self.gcode.respond_info)
+            self.bmc.print_generated_points(gcmd.respond_info)
         elif self.z_mesh is None:
-            self.gcode.respond_info("Bed has not been probed")
+            gcmd.respond_info("Bed has not been probed")
         else:
-            self.bmc.print_probed_positions(self.gcode.respond_info)
-            self.z_mesh.print_mesh(self.gcode.respond_raw,
-                                   self.horizontal_move_z)
+            self.bmc.print_probed_positions(gcmd.respond_info)
+            self.z_mesh.print_mesh(gcmd.respond_raw, self.horizontal_move_z)
     cmd_BED_MESH_MAP_help = "Serialize mesh and output to terminal"
-    def cmd_BED_MESH_MAP(self, params):
+    def cmd_BED_MESH_MAP(self, gcmd):
         if self.z_mesh is not None:
             params = self.z_mesh.mesh_params
             outdict = {
                 'mesh_min': (params['min_x'], params['min_y']),
                 'mesh_max': (params['max_x'], params['max_y']),
                 'z_positions': self.bmc.probed_matrix}
-            self.gcode.respond_raw("mesh_map_output " + json.dumps(outdict))
+            gcmd.respond_raw("mesh_map_output " + json.dumps(outdict))
         else:
-            self.gcode.respond_info("Bed has not been probed")
+            gcmd.respond_info("Bed has not been probed")
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
-    def cmd_BED_MESH_CLEAR(self, params):
+    def cmd_BED_MESH_CLEAR(self, gcmd):
         self.set_mesh(None)
 
 
@@ -451,29 +450,28 @@ class BedMeshCalibrate:
             self.gcode.respond_info(
                 "No profile named [%s] to remove" % (prof_name))
     cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
-    def cmd_BED_MESH_PROFILE(self, params):
+    def cmd_BED_MESH_PROFILE(self, gcmd):
         options = collections.OrderedDict({
             'LOAD': self.load_profile,
             'SAVE': self.save_profile,
             'REMOVE': self.remove_profile
         })
         for key in options:
-            name = self.gcode.get_str(key, params, None)
+            name = gcmd.get(key, None)
             if name is not None:
                 if name == "default" and key == 'SAVE':
-                    self.gcode.respond_info(
+                    gcmd.respond_info(
                         "Profile 'default' is reserved, please chose"
                         " another profile name.")
                 else:
                     options[key](name)
                 return
-        self.gcode.respond_info(
-            "Invalid syntax '%s'" % (params['#original']))
+        gcmd.respond_info("Invalid syntax '%s'" % (gcmd.get_commandline(),))
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
-    def cmd_BED_MESH_CALIBRATE(self, params):
+    def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self.build_map = False
         self.bedmesh.set_mesh(None)
-        self.probe_helper.start_probe(params)
+        self.probe_helper.start_probe(gcmd)
     def print_probed_positions(self, print_func):
         if self.probed_matrix is not None:
             msg = "Mesh Leveling Probed Z positions:\n"
