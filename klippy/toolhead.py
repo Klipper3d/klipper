@@ -537,17 +537,14 @@ class ToolHead:
         self.max_accel_to_decel = min(self.requested_accel_to_decel,
                                       self.max_accel)
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
-    def cmd_SET_VELOCITY_LIMIT(self, params):
+    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         print_time = self.get_last_move_time()
-        gcode = self.printer.lookup_object('gcode')
-        max_velocity = gcode.get_float('VELOCITY', params, self.max_velocity,
-                                       above=0.)
-        max_accel = gcode.get_float('ACCEL', params, self.max_accel, above=0.)
-        square_corner_velocity = gcode.get_float(
-            'SQUARE_CORNER_VELOCITY', params, self.square_corner_velocity,
-            minval=0.)
-        self.requested_accel_to_decel = gcode.get_float(
-            'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
+        max_velocity = gcmd.get_float('VELOCITY', self.max_velocity, above=0.)
+        max_accel = gcmd.get_float('ACCEL', self.max_accel, above=0.)
+        square_corner_velocity = gcmd.get_float(
+            'SQUARE_CORNER_VELOCITY', self.square_corner_velocity, minval=0.)
+        self.requested_accel_to_decel = gcmd.get_float(
+            'ACCEL_TO_DECEL', self.requested_accel_to_decel, above=0.)
         self.max_velocity = min(max_velocity, self.config_max_velocity)
         self.max_accel = min(max_accel, self.config_max_accel)
         self.square_corner_velocity = min(square_corner_velocity,
@@ -560,20 +557,19 @@ class ToolHead:
                    max_velocity, max_accel, self.requested_accel_to_decel,
                    square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        gcode.respond_info(msg, log=False)
-    def cmd_M204(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'S' in params:
-            # Use S for accel
-            accel = gcode.get_float('S', params, above=0.)
-        elif 'P' in params and 'T' in params:
+        gcmd.respond_info(msg, log=False)
+    def cmd_M204(self, gcmd):
+        # Use S for accel
+        accel = gcmd.get_float('S', None, above=0.)
+        if accel is None:
             # Use minimum of P and T for accel
-            accel = min(gcode.get_float('P', params, above=0.),
-                        gcode.get_float('T', params, above=0.))
-        else:
-            gcode.respond_info('Invalid M204 command "%s"'
-                               % (params['#original'],))
-            return
+            p = gcmd.get_float('P', None, above=0.)
+            t = gcmd.get_float('T', None, above=0.)
+            if p is None or t is None:
+                gcmd.respond_info('Invalid M204 command "%s"'
+                                  % (gcmd.get_commandline(),))
+                return
+            accel = min(p, t)
         self.max_accel = min(accel, self.config_max_accel)
         self._calc_junction_deviation()
 
