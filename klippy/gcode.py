@@ -123,7 +123,7 @@ class GCodeParser:
         self.respond_info(msg)
         return ""
     def _action_respond_error(self, msg):
-        self.respond_error(msg)
+        self._respond_error(msg)
         return ""
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
@@ -234,7 +234,7 @@ class GCodeParser:
             try:
                 handler(params)
             except self.error as e:
-                self.respond_error(str(e))
+                self._respond_error(str(e))
                 self.reset_last_position()
                 self.printer.send_event("gcode:command_error")
                 if not need_ack:
@@ -243,7 +243,7 @@ class GCodeParser:
                 msg = 'Internal error on command:"%s"' % (cmd,)
                 logging.exception(msg)
                 self.printer.invoke_shutdown(msg)
-                self.respond_error(msg)
+                self._respond_error(msg)
                 if not need_ack:
                     raise
             self.ack()
@@ -328,7 +328,7 @@ class GCodeParser:
             logging.info(msg)
         lines = [l.strip() for l in msg.strip().split('\n')]
         self.respond("// " + "\n// ".join(lines))
-    def respond_error(self, msg):
+    def _respond_error(self, msg):
         logging.warning(msg)
         lines = msg.strip().split('\n')
         if len(lines) > 1:
@@ -412,7 +412,7 @@ class GCodeParser:
     # G-Code special command handlers
     def cmd_default(self, params):
         if not self.is_printer_ready:
-            self.respond_error(self.printer.get_state_message())
+            raise self.error(self.printer.get_state_message())
             return
         cmd = params.get('#command')
         if not cmd:
@@ -683,7 +683,7 @@ class GCodeParser:
             return
         msg = self.printer.get_state_message()
         msg = msg.rstrip() + "\nKlipper state: Not ready"
-        self.respond_error(msg)
+        raise self.error(msg)
     cmd_HELP_when_not_ready = True
     def cmd_HELP(self, params):
         cmdhelp = []
