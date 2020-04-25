@@ -235,24 +235,24 @@ class BLTouchEndstopWrapper:
         self.send_cmd('pin_up')
         self.send_cmd(None)
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"
-    def cmd_BLTOUCH_DEBUG(self, params):
-        cmd = self.gcode.get_str('COMMAND', params, None)
+    def cmd_BLTOUCH_DEBUG(self, gcmd):
+        cmd = gcmd.get('COMMAND', None)
         if cmd is None or cmd not in Commands:
-            self.gcode.respond_info("BLTouch commands: %s" % (
+            gcmd.respond_info("BLTouch commands: %s" % (
                 ", ".join(sorted([c for c in Commands if c is not None]))))
             return
-        self.gcode.respond_info("Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,))
+        gcmd.respond_info("Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,))
         self.sync_print_time()
         self.send_cmd(cmd, duration=self.pin_move_time)
         self.send_cmd(None)
         self.sync_print_time()
     cmd_BLTOUCH_STORE_help = "Store an output mode in the BLTouch EEPROM"
-    def cmd_BLTOUCH_STORE(self, params):
-        cmd = self.gcode.get_str('MODE', params, None)
+    def cmd_BLTOUCH_STORE(self, gcmd):
+        cmd = gcmd.get('MODE', None)
         if cmd is None or cmd not in ['5V', 'OD']:
-            self.gcode.respond_info("BLTouch output modes: 5V, OD")
+            gcmd.respond_info("BLTouch output modes: 5V, OD")
             return
-        self.gcode.respond_info("Storing BLTouch output mode: %s" % (cmd,))
+        gcmd.respond_info("Storing BLTouch output mode: %s" % (cmd,))
         self.sync_print_time()
         self.store_output_mode(cmd)
         self.sync_print_time()
