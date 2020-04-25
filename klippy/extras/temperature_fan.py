@@ -15,7 +15,6 @@ class TemperatureFan:
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
-        self.gcode = self.printer.lookup_object('gcode')
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         pheaters = self.printer.try_load_module(config, 'heaters')
@@ -37,7 +36,8 @@ class TemperatureFan:
         self.control = algo(self, config)
         self.next_speed_time = 0.
         self.last_speed_value = 0.
-        self.gcode.register_mux_command(
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command(
             "SET_TEMPERATURE_FAN_TARGET", "TEMPERATURE_FAN", self.name,
             self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP,
             desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help)
@@ -72,12 +72,12 @@ class TemperatureFan:
         status["target"] = self.target_temp
         return status
     cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help = "Sets a temperature fan target"
-    def cmd_SET_TEMPERATURE_FAN_TARGET_TEMP(self, params):
-        temp = self.gcode.get_float('TARGET', params, self.target_temp_conf)
+    def cmd_SET_TEMPERATURE_FAN_TARGET_TEMP(self, gcmd):
+        temp = gcmd.get_float('TARGET', self.target_temp_conf)
         self.set_temp(temp)
     def set_temp(self, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
         self.target_temp = degrees
