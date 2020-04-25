@@ -245,9 +245,9 @@ class TMC5160CurrentHelper:
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _set_globalscaler(self, current):
         globalscaler = int((current * 256. * math.sqrt(2.)
                             * self.sense_resistor / VREF) + .5)
@@ -276,23 +276,22 @@ class TMC5160CurrentHelper:
                    / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
         return round(current, 2)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'HOLDCURRENT' in params:
-            hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
-        else:
-            hold_current = self._calc_current_from_field("IHOLD")
-        if 'CURRENT' in params:
-            run_current = gcode.get_float(
-                'CURRENT', params, minval=0., maxval=MAX_CURRENT)
-        else:
-            run_current = self._calc_current_from_field("IRUN")
-        if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        run_current = gcmd.get_float('CURRENT', None,
+                                     minval=0., maxval=MAX_CURRENT)
+        hold_current = gcmd.get_float('HOLDCURRENT', None,
+                                      above=0., maxval=MAX_CURRENT)
+        if run_current is None and hold_current is None:
             # Query only
-            gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                               % (run_current, hold_current))
+            run_current = self._calc_current_from_field("IRUN")
+            hold_current = self._calc_current_from_field("IHOLD")
+            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                              % (run_current, hold_current))
             return
+        if run_current is None:
+            run_current = self._calc_current_from_field("IRUN")
+        if hold_current is None:
+            hold_current = self._calc_current_from_field("IHOLD")
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
