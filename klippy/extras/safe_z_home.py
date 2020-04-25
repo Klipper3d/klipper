@@ -28,7 +28,7 @@ class SafeZHoming:
             raise config.error("homing_override and safe_z_homing cannot"
                                +" be used simultaneously")
 
-    def cmd_G28(self, params):
+    def cmd_G28(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
 
         # Perform Z Hop if necessary
@@ -40,10 +40,9 @@ class SafeZHoming:
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
                 if pos[2] + self.z_hop > self.max_z:
-                    self.gcode.respond_info(
+                    gcmd.respond_info(
                         "No zhop performed, target Z out of bounds: " +
-                        str(pos[2] + self.z_hop)
-                    )
+                        str(pos[2] + self.z_hop))
                 elif pos[2] < self.z_hop:
                     self._perform_z_hop(pos)
             else:
@@ -52,7 +51,8 @@ class SafeZHoming:
                     toolhead.get_kinematics().note_z_not_homed()
 
         # Determine which axes we need to home
-        need_x, need_y, need_z = [axis in params for axis in "XYZ"]
+        need_x, need_y, need_z = [gcmd.get(axis, None) is not None
+                                  for axis in "XYZ"]
         if not need_x and not need_y and not need_z:
             need_x = need_y = need_z = True
 
