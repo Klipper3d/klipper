@@ -77,15 +77,14 @@ class BedScrews:
         self.gcode.register_command('ADJUSTED', None)
         self.gcode.register_command('ABORT', None)
     cmd_BED_SCREWS_ADJUST_help = "Tool to help adjust bed leveling screws"
-    def cmd_BED_SCREWS_ADJUST(self, params):
+    def cmd_BED_SCREWS_ADJUST(self, gcmd):
         if self.state is not None:
-            raise self.gcode.error(
-                "Already in bed_screws helper; use ABORT to exit")
+            raise gcmd.error("Already in bed_screws helper; use ABORT to exit")
         self.adjust_again = False
         self.move((None, None, self.horizontal_move_z), self.speed)
         self.move_to_screw('adjust', 0)
     cmd_ACCEPT_help = "Accept bed screw position"
-    def cmd_ACCEPT(self, params):
+    def cmd_ACCEPT(self, gcmd):
         self.unregister_commands()
         if self.current_screw + 1 < len(self.states[self.state]):
             # Continue with next screw
@@ -103,14 +102,14 @@ class BedScrews:
         # Done
         self.state = None
         self.move((None, None, self.horizontal_move_z), self.lift_speed)
-        self.gcode.respond_info("Bed screws tool completed successfully")
+        gcmd.respond_info("Bed screws tool completed successfully")
     cmd_ADJUSTED_help = "Accept bed screw position after notable adjustment"
-    def cmd_ADJUSTED(self, params):
+    def cmd_ADJUSTED(self, gcmd):
         self.unregister_commands()
         self.adjust_again = True
-        self.cmd_ACCEPT(params)
+        self.cmd_ACCEPT(gcmd)
     cmd_ABORT_help = "Abort bed screws tool"
-    def cmd_ABORT(self, params):
+    def cmd_ABORT(self, gcmd):
         self.unregister_commands()
         self.state = None
 
