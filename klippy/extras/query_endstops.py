@@ -18,7 +18,7 @@ class QueryEndstops:
     def get_status(self, eventtime):
         return {'last_query': {name: value for name, value in self.last_state}}
     cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"
-    def cmd_QUERY_ENDSTOPS(self, params):
+    def cmd_QUERY_ENDSTOPS(self, gcmd):
         # Query the endstops
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.last_state = [(name, mcu_endstop.query_endstop(print_time))
@@ -26,8 +26,7 @@ class QueryEndstops:
         # Report results
         msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                         for name, t in self.last_state])
-        gcode = self.printer.lookup_object('gcode')
-        gcode.respond_raw(msg)
+        gcmd.respond_raw(msg)
 
 def load_config(config):
     return QueryEndstops(config)
