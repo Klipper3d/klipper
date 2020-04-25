@@ -18,7 +18,6 @@ PID_PARAM_BASE = 255.
 class Heater:
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
-        self.gcode = self.printer.lookup_object("gcode")
         self.name = config.get_name().split()[-1]
         # Setup sensor
         self.sensor = sensor
@@ -61,10 +60,10 @@ class Heater:
         # Load additional modules
         self.printer.try_load_module(config, "verify_heater %s" % (self.name,))
         self.printer.try_load_module(config, "pid_calibrate")
-        self.gcode.register_mux_command(
-            "SET_HEATER_TEMPERATURE", "HEATER", self.name,
-            self.cmd_SET_HEATER_TEMPERATURE,
-            desc=self.cmd_SET_HEATER_TEMPERATURE_help)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
+                                   self.name, self.cmd_SET_HEATER_TEMPERATURE,
+                                   desc=self.cmd_SET_HEATER_TEMPERATURE_help)
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -138,8 +137,8 @@ class Heater:
             smoothed_temp = self.smoothed_temp
         return {'temperature': smoothed_temp, 'target': target_temp}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
-    def cmd_SET_HEATER_TEMPERATURE(self, params):
-        temp = self.gcode.get_float('TARGET', params, 0.)
+    def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
+        temp = gcmd.get_float('TARGET', 0.)
         self.set_temp(temp)
 
 
@@ -288,7 +287,7 @@ class PrinterHeaters:
         for heater in self.heaters.values():
             heater.set_temp(0.)
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
-    def cmd_TURN_OFF_HEATERS(self, params):
+    def cmd_TURN_OFF_HEATERS(self, gcmd):
         self.turn_off_all_heaters()
     # G-Code M105 temperature reporting
     def _handle_ready(self):
@@ -303,14 +302,14 @@ class PrinterHeaters:
         if not out:
             return "T:0"
         return " ".join(out)
-    def cmd_M105(self, params):
+    def cmd_M105(self, gcmd):
         # Get Extruder Temperature
         gcode = self.printer.lookup_object("gcode")
         reactor = self.printer.get_reactor()
         msg = self._get_temp(reactor.monotonic())
         did_ack = gcode.ack(msg)
         if not did_ack:
-            gcode.respond_raw(msg)
+            gcmd.respond_raw(msg)
     def wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
