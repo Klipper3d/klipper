@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import heater
+import heaters
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -120,7 +120,7 @@ class ControlAutoTune:
         # Use Ziegler-Nichols method to generate PID parameters
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heater.PID_PARAM_BASE
+        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
