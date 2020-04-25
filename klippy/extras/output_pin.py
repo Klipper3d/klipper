@@ -35,16 +35,15 @@ class PrinterOutputPin:
                 'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
             self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
             pin_name = config.get_name().split()[1]
-            self.gcode = self.printer.lookup_object('gcode')
-            self.gcode.register_mux_command("SET_PIN", "PIN", pin_name,
-                                            self.cmd_SET_PIN,
-                                            desc=self.cmd_SET_PIN_help)
+            gcode = self.printer.lookup_object('gcode')
+            gcode.register_mux_command("SET_PIN", "PIN", pin_name,
+                                       self.cmd_SET_PIN,
+                                       desc=self.cmd_SET_PIN_help)
     def get_status(self, eventtime):
         return {'value': self.last_value}
     cmd_SET_PIN_help = "Set the value of an output pin"
-    def cmd_SET_PIN(self, params):
-        value = self.gcode.get_float('VALUE', params,
-                                     minval=0., maxval=self.scale)
+    def cmd_SET_PIN(self, gcmd):
+        value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
         value /= self.scale
         if value == self.last_value:
             return
@@ -54,7 +53,7 @@ class PrinterOutputPin:
             self.mcu_pin.set_pwm(print_time, value)
         else:
             if value not in [0., 1.]:
-                raise self.gcode.error("Invalid pin value")
+                raise gcmd.error("Invalid pin value")
             self.mcu_pin.set_digital(print_time, value)
         self.last_value = value
         self.last_value_time = print_time
