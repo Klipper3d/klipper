@@ -273,7 +273,7 @@ class PrinterConfig:
                           "with included value" % (section, option)
                     raise gcode.error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
-    def cmd_SAVE_CONFIG(self, params):
+    def cmd_SAVE_CONFIG(self, gcmd):
         if not self.autosave.fileconfig.sections():
             return
         gcode = self.printer.lookup_object('gcode')
