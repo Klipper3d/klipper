@@ -219,6 +219,8 @@ Failed to flash to %s: %s
 If the device is already in bootloader mode it can be flashed with the
 following command:
   make flash FLASH_DEVICE=0483:df11
+  OR
+  make flash FLASH_DEVICE=1209:beba
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -228,8 +230,11 @@ If attempting to flash via 3.3V serial, then use:
 def flash_stm32f4(options, binfile):
     start = "0x%x:leave" % (options.start,)
     try:
-        flash_dfuutil(options.device, binfile,
-                      ["-R", "-a", "0", "-s", start], options.sudo)
+        if options.start == 0x8004000:
+            flash_hidflash(options.device, binfile, options.sudo)
+        else:
+            flash_dfuutil(options.device, binfile,
+                          ["-R", "-a", "0", "-s", start], options.sudo)
     except error as e:
         sys.stderr.write(STM32F4_HELP % (
             options.device, str(e), options.device))
