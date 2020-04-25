@@ -127,22 +127,22 @@ class HallFilamentWidthSensor:
             self.filament_array = []
         return eventtime + 1
 
-    def cmd_M407(self, params):
+    def cmd_M407(self, gcmd):
         response = ""
         if self.lastFilamentWidthReading > 0:
             response += ("Filament dia (measured mm): "
                          + str(self.diameter))
         else:
             response += "Filament NOT present"
-        self.gcode.respond_info(response)
+        gcmd.respond_info(response)
 
-    def cmd_ClearFilamentArray(self, params):
+    def cmd_ClearFilamentArray(self, gcmd):
         self.filament_array = []
-        self.gcode.respond_info("Filament width measurements cleared!")
+        gcmd.respond_info("Filament width measurements cleared!")
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
 
-    def cmd_M405(self, params):
+    def cmd_M405(self, gcmd):
         response = "Filament width sensor Turned On"
         if self.is_active:
             response = "Filament width sensor is already On"
@@ -151,9 +151,9 @@ class HallFilamentWidthSensor:
             # Start extrude factor update timer
             self.reactor.update_timer(self.extrude_factor_update_timer,
                                       self.reactor.NOW)
-        self.gcode.respond_info(response)
+        gcmd.respond_info(response)
 
-    def cmd_M406(self, params):
+    def cmd_M406(self, gcmd):
         response = "Filament width sensor Turned Off"
         if not self.is_active:
             response = "Filament width sensor is already Off"
@@ -166,16 +166,16 @@ class HallFilamentWidthSensor:
             self.filament_array = []
             # Set extrude multiplier to 100%
             self.gcode.run_script_from_command("M221 S100")
-        self.gcode.respond_info(response)
+        gcmd.respond_info(response)
 
-    def cmd_Get_Raw_Values(self, params):
+    def cmd_Get_Raw_Values(self, gcmd):
         response = "ADC1="
         response +=  (" "+str(self.lastFilamentWidthReading))
         response +=  (" ADC2="+str(self.lastFilamentWidthReading2))
         response +=  (" RAW="+
                       str(self.lastFilamentWidthReading
                       +self.lastFilamentWidthReading2))
-        self.gcode.respond_info(response)
+        gcmd.respond_info(response)
     def get_status(self, eventtime):
         return {'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+
