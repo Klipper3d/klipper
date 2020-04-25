@@ -14,6 +14,7 @@ class ControllerFan:
         self.stepper_names = []
         self.stepper_enable = self.printer.try_load_module(config,
                                                            'stepper_enable')
+        self.printer.try_load_module(config, 'heaters')
         self.heaters = []
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
@@ -27,8 +28,8 @@ class ControllerFan:
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
     def handle_ready(self):
-        pheater = self.printer.lookup_object('heater')
-        self.heaters = [pheater.lookup_heater(n.strip())
+        pheaters = self.printer.lookup_object('heaters')
+        self.heaters = [pheaters.lookup_heater(n.strip())
                         for n in self.heater_name.split(',')]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         self.stepper_names = [s.get_name() for s in kin.get_steppers()]

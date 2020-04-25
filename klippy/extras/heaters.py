@@ -1,6 +1,6 @@
-# Printer heater support
+# Tracking of PWM controlled heaters and their temperature control
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
@@ -323,5 +323,5 @@ class PrinterHeaters:
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
 
-def add_printer_objects(config):
-    config.get_printer().add_object('heater', PrinterHeaters(config))
+def load_config(config):
+    return PrinterHeaters(config)

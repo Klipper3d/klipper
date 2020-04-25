@@ -198,5 +198,5 @@ class BME280:
 
 def load_config(config):
     # Register sensor
-    pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor_factory("BME280", BME280)
+    pheaters = config.get_printer().try_load_module(config, "heaters")
+    pheaters.add_sensor_factory("BME280", BME280)

@@ -18,9 +18,9 @@ class PIDCalibrate:
         heater_name = self.gcode.get_str('HEATER', params)
         target = self.gcode.get_float('TARGET', params)
         write_file = self.gcode.get_int('WRITE_FILE', params, 0)
-        pheater = self.printer.lookup_object('heater')
+        pheaters = self.printer.lookup_object('heaters')
         try:
-            heater = pheater.lookup_heater(heater_name)
+            heater = pheaters.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise self.gcode.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
@@ -31,7 +31,7 @@ class PIDCalibrate:
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise
-        pheater.wait_for_temperature(heater)
+        pheaters.wait_for_temperature(heater)
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
