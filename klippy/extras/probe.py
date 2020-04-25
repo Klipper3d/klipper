@@ -71,7 +71,7 @@ class PrinterProbe:
             self.mcu_probe.probe_prepare()
     def _handle_homing_move_end(self, endstops):
         if self.mcu_probe in endstops:
-            self.mcu_probe.probe_finalize()
+            self.mcu_probe.probe_finish()
     def _handle_home_rails_begin(self, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
@@ -311,7 +311,7 @@ class ProbeEndstopWrapper:
         if toolhead.get_position()[:3] != start_pos[:3]:
             raise homing.CommandError(
                 "Toolhead moved during probe activate_gcode script")
-    def probe_finalize(self):
+    def probe_finish(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
         self.deactivate_gcode.run_gcode_from_command()
