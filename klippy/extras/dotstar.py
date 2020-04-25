@@ -33,29 +33,27 @@ class PrinterDotstar:
         self.color_data = [0, 0, 0, 0] + color_data + [0xff, 0xff, 0xff, 0xff]
         self.printer.register_event_handler("klippy:connect", self.send_data)
         # Register commands
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command("SET_LED", "LED", name,
-                                        self.cmd_SET_LED,
-                                        desc=self.cmd_SET_LED_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
+                                   desc=self.cmd_SET_LED_help)
     def send_data(self, minclock=0):
         data = self.color_data
         for d in [data[i:i+20] for i in range(0, len(data), 20)]:
             self.spi.spi_send(d, minclock=minclock,
                               reqclock=BACKGROUND_PRIORITY_CLOCK)
     cmd_SET_LED_help = "Set the color of an LED"
-    def cmd_SET_LED(self, params):
+    def cmd_SET_LED(self, gcmd):
         # Parse parameters
-        red = self.gcode.get_float('RED', params, 0., minval=0., maxval=1.)
-        green = self.gcode.get_float('GREEN', params, 0., minval=0., maxval=1.)
-        blue = self.gcode.get_float('BLUE', params, 0., minval=0., maxval=1.)
-        transmit = self.gcode.get_int('TRANSMIT', params, 1)
+        red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
+        green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
+        blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
+        transmit = gcmd.get_int('TRANSMIT', 1)
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
         color_data = [0xff, blue, green, red]
-        if 'INDEX' in params:
-            index = self.gcode.get_int('INDEX', params,
-                                       minval=1, maxval=self.chain_count)
+        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
+        if index is not None:
             self.color_data[index*4:(index+1)*4] = color_data
         else:
             self.color_data[4:-4] = color_data * self.chain_count
