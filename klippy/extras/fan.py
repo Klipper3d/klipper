@@ -56,12 +56,11 @@ class PrinterFan:
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback((lambda pt:
                                               self.set_speed(pt, value)))
-    def cmd_M106(self, params):
+    def cmd_M106(self, gcmd):
         # Set fan speed
-        gcode = self.printer.lookup_object('gcode')
-        value = gcode.get_float('S', params, 255., minval=0.) / 255.
+        value = gcmd.get_float('S', 255., minval=0.) / 255.
         self._delayed_set_speed(value)
-    def cmd_M107(self, params):
+    def cmd_M107(self, gcmd):
         # Turn fan off
         self._delayed_set_speed(0.)
 
