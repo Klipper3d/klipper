@@ -91,15 +91,15 @@ class RunoutHelper:
     def get_status(self, eventtime):
         return {"filament_detected": bool(self.filament_present)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
-    def cmd_QUERY_FILAMENT_SENSOR(self, params):
+    def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.filament_present:
             msg = "Filament Sensor %s: filament detected" % (self.name)
         else:
             msg = "Filament Sensor %s: filament not detected" % (self.name)
-        self.gcode.respond_info(msg)
+        gcmd.respond_info(msg)
     cmd_SET_FILAMENT_SENSOR_help = "Sets the filament sensor on/off"
-    def cmd_SET_FILAMENT_SENSOR(self, params):
-        self.sensor_enabled = self.gcode.get_int("ENABLE", params, 1)
+    def cmd_SET_FILAMENT_SENSOR(self, gcmd):
+        self.sensor_enabled = gcmd.get_int("ENABLE", 1)
 
 class SwitchSensor:
     def __init__(self, config):
