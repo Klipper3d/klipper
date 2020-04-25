@@ -8,10 +8,11 @@ import homing
 
 class GCodeCommand:
     error = homing.CommandError
-    def __init__(self, gcode, command, commandline, params):
+    def __init__(self, gcode, command, commandline, params, need_ack):
         self._command = command
         self._commandline = commandline
         self._params = params
+        self._need_ack = need_ack
         # Method wrappers
         self.respond_info = gcode.respond_info
         self.respond_raw = gcode.respond_raw
@@ -21,6 +22,15 @@ class GCodeCommand:
         return self._commandline
     def get_command_parameters(self):
         return self._params
+    def ack(self, msg=None):
+        if not self._need_ack:
+            return False
+        ok_msg = "ok"
+        if msg:
+            ok_msg = "ok %s" % (msg,)
+        self.respond_raw(ok_msg)
+        self._need_ack = False
+        return True
     # Parameter parsing helpers
     class sentinel: pass
     def get(self, name, default=sentinel, parser=str, minval=None, maxval=None,
@@ -107,7 +117,6 @@ class GCodeParser:
         self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
-        self.need_ack = False
         self.toolhead = None
     def is_traditional_gcode(self, cmd):
         # A "traditional" g-code command is a letter and followed by a number
@@ -275,9 +284,8 @@ class GCodeParser:
             # Build gcode "params" dictionary
             params = { parts[i]: parts[i+1].strip()
                        for i in range(1, numparts, 2) }
-            gcmd = GCodeCommand(self, cmd, origline, params)
+            gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
-            self.need_ack = need_ack
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
             try:
                 handler(gcmd)
@@ -294,7 +302,7 @@ class GCodeParser:
                 self._respond_error(msg)
                 if not need_ack:
                     raise
-            self.ack()
+            gcmd.ack()
     m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
@@ -342,33 +350,15 @@ class GCodeParser:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
     def run_script_from_command(self, script):
-        prev_need_ack = self.need_ack
-        try:
-            self._process_commands(script.split('\n'), need_ack=False)
-        finally:
-            self.need_ack = prev_need_ack
+        self._process_commands(script.split('\n'), need_ack=False)
     def run_script(self, script):
         with self.mutex:
             self._process_commands(script.split('\n'), need_ack=False)
     def get_mutex(self):
         return self.mutex
     def create_gcode_command(self, command, commandline, params):
-        return GCodeCommand(self, command, commandline, params)
+        return GCodeCommand(self, command, commandline, params, False)
     # Response handling
-    def ack(self, msg=None):
-        if not self.need_ack:
-            return False
-        if self.is_fileinput:
-            return True
-        ok_msg = "ok\n"
-        if msg:
-            ok_msg = "ok %s\n" % (msg,)
-        try:
-            os.write(self.fd, ok_msg)
-        except os.error:
-            logging.exception("Write g-code ack")
-        self.need_ack = False
-        return True
     def respond_raw(self, msg):
         if self.is_fileinput:
             return
@@ -417,7 +407,7 @@ class GCodeParser:
         cmd = gcmd.get_command()
         if cmd == 'M105':
             # Don't warn about temperature requests when not ready
-            self.ack("T:0")
+            gcmd.ack("T:0")
             return
         if not self.is_printer_ready:
             raise gcmd.error(self.printer.get_state_message())
@@ -617,7 +607,7 @@ class GCodeParser:
         # Get Firmware Version and Capabilities
         software_version = self.printer.get_start_args().get('software_version')
         kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
-        self.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
+        gcmd.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
     cmd_IGNORE_when_not_ready = True
     cmd_IGNORE_aliases = ["G21", "M110", "M21"]
     def cmd_IGNORE(self, gcmd):

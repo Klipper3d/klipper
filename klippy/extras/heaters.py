@@ -304,10 +304,9 @@ class PrinterHeaters:
         return " ".join(out)
     def cmd_M105(self, gcmd):
         # Get Extruder Temperature
-        gcode = self.printer.lookup_object("gcode")
         reactor = self.printer.get_reactor()
         msg = self._get_temp(reactor.monotonic())
-        did_ack = gcode.ack(msg)
+        did_ack = gcmd.ack(msg)
         if not did_ack:
             gcmd.respond_raw(msg)
     def wait_for_temperature(self, heater):
