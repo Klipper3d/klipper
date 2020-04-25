@@ -98,16 +98,13 @@ class IdleTimeout:
         self.reactor.update_timer(self.timeout_timer, curtime + check_time)
         self.printer.send_event("idle_timeout:printing",
                                 est_print_time + PIN_MIN_TIME)
-    def cmd_SET_IDLE_TIMEOUT(self, params):
-        timeout = self.gcode.get_float(
-            'TIMEOUT', params, self.idle_timeout, above=0.)
+    def cmd_SET_IDLE_TIMEOUT(self, gcmd):
+        timeout = gcmd.get_float('TIMEOUT', self.idle_timeout, above=0.)
         self.idle_timeout = timeout
-        self.gcode.respond_info(
-            "idle_timeout: Timeout set to %.2f s" % timeout)
+        gcmd.respond_info("idle_timeout: Timeout set to %.2f s" % (timeout,))
         if self.state == "Ready":
             checktime = self.reactor.monotonic() + timeout
-            self.reactor.update_timer(
-                self.timeout_timer, checktime)
+            self.reactor.update_timer(self.timeout_timer, checktime)
 
 def load_config(config):
     return IdleTimeout(config)
