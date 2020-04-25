@@ -31,7 +31,7 @@ class PIDCalibrate:
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise
-        self.gcode.wait_for_temperature(heater)
+        pheater.wait_for_temperature(heater)
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')

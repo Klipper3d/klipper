@@ -167,7 +167,7 @@ class PrinterExtruder:
         heater = extruder.get_heater()
         heater.set_temp(temp)
         if wait and temp:
-            gcode.wait_for_temperature(heater)
+            self.printer.lookup_object('heater').wait_for_temperature(heater)
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.cmd_M104(params, wait=True)

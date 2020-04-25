@@ -59,7 +59,6 @@ class GCodeParser:
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
         self.need_ack = False
         self.toolhead = None
-        self.heaters = None
         self.axis2pos = {'X': 0, 'Y': 1, 'Z': 2, 'E': 3}
     def is_traditional_gcode(self, cmd):
         # A "traditional" g-code command is a letter and followed by a number
@@ -177,8 +176,6 @@ class GCodeParser:
     def _handle_ready(self):
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
-        # Lookup printer components
-        self.heaters = self.printer.lookup_object('heater')
         self.toolhead = self.printer.lookup_object('toolhead')
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
@@ -306,16 +303,19 @@ class GCodeParser:
         return self.mutex
     # Response handling
     def ack(self, msg=None):
-        if not self.need_ack or self.is_fileinput:
-            return
+        if not self.need_ack:
+            return False
+        if self.is_fileinput:
+            return True
+        ok_msg = "ok\n"
+        if msg:
+            ok_msg = "ok %s\n" % (msg,)
         try:
-            if msg:
-                os.write(self.fd, "ok %s\n" % (msg,))
-            else:
-                os.write(self.fd, "ok\n")
+            os.write(self.fd, ok_msg)
         except os.error:
             logging.exception("Write g-code ack")
         self.need_ack = False
+        return True
     def respond_raw(self, msg):
         if self.is_fileinput:
             return
@@ -389,32 +389,16 @@ class GCodeParser:
             return eparams
         except ValueError as e:
             raise self.error("Malformed command '%s'" % (params['#original'],))
-    # Temperature wrappers
-    def _get_temp(self, eventtime):
-        # Tn:XXX /YYY B:XXX /YYY
-        out = []
-        if self.heaters is not None:
-            for gcode_id, sensor in sorted(self.heaters.get_gcode_sensors()):
-                cur, target = sensor.get_temp(eventtime)
-                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
-        if not out:
-            return "T:0"
-        return " ".join(out)
-    def wait_for_temperature(self, heater):
-        # Helper to wait on heater.check_busy() and report M105 temperatures
-        if self.is_fileinput:
-            return
-        eventtime = self.reactor.monotonic()
-        while self.is_printer_ready and heater.check_busy(eventtime):
-            print_time = self.toolhead.get_last_move_time()
-            self.respond_raw(self._get_temp(eventtime))
-            eventtime = self.reactor.pause(eventtime + 1.)
     # G-Code special command handlers
     def cmd_default(self, params):
+        cmd = params.get('#command')
+        if cmd == 'M105':
+            # Don't warn about temperature requests when not ready
+            self.ack("T:0")
+            return
         if not self.is_printer_ready:
             raise self.error(self.printer.get_state_message())
             return
-        cmd = params.get('#command')
         if not cmd:
             logging.debug(params['#original'])
             return
@@ -446,7 +430,7 @@ class GCodeParser:
         'G1', 'G4', 'G28', 'M400',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
-        'M105', 'M112', 'M115', 'IGNORE', 'GET_POSITION',
+        'M112', 'M115', 'IGNORE', 'GET_POSITION',
         'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
     # G-Code movement commands
     cmd_G1_aliases = ['G0']
@@ -602,14 +586,6 @@ class GCodeParser:
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
     # G-Code miscellaneous commands
-    cmd_M105_when_not_ready = True
-    def cmd_M105(self, params):
-        # Get Extruder Temperature
-        msg = self._get_temp(self.reactor.monotonic())
-        if self.need_ack:
-            self.ack(msg)
-        else:
-            self.respond_raw(msg)
     cmd_M112_when_not_ready = True
     def cmd_M112(self, params):
         # Emergency Stop
