@@ -19,16 +19,16 @@ class TuningTower:
         gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
                                desc=self.cmd_TUNING_TOWER_help)
     cmd_TUNING_TOWER_help = "Tool to adjust a parameter at each Z height"
-    def cmd_TUNING_TOWER(self, params):
+    def cmd_TUNING_TOWER(self, gcmd):
         if self.normal_transform is not None:
             self.end_test()
         # Get parameters
         gcode = self.printer.lookup_object("gcode")
-        command = gcode.get_str('COMMAND', params)
-        parameter = gcode.get_str('PARAMETER', params)
-        self.start = gcode.get_float('START', params, 0.)
-        self.factor = gcode.get_float('FACTOR', params)
-        self.band = gcode.get_float('BAND', params, 0., minval=0.)
+        command = gcmd.get('COMMAND')
+        parameter = gcmd.get('PARAMETER')
+        self.start = gcmd.get_float('START', 0.)
+        self.factor = gcmd.get_float('FACTOR')
+        self.band = gcmd.get_float('BAND', 0., minval=0.)
         # Enable test mode
         if gcode.is_traditional_gcode(command):
             self.command_fmt = "%s %s%%.9f" % (command, parameter)
@@ -38,8 +38,8 @@ class TuningTower:
         self.last_z = -99999999.9
         gcode.reset_last_position()
         self.get_position()
-        gcode.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
-                           % (self.start, self.factor))
+        gcmd.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
+                          % (self.start, self.factor))
     def get_position(self):
         pos = self.normal_transform.get_position()
         self.last_position = list(pos)
