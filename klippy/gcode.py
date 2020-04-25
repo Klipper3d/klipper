@@ -15,8 +15,6 @@ class GCodeCommand:
         # Method wrappers
         self.respond_info = gcode.respond_info
         self.respond_raw = gcode.respond_raw
-        self.__contains__ = self._params.__contains__
-        self.__getitem__ = self._params.__getitem__
     def get_command(self):
         return self._command
     def get_commandline(self):
@@ -277,8 +275,6 @@ class GCodeParser:
             # Build gcode "params" dictionary
             params = { parts[i]: parts[i+1].strip()
                        for i in range(1, numparts, 2) }
-            params['#original'] = origline
-            params['#command'] = cmd
             gcmd = GCodeCommand(self, cmd, origline, params)
             # Invoke handler for command
             self.need_ack = need_ack
@@ -396,16 +392,6 @@ class GCodeParser:
     def _respond_state(self, state):
         self.respond_info("Klipper state: %s" % (state,), log=False)
     # Parameter parsing helpers
-    def get_str(self, name, gcmd, default=GCodeCommand.sentinel, parser=str,
-                minval=None, maxval=None, above=None, below=None):
-        return gcmd.get(name, default, parser, minval, maxval, above, below)
-    def get_int(self, name, gcmd, default=GCodeCommand.sentinel,
-                minval=None, maxval=None):
-        return gcmd.get_int(name, default, minval=minval, maxval=maxval)
-    def get_float(self, name, gcmd, default=GCodeCommand.sentinel,
-                  minval=None, maxval=None, above=None, below=None):
-        return gcmd.get_float(name, default, minval=minval, maxval=maxval,
-                              above=above, below=below)
     extended_r = re.compile(
         r'^\s*(?:N[0-9]+\s*)?'
         r'(?P<cmd>[a-zA-Z_][a-zA-Z0-9_]+)(?:\s+|$)'
@@ -420,8 +406,6 @@ class GCodeParser:
         try:
             eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]
             eparams = { k.upper(): v for k, v in eparams }
-            eparams['#original'] = gcmd._params['#original']
-            eparams['#command'] = gcmd._params['#command']
             gcmd._params.clear()
             gcmd._params.update(eparams)
             return gcmd
