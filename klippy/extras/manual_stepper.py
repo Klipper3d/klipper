@@ -33,10 +33,10 @@ class ManualStepper:
         self.rail.set_max_jerk(9999999.9, 9999999.9)
         # Register commands
         stepper_name = config.get_name().split()[1]
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
-                                        stepper_name, self.cmd_MANUAL_STEPPER,
-                                        desc=self.cmd_MANUAL_STEPPER_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
+                                   stepper_name, self.cmd_MANUAL_STEPPER,
+                                   desc=self.cmd_MANUAL_STEPPER_help)
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -77,7 +77,8 @@ class ManualStepper:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
         if not self.can_home:
-            raise self.gcode.error("No endstop for this manual stepper")
+            raise self.printer.command_error(
+                "No endstop for this manual stepper")
         # Notify start of homing/probing move
         endstops = self.rail.get_endstops()
         self.printer.send_event("homing:homing_move_begin",
@@ -110,24 +111,25 @@ class ManualStepper:
         if error is not None:
             raise homing.CommandError(error)
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
-    def cmd_MANUAL_STEPPER(self, params):
-        if 'ENABLE' in params:
-            self.do_enable(self.gcode.get_int('ENABLE', params))
-        if 'SET_POSITION' in params:
-            setpos = self.gcode.get_float('SET_POSITION', params)
+    def cmd_MANUAL_STEPPER(self, gcmd):
+        enable = gcmd.get_int('ENABLE', None)
+        if enable is not None:
+            self.do_enable(enable)
+        setpos = gcmd.get_float('SET_POSITION', None)
+        if setpos is not None:
             self.do_set_position(setpos)
-        sync = self.gcode.get_int('SYNC', params, 1)
-        homing_move = self.gcode.get_int('STOP_ON_ENDSTOP', params, 0)
-        speed = self.gcode.get_float('SPEED', params, self.velocity, above=0.)
-        accel = self.gcode.get_float('ACCEL', params, self.accel, minval=0.)
+        speed = gcmd.get_float('SPEED', self.velocity, above=0.)
+        accel = gcmd.get_float('ACCEL', self.accel, minval=0.)
+        homing_move = gcmd.get_int('STOP_ON_ENDSTOP', 0)
         if homing_move:
-            movepos = self.gcode.get_float('MOVE', params)
+            movepos = gcmd.get_float('MOVE')
             self.do_homing_move(movepos, speed, accel,
                                 homing_move > 0, abs(homing_move) == 1)
-        elif 'MOVE' in params:
-            movepos = self.gcode.get_float('MOVE', params)
+        elif gcmd.get_float('MOVE', None) is not None:
+            movepos = gcmd.get_float('MOVE')
+            sync = gcmd.get_int('SYNC', 1)
             self.do_move(movepos, speed, accel, sync)
-        elif 'SYNC' in params and sync:
+        elif gcmd.get_int('SYNC', 0):
             self.sync_print_time()
 
 def load_config_prefix(config):
