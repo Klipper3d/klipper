@@ -40,8 +40,8 @@ class DelayedGcode:
         self.inside_timer = self.repeat = False
         return nextwake
     cmd_UPDATE_DELAYED_GCODE_help = "Update the duration of a delayed_gcode"
-    def cmd_UPDATE_DELAYED_GCODE(self, params):
-        self.duration = self.gcode.get_float('DURATION', params, minval=0.)
+    def cmd_UPDATE_DELAYED_GCODE(self, gcmd):
+        self.duration = gcmd.get_float('DURATION', minval=0.)
         if self.inside_timer:
             self.repeat = (self.duration != 0.)
         else:
