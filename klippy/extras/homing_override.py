@@ -16,16 +16,16 @@ class HomingOverride:
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
-    def cmd_G28(self, params):
+    def cmd_G28(self, gcmd):
         if self.in_script:
             # Was called recursively - invoke the real G28 command
-            self.prev_G28(params)
+            self.prev_G28(gcmd)
             return
 
         # if no axis is given as parameter we assume the override
         no_axis = True
         for axis in 'XYZ':
-            if axis in params:
+            if gcmd.get(axis, None) is not None:
                 no_axis = False
                 break
 
@@ -35,11 +35,11 @@ class HomingOverride:
             # check if we home an axsis which needs the override
             override = False
             for axis in self.axes:
-                if axis in params:
+                if gcmd.get(axis, None) is not None:
                     override = True
 
         if not override:
-            self.gcode.cmd_G28(params)
+            self.gcode.cmd_G28(gcmd)
             return
 
         # Calculate forced position (if configured)
@@ -54,7 +54,7 @@ class HomingOverride:
         self.gcode.reset_last_position()
         # Perform homing
         kwparams = { 'printer': self.template.create_status_wrapper() }
-        kwparams['params'] = params.get_command_parameters()
+        kwparams['params'] = gcmd.get_command_parameters()
         try:
             self.in_script = True
             self.template.run_gcode_from_command(kwparams)
