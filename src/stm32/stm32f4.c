@@ -98,7 +98,18 @@ void
 usb_request_bootloader(void)
 {
     irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    if (CONFIG_STM32_FLASH_START_4000) {
+        // HID Bootloader
+        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+        RCC->APB1ENR;
+        PWR->CR |= PWR_CR_DBP;
+        // HID Bootloader magic key
+        RTC->BKP4R = 0x424C;
+        PWR->CR &= ~PWR_CR_DBP;
+    } else {
+        // System DFU Bootloader
+        *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    }
     NVIC_SystemReset();
 }
 
