@@ -150,9 +150,9 @@ class TMC2660CurrentHelper:
                                                 self.handle_ready)
 
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
 
     def _calc_current_bits(self, current, vsense):
         vref = 0.165 if vsense else 0.310
@@ -188,14 +188,13 @@ class TMC2660CurrentHelper:
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'CURRENT' in params:
-            self.current = gcode.get_float(
-                'CURRENT', params, minval=0.1, maxval=MAX_CURRENT)
-            self.set_current(
-                self.printer.lookup_object('toolhead').get_last_move_time(),
-                self.current)
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        cur = gcmd.get_float('CURRENT', None, minval=0.1, maxval=MAX_CURRENT)
+        if cur is None:
+            return
+        self.current = cur
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.set_current(print_time, self.current)
 
 
 ######################################################################
