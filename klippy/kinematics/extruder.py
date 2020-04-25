@@ -148,12 +148,11 @@ class PrinterExtruder:
                           move.start_pos[3], 0., 0.,
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
-    def cmd_M104(self, params, wait=False):
+    def cmd_M104(self, gcmd, wait=False):
         # Set Extruder Temperature
-        gcode = self.printer.lookup_object('gcode')
-        temp = gcode.get_float('S', params, 0.)
-        if 'T' in params:
-            index = gcode.get_int('T', params, minval=0)
+        temp = gcmd.get_float('S', 0.)
+        index = gcmd.get_int('T', None, minval=0)
+        if index is not None:
             section = 'extruder'
             if index:
                 section = 'extruder%d' % (index,)
@@ -161,55 +160,52 @@ class PrinterExtruder:
             if extruder is None:
                 if temp <= 0.:
                     return
-                raise gcode.error("Extruder not configured")
+                raise gcmd.error("Extruder not configured")
         else:
             extruder = self.printer.lookup_object('toolhead').get_extruder()
         heater = extruder.get_heater()
         heater.set_temp(temp)
         if wait and temp:
             self.printer.lookup_object('heaters').wait_for_temperature(heater)
-    def cmd_M109(self, params):
+    def cmd_M109(self, gcmd):
         # Set Extruder Temperature and Wait
-        self.cmd_M104(params, wait=True)
+        self.cmd_M104(gcmd, wait=True)
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
-    def cmd_default_SET_PRESSURE_ADVANCE(self, params):
+    def cmd_default_SET_PRESSURE_ADVANCE(self, gcmd):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
-        extruder.cmd_SET_PRESSURE_ADVANCE(params)
-    def cmd_SET_PRESSURE_ADVANCE(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        pressure_advance = gcode.get_float(
-            'ADVANCE', params, self.pressure_advance, minval=0.)
-        smooth_time = gcode.get_float(
-            'SMOOTH_TIME', params,
-            self.pressure_advance_smooth_time, minval=0., maxval=.200)
+        extruder.cmd_SET_PRESSURE_ADVANCE(gcmd)
+    def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
+        pressure_advance = gcmd.get_float('ADVANCE', self.pressure_advance,
+                                          minval=0.)
+        smooth_time = gcmd.get_float('SMOOTH_TIME',
+                                     self.pressure_advance_smooth_time,
+                                     minval=0., maxval=.200)
         self._set_pressure_advance(pressure_advance, smooth_time)
         msg = ("pressure_advance: %.6f\n"
-               "pressure_advance_smooth_time: %.6f" % (
-                   pressure_advance, smooth_time))
+               "pressure_advance_smooth_time: %.6f"
+               % (pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcode.respond_info(msg, log=False)
+        gcmd.respond_info(msg, log=False)
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
-    def cmd_SET_E_STEP_DISTANCE(self, params):
-        gcode = self.printer.lookup_object('gcode')
+    def cmd_SET_E_STEP_DISTANCE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
-        if 'DISTANCE' not in params:
+        dist = gcmd.get_float('DISTANCE', None, above=0.)
+        if dist is None:
             step_dist = self.stepper.get_step_dist()
-            gcode.respond_info("Extruder '%s' step distance is %0.6f"
-                               % (self.name, step_dist))
+            gcmd.respond_info("Extruder '%s' step distance is %0.6f"
+                              % (self.name, step_dist))
             return
-        dist = gcode.get_float('DISTANCE', params, above=0.)
         toolhead.flush_step_generation()
         self.stepper.set_step_dist(dist)
-        gcode.respond_info("Extruder '%s' step distance set to %0.6f"
-                           % (self.name, dist))
+        gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
+                          % (self.name, dist))
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
-    def cmd_ACTIVATE_EXTRUDER(self, params):
-        gcode = self.printer.lookup_object('gcode')
+    def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         if toolhead.get_extruder() is self:
-            gcode.respond_info("Extruder %s already active" % (self.name))
+            gcmd.respond_info("Extruder %s already active" % (self.name,))
             return
-        gcode.respond_info("Activating extruder %s" % (self.name))
+        gcmd.respond_info("Activating extruder %s" % (self.name,))
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.stepper.get_commanded_position())
         self.printer.send_event("extruder:activate_extruder")
