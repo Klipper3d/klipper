@@ -50,8 +50,8 @@ class ScrewsTiltAdjust:
                                      "screws by calculating the number " \
                                      "of turns to level it."
 
-    def cmd_SCREWS_TILT_CALCULATE(self, params):
-        self.probe_helper.start_probe(params)
+    def cmd_SCREWS_TILT_CALCULATE(self, gcmd):
+        self.probe_helper.start_probe(gcmd)
 
     def probe_finalize(self, offsets, positions):
         # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5
