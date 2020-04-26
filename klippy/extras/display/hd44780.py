@@ -23,6 +23,8 @@ class HD44780:
                 raise ppins.error("hd44780 all pins must be on same mcu")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
+        self.cmd_delay = config.getfloat('cmd_delay', HD44780_DELAY,
+            minval=0, maxval=0.1)
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
         self.mcu.register_config_callback(self.build_config)
@@ -42,7 +44,7 @@ class HD44780:
             " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1],
                 self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(HD44780_DELAY)))
+                self.mcu.seconds_to_clock(self.cmd_delay)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
@@ -79,7 +81,8 @@ class HD44780:
         curtime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(curtime)
         # Program 4bit / 2-line mode and then issue 0x02 "Home" command
-        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
+        # 0x32 0x28 by nibles: 0x3 - set 8 bit, 0x2 - set 4bit, 0x2,0x8 - config
+        init = [[0x33], [0x33], [0x32, 0x28, 0x02]]
         # Reset (set positive direction ; enable display and hide cursor)
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
