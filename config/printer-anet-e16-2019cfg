@@ -1,5 +1,5 @@
-# This file contains common pin mappings for Anet E10 printer from
-# 2018.  To use this config, the firmware should be compiled for the
+# This file contains common pin mappings for Anet E16 printer from
+# 2019.  To use this config, the firmware should be compiled for the
 # AVR atmega1284p.
 
 # Note that the "make flash" command does not work with Anet boards -
