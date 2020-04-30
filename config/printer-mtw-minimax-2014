@@ -44,7 +44,6 @@ position_max: 200
 step_pin: PC3
 dir_pin: PL6
 enable_pin: !PA4
-step_distance: .0102
 nozzle_diameter: 0.400
 filament_diameter: 1.750
 heater_pin: PE5
@@ -55,6 +54,13 @@ pid_Ki: 1.08
 pid_Kd: 114
 min_temp: 0
 max_temp: 275
+###
+### Select Appropriate Step Distance depending on printer:
+### MiniMax
+# step_distance: .0102
+### Fusematic
+# step_distance: .002175
+###
 ###   Select appropriate thermistor by removing the # before the line:
 ###   for E3D V6 or J-Head with Thermistor #5:
 #sensor_type: ATC Semitec 104GT-2 
