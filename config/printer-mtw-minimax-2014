@@ -158,5 +158,6 @@ z_hop_speed: 5
 #click_pin: ^!EXP1_2
 ##kill_pin: ^!EXP2_8
 
-[output_pin beeper]
-pin: EXP1_1
+### Also uncomment the lines below if GLCD is installed
+#[output_pin beeper]
+#pin: EXP1_1
