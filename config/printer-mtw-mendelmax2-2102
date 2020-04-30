@@ -1,7 +1,18 @@
-# Klipper configuration for the MTW Create Printer 
+# Klipper configuration for the MTW MendelMax 2 Printer.
+
 # See the example.cfg file for a description of available parameters.
 # This file contains common pin mappings for RAMBo boards. To use this
 # config, the firmware should be compiled for the AVR atmega2560.
+
+[mcu]
+serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_854333433343516051F1-if00
+
+[printer]
+kinematics: cartesian
+max_velocity: 300
+max_accel: 3000
+max_z_velocity: 5
+max_z_accel: 100
 
 [stepper_x]
 step_pin: PC0
@@ -56,26 +67,11 @@ max_temp: 275
 ##   for J-Head with thermistor #1:
 #sensor_type: EPCOS 100K B57560G104F
 
-#Uncomment below for dual extruder printers
-#[extruder1]
-#step_pin: PC4
-#dir_pin: PL7
-#enable_pin: !PA3
-#heater_pin: PH4
-#sensor_pin: PF1
-#step_distance: .0102
-#nozzle_diameter: 0.400
-#filament_diameter: 1.750
-#sensor_type: ATC Semitec 104GT-2
-#sensor_pin: PF0
-#control: pid
-#pid_Kp: 22.2
-#pid_Ki: 1.08
-#pid_Kd: 114
-#min_temp: 0
-#max_temp: 275
+[fan]
+pin: PH5
 
-
+[heater_fan nozzle_cooling_fan]
+pin: PH3
 
 [heater_bed]
 heater_pin: PE5
@@ -91,8 +87,8 @@ speed: 50
 z_hop: 10
 z_hop_speed: 5
 
-## BLTouch probe, if installed. 
-## See example-extras.cfg file for a description of available parameters.
+### BLTouch probe - Optional
+### Uncomment the lines below to activate
 #[bltouch]
 #sensor_pin: PB4
 #control_pin: PL5
@@ -103,9 +99,8 @@ z_hop_speed: 5
 #y_offset: -36
 #z_offset: 0.75
 
-
-## Mesh Bed Leveling - Requires BLTouch or other ABL Sensor
-## See example-extras.cfg file for a description of available parameters.
+### Mesh Bed Leveling - Requires BLTouch or other ABL Sensor
+### Uncomment the lines below to activate
 #[bed_mesh]
 #speed: 50
 #horizontal_move_z: 5
@@ -122,21 +117,24 @@ z_hop_speed: 5
 #bicubic_tension: .2
 ##relative_reference_index:
 
-[fan]
-pin: PH5
+### Graphic LCD - Optional
+### Uncomment the lines below to activate
+#[display]
+#lcd_type: st7920
+#cs_pin: EXP1_4
+#sclk_pin: EXP1_5
+#sid_pin: EXP1_3
+#encoder_pins: ^EXP2_3, ^EXP2_5
+#click_pin: ^!EXP1_2
+##kill_pin: ^!EXP2_8
 
-[heater_fan nozzle_cooling_fan]
-pin: PH3
+### Uncomment below also if GLCD is installed
+#[output_pin beeper]
+#pin: EXP1_1
 
-[mcu]
-serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_854333433343516051F1-if00
-
-[printer]
-kinematics: cartesian
-max_velocity: 300
-max_accel: 3000
-max_z_velocity: 5
-max_z_accel: 100
+##
+## Nothing below this line should require editing under normal circumstances.
+##
 
 [ad5206 stepper_digipot]
 enable_pin: PD7
