@@ -95,6 +95,17 @@ fifo_write_packet(uint32_t ep, const uint8_t *src, uint32_t len)
     return len;
 }
 
+static void
+enable_rx_endpoint(uint32_t ep)
+{
+    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(ep);
+    uint32_t ctl = epo->DOEPCTL;
+    if (!(ctl & USB_OTG_DOEPCTL_EPENA) || ctl & USB_OTG_DOEPCTL_NAKSTS) {
+        epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
+        epo->DOEPCTL = ctl | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+    }
+}
+
 // Read a packet from the rx queue
 static int_fast8_t
 fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
@@ -119,11 +130,9 @@ fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
         readl(fifo);
 
     // Reenable packet reception if it got disabled by controller
-    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(grx & USB_OTG_GRXSTSP_EPNUM_Msk);
-    uint32_t ctl = epo->DOEPCTL;
-    if (!(ctl & USB_OTG_DOEPCTL_EPENA) || ctl & USB_OTG_DOEPCTL_NAKSTS) {
-        epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
-        epo->DOEPCTL = ctl | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+    uint32_t ep = grx & USB_OTG_GRXSTSP_EPNUM_Msk;
+    if (ep) {
+        enable_rx_endpoint(ep);
     }
     return xfer;
 }
@@ -141,7 +150,7 @@ peek_rx_queue(uint32_t ep)
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                            >> USB_OTG_GRXSTSP_PKTSTS_Pos);
         if ((grx_ep == 0 || grx_ep == USB_CDC_EP_BULK_OUT)
-            && (pktsts == 2 || pktsts == 6)) {
+            && (pktsts == 2 || pktsts == 4 || pktsts == 6)) {
             // A packet is ready
             if (grx_ep != ep)
                 return 0;
@@ -223,6 +232,8 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
     return ret;
 }
 
+static uint8_t setup_buf[8];
+
 int_fast8_t
 usb_read_ep0_setup(void *data, uint_fast8_t max_len)
 {
@@ -237,25 +248,36 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         }
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                            >> USB_OTG_GRXSTSP_PKTSTS_Pos);
-        if (pktsts == 6)
-            // Found a setup packet
+
+        if (pktsts == 4) {
+            // Setup complete
+            grx = OTG->GRXSTSP;
+            enable_rx_endpoint(0);
             break;
-        // Discard other packets
-        fifo_read_packet(NULL, 0);
+        }
+        else if (pktsts == 6) {
+            // Found a setup packet
+            uint32_t ctl = EPIN(0)->DIEPCTL;
+            if (ctl & USB_OTG_DIEPCTL_EPENA) {
+                // Flush any pending tx packets
+                EPIN(0)->DIEPCTL = ctl | USB_OTG_DIEPCTL_EPDIS |
+                                   USB_OTG_DIEPCTL_SNAK;
+                while (EPIN(0)->DIEPCTL & USB_OTG_DIEPCTL_EPENA)
+                    ;
+                OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
+                while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
+                    ;
+            }
+            fifo_read_packet(setup_buf, max_len);
+        } else {
+            // Discard other packets
+            fifo_read_packet(NULL, 0);
+        }
     }
-    uint32_t ctl = EPIN(0)->DIEPCTL;
-    if (ctl & USB_OTG_DIEPCTL_EPENA) {
-        // Flush any pending tx packets
-        EPIN(0)->DIEPCTL = ctl | USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK;
-        while (EPIN(0)->DIEPCTL & USB_OTG_DIEPCTL_EPENA)
-            ;
-        OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
-        while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
-            ;
-    }
-    int_fast8_t ret = fifo_read_packet(data, max_len);
+    // Copy status buffer
+    memcpy(data, setup_buf, sizeof(setup_buf));
     usb_irq_enable();
-    return ret;
+    return sizeof(setup_buf);
 }
 
 int_fast8_t
@@ -403,7 +425,7 @@ usb_init(void)
     epi->DIEPCTL = mpsize_ep0 | USB_OTG_DIEPCTL_SNAK;
     epo->DOEPTSIZ = (64 | (1 << USB_OTG_DOEPTSIZ_STUPCNT_Pos)
                      | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
-    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_SNAK;
 
     // Enable interrupts
     OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
