@@ -230,6 +230,6 @@ class HTU21D:
 
 def load_config(config):
     # Register sensor
-    pheater = config.get_printer().lookup_object("heater")
+    pheater = config.get_printer().lookup_object("heaters")
     for stype in HTU21D_DEVICES:
         pheater.add_sensor_factory(stype, HTU21D)
