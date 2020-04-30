@@ -4,7 +4,7 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, optparse, logging, time, threading, collections, importlib
+import sys, os, optparse, logging, time, threading, collections, importlib, imp
 import util, reactor, queuelogger, msgproto, homing
 import gcode, configfile, pins, mcu, toolhead
 
@@ -82,7 +82,7 @@ class Printer:
         if name in self.objects:
             return self.objects[name]
         if default is configfile.sentinel:
-            raise self.config_error("Unknown config object '%s'" % (name,))
+            raise self.config_error("Unknown config object '%s'" % name)
         return default
     def lookup_objects(self, module=None):
         if module is None:
@@ -103,13 +103,17 @@ class Printer:
             return self.objects[section]
         module_parts = section.split()
         module_name = module_parts[0]
-        py_name = os.path.join(os.path.dirname(__file__),
-                               'extras', module_name + '.py')
-        py_dirname = os.path.join(os.path.dirname(__file__),
-                                  'extras', module_name, '__init__.py')
-        if not os.path.exists(py_name) and not os.path.exists(py_dirname):
-            return None
-        mod = importlib.import_module('extras.' + module_name)
+        custom_path = self._find_path_override(module_name)
+        if custom_path is None:
+            py_name = os.path.join(os.path.dirname(__file__),
+                                   'extras', module_name + '.py')
+            py_dirname = os.path.join(os.path.dirname(__file__),
+                                      'extras', module_name, '__init__.py')
+            if not os.path.exists(py_name) and not os.path.exists(py_dirname):
+                return None
+            mod = importlib.import_module('extras.' + module_name)
+        else:
+            mod = imp.load_source(module_name, custom_path)
         init_func = 'load_config'
         if len(module_parts) > 1:
             init_func = 'load_config_prefix'
@@ -117,6 +121,12 @@ class Printer:
         if init_func is not None:
             self.objects[section] = init_func(config.getsection(section))
             return self.objects[section]
+    def _find_path_override(self, modulename):
+        module_paths = self.lookup_object("module_paths", None)
+        if module_paths is not None:
+            return module_paths.find_path(modulename)
+        else:
+            return None
     def _read_config(self):
         self.objects['configfile'] = pconfig = configfile.PrinterConfig(self)
         config = pconfig.read_main_config()
