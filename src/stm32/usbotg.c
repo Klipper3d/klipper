@@ -117,15 +117,19 @@ fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
     uint32_t extra = DIV_ROUND_UP(bcnt, 4) - DIV_ROUND_UP(xfer, 4);
     while (extra--)
         readl(fifo);
+    return xfer;
+}
 
-    // Reenable packet reception if it got disabled by controller
-    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(grx & USB_OTG_GRXSTSP_EPNUM_Msk);
+// Reenable packet reception if it got disabled by controller
+static void
+enable_rx_endpoint(uint32_t ep)
+{
+    USB_OTG_OUTEndpointTypeDef *epo = EPOUT(ep);
     uint32_t ctl = epo->DOEPCTL;
     if (!(ctl & USB_OTG_DOEPCTL_EPENA) || ctl & USB_OTG_DOEPCTL_NAKSTS) {
         epo->DOEPTSIZ = 64 | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos);
         epo->DOEPCTL = ctl | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
     }
-    return xfer;
 }
 
 // Inspect the next packet on the rx queue
@@ -175,6 +179,7 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
         return -1;
     }
     int_fast8_t ret = fifo_read_packet(data, max_len);
+    enable_rx_endpoint(USB_CDC_EP_BULK_OUT);
     usb_irq_enable();
     return ret;
 }
@@ -219,6 +224,7 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
         return -2;
     }
     int_fast8_t ret = fifo_read_packet(data, max_len);
+    enable_rx_endpoint(0);
     usb_irq_enable();
     return ret;
 }
@@ -258,6 +264,7 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
             ;
     }
+    enable_rx_endpoint(0);
     EPOUT(0)->DOEPINT = USB_OTG_DOEPINT_STUP;
     usb_irq_enable();
     // Return previously read setup packet
@@ -410,7 +417,7 @@ usb_init(void)
     epi->DIEPCTL = mpsize_ep0 | USB_OTG_DIEPCTL_SNAK;
     epo->DOEPTSIZ = (64 | (1 << USB_OTG_DOEPTSIZ_STUPCNT_Pos)
                      | (1 << USB_OTG_DOEPTSIZ_PKTCNT_Pos));
-    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
+    epo->DOEPCTL = mpsize_ep0 | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_SNAK;
 
     // Enable interrupts
     OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
