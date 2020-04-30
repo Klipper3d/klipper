@@ -61,10 +61,10 @@ pid_Ki: 1.08
 pid_Kd: 114
 min_temp: 0
 max_temp: 275
-##   Select appropriate thermistor be removing the # before the line:
-##   for E3D V6 or J-Head with Thermistor #5:
+###   Select appropriate thermistor be removing the # before the line:
+###   for E3D V6 or J-Head with Thermistor #5:
 #sensor_type: ATC Semitec 104GT-2 
-##   for J-Head with thermistor #1:
+###   for J-Head with thermistor #1:
 #sensor_type: EPCOS 100K B57560G104F
 
 [fan]
@@ -132,9 +132,9 @@ z_hop_speed: 5
 #[output_pin beeper]
 #pin: EXP1_1
 
-##
-## Nothing below this line should require editing under normal circumstances.
-##
+###
+# Nothing below this line should require editing under normal circumstances.
+###
 
 [ad5206 stepper_digipot]
 enable_pin: PD7
