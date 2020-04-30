@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20200425: The gcode_macro command template variable `printer.heater`
+was renamed to `printer.heaters`.
+
 20200313: The default lcd layout for multi-extruder printers with a
 16x4 screen has changed.  The single extruder screen layout is now the
 default and it will show the currently active extruder.  To use the

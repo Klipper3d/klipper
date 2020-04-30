@@ -116,12 +116,12 @@ Sensors = {
 
 def load_config(config):
     # Register default thermistor types
-    pheater = config.get_printer().lookup_object("heater")
+    pheaters = config.get_printer().try_load_module(config, "heaters")
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: PrinterThermistor(config, params))
-        pheater.add_sensor_factory(sensor_type, func)
+        pheaters.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     thermistor = CustomThermistor(config)
-    pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor_factory(thermistor.name, thermistor.create)
+    pheaters = config.get_printer().try_load_module(config, "heaters")
+    pheaters.add_sensor_factory(thermistor.name, thermistor.create)

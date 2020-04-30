@@ -35,8 +35,8 @@ class HeaterCheck:
         if self.printer.get_start_args().get('debugoutput') is not None:
             # Disable verify_heater if outputting to a debug file
             return
-        pheater = self.printer.lookup_object('heater')
-        self.heater = pheater.lookup_heater(self.heater_name)
+        pheaters = self.printer.lookup_object('heaters')
+        self.heater = pheaters.lookup_heater(self.heater_name)
         logging.info("Starting heater checks for %s", self.heater_name)
         reactor = self.printer.get_reactor()
         self.check_timer = reactor.register_timer(self.check_event, reactor.NOW)

@@ -35,6 +35,7 @@ CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-mtw-create-2015.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
+CONFIG ../../config/printer-sovol-sv01-2020.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
@@ -60,6 +61,7 @@ CONFIG ../../config/printer-creality-ender2-2017.cfg
 CONFIG ../../config/printer-creality-ender3-2018.cfg
 CONFIG ../../config/printer-creality-ender5-2019.cfg
 CONFIG ../../config/printer-tronxy-p802e-2020.cfg
+CONFIG ../../config/printer-tronxy-p802m-2020.cfg
 CONFIG ../../config/printer-tronxy-x5s-2018.cfg
 CONFIG ../../config/printer-tronxy-x8-2018.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg

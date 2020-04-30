@@ -9,14 +9,15 @@ KELVIN_TO_CELSIUS = -273.15
 class PrinterSensorGeneric:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.sensor = self.printer.lookup_object('heater').setup_sensor(config)
+        pheaters = self.printer.try_load_module(config, 'heaters')
+        self.sensor = pheaters.setup_sensor(config)
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
-        self.printer.lookup_object('heater').register_sensor(config, self)
+        pheaters.register_sensor(config, self)
         self.last_temp = 0.
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp

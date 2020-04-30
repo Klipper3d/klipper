@@ -84,11 +84,10 @@ class QuadGantryLevel:
 
         adjust_max = max(z_adjust)
         if adjust_max > self.max_adjust:
-            self.gcode.respond_error(
-                "Aborting quad_gantry_level " +
-                "required adjustment %0.6f " % ( adjust_max ) +
-                "is greater than max_adjust %0.6f" % (self.max_adjust))
-            return
+            raise self.gcode.error("Aborting quad_gantry_level"
+                                   " required adjustment %0.6f"
+                                   " is greater than max_adjust %0.6f"
+                                   % (adjust_max, self.max_adjust))
 
         speed = self.probe_helper.get_lift_speed()
         self.z_helper.adjust_steppers(z_adjust, speed)
