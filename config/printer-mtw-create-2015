@@ -93,19 +93,11 @@ pin_up_touch_mode_reports_triggered: True
 x_offset: -17
 y_offset: 37
 z_offset: 2.0
-#speed:
-#samples:
-#sample_retract_dist:
-#samples_result:
-#samples_tolerance:
-#samples_tolerance_retries:
 
 [safe_z_home]
 home_xy_position: 125,150
-# Change coordinates to the center of your print bed
 speed: 50
 z_hop: 10
-# Move up 10mm
 z_hop_speed: 5
 
 # Mesh Bed Leveling 
@@ -118,22 +110,17 @@ max_point: 225,265
 probe_count: 5,7
 fade_start: 1.0
 fade_end: 0.0
-#fade_target:
 split_delta_z: .025
 move_check_distance: 5.0
 mesh_pps: 2,2
 algorithm: lagrange
 bicubic_tension: .2
-#relative_reference_index:
 
 [fan]
 pin: PH5
 
 [heater_fan nozzle_cooling_fan]
 pin: PH3
-
-[mcu]
-serial: /dev/serial/by-id/usb-UltiMachine__ultimachine.com__RAMBo_854333433343516051F1-if00
 
 [printer]
 kinematics: cartesian
