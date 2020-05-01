@@ -2,14 +2,15 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import math, logging
+#import math, logging
 
 class SaveVariables:
     def __init__(self, config):
         self.printer = config.get_printer()
+	self.name = config.get_name()
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
-            'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
+            'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,True,
             desc=self.cmd_SAVE_VARIABLE_help)
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables in the config file"
     def cmd_SAVE_VARIABLE(self, params):
