@@ -63,7 +63,7 @@ max_temp: 275
 ###
 ###   Select appropriate thermistor by removing the # before the line:
 ###   for E3D V6 or J-Head with Thermistor #5:
-#sensor_type: ATC Semitec 104GT-2 
+#sensor_type: ATC Semitec 104GT-2
 ###   for J-Head with thermistor #1:
 #sensor_type: EPCOS 100K B57560G104F
 
@@ -129,23 +129,20 @@ speed: 50
 z_hop: 10
 z_hop_speed: 5
 
-### Mesh Bed Leveling - Optional
-### Uncomment the lines below if installed
+### Mesh Bed Leveling - Uncomment if ABL Sensor is present.
 #[bed_mesh]
 #speed: 50
 #horizontal_move_z: 5
-#min_point: 5,5
-#max_point: 165,175
-#probe_count: 3,3
+#mesh_min: 60, 40
+#mesh_max: 190,190
+#probe_count: 4,4
 #fade_start: 1.0
 #fade_end: 0.0
-#fade_target:
 #split_delta_z: .025
 #move_check_distance: 5.0
 #mesh_pps: 2,2
 #algorithm: bicubic
 #bicubic_tension: .2
-#relative_reference_index:
 
 ### Graphic LCD - Optional
 ### Uncomment the lines below if installed
