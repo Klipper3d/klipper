@@ -1,6 +1,6 @@
-# Printer heater support
+# Tracking of PWM controlled heaters and their temperature control
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading
@@ -231,12 +231,15 @@ class PrinterHeaters:
         self.gcode_id_to_sensor = {}
         self.available_heaters = []
         self.available_sensors = []
+        self.has_started = False
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
-        # Register TURN_OFF_HEATERS command
+        # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
+        gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
@@ -267,8 +270,6 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "Unknown temperature sensor '%s'" % (sensor_type,))
         return self.sensor_factories[sensor_type](config)
-    def get_gcode_sensors(self):
-        return self.gcode_id_to_sensor.items()
     def register_sensor(self, config, psensor, gcode_id=None):
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
@@ -279,15 +280,48 @@ class PrinterHeaters:
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
         self.available_sensors.append(config.get_name())
+    def get_status(self, eventtime):
+        return {'available_heaters': self.available_heaters,
+                'available_sensors': self.available_sensors}
     def turn_off_all_heaters(self, print_time=0.):
         for heater in self.heaters.values():
             heater.set_temp(0.)
     cmd_TURN_OFF_HEATERS_help = "Turn off all heaters"
     def cmd_TURN_OFF_HEATERS(self, params):
         self.turn_off_all_heaters()
-    def get_status(self, eventtime):
-        return {'available_heaters': self.available_heaters,
-                'available_sensors': self.available_sensors}
+    # G-Code M105 temperature reporting
+    def _handle_ready(self):
+        self.has_started = True
+    def _get_temp(self, eventtime):
+        # Tn:XXX /YYY B:XXX /YYY
+        out = []
+        if self.has_started:
+            for gcode_id, sensor in sorted(self.gcode_id_to_sensor.items()):
+                cur, target = sensor.get_temp(eventtime)
+                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
+        if not out:
+            return "T:0"
+        return " ".join(out)
+    def cmd_M105(self, params):
+        # Get Extruder Temperature
+        gcode = self.printer.lookup_object("gcode")
+        reactor = self.printer.get_reactor()
+        msg = self._get_temp(reactor.monotonic())
+        did_ack = gcode.ack(msg)
+        if not did_ack:
+            gcode.respond_raw(msg)
+    def wait_for_temperature(self, heater):
+        # Helper to wait on heater.check_busy() and report M105 temperatures
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
+        toolhead = self.printer.lookup_object("toolhead")
+        gcode = self.printer.lookup_object("gcode")
+        reactor = self.printer.get_reactor()
+        eventtime = reactor.monotonic()
+        while not self.printer.is_shutdown() and heater.check_busy(eventtime):
+            print_time = toolhead.get_last_move_time()
+            gcode.respond_raw(self._get_temp(eventtime))
+            eventtime = reactor.pause(eventtime + 1.)
 
-def add_printer_objects(config):
-    config.get_printer().add_object('heater', PrinterHeaters(config))
+def load_config(config):
+    return PrinterHeaters(config)

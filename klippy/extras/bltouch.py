@@ -101,34 +101,34 @@ class BLTouchEndstopWrapper:
         cmd_clock += mcu.seconds_to_clock(max(duration, MIN_CMD_TIME))
         self.next_cmd_time = mcu.clock_to_print_time(cmd_clock)
         return self.next_cmd_time
-    def verify_state(self, check_start_time, check_end_time, triggered, msg):
+    def verify_state(self, check_start_time, check_end_time, triggered):
         # Perform endstop check to verify bltouch reports desired state
         self.mcu_endstop.home_start(check_start_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
                                     triggered=triggered)
-        did_trigger = self.mcu_endstop.home_wait(check_end_time)
-        if not did_trigger:
-            raise homing.EndstopError("BLTouch failed to %s" % (msg,))
+        return self.mcu_endstop.home_wait(check_end_time)
     def raise_probe(self):
+        self.sync_mcu_print_time()
+        if not self.pin_up_not_triggered:
+            # No way to verify raise attempt - just issue commands
+            self.send_cmd('reset')
+            self.send_cmd('pin_up', duration=self.pin_move_time)
+            self.send_cmd(None)
+            return
         for retry in range(3):
-            self.sync_mcu_print_time()
-            if retry or not self.pin_up_not_triggered:
-                self.send_cmd('reset')
             check_start_time = self.send_cmd('pin_up',
                                              duration=self.pin_move_time)
             check_end_time = self.send_cmd(None)
-            if self.pin_up_not_triggered:
-                try:
-                    self.verify_state(check_start_time, check_end_time,
-                                      False, "raise probe")
-                except homing.CommandError as e:
-                    if retry >= 2:
-                        raise
-                    msg = "Failed to verify BLTouch probe is raised; retrying."
-                    self.gcode.respond_info(msg)
-                    self.next_cmd_time += RETRY_RESET_TIME
-                    continue
-            break
+            success = self.verify_state(check_start_time, check_end_time, False)
+            if success:
+                # The "probe raised" test completed successfully
+                break
+            if retry >= 2:
+                raise homing.EndstopError("BLTouch failed to raise probe")
+            msg = "Failed to verify BLTouch probe is raised; retrying."
+            self.gcode.respond_info(msg)
+            self.sync_mcu_print_time()
+            self.send_cmd('reset', duration=RETRY_RESET_TIME)
     def lower_probe(self):
         self.test_sensor()
         self.sync_print_time()
@@ -146,14 +146,22 @@ class BLTouchEndstopWrapper:
             return
         # Raise the bltouch probe and test if probe is raised
         self.sync_print_time()
-        check_start_time = self.send_cmd('reset', duration=self.pin_move_time)
-        check_end_time = self.send_cmd('touch_mode')
-        self.send_cmd(None)
-        self.verify_state(check_start_time, check_end_time, True,
-                          "verify sensor state")
-        # Test was successful
-        self.next_test_time = check_end_time + TEST_TIME
-        self.sync_print_time()
+        for retry in range(3):
+            check_start_time = self.send_cmd('pin_up',
+                                             duration=self.pin_move_time)
+            self.send_cmd('touch_mode')
+            check_end_time = self.send_cmd(None)
+            success = self.verify_state(check_start_time, check_end_time, True)
+            self.sync_print_time()
+            if success:
+                # The "bltouch connection" test completed successfully
+                self.next_test_time = check_end_time + TEST_TIME
+                return
+            msg = "BLTouch failed to verify sensor state"
+            if retry >= 2:
+                raise homing.EndstopError(msg)
+            self.gcode.respond_info(msg + '; retrying.')
+            self.send_cmd('reset', duration=RETRY_RESET_TIME)
     def multi_probe_begin(self):
         if self.stow_on_each_sample:
             return
@@ -162,6 +170,7 @@ class BLTouchEndstopWrapper:
         if self.stow_on_each_sample:
             return
         self.raise_probe()
+        self.sync_print_time()
         self.multi = 'OFF'
     def probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
@@ -173,7 +182,7 @@ class BLTouchEndstopWrapper:
         toolhead.flush_step_generation()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
-    def probe_finalize(self):
+    def probe_finish(self):
         if self.multi == 'OFF':
             self.raise_probe()
         self.sync_print_time()

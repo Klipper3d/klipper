@@ -39,6 +39,8 @@ class Homing:
                               - s.calc_position_from_coord(movepos))
                           / s.get_step_dist())
                          for s in mcu_endstop.get_steppers()])
+        if max_steps <= 0.:
+            return .001
         return move_t / max_steps
     def homing_move(self, movepos, endstops, speed,
                     probe_pos=False, verify_movement=False):

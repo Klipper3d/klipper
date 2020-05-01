@@ -140,7 +140,7 @@ clock_setup(void)
         cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
                 | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
     }
-    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV4;
+    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 

@@ -11,12 +11,12 @@ class PrinterExtruder:
         self.printer = config.get_printer()
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
-        pheater = self.printer.lookup_object('heater')
+        pheaters = self.printer.try_load_module(config, 'heaters')
         gcode_id = 'T%d' % (extruder_num,)
         if shared_heater is None:
-            self.heater = pheater.setup_heater(config, gcode_id)
+            self.heater = pheaters.setup_heater(config, gcode_id)
         else:
-            self.heater = pheater.lookup_heater(shared_heater)
+            self.heater = pheaters.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(config)
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
@@ -167,7 +167,7 @@ class PrinterExtruder:
         heater = extruder.get_heater()
         heater.set_temp(temp)
         if wait and temp:
-            gcode.wait_for_temperature(heater)
+            self.printer.lookup_object('heaters').wait_for_temperature(heater)
     def cmd_M109(self, params):
         # Set Extruder Temperature and Wait
         self.cmd_M104(params, wait=True)

@@ -7,8 +7,8 @@
 class PrinterHeaterBed:
     def __init__(self, config):
         self.printer = config.get_printer()
-        pheater = self.printer.lookup_object('heater')
-        self.heater = pheater.setup_heater(config, 'B')
+        pheaters = self.printer.try_load_module(config, 'heaters')
+        self.heater = pheaters.setup_heater(config, 'B')
         self.get_status = self.heater.get_status
         self.stats = self.heater.stats
         # Register commands
@@ -19,10 +19,10 @@ class PrinterHeaterBed:
         # Set Bed Temperature
         gcode = self.printer.lookup_object('gcode')
         temp = gcode.get_float('S', params, 0.)
-        toolhead = self.printer.lookup_object('toolhead')
         self.heater.set_temp(temp)
         if wait and temp:
-            gcode.wait_for_temperature(self.heater)
+            pheaters = self.printer.lookup_object('heaters')
+            pheaters.wait_for_temperature(self.heater)
     def cmd_M190(self, params):
         # Set Bed Temperature and Wait
         self.cmd_M140(params, wait=True)

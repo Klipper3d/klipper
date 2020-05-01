@@ -72,13 +72,13 @@ class VirtualSD:
     def cmd_M20(self, params):
         # List SD card
         files = self.get_file_list()
-        self.gcode.respond("Begin file list")
+        self.gcode.respond_raw("Begin file list")
         for fname, fsize in files:
-            self.gcode.respond("%s %d" % (fname, fsize))
-        self.gcode.respond("End file list")
+            self.gcode.respond_raw("%s %d" % (fname, fsize))
+        self.gcode.respond_raw("End file list")
     def cmd_M21(self, params):
         # Initialize SD card
-        self.gcode.respond("SD card ok")
+        self.gcode.respond_raw("SD card ok")
     def cmd_M23(self, params):
         # Select SD file
         if self.work_timer is not None:
@@ -108,8 +108,8 @@ class VirtualSD:
         except:
             logging.exception("virtual_sdcard file open")
             raise self.gcode.error("Unable to open file")
-        self.gcode.respond("File opened:%s Size:%d" % (filename, fsize))
-        self.gcode.respond("File selected")
+        self.gcode.respond_raw("File opened:%s Size:%d" % (filename, fsize))
+        self.gcode.respond_raw("File selected")
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
@@ -132,9 +132,9 @@ class VirtualSD:
     def cmd_M27(self, params):
         # Report SD print status
         if self.current_file is None:
-            self.gcode.respond("Not SD printing.")
+            self.gcode.respond_raw("Not SD printing.")
             return
-        self.gcode.respond("SD printing byte %d/%d" % (
+        self.gcode.respond_raw("SD printing byte %d/%d" % (
             self.file_position, self.file_size))
     # Background work timer
     def work_handler(self, eventtime):
@@ -144,7 +144,6 @@ class VirtualSD:
             self.current_file.seek(self.file_position)
         except:
             logging.exception("virtual_sdcard seek")
-            self.gcode.respond_error("Unable to seek file")
             self.work_timer = None
             return self.reactor.NEVER
         gcode_mutex = self.gcode.get_mutex()
@@ -157,14 +156,13 @@ class VirtualSD:
                     data = self.current_file.read(8192)
                 except:
                     logging.exception("virtual_sdcard read")
-                    self.gcode.respond_error("Error on virtual sdcard read")
                     break
                 if not data:
                     # End of file
                     self.current_file.close()
                     self.current_file = None
                     logging.info("Finished SD card print")
-                    self.gcode.respond("Done printing file")
+                    self.gcode.respond_raw("Done printing file")
                     break
                 lines = data.split('\n')
                 lines[0] = partial_input + lines[0]

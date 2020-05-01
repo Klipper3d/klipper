@@ -187,7 +187,8 @@ class BedMesh:
             self.gcode.respond_info("Bed has not been probed")
         else:
             self.bmc.print_probed_positions(self.gcode.respond_info)
-            self.z_mesh.print_mesh(self.gcode.respond, self.horizontal_move_z)
+            self.z_mesh.print_mesh(self.gcode.respond_raw,
+                                   self.horizontal_move_z)
     cmd_BED_MESH_MAP_help = "Serialize mesh and output to terminal"
     def cmd_BED_MESH_MAP(self, params):
         if self.z_mesh is not None:
@@ -196,8 +197,7 @@ class BedMesh:
                 'mesh_min': (params['min_x'], params['min_y']),
                 'mesh_max': (params['max_x'], params['max_y']),
                 'z_positions': self.bmc.probed_matrix}
-            self.gcode.respond(
-                "mesh_map_output " + json.dumps(outdict))
+            self.gcode.respond_raw("mesh_map_output " + json.dumps(outdict))
         else:
             self.gcode.respond_info("Bed has not been probed")
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
@@ -339,7 +339,7 @@ class BedMeshCalibrate:
             # than 6 samples
             raise config.error(
                 "bed_mesh: cannot exceed a probe_count of 6 when using "
-                "langrange interpolation. Configured Probe Count: %d, %d" %
+                "lagrange interpolation. Configured Probe Count: %d, %d" %
                 (self.mesh_params['x_count'], self.mesh_params['y_count']))
         elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
             if max_probe_cnt > 6:
