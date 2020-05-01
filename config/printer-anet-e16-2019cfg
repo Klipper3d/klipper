@@ -8,6 +8,8 @@
 
 # See the example.cfg file for a description of available parameters.
 
+#Signed-off-by: Drew Strickland <andrew.flagship@gmail.com>
+
 [stepper_x]
 step_pin: PD7
 dir_pin: PC5
@@ -15,7 +17,7 @@ enable_pin: !PD6
 step_distance: .0125
 endstop_pin: ^!PC2
 position_endstop: -3
-position_max: 220
+position_max: 300
 position_min: -3
 homing_speed: 50
 
@@ -27,7 +29,7 @@ step_distance: .0125
 endstop_pin: ^!PC3
 position_endstop: -22
 position_min: -22
-position_max: 270
+position_max: 300
 homing_speed: 50
 
 [stepper_z]
@@ -37,7 +39,7 @@ enable_pin: !PA5
 step_distance: .0025
 endstop_pin: ^!PC4
 position_endstop: 0.5
-position_max: 300
+position_max: 400
 homing_speed: 20
 
 [extruder]
