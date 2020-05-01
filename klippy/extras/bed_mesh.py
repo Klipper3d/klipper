@@ -133,6 +133,8 @@ class BedMesh:
         else:
             return 1.
     def get_position(self):
+        if self.toolhead is None:
+            return [0., 0., 0., 0.]
         # Return last, non-transformed position
         if self.z_mesh is None:
             # No mesh calibrated, so send toolhead position
