@@ -168,6 +168,37 @@ probe. If configuring this value on a "clone" or older BL-Touch
 device, be sure to test the probe accuracy before and after setting
 this value (use the `PROBE_ACCURACY` command to test).
 
+Multi-probing without stowing
+=============================
+
+By default, Klipper will deploy the probe at the start of each probe
+attempt and then stow the probe afterwards. This repetitive deploying
+and stowing of the probe may increase the total time of calibration
+sequences that involve many probe measurements. Klipper supports
+leaving the probe deployed between consecutive probes, which can
+reduce the total time of probing. This mode is enabled by configuring
+`stow_on_each_sample` to False in the config file.
+
+Important! Setting `stow_on_each_sample` to False can lead to Klipper
+making horizontal toolhead movements while the probe is deployed. Be
+sure to verify all probing operations have sufficient Z clearance
+prior to setting this value to False. If there is insufficient
+clearance then a horizontal move may cause the pin to catch on an
+obstruction and result in damage to the printer.
+
+Important! It is recommended to use `probe_with_touch_mode` configured
+to True when using `stow_on_each_sample` configured to False. Some
+"clone" devices may not detect a subsequent bed contact if
+`probe_with_touch_mode` is not set. On all devices, using the
+combination of these two settings simplifies the device signaling,
+which can improve overall stability.
+
+Note, however, that some "clone" devices and the BL-Touch v2.0 (and
+earlier) may have reduced accuracy when `probe_with_touch_mode` is set
+to True. On these devices it is a good idea to test the probe accuracy
+before and after setting `probe_with_touch_mode` (use the
+`PROBE_ACCURACY` command to test).
+
 Calibrating the BL-Touch offsets
 ================================
 
