@@ -31,7 +31,7 @@ class PrinterHeaterFan:
         for heater in self.heaters:
             current_temp, target_temp = heater.get_temp(eventtime)
             if target_temp or current_temp > self.heater_temp:
-                power = self.fan_speed
+                power = min(power+self.fan_speed, 1)
         print_time = self.mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
         self.fan.set_speed(print_time, power)
         return eventtime + 1.
