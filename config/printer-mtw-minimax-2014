@@ -1,4 +1,4 @@
-# Klipper configuration for the MTW MiniMax and Fusematic Printers
+# Klipper configuration for the MTW MiniMax Printers
 
 # This file contains common pin mappings for Mini-RAMBo boards. To use
 # this config, the firmware should be compiled for the AVR atmega2560.
@@ -54,13 +54,7 @@ pid_Ki: 1.08
 pid_Kd: 114
 min_temp: 0
 max_temp: 275
-###
-### Select Appropriate Step Distance depending on printer:
-### MiniMax
-# step_distance: .0102
-### Fusematic
-# step_distance: .002175
-###
+step_distance: .0102
 ###   Select appropriate thermistor by removing the # before the line:
 ###   for E3D V6 or J-Head with Thermistor #5:
 #sensor_type: ATC Semitec 104GT-2
