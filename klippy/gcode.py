@@ -189,7 +189,8 @@ class GCodeParser:
         self.extrude_factor = 1.
         self.base_position[3] = self.last_position[3]
     def reset_last_position(self):
-        self.last_position = self.position_with_transform()
+        if self.is_printer_ready:
+            self.last_position = self.position_with_transform()
     def _dump_debug(self):
         out = []
         out.append("Dumping gcode input %d blocks" % (
