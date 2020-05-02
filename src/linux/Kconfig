@@ -17,6 +17,6 @@ config BOARD_DIRECTORY
 
 config CLOCK_FREQ
     int
-    default 20000000
+    default 50000000
 
 endif
