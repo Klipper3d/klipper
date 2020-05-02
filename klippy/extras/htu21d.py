@@ -1,11 +1,11 @@
-# HTU21D(F)/Si7013/Si7020/Si7021/SHT21 i2c based temperature sensors support 
+# HTU21D(F)/Si7013/Si7020/Si7021/SHT21 i2c based temperature sensors support
 #
 # Copyright (C) 2020  Lucio Tarantino <lucio.tarantino@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 ######################################################################
-# NOTE: The implementation requires write support of length 0 
+# NOTE: The implementation requires write support of length 0
 #       before reading on the i2c bus of the mcu.
 #
 # Compatible Sensors:
