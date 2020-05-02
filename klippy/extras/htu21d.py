@@ -1,18 +1,21 @@
-# Support for HTU21D(F) i2c based temperature sensors
-# Datasheets: https://cdn-shop.adafruit.com/datasheets/1899_HTU21D.pdf
+# HTU21D(F)/Si7013/Si7020/Si7021/SHT21 i2c based temperature sensors support 
 #
-# Compatible Sensors
-#       HTU21D - Tested
+# Copyright (C) 2020  Lucio Tarantino <lucio.tarantino@gmail.com>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+
+######################################################################
+# NOTE: The implementation requires write support of length 0 
+#       before reading on the i2c bus of the mcu.
+#
+# Compatible Sensors:
+#       HTU21D - Tested on Linux MCU.
 #       Si7013 - Untested
 #       Si7020 - Untested
 #       Si7021 - Untested
 #       SHT21  - Untested
 #
-# NOTE: Implementation need the support od 0 length send before read on MCU
-#
-# Copyright (C) 2020  Lucio Tarantino <lucio.tarantino@gmail.com>
-#
-# This file may be distributed under the terms of the GNU GPLv3 license.
+######################################################################
 
 import bus
 import logging
