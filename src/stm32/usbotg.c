@@ -141,7 +141,7 @@ peek_rx_queue(uint32_t ep)
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                            >> USB_OTG_GRXSTSP_PKTSTS_Pos);
         if ((grx_ep == 0 || grx_ep == USB_CDC_EP_BULK_OUT)
-            && (pktsts == 2 || pktsts == 6)) {
+            && (pktsts == 2 || pktsts == 4 || pktsts == 6)) {
             // A packet is ready
             if (grx_ep != ep)
                 return 0;
@@ -226,6 +226,7 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
 int_fast8_t
 usb_read_ep0_setup(void *data, uint_fast8_t max_len)
 {
+    static uint8_t setup_buf[8];
     usb_irq_disable();
     for (;;) {
         uint32_t grx = peek_rx_queue(0);
@@ -238,10 +239,14 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         uint32_t pktsts = ((grx & USB_OTG_GRXSTSP_PKTSTS_Msk)
                            >> USB_OTG_GRXSTSP_PKTSTS_Pos);
         if (pktsts == 6)
-            // Found a setup packet
+            // Store setup packet
+            fifo_read_packet(setup_buf, sizeof(setup_buf));
+        else
+            // Discard other packets
+            fifo_read_packet(NULL, 0);
+        if (pktsts == 4)
+            // Setup complete
             break;
-        // Discard other packets
-        fifo_read_packet(NULL, 0);
     }
     uint32_t ctl = EPIN(0)->DIEPCTL;
     if (ctl & USB_OTG_DIEPCTL_EPENA) {
@@ -253,9 +258,11 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
             ;
     }
-    int_fast8_t ret = fifo_read_packet(data, max_len);
+    EPOUT(0)->DOEPINT = USB_OTG_DOEPINT_STUP;
     usb_irq_enable();
-    return ret;
+    // Return previously read setup packet
+    memcpy(data, setup_buf, max_len);
+    return max_len;
 }
 
 int_fast8_t
