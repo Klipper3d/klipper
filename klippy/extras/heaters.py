@@ -265,6 +265,7 @@ class PrinterHeaters:
         self.printer.try_load_module(config, "adc_temperature")
         self.printer.try_load_module(config, "spi_temperature")
         self.printer.try_load_module(config, "bme280")
+        self.printer.try_load_module(config, "htu21d")
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensor_factories:
             raise self.printer.config_error(
