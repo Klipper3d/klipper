@@ -283,9 +283,9 @@ section is enabled:
 The following command is available when an "extruder_stepper" config
 section is enabled:
 - `SET_EXTRUDER_STEPPER STEPPER=<extruder_stepper config_name>
-  [EXTRUDER=<extruder config_name>]`: This command will cause the given 
+  [EXTRUDER=<extruder config_name>]`: This command will cause the given
   STEPPER to become synchronized to the given EXTRUDER, overriding
-  the extruder defined in the config file. 
+  the extruder defined in the config file.
 
 ## Probe
 
