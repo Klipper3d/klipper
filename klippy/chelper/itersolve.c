@@ -167,42 +167,58 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
     while (last_flush_time >= m->print_time + m->move_t)
         m = list_next_entry(m, node);
     double force_steps_time = sk->last_move_time + sk->gen_steps_post_active;
+    int skip_count = 0;
     for (;;) {
-        if (last_flush_time >= flush_time)
-            return 0;
-        double start = m->print_time, end = start + m->move_t;
-        if (start < last_flush_time)
-            start = last_flush_time;
-        if (end > flush_time)
-            end = flush_time;
+        double move_start = m->print_time, move_end = move_start + m->move_t;
         if (check_active(sk, m)) {
-            if (sk->gen_steps_pre_active
-                && start > last_flush_time + .000000001) {
+            if (skip_count && sk->gen_steps_pre_active) {
                 // Must generate steps leading up to stepper activity
-                force_steps_time = start;
-                if (last_flush_time < start - sk->gen_steps_pre_active)
-                    last_flush_time = start - sk->gen_steps_pre_active;
-                while (m->print_time > last_flush_time)
-                    m = list_prev_entry(m, node);
-                continue;
+                double abs_start = move_start - sk->gen_steps_pre_active;
+                if (abs_start < last_flush_time)
+                    abs_start = last_flush_time;
+                if (abs_start < force_steps_time)
+                    abs_start = force_steps_time;
+                struct move *pm = list_prev_entry(m, node);
+                while (--skip_count && pm->print_time > abs_start)
+                    pm = list_prev_entry(pm, node);
+                do {
+                    int32_t ret = itersolve_gen_steps_range(sk, pm, abs_start
+                                                            , flush_time);
+                    if (ret)
+                        return ret;
+                    pm = list_next_entry(pm, node);
+                } while (pm != m);
             }
             // Generate steps for this move
-            int32_t ret = itersolve_gen_steps_range(sk, m, start, end);
+            int32_t ret = itersolve_gen_steps_range(sk, m, last_flush_time
+                                                    , flush_time);
             if (ret)
                 return ret;
-            sk->last_move_time = last_flush_time = end;
-            force_steps_time = end + sk->gen_steps_post_active;
-        } else if (start < force_steps_time) {
-            // Must generates steps just past stepper activity
-            if (end > force_steps_time)
-                end = force_steps_time;
-            int32_t ret = itersolve_gen_steps_range(sk, m, start, end);
-            if (ret)
-                return ret;
-            last_flush_time = end;
+            if (move_end >= flush_time) {
+                sk->last_move_time = flush_time;
+                return 0;
+            }
+            skip_count = 0;
+            sk->last_move_time = move_end;
+            force_steps_time = sk->last_move_time + sk->gen_steps_post_active;
+        } else {
+            if (move_start < force_steps_time) {
+                // Must generates steps just past stepper activity
+                double abs_end = force_steps_time;
+                if (abs_end > flush_time)
+                    abs_end = flush_time;
+                int32_t ret = itersolve_gen_steps_range(sk, m, last_flush_time
+                                                        , abs_end);
+                if (ret)
+                    return ret;
+                skip_count = 1;
+            } else {
+                // This move doesn't impact this stepper - skip it
+                skip_count++;
+            }
+            if (flush_time + sk->gen_steps_pre_active <= move_end)
+                return 0;
         }
-        if (flush_time + sk->gen_steps_pre_active <= m->print_time + m->move_t)
-            return 0;
         m = list_next_entry(m, node);
     }
 }
