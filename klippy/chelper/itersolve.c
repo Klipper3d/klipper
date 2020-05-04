@@ -64,11 +64,15 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
 // Generate step times for a portion of a move
 static int32_t
 itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
-                          , double move_start, double move_end)
+                          , double abs_start, double abs_end)
 {
     sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
-    double start = move_start - m->print_time, end = move_end - m->print_time;
+    double start = abs_start - m->print_time, end = abs_end - m->print_time;
+    if (start < 0.)
+        start = 0.;
+    if (end > m->move_t)
+        end = m->move_t;
     struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
     double seek_time_delta = SEEK_TIME_RESET;
     int sdir = stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
