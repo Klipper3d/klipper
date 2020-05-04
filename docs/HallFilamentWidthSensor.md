@@ -96,12 +96,12 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     type: list
     name: Filament
     items:
-    __temp __hotend0_current, __temp __hotend0_target
-    .__unload
-    .__load
-    .__feed
-    __filament_width_current
-    __filament_raw_width_current
+     __temp __hotend0_current, __temp __hotend0_target
+     .__unload
+     .__load
+     .__feed
+     __filament_width_current
+     __filament_raw_width_current
 
 ## Calibration procedure
 Insert first  calibration rod (1.5 mm size) get first  raw sensor value
