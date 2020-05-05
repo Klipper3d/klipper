@@ -303,7 +303,9 @@ enabled:
   helper script useful for calibrating the probe's z_offset. See the
   PROBE command for details on the optional probe parameters. See the
   MANUAL_PROBE command for details on the SPEED parameter and the
-  additional commands available while the tool is active.
+  additional commands available while the tool is active. Please note,
+  the PROBE_CALIBRATE command uses the speed variable to move in XY direction
+  as well as Z.
 
 ## BLTouch
 
