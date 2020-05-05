@@ -93,7 +93,7 @@ class GCodeMacro:
         name = config.get_name().split()[1]
         self.alias = name.upper()
         self.printer = printer = config.get_printer()
-        gcode_macro = printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
         self.rename_existing = config.get("rename_existing", None)

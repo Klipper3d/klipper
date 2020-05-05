@@ -93,7 +93,7 @@ class Printer:
         if module in self.objects:
             return [(module, self.objects[module])] + objs
         return objs
-    def try_load_module(self, config, section):
+    def load_object(self, config, section, default=configfile.sentinel):
         if section in self.objects:
             return self.objects[section]
         module_parts = section.split()
@@ -103,15 +103,20 @@ class Printer:
         py_dirname = os.path.join(os.path.dirname(__file__),
                                   'extras', module_name, '__init__.py')
         if not os.path.exists(py_name) and not os.path.exists(py_dirname):
-            return None
+            if default is not configfile.sentinel:
+                return default
+            raise self.config_error("Unable to load module '%s'" % (section,))
         mod = importlib.import_module('extras.' + module_name)
         init_func = 'load_config'
         if len(module_parts) > 1:
             init_func = 'load_config_prefix'
         init_func = getattr(mod, init_func, None)
-        if init_func is not None:
-            self.objects[section] = init_func(config.getsection(section))
-            return self.objects[section]
+        if init_func is None:
+            if default is not configfile.sentinel:
+                return default
+            raise self.config_error("Unable to load module '%s'" % (section,))
+        self.objects[section] = init_func(config.getsection(section))
+        return self.objects[section]
     def _read_config(self):
         self.objects['configfile'] = pconfig = configfile.PrinterConfig(self)
         config = pconfig.read_main_config()
@@ -121,7 +126,7 @@ class Printer:
         for m in [pins, mcu]:
             m.add_printer_objects(config)
         for section_config in config.get_prefix_sections(''):
-            self.try_load_module(config, section_config.get_name())
+            self.load_object(config, section_config.get_name(), None)
         for m in [toolhead]:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file

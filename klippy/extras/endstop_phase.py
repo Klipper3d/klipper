@@ -17,8 +17,8 @@ class EndstopPhase:
                                             self.handle_connect)
         self.printer.register_event_handler("homing:home_rails_end",
                                             self.handle_home_rails_end)
-        self.printer.try_load_module(config, "endstop_phase")
-        self.printer.try_load_module(config, "force_move")
+        self.printer.load_object(config, "endstop_phase")
+        self.printer.load_object(config, "force_move")
         # Read config
         self.phases = config.getint('phases', None, minval=1)
         self.endstop_phase = config.getint('endstop_phase', None, minval=0)

@@ -14,9 +14,9 @@ class RunoutHelper:
         # Read config
         self.runout_pause = config.getboolean('pause_on_runout', True)
         if self.runout_pause:
-            self.printer.try_load_module(config, 'pause_resume')
+            self.printer.load_object(config, 'pause_resume')
         self.runout_gcode = self.insert_gcode = None
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         if self.runout_pause or config.get('runout_gcode', None) is not None:
             self.runout_gcode = gcode_macro.load_template(
                 config, 'runout_gcode', '')
@@ -104,7 +104,7 @@ class RunoutHelper:
 class SwitchSensor:
     def __init__(self, config):
         printer = config.get_printer()
-        buttons = printer.try_load_module(config, 'buttons')
+        buttons = printer.load_object(config, 'buttons')
         switch_pin = config.get('switch_pin')
         buttons.register_buttons([switch_pin], self._button_handler)
         self.runout_helper = RunoutHelper(config)

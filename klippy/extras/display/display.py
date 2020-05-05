@@ -30,7 +30,7 @@ class DisplayTemplate:
                 raise config.error(
                     "Option '%s' in section '%s' is not a valid literal" % (
                         option, config.get_name()))
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'text')
     def render(self, context, **kwargs):
         params = dict(self.params)
@@ -58,7 +58,7 @@ class DisplayGroup:
         # Load all templates and store sorted by display position
         configs_by_name = {c.get_name(): c for c in data_configs}
         printer = config.get_printer()
-        gcode_macro = printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = printer.load_object(config, 'gcode_macro')
         self.data_items = []
         for row, col, name in sorted(items):
             c = configs_by_name[name]
@@ -88,7 +88,7 @@ class PrinterLCD:
         if name == 'display':
             # only load menu for primary display
             self.menu = menu.MenuManager(config, self.lcd_chip)
-        self.printer.try_load_module(config, "display_status")
+        self.printer.load_object(config, "display_status")
         # Configurable display
         self.display_templates = {}
         self.display_data_groups = {}

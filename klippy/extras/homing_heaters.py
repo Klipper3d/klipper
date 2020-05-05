@@ -19,7 +19,7 @@ class HomingHeaters:
         self.disable_heaters = []
         self.steppers_needing_quiet = config.get("steppers", "")
         self.flaky_steppers = []
-        self.pheaters = self.printer.try_load_module(config, 'heaters')
+        self.pheaters = self.printer.load_object(config, 'heaters')
         self.target_save = {}
 
     def handle_connect(self):

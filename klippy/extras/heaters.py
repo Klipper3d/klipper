@@ -58,8 +58,8 @@ class Heater:
             self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
-        self.printer.try_load_module(config, "verify_heater %s" % (self.name,))
-        self.printer.try_load_module(config, "pid_calibrate")
+        self.printer.load_object(config, "verify_heater %s" % (self.name,))
+        self.printer.load_object(config, "pid_calibrate")
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    self.name, self.cmd_SET_HEATER_TEMPERATURE,
@@ -260,11 +260,10 @@ class PrinterHeaters:
                 "Unknown heater '%s'" % (heater_name,))
         return self.heaters[heater_name]
     def setup_sensor(self, config):
-        self.printer.try_load_module(config, "thermistor")
-        self.printer.try_load_module(config, "adc_temperature")
-        self.printer.try_load_module(config, "spi_temperature")
-        self.printer.try_load_module(config, "bme280")
-        self.printer.try_load_module(config, "htu21d")
+        modules = ["thermistor", "adc_temperature", "spi_temperature",
+                   "bme280", "htu21d"]
+        for module_name in modules:
+            self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensor_factories:
             raise self.printer.config_error(

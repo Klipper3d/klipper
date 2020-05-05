@@ -9,7 +9,7 @@ KELVIN_TO_CELSIUS = -273.15
 class PrinterSensorGeneric:
     def __init__(self, config):
         self.printer = config.get_printer()
-        pheaters = self.printer.try_load_module(config, 'heaters')
+        pheaters = self.printer.load_object(config, 'heaters')
         self.sensor = pheaters.setup_sensor(config)
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)

@@ -186,10 +186,10 @@ def PrinterStepper(config, units_in_radians=False):
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
     # Support for stepper enable pin handling
-    stepper_enable = printer.try_load_module(config, 'stepper_enable')
+    stepper_enable = printer.load_object(config, 'stepper_enable')
     stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
     # Register STEPPER_BUZZ command
-    force_move = printer.try_load_module(config, 'force_move')
+    force_move = printer.load_object(config, 'force_move')
     force_move.register_stepper(mcu_stepper)
     return mcu_stepper
 
@@ -289,7 +289,7 @@ class PrinterRail:
         mcu_endstop.add_stepper(stepper)
         name = stepper.get_name(short=True)
         self.endstops.append((mcu_endstop, name))
-        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops = printer.load_object(config, 'query_endstops')
         query_endstops.register_endstop(mcu_endstop, name)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:

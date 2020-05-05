@@ -12,9 +12,8 @@ class ControllerFan:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.stepper_names = []
-        self.stepper_enable = self.printer.try_load_module(config,
-                                                           'stepper_enable')
-        self.printer.try_load_module(config, 'heaters')
+        self.stepper_enable = self.printer.load_object(config, 'stepper_enable')
+        self.printer.load_object(config, 'heaters')
         self.heaters = []
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()

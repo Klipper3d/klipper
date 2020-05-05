@@ -267,10 +267,9 @@ class ToolHead:
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
         # Load some default modules
-        self.printer.try_load_module(config, "idle_timeout")
-        self.printer.try_load_module(config, "statistics")
-        self.printer.try_load_module(config, "manual_probe")
-        self.printer.try_load_module(config, "tuning_tower")
+        modules = ["idle_timeout", "statistics", "manual_probe", "tuning_tower"]
+        for module_name in modules:
+            self.printer.load_object(config, module_name)
     # Print time tracking
     def _update_move_time(self, next_print_time):
         batch_time = MOVE_BATCH_TIME

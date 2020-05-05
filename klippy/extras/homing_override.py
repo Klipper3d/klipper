@@ -10,7 +10,7 @@ class HomingOverride:
         self.start_pos = [config.getfloat('set_position_' + a, None)
                           for a in 'xyz']
         self.axes = config.get('axes', 'XYZ').upper()
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.in_script = False
         self.gcode = self.printer.lookup_object('gcode')

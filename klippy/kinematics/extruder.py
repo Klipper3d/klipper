@@ -11,7 +11,7 @@ class PrinterExtruder:
         self.printer = config.get_printer()
         self.name = config.get_name()
         shared_heater = config.get('shared_heater', None)
-        pheaters = self.printer.try_load_module(config, 'heaters')
+        pheaters = self.printer.load_object(config, 'heaters')
         gcode_id = 'T%d' % (extruder_num,)
         if shared_heater is None:
             self.heater = pheaters.setup_heater(config, gcode_id)

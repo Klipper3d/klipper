@@ -11,9 +11,9 @@ class GCodeButton:
         self.name = config.get_name().split(' ')[-1]
         self.pin = config.get('pin')
         self.last_state = 0
-        buttons = self.printer.try_load_module(config, "buttons")
+        buttons = self.printer.load_object(config, "buttons")
         buttons.register_buttons([self.pin], self.button_callback)
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.press_template = gcode_macro.load_template(config, 'press_gcode')
         self.release_template = gcode_macro.load_template(config,
                                                           'release_gcode', '')

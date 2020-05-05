@@ -1019,7 +1019,7 @@ class MenuManager:
         self._last_encoder_cw_eventtime = 0
         self._last_encoder_ccw_eventtime = 0
         # printer objects
-        self.buttons = self.printer.try_load_module(config, "buttons")
+        self.buttons = self.printer.load_object(config, "buttons")
         # register itself for printer callbacks
         self.printer.add_object('menu', self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)

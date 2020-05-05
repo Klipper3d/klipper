@@ -268,7 +268,7 @@ class ProbeEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.position_endstop = config.getfloat('z_offset')
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.activate_gcode = gcode_macro.load_template(
             config, 'activate_gcode', '')
         self.deactivate_gcode = gcode_macro.load_template(

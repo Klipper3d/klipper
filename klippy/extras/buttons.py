@@ -207,7 +207,7 @@ class RotaryEncoder:
 class PrinterButtons:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.try_load_module(config, 'query_adc')
+        self.printer.load_object(config, 'query_adc')
         self.mcu_buttons = {}
         self.adc_buttons = {}
     def register_adc_button(self, pin, min_val, max_val, pullup, callback):

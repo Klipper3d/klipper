@@ -336,6 +336,6 @@ Sensors = {
 
 def load_config(config):
     # Register sensors
-    pheaters = config.get_printer().try_load_module(config, "heaters")
+    pheaters = config.get_printer().load_object(config, "heaters")
     for name, klass in Sensors.items():
         pheaters.add_sensor_factory(name, klass)

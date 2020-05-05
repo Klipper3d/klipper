@@ -7,7 +7,7 @@
 class PrinterHeaterBed:
     def __init__(self, config):
         self.printer = config.get_printer()
-        pheaters = self.printer.try_load_module(config, 'heaters')
+        pheaters = self.printer.load_object(config, 'heaters')
         self.heater = pheaters.setup_heater(config, 'B')
         self.get_status = self.heater.get_status
         self.stats = self.heater.stats
