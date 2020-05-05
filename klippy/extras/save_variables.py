@@ -6,7 +6,7 @@ import sys,os,logging, ConfigParser
 
 error = ConfigParser.Error
 
-class LoadSaveVariables:
+class SaveVariables:
     error = ConfigParser.Error
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -14,33 +14,20 @@ class LoadSaveVariables:
         self.name = config.get_name()
         self.cfilename = config.get('filename')
         self.filename = os.path.join(os.path.expanduser("~"), self.cfilename)
+        self.allVariables = {}
         self.gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
             desc=self.cmd_SAVE_VARIABLE_help)
-        self.gcode.register_command(
-            'LOAD_VARIABLE', self.cmd_LOAD_VARIABLE,
-            desc=self.cmd_LOAD_VARIABLE_help)
-    cmd_LOAD_VARIABLE_help = "Load arbitrary variables from disk"
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
-    def cmd_LOAD_VARIABLE(self, params):
+    def loadVariables(self):
         try:
             self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
+            self.allVariables = dict(self.variablefile.items('Variables'))
         except error as e:
             msg = e.message + "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.gcode.error(msg)
-        self.variable_name = self.gcode.get_str('VARIABLE', params)
-        try:
-            self.variable_value = self.variablefile.get('Variables',self.variable_name)
-        except error as e:
-            msg = e.message + "\nUnable to parse variables"
-            logging.exception(msg)
-            raise self.gcode.error(msg)
-        #self.gcode.respond_info(self.filename)
-        self.gcode.respond_info(self.variable_name)
-        self.gcode.respond_info(self.variable_value)
-
     def cmd_SAVE_VARIABLE(self, params):
         self.variable_name = self.gcode.get_str('VARIABLE', params)
         self.variable_value = self.gcode.get_str('VALUE', params)
@@ -59,6 +46,11 @@ class LoadSaveVariables:
             logging.exception(msg)
             raise self.gcode.error(msg)
         self.gcode.respond_info("Variable Saved")
+        self.loadVariables()
+        logging.exception(str(self.allVariables))
+    def get_status(self, eventtime):
+        #return {'temp1':self.filename}
+        return self.allVariables
 
 def load_config(config):
-    return LoadSaveVariables(config)
+    return SaveVariables(config)
