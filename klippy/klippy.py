@@ -93,11 +93,6 @@ class Printer:
         if module in self.objects:
             return [(module, self.objects[module])] + objs
         return objs
-    def set_rollover_info(self, name, info, log=True):
-        if log:
-            logging.info(info)
-        if self.bglogger is not None:
-            self.bglogger.set_rollover_info(name, info)
     def try_load_module(self, config, section):
         if section in self.objects:
             return self.objects[section]
@@ -189,6 +184,11 @@ class Printer:
         except:
             logging.exception("Unhandled exception during post run")
         return run_result
+    def set_rollover_info(self, name, info, log=True):
+        if log:
+            logging.info(info)
+        if self.bglogger is not None:
+            self.bglogger.set_rollover_info(name, info)
     def invoke_shutdown(self, msg):
         if self.in_shutdown_state:
             return
