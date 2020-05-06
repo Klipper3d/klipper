@@ -15,11 +15,14 @@ class SaveVariables:
         self.cfilename = config.get('filename')
         self.filename = os.path.join(os.path.expanduser("~"), self.cfilename)
         self.allVariables = {}
+        self.loadVariables()
+        logging.info(str(self.allVariables))
         self.gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
             desc=self.cmd_SAVE_VARIABLE_help)
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
     def loadVariables(self):
+        self.allVariables = {}
         try:
             self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
@@ -47,10 +50,12 @@ class SaveVariables:
             raise self.gcode.error(msg)
         self.gcode.respond_info("Variable Saved")
         self.loadVariables()
-        logging.exception(str(self.allVariables))
+        logging.info(str(self.allVariables))
     def get_status(self, eventtime):
         #return {'temp1':self.filename}
+        #logging.info("allVariables='%s'", repr(self.allVariables))
         return self.allVariables
 
 def load_config(config):
     return SaveVariables(config)
+
