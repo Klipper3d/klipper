@@ -589,7 +589,7 @@ been enabled:
    the printer.save_variables dict at startup and can be used in gcode macros.
 
 As an example, it could be used to save the state of 2-in-1-out hotend 
-and when starting a print ensure that the active extruder is used, instead of T0. 
+and when starting a print ensure that the active extruder is used, instead of T0.
 
 ```[gcode_macro T1]
 gcode:
@@ -605,8 +605,3 @@ gcode:
 gcode:
   ACTIVATE_EXTRUDER extruder={printer.save_variables.currentextruder}
 ```
-
-
-
-
-
