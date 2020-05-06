@@ -579,3 +579,34 @@ been enabled:
     delay duration for the identified [delayed_gcode] and starts the timer
     for gcode execution.  A value of 0 will cancel a pending delayed gcode
     from executing.
+    
+## Save Variables
+
+The following command is enabled if a [save_variables] config section has
+been enabled:
+ - `SAVE_VARABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to disk
+   so that it can be used across restarts. All stored variables are loaded into
+   the printer.save_variables dict at startup and can be used in gcode macros.
+
+As an example, it could be used to save the state of 2-in-1-out hotend 
+and when starting a print ensure that the active extruder is used, instead of T0. 
+
+```[gcode_macro T1]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder1
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE=extruder1
+
+[gcode_macro T0]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE=extruder
+
+[gcode_macro START_GCODE]
+gcode:
+  ACTIVATE_EXTRUDER extruder={printer.save_variables.currentextruder}
+```
+
+
+
+
+
