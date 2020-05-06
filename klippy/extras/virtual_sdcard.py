@@ -12,7 +12,8 @@ class VirtualSD:
         # sdcard state
         sd = config.get('path')
         sd_gcode_dir = config.get('gcode_dir', '')
-        self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd + '/' + sd_gcode_dir))
+        self.sdcard_dirname = os.path.normpath(os.path.expanduser(
+            sd + '/' + sd_gcode_dir))
         self.current_file = None
         self.file_position = self.file_size = 0
         # Work timer
