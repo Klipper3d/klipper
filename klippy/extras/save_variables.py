@@ -1,4 +1,5 @@
-# Get and Save arbitrary variables in the config file so that values can be kept across restarts. 
+# Get and Save arbitrary variables in the config file so that values can be kept across
+# restarts.
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -42,7 +43,8 @@ class SaveVariables:
             logging.exception(msg)
             raise self.gcode.error(msg)
         try:
-            self.variablefile.set('Variables',self.variable_name,self.variable_value)
+            self.variablefile.set('Variables',self.variable_name,
+                self.variable_value)
             self.variablefile.write(open(self.filename, "w"))
         except error as e:
             msg = e.message + "\nUnable to save variable"
@@ -58,4 +60,3 @@ class SaveVariables:
 
 def load_config(config):
     return SaveVariables(config)
-
