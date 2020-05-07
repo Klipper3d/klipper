@@ -581,8 +581,8 @@ been enabled:
     from executing.
     
 ## Save Variables
-The following command is enabled if a [save_variables] config section has
-been enabled:
+The following command is enabled if a [save_variables] config section has been
+enabled:
 
 - `SAVE_VARABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to disk
   so that it can be used across restarts. All stored variables are loaded into
