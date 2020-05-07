@@ -581,7 +581,6 @@ been enabled:
     from executing.
     
 ## Save Variables
-
 The following command is enabled if a [save_variables] config section has
 been enabled:
 
