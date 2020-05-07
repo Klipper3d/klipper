@@ -44,7 +44,7 @@ class SaveVariables:
             raise self.gcode.error(msg)
         try:
             self.variablefile.set('Variables',self.variable_name,
-                self.variable_value)
+                              self.variable_value)
             self.variablefile.write(open(self.filename, "w"))
         except error as e:
             msg = e.message + "\nUnable to save variable"
