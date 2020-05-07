@@ -1,5 +1,5 @@
-# Get and Save arbitrary variables in the config file so that values can be kept across
-# restarts.
+# Get and Save arbitrary variables in the config file so that values can be kept
+# across restarts.
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
