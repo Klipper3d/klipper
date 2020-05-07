@@ -579,8 +579,9 @@ been enabled:
     delay duration for the identified [delayed_gcode] and starts the timer
     for gcode execution.  A value of 0 will cancel a pending delayed gcode
     from executing.
-    
+ 
 ## Save Variables
+
 The following command is enabled if a [save_variables] config section has been
 enabled:
 
