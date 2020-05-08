@@ -225,7 +225,7 @@ into account when using SET_GCODE_VARIABLE.
 ### Save Variables to disk
 
 If a [save_variables] config section has been enabled,
-`SAVE_VARABLE VARIABLE=<name> VALUE=<value>` can be used to save the variable
+`SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be used to save the variable
 to disk so that it can be used across restarts. All stored variables are loaded
 into the printer.save_variables dict at startup and can be used in gcode macros.
 
