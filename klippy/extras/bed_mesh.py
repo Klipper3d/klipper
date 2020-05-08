@@ -461,7 +461,7 @@ class BedMeshCalibrate:
             if name is not None:
                 if name == "default" and key == 'SAVE':
                     gcmd.respond_info(
-                        "Profile 'default' is reserved, please chose"
+                        "Profile 'default' is reserved, please choose"
                         " another profile name.")
                 else:
                     options[key](name)
