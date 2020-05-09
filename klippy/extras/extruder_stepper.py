@@ -16,33 +16,30 @@ class ExtruderStepper:
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        if config.getboolean("sync_to_active", True):
-            self.printer.register_event_handler("extruder:activate_extruder",
-                                                self.handle_activate)
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("SET_EXTRUDER_STEPPER", "STEPPER",
-                                   stepper_name, self.cmd_SET_EXTRUDER_STEPPER,
-                                   desc=self.cmd_SET_EXTRUDER_STEPPER_help)
+        gcode.register_mux_command("SYNC_STEPPER_TO_EXTRUDER", "STEPPER",
+                                   stepper_name,
+                                   self.cmd_SYNC_STEPPER_TO_EXTRUDER,
+                                   desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
     def handle_connect(self):
         extruder = self.printer.lookup_object(self.extruder_name)
         self.stepper.set_trapq(extruder.get_trapq())
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
-    def handle_activate(self):
-        extruder = self.printer.lookup_object('toolhead').get_extruder()
-        self.stepper.set_position([extruder.stepper.get_commanded_position(),
-                                   0., 0.])
-        self.stepper.set_trapq(extruder.get_trapq())
-    cmd_SET_EXTRUDER_STEPPER_help = "Set extruder stepper"
-    def cmd_SET_EXTRUDER_STEPPER(self, params):
+    cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
+    def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
         gcode = self.printer.lookup_object('gcode')
-        self.extruder_name = gcode.get_str('EXTRUDER', params)
-        extruder = self.printer.lookup_object(self.extruder_name)
-        self.stepper.set_position([extruder.stepper.get_commanded_position(),
-                                   0., 0.])
-        self.stepper.set_trapq(extruder.get_trapq())
-        gcode.respond_info("Extruder stepper now syncing with '%s'"
-                                   % (self.extruder_name))
+        self.extruder_name = gcmd.get('EXTRUDER', None)
+        extruder = self.printer.lookup_object(self.extruder_name, None)
+        if extruder is not None:
+            self.stepper.set_position([extruder.stepper.get_commanded_position(),
+                                       0., 0.])
+            self.stepper.set_trapq(extruder.get_trapq())
+            gcode.respond_info("Extruder stepper now syncing with '%s'"
+                                       % (self.extruder_name))
+        else:
+            raise gcmd.error("'%s' is not a valid extruder."
+                                       % (self.extruder_name))
 
 def load_config_prefix(config):
     return ExtruderStepper(config)
