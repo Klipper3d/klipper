@@ -26,8 +26,8 @@ class SaveVariables:
             self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
             self.allVariables = dict(self.variablefile.items('Variables'))
-        except error as e:
-            msg = e.message + "\nUnable to parse existing variable file"
+        except:
+            msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.gcode.error(msg)
     def cmd_SAVE_VARIABLE(self, params):
