@@ -25,7 +25,6 @@ class SaveVariables:
     def loadVariables(self):
         self.allVariables = {}
         try:
-            #self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
             self.allVariables = dict(self.variablefile.items('Variables'))
         except:
