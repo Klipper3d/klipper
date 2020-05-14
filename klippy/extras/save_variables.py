@@ -14,7 +14,9 @@ class SaveVariables:
         self.cfilename = config.get('filename')
         self.filename = os.path.expanduser(self.cfilename)
         self.allVariables = {}
-        self.loadVariables()
+        self.variablefile = ConfigParser.ConfigParser()
+        if os.path.isfile(self.filename):
+            self.loadVariables()
         logging.info("save_variable state: %s", self.allVariables)
         self.gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
@@ -23,7 +25,7 @@ class SaveVariables:
     def loadVariables(self):
         self.allVariables = {}
         try:
-            self.variablefile = ConfigParser.ConfigParser()
+            #self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
             self.allVariables = dict(self.variablefile.items('Variables'))
         except:
@@ -33,11 +35,14 @@ class SaveVariables:
     def cmd_SAVE_VARIABLE(self, params):
         self.variable_name = self.gcode.get_str('VARIABLE', params)
         self.variable_value = self.gcode.get_str('VALUE', params)
-        self.loadVariables()
+        if os.path.isfile(self.filename):
+            self.loadVariables()
         try:
+            if not self.variablefile.has_section('Variables'):
+                self.variablefile.add_section('Variables')
             self.variablefile.set('Variables',self.variable_name,
                               self.variable_value)
-            self.variablefile.write(open(self.filename, "w"))
+            self.variablefile.write(open(self.filename, "w+"))
         except:
             msg = "\nUnable to save variable"
             logging.exception(msg)
