@@ -25,15 +25,16 @@ class SaveVariables:
     def loadVariables(self):
         self.allVariables = {}
         try:
+            #self.variablefile = ConfigParser.ConfigParser()
             self.variablefile.read(self.filename)
             self.allVariables = dict(self.variablefile.items('Variables'))
         except:
             msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.gcode.error(msg)
-    def cmd_SAVE_VARIABLE(self, params):
-        self.variable_name = self.gcode.get_str('VARIABLE', params)
-        self.variable_value = self.gcode.get_str('VALUE', params)
+    def cmd_SAVE_VARIABLE(self, gcmd):
+        self.variable_name = gcmd.get('VARIABLE')
+        self.variable_value = gcmd.get('VALUE')
         if os.path.isfile(self.filename):
             self.loadVariables()
         try:
