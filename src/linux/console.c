@@ -138,6 +138,12 @@ console_task(void)
     if (!sched_check_wake(&console_wake))
         return;
 
+    // Check DTR status (arduino reset)
+    int serial;
+    ioctl(main_pfd[MP_TTY_IDX].fd, TIOCMGET, &serial);
+    if( serial & TIOCM_DTR)
+        shutdown("DTR shutdown command");
+
     // Read data
     int ret = read(main_pfd[MP_TTY_IDX].fd, &receive_buf[receive_pos]
                    , sizeof(receive_buf) - receive_pos);
