@@ -6,8 +6,8 @@
 import filament_switch_sensor
 
 ADC_REPORT_TIME = 0.500
-ADC_SAMPLE_TIME = 0.001
-ADC_SAMPLE_COUNT = 5
+ADC_SAMPLE_TIME = 0.01
+ADC_SAMPLE_COUNT = 49
 
 class HallFilamentWidthSensor:
     def __init__(self, config):
@@ -77,10 +77,11 @@ class HallFilamentWidthSensor:
         # read sensor value
         self.lastFilamentWidthReading2 = round(read_value * 10000)
         # calculate diameter
-        self.diameter = round((self.dia2 - self.dia1)/
+        diameter_new = round((self.dia2 - self.dia1)/
             (self.rawdia2-self.rawdia1)*
           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
            -self.rawdia1)+self.dia1,2)
+        self.diameter=(5.0 * self.diameter + diameter_new)/6
 
     def update_filament_array(self, last_epos):
         # Fill array
