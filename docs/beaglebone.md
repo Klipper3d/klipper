@@ -76,13 +76,13 @@ It is also necessary to compile and install the micro-controller code
 for a Linux host process. Run "make menuconfig" a second time and
 configure it for a "Linux process":
 ```
-make menuconfig
+make MCU=2 menuconfig
 ```
 
 Then install this micro-controller code as well:
 ```
 sudo service klipper stop
-make flash
+make MCU=2 flash
 sudo service klipper start
 ```
 
