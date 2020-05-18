@@ -29,7 +29,6 @@ class HallFilamentWidthSensor:
         self.min_diameter = (self.nominal_filament_dia
                              - self.measurement_max_difference)
         self.diameter =self.nominal_filament_dia
-        self.diameter_old=self.diameter
         self.is_active =config.getboolean('enable', False)
         self.runout_dia=config.getfloat('min_diameter', 1.0)
         # filament array [position, filamentWidth]
