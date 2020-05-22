@@ -6,8 +6,8 @@
 import filament_switch_sensor
 
 ADC_REPORT_TIME = 0.500
-ADC_SAMPLE_TIME = 0.01
-ADC_SAMPLE_COUNT = 49
+ADC_SAMPLE_TIME = 0.03
+ADC_SAMPLE_COUNT = 15
 
 class HallFilamentWidthSensor:
     def __init__(self, config):
