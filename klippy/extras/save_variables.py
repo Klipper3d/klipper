@@ -1,6 +1,7 @@
 # Save arbitrary variables so that values can be kept across restarts.
 #
 # Copyright (C) 2020 Dushyant Ahuja <dusht.ahuja@gmail.com>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,11 +14,15 @@ class SaveVariables:
         self.name = config.get_name()
         self.cfilename = config.get('filename')
         self.filename = os.path.expanduser(self.cfilename)
-        self.allVariables = {}
         self.variablefile = ConfigParser.ConfigParser()
-        if os.path.isfile(self.filename):
-            self.loadVariables()
-        logging.info("save_variable state: %s", self.allVariables)
+        try: 
+            f = open(self.filename, "a")
+            f.close()
+        except self.printer.command_error, e: 
+            raise config.error(str(e))
+        self.loadVariables()
+        logging.info("Variables saved using save_variable: %s", 
+            self.allVariables)
         self.gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
             desc=self.cmd_SAVE_VARIABLE_help)
@@ -31,17 +36,24 @@ class SaveVariables:
             msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.gcode.error(msg)
+        for keys in self.allVariables: 
+            try:
+                self.allVariables[keys] = float(self.allVariables[keys])
+            except:
+                self.allVariables[keys] = self.allVariables[keys]
     def cmd_SAVE_VARIABLE(self, gcmd):
-        self.variable_name = gcmd.get('VARIABLE')
-        self.variable_value = gcmd.get('VALUE')
+        variable_name = gcmd.get('VARIABLE')
+        variable_value = gcmd.get('VALUE')
         if os.path.isfile(self.filename):
             self.loadVariables()
         try:
             if not self.variablefile.has_section('Variables'):
                 self.variablefile.add_section('Variables')
-            self.variablefile.set('Variables',self.variable_name,
-                              self.variable_value)
-            self.variablefile.write(open(self.filename, "w+"))
+            self.variablefile.set('Variables',variable_name,
+                              variable_value)
+            f = open(self.filename, "w+")
+            self.variablefile.write(f)
+            f.close()
         except:
             msg = "\nUnable to save variable"
             logging.exception(msg)
@@ -50,7 +62,7 @@ class SaveVariables:
         self.loadVariables()
         logging.info(str(self.allVariables))
     def get_status(self, eventtime):
-        return self.allVariables
+        return {'variables': dict(self.allVariables)}
 
 def load_config(config):
     return SaveVariables(config)
