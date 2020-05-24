@@ -227,11 +227,12 @@ into account when using SET_GCODE_VARIABLE.
 If a [save_variables] config section has been enabled,
 `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be used to save the variable
 to disk so that it can be used across restarts. All stored variables are loaded
-into the printer.save_variables.variables dict at startup and can be used in gcode 
+into the printer.save_variables.variables dict at startup and can be used in gcode
 macros. to avoid overly long lines you can add the following at the top of the macro
-`{% set svv = printer.save_variables.variables %}`
-
-Variables are saved as floats if they can be converted to floats, and strings if not. 
+```
+{% set svv = printer.save_variables.variables %}
+```
+Variables are saved as floats if they can be converted to floats, and strings if not.
 
 As an example, it could be used to save the state of 2-in-1-out hotend
 and when starting a print ensure that the active extruder is used, instead of T0
