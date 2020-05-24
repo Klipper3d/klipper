@@ -15,13 +15,13 @@ class SaveVariables:
         self.cfilename = config.get('filename')
         self.filename = os.path.expanduser(self.cfilename)
         self.variablefile = ConfigParser.ConfigParser()
-        try: 
+        try:
             f = open(self.filename, "a")
             f.close()
-        except self.printer.command_error, e: 
+        except self.printer.command_error, e:
             raise config.error(str(e))
         self.loadVariables()
-        logging.info("Variables saved using save_variable: %s", 
+        logging.info("Variables saved using save_variable: %s",
             self.allVariables)
         self.gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
@@ -36,7 +36,7 @@ class SaveVariables:
             msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.gcode.error(msg)
-        for keys in self.allVariables: 
+        for keys in self.allVariables:
             try:
                 self.allVariables[keys] = float(self.allVariables[keys])
             except:
