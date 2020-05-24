@@ -347,7 +347,7 @@ class TMC5160:
         #   PWMCONF
         set_config_field(config, "PWM_OFS", 30)
         set_config_field(config, "PWM_GRAD", 0)
-        set_config_field(config, "pwm_freq", 1)
+        set_config_field(config, "pwm_freq", 0)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "freewheel", 0)

@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20200524: The default value for the tmc5160 pwm_freq field is now zero
+(instead of one).
+
 20200425: The gcode_macro command template variable `printer.heater`
 was renamed to `printer.heaters`.
 
