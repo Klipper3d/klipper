@@ -100,6 +100,11 @@ command_config_hd44780(uint32_t *args)
     h->d6 = gpio_out_setup(args[5], 0);
     h->d7 = gpio_out_setup(args[6], 0);
 
+    if (!CONFIG_HAVE_STRICT_TIMING) {
+        h->cmd_wait_ticks = args[7];
+        return;
+    }
+
     // Calibrate cmd_wait_ticks
     irq_disable();
     uint32_t start = timer_read_time();
