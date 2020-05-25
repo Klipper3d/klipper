@@ -121,6 +121,9 @@ config HAVE_GPIO_HARD_PWM
 config HAVE_GPIO_BITBANGING
     bool
     default n
+config HAVE_STRICT_TIMING
+    bool
+    default n
 config HAVE_CHIPID
     bool
     default n
