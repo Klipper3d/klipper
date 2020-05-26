@@ -35,4 +35,4 @@ $(OUT)pru1.elf: $(OUT)klipper.elf
 
 flash: $(OUT)pru0.elf $(OUT)pru1.elf
 	@echo "  Flashing"
-	$(Q)sudo ./scripts/flash-pru.sh
+	$(Q)sudo ./scripts/flash-pru.sh $(OUT)

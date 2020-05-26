@@ -10,4 +10,4 @@ CFLAGS_klipper.elf += -lutil
 
 flash: $(OUT)klipper.elf
 	@echo "  Flashing"
-	$(Q)sudo ./scripts/flash-linux.sh
+	$(Q)sudo ./scripts/flash-linux.sh $(OUT)
