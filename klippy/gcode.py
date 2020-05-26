@@ -190,7 +190,7 @@ class GCodeParser:
         return self.speed / self.speed_factor
     def _get_gcode_speed_override(self):
         return self.speed_factor * 60.
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         move_position = self._get_gcode_position()
         busy = self.is_processing_data
         return {

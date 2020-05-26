@@ -21,12 +21,13 @@ class ConfigWrapper:
         return self.printer
     def get_name(self):
         return self.section
-    def _get_wrapper(self, parser, option, default,
-                     minval=None, maxval=None, above=None, below=None):
+    def _get_wrapper(self, parser, option, default, minval=None, maxval=None,
+                     above=None, below=None, note_valid=True):
         if (default is not sentinel
             and not self.fileconfig.has_option(self.section, option)):
             return default
-        self.access_tracking[(self.section.lower(), option.lower())] = 1
+        if note_valid:
+            self.access_tracking[(self.section.lower(), option.lower())] = 1
         try:
             v = parser(self.section, option)
         except self.error as e:
@@ -49,19 +50,23 @@ class ConfigWrapper:
             raise self.error("Option '%s' in section '%s' must be below %s" % (
                 option, self.section, below))
         return v
-    def get(self, option, default=sentinel):
-        return self._get_wrapper(self.fileconfig.get, option, default)
-    def getint(self, option, default=sentinel, minval=None, maxval=None):
-        return self._get_wrapper(
-            self.fileconfig.getint, option, default, minval, maxval)
-    def getfloat(self, option, default=sentinel,
-                 minval=None, maxval=None, above=None, below=None):
+    def get(self, option, default=sentinel, note_valid=True):
+        return self._get_wrapper(self.fileconfig.get, option, default,
+                                 note_valid=note_valid)
+    def getint(self, option, default=sentinel, minval=None, maxval=None,
+               note_valid=True):
+        return self._get_wrapper(self.fileconfig.getint, option, default,
+                                 minval, maxval, note_valid=note_valid)
+    def getfloat(self, option, default=sentinel, minval=None, maxval=None,
+                 above=None, below=None, note_valid=True):
         return self._get_wrapper(self.fileconfig.getfloat, option, default,
-                                 minval, maxval, above, below)
-    def getboolean(self, option, default=sentinel):
-        return self._get_wrapper(self.fileconfig.getboolean, option, default)
-    def getchoice(self, option, choices, default=sentinel):
-        c = self.get(option, default)
+                                 minval, maxval, above, below,
+                                 note_valid=note_valid)
+    def getboolean(self, option, default=sentinel, note_valid=True):
+        return self._get_wrapper(self.fileconfig.getboolean, option, default,
+                                 note_valid=note_valid)
+    def getchoice(self, option, choices, default=sentinel, note_valid=True):
+        c = self.get(option, default, note_valid=note_valid)
         if c not in choices:
             raise error("Choice '%s' for option '%s' in section '%s'"
                         " is not a valid choice" % (c, option, self.section))
@@ -252,7 +257,7 @@ class PrinterConfig:
         for section in config.get_prefix_sections(''):
             self.status_info[section.get_name()] = section_status = {}
             for option in section.get_prefix_options(''):
-                section_status[option] = section.get(option)
+                section_status[option] = section.get(option, note_valid=False)
     def get_status(self, eventtime):
         return {'config': self.status_info}
     # Autosave functions
