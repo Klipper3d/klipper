@@ -58,7 +58,7 @@ class TuningTower:
                 self.end_test()
             else:
                 # Process update
-                z_offset = self.gcode.get_status(None)['base_zpos']
+                z_offset = self.gcode.get_status()['base_zpos']
                 oldval = self.calc_value(self.last_z - z_offset)
                 newval = self.calc_value(z - z_offset)
                 self.last_z = z

@@ -22,7 +22,7 @@ class ArcSupport:
         self.gcode.register_command("G3", self.cmd_G2)
 
     def cmd_G2(self, gcmd):
-        gcodestatus = self.gcode.get_status(None)
+        gcodestatus = self.gcode.get_status()
         if not gcodestatus['absolute_coordinates']:
             raise self.gcode.error("G2/G3 does not support relative move mode")
         currentPos = gcodestatus['gcode_position']
