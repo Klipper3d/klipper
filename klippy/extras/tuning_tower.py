@@ -15,28 +15,27 @@ class TuningTower:
         self.last_z = self.start = self.factor = self.band = 0.
         self.command_fmt = ""
         # Register command
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
-                               desc=self.cmd_TUNING_TOWER_help)
+        self.gcode = self.printer.lookup_object("gcode")
+        self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
+                                    desc=self.cmd_TUNING_TOWER_help)
     cmd_TUNING_TOWER_help = "Tool to adjust a parameter at each Z height"
     def cmd_TUNING_TOWER(self, gcmd):
         if self.normal_transform is not None:
             self.end_test()
         # Get parameters
-        gcode = self.printer.lookup_object("gcode")
         command = gcmd.get('COMMAND')
         parameter = gcmd.get('PARAMETER')
         self.start = gcmd.get_float('START', 0.)
         self.factor = gcmd.get_float('FACTOR')
         self.band = gcmd.get_float('BAND', 0., minval=0.)
         # Enable test mode
-        if gcode.is_traditional_gcode(command):
+        if self.gcode.is_traditional_gcode(command):
             self.command_fmt = "%s %s%%.9f" % (command, parameter)
         else:
             self.command_fmt = "%s %s=%%.9f" % (command, parameter)
-        self.normal_transform = gcode.set_move_transform(self, force=True)
+        self.normal_transform = self.gcode.set_move_transform(self, force=True)
         self.last_z = -99999999.9
-        gcode.reset_last_position()
+        self.gcode.reset_last_position()
         self.get_position()
         gcmd.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
                           % (self.start, self.factor))
@@ -45,10 +44,6 @@ class TuningTower:
         self.last_position = list(pos)
         return pos
     def calc_value(self, z):
-        # Compensate Z-Offset
-        gcode = self.printer.lookup_object("gcode")
-        z_offset = gcode.get_status(None)['base_zpos']
-        z = z - z_offset
         if self.band:
             z = (math.floor(z / self.band) + .5) * self.band
         return self.start + z * self.factor
@@ -63,19 +58,19 @@ class TuningTower:
                 self.end_test()
             else:
                 # Process update
-                oldval = self.calc_value(self.last_z)
-                newval = self.calc_value(z)
+                z_offset = self.gcode.get_status(None)['base_zpos']
+                oldval = self.calc_value(self.last_z - z_offset)
+                newval = self.calc_value(z - z_offset)
                 self.last_z = z
                 if newval != oldval:
-                    gcode = self.printer.lookup_object("gcode")
-                    gcode.run_script_from_command(self.command_fmt % (newval,))
+                    self.gcode.run_script_from_command(self.command_fmt
+                                                       % (newval,))
         # Forward move to actual handler
         self.last_position[:] = newpos
         normal_transform.move(newpos, speed)
     def end_test(self):
-        gcode = self.printer.lookup_object("gcode")
-        gcode.respond_info("Ending tuning test mode")
-        gcode.set_move_transform(self.normal_transform, force=True)
+        self.gcode.respond_info("Ending tuning test mode")
+        self.gcode.set_move_transform(self.normal_transform, force=True)
         self.normal_transform = None
 
 def load_config(config):
