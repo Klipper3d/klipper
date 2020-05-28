@@ -4,7 +4,7 @@
 if [ "$#" -ge 1 ]; then
     OUT=$1
 else
-    OUT=out/
+    OUT=out
 fi
 
 if [ "$EUID" -ne 0 ]; then
