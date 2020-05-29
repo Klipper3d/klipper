@@ -67,7 +67,8 @@ get_chip_fd(uint8_t chipId) {
         sprintf(chipFilename, CHIP_FILE_NAME, chipId);
         gpio_chip_fd[chipId] = open(chipFilename,O_RDWR | O_CLOEXEC);
         if (gpio_chip_fd[chipId] < 0) {
-            char *errorMessage = malloc(sizeof("Unable to open GPIO" CHIP_FILE_NAME));
+            char *errorMessage =
+                malloc(sizeof("Unable to open GPIO" CHIP_FILE_NAME));
             sprintf(errorMessage,"Unable to open GPIO %s",chipFilename);
             report_errno(errorMessage,-1);
             shutdown("Unable to open GPIO chip device");
@@ -158,8 +159,8 @@ gpio_in_setup(uint32_t pin, int8_t pull_up)
 void
 gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
-    int rv;    
-    struct gpiohandle_request req;   
+    int rv;
+    struct gpiohandle_request req;
     gpio_release_line(g.line);
     memset(&req, 0, sizeof(req));
     req.lines = 1;
@@ -173,7 +174,9 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
 #endif
     req.lineoffsets[0] = g.line->offset;
     strncpy(req.consumer_label,GPIO_CONSUMER,sizeof(req.consumer_label) - 1);
-    rv = ioctl(get_chip_fd(GPIO2PORT(g.line->offset)), GPIO_GET_LINEHANDLE_IOCTL, &req);
+    rv = ioctl(
+        get_chip_fd(GPIO2PORT(g.line->offset)), GPIO_GET_LINEHANDLE_IOCTL,
+        &req);
     if (rv < 0) {
         report_errno("gpio_in_reset get line",rv);
         shutdown("Unable to open in GPIO chip line");
