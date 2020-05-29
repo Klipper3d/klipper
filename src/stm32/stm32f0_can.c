@@ -2,6 +2,7 @@
  * Serial over CAN emulation for STM32F042 boards.
  *
  *  Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
+ *  Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
  *  This file may be distributed under the terms of the GNU GPLv3 license.
  *
  */
@@ -18,55 +19,81 @@
 DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
 #define GPIO_Rx GPIO('A', 11)
 #define GPIO_Tx GPIO('A', 12)
-#define MCR_FLAGS (CAN_MCR_NART)
-#define BTR_FLAGS (CAN_BTR_TS1_2 | CAN_BTR_TS2_0 | /* prescaler */ 11U )
+
+// TXFP makes packets posted to the TX mboxes transmit in chronologcal order
+#define MCR_FLAGS (CAN_MCR_TXFP)
+
+// TODO: Make portable to other STM32's.
+// TODO: Use SERIAL_BAUD
+
+/* BTR Register:
+    BRP = baudrate prescaler;  (6 bits)
+    SJW = synchronization jump width,  (2 bits)
+    TS1 = time segment before sample point,  (4 bits)
+    TS2 = time segment after sample point, (3 bits)
+  Values below gives 500kbits/s on a 48Mhz clock
+*/
+#define BTR_FLAGS (  CAN_BTR_TS1_2 | CAN_BTR_TS2_0 | /* prescaler */ 11U )
 #define CAN_FILTER_NUMBER 0
-#define CAN_DATA3_Pos 24
-#define CAN_DATA2_Pos 16
-#define CAN_DATA1_Pos 8
-#define CAN_DATA0_Pos 0
 
 static uint16_t MyCanId = 0;
 
-static void can_transmit(uint32_t id, uint32_t dlc, uint8_t *pkt)
+static int can_find_empty_tx_mbox(void) {
+    uint32_t tsr = CAN->TSR;
+    if(tsr & CAN_TSR_TME0) return 0;
+    if(tsr & CAN_TSR_TME1) return 1;
+    if(tsr & CAN_TSR_TME2) return 2;
+    return -1;
+}
+
+static void can_transmit_mbox(uint32_t id, int mbox, uint32_t dlc, uint8_t *pkt)
 {
-    /* ToDo: implement serial_get_tx_byte() inside TXComplete interrupt */
-
-    /* Use only Mailbox 0 to avoid message fragmentation */
-    while( !(CAN->TSR & CAN_TSR_TME0) ) /* wait until previous TX completes */
-        ;
-
+     CAN_TxMailBox_TypeDef *mb = &CAN->sTxMailBox[mbox];
     /* Set up the Id */
-    CAN->sTxMailBox[0].TIR &= CAN_TI1R_TXRQ;
-    CAN->sTxMailBox[0].TIR |= (id << CAN_TI1R_STID_Pos);
+    mb->TIR &= CAN_TI0R_TXRQ;
+    mb->TIR |= (id << CAN_TI0R_STID_Pos);
 
     /* Set up the DLC */
-    CAN->sTxMailBox[0].TDTR &= 0xFFFFFFF0U;
-    CAN->sTxMailBox[0].TDTR |= (dlc & 0xFU);
+    mb->TDTR &= 0xFFFFFFF0U;
+    mb->TDTR |= (dlc & 0xFU);
 
     /* Set up the data field */
     if(pkt) {
-        CAN->sTxMailBox[0].TDLR = ((uint32_t)pkt[3] << CAN_DATA3_Pos) |
-                        ((uint32_t)pkt[2] << CAN_DATA2_Pos) |
-                        ((uint32_t)pkt[1] << CAN_DATA1_Pos) |
-                        ((uint32_t)pkt[0] << CAN_DATA0_Pos);
-        CAN->sTxMailBox[0].TDHR = ((uint32_t)pkt[7] << CAN_DATA3_Pos) |
-                        ((uint32_t)pkt[6] << CAN_DATA2_Pos) |
-                        ((uint32_t)pkt[5] << CAN_DATA1_Pos) |
-                        ((uint32_t)pkt[4] << CAN_DATA0_Pos);
+      mb->TDLR = ((uint32_t)pkt[3] << 24) |
+                 ((uint32_t)pkt[2] << 16) |
+                 ((uint32_t)pkt[1] << 8) |
+                 ((uint32_t)pkt[0] << 0);
+      mb->TDHR = ((uint32_t)pkt[7] << 24) |
+                 ((uint32_t)pkt[6] << 16) |
+                 ((uint32_t)pkt[5] << 8) |
+                 ((uint32_t)pkt[4] << 0);
     }
 
      /* Request transmission */
     __sync_synchronize(); // disable write optimization
-    CAN->sTxMailBox[0].TIR |= CAN_TI1R_TXRQ;
+    mb->TIR |= CAN_TI0R_TXRQ;
+
+}
+
+// Blocking transmit function, it can race with the IRQ driven TX handler.
+// This should(tm) not happen
+static void can_transmit(uint32_t id, uint32_t dlc, uint8_t *pkt)
+{
+    int mbox = -1;
+
+    do {
+      mbox = can_find_empty_tx_mbox();
+    } while(mbox < 0);
+
+    can_transmit_mbox(id, mbox, dlc, pkt);
 }
 
 // Convert Unique 96-bit value into 48 bit representation
 static void pack_uuid(uint8_t* u)
 {
     for(int i=0; i<SHORT_UUID_LEN; i++) {
-        u[i] = *((uint8_t*)(STM32_UUID_ADDR+i)) ^
-                *((uint8_t*)(STM32_UUID_ADDR+i+SHORT_UUID_LEN));
+        u[i] = *((uint8_t*)(UID_BASE+i)) ^
+                *((uint8_t*)(UID_BASE+i+SHORT_UUID_LEN));
     }
 }
 
@@ -77,18 +104,49 @@ static void can_uuid_resp(void)
     can_transmit(PKT_ID_UUID_RESP, SHORT_UUID_LEN, short_uuid);
 }
 
-static void get_data(uint8_t* buf, uint8_t mbox)
+static void get_rx_data(uint8_t* buf, unsigned int mbox)
 {
-    for(int i=0; i < 8; i++ ) {
-        if (i<4) {
-            buf[i] = (CAN->sFIFOMailBox[mbox].RDLR >> (i*8)) & 0xFF;
-        } else {
-            buf[i] = (CAN->sFIFOMailBox[mbox].RDHR >> ((i-4)*8))& 0xFF;
-        }
-    }
+    uint32_t rdlr = CAN->sFIFOMailBox[mbox].RDLR;
+    buf[0] = (rdlr >>  0) & 0xff;
+    buf[1] = (rdlr >>  8) & 0xff;
+    buf[2] = (rdlr >> 16) & 0xff;
+    buf[3] = (rdlr >> 24) & 0xff;
+    uint32_t rdhr = CAN->sFIFOMailBox[mbox].RDHR;
+    buf[4] = (rdhr >>  0) & 0xff;
+    buf[5] = (rdhr >>  8) & 0xff;
+    buf[6] = (rdhr >> 16) & 0xff;
+    buf[7] = (rdhr >> 24) & 0xff;
 }
 
-void CAN_RxCpltCallback(uint8_t mbox)
+// Return true if more data is available to send or mailboxes are full
+int CAN_TxIrq(void) {
+    int txdata = 1;
+
+    // TODO: We need some kind of error handling?
+
+    while(txdata) {
+        int mbox = can_find_empty_tx_mbox();
+        if(mbox < 0) {
+            // All mboxes full, wait for next IRQ
+            return 1;
+        }
+        int i=0;
+        uint8_t databuf[8];
+        for (;i<8;i++)
+        {
+            if(serial_get_tx_byte(&(databuf[i])) == -1) {
+                txdata = 0;
+                break;
+            }
+        }
+        if (i>0) {
+            can_transmit_mbox(MyCanId+1, mbox, i, databuf);
+        }
+    }
+    return txdata;
+}
+
+void CAN_RxCpltCallback(unsigned int mbox)
 {
     uint32_t id = (CAN->sFIFOMailBox[mbox].RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
     uint8_t dlc = CAN->sFIFOMailBox[mbox].RDTR & CAN_RDT0R_DLC;
@@ -103,7 +161,7 @@ void CAN_RxCpltCallback(uint8_t mbox)
             pack_uuid(short_uuid);
 
             // compare my UUID with packet to check if this packet mine
-            get_data(databuf, mbox);
+            get_rx_data(databuf, mbox);
             if (memcmp(&(databuf[2]), short_uuid, SHORT_UUID_LEN) == 0) {
                 memcpy(&MyCanId, databuf, sizeof(uint16_t));
                 /* Set new filter values */
@@ -128,7 +186,7 @@ void CAN_RxCpltCallback(uint8_t mbox)
                 // empty packet == ping request
                 can_transmit(MyCanId+1, 0, NULL);
             } else {
-                get_data(databuf, mbox);
+                get_rx_data(databuf, mbox);
                 for(int i=0; i < dlc; i++ ) {
                     serial_rx_byte(databuf[i]);
                 }
@@ -136,7 +194,7 @@ void CAN_RxCpltCallback(uint8_t mbox)
         }
         else if (id == PKT_ID_UUID && dlc > 0)
         {
-            get_data(databuf, mbox);
+            get_rx_data(databuf, mbox);
             if (memcmp(databuf, &MyCanId, 2) == 0)
             {
                 // Reset from host
@@ -153,6 +211,7 @@ void CAN_RxCpltCallback(uint8_t mbox)
 void
 CEC_CAN_IRQHandler(void)
 {
+    // RX
     if (CAN->RF0R & CAN_RF0R_FMP0) {
         // Mailbox 0
         while(CAN->RF0R & CAN_RF0R_FMP0) {
@@ -179,6 +238,12 @@ CEC_CAN_IRQHandler(void)
     {
         /* Clear FIFO1 Overrun Flag */
         CAN->RF1R |= CAN_RF1R_FOVR1;
+    }
+
+    // TX
+    if(CAN->IER & CAN_IER_TMEIE) {  // TX IRQ enabled
+      if(!CAN_TxIrq())
+          CAN->IER &= ~CAN_IER_TMEIE; // Disable TXIRQ
     }
 }
 
@@ -232,9 +297,10 @@ can_init(void)
     /* Leave the initialisation mode for the filter */
     CAN->FMR &= ~(CAN_FMR_FINIT);
 
-    /*##-3- Configure Transmission process #################################*/
+    /*##-3- Configure Interrupts #################################*/
 
-    CAN->IER |= (CAN_IER_FMPIE0 | CAN_IER_FMPIE1);
+    CAN->IER |= (CAN_IER_FMPIE0 | CAN_IER_FMPIE1); // RX mailbox IRQ
+
     armcm_enable_irq(CEC_CAN_IRQHandler, CEC_CAN_IRQn, 0);
 
     /*##-4- Say Hello #################################*/
@@ -245,23 +311,9 @@ DECL_INIT(can_init);
 void
 serial_enable_tx_irq(void)
 {
-    uint8_t databuf[8];
     if(MyCanId == 0)
         // Serial port not initialized
         return;
-    uint8_t txdata =1;
-    while(txdata) {
-        int i=0;
-        for (;i<8;)
-        {
-            if(serial_get_tx_byte(&(databuf[i])) == -1) {
-                txdata = 0;
-                break;
-            }
-            i++;
-        }
-        if (i>0) {
-            can_transmit(MyCanId+1, i, databuf);
-        }
-    }
+
+    CAN->IER |= CAN_IER_TMEIE; // TX mailbox IRQ
 }
