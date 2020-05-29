@@ -4,11 +4,9 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "LPC17xx.h" // NVIC_SystemReset
-#include "command.h" // DECL_CONSTANT
+#include "board/armcm_boot.h" // armcm_main
+#include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
-
-DECL_CONSTANT(MCU, "lpc176x");
 
 
 /****************************************************************
@@ -38,17 +36,31 @@ DECL_INIT(watchdog_init);
  * misc functions
  ****************************************************************/
 
-void
-command_reset(uint32_t *args)
-{
-    NVIC_SystemReset();
-}
-DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
-
-// Main entry point
+// Check if a peripheral clock has been enabled
 int
-main(void)
+is_enabled_pclock(uint32_t pclk)
 {
+    return !!(LPC_SC->PCONP & (1<<pclk));
+}
+
+// Enable a peripheral clock
+void
+enable_pclock(uint32_t pclk)
+{
+    LPC_SC->PCONP |= 1<<pclk;
+    if (pclk < 16) {
+        uint32_t shift = pclk * 2;
+        LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<shift)) | (0x1<<shift);
+    } else {
+        uint32_t shift = (pclk - 16) * 2;
+        LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
+    }
+}
+
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
+{
+    SystemInit();
     sched_main();
-    return 0;
 }

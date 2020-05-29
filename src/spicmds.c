@@ -1,62 +1,46 @@
 // Commands for sending messages on an SPI bus
 //
-// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_HAVE_GPIO_BITBANGING
 #include "board/gpio.h" // gpio_out_write
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
+#include "spi_software.h" // spi_software_setup
 #include "spicmds.h" // spidev_transfer
 
 struct spidev_s {
-    struct spi_config spi_config;
+    union {
+        struct spi_config spi_config;
+        struct spi_software *spi_software;
+    };
     struct gpio_out pin;
     uint8_t flags;
-    uint8_t shutdown_msg_len;
-    uint8_t shutdown_msg[];
 };
 
 enum {
-    SF_HAVE_PIN = 1,
+    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4,
 };
 
 void
 command_config_spi(uint32_t *args)
 {
-    uint8_t mode = args[3], shutdown_msg_len = args[5];
-    if (mode > 3)
-        shutdown("Invalid spi mode");
-    struct spidev_s *spi = oid_alloc(args[0], command_config_spi
-                                     , sizeof(*spi) + shutdown_msg_len);
-    spi->pin = gpio_out_setup(args[2], 1);
-    spi->flags = SF_HAVE_PIN;
-    spi->spi_config = spi_setup(args[1], mode, args[4]);
-    spi->shutdown_msg_len = shutdown_msg_len;
-    uint8_t *shutdown_msg = (void*)(size_t)args[6];
-    memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
+    struct spidev_s *spi = oid_alloc(args[0], command_config_spi, sizeof(*spi));
+    spi->pin = gpio_out_setup(args[1], 1);
+    spi->flags |= SF_HAVE_PIN;
 }
-DECL_COMMAND(command_config_spi,
-             "config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s");
+DECL_COMMAND(command_config_spi, "config_spi oid=%c pin=%u");
 
 void
 command_config_spi_without_cs(uint32_t *args)
 {
-    uint8_t mode = args[2], shutdown_msg_len = args[4];
-    if (mode > 3)
-        shutdown("Invalid spi mode");
-    struct spidev_s *spi = oid_alloc(args[0], command_config_spi
-                                     , sizeof(*spi) + shutdown_msg_len);
-    spi->spi_config = spi_setup(args[1], mode, args[3]);
-    spi->shutdown_msg_len = shutdown_msg_len;
-    uint8_t *shutdown_msg = (void*)(size_t)args[5];
-    memcpy(spi->shutdown_msg, shutdown_msg, shutdown_msg_len);
+    struct spidev_s *spi = oid_alloc(args[0], command_config_spi, sizeof(*spi));
 }
-DECL_COMMAND(command_config_spi_without_cs,
-             "config_spi_without_cs oid=%c bus=%u mode=%u rate=%u"
-             " shutdown_msg=%*s");
+DECL_COMMAND(command_config_spi_without_cs, "config_spi_without_cs oid=%c");
 
 struct spidev_s *
 spidev_oid_lookup(uint8_t oid)
@@ -65,15 +49,47 @@ spidev_oid_lookup(uint8_t oid)
 }
 
 void
+command_spi_set_bus(uint32_t *args)
+{
+    struct spidev_s *spi = spidev_oid_lookup(args[0]);
+    uint8_t mode = args[2];
+    if (mode > 3 || spi->flags & (SF_SOFTWARE|SF_HARDWARE))
+        shutdown("Invalid spi config");
+    spi->spi_config = spi_setup(args[1], mode, args[3]);
+    spi->flags |= SF_HARDWARE;
+}
+DECL_COMMAND(command_spi_set_bus,
+             "spi_set_bus oid=%c spi_bus=%u mode=%u rate=%u");
+
+void
+spidev_set_software_bus(struct spidev_s *spi, struct spi_software *ss)
+{
+    if (spi->flags & (SF_SOFTWARE|SF_HARDWARE))
+        shutdown("Invalid spi config");
+    spi->spi_software = ss;
+    spi->flags |= SF_SOFTWARE;
+}
+
+void
 spidev_transfer(struct spidev_s *spi, uint8_t receive_data
                 , uint8_t data_len, uint8_t *data)
 {
-    spi_prepare(spi->spi_config);
+    if (!(spi->flags & (SF_SOFTWARE|SF_HARDWARE)))
+        // Not yet initialized
+        return;
+
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
+        spi_software_prepare(spi->spi_software);
+    else
+        spi_prepare(spi->spi_config);
 
     if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 0);
 
-    spi_transfer(spi->spi_config, receive_data, data_len, data);
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
+        spi_software_transfer(spi->spi_software, receive_data, data_len, data);
+    else
+        spi_transfer(spi->spi_config, receive_data, data_len, data);
 
     if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 1);
@@ -83,7 +99,7 @@ void
 command_spi_transfer(uint32_t *args)
 {
     uint8_t oid = args[0];
-    struct spidev_s *spi = oid_lookup(oid, command_config_spi);
+    struct spidev_s *spi = spidev_oid_lookup(oid);
     uint8_t data_len = args[1];
     uint8_t *data = (void*)(size_t)args[2];
     spidev_transfer(spi, 1, data_len, data);
@@ -94,13 +110,38 @@ DECL_COMMAND(command_spi_transfer, "spi_transfer oid=%c data=%*s");
 void
 command_spi_send(uint32_t *args)
 {
-    uint8_t oid = args[0];
-    struct spidev_s *spi = oid_lookup(oid, command_config_spi);
+    struct spidev_s *spi = spidev_oid_lookup(args[0]);
     uint8_t data_len = args[1];
     uint8_t *data = (void*)(size_t)args[2];
     spidev_transfer(spi, 0, data_len, data);
 }
 DECL_COMMAND(command_spi_send, "spi_send oid=%c data=%*s");
+
+
+/****************************************************************
+ * Shutdown handling
+ ****************************************************************/
+
+struct spidev_shutdown_s {
+    struct spidev_s *spi;
+    uint8_t shutdown_msg_len;
+    uint8_t shutdown_msg[];
+};
+
+void
+command_config_spi_shutdown(uint32_t *args)
+{
+    struct spidev_s *spi = spidev_oid_lookup(args[1]);
+    uint8_t shutdown_msg_len = args[2];
+    struct spidev_shutdown_s *sd = oid_alloc(
+        args[0], command_config_spi_shutdown, sizeof(*sd) + shutdown_msg_len);
+    sd->spi = spi;
+    sd->shutdown_msg_len = shutdown_msg_len;
+    uint8_t *shutdown_msg = (void*)(size_t)args[3];
+    memcpy(sd->shutdown_msg, shutdown_msg, shutdown_msg_len);
+}
+DECL_COMMAND(command_config_spi_shutdown,
+             "config_spi_shutdown oid=%c spi_oid=%c shutdown_msg=%*s");
 
 void
 spidev_shutdown(void)
@@ -114,9 +155,9 @@ spidev_shutdown(void)
     }
 
     // Send shutdown messages
-    foreach_oid(oid, spi, command_config_spi) {
-        if (spi->shutdown_msg_len)
-            spidev_transfer(spi, 0, spi->shutdown_msg_len, spi->shutdown_msg);
+    struct spidev_shutdown_s *sd;
+    foreach_oid(oid, sd, command_config_spi_shutdown) {
+        spidev_transfer(sd->spi, 0, sd->shutdown_msg_len, sd->shutdown_msg);
     }
 }
 DECL_SHUTDOWN(spidev_shutdown);

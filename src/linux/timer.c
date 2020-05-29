@@ -21,9 +21,6 @@ static uint32_t last_read_time_counter;
 static struct timespec last_read_time, next_wake_time;
 static time_t start_sec;
 
-#define NSECS 1000000000
-#define NSECS_PER_TICK (NSECS / CONFIG_CLOCK_FREQ)
-
 // Compare two 'struct timespec' times
 static inline uint8_t
 timespec_is_before(struct timespec ts1, struct timespec ts2)
@@ -106,7 +103,7 @@ timer_check_periodic(struct timespec *ts)
  * Timers
  ****************************************************************/
 
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t

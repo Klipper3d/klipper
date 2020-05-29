@@ -10,6 +10,7 @@ config LPC_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
     select HAVE_GPIO_BITBANGING
+    select HAVE_CHIPID
 
 config BOARD_DIRECTORY
     string
@@ -18,15 +19,36 @@ config BOARD_DIRECTORY
 choice
     prompt "Processor model"
     config MACH_LPC1768
-        bool "lpc1768 (100 Mhz)"
+        bool "lpc1768 (100 MHz)"
     config MACH_LPC1769
-        bool "lpc1769 (120 Mhz)"
+        bool "lpc1769 (120 MHz)"
 endchoice
+
+config MCU
+    string
+    default "lpc1768" if MACH_LPC1768
+    default "lpc1769" if MACH_LPC1769
 
 config CLOCK_FREQ
     int
-    default 25000000 if MACH_LPC1768 # 100000000 / 4
-    default 30000000 if MACH_LPC1769 # 120000000 / 4
+    default 100000000 if MACH_LPC1768
+    default 120000000 if MACH_LPC1769
+
+config FLASH_SIZE
+    hex
+    default 0x80000
+
+config RAM_START
+    hex
+    default 0x10000000
+
+config RAM_SIZE
+    hex
+    default 0x7fe0 # (0x8000 - 32) - top 32 bytes used by IAP functions
+
+config STACK_SIZE
+    int
+    default 512
 
 config SMOOTHIEWARE_BOOTLOADER
     bool "Target board uses Smoothieware bootloader"
@@ -44,9 +66,5 @@ config SERIAL
     depends on !USBSERIAL
     bool
     default y
-config SERIAL_BAUD
-    depends on SERIAL
-    int "Baud rate for serial port"
-    default 250000
 
 endif

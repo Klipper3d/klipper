@@ -1,10 +1,15 @@
 # Low level unix utility functions
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, pty, fcntl, termios, signal, logging
+import sys, os, pty, fcntl, termios, signal, logging, json, time
 import subprocess, traceback, shlex
+
+
+######################################################################
+# Low-level Unix commands
+######################################################################
 
 # Return the SIGINT interrupt handler back to the OS default
 def fix_sigint():
@@ -20,7 +25,10 @@ def set_nonblock(fd):
 def clear_hupcl(fd):
     attrs = termios.tcgetattr(fd)
     attrs[2] = attrs[2] & ~termios.HUPCL
-    termios.tcsetattr(fd, termios.TCSADRAIN, attrs)
+    try:
+        termios.tcsetattr(fd, termios.TCSADRAIN, attrs)
+    except termios.error:
+        pass
 
 # Support for creating a pseudo-tty for emulating a serial port
 def create_pty(ptyname):
@@ -38,12 +46,60 @@ def create_pty(ptyname):
     termios.tcsetattr(mfd, termios.TCSADRAIN, old)
     return mfd
 
+
+######################################################################
+# Helper code for extracting mcu build info
+######################################################################
+
+def dump_file_stats(build_dir, filename):
+    fname = os.path.join(build_dir, filename)
+    try:
+        mtime = os.path.getmtime(fname)
+        fsize = os.path.getsize(fname)
+        timestr = time.asctime(time.localtime(mtime))
+        logging.info("Build file %s(%d): %s", fname, fsize, timestr)
+    except:
+        logging.info("No build file %s", fname)
+
+# Try to log information on the last mcu build
+def dump_mcu_build():
+    build_dir = os.path.join(os.path.dirname(__file__), '..')
+    # Try to log last mcu config
+    dump_file_stats(build_dir, '.config')
+    try:
+        f = open(os.path.join(build_dir, '.config'), 'rb')
+        data = f.read(32*1024)
+        f.close()
+        logging.info("========= Last MCU build config =========\n%s"
+                     "=======================", data)
+    except:
+        pass
+    # Try to log last mcu build version
+    dump_file_stats(build_dir, 'out/klipper.dict')
+    try:
+        f = open(os.path.join(build_dir, 'out/klipper.dict'), 'rb')
+        data = f.read(32*1024)
+        f.close()
+        data = json.loads(data)
+        logging.info("Last MCU build version: %s", data.get('version', ''))
+        logging.info("Last MCU build tools: %s", data.get('build_versions', ''))
+        cparts = ["%s=%s" % (k, v) for k, v in data.get('config', {}).items()]
+        logging.info("Last MCU build config: %s", " ".join(cparts))
+    except:
+        pass
+    dump_file_stats(build_dir, 'out/klipper.elf')
+
+
+######################################################################
+# General system and software information
+######################################################################
+
 def get_cpu_info():
     try:
         f = open('/proc/cpuinfo', 'rb')
         data = f.read()
         f.close()
-    except OSError:
+    except IOError, OSError:
         logging.debug("Exception on read /proc/cpuinfo: %s",
                       traceback.format_exc())
         return "?"
@@ -66,9 +122,11 @@ def get_git_version(from_file=True):
 
     # Obtain version info from "git" program
     gitdir = os.path.join(klippy_src, '..')
-    prog = ('git', '-C', gitdir, 'describe', '--always', '--tags', '--long', '--dirty')
+    prog = ('git', '-C', gitdir, 'describe', '--always',
+            '--tags', '--long', '--dirty')
     try:
-        process = subprocess.Popen(prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         ver, err = process.communicate()
         retcode = process.wait()
         if retcode == 0:

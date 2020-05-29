@@ -15,12 +15,14 @@ COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
                " -flto -fwhole-program -fno-use-linker-plugin"
                " -o %s %s")
 SOURCE_FILES = [
-    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c',
-    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_extruder.c'
+    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
+    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
+    'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
-    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h'
+    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
+    'trapq.h',
 ]
 
 defs_stepcompress = """
@@ -30,8 +32,8 @@ defs_stepcompress = """
         , uint32_t set_next_step_dir_msgid);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
-    int stepcompress_set_homing(struct stepcompress *sc, uint64_t homing_clock);
-    int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
+    int stepcompress_queue_msg(struct stepcompress *sc
+        , uint32_t *data, int len);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
@@ -42,19 +44,30 @@ defs_stepcompress = """
 """
 
 defs_itersolve = """
-    struct move *move_alloc(void);
-    void move_fill(struct move *m, double print_time
-        , double accel_t, double cruise_t, double decel_t
-        , double start_pos_x, double start_pos_y, double start_pos_z
-        , double axes_d_x, double axes_d_y, double axes_d_z
-        , double start_v, double cruise_v, double accel);
-    int32_t itersolve_gen_steps(struct stepper_kinematics *sk, struct move *m);
+    int32_t itersolve_generate_steps(struct stepper_kinematics *sk
+        , double flush_time);
+    double itersolve_check_active(struct stepper_kinematics *sk
+        , double flush_time);
+    int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
+    void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
     void itersolve_set_stepcompress(struct stepper_kinematics *sk
         , struct stepcompress *sc, double step_dist);
     double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
         , double x, double y, double z);
-    void itersolve_set_commanded_pos(struct stepper_kinematics *sk, double pos);
+    void itersolve_set_position(struct stepper_kinematics *sk
+        , double x, double y, double z);
     double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
+"""
+
+defs_trapq = """
+    void trapq_append(struct trapq *tq, double print_time
+        , double accel_t, double cruise_t, double decel_t
+        , double start_pos_x, double start_pos_y, double start_pos_z
+        , double axes_r_x, double axes_r_y, double axes_r_z
+        , double start_v, double cruise_v, double accel);
+    struct trapq *trapq_alloc(void);
+    void trapq_free(struct trapq *tq);
+    void trapq_free_moves(struct trapq *tq, double print_time);
 """
 
 defs_kin_cartesian = """
@@ -70,12 +83,25 @@ defs_kin_delta = """
         , double tower_x, double tower_y);
 """
 
+defs_kin_polar = """
+    struct stepper_kinematics *polar_stepper_alloc(char type);
+"""
+
+defs_kin_rotary_delta = """
+    struct stepper_kinematics *rotary_delta_stepper_alloc(
+        double shoulder_radius, double shoulder_height
+        , double angle, double upper_arm, double lower_arm);
+"""
+
+defs_kin_winch = """
+    struct stepper_kinematics *winch_stepper_alloc(double anchor_x
+        , double anchor_y, double anchor_z);
+"""
+
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_move_fill(struct move *m, double print_time
-        , double accel_t, double cruise_t, double decel_t, double start_pos
-        , double start_v, double cruise_v, double accel
-        , double extra_accel_v, double extra_decel_v);
+    void extruder_set_smooth_time(struct stepper_kinematics *sk
+        , double smooth_time);
 """
 
 defs_serialqueue = """
@@ -84,6 +110,7 @@ defs_serialqueue = """
         uint8_t msg[MESSAGE_MAX];
         int len;
         double sent_time, receive_time;
+        uint64_t notify_id;
     };
 
     struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
@@ -92,10 +119,12 @@ defs_serialqueue = """
     struct command_queue *serialqueue_alloc_commandqueue(void);
     void serialqueue_free_commandqueue(struct command_queue *cq);
     void serialqueue_send(struct serialqueue *sq, struct command_queue *cq
-        , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock);
+        , uint8_t *msg, int len, uint64_t min_clock, uint64_t req_clock
+        , uint64_t notify_id);
     void serialqueue_pull(struct serialqueue *sq
         , struct pull_queue_message *pqm);
-    void serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust);
+    void serialqueue_set_baud_adjust(struct serialqueue *sq
+        , double baud_adjust);
     void serialqueue_set_receive_window(struct serialqueue *sq
         , int receive_window);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
@@ -115,8 +144,10 @@ defs_std = """
 """
 
 defs_all = [
-    defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress, defs_itersolve,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_extruder
+    defs_pyhelper, defs_serialqueue, defs_std,
+    defs_stepcompress, defs_itersolve, defs_trapq,
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
+    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder
 ]
 
 # Return the list of file modification times
@@ -139,7 +170,11 @@ def check_build_code(srcdir, target, sources, cmd, other_files=[]):
         logging.info("Building C code module %s", target)
         srcfiles = [os.path.join(srcdir, fname) for fname in sources]
         destlib = os.path.join(srcdir, target)
-        os.system(cmd % (destlib, ' '.join(srcfiles)))
+        res = os.system(cmd % (destlib, ' '.join(srcfiles)))
+        if res:
+            msg = "Unable to build C code module (error=%s)" % (res,)
+            logging.error(msg)
+            raise Exception(msg)
 
 FFI_main = None
 FFI_lib = None

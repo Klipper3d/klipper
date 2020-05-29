@@ -1,29 +1,16 @@
 Welcome to the Klipper project!
 
-This project implements a 3d-printer firmware. There are two parts to
-this firmware - code that runs on a micro-controller and code that
-runs on a host machine. The host software does the work to build a
-schedule of events, while the micro-controller software does the work
-to execute the provided schedule at the specified times.
+[![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
 
-See the [features](docs/Features.md) document to find out why you
-should use Klipper. To begin using Klipper start by
-[installing](docs/Installation.md) it.
+https://www.klipper3d.org/
 
-There is also [developer documentation](docs/Overview.md) available.
+Klipper is a 3d-Printer firmware. It combines the power of a general
+purpose computer with one or more micro-controllers. See the
+[features document](https://www.klipper3d.org/Features.html) for more
+information on why you should use Klipper.
 
-License
-=======
+To begin using Klipper start by
+[installing](https://www.klipper3d.org/Installation.html) it.
 
-Klipper is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Klipper is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Klipper.  If not, see <http://www.gnu.org/licenses/>.
+Klipper is Free Software. See the [license](COPYING) or read the
+[documentation](https://www.klipper3d.org/Overview.html).

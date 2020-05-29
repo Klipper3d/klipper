@@ -1,6 +1,6 @@
 // Handling of end stops.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,7 +11,7 @@
 #include "sched.h" // struct timer
 #include "stepper.h" // stepper_stop
 
-struct end_stop {
+struct endstop {
     struct timer time;
     struct gpio_in pin;
     uint32_t rest_time, sample_time, nextwake;
@@ -24,7 +24,7 @@ enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_REPORT=1<<2 };
 static struct task_wake endstop_wake;
 
 static void
-stop_steppers(struct end_stop *e)
+stop_steppers(struct endstop *e)
 {
     e->flags = ESF_REPORT;
     uint8_t count = e->stepper_count;
@@ -34,13 +34,13 @@ stop_steppers(struct end_stop *e)
     sched_wake_task(&endstop_wake);
 }
 
-static uint_fast8_t end_stop_oversample_event(struct timer *t);
+static uint_fast8_t endstop_oversample_event(struct timer *t);
 
 // Timer callback for an end stop
 static uint_fast8_t
-end_stop_event(struct timer *t)
+endstop_event(struct timer *t)
 {
-    struct end_stop *e = container_of(t, struct end_stop, time);
+    struct endstop *e = container_of(t, struct endstop, time);
     uint8_t val = gpio_in_read(e->pin);
     uint32_t nextwake = e->time.waketime + e->rest_time;
     if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
@@ -49,19 +49,19 @@ end_stop_event(struct timer *t)
         return SF_RESCHEDULE;
     }
     e->nextwake = nextwake;
-    e->time.func = end_stop_oversample_event;
-    return end_stop_oversample_event(t);
+    e->time.func = endstop_oversample_event;
+    return endstop_oversample_event(t);
 }
 
 // Timer callback for an end stop that is sampling extra times
 static uint_fast8_t
-end_stop_oversample_event(struct timer *t)
+endstop_oversample_event(struct timer *t)
 {
-    struct end_stop *e = container_of(t, struct end_stop, time);
+    struct endstop *e = container_of(t, struct endstop, time);
     uint8_t val = gpio_in_read(e->pin);
     if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
         // No longer matching - reschedule for the next attempt
-        e->time.func = end_stop_event;
+        e->time.func = endstop_event;
         e->time.waketime = e->nextwake;
         e->trigger_count = e->sample_count;
         return SF_RESCHEDULE;
@@ -77,36 +77,36 @@ end_stop_oversample_event(struct timer *t)
 }
 
 void
-command_config_end_stop(uint32_t *args)
+command_config_endstop(uint32_t *args)
 {
     uint8_t stepper_count = args[3];
-    struct end_stop *e = oid_alloc(
-        args[0], command_config_end_stop
+    struct endstop *e = oid_alloc(
+        args[0], command_config_endstop
         , sizeof(*e) + sizeof(e->steppers[0]) * stepper_count);
     e->pin = gpio_in_setup(args[1], args[2]);
     e->stepper_count = stepper_count;
     e->sample_count = 1;
 }
-DECL_COMMAND(command_config_end_stop,
-             "config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c");
+DECL_COMMAND(command_config_endstop,
+             "config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c");
 
 void
-command_end_stop_set_stepper(uint32_t *args)
+command_endstop_set_stepper(uint32_t *args)
 {
-    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
+    struct endstop *e = oid_lookup(args[0], command_config_endstop);
     uint8_t pos = args[1];
     if (pos >= e->stepper_count)
         shutdown("Set stepper past maximum stepper count");
     e->steppers[pos] = stepper_oid_lookup(args[2]);
 }
-DECL_COMMAND(command_end_stop_set_stepper,
-             "end_stop_set_stepper oid=%c pos=%c stepper_oid=%c");
+DECL_COMMAND(command_endstop_set_stepper,
+             "endstop_set_stepper oid=%c pos=%c stepper_oid=%c");
 
 // Home an axis
 void
-command_end_stop_home(uint32_t *args)
+command_endstop_home(uint32_t *args)
 {
-    struct end_stop *e = oid_lookup(args[0], command_config_end_stop);
+    struct endstop *e = oid_lookup(args[0], command_config_endstop);
     sched_del_timer(&e->time);
     e->time.waketime = args[1];
     e->sample_time = args[2];
@@ -117,47 +117,47 @@ command_end_stop_home(uint32_t *args)
         return;
     }
     e->rest_time = args[4];
-    e->time.func = end_stop_event;
+    e->time.func = endstop_event;
     e->trigger_count = e->sample_count;
     e->flags = ESF_HOMING | (args[5] ? ESF_PIN_HIGH : 0);
     sched_add_timer(&e->time);
 }
-DECL_COMMAND(command_end_stop_home,
-             "end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
+DECL_COMMAND(command_endstop_home,
+             "endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
              " rest_ticks=%u pin_value=%c");
 
 static void
-end_stop_report(uint8_t oid, struct end_stop *e)
+endstop_report(uint8_t oid, struct endstop *e)
 {
     irq_disable();
     uint8_t eflags = e->flags;
     e->flags &= ~ESF_REPORT;
     irq_enable();
 
-    sendf("end_stop_state oid=%c homing=%c pin=%c"
+    sendf("endstop_state oid=%c homing=%c pin_value=%c"
           , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin));
 }
 
 void
-command_end_stop_query(uint32_t *args)
+command_endstop_query_state(uint32_t *args)
 {
     uint8_t oid = args[0];
-    struct end_stop *e = oid_lookup(oid, command_config_end_stop);
-    end_stop_report(oid, e);
+    struct endstop *e = oid_lookup(oid, command_config_endstop);
+    endstop_report(oid, e);
 }
-DECL_COMMAND(command_end_stop_query, "end_stop_query oid=%c");
+DECL_COMMAND(command_endstop_query_state, "endstop_query_state oid=%c");
 
 void
-end_stop_task(void)
+endstop_task(void)
 {
     if (!sched_check_wake(&endstop_wake))
         return;
     uint8_t oid;
-    struct end_stop *e;
-    foreach_oid(oid, e, command_config_end_stop) {
+    struct endstop *e;
+    foreach_oid(oid, e, command_config_endstop) {
         if (!(e->flags & ESF_REPORT))
             continue;
-        end_stop_report(oid, e);
+        endstop_report(oid, e);
     }
 }
-DECL_TASK(end_stop_task);
+DECL_TASK(endstop_task);

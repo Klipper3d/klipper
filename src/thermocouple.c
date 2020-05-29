@@ -14,11 +14,13 @@
 #include "spicmds.h" // spidev_transfer
 
 enum {
-    TS_CHIP_MAX31855 = 1 << 0,
-    TS_CHIP_MAX31856 = 1 << 1,
-    TS_CHIP_MAX31865 = 1 << 2,
-    TS_CHIP_MAX6675  = 1 << 3
+    TS_CHIP_MAX31855, TS_CHIP_MAX31856, TS_CHIP_MAX31865, TS_CHIP_MAX6675
 };
+
+DECL_ENUMERATION("thermocouple_type", "MAX31855", TS_CHIP_MAX31855);
+DECL_ENUMERATION("thermocouple_type", "MAX31856", TS_CHIP_MAX31856);
+DECL_ENUMERATION("thermocouple_type", "MAX31865", TS_CHIP_MAX31865);
+DECL_ENUMERATION("thermocouple_type", "MAX6675", TS_CHIP_MAX6675);
 
 struct thermocouple_spi {
     struct timer timer;
@@ -49,7 +51,7 @@ void
 command_config_thermocouple(uint32_t *args)
 {
     uint8_t chip_type = args[2];
-    if (chip_type > TS_CHIP_MAX6675 || !chip_type)
+    if (chip_type > TS_CHIP_MAX6675)
         shutdown("Invalid thermocouple chip type");
     struct thermocouple_spi *spi = oid_alloc(
         args[0], command_config_thermocouple, sizeof(*spi));
@@ -58,7 +60,7 @@ command_config_thermocouple(uint32_t *args)
     spi->chip_type = chip_type;
 }
 DECL_COMMAND(command_config_thermocouple,
-             "config_thermocouple oid=%c spi_oid=%c chip_type=%c");
+             "config_thermocouple oid=%c spi_oid=%c thermocouple_type=%c");
 
 void
 command_query_thermocouple(uint32_t *args)

@@ -10,6 +10,9 @@ WiperRegisters = [0x00, 0x01, 0x06, 0x07]
 class mcp4451:
     def __init__(self, config):
         self.i2c = bus.MCU_I2C_from_config(config)
+        i2c_addr = self.i2c.get_i2c_address()
+        if i2c_addr < 44 or i2c_addr > 47:
+            raise config.error("mcp4451 address must be between 44 and 47")
         scale = config.getfloat('scale', 1., above=0.)
         # Configure registers
         self.set_register(0x04, 0xff)

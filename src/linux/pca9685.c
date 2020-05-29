@@ -136,7 +136,7 @@ struct i2cpwm_s {
     uint32_t max_duration;
 };
 
-DECL_CONSTANT(PCA9685_MAX, VALUE_MAX);
+DECL_CONSTANT("PCA9685_MAX", VALUE_MAX);
 
 static uint_fast8_t
 pca9685_end_event(struct timer *timer)

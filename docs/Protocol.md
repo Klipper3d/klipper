@@ -6,8 +6,8 @@ then processed at the receiving side. An example series of commands in
 uncompressed human-readable format might look like:
 
 ```
-set_digital_out pin=86 value=1
-set_digital_out pin=85 value=1
+set_digital_out pin=PA3 value=1
+set_digital_out pin=PA7 value=1
 schedule_digital_out oid=8 clock=4000000 value=0
 queue_step oid=7 interval=7458 count=10 add=331
 queue_step oid=7 interval=11717 count=4 add=1281
@@ -44,26 +44,26 @@ The micro-controller software declares a "command" by using the
 DECL_COMMAND() macro in the C code. For example:
 
 ```
-DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
+DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
 ```
 
-The above declares a command named "set_digital_out". This allows the
-host to "invoke" this command which would cause the
-command_set_digital_out() C function to be executed in the
+The above declares a command named "update_digital_out". This allows
+the host to "invoke" this command which would cause the
+command_update_digital_out() C function to be executed in the
 micro-controller. The above also indicates that the command takes two
-integer parameters. When the command_set_digital_out() C code is
+integer parameters. When the command_update_digital_out() C code is
 executed, it will be passed an array containing these two integers -
-the first corresponding to the 'pin' and the second corresponding to
+the first corresponding to the 'oid' and the second corresponding to
 the 'value'.
 
 In general, the parameters are described with printf() style syntax
 (eg, "%u"). The formatting directly corresponds to the human-readable
-view of commands (eg, "set_digital_out pin=86 value=1"). In the above
-example, "value=" is a parameter name and "%c" indicates the parameter
-is an integer. Internally, the parameter name is only used as
-documentation. In this example, the "%c" is also used as documentation
-to indicate the expected integer is 1 byte in size (the declared
-integer size does not impact the parsing or encoding).
+view of commands (eg, "update_digital_out oid=7 value=1"). In the
+above example, "value=" is a parameter name and "%c" indicates the
+parameter is an integer. Internally, the parameter name is only used
+as documentation. In this example, the "%c" is also used as
+documentation to indicate the expected integer is 1 byte in size (the
+declared integer size does not impact the parsing or encoding).
 
 The micro-controller build will collect all commands declared with
 DECL_COMMAND(), determine their parameters, and arrange for them to be
@@ -99,7 +99,7 @@ invoked, and it may invoke sendf() at any time from a task handler.
 
 ### Output responses
 
-To simplify debugging, there is also has an output() C function. For
+To simplify debugging, there is also an output() C function. For
 example:
 
 ```
@@ -109,17 +109,46 @@ output("The value of %u is %s with size %u.", x, buf, buf_len);
 The output() function is similar in usage to printf() - it is intended
 to generate and format arbitrary messages for human consumption.
 
+Declaring enumerations
+----------------------
+
+Enumerations allow the host code to use string identifiers for
+parameters that the micro-controller handles as integers. They are
+declared in the micro-controller code - for example:
+
+```
+DECL_ENUMERATION("spi_bus", "spi", 0);
+
+DECL_ENUMERATION_RANGE("pin", "PC0", 16, 8);
+```
+
+If the first example, the DECL_ENUMERATION() macro defines an
+enumeration for any command/response message with a parameter name of
+"spi_bus" or parameter name with a suffix of "_spi_bus". For those
+parameters the string "spi" is a valid value and it will be
+transmitted with an integer value of zero.
+
+It's also possible to declare an enumeration range. In the second
+example, a "pin" parameter (or any parameter with a suffix of "_pin")
+would accept PC0, PC1, PC2, ..., PC7 as valid values. The strings will
+be transmitted with integers 16, 17, 18, ..., 23.
+
 Declaring constants
 -------------------
 
 Constants can also be exported. For example, the following:
 
 ```
-DECL_CONSTANT(SERIAL_BAUD, 250000);
+DECL_CONSTANT("SERIAL_BAUD", 250000);
 ```
 
 would export a constant named "SERIAL_BAUD" with a value of 250000
-from the micro-controller to the host.
+from the micro-controller to the host. It is also possible to declare
+a constant that is a string - for example:
+
+```
+DECL_CONSTANT_STR("MCU", "pru");
+```
 
 Low-level message encoding
 ==========================
@@ -171,8 +200,8 @@ As an example, the following four commands might be placed in a single
 message block:
 
 ```
-set_digital_out pin=86 value=1
-set_digital_out pin=85 value=0
+update_digital_out oid=6 value=1
+update_digital_out oid=5 value=0
 get_config
 get_clock
 ```
@@ -180,19 +209,20 @@ get_clock
 and encoded into the following eight VLQ integers:
 
 ```
-<id_set_digital_out><86><1><id_set_digital_out><85><0><id_get_config><id_get_clock>
+<id_update_digital_out><6><1><id_update_digital_out><5><0><id_get_config><id_get_clock>
 ```
 
 In order to encode and parse the message contents, both the host and
 micro-controller must agree on the command ids and the number of
 parameters each command has. So, in the above example, both the host
-and micro-controller would know that "id_set_digital_out" is always
+and micro-controller would know that "id_update_digital_out" is always
 followed by two parameters, and "id_get_config" and "id_get_clock"
 have zero parameters. The host and micro-controller share a "data
-dictionary" that maps the command descriptions (eg, "set_digital_out
-pin=%u value=%c") to their integer command-ids. When processing the
-data, the parser will know to expect a specific number of VLQ encoded
-parameters following a given command id.
+dictionary" that maps the command descriptions (eg,
+"update_digital_out oid=%c value=%c") to their integer
+command-ids. When processing the data, the parser will know to expect
+a specific number of VLQ encoded parameters following a given command
+id.
 
 The message contents for blocks sent from micro-controller to host
 follow the same format. The identifiers in these messages are
@@ -277,24 +307,9 @@ dictionary. Once all chunks are obtained the host will assemble the
 chunks, uncompress the data, and parse the contents.
 
 In addition to information on the communication protocol, the data
-dictionary also contains the software version, constants (as defined
-by DECL_CONSTANT), and static strings.
-
-Static Strings
---------------
-
-To reduce bandwidth the data dictionary also contains a set of static
-strings known to the micro-controller. This is useful when sending
-messages from micro-controller to host. For example, if the
-micro-controller were to run:
-
-```
-shutdown("Unable to handle command");
-```
-
-The error message would be encoded and sent using a single VLQ. The
-host uses the data dictionary to resolve VLQ encoded static string ids
-to their associated human-readable strings.
+dictionary also contains the software version, enumerations (as
+defined by DECL_ENUMERATION), and constants (as defined by
+DECL_CONSTANT).
 
 Message flow
 ============

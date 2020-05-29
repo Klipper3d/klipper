@@ -40,7 +40,8 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
     { GPIO('B', 6), &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, 0 },
     { GPIO('B', 7), &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, 0 },
 # endif
-#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 || CONFIG_MACH_atmega32u4
+#elif CONFIG_MACH_at90usb1286 || CONFIG_MACH_at90usb646 \
+      || CONFIG_MACH_atmega32u4
     { GPIO('B', 7), &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GP_8BIT },
     { GPIO('D', 0), &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GP_8BIT },
     { GPIO('B', 5), &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, 0 },
@@ -73,7 +74,7 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #endif
 };
 
-DECL_CONSTANT(PWM_MAX, 255);
+DECL_CONSTANT("PWM_MAX", 255);
 
 struct gpio_pwm
 gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)

@@ -1,6 +1,6 @@
 # Test case for probe:z_virtual_endstop support
 CONFIG z_virtual_endstop.cfg
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 
 # Start by homing the printer.
 G28
@@ -20,6 +20,19 @@ G1 Z5 X0 Y0
 # Do regular probe
 PROBE
 QUERY_PROBE
+
+# Test PROBE_CALIBRATE
+PROBE_CALIBRATE
+ABORT
+PROBE_CALIBRATE SPEED=7.3
+TESTZ Z=-.2
+TESTZ Z=-.3
+TESTZ Z=+.1
+TESTZ Z=++
+TESTZ Z=--
+TESTZ Z=+
+TESTZ Z=-
+ACCEPT
 
 # Move again
 G1 Z9

@@ -53,7 +53,7 @@ set_non_blocking(int fd)
     return 0;
 }
 
-static int
+int
 set_close_on_exec(int fd)
 {
     int ret = fcntl(fd, F_SETFD, FD_CLOEXEC);

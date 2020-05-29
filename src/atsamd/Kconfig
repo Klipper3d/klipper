@@ -1,0 +1,140 @@
+# Kconfig settings for Atmel SAMD processors
+
+if MACH_ATSAMD
+
+config ATSAMD_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_HARD_PWM if MACH_SAMD21
+    select HAVE_GPIO_BITBANGING
+    select HAVE_CHIPID
+
+config BOARD_DIRECTORY
+    string
+    default "atsamd"
+
+choice
+    prompt "Processor model"
+    config MACH_SAMD21G18
+        bool "SAMD21G18 (Arduino Zero)"
+        select MACH_SAMD21
+    config MACH_SAMD21E18
+        bool "SAMD21E18 (Adafruit Trinket M0)"
+        select MACH_SAMD21
+    config MACH_SAMD21E15
+        bool "SAMD21E15"
+        select MACH_SAMD21
+    config MACH_SAMD51G19
+        bool "SAMD51G19 (Adafruit ItsyBitsy M4)"
+        select MACH_SAMD51
+    config MACH_SAMD51J19
+        bool "SAMD51J19 (Adafruit Metro M4)"
+        select MACH_SAMD51
+    config MACH_SAMD51N19
+        bool "SAMD51N19"
+        select MACH_SAMD51
+    config MACH_SAMD51P20
+        bool "SAMD51P20 (Adafruit Grand Central)"
+        select MACH_SAMD51
+endchoice
+
+config MACH_SAMD21
+    bool
+config MACH_SAMD51
+    bool
+
+config MCU
+    string
+    default "samd21g18a" if MACH_SAMD21G18
+    default "samd21e18a" if MACH_SAMD21E18
+    default "samd21e15a" if MACH_SAMD21E15
+    default "samd51g19a" if MACH_SAMD51G19
+    default "samd51j19a" if MACH_SAMD51J19
+    default "samd51n19a" if MACH_SAMD51N19
+    default "samd51p20a" if MACH_SAMD51P20
+
+config FLASH_SIZE
+    hex
+    default 0x8000 if MACH_SAMD21E15
+    default 0x40000 if MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
+    default 0x100000 if MACH_SAMD51P20
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x1000 if MACH_SAMD21E15
+    default 0x8000 if MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
+    default 0x40000 if MACH_SAMD51P20
+
+config STACK_SIZE
+    int
+    default 512
+
+choice
+    prompt "Clock Reference"
+    config CLOCK_REF_X32K
+        bool "32.768Khz crystal"
+    config CLOCK_REF_INTERNAL
+        bool "Internal clock"
+endchoice
+
+choice
+    depends on MACH_SAMD51 && LOW_LEVEL_OPTIONS
+    prompt "Processor speed"
+    config SAMD51_FREQ_120
+        bool "120 MHz (standard)"
+    config SAMD51_FREQ_150
+        bool "150 MHz (overclock)"
+    config SAMD51_FREQ_180
+        bool "180 MHz (overclock)"
+    config SAMD51_FREQ_200
+        bool "200 MHz (overclock)"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 48000000 if MACH_SAMD21
+    default 150000000 if SAMD51_FREQ_150
+    default 180000000 if SAMD51_FREQ_180
+    default 200000000 if SAMD51_FREQ_200
+    default 120000000 if MACH_SAMD51
+
+choice
+    prompt "Bootloader offset"
+    config FLASH_START_2000
+        depends on MACH_SAMD21
+        bool "8KiB bootloader (Arduino Zero)"
+    config FLASH_START_4000
+        bool "16KiB bootloader (Arduino M0)"
+    config FLASH_START_0000
+        bool "No bootloader"
+endchoice
+
+config FLASH_START
+    hex
+    default 0x4000 if FLASH_START_4000
+    default 0x2000 if FLASH_START_2000
+    default 0x0000
+
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)" if MACH_SAMD21
+    default y
+config SERIAL
+    depends on !USBSERIAL
+    bool
+    default y
+config HAVE_SERCOM
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    bool
+    default y
+
+endif

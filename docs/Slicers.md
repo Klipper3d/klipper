@@ -18,8 +18,9 @@ END_PRINT in the slicer's configuration. Defining these actions in the
 Klipper configuration may make it easier to tweak the printer's start
 and end steps as changes do not require re-slicing.
 
-See the [example-extras.cfg](../config/example-extras.cfg) file for
-details on defining a gcode_macro.
+See the
+[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+file for details on defining a gcode_macro.
 
 # Large retraction settings may require tuning Klipper
 
@@ -48,6 +49,19 @@ between moves. This is likely to make blobbing worse, not better.
 
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
+
+# Do not use "extra restart distance" on Simplify3d
+
+This setting can cause dramatic changes to extrusion rates which can
+trigger Klipper's maximum extrusion cross-section check. Consider
+using Klipper's [pressure advance](Pressure_Advance.md) or the regular
+Simplify3d retract setting instead.
+
+# Disable "PreloadVE" on KISSlicer
+
+If using KISSlicer slicing software then set "PreloadVE" to
+zero. Consider using Klipper's [pressure advance](Pressure_Advance.md)
+instead.
 
 # Disable any "advanced extruder pressure" settings
 

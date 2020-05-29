@@ -1,6 +1,6 @@
 # Support for UC1701 (and similar) 128x64 graphics LCD displays
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -12,14 +12,16 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class DisplayBase:
-    def __init__(self, io):
+    def __init__(self, io, columns=128):
         self.send = io.send
         # framebuffers
-        self.vram = [bytearray(128) for i in range(8)]
-        self.all_framebuffers = [(self.vram[i], bytearray('~'*128), i)
+        self.columns = columns
+        self.vram = [bytearray(self.columns) for i in range(8)]
+        self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
-        self.font = [self._swizzle_bits(c) for c in font8x14.VGA_FONT]
+        self.font = [self._swizzle_bits(bytearray(c))
+                     for c in font8x14.VGA_FONT]
         self.icons = {}
         for name, icon in icons.Icons16x16.items():
             top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
@@ -97,7 +99,7 @@ class DisplayBase:
             return 1
         return 0
     def clear(self):
-        zeros = bytearray(128)
+        zeros = bytearray(self.columns)
         for page in self.vram:
             page[:] = zeros
     def get_dimensions(self):
@@ -108,30 +110,12 @@ class SPI4wire:
     def __init__(self, config, data_pin_name):
         self.spi = extras.bus.MCU_SPI_from_config(config, 0,
                                                   default_speed=10000000)
-        mcu = self.spi.get_mcu()
-        # Create data/control pin
-        ppins = config.get_printer().lookup_object('pins')
-        pin_params = ppins.lookup_pin(config.get(data_pin_name))
-        if pin_params['chip'] != mcu:
-            raise ppins.error("%s: all pins must be on same mcu" % (
-                config.get_name()))
-        self.dc_oid = mcu.create_oid()
-        mcu.add_config_cmd("config_digital_out oid=%d pin=%s"
-                           " value=%d default_value=%d max_duration=%d" % (
-                               self.dc_oid, pin_params['pin'], 0, 0, 0))
-        mcu.register_config_callback(self.build_config)
-        self.update_pin_cmd = None
-    def build_config(self):
-        self.update_pin_cmd = self.spi.get_mcu().lookup_command(
-            "update_digital_out oid=%c value=%c",
-            cq=self.spi.get_command_queue())
+        dc_pin = config.get(data_pin_name)
+        self.mcu_dc = extras.bus.MCU_bus_digital_out(
+            self.spi.get_mcu(), dc_pin, self.spi.get_command_queue())
     def send(self, cmds, is_data=False):
-        if is_data:
-            self.update_pin_cmd.send([self.dc_oid, 1],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
-        else:
-            self.update_pin_cmd.send([self.dc_oid, 0],
-                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.mcu_dc.update_digital_out(is_data,
+                                       reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # IO wrapper for i2c bus
@@ -148,11 +132,38 @@ class I2C:
         cmds.insert(0, hdr)
         self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
+# Helper code for toggling a reset pin on startup
+class ResetHelper:
+    def __init__(self, pin_desc, io_bus):
+        self.mcu_reset = None
+        if pin_desc is None:
+            return
+        self.mcu_reset = extras.bus.MCU_bus_digital_out(
+            io_bus.get_mcu(), pin_desc, io_bus.get_command_queue())
+    def init(self):
+        if self.mcu_reset is None:
+            return
+        mcu = self.mcu_reset.get_mcu()
+        curtime = mcu.get_printer().get_reactor().monotonic()
+        print_time = mcu.estimated_print_time(curtime)
+        # Toggle reset
+        minclock = mcu.print_time_to_clock(print_time + .100)
+        self.mcu_reset.update_digital_out(0, minclock=minclock)
+        minclock = mcu.print_time_to_clock(print_time + .200)
+        self.mcu_reset.update_digital_out(1, minclock=minclock)
+        # Force a delay to any subsequent commands on the command queue
+        minclock = mcu.print_time_to_clock(print_time + .300)
+        self.mcu_reset.update_digital_out(1, minclock=minclock)
+
 # The UC1701 is a "4-wire" SPI display device
 class UC1701(DisplayBase):
     def __init__(self, config):
-        DisplayBase.__init__(self, SPI4wire(config, "a0_pin"))
+        io = SPI4wire(config, "a0_pin")
+        DisplayBase.__init__(self, io)
+        self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
+        self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
+        self.reset.init()
         init_cmds = [0xE2, # System reset
                      0x40, # Set display to start at line 0
                      0xA0, # Set SEG direction
@@ -165,7 +176,7 @@ class UC1701(DisplayBase):
                      0x00, # Booster ratio value (4x)
                      0x23, # Set resistor ratio (3)
                      0x81, # Set Electronic Volume
-                     0x28, # Electronic volume value (40)
+                     self.contrast, # Electronic Volume value
                      0xAC, # Set static indicator off
                      0x00, # NOP
                      0xA6, # Disable Inverse
@@ -174,18 +185,21 @@ class UC1701(DisplayBase):
         self.send([0xA5]) # display all
         self.send([0xA4]) # normal display
         self.flush()
-        logging.info("uc1701 initialized")
 
 # The SSD1306 supports both i2c and "4-wire" spi
-class SSD1306(UC1701):
-    def __init__(self, config):
+class SSD1306(DisplayBase):
+    def __init__(self, config, columns=128):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
-            io = I2C(config, 120)
+            io = I2C(config, 60)
+            io_bus = io.i2c
         else:
             io = SPI4wire(config, "dc_pin")
-        DisplayBase.__init__(self, io)
+            io_bus = io.spi
+        self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
+        DisplayBase.__init__(self, io, columns)
     def init(self):
+        self.reset.init()
         init_cmds = [
             0xAE,       # Display off
             0xD5, 0x80, # Set oscillator frequency
@@ -207,3 +221,8 @@ class SSD1306(UC1701):
         ]
         self.send(init_cmds)
         self.flush()
+
+# the SH1106 is SSD1306 compatible with up to 132 columns
+class SH1106(SSD1306):
+    def __init__(self, config):
+        SSD1306.__init__(self, config, 132)
