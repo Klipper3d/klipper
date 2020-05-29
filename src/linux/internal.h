@@ -5,6 +5,13 @@
 #include <time.h> // struct timespec
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 
+#define MAX_CHIP_NUMBER     5
+#define MAX_GPIO_LINES    254
+#define TOTAL_GPIO_LINES    MAX_CHIP_NUMBER*MAX_GPIO_LINES
+#define GPIO(PORT, NUM) ((PORT) * MAX_GPIO_LINES + (NUM))
+#define GPIO2PORT(PIN) ((PIN) / MAX_GPIO_LINES)
+
+
 #define NSECS 1000000000
 #define NSECS_PER_TICK (NSECS / CONFIG_CLOCK_FREQ)
 
