@@ -24,10 +24,30 @@
 
 
 DECL_ENUMERATION_RANGE("pin", "P0.0", GPIO(0, 0), MAX_GPIO_LINES);
+#if GPIO_CHIP_COUNT >= 2
 DECL_ENUMERATION_RANGE("pin", "P1.0", GPIO(1, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 3
 DECL_ENUMERATION_RANGE("pin", "P2.0", GPIO(2, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 4
 DECL_ENUMERATION_RANGE("pin", "P3.0", GPIO(3, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 5
 DECL_ENUMERATION_RANGE("pin", "P4.0", GPIO(4, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 6
+DECL_ENUMERATION_RANGE("pin", "P5.0", GPIO(5, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 7
+DECL_ENUMERATION_RANGE("pin", "P6.0", GPIO(6, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 8
+DECL_ENUMERATION_RANGE("pin", "P7.0", GPIO(7, 0), MAX_GPIO_LINES);
+#endif
+#if GPIO_CHIP_COUNT >= 9
+DECL_ENUMERATION_RANGE("pin", "P8.0", GPIO(8, 0), MAX_GPIO_LINES);
+#endif
 
 struct gpio_line {
     int offset;
@@ -37,7 +57,7 @@ struct gpio_line {
 
 static struct gpio_line lines[TOTAL_GPIO_LINES];
 
-static int gpio_chip_fd[MAX_CHIP_NUMBER] = { -1 };
+static int gpio_chip_fd[GPIO_CHIP_COUNT] = { -1 };
 
 static int
 get_chip_fd(uint8_t chipId) {
