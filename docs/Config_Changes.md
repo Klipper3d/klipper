@@ -5,6 +5,9 @@ document when upgrading the Klipper software.
 All dates in this document are approximate.
 
 # Changes
+2020xxxx: The the GPIO name on linux_mcu has changed. It is now in the
+form `P<chipid>.<gpio>`. For example, what was previously referred to
+as `P20` now becomes `P0.20`.
 
 20200524: The default value for the tmc5160 pwm_freq field is now zero
 (instead of one).
