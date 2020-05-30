@@ -25,7 +25,7 @@ ifeq ($(CONFIG_GPIO_CHIP_COUNT),0)
 	endif
 	CFLAGS += -DGPIO_CHIP_COUNT=$(shell ls /dev/gpiochip* | wc -l)
 else
-	CFLAGS += -DGPIO_CHIP_COUNT=$(CONFIG_GPIO_CHIP_COUNT)
+	CFLAGS += -DGPIO_CHIP_COUNT=0$(CONFIG_GPIO_CHIP_COUNT)
 endif
 
 flash: $(OUT)klipper.elf
