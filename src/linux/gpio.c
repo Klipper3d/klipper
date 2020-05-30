@@ -50,6 +50,7 @@ DECL_ENUMERATION_RANGE("pin", "P8.0", GPIO(8, 0), MAX_GPIO_LINES);
 #endif
 
 struct gpio_line {
+    int chipid;
     int offset;
     int fd;
     int state;
@@ -76,17 +77,18 @@ get_chip_fd(uint8_t chipId) {
         for (i=0; i<MAX_GPIO_LINES; ++i) {
             lines[GPIO(chipId,i)].offset = i;
             lines[GPIO(chipId,i)].fd = -1;
+            lines[GPIO(chipId,i)].chipid = chipId;
         }
     }
     return gpio_chip_fd[chipId];
 }
 
-// Dummy versions of gpio_out functions
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint8_t val)
 {
     struct gpio_line* line = &lines[pin];
-//    line->offset = pin;
+    line->offset = GPIO2PIN(pin);
+    line->chipid = GPIO2PORT(pin);
     struct gpio_out g = { .line = line };
     gpio_out_reset(g,val);
     return g;
@@ -106,7 +108,6 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
 {
     int rv;
     struct gpiohandle_request req;
-    int chipId = get_chip_fd(GPIO2PORT(g.line->offset));
     gpio_release_line(g.line);
     memset(&req, 0, sizeof(req));
     req.lines = 1;
@@ -114,7 +115,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     req.lineoffsets[0] = g.line->offset;
     req.default_values[0] = !!val;
     strncpy(req.consumer_label,GPIO_CONSUMER,sizeof(req.consumer_label) - 1);
-    rv = ioctl(chipId, GPIO_GET_LINEHANDLE_IOCTL, &req);
+    rv = ioctl(get_chip_fd(g.line->chipid), GPIO_GET_LINEHANDLE_IOCTL, &req);
     if (rv < 0) {
         report_errno("gpio_out_reset get line",rv);
         shutdown("Unable to open out GPIO chip line");
@@ -150,7 +151,8 @@ struct gpio_in
 gpio_in_setup(uint32_t pin, int8_t pull_up)
 {
     struct gpio_line* line = &lines[pin];
-//    line->offset = pin;
+    line->offset = GPIO2PIN(pin);
+    line->chipid = GPIO2PORT(pin);
     struct gpio_in g = { .line = line };
     gpio_in_reset(g,pull_up);
     return g;
@@ -175,8 +177,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     req.lineoffsets[0] = g.line->offset;
     strncpy(req.consumer_label,GPIO_CONSUMER,sizeof(req.consumer_label) - 1);
     rv = ioctl(
-        get_chip_fd(GPIO2PORT(g.line->offset)), GPIO_GET_LINEHANDLE_IOCTL,
-        &req);
+        get_chip_fd(g.line->chipid),GPIO_GET_LINEHANDLE_IOCTL,&req);
     if (rv < 0) {
         report_errno("gpio_in_reset get line",rv);
         shutdown("Unable to open in GPIO chip line");
