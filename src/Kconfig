@@ -53,10 +53,10 @@ menu "USB ids"
 
 config USB_VENDOR_ID
     hex "USB vendor ID"
-    default 0x2341
+    default 0x1d50
 config USB_DEVICE_ID
     hex "USB device ID"
-    default 0xabcd
+    default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
     depends on HAVE_CHIPID
     bool "USB serial number from CHIPID"

@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20200531: The default USB vendor/product id is now 0x1d50/0x614e.
+These new ids are reserved for Klipper (thanks to the openmoko
+project). This change should not require any config changes, but the
+new ids may appear in system logs.
+
 20200524: The default value for the tmc5160 pwm_freq field is now zero
 (instead of one).
 
