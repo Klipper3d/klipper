@@ -52,7 +52,11 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 # Flash rules
-flash: $(OUT)klipper.bin
+lib/hidflash/hid-flash:
+	@echo "  Building hid-flash"
+	$(Q)make -C lib/hidflash
+
+flash: $(OUT)klipper.bin lib/hidflash/hid-flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" -s "$(CONFIG_FLASH_START)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
 

@@ -1,8 +1,9 @@
 #!/bin/bash
-# This script installs Klipper on an Ubuntu 18.04 machine with Octoprint
+# This script installs Klipper on an Arch Linux system
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
+AURCLIENT="pamac"
 KLIPPER_USER=$USER
 KLIPPER_GROUP=$KLIPPER_USER
 
@@ -10,24 +11,22 @@ KLIPPER_GROUP=$KLIPPER_USER
 install_packages()
 {
     # Packages for python cffi
-    PKGLIST="python-virtualenv virtualenv python-dev libffi-dev build-essential"
+    PKGLIST="python2-virtualenv libffi base-devel"
     # kconfig requirements
-    PKGLIST="${PKGLIST} libncurses-dev"
+    PKGLIST="${PKGLIST} ncurses"
     # hub-ctrl
-    PKGLIST="${PKGLIST} libusb-dev"
+    PKGLIST="${PKGLIST} libusb"
     # AVR chip installation and building
-    PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
+    PKGLIST="${PKGLIST} avrdude avr-gcc avr-binutils avr-libc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} stm32flash libnewlib-arm-none-eabi"
-    PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0"
-
-    # Update system package info
-    report_status "Running apt-get update..."
-    sudo apt-get update
+    AURLIST="stm32flash"
+    PKGLIST="${PKGLIST} arm-none-eabi-newlib"
+    PKGLIST="${PKGLIST} arm-none-eabi-gcc arm-none-eabi-binutils"
 
     # Install desired packages
-    report_status "Installing packages..."
-    sudo apt-get install --yes ${PKGLIST}
+     report_status "Installing packages..."
+     sudo pacman -S ${PKGLIST}
+     $AURCLIENT build ${AURLIST}
 }
 
 # Step 2: Create python virtual environment
@@ -36,7 +35,7 @@ create_virtualenv()
     report_status "Updating python virtual environment..."
 
     # Create virtualenv if it doesn't already exist
-    [ ! -d ${PYTHONDIR} ] && virtualenv ${PYTHONDIR}
+    [ ! -d ${PYTHONDIR} ] && virtualenv2 ${PYTHONDIR}
 
     # Install/update dependencies
     ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
@@ -65,6 +64,7 @@ ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
+    report_status "Make sure to add $KLIPPER_USER to the user group controlling your serial printer port"
 }
 
 # Step 4: Start host software
