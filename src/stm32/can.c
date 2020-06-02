@@ -63,7 +63,9 @@ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB12,PB13");
 
 #if (CONFIG_MACH_STM32F4)
 #warning CAN on STM32F4 is untested
-#if (CONFIG_CAN_PINS_PA11_PA12 || CONFIG_CAN_PINS_PB8_PB9 || CONFIG_CAN_PINS_PI8_PH13)
+#if (CONFIG_CAN_PINS_PA11_PA12 ||
+     CONFIG_CAN_PINS_PB8_PB9 ||
+     CONFIG_CAN_PINS_PI8_PH13)
 #define SOC_CAN CAN1
 #define CAN_RX0_IRQn  CAN1_RX0_IRQn
 #define CAN_RX1_IRQn  CAN1_RX1_IRQn
@@ -206,8 +208,9 @@ int CAN_TxIrq(void) {
 
 void CAN_RxCpltCallback(unsigned int mbox)
 {
-    uint32_t id = (SOC_CAN->sFIFOMailBox[mbox].RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-    uint8_t dlc = SOC_CAN->sFIFOMailBox[mbox].RDTR & CAN_RDT0R_DLC;
+    CAN_FIFOMailBox_TypeDef* mb = &SOC_CAN->sFIFOMailBox[mbox];
+    uint32_t id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+    uint8_t dlc = mb->RDTR & CAN_RDT0R_DLC;
     uint8_t databuf[8];
 
     if(!MyCanId) { // If serial not assigned yet
@@ -263,7 +266,7 @@ void CAN_RxCpltCallback(unsigned int mbox)
 }
 
 /**
-  * @brief This function handles CAN global interrupts 
+  * @brief This function handles CAN global interrupts
   */
 void
 CAN_IRQHandler(void)
@@ -314,7 +317,7 @@ make_btr(uint32_t sjw,       // Sync jump width, ... hmm
         ((uint32_t)(sjw-1)) << CAN_BTR_SJW_Pos
         | ((uint32_t)(time_seg1-1)) << CAN_BTR_TS1_Pos
         | ((uint32_t)(time_seg2-1)) << CAN_BTR_TS2_Pos
-        | ((uint32_t)(brp - 1)) << CAN_BTR_BRP_Pos;    
+        | ((uint32_t)(brp - 1)) << CAN_BTR_BRP_Pos;
 }
 
 
@@ -323,14 +326,14 @@ compute_btr(uint32_t pclock, uint32_t bitrate) {
 
     /*
         Some equations:
-        Tpclock = 1 / pclock 
+        Tpclock = 1 / pclock
         Tq      = brp * Tpclock
         Tbs1    = Tq * TS1
         Tbs2    = Tq * TS2
         NominalBitTime = Tq + Tbs1 + Tbs2
         BaudRate = 1/NominalBitTime
 
-        Bit value sample point is after Tq+Tbs1. Ideal sample point 
+        Bit value sample point is after Tq+Tbs1. Ideal sample point
         is at 87.5% of NominalBitTime
 
         Use the lowest brp where ts1 and ts2 are in valid range
@@ -347,10 +350,10 @@ compute_btr(uint32_t pclock, uint32_t bitrate) {
         if(brp_rem == 0)
             break;
     }
-    uint32_t brp       = bit_clocks / qs; 
-    uint32_t time_seg2 = qs / 8; // sample at ~87.5% 
+    uint32_t brp       = bit_clocks / qs;
+    uint32_t time_seg2 = qs / 8; // sample at ~87.5%
     uint32_t time_seg1 = qs - (1 + time_seg2);
-    
+
     return make_btr(sjw, time_seg1, time_seg2, brp);
 }
 
@@ -361,7 +364,7 @@ can_init(void)
 
     gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
     gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
-    
+
     uint32_t pclock = get_pclock_frequency((uint32_t)SOC_CAN);
 
     uint32_t btr = compute_btr(pclock, CONFIG_SERIAL_BAUD);
@@ -420,7 +423,7 @@ can_init(void)
       armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
     // TODO: CAN_SCE_IRQ?n
 
-    
+
     /*##-4- Say Hello #################################*/
     can_uuid_resp();
 }
