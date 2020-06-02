@@ -219,7 +219,7 @@ armcm_main(void)
     // Turn on hsi14 oscillator for ADC
     hsi14_setup();
 
-    // Support alternate USB/CAN pins on stm32f042
+    // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
     if (CONFIG_STM32F042_PIN_SWAP) {
         enable_pclock(SYSCFG_BASE);

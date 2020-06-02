@@ -122,13 +122,14 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 
     // STM32F1 remaps functions to pins in a very different
     // way from other STM32s.
-    // Code below is emulating a few mappings to work like STM32F0
+    // Code below is emulating a few mappings to work like an STM32F4
     uint32_t func = (mode >> 4) & 0xf;
     if(( gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) &&
-       func == 4) { // CAN
+       func == 9) { // CAN
         stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
                                   AFIO_MAPR_CAN_REMAP_REMAP2);
     }
+    // Add more as needed
 }
 
 

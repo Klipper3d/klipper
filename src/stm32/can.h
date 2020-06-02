@@ -1,5 +1,5 @@
-#ifndef CORE_INC_CAN_H_
-#define CORE_INC_CAN_H_
+#ifndef __STM32_CAN_H__
+#define __STM32_CAN_H__
 
 // Read UUID  (6bytes)
 #define PKT_ID_UUID (0x321)
@@ -10,6 +10,4 @@
 
 #define SHORT_UUID_LEN (6)
 
-void CanInit(void);
-
-#endif /* CORE_INC_CAN_H_ */
+#endif /* __STM32_CAN_H__*/

@@ -7,39 +7,97 @@
  *
  */
 
-#include "autoconf.h" // CONFIG_SERIAL_BAUD
+#include "autoconf.h" //
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/serial_irq.h" // serial_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 #include <string.h>
-#include "stm32f0_can.h"
+#include "can.h"
 
+#if (CONFIG_CAN_PINS_PA11_PA12)
 DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
 #define GPIO_Rx GPIO('A', 11)
 #define GPIO_Tx GPIO('A', 12)
+#endif
+#if (CONFIG_CAN_PINS_PB8_PB9)
+DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB8,PB9");
+#define GPIO_Rx GPIO('B', 8)
+#define GPIO_Tx GPIO('B', 9)
+#endif
+#if (CONFIG_CAN_PINS_PI8_PH13)
+DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI8,PH13");
+#define GPIO_Rx GPIO('I', 8)
+#define GPIO_Tx GPIO('H', 13)
+#endif
+#if (CONFIG_CAN_PINS_PB5_PB6)
+DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB5,PB6");
+#define GPIO_Rx GPIO('B', 5)
+#define GPIO_Tx GPIO('B', 6)
+#endif
+#if (CONFIG_CAN_PINS_PB12_PB13)
+DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB12,PB13");
+#define GPIO_Rx GPIO('B', 12)
+#define GPIO_Tx GPIO('B', 13)
+#endif
+
+#if    (CONFIG_MACH_STM32F0)
+#define SOC_CAN CAN
+#define CAN_RX0_IRQn  CEC_CAN_IRQn
+#define CAN_RX1_IRQn  CEC_CAN_IRQn
+#define CAN_TX_IRQn   CEC_CAN_IRQn
+#define CAN_SCE_IRQn  CEC_CAN_IRQn
+#define CAN_FUNCTION  GPIO_FUNCTION(4)  // Alternative function mapping number
+#endif
+
+#if (CONFIG_MACH_STM32F1)
+#define SOC_CAN CAN1
+#define CAN_RX0_IRQn  CAN1_RX0_IRQn
+#define CAN_RX1_IRQn  CAN1_RX1_IRQn
+#define CAN_TX_IRQn   CAN1_TX_IRQn
+#define CAN_SCE_IRQn  CAN1_SCE_IRQn
+#define CAN_FUNCTION  GPIO_FUNCTION(9)  // Alternative function mapping number
+#endif
+
+
+#if (CONFIG_MACH_STM32F4)
+#warning CAN on STM32F4 is untested
+#if (CONFIG_CAN_PINS_PA11_PA12 || CONFIG_CAN_PINS_PB8_PB9 || CONFIG_CAN_PINS_PI8_PH13)
+#define SOC_CAN CAN1
+#define CAN_RX0_IRQn  CAN1_RX0_IRQn
+#define CAN_RX1_IRQn  CAN1_RX1_IRQn
+#define CAN_TX_IRQn   CAN1_TX_IRQn
+#define CAN_SCE_IRQn  CAN1_SCE_IRQn
+#elsif ((CONFIG_CAN_PINS_PB5_PB6 || CONFIG_CAN_PINS_PB12_PB13)
+#define SOC_CAN CAN2
+#define CAN_RX0_IRQn  CAN2_RX0_IRQn
+#define CAN_RX1_IRQn  CAN2_RX1_IRQn
+#define CAN_TX_IRQn   CAN2_TX_IRQn
+#define CAN_SCE_IRQn  CAN2_SCE_IRQn
+#else
+#error Uknown pins for STMF32F4 CAN
+#endif
+
+#define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
+#endif
+
+
+#ifndef SOC_CAN
+#error No known CAN device for configured MCU
+#endif
+
 
 // TXFP makes packets posted to the TX mboxes transmit in chronologcal order
-#define MCR_FLAGS (CAN_MCR_TXFP)
+// ABOM makes the hardware automatically leave bus-off state
+#define MCR_FLAGS (CAN_MCR_TXFP | CAN_MCR_ABOM)
 
-// TODO: Make portable to other STM32's.
-// TODO: Use SERIAL_BAUD
-
-/* BTR Register:
-    BRP = baudrate prescaler;  (6 bits)
-    SJW = synchronization jump width,  (2 bits)
-    TS1 = time segment before sample point,  (4 bits)
-    TS2 = time segment after sample point, (3 bits)
-  Values below gives 500kbits/s on a 48Mhz clock
-*/
-#define BTR_FLAGS (  CAN_BTR_TS1_2 | CAN_BTR_TS2_0 | /* prescaler */ 11U )
 #define CAN_FILTER_NUMBER 0
 
 static uint16_t MyCanId = 0;
 
 static int can_find_empty_tx_mbox(void) {
-    uint32_t tsr = CAN->TSR;
+    uint32_t tsr = SOC_CAN->TSR;
     if(tsr & CAN_TSR_TME0) return 0;
     if(tsr & CAN_TSR_TME1) return 1;
     if(tsr & CAN_TSR_TME2) return 2;
@@ -48,7 +106,7 @@ static int can_find_empty_tx_mbox(void) {
 
 static void can_transmit_mbox(uint32_t id, int mbox, uint32_t dlc, uint8_t *pkt)
 {
-     CAN_TxMailBox_TypeDef *mb = &CAN->sTxMailBox[mbox];
+     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
     /* Set up the Id */
     mb->TIR &= CAN_TI0R_TXRQ;
     mb->TIR |= (id << CAN_TI0R_STID_Pos);
@@ -106,12 +164,12 @@ static void can_uuid_resp(void)
 
 static void get_rx_data(uint8_t* buf, unsigned int mbox)
 {
-    uint32_t rdlr = CAN->sFIFOMailBox[mbox].RDLR;
+    uint32_t rdlr = SOC_CAN->sFIFOMailBox[mbox].RDLR;
     buf[0] = (rdlr >>  0) & 0xff;
     buf[1] = (rdlr >>  8) & 0xff;
     buf[2] = (rdlr >> 16) & 0xff;
     buf[3] = (rdlr >> 24) & 0xff;
-    uint32_t rdhr = CAN->sFIFOMailBox[mbox].RDHR;
+    uint32_t rdhr = SOC_CAN->sFIFOMailBox[mbox].RDHR;
     buf[4] = (rdhr >>  0) & 0xff;
     buf[5] = (rdhr >>  8) & 0xff;
     buf[6] = (rdhr >> 16) & 0xff;
@@ -148,8 +206,8 @@ int CAN_TxIrq(void) {
 
 void CAN_RxCpltCallback(unsigned int mbox)
 {
-    uint32_t id = (CAN->sFIFOMailBox[mbox].RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-    uint8_t dlc = CAN->sFIFOMailBox[mbox].RDTR & CAN_RDT0R_DLC;
+    uint32_t id = (SOC_CAN->sFIFOMailBox[mbox].RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+    uint8_t dlc = SOC_CAN->sFIFOMailBox[mbox].RDTR & CAN_RDT0R_DLC;
     uint8_t databuf[8];
 
     if(!MyCanId) { // If serial not assigned yet
@@ -166,17 +224,17 @@ void CAN_RxCpltCallback(unsigned int mbox)
                 memcpy(&MyCanId, databuf, sizeof(uint16_t));
                 /* Set new filter values */
                 uint32_t filternbrbitpos = (1U) << CAN_FILTER_NUMBER;
-                CAN->FA1R &= ~(filternbrbitpos);
+                SOC_CAN->FA1R &= ~(filternbrbitpos);
                 /* Personal ID */
-                CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
+                SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
                         ((uint32_t)(MyCanId<<5) << 16U);
                 /* Catch reset command */
-                CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
+                SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
                         ((uint32_t)(PKT_ID_UUID<<5) << 16U);
                 /* Filter activation */
-                CAN->FA1R |= filternbrbitpos;
+                SOC_CAN->FA1R |= filternbrbitpos;
                 /* Leave the initialisation mode for the filter */
-                CAN->FMR &= ~(CAN_FMR_FINIT);
+                SOC_CAN->FMR &= ~(CAN_FMR_FINIT);
             }
         }
     }  else {
@@ -205,104 +263,164 @@ void CAN_RxCpltCallback(unsigned int mbox)
 }
 
 /**
-  * @brief This function handles HDMI-CEC and CAN global interrupts /
-  *  HDMI-CEC wake-up interrupt through EXTI line 27.
+  * @brief This function handles CAN global interrupts 
   */
 void
-CEC_CAN_IRQHandler(void)
+CAN_IRQHandler(void)
 {
     // RX
-    if (CAN->RF0R & CAN_RF0R_FMP0) {
+    if (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
         // Mailbox 0
-        while(CAN->RF0R & CAN_RF0R_FMP0) {
+        while(SOC_CAN->RF0R & CAN_RF0R_FMP0) {
             CAN_RxCpltCallback(0);
-            CAN->RF0R |= CAN_RF0R_RFOM0;
+            SOC_CAN->RF0R |= CAN_RF0R_RFOM0;
         }
     }
-    if (CAN->RF1R & CAN_RF1R_FMP1) {
+    if (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
         // Mailbox 1
-        while(CAN->RF1R & CAN_RF1R_FMP1) {
+        while(SOC_CAN->RF1R & CAN_RF1R_FMP1) {
             CAN_RxCpltCallback(1);
-            CAN->RF1R |= CAN_RF1R_RFOM1;
+            SOC_CAN->RF1R |= CAN_RF1R_RFOM1;
         }
     }
 
     /* Check Overrun flag for FIFO0 */
-    if(CAN->RF0R & CAN_RF0R_FOVR0)
+    if(SOC_CAN->RF0R & CAN_RF0R_FOVR0)
     {
         /* Clear FIFO0 Overrun Flag */
-        CAN->RF0R |= CAN_RF0R_FOVR0;
+        SOC_CAN->RF0R |= CAN_RF0R_FOVR0;
     }
     /* Check Overrun flag for FIFO1 */
-    if(CAN->RF1R & CAN_RF1R_FOVR1)
+    if(SOC_CAN->RF1R & CAN_RF1R_FOVR1)
     {
         /* Clear FIFO1 Overrun Flag */
-        CAN->RF1R |= CAN_RF1R_FOVR1;
+        SOC_CAN->RF1R |= CAN_RF1R_FOVR1;
     }
 
     // TX
-    if(CAN->IER & CAN_IER_TMEIE) {  // TX IRQ enabled
+    if(SOC_CAN->IER & CAN_IER_TMEIE) {  // TX IRQ enabled
       if(!CAN_TxIrq())
-          CAN->IER &= ~CAN_IER_TMEIE; // Disable TXIRQ
+          SOC_CAN->IER &= ~CAN_IER_TMEIE; // Disable TXIRQ
     }
+}
+
+static inline const uint32_t
+make_btr(uint32_t sjw,       // Sync jump width, ... hmm
+         uint32_t time_seg1, // time segment before sample point, 1 .. 16
+         uint32_t time_seg2, // time segment after sample point, 1 .. 8
+         uint32_t brp)       // Baud rate prescaler, 1 .. 1024
+{
+    return
+        ((uint32_t)(sjw-1)) << CAN_BTR_SJW_Pos
+        | ((uint32_t)(time_seg1-1)) << CAN_BTR_TS1_Pos
+        | ((uint32_t)(time_seg2-1)) << CAN_BTR_TS2_Pos
+        | ((uint32_t)(brp - 1)) << CAN_BTR_BRP_Pos;    
+}
+
+
+static inline const uint32_t
+compute_btr(uint32_t pclock, uint32_t bitrate) {
+
+    /*
+        Some equations:
+        Tpclock = 1 / pclock 
+        Tq      = brp * Tpclock
+        Tbs1    = Tq * TS1
+        Tbs2    = Tq * TS2
+        NominalBitTime = Tq + Tbs1 + Tbs2
+        BaudRate = 1/NominalBitTime
+
+        Bit value sample point is after Tq+Tbs1. Ideal sample point 
+        is at 87.5% of NominalBitTime
+
+        Use the lowest brp where ts1 and ts2 are in valid range
+     */
+
+    uint32_t bit_clocks = pclock / bitrate; // clock ticks per bit
+
+    uint32_t sjw =  2;
+    uint32_t qs;
+    // Find number of time quantas that gives us the exact wanted bit time
+    for(qs = 18; qs > 9; qs --) {
+        // check that bit_clocks / quantas is an integer
+        uint32_t brp_rem = bit_clocks % qs;
+        if(brp_rem == 0)
+            break;
+    }
+    uint32_t brp       = bit_clocks / qs; 
+    uint32_t time_seg2 = qs / 8; // sample at ~87.5% 
+    uint32_t time_seg1 = qs - (1 + time_seg2);
+    
+    return make_btr(sjw, time_seg1, time_seg2, brp);
 }
 
 void
 can_init(void)
 {
-    enable_pclock((uint32_t)CAN);
-    gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(4), 1);
-    gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(4), 0);
+    enable_pclock((uint32_t)SOC_CAN);
+
+    gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
+    gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
+    
+    uint32_t pclock = get_pclock_frequency((uint32_t)SOC_CAN);
+
+    uint32_t btr = compute_btr(pclock, CONFIG_SERIAL_BAUD);
 
     /*##-1- Configure the CAN #######################################*/
 
     /* Exit from sleep mode */
-    CAN->MCR &= ~(CAN_MCR_SLEEP);
+    SOC_CAN->MCR &= ~(CAN_MCR_SLEEP);
     /* Request initialisation */
-    CAN->MCR |= CAN_MCR_INRQ;
+    SOC_CAN->MCR |= CAN_MCR_INRQ;
     /* Wait the acknowledge */
-    while( !(CAN->MSR & CAN_MSR_INAK) );
+    while( !(SOC_CAN->MSR & CAN_MSR_INAK) );
 
-    CAN->MCR |= MCR_FLAGS;
-    CAN->BTR = BTR_FLAGS;
+    SOC_CAN->MCR |= MCR_FLAGS;
+    SOC_CAN->BTR = btr;
 
     /* Request leave initialisation */
-    CAN->MCR &= ~(CAN_MCR_INRQ);
+    SOC_CAN->MCR &= ~(CAN_MCR_INRQ);
     /* Wait the acknowledge */
-    while( CAN->MSR & CAN_MSR_INAK );
+    while( SOC_CAN->MSR & CAN_MSR_INAK );
 
     /*##-2- Configure the CAN Filter #######################################*/
     uint32_t filternbrbitpos = (1U) << CAN_FILTER_NUMBER;
 
     /* Select the start slave bank */
-    CAN->FMR |= CAN_FMR_FINIT;
+    SOC_CAN->FMR |= CAN_FMR_FINIT;
     /* Initialisation mode for the filter */
-    CAN->FA1R &= ~(filternbrbitpos);
+    SOC_CAN->FA1R &= ~(filternbrbitpos);
 
-    CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
             ((uint32_t)(PKT_ID_UUID<<5) << 16U);
-    CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
             ((uint32_t)(PKT_ID_SET<<5) << 16U);
 
     /*Identifier list mode for the filter*/
-    CAN->FM1R |= filternbrbitpos;
+    SOC_CAN->FM1R |= filternbrbitpos;
     /* 32-bit scale for the filter */
-    CAN->FS1R |= filternbrbitpos;
+    SOC_CAN->FS1R |= filternbrbitpos;
 
     /* FIFO 0 assignation for the filter */
-    CAN->FFA1R &= ~(filternbrbitpos);
+    SOC_CAN->FFA1R &= ~(filternbrbitpos);
 
     /* Filter activation */
-    CAN->FA1R |= filternbrbitpos;
+    SOC_CAN->FA1R |= filternbrbitpos;
     /* Leave the initialisation mode for the filter */
-    CAN->FMR &= ~(CAN_FMR_FINIT);
+    SOC_CAN->FMR &= ~(CAN_FMR_FINIT);
 
     /*##-3- Configure Interrupts #################################*/
 
-    CAN->IER |= (CAN_IER_FMPIE0 | CAN_IER_FMPIE1); // RX mailbox IRQ
+    SOC_CAN->IER |= (CAN_IER_FMPIE0 | CAN_IER_FMPIE1); // RX mailbox IRQ
 
-    armcm_enable_irq(CEC_CAN_IRQHandler, CEC_CAN_IRQn, 0);
+    armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
+    if(CAN_RX0_IRQn != CAN_RX1_IRQn)
+      armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);
+    if(CAN_RX0_IRQn != CAN_TX_IRQn)
+      armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
+    // TODO: CAN_SCE_IRQ?n
 
+    
     /*##-4- Say Hello #################################*/
     can_uuid_resp();
 }
@@ -315,5 +433,5 @@ serial_enable_tx_irq(void)
         // Serial port not initialized
         return;
 
-    CAN->IER |= CAN_IER_TMEIE; // TX mailbox IRQ
+    SOC_CAN->IER |= CAN_IER_TMEIE; // TX mailbox IRQ
 }
