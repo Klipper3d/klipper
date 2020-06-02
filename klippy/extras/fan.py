@@ -16,6 +16,10 @@ class PrinterFan:
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
                                                minval=0.)
+        self.kick_start_difference = config.getfloat(
+            'kick_start_difference', default=0.5, minval=0., maxval=1.)
+        self.kick_start_max_power = config.getfloat(
+            'kick_start_max_power', default=0.0, minval=0., maxval=1.)
         self.off_below = config.getfloat(
             'off_below', default=0., minval=0., maxval=1.)
         ppins = self.printer.lookup_object('pins')
@@ -42,8 +46,12 @@ class PrinterFan:
         if value == self.last_fan_value:
             return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
-        if (value and value < self.max_power and self.kick_start_time
-            and (not self.last_fan_value or value - self.last_fan_value > .5)):
+        if (value
+            and value < self.max_power
+            and value <= self.kick_start_max_power
+            and self.kick_start_time
+            and (not self.last_fan_value
+                 or value - self.last_fan_value > self.kick_start_difference)):
             # Run fan at full speed for specified kick_start_time
             self.mcu_fan.set_pwm(print_time, self.max_power)
             print_time += self.kick_start_time
