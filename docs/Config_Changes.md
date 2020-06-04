@@ -6,8 +6,8 @@ All dates in this document are approximate.
 
 # Changes
 2020xxxx: The the GPIO name on linux_mcu has changed. It is now in the
-form `P<chipid>.<gpio>`. For example, what was previously referred to
-as `P20` now becomes `P0.20`.
+form `gpiochip<chipid>/gpio<gpio>`. For example, what was previously referred
+to as `P20` now becomes `gpiochip0/gpio20`.
 
 20200531: The default USB vendor/product id is now 0x1d50/0x614e.
 These new ids are reserved for Klipper (thanks to the openmoko

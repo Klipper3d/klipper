@@ -21,16 +21,4 @@ config CLOCK_FREQ
     int
     default 50000000
 
-config GPIO_CHIP_COUNT
-    int "Number of GPIO chips"
-    depends on LOW_LEVEL_OPTIONS
-    default 0
-    help
-        This the number of /dev/gpiochip* devices to control.
-
-        A setting of zero results in a autodetection
-        mode at compile time.
-
-        Default is 0
-
 endif

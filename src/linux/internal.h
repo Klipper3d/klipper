@@ -5,8 +5,7 @@
 #include <time.h> // struct timespec
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 
-#define MAX_GPIO_LINES    254
-#define TOTAL_GPIO_LINES    GPIO_CHIP_COUNT*MAX_GPIO_LINES
+#define MAX_GPIO_LINES    256
 #define GPIO(PORT, NUM) ((PORT) * MAX_GPIO_LINES + (NUM))
 #define GPIO2PORT(PIN) ((PIN) / MAX_GPIO_LINES)
 #define GPIO2PIN(PIN) ((PIN) % MAX_GPIO_LINES)

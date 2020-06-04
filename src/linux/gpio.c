@@ -23,31 +23,14 @@
 #define GPIO_CONSUMER "klipper"
 
 
-DECL_ENUMERATION_RANGE("pin", "P0.0", GPIO(0, 0), MAX_GPIO_LINES);
-#if GPIO_CHIP_COUNT >= 2
-DECL_ENUMERATION_RANGE("pin", "P1.0", GPIO(1, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 3
-DECL_ENUMERATION_RANGE("pin", "P2.0", GPIO(2, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 4
-DECL_ENUMERATION_RANGE("pin", "P3.0", GPIO(3, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 5
-DECL_ENUMERATION_RANGE("pin", "P4.0", GPIO(4, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 6
-DECL_ENUMERATION_RANGE("pin", "P5.0", GPIO(5, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 7
-DECL_ENUMERATION_RANGE("pin", "P6.0", GPIO(6, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 8
-DECL_ENUMERATION_RANGE("pin", "P7.0", GPIO(7, 0), MAX_GPIO_LINES);
-#endif
-#if GPIO_CHIP_COUNT >= 9
-DECL_ENUMERATION_RANGE("pin", "P8.0", GPIO(8, 0), MAX_GPIO_LINES);
-#endif
+DECL_ENUMERATION_RANGE("pin", "gpiochip0/gpio0", GPIO(0, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip1/gpio0", GPIO(1, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip2/gpio0", GPIO(2, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip3/gpio0", GPIO(3, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip4/gpio0", GPIO(4, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip5/gpio0", GPIO(5, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip6/gpio0", GPIO(6, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip7/gpio0", GPIO(7, 0), MAX_GPIO_LINES);
 
 struct gpio_line {
     int chipid;
@@ -56,21 +39,26 @@ struct gpio_line {
     int state;
 };
 
-static struct gpio_line lines[TOTAL_GPIO_LINES];
+static struct gpio_line lines[8*MAX_GPIO_LINES];
 
-static int gpio_chip_fd[GPIO_CHIP_COUNT] = { -1 };
+static int gpio_chip_fd[8] = { -1 };
 
 static int
 get_chip_fd(uint8_t chipId) {
+    char chipFilename[64],errorMessage[256];
     int i = 0;
     if (gpio_chip_fd[chipId] <= 0) {
-        char *chipFilename = malloc(sizeof(CHIP_FILE_NAME)+1);
-        sprintf(chipFilename, CHIP_FILE_NAME, chipId);
+        snprintf(chipFilename,sizeof(chipFilename), CHIP_FILE_NAME, chipId);
+        if(access(chipFilename, F_OK) < 0){
+            snprintf(errorMessage,sizeof(errorMessage),
+                "%s not found!",chipFilename);
+            report_errno(errorMessage,-1);
+            shutdown("GPIO chip device not found");
+        }
         gpio_chip_fd[chipId] = open(chipFilename,O_RDWR | O_CLOEXEC);
         if (gpio_chip_fd[chipId] < 0) {
-            char *errorMessage =
-                malloc(sizeof("Unable to open GPIO" CHIP_FILE_NAME));
-            sprintf(errorMessage,"Unable to open GPIO %s",chipFilename);
+            snprintf(errorMessage,sizeof(errorMessage),
+                "Unable to open GPIO %s",chipFilename);
             report_errno(errorMessage,-1);
             shutdown("Unable to open GPIO chip device");
         }
