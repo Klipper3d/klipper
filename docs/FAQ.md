@@ -21,7 +21,8 @@ Frequently asked questions
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
 19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
 20. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
-21. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+21. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
+22. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 
 ### How can I donate to the project?
 
@@ -413,6 +414,36 @@ likely the result of endstop inaccuracies. A stepper motor itself can
 only lose steps in increments of 4 full steps. (So, if one is using 16
 microsteps, then a lost step on the stepper would result in the "mcu:"
 step counter being off by a multiple of 64 microsteps.)
+
+### Why does Klipper report errors? I lost my print!
+
+Short answer: We want to know if our printers detect a problem so that
+the underlying issue can be fixed and we can obtain great quality
+prints. We definitely do not want our printers to silently produce low
+quality prints.
+
+Long answer: Klipper has been engineered to automatically workaround
+many transient problems. For example, it automatically detects
+communication errors and will retransmit; it schedules actions in
+advance and buffers commands at multiple layers to enable precise
+timing even with intermittent interference. However, should the
+software detect an error that it can not recover from, if it is
+commanded to take an invalid action, or if it detects it is hopelessly
+unable to perform its commanded task, then Klipper will report an
+error. In these situations there is a high risk of producing a
+low-quality print (or worse). It is hoped that alerting the user will
+empower them to fix the underlying issue and improve the overall
+quality of their prints.
+
+There are some related questions: Why doesn't Klipper pause the print
+instead? Report a warning instead? Check for errors before the print?
+Ignore errors in user typed commands? etc? Currently Klipper reads
+commands using the G-Code protocol, and unfortunately the G-Code
+command protocol is not flexible enough to make these alternatives
+practical today. There is developer interest in improving the user
+experience during abnormal events, but it is expected that will
+require notable infrastructure work (including a shift away from
+G-Code).
 
 ### How do I upgrade to the latest software?
 
