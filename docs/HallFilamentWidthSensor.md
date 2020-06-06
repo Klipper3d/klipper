@@ -52,6 +52,8 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     #
     #min_diameter:1.0
     #Minimal diameter for trigger virtual filament_switch_sensor.
+    #use_current_dia_while_delay: False
+    #   Use the current diameter instead of the nominal diamenter while the measurement delay has not run through.
     #
     #Values from filament_switch_sensor. See the "filament_switch_sensor" section for information on these parameters.
     #

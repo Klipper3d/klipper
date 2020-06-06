@@ -31,6 +31,8 @@ class HallFilamentWidthSensor:
         self.diameter =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
         self.runout_dia=config.getfloat('min_diameter', 1.0)
+        # Use the current diameter instead of nominal while the first measurement isn't in place
+        self.use_current_dia_while_delay = config.getboolean('use_current_dia_while_delay', False)
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
@@ -116,13 +118,18 @@ class HallFilamentWidthSensor:
                     # Get first item in filament_array queue
                     item = self.filament_array.pop(0)
                     filament_width = item[1]
-                    if ((filament_width <= self.max_diameter)
-                        and (filament_width >= self.min_diameter)):
-                        percentage = round(self.nominal_filament_dia**2
-                                           / filament_width**2 * 100)
-                        self.gcode.run_script("M221 S" + str(percentage))
-                    else:
-                        self.gcode.run_script("M221 S100")
+                elif self.use_current_dia_while_delay:
+                    filament_width = self.diameter
+                else:
+                    filament_width = self.nominal_filament_dia
+                
+                if ((filament_width <= self.max_diameter)
+                    and (filament_width >= self.min_diameter)):
+                    percentage = round(self.nominal_filament_dia**2
+                                       / filament_width**2 * 100)
+                    self.gcode.run_script("M221 S" + str(percentage))
+                else:
+                    self.gcode.run_script("M221 S100")
         else:
             self.gcode.run_script("M221 S100")
             self.filament_array = []
