@@ -5,6 +5,11 @@ document when upgrading the Klipper software.
 All dates in this document are approximate.
 
 # Changes
+2020xxxx: The the GPIO name on linux_mcu has changed. It is now in the
+`gpiochip<chipid>/gpio<gpio>`, for gpiochip0 you can also use a short
+`gpio<gpio>`.
+For example, what was previously referred to as `P20` now becomes
+`gpio20` or `gpiochip0/gpio20`.
 
 20200603: The default 16x4 LCD layout will no longer show the
 estimated time remaining in a print.  (Only the elapsed time will be

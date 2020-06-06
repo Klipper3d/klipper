@@ -15,7 +15,7 @@
 
 DECL_CONSTANT("ADC_MAX", 4095); // Assume 12bit adc
 
-#define ANALOG_START (1<<8)
+#define ANALOG_START (1<<12)
 
 DECL_ENUMERATION_RANGE("pin", "analog0", ANALOG_START, 8);
 
