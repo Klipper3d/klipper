@@ -32,8 +32,8 @@ class ExtruderStepper:
         self.extruder_name = gcmd.get('EXTRUDER', None)
         extruder = self.printer.lookup_object(self.extruder_name, None)
         if extruder is not None:
-            self.stepper.set_position([extruder.stepper.get_commanded_position(),
-                                       0., 0.])
+            epos = extruder.stepper.get_commanded_position()
+            self.stepper.set_position([epos, 0., 0.])
             self.stepper.set_trapq(extruder.get_trapq())
             gcode.respond_info("Extruder stepper now syncing with '%s'"
                                        % (self.extruder_name))
