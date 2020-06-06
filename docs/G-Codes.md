@@ -278,6 +278,15 @@ section is enabled:
   future G-Code movement commands may run in parallel with the stepper
   movement.
 
+## Extruder stepper Commands
+
+The following command is available when an "extruder_stepper" config
+section is enabled:
+- `SYNC_STEPPER_TO_EXTRUDER STEPPER=<extruder_stepper config_name>
+  [EXTRUDER=<extruder config_name>]`: This command will cause the given
+  STEPPER to become synchronized to the given EXTRUDER, overriding
+  the extruder defined in the "extruder_stepper" config section.
+
 ## Probe
 
 The following commands are available when a "probe" config section is
