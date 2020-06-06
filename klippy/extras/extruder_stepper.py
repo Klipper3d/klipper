@@ -23,23 +23,18 @@ class ExtruderStepper:
                                    desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
     def handle_connect(self):
         extruder = self.printer.lookup_object(self.extruder_name)
-        self.stepper.set_trapq(extruder.get_trapq())
+        extruder.sync_stepper(self.stepper)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
     cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
     def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
-        gcode = self.printer.lookup_object('gcode')
-        self.extruder_name = gcmd.get('EXTRUDER', None)
-        extruder = self.printer.lookup_object(self.extruder_name, None)
-        if extruder is not None:
-            epos = extruder.stepper.get_commanded_position()
-            self.stepper.set_position([epos, 0., 0.])
-            self.stepper.set_trapq(extruder.get_trapq())
-            gcode.respond_info("Extruder stepper now syncing with '%s'"
-                                       % (self.extruder_name))
-        else:
-            raise gcmd.error("'%s' is not a valid extruder."
-                                       % (self.extruder_name))
+        ename = gcmd.get('EXTRUDER')
+        extruder = self.printer.lookup_object(ename, None)
+        if extruder is None:
+            raise gcmd.error("'%s' is not a valid extruder." % (ename,))
+        extruder.sync_stepper(self.stepper)
+        self.extruder_name = ename
+        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
 
 def load_config_prefix(config):
     return ExtruderStepper(config)

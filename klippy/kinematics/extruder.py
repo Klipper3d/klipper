@@ -98,8 +98,10 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
-    def get_trapq(self):
-        return self.trapq
+    def sync_stepper(self, stepper):
+        epos = self.stepper.get_commanded_position()
+        stepper.set_position([epos, 0., 0.])
+        stepper.set_trapq(self.trapq)
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
