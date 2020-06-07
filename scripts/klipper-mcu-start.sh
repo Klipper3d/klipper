@@ -15,7 +15,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DESC="klipper_mcu startup"
 NAME="klipper_mcu"
 KLIPPER_HOST_MCU=/usr/local/bin/klipper_mcu
-KLIPPER_HOST_ARGS="-w -r"
+KLIPPER_HOST_ARGS="-r"
 PIDFILE=/var/run/klipper_mcu.pid
 
 . /lib/lsb/init-functions
