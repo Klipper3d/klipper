@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import icons, font8x14
+import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -46,6 +46,7 @@ class ST7920:
             ] + [(self.graphics_framebuffers[i], bytearray('~'*32), i)
                  for i in range(32)]
         self.cached_glyphs = {}
+        self.icons = {}
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
@@ -108,13 +109,12 @@ class ST7920:
                 0x06, # Set positive update direction
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
-        # Setup animated glyphs
-        self.cache_glyph('fan2', 'fan1', 0)
-        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
         self.flush()
     def cache_glyph(self, glyph_name, base_glyph_name, glyph_id):
-        icon = icons.Icons16x16[glyph_name]
-        base_icon = icons.Icons16x16[base_glyph_name]
+        icon = self.icons.get(glyph_name)
+        base_icon = self.icons.get(base_glyph_name)
+        if icon is None or base_icon is None:
+            return
         for i, (bits, base_bits) in enumerate(zip(icon, base_icon)):
             pos = glyph_id*32 + i*2
             b1, b2 = (bits >> 8) & 0xff, bits & 0xff
@@ -135,13 +135,19 @@ class ST7920:
             gfx_fb -= 32
             x += 16
         self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            self.icons[glyph_name] = glyph_data
+        # Setup animated glyphs
+        self.cache_glyph('fan2', 'fan1', 0)
+        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
     def write_glyph(self, x, y, glyph_name):
         glyph_id = self.cached_glyphs.get(glyph_name)
         if glyph_id is not None and x & 1 == 0:
             # Render cached icon using character generator
             glyph_name = glyph_id[0]
             self.write_text(x, y, glyph_id[1])
-        icon = icons.Icons16x16.get(glyph_name)
+        icon = self.icons.get(glyph_name)
         if icon is not None:
             # Draw icon in graphics mode
             for i, bits in enumerate(icon):

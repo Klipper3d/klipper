@@ -100,9 +100,6 @@ class PrinterLCD:
         self.show_data_group = self.display_data_groups.get(dgroup)
         if self.show_data_group is None:
             raise config.error("Unknown display_data group '%s'" % (dgroup,))
-        # Screen updating
-        self.glyph_helpers = { 'animated_bed': self.animate_bed,
-                               'animated_fan': self.animate_fan }
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
@@ -139,6 +136,28 @@ class PrinterLCD:
         for group_name, data_configs in groups.items():
             dg = DisplayGroup(config, group_name, data_configs)
             self.display_data_groups[group_name] = dg
+        # Load display glyphs
+        dg_prefix = 'display_glyph '
+        icons = {}
+        dg_main = config.get_prefix_sections(dg_prefix)
+        dg_main_names = {c.get_name(): 1 for c in dg_main}
+        dg_def = [c for c in dconfig.get_prefix_sections(dg_prefix)
+                  if c.get_name() not in dg_main_names]
+        for dg in dg_main + dg_def:
+            glyph_name = dg.get_name()[len(dg_prefix):]
+            glyph_data = []
+            for line in dg.get('data').split('\n'):
+                if line:
+                    line_val = int(line, 2)
+                    if line_val > 65535:
+                        raise config.error("Glyph line out of range for " + \
+                                 "glyph %s maximum is 65535" % (glyph_name,))
+                    glyph_data.append(line_val)
+            if len(glyph_data) < 16:
+                raise config.error("Not enough lines for" + \
+                        "glyph %s, 16 lines are needed" % (glyph_name,))
+            icons[dg.get_name()[len(dg_prefix):]] = glyph_data
+        self.lcd_chip.set_glyphs(icons)
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
@@ -159,13 +178,6 @@ class PrinterLCD:
             logging.exception("Error during display screen update")
         self.lcd_chip.flush()
         return eventtime + .500
-    # Rendering helpers
-    def animate_bed(self, row, col, eventtime):
-        frame = int(eventtime) & 1
-        return self.lcd_chip.write_glyph(col, row, 'bed_heat%d' % (frame + 1,))
-    def animate_fan(self, row, col, eventtime):
-        frame = int(eventtime) & 1
-        return self.lcd_chip.write_glyph(col, row, 'fan%d' % (frame + 1,))
     def draw_text(self, row, col, mixed_text, eventtime):
         pos = col
         for i, text in enumerate(mixed_text.split('~')):
@@ -173,8 +185,6 @@ class PrinterLCD:
                 # write text
                 self.lcd_chip.write_text(pos, row, text)
                 pos += len(text)
-            elif text in self.glyph_helpers:
-                pos += self.glyph_helpers[text](row, pos, eventtime)
             else:
                 # write glyph
                 pos += self.lcd_chip.write_glyph(pos, row, text)

@@ -95,6 +95,8 @@ class HD44780:
             data = data[:20 - min(x, 20)]
         pos = x + ((y & 0x02) >> 1) * 20
         self.text_framebuffers[y & 1][pos:pos+len(data)] = data
+    def set_glyphs(self, glyphs):
+        pass
     def write_glyph(self, x, y, glyph_name):
         char = TextGlyphs.get(glyph_name)
         if char is not None:

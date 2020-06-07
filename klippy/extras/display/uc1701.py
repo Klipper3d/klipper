@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import icons, font8x14, extras.bus
+import font8x14, extras.bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -23,10 +23,6 @@ class DisplayBase:
         self.font = [self._swizzle_bits(bytearray(c))
                      for c in font8x14.VGA_FONT]
         self.icons = {}
-        for name, icon in icons.Icons16x16.items():
-            top1, bot1 = self._swizzle_bits([d >> 8 for d in icon])
-            top2, bot2 = self._swizzle_bits(icon)
-            self.icons[name] = (top1 + top2, bot1 + bot2)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, page in self.all_framebuffers:
@@ -83,6 +79,11 @@ class DisplayBase:
                 if (bits << col) & 0x80:
                     page[pix_x] ^= bit
                 pix_x += 1
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            top1, bot1 = self._swizzle_bits([d >> 8 for d in glyph_data])
+            top2, bot2 = self._swizzle_bits(glyph_data)
+            self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
     def write_glyph(self, x, y, glyph_name):
         icon = self.icons.get(glyph_name)
         if icon is not None and x < 15:
