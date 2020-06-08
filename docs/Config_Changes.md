@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20200608: The LCD display support has changed the name of some
+internal "glyphs".  If a custom display layout was implemented it may
+be necessary to update to the latest glyph names (see
+klippy/extras/display/display.cfg for a list of available glyphs).
+
 20200606: The pin names on linux mcu have changed. Pins now have names
 of the form `gpiochip<chipid>/gpio<gpio>`.  For gpiochip0 you can also
 use a short `gpio<gpio>`.  For example, what was previously referred

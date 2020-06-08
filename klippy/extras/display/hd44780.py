@@ -197,5 +197,5 @@ TextGlyphs = {
     'degrees': '\x04',
     'usb': '\x05',
     'sd': '\x06',
-    'fan': '\x07', 'fan1': '\x07', 'fan2': '\x07',
+    'fan1': '\x07', 'fan2': '\x07',
 }
