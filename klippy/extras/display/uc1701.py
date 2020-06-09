@@ -54,8 +54,8 @@ class DisplayBase:
         bits_bot = [0] * 8
         for row in range(8):
             for col in range(8):
-                bits_top[col] |= ((data[row] >> (8 - col)) & 1) << row
-                bits_bot[col] |= ((data[row + 8] >> (8 - col)) & 1) << row
+                bits_top[col] |= ((data[row] >> (7 - col)) & 1) << row
+                bits_bot[col] |= ((data[row + 8] >> (7 - col)) & 1) << row
         return (bits_top, bits_bot)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
