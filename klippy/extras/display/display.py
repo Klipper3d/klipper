@@ -103,6 +103,10 @@ class PrinterLCD:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            'SET_DISPLAY_GROUP', 'DISPLAY', name, self.cmd_SET_DISPLAY_GROUP,
+            desc=self.cmd_SET_DISPLAY_GROUP_help)
     # Configurable display
     def _parse_glyph(self, config, glyph_name, data, width, height):
         glyph_data = []
@@ -215,6 +219,13 @@ class PrinterLCD:
             self.lcd_chip.write_graphics(col, row, i, data)
         self.lcd_chip.write_graphics(col, row, 15, [0xff]*width)
         return ""
+    cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
+    def cmd_SET_DISPLAY_GROUP(self, gcmd):
+        group = gcmd.get('GROUP')
+        new_dg = self.display_data_groups.get(group)
+        if new_dg is None:
+            raise gcmd.error("Unknown display_data group '%s'" % (group,))
+        self.show_data_group = new_dg
 
 def load_config(config):
     return PrinterLCD(config)

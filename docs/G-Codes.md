@@ -202,6 +202,11 @@ The following standard commands are supported:
   adjustment will only be made every BAND millimeters of z height - in
   that case the formula used is `value = start + factor *
   ((floor(z_height / band) + .5) * band)`.
+- `SET_DISPLAY_GROUP DISPLAY=<display> GROUP=<group>`: Set the active
+  display group of the display. This allows to define multiple display
+  data groups in the config, e.g.`[display_data <group> <elementname>]`
+  and switch between them using this extended gcode command. use
+  `DISPLAY=display` to change the display group of the default display.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
