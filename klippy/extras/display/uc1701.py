@@ -81,9 +81,11 @@ class DisplayBase:
                 pix_x += 1
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
-            top1, bot1 = self._swizzle_bits([d >> 8 for d in glyph_data])
-            top2, bot2 = self._swizzle_bits(glyph_data)
-            self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
+            data = glyph_data.get('icon16x16')
+            if data is not None:
+                top1, bot1 = self._swizzle_bits([d >> 8 for d in data])
+                top2, bot2 = self._swizzle_bits(data)
+                self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
     def write_glyph(self, x, y, glyph_name):
         icon = self.icons.get(glyph_name)
         if icon is not None and x < 15:

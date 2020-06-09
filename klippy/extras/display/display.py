@@ -104,6 +104,18 @@ class PrinterLCD:
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
     # Configurable display
+    def _parse_glyph(self, config, glyph_name, data, width, height):
+        glyph_data = []
+        for line in data.split('\n'):
+            line = line.strip().replace('.', '0').replace('*', '1')
+            if not line:
+                continue
+            if len(line) != width or line.replace('0', '').replace('1', ''):
+                raise config.error("Invalid glyph line in %s" % (glyph_name,))
+            glyph_data.append(int(line, 2))
+        if len(glyph_data) != height:
+            raise config.error("Glyph %s incorrect lines" % (glyph_name,))
+        return glyph_data
     def load_config(self, config):
         # Load default display config file
         pconfig = self.printer.lookup_object('configfile')
@@ -145,18 +157,15 @@ class PrinterLCD:
                   if c.get_name() not in dg_main_names]
         for dg in dg_main + dg_def:
             glyph_name = dg.get_name()[len(dg_prefix):]
-            glyph_data = []
-            for line in dg.get('data').split('\n'):
-                line = line.strip().replace('.', '0').replace('*', '1')
-                if not line:
-                    continue
-                if len(line) != 16 or line.replace('0', '').replace('1', ''):
-                    raise config.error("Invalid glyph line in %s"
-                                       % (glyph_name,))
-                glyph_data.append(int(line, 2))
-            if len(glyph_data) != 16:
-                raise config.error("Glyph %s must be 16 lines" % (glyph_name,))
-            icons[glyph_name] = glyph_data
+            data = dg.get('data', None)
+            if data is not None:
+                idata = self._parse_glyph(config, glyph_name, data, 16, 16)
+                icons.setdefault(glyph_name, {})['icon16x16'] = idata
+            data = dg.get('hd44780_data', None)
+            if data is not None:
+                slot = dg.getint('hd44780_slot', minval=0, maxval=7)
+                idata = self._parse_glyph(config, glyph_name, data, 5, 8)
+                icons.setdefault(glyph_name, {})['icon5x8'] = (slot, idata)
         self.lcd_chip.set_glyphs(icons)
     # Initialization
     def handle_ready(self):

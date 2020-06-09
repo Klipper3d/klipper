@@ -137,7 +137,9 @@ class ST7920:
         self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
-            self.icons[glyph_name] = glyph_data
+            data = glyph_data.get('icon16x16')
+            if data is not None:
+                self.icons[glyph_name] = data
         # Setup animated glyphs
         self.cache_glyph('fan2', 'fan1', 0)
         self.cache_glyph('bed_heat2', 'bed_heat1', 1)
