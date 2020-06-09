@@ -152,10 +152,6 @@ class PrinterLCD:
             graphic_data.append(
                 [int(line[i:i+8], 2) for i in range (0, len(line), 8)]
             )
-        if len(graphic_data) % 8 != 0:
-            raise config.error("Graphic %s bad line " % (graphic_name,) + \
-                               "count must be multiple of 8"
-            )
         return graphic_data
     def load_config(self, config):
         # Load default display config file
@@ -271,8 +267,9 @@ class PrinterLCD:
         graphic = self.graphics.get(name)
         dims = self.lcd_chip.get_dimensions()
         if graphic is not None:
-          for i in range(0, min(len(graphic)/16, dims[1] - row)):
-            for j in range(0, 16):
+          for i in range(0, min((len(graphic)/16) + 1, dims[1] - row)):
+            render_rows = min(16, len(graphic) - i*16)
+            for j in range(0, render_rows):
               self.lcd_chip.write_graphics(
                   col, row + i, j, graphic[i*16 + j][:(dims[0] - col)*8])
         return ""
