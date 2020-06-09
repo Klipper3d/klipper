@@ -204,6 +204,10 @@ The following standard commands are supported:
   ((floor(z_height / band) + .5) * band)`.
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
+- `SET_DISPLAY_GROUP GROUP=<group>`: Set the active display group of the
+  display. This allows to define multiple display data groups in the
+  config, e.g.`[display_data <group> <elementname>]` and switch between
+  them using this extended gcode command.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
