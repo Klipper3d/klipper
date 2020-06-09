@@ -103,10 +103,14 @@ class PrinterLCD:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+        # Register g-code commands
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            'SET_DISPLAY_GROUP', 'DISPLAY', name, self.cmd_SET_DISPLAY_GROUP,
-            desc=self.cmd_SET_DISPLAY_GROUP_help)
+        gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
+                                   self.cmd_SET_DISPLAY_GROUP,
+                                   desc=self.cmd_SET_DISPLAY_GROUP_help)
+        if name == 'display':
+            gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
+                                       self.cmd_SET_DISPLAY_GROUP)
     # Configurable display
     def _parse_glyph(self, config, glyph_name, data, width, height):
         glyph_data = []
