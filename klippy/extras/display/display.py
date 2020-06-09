@@ -68,7 +68,8 @@ class DisplayGroup:
     def show(self, display, templates, eventtime):
         swrap = self.data_items[0][2].create_status_wrapper(eventtime)
         context = { 'printer': swrap,
-                    'draw_progress_bar': display.draw_progress_bar }
+                    'draw_progress_bar': display.draw_progress_bar,
+                    'draw_graphic': display.draw_graphic }
         def render(name, **kwargs):
             return templates[name].render(context, **kwargs)
         context['render'] = render
@@ -92,6 +93,7 @@ class PrinterLCD:
         # Configurable display
         self.display_templates = {}
         self.display_data_groups = {}
+        self.graphics = {}
         self.load_config(config)
         dgroup = "_default_16x4"
         if self.lcd_chip.get_dimensions()[0] == 20:
@@ -124,6 +126,37 @@ class PrinterLCD:
         if len(glyph_data) != height:
             raise config.error("Glyph %s incorrect lines" % (glyph_name,))
         return glyph_data
+    def _parse_graphic(self, config, graphic_name, data):
+        graphic_data = []
+        first_line_length = 0
+        for line in data.split('\n'):
+            if not line:
+                continue
+            line = line.strip().replace('.', '0').replace('*', '1')
+            if line.replace('0', '').replace('1', ''):
+                raise config.error(
+                    "Invalid graphic line in %s" % (graphic_name,)
+                )
+            if len(line) % 8 != 0:
+                raise config.error(
+                    "Bad length line in graphic " + \
+                    "%s must be multiple of 8 " % (graphic_name,)
+                )
+            if first_line_length == 0:
+                first_line_length = len(line)
+            else:
+              if len(line) != first_line_length:
+                  raise config.error(
+                      "Uneven line lengths in graphic %s" % (graphic_name,)
+                  )
+            graphic_data.append(
+                [int(line[i:i+8], 2) for i in range (0, len(line), 8)]
+            )
+        if len(graphic_data) % 8 != 0:
+            raise config.error("Graphic %s bad line " % (graphic_name,) + \
+                               "count must be multiple of 8"
+            )
+        return graphic_data
     def load_config(self, config):
         # Load default display config file
         pconfig = self.printer.lookup_object('configfile')
@@ -175,6 +208,17 @@ class PrinterLCD:
                 idata = self._parse_glyph(config, glyph_name, data, 5, 8)
                 icons.setdefault(glyph_name, {})['icon5x8'] = (slot, idata)
         self.lcd_chip.set_glyphs(icons)
+        # Load display graphics
+        dgr_prefix = 'display_graphic '
+        dgr_main = config.get_prefix_sections(dgr_prefix)
+        dgr_main_names = {c.get_name(): 1 for c in dgr_main}
+        for dgr in dgr_main:
+          graphic_name = dgr.get_name()[len(dgr_prefix):]
+          dgr_data = dgr.get('data')
+          if dgr_data is not None:
+            idata = self._parse_graphic(config, graphic_name, dgr_data)
+            self.graphics[graphic_name] = idata
+
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
@@ -222,6 +266,15 @@ class PrinterLCD:
         for i in range(1, 15):
             self.lcd_chip.write_graphics(col, row, i, data)
         self.lcd_chip.write_graphics(col, row, 15, [0xff]*width)
+        return ""
+    def draw_graphic(self, row, col, name):
+        graphic = self.graphics.get(name)
+        dims = self.lcd_chip.get_dimensions()
+        if graphic is not None:
+          for i in range(0, min(len(graphic)/16, dims[1] - row)):
+            for j in range(0, 16):
+              self.lcd_chip.write_graphics(
+                  col, row + i, j, graphic[i*16 + j][:(dims[0] - col)*8])
         return ""
     cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
     def cmd_SET_DISPLAY_GROUP(self, gcmd):
