@@ -104,8 +104,8 @@ class PrinterLCD:
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_command(
-            'SET_DISPLAY_GROUP', self.cmd_SET_DISPLAY_GROUP,
+        gcode.register_mux_command(
+            'SET_DISPLAY_GROUP', 'DISPLAY', name, self.cmd_SET_DISPLAY_GROUP,
             desc=self.cmd_SET_DISPLAY_GROUP_help)
     # Configurable display
     def _parse_glyph(self, config, glyph_name, data, width, height):
