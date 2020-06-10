@@ -1,5 +1,5 @@
 /*
- * Serial over CAN emulation for STM32F042 boards.
+ * Serial over CAN emulation for STM32 boards.
  *
  *  Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
  *  Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
