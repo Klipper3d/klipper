@@ -49,14 +49,16 @@ class DisplayBase:
                 self.send(new_data[col_pos:col_pos+count], is_data=True)
             old_data[:] = new_data
     def _swizzle_bits(self, data):
-        # Convert 8x16 data into display col/row order
-        bits_top = [0] * 8
-        bits_bot = [0] * 8
+        # Convert from "rows of pixels" format to "columns of pixels"
+        top = bot = 0
         for row in range(8):
-            for col in range(8):
-                bits_top[col] |= ((data[row] >> (7 - col)) & 1) << row
-                bits_bot[col] |= ((data[row + 8] >> (7 - col)) & 1) << row
-        return (bits_top, bits_bot)
+            spaced = (data[row] * 0x8040201008040201) & 0x8080808080808080
+            top |= spaced >> (7 - row)
+            spaced = (data[row + 8] * 0x8040201008040201) & 0x8080808080808080
+            bot |= spaced >> (7 - row)
+        bits_top = [(top >> s) & 0xff for s in range(0, 64, 8)]
+        bits_bot = [(bot >> s) & 0xff for s in range(0, 64, 8)]
+        return (bytearray(bits_top), bytearray(bits_bot))
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
             icon = glyph_data.get('icon16x16')
