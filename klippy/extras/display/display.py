@@ -168,7 +168,9 @@ class PrinterLCD:
             data = dg.get('data', None)
             if data is not None:
                 idata = self._parse_glyph(config, glyph_name, data, 16, 16)
-                icons.setdefault(glyph_name, {})['icon16x16'] = idata
+                icon1 = [(bits >> 8) & 0xff for bits in idata]
+                icon2 = [bits & 0xff for bits in idata]
+                icons.setdefault(glyph_name, {})['icon16x16'] = (icon1, icon2)
             data = dg.get('hd44780_data', None)
             if data is not None:
                 slot = dg.getint('hd44780_slot', minval=0, maxval=7)
@@ -206,22 +208,11 @@ class PrinterLCD:
                 # write glyph
                 pos += self.lcd_chip.write_glyph(pos, row, text)
     def draw_progress_bar(self, row, col, width, value):
-        value = int(value * 100.)
-        data = [0x00] * width
-        char_pcnt = int(100/width)
+        pixels = -1 << int(width * 8 * (1. - value) + .5)
+        pixels |= (1 << (width * 8 - 1)) | 1
         for i in range(width):
-            if (i+1)*char_pcnt <= value:
-                # Draw completely filled bytes
-                data[i] |= 0xFF
-            elif (i*char_pcnt) < value:
-                # Draw partially filled bytes
-                data[i] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
-        data[0] |= 0x80
-        data[-1] |= 0x01
-        self.lcd_chip.write_graphics(col, row, 0, [0xff]*width)
-        for i in range(1, 15):
-            self.lcd_chip.write_graphics(col, row, i, data)
-        self.lcd_chip.write_graphics(col, row, 15, [0xff]*width)
+            data = [0xff] + [(pixels >> (i * 8)) & 0xff] * 14 + [0xff]
+            self.lcd_chip.write_graphics(col + width - 1 - i, row, data)
         return ""
     cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
     def cmd_SET_DISPLAY_GROUP(self, gcmd):

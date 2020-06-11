@@ -112,7 +112,7 @@ class HD44780:
             self.write_text(x, y, char)
             return 1
         return 0
-    def write_graphics(self, x, y, pixel_row, pixel_col):
+    def write_graphics(self, x, y, data):
         pass
     def clear(self):
         spaces = ' ' * 40

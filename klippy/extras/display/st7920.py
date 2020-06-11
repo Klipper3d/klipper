@@ -115,34 +115,35 @@ class ST7920:
         base_icon = self.icons.get(base_glyph_name)
         if icon is None or base_icon is None:
             return
-        for i, (bits, base_bits) in enumerate(zip(icon, base_icon)):
+        all_bits = zip(icon[0], icon[1], base_icon[0], base_icon[1])
+        for i, (ic1, ic2, b1, b2) in enumerate(all_bits):
+            x1, x2 = ic1 ^ b1, ic2 ^ b2
             pos = glyph_id*32 + i*2
-            b1, b2 = (bits >> 8) & 0xff, bits & 0xff
-            b1, b2 = b1 ^ (base_bits >> 8) & 0xff, b2 ^ base_bits & 0xff
-            self.glyph_framebuffer[pos:pos+2] = [b1, b2]
-            self.all_framebuffers[1][1][pos:pos+2] = [b1 ^ 1, b2 ^ 1]
+            self.glyph_framebuffer[pos:pos+2] = [x1, x2]
+            self.all_framebuffers[1][1][pos:pos+2] = [x1 ^ 1, x2 ^ 1]
         self.cached_glyphs[glyph_name] = (base_glyph_name, (0, glyph_id*2))
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            icon = glyph_data.get('icon16x16')
+            if icon is not None:
+                self.icons[glyph_name] = icon
+        # Setup animated glyphs
+        self.cache_glyph('fan2', 'fan1', 0)
+        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
         self.text_framebuffer[pos:pos+len(data)] = data
-    def write_graphics(self, x, y, row, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        gfx_fb = y * 16 + row
+    def write_graphics(self, x, y, data):
+        if x >= 16 or y >= 4 or len(data) != 16:
+            return
+        gfx_fb = y * 16
         if gfx_fb >= 32:
             gfx_fb -= 32
             x += 16
-        self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
-    def set_glyphs(self, glyphs):
-        for glyph_name, glyph_data in glyphs.items():
-            data = glyph_data.get('icon16x16')
-            if data is not None:
-                self.icons[glyph_name] = data
-        # Setup animated glyphs
-        self.cache_glyph('fan2', 'fan1', 0)
-        self.cache_glyph('bed_heat2', 'bed_heat1', 1)
+        for i, bits in enumerate(data):
+            self.graphics_framebuffers[gfx_fb + i][x] = bits
     def write_glyph(self, x, y, glyph_name):
         glyph_id = self.cached_glyphs.get(glyph_name)
         if glyph_id is not None and x & 1 == 0:
@@ -152,8 +153,8 @@ class ST7920:
         icon = self.icons.get(glyph_name)
         if icon is not None:
             # Draw icon in graphics mode
-            for i, bits in enumerate(icon):
-                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            self.write_graphics(x, y, icon[0])
+            self.write_graphics(x + 1, y, icon[1])
             return 2
         char = TextGlyphs.get(glyph_name)
         if char is not None:
@@ -163,8 +164,7 @@ class ST7920:
         font = CharGlyphs.get(glyph_name)
         if font is not None:
             # Draw single width character
-            for i, bits in enumerate(font):
-                self.write_graphics(x, y, i, [bits])
+            self.write_graphics(x, y, font)
             return 1
         return 0
     def clear(self):

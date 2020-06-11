@@ -57,6 +57,13 @@ class DisplayBase:
                 bits_top[col] |= ((data[row] >> (7 - col)) & 1) << row
                 bits_bot[col] |= ((data[row + 8] >> (7 - col)) & 1) << row
         return (bits_top, bits_bot)
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            icon = glyph_data.get('icon16x16')
+            if icon is not None:
+                top1, bot1 = self._swizzle_bits(icon[0])
+                top2, bot2 = self._swizzle_bits(icon[1])
+                self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
@@ -68,24 +75,16 @@ class DisplayBase:
             page_top[pix_x:pix_x+8] = bits_top
             page_bot[pix_x:pix_x+8] = bits_bot
             pix_x += 8
-    def write_graphics(self, x, y, row, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        page = self.vram[y * 2 + (row >= 8)]
-        bit = 1 << (row % 8)
+    def write_graphics(self, x, y, data):
+        if x >= 16 or y >= 4 or len(data) != 16:
+            return
+        bits_top, bits_bot = self._swizzle_bits(data)
         pix_x = x * 8
-        for bits in data:
-            for col in range(8):
-                if (bits << col) & 0x80:
-                    page[pix_x] ^= bit
-                pix_x += 1
-    def set_glyphs(self, glyphs):
-        for glyph_name, glyph_data in glyphs.items():
-            data = glyph_data.get('icon16x16')
-            if data is not None:
-                top1, bot1 = self._swizzle_bits([d >> 8 for d in data])
-                top2, bot2 = self._swizzle_bits(data)
-                self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
+        page_top = self.vram[y * 2]
+        page_bot = self.vram[y * 2 + 1]
+        for i in range(8):
+            page_top[pix_x + i] ^= bits_top[i]
+            page_bot[pix_x + i] ^= bits_bot[i]
     def write_glyph(self, x, y, glyph_name):
         icon = self.icons.get(glyph_name)
         if icon is not None and x < 15:
