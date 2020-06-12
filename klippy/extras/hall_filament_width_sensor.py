@@ -104,7 +104,7 @@ class HallFilamentWidthSensor:
             self.filament_array.append([last_epos + self.measurement_delay,
                                             self.diameter])
             if self.is_log:
-                 self.gcode.respond_info("Filament width:%.3f" % 
+                 self.gcode.respond_info("Filament width:%.3f" %
                                          ( self.diameter ))
 
         else:
