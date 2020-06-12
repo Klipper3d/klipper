@@ -80,7 +80,7 @@ class PT_string:
         out.extend(bytearray(v))
     def parse(self, s, pos):
         l = s[pos]
-        return str(bytearray(s[pos+1:pos+l+1])), pos+l+1
+        return bytes(bytearray(s[pos+1:pos+l+1])), pos+l+1
 class PT_progmem_buffer(PT_string):
     pass
 class PT_buffer(PT_string):
@@ -209,7 +209,7 @@ class UnknownFormat:
     name = '#unknown'
     def parse(self, s, pos):
         msgid = s[pos]
-        msg = str(bytearray(s))
+        msg = bytes(bytearray(s))
         return {'#msgid': msgid, '#msg': msg}, len(s)-MESSAGE_TRAILER_SIZE
     def format_params(self, params):
         return "#unknown %s" % (repr(params['#msg']),)
