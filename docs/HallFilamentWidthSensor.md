@@ -75,6 +75,10 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
 
+**ENABLE_FILAMENT_WIDTH_LOG** - Turn on diameter logging
+
+**DISABLE_FILAMENT_WIDTH_LOG** - Turn off diameter logging
+
 ## Menu variables
 
 **hall_filament_width_sensor.Diameter** current measured filament width in mm
