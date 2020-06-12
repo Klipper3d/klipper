@@ -126,6 +126,6 @@ Save raw values in config
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
 
-## Logging 
+## Logging
 After power on by default diameter Logging disabled.
 Data to log added on every measurement interval (10 mm by default)
