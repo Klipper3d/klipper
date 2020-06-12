@@ -150,7 +150,7 @@ class PrinterConfig:
         return self.printer
     def _read_config_file(self, filename):
         try:
-            f = open(filename, 'rb')
+            f = open(filename, 'r')
             data = f.read()
             f.close()
         except:
@@ -383,7 +383,7 @@ class PrinterConfig:
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
-            f = open(temp_name, 'wb')
+            f = open(temp_name, 'w')
             f.write(data)
             f.close()
             os.rename(cfgname, backup_name)
