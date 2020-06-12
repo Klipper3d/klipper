@@ -10,7 +10,7 @@ from . import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
-TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
+TextGlyphs = { 'right_arrow': b'\x1a', 'degrees': b'\xf8' }
 
 class DisplayBase:
     def __init__(self, io, columns=128):
@@ -18,7 +18,7 @@ class DisplayBase:
         # framebuffers
         self.columns = columns
         self.vram = [bytearray(self.columns) for i in range(8)]
-        self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
+        self.all_framebuffers = [(self.vram[i], bytearray(b'~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
         self.font = [self._swizzle_bits(bytearray(c))
