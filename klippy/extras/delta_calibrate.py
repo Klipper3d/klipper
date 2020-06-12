@@ -52,7 +52,7 @@ def measurements_to_distances(measured_params, delta_params):
         for od, opw in zip(mp['OUTER_DISTS'], mp['OUTER_PILLAR_WIDTHS']) ]
     # Convert angles in degrees to an XY multiplier
     obj_angles = map(math.radians, MeasureAngles)
-    xy_angles = zip(map(math.cos, obj_angles), map(math.sin, obj_angles))
+    xy_angles = list(zip(map(math.cos, obj_angles), map(math.sin, obj_angles)))
     # Calculate stable positions for center measurements
     inner_ridge = MeasureRidgeRadius * scale
     inner_pos = [(ax * inner_ridge, ay * inner_ridge, 0.)
@@ -270,7 +270,7 @@ class DeltaCalibrate:
             if data is None:
                 continue
             try:
-                parts = map(float, data.split(','))
+                parts = list(map(float, data.split(',')))
             except:
                 raise gcmd.error("Unable to parse parameter '%s'" % (name,))
             if len(parts) != count:
