@@ -390,7 +390,7 @@ class BedMeshCalibrate:
                     for line in z_values if line.strip()]
             self.profiles[name]['mesh_params'] = params = \
                 collections.OrderedDict()
-            for key, t in PROFILE_OPTIONS.iteritems():
+            for key, t in PROFILE_OPTIONS.items():
                 if t is int:
                     params[key] = profile.getint(key)
                 elif t is float:
@@ -414,7 +414,7 @@ class BedMeshCalibrate:
             z_values = z_values[:-2]
         configfile.set(cfg_name, 'version', PROFILE_VERSION)
         configfile.set(cfg_name, 'points', z_values)
-        for key, value in self.mesh_params.iteritems():
+        for key, value in self.mesh_params.items():
             configfile.set(cfg_name, key, value)
         # save copy in local storage
         self.profiles[prof_name] = profile = {}
@@ -532,7 +532,7 @@ class BedMeshCalibrate:
                     msg += "Probed Table:\n"
                     msg += str(self.probed_matrix)
                     raise self.gcode.error(msg)
-                buf_cnt = (x_cnt - row_size) / 2
+                buf_cnt = (x_cnt - row_size) // 2
                 if buf_cnt == 0:
                     continue
                 left_buffer = [row[0]] * buf_cnt
@@ -626,7 +626,7 @@ class ZMesh:
         self.avg_z = 0.
         self.mesh_offset = 0.
         logging.debug('bed_mesh: probe/mesh parameters:')
-        for key, value in self.mesh_params.iteritems():
+        for key, value in self.mesh_params.items():
             logging.debug("%s :  %s" % (key, value))
         self.mesh_x_min = params['min_x']
         self.mesh_x_max = params['max_x']
@@ -738,7 +738,7 @@ class ZMesh:
         y_mult = self.y_mult
         self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_matrix[j/y_mult][i/x_mult]
+             else z_matrix[j//y_mult][i//x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
         xpts, ypts = self._get_lagrange_coords()
@@ -793,7 +793,7 @@ class ZMesh:
         c = self.mesh_params['tension']
         self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_matrix[j/y_mult][i/x_mult]
+             else z_matrix[j//y_mult][i//x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
         # Interpolate X values
