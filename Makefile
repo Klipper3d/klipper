@@ -5,20 +5,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 # Output directory
-MCU?=1
-ifeq "$(MCU)"  "1"
-  OUT?=out/
-  export KCONFIG_CONFIG?=$(CURDIR)/.config
-else
-  $(info *** MCU $(MCU) is the target  *** )
-  OUT?=out_$(MCU)/
-  export KCONFIG_CONFIG?=$(CURDIR)/.config_$(MCU)
-endif
+OUT=out/
 
 # Kconfig includes
 export HOSTCC             := $(CC)
 export CONFIG_SHELL       := sh
 export KCONFIG_AUTOHEADER := autoconf.h
+export KCONFIG_CONFIG     := $(CURDIR)/.config
 -include $(KCONFIG_CONFIG)
 
 # Common command definitions
