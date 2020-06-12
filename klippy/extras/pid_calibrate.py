@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import heaters
+from . import heaters
 
 class PIDCalibrate:
     def __init__(self, config):

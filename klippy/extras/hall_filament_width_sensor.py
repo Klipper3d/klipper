@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Mustafa YILDIZ <mydiz@hotmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import filament_switch_sensor
+from . import filament_switch_sensor
 
 ADC_REPORT_TIME = 0.500
 ADC_SAMPLE_TIME = 0.03

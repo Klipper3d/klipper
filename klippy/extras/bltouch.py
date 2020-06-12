@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import homing, probe
+import homing
+from . import probe
 
 SIGNAL_PERIOD = 0.020
 MIN_CMD_TIME = 5 * SIGNAL_PERIOD

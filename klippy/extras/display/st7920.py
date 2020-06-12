@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import font8x14
+from . import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 

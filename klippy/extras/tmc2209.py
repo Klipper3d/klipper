@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Stephan Oelze <stephan.oelze@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import tmc2208, tmc2130, tmc, tmc_uart
+from . import tmc2208, tmc2130, tmc, tmc_uart
 
 TMC_FREQUENCY=12000000.
 

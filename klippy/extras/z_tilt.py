@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import probe, mathutil
+import mathutil
+from . import probe
 
 class ZAdjustHelper:
     def __init__(self, config, z_count):

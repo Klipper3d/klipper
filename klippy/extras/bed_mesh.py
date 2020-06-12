@@ -4,11 +4,8 @@
 # Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
-import math
-import json
-import probe
-import collections
+import logging, math, json, collections
+from . import probe
 
 PROFILE_VERSION = 1
 PROFILE_OPTIONS = {

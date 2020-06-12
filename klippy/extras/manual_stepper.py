@@ -3,7 +3,8 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import stepper, homing, force_move, chelper
+import stepper, homing, chelper
+from . import force_move
 
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4

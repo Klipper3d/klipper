@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
-import hd44780, st7920, uc1701, menu
+from . import hd44780, st7920, uc1701, menu
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
