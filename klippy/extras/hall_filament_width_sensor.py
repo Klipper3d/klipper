@@ -201,7 +201,7 @@ class HallFilamentWidthSensor:
                  self.lastFilamentWidthReading2),
                 'is_active':self.is_active}
     def cmd_log_enable(self, gcmd):
-        self.is_log = true
+        self.is_log = True
         gcmd.respond_info("Filament width logging Turned On")
 
     def cmd_log_disable(self, gcmd):
