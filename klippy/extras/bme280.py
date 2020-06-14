@@ -27,6 +27,7 @@ class BME280:
         self.reactor = self.printer.get_reactor()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=BME280_CHIP_ADDR, default_speed=100000)
+        self.mcu = self.i2c.get_mcu()
         self.os_temp = config.getint('bme280_oversample_temp', 2)
         self.os_hum = config.getint('bme280_oversample_hum', 2)
         self.os_pres = config.getint('bme280_oversample_pressure', 2)
@@ -132,7 +133,7 @@ class BME280:
         self.pressure = self._compensate_pressure(pressure_raw) / 100.
         self.humidity = self._compensate_humidity(humid_raw)
         measured_time = self.reactor.monotonic()
-        self._callback(measured_time, self.temp)
+        self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
         return measured_time + REPORT_TIME
 
     def _compensate_temp(self, raw_temp):
