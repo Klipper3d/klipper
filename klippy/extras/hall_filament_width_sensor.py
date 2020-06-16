@@ -31,6 +31,7 @@ class HallFilamentWidthSensor:
         self.diameter =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
         self.runout_dia=config.getfloat('min_diameter', 1.0)
+        self.is_log =config.getboolean('logging', False)
         # Use the current diameter instead of nominal while the first
         # measurement isn't in place
         self.use_current_dia_while_delay = config.getboolean(
@@ -63,6 +64,11 @@ class HallFilamentWidthSensor:
                                     self.cmd_M405)
         self.gcode.register_command('QUERY_RAW_FILAMENT_WIDTH',
                                     self.cmd_Get_Raw_Values)
+        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_LOG',
+                                    self.cmd_log_enable)
+        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_LOG',
+                                    self.cmd_log_disable)
+
         self.runout_helper = filament_switch_sensor.RunoutHelper(config)
     # Initialization
     def handle_ready(self):
@@ -97,6 +103,10 @@ class HallFilamentWidthSensor:
           if next_reading_position <= (last_epos + self.measurement_delay):
             self.filament_array.append([last_epos + self.measurement_delay,
                                             self.diameter])
+            if self.is_log:
+                 self.gcode.respond_info("Filament width:%.3f" %
+                                         ( self.diameter ))
+
         else:
             # add first item to array
             self.filament_array.append([self.measurement_delay + last_epos,
@@ -190,6 +200,13 @@ class HallFilamentWidthSensor:
                 'Raw':(self.lastFilamentWidthReading+
                  self.lastFilamentWidthReading2),
                 'is_active':self.is_active}
+    def cmd_log_enable(self, gcmd):
+        self.is_log = True
+        gcmd.respond_info("Filament width logging Turned On")
+
+    def cmd_log_disable(self, gcmd):
+        self.is_log = False
+        gcmd.respond_info("Filament width logging Turned Off")
 
 def load_config(config):
     return HallFilamentWidthSensor(config)

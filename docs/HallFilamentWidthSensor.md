@@ -48,6 +48,10 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     # measurement_interval:10
     # Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting
 
+    #logging: False
+    #  Out diameter to terminal and klipper.log
+    #  can be turn on|of by command
+
     #Virtual filament_switch_sensor suppurt. Create sensor named hall_filament_width_sensor.
     #
     #min_diameter:1.0
@@ -74,6 +78,10 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
 
 **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
+
+**ENABLE_FILAMENT_WIDTH_LOG** - Turn on diameter logging
+
+**DISABLE_FILAMENT_WIDTH_LOG** - Turn off diameter logging
 
 ## Menu variables
 
@@ -117,3 +125,7 @@ Save raw values in config
 ## How to enable sensor
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
+
+## Logging
+After power on by default diameter Logging disabled.
+Data to log added on every measurement interval (10 mm by default)
