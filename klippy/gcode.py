@@ -91,6 +91,16 @@ class GCodeParser:
         self.pending_commands = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
+        # Register webhooks
+        webhooks = self.printer.lookup_object('webhooks')
+        webhooks.register_endpoint(
+            "gcode/help", self._handle_remote_help)
+        webhooks.register_endpoint(
+            "gcode/script", self._handle_remote_script)
+        webhooks.register_endpoint(
+            "gcode/restart", self._handle_remote_restart)
+        webhooks.register_endpoint(
+            "gcode/firmware_restart", self._handle_remote_restart)
         # Command handling
         self.is_printer_ready = False
         self.mutex = self.reactor.mutex()
@@ -349,6 +359,23 @@ class GCodeParser:
         if self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
+    def _handle_remote_help(self, web_request):
+        if web_request.get_method() != 'GET':
+            raise web_request.error("Invalid Request Method")
+        web_request.send(dict(self.gcode_help))
+    def _handle_remote_restart(self, web_request):
+        if web_request.get_method() != 'POST':
+            raise web_request.error("Invalid Request Method")
+        path = web_request.get_path()
+        if path == "gcode/restart":
+            self.run_script('restart')
+        elif path == "gcode/firmware_restart":
+            self.run_script('firmware_restart')
+    def _handle_remote_script(self, web_request):
+        if web_request.get_method() != 'POST':
+            raise web_request.error("Invalid Request Method")
+        script = web_request.get('script')
+        self.run_script(script)
     def run_script_from_command(self, script):
         self._process_commands(script.split('\n'), need_ack=False)
     def run_script(self, script):
