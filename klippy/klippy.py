@@ -6,7 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse, logging, time, threading, collections, importlib
 import util, reactor, queuelogger, msgproto, homing
-import gcode, configfile, pins, mcu, toolhead
+import gcode, configfile, pins, mcu, toolhead, webhooks
 
 message_ready = "Printer is ready"
 
@@ -57,8 +57,9 @@ class Printer:
         self.in_shutdown_state = False
         self.run_result = None
         self.event_handlers = {}
-        gc = gcode.GCodeParser(self, input_fd)
-        self.objects = collections.OrderedDict({'gcode': gc})
+        self.objects = collections.OrderedDict()
+        self.objects['webhooks'] = webhooks.WebHooks(self)
+        self.objects['gcode'] = gcode.GCodeParser(self, input_fd)
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):
@@ -268,16 +269,18 @@ def main():
         start_args['debugoutput'] = options.debugoutput
         start_args.update(options.dictionary)
     if options.logfile:
+        start_args['log_file'] = options.logfile
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
         logging.basicConfig(level=debuglevel)
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
+    start_args['cpu_info'] = util.get_cpu_info()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
             "Git version: %s" % (repr(start_args['software_version']),),
-            "CPU: %s" % (util.get_cpu_info(),),
+            "CPU: %s" % (start_args['cpu_info'],),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)
     elif not options.debugoutput:
