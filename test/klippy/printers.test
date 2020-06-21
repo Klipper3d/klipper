@@ -120,6 +120,7 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 DICTIONARY stm32f103-serial.dict
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
+CONFIG ../../config/generic-mks-robin-e3.cfg
 CONFIG ../../config/generic-mks-robin-nano.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
