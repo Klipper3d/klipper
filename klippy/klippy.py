@@ -65,7 +65,13 @@ class Printer:
     def get_reactor(self):
         return self.reactor
     def get_state_message(self):
-        return self.state_message
+        if self.state_message == message_ready:
+            category = "ready"
+        elif self.state_message == message_startup:
+            category = "startup"
+        else:
+            category = "error"
+        return self.state_message, category
     def is_shutdown(self):
         return self.in_shutdown_state
     def _set_state(self, msg):

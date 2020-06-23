@@ -8,7 +8,6 @@ import socket
 import errno
 import json
 import homing
-from klippy import message_startup, message_ready
 
 SOCKET_LOCATION = "/tmp/moonraker"
 
@@ -252,15 +251,14 @@ class WebHooks:
         if web_request.get_method() != 'GET':
             raise web_request.error("Invalid Request Method")
         start_args = self.printer.get_start_args()
-        state_message = self.printer.get_state_message()
+        state_message, msg_type = self.printer.get_state_message()
         version = start_args['software_version']
         cpu_info = start_args['cpu_info']
-        error = state_message != message_startup and \
-            state_message != message_ready
+        error = msg_type == "error"
         web_request.send(
             {'cpu': cpu_info, 'version': version,
              'hostname': socket.gethostname(),
-             'is_ready': state_message == message_ready,
+             'is_ready': msg_type == "ready",
              'error_detected': error,
              'message': state_message})
 
