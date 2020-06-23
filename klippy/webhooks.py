@@ -97,8 +97,9 @@ class ServerConnection:
         self.reactor = printer.get_reactor()
 
         # Klippy Connection
-        self.fd_handler = self.mutex = None
+        self.fd = self.fd_handle = self.mutex = None
         self.is_server_connected = False
+        self.is_busy = False
         self.partial_data = ""
         is_fileoutput = (printer.get_start_args().get('debugoutput')
                          is not None)
@@ -115,8 +116,9 @@ class ServerConnection:
             return
         logging.debug("ServerConnection: Moonraker connection established")
         self.is_server_connected = True
-        self.fd_handler = self.reactor.register_fd(
-            self.socket.fileno(), self.process_received)
+        self.fd = self.socket.fileno()
+        self.fd_handle = self.reactor.register_fd(
+            self.fd, self.process_received)
         self.mutex = self.reactor.mutex()
         printer.register_event_handler('klippy:disconnect', self.close_socket)
 
@@ -124,7 +126,7 @@ class ServerConnection:
         if self.is_server_connected:
             logging.info("ServerConnection: lost connection to Moonraker")
             self.is_server_connected = False
-            self.reactor.unregister_fd(self.fd_handler)
+            self.reactor.unregister_fd(self.fd_handle)
             try:
                 self.socket.close()
             except socket.error:
@@ -150,6 +152,12 @@ class ServerConnection:
         requests = data.split('\x03')
         requests[0] = self.partial_data + requests[0]
         self.partial_data = requests.pop()
+        if self.is_busy:
+            if len(requests > 20):
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
+            return
+        self.is_busy = True
         for req in requests:
             logging.debug(
                 "ServerConnection: Request received from Moonraker %s" % (req))
@@ -160,6 +168,10 @@ class ServerConnection:
                 logging.exception(
                     "ServerConnection: Error processing Server Request %s"
                     % (req))
+        self.is_busy = False
+        if self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(
+                self.fd, self.process_received)
 
     def _process_request(self, req):
         web_request = WebRequest(req)
