@@ -437,7 +437,7 @@ class GCodeParser:
             gcmd.ack("T:0")
             return
         if not self.is_printer_ready:
-            raise gcmd.error(self.printer.get_state_message())
+            raise gcmd.error(self.printer.get_state_message()[0])
             return
         if not cmd:
             logging.debug(gcmd.get_commandline())
@@ -696,7 +696,7 @@ class GCodeParser:
         if self.is_printer_ready:
             self._respond_state("Ready")
             return
-        msg = self.printer.get_state_message()
+        msg = self.printer.get_state_message()[0]
         msg = msg.rstrip() + "\nKlipper state: Not ready"
         raise gcmd.error(msg)
     cmd_HELP_when_not_ready = True
