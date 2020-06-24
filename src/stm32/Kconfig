@@ -159,18 +159,36 @@ config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     default y
+
 config CANSERIAL
     bool "Use CAN for communication (instead of serial)"
-    depends on MACH_STM32F042 && !USBSERIAL
+    depends on !USBSERIAL
     default n
 config SERIAL_BAUD
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
     default 500000 if CANSERIAL
+choice
+    depends on CANSERIAL
+    prompt "CAN pins"
+    config CAN_PINS_PA11_PA12
+        bool "Pins PA11(rx) and PA12(tx)"
+    config CAN_PINS_PB8_PB9
+        bool "Pins PB8(rx) and PB9(tx)"
+    config CAN_PINS_PI8_PH13
+        bool "Pins PI8(rx) and PH13(tx)" if MACH_STM32F4
+    config CAN_PINS_PB5_PB6
+        bool "Pins PB5(rx) and PB6(tx)" if MACH_STM32F4
+    config CAN_PINS_PB12_PB13
+        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F4
+endchoice
+
 config STM32F042_PIN_SWAP
     bool "Use PA9/PA10 for USB or CAN" if MACH_STM32F042
     depends on (USBSERIAL || CANSERIAL) && MACH_STM32F042
     default y if (USBSERIAL || CANSERIAL)
     default n
+    help
+        Remaps logical pins PA11/PA12 to physical PA9/PA10 on low pincount F042 devices.
 config SERIAL
     depends on !USBSERIAL && !CANSERIAL
     bool
