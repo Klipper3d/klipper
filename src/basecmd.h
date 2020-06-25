@@ -1,8 +1,10 @@
 #ifndef __BASECMD_H
 #define __BASECMD_H
 
+#include <stddef.h> // size_t
 #include <stdint.h> // uint8_t
 
+void *alloc_chunk(size_t size);
 void move_free(void *m);
 void *move_alloc(void);
 void move_request_size(int size);

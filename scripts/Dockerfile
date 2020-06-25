@@ -1,5 +1,7 @@
 # This is an example Dockerfile showing how it's possible to install Klipper in Docker.
-# IMPORTANT: This Dockerfile must be moved to the repo root directory before building.
+# IMPORTANT: The docker build must be run from the root of the repo, either copy the
+# Dockerfile to the root, or run docker build with "-f", for example:
+#       docker build . -f scripts/Dockerfile -t klipper
 # Note that the host still needs to run Linux to connect the printers serial port to
 # the container.
 # When running, the serial port of your printer should be connected, including an
@@ -12,7 +14,7 @@
 #       /home/klippy/.config/
 # For more Dockerfile examples with Klipper (and Octoprint) see:
 # https://github.com/sillyfrog/OctoPrint-Klipper-mjpg-Dockerfile
-FROM debian
+FROM ubuntu:18.04
 
 RUN apt-get update && \
     apt-get install -y sudo
@@ -32,7 +34,11 @@ COPY . klipper/
 USER root
 RUN echo 'klippy ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/klippy && \
     chown klippy:klippy -R klipper
+# This is to allow the install script to run without error
+RUN ln -s /bin/true /bin/systemctl
 USER klippy
-RUN ./klipper/scripts/install-octopi.sh
+RUN ./klipper/scripts/install-ubuntu-18.04.sh
+# Clean up install script workaround
+RUN sudo rm -f /bin/systemctl
 
 CMD ["/home/klippy/klippy-env/bin/python", "/home/klippy/klipper/klippy/klippy.py", "/home/klippy/.config/printer.cfg"]

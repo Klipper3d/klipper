@@ -28,12 +28,3 @@
  
  #define PCLKSEL0_Val          0x00000000
  #define PCLKSEL1_Val          0x00000000
-@@ -514,7 +511,7 @@
-  * @brief  Setup the microcontroller system.
-  *         Initialize the System.
-  */
--void SystemInit (void)
-+void __attribute__((externally_visible)) SystemInit (void)
- {
- #if (CLOCK_SETUP)                       /* Clock Setup                        */
-   LPC_SC->SCS       = SCS_Val;

@@ -1,0 +1,11 @@
+# Tests for g-code G2/G3 arc commands
+DICTIONARY atmega2560.dict
+CONFIG gcode_arcs.cfg
+
+# Home and move in arcs
+G28
+G1 X20 Y20 Z20
+G2 X125 Y32 Z20 E1 I10.5 J10.5
+
+# XY+Z arc move
+G2 X20 Y20 Z10 E1 I10.5 J10.5

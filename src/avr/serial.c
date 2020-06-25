@@ -7,7 +7,23 @@
 #include <avr/interrupt.h> // USART_RX_vect
 #include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "board/serial_irq.h" // serial_rx_byte
+#include "command.h" // DECL_CONSTANT_STR
 #include "sched.h" // DECL_INIT
+
+// Reserve serial pins
+#if CONFIG_SERIAL_PORT == 0
+ #if CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PE0,PE1");
+ #else
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD0,PD1");
+ #endif
+#elif CONFIG_SERIAL_PORT == 1
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD2,PD3");
+#elif CONFIG_SERIAL_PORT == 2
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PH0,PH1");
+#else
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PJ0,PJ1");
+#endif
 
 // Helper macros for defining serial port aliases
 #define AVR_SERIAL_REG1(prefix, id, suffix) prefix ## id ## suffix

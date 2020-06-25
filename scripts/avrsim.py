@@ -150,9 +150,19 @@ def create_pty(ptyname):
     os.symlink(os.ttyname(sfd), ptyname)
     fcntl.fcntl(mfd, fcntl.F_SETFL
                 , fcntl.fcntl(mfd, fcntl.F_GETFL) | os.O_NONBLOCK)
-    old = termios.tcgetattr(mfd)
-    old[3] = old[3] & ~termios.ECHO
-    termios.tcsetattr(mfd, termios.TCSADRAIN, old)
+    tcattr = termios.tcgetattr(mfd)
+    tcattr[0] &= ~(
+        termios.IGNBRK | termios.BRKINT | termios.PARMRK | termios.ISTRIP |
+        termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON)
+    tcattr[1] &= ~termios.OPOST
+    tcattr[3] &= ~(
+        termios.ECHO | termios.ECHONL | termios.ICANON | termios.ISIG |
+        termios.IEXTEN)
+    tcattr[2] &= ~(termios.CSIZE | termios.PARENB)
+    tcattr[2] |= termios.CS8
+    tcattr[6][termios.VMIN] = 0
+    tcattr[6][termios.VTIME] = 0
+    termios.tcsetattr(mfd, termios.TCSAFLUSH, tcattr)
     return mfd
 
 def main():
@@ -162,8 +172,8 @@ def main():
                     default="atmega644", help="type of AVR machine to simulate")
     opts.add_option("-s", "--speed", type="int", dest="speed", default=8000000,
                     help="machine speed")
-    opts.add_option("-r", "--rate", type="float", dest="pacing_rate", default=0.,
-                    help="real-time pacing rate")
+    opts.add_option("-r", "--rate", type="float", dest="pacing_rate",
+                    default=0., help="real-time pacing rate")
     opts.add_option("-b", "--baud", type="int", dest="baud", default=38400,
                     help="baud rate of the emulated serial port")
     opts.add_option("-t", "--trace", type="string", dest="trace",

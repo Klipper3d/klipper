@@ -3,26 +3,29 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import fan
+from . import fan
 
 PIN_MIN_TIME = 0.100
 
 class PrinterHeaterFan:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.heater_name = config.get("heater", "extruder0")
+        self.printer.load_object(config, 'heaters')
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.heater_name = config.get("heater", "extruder")
         self.heater_temp = config.getfloat("heater_temp", 50.0)
         self.heaters = []
         self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.fan_speed = config.getfloat("fan_speed", 1., minval=0., maxval=1.)
-    def printer_state(self, state):
-        if state == 'ready':
-            pheater = self.printer.lookup_object('heater')
-            self.heaters = [pheater.lookup_heater(n.strip())
-                            for n in self.heater_name.split(',')]
-            reactor = self.printer.get_reactor()
-            reactor.register_timer(self.callback, reactor.NOW)
+    def handle_ready(self):
+        pheaters = self.printer.lookup_object('heaters')
+        self.heaters = [pheaters.lookup_heater(n.strip())
+                        for n in self.heater_name.split(',')]
+        reactor = self.printer.get_reactor()
+        reactor.register_timer(self.callback, reactor.NOW)
+    def get_status(self, eventtime):
+        return self.fan.get_status(eventtime)
     def callback(self, eventtime):
         power = 0.
         for heater in self.heaters:

@@ -15,6 +15,12 @@ sync
 
 # Restart (if system install script present)
 if [ -f /etc/init.d/klipper_pru ]; then
-    echo "Attempting host MCU restart..."
+    echo "Attempting host PRU restart..."
     service klipper_pru restart
+fi
+
+# Restart (if system install script present)
+if [ -f /etc/init.d/klipper_mcu ]; then
+    echo "Attempting host MCU restart..."
+    service klipper_mcu restart
 fi

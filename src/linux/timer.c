@@ -1,6 +1,6 @@
 // Handling of timers on linux systems
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -20,9 +20,6 @@
 static uint32_t last_read_time_counter;
 static struct timespec last_read_time, next_wake_time;
 static time_t start_sec;
-
-#define NSECS 1000000000
-#define NSECS_PER_TICK (NSECS / CONFIG_CLOCK_FREQ)
 
 // Compare two 'struct timespec' times
 static inline uint8_t
@@ -106,7 +103,7 @@ timer_check_periodic(struct timespec *ts)
  * Timers
  ****************************************************************/
 
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
@@ -142,7 +139,7 @@ static struct timespec timer_repeat_until;
 #define TIMER_IDLE_REPEAT_NS 500000
 #define TIMER_REPEAT_NS 100000
 
-#define TIMER_MIN_TRY_NS 1000
+#define TIMER_MIN_TRY_NS 2000
 #define TIMER_DEFER_REPEAT_NS 5000
 
 // Invoke timers

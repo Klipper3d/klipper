@@ -106,9 +106,6 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
  * Soft PWM output pins
  ****************************************************************/
 
-#define MAX_SOFT_PWM 256
-DECL_CONSTANT(SOFT_PWM_MAX, MAX_SOFT_PWM);
-
 struct soft_pwm_s {
     struct timer timer;
     uint32_t on_duration, off_duration, end_time;
@@ -192,17 +189,14 @@ void
 command_schedule_soft_pwm_out(uint32_t *args)
 {
     struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
-    uint32_t time = args[1];
-    uint16_t value = args[2];
+    uint32_t time = args[1], next_on_duration = args[2], next_off_duration;
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
-    uint32_t next_on_duration, next_off_duration;
-    if (value == 0 || value >= MAX_SOFT_PWM) {
-        next_on_duration = next_off_duration = 0;
-        next_flags |= value ? SPF_NEXT_ON : 0;
-        if (!!value != s->default_value && s->max_duration)
+    if (next_on_duration == 0 || next_on_duration >= s->cycle_time) {
+        next_flags |= next_on_duration ? SPF_NEXT_ON : 0;
+        if (!!next_on_duration != s->default_value && s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;
+        next_on_duration = next_off_duration = 0;
     } else {
-        next_on_duration = (s->cycle_time / MAX_SOFT_PWM) * value;
         next_off_duration = s->cycle_time - next_on_duration;
         next_flags |= SPF_NEXT_ON | SPF_NEXT_TOGGLING;
         if (s->max_duration)
@@ -227,7 +221,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
     irq_enable();
 }
 DECL_COMMAND(command_schedule_soft_pwm_out,
-             "schedule_soft_pwm_out oid=%c clock=%u value=%hu");
+             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u");
 
 void
 soft_pwm_shutdown(void)

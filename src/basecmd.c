@@ -1,6 +1,6 @@
 // Basic infrastructure commands.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -27,7 +27,7 @@ alloc_init(void)
 DECL_INIT(alloc_init);
 
 // Allocate an area of memory
-static void *
+void *
 alloc_chunk(size_t size)
 {
     if (alloc_end + size > dynmem_end())
@@ -211,7 +211,6 @@ command_finalize_config(uint32_t *args)
 {
     move_finalize();
     config_crc = args[0];
-    command_get_config(NULL);
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 
@@ -258,7 +257,7 @@ command_get_uptime(uint32_t *args)
 DECL_COMMAND_FLAGS(command_get_uptime, HF_IN_SHUTDOWN, "get_uptime");
 
 #define SUMSQ_BASE 256
-DECL_CONSTANT(STATS_SUMSQ_BASE, SUMSQ_BASE);
+DECL_CONSTANT("STATS_SUMSQ_BASE", SUMSQ_BASE);
 
 void
 stats_update(uint32_t start, uint32_t cur)

@@ -92,7 +92,8 @@ command_buttons_add(uint32_t *args)
         shutdown("Set button past maximum button count");
     b->pins[pos] = gpio_in_setup(args[2], args[3]);
 }
-DECL_COMMAND(command_buttons_add, "buttons_add oid=%c pos=%c pin=%u pull_up=%c");
+DECL_COMMAND(command_buttons_add,
+             "buttons_add oid=%c pos=%c pin=%u pull_up=%c");
 
 void
 command_buttons_query(uint32_t *args)
@@ -101,7 +102,7 @@ command_buttons_query(uint32_t *args)
     sched_del_timer(&b->time);
     b->time.waketime = args[1];
     b->rest_ticks = args[2];
-    b->pressed = b->last_pressed = 0;
+    b->pressed = b->last_pressed = args[4];
     b->ack_count = b->report_count = 0;
     b->retransmit_state = BF_ACKED;
     b->retransmit_count = args[3];
@@ -112,7 +113,8 @@ command_buttons_query(uint32_t *args)
     sched_add_timer(&b->time);
 }
 DECL_COMMAND(command_buttons_query,
-             "buttons_query oid=%c clock=%u rest_ticks=%u retransmit_count=%c");
+             "buttons_query oid=%c clock=%u rest_ticks=%u retransmit_count=%c"
+             " invert=%c");
 
 void
 command_buttons_ack(uint32_t *args)

@@ -23,11 +23,13 @@ class PrinterServo:
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.
+        self.enable = config.getboolean('enable', True)
+        self.last_enable = not self.enable
         servo_name = config.get_name().split()[1]
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command("SET_SERVO", "SERVO", servo_name,
-                                        self.cmd_SET_SERVO,
-                                        desc=self.cmd_SET_SERVO_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("SET_SERVO", "SERVO", servo_name,
+                                   self.cmd_SET_SERVO,
+                                   desc=self.cmd_SET_SERVO_help)
         # Check to see if an initial angle or pulse width is
         # configured and set it as required
         self.initial_pwm_value = None
@@ -42,18 +44,24 @@ class PrinterServo:
             if initial_pulse_width is not None:
                 self.initial_pwm_value = self._get_pwm_from_pulse_width(
                     initial_pulse_width)
-    def printer_state(self, state):
-        if state == 'ready':
-            if self.initial_pwm_value is not None:
-                toolhead = self.printer.lookup_object('toolhead')
-                print_time = toolhead.get_last_move_time()
-                self._set_pwm(print_time, self.initial_pwm_value)
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+    def handle_ready(self):
+        if self.initial_pwm_value is not None:
+            toolhead = self.printer.lookup_object('toolhead')
+            print_time = toolhead.get_last_move_time()
+            self._set_pwm(print_time, self.initial_pwm_value)
+    def get_status(self, eventtime):
+        return {'value': self.last_value}
     def _set_pwm(self, print_time, value):
-        if value == self.last_value:
+        if value == self.last_value and self.enable == self.last_enable:
             return
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
-        self.mcu_servo.set_pwm(print_time, value)
+        if self.enable:
+          self.mcu_servo.set_pwm(print_time, value)
+        else:
+          self.mcu_servo.set_pwm(print_time, 0)
         self.last_value = value
+        self.last_enable = self.enable
         self.last_value_time = print_time
     def _get_pwm_from_angle(self, angle):
         angle = max(0., min(self.max_angle, angle))
@@ -63,14 +71,19 @@ class PrinterServo:
         width = max(self.min_width, min(self.max_width, width))
         return width * self.width_to_value
     cmd_SET_SERVO_help = "Set servo angle"
-    def cmd_SET_SERVO(self, params):
+    def cmd_SET_SERVO(self, gcmd):
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        if 'WIDTH' in params:
-            self._set_pwm(print_time, self._get_pwm_from_pulse_width(
-                self.gcode.get_float('WIDTH', params)))
+        enable = gcmd.get_int('ENABLE', None)
+        width = gcmd.get_float('WIDTH', None)
+        angle = gcmd.get_float('ANGLE', None)
+        if enable is not None:
+            self.enable = enable != 0
+        if width is not None:
+            self._set_pwm(print_time, self._get_pwm_from_pulse_width(width))
+        elif angle is not None:
+            self._set_pwm(print_time, self._get_pwm_from_angle(angle))
         else:
-            self._set_pwm(print_time, self._get_pwm_from_angle(
-                self.gcode.get_float('ANGLE', params)))
+            self._set_pwm(print_time, self.last_value)
 
 def load_config_prefix(config):
     return PrinterServo(config)
