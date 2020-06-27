@@ -6,6 +6,27 @@ All dates in this document are approximate.
 
 # Changes
 
+20200608: The LCD display support has changed the name of some
+internal "glyphs".  If a custom display layout was implemented it may
+be necessary to update to the latest glyph names (see
+klippy/extras/display/display.cfg for a list of available glyphs).
+
+20200606: The pin names on linux mcu have changed. Pins now have names
+of the form `gpiochip<chipid>/gpio<gpio>`.  For gpiochip0 you can also
+use a short `gpio<gpio>`.  For example, what was previously referred
+to as `P20` now becomes `gpio20` or `gpiochip0/gpio20`.
+
+20200603: The default 16x4 LCD layout will no longer show the
+estimated time remaining in a print.  (Only the elapsed time will be
+shown.)  If the old behavior is desired one can customize the menu
+display with that information (see the description of display_data in
+config/example-extras.cfg for details).
+
+20200531: The default USB vendor/product id is now 0x1d50/0x614e.
+These new ids are reserved for Klipper (thanks to the openmoko
+project). This change should not require any config changes, but the
+new ids may appear in system logs.
+
 20200524: The default value for the tmc5160 pwm_freq field is now zero
 (instead of one).
 

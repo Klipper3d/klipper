@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import heaters
+from . import heaters
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -34,6 +34,8 @@ class PIDCalibrate:
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
+        if calibrate.check_busy(0., 0., 0.):
+            raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)

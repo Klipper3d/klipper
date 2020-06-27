@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import pins, homing, manual_probe
+import pins, homing
+from . import manual_probe
 
 HINT_TIMEOUT = """
 Make sure to home the printer before probing. If the probe

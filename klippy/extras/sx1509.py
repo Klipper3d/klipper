@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import pins
-import bus
+from . import bus
 
 # Word registers
 REG_RESET = 0x7D
@@ -52,7 +52,7 @@ class SX1509(object):
                                  " clear_set_bits=%02x%02x" % (
                                      self._oid, REG_MISC, 0, (1 << 4)))
         # Transfer all regs with their initial cached state
-        for _reg, _data in self.reg_dict.iteritems():
+        for _reg, _data in self.reg_dict.items():
             self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%04x" % (
                 self._oid, _reg, _data), is_init=True)
     def setup_pin(self, pin_type, pin_params):

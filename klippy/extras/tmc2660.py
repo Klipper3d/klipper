@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import bus, tmc
+from . import bus, tmc
 
 Registers = {
     "DRVCONF": 0xE, "SGCSCONF": 0xC, "SMARTEN": 0xA,

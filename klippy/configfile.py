@@ -3,15 +3,15 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, ConfigParser, StringIO
+import os, glob, re, time, logging, ConfigParser as configparser, StringIO
 
-error = ConfigParser.Error
+error = configparser.Error
 
 class sentinel:
     pass
 
 class ConfigWrapper:
-    error = ConfigParser.Error
+    error = configparser.Error
     def __init__(self, printer, fileconfig, access_tracking, section):
         self.printer = printer
         self.fileconfig = fileconfig
@@ -194,7 +194,7 @@ class PrinterConfig:
             if pos >= 0:
                 line = line[:pos]
             # Process include or buffer line
-            mo = ConfigParser.RawConfigParser.SECTCRE.match(line)
+            mo = configparser.RawConfigParser.SECTCRE.match(line)
             header = mo and mo.group('header')
             if header and header.startswith('include '):
                 self._parse_config_buffer(buffer, filename, fileconfig)
@@ -206,7 +206,7 @@ class PrinterConfig:
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
-        fileconfig = ConfigParser.RawConfigParser()
+        fileconfig = configparser.RawConfigParser()
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):

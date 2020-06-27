@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import probe, z_tilt
+from . import probe, z_tilt
 
 class QuadGantryLevel:
     def __init__(self, config):

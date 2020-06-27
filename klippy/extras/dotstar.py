@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import bus
+from . import bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 

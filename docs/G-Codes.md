@@ -202,6 +202,12 @@ The following standard commands are supported:
   adjustment will only be made every BAND millimeters of z height - in
   that case the formula used is `value = start + factor *
   ((floor(z_height / band) + .5) * band)`.
+- `SET_DISPLAY_GROUP [DISPLAY=<display>] GROUP=<group>`: Set the
+  active display group of an lcd display. This allows to define
+  multiple display data groups in the config,
+  e.g. `[display_data <group> <elementname>]` and switch between them
+  using this extended gcode command. If DISPLAY is not specified it
+  defaults to "display" (the primary display).
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
@@ -277,6 +283,15 @@ section is enabled:
   move completes, however if a manual stepper move uses SYNC=0 then
   future G-Code movement commands may run in parallel with the stepper
   movement.
+
+## Extruder stepper Commands
+
+The following command is available when an "extruder_stepper" config
+section is enabled:
+- `SYNC_STEPPER_TO_EXTRUDER STEPPER=<extruder_stepper config_name>
+  [EXTRUDER=<extruder config_name>]`: This command will cause the given
+  STEPPER to become synchronized to the given EXTRUDER, overriding
+  the extruder defined in the "extruder_stepper" config section.
 
 ## Probe
 

@@ -3,6 +3,8 @@
 # Copyright (C) 2020  Lucio Tarantino <lucio.tarantino@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+from . import bus
 
 ######################################################################
 # NOTE: The implementation requires write support of length 0
@@ -16,9 +18,6 @@
 #       SHT21  - Untested
 #
 ######################################################################
-
-import bus
-import logging
 
 HTU21D_I2C_ADDR= 0x40
 

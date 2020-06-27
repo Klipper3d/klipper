@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
-import probe
+from . import probe
 
 def parse_coord(config, param):
     pair = config.get(param).strip().split(',', 1)

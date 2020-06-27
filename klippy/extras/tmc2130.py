@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import bus, tmc
+from . import bus, tmc
 
 TMC_FREQUENCY=13200000.
 

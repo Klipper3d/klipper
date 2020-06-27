@@ -38,20 +38,23 @@ class ArcSupport:
         if not asI and not asJ:
             raise gcmd.error("G2/G3 neither I nor J given")
         asE = gcmd.get_float("E", None)
-        if asE is not None and gcodestatus['absolute_extrude']:
-            raise gcmd.error("G2/G3 only supports relative extrude mode")
         asF = gcmd.get_float("F", None)
         clockwise = (gcmd.get_command() == 'G2')
 
         # Build list of linear coordinates to move to
         coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],
                               clockwise)
+        e_per_move = e_base = 0.
+        if asE is not None:
+            if gcodestatus['absolute_extrude']:
+                e_base = currentPos[3]
+            e_per_move = (asE - e_base) / len(coords)
 
         # Convert coords into G1 commands
         for coord in coords:
             g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
-            if asE is not None:
-                g1_params['E'] = asE / len(coords)
+            if e_per_move:
+                g1_params['E'] = e_base + e_per_move
             if asF is not None:
                 g1_params['F'] = asF
             g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)

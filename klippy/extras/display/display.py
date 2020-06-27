@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
-import hd44780, st7920, uc1701, menu
+from . import hd44780, st7920, uc1701, menu
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
@@ -100,13 +100,30 @@ class PrinterLCD:
         self.show_data_group = self.display_data_groups.get(dgroup)
         if self.show_data_group is None:
             raise config.error("Unknown display_data group '%s'" % (dgroup,))
-        # Screen updating
-        self.glyph_helpers = { 'animated_bed': self.animate_bed,
-                               'animated_fan': self.animate_fan }
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+        # Register g-code commands
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
+                                   self.cmd_SET_DISPLAY_GROUP,
+                                   desc=self.cmd_SET_DISPLAY_GROUP_help)
+        if name == 'display':
+            gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
+                                       self.cmd_SET_DISPLAY_GROUP)
     # Configurable display
+    def _parse_glyph(self, config, glyph_name, data, width, height):
+        glyph_data = []
+        for line in data.split('\n'):
+            line = line.strip().replace('.', '0').replace('*', '1')
+            if not line:
+                continue
+            if len(line) != width or line.replace('0', '').replace('1', ''):
+                raise config.error("Invalid glyph line in %s" % (glyph_name,))
+            glyph_data.append(int(line, 2))
+        if len(glyph_data) != height:
+            raise config.error("Glyph %s incorrect lines" % (glyph_name,))
+        return glyph_data
     def load_config(self, config):
         # Load default display config file
         pconfig = self.printer.lookup_object('configfile')
@@ -139,6 +156,27 @@ class PrinterLCD:
         for group_name, data_configs in groups.items():
             dg = DisplayGroup(config, group_name, data_configs)
             self.display_data_groups[group_name] = dg
+        # Load display glyphs
+        dg_prefix = 'display_glyph '
+        icons = {}
+        dg_main = config.get_prefix_sections(dg_prefix)
+        dg_main_names = {c.get_name(): 1 for c in dg_main}
+        dg_def = [c for c in dconfig.get_prefix_sections(dg_prefix)
+                  if c.get_name() not in dg_main_names]
+        for dg in dg_main + dg_def:
+            glyph_name = dg.get_name()[len(dg_prefix):]
+            data = dg.get('data', None)
+            if data is not None:
+                idata = self._parse_glyph(config, glyph_name, data, 16, 16)
+                icon1 = [(bits >> 8) & 0xff for bits in idata]
+                icon2 = [bits & 0xff for bits in idata]
+                icons.setdefault(glyph_name, {})['icon16x16'] = (icon1, icon2)
+            data = dg.get('hd44780_data', None)
+            if data is not None:
+                slot = dg.getint('hd44780_slot', minval=0, maxval=7)
+                idata = self._parse_glyph(config, glyph_name, data, 5, 8)
+                icons.setdefault(glyph_name, {})['icon5x8'] = (slot, idata)
+        self.lcd_chip.set_glyphs(icons)
     # Initialization
     def handle_ready(self):
         self.lcd_chip.init()
@@ -159,13 +197,6 @@ class PrinterLCD:
             logging.exception("Error during display screen update")
         self.lcd_chip.flush()
         return eventtime + .500
-    # Rendering helpers
-    def animate_bed(self, row, col, eventtime):
-        frame = int(eventtime) & 1
-        return self.lcd_chip.write_glyph(col, row, 'bed_heat%d' % (frame + 1,))
-    def animate_fan(self, row, col, eventtime):
-        frame = int(eventtime) & 1
-        return self.lcd_chip.write_glyph(col, row, 'fan%d' % (frame + 1,))
     def draw_text(self, row, col, mixed_text, eventtime):
         pos = col
         for i, text in enumerate(mixed_text.split('~')):
@@ -173,29 +204,23 @@ class PrinterLCD:
                 # write text
                 self.lcd_chip.write_text(pos, row, text)
                 pos += len(text)
-            elif text in self.glyph_helpers:
-                pos += self.glyph_helpers[text](row, pos, eventtime)
             else:
                 # write glyph
                 pos += self.lcd_chip.write_glyph(pos, row, text)
     def draw_progress_bar(self, row, col, width, value):
-        value = int(value * 100.)
-        data = [0x00] * width
-        char_pcnt = int(100/width)
+        pixels = -1 << int(width * 8 * (1. - value) + .5)
+        pixels |= (1 << (width * 8 - 1)) | 1
         for i in range(width):
-            if (i+1)*char_pcnt <= value:
-                # Draw completely filled bytes
-                data[i] |= 0xFF
-            elif (i*char_pcnt) < value:
-                # Draw partially filled bytes
-                data[i] |= (-1 << 8-((value % char_pcnt)*8/char_pcnt)) & 0xff
-        data[0] |= 0x80
-        data[-1] |= 0x01
-        self.lcd_chip.write_graphics(col, row, 0, [0xff]*width)
-        for i in range(1, 15):
-            self.lcd_chip.write_graphics(col, row, i, data)
-        self.lcd_chip.write_graphics(col, row, 15, [0xff]*width)
+            data = [0xff] + [(pixels >> (i * 8)) & 0xff] * 14 + [0xff]
+            self.lcd_chip.write_graphics(col + width - 1 - i, row, data)
         return ""
+    cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
+    def cmd_SET_DISPLAY_GROUP(self, gcmd):
+        group = gcmd.get('GROUP')
+        new_dg = self.display_data_groups.get(group)
+        if new_dg is None:
+            raise gcmd.error("Unknown display_data group '%s'" % (group,))
+        self.show_data_group = new_dg
 
 def load_config(config):
     return PrinterLCD(config)

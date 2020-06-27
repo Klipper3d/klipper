@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, Queue
+import os, select, math, time, Queue as queue
 import greenlet
 import chelper, util
 
@@ -102,7 +102,7 @@ class SelectReactor:
         self._next_timer = self.NEVER
         # Callbacks
         self._pipe_fds = None
-        self._async_queue = Queue.Queue()
+        self._async_queue = queue.Queue()
         # File descriptors
         self._fds = []
         # Greenlets
@@ -170,7 +170,7 @@ class SelectReactor:
         while 1:
             try:
                 func, args = self._async_queue.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 break
             func(*args)
     def _setup_async_callbacks(self):
