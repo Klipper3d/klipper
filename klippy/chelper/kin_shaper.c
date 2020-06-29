@@ -308,11 +308,11 @@ static void
 shaper_note_generation_time(struct input_shaper *is)
 {
     double pre_active = 0., post_active = 0.;
-    if (is->sk.active_flags & AF_X) {
+    if ((is->sk.active_flags & AF_X) && is->x_n) {
         pre_active = is->x_pulses[is->x_n-1].t;
         post_active = -is->x_pulses[0].t;
     }
-    if (is->sk.active_flags & AF_Y) {
+    if ((is->sk.active_flags & AF_Y) && is->y_n) {
         pre_active = is->y_pulses[is->y_n-1].t > pre_active
             ? is->y_pulses[is->y_n-1].t : pre_active;
         post_active = -is->y_pulses[0].t > post_active
@@ -367,17 +367,23 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk
         return -1;
 
     int af = is->orig_sk->active_flags & (AF_X | AF_Y);
-    if (af & AF_X) {
-        free(is->x_pulses);
+    free(is->x_pulses);
+    if ((af & AF_X) && shaper_freq_x > 0.) {
         init_shaper_callbacks[shaper_type_x](
                 shaper_freq_x, damping_ratio_x, &is->x_pulses, &is->x_n);
         shift_pulses(is->x_n, is->x_pulses);
+    } else {
+        is->x_pulses = NULL;
+        is->x_n = 0;
     }
-    if (af & AF_Y) {
-        free(is->y_pulses);
+    free(is->y_pulses);
+    if ((af & AF_Y) && shaper_freq_y > 0.) {
         init_shaper_callbacks[shaper_type_y](
                 shaper_freq_y, damping_ratio_y, &is->y_pulses, &is->y_n);
         shift_pulses(is->y_n, is->y_pulses);
+    } else {
+        is->y_pulses = NULL;
+        is->y_n = 0;
     }
     shaper_note_generation_time(is);
     return 0;
@@ -387,6 +393,8 @@ double __visible
 input_shaper_get_step_generation_window(int shaper_type, double shaper_freq
                                         , double damping_ratio)
 {
+    if (shaper_freq <= 0.)
+        return 0.;
     if (shaper_type >= ARRAY_SIZE(init_shaper_callbacks) || shaper_type < 0)
         return 0.;
     is_init_shaper_callback init_shaper_cb = init_shaper_callbacks[shaper_type];
