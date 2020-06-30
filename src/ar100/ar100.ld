@@ -43,5 +43,6 @@ SECTIONS
     *(.iplt*)
     *(.note*)
     *(.rela*)
+    *( .compile_time_request )
   }
 }

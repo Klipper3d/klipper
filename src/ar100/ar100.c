@@ -6,6 +6,7 @@
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_shutdown
 
+#define PRCM_BASE 0x01f01400
 #define PIO_BASE 0x01C20800
 #define PIOB_BASE PIO_BASE + (1*0x24)
 #define PIOE_BASE PIO_BASE + (4*0x24)
@@ -26,8 +27,6 @@ struct command{
   uint16_t padding;
   uint32_t delay;
 };
-
-extern struct command __shared_mem[NUM_COMMANDS];
 
 // shutdown() compatibility code
 uint8_t ctr_lookup_static_string(const char *str)
@@ -55,8 +54,9 @@ inline void  write_reg(uint32_t addr, uint32_t val){
 void delay_cycles(uint32_t cycles){
   if(cycles <= 2)
     return;
-  while(cycles--)
-  asm volatile("");
+  while(cycles--){
+    __asm__ __volatile__ ("l.nop");
+  }
 }
 
 
@@ -69,21 +69,29 @@ void gpio_init(void){
 
 _Noreturn void
 main(void){
-  gpio_init();
-  int command_num = 0;
+  /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
+  write_reg(PRCM_BASE, 2<<16 | 1<<8);
 
-  __shared_mem[0].delay = 10000000;
-  __shared_mem[0].gpios = 1 << 7;
-  __shared_mem[1].delay = 20000000;
-  __shared_mem[1].gpios = 0;
+  struct command commands[NUM_COMMANDS] = {
+    {
+      .delay = 100000,
+      .gpios = 1 << 0
+    },
+    {
+      .delay = 100000,
+      .gpios = 0 << 0
+    },
+  };
+
+  gpio_init();
 
   SHARED_MEM->command_index = command_index;
   SHARED_MEM->command_index_size = command_index_size;
 
   while(1){
-    write_reg(PB_DATA, __shared_mem[command_num].gpios);
-    delay_cycles(__shared_mem[command_num].delay);
-    if(++command_num == 2)
-      command_num = 0;
+    for(int i=0; i<2; i++){
+      write_reg(PE_DATA, commands[i].gpios);
+      delay_cycles(commands[i].delay);
+    }
   }
 }
