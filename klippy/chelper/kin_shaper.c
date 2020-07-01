@@ -18,12 +18,26 @@
  ****************************************************************/
 
 static inline double
-move_get_axis_coord(struct move *m, int axis, double move_time)
+get_axis_position(struct move *m, int axis, double move_time)
 {
     double axis_r = m->axes_r.axis[axis - 'x'];
     double start_pos = m->start_pos.axis[axis - 'x'];
     double move_dist = move_get_distance(m, move_time);
     return start_pos + axis_r * move_dist;
+}
+
+static inline double
+get_axis_position_across_moves(struct move *m, int axis, double time)
+{
+    while (likely(time < 0.)) {
+        m = list_prev_entry(m, node);
+        time += m->move_t;
+    }
+    while (likely(time > m->move_t)) {
+        time -= m->move_t;
+        m = list_next_entry(m, node);
+    }
+    return get_axis_position(m, axis, time);
 }
 
 struct shaper_pulse {
@@ -35,22 +49,10 @@ static inline double
 calc_position(struct move *m, int axis, double move_time
               , struct shaper_pulse *pulses, int n)
 {
-    double time = move_time + pulses[0].t;
-    while (unlikely(time < 0.)) {
-        m = list_prev_entry(m, node);
-        time += m->move_t;
-    }
     double res = 0.;
-    for (int i = 0; ; ++i) {
-        res += pulses[i].a * move_get_axis_coord(m, axis, time);
-        if (i + 1 >= n)
-            break;
-        time += pulses[i+1].t - pulses[i].t;
-        while (unlikely(time > m->move_t)) {
-            time -= m->move_t;
-            m = list_next_entry(m, node);
-        }
-    }
+    for (int i = 0; i < n; ++i)
+        res += pulses[i].a * get_axis_position_across_moves(
+                m, axis, move_time + pulses[i].t);
     return res;
 }
 
