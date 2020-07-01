@@ -12,6 +12,20 @@
 
 DECL_CONSTANT_STR("MCU", "ar100");
 
+#define PRCM_BASE 0x01f01400
+
+#define SHARED_MEM ((struct shared_mem *)0x00013c00)
+
+#define NUM_COMMANDS 2
+#define SHARED_MEM_BASE 0x00013c00
+#define SHARED_MEM_LENGTH 1000
+volatile unsigned int *sram = (volatile unsigned int *)SHARED_MEM_BASE;
+
+struct command{
+  uint16_t gpios;
+  uint16_t padding;
+  uint32_t delay;
+};
 
 /****************************************************************
  * Timers
@@ -163,10 +177,59 @@ dynmem_end(void)
  * Startup
  ****************************************************************/
 
+ // Support config_reset
+ DECL_COMMAND_FLAGS(config_reset, HF_IN_SHUTDOWN, "config_reset");
+
+ inline void  write_reg(uint32_t addr, uint32_t val){
+   *((volatile unsigned long *)(addr)) = val;
+ }
+
+
+ void delay_cycles(uint32_t cycles){
+   if(cycles <= 2)
+     return;
+   while(cycles--){
+     __asm__ __volatile__ ("l.nop");
+   }
+ }
+
+ /*void gpio_init(void){
+   write_reg(PE_CFG0, 1 << 0 | 1 << 4 | 1 << 8 | 1 << 12 | 1 << 16 | 1 << 20 | 1 << 24 | 1 << 28);
+   write_reg(PE_CFG1, 1 << 0 | 1 << 4 | 1 << 8 | 1 << 12 | 1 << 16 | 1 << 20 | 1 << 24 | 1 << 28);
+
+   write_reg(PB_CFG0, 1 << 28);
+ }*/
+
+
 // Main entry point
 int
-main(void)
-{
+main(void){
+  /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
+  write_reg(PRCM_BASE, 2<<16 | 1<<8);
+
+  struct command commands[NUM_COMMANDS] = {
+    {
+      .delay = 1000000,
+      .gpios = 1 << 7
+    },
+    {
+      .delay = 1000000,
+      .gpios = 0 << 7
+    },
+  };
+
+  //gpio_init();
+
+  SHARED_MEM->command_index = command_index;
+  SHARED_MEM->command_index_size = command_index_size;
+
+  /*while(1){
+    for(int i=0; i<2; i++){
+      write_reg(PB_DATA, commands[i].gpios);
+      //delay_cycles(commands[i].delay);
+    }
+  }*/
+
     sched_main();
     return 0;
 }

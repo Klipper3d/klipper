@@ -3,7 +3,19 @@
 
 #include <stdint.h> // uint8_t
 
+
+#define PIO_BASE 0x01C20800
+#define PIOB_BASE PIO_BASE + (1*0x24)
+#define PIOE_BASE PIO_BASE + (4*0x24)
+#define PB_CFG0 PIOB_BASE + 0x0
+#define PB_DATA PIOB_BASE + 0x10
+#define PE_CFG0 PIOE_BASE + 0x0
+#define PE_CFG1 PIOE_BASE + 0x4
+#define PE_DATA PIOE_BASE + 0x10
+
+
 struct gpio_out {
+    uint32_t reg;
     uint32_t pin;
     uint32_t val;
 };

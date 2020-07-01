@@ -15,8 +15,6 @@
 #define WAKE_PRU1_IRQ  1
 #define WAKE_ARM_IRQ   2
 
-#define R31_IRQ_OFFSET 30
-
 #define R31_WRITE_IRQ_SELECT (1<<5)
 #define R31_WRITE_IRQ_OFFSET 16
 
