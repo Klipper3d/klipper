@@ -7,7 +7,10 @@
 FAN_MIN_TIME = 0.100
 
 class PrinterFan:
+    cmd_SET_FAN_SPEED_help = "Sets the speed of a fan"
     def __init__(self, config, default_shutdown_speed=0.):
+        self.fan_name = config.get_name().split()[-1]
+        self.section = config.get_name().split()[0]
         self.last_fan_value = 0.
         self.last_fan_time = 0.
         self.printer = config.get_printer()
@@ -29,10 +32,16 @@ class PrinterFan:
         self.mcu_fan.setup_start_value(
             0., max(0., min(self.max_power, shutdown_speed)))
         # Register commands
-        if config.get_name() == 'fan':
-            gcode = self.printer.lookup_object('gcode')
-            gcode.register_command("M106", self.cmd_M106)
-            gcode.register_command("M107", self.cmd_M107)
+        if self.section == 'fan':
+            gcode = self.printer.lookup_object("gcode")
+            if self.fan_name == 'fan': # Unnamed fans gets the name 'fan'
+                gcode.register_command("M106", self.cmd_M106)
+                gcode.register_command("M107", self.cmd_M107)
+            else:
+                gcode.register_mux_command("SET_FAN_SPEED", "FAN",
+                                           self.fan_name, self.cmd_SET_FAN_SPEED,
+                                           desc=self.cmd_SET_FAN_SPEED_help)
+
     def handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
     def set_speed(self, print_time, value):
@@ -63,6 +72,12 @@ class PrinterFan:
     def cmd_M107(self, gcmd):
         # Turn fan off
         self._delayed_set_speed(0.)
+    def cmd_SET_FAN_SPEED(self, gcmd):
+        speed = gcmd.get_float('SPEED', 0.)
+        self._delayed_set_speed(speed)
 
 def load_config(config):
+    return PrinterFan(config)
+
+def load_config_prefix(config):
     return PrinterFan(config)
