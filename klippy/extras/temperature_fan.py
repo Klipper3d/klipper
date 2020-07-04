@@ -1,6 +1,6 @@
 # Support fans that are enabled when temperature exceeds a set threshold
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import fan
@@ -14,7 +14,7 @@ class TemperatureFan:
     def __init__(self, config):
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
-        self.fan = fan.PrinterFan(config, default_shutdown_speed=1.)
+        self.fan = fan.Fan(config, default_shutdown_speed=1.)
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         pheaters = self.printer.load_object(config, 'heaters')

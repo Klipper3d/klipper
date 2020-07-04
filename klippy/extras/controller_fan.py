@@ -15,10 +15,9 @@ class ControllerFan:
         self.stepper_enable = self.printer.load_object(config, 'stepper_enable')
         self.printer.load_object(config, 'heaters')
         self.heaters = []
-        self.fan = fan.PrinterFan(config)
-        self.mcu = self.fan.mcu_fan.get_mcu()
-        self.fan_speed = config.getfloat(
-            'fan_speed', default=1., minval=0., maxval=1.)
+        self.fan = fan.Fan(config)
+        self.fan_speed = config.getfloat('fan_speed', default=1.,
+                                         minval=0., maxval=1.)
         self.idle_speed = config.getfloat(
             'idle_speed', default=self.fan_speed, minval=0., maxval=1.)
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
@@ -47,8 +46,8 @@ class ControllerFan:
         elif self.last_on < self.idle_timeout:
             power = self.idle_speed
             self.last_on += 1
-        print_time = self.mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
-        self.fan.set_speed(print_time, power)
+        print_time = self.fan.get_mcu().estimated_print_time(eventtime)
+        self.fan.set_speed(print_time + PIN_MIN_TIME, power)
         return eventtime + 1.
 
 def load_config_prefix(config):
