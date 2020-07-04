@@ -39,7 +39,8 @@ class PrinterFan:
                 gcode.register_command("M107", self.cmd_M107)
             else:
                 gcode.register_mux_command("SET_FAN_SPEED", "FAN",
-                                           self.fan_name, self.cmd_SET_FAN_SPEED,
+                                           self.fan_name,
+                                           self.cmd_SET_FAN_SPEED,
                                            desc=self.cmd_SET_FAN_SPEED_help)
 
     def handle_request_restart(self, print_time):
