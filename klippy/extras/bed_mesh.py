@@ -504,6 +504,8 @@ class BedMeshCalibrate:
             print_func("bed_mesh: bed has not been probed")
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets
+        positions = [(round(p[0], 2), round(p[1], 2), p[2])
+                     for p in positions]
         params = self.mesh_params
         params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
         params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
