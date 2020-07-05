@@ -175,6 +175,27 @@ class BedMesh:
                     raise self.gcode.error(
                         "Mesh Leveling: Error splitting move ")
         self.last_position[:] = newpos
+    def get_status(self, eventtime=None):
+        status = {
+            "profile_name": "",
+            "mesh_min": (0., 0.),
+            "mesh_max": (0., 0.),
+            "probed_matrix": [[]],
+            "mesh_matrix": [[]]
+        }
+        if self.z_mesh is not None:
+            params = self.z_mesh.mesh_params
+            mesh_min = (params['min_x'], params['min_y'])
+            mesh_max = (params['max_x'], params['max_y'])
+            probed_matrix = [[round(z, 6) for z in line]
+                             for line in self.bmc.probed_matrix]
+            mesh_matrix = self.z_mesh.get_mesh_matrix()
+            status['profile_name'] = self.bmc.current_profile
+            status['mesh_min'] = mesh_min
+            status['mesh_max'] = mesh_max
+            status['probed_matrix'] = probed_matrix
+            status['mesh_matrix'] = mesh_matrix
+        return status
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
     def cmd_BED_MESH_OUTPUT(self, gcmd):
         if gcmd.get_int('PGP', 0):
@@ -206,6 +227,7 @@ class BedMeshCalibrate:
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
         self.name = config.get_name()
+        self.current_profile = ""
         self.radius = self.origin = None
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
@@ -433,6 +455,7 @@ class BedMeshCalibrate:
             zmesh.build_mesh(self.probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
+        self.current_profile = prof_name
         self.bedmesh.set_mesh(zmesh)
     def remove_profile(self, prof_name):
         if prof_name in self.profiles:
@@ -550,6 +573,7 @@ class BedMeshCalibrate:
             mesh.build_mesh(self.probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
+        self.current_profile = "default"
         self.bedmesh.set_mesh(mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         self.save_profile("default")
@@ -655,8 +679,14 @@ class ZMesh:
                            (self.mesh_x_count - 1)
         self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
                            (self.mesh_y_count - 1)
-    def print_mesh(self, print_func, move_z=None):
+    def get_mesh_matrix(self):
         if self.mesh_matrix is not None:
+            return [[round(z + self.mesh_offset, 6) for z in line]
+                    for line in self.mesh_matrix]
+        return None
+    def print_mesh(self, print_func, move_z=None):
+        matrix = self.get_mesh_matrix()
+        if matrix is not None:
             msg = "Mesh X,Y: %d,%d\n" % (self.mesh_x_count, self.mesh_y_count)
             if move_z is not None:
                 msg += "Search Height: %d\n" % (move_z)
@@ -667,8 +697,8 @@ class ZMesh:
                    % (self.mesh_params['algo'])
             msg += "Measured points:\n"
             for y_line in range(self.mesh_y_count - 1, -1, -1):
-                for z in self.mesh_matrix[y_line]:
-                    msg += "  %f" % (z + self.mesh_offset)
+                for z in matrix[y_line]:
+                    msg += "  %f" % (z)
                 msg += "\n"
             print_func(msg)
         else:
