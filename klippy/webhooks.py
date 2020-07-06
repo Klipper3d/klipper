@@ -99,9 +99,9 @@ class ServerConnection:
         self.fd = self.fd_handle = self.mutex = None
         self.is_server_connected = False
         self.partial_data = ""
-        is_fileoutput = (printer.get_start_args().get('debugoutput')
-                         is not None)
-        if is_fileoutput:
+        is_fileinput = (printer.get_start_args().get('debuginput')
+                        is not None)
+        if is_fileinput:
             # Do not try to connect in klippy batch mode
             return
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
