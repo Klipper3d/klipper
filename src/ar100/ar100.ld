@@ -5,6 +5,7 @@ ENTRY (start)
 MEMORY {
   /*SRAM_A2 (rwx): ORIGIN = 0x00000000, LENGTH = 0x00014000*/
   SRAM_A2 (rwx): ORIGIN = 0x00000000, LENGTH = 0x00114000
+  SRAM_A1 (rwx): ORIGIN = 0x40000, LENGTH = 0x8000
 }
 
 SECTIONS
@@ -36,7 +37,7 @@ SECTIONS
 
   /*ASSERT(. <= 0x00013c00, "Firmware overflows into shared memory")*/
 
-  __shared_mem = 0x00013c00;
+  //__shared_mem = 0x00013c00;
 
   /DISCARD/ : {
     *(.comment*)

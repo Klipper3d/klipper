@@ -2,75 +2,79 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
+#include <string.h>
 #include "board/misc.h" // dynmem_start
-#include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "command.h" // shutdown
 #include "generic/timer_irq.h" // timer_dispatch_many
-#include "internal.h" // SHARED_MEM
+#include "util.h"
 #include "sched.h" // sched_main
 
-DECL_CONSTANT_STR("MCU", "ar100");
+#include "asm/spr.h"
+#include "gpio.h"
+//#include "uart.h"
+#include "serial.h"
+#include "prcm.h"
 
-#define PRCM_BASE 0x01f01400
 
-#define SHARED_MEM ((struct shared_mem *)0x00013c00)
+static struct task_wake console_wake;
+static uint8_t receive_buf[4096];
+static int receive_pos;
 
-#define NUM_COMMANDS 2
-#define SHARED_MEM_BASE 0x00013c00
-#define SHARED_MEM_LENGTH 1000
-volatile unsigned int *sram = (volatile unsigned int *)SHARED_MEM_BASE;
 
-struct command{
-  uint16_t gpios;
-  uint16_t padding;
-  uint32_t delay;
-};
+static inline unsigned long mfspr(unsigned long add){
+	unsigned long ret;
+
+	__asm__ __volatile__ ("l.mfspr %0,r0,%1" : "=r" (ret) : "K" (add));
+
+	return ret;
+}
+
+static inline void mtspr(unsigned long add, unsigned long val)
+{
+	__asm__ __volatile__ ("l.mtspr r0,%1,%0" : : "K" (add), "r" (val));
+}
+
+
+void irq_disable(void){}
+
+void irq_enable(void){}
+
+irqstatus_t irq_save(void){
+    return 0;
+}
+
+void irq_restore(irqstatus_t flag){
+}
+
+void irq_wait(void){
+    //uart_puts("irq_wait()\n");
+    irq_poll();
+}
+void irq_poll(void){
+  if(r_uart_fifo_rcv())
+    sched_wake_task(&console_wake);
+}
+
+
+void
+serial_enable_tx_irq(void)
+{
+    // Normally this would enable the hardware irq, but we just call
+    // do_uart() directly in this demo code.
+    uart_puts("serial_enable_tx_irq\n");
+}
 
 /****************************************************************
  * Timers
  ****************************************************************/
-
-void
-irq_disable(void)
-{
-}
-
-void
-irq_enable(void)
-{
-}
-
-irqstatus_t
-irq_save(void)
-{
-    return 0;
-}
-
-void
-irq_restore(irqstatus_t flag)
-{
-}
-
-void
-irq_wait(void)
-{
-    irq_poll();
-}
-
 // Set the next timer wake up time
 static void
-timer_set(uint32_t value)
-{
-    if (!value)
-        value = 1;
-}
+timer_set(uint32_t value){}
 
 // Return the current time (in absolute clock ticks).
-uint32_t
-timer_read_time(void)
-{
-    return 0;
+uint32_t timer_read_time(void){
+  return mfspr(SPR_TICK_TTCR_ADDR);
 }
 
 // Activate timer dispatch as soon as possible
@@ -81,13 +85,9 @@ timer_kick(void)
 }
 
 void
-irq_poll(void)
-{
-}
-
-void
 timer_init(void)
 {
+  mtspr(SPR_TICK_TTMR_ADDR, 3<<30);
 }
 DECL_INIT(timer_init);
 
@@ -96,50 +96,49 @@ DECL_INIT(timer_init);
  * Console IO
  ****************************************************************/
 
-// Process any incoming commands
-void
-console_task(void)
-{
-    const struct command_parser *cp = SHARED_MEM->next_command;
-    if (!cp)
-        return;
+ // Process any incoming commands
+ void
+ console_task(void)
+ {
+     // Read data
+     char c;
+     int ret = 0;
+     while(r_uart_fifo_rcv()){
+       c = r_uart_getc();
+       receive_buf[receive_pos + ret] = c;
+       ret++;
+     }
+     if(!ret)
+       return;
 
-    if (sched_is_shutdown() && !(cp->flags & HF_IN_SHUTDOWN)) {
-        sched_report_shutdown();
-    } else {
-        void (*func)(uint32_t*) = cp->func;
-        func(SHARED_MEM->next_command_args);
-    }
-
-    writel(&SHARED_MEM->next_command, 0);
-}
-DECL_TASK(console_task);
+     // Find and dispatch message blocks in the input
+     int len = receive_pos + ret;
+     uint_fast8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
+     ret = command_find_and_dispatch(receive_buf, msglen, &pop_count);
+     if (ret) {
+         len -= pop_count;
+         if (len) {
+             memmove(receive_buf, &receive_buf[pop_count], len);
+             sched_wake_task(&console_wake);
+         }
+     }
+     receive_pos = len;
+ }
+ DECL_TASK(console_task);
 
 // Encode and transmit a "response" message
 void
-console_sendf(const struct command_encoder *ce, va_list args)
-{
-    // Verify space for message
-    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    struct shared_response_buffer *s = &SHARED_MEM->send_data[send_push_pos];
-    if (readl(&s->count))
-        return;
+console_sendf(const struct command_encoder *ce, va_list args){
+     // Generate message
+     uint8_t buf[MESSAGE_MAX];
+     uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
 
-    // Generate message
-    uint32_t msglen = command_encodef(s->data, ce, args);
+     // Transmit message
+     for(int i=0; i<msglen; i++){
+       r_uart_putc(buf[i]);
+     }
+ }
 
-    // Signal PRU0 to transmit message
-    writel(&s->count, msglen);
-    SHARED_MEM->send_push_pos = (
-        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
-}
-
-void
-console_shutdown(void)
-{
-    writel(&SHARED_MEM->next_command, 0);
-}
-DECL_SHUTDOWN(console_shutdown);
 
 // Handle shutdown request from ar100
 static void
@@ -147,89 +146,35 @@ shutdown_handler(uint32_t *args)
 {
     shutdown("Request from ar100");
 }
+
 const struct command_parser shutdown_request = {
     .func = shutdown_handler,
 };
 
-
-/****************************************************************
- * Dynamic memory
- ****************************************************************/
-
-static char dynmem_pool[3 * 1024];
-
-// Return the start of memory available for dynamic allocations
-void *
-dynmem_start(void)
-{
-    return dynmem_pool;
+void delay_cycles(uint32_t cycles){
+  uint32_t end = timer_read_time() + cycles;
+  while(end > timer_read_time());
 }
-
-// Return the end of memory available for dynamic allocations
-void *
-dynmem_end(void)
-{
-    return &dynmem_pool[sizeof(dynmem_pool)];
-}
-
-
-/****************************************************************
- * Startup
- ****************************************************************/
-
- // Support config_reset
- DECL_COMMAND_FLAGS(config_reset, HF_IN_SHUTDOWN, "config_reset");
-
- inline void  write_reg(uint32_t addr, uint32_t val){
-   *((volatile unsigned long *)(addr)) = val;
- }
-
-
- void delay_cycles(uint32_t cycles){
-   if(cycles <= 2)
-     return;
-   while(cycles--){
-     __asm__ __volatile__ ("l.nop");
-   }
- }
-
- /*void gpio_init(void){
-   write_reg(PE_CFG0, 1 << 0 | 1 << 4 | 1 << 8 | 1 << 12 | 1 << 16 | 1 << 20 | 1 << 24 | 1 << 28);
-   write_reg(PE_CFG1, 1 << 0 | 1 << 4 | 1 << 8 | 1 << 12 | 1 << 16 | 1 << 20 | 1 << 24 | 1 << 28);
-
-   write_reg(PB_CFG0, 1 << 28);
- }*/
-
 
 // Main entry point
-int
-main(void){
+__noreturn void main(uint32_t exception);
+__noreturn void main(uint32_t exception){
+
   /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
-  write_reg(PRCM_BASE, 2<<16 | 1<<8);
+  r_prcm_set_cpus_clk_rate(PLL_PERIPH);
 
-  struct command commands[NUM_COMMANDS] = {
-    {
-      .delay = 1000000,
-      .gpios = 1 << 7
-    },
-    {
-      .delay = 1000000,
-      .gpios = 0 << 7
-    },
-  };
-
-  //gpio_init();
-
-  SHARED_MEM->command_index = command_index;
-  SHARED_MEM->command_index_size = command_index_size;
-
+  uart_puts("Init uart\n");
+  r_uart_init();
+  uart_puts("**Start**\n");
+  //r_uart_puts("Test");
+  timer_init();
   /*while(1){
-    for(int i=0; i<2; i++){
-      write_reg(PB_DATA, commands[i].gpios);
-      //delay_cycles(commands[i].delay);
+    while(r_uart_fifo_rcv()){
+      uart_putc(r_uart_getc());
     }
+    uart_puts("*\r\n");
+    while(!r_uart_fifo_rcv()){}
+    //delay_cycles(10000000);
   }*/
-
-    sched_main();
-    return 0;
+  sched_main();
 }

@@ -6,7 +6,7 @@
 
 #include "misc.h" // dynmem_start
 
-static char dynmem_pool[20 * 1024];
+static char dynmem_pool[1 * 1024];
 
 // Return the start of memory available for dynamic allocations
 void *

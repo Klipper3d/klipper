@@ -6,7 +6,6 @@
 #ifndef COMMON_ARCH_SPR_H
 #define COMMON_ARCH_SPR_H
 
-//#include <util.h>
 #ifdef __ASSEMBLER__
 #define U(n)          (n)
 #else
