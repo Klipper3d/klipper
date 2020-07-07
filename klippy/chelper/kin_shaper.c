@@ -50,7 +50,8 @@ calc_position(struct move *m, int axis, double move_time
               , struct shaper_pulse *pulses, int n)
 {
     double res = 0.;
-    for (int i = 0; i < n; ++i)
+    int i;
+    for (i = 0; i < n; ++i)
         res += pulses[i].a * get_axis_position_across_moves(
                 m, axis, move_time + pulses[i].t);
     return res;
