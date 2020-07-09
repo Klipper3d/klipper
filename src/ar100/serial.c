@@ -4,15 +4,17 @@
 #include "serial.h"
 #include "util.h"
 #include "prcm.h"
-#include "r_pio.h"
+#include "gpio.h"
 
 void r_uart_init(void){
   // Setup Pins PL2, PL3 as UART IO
-  uint32_t pl = (read_reg(PL_CFG0_REG) & 0xFFFF00FF);
-  write_reg(PL_CFG0_REG, pl | 2 << 8 | 2 << 12);
+  gpio_mux_setup(2, PIO_ALT1);
+  gpio_mux_setup(3, PIO_ALT1);
+
   // Enable clock and assert reset
   r_prcm_uart_enable();
-  // Setup baud rate (baud rate = (serial clock freq) / (16 * divisor))
+
+  // Setup baud rate
   set_bit(R_UART_LCR, 7); // Enable setting DLH, DLL
   write_reg(R_UART_DLH, 0x0);
   write_reg(R_UART_DLL, 0xD); // 1 500 000
@@ -59,6 +61,17 @@ void r_uart_puts(char *s){
   while(*s){
     r_uart_putc(*s++);
   }
+}
+
+void uart_puth(uint32_t u){
+  char s[11] = {0};
+  s[0] = '0';
+  s[1] = 'x';
+  for(int i=9; i>=2; i--){
+    s[i] = (u%16>9?'A'-10:'0')+u%16;
+    u/=16;
+  }
+  uart_puts(s);
 }
 
 void uart_puti(uint32_t u){

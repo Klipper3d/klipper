@@ -79,9 +79,7 @@ command_parsef(uint8_t *p, uint8_t *maxend
             if (p + len > maxend)
                 goto error;
             *args++ = len;
-            size_t addr = (size_t)p;
-            *args++ = (uint32_t) (addr & 0xFFFFFFFF);
-            *args++ = (uint32_t) (addr >> 32);
+            *args++ = (size_t)p;
             p += len;
             break;
         }

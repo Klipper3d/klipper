@@ -105,6 +105,7 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
 /****************************************************************
  * Soft PWM output pins
  ****************************************************************/
+#ifdef soft_pwm
 
 struct soft_pwm_s {
     struct timer timer;
@@ -234,3 +235,4 @@ soft_pwm_shutdown(void)
     }
 }
 DECL_SHUTDOWN(soft_pwm_shutdown);
+#endif

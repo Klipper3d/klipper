@@ -2,10 +2,10 @@ OUTPUT_ARCH(or1k)
 OUTPUT_FORMAT(elf32-or1k)
 ENTRY (start)
 
+STACK_SIZE = 0x200;
+SRAM_SIZE = 16M;
 MEMORY {
-  /*SRAM_A2 (rwx): ORIGIN = 0x00000000, LENGTH = 0x00014000*/
-  SRAM_A2 (rwx): ORIGIN = 0x00000000, LENGTH = 0x00114000
-  SRAM_A1 (rwx): ORIGIN = 0x40000, LENGTH = 0x8000
+  SRAM_A2 (rwx): ORIGIN = 0x00010000, LENGTH = SRAM_SIZE
 }
 
 SECTIONS
@@ -29,15 +29,11 @@ SECTIONS
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
     . = ALIGN(4);
     __bss_end = .;
+
+      __stack_start = .;
+      . += STACK_SIZE;
+      __stack_end = .;
   } >SRAM_A2
-
-  __stack_start = .;
-  . += 0x00000100;
-  __stack_end = .;
-
-  /*ASSERT(. <= 0x00013c00, "Firmware overflows into shared memory")*/
-
-  //__shared_mem = 0x00013c00;
 
   /DISCARD/ : {
     *(.comment*)

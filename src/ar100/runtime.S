@@ -76,8 +76,7 @@ endfunc __popcountsi2
  * In addition to returning the quotient in r11, this function also returns
  * the remainder in r12. __umodsi3 simply copies the remainder into r11.
  */
- /*
-func __udivsi3				# u32 __udivsi3(u32 x, u32 y) {
+/*func __udivsi3				# u32 __udivsi3(u32 x, u32 y) {
 	l.sfeqi	r4, 1			#	if (y == 1)
 	l.bf	5f			#		goto identity;
 	l.ori	r12, r3, 0		#	u32 r = x;
@@ -107,6 +106,7 @@ func __udivsi3				# u32 __udivsi3(u32 x, u32 y) {
 	l.ori	r12, r0, 0		#	r = 0;
 endfunc __udivsi3			# }
 */
+
 func __umodsi3
 	l.sw	-4(r1), r9
 	l.jal	__udivsi3

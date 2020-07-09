@@ -2,8 +2,12 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h>
+#include <stddef.h>
 
-inline void  write_reg(uint32_t addr, uint32_t val){
+void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+void *memset(void *restrict dest, int c, size_t n);
+
+inline void write_reg(uint32_t addr, uint32_t val){
   *((volatile unsigned long *)(addr)) = val;
 }
 
@@ -11,10 +15,6 @@ inline uint32_t read_reg(uint32_t addr){
   return *((volatile unsigned long *)(addr));
 }
 
-inline void set_bit(uint32_t addr, uint8_t bit){
-  write_reg(addr, read_reg(addr) | (1<<bit));
-}
+void set_bit(uint32_t addr, uint8_t bit);
 
-inline void clear_bit(uint32_t addr, uint8_t bit){
-  write_reg(addr, read_reg(addr) & ~(1<<bit));
-}
+void clear_bit(uint32_t addr, uint8_t bit);

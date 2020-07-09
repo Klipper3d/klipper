@@ -360,7 +360,8 @@ class MCU:
         # Restarts
         self._restart_method = 'command'
         if baud:
-            rmethods = {m: m for m in [None, 'arduino', 'command', 'rpi_usb']}
+            rmethods = {m: m for m in [None, 'arduino', 'command', 'rpi_usb',
+                'pin', 'script']}
             self._restart_method = config.getchoice(
                 'restart_method', rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
@@ -667,13 +668,33 @@ class MCU:
         chelper.run_hub_ctrl(0)
         self._reactor.pause(self._reactor.monotonic() + 2.)
         chelper.run_hub_ctrl(1)
+    def _restart_via_pin(self):
+        logging.info("Attempting MCU '%s' reset via pin toggling", self._name)
+        self._disconnect()
+        reset_pin = 196 # PG4
+        cmd = "sudo /usr/bin/gpioset 1 {}={}"
+        os.system(cmd.format(reset_pin, 0))
+        self._reactor.pause(self._reactor.monotonic() + 1.)
+        x = os.system(cmd.format(reset_pin, 1))
+        logging.info("Done with result {}".format(x))
+    def _restart_via_script(self):
+        logging.info("Attempting MCU '%s' reset via script", self._name)
+        self._disconnect()
+        cmd = "sudo /home/klipper/klipper/scripts/flash-ar100.py --reset"
+        x = os.system(cmd)
+        logging.info("Done with result {}".format(x))
     def microcontroller_restart(self):
         if self._restart_method == 'rpi_usb':
             self._restart_rpi_usb()
         elif self._restart_method == 'command':
             self._restart_via_command()
+        elif self._restart_method == 'pin':
+            self._restart_via_pin()
+        elif self._restart_method == 'script':
+            self._restart_via_script()
         else:
             self._restart_arduino()
+
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None

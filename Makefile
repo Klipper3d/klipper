@@ -93,7 +93,7 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
-	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
+	$(Q)$(CC)  $(CFLAGS_klipper.elf) $(OBJS_klipper.elf) -o $@
 	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
 
 ################ Kconfig rules

@@ -12,13 +12,13 @@
 
 #include "asm/spr.h"
 #include "gpio.h"
-//#include "uart.h"
 #include "serial.h"
 #include "prcm.h"
 
+DECL_CONSTANT_STR("MCU", "ar100");
 
 static struct task_wake console_wake;
-static uint8_t receive_buf[4096];
+static uint8_t receive_buf[1024];
 static int receive_pos;
 
 
@@ -102,6 +102,7 @@ DECL_INIT(timer_init);
  {
      // Read data
      char c;
+		 //uart_puts("Console_task\n");
      int ret = 0;
      while(r_uart_fifo_rcv()){
        c = r_uart_getc();
@@ -118,7 +119,7 @@ DECL_INIT(timer_init);
      if (ret) {
          len -= pop_count;
          if (len) {
-             memmove(receive_buf, &receive_buf[pop_count], len);
+             memcpy(receive_buf, &receive_buf[pop_count], len);
              sched_wake_task(&console_wake);
          }
      }
@@ -156,25 +157,22 @@ void delay_cycles(uint32_t cycles){
   while(end > timer_read_time());
 }
 
-// Main entry point
 __noreturn void main(uint32_t exception);
 __noreturn void main(uint32_t exception){
 
   /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
   r_prcm_set_cpus_clk_rate(PLL_PERIPH);
 
-  uart_puts("Init uart\n");
   r_uart_init();
   uart_puts("**Start**\n");
-  //r_uart_puts("Test");
   timer_init();
-  /*while(1){
-    while(r_uart_fifo_rcv()){
-      uart_putc(r_uart_getc());
-    }
-    uart_puts("*\r\n");
-    while(!r_uart_fifo_rcv()){}
-    //delay_cycles(10000000);
-  }*/
+	/*struct gpio_in in = gpio_in_setup(4, 0);
+	uint8_t val;
+	while(1){
+		val = gpio_in_read(in);
+		uart_puti(val);
+		uart_puts("\n");
+	}*/
   sched_main();
+	while(1){} // Stop complaining aout noreturn
 }
