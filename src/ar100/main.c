@@ -7,33 +7,21 @@
 #include "board/irq.h" // irq_disable
 #include "command.h" // shutdown
 #include "generic/timer_irq.h" // timer_dispatch_many
-#include "util.h"
 #include "sched.h" // sched_main
 
 #include "asm/spr.h"
+#include "util.h"
 #include "gpio.h"
 #include "serial.h"
 #include "prcm.h"
+#include "timer.h"
+#include "test.h"
 
 DECL_CONSTANT_STR("MCU", "ar100");
 
 static struct task_wake console_wake;
 static uint8_t receive_buf[1024];
 static int receive_pos;
-
-
-static inline unsigned long mfspr(unsigned long add){
-	unsigned long ret;
-
-	__asm__ __volatile__ ("l.mfspr %0,r0,%1" : "=r" (ret) : "K" (add));
-
-	return ret;
-}
-
-static inline void mtspr(unsigned long add, unsigned long val)
-{
-	__asm__ __volatile__ ("l.mtspr r0,%1,%0" : : "K" (add), "r" (val));
-}
 
 
 void irq_disable(void){}
@@ -52,44 +40,14 @@ void irq_wait(void){
     irq_poll();
 }
 void irq_poll(void){
+	if(timer_interrupt_pending()){
+		timer_clear_interrupt();
+		uint32_t next = timer_dispatch_many();
+		timer_set(next);
+	}
   if(r_uart_fifo_rcv())
     sched_wake_task(&console_wake);
 }
-
-
-void
-serial_enable_tx_irq(void)
-{
-    // Normally this would enable the hardware irq, but we just call
-    // do_uart() directly in this demo code.
-    uart_puts("serial_enable_tx_irq\n");
-}
-
-/****************************************************************
- * Timers
- ****************************************************************/
-// Set the next timer wake up time
-static void
-timer_set(uint32_t value){}
-
-// Return the current time (in absolute clock ticks).
-uint32_t timer_read_time(void){
-  return mfspr(SPR_TICK_TTCR_ADDR);
-}
-
-// Activate timer dispatch as soon as possible
-void
-timer_kick(void)
-{
-    timer_set(timer_read_time() + 50);
-}
-
-void
-timer_init(void)
-{
-  mtspr(SPR_TICK_TTMR_ADDR, 3<<30);
-}
-DECL_INIT(timer_init);
 
 
 /****************************************************************
@@ -152,11 +110,6 @@ const struct command_parser shutdown_request = {
     .func = shutdown_handler,
 };
 
-void delay_cycles(uint32_t cycles){
-  uint32_t end = timer_read_time() + cycles;
-  while(end > timer_read_time());
-}
-
 __noreturn void main(uint32_t exception);
 __noreturn void main(uint32_t exception){
 
@@ -166,13 +119,8 @@ __noreturn void main(uint32_t exception){
   r_uart_init();
   uart_puts("**Start**\n");
   timer_init();
-	/*struct gpio_in in = gpio_in_setup(4, 0);
-	uint8_t val;
-	while(1){
-		val = gpio_in_read(in);
-		uart_puti(val);
-		uart_puts("\n");
-	}*/
+	//test_timer();
+	//test_gpio();
   sched_main();
-	while(1){} // Stop complaining aout noreturn
+	while(1){} // Stop complaining about noreturn
 }
