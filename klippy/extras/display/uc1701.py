@@ -223,7 +223,7 @@ class SSD1306(DisplayBase):
             0xDB, self.vcomh, # Set VCOMH deselect level
             0x2E,       # Deactivate scroll
             0xA4,       # Output ram to display
-            0xA6 if self.invert else 0xA7, # Normal display
+            0xA7 if self.invert else 0xA6, # Set normal/invert
             0xAF,       # Display on
         ]
         self.send(init_cmds)
