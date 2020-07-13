@@ -35,7 +35,6 @@ struct gpio_out gpio_out_setup(uint8_t pin, uint8_t val){
   struct gpio_mux mux = gpio_mux_setup(pin, PIO_OUTPUT);
   struct gpio_out ret = {
     .pin = mux.pin,
-    .val = val,
     .reg = mux.reg
   };
   gpio_out_write(ret, val);
@@ -48,11 +47,10 @@ void gpio_out_write(struct gpio_out pin, uint8_t val){
     set_bit(pin.reg, pin.pin);
   else
     clear_bit(pin.reg, pin.pin);
-  pin.val = val;
 }
 
 void gpio_out_toggle_noirq(struct gpio_out pin){
-  gpio_out_write(pin, !pin.val);
+  gpio_out_write(pin, !(read_reg(pin.reg) & (1<<pin.pin)));
 }
 
 uint8_t gpio_in_read(struct gpio_in pin){
@@ -65,8 +63,6 @@ struct gpio_in gpio_in_setup(uint8_t pin, uint8_t val){
     .pin = mux.pin,
     .reg = mux.reg
   };
-
-  in.val = gpio_in_read(in);
 
   return in;
 }

@@ -1,16 +1,27 @@
 
 #include "timer.h"
+#include "board/timer_irq.h"
+
+volatile static uint32_t timer_compare;
+static uint8_t interrupt_seen;
 
 uint8_t timer_interrupt_pending(void){
-	return !!(mfspr(SPR_TICK_TTMR_ADDR) & (1<<28));
+  if(interrupt_seen){
+    return 0;
+  }
+  if(timer_is_before(mfspr(SPR_TICK_TTCR_ADDR), timer_compare)){
+    return 0;
+  }
+
+  return 1;
 }
 void timer_clear_interrupt(void){
-  uint32_t current = mfspr(SPR_TICK_TTMR_ADDR);
-  mtspr(SPR_TICK_TTMR_ADDR, current | (1<<28));
+  interrupt_seen = 1;
 }
 // Set the next timer wake up time
 void timer_set(uint32_t value){
-	mtspr(SPR_TICK_TTMR_ADDR, 3<<30 | 1<<29 | (0x00FFFFFF & value));
+  timer_compare = value;
+  interrupt_seen = 0;
 }
 
 // Return the current time (in absolute clock ticks).
@@ -24,6 +35,8 @@ void timer_kick(void){
 }
 
 void timer_init(void){
-  mtspr(SPR_TICK_TTMR_ADDR, 3<<30 | 1<<29); // Interrupt enable + continous
+  interrupt_seen = 1;
+  mtspr(SPR_TICK_TTMR_ADDR, 3<<30); // continous
+  timer_kick();
 }
 DECL_INIT(timer_init);

@@ -82,3 +82,9 @@ void uart_puti(uint32_t u){
   }
   uart_puts(s);
 }
+
+void uart_put_int(int32_t j){
+  uint32_t u = j > 0 ? j:-j;
+  uart_putc(j < 0 ? '-': '+');
+  uart_puti(u);
+}

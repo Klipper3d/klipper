@@ -36,7 +36,6 @@ void irq_restore(irqstatus_t flag){
 }
 
 void irq_wait(void){
-    //uart_puts("irq_wait()\n");
     irq_poll();
 }
 void irq_poll(void){
@@ -118,9 +117,6 @@ __noreturn void main(uint32_t exception){
 
   r_uart_init();
   uart_puts("**Start**\n");
-  timer_init();
-	//test_timer();
-	//test_gpio();
   sched_main();
 	while(1){} // Stop complaining about noreturn
 }

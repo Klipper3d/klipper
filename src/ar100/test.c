@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "test.h"
 #include "gpio.h"
+#include "serial.h"
 
 void delay_cycles(uint32_t cycles){
   uint32_t end = timer_read_time() + cycles;
@@ -24,11 +25,11 @@ void test_timer(void){
 
 // Blink PB7 (user led) indefinitely
 void test_gpio(void){
+  timer_init();
   struct gpio_out pb7 = gpio_out_setup(32+7, 0);
   while(1){
-    gpio_out_write(pb7, 0);
-    delay_cycles(10000000);
-    gpio_out_write(pb7, 1);
+    gpio_out_toggle_noirq(pb7);
     delay_cycles(10000000);
   }
 }
+

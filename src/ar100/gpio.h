@@ -23,13 +23,11 @@ struct gpio_mux {
 
 struct gpio_out {
   uint8_t pin;
-  uint8_t val;
   uint32_t reg;
 };
 
 struct gpio_in {
   uint8_t pin;
-  uint8_t val;
   uint32_t reg;
 };
 
