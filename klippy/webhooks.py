@@ -161,7 +161,7 @@ class ServerConnection:
                     % (req))
                 continue
             self.reactor.register_callback(
-                lambda e, s=self: s._process_request(web_request))
+                lambda e, s=self, wr=web_request: s._process_request(wr))
 
     def _process_request(self, web_request):
         try:
