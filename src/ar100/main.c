@@ -59,7 +59,6 @@ void irq_poll(void){
  {
      // Read data
      char c;
-		 //uart_puts("Console_task\n");
      int ret = 0;
      while(r_uart_fifo_rcv()){
        c = r_uart_getc();
