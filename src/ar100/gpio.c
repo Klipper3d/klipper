@@ -53,6 +53,10 @@ void gpio_out_toggle_noirq(struct gpio_out pin){
   gpio_out_write(pin, !(read_reg(pin.reg) & (1<<pin.pin)));
 }
 
+void gpio_out_reset(struct gpio_out pin){
+
+}
+
 uint8_t gpio_in_read(struct gpio_in pin){
   return !!(read_reg(pin.reg) & (1<<pin.pin));
 }
@@ -65,4 +69,7 @@ struct gpio_in gpio_in_setup(uint8_t pin, uint8_t val){
   };
 
   return in;
+}
+void gpio_in_reset(struct gpio_in pin){
+
 }

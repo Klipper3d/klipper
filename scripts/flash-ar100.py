@@ -35,7 +35,6 @@ def write_exception_vectors():
             add = i*0x100
             exc[add:add+4] = ((EXCEPTIONS_JUMP-add)>>2).to_bytes(4, byteorder='little')
         exc.close()
-    assert_deassert_reset(0)
 
 def assert_deassert_reset(ass):
     with open("/dev/mem", "w+b") as f:
@@ -44,8 +43,12 @@ def assert_deassert_reset(ass):
             offset=R_CPU_CFG_PAGE_BASE)
         if ass:
             r_cpucfg[R_CPU_CFG_OFFSET] &= ~0x01
+            if r_cpucfg[R_CPU_CFG_OFFSET] & 0x01:
+                print("failed to assert reset")
         else:
             r_cpucfg[R_CPU_CFG_OFFSET] |= 0x01
+            if not (r_cpucfg[R_CPU_CFG_OFFSET] & 0x01):
+                print("failed to deassert reset")
         r_cpucfg.close()
 
 def write_file(filename):
