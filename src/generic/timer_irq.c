@@ -54,7 +54,6 @@ timer_dispatch_many(void)
         if (unlikely(timer_is_before(tru, now))) {
             // Check if there are too many repeat timers
             if (diff < (int32_t)(-timer_from_us(1000))){
-              uart_puts("Rescheduled timer in the past\n");
               try_shutdown("Rescheduled timer in the past");
             }
             if (sched_tasks_busy()) {
