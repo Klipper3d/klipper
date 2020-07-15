@@ -184,11 +184,10 @@ class BedMesh:
             "mesh_matrix": [[]]
         }
         if self.z_mesh is not None:
-            params = self.z_mesh.mesh_params
+            params = self.z_mesh.get_mesh_params()
             mesh_min = (params['min_x'], params['min_y'])
             mesh_max = (params['max_x'], params['max_y'])
-            probed_matrix = [[round(z, 6) for z in line]
-                             for line in self.bmc.probed_matrix]
+            probed_matrix = self.z_mesh.get_probed_matrix()
             mesh_matrix = self.z_mesh.get_mesh_matrix()
             status['profile_name'] = self.bmc.current_profile
             status['mesh_min'] = mesh_min
@@ -204,16 +203,16 @@ class BedMesh:
         elif self.z_mesh is None:
             gcmd.respond_info("Bed has not been probed")
         else:
-            self.bmc.print_probed_positions(gcmd.respond_info)
+            self.z_mesh.print_probed_matrix(gcmd.respond_info)
             self.z_mesh.print_mesh(gcmd.respond_raw, self.horizontal_move_z)
     cmd_BED_MESH_MAP_help = "Serialize mesh and output to terminal"
     def cmd_BED_MESH_MAP(self, gcmd):
         if self.z_mesh is not None:
-            params = self.z_mesh.mesh_params
+            params = self.z_mesh.get_mesh_params()
             outdict = {
                 'mesh_min': (params['min_x'], params['min_y']),
                 'mesh_max': (params['max_x'], params['max_y']),
-                'z_positions': self.bmc.probed_matrix}
+                'z_positions': self.z_mesh.get_probed_matrix()}
             gcmd.respond_raw("mesh_map_output " + json.dumps(outdict))
         else:
             gcmd.respond_info("Bed has not been probed")
@@ -232,7 +231,7 @@ class BedMeshCalibrate:
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
         self.bedmesh = bedmesh
-        self.probed_matrix = self.mesh_params = None
+        self.z_mesh = None
         self.mesh_config = collections.OrderedDict()
         self.points = self._generate_points(config)
         self._init_mesh_config(config, self.points)
@@ -417,28 +416,30 @@ class BedMeshCalibrate:
                 elif t is str:
                     params[key] = profile.get(key)
     def save_profile(self, prof_name):
-        if self.probed_matrix is None:
+        if self.z_mesh is None:
             self.gcode.respond_info(
                 "Unable to save to profile [%s], the bed has not been probed"
                 % (prof_name))
             return
+        probed_matrix = self.z_mesh.get_probed_matrix()
+        mesh_params = self.z_mesh.get_mesh_params()
         configfile = self.printer.lookup_object('configfile')
         cfg_name = self.name + " " + prof_name
         # set params
         z_values = ""
-        for line in self.probed_matrix:
+        for line in probed_matrix:
             z_values += "\n  "
             for p in line:
                 z_values += "%.6f, " % p
             z_values = z_values[:-2]
         configfile.set(cfg_name, 'version', PROFILE_VERSION)
         configfile.set(cfg_name, 'points', z_values)
-        for key, value in self.mesh_params.items():
+        for key, value in mesh_params.items():
             configfile.set(cfg_name, key, value)
         # save copy in local storage
         self.profiles[prof_name] = profile = {}
-        profile['points'] = list(self.probed_matrix)
-        profile['mesh_params'] = collections.OrderedDict(self.mesh_params)
+        profile['points'] = probed_matrix
+        profile['mesh_params'] = collections.OrderedDict(mesh_params)
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
             "for the current session.  The SAVE_CONFIG command will\n"
@@ -449,15 +450,15 @@ class BedMeshCalibrate:
         if profile is None:
             raise self.gcode.error(
                 "bed_mesh: Unknown profile [%s]" % prof_name)
-        self.probed_matrix = profile['points']
-        self.mesh_params = profile['mesh_params']
-        zmesh = ZMesh(self.mesh_params)
+        probed_matrix = profile['points']
+        mesh_params = profile['mesh_params']
+        self.z_mesh = ZMesh(mesh_params)
         try:
-            zmesh.build_mesh(self.probed_matrix)
+            self.z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
         self.current_profile = prof_name
-        self.bedmesh.set_mesh(zmesh)
+        self.bedmesh.set_mesh(self.z_mesh)
     def remove_profile(self, prof_name):
         if prof_name in self.profiles:
             configfile = self.printer.lookup_object('configfile')
@@ -492,21 +493,11 @@ class BedMeshCalibrate:
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self.bedmesh.set_mesh(None)
         self.probe_helper.start_probe(gcmd)
-    def print_probed_positions(self, print_func):
-        if self.probed_matrix is not None:
-            msg = "Mesh Leveling Probed Z positions:\n"
-            for line in self.probed_matrix:
-                for x in line:
-                    msg += " %f" % x
-                msg += "\n"
-            print_func(msg)
-        else:
-            print_func("bed_mesh: bed has not been probed")
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets
         positions = [(round(p[0], 2), round(p[1], 2), p[2])
                      for p in positions]
-        self.mesh_params = params = dict(self.mesh_config)
+        params = dict(self.mesh_config)
         params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
         params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
         params['min_y'] = min(positions, key=lambda p: p[1])[1] + y_offset
@@ -519,13 +510,13 @@ class BedMeshCalibrate:
             # set offset relative to reference index
             z_offset = positions[self.relative_reference_index][2]
 
-        self.probed_matrix = []
+        probed_matrix = []
         row = []
         prev_pos = positions[0]
         for pos in positions:
             if not isclose(pos[1], prev_pos[1], abs_tol=.1):
                 # y has changed, append row and start new
-                self.probed_matrix.append(row)
+                probed_matrix.append(row)
                 row = []
             if pos[0] > prev_pos[0]:
                 # probed in the positive direction
@@ -535,24 +526,24 @@ class BedMeshCalibrate:
                 row.insert(0, pos[2] - z_offset)
             prev_pos = pos
         # append last row
-        self.probed_matrix.append(row)
+        probed_matrix.append(row)
 
         # make sure the y-axis is the correct length
-        if len(self.probed_matrix) != y_cnt:
+        if len(probed_matrix) != y_cnt:
             raise self.gcode.error(
                 ("bed_mesh: Invalid y-axis table length\n"
                  "Probed table length: %d Probed Table:\n%s") %
-                (len(self.probed_matrix), str(self.probed_matrix)))
+                (len(probed_matrix), str(probed_matrix)))
 
         if self.radius is not None:
             # round bed, extrapolate probed values to create a square mesh
-            for row in self.probed_matrix:
+            for row in probed_matrix:
                 row_size = len(row)
                 if not row_size & 1:
                     # an even number of points in a row shouldn't be possible
                     msg = "bed_mesh: incorrect number of points sampled on X\n"
                     msg += "Probed Table:\n"
-                    msg += str(self.probed_matrix)
+                    msg += str(probed_matrix)
                     raise self.gcode.error(msg)
                 buf_cnt = (x_cnt - row_size) // 2
                 if buf_cnt == 0:
@@ -563,20 +554,20 @@ class BedMeshCalibrate:
                 row.extend(right_buffer)
 
         #  make sure that the x-axis is the correct length
-        for row in self.probed_matrix:
+        for row in probed_matrix:
             if len(row) != x_cnt:
                 raise self.gcode.error(
                     ("bed_mesh: invalid x-axis table length\n"
                         "Probed table length: %d Probed Table:\n%s") %
-                    (len(self.probed_matrix), str(self.probed_matrix)))
+                    (len(probed_matrix), str(probed_matrix)))
 
-        mesh = ZMesh(params)
+        self.z_mesh = ZMesh(params)
         try:
-            mesh.build_mesh(self.probed_matrix)
+            self.z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
         self.current_profile = "default"
-        self.bedmesh.set_mesh(mesh)
+        self.bedmesh.set_mesh(self.z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         self.save_profile("default")
 
@@ -644,7 +635,7 @@ class MoveSplitter:
 
 class ZMesh:
     def __init__(self, params):
-        self.mesh_matrix = None
+        self.probed_matrix = self.mesh_matrix = None
         self.mesh_params = params
         self.avg_z = 0.
         self.mesh_offset = 0.
@@ -685,7 +676,24 @@ class ZMesh:
         if self.mesh_matrix is not None:
             return [[round(z + self.mesh_offset, 6) for z in line]
                     for line in self.mesh_matrix]
-        return None
+        return [[]]
+    def get_probed_matrix(self):
+        if self.probed_matrix is not None:
+            return [[round(z, 6) for z in line]
+                    for line in self.probed_matrix]
+        return [[]]
+    def get_mesh_params(self):
+        return self.mesh_params
+    def print_probed_matrix(self, print_func):
+        if self.probed_matrix is not None:
+            msg = "Mesh Leveling Probed Z positions:\n"
+            for line in self.probed_matrix:
+                for x in line:
+                    msg += " %f" % x
+                msg += "\n"
+            print_func(msg)
+        else:
+            print_func("bed_mesh: bed has not been probed")
     def print_mesh(self, print_func, move_z=None):
         matrix = self.get_mesh_matrix()
         if matrix is not None:
@@ -706,6 +714,7 @@ class ZMesh:
         else:
             print_func("bed_mesh: Z Mesh not generated")
     def build_mesh(self, z_matrix):
+        self.probed_matrix = z_matrix
         self._sample(z_matrix)
         self.avg_z = (sum([sum(x) for x in self.mesh_matrix]) /
                       sum([len(x) for x in self.mesh_matrix]))
