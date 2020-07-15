@@ -105,7 +105,7 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
 /****************************************************************
  * Soft PWM output pins
  ****************************************************************/
-#ifdef HAVE_CONFIG_H
+#ifdef HAVE_SOFT_PWM
 
 struct soft_pwm_s {
     struct timer timer;
@@ -141,7 +141,7 @@ soft_pwm_toggle_event(struct timer *timer)
         waketime = s->end_time;
     }
     s->timer.waketime = waketime;
-    return SF_RESCHEDULE;
+    return SF_REULE;
 }
 
 // Load next pwm settings
