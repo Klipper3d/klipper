@@ -124,6 +124,9 @@ config HAVE_GPIO_I2C
 config HAVE_GPIO_HARD_PWM
     bool
     default n
+config HAVE_SOFT_PWM
+    bool "have soft pwm"
+    default y
 config HAVE_GPIO_BITBANGING
     bool "have GPIO bitbanging"
     default n
