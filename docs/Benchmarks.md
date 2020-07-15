@@ -360,6 +360,34 @@ micro-controller.
 | 1 stepper (no delay) | 42    |
 | 3 stepper (no delay) | 194   |
 
+
+
+### AR100 step rate benchmark ###
+
+The following configuration sequence is used on AR100 CPU (Allwinner A64):
+```
+PINS ar100
+allocate_oids count=3
+config_stepper oid=0 step_pin=PE0 dir_pin=PE8 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=PE1 dir_pin=PE9 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=PE2 dir_pin=PE10 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+Baseline tests made as soon as the firmware started working,
+`CONFIG_STEP_DELAY` is set to 0. Run on Recore rev A2,so the PIO
+bank is shared with the main CPU. Frequency is for the ar100 is 300 MHz,
+so the step frequency is recorded as well. Commit `51f4a43c` from the
+intelligent-agent fork.
+
+
+| ar100            | ticks | freq |
+| ---------------- | ----- | ---- |
+| 1 stepper        | 389   | 763  |
+| 2 stepper        | 824   | 362  |
+| 3 stepper        | 1274  | 234  |
+
+
 ## Command dispatch benchmark ##
 
 The command dispatch benchmark tests how many "dummy" commands the
@@ -371,6 +399,14 @@ cut-and-paste into the console.py terminal window:
 DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 end_group
 get_uptime
+```
+
+To calculate the frequency, paste this in a bash terminal window:
+```
+export mcu_frequency=300000000
+export before=1900409982
+export after=3041976087
+echo "100000 * ${mcu_frequency} / (${after}-${before})" | bc
 ```
 
 When the test completes, determine the difference between the clocks
@@ -387,6 +423,7 @@ class machine with the device connected via a high-speed hub.
 | stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| ar100 (serial)      |  26K | 51f4a43c | or1k-linux-musl-gcc 10.0.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
