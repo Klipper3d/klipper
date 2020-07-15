@@ -377,15 +377,15 @@ finalize_config crc=0
 Baseline tests made as soon as the firmware started working,
 `CONFIG_STEP_DELAY` is set to 0. Run on Recore rev A2,so the PIO
 bank is shared with the main CPU. Frequency is for the ar100 is 300 MHz,
-so the step frequency is recorded as well. Commit `51f4a43c` from the
+so the step frequency in kHz is recorded as well. Commit `51f4a43c` from the
 intelligent-agent fork.
 
 
-| ar100            | ticks | freq |
-| ---------------- | ----- | ---- |
-| 1 stepper        | 389   | 763  |
-| 2 stepper        | 824   | 362  |
-| 3 stepper        | 1274  | 234  |
+| ar100            | ticks | freq (kHz) |
+| ---------------- | ----- | ---------- |
+| 1 stepper        | 389   | 763        |
+| 2 stepper        | 824   | 362        |
+| 3 stepper        | 1274  | 234        |
 
 
 ## Command dispatch benchmark ##
