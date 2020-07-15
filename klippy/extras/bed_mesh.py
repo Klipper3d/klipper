@@ -232,10 +232,10 @@ class BedMeshCalibrate:
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
         self.bedmesh = bedmesh
-        self.probed_matrix = None
-        self.mesh_params = collections.OrderedDict()
+        self.probed_matrix = self.mesh_params = None
+        self.mesh_config = collections.OrderedDict()
         self.points = self._generate_points(config)
-        self._init_mesh_params(config, self.points)
+        self._init_mesh_config(config, self.points)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self.points)
         self.probe_helper.minimum_points(3)
@@ -278,8 +278,8 @@ class BedMeshCalibrate:
             if max_x <= min_x or max_y <= min_y:
                 raise config.error('bed_mesh: invalid min/max points')
 
-        self.mesh_params['x_count'] = x_cnt
-        self.mesh_params['y_count'] = y_cnt
+        self.mesh_config['x_count'] = x_cnt
+        self.mesh_config['y_count'] = y_cnt
         x_dist = (max_x - min_x) / (x_cnt - 1)
         y_dist = (max_y - min_y) / (y_cnt - 1)
         # floor distances down to next hundredth
@@ -335,30 +335,30 @@ class BedMeshCalibrate:
             print_func(
                 "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
                 % (rri, self.points[rri][0], self.points[rri][1]))
-    def _init_mesh_params(self, config, points):
+    def _init_mesh_config(self, config, points):
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
-        params = self.mesh_params
+        params = self.mesh_config
         params['mesh_x_pps'] = pps[0]
         params['mesh_y_pps'] = pps[1]
         params['algo'] = config.get('algorithm', 'lagrange').strip().lower()
         if params['algo'] not in self.ALGOS:
             raise config.error(
                 "bed_mesh: Unknown algorithm <%s>"
-                % (self.mesh_params['algo']))
+                % (self.mesh_config['algo']))
         # Check the algorithm against the current configuration
         max_probe_cnt = max(params['x_count'], params['y_count'])
         min_probe_cnt = min(params['x_count'], params['y_count'])
         if max(pps[0], pps[1]) == 0:
             # Interpolation disabled
-            self.mesh_params['algo'] = 'direct'
+            self.mesh_config['algo'] = 'direct'
         elif params['algo'] == 'lagrange' and max_probe_cnt > 6:
             # Lagrange interpolation tends to oscillate when using more
             # than 6 samples
             raise config.error(
                 "bed_mesh: cannot exceed a probe_count of 6 when using "
                 "lagrange interpolation. Configured Probe Count: %d, %d" %
-                (self.mesh_params['x_count'], self.mesh_params['y_count']))
+                (self.mesh_config['x_count'], self.mesh_config['y_count']))
         elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
             if max_probe_cnt > 6:
                 raise config.error(
@@ -366,13 +366,13 @@ class BedMeshCalibrate:
                     "interpolation.  Combination of 3 points on one axis with "
                     "more than 6 on another is not permitted. "
                     "Configured Probe Count: %d, %d" %
-                    (self.mesh_params['x_count'], self.mesh_params['y_count']))
+                    (self.mesh_config['x_count'], self.mesh_config['y_count']))
             else:
                 logging.info(
                     "bed_mesh: bicubic interpolation with a probe_count of "
                     "less than 4 points detected.  Forcing lagrange "
                     "interpolation. Configured Probe Count: %d, %d" %
-                    (self.mesh_params['x_count'], self.mesh_params['y_count']))
+                    (self.mesh_config['x_count'], self.mesh_config['y_count']))
                 params['algo'] = 'lagrange'
         params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
@@ -450,7 +450,8 @@ class BedMeshCalibrate:
             raise self.gcode.error(
                 "bed_mesh: Unknown profile [%s]" % prof_name)
         self.probed_matrix = profile['points']
-        zmesh = ZMesh(profile['mesh_params'])
+        self.mesh_params = profile['mesh_params']
+        zmesh = ZMesh(self.mesh_params)
         try:
             zmesh.build_mesh(self.probed_matrix)
         except BedMeshError as e:
@@ -489,7 +490,6 @@ class BedMeshCalibrate:
         gcmd.respond_info("Invalid syntax '%s'" % (gcmd.get_commandline(),))
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
-        self.build_map = False
         self.bedmesh.set_mesh(None)
         self.probe_helper.start_probe(gcmd)
     def print_probed_positions(self, print_func):
@@ -506,7 +506,7 @@ class BedMeshCalibrate:
         x_offset, y_offset, z_offset = offsets
         positions = [(round(p[0], 2), round(p[1], 2), p[2])
                      for p in positions]
-        params = self.mesh_params
+        self.mesh_params = params = dict(self.mesh_config)
         params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
         params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
         params['min_y'] = min(positions, key=lambda p: p[1])[1] + y_offset
