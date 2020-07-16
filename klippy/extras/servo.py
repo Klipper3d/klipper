@@ -1,6 +1,6 @@
 # Support for servos
 #
-# Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -10,44 +10,35 @@ PIN_MIN_TIME = 0.100
 class PrinterServo:
     def __init__(self, config):
         self.printer = config.get_printer()
-        ppins = self.printer.lookup_object('pins')
-        self.mcu_servo = ppins.setup_pin('pwm', config.get('pin'))
-        self.mcu_servo.setup_max_duration(0.)
-        self.mcu_servo.setup_cycle_time(SERVO_SIGNAL_PERIOD)
-        self.min_width = config.getfloat(
-            'minimum_pulse_width', .001, above=0., below=SERVO_SIGNAL_PERIOD)
-        self.max_width = config.getfloat(
-            'maximum_pulse_width', .002
-            , above=self.min_width, below=SERVO_SIGNAL_PERIOD)
+        self.min_width = config.getfloat('minimum_pulse_width', .001,
+                                         above=0., below=SERVO_SIGNAL_PERIOD)
+        self.max_width = config.getfloat('maximum_pulse_width', .002,
+                                         above=self.min_width,
+                                         below=SERVO_SIGNAL_PERIOD)
         self.max_angle = config.getfloat('maximum_servo_angle', 180.)
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.
+        initial_pwm = 0.
+        iangle = config.getfloat('initial_angle', None, minval=0., maxval=360.)
+        if iangle is not None:
+            initial_pwm = self._get_pwm_from_angle(iangle)
+        else:
+            iwidth = config.getfloat('initial_pulse_width', 0.,
+                                     minval=0., maxval=self.max_width)
+            initial_pwm = self._get_pwm_from_pulse_width(iwidth)
+        # Setup mcu_servo pin
+        ppins = self.printer.lookup_object('pins')
+        self.mcu_servo = ppins.setup_pin('pwm', config.get('pin'))
+        self.mcu_servo.setup_max_duration(0.)
+        self.mcu_servo.setup_cycle_time(SERVO_SIGNAL_PERIOD)
+        self.mcu_servo.setup_start_value(initial_pwm, 0.)
+        # Register commands
         servo_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_SERVO", "SERVO", servo_name,
                                    self.cmd_SET_SERVO,
                                    desc=self.cmd_SET_SERVO_help)
-        # Check to see if an initial angle or pulse width is
-        # configured and set it as required
-        self.initial_pwm_value = None
-        initial_angle = config.getfloat('initial_angle', None,
-                                        minval=0., maxval=360.)
-        if initial_angle is not None:
-            self.initial_pwm_value = self._get_pwm_from_angle(initial_angle)
-        else:
-            initial_pulse_width = config.getfloat('initial_pulse_width', None,
-                                                  minval=self.min_width,
-                                                  maxval=self.max_width)
-            if initial_pulse_width is not None:
-                self.initial_pwm_value = self._get_pwm_from_pulse_width(
-                    initial_pulse_width)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
-    def handle_ready(self):
-        if self.initial_pwm_value is not None:
-            toolhead = self.printer.lookup_object('toolhead')
-            print_time = toolhead.get_last_move_time()
-            self._set_pwm(print_time, self.initial_pwm_value)
     def get_status(self, eventtime):
         return {'value': self.last_value}
     def _set_pwm(self, print_time, value):
