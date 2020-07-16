@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20200725: The servo `enable` config parameter and the SET_SERVO
+`ENABLE` parameter have been removed.  Update any macros to use
+`SET_SERVO SERVO=my_servo WIDTH=0` to disable a servo.
+
 20200608: The LCD display support has changed the name of some
 internal "glyphs".  If a custom display layout was implemented it may
 be necessary to update to the latest glyph names (see

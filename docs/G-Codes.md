@@ -258,8 +258,9 @@ sections are enabled:
 
 The following commands are available when a "servo" config section is
 enabled:
-- `SET_SERVO SERVO=config_name [WIDTH=<seconds>] [ENABLE=<0|1>]`
-- `SET_SERVO SERVO=config_name [ANGLE=<degrees>] [ENABLE=<0|1>]`
+- `SET_SERVO SERVO=config_name [ANGLE=<degrees> | WIDTH=<seconds>]`:
+  Set the servo position to the given angle (in degrees) or pulse
+  width (in seconds). Use `WIDTH=0` to disable the servo output.
 
 ## Manual stepper Commands
 
