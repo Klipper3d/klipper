@@ -74,6 +74,10 @@ class BedMesh:
         self.fade_target = 0.
         self.gcode = self.printer.lookup_object('gcode')
         self.splitter = MoveSplitter(config, self.gcode)
+        # setup persistent storage
+        self.pmgr = ProfileManager(config, self)
+        self.save_profile = self.pmgr.save_profile
+        # register gcodes
         self.gcode.register_command(
             'BED_MESH_OUTPUT', self.cmd_BED_MESH_OUTPUT,
             desc=self.cmd_BED_MESH_OUTPUT_help)
@@ -86,7 +90,8 @@ class BedMesh:
         self.gcode.set_move_transform(self)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.bmc.handle_ready()
+        self.bmc.print_generated_points(logging.info)
+        self.pmgr.initialize()
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -189,12 +194,14 @@ class BedMesh:
             mesh_max = (params['max_x'], params['max_y'])
             probed_matrix = self.z_mesh.get_probed_matrix()
             mesh_matrix = self.z_mesh.get_mesh_matrix()
-            status['profile_name'] = self.bmc.current_profile
+            status['profile_name'] = self.pmgr.get_current_profile()
             status['mesh_min'] = mesh_min
             status['mesh_max'] = mesh_max
             status['probed_matrix'] = probed_matrix
             status['mesh_matrix'] = mesh_matrix
         return status
+    def get_mesh(self):
+        return self.z_mesh
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
     def cmd_BED_MESH_OUTPUT(self, gcmd):
         if gcmd.get_int('PGP', 0):
@@ -225,13 +232,10 @@ class BedMeshCalibrate:
     ALGOS = ['lagrange', 'bicubic']
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
-        self.name = config.get_name()
-        self.current_profile = ""
         self.radius = self.origin = None
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
         self.bedmesh = bedmesh
-        self.z_mesh = None
         self.mesh_config = collections.OrderedDict()
         self.points = self._generate_points(config)
         self._init_mesh_config(config, self.points)
@@ -239,22 +243,10 @@ class BedMeshCalibrate:
             config, self.probe_finalize, self.points)
         self.probe_helper.minimum_points(3)
         self.probe_helper.use_xy_offsets(True)
-        # setup persistent storage
-        self.profiles = {}
-        self.incompatible_profiles = []
-        self._load_storage(config)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-        self.gcode.register_command(
-            'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
-            desc=self.cmd_BED_MESH_PROFILE_help)
-    def handle_ready(self):
-        self.print_generated_points(logging.info)
-        self._check_incompatible_profiles()
-        if "default" in self.profiles:
-            self.load_profile("default")
     def _generate_points(self, config):
         self.radius = config.getfloat('mesh_radius', None, above=0.)
         if self.radius is not None:
@@ -375,120 +367,6 @@ class BedMeshCalibrate:
                 params['algo'] = 'lagrange'
         params['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
-    def _check_incompatible_profiles(self):
-        if self.incompatible_profiles:
-            configfile = self.printer.lookup_object('configfile')
-            for profile in self.incompatible_profiles:
-                configfile.remove_section('bed_mesh ' + profile)
-            self.gcode.respond_info(
-                "The following incompatible profiles have been detected\n"
-                "and are scheduled for removal:\n%s\n"
-                "The SAVE_CONFIG command will update the printer config\n"
-                "file and restart the printer" %
-                (('\n').join(self.incompatible_profiles)))
-    def _load_storage(self, config):
-        stored_profs = config.get_prefix_sections(self.name)
-        # Remove primary bed_mesh section, as it is not a stored profile
-        stored_profs = [s for s in stored_profs
-                        if s.get_name() != self.name]
-        for profile in stored_profs:
-            name = profile.get_name().split(' ', 1)[1]
-            version = profile.getint('version', 0)
-            if version != PROFILE_VERSION:
-                logging.info(
-                    "bed_mesh: Profile [%s] not compatible with this version\n"
-                    "of bed_mesh.  Profile Version: %d Current Version: %d "
-                    % (name, version, PROFILE_VERSION))
-                self.incompatible_profiles.append(name)
-                continue
-            self.profiles[name] = {}
-            z_values = profile.get('points').split('\n')
-            self.profiles[name]['points'] = \
-                [[float(pt.strip()) for pt in line.split(',')]
-                    for line in z_values if line.strip()]
-            self.profiles[name]['mesh_params'] = params = \
-                collections.OrderedDict()
-            for key, t in PROFILE_OPTIONS.items():
-                if t is int:
-                    params[key] = profile.getint(key)
-                elif t is float:
-                    params[key] = profile.getfloat(key)
-                elif t is str:
-                    params[key] = profile.get(key)
-    def save_profile(self, prof_name):
-        if self.z_mesh is None:
-            self.gcode.respond_info(
-                "Unable to save to profile [%s], the bed has not been probed"
-                % (prof_name))
-            return
-        probed_matrix = self.z_mesh.get_probed_matrix()
-        mesh_params = self.z_mesh.get_mesh_params()
-        configfile = self.printer.lookup_object('configfile')
-        cfg_name = self.name + " " + prof_name
-        # set params
-        z_values = ""
-        for line in probed_matrix:
-            z_values += "\n  "
-            for p in line:
-                z_values += "%.6f, " % p
-            z_values = z_values[:-2]
-        configfile.set(cfg_name, 'version', PROFILE_VERSION)
-        configfile.set(cfg_name, 'points', z_values)
-        for key, value in mesh_params.items():
-            configfile.set(cfg_name, key, value)
-        # save copy in local storage
-        self.profiles[prof_name] = profile = {}
-        profile['points'] = probed_matrix
-        profile['mesh_params'] = collections.OrderedDict(mesh_params)
-        self.gcode.respond_info(
-            "Bed Mesh state has been saved to profile [%s]\n"
-            "for the current session.  The SAVE_CONFIG command will\n"
-            "update the printer config file and restart the printer."
-            % (prof_name))
-    def load_profile(self, prof_name):
-        profile = self.profiles.get(prof_name, None)
-        if profile is None:
-            raise self.gcode.error(
-                "bed_mesh: Unknown profile [%s]" % prof_name)
-        probed_matrix = profile['points']
-        mesh_params = profile['mesh_params']
-        self.z_mesh = ZMesh(mesh_params)
-        try:
-            self.z_mesh.build_mesh(probed_matrix)
-        except BedMeshError as e:
-            raise self.gcode.error(e.message)
-        self.current_profile = prof_name
-        self.bedmesh.set_mesh(self.z_mesh)
-    def remove_profile(self, prof_name):
-        if prof_name in self.profiles:
-            configfile = self.printer.lookup_object('configfile')
-            configfile.remove_section('bed_mesh ' + prof_name)
-            del self.profiles[prof_name]
-            self.gcode.respond_info(
-                "Profile [%s] removed from storage for this session.\n"
-                "The SAVE_CONFIG command will update the printer\n"
-                "configuration and restart the printer" % (prof_name))
-        else:
-            self.gcode.respond_info(
-                "No profile named [%s] to remove" % (prof_name))
-    cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
-    def cmd_BED_MESH_PROFILE(self, gcmd):
-        options = collections.OrderedDict({
-            'LOAD': self.load_profile,
-            'SAVE': self.save_profile,
-            'REMOVE': self.remove_profile
-        })
-        for key in options:
-            name = gcmd.get(key, None)
-            if name is not None:
-                if name == "default" and key == 'SAVE':
-                    gcmd.respond_info(
-                        "Profile 'default' is reserved, please choose"
-                        " another profile name.")
-                else:
-                    options[key](name)
-                return
-        gcmd.respond_info("Invalid syntax '%s'" % (gcmd.get_commandline(),))
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self.bedmesh.set_mesh(None)
@@ -561,15 +439,14 @@ class BedMeshCalibrate:
                         "Probed table length: %d Probed Table:\n%s") %
                     (len(probed_matrix), str(probed_matrix)))
 
-        self.z_mesh = ZMesh(params)
+        z_mesh = ZMesh(params)
         try:
-            self.z_mesh.build_mesh(probed_matrix)
+            z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(e.message)
-        self.current_profile = "default"
-        self.bedmesh.set_mesh(self.z_mesh)
+        self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
-        self.save_profile("default")
+        self.bedmesh.save_profile("default")
 
 
 class MoveSplitter:
@@ -921,6 +798,142 @@ class ZMesh:
         c = m1 * (t3 - 2*t2 + t)
         d = m2 * (t3 - t2)
         return a + b + c + d
+
+
+class ProfileManager:
+    def __init__(self, config, bedmesh):
+        self.name = config.get_name()
+        self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
+        self.bedmesh = bedmesh
+        self.profiles = {}
+        self.current_profile = ""
+        self.incompatible_profiles = []
+        # Fetch stored profiles from Config
+        stored_profs = config.get_prefix_sections(self.name)
+        stored_profs = [s for s in stored_profs
+                        if s.get_name() != self.name]
+        for profile in stored_profs:
+            name = profile.get_name().split(' ', 1)[1]
+            version = profile.getint('version', 0)
+            if version != PROFILE_VERSION:
+                logging.info(
+                    "bed_mesh: Profile [%s] not compatible with this version\n"
+                    "of bed_mesh.  Profile Version: %d Current Version: %d "
+                    % (name, version, PROFILE_VERSION))
+                self.incompatible_profiles.append(name)
+                continue
+            self.profiles[name] = {}
+            z_values = profile.get('points').split('\n')
+            self.profiles[name]['points'] = \
+                [[float(pt.strip()) for pt in line.split(',')]
+                    for line in z_values if line.strip()]
+            self.profiles[name]['mesh_params'] = params = \
+                collections.OrderedDict()
+            for key, t in PROFILE_OPTIONS.items():
+                if t is int:
+                    params[key] = profile.getint(key)
+                elif t is float:
+                    params[key] = profile.getfloat(key)
+                elif t is str:
+                    params[key] = profile.get(key)
+        # Register GCode
+        self.gcode.register_command(
+            'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
+            desc=self.cmd_BED_MESH_PROFILE_help)
+    def initialize(self):
+        self._check_incompatible_profiles()
+        if "default" in self.profiles:
+            self.load_profile("default")
+    def get_current_profile(self):
+        return self.current_profile
+    def _check_incompatible_profiles(self):
+        if self.incompatible_profiles:
+            configfile = self.printer.lookup_object('configfile')
+            for profile in self.incompatible_profiles:
+                configfile.remove_section('bed_mesh ' + profile)
+            self.gcode.respond_info(
+                "The following incompatible profiles have been detected\n"
+                "and are scheduled for removal:\n%s\n"
+                "The SAVE_CONFIG command will update the printer config\n"
+                "file and restart the printer" %
+                (('\n').join(self.incompatible_profiles)))
+    def save_profile(self, prof_name):
+        z_mesh = self.bedmesh.get_mesh()
+        if z_mesh is None:
+            self.gcode.respond_info(
+                "Unable to save to profile [%s], the bed has not been probed"
+                % (prof_name))
+            return
+        probed_matrix = z_mesh.get_probed_matrix()
+        mesh_params = z_mesh.get_mesh_params()
+        configfile = self.printer.lookup_object('configfile')
+        cfg_name = self.name + " " + prof_name
+        # set params
+        z_values = ""
+        for line in probed_matrix:
+            z_values += "\n  "
+            for p in line:
+                z_values += "%.6f, " % p
+            z_values = z_values[:-2]
+        configfile.set(cfg_name, 'version', PROFILE_VERSION)
+        configfile.set(cfg_name, 'points', z_values)
+        for key, value in mesh_params.items():
+            configfile.set(cfg_name, key, value)
+        # save copy in local storage
+        self.profiles[prof_name] = profile = {}
+        profile['points'] = probed_matrix
+        profile['mesh_params'] = collections.OrderedDict(mesh_params)
+        self.current_profile = prof_name
+        self.gcode.respond_info(
+            "Bed Mesh state has been saved to profile [%s]\n"
+            "for the current session.  The SAVE_CONFIG command will\n"
+            "update the printer config file and restart the printer."
+            % (prof_name))
+    def load_profile(self, prof_name):
+        profile = self.profiles.get(prof_name, None)
+        if profile is None:
+            raise self.gcode.error(
+                "bed_mesh: Unknown profile [%s]" % prof_name)
+        probed_matrix = profile['points']
+        mesh_params = profile['mesh_params']
+        z_mesh = ZMesh(mesh_params)
+        try:
+            z_mesh.build_mesh(probed_matrix)
+        except BedMeshError as e:
+            raise self.gcode.error(e.message)
+        self.current_profile = prof_name
+        self.bedmesh.set_mesh(z_mesh)
+    def remove_profile(self, prof_name):
+        if prof_name in self.profiles:
+            configfile = self.printer.lookup_object('configfile')
+            configfile.remove_section('bed_mesh ' + prof_name)
+            del self.profiles[prof_name]
+            self.gcode.respond_info(
+                "Profile [%s] removed from storage for this session.\n"
+                "The SAVE_CONFIG command will update the printer\n"
+                "configuration and restart the printer" % (prof_name))
+        else:
+            self.gcode.respond_info(
+                "No profile named [%s] to remove" % (prof_name))
+    cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
+    def cmd_BED_MESH_PROFILE(self, gcmd):
+        options = collections.OrderedDict({
+            'LOAD': self.load_profile,
+            'SAVE': self.save_profile,
+            'REMOVE': self.remove_profile
+        })
+        for key in options:
+            name = gcmd.get(key, None)
+            if name is not None:
+                if name == "default" and key == 'SAVE':
+                    gcmd.respond_info(
+                        "Profile 'default' is reserved, please choose"
+                        " another profile name.")
+                else:
+                    options[key](name)
+                return
+        gcmd.respond_info("Invalid syntax '%s'" % (gcmd.get_commandline(),))
 
 
 def load_config(config):
