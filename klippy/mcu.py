@@ -140,8 +140,8 @@ class MCU_digital_out:
         self._is_static = is_static
     def _build_config(self):
         if self._is_static:
-            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                self._pin, self._start_value))
+            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
+                                     % (self._pin, self._start_value))
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
@@ -149,6 +149,9 @@ class MCU_digital_out:
             " max_duration=%d" % (
                 self._oid, self._pin, self._start_value, self._shutdown_value,
                 self._mcu.seconds_to_clock(self._max_duration)))
+        self._mcu.add_config_cmd("update_digital_out oid=%d value=%d"
+                                 % (self._oid, self._start_value),
+                                 on_restart=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c", cq=cmd_queue)
@@ -198,45 +201,50 @@ class MCU_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd(
-                    "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
-                        self._pin, cycle_ticks,
-                        self._start_value * self._pwm_max))
+                    "set_pwm_out pin=%s cycle_ticks=%d value=%d"
+                    % (self._pin, cycle_ticks,
+                       self._start_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
-                " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, cycle_ticks,
-                    self._start_value * self._pwm_max,
-                    self._shutdown_value * self._pwm_max,
-                    self._mcu.seconds_to_clock(self._max_duration)))
+                " default_value=%d max_duration=%d"
+                % (self._oid, self._pin, cycle_ticks,
+                   self._start_value * self._pwm_max,
+                   self._shutdown_value * self._pwm_max,
+                   self._mcu.seconds_to_clock(self._max_duration)))
+            self._mcu.add_config_cmd(
+                "set_pwm_out pin=%s cycle_ticks=%d value=%d"
+                % (self._pin, cycle_ticks, self._start_value * self._pwm_max),
+                on_restart=True)
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
-        else:
-            if self._shutdown_value not in [0., 1.]:
-                raise pins.error(
-                    "shutdown value must be 0.0 or 1.0 on soft pwm")
-            self._pwm_max = float(cycle_ticks)
-            if self._is_static:
-                self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                    self._pin, self._start_value >= 0.5))
-                return
-            self._oid = self._mcu.create_oid()
-            self._mcu.add_config_cmd(
-                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
-                " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, cycle_ticks,
-                    self._start_value >= 1.0, self._shutdown_value >= 0.5,
-                    self._mcu.seconds_to_clock(self._max_duration)))
-            if self._start_value not in [0., 1.]:
-                clock = self._mcu.get_query_slot(self._oid)
-                svalue = int(self._start_value * self._pwm_max + 0.5)
-                self._mcu.add_config_cmd(
-                    "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d" % (
-                        self._oid, clock, svalue))
-            self._set_cmd = self._mcu.lookup_command(
-                "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
-                cq=cmd_queue)
+            return
+        # Software PWM
+        if self._shutdown_value not in [0., 1.]:
+            raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
+        self._pwm_max = float(cycle_ticks)
+        if self._is_static:
+            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
+                                     % (self._pin, self._start_value >= 0.5))
+            return
+        self._oid = self._mcu.create_oid()
+        self._mcu.add_config_cmd(
+            "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
+            " default_value=%d max_duration=%d"
+            % (self._oid, self._pin, cycle_ticks,
+               self._start_value >= 1.0, self._shutdown_value >= 0.5,
+               self._mcu.seconds_to_clock(self._max_duration)))
+        curtime = self._mcu.get_printer().get_reactor().monotonic()
+        printtime = self._mcu.estimated_print_time(curtime)
+        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
+        svalue = int(self._start_value * self._pwm_max + 0.5)
+        self._mcu.add_config_cmd(
+            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
+            % (self._oid, self._last_clock, svalue), is_init=True)
+        self._set_cmd = self._mcu.lookup_command(
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+            cq=cmd_queue)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
