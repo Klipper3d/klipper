@@ -415,7 +415,6 @@ class MCU:
         self._init_cmds = []
         self._config_cmds = []
         self._pin_map = config.get('pin_map', None)
-        self._custom = config.get('custom', '')
         self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
@@ -484,22 +483,12 @@ class MCU:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
-    def _add_custom(self):
-        for line in self._custom.split('\n'):
-            line = line.strip()
-            cpos = line.find('#')
-            if cpos >= 0:
-                line = line[:cpos].strip()
-            if not line:
-                continue
-            self.add_config_cmd(line)
     def _send_config(self, prev_crc):
         # Build config commands
         for cb in self._config_callbacks:
             cb()
-        self._add_custom()
-        self._config_cmds.insert(0, "allocate_oids count=%d" % (
-            self._oid_count,))
+        self._config_cmds.insert(0, "allocate_oids count=%d"
+                                 % (self._oid_count,))
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
