@@ -374,18 +374,19 @@ config_stepper oid=2 step_pin=PE2 dir_pin=PE10 min_stop_interval=0 invert_step=0
 finalize_config crc=0
 ```
 
-Baseline tests made as soon as the firmware started working,
-`CONFIG_STEP_DELAY` is set to 0. Run on Recore rev A2,so the PIO
-bank is shared with the main CPU. Frequency is for the ar100 is 300 MHz,
-so the step frequency in kHz is recorded as well. Commit `51f4a43c` from the
+Run on Recore rev A2,so the PIO bank is shared with the main CPU.
+Frequency is for the ar100 is 300 MHz. Commit `6192aace` from the
 intelligent-agent fork.
 
+| AR100 PIO            | ticks |
+| -------------------- | ----- |
+| 1 stepper (no delay) | 134   |
+| 2 stepper (no delay) | 308   |
+| 3 stepper (no delay) | 500   |
 
-| ar100            | ticks | freq (kHz) |
-| ---------------- | ----- | ---------- |
-| 1 stepper        | 389   | 763        |
-| 2 stepper        | 824   | 362        |
-| 3 stepper        | 1274  | 234        |
+| AR100 R_PIO          | ticks |
+| -------------------- | ----- |
+| 1 stepper (no delay) | 98    |
 
 
 ## Command dispatch benchmark ##

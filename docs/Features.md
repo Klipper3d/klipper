@@ -143,6 +143,7 @@ represent total number of steps per second on the micro-controller.
 | Duet2 Wifi/Eth (SAM4E8E)        | 686K              | 686K              |
 | Adafruit Metro M4 (SAMD51)      | 761K              | 692K              |
 | BigTreeTech SKR Pro (STM32F407) | 922K              | 711K              |
+| Recore A2 (AR100)               | 2239K             | 1800K             |
 
 On AVR platforms, the highest achievable step rate is with just one
 stepper stepping. On the SAMD21 and STM32F103 the highest step rate is

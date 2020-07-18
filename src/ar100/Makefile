@@ -45,7 +45,7 @@ flash: $(OUT)ar100.bin
 	$(Q)sudo ./scripts/flash-ar100.sh
 
 dump:
-	or1k-linux-musl-objdump   --source -h out/klipper.elf  > out/klipper.dump
+	or1k-linux-musl-objdump -d out/klipper.elf  > out/klipper.dump
 
 size:
 	or1k-linux-musl-size out/klipper.elf

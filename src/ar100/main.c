@@ -58,12 +58,9 @@ void irq_poll(void){
  console_task(void)
  {
      // Read data
-     char c;
      int ret = 0;
-     while(r_uart_fifo_rcv()){
-       c = r_uart_getc();
-       receive_buf[receive_pos + ret] = c;
-       ret++;
+     for(int i=0; i<r_uart_fifo_rcv(); i++){
+       receive_buf[receive_pos + ret++] = r_uart_getc();
      }
      if(!ret)
        return;
@@ -116,6 +113,8 @@ __noreturn void main(uint32_t exception){
 
   r_uart_init();
   uart_puts("**Start**\n");
+  //timer_init();
+  //time_gpio();
   sched_main();
 	while(1){} // Stop complaining about noreturn
 }
