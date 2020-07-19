@@ -40,7 +40,7 @@ class MCU_endstop:
                 self._oid, self._pin, self._pullup, len(self._steppers)))
         self._mcu.add_config_cmd(
             "endstop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
-            " rest_ticks=0 pin_value=0" % (self._oid,), is_init=True)
+            " rest_ticks=0 pin_value=0" % (self._oid,), on_restart=True)
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
                 "endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
@@ -412,8 +412,9 @@ class MCU:
         self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_callbacks = []
-        self._init_cmds = []
         self._config_cmds = []
+        self._restart_cmds = []
+        self._init_cmds = []
         self._pin_map = config.get('pin_map', None)
         self._mcu_freq = 0.
         # Move command queuing
@@ -495,10 +496,9 @@ class MCU:
         pin_resolver = ppins.get_pin_resolver(self._name)
         if self._pin_map is not None:
             pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
-        for i, cmd in enumerate(self._config_cmds):
-            self._config_cmds[i] = pin_resolver.update_command(cmd)
-        for i, cmd in enumerate(self._init_cmds):
-            self._init_cmds[i] = pin_resolver.update_command(cmd)
+        for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
+            for i, cmd in enumerate(cmdlist):
+                cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
         config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
@@ -511,6 +511,9 @@ class MCU:
             logging.info("Sending MCU '%s' printer configuration...",
                          self._name)
             for c in self._config_cmds:
+                self._serial.send(c)
+        else:
+            for c in self._restart_cmds:
                 self._serial.send(c)
         # Transmit init messages
         for c in self._init_cmds:
@@ -612,9 +615,11 @@ class MCU:
         return self._oid_count - 1
     def register_config_callback(self, cb):
         self._config_callbacks.append(cb)
-    def add_config_cmd(self, cmd, is_init=False):
+    def add_config_cmd(self, cmd, is_init=False, on_restart=False):
         if is_init:
             self._init_cmds.append(cmd)
+        elif on_restart:
+            self._restart_cmds.append(cmd)
         else:
             self._config_cmds.append(cmd)
     def get_query_slot(self, oid):

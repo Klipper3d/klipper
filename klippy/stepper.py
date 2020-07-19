@@ -76,8 +76,8 @@ class MCU_stepper:
                 self._oid, self._step_pin, self._dir_pin,
                 self._mcu.seconds_to_clock(min_stop_interval),
                 self._invert_step))
-        self._mcu.add_config_cmd(
-            "reset_step_clock oid=%d clock=0" % (self._oid,), is_init=True)
+        self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
+                                 % (self._oid,), on_restart=True)
         step_cmd_id = self._mcu.lookup_command_id(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd_id = self._mcu.lookup_command_id(
