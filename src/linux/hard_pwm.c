@@ -77,20 +77,18 @@ struct gpio_pwm gpio_pwm_setup(uint32_t pin, uint32_t cycle_time, uint16_t val)
         report_errno("pwm duty_cycle", fd);
         goto fail;
     }
-
-    g.fd = fd;
-    gpio_pwm_write(g, val);
+    g.duty_fd = fd;
 
     // enable PWM
     snprintf(filename, sizeof(filename), pwm_path, chip_id, pwm_id, "enable");
     fd = open(filename, O_WRONLY|O_CLOEXEC);
     if (fd == -1) {
-        close(g.fd);
         report_errno("pwm enable", fd);
+        close(g.duty_fd);
         goto fail;
     }
-    write(fd, "1", 2);
-    close(fd);
+    g.enable_fd = fd;
+    gpio_pwm_write(g, val);
 
     return g;
 
@@ -103,12 +101,13 @@ fail:
 
 void gpio_pwm_write(struct gpio_pwm g, uint16_t val)
 {
+    if (!val) {
+        write(g.enable_fd, "0", 2);
+        return;
+    }
     char scratch[16];
     uint32_t duty_cycle = g.period * (uint64_t)val / MAX_PWM;
-    snprintf(scratch, sizeof(scratch), "%u", duty_cycle);
-    if (g.fd != -1) {
-        write(g.fd, scratch, strlen(scratch));
-    } else {
-        report_errno("pwm set duty_cycle", g.fd);
-    }
+    int len = snprintf(scratch, sizeof(scratch), "%u", duty_cycle);
+    write(g.duty_fd, scratch, len + 1);
+    write(g.enable_fd, "1", 2);
 }
