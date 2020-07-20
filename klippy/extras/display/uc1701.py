@@ -202,6 +202,9 @@ class SSD1306(DisplayBase):
             io_bus = io.spi
         self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
         DisplayBase.__init__(self, io, columns)
+        self.contrast = config.getint('contrast', 239, minval=0, maxval=255)
+        self.vcomh = config.getint('vcomh', 0, minval=0, maxval=63)
+        self.invert = config.getboolean('invert', False)
     def init(self):
         self.reset.init()
         init_cmds = [
@@ -215,12 +218,12 @@ class SSD1306(DisplayBase):
             0xA1,       # Set Segment re-map
             0xC8,       # Set COM output scan direction
             0xDA, 0x12, # Set COM pins hardware configuration
-            0x81, 0xEF, # Set contrast control
+            0x81, self.contrast, # Set contrast control
             0xD9, 0xA1, # Set pre-charge period
-            0xDB, 0x00, # Set VCOMH deselect level
+            0xDB, self.vcomh, # Set VCOMH deselect level
             0x2E,       # Deactivate scroll
             0xA4,       # Output ram to display
-            0xA6,       # Normal display
+            0xA7 if self.invert else 0xA6, # Set normal/invert
             0xAF,       # Display on
         ]
         self.send(init_cmds)
