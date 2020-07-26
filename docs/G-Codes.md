@@ -210,6 +210,8 @@ The following standard commands are supported:
   defaults to "display" (the primary display).
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
+- `SET_TEMPERATURE_FAN_TARGET temperature_fan=<temperature_fan_name> [target=<target_temperature>]`:
+  Sets the target temperature for a temperature_fan. If a target is not supplied, it is set to the specified temperature in the config file.
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
   state from the micro-controller (see FIRMWARE_RESTART) nor will it
