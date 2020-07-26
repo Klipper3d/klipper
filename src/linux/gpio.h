@@ -37,7 +37,7 @@ void spi_transfer(struct spi_config config, uint8_t receive_data
                   , uint8_t len, uint8_t *data);
 
 struct gpio_pwm {
-    int fd;
+    int duty_fd, enable_fd;
     uint32_t period;
 };
 struct gpio_pwm gpio_pwm_setup(uint32_t pin, uint32_t cycle_time, uint16_t val);

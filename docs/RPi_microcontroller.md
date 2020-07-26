@@ -42,13 +42,20 @@ make flash
 sudo service klipper start
 ```
 
+If klippy.log reports a "Permission denied" error when attempting to connect
+to `/tmp/klipper_host_mcu` then you need to add your user to the tty group.
+The following command will add the "pi" user to the tty group:
+```
+sudo usermod -a -G tty pi
+```
+
 Remaining configuration
 =======================
 
 Complete the installation by configuring Klipper secondary MCU
 following the instructions in
-[RasperryPi example config](../config/example-rasperry-pi.cfg) and
-[Multi MCU example config](../config/example-multi-mcu.cfg).
+[RaspberryPi sample config](../config/sample-raspberry-pi.cfg) and
+[Multi MCU sample config](../config/sample-multi-mcu.cfg).
 
 Optional: Identify the correct gpiochip
 =======================================
