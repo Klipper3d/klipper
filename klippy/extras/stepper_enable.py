@@ -91,7 +91,6 @@ class PrinterStepperEnable:
             el.motor_disable(print_time)
         self.printer.send_event("stepper_enable:motor_off", print_time)
         toolhead.dwell(DISABLE_STALL_TIME)
-        logging.debug('; Max time of %f', print_time)
     def motor_debug_enable(self, stepper, enable):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.dwell(DISABLE_STALL_TIME)
@@ -104,7 +103,6 @@ class PrinterStepperEnable:
             el.motor_disable(print_time)
             logging.info("%s has been manually disabled", stepper)
         toolhead.dwell(DISABLE_STALL_TIME)
-        logging.debug('; Max time of %f', print_time)
     def _handle_request_restart(self, print_time):
         self.motor_off()
     def cmd_M18(self, gcmd):

@@ -675,6 +675,8 @@ class GCodeParser:
     def request_restart(self, result):
         if self.is_printer_ready:
             print_time = self.toolhead.get_last_move_time()
+            if result == 'exit':
+                logging.info("Exiting (print time %.3fs)" % (print_time,))
             self.printer.send_event("gcode:request_restart", print_time)
             self.toolhead.dwell(0.500)
             self.toolhead.wait_moves()
