@@ -25,6 +25,9 @@ class VirtualSD:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
             self.gcode.register_command(cmd, self.cmd_error)
+        self.gcode.register_command(
+            "SDCARD_RESET_FILE", self.cmd_SDCARD_RESET_FILE,
+            desc=self.cmd_SDCARD_RESET_FILE_help)
     def handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
@@ -69,6 +72,19 @@ class VirtualSD:
     # G-Code commands
     def cmd_error(self, gcmd):
         raise gcmd.error("SD write not supported")
+    def _reset_file(self):
+        if self.current_file is not None:
+            self.do_pause()
+            self.current_file.close()
+            self.current_file = None
+        self.file_position = self.file_size = 0.
+    cmd_SDCARD_RESET_FILE_help = "Clears a loaded SD File. Stops the print "\
+        "if necessary"
+    def cmd_SDCARD_RESET_FILE(self, gcmd):
+        if self.cmd_from_sd:
+            raise gcmd.error(
+                "SDCARD_RESET_FILE cannot be run from the sdcard")
+        self._reset_file()
     def cmd_M20(self, gcmd):
         # List SD card
         files = self.get_file_list()
