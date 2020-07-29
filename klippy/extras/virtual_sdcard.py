@@ -78,9 +78,11 @@ class VirtualSD:
                 raise self.gcode.error("Unable to get file list")
     def get_status(self, eventtime):
         progress = 0.
-        if self.work_timer is not None and self.file_size:
+        if self.file_size:
             progress = float(self.file_position) / self.file_size
-        return {'progress': progress}
+        is_active = self.is_active()
+        return {'progress': progress, 'is_active': is_active,
+                'file_position': self.file_position}
     def is_active(self):
         return self.work_timer is not None
     def do_pause(self):
