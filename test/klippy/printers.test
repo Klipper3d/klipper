@@ -5,6 +5,7 @@ GCODE move.gcode
 DICTIONARY atmega2560.dict
 CONFIG ../../config/example.cfg
 CONFIG ../../config/example-corexy.cfg
+CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-delta.cfg
 CONFIG ../../config/example-rotary-delta.cfg
 CONFIG ../../config/example-winch.cfg
