@@ -16,6 +16,8 @@ class VirtualSD:
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
+        # Print Stat Tracking
+        self.print_stats = printer.load_object(config, 'print_stats')
         # Work timer
         self.reactor = printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
@@ -99,6 +101,7 @@ class VirtualSD:
             self.current_file.close()
             self.current_file = None
         self.file_position = self.file_size = 0.
+        self.print_stats.reset()
     cmd_SDCARD_RESET_FILE_help = "Clears a loaded SD File. Stops the print "\
         "if necessary"
     def cmd_SDCARD_RESET_FILE(self, gcmd):
@@ -160,6 +163,7 @@ class VirtualSD:
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
+        self.print_stats.set_current_file(filename)
     def cmd_M24(self, gcmd):
         # Start/resume SD print
         if self.work_timer is not None:
@@ -193,6 +197,7 @@ class VirtualSD:
             logging.exception("virtual_sdcard seek")
             self.work_timer = None
             return self.reactor.NEVER
+        self.print_stats.note_start()
         gcode_mutex = self.gcode.get_mutex()
         partial_input = ""
         lines = []
@@ -235,6 +240,10 @@ class VirtualSD:
         logging.info("Exiting SD card print (position %d)", self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False
+        if self.current_file is not None:
+            self.print_stats.note_pause()
+        else:
+            self._reset_file()
         return self.reactor.NEVER
 
 def load_config(config):
