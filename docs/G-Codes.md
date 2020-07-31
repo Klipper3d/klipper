@@ -60,6 +60,11 @@ Klipper also supports the following standard G-Code commands if the
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
 
+In addition, the following extended commands are availble when the
+"virtual_sdcard" config section is enabled.
+- Load a file and start SD print: `SDCARD_PRINT_FILE FILENAME=<filename>`
+- Unload file and clear SD state:  `SDCARD_RESET_FILE`
+
 ## G-Code arcs
 
 The following standard G-Code commands are available if a "gcode_arcs"
