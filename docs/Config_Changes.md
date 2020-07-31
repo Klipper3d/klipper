@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20200731:  The behavior of the `progress` attribute reported by
+the `virtual_sdcard` printer object has changed.  Progress is no
+longer reset to 0 when a print is paused.  It will now always report
+progress based on the internal file position, or 0 if no file is
+currently loaded.
+
 20200725: The servo `enable` config parameter and the SET_SERVO
 `ENABLE` parameter have been removed.  Update any macros to use
 `SET_SERVO SERVO=my_servo WIDTH=0` to disable a servo.
