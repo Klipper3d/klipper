@@ -19,12 +19,21 @@ class PrinterSensorGeneric:
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
         self.last_temp = 0.
+        self.measured_min = 99999999.
+        self.measured_max = 0.
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
+        if temp:
+            self.measured_min = min(self.measured_min, temp)
+            self.measured_max = max(self.measured_max, temp)
     def get_temp(self, eventtime):
         return self.last_temp, 0.
     def get_status(self, eventtime):
-        return {'temperature': self.last_temp}
+        return {
+            'temperature': self.last_temp,
+            'measured_min_temp': self.measured_min,
+            'measured_max_temp': self.measured_max
+        }
 
 def load_config_prefix(config):
     return PrinterSensorGeneric(config)
