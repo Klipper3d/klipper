@@ -495,7 +495,11 @@ class ToolHead:
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
                      'position': homing.Coord(*self.commanded_pos),
-                     'printing_time': print_time - last_print_start_time })
+                     'printing_time': print_time - last_print_start_time,
+                     'max_velocity': self.max_velocity,
+                     'max_accel': self.max_accel,
+                     'max_accel_to_decel': self.requested_accel_to_decel,
+                     'square_corner_velocity': self.square_corner_velocity})
         return res
     def _handle_shutdown(self):
         self.can_pause = False
