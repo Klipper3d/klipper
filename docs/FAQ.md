@@ -24,6 +24,7 @@ Frequently asked questions
 21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
 22. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
 23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
 
 ### How can I donate to the project?
 
@@ -531,3 +532,13 @@ modify the printer configuration.
 Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
 new software - the above "sudo service klipper restart" and "make
 flash" commands are needed for a software change to take effect.
+
+### How do I uninstall Klipper?
+
+On the firmware end, nothing special needs to happen. Just follow the flashing directions for the new firmware.
+
+On the raspberry pi end, an uninstall script is available in [`scripts/klipper-uninstall.sh`](https://github.com/KevinOConnor/klipper/blob/master/scripts/klipper-uninstall.sh). Assuming you cloned `klipper` to `$HOME`
+```
+sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+```
