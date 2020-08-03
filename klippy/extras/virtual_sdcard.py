@@ -231,6 +231,7 @@ class VirtualSD:
             try:
                 self.gcode.run_script(lines[-1])
             except self.gcode.error as e:
+                self.print_stats.note_error(str(e))
                 break
             except:
                 logging.exception("virtual_sdcard dispatch")
@@ -243,7 +244,7 @@ class VirtualSD:
         if self.current_file is not None:
             self.print_stats.note_pause()
         else:
-            self._reset_file()
+            self.print_stats.note_complete()
         return self.reactor.NEVER
 
 def load_config(config):

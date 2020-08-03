@@ -31,19 +31,31 @@ class PrintStats:
         # Reset last e-position
         gc_status = self.gcode.get_status(curtime)
         self.last_epos = gc_status['last_epos']
+        self.state = "printing"
+        self.error_message = ""
     def note_pause(self):
         if self.last_pause_time is None:
             curtime = self.reactor.monotonic()
             self.last_pause_time = curtime
             # update filament usage
             self._update_filament_usage(curtime)
+        if self.state != "error":
+            self.state = "paused"
+    def note_error(self, message):
+        self.state = "error"
+        self.error_message = message
+    def note_complete(self):
+        self.state = "complete"
+        eventtime = self.reactor.monotonic()
+        self.total_duration = eventtime - self.print_start_time
+        self.print_start_time = None
     def reset(self):
-        self.filename = ""
+        self.filename = self.error_message = ""
+        self.state = "standby"
         self.prev_pause_duration = self.last_epos = 0.
-        self.filament_used = 0.
+        self.filament_used = self.total_duration = 0.
         self.print_start_time = self.last_pause_time = None
     def get_status(self, eventtime):
-        total_duration = 0.
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:
             if self.last_pause_time is not None:
@@ -52,12 +64,14 @@ class PrintStats:
             else:
                 # Accumulate filament if not paused
                 self._update_filament_usage(eventtime)
-            total_duration = eventtime - self.print_start_time
+            self.total_duration = eventtime - self.print_start_time
         return {
             'filename': self.filename,
-            'total_duration': total_duration,
-            'print_duration': total_duration - time_paused,
-            'filament_used': self.filament_used
+            'total_duration': self.total_duration,
+            'print_duration': self.total_duration - time_paused,
+            'filament_used': self.filament_used,
+            'state': self.state,
+            'message': self.error_message
         }
 
 def load_config(config):
