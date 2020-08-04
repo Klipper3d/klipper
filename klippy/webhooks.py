@@ -268,5 +268,17 @@ class WebHooks:
             raise WebRequestError(msg)
         return cb
 
+    def call_remote_method(self, method, **kwargs):
+        self.sconn.send({'method': method, 'params': kwargs})
+
+    def _action_call_remote_method(self, method, **kwargs):
+        self.call_remote_method(method, **kwargs)
+        return ""
+
+    def get_status(self, eventtime=0.):
+        return {
+            "action_call_remote_method": self._action_call_remote_method
+        }
+
 def add_early_printer_objects(printer):
     printer.add_object('webhooks', WebHooks(printer))
