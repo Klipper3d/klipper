@@ -268,3 +268,6 @@ class WebHooks:
             logging.info(msg)
             raise WebRequestError(msg)
         return cb
+
+def add_early_printer_objects(printer):
+    printer.add_object('webhooks', WebHooks(printer))
