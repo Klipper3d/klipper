@@ -59,7 +59,7 @@ class Printer:
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
         self.objects['webhooks'] = webhooks.WebHooks(self)
-        self.objects['gcode'] = gcode.GCodeParser(self)
+        gcode.add_early_printer_objects(self)
     def get_start_args(self):
         return self.start_args
     def get_reactor(self):

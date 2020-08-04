@@ -719,3 +719,6 @@ class GCodeParser:
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         gcmd.respond_info("\n".join(cmdhelp), log=False)
+
+def add_early_printer_objects(printer):
+    printer.add_object('gcode', GCodeParser(printer))
