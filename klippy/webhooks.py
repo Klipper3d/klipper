@@ -255,8 +255,7 @@ class WebHooks:
     def _handle_estop_request(self, web_request):
         if web_request.get_method() != 'POST':
             raise web_request.error("Invalid Request Method")
-        gcode = self.printer.lookup_object('gcode')
-        gcode.cmd_M112(None)
+        self.printer.invoke_shutdown("Shutdown due to webhooks request")
 
     def get_connection(self):
         return self.sconn
