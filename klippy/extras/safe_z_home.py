@@ -3,7 +3,6 @@
 # Copyright (C) 2019 Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import homing
 
 class SafeZHoming:
     def __init__(self, config):
@@ -81,8 +80,7 @@ class SafeZHoming:
             # Throw an error if X or Y are not homed
             if ('x' not in kin_status['homed_axes'] or
                 'y' not in kin_status['homed_axes']):
-                raise homing.EndstopMoveError(
-                        pos, "Must home axis first")
+                raise gcmd.error("Must home X and Y axes first")
             # Move to safe XY homing position
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
