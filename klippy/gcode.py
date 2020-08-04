@@ -70,9 +70,9 @@ class GCodeCommand:
 class GCodeParser:
     error = homing.CommandError
     RETRY_TIME = 0.100
-    def __init__(self, printer, fd):
+    def __init__(self, printer):
         self.printer = printer
-        self.fd = fd
+        self.fd = printer.get_start_args().get("gcode_fd")
         printer.register_event_handler("klippy:ready", self._handle_ready)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         printer.register_event_handler("klippy:disconnect",
