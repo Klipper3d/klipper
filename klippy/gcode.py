@@ -69,29 +69,15 @@ class GCodeCommand:
 # Parse and handle G-Code commands
 class GCodeParser:
     error = homing.CommandError
-    RETRY_TIME = 0.100
     def __init__(self, printer):
         self.printer = printer
-        self.fd = printer.get_start_args().get("gcode_fd")
+        self.is_fileinput = not not printer.get_start_args().get("debuginput")
         printer.register_event_handler("klippy:ready", self._handle_ready)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         printer.register_event_handler("klippy:disconnect",
                                        self._handle_disconnect)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
-        # Input handling
-        self.reactor = printer.get_reactor()
-        self.is_processing_data = False
-        self.is_fileinput = not not printer.get_start_args().get("debuginput")
-        self.pipe_is_active = not self.is_fileinput
-        self.fd_handle = None
-        if not self.is_fileinput:
-            self.fd_handle = self.reactor.register_fd(self.fd,
-                                                      self._process_data)
-        self.partial_input = ""
-        self.pending_commands = []
-        self.bytes_read = 0
-        self.input_log = collections.deque([], 50)
         # Register webhooks
         webhooks = self.printer.lookup_object('webhooks')
         webhooks.register_endpoint(
@@ -104,7 +90,7 @@ class GCodeParser:
             "gcode/firmware_restart", self._handle_remote_restart)
         # Command handling
         self.is_printer_ready = False
-        self.mutex = self.reactor.mutex()
+        self.mutex = printer.get_reactor().mutex()
         self.output_callbacks = []
         self.base_gcode_handlers = self.gcode_handlers = {}
         self.ready_gcode_handlers = {}
@@ -185,8 +171,6 @@ class GCodeParser:
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
         return old_transform
-    def stats(self, eventtime):
-        return False, "gcodein=%d" % (self.bytes_read,)
     def _action_emergency_stop(self, msg="action_emergency_stop"):
         self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
         return ""
@@ -206,14 +190,12 @@ class GCodeParser:
         return self.speed_factor * 60.
     def get_status(self, eventtime=None):
         move_position = self._get_gcode_position()
-        busy = self.is_processing_data
         return {
             'speed_factor': self._get_gcode_speed_override(),
             'speed': self._get_gcode_speed(),
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'busy': busy,
             'move_xpos': move_position[0],
             'move_ypos': move_position[1],
             'move_zpos': move_position[2],
@@ -239,9 +221,6 @@ class GCodeParser:
             return
         self.is_printer_ready = False
         self.gcode_handlers = self.base_gcode_handlers
-        self._dump_debug()
-        if self.is_fileinput:
-            self.printer.request_exit('error_exit')
         self._respond_state("Shutdown")
     def _handle_disconnect(self):
         self._respond_state("Disconnect")
@@ -252,9 +231,6 @@ class GCodeParser:
         if self.move_transform is None:
             self.move_with_transform = self.toolhead.move
             self.position_with_transform = self.toolhead.get_position
-        if self.is_fileinput and self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd,
-                                                      self._process_data)
         self._respond_state("Ready")
     def _handle_activate_extruder(self):
         self.reset_last_position()
@@ -263,20 +239,6 @@ class GCodeParser:
     def reset_last_position(self):
         if self.is_printer_ready:
             self.last_position = self.position_with_transform()
-    def _dump_debug(self):
-        out = []
-        out.append("Dumping gcode input %d blocks" % (
-            len(self.input_log),))
-        for eventtime, data in self.input_log:
-            out.append("Read %f: %s" % (eventtime, repr(data)))
-        out.append(
-            "gcode state: absolute_coord=%s absolute_extrude=%s"
-            " base_position=%s last_position=%s homing_position=%s"
-            " speed_factor=%s extrude_factor=%s speed=%s" % (
-                self.absolute_coord, self.absolute_extrude,
-                self.base_position, self.last_position, self.homing_position,
-                self.speed_factor, self.extrude_factor, self.speed))
-        logging.info("\n".join(out))
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def _process_commands(self, commands, need_ack=True):
@@ -317,71 +279,6 @@ class GCodeParser:
                 if not need_ack:
                     raise
             gcmd.ack()
-    m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
-    def _process_data(self, eventtime):
-        # Read input, separate by newline, and add to pending_commands
-        try:
-            data = os.read(self.fd, 4096)
-        except os.error:
-            logging.exception("Read g-code")
-            return
-        self.input_log.append((eventtime, data))
-        self.bytes_read += len(data)
-        lines = data.split('\n')
-        lines[0] = self.partial_input + lines[0]
-        self.partial_input = lines.pop()
-        pending_commands = self.pending_commands
-        pending_commands.extend(lines)
-        if not self.is_fileinput:
-            self.pipe_is_active = True
-        elif not data:
-            # Special handling for debug file input EOF
-            if not self.is_processing_data:
-                self.reactor.unregister_fd(self.fd_handle)
-                self.fd_handle = None
-                self.request_restart('exit')
-            pending_commands.append("")
-        # Handle case where multiple commands pending
-        if self.is_processing_data or len(pending_commands) > 1:
-            if len(pending_commands) < 20:
-                # Check for M112 out-of-order
-                for line in lines:
-                    if self.m112_r.match(line) is not None:
-                        self.cmd_M112(None)
-            if self.is_processing_data:
-                if len(pending_commands) >= 20:
-                    # Stop reading input
-                    self.reactor.unregister_fd(self.fd_handle)
-                    self.fd_handle = None
-                return
-        # Process commands
-        self.is_processing_data = True
-        while pending_commands:
-            self.pending_commands = []
-            with self.mutex:
-                self._process_commands(pending_commands)
-            pending_commands = self.pending_commands
-        self.is_processing_data = False
-        if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd,
-                                                      self._process_data)
-    def _handle_remote_help(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
-        web_request.send(dict(self.gcode_help))
-    def _handle_remote_restart(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
-        path = web_request.get_path()
-        if path == "gcode/restart":
-            self.run_script('restart')
-        elif path == "gcode/firmware_restart":
-            self.run_script('firmware_restart')
-    def _handle_remote_script(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
-        script = web_request.get('script')
-        self.run_script(script)
     def run_script_from_command(self, script):
         self._process_commands(script.split('\n'), need_ack=False)
     def run_script(self, script):
@@ -395,12 +292,6 @@ class GCodeParser:
     def respond_raw(self, msg):
         for cb in self.output_callbacks:
             cb(msg)
-        if self.pipe_is_active:
-            try:
-                os.write(self.fd, msg+"\n")
-            except os.error:
-                logging.exception("Write g-code response")
-                self.pipe_is_active = False
     def respond_info(self, msg, log=True):
         if log:
             logging.info(msg)
@@ -719,6 +610,131 @@ class GCodeParser:
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         gcmd.respond_info("\n".join(cmdhelp), log=False)
+    # Webhooks
+    def _handle_remote_help(self, web_request):
+        if web_request.get_method() != 'GET':
+            raise web_request.error("Invalid Request Method")
+        web_request.send(dict(self.gcode_help))
+    def _handle_remote_restart(self, web_request):
+        if web_request.get_method() != 'POST':
+            raise web_request.error("Invalid Request Method")
+        path = web_request.get_path()
+        if path == "gcode/restart":
+            self.run_script('restart')
+        elif path == "gcode/firmware_restart":
+            self.run_script('firmware_restart')
+    def _handle_remote_script(self, web_request):
+        if web_request.get_method() != 'POST':
+            raise web_request.error("Invalid Request Method")
+        script = web_request.get('script')
+        self.run_script(script)
+
+# Support reading gcode from a pseudo-tty interface
+class GCodeIO:
+    def __init__(self, printer):
+        self.printer = printer
+        printer.register_event_handler("klippy:ready", self._handle_ready)
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        self.gcode = printer.lookup_object('gcode')
+        self.gcode_mutex = self.gcode.get_mutex()
+        self.fd = printer.get_start_args().get("gcode_fd")
+        self.reactor = printer.get_reactor()
+        self.is_printer_ready = False
+        self.is_processing_data = False
+        self.is_fileinput = not not printer.get_start_args().get("debuginput")
+        self.pipe_is_active = True
+        self.fd_handle = None
+        if not self.is_fileinput:
+            self.gcode.register_output_handler(self._respond_raw)
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self._process_data)
+        self.partial_input = ""
+        self.pending_commands = []
+        self.bytes_read = 0
+        self.input_log = collections.deque([], 50)
+    def _handle_ready(self):
+        self.is_printer_ready = True
+        if self.is_fileinput and self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self._process_data)
+    def _dump_debug(self):
+        out = []
+        out.append("Dumping gcode input %d blocks" % (
+            len(self.input_log),))
+        for eventtime, data in self.input_log:
+            out.append("Read %f: %s" % (eventtime, repr(data)))
+        out.append(
+            "gcode state: absolute_coord=%s absolute_extrude=%s"
+            " base_position=%s last_position=%s homing_position=%s"
+            " speed_factor=%s extrude_factor=%s speed=%s" % (
+                self.absolute_coord, self.absolute_extrude,
+                self.base_position, self.last_position, self.homing_position,
+                self.speed_factor, self.extrude_factor, self.speed))
+        logging.info("\n".join(out))
+    def _handle_shutdown(self):
+        if not self.is_printer_ready:
+            return
+        self.is_printer_ready = False
+        self._dump_debug()
+        if self.is_fileinput:
+            self.printer.request_exit('error_exit')
+    m112_r = re.compile('^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
+    def _process_data(self, eventtime):
+        # Read input, separate by newline, and add to pending_commands
+        try:
+            data = os.read(self.fd, 4096)
+        except os.error:
+            logging.exception("Read g-code")
+            return
+        self.input_log.append((eventtime, data))
+        self.bytes_read += len(data)
+        lines = data.split('\n')
+        lines[0] = self.partial_input + lines[0]
+        self.partial_input = lines.pop()
+        pending_commands = self.pending_commands
+        pending_commands.extend(lines)
+        self.pipe_is_active = True
+        # Special handling for debug file input EOF
+        if not data and self.is_fileinput:
+            if not self.is_processing_data:
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
+                self.gcode.request_restart('exit')
+            pending_commands.append("")
+        # Handle case where multiple commands pending
+        if self.is_processing_data or len(pending_commands) > 1:
+            if len(pending_commands) < 20:
+                # Check for M112 out-of-order
+                for line in lines:
+                    if self.m112_r.match(line) is not None:
+                        self.cmd_M112(None)
+            if self.is_processing_data:
+                if len(pending_commands) >= 20:
+                    # Stop reading input
+                    self.reactor.unregister_fd(self.fd_handle)
+                    self.fd_handle = None
+                return
+        # Process commands
+        self.is_processing_data = True
+        while pending_commands:
+            self.pending_commands = []
+            with self.gcode_mutex:
+                self.gcode._process_commands(pending_commands)
+            pending_commands = self.pending_commands
+        self.is_processing_data = False
+        if self.fd_handle is None:
+            self.fd_handle = self.reactor.register_fd(self.fd,
+                                                      self._process_data)
+    def _respond_raw(self, msg):
+        if self.pipe_is_active:
+            try:
+                os.write(self.fd, msg+"\n")
+            except os.error:
+                logging.exception("Write g-code response")
+                self.pipe_is_active = False
+    def stats(self, eventtime):
+        return False, "gcodein=%d" % (self.bytes_read,)
 
 def add_early_printer_objects(printer):
     printer.add_object('gcode', GCodeParser(printer))
+    printer.add_object('gcode_io', GCodeIO(printer))
