@@ -83,6 +83,7 @@ class GCodeParser:
         self.reactor = printer.get_reactor()
         self.is_processing_data = False
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
+        self.pipe_is_active = not self.is_fileinput
         self.fd_handle = None
         if not self.is_fileinput:
             self.fd_handle = self.reactor.register_fd(self.fd,
@@ -328,8 +329,10 @@ class GCodeParser:
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
         pending_commands.extend(lines)
-        # Special handling for debug file input EOF
-        if not data and self.is_fileinput:
+        if not self.is_fileinput:
+            self.pipe_is_active = True
+        elif not data:
+            # Special handling for debug file input EOF
             if not self.is_processing_data:
                 self.reactor.unregister_fd(self.fd_handle)
                 self.fd_handle = None
@@ -387,12 +390,12 @@ class GCodeParser:
         return GCodeCommand(self, command, commandline, params, False)
     # Response handling
     def respond_raw(self, msg):
-        if self.is_fileinput:
-            return
-        try:
-            os.write(self.fd, msg+"\n")
-        except os.error:
-            logging.exception("Write g-code response")
+        if self.pipe_is_active:
+            try:
+                os.write(self.fd, msg+"\n")
+            except os.error:
+                logging.exception("Write g-code response")
+                self.pipe_is_active = False
     def respond_info(self, msg, log=True):
         if log:
             logging.info(msg)
