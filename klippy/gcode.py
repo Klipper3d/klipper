@@ -105,6 +105,7 @@ class GCodeParser:
         # Command handling
         self.is_printer_ready = False
         self.mutex = self.reactor.mutex()
+        self.output_callbacks = []
         self.base_gcode_handlers = self.gcode_handlers = {}
         self.ready_gcode_handlers = {}
         self.mux_commands = {}
@@ -171,6 +172,8 @@ class GCodeParser:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
+    def register_output_handler(self, cb):
+        self.output_callbacks.append(cb)
     def set_move_transform(self, transform, force=False):
         if self.move_transform is not None and not force:
             raise self.printer.config_error(
@@ -390,6 +393,8 @@ class GCodeParser:
         return GCodeCommand(self, command, commandline, params, False)
     # Response handling
     def respond_raw(self, msg):
+        for cb in self.output_callbacks:
+            cb(msg)
         if self.pipe_is_active:
             try:
                 os.write(self.fd, msg+"\n")
