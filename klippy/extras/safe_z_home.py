@@ -30,12 +30,12 @@ class SafeZHoming:
 
     def cmd_G28(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
+        curtime = self.printer.get_reactor().monotonic()
+        kin_status = toolhead.get_kinematics().get_status(curtime)
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
             pos = toolhead.get_position()
-            curtime = self.printer.get_reactor().monotonic()
-            kin_status = toolhead.get_kinematics().get_status(curtime)
             # Check if Z axis is homed or has a known position
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
@@ -65,14 +65,23 @@ class SafeZHoming:
         if new_params:
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", new_params)
             self.prev_G28(g28_gcmd)
+
+        # Update the currently homed axes
+        curtime = self.printer.get_reactor().monotonic()
+        kin_status = toolhead.get_kinematics().get_status(curtime)
+
         # Home Z axis if necessary
         if need_z:
-            # Move to safe XY homing position
             pos = toolhead.get_position()
             prev_x = pos[0]
             prev_y = pos[1]
             pos[0] = self.home_x_pos
             pos[1] = self.home_y_pos
+            # Throw an error if X or Y are not homed
+            if ('x' not in kin_status['homed_axes'] or
+                'y' not in kin_status['homed_axes']):
+                raise gcmd.error("Must home X and Y axes first")
+            # Move to safe XY homing position
             toolhead.move(pos, self.speed)
             self.gcode.reset_last_position()
             # Home Z
