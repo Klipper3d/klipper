@@ -15,8 +15,8 @@ class Homing:
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
         self.verify_retract = True
-    def set_no_verify_retract(self):
-        self.verify_retract = False
+        if self.printer.get_start_args().get("debuginput"):
+            self.verify_retract = False
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):

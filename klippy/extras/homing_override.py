@@ -32,14 +32,14 @@ class HomingOverride:
         if no_axis:
             override = True
         else:
-            # check if we home an axsis which needs the override
+            # check if we home an axis which needs the override
             override = False
             for axis in self.axes:
                 if gcmd.get(axis, None) is not None:
                     override = True
 
         if not override:
-            self.gcode.cmd_G28(gcmd)
+            self.prev_G28(gcmd)
             return
 
         # Calculate forced position (if configured)

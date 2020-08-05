@@ -473,9 +473,9 @@ system specified in the config file. This may differ from the
 bed_tilt, skew_correction) is in effect. This may differ from the
 actual coordinates specified in the last `G1` command if the g-code
 origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
-`M114` command (`gcode.get_status()['gcode_position']`) will report
-the last g-code position relative to the current g-code coordinate
-system.
+`M114` command (`gcode_move.get_status()['gcode_position']`) will
+report the last g-code position relative to the current g-code
+coordinate system.
 
 The "gcode base" is the location of the g-code origin in cartesian
 coordinates relative to the coordinate system specified in the config

@@ -15,6 +15,7 @@ class TuningTower:
         self.last_z = self.start = self.factor = self.band = 0.
         self.last_command_value = None
         self.command_fmt = ""
+        self.gcode_move = self.printer.lookup_object("gcode_move")
         # Register command
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
@@ -34,7 +35,8 @@ class TuningTower:
             self.command_fmt = "%s %s%%.9f" % (command, parameter)
         else:
             self.command_fmt = "%s %s=%%.9f" % (command, parameter)
-        self.normal_transform = self.gcode.set_move_transform(self, force=True)
+        nt = self.gcode_move.set_move_transform(self, force=True)
+        self.normal_transform = nt
         self.last_z = -99999999.9
         self.last_command_value = None
         self.get_position()
@@ -59,7 +61,7 @@ class TuningTower:
                 self.end_test()
             else:
                 # Process update
-                gcode_z = self.gcode.get_status()['gcode_position'].z
+                gcode_z = self.gcode_move.get_status()['gcode_position'].z
                 newval = self.calc_value(gcode_z)
                 self.last_z = z
                 if newval != self.last_command_value:
@@ -71,7 +73,7 @@ class TuningTower:
         normal_transform.move(newpos, speed)
     def end_test(self):
         self.gcode.respond_info("Ending tuning test mode")
-        self.gcode.set_move_transform(self.normal_transform, force=True)
+        self.gcode_move.set_move_transform(self.normal_transform, force=True)
         self.normal_transform = None
 
 def load_config(config):

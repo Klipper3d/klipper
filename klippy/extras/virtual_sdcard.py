@@ -24,7 +24,6 @@ class VirtualSD:
         self.work_timer = None
         # Register commands
         self.gcode = printer.lookup_object('gcode')
-        self.gcode.register_command('M21', None)
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
