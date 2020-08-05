@@ -30,7 +30,7 @@ class PolarKinematics:
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
-        self.limit_z = [(1.0, -1.0)]
+        self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
@@ -87,7 +87,7 @@ class PolarKinematics:
         if home_z:
             self._home_axis(homing_state, 2, self.rails[1])
     def _motor_off(self, print_time):
-        self.limit_z = [(1.0, -1.0)]
+        self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
     def check_move(self, move):
         end_pos = move.end_pos
