@@ -54,6 +54,8 @@ communication with the Klipper developers.
   perfectly square.
 - [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
   tools such as lasers or spindles.
+- [Advanced tuning](Advanced_Tuning.md): Hints on tuning some common
+  configuration parameters.
 
 ## Developer Documentation
 
