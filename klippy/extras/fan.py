@@ -76,6 +76,3 @@ class PrinterFan:
 
 def load_config(config):
     return PrinterFan(config)
-
-def load_config_prefix(config):
-    return PrinterFan(config)

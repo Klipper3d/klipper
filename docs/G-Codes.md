@@ -241,9 +241,9 @@ is enabled:
 
 ## Manually Controlled Fans Commands
 
-The following command is available when a named "fan" config section
+The following command is available when a "fan_generic" config section
 is enabled:
-- 'SET_FAN_SPEED FAN=config_name SPEED=<speed>: This command sets
+- `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets
   the speed of a fan. <speed> must be between 0.0 and 1.0.
 
 ## Neopixel and Dotstar Commands
