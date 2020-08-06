@@ -178,6 +178,20 @@ class MCU_TMC_SPI:
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         self.name_to_reg = name_to_reg
         self.fields = fields
+        diag0_pin = config.get('diag0_pin', None)
+        diag1_pin = config.get('diag1_pin', None)
+        if diag0_pin is not None and diag1_pin is not None:
+            raise config.error(
+                "TMC_SPI: only diag0_pin or diag1_pin should be specified")
+        elif diag0_pin is not None:
+            self.diag_pin = diag0_pin
+            self.diag_field = "diag0_stall"
+        elif diag1_pin is not None:
+            self.diag_pin = diag1_pin
+            self.diag_field = "diag1_stall"
+        else:
+            self.diag_pin = None
+            self.diag_field = None
     def get_fields(self):
         return self.fields
     def get_register(self, reg_name):
@@ -198,6 +212,10 @@ class MCU_TMC_SPI:
                 (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
             self.spi.spi_send(data, minclock)
+    def get_diag_pin(self):
+        return self.diag_pin
+    def get_diag_field(self):
+        return self.diag_field
 
 
 ######################################################################
@@ -210,8 +228,7 @@ class TMC2130:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual pins to be created
-        diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)

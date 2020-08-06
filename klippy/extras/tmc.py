@@ -182,11 +182,11 @@ class TMCCommandHelper:
 
 # Helper class for "sensorless homing"
 class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc, diag_pin):
+    def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.diag_pin = diag_pin
+        self.diag_pin = mcu_tmc.get_diag_pin()
         self.mcu_endstop = None
         self.en_pwm = False
         self.pwmthrs = 0
@@ -228,7 +228,7 @@ class TMCVirtualPinHelper:
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
-            val = self.fields.set_field("diag1_stall", 1)
+            val = self.fields.set_field(self.mcu_tmc.get_diag_field(), 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
     def handle_homing_move_end(self, endstops):
@@ -240,7 +240,7 @@ class TMCVirtualPinHelper:
             val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
         else:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
-            val = self.fields.set_field("diag1_stall", 0)
+            val = self.fields.set_field(self.mcu_tmc.get_diag_field(), 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
 

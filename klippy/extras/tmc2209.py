@@ -60,8 +60,7 @@ class TMC2209:
                                       FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3)
         # Allow virtual pins to be created
-        diag_pin = config.get('diag_pin', None)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag_pin)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
