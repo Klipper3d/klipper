@@ -29,6 +29,8 @@ communication with the Klipper developers.
     similar).
   - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
     positioning.
+- [Resonance compensation](Resonance_Compensation.md): A tool to
+  reduce ringing in prints.
 - [Pressure advance](Pressure_Advance.md): Calibrate extruder
   pressure.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
@@ -38,8 +40,6 @@ communication with the Klipper developers.
   sensorless homing.
 - [Skew correction](skew_correction.md): Adjustments for axes not
   perfectly square.
-- [Resonance compensation](Resonance_Compensation.md): Reduce ringing in prints
-  by measuring printer resonances and configuring the input shaping.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
 # Developer Documentation
