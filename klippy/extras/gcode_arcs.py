@@ -55,6 +55,8 @@ class ArcSupport:
             g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
             if e_per_move:
                 g1_params['E'] = e_base + e_per_move
+                if gcodestatus['absolute_extrude']:
+                    e_base += e_per_move
             if asF is not None:
                 g1_params['F'] = asF
             g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
