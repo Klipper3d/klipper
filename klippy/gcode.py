@@ -216,6 +216,13 @@ class GCodeParser:
             'action_respond_error': self._action_respond_error,
             'action_emergency_stop': self._action_emergency_stop,
         }
+    def dump_state(self):
+        return ("gcode state: absolute_coord=%s absolute_extrude=%s"
+                " base_position=%s last_position=%s homing_position=%s"
+                " speed_factor=%s extrude_factor=%s speed=%s"
+                % (self.absolute_coord, self.absolute_extrude,
+                   self.base_position, self.last_position, self.homing_position,
+                   self.speed_factor, self.extrude_factor, self.speed))
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
@@ -663,13 +670,7 @@ class GCodeIO:
             len(self.input_log),))
         for eventtime, data in self.input_log:
             out.append("Read %f: %s" % (eventtime, repr(data)))
-        out.append(
-            "gcode state: absolute_coord=%s absolute_extrude=%s"
-            " base_position=%s last_position=%s homing_position=%s"
-            " speed_factor=%s extrude_factor=%s speed=%s" % (
-                self.absolute_coord, self.absolute_extrude,
-                self.base_position, self.last_position, self.homing_position,
-                self.speed_factor, self.extrude_factor, self.speed))
+        out.append(self.gcode.dump_state())
         logging.info("\n".join(out))
     def _handle_shutdown(self):
         if not self.is_printer_ready:
