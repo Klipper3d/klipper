@@ -158,8 +158,8 @@ class ClientConnection:
         self.sock = sock
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self.process_received)
-        self.partial_data = ""
-        self.mutex = self.reactor.mutex()
+        self.partial_data = self.send_buffer = ""
+        self.is_sending_data = False
         logging.info(
             "webhooks: New connection established")
 
@@ -222,30 +222,34 @@ class ClientConnection:
         self.send({'method': "response", 'params': result})
 
     def send(self, data):
-        with self.mutex:
-            retries = 10
-            data = json.dumps(data) + "\x03"
-            while data:
-                try:
-                    sent = self.sock.send(data)
-                except socket.error as e:
-                    if e.errno == errno.EBADF or e.errno == errno.EPIPE \
-                            or not retries:
-                        sent = 0
-                    else:
-                        retries -= 1
-                        waketime = self.reactor.monotonic() + .001
-                        self.reactor.pause(waketime)
-                        continue
-                retries = 10
-                if sent > 0:
-                    data = data[sent:]
+        self.send_buffer += json.dumps(data) + "\x03"
+        if not self.is_sending_data:
+            self.is_sending_data = True
+            self.reactor.register_callback(self._do_send)
+
+    def _do_send(self, eventtime):
+        retries = 10
+        while self.send_buffer:
+            try:
+                sent = self.sock.send(self.send_buffer)
+            except socket.error as e:
+                if e.errno == errno.EBADF or e.errno == errno.EPIPE \
+                        or not retries:
+                    sent = 0
                 else:
-                    logging.info(
-                        "webhooks: Error sending server data,"
-                        " closing socket")
-                    self.close()
-                    break
+                    retries -= 1
+                    waketime = self.reactor.monotonic() + .001
+                    self.reactor.pause(waketime)
+                    continue
+            retries = 10
+            if sent > 0:
+                self.send_buffer = self.send_buffer[sent:]
+            else:
+                logging.info(
+                    "webhooks: Error sending server data,  closing socket")
+                self.close()
+                break
+        self.is_sending_data = False
 
 class WebHooks:
     def __init__(self, printer):
