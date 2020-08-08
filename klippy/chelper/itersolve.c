@@ -43,11 +43,11 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
     for (;;) {
         double guess_time = ((low.time*high.position - high.time*low.position)
                              / (high.position - low.position));
-        if (fabs(guess_time - best_guess.time) <= .000000001)
-            break;
         best_guess.time = guess_time;
         best_guess.position = calc_position_cb(sk, m, guess_time);
         double guess_position = best_guess.position - target;
+        if (fabs(guess_position) <= .000000001)
+            break;
         int guess_sign = signbit(guess_position);
         if (guess_sign == high_sign) {
             high.time = guess_time;
@@ -62,6 +62,8 @@ itersolve_find_step(struct stepper_kinematics *sk, struct move *m
                 high.position *= .5;
             prev_choice = -1;
         }
+        if (high.time - low.time <= .000000001)
+            break;
     }
     return best_guess;
 }
