@@ -154,11 +154,6 @@ static void pack_uuid(uint8_t* u)
 {
     uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
     memcpy(u, &hash, SHORT_UUID_LEN);
-    /*for(int i=0; i<SHORT_UUID_LEN; i++) {
-        u[i] = *((uint8_t*)(UID_BASE+i)) ^
-                *((uint8_t*)(UID_BASE+i+SHORT_UUID_LEN));
-    }
-    */
 }
 
 static void can_uuid_resp(void)
