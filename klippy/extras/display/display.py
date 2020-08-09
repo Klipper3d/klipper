@@ -87,7 +87,7 @@ class PrinterLCD:
         name = config.get_name()
         if name == 'display':
             # only load menu for primary display
-            self.menu = menu.MenuManager(config, self.lcd_chip)
+            self.menu = menu.MenuManager(config, self)
         self.printer.load_object(config, "display_status")
         # Configurable display
         self.display_templates = {}
