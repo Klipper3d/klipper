@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20200809: The menu system has been rewritten. If the menu has been
+customized then it will be necessary to update to the new
+configuration. See config/example-menu.cfg for configuration details
+and see klippy/extras/display/menu.cfg for examples.
+
 20200731:  The behavior of the `progress` attribute reported by
 the `virtual_sdcard` printer object has changed.  Progress is no
 longer reset to 0 when a print is paused.  It will now always report
