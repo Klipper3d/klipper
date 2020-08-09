@@ -6,6 +6,7 @@
 import logging
 import socket
 import os
+import sys
 import errno
 import json
 import homing
@@ -260,10 +261,33 @@ class WebHooks:
         self.register_endpoint("emergency_stop", self._handle_estop_request)
         start_args = printer.get_start_args()
         log_file = start_args.get('log_file')
+        cfg_file = start_args.get('config_file')
+        klipper_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), ".."))
         if log_file is not None:
             self.register_static_path("klippy.log", log_file)
+        self.register_static_path("printer.cfg", cfg_file)
+        self.register_static_path("klippy_env", sys.executable)
+        self.register_static_path("klipper_path", klipper_path)
         self.sconn = ServerSocket(self, printer)
         StatusHandler(self)
+
+        # Register Events
+        printer.register_event_handler(
+            "klippy:connect", self._handle_connect)
+        printer.register_event_handler(
+            "klippy:shutdown", self._notify_shutdown)
+
+    def _handle_connect(self):
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_output_handler(self._process_gcode_response)
+
+    def _notify_shutdown(self):
+        self.call_remote_method("set_klippy_shutdown")
+
+    def _process_gcode_response(self, gc_response):
+        self.call_remote_method(
+            "process_gcode_response", response=gc_response)
 
     def register_endpoint(self, path, callback):
         if path in self._endpoints:
