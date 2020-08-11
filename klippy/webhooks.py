@@ -258,7 +258,6 @@ class WebHooks:
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
         self.sconn = ServerSocket(self, printer)
-        StatusHandler(self)
 
         # Register Events
         printer.register_event_handler(
@@ -330,9 +329,9 @@ class WebHooks:
 SUBSCRIPTION_REFRESH_TIME = .25
 
 class StatusHandler:
-    def __init__(self, webhooks):
-        self.printer = webhooks.printer
-        self.webhooks = webhooks
+    def __init__(self, printer):
+        self.printer = printer
+        self.webhooks = webhooks = printer.lookup_object('webhooks')
         self.ready = self.timer_started = False
         self.reactor = self.printer.get_reactor()
         self.available_objects = {}
@@ -462,3 +461,4 @@ class StatusHandler:
 
 def add_early_printer_objects(printer):
     printer.add_object('webhooks', WebHooks(printer))
+    StatusHandler(printer)
