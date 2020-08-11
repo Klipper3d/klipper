@@ -255,19 +255,8 @@ class WebHooks:
     def __init__(self, printer):
         self.printer = printer
         self._endpoints = {"list_endpoints": self._handle_list_endpoints}
-        self._static_paths = []
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
-        start_args = printer.get_start_args()
-        log_file = start_args.get('log_file')
-        cfg_file = start_args.get('config_file')
-        klipper_path = os.path.normpath(os.path.join(
-            os.path.dirname(__file__), ".."))
-        if log_file is not None:
-            self.register_static_path("klippy.log", log_file)
-        self.register_static_path("printer.cfg", cfg_file)
-        self.register_static_path("klippy_env", sys.executable)
-        self.register_static_path("klipper_path", klipper_path)
         self.sconn = ServerSocket(self, printer)
         StatusHandler(self)
 
@@ -293,30 +282,22 @@ class WebHooks:
             raise WebRequestError("Path already registered to an endpoint")
         self._endpoints[path] = callback
 
-    def register_static_path(self, resource_id, file_path):
-        static_path_info = {
-            'resource_id': resource_id, 'file_path': file_path}
-        self._static_paths.append(static_path_info)
-
     def _handle_list_endpoints(self, web_request):
-        web_request.send({
-            'hooks': self._endpoints.keys(),
-            'static_paths': self._static_paths})
+        web_request.send({'endpoints': self._endpoints.keys()})
 
     def _handle_info_request(self, web_request):
         if web_request.get_method() != 'GET':
             raise web_request.error("Invalid Request Method")
+        state_message, state = self.printer.get_state_message()
+        klipper_path = os.path.normpath(os.path.join(
+            os.path.dirname(__file__), ".."))
+        response = {'state': state, 'state_message': state_message,
+                    'hostname': socket.gethostname(),
+                    'klipper_path': klipper_path, 'python_path': sys.executable}
         start_args = self.printer.get_start_args()
-        state_message, msg_type = self.printer.get_state_message()
-        version = start_args['software_version']
-        cpu_info = start_args['cpu_info']
-        error = msg_type == "error"
-        web_request.send(
-            {'cpu': cpu_info, 'version': version,
-             'hostname': socket.gethostname(),
-             'is_ready': msg_type == "ready",
-             'error_detected': error,
-             'message': state_message})
+        for sa in ['log_file', 'config_file', 'software_version', 'cpu_info']:
+            response[sa] = start_args.get(sa)
+        web_request.send(response)
 
     def _handle_estop_request(self, web_request):
         if web_request.get_method() != 'POST':
