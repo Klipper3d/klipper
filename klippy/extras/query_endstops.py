@@ -22,8 +22,6 @@ class QueryEndstops:
     def get_status(self, eventtime):
         return {'last_query': {name: value for name, value in self.last_state}}
     def _handle_web_request(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
         gc_mutex = self.printer.lookup_object('gcode').get_mutex()
         toolhead = self.printer.lookup_object('toolhead')
         with gc_mutex:

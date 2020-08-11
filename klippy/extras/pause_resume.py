@@ -19,27 +19,20 @@ class PauseResume:
         self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE)
         self.gcode.register_command("CANCEL_PRINT", self.cmd_CANCEL_PRINT)
         webhooks = self.printer.lookup_object('webhooks')
-        webhooks.register_endpoint(
-            "pause_resume/cancel", self._handle_web_request)
-        webhooks.register_endpoint(
-            "pause_resume/pause", self._handle_web_request)
-        webhooks.register_endpoint(
-            "pause_resume/resume", self._handle_web_request)
+        webhooks.register_endpoint("pause_resume/cancel",
+                                   self._handle_cancel_request)
+        webhooks.register_endpoint("pause_resume/pause",
+                                   self._handle_pause_request)
+        webhooks.register_endpoint("pause_resume/resume",
+                                   self._handle_resume_request)
     def handle_ready(self):
         self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
-    def _handle_web_request(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
-        path = web_request.get_path()
-        if path == "pause_resume/cancel":
-            script = "CANCEL_PRINT"
-        elif path == "pause_resume/pause":
-            script = "PAUSE"
-        elif path == "pause_resume/resume":
-            script = "RESUME"
-        else:
-            raise web_request.error("Invalid Path")
-        self.gcode.run_script(script)
+    def _handle_cancel_request(self, web_request):
+        self.gcode.run_script("CANCEL_PRINT")
+    def _handle_pause_request(self, web_request):
+        self.gcode.run_script("PAUSE")
+    def _handle_resume_request(self, web_request):
+        self.gcode.run_script("RESUME")
     def get_status(self, eventtime):
         return {
             'is_paused': self.is_paused

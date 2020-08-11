@@ -48,7 +48,6 @@ class WebRequest:
     def __init__(self, base_request):
         self.id = base_request['id']
         self.path = base_request['path']
-        self.method = base_request['method']
         self.args = base_request['args']
         self.response = None
 
@@ -70,9 +69,6 @@ class WebRequest:
 
     def get_path(self):
         return self.path
-
-    def get_method(self):
-        return self.method
 
     def set_error(self, error):
         self.response = error.to_dict()
@@ -285,8 +281,6 @@ class WebHooks:
         web_request.send({'endpoints': self._endpoints.keys()})
 
     def _handle_info_request(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
         state_message, state = self.printer.get_state_message()
         klipper_path = os.path.normpath(os.path.join(
             os.path.dirname(__file__), ".."))
@@ -299,8 +293,6 @@ class WebHooks:
         web_request.send(response)
 
     def _handle_estop_request(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
         self.printer.invoke_shutdown("Shutdown due to webhooks request")
 
     def get_connection(self):
@@ -346,15 +338,13 @@ class StatusHandler:
             "gcode:request_restart", self._handle_restart)
 
         # Register webhooks
-        webhooks.register_endpoint(
-            "objects/list",
-            self._handle_object_request)
-        webhooks.register_endpoint(
-            "objects/status",
-            self._handle_status_request)
-        webhooks.register_endpoint(
-            "objects/subscription",
-            self._handle_subscription_request)
+        webhooks.register_endpoint("objects/list", self._handle_object_request)
+        webhooks.register_endpoint("objects/status",
+                                   self._handle_status_request)
+        webhooks.register_endpoint("objects/subscription",
+                                   self._handle_subscription_request)
+        webhooks.register_endpoint("objects/list_subscription",
+                                   self._handle_list_subscription_request)
 
     def _handle_ready(self):
         eventtime = self.reactor.monotonic()
@@ -396,31 +386,23 @@ class StatusHandler:
         return result
 
     def _handle_object_request(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
         web_request.send(dict(self.available_objects))
 
     def _handle_status_request(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
         args = web_request.get_args()
         eventtime = self.reactor.monotonic()
         result = self._process_status_request(args, eventtime)
         web_request.send(result)
 
     def _handle_subscription_request(self, web_request):
-        method = web_request.get_method()
-        if method == 'POST':
-            # add a subscription
-            args = web_request.get_args()
-            if args:
-                self.add_subscripton(args)
-            else:
-                raise web_request.error("Invalid argument")
+        args = web_request.get_args()
+        if args:
+            self.add_subscripton(args)
         else:
-            # get subscription info
-            result = dict(self.subscriptions)
-            web_request.send(result)
+            raise web_request.error("Invalid argument")
+
+    def _handle_list_subscription_request(self, web_request):
+        web_request.send(dict(self.subscriptions))
 
     def add_subscripton(self, new_sub):
         if not new_sub:

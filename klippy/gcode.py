@@ -87,7 +87,7 @@ class GCodeParser:
         webhooks.register_endpoint(
             "gcode/restart", self._handle_remote_restart)
         webhooks.register_endpoint(
-            "gcode/firmware_restart", self._handle_remote_restart)
+            "gcode/firmware_restart", self._handle_remote_firmware_restart)
         # Command handling
         self.is_printer_ready = False
         self.mutex = printer.get_reactor().mutex()
@@ -619,22 +619,13 @@ class GCodeParser:
         gcmd.respond_info("\n".join(cmdhelp), log=False)
     # Webhooks
     def _handle_remote_help(self, web_request):
-        if web_request.get_method() != 'GET':
-            raise web_request.error("Invalid Request Method")
         web_request.send(dict(self.gcode_help))
     def _handle_remote_restart(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
-        path = web_request.get_path()
-        if path == "gcode/restart":
-            self.run_script('restart')
-        elif path == "gcode/firmware_restart":
-            self.run_script('firmware_restart')
+        self.run_script('restart')
+    def _handle_remote_firmware_restart(self, web_request):
+        self.run_script('firmware_restart')
     def _handle_remote_script(self, web_request):
-        if web_request.get_method() != 'POST':
-            raise web_request.error("Invalid Request Method")
-        script = web_request.get('script')
-        self.run_script(script)
+        self.run_script(web_request.get('script'))
 
 # Support reading gcode from a pseudo-tty interface
 class GCodeIO:
