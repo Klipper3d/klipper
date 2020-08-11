@@ -11,8 +11,6 @@ import errno
 import json
 import homing
 
-SERVER_ADDRESS = "/tmp/klippy_uds"
-
 # Json decodes strings as unicode types in Python 2.x.  This doesn't
 # play well with some parts of Klipper (particuarly displays), so we
 # need to create an object hook. This solution borrowed from:
@@ -98,15 +96,16 @@ class ServerSocket:
         self.reactor = printer.get_reactor()
         self.sock = self.fd_handle = None
         self.clients = {}
-        is_fileinput = (printer.get_start_args().get('debuginput')
-                        is not None)
-        if is_fileinput:
-            # Do not enable server in batch mode
+        start_args = printer.get_start_args()
+        server_address = start_args.get('apiserver')
+        is_fileinput = (start_args.get('debuginput') is not None)
+        if not server_address or is_fileinput:
+            # Do not enable server
             return
-        self._remove_socket_file(SERVER_ADDRESS)
+        self._remove_socket_file(server_address)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.setblocking(0)
-        self.sock.bind(SERVER_ADDRESS)
+        self.sock.bind(server_address)
         self.sock.listen(1)
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self._handle_accept)

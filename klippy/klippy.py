@@ -247,6 +247,8 @@ def main():
     opts.add_option("-I", "--input-tty", dest="inputtty",
                     default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
+    opts.add_option("-a", "--api-server", dest="apiserver",
+                    help="api server unix domain socket filename")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
@@ -259,7 +261,8 @@ def main():
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    start_args = {'config_file': args[0], 'start_reason': 'startup'}
+    start_args = {'config_file': args[0], 'apiserver': options.apiserver,
+                  'start_reason': 'startup'}
 
     debuglevel = logging.INFO
     if options.verbose:
