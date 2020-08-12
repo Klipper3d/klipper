@@ -262,13 +262,6 @@ class WebHooks:
         self.register_endpoint("emergency_stop", self._handle_estop_request)
         self.sconn = ServerSocket(self, printer)
 
-        # Register Events
-        printer.register_event_handler(
-            "klippy:shutdown", self._notify_shutdown)
-
-    def _notify_shutdown(self):
-        self.call_remote_method("set_klippy_shutdown")
-
     def register_endpoint(self, path, callback):
         if path in self._endpoints:
             raise WebRequestError("Path already registered to an endpoint")
@@ -310,10 +303,10 @@ class WebHooks:
         self.call_remote_method(method, **kwargs)
         return ""
 
-    def get_status(self, eventtime=0.):
-        return {
-            "action_call_remote_method": self._action_call_remote_method
-        }
+    def get_status(self, eventtime):
+        state_message, state = self.printer.get_state_message()
+        return {'state': state, 'state_message': state_message,
+                "action_call_remote_method": self._action_call_remote_method}
 
 class GCodeHelper:
     def __init__(self, printer):
