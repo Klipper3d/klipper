@@ -78,16 +78,6 @@ class GCodeParser:
                                        self._handle_disconnect)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
-        # Register webhooks
-        webhooks = self.printer.lookup_object('webhooks')
-        webhooks.register_endpoint(
-            "gcode/help", self._handle_remote_help)
-        webhooks.register_endpoint(
-            "gcode/script", self._handle_remote_script)
-        webhooks.register_endpoint(
-            "gcode/restart", self._handle_remote_restart)
-        webhooks.register_endpoint(
-            "gcode/firmware_restart", self._handle_remote_firmware_restart)
         # Command handling
         self.is_printer_ready = False
         self.mutex = printer.get_reactor().mutex()
@@ -158,6 +148,8 @@ class GCodeParser:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
+    def get_command_help(self):
+        return dict(self.gcode_help)
     def register_output_handler(self, cb):
         self.output_callbacks.append(cb)
     def set_move_transform(self, transform, force=False):
@@ -617,15 +609,6 @@ class GCodeParser:
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         gcmd.respond_info("\n".join(cmdhelp), log=False)
-    # Webhooks
-    def _handle_remote_help(self, web_request):
-        web_request.send(dict(self.gcode_help))
-    def _handle_remote_restart(self, web_request):
-        self.run_script('restart')
-    def _handle_remote_firmware_restart(self, web_request):
-        self.run_script('firmware_restart')
-    def _handle_remote_script(self, web_request):
-        self.run_script(web_request.get('script'))
 
 # Support reading gcode from a pseudo-tty interface
 class GCodeIO:

@@ -59,7 +59,7 @@ class Printer:
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
         # Init printer components that must be setup prior to config
-        for m in [webhooks, gcode]:
+        for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
     def get_start_args(self):
         return self.start_args
