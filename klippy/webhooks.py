@@ -45,22 +45,24 @@ class Sentinel:
 
 class WebRequest:
     error = WebRequestError
-    def __init__(self, client_conn, base_request):
+    def __init__(self, client_conn, request):
         self.client_conn = client_conn
-        self.id = base_request['id']
-        self.path = base_request['path']
-        self.args = base_request['args']
+        base_request = json_loads_byteified(request)
+        self.id = base_request.get('id', None)
+        self.method = base_request['method']
+        self.params = base_request.get('params', {})
         self.response = None
+        self.is_error = False
 
     def get_client_connection(self):
         return self.client_conn
 
     def get(self, item, default=Sentinel):
-        if item not in self.args:
+        if item not in self.params:
             if default == Sentinel:
                 raise WebRequestError("Invalid Argument [%s]" % item)
             return default
-        return self.args[item]
+        return self.params[item]
 
     def get_int(self, item):
         return int(self.get(item))
@@ -68,13 +70,11 @@ class WebRequest:
     def get_float(self, item):
         return float(self.get(item))
 
-    def get_args(self):
-        return self.args
-
-    def get_path(self):
-        return self.path
+    def get_method(self):
+        return self.method
 
     def set_error(self, error):
+        self.is_error = True
         self.response = error.to_dict()
 
     def send(self, data):
@@ -83,11 +83,16 @@ class WebRequest:
         self.response = data
 
     def finish(self):
+        if self.id is None:
+            return None
+        rtype = "result"
+        if self.is_error:
+            rtype = "error"
         if self.response is None:
             # No error was set and the user never executed
-            # send, default response is "ok"
-            self.response = "ok"
-        return {"request_id": self.id, "response": self.response}
+            # send, default response is {}
+            self.response = {}
+        return {"id": self.id, rtype: self.response}
 
 class ServerSocket:
     def __init__(self, webhooks, printer):
@@ -194,7 +199,7 @@ class ClientConnection:
             logging.debug(
                 "webhooks: Request received: %s" % (req))
             try:
-                web_request = WebRequest(self, json_loads_byteified(req))
+                web_request = WebRequest(self, req)
             except Exception:
                 logging.exception(
                     "webhooks: Error decoding Server Request %s"
@@ -205,20 +210,20 @@ class ClientConnection:
 
     def _process_request(self, web_request):
         try:
-            func = self.webhooks.get_callback(
-                web_request.get_path())
+            func = self.webhooks.get_callback(web_request.get_method())
             func(web_request)
         except homing.CommandError as e:
             web_request.set_error(WebRequestError(e.message))
         except Exception as e:
-            msg = "Internal Error on WebRequest: %s" % (web_request.get_path())
+            msg = ("Internal Error on WebRequest: %s"
+                   % (web_request.get_method()))
             logging.exception(msg)
             web_request.set_error(WebRequestError(e.message))
             self.printer.invoke_shutdown(msg)
         result = web_request.finish()
-        logging.debug(
-            "webhooks: Sending response - %s" % (str(result)))
-        self.send({'method': "response", 'params': result})
+        if result is None:
+            return
+        self.send(result)
 
     def send(self, data):
         self.send_buffer += json.dumps(data) + "\x03"
