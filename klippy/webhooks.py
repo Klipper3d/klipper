@@ -144,10 +144,6 @@ class ServerSocket:
     def pop_client(self, client_id):
         self.clients.pop(client_id, None)
 
-    def send_all_clients(self, data):
-        for client in self.clients.values():
-            client.send(data)
-
 class ClientConnection:
     def __init__(self, server, sock):
         self.printer = server.printer
@@ -296,17 +292,9 @@ class WebHooks:
             raise WebRequestError(msg)
         return cb
 
-    def call_remote_method(self, method, **kwargs):
-        self.sconn.send_all_clients({'method': method, 'params': kwargs})
-
-    def _action_call_remote_method(self, method, **kwargs):
-        self.call_remote_method(method, **kwargs)
-        return ""
-
     def get_status(self, eventtime):
         state_message, state = self.printer.get_state_message()
-        return {'state': state, 'state_message': state_message,
-                "action_call_remote_method": self._action_call_remote_method}
+        return {'state': state, 'state_message': state_message}
 
 class GCodeHelper:
     def __init__(self, printer):
