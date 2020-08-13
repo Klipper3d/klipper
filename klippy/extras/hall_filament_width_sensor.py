@@ -39,6 +39,7 @@ class HallFilamentWidthSensor:
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
+        self.lastFilamentWidthReading2 = 0
         # printer objects
         self.toolhead = self.ppins = self.mcu_adc = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
