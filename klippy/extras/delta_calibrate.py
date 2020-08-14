@@ -227,6 +227,10 @@ class DeltaCalibrate:
 
         sum = 0
         count = len(self.probe_helper.results)
+
+        if count <= 0:
+          return
+
         for i in range(count):
             x = self.probe_helper.results[i][0]
             y = self.probe_helper.results[i][1]
