@@ -934,14 +934,16 @@ class MenuManager:
             config, 'type', menu_items)(self, config)
 
     def add_menuitem(self, name, item):
+        existing_item = False
         if name in self.menuitems:
+            existing_item = True
             logging.info(
                 "Declaration of '%s' hides "
                 "previous menuitem declaration" % (name,))
         self.menuitems[name] = item
         if isinstance(item, MenuElement):
             parent = item.get_ns('..')
-            if parent:
+            if parent and not existing_item:
                 if item.index is not None:
                     self.children.setdefault(parent, []).insert(
                         item.index, item.get_ns())
