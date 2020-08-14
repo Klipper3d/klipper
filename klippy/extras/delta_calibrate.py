@@ -231,16 +231,17 @@ class DeltaCalibrate:
             x = self.probe_helper.results[i][0]
             y = self.probe_helper.results[i][1]
             z = self.probe_helper.results[i][2]
-            self.gcode.respond_info("%2d. x:%.2f, y:%.2f, z : %.6f" % (i, x, y, z))
+            self.gcode.respond_info\
+              ("%2d. x:%.2f, y:%.2f, z : %.6f" % (i, x, y, z))
             sum += z
         avg = sum / count
-        
+
         sd_sum = 0
         for i in range(count):
             z = self.probe_helper.results[i][2]
             sd_sum += pow(z - avg, 2.)
         sd = (sd_sum / count) ** 0.5
-        
+
         self.gcode.respond_info("probe count : %d" % (count))
         self.gcode.respond_info("average : %.6f" % (avg))
         self.gcode.respond_info("stdev : %.6f" % (sd))
