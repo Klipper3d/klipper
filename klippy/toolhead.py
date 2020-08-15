@@ -232,7 +232,6 @@ class ToolHead:
         self.need_check_stall = -1.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
-        self.last_print_start_time = 0.
         self.idle_flush_print_time = 0.
         self.print_stall = 0
         self.drip_completion = None
@@ -295,7 +294,7 @@ class ToolHead:
         kin_time += self.kin_flush_delay
         min_print_time = max(est_print_time + self.buffer_time_start, kin_time)
         if min_print_time > self.print_time:
-            self.print_time = self.last_print_start_time = min_print_time
+            self.print_time = min_print_time
             self.printer.send_event("toolhead:sync_print_time",
                                     curtime, est_print_time, self.print_time)
     def _process_moves(self, moves):
@@ -492,18 +491,11 @@ class ToolHead:
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
-        last_print_start_time = self.last_print_start_time
-        buffer_time = print_time - estimated_print_time
-        if buffer_time > -1. or not self.special_queuing_state:
-            status = "Printing"
-        else:
-            status = "Ready"
         res = dict(self.kin.get_status(eventtime))
-        res.update({ 'status': status, 'print_time': print_time,
+        res.update({ 'print_time': print_time,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
                      'position': homing.Coord(*self.commanded_pos),
-                     'printing_time': print_time - last_print_start_time,
                      'max_velocity': self.max_velocity,
                      'max_accel': self.max_accel,
                      'max_accel_to_decel': self.requested_accel_to_decel,
