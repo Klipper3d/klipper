@@ -191,9 +191,7 @@ class GCodeParser:
             'base_ypos': self.base_position[1],
             'base_zpos': self.base_position[2],
             'base_epos': self.base_position[3],
-            'homing_xpos': self.homing_position[0],
-            'homing_ypos': self.homing_position[1],
-            'homing_zpos': self.homing_position[2],
+            'homing_origin': homing.Coord(*self.homing_position),
             'gcode_position': homing.Coord(*move_position),
         }
     def dump_state(self):
