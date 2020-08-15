@@ -187,10 +187,6 @@ class GCodeParser:
             'last_ypos': self.last_position[1],
             'last_zpos': self.last_position[2],
             'last_epos': self.last_position[3],
-            'base_xpos': self.base_position[0],
-            'base_ypos': self.base_position[1],
-            'base_zpos': self.base_position[2],
-            'base_epos': self.base_position[3],
             'homing_origin': homing.Coord(*self.homing_position),
             'gcode_position': homing.Coord(*move_position),
         }
