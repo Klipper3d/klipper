@@ -119,17 +119,42 @@ other macros, as the called macro is evaluated when it is invoked
 By convention, the name immediately following `printer` is the name of
 a config section. So, for example, `printer.fan` refers to the fan
 object created by the `[fan]` config section. There are some
-exceptions to this rule - notably the `gcode` and `toolhead` objects.
-If the config section contains spaces in it, then one can access it
-via the `[ ]` accessor - for example:
+exceptions to this rule - notably the `gcode_move` and `toolhead`
+objects. If the config section contains spaces in it, then one can
+access it via the `[ ]` accessor - for example:
 `printer["generic_heater my_chamber_heater"].temperature`.
 
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-- `printer.gcode.gcode_position`: The current position of the toolhead
-  relative to the current G-Code origin. It is possible to access the
-  x, y, z, and e components of this position (eg,
-  `printer.gcode.gcode_position.x`).
+- `printer.gcode_move.gcode_position`: The current position of the
+  toolhead relative to the current G-Code origin. That is, positions
+  that one might directly send to a `G1` command. It is possible to
+  access the x, y, z, and e components of this position (eg,
+  `printer.gcode_move.gcode_position.x`).
+- `printer.gcode_move.position`: The last commanded position of the
+  toolhead using the coordinate system specified in the config
+  file. It is possible to access the x, y, z, and e components of this
+  position (eg, `printer.gcode_move.position.x`).
+- `printer.gcode_move.homing_origin`: The origin of the gcode
+  coordinate system (relative to the coordinate system specified in
+  the config file) to use after a `G28` command. The
+  `SET_GCODE_OFFSET` command can alter this position. It is possible
+  to access the x, y, and z components of this position (eg,
+  `printer.gcode_move.homing_origin.x`).
+- `printer.gcode_move.speed`: The last speed set in a `G1` command (in
+  mm/s).
+- `printer.gcode_move.speed_factor`: The "speed factor override" as
+  set by an `M220` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested speed.
+- `printer.gcode_move.extrude_factor`: The "extrude factor override"
+  as set by an `M221` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested extrusions.
+- `printer.gcode_move.absolute_coordinates`: This returns True if in
+  `G90` absolute coordinate mode or False if in `G91` relative mode.
+- `printer.gcode_move.absolute_extrude`: This returns True if in `M82`
+  absolute extrude mode or False if in `M83` relative mode.
 - `printer["gcode_macro <macro_name>"].<variable>`: The current value
   of a gcode_macro variable.
 - `printer.<heater>.temperature`: The last reported temperature (in
