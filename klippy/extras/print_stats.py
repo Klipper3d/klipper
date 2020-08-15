@@ -12,7 +12,7 @@ class PrintStats:
         self.reset()
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode.get_status(eventtime)
-        cur_epos = gc_status['last_epos']
+        cur_epos = gc_status['position'].e
         self.filament_used += (cur_epos - self.last_epos) \
             / gc_status['extrude_factor']
         self.last_epos = cur_epos
@@ -30,7 +30,7 @@ class PrintStats:
             self.last_pause_time = None
         # Reset last e-position
         gc_status = self.gcode.get_status(curtime)
-        self.last_epos = gc_status['last_epos']
+        self.last_epos = gc_status['position'].e
         self.state = "printing"
         self.error_message = ""
     def note_pause(self):

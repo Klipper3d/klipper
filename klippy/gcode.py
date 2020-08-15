@@ -183,11 +183,8 @@ class GCodeParser:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'last_xpos': self.last_position[0],
-            'last_ypos': self.last_position[1],
-            'last_zpos': self.last_position[2],
-            'last_epos': self.last_position[3],
             'homing_origin': homing.Coord(*self.homing_position),
+            'position': homing.Coord(*self.last_position),
             'gcode_position': homing.Coord(*move_position),
         }
     def dump_state(self):
