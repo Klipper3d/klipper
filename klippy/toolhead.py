@@ -259,8 +259,10 @@ class ToolHead:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
             raise config.error(msg)
-        # SET_VELOCITY_LIMIT command
+        # Register commands
         gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('G4', self.cmd_G4)
+        gcode.register_command('M400', self.cmd_M400)
         gcode.register_command('SET_VELOCITY_LIMIT',
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
@@ -540,6 +542,13 @@ class ToolHead:
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
         self.max_accel_to_decel = min(self.requested_accel_to_decel,
                                       self.max_accel)
+    def cmd_G4(self, gcmd):
+        # Dwell
+        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        self.dwell(delay)
+    def cmd_M400(self, gcmd):
+        # Wait for current moves to finish
+        self.wait_moves()
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         print_time = self.get_last_move_time()

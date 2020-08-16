@@ -344,7 +344,7 @@ class GCodeParser:
                              % (key_param, key))
         values[key_param](gcmd)
     all_handlers = [
-        'G1', 'G4', 'G28', 'M400',
+        'G1', 'G28',
         'G20', 'M82', 'M83', 'G90', 'G91', 'G92', 'M114', 'M220', 'M221',
         'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
         'M112', 'M115', 'IGNORE', 'GET_POSITION',
@@ -382,10 +382,6 @@ class GCodeParser:
             raise gcmd.error("Unable to parse move '%s'"
                              % (gcmd.get_commandline(),))
         self.move_with_transform(self.last_position, self.speed)
-    def cmd_G4(self, gcmd):
-        # Dwell
-        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
-        self.toolhead.dwell(delay)
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
@@ -400,9 +396,6 @@ class GCodeParser:
         homing_state.home_axes(axes)
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
-    def cmd_M400(self, gcmd):
-        # Wait for current moves to finish
-        self.toolhead.wait_moves()
     # G-Code coordinate manipulation
     def cmd_G20(self, gcmd):
         # Set units to inches
