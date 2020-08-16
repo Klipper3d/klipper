@@ -393,7 +393,7 @@ class QueryStatusHelper:
                 cres = {}
                 for ri in req_items:
                     rd = res.get(ri, None)
-                    if not callable(rd) and (is_query or rd != lres.get(ri)):
+                    if is_query or rd != lres.get(ri):
                         cres[ri] = rd
                 if cres or is_query:
                     cquery[obj_name] = cres

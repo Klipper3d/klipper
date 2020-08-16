@@ -66,9 +66,8 @@ class DisplayGroup:
                 template = gcode_macro.load_template(c, 'text')
                 self.data_items.append((row, col, template))
     def show(self, display, templates, eventtime):
-        swrap = self.data_items[0][2].create_status_wrapper(eventtime)
-        context = { 'printer': swrap,
-                    'draw_progress_bar': display.draw_progress_bar }
+        context = self.data_items[0][2].create_template_context(eventtime)
+        context['draw_progress_bar'] = display.draw_progress_bar
         def render(name, **kwargs):
             return templates[name].render(context, **kwargs)
         context['render'] = render

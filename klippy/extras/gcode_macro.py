@@ -45,6 +45,8 @@ class TemplateWrapper:
         self.printer = printer
         self.name = name
         self.gcode = self.printer.lookup_object('gcode')
+        gcode_macro = self.printer.lookup_object('gcode_macro')
+        self.create_template_context = gcode_macro.create_template_context
         try:
             self.template = env.from_string(script)
         except Exception as e:
@@ -52,11 +54,9 @@ class TemplateWrapper:
                  name, traceback.format_exception_only(type(e), e)[-1])
             logging.exception(msg)
             raise printer.config_error(msg)
-    def create_status_wrapper(self, eventtime=None):
-        return GetStatusWrapper(self.printer, eventtime)
     def render(self, context=None):
         if context is None:
-            context = {'printer': self.create_status_wrapper()}
+            context = self.create_template_context()
         try:
             return str(self.template.render(context))
         except Exception as e:
@@ -79,6 +79,21 @@ class PrinterGCodeMacro:
         else:
             script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
+    def _action_emergency_stop(self, msg="action_emergency_stop"):
+        self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
+        return ""
+    def _action_respond_info(self, msg):
+        self.printer.lookup_object('gcode').respond_info(msg)
+        return ""
+    def _action_raise_error(self, msg):
+        raise self.printer.command_error(msg)
+    def create_template_context(self, eventtime=None):
+        return {
+            'printer': GetStatusWrapper(self.printer, eventtime),
+            'action_emergency_stop': self._action_emergency_stop,
+            'action_respond_info': self._action_respond_info,
+            'action_raise_error': self._action_raise_error,
+        }
 
 def load_config(config):
     return PrinterGCodeMacro(config)
@@ -159,7 +174,7 @@ class GCodeMacro:
         kwparams = dict(self.kwparams)
         kwparams.update(params)
         kwparams.update(self.variables)
-        kwparams['printer'] = self.template.create_status_wrapper()
+        kwparams.update(self.template.create_template_context())
         kwparams['params'] = params
         self.in_script = True
         try:

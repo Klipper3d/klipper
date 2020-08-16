@@ -167,15 +167,6 @@ class GCodeParser:
         self.move_with_transform = transform.move
         self.position_with_transform = transform.get_position
         return old_transform
-    def _action_emergency_stop(self, msg="action_emergency_stop"):
-        self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
-        return ""
-    def _action_respond_info(self, msg):
-        self.respond_info(msg)
-        return ""
-    def _action_respond_error(self, msg):
-        self._respond_error(msg)
-        return ""
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
@@ -208,9 +199,6 @@ class GCodeParser:
             'homing_ypos': self.homing_position[1],
             'homing_zpos': self.homing_position[2],
             'gcode_position': homing.Coord(*move_position),
-            'action_respond_info': self._action_respond_info,
-            'action_respond_error': self._action_respond_error,
-            'action_emergency_stop': self._action_emergency_stop,
         }
     def dump_state(self):
         return ("gcode state: absolute_coord=%s absolute_extrude=%s"

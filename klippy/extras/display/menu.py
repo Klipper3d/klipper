@@ -7,7 +7,6 @@
 import os, logging
 from string import Template
 from . import menu_keys
-from .. import gcode_macro
 
 
 class sentinel:
@@ -722,13 +721,11 @@ class MenuManager:
 
     def update_context(self, eventtime):
         # menu default jinja2 context
-        self.context = {
-            'printer': gcode_macro.GetStatusWrapper(self.printer, eventtime),
-            'menu': {
-                'eventtime': eventtime,
-                'back': self._action_back,
-                'exit': self._action_exit
-            }
+        self.context = self.gcode_macro.create_template_context(eventtime)
+        self.context['menu'] = {
+            'eventtime': eventtime,
+            'back': self._action_back,
+            'exit': self._action_exit
         }
 
     def stack_push(self, container):

@@ -124,25 +124,8 @@ If the config section contains spaces in it, then one can access it
 via the `[ ]` accessor - for example:
 `printer["generic_heater my_chamber_heater"].temperature`.
 
-Some printer objects allow one to alter the state of the printer. By
-convention, these objects use an `action_` prefix. For example,
-`printer.gcode.action_emergency_stop()` would cause the printer to go
-into a shutdown state. These actions are taken at the time that the
-macro is evaluated, which may be a significant amount of time before
-the generated commands are executed.
-
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-- `printer.gcode.action_respond_info(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. Each line of `msg` will be sent
-  with a "// " prefix.
-- `printer.gcode.action_respond_error(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. The first line of `msg` will be
-  sent with a "!! " prefix and subsequent lines will have a "// "
-  prefix.
-- `printer.gcode.action_emergency_stop(msg)`: Transition the printer
-  to a shutdown state. The `msg` parameter is optional, it may be
-  useful to describe the reason for the shutdown.
 - `printer.gcode.gcode_position`: The current position of the toolhead
   relative to the current G-Code origin. It is possible to access the
   x, y, z, and e components of this position (eg,
@@ -193,6 +176,26 @@ the Klipper software. The above list is not exhaustive.  Other
 attributes may be available (via `get_status()` methods defined in the
 software). However, undocumented attributes may change without notice
 in future Klipper releases.
+
+### Actions
+
+There are some commands available that can alter the state of the
+printer. For example, `{ action_emergency_stop() }` would cause the
+printer to go into a shutdown state. Note that these actions are taken
+at the time that the macro is evaluated, which may be a significant
+amount of time before the generated g-code commands are executed.
+
+Available "action" commands:
+- `action_respond_info(msg)`: Write the given `msg` to the
+  /tmp/printer pseudo-terminal. Each line of `msg` will be sent with a
+  "// " prefix.
+- `action_raise_error(msg)`: Abort the current macro (and any calling
+  macros) and write the given `msg` to the /tmp/printer
+  pseudo-terminal. The first line of `msg` will be sent with a "!! "
+  prefix and subsequent lines will have a "// " prefix.
+- `action_emergency_stop(msg)`: Transition the printer to a shutdown
+  state. The `msg` parameter is optional, it may be useful to describe
+  the reason for the shutdown.
 
 ### Variables
 
@@ -267,11 +270,8 @@ the gcode option:
 [delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
-  {printer.gcode.action_respond_info(
-    "Extruder Temp: %.1f" %
-    (printer.extruder0.temperature))}
+  {action_respond_info("Extruder Temp: %.1f" % (printer.extruder0.temperature))}
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
-
 ```
 
 The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to

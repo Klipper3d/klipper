@@ -52,11 +52,11 @@ class HomingOverride:
                 homing_axes.append(axis)
         toolhead.set_position(pos, homing_axes=homing_axes)
         # Perform homing
-        kwparams = { 'printer': self.template.create_status_wrapper() }
-        kwparams['params'] = gcmd.get_command_parameters()
+        context = self.template.create_template_context()
+        context['params'] = gcmd.get_command_parameters()
         try:
             self.in_script = True
-            self.template.run_gcode_from_command(kwparams)
+            self.template.run_gcode_from_command(context)
         finally:
             self.in_script = False
 

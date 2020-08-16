@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20200816: The gcode macro "action_" system has changed.  Replace any
+calls to `printer.gcode.action_emergency_stop()` with
+`action_emergency_stop()`, `printer.gcode.action_respond_info()` with
+`action_respond_info()`, and `printer.gcode.action_respond_error()`
+with `action_raise_error()`.
+
 20200809: The menu system has been rewritten. If the menu has been
 customized then it will be necessary to update to the new
 configuration. See config/example-menu.cfg for configuration details
