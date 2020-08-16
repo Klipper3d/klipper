@@ -70,6 +70,8 @@ class Printer:
             category = "ready"
         elif self.state_message == message_startup:
             category = "startup"
+        elif self.in_shutdown_state:
+            category = "shutdown"
         else:
             category = "error"
         return self.state_message, category
