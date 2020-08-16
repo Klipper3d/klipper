@@ -138,6 +138,12 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.idle_timeout.state`: The current state of the printer as
+  tracked by the idle_timeout module. It is one of the following
+  strings: "Idle", "Printing", "Ready".
+- `printer.idle_timeout.printing_time`: The amount of time (in
+  seconds) the printer has been in the "Printing" state (as tracked by
+  the idle_timeout module).
 - `printer.pause_resume.is_paused`: Returns true if a PAUSE command
   has been executed without a corresponding RESUME.
 - `printer.toolhead.position`: The last commanded position of the
