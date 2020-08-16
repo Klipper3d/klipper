@@ -17,6 +17,8 @@ src-$(CONFIG_HAVE_GPIO_HARD_PWM) += avr/hard_pwm.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
 src-$(CONFIG_USBSERIAL) += avr/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += avr/serial.c generic/serial_irq.c
+src-$(CONFIG_T5UID1_SERIAL) += avr/serial_t5uid1.c
+src-$(CONFIG_T5UID1_SERIAL) += generic/t5uid1_irq.c
 
 # Suppress broken "misspelled signal handler" warnings on gcc 4.8.1
 CFLAGS_klipper.elf := $(CFLAGS_klipper.elf) $(if $(filter 4.8.1, $(shell $(CC) -dumpversion)), -w)

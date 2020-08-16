@@ -68,4 +68,9 @@ config SERIAL
     bool
     default y
 
+config T5UID1_SERIAL
+    depends on USBSERIAL
+    bool "Use UART0 for DGUS T5UID1 screen"
+    default n
+
 endif

@@ -14,3 +14,15 @@ To begin using Klipper start by
 
 Klipper is Free Software. See the [license](COPYING) or read the
 [documentation](https://www.klipper3d.org/Overview.html).
+
+## Modifications
+
+The scope of modifications is limited to adding support for DGUS
+touchscreens. This feature is only available for AVR/LPC176X
+micro-controllers and it needs to be configured before compilation.
+
+The touchscreen firmware compatible with this fork is available in
+[this repository](https://github.com/Desuuuu/DGUS-reloaded-Klipper).
+
+Available configuration options are documented in the
+[sample-t5uid1.cfg](/config/sample-t5uid1.cfg) file.
