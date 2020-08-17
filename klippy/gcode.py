@@ -78,6 +78,8 @@ class GCodeParser:
                                        self._handle_disconnect)
         printer.register_event_handler("toolhead:set_position",
                                        self.reset_last_position)
+        printer.register_event_handler("toolhead:manual_move",
+                                       self.reset_last_position)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
         # Command handling

@@ -413,6 +413,13 @@ class ToolHead:
         self.move_queue.add_move(move)
         if self.print_time > self.need_check_stall:
             self._check_stall()
+    def manual_move(self, coord, speed):
+        curpos = list(self.commanded_pos)
+        for i in range(len(coord)):
+            if coord[i] is not None:
+                curpos[i] = coord[i]
+        self.move(curpos, speed)
+        self.printer.send_event("toolhead:manual_move")
     def dwell(self, delay):
         next_print_time = self.get_last_move_time() + max(0., delay)
         self._update_move_time(next_print_time)
