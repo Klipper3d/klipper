@@ -114,7 +114,8 @@ class HallFilamentWidthSensor:
             # add first item to array
             self.filament_array.append([self.measurement_delay + last_epos,
                                         self.diameter])
-            self.firstExtruderUpdatePosition = self.measurement_delay + last_epos
+            self.firstExtruderUpdatePosition = (self.measurement_delay 
+                                                + last_epos)
 
     def extrude_factor_update_event(self, eventtime):
         # Update extrude factor
@@ -135,7 +136,8 @@ class HallFilamentWidthSensor:
                     item = self.filament_array.pop(0)
                     self.filament_width = item[1]
                 else:
-                    if self.use_current_dia_while_delay and self.firstExtruderUpdatePosition == pending_position:
+                    if (self.use_current_dia_while_delay
+                        and (self.firstExtruderUpdatePosition == pending_position)):
                         self.filament_width = self.diameter
                     elif  self.firstExtruderUpdatePosition == pending_position:
                         self.filament_width = self.nominal_filament_dia
