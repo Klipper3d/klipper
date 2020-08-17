@@ -616,7 +616,6 @@ menu_items = {
 }
 
 
-MENU_UPDATE_DELAY = .100
 TIMER_DELAY = .100
 
 
@@ -636,7 +635,7 @@ class MenuManager:
         self.context = {}
         self.root = None
         self._root = config.get('menu_root', '__main')
-        self.cols, self.rows = self.display.lcd_chip.get_dimensions()
+        self.cols, self.rows = self.display.get_dimensions()
         self.timeout = config.getint('menu_timeout', 0)
         self.timer = 0
         self.eventtime = 0
@@ -808,14 +807,11 @@ class MenuManager:
 
     def screen_update_event(self, eventtime):
         # screen update
-        if self.is_running():
-            self.display.lcd_chip.clear()
-            for y, line in enumerate(self.render(eventtime)):
-                self.display.draw_text(y, 0, line, eventtime)
-            self.display.lcd_chip.flush()
-            return eventtime + MENU_UPDATE_DELAY
-        else:
-            return 0
+        if not self.is_running():
+            return False
+        for y, line in enumerate(self.render(eventtime)):
+            self.display.draw_text(y, 0, line, eventtime)
+        return True
 
     def up(self, fast_rate=False):
         container = self.stack_peek()
@@ -998,6 +994,7 @@ class MenuManager:
             self.down(True)
         elif key == 'back':
             self.back()
+        self.display.request_redraw()
 
     # Collection of manager class helper methods
 
