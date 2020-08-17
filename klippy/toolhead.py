@@ -400,6 +400,7 @@ class ToolHead:
         self.trapq_free_moves(self.trapq, self.reactor.NEVER)
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
+        self.printer.send_event("toolhead:set_position")
     def move(self, newpos, speed):
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:

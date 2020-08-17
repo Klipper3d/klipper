@@ -35,7 +35,6 @@ class TuningTower:
             self.command_fmt = "%s %s=%%.9f" % (command, parameter)
         self.normal_transform = self.gcode.set_move_transform(self, force=True)
         self.last_z = -99999999.9
-        self.gcode.reset_last_position()
         self.get_position()
         gcmd.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
                           % (self.start, self.factor))

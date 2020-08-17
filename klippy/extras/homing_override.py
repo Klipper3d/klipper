@@ -51,7 +51,6 @@ class HomingOverride:
                 pos[axis] = loc
                 homing_axes.append(axis)
         toolhead.set_position(pos, homing_axes=homing_axes)
-        self.gcode.reset_last_position()
         # Perform homing
         kwparams = { 'printer': self.template.create_status_wrapper() }
         kwparams['params'] = gcmd.get_command_parameters()

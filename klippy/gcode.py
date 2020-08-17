@@ -76,6 +76,8 @@ class GCodeParser:
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         printer.register_event_handler("klippy:disconnect",
                                        self._handle_disconnect)
+        printer.register_event_handler("toolhead:set_position",
+                                       self.reset_last_position)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
         # Command handling
@@ -421,7 +423,6 @@ class GCodeParser:
         homing_state.home_axes(axes)
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
-        self.reset_last_position()
     def cmd_M400(self, gcmd):
         # Wait for current moves to finish
         self.toolhead.wait_moves()

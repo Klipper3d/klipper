@@ -65,7 +65,6 @@ class ZAdjustHelper:
         last_stepper.set_trapq(toolhead.get_trapq())
         curpos[2] += first_stepper_offset
         toolhead.set_position(curpos)
-        gcode.reset_last_position()
 
 class RetryHelper:
     def __init__(self, config, error_msg_extra = ""):

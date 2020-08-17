@@ -132,8 +132,6 @@ class ForceMove:
         z = gcmd.get_float('Z', curpos[2])
         logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
         toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
-        gcode = self.printer.lookup_object('gcode')
-        gcode.reset_last_position()
 
 def load_config(config):
     return ForceMove(config)
