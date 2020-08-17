@@ -97,7 +97,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     enable: {'hall_filament_width_sensor' in printer}
     name: Dia: {'%.2F' % printer.hall_filament_width_sensor.Diameter}
     index: 0
-    
+
     [menu __main __filament __raw_width_current]
     type: command
     enable: {'hall_filament_width_sensor' in printer}
