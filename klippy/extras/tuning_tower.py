@@ -15,7 +15,7 @@ class TuningTower:
         self.last_z = self.start = self.factor = self.band = 0.
         self.last_command_value = None
         self.command_fmt = ""
-        self.gcode_move = self.printer.lookup_object("gcode_move")
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Register command
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,

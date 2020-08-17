@@ -19,7 +19,7 @@ class BedTilt:
             BedTiltCalibrate(config, self)
         self.toolhead = None
         # Register move transform with g-code class
-        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')

@@ -88,7 +88,7 @@ class BedMesh:
             'BED_MESH_CLEAR', self.cmd_BED_MESH_CLEAR,
             desc=self.cmd_BED_MESH_CLEAR_help)
         # Register transform
-        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')

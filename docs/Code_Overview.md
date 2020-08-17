@@ -125,12 +125,13 @@ of a typical move command. The [kinematics](Kinematics.md) document
 provides further information on the mechanics of moves.
 
 * Processing for a move command starts in gcode.py. The goal of
-  gcode.py is to translate G-code into internal calls. Changes in
-  origin (eg, G92), changes in relative vs absolute positions (eg,
-  G90), and unit changes (eg, F6000=100mm/s) are handled here. The
-  code path for a move is: `_process_data() -> _process_commands() ->
-  cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
-  actual request: `cmd_G1() -> ToolHead.move()`
+  gcode.py is to translate G-code into internal calls. A G1 command
+  will invoke cmd_G1() in klippy/extras/gcode_move.py. The
+  gcode_move.py code handles changes in origin (eg, G92), changes in
+  relative vs absolute positions (eg, G90), and unit changes (eg,
+  F6000=100mm/s). The code path for a move is: `_process_data() ->
+  _process_commands() -> cmd_G1()`. Ultimately the ToolHead class is
+  invoked to execute the actual request: `cmd_G1() -> ToolHead.move()`
 
 * The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:

@@ -7,7 +7,7 @@
 class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
-        self.gcode_move = printer.lookup_object('gcode_move')
+        self.gcode_move = printer.load_object(config, 'gcode_move')
         self.reactor = printer.get_reactor()
         self.reset()
     def _update_filament_usage(self, eventtime):
