@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, Queue as queue
+import os, select, math, time, queue
 import greenlet
 import chelper, util
 

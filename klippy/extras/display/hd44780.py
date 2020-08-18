@@ -31,14 +31,14 @@ class HD44780:
         self.send_data_cmd = self.send_cmds_cmd = None
         self.icons = {}
         # framebuffers
-        self.text_framebuffers = [bytearray(' '*40), bytearray(' '*40)]
+        self.text_framebuffers = [bytearray(' '*40, 'utf-8'), bytearray(' '*40, 'utf-8')]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
             # Text framebuffers
-            (self.text_framebuffers[0], bytearray('~'*40), 0x80),
-            (self.text_framebuffers[1], bytearray('~'*40), 0xc0),
+            (self.text_framebuffers[0], bytearray('~'*40, 'utf-8'), 0x80),
+            (self.text_framebuffers[1], bytearray('~'*40, 'utf-8'), 0xc0),
             # Glyph framebuffer
-            (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
+            (self.glyph_framebuffer, bytearray('~'*64, 'utf-8'), 0x40) ]
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"

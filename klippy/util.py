@@ -97,7 +97,7 @@ def dump_mcu_build():
 def get_cpu_info():
     try:
         f = open('/proc/cpuinfo', 'rb')
-        data = f.read()
+        data = f.read().decode('utf-8')
         f.close()
     except (IOError, OSError) as e:
         logging.debug("Exception on read /proc/cpuinfo: %s",

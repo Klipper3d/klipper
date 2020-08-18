@@ -264,7 +264,7 @@ def stk500v2_leave(ser, reactor):
     ser.baudrate = 115200
     reactor.pause(reactor.monotonic() + 0.100)
     ser.read(4096)
-    ser.write('\x1b\x01\x00\x01\x0e\x11\x04')
+    ser.write(b'\x1b\x01\x00\x01\x0e\x11\x04')
     reactor.pause(reactor.monotonic() + 0.050)
     res = ser.read(4096)
     logging.debug("Got %s from stk500v2", repr(res))

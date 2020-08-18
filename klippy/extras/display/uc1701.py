@@ -21,7 +21,7 @@ class DisplayBase:
         self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
-        self.font = [self._swizzle_bits(bytearray(c))
+        self.font = [self._swizzle_bits(bytearray(c, 'utf-8'))
                      for c in font8x14.VGA_FONT]
         self.icons = {}
     def flush(self):
@@ -132,7 +132,7 @@ class I2C:
             hdr = 0x40
         else:
             hdr = 0x00
-        cmds = bytearray(cmds)
+        cmds = bytearray(cmds, 'utf-8')
         cmds.insert(0, hdr)
         self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 

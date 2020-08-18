@@ -37,7 +37,7 @@ def main():
                 logging.error("Invalid data")
                 data = data[-l:]
                 continue
-            msgs = mp.dump(bytearray(data[:l]))
+            msgs = mp.dump(bytearray(data[:l], 'utf-8'))
             sys.stdout.write('\n'.join(msgs[1:]) + '\n')
             data = data[l:]
 
