@@ -31,7 +31,9 @@ class HD44780:
         self.send_data_cmd = self.send_cmds_cmd = None
         self.icons = {}
         # framebuffers
-        self.text_framebuffers = [bytearray(' '*40, 'utf-8'), bytearray(' '*40, 'utf-8')]
+        self.text_framebuffers = [
+            bytearray(' '*40, 'utf-8'), 
+            bytearray(' '*40, 'utf-8') ]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
             # Text framebuffers
