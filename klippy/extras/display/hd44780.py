@@ -32,7 +32,7 @@ class HD44780:
         self.icons = {}
         # framebuffers
         self.text_framebuffers = [
-            bytearray(' '*40, 'utf-8'), 
+            bytearray(' '*40, 'utf-8'),
             bytearray(' '*40, 'utf-8') ]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
