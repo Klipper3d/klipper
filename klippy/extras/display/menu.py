@@ -704,8 +704,6 @@ class MenuManager:
             logging.error("Invalid root, menu stopped!")
         self.running = False
 
-        self.running = False
-
     def get_status(self, eventtime):
         return {
             'timeout': self.timeout,
