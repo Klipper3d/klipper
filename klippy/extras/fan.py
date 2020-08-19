@@ -39,7 +39,7 @@ class Fan:
             value = 0.
         elif self.relative_power == True:
             # adjust value proportionately between off_below to max_power
-            value = max(0., (value * (self.max_power - 
+            value = max(0., (value * (self.max_power -
                         self.off_below)) + self.off_below)
             if value <= self.off_below:
                 value = 0.
@@ -66,7 +66,7 @@ class Fan:
     def get_status(self, eventtime):
         if self.relative_power == True:
             # return the relative value between off_below and max_power
-            return {'speed': (self.last_fan_value - 
+            return {'speed': (self.last_fan_value -
                                 self.off_below) / self.max_power}
         return {'speed': self.last_fan_value}
 
