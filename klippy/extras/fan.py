@@ -39,13 +39,13 @@ class Fan:
             value = 0.
         elif self.relative_power == True:
             # adjust value proportionately between off_below to max_power
-            value = max(0., (value * (self.max_power - self.off_below)) + self.off_below)
+            value = max(0., (value * (self.max_power - 
+                        self.off_below)) + self.off_below)
             if value <= self.off_below:
                 value = 0.
         else:
             # adjust value proportionately between 0 and max_power
             value = max(0., min(self.max_power, value * self.max_power))
-        
         if value == self.last_fan_value:
             return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
@@ -66,7 +66,8 @@ class Fan:
     def get_status(self, eventtime):
         if self.relative_power == True:
             # return the relative value between off_below and max_power
-            return {'speed': (self.last_fan_value - self.off_below) / self.max_power}
+            return {'speed': (self.last_fan_value - 
+                                self.off_below) / self.max_power}
         return {'speed': self.last_fan_value}
 
 class PrinterFan:
