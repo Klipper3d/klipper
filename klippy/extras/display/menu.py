@@ -328,7 +328,6 @@ class MenuContainer(MenuElement):
                 item.add_parents(self._parents)
                 item.add_parents(self)
                 item.assert_recursive_relation()
-                item.populate()
             if index is None:
                 self._allitems.append((item, name))
             else:
@@ -346,7 +345,6 @@ class MenuContainer(MenuElement):
         self._populate()
         # send populate event
         self.send_event('populate', self)
-        self.update_items()
 
     def update_items(self):
         _a = [(item, name) for item, name in self._allitems
@@ -553,7 +551,12 @@ class MenuInput(MenuCommand):
 class MenuList(MenuContainer):
     def __init__(self, manager, config):
         super(MenuList, self).__init__(manager, config)
-        self._show_title = True
+        # create back item
+        self._itemBack = self.manager.menuitem_from({
+            'type': 'command',
+            'name': '..',
+            'gcode': '{menu.back()}'
+        })
 
     def _names_aslist(self):
         return self.manager.lookup_children(self.get_ns())
@@ -561,15 +564,7 @@ class MenuList(MenuContainer):
     def _populate(self):
         super(MenuList, self)._populate()
         #  add back as first item
-        name = '..'
-        if self._show_title:
-            name += ' %s' % str(self._name())
-        item = self.manager.menuitem_from({
-            'type': 'command',
-            'name': self.manager.asliteral(name),
-            'gcode': '{menu.back()}'
-        })
-        self.insert_item(item, 0)
+        self.insert_item(self._itemBack, 0)
 
     def render_container(self, eventtime):
         rows = []
@@ -702,14 +697,11 @@ class MenuManager:
             self.update_context(eventtime)
             if isinstance(self.root, MenuContainer):
                 self.root.init_selection()
-            self.root.populate()
             self.stack_push(self.root)
             self.running = True
             return
         elif self.root is not None:
             logging.error("Invalid root, menu stopped!")
-        self.running = False
-
         self.running = False
 
     def get_status(self, eventtime):
@@ -748,6 +740,7 @@ class MenuManager:
     def stack_push(self, container):
         if not isinstance(container, MenuContainer):
             raise error("Wrong type, expected MenuContainer")
+        container.populate()
         top = self.stack_peek()
         if top is not None:
             if isinstance(top, MenuList):
