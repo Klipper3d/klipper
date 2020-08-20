@@ -616,7 +616,7 @@ menu_items = {
 }
 
 
-TIMER_DELAY = .100
+TIMER_DELAY = 1.0
 
 
 class MenuManager:
@@ -626,7 +626,6 @@ class MenuManager:
         self.menustack = []
         self.children = {}
         self.top_row = 0
-        self.timeout_idx = 0
         self.display = display
         self.printer = config.get_printer()
         self.pconfig = self.printer.lookup_object('configfile')
@@ -638,7 +637,6 @@ class MenuManager:
         self.cols, self.rows = self.display.get_dimensions()
         self.timeout = config.getint('menu_timeout', 0)
         self.timer = 0
-        self.eventtime = 0
         # reverse container navigation
         self._reverse_navigation = config.getboolean(
             'menu_reverse_navigation', False)
@@ -664,10 +662,7 @@ class MenuManager:
         reactor.register_timer(self.timer_event, reactor.NOW)
 
     def timer_event(self, eventtime):
-        self.eventtime = eventtime
-        self.timeout_idx = (self.timeout_idx + 1) % 10  # 0.1*10 = 1s
-        if self.timeout_idx == 0:
-            self.timeout_check(eventtime)
+        self.timeout_check(eventtime)
         return eventtime + TIMER_DELAY
 
     def timeout_check(self, eventtime):
