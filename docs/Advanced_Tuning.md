@@ -10,6 +10,11 @@ file for the full documentation of the settings discussed here.
 Tuning for faster prints
 ========================
 
+XXX - move simulation section to new test tools section
+
+XXX - add description of TUNING_TOWER command to tools section
+
+
 A common goal is to tune for higher print speeds while still
 maintaining reasonable print quality. A useful tool is Klipper's
 ["batch processing mode"](Debugging.md#translating-gcode-files-to-micro-controller-commands). It
@@ -30,6 +35,11 @@ would take to print the given gcode file with the given printer.cfg
 file. When tuning config parameters to reduce print time, it is
 recommended to run a print simulation to determine the time impact of
 each change.
+
+XXX - move "Print layer height" description to a new "aside" section
+  about importance of slicer settings on speed. Reduce number of
+  moves. Reduce infill, increase layer height, increase extrusion
+  width.
 
 The following are common settings that one would tune to reduce print
 times (greatest impact first):
