@@ -87,7 +87,9 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_CLEAR', self.cmd_BED_MESH_CLEAR,
             desc=self.cmd_BED_MESH_CLEAR_help)
-        self.gcode.set_move_transform(self)
+        # Register transform
+        gcode_move = self.printer.load_object(config, 'gcode_move')
+        gcode_move.set_move_transform(self)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.bmc.print_generated_points(logging.info)
@@ -126,7 +128,8 @@ class BedMesh:
         self.z_mesh = mesh
         self.splitter.initialize(mesh)
         # cache the current position before a transform takes place
-        self.gcode.reset_last_position()
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position()
     def get_z_factor(self, z_pos):
         if z_pos >= self.fade_end:
             return 0.

@@ -7,7 +7,6 @@
 import os, logging
 from string import Template
 from . import menu_keys
-from .. import gcode_macro
 
 
 class sentinel:
@@ -616,8 +615,7 @@ menu_items = {
 }
 
 
-MENU_UPDATE_DELAY = .100
-TIMER_DELAY = .100
+TIMER_DELAY = 1.0
 
 
 class MenuManager:
@@ -627,7 +625,6 @@ class MenuManager:
         self.menustack = []
         self.children = {}
         self.top_row = 0
-        self.timeout_idx = 0
         self.display = display
         self.printer = config.get_printer()
         self.pconfig = self.printer.lookup_object('configfile')
@@ -636,10 +633,9 @@ class MenuManager:
         self.context = {}
         self.root = None
         self._root = config.get('menu_root', '__main')
-        self.cols, self.rows = self.display.lcd_chip.get_dimensions()
+        self.cols, self.rows = self.display.get_dimensions()
         self.timeout = config.getint('menu_timeout', 0)
         self.timer = 0
-        self.eventtime = 0
         # reverse container navigation
         self._reverse_navigation = config.getboolean(
             'menu_reverse_navigation', False)
@@ -665,10 +661,7 @@ class MenuManager:
         reactor.register_timer(self.timer_event, reactor.NOW)
 
     def timer_event(self, eventtime):
-        self.eventtime = eventtime
-        self.timeout_idx = (self.timeout_idx + 1) % 10  # 0.1*10 = 1s
-        if self.timeout_idx == 0:
-            self.timeout_check(eventtime)
+        self.timeout_check(eventtime)
         return eventtime + TIMER_DELAY
 
     def timeout_check(self, eventtime):
@@ -728,13 +721,11 @@ class MenuManager:
 
     def update_context(self, eventtime):
         # menu default jinja2 context
-        self.context = {
-            'printer': gcode_macro.GetStatusWrapper(self.printer, eventtime),
-            'menu': {
-                'eventtime': eventtime,
-                'back': self._action_back,
-                'exit': self._action_exit
-            }
+        self.context = self.gcode_macro.create_template_context(eventtime)
+        self.context['menu'] = {
+            'eventtime': eventtime,
+            'back': self._action_back,
+            'exit': self._action_exit
         }
 
     def stack_push(self, container):
@@ -808,14 +799,11 @@ class MenuManager:
 
     def screen_update_event(self, eventtime):
         # screen update
-        if self.is_running():
-            self.display.lcd_chip.clear()
-            for y, line in enumerate(self.render(eventtime)):
-                self.display.draw_text(y, 0, line, eventtime)
-            self.display.lcd_chip.flush()
-            return eventtime + MENU_UPDATE_DELAY
-        else:
-            return 0
+        if not self.is_running():
+            return False
+        for y, line in enumerate(self.render(eventtime)):
+            self.display.draw_text(y, 0, line, eventtime)
+        return True
 
     def up(self, fast_rate=False):
         container = self.stack_peek()
@@ -998,6 +986,7 @@ class MenuManager:
             self.down(True)
         elif key == 'back':
             self.back()
+        self.display.request_redraw()
 
     # Collection of manager class helper methods
 

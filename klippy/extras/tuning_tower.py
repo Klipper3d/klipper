@@ -13,7 +13,9 @@ class TuningTower:
         self.normal_transform = None
         self.last_position = [0., 0., 0., 0.]
         self.last_z = self.start = self.factor = self.band = 0.
+        self.last_command_value = None
         self.command_fmt = ""
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Register command
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
@@ -33,9 +35,10 @@ class TuningTower:
             self.command_fmt = "%s %s%%.9f" % (command, parameter)
         else:
             self.command_fmt = "%s %s=%%.9f" % (command, parameter)
-        self.normal_transform = self.gcode.set_move_transform(self, force=True)
+        nt = self.gcode_move.set_move_transform(self, force=True)
+        self.normal_transform = nt
         self.last_z = -99999999.9
-        self.gcode.reset_last_position()
+        self.last_command_value = None
         self.get_position()
         gcmd.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
                           % (self.start, self.factor))
@@ -58,11 +61,11 @@ class TuningTower:
                 self.end_test()
             else:
                 # Process update
-                z_offset = self.gcode.get_status()['base_zpos']
-                oldval = self.calc_value(self.last_z - z_offset)
-                newval = self.calc_value(z - z_offset)
+                gcode_z = self.gcode_move.get_status()['gcode_position'].z
+                newval = self.calc_value(gcode_z)
                 self.last_z = z
-                if newval != oldval:
+                if newval != self.last_command_value:
+                    self.last_command_value = newval
                     self.gcode.run_script_from_command(self.command_fmt
                                                        % (newval,))
         # Forward move to actual handler
@@ -70,7 +73,7 @@ class TuningTower:
         normal_transform.move(newpos, speed)
     def end_test(self):
         self.gcode.respond_info("Ending tuning test mode")
-        self.gcode.set_move_transform(self.normal_transform, force=True)
+        self.gcode_move.set_move_transform(self.normal_transform, force=True)
         self.normal_transform = None
 
 def load_config(config):

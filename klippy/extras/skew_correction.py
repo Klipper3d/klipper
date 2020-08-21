@@ -40,8 +40,8 @@ class PrinterSkew:
         gcode.register_command('SKEW_PROFILE', self.cmd_SKEW_PROFILE,
                                desc=self.cmd_SKEW_PROFILE_help)
     def _handle_ready(self):
-        gcode = self.printer.lookup_object('gcode')
-        self.next_transform = gcode.set_move_transform(self, force=True)
+        gcode_move = self.printer.lookup_object('gcode_move')
+        self.next_transform = gcode_move.set_move_transform(self, force=True)
     def _load_storage(self, config):
         stored_profs = config.get_prefix_sections(self.name)
         # Remove primary skew_correction section, as it is not a stored profile
@@ -69,6 +69,12 @@ class PrinterSkew:
     def move(self, newpos, speed):
         corrected_pos = self.calc_skew(newpos)
         self.next_transform.move(corrected_pos, speed)
+    def _update_skew(self, xy_factor, xz_factor, yz_factor):
+        self.xy_factor = xy_factor
+        self.xz_factor = xz_factor
+        self.yz_factor = yz_factor
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position()
     cmd_GET_CURRENT_SKEW_help = "Report current printer skew"
     def cmd_GET_CURRENT_SKEW(self, gcmd):
         out = "Current Printer Skew:"
@@ -90,9 +96,7 @@ class PrinterSkew:
     cmd_SET_SKEW_help = "Set skew based on lengths of measured object"
     def cmd_SET_SKEW(self, gcmd):
         if gcmd.get_int("CLEAR", 0):
-            self.xy_factor = 0.
-            self.xz_factor = 0.
-            self.yz_factor = 0.
+            self._update_skew(0., 0., 0.)
             return
         planes = ["XY", "XZ", "YZ"]
         for plane in planes:
@@ -113,14 +117,13 @@ class PrinterSkew:
     def cmd_SKEW_PROFILE(self, gcmd):
         if gcmd.get('LOAD', None) is not None:
             name = gcmd.get('LOAD')
-            if name not in self.skew_profiles:
+            prof = self.skew_profiles.get(name)
+            if prof is None:
                 gcmd.respond_info(
                     "skew_correction:  Load failed, unknown profile [%s]"
                     % (name))
                 return
-            self.xy_factor = self.skew_profiles[name]['xy_skew']
-            self.xz_factor = self.skew_profiles[name]['xz_skew']
-            self.yz_factor = self.skew_profiles[name]['yz_skew']
+            self._update_skew(prof['xy_skew'], prof['xz_skew'], prof['yz_skew'])
         elif gcmd.get('SAVE', None) is not None:
             name = gcmd.get('SAVE')
             configfile = self.printer.lookup_object('configfile')

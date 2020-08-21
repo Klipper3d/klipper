@@ -19,8 +19,8 @@ class BedTilt:
             BedTiltCalibrate(config, self)
         self.toolhead = None
         # Register move transform with g-code class
-        gcode = self.printer.lookup_object('gcode')
-        gcode.set_move_transform(self)
+        gcode_move = self.printer.load_object(config, 'gcode_move')
+        gcode_move.set_move_transform(self)
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
@@ -34,6 +34,8 @@ class BedTilt:
         self.x_adjust = x_adjust
         self.y_adjust = y_adjust
         self.z_adjust = z_adjust
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position()
         configfile = self.printer.lookup_object('configfile')
         configfile.set('bed_tilt', 'x_adjust', "%.6f" % (x_adjust,))
         configfile.set('bed_tilt', 'y_adjust', "%.6f" % (y_adjust,))
@@ -80,7 +82,6 @@ class BedTiltCalibrate:
         z_adjust = (new_params['z_adjust'] - z_offset
                     - x_adjust * offsets[0] - y_adjust * offsets[1])
         self.bedtilt.update_adjust(x_adjust, y_adjust, z_adjust)
-        self.gcode.reset_last_position()
         # Log and report results
         logging.info("Calculated bed_tilt parameters: %s", new_params)
         for pos in positions:

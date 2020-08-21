@@ -17,14 +17,15 @@ class ArcSupport:
         self.printer = config.get_printer()
         self.mm_per_arc_segment = config.getfloat('resolution', 1., above=0.0)
 
+        self.gcode_move = self.printer.load_object(config, 'gcode_move')
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2)
         self.gcode.register_command("G3", self.cmd_G2)
 
     def cmd_G2(self, gcmd):
-        gcodestatus = self.gcode.get_status()
+        gcodestatus = self.gcode_move.get_status()
         if not gcodestatus['absolute_coordinates']:
-            raise self.gcode.error("G2/G3 does not support relative move mode")
+            raise gcmd.error("G2/G3 does not support relative move mode")
         currentPos = gcodestatus['gcode_position']
 
         # Parse parameters
@@ -60,7 +61,7 @@ class ArcSupport:
             if asF is not None:
                 g1_params['F'] = asF
             g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
-            self.gcode.cmd_G1(g1_gcmd)
+            self.gcode_move.cmd_G1(g1_gcmd)
 
     # function planArc() originates from marlin plan_arc()
     # https://github.com/MarlinFirmware/Marlin

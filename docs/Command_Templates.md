@@ -119,34 +119,42 @@ other macros, as the called macro is evaluated when it is invoked
 By convention, the name immediately following `printer` is the name of
 a config section. So, for example, `printer.fan` refers to the fan
 object created by the `[fan]` config section. There are some
-exceptions to this rule - notably the `gcode` and `toolhead` objects.
-If the config section contains spaces in it, then one can access it
-via the `[ ]` accessor - for example:
+exceptions to this rule - notably the `gcode_move` and `toolhead`
+objects. If the config section contains spaces in it, then one can
+access it via the `[ ]` accessor - for example:
 `printer["generic_heater my_chamber_heater"].temperature`.
-
-Some printer objects allow one to alter the state of the printer. By
-convention, these objects use an `action_` prefix. For example,
-`printer.gcode.action_emergency_stop()` would cause the printer to go
-into a shutdown state. These actions are taken at the time that the
-macro is evaluated, which may be a significant amount of time before
-the generated commands are executed.
 
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-- `printer.gcode.action_respond_info(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. Each line of `msg` will be sent
-  with a "// " prefix.
-- `printer.gcode.action_respond_error(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. The first line of `msg` will be
-  sent with a "!! " prefix and subsequent lines will have a "// "
-  prefix.
-- `printer.gcode.action_emergency_stop(msg)`: Transition the printer
-  to a shutdown state. The `msg` parameter is optional, it may be
-  useful to describe the reason for the shutdown.
-- `printer.gcode.gcode_position`: The current position of the toolhead
-  relative to the current G-Code origin. It is possible to access the
-  x, y, z, and e components of this position (eg,
-  `printer.gcode.gcode_position.x`).
+- `printer.gcode_move.gcode_position`: The current position of the
+  toolhead relative to the current G-Code origin. That is, positions
+  that one might directly send to a `G1` command. It is possible to
+  access the x, y, z, and e components of this position (eg,
+  `printer.gcode_move.gcode_position.x`).
+- `printer.gcode_move.position`: The last commanded position of the
+  toolhead using the coordinate system specified in the config
+  file. It is possible to access the x, y, z, and e components of this
+  position (eg, `printer.gcode_move.position.x`).
+- `printer.gcode_move.homing_origin`: The origin of the gcode
+  coordinate system (relative to the coordinate system specified in
+  the config file) to use after a `G28` command. The
+  `SET_GCODE_OFFSET` command can alter this position. It is possible
+  to access the x, y, and z components of this position (eg,
+  `printer.gcode_move.homing_origin.x`).
+- `printer.gcode_move.speed`: The last speed set in a `G1` command (in
+  mm/s).
+- `printer.gcode_move.speed_factor`: The "speed factor override" as
+  set by an `M220` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested speed.
+- `printer.gcode_move.extrude_factor`: The "extrude factor override"
+  as set by an `M221` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested extrusions.
+- `printer.gcode_move.absolute_coordinates`: This returns True if in
+  `G90` absolute coordinate mode or False if in `G91` relative mode.
+- `printer.gcode_move.absolute_extrude`: This returns True if in `M82`
+  absolute extrude mode or False if in `M83` relative mode.
 - `printer["gcode_macro <macro_name>"].<variable>`: The current value
   of a gcode_macro variable.
 - `printer.<heater>.temperature`: The last reported temperature (in
@@ -155,6 +163,12 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.idle_timeout.state`: The current state of the printer as
+  tracked by the idle_timeout module. It is one of the following
+  strings: "Idle", "Printing", "Ready".
+- `printer.idle_timeout.printing_time`: The amount of time (in
+  seconds) the printer has been in the "Printing" state (as tracked by
+  the idle_timeout module).
 - `printer.pause_resume.is_paused`: Returns true if a PAUSE command
   has been executed without a corresponding RESUME.
 - `printer.toolhead.position`: The last commanded position of the
@@ -193,6 +207,26 @@ the Klipper software. The above list is not exhaustive.  Other
 attributes may be available (via `get_status()` methods defined in the
 software). However, undocumented attributes may change without notice
 in future Klipper releases.
+
+### Actions
+
+There are some commands available that can alter the state of the
+printer. For example, `{ action_emergency_stop() }` would cause the
+printer to go into a shutdown state. Note that these actions are taken
+at the time that the macro is evaluated, which may be a significant
+amount of time before the generated g-code commands are executed.
+
+Available "action" commands:
+- `action_respond_info(msg)`: Write the given `msg` to the
+  /tmp/printer pseudo-terminal. Each line of `msg` will be sent with a
+  "// " prefix.
+- `action_raise_error(msg)`: Abort the current macro (and any calling
+  macros) and write the given `msg` to the /tmp/printer
+  pseudo-terminal. The first line of `msg` will be sent with a "!! "
+  prefix and subsequent lines will have a "// " prefix.
+- `action_emergency_stop(msg)`: Transition the printer to a shutdown
+  state. The `msg` parameter is optional, it may be useful to describe
+  the reason for the shutdown.
 
 ### Variables
 
@@ -267,11 +301,8 @@ the gcode option:
 [delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
-  {printer.gcode.action_respond_info(
-    "Extruder Temp: %.1f" %
-    (printer.extruder0.temperature))}
+  {action_respond_info("Extruder Temp: %.1f" % (printer.extruder0.temperature))}
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
-
 ```
 
 The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to
