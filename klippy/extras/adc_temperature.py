@@ -274,10 +274,12 @@ PT100 = [
     (1000, 4.48), (1100, 4.73)
 ]
 
-PT1000 = [
-    (0., 1000.), (100., 1385.1), (200., 1758.6), (300., 2120.5),
-    (400., 2470.9), (500., 2809.8),
-]
+def calc_pt1000():
+    # Calc PT1000 temperature/resistance pairs using formula
+    A, B = (3.9083e-3, -5.775e-7)
+    return [(float(t), 1000. * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
+
+PT1000 = calc_pt1000()
 
 def load_config(config):
     # Register default sensors
