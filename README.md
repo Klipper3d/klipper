@@ -24,5 +24,8 @@ micro-controllers and it needs to be configured before compilation.
 The touchscreen firmware compatible with this fork is available in
 [this repository](https://github.com/Desuuuu/DGUS-reloaded-Klipper).
 
+Example configurations are available in
+[this repository](https://github.com/Desuuuu/DGUS-reloaded-Klipper-config).
+
 Available configuration options are documented in the
 [sample-t5uid1.cfg](/config/sample-t5uid1.cfg) file.
