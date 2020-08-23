@@ -343,26 +343,33 @@ class BedMeshCalibrate:
         params['mesh_x_pps'] = pps[0]
         params['mesh_y_pps'] = pps[1]
         params['algo'] = config.get('algorithm', 'lagrange').strip().lower()
+        params['tension'] = config.getfloat(
+            'bicubic_tension', .2, minval=0., maxval=2.)
+        self._verify_algorithm(config.error)
+    def _verify_algorithm(self, error):
+        params = self.mesh_config
+        x_pps = params['mesh_x_pps']
+        y_pps = params['mesh_y_pps']
         if params['algo'] not in self.ALGOS:
-            raise config.error(
+            raise error(
                 "bed_mesh: Unknown algorithm <%s>"
                 % (self.mesh_config['algo']))
         # Check the algorithm against the current configuration
         max_probe_cnt = max(params['x_count'], params['y_count'])
         min_probe_cnt = min(params['x_count'], params['y_count'])
-        if max(pps[0], pps[1]) == 0:
+        if max(x_pps, y_pps) == 0:
             # Interpolation disabled
             self.mesh_config['algo'] = 'direct'
         elif params['algo'] == 'lagrange' and max_probe_cnt > 6:
             # Lagrange interpolation tends to oscillate when using more
             # than 6 samples
-            raise config.error(
+            raise error(
                 "bed_mesh: cannot exceed a probe_count of 6 when using "
                 "lagrange interpolation. Configured Probe Count: %d, %d" %
                 (self.mesh_config['x_count'], self.mesh_config['y_count']))
         elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
             if max_probe_cnt > 6:
-                raise config.error(
+                raise error(
                     "bed_mesh: invalid probe_count option when using bicubic "
                     "interpolation.  Combination of 3 points on one axis with "
                     "more than 6 on another is not permitted. "
@@ -375,8 +382,6 @@ class BedMeshCalibrate:
                     "interpolation. Configured Probe Count: %d, %d" %
                     (self.mesh_config['x_count'], self.mesh_config['y_count']))
                 params['algo'] = 'lagrange'
-        params['tension'] = config.getfloat(
-            'bicubic_tension', .2, minval=0., maxval=2.)
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self.bedmesh.set_mesh(None)
