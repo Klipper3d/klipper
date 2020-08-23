@@ -395,7 +395,7 @@ class GCodeIO:
                 # Check for M112 out-of-order
                 for line in lines:
                     if self.m112_r.match(line) is not None:
-                        self.cmd_M112(None)
+                        self.gcode.cmd_M112(None)
             if self.is_processing_data:
                 if len(pending_commands) >= 20:
                     # Stop reading input
