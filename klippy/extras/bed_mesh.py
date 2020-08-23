@@ -240,8 +240,9 @@ class BedMeshCalibrate:
             'relative_reference_index', None)
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
-        self.points = self._generate_points(config)
-        self._init_mesh_config(config, self.points)
+        self.config_mesh_min = self.config_mesh_max = (0., 0.)
+        self._init_mesh_config(config)
+        self._generate_points(config.error)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self.points)
         self.probe_helper.minimum_points(3)
@@ -250,37 +251,18 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-    def _generate_points(self, config):
-        self.radius = config.getfloat('mesh_radius', None, above=0.)
-        if self.radius is not None:
-            self.origin = parse_pair(config, ('mesh_origin', "0, 0"))
-            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
-            # round beds must have an odd number of points along each axis
-            if not x_cnt & 1:
-                raise config.error(
-                    "bed_mesh: probe_count must be odd for round beds")
-            # radius may have precision to .1mm
-            self.radius = math.floor(self.radius * 10) / 10
-            min_x = min_y = -self.radius
-            max_x = max_y = self.radius
-        else:
-            # rectangular
-            x_cnt, y_cnt = parse_pair(
-                config, ('probe_count', '3'), check=False, cast=int, minval=3)
-            min_x, min_y = parse_pair(config, ('mesh_min',))
-            max_x, max_y = parse_pair(config, ('mesh_max',))
-            if max_x <= min_x or max_y <= min_y:
-                raise config.error('bed_mesh: invalid min/max points')
-
-        self.mesh_config['x_count'] = x_cnt
-        self.mesh_config['y_count'] = y_cnt
+    def _generate_points(self, error):
+        x_cnt = self.mesh_config['x_count']
+        y_cnt = self.mesh_config['y_count']
+        min_x, min_y = self.config_mesh_min
+        max_x, max_y = self.config_mesh_max
         x_dist = (max_x - min_x) / (x_cnt - 1)
         y_dist = (max_y - min_y) / (y_cnt - 1)
         # floor distances down to next hundredth
         x_dist = math.floor(x_dist * 100) / 100
         y_dist = math.floor(y_dist * 100) / 100
         if x_dist <= 1. or y_dist <= 1.:
-            raise config.error("bed_mesh: min/max points too close together")
+            raise error("bed_mesh: min/max points too close together")
 
         if self.radius is not None:
             # round bed, min/max needs to be recalculated
@@ -311,7 +293,7 @@ class BedMeshCalibrate:
                         points.append(
                             (self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
-        return points
+        self.points = points
     def print_generated_points(self, print_func):
         x_offset = y_offset = 0.
         probe = self.printer.lookup_object('probe', None)
@@ -329,7 +311,32 @@ class BedMeshCalibrate:
             print_func(
                 "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
                 % (rri, self.points[rri][0], self.points[rri][1]))
-    def _init_mesh_config(self, config, points):
+    def _init_mesh_config(self, config):
+        self.radius = config.getfloat('mesh_radius', None, above=0.)
+        if self.radius is not None:
+            self.origin = parse_pair(config, ('mesh_origin', "0, 0"))
+            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
+            # round beds must have an odd number of points along each axis
+            if not x_cnt & 1:
+                raise config.error(
+                    "bed_mesh: probe_count must be odd for round beds")
+            # radius may have precision to .1mm
+            self.radius = math.floor(self.radius * 10) / 10
+            min_x = min_y = -self.radius
+            max_x = max_y = self.radius
+        else:
+            # rectangular
+            x_cnt, y_cnt = parse_pair(
+                config, ('probe_count', '3'), check=False, cast=int, minval=3)
+            min_x, min_y = parse_pair(config, ('mesh_min',))
+            max_x, max_y = parse_pair(config, ('mesh_max',))
+            if max_x <= min_x or max_y <= min_y:
+                raise config.error('bed_mesh: invalid min/max points')
+        self.mesh_config['x_count'] = x_cnt
+        self.mesh_config['y_count'] = y_cnt
+        self.config_mesh_min = (min_x, min_y)
+        self.config_mesh_max = (max_x, max_y)
+
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
         params = self.mesh_config
