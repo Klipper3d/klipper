@@ -261,34 +261,33 @@ AD8497 = [
     (1360, 6.671), (1380, 6.754)
 ]
 
-def calc_pt1000():
-    # Calc PT1000 temperature/resistance pairs using formula
+def calc_pt100(base=100.):
+    # Calc PT100/PT1000 temperature/resistance pairs using formula
     A, B = (3.9083e-3, -5.775e-7)
-    return [(float(t), 1000. * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
-
-PT1000 = calc_pt1000()
+    return [(float(t), base * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
 
 def calc_ina826_pt100():
-    PT100 = [(t, .1 * r) for t, r in PT1000]
     # Standard circuit is 4400ohm pullup with 10x gain to 5V
-    return [(t, 10. * 5. * r / (4400. + r)) for t, r in PT100]
+    return [(t, 10. * 5. * r / (4400. + r)) for t, r in calc_pt100()]
 
-PT100 = calc_ina826_pt100()
+DefaultVoltageSensors = [
+    ("AD595", AD595), ("AD597", AD597), ("AD8494", AD8494), ("AD8495", AD8495),
+    ("AD8496", AD8496), ("AD8497", AD8497),
+    ("PT100 INA826", calc_ina826_pt100())
+]
+
+DefaultResistanceSensors = [
+    ("PT1000", calc_pt100(1000.))
+]
 
 def load_config(config):
     # Register default sensors
     pheaters = config.get_printer().load_object(config, "heaters")
-    for sensor_type, params in [("AD595", AD595),
-                                ("AD597", AD597),
-                                ("AD8494", AD8494),
-                                ("AD8495", AD8495),
-                                ("AD8496", AD8496),
-                                ("AD8497", AD8497),
-                                ("PT100 INA826", PT100)]:
+    for sensor_type, params in DefaultVoltageSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config, LinearVoltage(config, params)))
         pheaters.add_sensor_factory(sensor_type, func)
-    for sensor_type, params in [("PT1000", PT1000)]:
+    for sensor_type, params in DefaultResistanceSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config,
                                         LinearResistance(config, params)))
