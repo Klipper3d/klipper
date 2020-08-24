@@ -94,6 +94,8 @@ class PrinterGCodeMacro:
             'action_respond_info': self._action_respond_info,
             'action_raise_error': self._action_raise_error,
         }
+    def create_template(self, name, script):
+        return TemplateWrapper(self.printer, self.env, name, script)
 
 def load_config(config):
     return PrinterGCodeMacro(config)
