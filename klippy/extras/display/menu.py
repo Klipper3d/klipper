@@ -884,6 +884,10 @@ class MenuManager:
             current = container.selected_item()
             if isinstance(current, MenuContainer):
                 self.stack_push(current)
+            elif isinstance(current, MenuInput):
+                if current.is_editing():
+                    current.run_script('gcode', event=event)
+                current.run_script(event)
             elif isinstance(current, MenuCommand):
                 current.run_script('gcode', event=event)
                 current.run_script(event)
