@@ -20,6 +20,7 @@ class SafeZHoming:
         self.max_z = config.getsection('stepper_z').getfloat('position_max')
         self.speed = config.getfloat('speed', 50.0, above=0.)
         self.move_to_previous = config.getboolean('move_to_previous', False)
+        self.printer.load_object(config, 'gcode_move')
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
@@ -30,23 +31,23 @@ class SafeZHoming:
 
     def cmd_G28(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
-        curtime = self.printer.get_reactor().monotonic()
-        kin_status = toolhead.get_kinematics().get_status(curtime)
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
-            pos = toolhead.get_position()
             # Check if Z axis is homed or has a known position
+            curtime = self.printer.get_reactor().monotonic()
+            kin_status = toolhead.get_kinematics().get_status(curtime)
             if 'z' in kin_status['homed_axes']:
                 # Check if the zhop would exceed the printer limits
+                pos = toolhead.get_position()
                 if pos[2] + self.z_hop > self.max_z:
                     gcmd.respond_info(
                         "No zhop performed, target Z out of bounds: " +
                         str(pos[2] + self.z_hop))
                 elif pos[2] < self.z_hop:
-                    self._perform_z_hop(pos)
+                    self._perform_z_hop()
             else:
-                self._perform_z_hop(pos)
+                self._perform_z_hop()
                 if hasattr(toolhead.get_kinematics(), "note_z_not_homed"):
                     toolhead.get_kinematics().note_z_not_homed()
 
@@ -66,46 +67,33 @@ class SafeZHoming:
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", new_params)
             self.prev_G28(g28_gcmd)
 
-        # Update the currently homed axes
-        curtime = self.printer.get_reactor().monotonic()
-        kin_status = toolhead.get_kinematics().get_status(curtime)
-
         # Home Z axis if necessary
         if need_z:
-            pos = toolhead.get_position()
-            prev_x = pos[0]
-            prev_y = pos[1]
-            pos[0] = self.home_x_pos
-            pos[1] = self.home_y_pos
             # Throw an error if X or Y are not homed
+            curtime = self.printer.get_reactor().monotonic()
+            kin_status = toolhead.get_kinematics().get_status(curtime)
             if ('x' not in kin_status['homed_axes'] or
                 'y' not in kin_status['homed_axes']):
                 raise gcmd.error("Must home X and Y axes first")
             # Move to safe XY homing position
-            toolhead.move(pos, self.speed)
-            self.gcode.reset_last_position()
+            prevpos = toolhead.get_position()
+            toolhead.manual_move([self.home_x_pos, self.home_y_pos], self.speed)
             # Home Z
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {'Z': '0'})
             self.prev_G28(g28_gcmd)
             # Perform Z Hop again for pressure-based probes
-            pos = toolhead.get_position()
             if self.z_hop:
-                pos[2] = self.z_hop
-                toolhead.move(pos, self.z_hop_speed)
+                toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
             # Move XY back to previous positions
             if self.move_to_previous:
-                pos[0] = prev_x
-                pos[1] = prev_y
-                toolhead.move(pos, self.speed)
-            self.gcode.reset_last_position()
+                toolhead.manual_move(prevpos[:2], self.speed)
 
-    def _perform_z_hop(self, pos):
+    def _perform_z_hop(self):
         toolhead = self.printer.lookup_object('toolhead')
         # Perform the Z-Hop
+        pos = toolhead.get_position()
         toolhead.set_position(pos, homing_axes=[2])
-        pos[2] = pos[2] + self.z_hop
-        toolhead.move(pos, self.z_hop_speed)
-        self.gcode.reset_last_position()
+        toolhead.manual_move([None, None, pos[2]+self.z_hop], self.z_hop_speed)
 
 def load_config(config):
     return SafeZHoming(config)

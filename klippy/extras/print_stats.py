@@ -7,12 +7,12 @@
 class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
-        self.gcode = printer.lookup_object('gcode')
+        self.gcode_move = printer.load_object(config, 'gcode_move')
         self.reactor = printer.get_reactor()
         self.reset()
     def _update_filament_usage(self, eventtime):
-        gc_status = self.gcode.get_status(eventtime)
-        cur_epos = gc_status['last_epos']
+        gc_status = self.gcode_move.get_status(eventtime)
+        cur_epos = gc_status['position'].e
         self.filament_used += (cur_epos - self.last_epos) \
             / gc_status['extrude_factor']
         self.last_epos = cur_epos
@@ -29,8 +29,8 @@ class PrintStats:
             self.prev_pause_duration += pause_duration
             self.last_pause_time = None
         # Reset last e-position
-        gc_status = self.gcode.get_status(curtime)
-        self.last_epos = gc_status['last_epos']
+        gc_status = self.gcode_move.get_status(curtime)
+        self.last_epos = gc_status['position'].e
         self.state = "printing"
         self.error_message = ""
     def note_pause(self):

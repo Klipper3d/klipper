@@ -8,6 +8,11 @@
 import logging, os, ast
 from . import hd44780, st7920, uc1701, menu
 
+# Normal time between each screen redraw
+REDRAW_TIME = 0.500
+# Minimum time between screen redraws
+REDRAW_MIN_TIME = 0.100
+
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
     'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
@@ -66,9 +71,8 @@ class DisplayGroup:
                 template = gcode_macro.load_template(c, 'text')
                 self.data_items.append((row, col, template))
     def show(self, display, templates, eventtime):
-        swrap = self.data_items[0][2].create_status_wrapper(eventtime)
-        context = { 'printer': swrap,
-                    'draw_progress_bar': display.draw_progress_bar }
+        context = self.data_items[0][2].create_template_context(eventtime)
+        context['draw_progress_bar'] = display.draw_progress_bar
         def render(name, **kwargs):
             return templates[name].render(context, **kwargs)
         context['render'] = render
@@ -100,9 +104,12 @@ class PrinterLCD:
         self.show_data_group = self.display_data_groups.get(dgroup)
         if self.show_data_group is None:
             raise config.error("Unknown display_data group '%s'" % (dgroup,))
+        # Screen updating
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+        self.redraw_request_pending = False
+        self.redraw_time = 0.
         # Register g-code commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
@@ -111,6 +118,8 @@ class PrinterLCD:
         if name == 'display':
             gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
                                        self.cmd_SET_DISPLAY_GROUP)
+    def get_dimensions(self):
+        return self.lcd_chip.get_dimensions()
     # Configurable display
     def _parse_glyph(self, config, glyph_name, data, width, height):
         glyph_data = []
@@ -184,19 +193,28 @@ class PrinterLCD:
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
     # Screen updating
     def screen_update_event(self, eventtime):
+        if self.redraw_request_pending:
+            self.redraw_request_pending = False
+            self.redraw_time = eventtime + REDRAW_MIN_TIME
+        self.lcd_chip.clear()
         # update menu component
         if self.menu is not None:
             ret = self.menu.screen_update_event(eventtime)
             if ret:
-                return ret
+                self.lcd_chip.flush()
+                return eventtime + REDRAW_TIME
         # Update normal display
-        self.lcd_chip.clear()
         try:
             self.show_data_group.show(self, self.display_templates, eventtime)
         except:
             logging.exception("Error during display screen update")
         self.lcd_chip.flush()
-        return eventtime + .500
+        return eventtime + REDRAW_TIME
+    def request_redraw(self):
+        if self.redraw_request_pending:
+            return
+        self.redraw_request_pending = True
+        self.reactor.update_timer(self.screen_update_timer, self.redraw_time)
     def draw_text(self, row, col, mixed_text, eventtime):
         pos = col
         for i, text in enumerate(mixed_text.split('~')):

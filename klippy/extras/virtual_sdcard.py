@@ -24,7 +24,6 @@ class VirtualSD:
         self.work_timer = None
         # Register commands
         self.gcode = printer.lookup_object('gcode')
-        self.gcode.register_command('M21', None)
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
@@ -35,9 +34,6 @@ class VirtualSD:
         self.gcode.register_command(
             "SDCARD_PRINT_FILE", self.cmd_SDCARD_PRINT_FILE,
             desc=self.cmd_SDCARD_PRINT_FILE_help)
-        # Register sd path
-        webhooks = printer.lookup_object('webhooks')
-        webhooks.register_static_path("sd_path", self.sdcard_dirname)
     def handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True

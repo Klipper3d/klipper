@@ -40,6 +40,8 @@ class HallFilamentWidthSensor:
         self.filament_array = []
         self.lastFilamentWidthReading = 0
         self.lastFilamentWidthReading2 = 0
+        self.firstExtruderUpdatePosition = 0
+        self.filament_width = self.nominal_filament_dia
         # printer objects
         self.toolhead = self.ppins = self.mcu_adc = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -112,6 +114,8 @@ class HallFilamentWidthSensor:
             # add first item to array
             self.filament_array.append([self.measurement_delay + last_epos,
                                         self.diameter])
+            self.firstExtruderUpdatePosition = (self.measurement_delay
+                                                + last_epos)
 
     def extrude_factor_update_event(self, eventtime):
         # Update extrude factor
@@ -130,15 +134,18 @@ class HallFilamentWidthSensor:
                 if pending_position <= last_epos:
                     # Get first item in filament_array queue
                     item = self.filament_array.pop(0)
-                    filament_width = item[1]
-                elif self.use_current_dia_while_delay:
-                    filament_width = self.diameter
+                    self.filament_width = item[1]
                 else:
-                    filament_width = self.nominal_filament_dia
-                if ((filament_width <= self.max_diameter)
-                    and (filament_width >= self.min_diameter)):
+                    if ((self.use_current_dia_while_delay)
+                        and (self.firstExtruderUpdatePosition
+                             == pending_position)):
+                        self.filament_width = self.diameter
+                    elif  self.firstExtruderUpdatePosition == pending_position:
+                        self.filament_width = self.nominal_filament_dia
+                if ((self.filament_width <= self.max_diameter)
+                    and (self.filament_width >= self.min_diameter)):
                     percentage = round(self.nominal_filament_dia**2
-                                       / filament_width**2 * 100)
+                                       / self.filament_width**2 * 100)
                     self.gcode.run_script("M221 S" + str(percentage))
                 else:
                     self.gcode.run_script("M221 S100")

@@ -123,16 +123,9 @@ class PrinterProbe:
         pos = toolhead.get_position()
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                 % (pos[0], pos[1], pos[2]))
-        self.gcode.reset_last_position()
         return pos[:3]
     def _move(self, coord, speed):
-        toolhead = self.printer.lookup_object('toolhead')
-        curpos = toolhead.get_position()
-        for i in range(len(coord)):
-            if coord[i] is not None:
-                curpos[i] = coord[i]
-        toolhead.move(curpos, speed)
-        self.gcode.reset_last_position()
+        self.printer.lookup_object('toolhead').manual_move(coord, speed)
     def _calc_mean(self, positions):
         count = float(len(positions))
         return [sum([pos[i] for pos in positions]) / count
@@ -355,24 +348,20 @@ class ProbePointsHelper:
         if not self.results:
             # Use full speed to first probe position
             speed = self.speed
-        curpos = toolhead.get_position()
-        curpos[2] = self.horizontal_move_z
-        toolhead.move(curpos, speed)
+        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
-            self.gcode.reset_last_position()
             toolhead.get_last_move_time()
             res = self.finalize_callback(self.probe_offsets, self.results)
             if res != "retry":
                 return True
             self.results = []
         # Move to next XY probe point
-        curpos[:2] = self.probe_points[len(self.results)]
+        nextpos = list(self.probe_points[len(self.results)])
         if self.use_offsets:
-            curpos[0] -= self.probe_offsets[0]
-            curpos[1] -= self.probe_offsets[1]
-        toolhead.move(curpos, self.speed)
-        self.gcode.reset_last_position()
+            nextpos[0] -= self.probe_offsets[0]
+            nextpos[1] -= self.probe_offsets[1]
+        toolhead.manual_move(nextpos, self.speed)
         return False
     def start_probe(self, gcmd):
         manual_probe.verify_no_manual_probe(self.printer)

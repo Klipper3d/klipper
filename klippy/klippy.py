@@ -59,7 +59,7 @@ class Printer:
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
         # Init printer components that must be setup prior to config
-        for m in [webhooks, gcode]:
+        for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
     def get_start_args(self):
         return self.start_args
@@ -70,6 +70,8 @@ class Printer:
             category = "ready"
         elif self.state_message == message_startup:
             category = "startup"
+        elif self.in_shutdown_state:
+            category = "shutdown"
         else:
             category = "error"
         return self.state_message, category
@@ -247,6 +249,8 @@ def main():
     opts.add_option("-I", "--input-tty", dest="inputtty",
                     default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
+    opts.add_option("-a", "--api-server", dest="apiserver",
+                    help="api server unix domain socket filename")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
@@ -259,7 +263,8 @@ def main():
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    start_args = {'config_file': args[0], 'start_reason': 'startup'}
+    start_args = {'config_file': args[0], 'apiserver': options.apiserver,
+                  'start_reason': 'startup'}
 
     debuglevel = logging.INFO
     if options.verbose:

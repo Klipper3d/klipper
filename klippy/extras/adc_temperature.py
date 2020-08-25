@@ -261,38 +261,33 @@ AD8497 = [
     (1360, 6.671), (1380, 6.754)
 ]
 
-PT100 = [
-    (0, 0.00), (1, 1.11), (10, 1.15), (20, 1.20), (30, 1.24), (40, 1.28),
-    (50, 1.32), (60, 1.36), (70, 1.40), (80, 1.44), (90, 1.48), (100, 1.52),
-    (110, 1.56), (120, 1.61), (130, 1.65), (140, 1.68), (150, 1.72),
-    (160, 1.76), (170, 1.80), (180, 1.84), (190, 1.88), (200, 1.92),
-    (210, 1.96), (220, 2.00), (230, 2.04), (240, 2.07), (250, 2.11),
-    (260, 2.15), (270, 2.18), (280, 2.22), (290, 2.26), (300, 2.29),
-    (310, 2.33), (320, 2.37), (330, 2.41), (340, 2.44), (350, 2.48),
-    (360, 2.51), (370, 2.55), (380, 2.58), (390, 2.62), (400, 2.66),
-    (500, 3.00), (600, 3.33), (700, 3.63), (800, 3.93), (900, 4.21),
-    (1000, 4.48), (1100, 4.73)
+def calc_pt100(base=100.):
+    # Calc PT100/PT1000 temperature/resistance pairs using formula
+    A, B = (3.9083e-3, -5.775e-7)
+    return [(float(t), base * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
+
+def calc_ina826_pt100():
+    # Standard circuit is 4400ohm pullup with 10x gain to 5V
+    return [(t, 10. * 5. * r / (4400. + r)) for t, r in calc_pt100()]
+
+DefaultVoltageSensors = [
+    ("AD595", AD595), ("AD597", AD597), ("AD8494", AD8494), ("AD8495", AD8495),
+    ("AD8496", AD8496), ("AD8497", AD8497),
+    ("PT100 INA826", calc_ina826_pt100())
 ]
 
-PT1000 = [
-    (0., 1000.), (100., 1385.1), (200., 1758.6), (300., 2120.5),
-    (400., 2470.9), (500., 2809.8),
+DefaultResistanceSensors = [
+    ("PT1000", calc_pt100(1000.))
 ]
 
 def load_config(config):
     # Register default sensors
     pheaters = config.get_printer().load_object(config, "heaters")
-    for sensor_type, params in [("AD595", AD595),
-                                ("AD597", AD597),
-                                ("AD8494", AD8494),
-                                ("AD8495", AD8495),
-                                ("AD8496", AD8496),
-                                ("AD8497", AD8497),
-                                ("PT100 INA826", PT100)]:
+    for sensor_type, params in DefaultVoltageSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config, LinearVoltage(config, params)))
         pheaters.add_sensor_factory(sensor_type, func)
-    for sensor_type, params in [("PT1000", PT1000)]:
+    for sensor_type, params in DefaultResistanceSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config,
                                         LinearResistance(config, params)))

@@ -136,10 +136,8 @@ class CartKinematics:
             self.limits[dc_axis] = dc_rail.get_range()
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
-        gcode = self.printer.lookup_object('gcode')
         carriage = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
         self._activate_carriage(carriage)
-        gcode.reset_last_position()
 
 def load_kinematics(toolhead, config):
     return CartKinematics(toolhead, config)

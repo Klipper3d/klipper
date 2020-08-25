@@ -93,11 +93,10 @@ class ManualProbeHelper:
     def move_z(self, z_pos):
         curpos = self.toolhead.get_position()
         try:
-            if curpos[2] - z_pos < Z_BOB_MINIMUM:
-                curpos[2] = z_pos + Z_BOB_MINIMUM
-                self.toolhead.move(curpos, self.speed)
-            curpos[2] = z_pos
-            self.toolhead.move(curpos, self.speed)
+            z_bob_pos = z_pos + Z_BOB_MINIMUM
+            if curpos[2] < z_bob_pos:
+                self.toolhead.manual_move([None, None, z_bob_pos], self.speed)
+            self.toolhead.manual_move([None, None, z_pos], self.speed)
         except homing.CommandError as e:
             self.finalize(False)
             raise
