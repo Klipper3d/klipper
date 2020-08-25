@@ -397,8 +397,8 @@ class MenuContainer(MenuElement):
         return self.select_at(index)
 
     # override
-    def render_container(self, eventtime):
-        return ("", None)
+    def render_container(self, nrows, eventtime):
+        return []
 
     def __iter__(self):
         return iter(self._items)
@@ -550,6 +550,7 @@ class MenuInput(MenuCommand):
 class MenuList(MenuContainer):
     def __init__(self, manager, config):
         super(MenuList, self).__init__(manager, config)
+        self._viewport_top = 0
         # create back item
         self._itemBack = self.manager.menuitem_from({
             'type': 'command',
@@ -562,29 +563,43 @@ class MenuList(MenuContainer):
 
     def _populate(self):
         super(MenuList, self)._populate()
+        self._viewport_top = 0
         #  add back as first item
         self.insert_item(self._itemBack, 0)
 
-    def render_container(self, eventtime):
-        rows = []
-        selected_row = None
+    def render_container(self, nrows, eventtime):
+        manager = self.manager
+        lines = []
+        selected_row = self.selected
+        # adjust viewport
+        if selected_row is not None:
+            if selected_row >= (self._viewport_top + nrows):
+                self._viewport_top = (selected_row - nrows) + 1
+            if selected_row < self._viewport_top:
+                self._viewport_top = selected_row
+        else:
+            self._viewport_top = 0
+        # clamps viewport
+        self._viewport_top = max(0, min(self._viewport_top, len(self) - nrows))
         try:
-            for row, item in enumerate(self):
+            for row in range(self._viewport_top, self._viewport_top + nrows):
                 s = ""
-                selected = (row == self.selected)
-                if selected:
-                    item.heartbeat(eventtime)
-                    selected_row = len(rows)
-                name = str(item.render_name(selected))
-                if isinstance(item, MenuList):
-                    s += name[:self.manager.cols-1].ljust(self.manager.cols-1)
-                    s += '>'
-                else:
-                    s += name[:self.manager.cols].ljust(self.manager.cols)
-                rows.append(s)
+                if row < len(self):
+                    current = self[row]
+                    selected = (row == selected_row)
+                    if selected:
+                        current.heartbeat(eventtime)
+                    name = manager.stripliterals(
+                        manager.aslatin(current.render_name(selected)))
+                    if isinstance(current, MenuList):
+                        s += name[:manager.cols-1].ljust(manager.cols-1)
+                        s += '>'
+                    else:
+                        s += name
+                lines.append(s[:manager.cols].ljust(manager.cols))
         except Exception:
             logging.exception('List rendering error')
-        return ("\n".join(rows), selected_row)
+        return lines
 
 
 class MenuVSDList(MenuList):
@@ -624,7 +639,6 @@ class MenuManager:
         self.menuitems = {}
         self.menustack = []
         self.children = {}
-        self.top_row = 0
         self.display = display
         self.printer = config.get_printer()
         self.pconfig = self.printer.lookup_object('configfile')
@@ -682,7 +696,6 @@ class MenuManager:
 
     def begin(self, eventtime):
         self.menustack = []
-        self.top_row = 0
         self.timer = 0
         if isinstance(self.root, MenuContainer):
             # send begin event
@@ -780,21 +793,7 @@ class MenuManager:
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             container.heartbeat(eventtime)
-            content, viewport_row = container.render_container(eventtime)
-            if viewport_row is not None:
-                while viewport_row >= (self.top_row + self.rows):
-                    self.top_row += 1
-                while viewport_row < self.top_row and self.top_row > 0:
-                    self.top_row -= 1
-            else:
-                self.top_row = 0
-            rows = self.aslatin(content).splitlines()
-            for row in range(0, self.rows):
-                try:
-                    text = self.stripliterals(rows[self.top_row + row])
-                except IndexError:
-                    text = ""
-                lines.append(text.ljust(self.cols))
+            lines = container.render_container(self.rows, eventtime)
         return lines
 
     def screen_update_event(self, eventtime):
