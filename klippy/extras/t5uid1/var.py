@@ -85,8 +85,7 @@ class T5UID1_Var:
         if self.type != "input":
             raise Exception("not an input")
 
-        swrap = self._template.create_status_wrapper()
-        context = { 'printer': swrap }
+        context = self._template.create_template_context()
         context.update(self._context)
 
         if self.data_type != "none" and self.data_len != 0:
@@ -118,8 +117,7 @@ class T5UID1_Var:
         if self.type != "output":
             raise Exception("not an output")
 
-        swrap = self._template.create_status_wrapper()
-        context = { 'printer': swrap }
+        context = self._template.create_template_context()
         context.update(self._context)
         result = self._template.render(context)
 

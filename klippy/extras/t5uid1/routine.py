@@ -74,9 +74,8 @@ class T5UID1_Routine:
                     self.reactor.update_timer(self._timer, self.reactor.NOW)
                 return
 
-        swrap = self._template.create_status_wrapper()
-        context = { 'printer': swrap,
-                    'is_timer': is_timer }
+        context = self._template.create_template_context()
+        context['is_timer'] = is_timer
         context.update(self._context)
 
         result = self._template.render(context).strip()
