@@ -70,7 +70,35 @@ EOF
     sudo systemctl enable klipper.service
 }
 
-# Step 4: Start host software
+# Step 4: Install linux mcu startup script
+install_script1()
+{
+# Create systemd service file
+    PIDFILE=/var/run/klipper_mcu.pid
+    report_status "Installing linux mcu system start script1..."
+    sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper_host_mcu.service" << EOF
+#Systemd service file for klipper-linux-host-mcu
+[Unit]
+Description=klipper linux host
+PartOf=klipper.service
+After=klipper.service
+
+[Service]
+Type=simple
+User=$KLIPPER_USER
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/klipper_mcu
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=klipper.service
+EOF
+# Use systemctl to enable the klipper systemd service script
+    sudo systemctl enable klipper_host_mcu.service
+}
+
+# Step 5: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
@@ -102,4 +130,5 @@ verify_ready
 install_packages
 create_virtualenv
 install_script
+install_script1
 start_software
