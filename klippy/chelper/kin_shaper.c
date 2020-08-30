@@ -218,6 +218,19 @@ static is_init_shaper_callback init_shaper_callbacks[] = {
     [INPUT_SHAPER_3HUMP_EI] = &init_shaper_3hump_ei,
 };
 
+static void
+init_shaper(int shaper_type, double shaper_freq, double damping_ratio
+            , struct shaper_pulses *sp)
+{
+    if (shaper_type < 0 || shaper_type >= ARRAY_SIZE(init_shaper_callbacks)
+        || shaper_freq <= 0.) {
+        sp->num_pulses = 0;
+        return;
+    }
+    init_shaper_callbacks[shaper_type](shaper_freq, damping_ratio, sp);
+    shift_pulses(sp);
+}
+
 
 /****************************************************************
  * Generic position calculation via shaper convolution
@@ -361,27 +374,14 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk
                                , double damping_ratio_y)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-
-    if (shaper_type_x >= ARRAY_SIZE(init_shaper_callbacks) || shaper_type_x < 0)
-        return -1;
-    if (shaper_type_y >= ARRAY_SIZE(init_shaper_callbacks) || shaper_type_y < 0)
-        return -1;
-
-    int af = is->orig_sk->active_flags & (AF_X | AF_Y);
-    if ((af & AF_X) && shaper_freq_x > 0.) {
-        init_shaper_callbacks[shaper_type_x](
-                shaper_freq_x, damping_ratio_x, &is->sx);
-        shift_pulses(&is->sx);
-    } else {
+    if (is->orig_sk->active_flags & AF_X)
+        init_shaper(shaper_type_x, shaper_freq_x, damping_ratio_x, &is->sx);
+    else
         is->sx.num_pulses = 0;
-    }
-    if ((af & AF_Y) && shaper_freq_y > 0.) {
-        init_shaper_callbacks[shaper_type_y](
-                shaper_freq_y, damping_ratio_y, &is->sy);
-        shift_pulses(&is->sy);
-    } else {
+    if (is->orig_sk->active_flags & AF_Y)
+        init_shaper(shaper_type_y, shaper_freq_y, damping_ratio_y, &is->sy);
+    else
         is->sy.num_pulses = 0;
-    }
     shaper_note_generation_time(is);
     return 0;
 }
@@ -390,14 +390,10 @@ double __visible
 input_shaper_get_step_generation_window(int shaper_type, double shaper_freq
                                         , double damping_ratio)
 {
-    if (shaper_freq <= 0.)
-        return 0.;
-    if (shaper_type >= ARRAY_SIZE(init_shaper_callbacks) || shaper_type < 0)
-        return 0.;
-    is_init_shaper_callback init_shaper_cb = init_shaper_callbacks[shaper_type];
     struct shaper_pulses sp;
-    init_shaper_cb(shaper_freq, damping_ratio, &sp);
-    shift_pulses(&sp);
+    init_shaper(shaper_type, shaper_freq, damping_ratio, &sp);
+    if (!sp.num_pulses)
+        return 0.;
     double window = -sp.pulses[0].t;
     if (sp.pulses[sp.num_pulses-1].t > window)
         window = sp.pulses[sp.num_pulses-1].t;
