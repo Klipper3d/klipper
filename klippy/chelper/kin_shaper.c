@@ -332,13 +332,12 @@ input_shaper_set_sk(struct stepper_kinematics *sk
                     , struct stepper_kinematics *orig_sk)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    int af = orig_sk->active_flags & (AF_X | AF_Y);
-    if (af == (AF_X | AF_Y))
-        is->sk.calc_position_cb = shaper_xy_calc_position;
-    else if (af & AF_X)
+    if (orig_sk->active_flags == AF_X)
         is->sk.calc_position_cb = shaper_x_calc_position;
-    else if (af & AF_Y)
+    else if (orig_sk->active_flags == AF_Y)
         is->sk.calc_position_cb = shaper_y_calc_position;
+    else if (orig_sk->active_flags & (AF_X | AF_Y))
+        is->sk.calc_position_cb = shaper_xy_calc_position;
     else
         return -1;
     is->sk.active_flags = orig_sk->active_flags;
