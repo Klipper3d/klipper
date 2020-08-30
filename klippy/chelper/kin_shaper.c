@@ -40,20 +40,24 @@ get_axis_position_across_moves(struct move *m, int axis, double time)
     return get_axis_position(m, axis, time);
 }
 
-struct shaper_pulse {
-    double t, a;
+struct shaper_pulses {
+    int num_pulses;
+    struct {
+        double t, a;
+    } pulses[5];
 };
 
 // Calculate the position from the convolution of the shaper with input signal
 static inline double
 calc_position(struct move *m, int axis, double move_time
-              , struct shaper_pulse *pulses, int n)
+              , struct shaper_pulses *sp)
 {
     double res = 0.;
-    int i;
-    for (i = 0; i < n; ++i)
-        res += pulses[i].a * get_axis_position_across_moves(
-                m, axis, move_time + pulses[i].t);
+    int num_pulses = sp->num_pulses, i;
+    for (i = 0; i < num_pulses; ++i) {
+        double t = sp->pulses[i].t, a = sp->pulses[i].a;
+        res += a * get_axis_position_across_moves(m, axis, move_time + t);
+    }
     return res;
 }
 
@@ -76,13 +80,12 @@ struct input_shaper {
     struct stepper_kinematics sk;
     struct stepper_kinematics *orig_sk;
     struct move m;
-    struct shaper_pulse *x_pulses, *y_pulses;
-    int x_n, y_n;
+    struct shaper_pulses sx, sy;
 };
 
 typedef void (*is_init_shaper_callback)(double shaper_freq
                                         , double damping_ratio
-                                        , struct shaper_pulse **pulses, int *n);
+                                        , struct shaper_pulses *sp);
 
 static inline double
 calc_ZV_K(double damping_ratio)
@@ -100,49 +103,46 @@ calc_half_period(double shaper_freq, double damping_ratio)
 
 static void
 init_shaper_zv(double shaper_freq, double damping_ratio
-               , struct shaper_pulse **pulses, int *n)
+               , struct shaper_pulses *sp)
 {
-    *n = 2;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 2;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = calc_ZV_K(damping_ratio);
     double inv_D = 1. / (1. + K);
 
-    (*pulses)[0].t = -half_period;
-    (*pulses)[1].t = 0.;
+    sp->pulses[0].t = -half_period;
+    sp->pulses[1].t = 0.;
 
-    (*pulses)[0].a = K * inv_D;
-    (*pulses)[1].a = inv_D;
+    sp->pulses[0].a = K * inv_D;
+    sp->pulses[1].a = inv_D;
 }
 
 static void
 init_shaper_zvd(double shaper_freq, double damping_ratio
-                , struct shaper_pulse **pulses, int *n)
+                , struct shaper_pulses *sp)
 {
-    *n = 3;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 3;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = calc_ZV_K(damping_ratio);
     double K2 = K * K;
     double inv_D = 1. / (K2 + 2. * K + 1.);
 
-    (*pulses)[0].t = -2. * half_period;
-    (*pulses)[1].t = -half_period;
-    (*pulses)[2].t = 0.;
+    sp->pulses[0].t = -2. * half_period;
+    sp->pulses[1].t = -half_period;
+    sp->pulses[2].t = 0.;
 
-    (*pulses)[0].a = K2 * inv_D;
-    (*pulses)[1].a = 2. * K * inv_D;
-    (*pulses)[2].a = inv_D;
+    sp->pulses[0].a = K2 * inv_D;
+    sp->pulses[1].a = 2. * K * inv_D;
+    sp->pulses[2].a = inv_D;
 }
 
 static void
 init_shaper_mzv(double shaper_freq, double damping_ratio
-                , struct shaper_pulse **pulses, int *n)
+                , struct shaper_pulses *sp)
 {
-    *n = 3;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 3;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = exp(-.75 * damping_ratio * M_PI
@@ -153,21 +153,20 @@ init_shaper_mzv(double shaper_freq, double damping_ratio
     double a3 = a1 * K * K;
     double inv_D = 1. / (a1 + a2 + a3);
 
-    (*pulses)[0].t = -1.5 * half_period;
-    (*pulses)[1].t = -.75 * half_period;
-    (*pulses)[2].t = 0.;
+    sp->pulses[0].t = -1.5 * half_period;
+    sp->pulses[1].t = -.75 * half_period;
+    sp->pulses[2].t = 0.;
 
-    (*pulses)[0].a = a3 * inv_D;
-    (*pulses)[1].a = a2 * inv_D;
-    (*pulses)[2].a = a1 * inv_D;
+    sp->pulses[0].a = a3 * inv_D;
+    sp->pulses[1].a = a2 * inv_D;
+    sp->pulses[2].a = a1 * inv_D;
 }
 
 static void
 init_shaper_ei(double shaper_freq, double damping_ratio
-               , struct shaper_pulse **pulses, int *n)
+               , struct shaper_pulses *sp)
 {
-    *n = 3;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 3;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = calc_ZV_K(damping_ratio);
@@ -176,21 +175,20 @@ init_shaper_ei(double shaper_freq, double damping_ratio
     double a3 = a1 * K * K;
     double inv_D = 1. / (a1 + a2 + a3);
 
-    (*pulses)[0].t = -2. * half_period;
-    (*pulses)[1].t = -half_period;
-    (*pulses)[2].t = 0.;
+    sp->pulses[0].t = -2. * half_period;
+    sp->pulses[1].t = -half_period;
+    sp->pulses[2].t = 0.;
 
-    (*pulses)[0].a = a3 * inv_D;
-    (*pulses)[1].a = a2 * inv_D;
-    (*pulses)[2].a = a1 * inv_D;
+    sp->pulses[0].a = a3 * inv_D;
+    sp->pulses[1].a = a2 * inv_D;
+    sp->pulses[2].a = a1 * inv_D;
 }
 
 static void
 init_shaper_2hump_ei(double shaper_freq, double damping_ratio
-                     , struct shaper_pulse **pulses, int *n)
+                     , struct shaper_pulses *sp)
 {
-    *n = 4;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 4;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = calc_ZV_K(damping_ratio);
@@ -203,23 +201,22 @@ init_shaper_2hump_ei(double shaper_freq, double damping_ratio
     double a4 = a1 * K * K * K;
     double inv_D = 1. / (a1 + a2 + a3 + a4);
 
-    (*pulses)[0].t = -3. * half_period;
-    (*pulses)[1].t = -2. * half_period;
-    (*pulses)[2].t = -half_period;
-    (*pulses)[3].t = 0.;
+    sp->pulses[0].t = -3. * half_period;
+    sp->pulses[1].t = -2. * half_period;
+    sp->pulses[2].t = -half_period;
+    sp->pulses[3].t = 0.;
 
-    (*pulses)[0].a = a4 * inv_D;
-    (*pulses)[1].a = a3 * inv_D;
-    (*pulses)[2].a = a2 * inv_D;
-    (*pulses)[3].a = a1 * inv_D;
+    sp->pulses[0].a = a4 * inv_D;
+    sp->pulses[1].a = a3 * inv_D;
+    sp->pulses[2].a = a2 * inv_D;
+    sp->pulses[3].a = a1 * inv_D;
 }
 
 static void
 init_shaper_3hump_ei(double shaper_freq, double damping_ratio
-                     , struct shaper_pulse **pulses, int *n)
+                     , struct shaper_pulses *sp)
 {
-    *n = 5;
-    *pulses = malloc(*n * sizeof(struct shaper_pulse));
+    sp->num_pulses = 5;
 
     double half_period = calc_half_period(shaper_freq, damping_ratio);
     double K = calc_ZV_K(damping_ratio);
@@ -233,30 +230,30 @@ init_shaper_3hump_ei(double shaper_freq, double damping_ratio
     double a5 = a1 * K2 * K2;
     double inv_D = 1. / (a1 + a2 + a3 + a4 + a5);
 
-    (*pulses)[0].t = -4. * half_period;
-    (*pulses)[1].t = -3. * half_period;
-    (*pulses)[2].t = -2. * half_period;
-    (*pulses)[3].t = -half_period;
-    (*pulses)[4].t = 0.;
+    sp->pulses[0].t = -4. * half_period;
+    sp->pulses[1].t = -3. * half_period;
+    sp->pulses[2].t = -2. * half_period;
+    sp->pulses[3].t = -half_period;
+    sp->pulses[4].t = 0.;
 
-    (*pulses)[0].a = a5 * inv_D;
-    (*pulses)[1].a = a4 * inv_D;
-    (*pulses)[2].a = a3 * inv_D;
-    (*pulses)[3].a = a2 * inv_D;
-    (*pulses)[4].a = a1 * inv_D;
+    sp->pulses[0].a = a5 * inv_D;
+    sp->pulses[1].a = a4 * inv_D;
+    sp->pulses[2].a = a3 * inv_D;
+    sp->pulses[3].a = a2 * inv_D;
+    sp->pulses[4].a = a1 * inv_D;
 }
 
 // Shift pulses around 'mid-point' t=0 so that the input shaper is an identity
 // transformation for constant-speed motion (i.e. input_shaper(v * T) = v * T)
 static void
-shift_pulses(int n, struct shaper_pulse *pulses)
+shift_pulses(struct shaper_pulses *sp)
 {
     int i;
     double ts = 0.;
-    for (i = 0; i < n; ++i)
-        ts += pulses[i].a * pulses[i].t;
-    for (i = 0; i < n; ++i)
-        pulses[i].t -= ts;
+    for (i = 0; i < sp->num_pulses; ++i)
+        ts += sp->pulses[i].a * sp->pulses[i].t;
+    for (i = 0; i < sp->num_pulses; ++i)
+        sp->pulses[i].t -= ts;
 }
 
 /****************************************************************
@@ -271,9 +268,9 @@ shaper_x_calc_position(struct stepper_kinematics *sk, struct move *m
                        , double move_time)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    if (!is->x_n)
+    if (!is->sx.num_pulses)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
-    is->m.start_pos.x = calc_position(m, 'x', move_time, is->x_pulses, is->x_n);
+    is->m.start_pos.x = calc_position(m, 'x', move_time, &is->sx);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -283,9 +280,9 @@ shaper_y_calc_position(struct stepper_kinematics *sk, struct move *m
                        , double move_time)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    if (!is->y_n)
+    if (!is->sy.num_pulses)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
-    is->m.start_pos.y = calc_position(m, 'y', move_time, is->y_pulses, is->y_n);
+    is->m.start_pos.y = calc_position(m, 'y', move_time, &is->sy);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -295,15 +292,13 @@ shaper_xy_calc_position(struct stepper_kinematics *sk, struct move *m
                         , double move_time)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    if (!is->x_n && !is->y_n)
+    if (!is->sx.num_pulses && !is->sy.num_pulses)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
     is->m.start_pos = move_get_coord(m, move_time);
-    if (is->x_n)
-        is->m.start_pos.x = calc_position(m, 'x', move_time
-                                          , is->x_pulses, is->x_n);
-    if (is->y_n)
-        is->m.start_pos.y = calc_position(m, 'y', move_time
-                                          , is->y_pulses, is->y_n);
+    if (is->sx.num_pulses)
+        is->m.start_pos.x = calc_position(m, 'x', move_time, &is->sx);
+    if (is->sy.num_pulses)
+        is->m.start_pos.y = calc_position(m, 'y', move_time, &is->sy);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -311,15 +306,15 @@ static void
 shaper_note_generation_time(struct input_shaper *is)
 {
     double pre_active = 0., post_active = 0.;
-    if ((is->sk.active_flags & AF_X) && is->x_n) {
-        pre_active = is->x_pulses[is->x_n-1].t;
-        post_active = -is->x_pulses[0].t;
+    if ((is->sk.active_flags & AF_X) && is->sx.num_pulses) {
+        pre_active = is->sx.pulses[is->sx.num_pulses-1].t;
+        post_active = -is->sx.pulses[0].t;
     }
-    if ((is->sk.active_flags & AF_Y) && is->y_n) {
-        pre_active = is->y_pulses[is->y_n-1].t > pre_active
-            ? is->y_pulses[is->y_n-1].t : pre_active;
-        post_active = -is->y_pulses[0].t > post_active
-            ? -is->y_pulses[0].t : post_active;
+    if ((is->sk.active_flags & AF_Y) && is->sy.num_pulses) {
+        pre_active = is->sy.pulses[is->sy.num_pulses-1].t > pre_active
+            ? is->sy.pulses[is->sy.num_pulses-1].t : pre_active;
+        post_active = -is->sy.pulses[0].t > post_active
+            ? -is->sy.pulses[0].t : post_active;
     }
     is->sk.gen_steps_pre_active = pre_active;
     is->sk.gen_steps_post_active = post_active;
@@ -370,23 +365,19 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk
         return -1;
 
     int af = is->orig_sk->active_flags & (AF_X | AF_Y);
-    free(is->x_pulses);
     if ((af & AF_X) && shaper_freq_x > 0.) {
         init_shaper_callbacks[shaper_type_x](
-                shaper_freq_x, damping_ratio_x, &is->x_pulses, &is->x_n);
-        shift_pulses(is->x_n, is->x_pulses);
+                shaper_freq_x, damping_ratio_x, &is->sx);
+        shift_pulses(&is->sx);
     } else {
-        is->x_pulses = NULL;
-        is->x_n = 0;
+        is->sx.num_pulses = 0;
     }
-    free(is->y_pulses);
     if ((af & AF_Y) && shaper_freq_y > 0.) {
         init_shaper_callbacks[shaper_type_y](
-                shaper_freq_y, damping_ratio_y, &is->y_pulses, &is->y_n);
-        shift_pulses(is->y_n, is->y_pulses);
+                shaper_freq_y, damping_ratio_y, &is->sy);
+        shift_pulses(&is->sy);
     } else {
-        is->y_pulses = NULL;
-        is->y_n = 0;
+        is->sy.num_pulses = 0;
     }
     shaper_note_generation_time(is);
     return 0;
@@ -401,14 +392,12 @@ input_shaper_get_step_generation_window(int shaper_type, double shaper_freq
     if (shaper_type >= ARRAY_SIZE(init_shaper_callbacks) || shaper_type < 0)
         return 0.;
     is_init_shaper_callback init_shaper_cb = init_shaper_callbacks[shaper_type];
-    int n;
-    struct shaper_pulse *pulses;
-    init_shaper_cb(shaper_freq, damping_ratio, &pulses, &n);
-    shift_pulses(n, pulses);
-    double window = -pulses[0].t;
-    if (pulses[n-1].t > window)
-        window = pulses[n-1].t;
-    free(pulses);
+    struct shaper_pulses sp;
+    init_shaper_cb(shaper_freq, damping_ratio, &sp);
+    shift_pulses(&sp);
+    double window = -sp.pulses[0].t;
+    if (sp.pulses[sp.num_pulses-1].t > window)
+        window = sp.pulses[sp.num_pulses-1].t;
     return window;
 }
 
