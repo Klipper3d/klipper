@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# Encrypts STM32 firmwares to be flashable from SD card by Chitu motherboards.
+# Encodes STM32 firmwares to be flashable from SD card by Chitu motherboards.
 # Relocate firmware to 0x08008800!
 
 # Copied from Marlin and modified.
@@ -64,7 +64,7 @@ def xor_block(r0, r1, block_number, block_size, file_key):
         loop_counter = loop_counter + 1
 
 
-def encrypt_file(input, output_file, file_length):
+def encode_file(input, output_file, file_length):
     input_file = bytearray(input.read())
     block_size = 0x800
     key_length = 0x18
@@ -81,7 +81,7 @@ def encrypt_file(input, output_file, file_length):
 
     # write the file header
     output_file.write(struct.pack(">I", 0x443D2D3F))
-    # encrypt the contents using a known file header key
+    # encode the contents using a known file header key
 
     # write the file_key
     output_file.write(struct.pack("<I", file_key))
@@ -103,28 +103,32 @@ def encrypt_file(input, output_file, file_length):
     # write CRC
     output_file.write(struct.pack("<I", xor_crc))
 
-    # finally, append the encrypted results.
+    # finally, append the encoded results.
     output_file.write(input_file)
     return
 
-if len(sys.argv) == 1:
-    print("Usage: chitu_crypt [firmware.bin]")
-    exit(1)
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: update_chitu <input_file> <output_file>")
+        exit(1)
 
-fw = sys.argv[-1]
+    fw, output = sys.argv[1:]
 
-if not os.path.isfile(fw):
-    print("Usage: chitu_crypt [firmware.bin]")
-    print("Firmware file", fw, "does not exist")
-    exit(1)
+    if not os.path.isfile(fw):
+        print("Usage: update_chitu <input_file> <output_file>")
+        print("Firmware file", fw, "does not exist")
+        exit(1)
 
-firmware = open(fw, "rb")
-update = open('./update.cbd', "wb")
-length = os.path.getsize(fw)
+    firmware = open(fw, "rb")
+    update = open(output, "wb")
+    length = os.path.getsize(fw)
 
-encrypt_file(firmware, update, length)
+    encode_file(firmware, update, length)
 
-firmware.close()
-update.close()
+    firmware.close()
+    update.close()
 
-print("Encryption complete. Firmware is written to update.cbd.")
+    print("Encoding complete.")
+
+if __name__ == '__main__':
+    main()
