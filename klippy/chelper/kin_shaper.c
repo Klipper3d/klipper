@@ -13,32 +13,10 @@
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // struct move
 
+
 /****************************************************************
- * Generic position calculation via shaper convolution
+ * Shaper-specific initialization
  ****************************************************************/
-
-static inline double
-get_axis_position(struct move *m, int axis, double move_time)
-{
-    double axis_r = m->axes_r.axis[axis - 'x'];
-    double start_pos = m->start_pos.axis[axis - 'x'];
-    double move_dist = move_get_distance(m, move_time);
-    return start_pos + axis_r * move_dist;
-}
-
-static inline double
-get_axis_position_across_moves(struct move *m, int axis, double time)
-{
-    while (likely(time < 0.)) {
-        m = list_prev_entry(m, node);
-        time += m->move_t;
-    }
-    while (likely(time > m->move_t)) {
-        time -= m->move_t;
-        m = list_next_entry(m, node);
-    }
-    return get_axis_position(m, axis, time);
-}
 
 struct shaper_pulses {
     int num_pulses;
@@ -46,46 +24,6 @@ struct shaper_pulses {
         double t, a;
     } pulses[5];
 };
-
-// Calculate the position from the convolution of the shaper with input signal
-static inline double
-calc_position(struct move *m, int axis, double move_time
-              , struct shaper_pulses *sp)
-{
-    double res = 0.;
-    int num_pulses = sp->num_pulses, i;
-    for (i = 0; i < num_pulses; ++i) {
-        double t = sp->pulses[i].t, a = sp->pulses[i].a;
-        res += a * get_axis_position_across_moves(m, axis, move_time + t);
-    }
-    return res;
-}
-
-/****************************************************************
- * Shaper-specific initialization
- ****************************************************************/
-
-#define EI_SHAPER_VIB_TOL 0.05
-
-enum INPUT_SHAPER_TYPE {
-    INPUT_SHAPER_ZV = 0,
-    INPUT_SHAPER_ZVD = 1,
-    INPUT_SHAPER_MZV = 2,
-    INPUT_SHAPER_EI = 3,
-    INPUT_SHAPER_2HUMP_EI = 4,
-    INPUT_SHAPER_3HUMP_EI = 5,
-};
-
-struct input_shaper {
-    struct stepper_kinematics sk;
-    struct stepper_kinematics *orig_sk;
-    struct move m;
-    struct shaper_pulses sx, sy;
-};
-
-typedef void (*is_init_shaper_callback)(double shaper_freq
-                                        , double damping_ratio
-                                        , struct shaper_pulses *sp);
 
 static inline double
 calc_ZV_K(double damping_ratio)
@@ -161,6 +99,8 @@ init_shaper_mzv(double shaper_freq, double damping_ratio
     sp->pulses[1].a = a2 * inv_D;
     sp->pulses[2].a = a1 * inv_D;
 }
+
+#define EI_SHAPER_VIB_TOL 0.05
 
 static void
 init_shaper_ei(double shaper_freq, double damping_ratio
@@ -256,11 +196,83 @@ shift_pulses(struct shaper_pulses *sp)
         sp->pulses[i].t -= ts;
 }
 
+enum INPUT_SHAPER_TYPE {
+    INPUT_SHAPER_ZV = 0,
+    INPUT_SHAPER_ZVD = 1,
+    INPUT_SHAPER_MZV = 2,
+    INPUT_SHAPER_EI = 3,
+    INPUT_SHAPER_2HUMP_EI = 4,
+    INPUT_SHAPER_3HUMP_EI = 5,
+};
+
+typedef void (*is_init_shaper_callback)(double shaper_freq
+                                        , double damping_ratio
+                                        , struct shaper_pulses *sp);
+
+static is_init_shaper_callback init_shaper_callbacks[] = {
+    [INPUT_SHAPER_ZV] = &init_shaper_zv,
+    [INPUT_SHAPER_ZVD] = &init_shaper_zvd,
+    [INPUT_SHAPER_MZV] = &init_shaper_mzv,
+    [INPUT_SHAPER_EI] = &init_shaper_ei,
+    [INPUT_SHAPER_2HUMP_EI] = &init_shaper_2hump_ei,
+    [INPUT_SHAPER_3HUMP_EI] = &init_shaper_3hump_ei,
+};
+
+
+/****************************************************************
+ * Generic position calculation via shaper convolution
+ ****************************************************************/
+
+static inline double
+get_axis_position(struct move *m, int axis, double move_time)
+{
+    double axis_r = m->axes_r.axis[axis - 'x'];
+    double start_pos = m->start_pos.axis[axis - 'x'];
+    double move_dist = move_get_distance(m, move_time);
+    return start_pos + axis_r * move_dist;
+}
+
+static inline double
+get_axis_position_across_moves(struct move *m, int axis, double time)
+{
+    while (likely(time < 0.)) {
+        m = list_prev_entry(m, node);
+        time += m->move_t;
+    }
+    while (likely(time > m->move_t)) {
+        time -= m->move_t;
+        m = list_next_entry(m, node);
+    }
+    return get_axis_position(m, axis, time);
+}
+
+// Calculate the position from the convolution of the shaper with input signal
+static inline double
+calc_position(struct move *m, int axis, double move_time
+              , struct shaper_pulses *sp)
+{
+    double res = 0.;
+    int num_pulses = sp->num_pulses, i;
+    for (i = 0; i < num_pulses; ++i) {
+        double t = sp->pulses[i].t, a = sp->pulses[i].a;
+        res += a * get_axis_position_across_moves(m, axis, move_time + t);
+    }
+    return res;
+}
+
+
 /****************************************************************
  * Kinematics-related shaper code
  ****************************************************************/
 
 #define DUMMY_T 500.0
+
+struct input_shaper {
+    struct stepper_kinematics sk;
+    struct stepper_kinematics *orig_sk;
+    struct move m;
+    struct shaper_pulses sx, sy;
+};
 
 // Optimized calc_position when only x axis is needed
 static double
@@ -302,24 +314,6 @@ shaper_xy_calc_position(struct stepper_kinematics *sk, struct move *m
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
-static void
-shaper_note_generation_time(struct input_shaper *is)
-{
-    double pre_active = 0., post_active = 0.;
-    if ((is->sk.active_flags & AF_X) && is->sx.num_pulses) {
-        pre_active = is->sx.pulses[is->sx.num_pulses-1].t;
-        post_active = -is->sx.pulses[0].t;
-    }
-    if ((is->sk.active_flags & AF_Y) && is->sy.num_pulses) {
-        pre_active = is->sy.pulses[is->sy.num_pulses-1].t > pre_active
-            ? is->sy.pulses[is->sy.num_pulses-1].t : pre_active;
-        post_active = -is->sy.pulses[0].t > post_active
-            ? -is->sy.pulses[0].t : post_active;
-    }
-    is->sk.gen_steps_pre_active = pre_active;
-    is->sk.gen_steps_post_active = post_active;
-}
-
 int __visible
 input_shaper_set_sk(struct stepper_kinematics *sk
                     , struct stepper_kinematics *orig_sk)
@@ -339,14 +333,23 @@ input_shaper_set_sk(struct stepper_kinematics *sk
     return 0;
 }
 
-static is_init_shaper_callback init_shaper_callbacks[] = {
-    [INPUT_SHAPER_ZV] = &init_shaper_zv,
-    [INPUT_SHAPER_ZVD] = &init_shaper_zvd,
-    [INPUT_SHAPER_MZV] = &init_shaper_mzv,
-    [INPUT_SHAPER_EI] = &init_shaper_ei,
-    [INPUT_SHAPER_2HUMP_EI] = &init_shaper_2hump_ei,
-    [INPUT_SHAPER_3HUMP_EI] = &init_shaper_3hump_ei,
-};
+static void
+shaper_note_generation_time(struct input_shaper *is)
+{
+    double pre_active = 0., post_active = 0.;
+    if ((is->sk.active_flags & AF_X) && is->sx.num_pulses) {
+        pre_active = is->sx.pulses[is->sx.num_pulses-1].t;
+        post_active = -is->sx.pulses[0].t;
+    }
+    if ((is->sk.active_flags & AF_Y) && is->sy.num_pulses) {
+        pre_active = is->sy.pulses[is->sy.num_pulses-1].t > pre_active
+            ? is->sy.pulses[is->sy.num_pulses-1].t : pre_active;
+        post_active = -is->sy.pulses[0].t > post_active
+            ? -is->sy.pulses[0].t : post_active;
+    }
+    is->sk.gen_steps_pre_active = pre_active;
+    is->sk.gen_steps_post_active = post_active;
+}
 
 int __visible
 input_shaper_set_shaper_params(struct stepper_kinematics *sk
