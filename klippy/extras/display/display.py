@@ -8,6 +8,11 @@
 import logging, os, ast
 from . import hd44780, st7920, uc1701, menu
 
+# Normal time between each screen redraw
+REDRAW_TIME = 0.500
+# Minimum time between screen redraws
+REDRAW_MIN_TIME = 0.100
+
 LCD_chips = {
     'st7920': st7920.ST7920, 'hd44780': hd44780.HD44780,
     'uc1701': uc1701.UC1701, 'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
@@ -190,21 +195,21 @@ class PrinterLCD:
     def screen_update_event(self, eventtime):
         if self.redraw_request_pending:
             self.redraw_request_pending = False
-            self.redraw_time = eventtime + 0.250
+            self.redraw_time = eventtime + REDRAW_MIN_TIME
         self.lcd_chip.clear()
         # update menu component
         if self.menu is not None:
             ret = self.menu.screen_update_event(eventtime)
             if ret:
                 self.lcd_chip.flush()
-                return eventtime + .500
+                return eventtime + REDRAW_TIME
         # Update normal display
         try:
             self.show_data_group.show(self, self.display_templates, eventtime)
         except:
             logging.exception("Error during display screen update")
         self.lcd_chip.flush()
-        return eventtime + .500
+        return eventtime + REDRAW_TIME
     def request_redraw(self):
         if self.redraw_request_pending:
             return
