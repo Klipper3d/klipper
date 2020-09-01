@@ -669,7 +669,7 @@ class MCU:
         self._reactor.pause(self._reactor.monotonic() + 2.)
         chelper.run_hub_ctrl(1)
     def _restart_via_pin(self):
-        logging.info("Attempting MCU '%s' reset via pin toggling", self._name)
+        logging.error("Attempting MCU '%s' reset via pin toggling", self._name)
         self._disconnect()
         reset_pin = 196 # PG4
         cmd = "sudo /usr/bin/gpioset 1 {}={}"
@@ -678,7 +678,7 @@ class MCU:
         x = os.system(cmd.format(reset_pin, 1))
         logging.info("Done with result {}".format(x))
     def _restart_via_script(self):
-        logging.info("Attempting MCU '%s' reset via script", self._name)
+        logging.error("Attempting MCU '%s' reset via script", self._name)
         self._disconnect()
         cmd = "sudo /home/klipper/klipper/scripts/flash-ar100.py --reset"
         x = os.system(cmd)

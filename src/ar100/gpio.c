@@ -26,7 +26,8 @@ struct gpio_mux gpio_mux_setup(uint8_t pin, enum pin_func func){
 
   struct gpio_mux ret = {
     .pin = p,
-    .reg = data_reg
+    .reg = data_reg,
+    .bank = bank
   };
   return ret;
 }
@@ -51,7 +52,6 @@ void gpio_out_write(struct gpio_out pin, uint8_t val){
 }
 
 void gpio_out_reset(struct gpio_out pin){
-
 }
 
 uint8_t gpio_in_read(struct gpio_in pin){

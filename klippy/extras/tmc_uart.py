@@ -181,7 +181,7 @@ def lookup_tmc_uart_bitbang(config, max_addr):
         raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
     select_pins_desc = config.get('select_pins', None)
     addr = config.getint('uart_address', 0, minval=0, maxval=max_addr)
-    tty = config.getint('uart_tty', 1)
+    tty = config.getint('uart_tty', 2)
     logging.info("TTY=%i" % (tty))
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:

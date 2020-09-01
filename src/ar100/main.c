@@ -113,8 +113,6 @@ __noreturn void main(uint32_t exception){
 
   r_uart_init();
   uart_puts("**Start**\n");
-  //timer_init();
-  //time_gpio();
   sched_main();
 	while(1){} // Stop complaining about noreturn
 }

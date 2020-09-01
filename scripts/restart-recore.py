@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import os
+
 def compute_crc8_atm(datagram, initial_value=0):
     crc = initial_value
     # Iterate bytes in data
@@ -24,6 +26,28 @@ def write_bytes(addr, reg, data, tty):
     with open(tty, "wb") as f:
         f.write(bytes(to_send))
 
+
+
+# Enable high power
+os.system("gpioset 1 194=0")
+
+# reset STM32
+os.system("gpioset 1 196=0")
+os.system("gpioset 1 196=1")
+
+# reset AR100
+os.system("/home/klipper/klipper/scripts/flash-ar100.py --reset")
+
+os.system("gpioset 1 102=1")
+os.system("gpioset 1 120=1")
+os.system("gpioset 1 160=1")
+os.system("gpioset 1 161=1")
+
+os.system("gpioget 1 100")
+os.system("gpioget 1 235")
+os.system("gpioget 1 145")
+os.system("gpioget 1 34")
+
 # Write Rsense int
 write_bytes(0, 0x00, [0x00, 0x00, 0x01, 0x82], "/dev/ttyS2")
 write_bytes(1, 0x00, [0x00, 0x00, 0x01, 0x82], "/dev/ttyS2")
@@ -41,4 +65,9 @@ write_bytes(0, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(1, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(2, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(3, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
+
+
+
+# restart klipper
+os.system("systemctl restart klipper")
 

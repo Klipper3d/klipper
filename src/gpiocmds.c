@@ -141,7 +141,7 @@ soft_pwm_toggle_event(struct timer *timer)
         waketime = s->end_time;
     }
     s->timer.waketime = waketime;
-    return SF_REULE;
+    return SF_RESCHEDULE;
 }
 
 // Load next pwm settings
