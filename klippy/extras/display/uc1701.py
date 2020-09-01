@@ -18,7 +18,7 @@ class DisplayBase:
         # framebuffers
         self.columns = columns
         self.vram = [bytearray(self.columns) for i in range(8)]
-        self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
+        self.all_framebuffers = [(self.vram[i], bytearray(b'~'*self.columns), i)
                                  for i in range(8)]
         # Cache fonts and icons in display byte order
         self.font = [self._swizzle_bits(bytearray(c))

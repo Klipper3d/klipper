@@ -376,7 +376,7 @@ class GCodeIO:
             return
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
-        lines = data.split('\n')
+        lines = data.decode().split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands

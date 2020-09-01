@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, Queue as queue
+import os, select, math, time, queue
 import greenlet
 import chelper, util
 
@@ -153,13 +153,13 @@ class SelectReactor:
         self._async_queue.put_nowait(
             (ReactorCallback, (self, callback, waketime)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def async_complete(self, completion, result):
         self._async_queue.put_nowait((completion.complete, (result,)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def _got_pipe_signal(self, eventtime):
