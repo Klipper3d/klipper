@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20200902: The RTD resistance-to-temperature calculation for MAX31865
+converters has been corrected to not read low.  If you are using such a
+device, you should recalibrate your print temperature and PID settings.
+
 20200816: The gcode macro `printer.gcode` object has been renamed to
 `printer.gcode_move`.  Several undocumented variables in
 `printer.toolhead` and `printer.gcode` have been removed.  See
