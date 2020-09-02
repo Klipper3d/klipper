@@ -267,15 +267,18 @@ MAX31865_FAULT_REFINHIGH       = 0x10
 MAX31865_FAULT_RTDINLOW        = 0x08
 MAX31865_FAULT_OVUV            = 0x04
 
-VAL_A = 0.00390830
-VAL_B = 0.0000005775
-VAL_C = -0.00000000000418301
-VAL_ADC_MAX = 32768.0 # 2^15
+MAX31865_ADC_MAX = 1<<15
+
+# Callendar-Van Dusen constants for platinum resistance thermometers (RTD)
+CVD_A = 3.9083e-3
+CVD_B = -5.775e-7
 
 class MAX31865(SensorBase):
     def __init__(self, config):
-        self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
-        self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
+        rtd_nominal_r = config.getfloat('rtd_nominal_r', 100., above=0.)
+        rtd_reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
+        adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
+        self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
         SensorBase.__init__(self, config, "MAX31865",
                             self.build_spi_init(config))
     def calc_temp(self, adc, fault):
@@ -295,20 +298,20 @@ class MAX31865(SensorBase):
         if fault & 0x03:
             self.fault("Max31865 Unspecified error")
         adc = adc >> 1 # remove fault bit
-        R_rtd = (self.reference_r * adc) / VAL_ADC_MAX
-        temp = ((( ( -1 * self.rtd_nominal_r ) * VAL_A )
-                 + math.sqrt( ( self.rtd_nominal_r**2 * VAL_A * VAL_A )
-                              - ( 4 * self.rtd_nominal_r * VAL_B
-                                  * ( self.rtd_nominal_r - R_rtd ) )))
-                / (2 * self.rtd_nominal_r * VAL_B))
+        R_div_nominal = adc * self.adc_to_resist_div_nominal
+        # Resistance (relative to rtd_nominal_r) is calculated using:
+        #  R_div_nominal = 1. + CVD_A * temp + CVD_B * temp**2
+        # Solve for temp using quadratic equation:
+        #  temp = (-b +- sqrt(b**2 - 4ac)) / 2a
+        discriminant = math.sqrt(CVD_A**2 - 4. * CVD_B * (1. - R_div_nominal))
+        temp = (-CVD_A + discriminant) / (2. * CVD_B)
         return temp
     def calc_adc(self, temp):
-        R_rtd = temp * ( 2 * self.rtd_nominal_r * VAL_B )
-        R_rtd = math.pow( ( R_rtd + ( self.rtd_nominal_r * VAL_A ) ), 2)
-        R_rtd = -1 * ( R_rtd - (self.rtd_nominal_r**2 * VAL_A * VAL_A ) )
-        R_rtd = R_rtd / ( 4 * self.rtd_nominal_r * VAL_B )
-        R_rtd = ( -1 * R_rtd ) + self.rtd_nominal_r
-        adc = int( ( ( R_rtd * VAL_ADC_MAX ) / self.reference_r) + 0.5 )
+        # Calculate relative resistance via Callendar-Van Dusen formula:
+        #  resistance = rtd_nominal_r * (1 + CVD_A * temp + CVD_B * temp**2)
+        R_div_nominal = 1. + CVD_A * temp + CVD_B * temp * temp
+        adc = int(R_div_nominal / self.adc_to_resist_div_nominal + 0.5)
+        adc = max(0, min(MAX31865_ADC_MAX, adc))
         adc = adc << 1 # Add fault bit
         return adc
     def build_spi_init(self, config):
