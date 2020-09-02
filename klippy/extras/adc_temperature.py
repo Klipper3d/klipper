@@ -262,7 +262,7 @@ AD8497 = [
 ]
 
 def calc_pt100(base=100.):
-    # Calc PT100/PT1000 temperature/resistance pairs using formula
+    # Calc PT100/PT1000 resistances using Callendar-Van Dusen formula
     A, B = (3.9083e-3, -5.775e-7)
     return [(float(t), base * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
 
