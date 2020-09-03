@@ -124,7 +124,7 @@ class InputShaper:
                               self.shapers.keys()[
                                   self.shapers.values().index(shaper_type_x)]
                               , self.shapers.keys()[
-                                  self.shapers.values().index(shaper_type_x)]
+                                  self.shapers.values().index(shaper_type_y)]
                               , shaper_freq_x, shaper_freq_y
                               , damping_ratio_x, damping_ratio_y))
 
