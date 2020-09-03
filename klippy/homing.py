@@ -164,8 +164,4 @@ class CommandError(Exception):
 class EndstopError(CommandError):
     pass
 
-def EndstopMoveError(pos, msg="Move out of range"):
-    return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
-            msg, pos[0], pos[1], pos[2], pos[3]))
-
 Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))

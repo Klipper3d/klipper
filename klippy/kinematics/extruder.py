@@ -217,8 +217,7 @@ class DummyExtruder:
     def update_move_time(self, flush_time):
         pass
     def check_move(self, move):
-        raise homing.EndstopMoveError(
-            move.end_pos, "Extrude when no extruder present")
+        raise move.move_error("Extrude when no extruder present")
     def calc_junction(self, prev_move, move):
         return move.max_cruise_v2
     def get_name(self):

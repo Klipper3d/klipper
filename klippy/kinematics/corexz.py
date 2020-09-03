@@ -76,9 +76,8 @@ class CoreXZKinematics:
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise homing.EndstopMoveError(
-                        end_pos, "Must home axis first")
-                raise homing.EndstopMoveError(end_pos)
+                    raise move.move_error("Must home axis first")
+                raise move.move_error()
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
