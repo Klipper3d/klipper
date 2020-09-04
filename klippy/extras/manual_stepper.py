@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import stepper, homing, chelper
+import stepper, chelper
 from . import force_move
 
 ENDSTOP_SAMPLE_TIME = .000015
@@ -110,7 +110,7 @@ class ManualStepper:
                 error = str(e)
         self.sync_print_time()
         if error is not None:
-            raise homing.CommandError(error)
+            raise self.printer.command_error(error)
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
     def cmd_MANUAL_STEPPER(self, gcmd):
         enable = gcmd.get_int('ENABLE', None)

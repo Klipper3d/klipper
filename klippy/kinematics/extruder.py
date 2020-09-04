@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, chelper
+import stepper, chelper
 
 class PrinterExtruder:
     def __init__(self, config, extruder_num):
@@ -214,6 +214,8 @@ class PrinterExtruder:
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
+    def __init__(self, printer):
+        self.printer = printer
     def update_move_time(self, flush_time):
         pass
     def check_move(self, move):
@@ -223,7 +225,7 @@ class DummyExtruder:
     def get_name(self):
         return ""
     def get_heater(self):
-        raise homing.CommandError("Extruder not configured")
+        raise self.printer.command_error("Extruder not configured")
 
 def add_printer_objects(config):
     printer = config.get_printer()

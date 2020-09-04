@@ -250,7 +250,7 @@ class ToolHead:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.step_generators = []
         # Create kinematics class
-        self.extruder = kinematics.extruder.DummyExtruder()
+        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         kin_name = config.get('kinematics')
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
@@ -470,7 +470,7 @@ class ToolHead:
         # Submit move
         try:
             self.move(newpos, speed)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             self.flush_step_generation()
             raise
         # Transmit move in "drip" mode
