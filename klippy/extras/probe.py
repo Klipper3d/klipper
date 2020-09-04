@@ -8,10 +8,9 @@ import pins, homing
 from . import manual_probe
 
 HINT_TIMEOUT = """
-Make sure to home the printer before probing. If the probe
-did not move far enough to trigger, then consider reducing
-the Z axis minimum position so the probe can travel further
-(the Z minimum position can be negative).
+If the probe did not move far enough to trigger, then
+consider reducing the Z axis minimum position so the probe
+can travel further (the Z minimum position can be negative).
 """
 
 class PrinterProbe:
@@ -107,6 +106,9 @@ class PrinterProbe:
         return self.x_offset, self.y_offset, self.z_offset
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
+        curtime = self.printer.get_reactor().monotonic()
+        if 'z' not in toolhead.get_status(curtime)['homed_axes']:
+            raise self.printer.command_error("Must home before probe")
         homing_state = homing.Homing(self.printer)
         pos = toolhead.get_position()
         pos[2] = self.z_position
