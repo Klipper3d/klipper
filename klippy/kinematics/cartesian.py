@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, homing
+import stepper
 
 class CartKinematics:
     def __init__(self, toolhead, config):

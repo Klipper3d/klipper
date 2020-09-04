@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, mathutil
+import stepper, mathutil
 
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.

@@ -55,9 +55,9 @@ class Move:
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
-        pos = self.end_pos
-        return homing.EndstopError("%s: %.3f %.3f %.3f [%.3f]"
-                                   % (msg, pos[0], pos[1], pos[2], pos[3]))
+        ep = self.end_pos
+        m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
