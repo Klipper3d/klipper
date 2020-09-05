@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import homing
 from . import probe
 
 SIGNAL_PERIOD = 0.020
@@ -82,7 +81,7 @@ class BLTouchEndstopWrapper:
         self.set_output_mode(self.output_mode)
         try:
             self.raise_probe()
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             logging.warning("BLTouch raise probe error: %s", str(e))
     def sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
@@ -128,7 +127,8 @@ class BLTouchEndstopWrapper:
                 # The "probe raised" test completed successfully
                 break
             if retry >= 2:
-                raise homing.EndstopError("BLTouch failed to raise probe")
+                raise self.printer.command_error(
+                    "BLTouch failed to raise probe")
             msg = "Failed to verify BLTouch probe is raised; retrying."
             self.gcode.respond_info(msg)
             self.sync_mcu_print_time()
@@ -161,7 +161,7 @@ class BLTouchEndstopWrapper:
                 return
             msg = "BLTouch failed to verify sensor state"
             if retry >= 2:
-                raise homing.EndstopError(msg)
+                raise self.printer.command_error(msg)
             self.gcode.respond_info(msg + '; retrying.')
             self.send_cmd('reset', duration=RETRY_RESET_TIME)
     def multi_probe_begin(self):
@@ -191,7 +191,7 @@ class BLTouchEndstopWrapper:
         # Verify the probe actually deployed during the attempt
         for s, mcu_pos in self.start_mcu_pos:
             if s.get_mcu_position() == mcu_pos:
-                raise homing.EndstopError("BLTouch failed to deploy")
+                raise self.printer.command_error("BLTouch failed to deploy")
     def home_start(self, print_time, sample_time, sample_count, rest_time):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
         return self.mcu_endstop.home_start(print_time, sample_time,

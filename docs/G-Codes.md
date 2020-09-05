@@ -633,3 +633,17 @@ section is enabled:
   [target=<target_temperature>]`: Sets the target temperature for a
   temperature_fan. If a target is not supplied, it is set to the
   specified temperature in the config file.
+
+## Adxl345 Accelerometer Commands
+
+The following command is available when an "adxl345" config section is
+enabled:
+- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
+  [NAME=<value>]`: Starts accelerometer measurements at the requested
+  number of samples per second. If CHIP is not specified it defaults
+  to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
+  and 3200. If RATE is zero (or not specified) then the current series
+  of measurements are stopped and the results are written to a file
+  named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
+  parameter. If NAME is not specified it defaults to the current time
+  in "YYYYMMDD_HHMMSS" format.
