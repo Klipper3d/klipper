@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
-import homing
 
 class ManualProbe:
     def __init__(self, config):
@@ -97,7 +96,7 @@ class ManualProbeHelper:
             if curpos[2] < z_bob_pos:
                 self.toolhead.manual_move([None, None, z_bob_pos], self.speed)
             self.toolhead.manual_move([None, None, z_pos], self.speed)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             self.finalize(False)
             raise
     def report_z_status(self, warn_no_change=False, prev_pos=None):

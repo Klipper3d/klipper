@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, mathutil
+import stepper, mathutil
 
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.
@@ -118,7 +118,7 @@ class DeltaKinematics:
             # Normal XY move
             return
         if self.need_home:
-            raise homing.EndstopMoveError(end_pos, "Must home first")
+            raise move.move_error("Must home first")
         end_z = end_pos[2]
         limit_xy2 = self.max_xy2
         if end_z > self.limit_z:
@@ -127,7 +127,7 @@ class DeltaKinematics:
             # Move out of range - verify not a homing move
             if (end_pos[:2] != self.home_position[:2]
                 or end_z < self.min_z or end_z > self.home_position[2]):
-                raise homing.EndstopMoveError(end_pos)
+                raise move.move_error()
             limit_xy2 = -1.
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)

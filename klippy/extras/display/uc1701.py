@@ -73,8 +73,8 @@ class DisplayBase:
         pix_x = x * 8
         page_top = self.vram[y * 2]
         page_bot = self.vram[y * 2 + 1]
-        for c in data:
-            bits_top, bits_bot = self.font[ord(c)]
+        for c in bytearray(data):
+            bits_top, bits_bot = self.font[c]
             page_top[pix_x:pix_x+8] = bits_top
             page_bot[pix_x:pix_x+8] = bits_bot
             pix_x += 8

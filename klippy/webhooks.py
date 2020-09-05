@@ -228,7 +228,7 @@ class ClientConnection:
         try:
             func = self.webhooks.get_callback(web_request.get_method())
             func(web_request)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             web_request.set_error(WebRequestError(e.message))
         except Exception as e:
             msg = ("Internal Error on WebRequest: %s"

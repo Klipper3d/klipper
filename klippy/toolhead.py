@@ -54,6 +54,10 @@ class Move:
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
+    def move_error(self, msg="Move out of range"):
+        ep = self.end_pos
+        m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
@@ -246,7 +250,7 @@ class ToolHead:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.step_generators = []
         # Create kinematics class
-        self.extruder = kinematics.extruder.DummyExtruder()
+        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         kin_name = config.get('kinematics')
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
@@ -466,7 +470,7 @@ class ToolHead:
         # Submit move
         try:
             self.move(newpos, speed)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             self.flush_step_generation()
             raise
         # Transmit move in "drip" mode
