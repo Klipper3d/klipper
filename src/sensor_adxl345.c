@@ -14,7 +14,7 @@
 
 struct adxl345 {
     struct timer timer;
-    uint32_t rest_ticks, stop_time;
+    uint32_t rest_ticks;
     struct spidev_s *spi;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
