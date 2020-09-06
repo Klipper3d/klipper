@@ -13,6 +13,7 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class DisplayBase:
+    x_offset = 0
     def __init__(self, io, columns=128):
         self.send = io.send
         # framebuffers
@@ -71,6 +72,7 @@ class DisplayBase:
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pix_x = x * 8
+        pix_x += self.x_offset
         page_top = self.vram[y * 2]
         page_bot = self.vram[y * 2 + 1]
         for c in bytearray(data):
@@ -83,6 +85,7 @@ class DisplayBase:
             return
         bits_top, bits_bot = self._swizzle_bits(data)
         pix_x = x * 8
+        pix_x += self.x_offset
         page_top = self.vram[y * 2]
         page_bot = self.vram[y * 2 + 1]
         for i in range(8):
@@ -93,6 +96,7 @@ class DisplayBase:
         if icon is not None and x < 15:
             # Draw icon in graphics mode
             pix_x = x * 8
+            pix_x += self.x_offset
             page_idx = y * 2
             self.vram[page_idx][pix_x:pix_x+16] = icon[0]
             self.vram[page_idx + 1][pix_x:pix_x+16] = icon[1]
@@ -164,6 +168,7 @@ class UC1701(DisplayBase):
     def __init__(self, config):
         io = SPI4wire(config, "a0_pin")
         DisplayBase.__init__(self, io)
+        self.x_offset = config.getint('x_offset')
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
         self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
