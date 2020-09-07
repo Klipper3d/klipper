@@ -13,11 +13,11 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 TextGlyphs = { 'right_arrow': '\x1a', 'degrees': '\xf8' }
 
 class DisplayBase:
-    x_offset = 0
-    def __init__(self, io, columns=128):
+    def __init__(self, io, columns=128, x_offset=0):
         self.send = io.send
         # framebuffers
         self.columns = columns
+        self.x_offset = x_offset
         self.vram = [bytearray(self.columns) for i in range(8)]
         self.all_framebuffers = [(self.vram[i], bytearray('~'*self.columns), i)
                                  for i in range(8)]
@@ -168,7 +168,6 @@ class UC1701(DisplayBase):
     def __init__(self, config):
         io = SPI4wire(config, "a0_pin")
         DisplayBase.__init__(self, io)
-        self.x_offset = config.getint('x_offset', 0)
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
         self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
@@ -197,7 +196,7 @@ class UC1701(DisplayBase):
 
 # The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(DisplayBase):
-    def __init__(self, config, columns=128):
+    def __init__(self, config, columns=128, x_offset=0):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
             io = I2C(config, 60)
@@ -206,7 +205,7 @@ class SSD1306(DisplayBase):
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
         self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
-        DisplayBase.__init__(self, io, columns)
+        DisplayBase.__init__(self, io, columns, x_offset)
         self.contrast = config.getint('contrast', 239, minval=0, maxval=255)
         self.vcomh = config.getint('vcomh', 0, minval=0, maxval=63)
         self.invert = config.getboolean('invert', False)
@@ -237,4 +236,5 @@ class SSD1306(DisplayBase):
 # the SH1106 is SSD1306 compatible with up to 132 columns
 class SH1106(SSD1306):
     def __init__(self, config):
-        SSD1306.__init__(self, config, 132)
+        x_offset = config.getint('x_offset', 0, minval=0, maxval=3)
+        SSD1306.__init__(self, config, 132, x_offset=x_offset)
