@@ -233,28 +233,35 @@ class MCU_pwm:
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
+            "config_soft_pwm_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
-            % (self._oid, self._pin, cycle_ticks,
-               self._start_value >= 1.0, self._shutdown_value >= 0.5,
+            % (self._oid, self._pin, self._start_value >= 1.0,
+               self._shutdown_value >= 0.5,
                self._mcu.seconds_to_clock(self._max_duration)))
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
         svalue = int(self._start_value * self._pwm_max + 0.5)
         self._mcu.add_config_cmd(
-            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
-            % (self._oid, self._last_clock, svalue), is_init=True)
+            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d off_ticks=%d"
+            % (self._oid, self._last_clock, svalue, cycle_ticks - svalue),
+            is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u",
             cq=cmd_queue)
     def set_pwm(self, print_time, value):
+        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
-        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._set_cmd.send([self._oid, clock, value],
-                           minclock=self._last_clock, reqclock=clock)
+        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
+        if self._hardware_pwm:
+            self._set_cmd.send([self._oid, clock, on_ticks],
+                               minclock=self._last_clock, reqclock=clock)
+        else:
+            off_ticks = cycle_ticks - on_ticks
+            self._set_cmd.send([self._oid, clock, on_ticks, off_ticks],
+                               minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
 
 class MCU_adc:
