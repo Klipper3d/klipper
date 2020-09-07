@@ -189,6 +189,7 @@ void
 command_schedule_soft_pwm_out(uint32_t *args)
 {
     struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
+    s->cycle_time = args[3];
     uint32_t time = args[1], next_on_duration = args[2], next_off_duration;
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
     if (next_on_duration == 0 || next_on_duration >= s->cycle_time) {
@@ -221,7 +222,8 @@ command_schedule_soft_pwm_out(uint32_t *args)
     irq_enable();
 }
 DECL_COMMAND(command_schedule_soft_pwm_out,
-             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u");
+             "schedule_soft_pwm_out oid=%c clock=%u"
+             " on_ticks=%u cycle_ticks=%u");
 
 void
 soft_pwm_shutdown(void)

@@ -243,17 +243,18 @@ class MCU_pwm:
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
         svalue = int(self._start_value * self._pwm_max + 0.5)
         self._mcu.add_config_cmd(
-            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
-            % (self._oid, self._last_clock, svalue), is_init=True)
+            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d cycle_ticks=%d"
+            % (self._oid, self._last_clock, svalue, cycle_ticks), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u cycle_ticks=%u",
             cq=cmd_queue)
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time):
+        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
-        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._set_cmd.send([self._oid, clock, value],
+        value = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
+        self._set_cmd.send([self._oid, clock, value, cycle_ticks],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
 
