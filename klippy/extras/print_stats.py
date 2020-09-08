@@ -8,7 +8,13 @@ class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
         self.gcode_move = printer.load_object(config, 'gcode_move')
+        self.gcode = printer.lookup_object('gcode')
         self.reactor = printer.get_reactor()
+        self.gcode.register_command('PAUSE_STATS',
+                                     self.cmd_PAUSE_STATS)
+        self.gcode.register_command('RESUME_STATS',
+                                     self.cmd_RESUME_STATS)
+        
         self.reset()
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
@@ -73,6 +79,13 @@ class PrintStats:
             'state': self.state,
             'message': self.error_message
         }
+    def cmd_PAUSE_STATS(self,gcmd):
+        if self.last_pause_time is None:
+            curtime = self.reactor.monotonic()
+            self.last_pause_time = curtime
+
+    def cmd_RESUME_STATS(self,gcmd):
+        self.note_start()
 
 def load_config(config):
     return PrintStats(config)
