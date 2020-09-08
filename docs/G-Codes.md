@@ -64,6 +64,9 @@ In addition, the following extended commands are availble when the
 "virtual_sdcard" config section is enabled.
 - Load a file and start SD print: `SDCARD_PRINT_FILE FILENAME=<filename>`
 - Unload file and clear SD state:  `SDCARD_RESET_FILE`
+- Pause the SD print timer: PAUSE_STATS
+- Resume the SD print timer: RESUME_STATS
+
 
 ## G-Code arcs
 
@@ -228,6 +231,7 @@ The following standard commands are supported:
   calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
+- `
 
 ## G-Code Macro Commands
 
@@ -649,3 +653,4 @@ enabled:
   named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
   parameter. If NAME is not specified it defaults to the current time
   in "YYYYMMDD_HHMMSS" format.
+
