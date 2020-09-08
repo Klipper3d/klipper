@@ -653,4 +653,3 @@ enabled:
   named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
   parameter. If NAME is not specified it defaults to the current time
   in "YYYYMMDD_HHMMSS" format.
-

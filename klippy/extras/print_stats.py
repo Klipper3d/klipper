@@ -14,7 +14,6 @@ class PrintStats:
                                      self.cmd_PAUSE_STATS)
         self.gcode.register_command('RESUME_STATS',
                                      self.cmd_RESUME_STATS)
-        
         self.reset()
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
@@ -83,9 +82,7 @@ class PrintStats:
         if self.last_pause_time is None:
             curtime = self.reactor.monotonic()
             self.last_pause_time = curtime
-
     def cmd_RESUME_STATS(self,gcmd):
         self.note_start()
-
 def load_config(config):
     return PrintStats(config)
