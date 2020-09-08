@@ -248,7 +248,9 @@ class MCU_pwm:
         self._set_cmd = self._mcu.lookup_command(
             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u cycle_ticks=%u",
             cq=cmd_queue)
-    def set_pwm(self, print_time, value, cycle_time):
+    def set_pwm(self, print_time, value, cycle_time=None):
+        if cycle_time == None:
+            cycle_time=self._cycle_time
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
