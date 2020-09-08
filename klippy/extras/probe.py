@@ -26,7 +26,7 @@ class PrinterProbe:
         self.z_offset = config.getfloat('z_offset')
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
-        self.last_state = ''
+        self.last_state = False
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
