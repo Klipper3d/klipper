@@ -213,10 +213,13 @@ class MCU_pwm:
                    self._start_value * self._pwm_max,
                    self._shutdown_value * self._pwm_max,
                    self._mcu.seconds_to_clock(self._max_duration)))
-            self._mcu.add_config_cmd(
-                "set_pwm_out pin=%s cycle_ticks=%d value=%d"
-                % (self._pin, cycle_ticks, self._start_value * self._pwm_max),
-                on_restart=True)
+            curtime = self._mcu.get_printer().get_reactor().monotonic()
+            printtime = self._mcu.estimated_print_time(curtime)
+            self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
+            svalue = int(self._start_value * self._pwm_max + 0.5)
+            self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
+                                     % (self._oid, self._last_clock, svalue),
+                                     on_restart=True)
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
             return
