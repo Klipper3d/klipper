@@ -182,7 +182,7 @@ The following are common printer attributes:
   containing this reference.
 - `printer.probe.last_query`: Returns True if the probe was reported
   as "triggered" during the last QUERY_PROBE command. Note, due to the
-  order of template expansion (see above), the QUERY_STATUS command 
+  order of template expansion (see above), the QUERY_STATUS command
   must be run prior to the macro containing this reference.
 - `printer.configfile.config["<section>"]["<option>"]`: Returns the
   given config file setting as read by Klipper during the last
