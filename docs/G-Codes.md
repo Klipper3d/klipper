@@ -231,7 +231,6 @@ The following standard commands are supported:
   calibration tests.
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
-- `
 
 ## G-Code Macro Commands
 
