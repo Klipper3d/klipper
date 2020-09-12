@@ -138,4 +138,4 @@ class SwitchSensor:
 
 def load_config_prefix(config):
     return SwitchSensor(config)
-    
+
