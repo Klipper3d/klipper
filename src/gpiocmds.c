@@ -191,7 +191,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
     uint32_t time = args[1], next_on_duration = args[2],
         next_off_duration = args[3];
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
-    if (next_on_duration == 0) {
+    if (next_on_duration == 0 || next_off_duration == 0) {
         next_flags |= next_on_duration ? SPF_NEXT_ON : 0;
         if (!!next_on_duration != s->default_value && s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;

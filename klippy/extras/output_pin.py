@@ -17,6 +17,7 @@ class PrinterOutputPin:
             hardware_pwm = config.getboolean('hardware_pwm', False)
             self.mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.scale = config.getfloat('scale', 1., above=0.)
+            self.last_cycle_time = cycle_time
         else:
             self.mcu_pin = ppins.setup_pin('digital_out', config.get('pin'))
             self.scale = 1.
@@ -45,11 +46,14 @@ class PrinterOutputPin:
     def cmd_SET_PIN(self, gcmd):
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
         value /= self.scale
+        if value == self.last_value:
+            if not self.is_pwm or cycle_time == self.last_cycle_time:
+                return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
         if self.is_pwm:
             cycle_time = gcmd.get_float('CYCLE_TIME',
-                self.mcu_pin._cycle_time, above=0., maxval=0.1)
+                self.mcu_pin._cycle_time, above=0.)
             self.mcu_pin.set_pwm(print_time, value, cycle_time)
         else:
             if value not in [0., 1.]:
