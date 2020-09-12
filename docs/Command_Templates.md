@@ -192,8 +192,12 @@ The following are common printer attributes:
 - `printer.query_endstops.last_query["<endstop>"]`: Returns True if
   the given endstop was reported as "triggered" during the last
   QUERY_ENDSTOP command. Note, due to the order of template expansion
-  (see above), the QUERY_STATUS command must be run prior to the macro
-  containing this reference.
+  (see above), the QUERY_ENDSTOP command must be run prior to the
+  macro containing this reference.
+- `printer.probe.last_query`: Returns True if the probe was reported
+  as "triggered" during the last QUERY_PROBE command. Note, due to the
+  order of template expansion (see above), the QUERY_PROBE command
+  must be run prior to the macro containing this reference.
 - `printer.configfile.config["<section>"]["<option>"]`: Returns the
   given config file setting as read by Klipper during the last
   software start or restart. (Any settings changed at run-time will
