@@ -549,9 +549,6 @@ is enabled:
 
 ## Filament Sensors
 
-Both of the following sensor may be enabled at the same time as they have
-complimentary functions.
-
 The following command is available when the "filament_switch_sensor" config
 section is enabled.
 
@@ -561,23 +558,6 @@ section is enabled.
 - `SET_FILAMENT_SENSOR SENSOR=<sensor_name> ENABLE=[0|1]`: Sets the
   filament sensor on/off. If ENABLE is set to 0, the filament sensor will
   be disabled, if set to 1 it is enabled.
-
-The following command is available when the "filament_encoder_sensor" config
-section is enabled.
-
-- `QUERY_FILAMENT_ENCODER SENSOR=<sensor_name>`: Queries the current state of
-  the filament encoder. This will be either 1 or 0 for enabled or disabled.
-- `SET_FILAMENT_ENCODER SENSOR=<sensor_name> ENABLE=[0|1]`: Sets the
-  encoder sensor on/off. If ENABLE is set to 0, the filament sensor will
-  be disabled, if set to 1 it is enabled. The sensor is enabled by default when
-  this config section is enabled, but some manual control is necessary via macros
-  see "Filament_Switch_vs_Encoder" in /Docs.
-- `SET_FILAMENT_ENCODER_DELAY SENSOR=<my_sensor> DELAY=<time in seconds>`: Sets the
-  number of seconds between checks of the encoder. You're looking for an interval long
-  enough to prove that the filament is not moving because of a jam or break, but short
-  enough to avoid burning the hotend nozzle. The default is 9 seconds, but this will
-  need to be evaluated print by print for maximum effectiveness. The faster the print speed,
-  the shorter the interval may be and vice versa.
 
 ## Firmware Retraction
 

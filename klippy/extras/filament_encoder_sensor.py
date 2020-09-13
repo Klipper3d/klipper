@@ -1,11 +1,12 @@
-# filament Encoder Sensor Module by Mike Stromberg <Abom Klipper discord>
-# Based off of FIlament_Switch_Sensor by Eric Callahan <arksine.code@gmail.com>
-# Copyright (C) 2019  Eric Callahan <arksine.code@gmail.com>
+# Encoder Based Filament Sensor Module
+#
+# Copyright (C) 2020 Mike Stromberg mtstromberg@gmail.com
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+#
 import logging
 
-class RunoutHelper:
+class EncoderHelper:
     def __init__(self, config):
         self.name = config.get_name().split()[-1]
         self.printer = config.get_printer()
@@ -128,13 +129,13 @@ class SwitchSensor:
         buttons = printer.load_object(config, 'buttons')
         switch_pin = config.get('switch_pin')
         buttons.register_buttons([switch_pin], self._button_handler)
-        self.runout_helper = RunoutHelper(config)
+        self.encoder_helper = EncoderHelper(config)
     def _button_handler(self, eventtime, state):
-        self.runout_helper.last_button_event = eventtime
+        self.encoder_helper.last_button_event = eventtime
         # if runout is true, the printer was paused by the runout event handler
         # filament has been inserted thru the encoder now.
-        if self.runout_helper.runout:
-            self.runout_helper.filament_inserted()
+        if self.encoder_helper.runout:
+            self.encoder_helper.filament_inserted()
 
 def load_config_prefix(config):
     return SwitchSensor(config)
