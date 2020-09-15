@@ -45,20 +45,26 @@ pwm_event(struct timer *timer)
 
     gpio_pwm_write(p->pin, v->value);
 
-    p->first = v->next;
-    pwm_free(v);
-
     if(p->first){
         //next event scheduled
+    	irq_disable();
         p->timer.waketime = p->first->waketime;
+        p->first = v->next;		//v->next may be NULL
+        pwm_free(v);
+        irq_enable();
     } else {
-        if (v->value == p->default_value || !p->max_duration)
+        if (v->value == p->default_value || !p->max_duration) {
+        	irq_disable();
+            pwm_free(v);
+            irq_enable();
             return SF_DONE;
+        }
 
         //nothing scheduled, so lets start the safety timeout
         p->timer.waketime += p->max_duration;
         p->timer.func = pwm_end_event;
     }
+
 
     return SF_RESCHEDULE;
 }
