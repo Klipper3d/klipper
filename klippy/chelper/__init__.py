@@ -1,6 +1,6 @@
 # Wrapper around C helper code
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging
@@ -11,9 +11,11 @@ import cffi
 # c_helper.so compiling
 ######################################################################
 
-COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
-               " -flto -fwhole-program -fno-use-linker-plugin"
-               " -o %s %s")
+GCC_CMD = "gcc"
+COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
+                " -flto -fwhole-program -fno-use-linker-plugin"
+                " -o %s %s")
+SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
@@ -190,7 +192,7 @@ def get_mtimes(srcdir, filelist):
 
 # Check if the code needs to be compiled
 def check_build_code(srcdir, target, sources, cmd, other_files=[]):
-    src_times = get_mtimes(srcdir, sources + other_files)
+    src_times = get_mtimes(srcdir, sources + other_files + [__file__])
     obj_times = get_mtimes(srcdir, [target])
     if not obj_times or max(src_times) > min(obj_times):
         logging.info("Building C code module %s", target)
@@ -202,6 +204,12 @@ def check_build_code(srcdir, target, sources, cmd, other_files=[]):
             logging.error(msg)
             raise Exception(msg)
 
+def check_gcc_option(option):
+    cmd = "%s %s -S -o /dev/null -xc /dev/null > /dev/null 2>&1" % (
+        GCC_CMD, option)
+    res = os.system(cmd)
+    return res == 0
+
 FFI_main = None
 FFI_lib = None
 pyhelper_logging_callback = None
@@ -211,8 +219,11 @@ def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
-        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD
-                         , OTHER_FILES)
+        if check_gcc_option(SSE_FLAGS):
+            cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
+        else:
+            cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
+        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, cmd, OTHER_FILES)
         FFI_main = cffi.FFI()
         for d in defs_all:
             FFI_main.cdef(d)
