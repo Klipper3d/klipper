@@ -15,7 +15,7 @@
 
 //TODO: Let Move queue use the remaining chunks
 //		amount after PWM_Queue took a small amount
-#define QUEUE_NUM_ELEMS 128
+#define QUEUE_NUM_ELEMS 256
 
 /****************************************************************
  * Low level allocation

@@ -20,7 +20,7 @@ struct pwm_out_s {
     struct timer timer;
     struct gpio_pwm pin;
     uint32_t max_duration;
-    uint16_t value, default_value;		//TODO: Value redundant here?
+    uint16_t default_value;
     struct pwm_value *first, **plast;
 };
 
@@ -39,8 +39,8 @@ pwm_event(struct timer *timer)
 
     if(!v)
     {
-    	// no next pwm value, queue is empty
-    	return SF_DONE;
+        // no next pwm value, queue is empty
+        return SF_DONE;
     }
 
     gpio_pwm_write(p->pin, v->value);
@@ -49,15 +49,15 @@ pwm_event(struct timer *timer)
     pwm_free(v);
 
     if(p->first){
-    	//next event scheduled
-    	p->timer.waketime += p->first->waketime;
+        //next event scheduled
+        p->timer.waketime = p->first->waketime;
     } else {
-        if (p->value == p->default_value || !p->max_duration)
+        if (v->value == p->default_value || !p->max_duration)
             return SF_DONE;
 
         //nothing scheduled, so lets start the safety timeout
-		p->timer.waketime += p->max_duration;
-		p->timer.func = pwm_end_event;
+        p->timer.waketime += p->max_duration;
+        p->timer.func = pwm_end_event;
     }
 
     return SF_RESCHEDULE;
@@ -72,6 +72,8 @@ command_config_pwm_out(uint32_t *args)
     p->pin = pin;
     p->default_value = args[4];
     p->max_duration = args[5];
+    p->first = NULL;
+    p->plast = NULL;
 
     pwm_request_size(sizeof(struct pwm_value));
 }
@@ -92,7 +94,7 @@ command_schedule_pwm_out(uint32_t *args)
      */
 
     struct pwm_value* v = pwm_alloc();
-    v->waketime = args[1];		// TODO: is this redundant?
+    v->waketime = args[1];
     v->value = args[2];
     v->next = NULL;
 
@@ -108,7 +110,7 @@ command_schedule_pwm_out(uint32_t *args)
     	p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
     }
-    p->plast = &v->next;	//plast pointing to the new last's "next" element
+    p->plast = &v->next;	//plast to point to this new element
     irq_enable();
 
 }
