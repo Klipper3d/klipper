@@ -13,6 +13,10 @@
 #include "sched.h" // sched_clear_shutdown
 
 
+//TODO: Let Move queue use the remaining chunks
+//		amount after PWM_Queue took a small amount
+#define QUEUE_NUM_ELEMS 128
+
 /****************************************************************
  * Low level allocation
  ****************************************************************/
@@ -130,7 +134,7 @@ move_finalize(void)
     if (move_is_finalized())
         shutdown("Already finalized");
     move_request_size(sizeof(*move_free_list));
-    move_list = alloc_chunks(move_item_size, 1024, &move_count);
+    move_list = alloc_chunks(move_item_size, QUEUE_NUM_ELEMS, &move_count);
     move_reset();
 }
 
@@ -215,7 +219,7 @@ pwm_finalize(void)
     if (pwm_is_finalized())
         shutdown("PWM Already finalized");
     pwm_request_size(sizeof(*pwm_free_list));
-    pwm_list = alloc_chunks(pwm_item_size, 1024, &pwm_count);
+    pwm_list = alloc_chunks(pwm_item_size, QUEUE_NUM_ELEMS, &pwm_count);
     pwm_reset();
 }
 
