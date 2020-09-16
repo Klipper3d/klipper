@@ -33,7 +33,7 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         if self.pos == 1:
             return int(self.delay * 1.5)
         if self.pos >= SERIALBITS:
-            data = bytearray(((self.current >> 1) & 0xff,))
+            data = bytearray([(self.current >> 1) & 0xff])
             self.terminal.write(data)
             self.pos = -1
             self.current = 0
@@ -51,7 +51,7 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         self.delay = SIMULAVR_FREQ // baud
         self.current = 0
         self.pos = 0
-        self.queue = b""
+        self.queue = bytearray()
         self.sc.Add(self)
     def DoStep(self, trueHwStep):
         if not self.pos:
@@ -59,9 +59,8 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
                 data = self.terminal.read()
                 if not data:
                     return self.delay * 100
-                self.queue += data
-            self.current = (self.queue[0] << 1) | 0x200
-            self.queue = self.queue[1:]
+                self.queue.extend(data)
+            self.current = (self.queue.pop(0) << 1) | 0x200
         newstate = 'L'
         if self.current & (1 << self.pos):
             newstate = 'H'
