@@ -240,7 +240,6 @@ class MCU_pwm:
                self._mcu.seconds_to_clock(self._max_duration)))
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
-        # TODO: Here limit of change_frequency?
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
         svalue = int(self._start_value * self._pwm_max + 0.5)
         self._mcu.add_config_cmd(
@@ -254,7 +253,6 @@ class MCU_pwm:
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-         # TODO: in set_cmd limit frequency of change?
         self._set_cmd.send([self._oid, clock, value],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
