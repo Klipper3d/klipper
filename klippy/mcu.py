@@ -257,8 +257,11 @@ class MCU_pwm:
         if self._invert:
             value = 1. - value
         on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd.send([self._oid, clock, on_ticks, cycle_ticks - on_ticks],
-                           minclock=self._last_clock, reqclock=clock)
+        if(self._hardware_pwm):
+            args = [self._oid, clock, on_ticks]
+        else:
+            args = [self._oid, clock, on_ticks, cycle_ticks - on_ticks]
+        self._set_cmd.send(args, minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
 
 class MCU_adc:
