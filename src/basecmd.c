@@ -154,7 +154,6 @@ static uint16_t pwm_count;
 static uint8_t pwm_item_size;
 
 // Is the config and move queue finalized?
-// TODO: Maybe combine x_finalized functions to one
 static int
 pwm_is_finalized(void)
 {
@@ -224,6 +223,12 @@ pwm_finalize(void)
 }
 
 
+static int
+all_queues_finalized(void)
+{
+    return move_is_finalized() && pwm_is_finalized();
+}
+
 /****************************************************************
  * Generic object ids (oid)
  ****************************************************************/
@@ -246,7 +251,7 @@ oid_lookup(uint8_t oid, void *type)
 void *
 oid_alloc(uint8_t oid, void *type, uint16_t size)
 {
-    if (oid >= oid_count || oids[oid].type || pwm_is_finalized() || move_is_finalized())
+    if (oid >= oid_count || oids[oid].type || all_queues_finalized())
         shutdown("Can't assign oid");
     oids[oid].type = type;
     void *data = alloc_chunk(size);
@@ -291,7 +296,7 @@ void
 command_get_config(uint32_t *args)
 {
     sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
-          , move_is_finalized(), config_crc, move_count, sched_is_shutdown());
+          , all_queues_finalized(), config_crc, move_count, sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
