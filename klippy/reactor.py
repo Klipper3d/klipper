@@ -178,11 +178,6 @@ class SelectReactor:
         util.set_nonblock(self._pipe_fds[0])
         util.set_nonblock(self._pipe_fds[1])
         self.register_fd(self._pipe_fds[0], self._got_pipe_signal)
-    def __del__(self):
-        if self._pipe_fds is not None:
-            os.close(self._pipe_fds[0])
-            os.close(self._pipe_fds[1])
-            self._pipe_fds = None
     # Greenlets
     def _sys_pause(self, waketime):
         # Pause using system sleep for when reactor not running
@@ -251,6 +246,11 @@ class SelectReactor:
         g_next.switch()
     def end(self):
         self._process = False
+    def finalize(self):
+        if self._pipe_fds is not None:
+            os.close(self._pipe_fds[0])
+            os.close(self._pipe_fds[1])
+            self._pipe_fds = None
 
 class PollReactor(SelectReactor):
     def __init__(self):

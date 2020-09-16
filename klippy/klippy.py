@@ -48,10 +48,10 @@ Printer is shutdown
 class Printer:
     config_error = configfile.error
     command_error = homing.CommandError
-    def __init__(self, bglogger, start_args):
+    def __init__(self, main_reactor, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
-        self.reactor = reactor.Reactor()
+        self.reactor = main_reactor
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -312,11 +312,13 @@ def main():
         if bglogger is not None:
             bglogger.clear_rollover_info()
             bglogger.set_rollover_info('versions', versions)
-        printer = Printer(bglogger, start_args)
+        main_reactor = reactor.Reactor()
+        printer = Printer(main_reactor, bglogger, start_args)
         res = printer.run()
         if res in ['exit', 'error_exit']:
             break
         time.sleep(1.)
+        main_reactor.finalize()
         logging.info("Restarting printer")
         start_args['start_reason'] = res
 
