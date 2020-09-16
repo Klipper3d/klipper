@@ -157,8 +157,9 @@ class MCU_digital_out:
             "schedule_digital_out oid=%c clock=%u value=%c", cq=cmd_queue)
     def set_digital(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
+        # TODO: Is this the appropriate way to "send it out as fast as you can"?
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
-                           minclock=self._last_clock, reqclock=clock)
+                           minclock=0, reqclock=clock)
         self._last_clock = clock
     def set_pwm(self, print_time, value):
         self.set_digital(print_time, value >= 0.5)
