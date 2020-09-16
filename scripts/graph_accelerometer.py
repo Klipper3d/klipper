@@ -52,8 +52,6 @@ def plot_accel(data, logname):
 # Frequency graphing
 ######################################################################
 
-WINDOW_T_SEC = 0.5
-
 class CalibrationData:
     def __init__(self, freq_bins, times, px, py, pz):
         self.freq_bins = freq_bins
@@ -73,7 +71,7 @@ def calc_freq_response(data, max_freq):
     T = data[-1,0] - data[0,0]
     SAMPLING_FREQ = N / T
     # Round down to a power of 2 for faster FFT
-    M = 1 << int(SAMPLING_FREQ * WINDOW_T_SEC - 1).bit_length()
+    M = 1 << int(.5 * SAMPLING_FREQ - 1).bit_length()
 
     # Calculate PSD (power spectral density) of vibrations per window per
     # frequency bins (the same bins for X, Y, and Z)
@@ -122,9 +120,6 @@ def plot_compare_frequency(datas, lognames, max_freq):
         calibration_data = calc_freq_response(data, max_freq)
         freqs = calibration_data.freq_bins
         psd = calibration_data.psd_sum[freqs <= max_freq]
-        px = calibration_data.psd_x[freqs <= max_freq]
-        py = calibration_data.psd_y[freqs <= max_freq]
-        pz = calibration_data.psd_z[freqs <= max_freq]
         freqs = freqs[freqs <= max_freq]
         ax.plot(freqs, psd, label=logname, alpha=0.6)
 
