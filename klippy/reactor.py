@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, Queue as queue
+import os, select, math, time, logging, Queue as queue
 import greenlet
 import chelper, util
 
@@ -108,6 +108,7 @@ class SelectReactor:
         # Greenlets
         self._g_dispatch = None
         self._greenlets = []
+        self._all_greenlets = []
     # Timers
     def update_timer(self, timer_handler, waketime):
         timer_handler.waketime = waketime
@@ -197,6 +198,7 @@ class SelectReactor:
             g_next = self._greenlets.pop()
         else:
             g_next = ReactorGreenlet(run=self._dispatch_loop)
+            self._all_greenlets.append(g_next)
         g_next.parent = g.parent
         g.timer = self.register_timer(g.switch, waketime)
         self._next_timer = self.NOW
@@ -243,10 +245,19 @@ class SelectReactor:
             self._setup_async_callbacks()
         self._process = True
         g_next = ReactorGreenlet(run=self._dispatch_loop)
+        self._all_greenlets.append(g_next)
         g_next.switch()
     def end(self):
         self._process = False
     def finalize(self):
+        self._g_dispatch = None
+        self._greenlets = []
+        for g in self._all_greenlets:
+            try:
+                g.throw()
+            except:
+                logging.exception("reactor finalize greenlet terminate")
+        self._all_greenlets = []
         if self._pipe_fds is not None:
             os.close(self._pipe_fds[0])
             os.close(self._pipe_fds[1])
