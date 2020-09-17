@@ -766,8 +766,6 @@ class MCU:
             self._mcu_tick_stddev)
         return False, ' '.join([msg, self._serial.stats(eventtime),
                                 self._clocksync.stats(eventtime)])
-    def __del__(self):
-        self._disconnect()
 
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """
