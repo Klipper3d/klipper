@@ -222,8 +222,6 @@ class SerialReader:
         logging.info("%s: %s", params['#name'], params['#msg'])
     def handle_default(self, params):
         logging.warn("got %s", params)
-    def __del__(self):
-        self.disconnect()
 
 # Class to send a query command and return the received response
 class SerialRetryCommand:
