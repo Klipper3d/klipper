@@ -14,7 +14,7 @@
 
 
 //TODO: Let Move queue use the remaining chunks
-//		amount after PWM_Queue took a small amount
+//      after PWM_Queue took a small amount
 #define QUEUE_NUM_ELEMS 256
 
 /****************************************************************
@@ -191,7 +191,7 @@ pwm_request_size(int size)
     if (size > UINT8_MAX || pwm_is_finalized())
         shutdown("Invalid PWM request size");
     if (size > pwm_item_size)
-    	pwm_item_size = size;
+        pwm_item_size = size;
 }
 
 void
@@ -296,15 +296,16 @@ void
 command_get_config(uint32_t *args)
 {
     sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
-          , all_queues_finalized(), config_crc, move_count, sched_is_shutdown());
+          , all_queues_finalized(), config_crc, move_count,
+          sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
 void
 command_finalize_config(uint32_t *args)
 {
-	move_finalize();
-	pwm_finalize();
+    move_finalize();
+    pwm_finalize();
     config_crc = args[0];
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
@@ -321,7 +322,7 @@ config_reset(uint32_t *args)
     oids = NULL;
     move_free_list = NULL;
     move_list = NULL;
-	move_count = move_item_size = 0;
+    move_count = move_item_size = 0;
     alloc_init();
     sched_timer_reset();
     sched_clear_shutdown();

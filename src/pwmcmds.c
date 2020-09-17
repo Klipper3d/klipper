@@ -14,9 +14,9 @@
 #define GPIO(PORT, NUM) (((PORT)-'A') * 8 + (NUM))
 
 struct pwm_value {
-	uint32_t waketime;
-	uint16_t value;
-	struct pwm_value *next;
+    uint32_t waketime;
+    uint16_t value;
+    struct pwm_value *next;
 };
 
 struct pwm_out_s {
@@ -48,7 +48,7 @@ pwm_event(struct timer *timer)
     if(!v)
     {
         // no next pwm value, queue is empty
-    	// this should not happen because we check the v->next
+        // this should not happen because we check the v->next
         //fixme: Debug
         gpio_out_write(p->debug5, 0);
         return SF_DONE;
@@ -56,7 +56,8 @@ pwm_event(struct timer *timer)
 
     gpio_pwm_write(p->pin, v->value);
 
-    p->first = v->next;		//v->next may be NULL if no further elements are queued
+    //v->next may be NULL if no further elements are queued
+    p->first = v->next;
 
     if(p->first){
         //next event scheduled
@@ -66,12 +67,14 @@ pwm_event(struct timer *timer)
         gpio_out_write(p->debug7, 1);
 
     } else {
-    	// no next event schedlued
+        // no next event schedlued
         if (v->value == p->default_value || !p->max_duration) {
-        	//We either have set the default value or there is no maximum duration
-        	irq_disable();
+            // We either have set the default value
+            // or there is no maximum duration
+            irq_disable();
             pwm_free(v);
             irq_enable();
+
             //fixme: Debug
             gpio_out_write(p->debug5, 0);
             return SF_DONE;
@@ -86,7 +89,7 @@ pwm_event(struct timer *timer)
     gpio_out_write(p->debug5, 0);
     gpio_out_write(p->debug7, 0);
 
-	irq_disable();
+    irq_disable();
     pwm_free(v);
     irq_enable();
 
@@ -141,7 +144,7 @@ command_schedule_pwm_out(uint32_t *args)
 
         //if there is a p->first, there has to be a p->plast
         //if there is no first, plast is invalid.
-        *p->plast = v;	//enqueue new v into the last's "next" element
+        *p->plast = v;  //enqueue new v into the last's "next" element
     }
     else {
         // no first element set
@@ -151,7 +154,8 @@ command_schedule_pwm_out(uint32_t *args)
         sched_add_timer(&p->timer);
     }
 
-    p->plast = &v->next;	//plast to point to this new element's next pointer
+    //plast to point to this new element's next pointer
+    p->plast = &v->next;
     irq_enable();
 
     //fixme: debug
