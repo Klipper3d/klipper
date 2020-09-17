@@ -1,9 +1,9 @@
 # File descriptor and timer event helper
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, logging, Queue as queue
+import os, gc, select, math, time, logging, Queue as queue
 import greenlet
 import chelper, util
 
@@ -93,9 +93,10 @@ class ReactorMutex:
 class SelectReactor:
     NOW = _NOW
     NEVER = _NEVER
-    def __init__(self):
+    def __init__(self, gc_checking=False):
         # Main code
         self._process = False
+        self._check_gc = gc_checking
         self.monotonic = chelper.get_ffi()[1].get_monotonic
         # Timers
         self._timers = []
@@ -125,8 +126,22 @@ class SelectReactor:
         timers = list(self._timers)
         timers.pop(timers.index(timer_handler))
         self._timers = timers
-    def _check_timers(self, eventtime):
+    def _check_timers(self, eventtime, busy):
         if eventtime < self._next_timer:
+            if busy:
+                return 0.
+            if self._check_gc:
+                gi = gc.get_count()
+                if gi[0] >= 700:
+                    # Reactor looks idle and gc is due - run it
+                    if gi[1] >= 10:
+                        if gi[2] >= 10:
+                            gc.collect(2)
+                        else:
+                            gc.collect(1)
+                    else:
+                        gc.collect(0)
+                    return 0.
             return min(1., max(.001, self._next_timer - eventtime))
         self._next_timer = self.NEVER
         g_dispatch = self._g_dispatch
@@ -140,9 +155,7 @@ class SelectReactor:
                     self._end_greenlet(g_dispatch)
                     return 0.
             self._next_timer = min(self._next_timer, waketime)
-        if eventtime >= self._next_timer:
-            return 0.
-        return min(1., max(.001, self._next_timer - self.monotonic()))
+        return 0.
     # Callbacks and Completions
     def completion(self):
         return ReactorCompletion(self)
@@ -228,12 +241,15 @@ class SelectReactor:
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
             res = select.select(self._fds, [], [], timeout)
             eventtime = self.monotonic()
             for fd in res[0]:
+                busy = True
                 fd.callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
@@ -264,8 +280,8 @@ class SelectReactor:
             self._pipe_fds = None
 
 class PollReactor(SelectReactor):
-    def __init__(self):
-        SelectReactor.__init__(self)
+    def __init__(self, gc_checking=False):
+        SelectReactor.__init__(self, gc_checking)
         self._poll = select.poll()
         self._fds = {}
     # File descriptors
@@ -284,12 +300,15 @@ class PollReactor(SelectReactor):
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
             res = self._poll.poll(int(math.ceil(timeout * 1000.)))
             eventtime = self.monotonic()
             for fd, event in res:
+                busy = True
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
@@ -298,8 +317,8 @@ class PollReactor(SelectReactor):
         self._g_dispatch = None
 
 class EPollReactor(SelectReactor):
-    def __init__(self):
-        SelectReactor.__init__(self)
+    def __init__(self, gc_checking=False):
+        SelectReactor.__init__(self, gc_checking)
         self._epoll = select.epoll()
         self._fds = {}
     # File descriptors
@@ -318,12 +337,15 @@ class EPollReactor(SelectReactor):
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
             res = self._epoll.poll(timeout)
             eventtime = self.monotonic()
             for fd, event in res:
+                busy = True
                 self._fds[fd](eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)

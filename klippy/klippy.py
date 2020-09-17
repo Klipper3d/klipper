@@ -306,6 +306,7 @@ def main():
     elif not options.debugoutput:
         logging.warning("No log file specified!"
                         " Severe timing issues may result!")
+    gc.disable()
 
     # Start Printer() class
     while 1:
@@ -313,7 +314,7 @@ def main():
             bglogger.clear_rollover_info()
             bglogger.set_rollover_info('versions', versions)
         gc.collect()
-        main_reactor = reactor.Reactor()
+        main_reactor = reactor.Reactor(gc_checking=True)
         printer = Printer(main_reactor, bglogger, start_args)
         res = printer.run()
         if res in ['exit', 'error_exit']:
