@@ -79,6 +79,7 @@ class DisplayGroup:
         for row, col, template in self.data_items:
             text = template.render(context)
             display.draw_text(row, col, text.replace('\n', ''), eventtime)
+        context.clear() # Remove circular references for better gc
 
 class PrinterLCD:
     def __init__(self, config):
