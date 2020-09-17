@@ -137,6 +137,48 @@ def plot_mcu(data, maxbw):
     ax1.grid(True)
     return fig
 
+def plot_system(data):
+    # Generate data for plot
+    lasttime = data[0]['#sampletime']
+    lastcputime = float(data[0]['cputime'])
+    times = []
+    sysloads = []
+    cputimes = []
+    memavails = []
+    for d in data:
+        st = d['#sampletime']
+        timedelta = st - lasttime
+        if timedelta <= 0.:
+            continue
+        lasttime = st
+        times.append(datetime.datetime.utcfromtimestamp(st))
+        cputime = float(d['cputime'])
+        cpudelta = max(0., min(1.5, (cputime - lastcputime) / timedelta))
+        lastcputime = cputime
+        cputimes.append(cpudelta * 100.)
+        sysloads.append(float(d['sysload']) * 100.)
+        memavails.append(float(d['memavail']))
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("MCU bandwidth and load utilization")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Load (% of a core)')
+    ax1.plot_date(times, sysloads, '-', label='system load',
+                  color='cyan', alpha=0.8)
+    ax1.plot_date(times, cputimes, '-', label='process time',
+                  color='red', alpha=0.8)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Available memory (KB)')
+    ax2.plot_date(times, memavails, '-', label='system memory',
+                  color='yellow', alpha=0.3)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.grid(True)
+    return fig
+
 def plot_frequency(data, mcu):
     all_keys = {}
     for d in data:
@@ -211,6 +253,8 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-f", "--frequency", action="store_true",
                     help="graph mcu frequency")
+    opts.add_option("-s", "--system", action="store_true",
+                    help="graph system load")
     opts.add_option("-o", "--output", type="string", dest="output",
                     default=None, help="filename of output graph")
     opts.add_option("-t", "--temperature", type="string", dest="heater",
@@ -233,6 +277,8 @@ def main():
         fig = plot_temperature(data, options.heater)
     elif options.frequency:
         fig = plot_frequency(data, options.mcu)
+    elif options.system:
+        fig = plot_system(data)
     else:
         fig = plot_mcu(data, MAXBANDWIDTH)
 

@@ -342,6 +342,9 @@ class ProbePointsHelper:
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
+    def update_probe_points(self, points, min_points):
+        self.probe_points = points
+        self.minimum_points(min_points)
     def use_xy_offsets(self, use_offsets):
         self.use_offsets = use_offsets
     def get_lift_speed(self):

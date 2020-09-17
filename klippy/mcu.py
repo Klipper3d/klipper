@@ -430,8 +430,8 @@ class MCU:
         self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._max_stepper_error = config.getfloat(
-            'max_stepper_error', 0.000025, minval=0.)
+        self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
+                                                  minval=0.)
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -566,17 +566,19 @@ class MCU:
         else:
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
-                raise error("Failed automated reset of MCU '%s'" % (
-                    self._name,))
+                raise error("Failed automated reset of MCU '%s'"
+                            % (self._name,))
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
-        self._steppersync = self._ffi_lib.steppersync_alloc(
-            self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            move_count)
-        self._ffi_lib.steppersync_set_time(
-            self._steppersync, 0., self._mcu_freq)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self._steppersync = ffi_main.gc(
+            ffi_lib.steppersync_alloc(self._serial.serialqueue,
+                                      self._stepqueues, len(self._stepqueues),
+                                      move_count),
+            ffi_lib.steppersync_free)
+        ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
@@ -682,9 +684,7 @@ class MCU:
     # Restarts
     def _disconnect(self):
         self._serial.disconnect()
-        if self._steppersync is not None:
-            self._ffi_lib.steppersync_free(self._steppersync)
-            self._steppersync = None
+        self._steppersync = None
     def _shutdown(self, force=False):
         if (self._emergency_stop_cmd is None
             or (self._is_shutdown and not force)):
@@ -745,8 +745,8 @@ class MCU:
             return
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
-            raise error("Internal error in MCU '%s' stepcompress" % (
-                self._name,))
+            raise error("Internal error in MCU '%s' stepcompress"
+                        % (self._name,))
     def check_active(self, print_time, eventtime):
         if self._steppersync is None:
             return
@@ -766,8 +766,6 @@ class MCU:
             self._mcu_tick_stddev)
         return False, ' '.join([msg, self._serial.stats(eventtime),
                                 self._clocksync.stats(eventtime)])
-    def __del__(self):
-        self._disconnect()
 
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """
