@@ -64,7 +64,7 @@ class Heater:
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    self.name, self.cmd_SET_HEATER_TEMPERATURE,
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
-    def set_pwm(self, read_time, value):
+    def set_pwm(self, read_time, value, cycle_time=None):
         if self.target_temp <= 0.:
             value = 0.
         if ((read_time < self.next_pwm_time or not self.last_pwm_value)
@@ -74,7 +74,7 @@ class Heater:
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        self.mcu_pwm.set_pwm(pwm_time, value)
+        self.mcu_pwm.set_pwm(pwm_time, value, cycle_time)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
         #              self.last_temp, self.last_temp_time, self.target_temp)
