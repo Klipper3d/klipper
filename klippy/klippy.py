@@ -165,8 +165,8 @@ class Printer:
             return
         except Exception as e:
             logging.exception("Unhandled exception during connect")
-            self._set_state("Internal error during connect: %s\n%s" % (
-                str(e), message_restart,))
+            self._set_state("Internal error during connect: %s\n%s"
+                            % (str(e), message_restart,))
             return
         try:
             self._set_state(message_ready)
@@ -176,8 +176,8 @@ class Printer:
                 cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback: %s" % (
-                str(e),))
+            self.invoke_shutdown("Internal error during ready callback: %s"
+                                 % (str(e),))
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
@@ -224,6 +224,8 @@ class Printer:
                 cb()
             except:
                 logging.exception("Exception during shutdown handler")
+        logging.info("Reactor garbage collection: %s",
+                     self.reactor.get_gc_stats())
     def invoke_async_shutdown(self, msg):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg)))

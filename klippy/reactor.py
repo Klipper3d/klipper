@@ -96,8 +96,10 @@ class SelectReactor:
     def __init__(self, gc_checking=False):
         # Main code
         self._process = False
-        self._check_gc = gc_checking
         self.monotonic = chelper.get_ffi()[1].get_monotonic
+        # Python garbage collection
+        self._check_gc = gc_checking
+        self._last_gc_times = [0., 0., 0.]
         # Timers
         self._timers = []
         self._next_timer = self.NEVER
@@ -110,6 +112,8 @@ class SelectReactor:
         self._g_dispatch = None
         self._greenlets = []
         self._all_greenlets = []
+    def get_gc_stats(self):
+        return tuple(self._last_gc_times)
     # Timers
     def update_timer(self, timer_handler, waketime):
         timer_handler.waketime = waketime
@@ -134,13 +138,13 @@ class SelectReactor:
                 gi = gc.get_count()
                 if gi[0] >= 700:
                     # Reactor looks idle and gc is due - run it
+                    gc_level = 0
                     if gi[1] >= 10:
+                        gc_level = 1
                         if gi[2] >= 10:
-                            gc.collect(2)
-                        else:
-                            gc.collect(1)
-                    else:
-                        gc.collect(0)
+                            gc_level = 2
+                    self._last_gc_times[gc_level] = eventtime
+                    gc.collect(gc_level)
                     return 0.
             return min(1., max(.001, self._next_timer - eventtime))
         self._next_timer = self.NEVER
