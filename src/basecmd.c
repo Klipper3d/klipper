@@ -13,10 +13,6 @@
 #include "sched.h" // sched_clear_shutdown
 
 
-//TODO: Let Move queue use the remaining chunks
-//      after PWM_Queue took a small amount
-#define QUEUE_NUM_ELEMS 256
-
 /****************************************************************
  * Low level allocation
  ****************************************************************/
@@ -73,7 +69,7 @@ static uint8_t move_item_size;
 
 // Is the config and move queue finalized?
 static int
-move_is_finalized(void)
+is_finalized(void)
 {
     return !!move_count;
 }
@@ -105,7 +101,7 @@ move_alloc(void)
 void
 move_request_size(int size)
 {
-    if (size > UINT8_MAX || move_is_finalized())
+    if (size > UINT8_MAX || is_finalized())
         shutdown("Invalid move request size");
     if (size > move_item_size)
         move_item_size = size;
@@ -131,103 +127,13 @@ DECL_SHUTDOWN(move_reset);
 static void
 move_finalize(void)
 {
-    if (move_is_finalized())
+    if (is_finalized())
         shutdown("Already finalized");
     move_request_size(sizeof(*move_free_list));
-    move_list = alloc_chunks(move_item_size, QUEUE_NUM_ELEMS, &move_count);
+    move_list = alloc_chunks(move_item_size, 1024, &move_count);
     move_reset();
 }
 
-
-
-/****************************************************************
- * PWM queue
- ****************************************************************/
-
-struct pwm_freed {
-    struct pwm_freed *next;
-};
-
-static struct pwm_freed *pwm_free_list;
-static void *pwm_list;
-static uint16_t pwm_count;
-static uint8_t pwm_item_size;
-
-// Is the config and move queue finalized?
-static int
-pwm_is_finalized(void)
-{
-    return !!pwm_count;
-}
-
-
-// Free previously allocated storage from move_alloc(). Caller must
-// disable irqs.
-void
-pwm_free(void *m)
-{
-    struct pwm_freed *pf = m;
-    pf->next = pwm_free_list;
-    pwm_free_list = pf;
-}
-
-// Allocate runtime storage
-void *
-pwm_alloc(void)
-{
-    irqstatus_t flag = irq_save();
-    struct pwm_freed *pf = pwm_free_list;
-    if (!pf)
-        shutdown("pwm free queue empty");
-    pwm_free_list = pf->next;
-    irq_restore(flag);
-    return pf;
-}
-
-// Request minimum size of runtime allocations returned by move_alloc()
-void
-pwm_request_size(int size)
-{
-    if (size > UINT8_MAX || pwm_is_finalized())
-        shutdown("Invalid PWM request size");
-    if (size > pwm_item_size)
-        pwm_item_size = size;
-}
-
-void
-pwm_reset(void)
-{
-    if (!pwm_count)
-        return;
-    // Add everything in move_list to the free list.
-    uint32_t i;
-    for (i=0; i<pwm_count-1; i++) {
-        struct pwm_freed *pf = pwm_list + i*pwm_item_size;
-        pf->next = move_list + (i + 1)*pwm_item_size;
-    }
-    struct move_freed *pf = pwm_list + (pwm_count - 1)*pwm_item_size;
-    pf->next = NULL;
-    pwm_free_list = pwm_list;
-}
-DECL_SHUTDOWN(pwm_reset);
-
-
-static void
-pwm_finalize(void)
-{
-    if (pwm_is_finalized())
-        shutdown("PWM Already finalized");
-    pwm_request_size(sizeof(*pwm_free_list));
-    pwm_list = alloc_chunks(pwm_item_size, QUEUE_NUM_ELEMS, &pwm_count);
-    pwm_reset();
-}
-
-
-static int
-all_queues_finalized(void)
-{
-    return move_is_finalized() && pwm_is_finalized();
-}
 
 /****************************************************************
  * Generic object ids (oid)
@@ -251,7 +157,7 @@ oid_lookup(uint8_t oid, void *type)
 void *
 oid_alloc(uint8_t oid, void *type, uint16_t size)
 {
-    if (oid >= oid_count || oids[oid].type || all_queues_finalized())
+    if (oid >= oid_count || oids[oid].type || is_finalized())
         shutdown("Can't assign oid");
     oids[oid].type = type;
     void *data = alloc_chunk(size);
@@ -296,8 +202,7 @@ void
 command_get_config(uint32_t *args)
 {
     sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
-          , all_queues_finalized(), config_crc, move_count,
-          sched_is_shutdown());
+          , is_finalized(), config_crc, move_count, sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
@@ -305,7 +210,6 @@ void
 command_finalize_config(uint32_t *args)
 {
     move_finalize();
-    pwm_finalize();
     config_crc = args[0];
 }
 DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");

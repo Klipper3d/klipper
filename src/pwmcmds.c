@@ -72,7 +72,7 @@ pwm_event(struct timer *timer)
             // We either have set the default value
             // or there is no maximum duration
             irq_disable();
-            pwm_free(v);
+            move_free(v);
             irq_enable();
 
             //fixme: Debug
@@ -90,7 +90,7 @@ pwm_event(struct timer *timer)
     gpio_out_write(p->debug7, 0);
 
     irq_disable();
-    pwm_free(v);
+    move_free(v);
     irq_enable();
 
     return SF_RESCHEDULE;
@@ -108,7 +108,7 @@ command_config_pwm_out(uint32_t *args)
     p->first = NULL;
     p->plast = NULL;
 
-    pwm_request_size(sizeof(struct pwm_value));
+    move_request_size(sizeof(struct pwm_value));
 
 
     //FIXME: debugging gpios
@@ -128,7 +128,7 @@ command_schedule_pwm_out(uint32_t *args)
     gpio_out_write(p->debug7, 1);
     gpio_out_write(p->debug5, 1);
 
-    struct pwm_value* v = pwm_alloc();
+    struct pwm_value* v = move_alloc();
     v->waketime = args[1];
     v->value = args[2];
     v->next = NULL;
