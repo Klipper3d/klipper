@@ -55,8 +55,9 @@ def plot_accel(data, logname):
 WINDOW_T_SEC = 0.5
 
 class CalibrationData:
-    def __init__(self, freq_bins, px, py, pz):
+    def __init__(self, freq_bins, times, px, py, pz):
         self.freq_bins = freq_bins
+        self.times = times
         self.px, self.py, self.pz = px, py, pz
         self.pall = px + py + pz
         avgs = [np.average(d, axis=1) for d in [self.pall, px, py, pz]]
@@ -77,13 +78,13 @@ def calc_freq_response(data, max_freq):
     # Calculate PSD (power spectral density) of vibrations per window per
     # frequency bins (the same bins for X, Y, and Z)
     specgram = matplotlib.mlab.specgram
-    px, fx, _ = specgram(data[:,1], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                         window=np.blackman(M), detrend='mean', mode='psd')
+    px, fx, times = specgram(data[:,1], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
+                             window=np.blackman(M), detrend='mean', mode='psd')
     py, fy, _ = specgram(data[:,2], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
                          window=np.blackman(M), detrend='mean', mode='psd')
     pz, fz, _ = specgram(data[:,3], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
                          window=np.blackman(M), detrend='mean', mode='psd')
-    return CalibrationData(fx, px, py, pz)
+    return CalibrationData(fx, times, px, py, pz)
 
 def plot_frequency(data, logname, max_freq):
     calibration_data = calc_freq_response(data, max_freq)
@@ -138,10 +139,12 @@ def plot_compare_frequency(datas, lognames, max_freq):
 def plot_specgram(data, logname, max_freq, axis):
     calibration_data = calc_freq_response(data, max_freq)
     pdata = calibration_data.get_psd_axis(axis)
+    t = calibration_data.times
+    bins = calibration_data.freq_bins
 
     fig, ax = matplotlib.pyplot.subplots()
     ax.set_title("Spectogram %s (%s)" % (axis, logname))
-    ax.pcolormesh(pdata, norm=matplotlib.colors.LogNorm())
+    ax.pcolormesh(t, bins, pdata, norm=matplotlib.colors.LogNorm())
     ax.set_ylim([0., max_freq])
     ax.set_ylabel('frequency (hz)')
     ax.set_xlabel('Time')
