@@ -142,7 +142,7 @@ def plot_specgram(data, logname, max_freq, axis):
     ax.pcolormesh(t, bins, pdata, norm=matplotlib.colors.LogNorm())
     ax.set_ylim([0., max_freq])
     ax.set_ylabel('frequency (hz)')
-    ax.set_xlabel('Time')
+    ax.set_xlabel('Time (s)')
     fig.tight_layout()
     return fig
 
