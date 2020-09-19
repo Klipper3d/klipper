@@ -810,7 +810,7 @@ class T5UID1:
             eventtime)
         idle_time = est_print_time - print_time
         return (not lookahead_empty
-                or idle_time < 0.2
+                or idle_time < 1.0
                 or self.gcode.get_mutex().test()
                 or self.probe.multi_probe_pending)
 
