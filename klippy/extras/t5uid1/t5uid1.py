@@ -98,8 +98,13 @@ class T5UID1:
         self.gcode = self.printer.lookup_object('gcode')
         self.configfile = self.printer.lookup_object('configfile')
 
-        self.stepper_enable = self.heaters = self.bed_mesh = None
-        self.toolhead = self.probe = self.pause_resume = None
+        self.toolhead = None
+        self.heaters = self.printer.load_object(config, 'heaters')
+        self.pause_resume = self.printer.load_object(config, 'pause_resume')
+        self.stepper_enable = self.printer.load_object(config, 'stepper_enable')
+        self.bed_mesh = None
+        self.probe = None
+
         self.extruders = {}
 
         self.mcu = mcu.get_printer_mcu(self.printer,
@@ -330,16 +335,35 @@ class T5UID1:
                                    "t5uid1_received")
 
     def _handle_ready(self):
+        self.toolhead = self.printer.lookup_object('toolhead')
+
+        self.heaters.lookup_heater('extruder')
+        self.heaters.lookup_heater('heater_bed')
+
+        try:
+            self.bed_mesh = self.printer.lookup_object(config, 'bed_mesh')
+        except Exception:
+            logging.debug("No 'bed_mesh' configuration found")
+            self.bed_mesh = None
+
+        try:
+            self.probe = self.printer.lookup_object(config, 'probe')
+        except Exception:
+            logging.debug("No 'probe' configuration found")
+            self.probe = None
+
         has_bltouch = False
         try:
             self.printer.lookup_object('bltouch')
             has_bltouch = True
         except Exception:
             pass
+
         self._status_data.update({
             'limits': self.limits(),
             'has_bltouch': has_bltouch
         })
+
         self._is_connected = True
         self.reactor.register_timer(self._on_ready, self.reactor.NOW)
 
@@ -499,11 +523,6 @@ class T5UID1:
     def check_paused(self):
         if not self._is_printing:
             return
-        if self.pause_resume is None:
-            try:
-                self.pause_resume = self.printer.lookup_object('pause_resume')
-            except Exception:
-                return
         curtime = self.reactor.monotonic()
         if self._print_pause_time < 0 and self.pause_resume.is_paused:
             self._print_pause_time = curtime
@@ -700,37 +719,29 @@ class T5UID1:
             self.configfile.set(self.name, 'volume', volume)
 
     def all_steppers_enabled(self):
-        if self.stepper_enable is None:
-            self.stepper_enable = self.printer.lookup_object('stepper_enable')
         res = True
         for name in ['stepper_x', 'stepper_y', 'stepper_z']:
             res &= self.stepper_enable.lookup_enable(name).is_motor_enabled()
         return res
 
     def heater_min_temp(self, heater):
-        if self.heaters is None:
-            self.heaters = self.printer.lookup_object('heaters')
         try:
             return self.heaters.lookup_heater(heater).min_temp
         except Exception:
             return 0
 
     def heater_max_temp(self, heater, margin=0):
-        if self.heaters is None:
-            self.heaters = self.printer.lookup_object('heaters')
         try:
             return max(0, self.heaters.lookup_heater(heater).max_temp - margin)
         except Exception:
             return 0
 
     def heater_min_extrude_temp(self, heater):
-        if self.heaters is None:
-            self.heaters = self.printer.lookup_object('heaters')
         return self.heaters.lookup_heater(heater).min_extrude_temp
 
     def probed_matrix(self):
         if self.bed_mesh is None:
-            self.bed_mesh = self.printer.lookup_object('bed_mesh')
+            return 0
         count = len(self.bed_mesh.bmc.probe_helper.results)
         points_map = [ 0,  1,  2,  3,  4,
                        9,  8,  7,  6,  5,
@@ -749,8 +760,6 @@ class T5UID1:
     def pid_param(self, heater, param):
         if param not in ['p', 'i', 'd']:
             raise ValueError("Invalid param")
-        if self.heaters is None:
-            self.heaters = self.printer.lookup_object('heaters')
         try:
             return getattr(self.heaters.lookup_heater(heater).control,
                            'K' + param) * heaters.PID_PARAM_BASE
@@ -770,8 +779,6 @@ class T5UID1:
             return 0
 
     def limits(self):
-        if self.toolhead is None:
-            self.toolhead = self.printer.lookup_object('toolhead')
         kin = self.toolhead.get_kinematics()
         x_min, x_max = kin.rails[0].get_range()
         y_min, y_max = kin.rails[1].get_range()
@@ -801,18 +808,15 @@ class T5UID1:
             self.start_routine('message_timeout')
 
     def is_busy(self):
-        if self.toolhead is None:
-            self.toolhead = self.printer.lookup_object('toolhead')
-        if self.probe is None:
-            self.probe = self.printer.lookup_object('probe')
         eventtime = self.reactor.monotonic()
         print_time, est_print_time, lookahead_empty = self.toolhead.check_busy(
             eventtime)
         idle_time = est_print_time - print_time
-        return (not lookahead_empty
+        if (not lookahead_empty
                 or idle_time < 1.0
-                or self.gcode.get_mutex().test()
-                or self.probe.multi_probe_pending)
+                or self.gcode.get_mutex().test()):
+            return True
+        return (self.probe is not None and self.probe.multi_probe_pending)
 
     def cmd_DGUS_ABORT_PAGE_SWITCH(self, gcmd):
         pass
