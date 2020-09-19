@@ -101,8 +101,8 @@ class Homing:
             for s, name, spos, epos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
-                        raise EndstopError("Probe triggered prior to movement")
-                    raise EndstopError(
+                        raise CommandError("Probe triggered prior to movement")
+                    raise CommandError(
                         "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
@@ -160,12 +160,5 @@ def multi_complete(printer, completions):
 
 class CommandError(Exception):
     pass
-
-class EndstopError(CommandError):
-    pass
-
-def EndstopMoveError(pos, msg="Move out of range"):
-    return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
-            msg, pos[0], pos[1], pos[2], pos[3]))
 
 Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))

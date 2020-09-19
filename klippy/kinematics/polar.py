@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper, homing
+import stepper
 
 class PolarKinematics:
     def __init__(self, toolhead, config):
@@ -94,18 +94,17 @@ class PolarKinematics:
         xy2 = end_pos[0]**2 + end_pos[1]**2
         if xy2 > self.limit_xy2:
             if self.limit_xy2 < 0.:
-                raise homing.EndstopMoveError(end_pos, "Must home axis first")
-            raise homing.EndstopMoveError(end_pos)
+                raise move.move_error("Must home axis first")
+            raise move.move_error()
         if move.axes_d[2]:
             if end_pos[2] < self.limit_z[0] or end_pos[2] > self.limit_z[1]:
                 if self.limit_z[0] > self.limit_z[1]:
-                    raise homing.EndstopMoveError(
-                        end_pos, "Must home axis first")
-                raise homing.EndstopMoveError(end_pos)
+                    raise move.move_error("Must home axis first")
+                raise move.move_error()
             # Move with Z - update velocity and accel for slower Z axis
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(
-                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+            move.limit_speed(self.max_z_velocity * z_ratio,
+                             self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""

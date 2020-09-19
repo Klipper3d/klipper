@@ -77,6 +77,27 @@ def plot_adc_resolution(config, sensors):
     fig.tight_layout()
     return fig
 
+def plot_resistance(config, sensors):
+    # Temperature list
+    all_temps = [float(i) for i in range(1, 351)]
+    # Build plot
+    fig, ax = matplotlib.pyplot.subplots()
+    pullup = config.getfloat('pullup_resistor', 0.)
+    ax.set_title("Temperature Sensor (pullup=%.0f)" % (pullup,))
+    ax.set_ylabel('Resistance (Ohms)')
+    for sensor in sensors:
+        sc = config.do_create_sensor(sensor)
+        adcs = [sc.calc_adc(t) for t in all_temps]
+        rs = [pullup * adc / (1.0 - adc) for adc in adcs]
+        ax.plot(all_temps, rs, label=sensor, alpha=0.6)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax.legend(loc='best', prop=fontP)
+    ax.set_xlabel('Temperature (C)')
+    ax.grid(True)
+    fig.tight_layout()
+    return fig
+
 
 ######################################################################
 # Startup
@@ -111,6 +132,8 @@ def main():
                     default=5., help="pullup resistor")
     opts.add_option("-s", "--sensors", type="string", dest="sensors",
                     default="", help="list of sensors (comma separated)")
+    opts.add_option("-r", "--resistance", action="store_true",
+                    help="graph sensor resistance")
     options, args = opts.parse_args()
     if len(args) != 0:
         opts.error("Incorrect number of arguments")
@@ -129,7 +152,10 @@ def main():
 
     # Draw graph
     setup_matplotlib(options.output is not None)
-    fig = plot_adc_resolution(config, sensors)
+    if options.resistance:
+        fig = plot_resistance(config, sensors)
+    else:
+        fig = plot_adc_resolution(config, sensors)
 
     # Show graph
     if options.output is None:

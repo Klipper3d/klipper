@@ -61,7 +61,8 @@ class WebRequest:
         value = self.params.get(item, default)
         if value is Sentinel:
             raise WebRequestError("Missing Argument [%s]" % (item,))
-        if types is not None and type(value) not in types:
+        if (types is not None and type(value) not in types
+            and item in self.params):
             raise WebRequestError("Invalid Argument Type [%s]" % (item,))
         return value
 
@@ -168,19 +169,30 @@ class ClientConnection:
             self.sock.fileno(), self.process_received)
         self.partial_data = self.send_buffer = ""
         self.is_sending_data = False
-        logging.info(
-            "webhooks: New connection established")
+        self.set_client_info("?", "New connection")
+
+    def set_client_info(self, client_info, state_msg=None):
+        if state_msg is None:
+            state_msg = "Client info %s" % (repr(client_info),)
+        logging.info("webhooks client %s: %s", self.uid, state_msg)
+        log_id = "webhooks %s" % (self.uid,)
+        if client_info is None:
+            self.printer.set_rollover_info(log_id, None, log=False)
+            return
+        rollover_msg = "webhooks client %s: %s" % (self.uid, repr(client_info))
+        self.printer.set_rollover_info(log_id, rollover_msg, log=False)
 
     def close(self):
-        if self.fd_handle is not None:
-            logging.info("webhooks: Client connection closed")
-            self.reactor.unregister_fd(self.fd_handle)
-            self.fd_handle = None
-            try:
-                self.sock.close()
-            except socket.error:
-                pass
-            self.server.pop_client(self.uid)
+        if self.fd_handle is None:
+            return
+        self.set_client_info(None, "Disconnected")
+        self.reactor.unregister_fd(self.fd_handle)
+        self.fd_handle = None
+        try:
+            self.sock.close()
+        except socket.error:
+            pass
+        self.server.pop_client(self.uid)
 
     def is_closed(self):
         return self.fd_handle is None
@@ -216,7 +228,7 @@ class ClientConnection:
         try:
             func = self.webhooks.get_callback(web_request.get_method())
             func(web_request)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             web_request.set_error(WebRequestError(e.message))
         except Exception as e:
             msg = ("Internal Error on WebRequest: %s"
@@ -276,9 +288,12 @@ class WebHooks:
         web_request.send({'endpoints': self._endpoints.keys()})
 
     def _handle_info_request(self, web_request):
+        client_info = web_request.get_dict('client_info', None)
+        if client_info is not None:
+            web_request.get_client_connection().set_client_info(client_info)
         state_message, state = self.printer.get_state_message()
-        klipper_path = os.path.normpath(os.path.join(
-            os.path.dirname(__file__), ".."))
+        src_path = os.path.dirname(__file__)
+        klipper_path = os.path.normpath(os.path.join(src_path, ".."))
         response = {'state': state, 'state_message': state_message,
                     'hostname': socket.gethostname(),
                     'klipper_path': klipper_path, 'python_path': sys.executable}

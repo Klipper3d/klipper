@@ -163,6 +163,18 @@ machine. See the
 [install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
 
+If you are looking to run the Klipper host software on a low-end chip,
+then be aware that, at a minimum, a machine with "double precision
+floating point" hardware is required.
+
+If you are looking to run the Klipper host software on a shared
+general-purpose desktop or server class machine, then note that
+Klipper has some real-time scheduling requirements. If, during a
+print, the host computer also performs an intensive general-purpose
+computing task (such as defragmenting a hard drive, 3d rendering,
+heavy swapping, etc.), then it may cause Klipper to report print
+errors.
+
 Note: If you are not using an OctoPi image, be aware that several
 Linux distributions enable a "ModemManager" (or similar) package that
 can disrupt serial communication. (Which can cause Klipper to report
