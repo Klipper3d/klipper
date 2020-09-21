@@ -74,7 +74,8 @@ class ControlAutoTune:
                 (read_time + self.heater.get_pwm_delay(), value))
             self.last_pwm = value
         self.heater.set_pwm(read_time, value)
-    def temperature_update(self, read_time, temp, target_temp):
+    def temperature_update(self, read_time, temp, target_temp, extruder_velocity
+        ):
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
         # enable/disable the heater if so.
