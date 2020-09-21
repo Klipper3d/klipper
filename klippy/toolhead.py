@@ -572,8 +572,9 @@ class ToolHead:
                "max_accel: %.6f\n"
                "max_accel_to_decel: %.6f\n"
                "square_corner_velocity: %.6f"% (
-                   max_velocity, max_accel, self.requested_accel_to_decel,
-                   square_corner_velocity))
+                   self.max_velocity, self.max_accel,
+                   self.requested_accel_to_decel,
+                   self.square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         gcmd.respond_info(msg, log=False)
     def cmd_M204(self, gcmd):
