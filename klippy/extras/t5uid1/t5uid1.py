@@ -113,6 +113,7 @@ class T5UID1:
 
         self._version = self.printer.get_start_args().get('software_version')
 
+        self.printer.load_object(config, 'gcode_macro')
         self._gcode_macro = T5UID1GCodeMacro(config)
 
         firmware_cfg = config.getchoice('firmware', T5UID1_firmware_cfg)
