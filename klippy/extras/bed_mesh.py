@@ -235,13 +235,17 @@ class BedMeshCalibrate:
     ALGOS = ['lagrange', 'bicubic']
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
+        self.orig_config = {'radius': None, 'origin': None}
         self.radius = self.origin = None
+        self.mesh_min = self.mesh_max = (0., 0.)
         self.relative_reference_index = config.getint(
             'relative_reference_index', None)
+        self.orig_config['rri'] = self.relative_reference_index
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
-        self.points = self._generate_points(config)
-        self._init_mesh_config(config, self.points)
+        self._init_mesh_config(config)
+        self._generate_points(config.error)
+        self.orig_points = self.points
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self.points)
         self.probe_helper.minimum_points(3)
@@ -250,37 +254,18 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-    def _generate_points(self, config):
-        self.radius = config.getfloat('mesh_radius', None, above=0.)
-        if self.radius is not None:
-            self.origin = parse_pair(config, ('mesh_origin', "0, 0"))
-            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
-            # round beds must have an odd number of points along each axis
-            if not x_cnt & 1:
-                raise config.error(
-                    "bed_mesh: probe_count must be odd for round beds")
-            # radius may have precision to .1mm
-            self.radius = math.floor(self.radius * 10) / 10
-            min_x = min_y = -self.radius
-            max_x = max_y = self.radius
-        else:
-            # rectangular
-            x_cnt, y_cnt = parse_pair(
-                config, ('probe_count', '3'), check=False, cast=int, minval=3)
-            min_x, min_y = parse_pair(config, ('mesh_min',))
-            max_x, max_y = parse_pair(config, ('mesh_max',))
-            if max_x <= min_x or max_y <= min_y:
-                raise config.error('bed_mesh: invalid min/max points')
-
-        self.mesh_config['x_count'] = x_cnt
-        self.mesh_config['y_count'] = y_cnt
+    def _generate_points(self, error):
+        x_cnt = self.mesh_config['x_count']
+        y_cnt = self.mesh_config['y_count']
+        min_x, min_y = self.mesh_min
+        max_x, max_y = self.mesh_max
         x_dist = (max_x - min_x) / (x_cnt - 1)
         y_dist = (max_y - min_y) / (y_cnt - 1)
         # floor distances down to next hundredth
         x_dist = math.floor(x_dist * 100) / 100
         y_dist = math.floor(y_dist * 100) / 100
         if x_dist <= 1. or y_dist <= 1.:
-            raise config.error("bed_mesh: min/max points too close together")
+            raise error("bed_mesh: min/max points too close together")
 
         if self.radius is not None:
             # round bed, min/max needs to be recalculated
@@ -311,7 +296,7 @@ class BedMeshCalibrate:
                         points.append(
                             (self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
-        return points
+        self.points = points
     def print_generated_points(self, print_func):
         x_offset = y_offset = 0.
         probe = self.printer.lookup_object('probe', None)
@@ -329,33 +314,69 @@ class BedMeshCalibrate:
             print_func(
                 "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
                 % (rri, self.points[rri][0], self.points[rri][1]))
-    def _init_mesh_config(self, config, points):
+    def _init_mesh_config(self, config):
+        mesh_cfg = self.mesh_config
+        orig_cfg = self.orig_config
+        self.radius = config.getfloat('mesh_radius', None, above=0.)
+        if self.radius is not None:
+            self.origin = parse_pair(config, ('mesh_origin', "0, 0"))
+            x_cnt = y_cnt = config.getint('round_probe_count', 5, minval=3)
+            # round beds must have an odd number of points along each axis
+            if not x_cnt & 1:
+                raise config.error(
+                    "bed_mesh: probe_count must be odd for round beds")
+            # radius may have precision to .1mm
+            self.radius = math.floor(self.radius * 10) / 10
+            orig_cfg['radius'] = self.radius
+            orig_cfg['origin'] = self.origin
+            min_x = min_y = -self.radius
+            max_x = max_y = self.radius
+        else:
+            # rectangular
+            x_cnt, y_cnt = parse_pair(
+                config, ('probe_count', '3'), check=False, cast=int, minval=3)
+            min_x, min_y = parse_pair(config, ('mesh_min',))
+            max_x, max_y = parse_pair(config, ('mesh_max',))
+            if max_x <= min_x or max_y <= min_y:
+                raise config.error('bed_mesh: invalid min/max points')
+        orig_cfg['x_count'] = mesh_cfg['x_count'] = x_cnt
+        orig_cfg['y_count'] = mesh_cfg['y_count'] = y_cnt
+        orig_cfg['mesh_min'] = self.mesh_min = (min_x, min_y)
+        orig_cfg['mesh_max'] = self.mesh_max = (max_x, max_y)
+
         pps = parse_pair(config, ('mesh_pps', '2'), check=False,
                          cast=int, minval=0)
+        orig_cfg['mesh_x_pps'] = mesh_cfg['mesh_x_pps'] = pps[0]
+        orig_cfg['mesh_y_pps'] = mesh_cfg['mesh_y_pps'] = pps[1]
+        orig_cfg['algo'] = mesh_cfg['algo'] = \
+            config.get('algorithm', 'lagrange').strip().lower()
+        orig_cfg['tension'] = mesh_cfg['tension'] = config.getfloat(
+            'bicubic_tension', .2, minval=0., maxval=2.)
+        self._verify_algorithm(config.error)
+    def _verify_algorithm(self, error):
         params = self.mesh_config
-        params['mesh_x_pps'] = pps[0]
-        params['mesh_y_pps'] = pps[1]
-        params['algo'] = config.get('algorithm', 'lagrange').strip().lower()
+        x_pps = params['mesh_x_pps']
+        y_pps = params['mesh_y_pps']
         if params['algo'] not in self.ALGOS:
-            raise config.error(
+            raise error(
                 "bed_mesh: Unknown algorithm <%s>"
                 % (self.mesh_config['algo']))
         # Check the algorithm against the current configuration
         max_probe_cnt = max(params['x_count'], params['y_count'])
         min_probe_cnt = min(params['x_count'], params['y_count'])
-        if max(pps[0], pps[1]) == 0:
+        if max(x_pps, y_pps) == 0:
             # Interpolation disabled
             self.mesh_config['algo'] = 'direct'
         elif params['algo'] == 'lagrange' and max_probe_cnt > 6:
             # Lagrange interpolation tends to oscillate when using more
             # than 6 samples
-            raise config.error(
+            raise error(
                 "bed_mesh: cannot exceed a probe_count of 6 when using "
                 "lagrange interpolation. Configured Probe Count: %d, %d" %
                 (self.mesh_config['x_count'], self.mesh_config['y_count']))
         elif params['algo'] == 'bicubic' and min_probe_cnt < 4:
             if max_probe_cnt > 6:
-                raise config.error(
+                raise error(
                     "bed_mesh: invalid probe_count option when using bicubic "
                     "interpolation.  Combination of 3 points on one axis with "
                     "more than 6 on another is not permitted. "
@@ -368,11 +389,74 @@ class BedMeshCalibrate:
                     "interpolation. Configured Probe Count: %d, %d" %
                     (self.mesh_config['x_count'], self.mesh_config['y_count']))
                 params['algo'] = 'lagrange'
-        params['tension'] = config.getfloat(
-            'bicubic_tension', .2, minval=0., maxval=2.)
+    def update_config(self, gcmd):
+        # reset default configuration
+        self.radius = self.orig_config['radius']
+        self.origin = self.orig_config['origin']
+        self.relative_reference_index = self.orig_config['rri']
+        self.mesh_min = self.orig_config['mesh_min']
+        self.mesh_max = self.orig_config['mesh_max']
+        for key in list(self.mesh_config.keys()):
+            self.mesh_config[key] = self.orig_config[key]
+
+        params = gcmd.get_command_parameters()
+        need_cfg_update = False
+        if 'RELATIVE_REFERENCE_INDEX' in params:
+            self.relative_reference_index = gcmd.get_int(
+                'RELATIVE_REFERENCE_INDEX')
+            need_cfg_update = True
+        if self.radius is not None:
+            if "MESH_RADIUS" in params:
+                self.radius = gcmd.get_float("MESH_RADIUS")
+                self.radius = math.floor(self.radius * 10) / 10
+                self.mesh_min = (-self.radius, -self.radius)
+                self.mesh_max = (self.radius, self.radius)
+                need_cfg_update = True
+            if "MESH_ORIGIN" in params:
+                self.origin = parse_pair(gcmd, ('MESH_ORIGIN',))
+                need_cfg_update = True
+            if "ROUND_PROBE_COUNT" in params:
+                cnt = gcmd.get_int('ROUND_PROBE_COUNT', minval=3)
+                self.mesh_config['x_count'] = cnt
+                self.mesh_config['y_count'] = cnt
+                need_cfg_update = True
+        else:
+            if "MESH_MIN" in params:
+                self.mesh_min = parse_pair(gcmd, ('MESH_MIN',))
+                need_cfg_update = True
+            if "MESH_MAX" in params:
+                self.mesh_max = parse_pair(gcmd, ('MESH_MAX',))
+                need_cfg_update = True
+            if "PROBE_COUNT" in params:
+                x_cnt, y_cnt = parse_pair(
+                    gcmd, ('PROBE_COUNT',), check=False, cast=int, minval=3)
+                self.mesh_config['x_count'] = x_cnt
+                self.mesh_config['y_count'] = y_cnt
+                need_cfg_update = True
+
+        if "ALGORITHM" in params:
+            self.mesh_config['algo'] = gcmd.get('ALGORITHM').strip().lower()
+            need_cfg_update = True
+
+        if need_cfg_update:
+            self._verify_algorithm(gcmd.error)
+            self._generate_points(gcmd.error)
+            gcmd.respond_info("Generating new points...")
+            self.print_generated_points(gcmd.respond_info)
+            self.probe_helper.update_probe_points(self.points, 3)
+            msg = "relative_reference_index: %s\n" % \
+                (self.relative_reference_index)
+            msg += "\n".join(["%s: %s" % (k, v) for k, v
+                              in self.mesh_config.items()])
+            logging.info("Updated Mesh Configuration:\n" + msg)
+        else:
+            self.points = self.orig_points
+            self.probe_helper.update_probe_points(self.points, 3)
+
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self.bedmesh.set_mesh(None)
+        self.update_config(gcmd)
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets
