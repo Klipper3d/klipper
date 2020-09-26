@@ -18,8 +18,7 @@ PYTHON=${BUILD_DIR}/python-env/bin/python
 
 start_test()
 {
-    echo "travis_fold:start:$1"
-    echo "=============== $2"
+    echo "::group::=============== $1 $2"
     set -x
 }
 
@@ -27,7 +26,7 @@ finish_test()
 {
     set +x
     echo "=============== Finished $2"
-    echo "travis_fold:end:$1"
+    echo "::endgroup::"
 }
 
 
@@ -63,9 +62,6 @@ done
 ######################################################################
 # Verify klippy host software
 ######################################################################
-
-HOSTDIR=${BUILD_DIR}/hosttest
-mkdir -p ${HOSTDIR}
 
 start_test klippy "Test invoke klippy"
 $PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test

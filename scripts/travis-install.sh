@@ -43,7 +43,9 @@ PRU_DIR=${BUILD_DIR}/pru-gcc
 
 if [ ! -f ${PRU_FILE} ]; then
     cd ${BUILD_DIR}
-    git clone https://github.com/dinuxbg/gnupru -b 2018.03-beta-rc3
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
+    git clone https://github.com/dinuxbg/gnupru -b 2018.03-beta-rc3 --depth 1
     cd gnupru
     export PREFIX=${PRU_DIR}
     ./download-and-patch.sh 2>&1 | pv -nli 30 > ${BUILD_DIR}/gnupru-build.log
