@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 import stepper, chelper
+import Queue
 
 class PrinterExtruder:
     def __init__(self, config, extruder_num):
@@ -28,8 +29,8 @@ class PrinterExtruder:
             'max_extrude_cross_section', def_max_cross_section, above=0.)
         self.max_extrude_ratio = max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
-        toolhead = self.printer.lookup_object('toolhead')
-        max_velocity, max_accel = toolhead.get_max_velocity()
+        self.toolhead = self.printer.lookup_object('toolhead')
+        max_velocity, max_accel = self.toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
@@ -45,6 +46,7 @@ class PrinterExtruder:
         pressure_advance = config.getfloat('pressure_advance', 0., minval=0.)
         smooth_time = config.getfloat('pressure_advance_smooth_time',
                                       0.040, above=0., maxval=.200)
+        self.moves = []
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -54,13 +56,13 @@ class PrinterExtruder:
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
-        toolhead.register_step_generator(self.stepper.generate_steps)
+        self.toolhead.register_step_generator(self.stepper.generate_steps)
         self.extruder_set_smooth_time = ffi_lib.extruder_set_smooth_time
         self._set_pressure_advance(pressure_advance, smooth_time)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
-            toolhead.set_extruder(self, 0.)
+            self.toolhead.set_extruder(self, 0.)
             gcode.register_command("M104", self.cmd_M104)
             gcode.register_command("M109", self.cmd_M109)
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
@@ -84,8 +86,8 @@ class PrinterExtruder:
         new_smooth_time = smooth_time
         if not pressure_advance:
             new_smooth_time = 0.
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.note_step_generation_scan_time(new_smooth_time * .5,
+        self.toolhead = self.printer.lookup_object("toolhead")
+        self.toolhead.note_step_generation_scan_time(new_smooth_time * .5,
                                                 old_delay=old_smooth_time * .5)
         self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
         self.pressure_advance = pressure_advance
@@ -93,7 +95,9 @@ class PrinterExtruder:
     def get_status(self, eventtime):
         return dict(self.heater.get_status(eventtime),
                     pressure_advance=self.pressure_advance,
-                    smooth_time=self.pressure_advance_smooth_time)
+                    smooth_time=self.pressure_advance_smooth_time,
+                    velocity=self.get_velocity(
+                        self.toolhead.mcu.estimated_print_time(eventtime)))
     def get_name(self):
         return self.name
     def get_heater(self):
@@ -150,6 +154,18 @@ class PrinterExtruder:
                           move.start_pos[3], 0., 0.,
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
+        self.moves.append((print_time,
+            move.accel_t + move.cruise_t + move.decel_t, cruise_v))
+    def get_velocity(self, print_time):
+        for move in self.moves:
+            if(move[0] > print_time): # move is in the future
+                return 0
+            if move[0] + move[1] < print_time - 2: # move is old
+                self.moves.remove(move)
+                continue
+            if move[0] + move[1] > print_time: # move is current
+                return move[2]
+        return 0 # no moves queued
     def cmd_M104(self, gcmd, wait=False):
         # Set Extruder Temperature
         temp = gcmd.get_float('S', 0.)
