@@ -160,7 +160,7 @@ class MCU_digital_out:
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         self.set_digital(print_time, value >= 0.5)
 
 class MCU_pwm:
@@ -249,8 +249,10 @@ class MCU_pwm:
         self._set_cmd = self._mcu.lookup_command(
             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u",
             cq=cmd_queue)
-    def set_pwm(self, print_time, value):
-        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+    def set_pwm(self, print_time, value, cycle_time=None):
+        if cycle_time is None:
+            cycle_time = self._cycle_time
+        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
