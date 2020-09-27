@@ -41,7 +41,7 @@ class DisplayStatus:
             # Parse out additional info if M117 recd during a print
             start = umsg.find('M117')
             end = msg.rfind('*')
-	    if end >= 0: msg = msg[:end]
+            if end >= 0: msg = msg[:end]
             msg = msg[start:]
         if len(msg) > 5:
             self.message = msg[5:]
