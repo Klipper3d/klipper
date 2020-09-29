@@ -234,11 +234,16 @@ class PrinterHeaters:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
+        self.reactor = self.printer.get_reactor()
+        self.auto_report_timer = self.printer.get_reactor().register_timer(
+            self._respond_temp)
+        self.auto_report_interval = 0
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
+        gcode.register_command("M155", self.cmd_M155, when_not_ready=True)
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
@@ -303,23 +308,39 @@ class PrinterHeaters:
         return " ".join(out)
     def cmd_M105(self, gcmd):
         # Get Extruder Temperature
-        reactor = self.printer.get_reactor()
-        msg = self._get_temp(reactor.monotonic())
+        msg = self._get_temp(self.reactor.monotonic())
         did_ack = gcmd.ack(msg)
         if not did_ack:
             gcmd.respond_raw(msg)
+    def _respond_temp(self, eventtime):
+        gcode = self.printer.lookup_object("gcode")
+        msg = self._get_temp(eventtime)
+        gcode.respond_raw("ok %s" % msg)
+        return self._next_auto_report_time()
+    def cmd_M155(self, gcmd):
+        self.auto_report_interval = gcmd.get_float("S",
+            default=self.reactor.NEVER, minval=0)
+        next_update = self._next_auto_report_time()
+        self.reactor.update_timer(self.auto_report_timer,
+            next_update)
+        gcmd.ack()
+    def _next_auto_report_time(self):
+        if self.auto_report_interval == self.reactor.NEVER or \
+            self.auto_report_interval == 0:
+            return self.reactor.NEVER
+        else:
+            return self.reactor.monotonic() + self.auto_report_interval
     def wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         toolhead = self.printer.lookup_object("toolhead")
         gcode = self.printer.lookup_object("gcode")
-        reactor = self.printer.get_reactor()
-        eventtime = reactor.monotonic()
+        eventtime = self.reactor.monotonic()
         while not self.printer.is_shutdown() and heater.check_busy(eventtime):
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
-            eventtime = reactor.pause(eventtime + 1.)
+            eventtime = self.reactor.pause(eventtime + 1.)
 
 def load_config(config):
     return PrinterHeaters(config)
