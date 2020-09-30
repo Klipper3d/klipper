@@ -291,6 +291,7 @@ class GCodeDispatch:
         software_version = self.printer.get_start_args().get('software_version')
         kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
         gcmd.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
+        gcmd.respond_raw("Cap:AUTOREPORT_TEMP:1")
     def request_restart(self, result):
         if self.is_printer_ready:
             toolhead = self.printer.lookup_object('toolhead')
