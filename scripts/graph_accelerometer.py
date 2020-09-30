@@ -144,6 +144,16 @@ def plot_specgram(data, logname, max_freq, axis):
     fig.tight_layout()
     return fig
 
+######################################################################
+# CSV output
+######################################################################
+
+def write_frequency_response(datas, output):
+    helper = ShaperCalibrate(printer=None)
+    calibration_data = helper.process_accelerometer_data(datas[0])
+    for data in datas[1:]:
+        calibration_data.join(helper.process_accelerometer_data(data))
+    helper.save_calibration_data(output, calibration_data)
 
 ######################################################################
 # Startup
@@ -180,6 +190,10 @@ def main():
 
     # Parse data
     datas = [parse_log(fn) for fn in args]
+
+    if options.output and os.path.splitext(options.output)[1].lower() == '.csv':
+        write_frequency_response(datas, options.output)
+        return
 
     # Draw graph
     setup_matplotlib(options.output is not None)

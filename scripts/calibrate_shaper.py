@@ -10,23 +10,45 @@ import optparse, os, sys
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              '..', 'klippy', 'extras'))
-from shaper_calibrate import ShaperCalibrate
+from shaper_calibrate import CalibrationData, ShaperCalibrate
 
 def parse_log(logname):
-    return np.loadtxt(logname, comments='#', delimiter=',')
+    with open(logname) as f:
+        for header in f:
+            if not header.startswith('#'):
+                break
+        if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
+            # Raw accelerometer data
+            return np.loadtxt(logname, comments='#', delimiter=',')
+    # Parse power spectral density data
+    data = np.loadtxt(logname, skiprows=1, comments='#', delimiter=',')
+    calibration_data = CalibrationData(
+            freq_bins=data[:,0], psd_sum=data[:,4],
+            psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
+    calibration_data.set_numpy(np)
+    # If input shapers are present in the CSV file, the frequency
+    # response is already normalized to input frequencies
+    if 'mzv' not in header:
+        calibration_data.normalize_to_frequencies()
+    return calibration_data
 
 ######################################################################
 # Shaper calibration
 ######################################################################
 
 # Find the best shaper parameters
-def calibrate_shaper(datas, lognames, csv_output):
+def calibrate_shaper(datas, csv_output):
     helper = ShaperCalibrate(printer=None)
-    # Process accelerometer data
-    calibration_data = helper.process_accelerometer_data(datas[0])
-    for data in datas[1:]:
-        calibration_data.join(helper.process_accelerometer_data(data))
-    calibration_data.normalize_to_frequencies()
+    if isinstance(datas[0], CalibrationData):
+        calibration_data = datas[0]
+        for data in datas[1:]:
+            calibration_data.join(data)
+    else:
+        # Process accelerometer data
+        calibration_data = helper.process_accelerometer_data(datas[0])
+        for data in datas[1:]:
+            calibration_data.join(helper.process_accelerometer_data(data))
+        calibration_data.normalize_to_frequencies()
     shaper_name, shaper_freq, shapers_vals = helper.find_best_shaper(
             calibration_data, print)
     print("Recommended shaper is %s @ %.1f Hz" % (shaper_name, shaper_freq))
@@ -124,7 +146,7 @@ def main():
 
     # Calibrate shaper and generate outputs
     selected_shaper, shapers_vals, calibration_data = calibrate_shaper(
-            datas, args, options.csv)
+            datas, options.csv)
 
     if not options.csv or options.output:
         # Draw graph
