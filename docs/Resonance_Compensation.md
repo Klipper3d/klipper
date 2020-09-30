@@ -195,7 +195,10 @@ A few notes on shaper selection:
 
 ## Selecting max_accel
 
-You should have a printed test for the shaper you chose from the previous step.
+You should have a printed test for the shaper you chose from the previous step
+(if you don't, print the test model with the pressure advance disabled
+`SET_PRESSURE_ADVANCE ADVANCE=0` and with the tuning tower enabled as
+`TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1250 FACTOR=100 BAND=5`).
 Note that at very high accelerations, depending on the resonance frequency and
 the input shaper you chose (e.g. EI shaper creates more smoothing than MZV),
 input shaping may cause too much smoothing and rounding of the parts. So,
