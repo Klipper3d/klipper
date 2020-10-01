@@ -15,9 +15,23 @@ Installation instructions
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
-and **will not work**. You can follow the wiring instructions from
-[this](https://github.com/nagimov/adxl345spi#wiring) repo (just the wiring
-part). Double-check your wiring before powering up the Raspberry Pi to prevent
+and **will not work**. The recommended connection scheme:
+
+| ADXL345 pin | RPi pin | RPi pin name |
+|:--:|:--:|:--:|
+| 3V3 (or VCC) | 01 | 3.3v DC power |
+| GND | 06 | Ground |
+| CS | 24 | GPIO08 (SPI0_CE0_N) |
+| SDO | 21 | GPIO09 (SPI0_MISO) |
+| SDA | 19 | GPIO10 (SPI0_MOSI) |
+| SCL | 23 | GPIO11 (SPI0_SCLK) |
+
+Fritzing wiring diagrams for some of the ADXL345 boards:
+
+![ADXL345-Rpi](img/adxl345-fritzing.png)
+
+
+Double-check your wiring before powering up the Raspberry Pi to prevent
 damaging it or the accelerometer.
 
 ## Mounting the accelerometer
