@@ -134,7 +134,7 @@ class SX1509_digital_out(object):
         else:
             self._sx1509.clear_bits_in_register(REG_DATA, self._bitmask)
         self._sx1509.send_register(REG_DATA, print_time)
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         self.set_digital(print_time, value >= 0.5)
 
 class SX1509_pwm(object):
@@ -191,7 +191,7 @@ class SX1509_pwm(object):
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert
                                   else int(255 * value) & 0xFF)

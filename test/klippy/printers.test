@@ -121,6 +121,7 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
+CONFIG ../../config/generic-creality-v4.2.7.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg

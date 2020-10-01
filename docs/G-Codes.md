@@ -241,8 +241,10 @@ is enabled:
 
 The following command is available when an "output_pin" config section
 is enabled:
+- `SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`
 
-- `SET_PIN PIN=config_name VALUE=<value>`
+Note: Hardware PWM does not currently support the CYCLE_TIME parameter and will
+use the cycle time defined in the config.
 
 ## Manually Controlled Fans Commands
 
