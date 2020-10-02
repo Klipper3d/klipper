@@ -36,7 +36,7 @@ os.system("gpioset 1 196=0")
 os.system("gpioset 1 196=1")
 
 # reset AR100
-os.system("/home/klipper/klipper/scripts/flash-ar100.py /home/klipper/klipper/out/ar100.bin")
+os.system("/home/debian/klipper/scripts/flash-ar100.py /home/debian/klipper/out/ar100.bin")
 
 os.system("gpioset 1 102=1")
 os.system("gpioset 1 120=1")
