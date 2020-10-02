@@ -133,15 +133,13 @@ This section lists some commonly used config commands.
   see the description of the 'set_pwm_out' and 'config_digital_out'
   commands for parameter description.
 
-* `config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u value=%c
+* `config_soft_pwm_out oid=%c pin=%u value=%c
   default_value=%c max_duration=%u` : This command creates an internal
   micro-controller object for software implemented PWM. Unlike
   hardware pwm pins, a software pwm object does not require any
   special hardware support (other than the ability to configure the
-  pin as a digital output GPIO). Because the output switching is
-  implemented in the micro-controller software, it is recommended that
-  the cycle_ticks parameter correspond to a time of 10ms or greater.
-  See the description of the 'set_pwm_out' and 'config_digital_out'
+  pin as a digital output GPIO).  See the description of
+  the 'set_pwm_out' and 'config_digital_out'
   commands for parameter description.
 
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
@@ -203,9 +201,13 @@ only of interest to developers looking to gain insight into Klipper.
   a hardware PWM output pin. See the 'schedule_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
-  change to a software PWM output pin. See the 'schedule_digital_out'
-  and 'config_soft_pwm_out' commands for more info.
+* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u` : Schedules a
+  change to a software PWM output pin. The parameters 'on_ticks' and 'off_ticks'
+  define for how many ticks the pin will be on and off, respectively.
+  Because the output switching is implemented in the micro-controller software,
+  it is recommended that the sum of on_ticks and off_ticks parameters
+  corresponds to a time of 10ms or greater. See the 'schedule_digital_out' and
+  'config_soft_pwm_out' commands for more info.
 
 * `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u min_value=%hu max_value=%hu` : This command sets up a

@@ -245,7 +245,10 @@ is enabled:
 
 The following command is available when an "output_pin" config section
 is enabled:
-- `SET_PIN PIN=config_name VALUE=<value>`
+- `SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`
+
+Note: Hardware PWM does not currently support the CYCLE_TIME parameter and will
+use the cycle time defined in the config.
 
 ## Manually Controlled Fans Commands
 
@@ -385,7 +388,8 @@ section is enabled:
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]
+  [<mesh_parameter>=<value>]`:
   This command probes the bed using generated points specified by the
   parameters in the config. After probing, a mesh is generated and
   z-movement is adjusted according to the mesh. See the PROBE command

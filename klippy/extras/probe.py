@@ -25,6 +25,7 @@ class PrinterProbe:
         self.z_offset = config.getfloat('z_offset')
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
+        self.last_state = False
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -187,7 +188,10 @@ class PrinterProbe:
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         res = self.mcu_probe.query_endstop(print_time)
+        self.last_state = res
         gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
+    def get_status(self, eventtime):
+        return {'last_query': self.last_state}
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, gcmd):
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
@@ -338,6 +342,9 @@ class ProbePointsHelper:
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
+    def update_probe_points(self, points, min_points):
+        self.probe_points = points
+        self.minimum_points(min_points)
     def use_xy_offsets(self, use_offsets):
         self.use_offsets = use_offsets
     def get_lift_speed(self):
