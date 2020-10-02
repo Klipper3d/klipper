@@ -10,6 +10,7 @@ class PrintStats:
         self.gcode_move = printer.load_object(config, 'gcode_move')
         self.gcode = printer.lookup_object('gcode')
         self.reactor = printer.get_reactor()
+        self.manual_pause = False
         self.gcode.register_command('PAUSE_STATS',
                                      self.cmd_PAUSE_STATS)
         self.gcode.register_command('RESUME_STATS',
@@ -33,6 +34,7 @@ class PrintStats:
             pause_duration = curtime - self.last_pause_time
             self.prev_pause_duration += pause_duration
             self.last_pause_time = None
+            self.manual_pause = False
         # Reset last e-position
         gc_status = self.gcode_move.get_status(curtime)
         self.last_epos = gc_status['position'].e
@@ -44,11 +46,13 @@ class PrintStats:
             self.last_pause_time = curtime
             # update filament usage
             self._update_filament_usage(curtime)
+            self.manual_pause = False
         if self.state != "error":
             self.state = "paused"
     def note_error(self, message):
         self.state = "error"
         self.error_message = message
+        self.manual_pause = False
     def note_complete(self):
         self.state = "complete"
         eventtime = self.reactor.monotonic()
@@ -60,6 +64,7 @@ class PrintStats:
         self.prev_pause_duration = self.last_epos = 0.
         self.filament_used = self.total_duration = 0.
         self.print_start_time = self.last_pause_time = None
+        self.manual_pause = False
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:
@@ -82,7 +87,10 @@ class PrintStats:
         if self.last_pause_time is None:
             curtime = self.reactor.monotonic()
             self.last_pause_time = curtime
+            self._update_filament_usage(curtime)
+            self.manual_pause = True
     def cmd_RESUME_STATS(self,gcmd):
-        self.note_start()
+        if (self.last_pause_time is not None) and self.manual_pause:
+            self.note_start()
 def load_config(config):
     return PrintStats(config)
