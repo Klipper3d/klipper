@@ -26,18 +26,14 @@ void test_timer(void){
 // Blink PB7 (user led) indefinitely
 void test_gpio(void){
   timer_init();
-  struct gpio_out pb7 = gpio_out_setup(32+7, 1);
-  gpio_out_write(pb7, 0);
-  /*while(1){
-    gpio_out_toggle_noirq(pb7);
-    delay_cycles(300000000);
-    gpio_out_toggle_noirq(pb7);
-    delay_cycles(300000000);
-    gpio_out_write(pb7, 0);
-    delay_cycles(300000000);
-    gpio_out_write(pb7, 1);
-    delay_cycles(300000000);
-  }*/
+  struct gpio_out pe9;
+  while(1){
+    pe9 = gpio_out_setup((4*32)+9, 1);
+    gpio_out_write(pe9, 0);
+    gpio_out_toggle_noirq(pe9);
+    gpio_out_write(pe9, 1);
+    gpio_out_toggle_noirq(pe9);
+  }
 }
 
 
