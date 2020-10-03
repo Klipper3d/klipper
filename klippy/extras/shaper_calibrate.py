@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import importlib, logging, math, multiprocessing
 
-MIN_FREQ = 10.
+MIN_FREQ = 5.
 MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
 MAX_SHAPER_FREQ = 150.
@@ -203,7 +203,7 @@ class ShaperCalibrate:
     def _psd(self, x, fs, nfft):
         # Calculate power spectral density (PSD) using Welch's algorithm
         np = self.numpy
-        window = np.blackman(nfft)
+        window = np.kaiser(nfft, 6.)
         # Compensation for windowing loss
         scale = 1.0 / (window**2).sum()
 
@@ -280,22 +280,16 @@ class ShaperCalibrate:
     def _estimate_remaining_vibrations(self, shaper, test_damping_ratio,
                                        freq_bins, psd):
         vals = self._estimate_shaper(shaper, test_damping_ratio, freq_bins)
-        integral = .5 * (vals[:-1] * psd[:-1] + vals[1:] * psd[1:]) * (
-                freq_bins[1:] - freq_bins[:-1])
-        base = .5 * (psd[:-1] + psd[1:]) * (freq_bins[1:] - freq_bins[:-1])
-        return (integral.sum() / base.sum(), vals)
+        remaining_vibrations = (vals * psd).sum() / psd.sum()
+        return (remaining_vibrations, vals)
 
     def fit_shaper(self, shaper_cfg, calibration_data):
+        np = self.numpy
+
+        test_freqs = np.arange(shaper_cfg.min_freq, MAX_SHAPER_FREQ, .2)
+
         freq_bins = calibration_data.freq_bins
-        psd = calibration_data.psd_sum
-
-        test_freqs = freq_bins[(freq_bins <= MAX_SHAPER_FREQ) &
-                               (freq_bins >= shaper_cfg.min_freq)]
-        test_freqs = self.numpy.r_[(test_freqs[:-1] + test_freqs[1:]) * 0.5,
-                                   test_freqs]
-        test_freqs.sort()
-
-        psd = psd[freq_bins <= MAX_FREQ]
+        psd = calibration_data.psd_sum[freq_bins <= MAX_FREQ]
         freq_bins = freq_bins[freq_bins <= MAX_FREQ]
 
         best_freq = None
@@ -304,15 +298,14 @@ class ShaperCalibrate:
 
         for test_freq in test_freqs[::-1]:
             cur_remaining_vibrations = 0.
-            shaper_vals = self.numpy.zeros(shape=freq_bins.shape)
+            shaper_vals = np.zeros(shape=freq_bins.shape)
+            shaper = shaper_cfg.init_func(test_freq, SHAPER_DAMPING_RATIO)
             # Exact damping ratio of the printer is unknown, pessimizing
             # remaining vibrations over possible damping values.
             for dr in TEST_DAMPING_RATIOS:
-                shaper = shaper_cfg.init_func(test_freq,
-                                              SHAPER_DAMPING_RATIO)
                 vibrations, vals = self._estimate_remaining_vibrations(
                         shaper, dr, freq_bins, psd)
-                shaper_vals = self.numpy.maximum(shaper_vals, vals)
+                shaper_vals = np.maximum(shaper_vals, vals)
                 if vibrations > cur_remaining_vibrations:
                     cur_remaining_vibrations = vibrations
             if (best_freq is None or

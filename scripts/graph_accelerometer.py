@@ -54,7 +54,7 @@ def calc_specgram(data, axis):
     Fs = N / (data[-1,0] - data[0,0])
     # Round up to a power of 2 for faster FFT
     M = 1 << int(.5 * Fs - 1).bit_length()
-    window = np.blackman(M)
+    window = np.kaiser(M, 6.)
     def _specgram(x):
         return matplotlib.mlab.specgram(
                 x, Fs=Fs, NFFT=M, noverlap=M//2, window=window,
