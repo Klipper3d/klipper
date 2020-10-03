@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import time
 
 def compute_crc8_atm(datagram, initial_value=0):
     crc = initial_value
@@ -26,17 +27,13 @@ def write_bytes(addr, reg, data, tty):
     with open(tty, "wb") as f:
         f.write(bytes(to_send))
 
-
-
-# Enable high power
-os.system("gpioset 1 194=0")
-
 # reset STM32
 os.system("gpioset 1 196=0")
 os.system("gpioset 1 196=1")
 
 # reset AR100
 os.system("/home/debian/klipper/scripts/flash-ar100.py /home/debian/klipper/out/ar100.bin")
+
 
 os.system("gpioset 1 102=1")
 os.system("gpioset 1 120=1")
@@ -47,6 +44,16 @@ os.system("gpioget 1 100")
 os.system("gpioget 1 235")
 os.system("gpioget 1 145")
 os.system("gpioget 1 34")
+
+
+# Enable high power
+os.system("gpioset 1 194=1")
+time.sleep(0.1)
+os.system("gpioset 1 194=0")
+
+
+# Prep the tty for stepper drivers
+os.system("stty -F /dev/ttyS2 raw -echo -echoe")
 
 # Write Rsense int
 write_bytes(0, 0x00, [0x00, 0x00, 0x01, 0x82], "/dev/ttyS2")
@@ -65,6 +72,14 @@ write_bytes(0, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(1, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(2, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
 write_bytes(3, 0x6C, [0x15, 0x00, 0x00, 0x53], "/dev/ttyS2")
+
+print("Stepper driver states: ")
+os.system("gpioget 1 128")
+os.system("gpioget 1 129")
+os.system("gpioget 1 130")
+os.system("gpioget 1 131")
+os.system("gpioget 1 132")
+os.system("gpioget 1 133")
 
 
 
