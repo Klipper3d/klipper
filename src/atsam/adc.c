@@ -1,6 +1,6 @@
 // Analog to digital support
 //
-// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -12,17 +12,20 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
+
 static const uint8_t adc_pins[] = {
 #if CONFIG_MACH_SAM3X
     GPIO('A', 2), GPIO('A', 3), GPIO('A', 4), GPIO('A', 6),
     GPIO('A', 22), GPIO('A', 23), GPIO('A', 24), GPIO('A', 16),
     GPIO('B', 12), GPIO('B', 13), GPIO('B', 17), GPIO('B', 18),
-    GPIO('B', 19), GPIO('B', 20), GPIO('B', 21)
+    GPIO('B', 19), GPIO('B', 20), GPIO('B', 21), ADC_TEMPERATURE_PIN
 #elif CONFIG_MACH_SAM4S
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19), GPIO('A', 20),
     GPIO('B', 0), GPIO('B', 1), GPIO('B', 2), GPIO('B', 3),
     GPIO('A', 21), GPIO('A', 22), GPIO('C', 13), GPIO('C', 15),
-    GPIO('C', 12), GPIO('C', 29), GPIO('C', 30)
+    GPIO('C', 12), GPIO('C', 29), GPIO('C', 30), ADC_TEMPERATURE_PIN
 #endif
 };
 
@@ -50,8 +53,13 @@ gpio_adc_setup(uint8_t pin)
                        | ADC_MR_TRANSFER(1));
     }
 
-    // Place pin in input floating mode
-    gpio_in_setup(pin, 0);
+    if (pin == ADC_TEMPERATURE_PIN) {
+        // Enable temperature sensor
+        ADC->ADC_ACR |= ADC_ACR_TSON;
+    } else {
+        // Place pin in input floating mode
+        gpio_in_setup(pin, 0);
+    }
     return (struct gpio_adc){ .chan = 1 << chan };
 }
 
