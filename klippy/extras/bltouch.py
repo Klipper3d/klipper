@@ -78,6 +78,8 @@ class BLTouchEndstopWrapper:
             if stepper.is_active_axis('z'):
                 self.add_stepper(stepper)
     def handle_connect(self):
+        self.sync_mcu_print_time()
+        self.next_cmd_time += 0.200
         self.set_output_mode(self.output_mode)
         try:
             self.raise_probe()
