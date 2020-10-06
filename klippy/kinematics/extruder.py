@@ -102,8 +102,6 @@ class PrinterExtruder:
         epos = self.stepper.get_commanded_position()
         stepper.set_position([epos, 0., 0.])
         stepper.set_trapq(self.trapq)
-        sk = stepper.get_stepper_kinematics()
-        self.extruder_set_smooth_time(sk, self.pressure_advance_smooth_time)
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
