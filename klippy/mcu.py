@@ -196,6 +196,9 @@ class MCU_pwm:
         self._is_static = is_static
     def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
+        curtime = self._mcu.get_printer().get_reactor().monotonic()
+        printtime = self._mcu.estimated_print_time(curtime)
+        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
@@ -213,9 +216,6 @@ class MCU_pwm:
                    self._start_value * self._pwm_max,
                    self._shutdown_value * self._pwm_max,
                    self._mcu.seconds_to_clock(self._max_duration)))
-            curtime = self._mcu.get_printer().get_reactor().monotonic()
-            printtime = self._mcu.estimated_print_time(curtime)
-            self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
             svalue = int(self._start_value * self._pwm_max + 0.5)
             self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
@@ -238,9 +238,6 @@ class MCU_pwm:
             % (self._oid, self._pin, self._start_value >= 1.0,
                self._shutdown_value >= 0.5,
                self._mcu.seconds_to_clock(self._max_duration)))
-        curtime = self._mcu.get_printer().get_reactor().monotonic()
-        printtime = self._mcu.estimated_print_time(curtime)
-        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
         svalue = int(self._start_value * self._pwm_max + 0.5)
         self._mcu.add_config_cmd(
             "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d off_ticks=%d"
