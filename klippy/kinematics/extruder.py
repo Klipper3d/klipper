@@ -100,6 +100,9 @@ class PrinterExtruder:
         return self.heater
     def sync_stepper(self, stepper):
         epos = self.stepper.get_commanded_position()
+        sk = stepper.get_stepper_kinematics()
+        if self.pressure_advance > 0:
+            self.extruder_set_smooth_time(sk, self.pressure_advance_smooth_time)
         stepper.set_position([epos, 0., 0.])
         stepper.set_trapq(self.trapq)
     def stats(self, eventtime):
