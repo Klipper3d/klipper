@@ -90,6 +90,9 @@ class PrinterExtruder:
         self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
+        try: synced_stepper
+        except: print("synced_stepper not defined")
+        else: self.sync_stepper(synced_stepper)
     def get_status(self, eventtime):
         return dict(self.heater.get_status(eventtime),
                     pressure_advance=self.pressure_advance,
@@ -103,8 +106,12 @@ class PrinterExtruder:
         sk = stepper.get_stepper_kinematics()
         if self.pressure_advance > 0:
             self.extruder_set_smooth_time(sk, self.pressure_advance_smooth_time)
+        if self.pressure_advance == 0:
+            self.extruder_set_smooth_time(sk, 0.)
         stepper.set_position([epos, 0., 0.])
         stepper.set_trapq(self.trapq)
+        global synced_stepper
+        synced_stepper = stepper
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
