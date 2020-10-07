@@ -1,6 +1,6 @@
 // ADC functions on STM32
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -15,11 +15,15 @@
 
 DECL_CONSTANT("ADC_MAX", 4095);
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
+
 static const uint8_t adc_pins[] = {
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
     GPIO('B', 0), GPIO('B', 1), GPIO('C', 0), GPIO('C', 1),
     GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5),
+    ADC_TEMPERATURE_PIN
 };
 
 struct gpio_adc
@@ -68,7 +72,11 @@ gpio_adc_setup(uint32_t pin)
         }
     }
 
-    gpio_peripheral(pin, GPIO_ANALOG, 0);
+    if (pin == ADC_TEMPERATURE_PIN) {
+        ADC1_COMMON->CCR = ADC_CCR_TSEN;
+    } else {
+        gpio_peripheral(pin, GPIO_ANALOG, 0);
+    }
 
     return (struct gpio_adc){ .adc = adc, .chan = 1 << chan };
 }
