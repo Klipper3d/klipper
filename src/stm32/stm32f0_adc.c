@@ -15,23 +15,11 @@
 
 DECL_CONSTANT("ADC_MAX", 4095);
 
-static const uint32_t adc_pins[][2] = {
-    {GPIO('A', 0), ADC_CHSELR_CHSEL0},
-    {GPIO('A', 1), ADC_CHSELR_CHSEL1},
-    {GPIO('A', 2), ADC_CHSELR_CHSEL2},
-    {GPIO('A', 3), ADC_CHSELR_CHSEL3},
-    {GPIO('A', 4), ADC_CHSELR_CHSEL4},
-    {GPIO('A', 5), ADC_CHSELR_CHSEL5},
-    {GPIO('A', 6), ADC_CHSELR_CHSEL6},
-    {GPIO('A', 7), ADC_CHSELR_CHSEL7},
-    {GPIO('B', 0), ADC_CHSELR_CHSEL8},
-    {GPIO('B', 1), ADC_CHSELR_CHSEL9},
-    {GPIO('C', 0), ADC_CHSELR_CHSEL10},
-    {GPIO('C', 1), ADC_CHSELR_CHSEL11},
-    {GPIO('C', 2), ADC_CHSELR_CHSEL12},
-    {GPIO('C', 3), ADC_CHSELR_CHSEL13},
-    {GPIO('C', 4), ADC_CHSELR_CHSEL14},
-    {GPIO('C', 5), ADC_CHSELR_CHSEL15}
+static const uint8_t adc_pins[] = {
+    GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
+    GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
+    GPIO('B', 0), GPIO('B', 1), GPIO('C', 0), GPIO('C', 1),
+    GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5),
 };
 
 struct gpio_adc
@@ -42,7 +30,7 @@ gpio_adc_setup(uint32_t pin)
     for (chan=0; ; chan++) {
         if (chan >= ARRAY_SIZE(adc_pins))
             shutdown("Not a valid ADC pin");
-        if (adc_pins[chan][0] == pin)
+        if (adc_pins[chan] == pin)
             break;
     }
 
@@ -82,7 +70,7 @@ gpio_adc_setup(uint32_t pin)
 
     gpio_peripheral(pin, GPIO_ANALOG, 0);
 
-    return (struct gpio_adc){ .adc = adc, .chan = adc_pins[chan][1] };
+    return (struct gpio_adc){ .adc = adc, .chan = 1 << chan };
 }
 
 // Try to sample a value. Returns zero if sample ready, otherwise
