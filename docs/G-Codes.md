@@ -259,8 +259,9 @@ is enabled:
 The following command is available when "neopixel" or "dotstar" config
 sections are enabled:
 - `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-  [INDEX=<index>] [TRANSMIT=0]`: This sets the LED output. Each color
-  <value> must be between 0.0 and 1.0. If multiple LED chips are
+  WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
+  output. Each color <value> must be between 0.0 and 1.0. The WHITE
+  option is only valid on RGBW LEDs. If multiple LED chips are
   daisy-chained then one may specify INDEX to alter the color of just
   the given chip (1 for the first chip, 2 for the second, etc.). If
   INDEX is not provided then all LEDs in the daisy-chain will be set

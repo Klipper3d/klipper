@@ -23,16 +23,21 @@ class PrinterNeoPixel:
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
         self.mcu.register_config_callback(self.build_config)
-        self.color_order_GRB = config.getboolean("color_order_GRB", True)
-        self.chain_count = config.getint('chain_count', 1,
-                                         minval=1, maxval=MAX_MCU_SIZE//3)
+        formats = {v: v for v in ["RGB", "GRB", "RGBW", "GRBW"]}
+        self.color_order = config.getchoice("color_order", formats, "GRB")
+        elem_size = len(self.color_order)
+        self.chain_count = config.getint('chain_count', 1, minval=1,
+                                         maxval=MAX_MCU_SIZE//elem_size)
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
         # Initial color
-        self.color_data = bytearray(self.chain_count * 3)
+        self.color_data = bytearray(self.chain_count * elem_size)
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
-        self.update_color_data(red, green, blue)
+        white = 0
+        if elem_size == 4:
+            white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
+        self.update_color_data(red, green, blue, white)
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
         # Register commands
         self.printer.register_event_handler("klippy:connect", self.send_data)
@@ -44,25 +49,31 @@ class PrinterNeoPixel:
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
         self.mcu.add_config_cmd("config_neopixel oid=%d pin=%s data_size=%d"
                                 " bit_max_ticks=%d reset_min_ticks=%d"
-                                % (self.oid, self.pin, self.chain_count * 3,
+                                % (self.oid, self.pin, len(self.color_data),
                                    bmt, rmt))
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_update_cmd = self.mcu.lookup_command(
             "neopixel_update oid=%c pos=%hu data=%*s", cq=cmd_queue)
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
             "neopixel_send oid=%c", "neopixel_result success=%c", cq=cmd_queue)
-    def update_color_data(self, red, green, blue, index=None):
+    def update_color_data(self, red, green, blue, white, index=None):
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
         green = int(green * 255. + .5)
-        if self.color_order_GRB:
+        white = int(white * 255. + .5)
+        if self.color_order == "GRB":
             color_data = [green, red, blue]
-        else:
+        elif self.color_order == "RGB":
             color_data = [red, green, blue]
+        elif self.color_order == "GRBW":
+            color_data = [green, red, blue, white]
+        else:
+            color_data = [red, green, blue, white]
         if index is None:
             self.color_data[:] = color_data * self.chain_count
         else:
-            self.color_data[(index-1)*3:index*3] = color_data
+            elem_size = len(color_data)
+            self.color_data[(index-1)*elem_size:index*elem_size] = color_data
     def send_data(self, minclock=0):
         old_data, new_data = self.old_color_data, self.color_data
         if new_data == old_data:
@@ -97,9 +108,10 @@ class PrinterNeoPixel:
         red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
         green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
         blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
+        white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
-        self.update_color_data(red, green, blue, index)
+        self.update_color_data(red, green, blue, white, index)
         # Send command
         if not transmit:
             return

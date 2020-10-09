@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20201029: The neopixel `color_order_GRB` config option has been
+removed. If necessary, update the config to set the new `color_order`
+option to RGB, GRB, RGBW, or GRBW.
+
 20201029: The serial option in the mcu config section no longer
 defaults to /dev/ttyS0.  In the rare situation where /dev/ttyS0 is the
 desired serial port, it must be specified explicitly.
