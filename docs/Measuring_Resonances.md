@@ -1,11 +1,12 @@
 Measuring Resonances
 ====================
 
-This branch provides a support for ADXL345 accelerometer, which can be used to
+Klipper has built-in support for ADXL345 accelerometer, which can be used to
 measure resonance frequencies of the printer for different axes, and auto-tune
 [input shapers](Resonance_Compensation.md) to compensate for resonances.
-Note that using ADXL345 requires some soldering and crimping. Also note that
-only Raspberry Pi setups have been tested at this time.
+Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
+connected to a Raspberry Pi directly, or to an SPI interface of an MCU
+board (it needs to be reasonably fast).
 
 
 Installation instructions
@@ -135,19 +136,19 @@ as it is not valid to run the resonance testing with the input shaper enabled.
 
 Run the following command:
 ```
-TEST_RESONANCES AXIS=X CSV_NAME=resonances.csv
+TEST_RESONANCES AXIS=X
 ```
 Note that it will create vibrations on X axis. If that works, run for Y axis
 as well:
 ```
-TEST_RESONANCES AXIS=Y CSV_NAME=resonances.csv
+TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`).
 
 Note that the commands above require `numpy` to be installed installed. If you
-haven't installed it, you can instead pass `RAW_NAME=raw_data.csv` argument to
-theabove commands (2 files `/tmp/raw_data_x_*.csv` and `/tmp/raw_data_y_*.csv`
+haven't installed it, you can instead pass `OUTPUT=raw_data` argument to the
+above commands (2 files `/tmp/raw_data_x_*.csv` and `/tmp/raw_data_y_*.csv`
 will be written). One can then run stand-alone scripts on Raspberry Pi
 (specify the correct file name on the command line):
 ```
@@ -171,8 +172,8 @@ probe_points: ...
 ```
 
 Generated CSV files show power spectral density of the vibrations depending on the
-frequency. Usually, the charts generated from these CSV files are pretty much
-self-explanatory, with the peaks corresponding to the resonance frequencies:
+frequency. Usually, the charts generated from these CSV files are relatively easy
+to read, with the peaks corresponding to the resonance frequencies:
 
 ![Resonances](img/test-resonances-x.png)
 
@@ -231,14 +232,18 @@ SHAPER_CALIBRATE AXIS=Y
 
 You can execute `SAVE_CONFIG` twice - after calibrating each axis.
 
-However, if you connected two accelerometers simultaneously and configured them
-in the following manner:
+However, you can connect two accelerometers simultaneously, though they must be
+connected to different boards (say, to an RPi and printer MCU board), or to two
+different physical SPI interfaces on the same board (rarely available).
+Then they can be configured in the following manner:
 ```
 [adxl345 adxl345_x]
-cs_pin: ...
+# Assuming adxl345_x is connected to an RPi
+cs_pin: rpi:None
 
 [adxl345 adxl345_y]
-cs_pin: ...
+# Assuming adxl345_y is connected to a printer MCU board
+cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
 accel_chip_x: adxl345_x
@@ -286,7 +291,7 @@ It is possible to generate the raw accelerometer data and process it offline
 (e.g. on a host machine), for example to find resonances. In order to do so,
 run the following command via Octoprint terminal:
 ```
-TEST_RESONANCES AXIS=X RAW_NAME=raw_data.csv
+TEST_RESONANCES AXIS=X OUTPUT=raw_data
 ```
 (specify the desired test axis and the desired template for the raw
 accelerometer output, the data will be written into `/tmp` directory).
@@ -328,12 +333,16 @@ the CSV file if `-c output.csv` parameter is specified.
 
 Providing several inputs to shaper_calibrate.py script can be useful if running
 some advanced tuning of the input shapers, for example:
-  * Running `TEST_RESONANCES AXIS=X` (and `Y` axis) for a single axis twice on a
-    bed slinger printer with the accelerometer attached to the toolhead the
-    first time, and the accelerometer attached to the bed the second time in
-    order to detect axes cross-resonances and attempt to cancel them with input
-    shapers.
-  * Running `TEST_RESONANCES AXIS=Y` twice on a bed slinger with a glass bed and
-    a magnetic surfaces (which is lighter) to find the input shaper
-    parameters that work well for any print surface configuration.
+  * Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
+    axis twice on a bed slinger printer with the accelerometer attached to the
+    toolhead the first time, and the accelerometer attached to the bed the
+    second time in order to detect axes cross-resonances and attempt to cancel
+    them with input shapers.
+  * Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
+    a glass bed and a magnetic surfaces (which is lighter) to find the input
+    shaper parameters that work well for any print surface configuration.
   * Combining the resonance data from multiple test points.
+  * Combining the resonance data from 2 axis (e.g. on a bed slinger printer
+    to configure X-axis input_shaper from both X and Y axes resonances to
+    cancel vibrations of the *bed* in case the nozzle 'catches' a print when
+    moving in X axis direction).
