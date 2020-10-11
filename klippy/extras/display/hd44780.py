@@ -103,7 +103,7 @@ class HD44780:
         data = self.icons.get(glyph_name)
         if data is not None:
             slot, bits = data
-            self.write_text(x, y, chr(slot))
+            self.write_text(x, y, [slot])
             self.glyph_framebuffer[slot * 8:(slot + 1) * 8] = bits
             return 1
         char = TextGlyphs.get(glyph_name)

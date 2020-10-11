@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to interact with simulavr by simulating a serial port.
 #
 # Copyright (C) 2015-2018  Kevin O'Connor <kevin@koconnor.net>
@@ -17,7 +17,7 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         pysimulavr.PySimulationMember.__init__(self)
         self.terminal = terminal
         self.sc = pysimulavr.SystemClock.Instance()
-        self.delay = SIMULAVR_FREQ / baud
+        self.delay = SIMULAVR_FREQ // baud
         self.current = 0
         self.pos = -1
     def SetInState(self, pin):
@@ -33,7 +33,7 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         if self.pos == 1:
             return int(self.delay * 1.5)
         if self.pos >= SERIALBITS:
-            data = chr((self.current >> 1) & 0xff)
+            data = bytearray([(self.current >> 1) & 0xff])
             self.terminal.write(data)
             self.pos = -1
             self.current = 0
@@ -48,10 +48,10 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         self.terminal = terminal
         self.SetPin('H')
         self.sc = pysimulavr.SystemClock.Instance()
-        self.delay = SIMULAVR_FREQ / baud
+        self.delay = SIMULAVR_FREQ // baud
         self.current = 0
         self.pos = 0
-        self.queue = ""
+        self.queue = bytearray()
         self.sc.Add(self)
     def DoStep(self, trueHwStep):
         if not self.pos:
@@ -59,9 +59,8 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
                 data = self.terminal.read()
                 if not data:
                     return self.delay * 100
-                self.queue += data
-            self.current = (ord(self.queue[0]) << 1) | 0x200
-            self.queue = self.queue[1:]
+                self.queue.extend(data)
+            self.current = (self.queue.pop(0) << 1) | 0x200
         newstate = 'L'
         if self.current & (1 << self.pos):
             newstate = 'H'
@@ -109,7 +108,7 @@ class Pacing(pysimulavr.PySimulationMember):
         self.next_check_clock = 0
         self.rel_time = time.time()
         self.best_offset = 0.
-        self.delay = SIMULAVR_FREQ / 10000
+        self.delay = SIMULAVR_FREQ // 10000
         self.sc.Add(self)
     def DoStep(self, trueHwStep):
         curtime = time.time()
@@ -135,7 +134,7 @@ class TerminalIO:
     def read(self):
         try:
             return os.read(self.fd, 64)
-        except os.error, e:
+        except os.error as e:
             if e.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
                 pysimulavr.SystemClock.Instance().stop()
         return ""
@@ -198,7 +197,7 @@ def main():
     trace = Tracing(options.tracefile, options.trace)
     dev = pysimulavr.AvrFactory.instance().makeDevice(proc)
     dev.Load(elffile)
-    dev.SetClockFreq(SIMULAVR_FREQ / speed)
+    dev.SetClockFreq(SIMULAVR_FREQ // speed)
     sc.Add(dev)
     pysimulavr.cvar.sysConHandler.SetUseExit(False)
     trace.load_options()

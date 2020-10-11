@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import homing
 
 TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
 
@@ -81,7 +80,7 @@ class EndstopPhase:
             except Exception as e:
                 msg = "Unable to get stepper %s phase: %s" % (self.name, str(e))
                 logging.exception(msg)
-                raise homing.EndstopError(msg)
+                raise self.printer.command_error(msg)
             if stepper.is_dir_inverted():
                 phase = (self.phases - 1) - phase
         else:
@@ -95,7 +94,7 @@ class EndstopPhase:
         if delta >= self.phases - self.endstop_phase_accuracy:
             delta -= self.phases
         elif delta > self.endstop_phase_accuracy:
-            raise homing.EndstopError(
+            raise self.printer.command_error(
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist

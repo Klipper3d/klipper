@@ -94,6 +94,7 @@ class PrinterConfig:
         self.printer = printer
         self.autosave = None
         self.status_info = {}
+        self.save_config_pending = False
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
                                desc=self.cmd_SAVE_CONFIG_help)
@@ -259,16 +260,19 @@ class PrinterConfig:
             for option in section.get_prefix_options(''):
                 section_status[option] = section.get(option, note_valid=False)
     def get_status(self, eventtime):
-        return {'config': self.status_info}
+        return {'config': self.status_info,
+                'save_config_pending': self.save_config_pending}
     # Autosave functions
     def set(self, section, option, value):
         if not self.autosave.fileconfig.has_section(section):
             self.autosave.fileconfig.add_section(section)
         svalue = str(value)
         self.autosave.fileconfig.set(section, option, svalue)
+        self.save_config_pending = True
         logging.info("save_config: set [%s] %s = %s", section, option, svalue)
     def remove_section(self, section):
         self.autosave.fileconfig.remove_section(section)
+        self.save_config_pending = True
     def _disallow_include_conflicts(self, regular_data, cfgname, gcode):
         config = self._build_config_wrapper(regular_data, cfgname)
         for section in self.autosave.fileconfig.sections():

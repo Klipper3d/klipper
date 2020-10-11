@@ -121,12 +121,15 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
+CONFIG ../../config/generic-creality-v4.2.7.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
 CONFIG ../../config/generic-mks-robin-nano.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
+CONFIG ../../config/printer-creality-ender3pro-2020.cfg
+CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 
 # Printers using the stm32f407

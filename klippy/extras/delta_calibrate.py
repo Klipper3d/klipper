@@ -182,21 +182,25 @@ class DeltaCalibrate:
             z_weight = len(distances) / (MEASURE_WEIGHT * len(probe_positions))
         # Perform coordinate descent
         def delta_errorfunc(params):
-            # Build new delta_params for params under test
-            delta_params = orig_delta_params.new_calibration(params)
-            # Calculate z height errors
-            total_error = 0.
-            for z_offset, stable_pos in height_positions:
-                x, y, z = delta_params.get_position_from_stable(stable_pos)
-                total_error += (z - z_offset)**2
-            total_error *= z_weight
-            # Calculate distance errors
-            for dist, stable_pos1, stable_pos2 in distances:
-                x1, y1, z1 = delta_params.get_position_from_stable(stable_pos1)
-                x2, y2, z2 = delta_params.get_position_from_stable(stable_pos2)
-                d = math.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
-                total_error += (d - dist)**2
-            return total_error
+            try:
+                # Build new delta_params for params under test
+                delta_params = orig_delta_params.new_calibration(params)
+                getpos = delta_params.get_position_from_stable
+                # Calculate z height errors
+                total_error = 0.
+                for z_offset, stable_pos in height_positions:
+                    x, y, z = getpos(stable_pos)
+                    total_error += (z - z_offset)**2
+                total_error *= z_weight
+                # Calculate distance errors
+                for dist, stable_pos1, stable_pos2 in distances:
+                    x1, y1, z1 = getpos(stable_pos1)
+                    x2, y2, z2 = getpos(stable_pos2)
+                    d = math.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+                    total_error += (d - dist)**2
+                return total_error
+            except ValueError:
+                return 9999999999999.9
         new_params = mathutil.background_coordinate_descent(
             self.printer, adj_params, params, delta_errorfunc)
         # Log and report results

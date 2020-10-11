@@ -8,10 +8,9 @@ import pins, homing
 from . import manual_probe
 
 HINT_TIMEOUT = """
-Make sure to home the printer before probing. If the probe
-did not move far enough to trigger, then consider reducing
-the Z axis minimum position so the probe can travel further
-(the Z minimum position can be negative).
+If the probe did not move far enough to trigger, then
+consider reducing the Z axis minimum position so the probe
+can travel further (the Z minimum position can be negative).
 """
 
 class PrinterProbe:
@@ -26,6 +25,7 @@ class PrinterProbe:
         self.z_offset = config.getfloat('z_offset')
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
+        self.last_state = False
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -107,6 +107,9 @@ class PrinterProbe:
         return self.x_offset, self.y_offset, self.z_offset
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
+        curtime = self.printer.get_reactor().monotonic()
+        if 'z' not in toolhead.get_status(curtime)['homed_axes']:
+            raise self.printer.command_error("Must home before probe")
         homing_state = homing.Homing(self.printer)
         pos = toolhead.get_position()
         pos[2] = self.z_position
@@ -115,11 +118,11 @@ class PrinterProbe:
         try:
             homing_state.homing_move(pos, endstops, speed,
                                      probe_pos=True, verify_movement=verify)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
-            raise homing.CommandError(reason)
+            raise self.printer.command_error(reason)
         pos = toolhead.get_position()
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                 % (pos[0], pos[1], pos[2]))
@@ -162,8 +165,7 @@ class PrinterProbe:
             z_positions = [p[2] for p in positions]
             if max(z_positions) - min(z_positions) > samples_tolerance:
                 if retries >= samples_retries:
-                    raise homing.CommandError(
-                        "Probe samples exceed samples_tolerance")
+                    raise gcmd.error("Probe samples exceed samples_tolerance")
                 gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
                 retries += 1
                 positions = []
@@ -186,7 +188,10 @@ class PrinterProbe:
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         res = self.mcu_probe.query_endstop(print_time)
+        self.last_state = res
         gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
+    def get_status(self, eventtime):
+        return {'last_query': self.last_state}
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, gcmd):
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
@@ -295,14 +300,14 @@ class ProbeEndstopWrapper:
         start_pos = toolhead.get_position()
         self.activate_gcode.run_gcode_from_command()
         if toolhead.get_position()[:3] != start_pos[:3]:
-            raise homing.CommandError(
+            raise self.printer.command_error(
                 "Toolhead moved during probe activate_gcode script")
     def probe_finish(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
         self.deactivate_gcode.run_gcode_from_command()
         if toolhead.get_position()[:3] != start_pos[:3]:
-            raise homing.CommandError(
+            raise self.printer.command_error(
                 "Toolhead moved during probe deactivate_gcode script")
     def get_position_endstop(self):
         return self.position_endstop
@@ -337,6 +342,9 @@ class ProbePointsHelper:
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))
+    def update_probe_points(self, points, min_points):
+        self.probe_points = points
+        self.minimum_points(min_points)
     def use_xy_offsets(self, use_offsets):
         self.use_offsets = use_offsets
     def get_lift_speed(self):

@@ -242,7 +242,10 @@ is enabled:
 
 The following command is available when an "output_pin" config section
 is enabled:
-- `SET_PIN PIN=config_name VALUE=<value>`
+- `SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`
+
+Note: Hardware PWM does not currently support the CYCLE_TIME parameter and will
+use the cycle time defined in the config.
 
 ## Manually Controlled Fans Commands
 
@@ -382,7 +385,8 @@ section is enabled:
 
 The following commands are available when the "bed_mesh" config
 section is enabled:
-- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
+- `BED_MESH_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]
+  [<mesh_parameter>=<value>]`:
   This command probes the bed using generated points specified by the
   parameters in the config. After probing, a mesh is generated and
   z-movement is adjusted according to the mesh. See the PROBE command
@@ -488,13 +492,15 @@ section is enabled:
   the given distance (in mm) at the given constant velocity (in
   mm/s). If ACCEL is specified and is greater than zero, then the
   given acceleration (in mm/s^2) will be used; otherwise no
-  acceleration is performed. No boundary checks are performed; no
-  kinematic updates are made; other parallel steppers on an axis will
-  not be moved. Use caution as an incorrect command could cause
-  damage! Using this command will almost certainly place the low-level
-  kinematics in an incorrect state; issue a G28 afterwards to reset
-  the kinematics. This command is intended for low-level diagnostics
-  and debugging.
+  acceleration is performed. If acceleration is not performed then it
+  can lead to the micro-controller reporting "No next step" errors
+  (avoid these errors by specifying an ACCEL value or use a very low
+  VELOCITY). No boundary checks are performed; no kinematic updates
+  are made; other parallel steppers on an axis will not be moved. Use
+  caution as an incorrect command could cause damage! Using this
+  command will almost certainly place the low-level kinematics in an
+  incorrect state; issue a G28 afterwards to reset the kinematics.
+  This command is intended for low-level diagnostics and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
@@ -633,3 +639,17 @@ section is enabled:
   [target=<target_temperature>]`: Sets the target temperature for a
   temperature_fan. If a target is not supplied, it is set to the
   specified temperature in the config file.
+
+## Adxl345 Accelerometer Commands
+
+The following command is available when an "adxl345" config section is
+enabled:
+- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
+  [NAME=<value>]`: Starts accelerometer measurements at the requested
+  number of samples per second. If CHIP is not specified it defaults
+  to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
+  and 3200. If RATE is zero (or not specified) then the current series
+  of measurements are stopped and the results are written to a file
+  named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
+  parameter. If NAME is not specified it defaults to the current time
+  in "YYYYMMDD_HHMMSS" format.
