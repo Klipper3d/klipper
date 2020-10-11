@@ -178,7 +178,9 @@ class MCU_pwm:
         self._is_static = False
         self._last_clock = 0
         self._pwm_max = 0.
-        self._set_cmd = None
+        self._ffi_main, self._ffi_lib = chelper.get_ffi()
+        self._set_cmd_id = None
+        self._pwmqueue = None
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -196,7 +198,6 @@ class MCU_pwm:
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
     def _build_config(self):
-        cmd_queue = self._mcu.alloc_command_queue()
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
@@ -218,11 +219,18 @@ class MCU_pwm:
             printtime = self._mcu.estimated_print_time(curtime)
             self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
             svalue = int(self._start_value * self._pwm_max + 0.5)
+            #
+            self._pwmqueue = self._ffi_main.gc(self._ffi_lib.pwmchannel_alloc(self._oid),
+                      self._ffi_lib.pwmchannel_free)
+            print("_pwmqueue is " + str(self._pwmqueue))
+            self._mcu.register_pwmqueue(self._pwmqueue)
+            #
             self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
                                      on_restart=True)
-            self._set_cmd = self._mcu.lookup_command(
-                "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+            self._set_cmd_id = self._mcu.lookup_command_id(
+                "schedule_pwm_out oid=%c clock=%u value=%hu")
+            
             return
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
@@ -246,17 +254,31 @@ class MCU_pwm:
         self._mcu.add_config_cmd(
             "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
-        self._set_cmd = self._mcu.lookup_command(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
-            cq=cmd_queue)
+        self._set_cmd_id = self._mcu.lookup_command_id(
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u")
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._set_cmd.send([self._oid, clock, value],
-                           minclock=self._last_clock, reqclock=clock)
+        
+        #somehow change to
+        
+        print("self._pwmqueue is " + str(self._pwmqueue))
+        
+        data = (self._set_cmd_id, self._oid, clock, value)
+        ret = self._ffi_lib.pwmchannel_queue_msg(
+            self._pwmqueue, data, len(data), clock)
+        if ret:
+            raise error("Internal error in pwm send")
+        #
+        
+        
+        #self._set_cmd.send([self._oid, clock, value],
+        #                   minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
+        
+
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -434,6 +456,7 @@ class MCU:
         self._max_stepper_error = config.getfloat(
             'max_stepper_error', 0.000025, minval=0.)
         self._stepqueues = []
+        self._pwmqueues = []
         self._steppersync = None
         # Stats
         self._stats_sumsq_base = 0.
@@ -573,9 +596,14 @@ class MCU:
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
+        
+        # fixme debug
+        print("num Pwm-Queues:" + str(len(self._pwmqueues)))
+        print("Pwm-Queue:" + str(self._pwmqueues))
+
         self._steppersync = self._ffi_lib.steppersync_alloc(
             self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            move_count)
+            self._pwmqueues, len(self._pwmqueues), move_count)
         self._ffi_lib.steppersync_set_time(
             self._steppersync, 0., self._mcu_freq)
         # Log config information
@@ -640,6 +668,10 @@ class MCU:
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
+    def register_pwmqueue(self, pwmqueue):
+        #debug
+        print("Registering pwmqueue " + str(pwmqueue))
+        self._pwmqueues.append(pwmqueue)
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
