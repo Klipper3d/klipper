@@ -569,6 +569,10 @@ pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len, uint64_t re
 
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = req_clock;
+
+    //FIXME min_clock somehow overloaded? How to indicate that it uses the move queue?
+    qm->min_clock = req_clock;
+
     list_add_tail(&qm->node, &pc->msg_queue);
     return 0;
 }
@@ -694,6 +698,8 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         // Find message with lowest reqclock
         uint64_t req_clock = MAX_CLOCK;
         struct queue_message *qm = NULL;
+
+        //STEPPER
         for (i=0; i<ss->sc_num; i++) {
             struct stepcompress *sc = ss->sc_list[i];
             if (!list_empty(&sc->msg_queue)) {
