@@ -251,9 +251,13 @@ class ADXL345:
             raise gcmd.error("adxl345 measurements in progress")
         self.start_measurements()
         reactor = self.printer.get_reactor()
-        eventtime = reactor.monotonic()
+        eventtime = starttime = reactor.monotonic()
         while not self.raw_samples:
             eventtime = reactor.pause(eventtime + .1)
+            if eventtime > starttime + 3.:
+                # Try to shutdown the measurements
+                self.finish_measurements()
+                raise gcmd.error("Timeout reading adxl345 data")
         result = self.finish_measurements()
         values = result.decode_samples()
         _, accel_x, accel_y, accel_z = values[-1]
