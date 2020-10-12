@@ -179,6 +179,7 @@ class MCU_pwm:
         self._last_clock = 0
         self._pwm_max = 0.
         self._set_cmd_id = None
+        self._set_cmd_if_soft_pwm = None
         #
         self._oid = self._mcu.create_oid()
         self._ffi_main, self._ffi_lib = chelper.get_ffi()
@@ -251,28 +252,27 @@ class MCU_pwm:
         self._mcu.add_config_cmd(
             "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
-        self._set_cmd_id = self._mcu.lookup_command_id(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u")
+        self._set_cmd_if_soft_pwm = self._mcu.lookup_command(
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+            cq=self._mcu.alloc_command_queue())
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
         
-        #somehow change to
-        
-        data = (self._set_cmd_id, self._oid, clock, value)
-        ret = self._ffi_lib.pwmchannel_queue_msg(
-            self._pwmqueue, data, len(data), clock)
-        if ret:
-            raise error("Internal error in pwm send")
-        #
-        
-        
-        #self._set_cmd.send([self._oid, clock, value],
-        #                   minclock=self._last_clock, reqclock=clock)
+        # FIXME: Dirty hack to slow down soft-pwm
+        if self._hardware_pwm:
+            data = (self._set_cmd_id, self._oid, clock, value)
+            ret = self._ffi_lib.pwmchannel_queue_msg(
+                self._pwmqueue, data, len(data), clock)
+            if ret:
+                raise error("Internal error in pwm send")
+        else:
+            self._set_cmd_if_soft_pwm.send([self._oid, clock, value],
+                               minclock=self._last_clock, reqclock=clock)
+
         self._last_clock = clock
-        
 
 
 class MCU_adc:
