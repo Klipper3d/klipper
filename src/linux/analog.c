@@ -15,15 +15,17 @@
 
 DECL_CONSTANT("ADC_MAX", 4095); // Assume 12bit adc
 
-DECL_ENUMERATION_RANGE("pin", "analog0", 0, 8);
+#define ANALOG_START (1<<12)
+
+DECL_ENUMERATION_RANGE("pin", "analog0", ANALOG_START, 8);
 
 #define IIO_PATH "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw"
 
 struct gpio_adc
-gpio_adc_setup(uint8_t pin)
+gpio_adc_setup(uint32_t pin)
 {
     char fname[256];
-    snprintf(fname, sizeof(fname), IIO_PATH, pin);
+    snprintf(fname, sizeof(fname), IIO_PATH, pin-ANALOG_START);
 
     int fd = open(fname, O_RDONLY|O_CLOEXEC);
     if (fd < 0) {

@@ -91,7 +91,8 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
-    i2c_write(config, reg_len, reg);
+    if(reg_len != 0)
+        i2c_write(config, reg_len, reg);
     int ret = read(config.fd, data, read_len);
     if (ret != read_len) {
         if (ret < 0)

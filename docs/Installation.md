@@ -13,11 +13,11 @@ Prepping an OS image
 ====================
 
 Start by installing [OctoPi](https://github.com/guysoft/OctoPi) on the
-Raspberry Pi computer. Use OctoPi v0.16.0 or later - see the
+Raspberry Pi computer. Use OctoPi v0.17.0 or later - see the
 [octopi releases](https://github.com/guysoft/OctoPi/releases) for
 release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
-page, follow the prompt to upgrade OctoPrint to v1.3.12 or later.
+page, follow the prompt to upgrade OctoPrint to v1.4.2 or later.
 
 After installing OctoPi and upgrading OctoPrint, it will be necessary
 to ssh into the target machine to run a handful of system commands. If

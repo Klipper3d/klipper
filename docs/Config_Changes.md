@@ -6,6 +6,60 @@ All dates in this document are approximate.
 
 # Changes
 
+20200902: The RTD resistance-to-temperature calculation for MAX31865
+converters has been corrected to not read low.  If you are using such a
+device, you should recalibrate your print temperature and PID settings.
+
+20200816: The gcode macro `printer.gcode` object has been renamed to
+`printer.gcode_move`.  Several undocumented variables in
+`printer.toolhead` and `printer.gcode` have been removed.  See
+docs/Command_Templates.md for a list of available template variables.
+
+20200816: The gcode macro "action_" system has changed.  Replace any
+calls to `printer.gcode.action_emergency_stop()` with
+`action_emergency_stop()`, `printer.gcode.action_respond_info()` with
+`action_respond_info()`, and `printer.gcode.action_respond_error()`
+with `action_raise_error()`.
+
+20200809: The menu system has been rewritten. If the menu has been
+customized then it will be necessary to update to the new
+configuration. See config/example-menu.cfg for configuration details
+and see klippy/extras/display/menu.cfg for examples.
+
+20200731:  The behavior of the `progress` attribute reported by
+the `virtual_sdcard` printer object has changed.  Progress is no
+longer reset to 0 when a print is paused.  It will now always report
+progress based on the internal file position, or 0 if no file is
+currently loaded.
+
+20200725: The servo `enable` config parameter and the SET_SERVO
+`ENABLE` parameter have been removed.  Update any macros to use
+`SET_SERVO SERVO=my_servo WIDTH=0` to disable a servo.
+
+20200608: The LCD display support has changed the name of some
+internal "glyphs".  If a custom display layout was implemented it may
+be necessary to update to the latest glyph names (see
+klippy/extras/display/display.cfg for a list of available glyphs).
+
+20200606: The pin names on linux mcu have changed. Pins now have names
+of the form `gpiochip<chipid>/gpio<gpio>`.  For gpiochip0 you can also
+use a short `gpio<gpio>`.  For example, what was previously referred
+to as `P20` now becomes `gpio20` or `gpiochip0/gpio20`.
+
+20200603: The default 16x4 LCD layout will no longer show the
+estimated time remaining in a print.  (Only the elapsed time will be
+shown.)  If the old behavior is desired one can customize the menu
+display with that information (see the description of display_data in
+config/example-extras.cfg for details).
+
+20200531: The default USB vendor/product id is now 0x1d50/0x614e.
+These new ids are reserved for Klipper (thanks to the openmoko
+project). This change should not require any config changes, but the
+new ids may appear in system logs.
+
+20200524: The default value for the tmc5160 pwm_freq field is now zero
+(instead of one).
+
 20200425: The gcode_macro command template variable `printer.heater`
 was renamed to `printer.heaters`.
 

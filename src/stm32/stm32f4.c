@@ -1,4 +1,4 @@
-// Code to setup clocks and gpio on stm32f4
+// Code to setup clocks and gpio on stm32f2/stm32f4
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -98,7 +98,18 @@ void
 usb_request_bootloader(void)
 {
     irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    if (CONFIG_STM32_FLASH_START_4000) {
+        // HID Bootloader
+        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+        RCC->APB1ENR;
+        PWR->CR |= PWR_CR_DBP;
+        // HID Bootloader magic key
+        RTC->BKP4R = 0x424C;
+        PWR->CR &= ~PWR_CR_DBP;
+    } else {
+        // System DFU Bootloader
+        *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    }
     NVIC_SystemReset();
 }
 
@@ -107,6 +118,28 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
 
 // Clock configuration
+static void
+enable_clock_stm32f20x(void)
+{
+#if CONFIG_MACH_STM32F207
+    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 120Mhz PLL from external crystal (HSE)
+        uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
+        RCC->CR |= RCC_CR_HSEON;
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
+    } else {
+        // Configure 120Mhz PLL from internal 16Mhz oscillator (HSI)
+        uint32_t div = 16000000 / pll_base;
+        pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
+    }
+    RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
+                    | (0 << RCC_PLLCFGR_PLLP_Pos)
+                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
+    RCC->CR |= RCC_CR_PLLON;
+#endif
+}
+
 static void
 enable_clock_stm32f40x(void)
 {
@@ -183,7 +216,9 @@ static void
 clock_setup(void)
 {
     // Configure and enable PLL
-    if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
+    if (CONFIG_MACH_STM32F207)
+        enable_clock_stm32f20x();
+    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407)
         enable_clock_stm32f40x();
     else
         enable_clock_stm32f446();

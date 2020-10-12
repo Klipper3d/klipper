@@ -110,7 +110,7 @@ struct soft_pwm_s {
     struct timer timer;
     uint32_t on_duration, off_duration, end_time;
     uint32_t next_on_duration, next_off_duration;
-    uint32_t max_duration, cycle_time;
+    uint32_t max_duration;
     struct gpio_out pin;
     uint8_t default_value, flags;
 };
@@ -172,32 +172,31 @@ soft_pwm_load_event(struct timer *timer)
 void
 command_config_soft_pwm_out(uint32_t *args)
 {
-    struct gpio_out pin = gpio_out_setup(args[1], !!args[3]);
+    struct gpio_out pin = gpio_out_setup(args[1], !!args[2]);
     struct soft_pwm_s *s = oid_alloc(args[0], command_config_soft_pwm_out
                                      , sizeof(*s));
     s->pin = pin;
-    s->cycle_time = args[2];
-    s->default_value = !!args[4];
-    s->max_duration = args[5];
+    s->default_value = !!args[3];
+    s->max_duration = args[4];
     s->flags = s->default_value ? SPF_ON : 0;
 }
 DECL_COMMAND(command_config_soft_pwm_out,
-             "config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u value=%c"
+             "config_soft_pwm_out oid=%c pin=%u value=%c"
              " default_value=%c max_duration=%u");
 
 void
 command_schedule_soft_pwm_out(uint32_t *args)
 {
     struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
-    uint32_t time = args[1], next_on_duration = args[2], next_off_duration;
+    uint32_t time = args[1], next_on_duration = args[2],
+        next_off_duration = args[3];
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
-    if (next_on_duration == 0 || next_on_duration >= s->cycle_time) {
+    if (next_on_duration == 0 || next_off_duration == 0) {
         next_flags |= next_on_duration ? SPF_NEXT_ON : 0;
         if (!!next_on_duration != s->default_value && s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;
         next_on_duration = next_off_duration = 0;
     } else {
-        next_off_duration = s->cycle_time - next_on_duration;
         next_flags |= SPF_NEXT_ON | SPF_NEXT_TOGGLING;
         if (s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;
@@ -221,7 +220,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
     irq_enable();
 }
 DECL_COMMAND(command_schedule_soft_pwm_out,
-             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u");
+             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u");
 
 void
 soft_pwm_shutdown(void)

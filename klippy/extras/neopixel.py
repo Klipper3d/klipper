@@ -30,10 +30,9 @@ class PrinterNeoPixel:
         self.update_color_data(red, green, blue)
         self.printer.register_event_handler("klippy:connect", self.send_data)
         # Register commands
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command("SET_LED", "LED", name,
-                                        self.cmd_SET_LED,
-                                        desc=self.cmd_SET_LED_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
+                                   desc=self.cmd_SET_LED_help)
     def build_config(self):
         bmt = self.mcu.seconds_to_clock(BIT_MAX_TIME)
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
@@ -60,14 +59,13 @@ class PrinterNeoPixel:
                                     minclock=minclock,
                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
     cmd_SET_LED_help = "Set the color of an LED"
-    def cmd_SET_LED(self, params):
+    def cmd_SET_LED(self, gcmd):
         # Parse parameters
-        red = self.gcode.get_float('RED', params, 0., minval=0., maxval=1.)
-        green = self.gcode.get_float('GREEN', params, 0., minval=0., maxval=1.)
-        blue = self.gcode.get_float('BLUE', params, 0., minval=0., maxval=1.)
-        index = self.gcode.get_int('INDEX', params, None,
-                                   minval=1, maxval=self.chain_count)
-        transmit = self.gcode.get_int('TRANSMIT', params, 1)
+        red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
+        green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
+        blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
+        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
+        transmit = gcmd.get_int('TRANSMIT', 1)
         self.update_color_data(red, green, blue, index)
         # Send command
         if not transmit:

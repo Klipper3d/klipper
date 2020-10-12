@@ -40,7 +40,7 @@ class MCU_endstop:
                 self._oid, self._pin, self._pullup, len(self._steppers)))
         self._mcu.add_config_cmd(
             "endstop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
-            " rest_ticks=0 pin_value=0" % (self._oid,), is_init=True)
+            " rest_ticks=0 pin_value=0" % (self._oid,), on_restart=True)
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
                 "endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
@@ -140,8 +140,8 @@ class MCU_digital_out:
         self._is_static = is_static
     def _build_config(self):
         if self._is_static:
-            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                self._pin, self._start_value))
+            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
+                                     % (self._pin, self._start_value))
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
@@ -149,6 +149,9 @@ class MCU_digital_out:
             " max_duration=%d" % (
                 self._oid, self._pin, self._start_value, self._shutdown_value,
                 self._mcu.seconds_to_clock(self._max_duration)))
+        self._mcu.add_config_cmd("update_digital_out oid=%d value=%d"
+                                 % (self._oid, self._start_value),
+                                 on_restart=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "schedule_digital_out oid=%c clock=%u value=%c", cq=cmd_queue)
@@ -157,7 +160,7 @@ class MCU_digital_out:
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         self.set_digital(print_time, value >= 0.5)
 
 class MCU_pwm:
@@ -193,58 +196,74 @@ class MCU_pwm:
         self._is_static = is_static
     def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
+        curtime = self._mcu.get_printer().get_reactor().monotonic()
+        printtime = self._mcu.estimated_print_time(curtime)
+        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd(
-                    "set_pwm_out pin=%s cycle_ticks=%d value=%d" % (
-                        self._pin, cycle_ticks,
-                        self._start_value * self._pwm_max))
+                    "set_pwm_out pin=%s cycle_ticks=%d value=%d"
+                    % (self._pin, cycle_ticks,
+                       self._start_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
-                " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, cycle_ticks,
-                    self._start_value * self._pwm_max,
-                    self._shutdown_value * self._pwm_max,
-                    self._mcu.seconds_to_clock(self._max_duration)))
+                " default_value=%d max_duration=%d"
+                % (self._oid, self._pin, cycle_ticks,
+                   self._start_value * self._pwm_max,
+                   self._shutdown_value * self._pwm_max,
+                   self._mcu.seconds_to_clock(self._max_duration)))
+            svalue = int(self._start_value * self._pwm_max + 0.5)
+            self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
+                                     % (self._oid, self._last_clock, svalue),
+                                     on_restart=True)
             self._set_cmd = self._mcu.lookup_command(
                 "schedule_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
-        else:
-            if self._shutdown_value not in [0., 1.]:
-                raise pins.error(
-                    "shutdown value must be 0.0 or 1.0 on soft pwm")
-            self._pwm_max = float(cycle_ticks)
-            if self._is_static:
-                self._mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (
-                    self._pin, self._start_value >= 0.5))
-                return
-            self._oid = self._mcu.create_oid()
-            self._mcu.add_config_cmd(
-                "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
-                " default_value=%d max_duration=%d" % (
-                    self._oid, self._pin, cycle_ticks,
-                    self._start_value >= 1.0, self._shutdown_value >= 0.5,
-                    self._mcu.seconds_to_clock(self._max_duration)))
-            if self._start_value not in [0., 1.]:
-                clock = self._mcu.get_query_slot(self._oid)
-                svalue = int(self._start_value * self._pwm_max + 0.5)
-                self._mcu.add_config_cmd(
-                    "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d" % (
-                        self._oid, clock, svalue))
-            self._set_cmd = self._mcu.lookup_command(
-                "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
-                cq=cmd_queue)
-    def set_pwm(self, print_time, value):
+            return
+        # Software PWM
+        if self._shutdown_value not in [0., 1.]:
+            raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
+        self._pwm_max = float(cycle_ticks)
+        if self._is_static:
+            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
+                                     % (self._pin, self._start_value >= 0.5))
+            return
+        self._oid = self._mcu.create_oid()
+        self._mcu.add_config_cmd(
+            "config_soft_pwm_out oid=%d pin=%s value=%d"
+            " default_value=%d max_duration=%d"
+            % (self._oid, self._pin, self._start_value >= 1.0,
+               self._shutdown_value >= 0.5,
+               self._mcu.seconds_to_clock(self._max_duration)))
+        svalue = int(self._start_value * self._pwm_max + 0.5)
+        self._mcu.add_config_cmd(
+            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d off_ticks=%d"
+            % (self._oid, self._last_clock, svalue, cycle_ticks - svalue),
+            is_init=True)
+        self._set_cmd = self._mcu.lookup_command(
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u",
+            cq=cmd_queue)
+    def set_pwm(self, print_time, value, cycle_time=None):
         clock = self._mcu.print_time_to_clock(print_time)
+        minclock = self._last_clock
+        self._last_clock = clock
         if self._invert:
             value = 1. - value
-        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._set_cmd.send([self._oid, clock, value],
-                           minclock=self._last_clock, reqclock=clock)
-        self._last_clock = clock
+        if self._hardware_pwm:
+            v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+            self._set_cmd.send([self._oid, clock, v],
+                               minclock=minclock, reqclock=clock)
+            return
+        # Soft pwm update
+        if cycle_time is None:
+            cycle_time = self._cycle_time
+        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
+        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
+        self._set_cmd.send([self._oid, clock, on_ticks, cycle_ticks - on_ticks],
+                           minclock=minclock, reqclock=clock)
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -337,14 +356,14 @@ class RetryAsyncCommand:
 # Wrapper around query commands
 class CommandQueryWrapper:
     def __init__(self, serial, msgformat, respformat, oid=None,
-                 cmd_queue=None, async=False):
+                 cmd_queue=None, is_async=False):
         self._serial = serial
         self._cmd = serial.get_msgparser().lookup_command(msgformat)
         serial.get_msgparser().lookup_command(respformat)
         self._response = respformat.split()[0]
         self._oid = oid
         self._xmit_helper = serialhdl.SerialRetryCommand
-        if async:
+        if is_async:
             self._xmit_helper = RetryAsyncCommand
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
@@ -412,15 +431,15 @@ class MCU:
         self._printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_callbacks = []
-        self._init_cmds = []
         self._config_cmds = []
+        self._restart_cmds = []
+        self._init_cmds = []
         self._pin_map = config.get('pin_map', None)
-        self._custom = config.get('custom', '')
         self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._max_stepper_error = config.getfloat(
-            'max_stepper_error', 0.000025, minval=0.)
+        self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
+                                                  minval=0.)
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -484,32 +503,21 @@ class MCU:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
-    def _add_custom(self):
-        for line in self._custom.split('\n'):
-            line = line.strip()
-            cpos = line.find('#')
-            if cpos >= 0:
-                line = line[:cpos].strip()
-            if not line:
-                continue
-            self.add_config_cmd(line)
     def _send_config(self, prev_crc):
         # Build config commands
         for cb in self._config_callbacks:
             cb()
-        self._add_custom()
-        self._config_cmds.insert(0, "allocate_oids count=%d" % (
-            self._oid_count,))
+        self._config_cmds.insert(0, "allocate_oids count=%d"
+                                 % (self._oid_count,))
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
         if self._pin_map is not None:
             pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
-        for i, cmd in enumerate(self._config_cmds):
-            self._config_cmds[i] = pin_resolver.update_command(cmd)
-        for i, cmd in enumerate(self._init_cmds):
-            self._init_cmds[i] = pin_resolver.update_command(cmd)
+        for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
+            for i, cmd in enumerate(cmdlist):
+                cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
         config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
@@ -522,6 +530,9 @@ class MCU:
             logging.info("Sending MCU '%s' printer configuration...",
                          self._name)
             for c in self._config_cmds:
+                self._serial.send(c)
+        else:
+            for c in self._restart_cmds:
                 self._serial.send(c)
         # Transmit init messages
         for c in self._init_cmds:
@@ -563,17 +574,19 @@ class MCU:
         else:
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
-                raise error("Failed automated reset of MCU '%s'" % (
-                    self._name,))
+                raise error("Failed automated reset of MCU '%s'"
+                            % (self._name,))
             # Already configured - send init commands
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
-        self._steppersync = self._ffi_lib.steppersync_alloc(
-            self._serial.serialqueue, self._stepqueues, len(self._stepqueues),
-            move_count)
-        self._ffi_lib.steppersync_set_time(
-            self._steppersync, 0., self._mcu_freq)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self._steppersync = ffi_main.gc(
+            ffi_lib.steppersync_alloc(self._serial.serialqueue,
+                                      self._stepqueues, len(self._stepqueues),
+                                      move_count),
+            ffi_lib.steppersync_free)
+        ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
@@ -623,9 +636,11 @@ class MCU:
         return self._oid_count - 1
     def register_config_callback(self, cb):
         self._config_callbacks.append(cb)
-    def add_config_cmd(self, cmd, is_init=False):
+    def add_config_cmd(self, cmd, is_init=False, on_restart=False):
         if is_init:
             self._init_cmds.append(cmd)
+        elif on_restart:
+            self._restart_cmds.append(cmd)
         else:
             self._config_cmds.append(cmd)
     def get_query_slot(self, oid):
@@ -650,9 +665,9 @@ class MCU:
     def lookup_command(self, msgformat, cq=None):
         return CommandWrapper(self._serial, msgformat, cq)
     def lookup_query_command(self, msgformat, respformat, oid=None,
-                             cq=None, async=False):
+                             cq=None, is_async=False):
         return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
-                                   cq, async)
+                                   cq, is_async)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
@@ -677,9 +692,7 @@ class MCU:
     # Restarts
     def _disconnect(self):
         self._serial.disconnect()
-        if self._steppersync is not None:
-            self._ffi_lib.steppersync_free(self._steppersync)
-            self._steppersync = None
+        self._steppersync = None
     def _shutdown(self, force=False):
         if (self._emergency_stop_cmd is None
             or (self._is_shutdown and not force)):
@@ -740,8 +753,8 @@ class MCU:
             return
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
-            raise error("Internal error in MCU '%s' stepcompress" % (
-                self._name,))
+            raise error("Internal error in MCU '%s' stepcompress"
+                        % (self._name,))
     def check_active(self, print_time, eventtime):
         if self._steppersync is None:
             return
@@ -761,8 +774,6 @@ class MCU:
             self._mcu_tick_stddev)
         return False, ' '.join([msg, self._serial.stats(eventtime),
                                 self._clocksync.stats(eventtime)])
-    def __del__(self):
-        self._disconnect()
 
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """

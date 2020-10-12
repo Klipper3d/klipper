@@ -29,31 +29,26 @@ class FirmwareRetraction:
             "unretract_speed": self.unretract_speed,
         }
 
-    def cmd_SET_RETRACTION(self, params):
-        self.retract_length = self.gcode.get_float(
-            'RETRACT_LENGTH',
-            params, self.retract_length, minval=0.)
-        self.retract_speed = self.gcode.get_float(
-            'RETRACT_SPEED',
-            params, self.retract_speed, minval=1)
-        self.unretract_extra_length = self.gcode.get_float(
-            'UNRETRACT_EXTRA_LENGTH',
-            params, self.unretract_extra_length, minval=0.)
-        self.unretract_speed = self.gcode.get_float(
-            'UNRETRACT_SPEED',
-            params, self.unretract_speed, minval=1)
+    def cmd_SET_RETRACTION(self, gcmd):
+        self.retract_length = gcmd.get_float('RETRACT_LENGTH',
+                                             self.retract_length, minval=0.)
+        self.retract_speed = gcmd.get_float('RETRACT_SPEED',
+                                            self.retract_speed, minval=1)
+        self.unretract_extra_length = gcmd.get_float(
+            'UNRETRACT_EXTRA_LENGTH', self.unretract_extra_length, minval=0.)
+        self.unretract_speed = gcmd.get_float('UNRETRACT_SPEED',
+                                              self.unretract_speed, minval=1)
         self.unretract_length = (self.retract_length
                                  + self.unretract_extra_length)
         self.is_retracted = False
 
-    def cmd_GET_RETRACTION(self, params):
-        msg = ("RETRACT_LENGTH=%.5f RETRACT_SPEED=%.5f "
-               "UNRETRACT_EXTRA_LENGTH=%.5f UNRETRACT_SPEED=%.5f"
-               % (self.retract_length, self.retract_speed,
-                  self.unretract_extra_length, self.unretract_speed))
-        self.gcode.respond_info(msg)
+    def cmd_GET_RETRACTION(self, gcmd):
+        gcmd.respond_info("RETRACT_LENGTH=%.5f RETRACT_SPEED=%.5f"
+                          " UNRETRACT_EXTRA_LENGTH=%.5f UNRETRACT_SPEED=%.5f"
+                          % (self.retract_length, self.retract_speed,
+                             self.unretract_extra_length, self.unretract_speed))
 
-    def cmd_G10(self, params):
+    def cmd_G10(self, gcmd):
         if not self.is_retracted:
             self.gcode.run_script_from_command(
                 "SAVE_GCODE_STATE NAME=_retract_state\n"
@@ -63,7 +58,7 @@ class FirmwareRetraction:
                 % (self.retract_length, self.retract_speed*60))
             self.is_retracted = True
 
-    def cmd_G11(self, params):
+    def cmd_G11(self, gcmd):
         if self.is_retracted:
             self.gcode.run_script_from_command(
                 "SAVE_GCODE_STATE NAME=_retract_state\n"

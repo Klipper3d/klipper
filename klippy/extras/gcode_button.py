@@ -11,9 +11,19 @@ class GCodeButton:
         self.name = config.get_name().split(' ')[-1]
         self.pin = config.get('pin')
         self.last_state = 0
-        buttons = self.printer.try_load_module(config, "buttons")
-        buttons.register_buttons([self.pin], self.button_callback)
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        buttons = self.printer.load_object(config, "buttons")
+        analog_range = config.get('analog_range', None)
+        if analog_range is None:
+            buttons.register_buttons([self.pin], self.button_callback)
+        else:
+            try:
+                amin, amax = map(float, analog_range.split(','))
+            except:
+                raise config.error("Unable to parse analog_range")
+            pullup = config.getfloat('analog_pullup_resistor', 4700., above=0.)
+            buttons.register_adc_button(self.pin, amin, amax, pullup,
+                                        self.button_callback)
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.press_template = gcode_macro.load_template(config, 'press_gcode')
         self.release_template = gcode_macro.load_template(config,
                                                           'release_gcode', '')
@@ -23,8 +33,8 @@ class GCodeButton:
                                         desc=self.cmd_QUERY_BUTTON_help)
 
     cmd_QUERY_BUTTON_help = "Report on the state of a button"
-    def cmd_QUERY_BUTTON(self, params):
-        self.gcode.respond_info(self.name + ": " + self.get_status()['state'])
+    def cmd_QUERY_BUTTON(self, gcmd):
+        gcmd.respond_info(self.name + ": " + self.get_status()['state'])
 
     def button_callback(self, eventtime, state):
         self.last_state = state

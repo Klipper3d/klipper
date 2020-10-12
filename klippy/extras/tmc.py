@@ -91,13 +91,13 @@ class TMCCommandHelper:
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         # Register commands
-        self.gcode = self.printer.lookup_object("gcode")
-        self.gcode.register_mux_command(
-            "SET_TMC_FIELD", "STEPPER", self.name,
-            self.cmd_SET_TMC_FIELD, desc=self.cmd_SET_TMC_FIELD_help)
-        self.gcode.register_mux_command(
-            "INIT_TMC", "STEPPER", self.name,
-            self.cmd_INIT_TMC, desc=self.cmd_INIT_TMC_help)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_FIELD,
+                                   desc=self.cmd_SET_TMC_FIELD_help)
+        gcode.register_mux_command("INIT_TMC", "STEPPER", self.name,
+                                   self.cmd_INIT_TMC,
+                                   desc=self.cmd_INIT_TMC_help)
     def _init_registers(self, print_time=None):
         # Send registers
         for reg_name, val in self.fields.registers.items():
@@ -126,19 +126,17 @@ class TMCCommandHelper:
                 reactor = self.printer.get_reactor()
                 reactor.pause(reactor.monotonic() + 1.)
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
-    def cmd_INIT_TMC(self, params):
+    def cmd_INIT_TMC(self, gcmd):
         logging.info("INIT_TMC %s", self.name)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self._init_registers(print_time)
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC driver"
-    def cmd_SET_TMC_FIELD(self, params):
-        if 'FIELD' not in params or 'VALUE' not in params:
-            raise self.gcode.error("Invalid command format")
-        field_name = self.gcode.get_str('FIELD', params)
+    def cmd_SET_TMC_FIELD(self, gcmd):
+        field_name = gcmd.get('FIELD')
         reg_name = self.fields.lookup_register(field_name, None)
         if reg_name is None:
-            raise self.gcode.error("Unknown field name '%s'" % (field_name,))
-        value = self.gcode.get_int('VALUE', params)
+            raise gcmd.error("Unknown field name '%s'" % (field_name,))
+        value = gcmd.get_int('VALUE')
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
@@ -158,24 +156,24 @@ class TMCCommandHelper:
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
         self.read_translate = read_translate
-        self.gcode.register_mux_command(
-            "DUMP_TMC", "STEPPER", self.name,
-            self.cmd_DUMP_TMC, desc=self.cmd_DUMP_TMC_help)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("DUMP_TMC", "STEPPER", self.name,
+                                   self.cmd_DUMP_TMC,
+                                   desc=self.cmd_DUMP_TMC_help)
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
-    def cmd_DUMP_TMC(self, params):
+    def cmd_DUMP_TMC(self, gcmd):
         logging.info("DUMP_TMC %s", self.name)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.gcode.respond_info("========== Write-only registers ==========")
+        gcmd.respond_info("========== Write-only registers ==========")
         for reg_name, val in self.fields.registers.items():
             if reg_name not in self.read_registers:
-                self.gcode.respond_info(
-                    self.fields.pretty_format(reg_name, val))
-        self.gcode.respond_info("========== Queried registers ==========")
+                gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+        gcmd.respond_info("========== Queried registers ==========")
         for reg_name in self.read_registers:
             val = self.mcu_tmc.get_register(reg_name)
             if self.read_translate is not None:
                 reg_name, val = self.read_translate(reg_name, val)
-            self.gcode.respond_info(self.fields.pretty_format(reg_name, val))
+            gcmd.respond_info(self.fields.pretty_format(reg_name, val))
 
 
 ######################################################################
@@ -184,11 +182,20 @@ class TMCCommandHelper:
 
 # Helper class for "sensorless homing"
 class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc, diag_pin):
+    def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.diag_pin = diag_pin
+        if self.fields.lookup_register('diag0_stall') is not None:
+            if config.get('diag0_pin', None) is not None:
+                self.diag_pin = config.get('diag0_pin')
+                self.diag_pin_field = 'diag0_stall'
+            else:
+                self.diag_pin = config.get('diag1_pin', None)
+                self.diag_pin_field = 'diag1_stall'
+        else:
+            self.diag_pin = config.get('diag_pin', None)
+            self.diag_pin_field = None
         self.mcu_endstop = None
         self.en_pwm = False
         self.pwmthrs = 0
@@ -230,7 +237,7 @@ class TMCVirtualPinHelper:
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
-            val = self.fields.set_field("diag1_stall", 1)
+            val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
     def handle_homing_move_end(self, endstops):
@@ -242,7 +249,7 @@ class TMCVirtualPinHelper:
             val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
         else:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
-            val = self.fields.set_field("diag1_stall", 0)
+            val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
         self.mcu_tmc.set_register("TCOOLTHRS", 0)
 

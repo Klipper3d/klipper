@@ -1,0 +1,31 @@
+# Enable the github stale issue bot tracker
+name: "Close stale issues"
+on:
+  schedule:
+  - cron: "0 0 * * *"
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/stale@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-issue-message: |
+          Hello,
+
+          It looks like there hasn't been any recent updates on this
+          Klipper github issue.  If you created this issue and no
+          longer consider it open, then please login to github and
+          close the issue.  Otherwise, if there is no further activity
+          on this thread then it will be automatically closed in a few
+          days.
+
+          Best regards,
+
+          ~ Your friendly GitIssueBot
+
+          PS: I'm just an automated script, not a human being.
+
+        exempt-issue-labels: 'enhancement,bug'
+        days-before-stale: 21
+        days-before-close: 7

@@ -78,7 +78,7 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = self.mcu.lookup_query_command(
             "tmcuart_send oid=%c write=%*s read=%c",
             "tmcuart_response oid=%c read=%*s", oid=self.oid,
-            cq=self.cmd_queue, async=True)
+            cq=self.cmd_queue, is_async=True)
     def register_instance(self, rx_pin_params, tx_pin_params,
                           select_pins_desc, addr):
         if (rx_pin_params['pin'] != self.rx_pin

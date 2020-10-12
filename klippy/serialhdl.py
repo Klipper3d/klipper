@@ -98,8 +98,9 @@ class SerialReader:
                 continue
             if self.baud:
                 stk500v2_leave(self.ser, self.reactor)
-            self.serialqueue = self.ffi_lib.serialqueue_alloc(
-                self.ser.fileno(), 0)
+            self.serialqueue = self.ffi_main.gc(
+                self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0),
+                self.ffi_lib.serialqueue_free)
             self.background_thread = threading.Thread(target=self._bg_thread)
             self.background_thread.start()
             # Obtain and load the data dictionary from the firmware
@@ -126,7 +127,9 @@ class SerialReader:
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.ser = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
-        self.serialqueue = self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1)
+        self.serialqueue = self.ffi_main.gc(
+            self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1),
+            self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, last_time, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
             self.serialqueue, freq, last_time, last_clock)
@@ -135,7 +138,6 @@ class SerialReader:
             self.ffi_lib.serialqueue_exit(self.serialqueue)
             if self.background_thread is not None:
                 self.background_thread.join()
-            self.ffi_lib.serialqueue_free(self.serialqueue)
             self.background_thread = self.serialqueue = None
         if self.ser is not None:
             self.ser.close()
@@ -194,10 +196,10 @@ class SerialReader:
             self.stats(self.reactor.monotonic()),))
         sdata = self.ffi_main.new('struct pull_queue_message[1024]')
         rdata = self.ffi_main.new('struct pull_queue_message[1024]')
-        scount = self.ffi_lib.serialqueue_extract_old(
-            self.serialqueue, 1, sdata, len(sdata))
-        rcount = self.ffi_lib.serialqueue_extract_old(
-            self.serialqueue, 0, rdata, len(rdata))
+        scount = self.ffi_lib.serialqueue_extract_old(self.serialqueue, 1,
+                                                      sdata, len(sdata))
+        rcount = self.ffi_lib.serialqueue_extract_old(self.serialqueue, 0,
+                                                      rdata, len(rdata))
         out.append("Dumping send queue %d messages" % (scount,))
         for i in range(scount):
             msg = sdata[i]
@@ -222,8 +224,6 @@ class SerialReader:
         logging.info("%s: %s", params['#name'], params['#msg'])
     def handle_default(self, params):
         logging.warn("got %s", params)
-    def __del__(self):
-        self.disconnect()
 
 # Class to send a query command and return the received response
 class SerialRetryCommand:

@@ -125,12 +125,13 @@ of a typical move command. The [kinematics](Kinematics.md) document
 provides further information on the mechanics of moves.
 
 * Processing for a move command starts in gcode.py. The goal of
-  gcode.py is to translate G-code into internal calls. Changes in
-  origin (eg, G92), changes in relative vs absolute positions (eg,
-  G90), and unit changes (eg, F6000=100mm/s) are handled here. The
-  code path for a move is: `_process_data() -> _process_commands() ->
-  cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
-  actual request: `cmd_G1() -> ToolHead.move()`
+  gcode.py is to translate G-code into internal calls. A G1 command
+  will invoke cmd_G1() in klippy/extras/gcode_move.py. The
+  gcode_move.py code handles changes in origin (eg, G92), changes in
+  relative vs absolute positions (eg, G90), and unit changes (eg,
+  F6000=100mm/s). The code path for a move is: `_process_data() ->
+  _process_commands() -> cmd_G1()`. Ultimately the ToolHead class is
+  invoked to execute the actual request: `cmd_G1() -> ToolHead.move()`
 
 * The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
@@ -473,9 +474,9 @@ system specified in the config file. This may differ from the
 bed_tilt, skew_correction) is in effect. This may differ from the
 actual coordinates specified in the last `G1` command if the g-code
 origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
-`M114` command (`gcode.get_status()['gcode_position']`) will report
-the last g-code position relative to the current g-code coordinate
-system.
+`M114` command (`gcode_move.get_status()['gcode_position']`) will
+report the last g-code position relative to the current g-code
+coordinate system.
 
 The "gcode base" is the location of the g-code origin in cartesian
 coordinates relative to the coordinate system specified in the config
