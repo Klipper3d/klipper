@@ -263,6 +263,10 @@ class MCU_pwm:
         
         # FIXME: Dirty hack to slow down soft-pwm
         if self._hardware_pwm:
+            #print_time may be too near (or in the past!)
+            #now_on_mcu = self._mcu._reactor.
+            curtime = self._mcu.get_printer().get_reactor().monotonic()
+            print_time = max(print_time, self._mcu.estimated_print_time(curtime))
             data = (self._set_cmd_id, self._oid, clock, value)
             ret = self._ffi_lib.pwmchannel_queue_msg(
                 self._pwmqueue, data, len(data), clock)
