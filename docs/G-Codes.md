@@ -653,3 +653,14 @@ enabled:
   named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
   parameter. If NAME is not specified it defaults to the current time
   in "YYYYMMDD_HHMMSS" format.
+
+## Save Variables
+
+The following command is enabled if a [save_variables] config section has been
+enabled:
+
+- `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to disk
+  so that it can be used across restarts. All stored variables are loaded into
+  the printer.save_variables dict at startup and can be used in gcode macros.
+  Variables are always saved as floats if they can be converted, and
+  strings, if not.
