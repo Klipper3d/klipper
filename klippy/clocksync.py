@@ -39,9 +39,10 @@ class ClockSync:
         self.prediction_variance = (.001 * self.mcu_freq)**2
         # Enable periodic get_clock timer
         for i in range(8):
+            self.reactor.pause(self.reactor.monotonic() + 0.050)
+            self.last_prediction_time = -9999.
             params = serial.send_with_response('get_clock', 'clock')
             self._handle_clock(params)
-            self.reactor.pause(self.reactor.monotonic() + 0.050)
         self.get_clock_cmd = serial.get_msgparser().create_command('get_clock')
         self.cmd_queue = serial.alloc_command_queue()
         serial.register_response(self._handle_clock, 'clock')

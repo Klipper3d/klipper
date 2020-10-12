@@ -1,0 +1,5 @@
+*.o
+bossac/bin/
+bossac/obj/
+hidflash/hid-flash
+hub-ctrl/hub-ctrl

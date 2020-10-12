@@ -162,3 +162,6 @@ consider calibrating [pressure advance](Pressure_Advance.md).
 It may be necessary to perform other types of detailed printer
 calibration - a number of guides are available online to help with
 this (for example, do a web search for "3d printer calibration").
+As an example, if you experience the effect called ringing,
+you may try following [resonance compensation](Resonance_Compensation.md)
+tuning guide.

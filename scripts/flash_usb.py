@@ -113,6 +113,25 @@ def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     pathname = wait_path(devpath)
     call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
+def call_hidflash(binfile, sudo):
+    args = ["lib/hidflash/hid-flash", binfile]
+    if sudo:
+        args.insert(0, "sudo")
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running hid-flash")
+
+# Flash via call to hid-flash
+def flash_hidflash(device, binfile, sudo=True):
+    hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
+    if hexfmt_r.match(device.strip()):
+        call_hidflash(binfile, sudo)
+        return
+    buspath, devpath = translate_serial_to_usb_path(device)
+    enter_bootloader(device)
+    pathname = wait_path(devpath)
+    call_hidflash(binfile, sudo)
 
 ######################################################################
 # Device specific helpers
@@ -174,6 +193,8 @@ Failed to flash to %s: %s
 If the device is already in bootloader mode it can be flashed with the
 following command:
   make flash FLASH_DEVICE=1eaf:0003
+  OR
+  make flash FLASH_DEVICE=1209:beba
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -182,7 +203,11 @@ If attempting to flash via 3.3V serial, then use:
 
 def flash_stm32f1(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"], options.sudo)
+        if options.start == 0x8000800:
+            flash_hidflash(options.device, binfile, options.sudo)
+        else:
+            flash_dfuutil(options.device, binfile, ["-R", "-a", "2"],
+                          options.sudo)
     except error as e:
         sys.stderr.write(STM32F1_HELP % (
             options.device, str(e), options.device))
@@ -194,6 +219,8 @@ Failed to flash to %s: %s
 If the device is already in bootloader mode it can be flashed with the
 following command:
   make flash FLASH_DEVICE=0483:df11
+  OR
+  make flash FLASH_DEVICE=1209:beba
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -203,8 +230,11 @@ If attempting to flash via 3.3V serial, then use:
 def flash_stm32f4(options, binfile):
     start = "0x%x:leave" % (options.start,)
     try:
-        flash_dfuutil(options.device, binfile,
-                      ["-R", "-a", "0", "-s", start], options.sudo)
+        if options.start == 0x8004000:
+            flash_hidflash(options.device, binfile, options.sudo)
+        else:
+            flash_dfuutil(options.device, binfile,
+                          ["-R", "-a", "0", "-s", start], options.sudo)
     except error as e:
         sys.stderr.write(STM32F4_HELP % (
             options.device, str(e), options.device))

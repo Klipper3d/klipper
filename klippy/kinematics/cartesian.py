@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, homing
+import stepper
 
 class CartKinematics:
     def __init__(self, toolhead, config):
@@ -100,9 +100,8 @@ class CartKinematics:
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise homing.EndstopMoveError(
-                        end_pos, "Must home axis first")
-                raise homing.EndstopMoveError(end_pos)
+                    raise move.move_error("Must home axis first")
+                raise move.move_error()
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
@@ -135,11 +134,9 @@ class CartKinematics:
         if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
             self.limits[dc_axis] = dc_rail.get_range()
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
-    def cmd_SET_DUAL_CARRIAGE(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        carriage = gcode.get_int('CARRIAGE', params, minval=0, maxval=1)
+    def cmd_SET_DUAL_CARRIAGE(self, gcmd):
+        carriage = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
         self._activate_carriage(carriage)
-        gcode.reset_last_position()
 
 def load_kinematics(toolhead, config):
     return CartKinematics(toolhead, config)

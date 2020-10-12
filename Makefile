@@ -66,7 +66,7 @@ $(OUT)%.o: %.c $(OUT)autoconf.h $(OUT)board-link
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-$(OUT)%.ld: %.lds.S $(OUT)board-link
+$(OUT)%.ld: %.lds.S $(OUT)autoconf.h $(OUT)board-link
 	@echo "  Preprocessing $@"
 	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
 

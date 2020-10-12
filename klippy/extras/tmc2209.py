@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Stephan Oelze <stephan.oelze@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import tmc2208, tmc2130, tmc, tmc_uart
+from . import tmc2208, tmc2130, tmc, tmc_uart
 
 TMC_FREQUENCY=12000000.
 
@@ -60,8 +60,7 @@ class TMC2209:
                                       FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3)
         # Allow virtual pins to be created
-        diag_pin = config.get('diag_pin', None)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag_pin)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)

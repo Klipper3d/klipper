@@ -8,6 +8,8 @@ import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
+TextGlyphs = { 'right_arrow': '\x7e' }
+
 HD44780_DELAY = .000040
 
 class HD44780:
@@ -27,6 +29,7 @@ class HD44780:
         self.oid = self.mcu.create_oid()
         self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
+        self.icons = {}
         # framebuffers
         self.text_framebuffers = [bytearray(' '*40), bytearray(' '*40)]
         self.glyph_framebuffer = bytearray(64)
@@ -85,24 +88,31 @@ class HD44780:
         for i, cmds in enumerate(init):
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
-        # Add custom fonts
-        self.glyph_framebuffer[:len(HD44780_chars)] = HD44780_chars
-        for i in range(len(self.glyph_framebuffer)):
-            self.all_framebuffers[2][1][i] = self.glyph_framebuffer[i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > 20:
             data = data[:20 - min(x, 20)]
         pos = x + ((y & 0x02) >> 1) * 20
         self.text_framebuffers[y & 1][pos:pos+len(data)] = data
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            data = glyph_data.get('icon5x8')
+            if data is not None:
+                self.icons[glyph_name] = data
     def write_glyph(self, x, y, glyph_name):
+        data = self.icons.get(glyph_name)
+        if data is not None:
+            slot, bits = data
+            self.write_text(x, y, [slot])
+            self.glyph_framebuffer[slot * 8:(slot + 1) * 8] = bits
+            return 1
         char = TextGlyphs.get(glyph_name)
         if char is not None:
             # Draw character
             self.write_text(x, y, char)
             return 1
         return 0
-    def write_graphics(self, x, y, pixel_row, pixel_col):
+    def write_graphics(self, x, y, data):
         pass
     def clear(self):
         spaces = ' ' * 40
@@ -110,90 +120,3 @@ class HD44780:
         self.text_framebuffers[1][:] = spaces
     def get_dimensions(self):
         return (20, 4)
-
-HD44780_chars = [
-    # Extruder (a thermometer)
-    0b00100,
-    0b01010,
-    0b01010,
-    0b01010,
-    0b01010,
-    0b10001,
-    0b10001,
-    0b01110,
-    # Heated bed
-    0b00000,
-    0b11111,
-    0b10101,
-    0b10001,
-    0b10101,
-    0b11111,
-    0b00000,
-    0b00000,
-    # Feed rate
-    0b11100,
-    0b10000,
-    0b11000,
-    0b10111,
-    0b00101,
-    0b00110,
-    0b00101,
-    0b00000,
-    # Clock
-    0b00000,
-    0b01110,
-    0b10011,
-    0b10101,
-    0b10001,
-    0b01110,
-    0b00000,
-    0b00000,
-    # Degrees
-    0b01100,
-    0b10010,
-    0b10010,
-    0b01100,
-    0b00000,
-    0b00000,
-    0b00000,
-    0b00000,
-    # USB
-    0b01110,
-    0b01110,
-    0b01110,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b00100,
-    0b00100,
-    # SD
-    0b00000,
-    0b00111,
-    0b01111,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b00000,
-    # Fan
-    0b00000,
-    0b10011,
-    0b11010,
-    0b00100,
-    0b01011,
-    0b11001,
-    0b00000,
-    0b00000,
-]
-
-TextGlyphs = {
-    'right_arrow': '\x7e',
-    'extruder': '\x00',
-    'bed': '\x01', 'bed_heat1': '\x01', 'bed_heat2': '\x01',
-    'feedrate': '\x02',
-    'clock': '\x03',
-    'degrees': '\x04',
-    'usb': '\x05',
-    'sd': '\x06',
-    'fan': '\x07', 'fan1': '\x07', 'fan2': '\x07',
-}

@@ -48,13 +48,13 @@ the probe should be lit. If there are any errors, for example the
 probe is flashing red or the pin is down instead of up, please turn
 off the printer and check the wiring and configuration.
 
-If the above is looking good, it's time to test that the probe
-responds to commands from the firmware. First run `BLTOUCH_DEBUG
-COMMAND=pin_down` in your printer terminal. Verify that the pin moves
-down and that the red LED on the probe turns off. If not, check your
-wiring and configuration again. Next issue a `BLTOUCH_DEBUG
-COMMAND=pin_up`, verify that the pin moves up, and that the red light
-turns on again. If it's flashing then there's some problem.
+If the above is looking good, it's time to test that the control pin
+is working correctly. First run `BLTOUCH_DEBUG COMMAND=pin_down` in
+your printer terminal. Verify that the pin moves down and that the red
+LED on the probe turns off. If not, check your wiring and
+configuration again. Next issue a `BLTOUCH_DEBUG COMMAND=pin_up`,
+verify that the pin moves up, and that the red light turns on
+again. If it's flashing then there's some problem.
 
 The next step is to confirm that the sensor pin is working correctly.
 Run `BLTOUCH_DEBUG COMMAND=pin_down`, verify that the pin moves down,
@@ -66,15 +66,15 @@ not report the correct message then check your wiring and
 configuration again. At the completion of this test run `BLTOUCH_DEBUG
 COMMAND=pin_up` and verify that the pin moves up.
 
-After completing the BL-Touch command and sensor tests, it is now time
-to test probing, but with a twist. Instead of letting the probe pin
-touch the print bed, let it touch the nail on your finger. Position
-the toolhead far from the bed, issue a `G28` (or `PROBE` if not using
-probe:z_virtual_endstop), wait until the toolhead starts to move down,
-and stop the movement by very gently touching the pin with your nail.
-You may have to do it twice, since the default homing configuration
-probes twice. Be prepared to turn off the printer, to avoid damage, if
-it doesn't stop when you touch the pin.
+After completing the BL-Touch control pin and sensor pin tests, it is
+now time to test probing, but with a twist. Instead of letting the
+probe pin touch the print bed, let it touch the nail on your finger.
+Position the toolhead far from the bed, issue a `G28` (or `PROBE` if
+not using probe:z_virtual_endstop), wait until the toolhead starts to
+move down, and stop the movement by very gently touching the pin with
+your nail. You may have to do it twice, since the default homing
+configuration probes twice. Be prepared to turn off the printer if it
+doesn't stop when you touch the pin.
 
 If that was successful, do another `G28` (or `PROBE`) but this time
 let it touch the bed as it should.
@@ -140,6 +140,65 @@ the second query reports "probe: TRIGGERED" then it indicates that
 `pin_up_reports_not_triggered` should be set to False in the Klipper
 config file.
 
+BL-Touch v3
+===========
+
+Some BL-Touch v3.0 and BL-Touch 3.1 devices may require configuring
+`probe_with_touch_mode` in the printer config file.
+
+If the BL-Touch v3.0 has its signal wire connected to an endstop pin
+(with a noise filtering capacitor), then the BL-Touch v3.0 may not be
+able to consistently send a signal during homing and probing. If the
+`QUERY_PROBE` commands in the [initial tests section](#initial-tests)
+always produce the expected results, but the toolhead does not always
+stop during G28/PROBE commands, then it is indicative of this issue. A
+workaround is to set `probe_with_touch_mode: True` in the config file.
+
+The BL-Touch v3.1 may incorrectly enter an error state after a
+successful probe attempt. The symptoms are an occasional flashing
+light on the BL-Touch v3.1 that lasts for a couple of seconds after it
+successfully contacts the bed. Klipper should clear this error
+automatically and it is generally harmless. However, one may set
+`probe_with_touch_mode` in the config file to avoid this issue.
+
+Important! Some "clone" devices and the BL-Touch v2.0 (and earlier)
+may have reduced accuracy when `probe_with_touch_mode` is set to True.
+Setting this to True also increases the time it takes to deploy the
+probe. If configuring this value on a "clone" or older BL-Touch
+device, be sure to test the probe accuracy before and after setting
+this value (use the `PROBE_ACCURACY` command to test).
+
+Multi-probing without stowing
+=============================
+
+By default, Klipper will deploy the probe at the start of each probe
+attempt and then stow the probe afterwards. This repetitive deploying
+and stowing of the probe may increase the total time of calibration
+sequences that involve many probe measurements. Klipper supports
+leaving the probe deployed between consecutive probes, which can
+reduce the total time of probing. This mode is enabled by configuring
+`stow_on_each_sample` to False in the config file.
+
+Important! Setting `stow_on_each_sample` to False can lead to Klipper
+making horizontal toolhead movements while the probe is deployed. Be
+sure to verify all probing operations have sufficient Z clearance
+prior to setting this value to False. If there is insufficient
+clearance then a horizontal move may cause the pin to catch on an
+obstruction and result in damage to the printer.
+
+Important! It is recommended to use `probe_with_touch_mode` configured
+to True when using `stow_on_each_sample` configured to False. Some
+"clone" devices may not detect a subsequent bed contact if
+`probe_with_touch_mode` is not set. On all devices, using the
+combination of these two settings simplifies the device signaling,
+which can improve overall stability.
+
+Note, however, that some "clone" devices and the BL-Touch v2.0 (and
+earlier) may have reduced accuracy when `probe_with_touch_mode` is set
+to True. On these devices it is a good idea to test the probe accuracy
+before and after setting `probe_with_touch_mode` (use the
+`PROBE_ACCURACY` command to test).
+
 Calibrating the BL-Touch offsets
 ================================
 
@@ -193,21 +252,3 @@ BL-Touch output mode
   default being a safe OPEN DRAIN mode) and is not suited to be repeatedly
   issued by any slicer, macro or anything else, it is preferably only to be
   used when first integrating the probe into a printers electronics.
-
-Troubleshooting
-===============
-
-* A BL-Touch v3 may not work correctly when its signal wire is
-  connected to the Z end-stop pin on some printer boards. The symptoms
-  of this problem are: the BL-Touch probe deploys, the printer
-  descends, the probe contacts a surface, the BL-Touch raises the
-  probe, the BL-Touch does not successfully notify the
-  micro-controller, and the printer continues to descend. The Z
-  end-stop pin on some printer boards have a capacitor to filter the
-  signal which the BL-Touch v3 may not support. The simplest solution
-  is to connect the BL-Touch v3 sensor wire to an available pin on the
-  printer board that is not associated with an end-stop (and thus is
-  unlikely to have a capacitor). An alternative solution is to
-  physically alter the printer board to disable the given end-stop
-  capacitor or to add a hardware "pull up resistor" to the BL-Touch v3
-  sensor wire.

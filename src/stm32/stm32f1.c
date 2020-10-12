@@ -64,6 +64,18 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->APB2ENR;
 }
 
+
+static void stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
+{
+    // The MAPR register is a mix of write only and r/w bits
+    // We have to save the written values in a global variable
+    static uint32_t mapr = 0;
+
+    mapr &= ~mapr_mask;
+    mapr |= mapr_value;
+    AFIO->MAPR = mapr;
+}
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -105,20 +117,39 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 
     if (gpio == GPIO('A', 13) || gpio == GPIO('A', 14))
         // Disable SWD to free PA13, PA14
-        AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE;
+        stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                                  AFIO_MAPR_SWJ_CFG_DISABLE);
+
+    // STM32F1 remaps functions to pins in a very different
+    // way from other STM32s.
+    // Code below is emulating a few mappings to work like an STM32F4
+    uint32_t func = (mode >> 4) & 0xf;
+    if(( gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) &&
+       func == 9) { // CAN
+        stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                  AFIO_MAPR_CAN_REMAP_REMAP2);
+    }
+    // Add more as needed
 }
+
+
 
 // Handle USB reboot requests
 void
 usb_request_bootloader(void)
 {
-    if (!CONFIG_STM32_FLASH_START_2000)
+    if (!(CONFIG_STM32_FLASH_START_2000 || CONFIG_STM32_FLASH_START_800))
         return;
-    // Enter "stm32duino" bootloader
+    // Enter "stm32duino" or HID bootloader
     irq_disable();
     RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
     PWR->CR |= PWR_CR_DBP;
-    BKP->DR10 = 0x01;
+    if (CONFIG_STM32_FLASH_START_800)
+        // HID Bootloader magic key
+        BKP->DR4 = 0x424C;
+    else
+        // stm32duino bootloader magic key
+        BKP->DR10 = 0x01;
     PWR->CR &=~ PWR_CR_DBP;
     NVIC_SystemReset();
 }
@@ -175,7 +206,8 @@ armcm_main(void)
 
     // Disable JTAG to free PA15, PB3, PB4
     enable_pclock(AFIO_BASE);
-    AFIO->MAPR = AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+    stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                              AFIO_MAPR_SWJ_CFG_JTAGDISABLE);
 
     sched_main();
 }

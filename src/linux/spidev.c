@@ -70,6 +70,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         report_errno("ioctl set max spi speed", ret);
         shutdown("Unable to set SPI speed");
     }
+    ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+    if (ret < 0) {
+        report_errno("ioctl set spi mode", ret);
+        shutdown("Unable to set SPI mode");
+    }
     return (struct spi_config) { fd , rate};
 }
 
@@ -106,16 +111,4 @@ spi_transfer(struct spi_config config, uint8_t receive_data
             try_shutdown("Unable to write to spi");
         }
     }
-}
-
-// Dummy versions of gpio_out functions
-struct gpio_out
-gpio_out_setup(uint8_t pin, uint8_t val)
-{
-    shutdown("gpio_out_setup not supported");
-}
-
-void
-gpio_out_write(struct gpio_out g, uint8_t val)
-{
 }

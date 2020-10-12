@@ -12,7 +12,7 @@ class DelayedGcode:
         self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[1]
         self.gcode = self.printer.lookup_object('gcode')
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.timer_gcode = gcode_macro.load_template(config, 'gcode')
         self.duration = config.getfloat('initial_duration', 0., minval=0.)
         self.timer_handler = None
@@ -40,8 +40,8 @@ class DelayedGcode:
         self.inside_timer = self.repeat = False
         return nextwake
     cmd_UPDATE_DELAYED_GCODE_help = "Update the duration of a delayed_gcode"
-    def cmd_UPDATE_DELAYED_GCODE(self, params):
-        self.duration = self.gcode.get_float('DURATION', params, minval=0.)
+    def cmd_UPDATE_DELAYED_GCODE(self, gcmd):
+        self.duration = gcmd.get_float('DURATION', minval=0.)
         if self.inside_timer:
             self.repeat = (self.duration != 0.)
         else:

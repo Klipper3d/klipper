@@ -154,9 +154,13 @@ stepper_event(struct timer *t)
         return stepper_event_nodelay(s);
 
     // Normal step code - schedule the unstep event
+    if (!CONFIG_HAVE_STRICT_TIMING)
+        gpio_out_toggle_noirq(s->step_pin);
     uint32_t step_delay = timer_from_us(CONFIG_STEP_DELAY);
     uint32_t min_next_time = timer_read_time() + step_delay;
-    gpio_out_toggle_noirq(s->step_pin);
+    if (CONFIG_HAVE_STRICT_TIMING)
+        // Toggling gpio after reading the time is a micro-optimization
+        gpio_out_toggle_noirq(s->step_pin);
     s->count--;
     if (likely(s->count & 1))
         // Schedule unstep event

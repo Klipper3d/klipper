@@ -54,6 +54,10 @@ class Move:
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
+    def move_error(self, msg="Move out of range"):
+        ep = self.end_pos
+        m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
@@ -232,7 +236,6 @@ class ToolHead:
         self.need_check_stall = -1.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
-        self.last_print_start_time = 0.
         self.idle_flush_print_time = 0.
         self.print_stall = 0
         self.drip_completion = None
@@ -247,7 +250,7 @@ class ToolHead:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.step_generators = []
         # Create kinematics class
-        self.extruder = kinematics.extruder.DummyExtruder()
+        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         kin_name = config.get('kinematics')
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
@@ -260,17 +263,19 @@ class ToolHead:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
             raise config.error(msg)
-        # SET_VELOCITY_LIMIT command
+        # Register commands
         gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('G4', self.cmd_G4)
+        gcode.register_command('M400', self.cmd_M400)
         gcode.register_command('SET_VELOCITY_LIMIT',
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
         # Load some default modules
-        self.printer.try_load_module(config, "idle_timeout")
-        self.printer.try_load_module(config, "statistics")
-        self.printer.try_load_module(config, "manual_probe")
-        self.printer.try_load_module(config, "tuning_tower")
+        modules = ["gcode_move", "idle_timeout", "statistics", "manual_probe",
+                   "tuning_tower"]
+        for module_name in modules:
+            self.printer.load_object(config, module_name)
     # Print time tracking
     def _update_move_time(self, next_print_time):
         batch_time = MOVE_BATCH_TIME
@@ -296,7 +301,7 @@ class ToolHead:
         kin_time += self.kin_flush_delay
         min_print_time = max(est_print_time + self.buffer_time_start, kin_time)
         if min_print_time > self.print_time:
-            self.print_time = self.last_print_start_time = min_print_time
+            self.print_time = min_print_time
             self.printer.send_event("toolhead:sync_print_time",
                                     curtime, est_print_time, self.print_time)
     def _process_moves(self, moves):
@@ -338,6 +343,7 @@ class ToolHead:
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
         flush_time = self.last_kin_move_time + self.kin_flush_delay
+        flush_time = max(flush_time, self.print_time - self.kin_flush_delay)
         self.last_kin_flush_time = max(self.last_kin_flush_time, flush_time)
         self._update_move_time(max(self.print_time, self.last_kin_flush_time))
     def _flush_lookahead(self):
@@ -400,6 +406,7 @@ class ToolHead:
         self.trapq_free_moves(self.trapq, self.reactor.NEVER)
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
+        self.printer.send_event("toolhead:set_position")
     def move(self, newpos, speed):
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
@@ -412,6 +419,13 @@ class ToolHead:
         self.move_queue.add_move(move)
         if self.print_time > self.need_check_stall:
             self._check_stall()
+    def manual_move(self, coord, speed):
+        curpos = list(self.commanded_pos)
+        for i in range(len(coord)):
+            if coord[i] is not None:
+                curpos[i] = coord[i]
+        self.move(curpos, speed)
+        self.printer.send_event("toolhead:manual_move")
     def dwell(self, delay):
         next_print_time = self.get_last_move_time() + max(0., delay)
         self._update_move_time(next_print_time)
@@ -456,7 +470,7 @@ class ToolHead:
         # Submit move
         try:
             self.move(newpos, speed)
-        except homing.CommandError as e:
+        except self.printer.command_error as e:
             self.flush_step_generation()
             raise
         # Transmit move in "drip" mode
@@ -484,18 +498,15 @@ class ToolHead:
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
-        last_print_start_time = self.last_print_start_time
-        buffer_time = print_time - estimated_print_time
-        if buffer_time > -1. or not self.special_queuing_state:
-            status = "Printing"
-        else:
-            status = "Ready"
         res = dict(self.kin.get_status(eventtime))
-        res.update({ 'status': status, 'print_time': print_time,
+        res.update({ 'print_time': print_time,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
                      'position': homing.Coord(*self.commanded_pos),
-                     'printing_time': print_time - last_print_start_time })
+                     'max_velocity': self.max_velocity,
+                     'max_accel': self.max_accel,
+                     'max_accel_to_decel': self.requested_accel_to_decel,
+                     'square_corner_velocity': self.square_corner_velocity})
         return res
     def _handle_shutdown(self):
         self.can_pause = False
@@ -536,18 +547,22 @@ class ToolHead:
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
         self.max_accel_to_decel = min(self.requested_accel_to_decel,
                                       self.max_accel)
+    def cmd_G4(self, gcmd):
+        # Dwell
+        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        self.dwell(delay)
+    def cmd_M400(self, gcmd):
+        # Wait for current moves to finish
+        self.wait_moves()
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
-    def cmd_SET_VELOCITY_LIMIT(self, params):
+    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         print_time = self.get_last_move_time()
-        gcode = self.printer.lookup_object('gcode')
-        max_velocity = gcode.get_float('VELOCITY', params, self.max_velocity,
-                                       above=0.)
-        max_accel = gcode.get_float('ACCEL', params, self.max_accel, above=0.)
-        square_corner_velocity = gcode.get_float(
-            'SQUARE_CORNER_VELOCITY', params, self.square_corner_velocity,
-            minval=0.)
-        self.requested_accel_to_decel = gcode.get_float(
-            'ACCEL_TO_DECEL', params, self.requested_accel_to_decel, above=0.)
+        max_velocity = gcmd.get_float('VELOCITY', self.max_velocity, above=0.)
+        max_accel = gcmd.get_float('ACCEL', self.max_accel, above=0.)
+        square_corner_velocity = gcmd.get_float(
+            'SQUARE_CORNER_VELOCITY', self.square_corner_velocity, minval=0.)
+        self.requested_accel_to_decel = gcmd.get_float(
+            'ACCEL_TO_DECEL', self.requested_accel_to_decel, above=0.)
         self.max_velocity = min(max_velocity, self.config_max_velocity)
         self.max_accel = min(max_accel, self.config_max_accel)
         self.square_corner_velocity = min(square_corner_velocity,
@@ -560,20 +575,19 @@ class ToolHead:
                    max_velocity, max_accel, self.requested_accel_to_decel,
                    square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        gcode.respond_info(msg, log=False)
-    def cmd_M204(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'S' in params:
-            # Use S for accel
-            accel = gcode.get_float('S', params, above=0.)
-        elif 'P' in params and 'T' in params:
+        gcmd.respond_info(msg, log=False)
+    def cmd_M204(self, gcmd):
+        # Use S for accel
+        accel = gcmd.get_float('S', None, above=0.)
+        if accel is None:
             # Use minimum of P and T for accel
-            accel = min(gcode.get_float('P', params, above=0.),
-                        gcode.get_float('T', params, above=0.))
-        else:
-            gcode.respond_info('Invalid M204 command "%s"'
-                               % (params['#original'],))
-            return
+            p = gcmd.get_float('P', None, above=0.)
+            t = gcmd.get_float('T', None, above=0.)
+            if p is None or t is None:
+                gcmd.respond_info('Invalid M204 command "%s"'
+                                  % (gcmd.get_commandline(),))
+                return
+            accel = min(p, t)
         self.max_accel = min(accel, self.config_max_accel)
         self._calc_junction_deviation()
 

@@ -48,23 +48,26 @@ config SERIAL_BAUD
         to 250000. Read the FAQ before changing this value.
 
 # Generic configuration options for USB
-menu "USB ids"
-    depends on USBSERIAL
-
 config USB_VENDOR_ID
-    hex "USB vendor ID"
-    default 0x2341
+    default 0x1d50
 config USB_DEVICE_ID
-    hex "USB device ID"
-    default 0xabcd
+    default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
     depends on HAVE_CHIPID
-    bool "USB serial number from CHIPID"
     default y
 config USB_SERIAL_NUMBER
-    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
     default "12345"
 
+menu "USB ids"
+    depends on USBSERIAL && LOW_LEVEL_OPTIONS
+config USB_VENDOR_ID
+    hex "USB vendor ID"
+config USB_DEVICE_ID
+    hex "USB device ID"
+config USB_SERIAL_NUMBER_CHIPID
+    bool "USB serial number from CHIPID" if HAVE_CHIPID
+config USB_SERIAL_NUMBER
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
 # Step timing customization
@@ -119,6 +122,9 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 config HAVE_GPIO_BITBANGING
+    bool
+    default n
+config HAVE_STRICT_TIMING
     bool
     default n
 config HAVE_CHIPID

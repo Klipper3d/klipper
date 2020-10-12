@@ -46,6 +46,10 @@ The stm32f1 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
 version 1.8.0 (extracted 20190721).
 
+The stm32f2 directory contains code from STMicroelectronics:
+  https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32cube-mcu-mpu-packages/stm32cubef2.html
+version 1.9.0 (extracted 20200614).
+
 The stm32f4 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef4.html
 version 1.24.0 (extracted 20190723).
@@ -58,9 +62,19 @@ The bossac directory contains code from:
   https://github.com/shumatech/BOSSA
 version 1.9 (b176eeef918fc810045c832348590595120187b4).
 
+The hidflash directory contains code from:
+  https://github.com/Serasidis/STM32_HID_Bootloader
+version 2.2.2 (2ab7927a27b7b78ef730782ea5f9b5d2c8f34671). It has been
+modified to work with Klipper - see hidflash/README for the
+details. See changes.diff for the modifications.
+
 The pru_rpmsg directory contains code from:
   https://github.com/dinuxbg/pru-gcc-examples
 revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
+
+The fast-hash directory contains code from:
+  https://github.com/ztanml/fast-hash
+revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc

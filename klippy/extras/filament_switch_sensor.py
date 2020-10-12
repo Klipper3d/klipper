@@ -14,9 +14,9 @@ class RunoutHelper:
         # Read config
         self.runout_pause = config.getboolean('pause_on_runout', True)
         if self.runout_pause:
-            self.printer.try_load_module(config, 'pause_resume')
+            self.printer.load_object(config, 'pause_resume')
         self.runout_gcode = self.insert_gcode = None
-        gcode_macro = self.printer.try_load_module(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         if self.runout_pause or config.get('runout_gcode', None) is not None:
             self.runout_gcode = gcode_macro.load_template(
                 config, 'runout_gcode', '')
@@ -89,22 +89,24 @@ class RunoutHelper:
                 (self.name, eventtime))
             self.reactor.register_callback(self._runout_event_handler)
     def get_status(self, eventtime):
-        return {"filament_detected": bool(self.filament_present)}
+        return {
+            "filament_detected": bool(self.filament_present),
+            "enabled": bool(self.sensor_enabled)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
-    def cmd_QUERY_FILAMENT_SENSOR(self, params):
+    def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.filament_present:
             msg = "Filament Sensor %s: filament detected" % (self.name)
         else:
             msg = "Filament Sensor %s: filament not detected" % (self.name)
-        self.gcode.respond_info(msg)
+        gcmd.respond_info(msg)
     cmd_SET_FILAMENT_SENSOR_help = "Sets the filament sensor on/off"
-    def cmd_SET_FILAMENT_SENSOR(self, params):
-        self.sensor_enabled = self.gcode.get_int("ENABLE", params, 1)
+    def cmd_SET_FILAMENT_SENSOR(self, gcmd):
+        self.sensor_enabled = gcmd.get_int("ENABLE", 1)
 
 class SwitchSensor:
     def __init__(self, config):
         printer = config.get_printer()
-        buttons = printer.try_load_module(config, 'buttons')
+        buttons = printer.load_object(config, 'buttons')
         switch_pin = config.get('switch_pin')
         buttons.register_buttons([switch_pin], self._button_handler)
         self.runout_helper = RunoutHelper(config)

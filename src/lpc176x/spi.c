@@ -61,7 +61,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     uint32_t pclk = SystemCoreClock;
     uint32_t div = DIV_ROUND_UP(pclk/2, rate) << 1;
     res.cpsr = div < 2 ? 2 : (div > 254 ? 254 : div);
-    res.cr0 = 0x07 | (mode << 6);
+    res.cr0 = 0x07 | ((mode & 2) << 5) | ((mode & 1) << 7);
 
     return res;
 }

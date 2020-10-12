@@ -1,5 +1,6 @@
 # This is a travis-ci.org continuous integration configuration file.
 language: c
+dist: bionic
 
 addons:
   apt:
