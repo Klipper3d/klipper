@@ -33,22 +33,14 @@ class SaveVariables:
             self.variablefile.read(self.filename)
             for name, val in self.variablefile.items('Variables'):
                 allvars[name] = ast.literal_eval(val)
- #           self.allVariables = dict(self.variablefile.items('Variables'))
         except:
             msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
             raise self.printer.command_error(msg)
         self.allVariables = allvars
-        #for keys in self.allVariables:
-        #    try:
-        #        self.allVariables[keys] = float(self.allVariables[keys])
-        #    except:
-        #        self.allVariables[keys] = self.allVariables[keys]
     def cmd_SAVE_VARIABLE(self, gcmd):
         variable_name = gcmd.get('VARIABLE')
         variable_value = gcmd.get('VALUE')
-        #if os.path.isfile(self.filename):
-        #    self.loadVariables()
         try:
             if os.path.isfile(self.filename):
                 self.loadVariables()
