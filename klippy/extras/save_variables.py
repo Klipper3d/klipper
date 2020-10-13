@@ -5,47 +5,53 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import sys,os,logging, ConfigParser
+import ast,os,logging, ConfigParser
 
 class SaveVariables:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.filename = os.path.expanduser(config.get('filename'))
         self.gcode = self.printer.lookup_object('gcode')
-        self.name = config.get_name()
-        self.cfilename = config.get('filename')
-        self.filename = os.path.expanduser(self.cfilename)
-        self.variablefile = ConfigParser.ConfigParser()
+        self.allVariables = {}
         try:
-            f = open(self.filename, "a")
-            f.close()
+            self.loadVariables()
         except self.printer.command_error, e:
             raise config.error(str(e))
-        self.loadVariables()
+        gcode = self.printer.lookup_object('gcode')
         logging.info("Variables saved using save_variable: %s",
             self.allVariables)
-        self.gcode.register_command(
+        gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
             desc=self.cmd_SAVE_VARIABLE_help)
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
     def loadVariables(self):
-        self.allVariables = {}
+        allvars = {}
+        variablefile = ConfigParser.ConfigParser()
         try:
-            self.variablefile.read(self.filename)
-            self.allVariables = dict(self.variablefile.items('Variables'))
+            variablefile.read(self.filename)
+            for name, val in varfile.items('Variables'):
+                allvars[name] = ast.literal_eval(val)
+ #           self.allVariables = dict(self.variablefile.items('Variables'))
         except:
             msg = "\nUnable to parse existing variable file"
             logging.exception(msg)
-            raise self.gcode.error(msg)
-        for keys in self.allVariables:
-            try:
-                self.allVariables[keys] = float(self.allVariables[keys])
-            except:
-                self.allVariables[keys] = self.allVariables[keys]
+            raise self.printer.command_error(msg)
+        self.allVariables = allvars
+        #for keys in self.allVariables:
+        #    try:
+        #        self.allVariables[keys] = float(self.allVariables[keys])
+        #    except:
+        #        self.allVariables[keys] = self.allVariables[keys]
     def cmd_SAVE_VARIABLE(self, gcmd):
         variable_name = gcmd.get('VARIABLE')
         variable_value = gcmd.get('VALUE')
-        if os.path.isfile(self.filename):
-            self.loadVariables()
+        #if os.path.isfile(self.filename):
+        #    self.loadVariables()
+        try:
+            if os.path.isfile(self.filename):
+                self.loadVariables()
+        except self.printer.command_error, e:
+            raise config.error(str(e))
         try:
             if not self.variablefile.has_section('Variables'):
                 self.variablefile.add_section('Variables')
@@ -57,9 +63,13 @@ class SaveVariables:
         except:
             msg = "\nUnable to save variable"
             logging.exception(msg)
-            raise self.gcode.error(msg)
+            raise gcmd.error(msg)
         self.gcode.respond_info("Variable Saved")
-        self.loadVariables()
+        try:
+            if os.path.isfile(self.filename):
+                self.loadVariables()
+        except self.printer.command_error, e:
+            raise config.error(str(e))
         logging.info(str(self.allVariables))
     def get_status(self, eventtime):
         return {'variables': dict(self.allVariables)}
