@@ -28,7 +28,7 @@ class PrinterHeaterFan:
     def callback(self, eventtime):
         power = 0.
         for heater in self.heaters:
-            current_temp, target_temp = heater.get_temp(eventtime)
+            current_temp, target_temp, pwm = heater.get_temp(eventtime)
             if target_temp or current_temp > self.heater_temp:
                 power = self.fan_speed
         print_time = self.fan.get_mcu().estimated_print_time(eventtime)

@@ -107,8 +107,8 @@ class Heater:
         print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
             if self.last_temp_time < print_time:
-                return 0., self.target_temp
-            return self.smoothed_temp, self.target_temp
+                return 0., self.target_temp, self.last_pwm_value
+            return self.smoothed_temp, self.target_temp, self.last_pwm_value
     def check_busy(self, eventtime):
         with self.lock:
             return self.control.check_busy(
@@ -135,7 +135,9 @@ class Heater:
         with self.lock:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
-        return {'temperature': smoothed_temp, 'target': target_temp}
+            last_pwm_value = self.last_pwm_value
+        return {'temperature': smoothed_temp, 'target': target_temp,
+                'pwm': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
@@ -292,12 +294,15 @@ class PrinterHeaters:
     def _handle_ready(self):
         self.has_started = True
     def _get_temp(self, eventtime):
-        # Tn:XXX /YYY B:XXX /YYY
+        # Tn:XXX /YYY @PWM B:XXX /YYY @PWM
+        #the output PWM value is float converted to int
+        #matching Marlin M105 output of max_power=255 floor(max_power/2) == 127
         out = []
         if self.has_started:
             for gcode_id, sensor in sorted(self.gcode_id_to_sensor.items()):
-                cur, target = sensor.get_temp(eventtime)
-                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
+                cur, target, pwm = sensor.get_temp(eventtime)
+                out.append("%s:%.1f /%.1f @%d" % (gcode_id, cur, target,
+                                                  round(pwm * 127)))
         if not out:
             return "T:0"
         return " ".join(out)
