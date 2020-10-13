@@ -116,18 +116,14 @@ class ResonanceTester:
         if not outputs:
             raise gcmd.error("No output specified, at least one of 'resonances'"
                              " or 'raw_data' must be set in OUTPUT parameter")
-        cur_time_str = time.strftime("%Y%m%d_%H%M%S")
-        csv_suffix = (gcmd.get("CSV_NAME", cur_time_str)
-                      if 'resonances' in outputs else None)
-        if csv_suffix and not self.is_valid_name_suffix(csv_suffix):
-            raise gcmd.error("Invalid CSV_NAME parameter")
-        raw_suffix = (gcmd.get("RAW_NAME", cur_time_str)
-                      if 'raw_data' in outputs else None)
-        if raw_suffix and not self.is_valid_name_suffix(raw_suffix):
-            raise gcmd.error("Invalid RAW_NAME parameter")
+        name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
+        if not self.is_valid_name_suffix(name_suffix):
+            raise gcmd.error("Invalid NAME parameter")
+        csv_output = 'resonances' in outputs
+        raw_output = 'raw_data' in outputs
 
         # Setup calculation of resonances
-        if csv_suffix is not None:
+        if csv_output:
             helper = shaper_calibrate.ShaperCalibrate(self.printer)
 
         currentPos = toolhead.get_position()
@@ -154,16 +150,16 @@ class ResonanceTester:
             for chip_axis, chip in self.accel_chips:
                 if axis in chip_axis or chip_axis in axis:
                     results = chip.finish_measurements()
-                    if raw_suffix:
+                    if raw_output:
                         raw_name = self.get_filename(
-                                'raw_data', raw_suffix, axis,
+                                'raw_data', name_suffix, axis,
                                 point if len(calibration_points) > 1 else None)
                         results.write_to_file(raw_name)
                         gcmd.respond_info(
                                 "Writing raw accelerometer data to %s file" % (
                                     raw_name,))
                     raw_values.append((chip_axis, results))
-            if csv_suffix is None:
+            if not csv_output:
                 continue
             for chip_axis, chip_values in raw_values:
                 gcmd.respond_info("%s-axis accelerometer stats: %s" % (
@@ -174,8 +170,8 @@ class ResonanceTester:
                                 chip_axis,))
                 new_data = helper.process_accelerometer_data(chip_values)
                 data = data.join(new_data) if data else new_data
-        if csv_suffix is not None:
-            csv_name = self.save_calibration_data('resonances', csv_suffix,
+        if csv_output:
+            csv_name = self.save_calibration_data('resonances', name_suffix,
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
@@ -192,9 +188,9 @@ class ResonanceTester:
         else:
             calibrate_axes = [axis.lower()]
 
-        csv_suffix = gcmd.get("CSV_NAME", time.strftime("%Y%m%d_%H%M%S"))
-        if not self.is_valid_name_suffix(csv_suffix):
-            raise gcmd.error("Invalid CSV_NAME parameter")
+        name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
+        if not self.is_valid_name_suffix(name_suffix):
+            raise gcmd.error("Invalid NAME parameter")
 
         # Setup shaper calibration
         helper = shaper_calibrate.ShaperCalibrate(self.printer)
@@ -255,7 +251,7 @@ class ResonanceTester:
                     % (axis, shaper_name, axis, shaper_freq))
             helper.save_params(configfile, axis, shaper_name, shaper_freq)
             csv_name = self.save_calibration_data(
-                    'calibration_data', csv_suffix, helper, axis,
+                    'calibration_data', name_suffix, helper, axis,
                     calibration_data[axis], shapers_vals)
             gcmd.respond_info(
                     "Shaper calibration data written to %s file" % (csv_name,))
@@ -296,9 +292,9 @@ class ResonanceTester:
         name += '_' + name_suffix
         return os.path.join("/tmp", name + ".csv")
 
-    def save_calibration_data(self, base_name, csv_suffix, shaper_calibrate,
+    def save_calibration_data(self, base_name, name_suffix, shaper_calibrate,
                               axis, calibration_data, shapers_vals=None):
-        output = self.get_filename(base_name, csv_suffix, axis)
+        output = self.get_filename(base_name, name_suffix, axis)
         shaper_calibrate.save_calibration_data(output, calibration_data,
                                                shapers_vals)
         return output

@@ -668,28 +668,27 @@ The following commands are available when a "resonance_tester" config section
 is enabled:
 - `MEASURE_AXES_NOISE`: Measures and outputs the noise for all axes of all
   enabled accelerometer chips.
-- `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
-  [CSV_NAME=<csv_name>] [RAW_NAME=<raw_name>] [FREQ_START=<min_freq>]
-  [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`: Runs the resonance test in
-  all configured probe points for the requested axis (X or Y) and measures the
-  acceleration using the accelerometer chips configured for the respective axis.
-  `OUTPUT` parameter is a comma-separated list of which outputs will be written.
-  If `raw_data` is requested, then the raw accelerometer data is written into a
-  file or a series of files `/tmp/raw_data_<axis>_[<point>_]<raw_name>.csv` with
-  (`<point>_` part of the name generated only if more than 1 probe point is
-  configured). If `resonances` is specified, the frequency response is calculated
-  (across all probe points) and written into
-  `/tmp/resonances_<axis>_<csv_name>.csv` file. If unset, OUTPUT defaults to
-  `resonances`, and both CSV_NAME and RAW_NAME default to the current time in
-  "YYYYMMDD_HHMMSS" format.
-- `SHAPER_CALIBRATE [AXIS=<axis>] [CSV_NAME=<csv_file>]
+- `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data> [NAME=<name>]
+  [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
+  Runs the resonance test in all configured probe points for the requested
+  axis (X or Y) and measures the acceleration using the accelerometer chips
+  configured for the respective axis. `OUTPUT` parameter is a comma-separated
+  list of which outputs will be written. If `raw_data` is requested, then the
+  raw accelerometer data is written into a file or a series of files
+  `/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
+  the name generated only if more than 1 probe point is configured). If
+  `resonances` is specified, the frequency response is calculated (across
+  all probe points) and written into `/tmp/resonances_<axis>_<name>.csv`
+  file. If unset, OUTPUT defaults to `resonances`, and NAME defaults to
+  the current time in "YYYYMMDD_HHMMSS" format.
+- `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>]
   [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
   Similarly to `TEST_RESONANCES`, runs the resonance test as configured, and
   tries to find the optimal parameters for the input shaper for the requested
   axis (or both X and Y axes if `AXIS` parameter is unset). The results of the
   tuning are printed to the console, and the frequency responses and the
   different input shapers values are written to a CSV file(s)
-  `/tmp/calibration_data_<axis>_<csv_name>.csv`. Unless specified, CSV_NAME
-  defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that the
-  suggested input shaper parameters can be persisted in the config by issuing
+  `/tmp/calibration_data_<axis>_<name>.csv`. Unless specified, NAME defaults
+  to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested
+  input shaper parameters can be persisted in the config by issuing
   `SAVE_CONFIG` command.
