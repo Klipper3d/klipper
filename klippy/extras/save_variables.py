@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import ast,os,logging, ConfigParser
+import ast,os,logging,ConfigParser
 
 class SaveVariables:
     def __init__(self, config):
@@ -13,23 +13,25 @@ class SaveVariables:
         self.filename = os.path.expanduser(config.get('filename'))
         self.gcode = self.printer.lookup_object('gcode')
         self.allVariables = {}
-        try:
+        self.variablefile = ConfigParser.ConfigParser()
+        if os.path.isfile(self.filename):
             self.loadVariables()
-        except self.printer.command_error, e:
-            raise config.error(str(e))
+        else:
+            f = open(self.filename, "w+")
+            self.variablefile.add_section('Variables')
+            self.variablefile.write(f)
+            f.close()
+            logging.info("Variable File Initialised")
         gcode = self.printer.lookup_object('gcode')
-        logging.info("Variables saved using save_variable: %s",
-            self.allVariables)
         gcode.register_command(
             'SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
             desc=self.cmd_SAVE_VARIABLE_help)
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
     def loadVariables(self):
         allvars = {}
-        variablefile = ConfigParser.ConfigParser()
         try:
-            variablefile.read(self.filename)
-            for name, val in varfile.items('Variables'):
+            self.variablefile.read(self.filename)
+            for name, val in self.variablefile.items('Variables'):
                 allvars[name] = ast.literal_eval(val)
  #           self.allVariables = dict(self.variablefile.items('Variables'))
         except:
@@ -51,7 +53,7 @@ class SaveVariables:
             if os.path.isfile(self.filename):
                 self.loadVariables()
         except self.printer.command_error, e:
-            raise config.error(str(e))
+            raise gcmd.error(str(e))
         try:
             if not self.variablefile.has_section('Variables'):
                 self.variablefile.add_section('Variables')
@@ -69,8 +71,9 @@ class SaveVariables:
             if os.path.isfile(self.filename):
                 self.loadVariables()
         except self.printer.command_error, e:
-            raise config.error(str(e))
-        logging.info(str(self.allVariables))
+            raise gcmd.error(str(e))
+        logging.info("Variables saved using save_variable: %s",
+            self.allVariables)
     def get_status(self, eventtime):
         return {'variables': dict(self.allVariables)}
 
