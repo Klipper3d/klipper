@@ -93,8 +93,6 @@ def plot_frequency(datas, lognames, max_freq):
 
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.grid(which='major', color='grey')
     ax.grid(which='minor', color='lightgrey')
     ax.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
@@ -120,8 +118,6 @@ def plot_compare_frequency(datas, lognames, max_freq):
 
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.grid(which='major', color='grey')
     ax.grid(which='minor', color='lightgrey')
     fontP = matplotlib.font_manager.FontProperties()
@@ -130,7 +126,7 @@ def plot_compare_frequency(datas, lognames, max_freq):
     fig.tight_layout()
     return fig
 
-# Plot data in a "spectogram colormap"
+# Plot data in a "spectrogram colormap"
 def plot_specgram(data, logname, max_freq, axis):
     pdata, bins, t = calc_specgram(data, axis)
 
@@ -155,13 +151,33 @@ def write_frequency_response(datas, output):
         calibration_data.join(helper.process_accelerometer_data(data))
     helper.save_calibration_data(output, calibration_data)
 
+def write_specgram(psd, freq_bins, time, output):
+    M = freq_bins.shape[0]
+    with open(output, "w") as csvfile:
+        csvfile.write("freq\\t")
+        for ts in time:
+            csvfile.write(",%.6f" % (ts,))
+        csvfile.write("\n")
+        for i in range(M):
+            csvfile.write("%.1f" % (freq_bins[i],))
+            for value in psd[i,:]:
+                csvfile.write(",%.6e" % (value,))
+            csvfile.write("\n")
+
 ######################################################################
 # Startup
 ######################################################################
 
-def setup_matplotlib(output_to_file):
+def is_csv_output(output):
+    return output and os.path.splitext(output)[1].lower() == '.csv'
+
+def setup_matplotlib(output):
     global matplotlib
-    if output_to_file:
+    if is_csv_output(output):
+        # Only mlab may be necessary with CSV output
+        import matplotlib.mlab
+        return
+    if output:
         matplotlib.rcParams.update({'figure.autolayout': True})
         matplotlib.use('Agg')
     import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
@@ -181,7 +197,7 @@ def main():
                     help="graph comparison of power spectral density "
                          "between different accelerometer data files")
     opts.add_option("-s", "--specgram", action="store_true",
-                    help="graph spectogram of accelerometer data")
+                    help="graph spectrogram of accelerometer data")
     opts.add_option("-a", type="string", dest="axis", default="all",
                     help="axis to graph (one of 'all', 'x', 'y', or 'z')")
     options, args = opts.parse_args()
@@ -191,12 +207,21 @@ def main():
     # Parse data
     datas = [parse_log(fn) for fn in args]
 
-    if options.output and os.path.splitext(options.output)[1].lower() == '.csv':
-        write_frequency_response(datas, options.output)
+    setup_matplotlib(options.output)
+
+    if is_csv_output(options.output):
+        if options.raw:
+            opts.error("raw mode is not supported with csv output")
+        if options.compare:
+            opts.error("comparison mode is not supported with csv output")
+        if options.specgram:
+            pdata, bins, t = calc_specgram(datas[0], options.axis)
+            write_specgram(pdata, bins, t, options.output)
+        else:
+            write_frequency_response(datas, options.output)
         return
 
     # Draw graph
-    setup_matplotlib(options.output is not None)
     if options.raw:
         fig = plot_accel(datas[0], args[0])
     elif options.specgram:
