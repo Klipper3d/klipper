@@ -52,6 +52,8 @@ communication with the Klipper developers.
   implements motion.
 - [Protocol](Protocol.md): Information on the low-level messaging
   protocol between host and micro-controller.
+- [API Server](API_Server.md): Information on Klipper's command and
+  control API.
 - [MCU commands](MCU_Commands.md): A description of low-level commands
   implemented in the micro-controller software.
 - [Debugging](Debugging.md): Information on how to test and debug
