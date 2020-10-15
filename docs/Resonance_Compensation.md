@@ -39,6 +39,7 @@ Slice the ringing test model, which can be found in
  * Use 1-2 perimeters, or even better the smooth vase mode with 1-2 mm base.
  * Use sufficiently high speed, around 80-100 mm/sec, for *external* perimeters.
  * Make sure that the minimum layer time is *at most* 3 seconds.
+ * Make sure any "dynamic acceleration control" is disabled in the slicer.
 
 ## Ringing frequency
 
