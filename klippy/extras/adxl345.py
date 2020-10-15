@@ -3,7 +3,7 @@
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, collections
+import logging, time, collections, multiprocessing, os
 from . import bus
 
 # ADXL345 registers
@@ -28,11 +28,10 @@ Accel_Measurement = collections.namedtuple(
 # Sample results
 class ADXL345Results:
     def __init__(self):
+        self.raw_samples = None
         self.samples = []
         self.drops = self.overflows = 0
         self.time_per_sample = self.start_range = self.end_range = 0.
-    def get_samples(self):
-        return self.samples
     def get_stats(self):
         return ("drops=%d,overflows=%d"
                 ",time_per_sample=%.9f,start_range=%.6f,end_range=%.6f"
@@ -42,31 +41,57 @@ class ADXL345Results:
                    start1_time, start2_time, end1_time, end2_time):
         if not raw_samples or not end_sequence:
             return
-        (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = axes_map
+        self.axes_map = axes_map
+        self.raw_samples = raw_samples
         self.overflows = overflows
+        self.start2_time = start2_time
         self.start_range = start2_time - start1_time
         self.end_range = end2_time - end1_time
-        total_count = (end_sequence - 1) * 8 + len(raw_samples[-1][1]) // 6
+        self.total_count = (end_sequence - 1) * 8 + len(raw_samples[-1][1]) // 6
         total_time = end2_time - start2_time
-        self.time_per_sample = time_per_sample = total_time / total_count
-        seq_to_time = time_per_sample * 8.
-        self.samples = samples = [None] * total_count
+        self.time_per_sample = time_per_sample = total_time / self.total_count
+        self.seq_to_time = time_per_sample * 8.
+        actual_count = sum([len(data)//6 for _, data in raw_samples])
+        self.drops = self.total_count - actual_count
+    def decode_samples(self):
+        if not self.raw_samples:
+            return self.samples
+        (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         actual_count = 0
-        for seq, data in raw_samples:
+        self.samples = samples = [None] * self.total_count
+        for seq, data in self.raw_samples:
             d = bytearray(data)
             count = len(data)
             sdata = [(d[i] | (d[i+1] << 8)) - ((d[i+1] & 0x80) << 9)
                      for i in range(0, count-1, 2)]
-            seq_time = start2_time + seq * seq_to_time
+            seq_time = self.start2_time + seq * self.seq_to_time
             for i in range(count//6):
-                samp_time = seq_time + i * time_per_sample
+                samp_time = seq_time + i * self.time_per_sample
                 x = sdata[i*3 + x_pos] * x_scale
                 y = sdata[i*3 + y_pos] * y_scale
                 z = sdata[i*3 + z_pos] * z_scale
                 samples[actual_count] = Accel_Measurement(samp_time, x, y, z)
                 actual_count += 1
         del samples[actual_count:]
-        self.drops = total_count - actual_count
+        return self.samples
+    def write_to_file(self, filename):
+        def write_impl():
+            try:
+                # Try to re-nice writing process
+                os.nice(20)
+            except:
+                pass
+            f = open(filename, "w")
+            f.write("##%s\n#time,accel_x,accel_y,accel_z\n" % (
+                self.get_stats(),))
+            samples = self.samples or self.decode_samples()
+            for t, accel_x, accel_y, accel_z in samples:
+                f.write("%.6f,%.6f,%.6f,%.6f\n" % (
+                    t, accel_x, accel_y, accel_z))
+            f.close()
+        write_proc = multiprocessing.Process(target=write_impl)
+        write_proc.daemon = True
+        write_proc.start()
 
 # Printer class that controls measurments
 class ADXL345:
@@ -80,6 +105,9 @@ class ADXL345:
         if len(axes_map) != 3 or any([a.strip() not in am for a in axes_map]):
             raise config.error("Invalid adxl345 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
+        self.data_rate = config.getint('rate', 3200)
+        if self.data_rate not in QUERY_RATES:
+            raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
         # Measurement storage (accessed from background thread)
         self.raw_samples = []
         self.last_sequence = 0
@@ -104,9 +132,14 @@ class ADXL345:
         gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", name,
                                    self.cmd_ACCELEROMETER_MEASURE,
                                    desc=self.cmd_ACCELEROMETER_MEASURE_help)
+        gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
+                                   self.cmd_ACCELEROMETER_QUERY,
+                                   desc=self.cmd_ACCELEROMETER_QUERY_help)
         if name == "default":
             gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", None,
                                        self.cmd_ACCELEROMETER_MEASURE)
+            gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", None,
+                                       self.cmd_ACCELEROMETER_QUERY)
     def _build_config(self):
         self.query_adxl345_cmd = self.mcu.lookup_command(
             "query_adxl345 oid=%c clock=%u rest_ticks=%u",
@@ -128,7 +161,7 @@ class ADXL345:
             sequence += 0x10000
         self.last_sequence = sequence
         raw_samples = self.raw_samples
-        if len(raw_samples) >= 200000:
+        if len(raw_samples) >= 300000:
             # Avoid filling up memory with too many samples
             return
         raw_samples.append((sequence, params['data']))
@@ -138,8 +171,7 @@ class ADXL345:
             sequence += 0x10000
         return sequence
     def start_measurements(self, rate=None):
-        if rate is None:
-            rate = 3200
+        rate = rate or self.data_rate
         # Verify chip connectivity
         params = self.spi.spi_transfer([REG_DEVID | REG_MOD_READ, 0x00])
         response = bytearray(params['response'])
@@ -190,33 +222,47 @@ class ADXL345:
                        self.samples_start1, self.samples_start2,
                        end1_time, end2_time)
         logging.info("ADXL345 finished %d measurements: %s",
-                     len(res.get_samples()), res.get_stats())
+                     res.total_count, res.get_stats())
         return res
     def end_query(self, name):
         if not self.query_rate:
             return
         res = self.finish_measurements()
         # Write data to file
-        f = open("/tmp/adxl345-%s.csv" % (name,), "w")
-        f.write("##%s\n#time,accel_x,accel_y,accel_z\n" % (res.get_stats(),))
-        for t, accel_x, accel_y, accel_z in res.get_samples():
-            f.write("%.6f,%.6f,%.6f,%.6f\n" % (t, accel_x, accel_y, accel_z))
-        f.close()
+        filename = "/tmp/adxl345-%s.csv" % (name,)
+        res.write_to_file(filename)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
-        rate = gcmd.get_int("RATE", 0)
-        if not rate:
+        if self.query_rate:
             name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
             if not name.replace('-', '').replace('_', '').isalnum():
                 raise gcmd.error("Invalid adxl345 NAME parameter")
             self.end_query(name)
             gcmd.respond_info("adxl345 measurements stopped")
-        elif self.query_rate:
-            raise gcmd.error("adxl345 already running")
-        elif rate not in QUERY_RATES:
-            raise gcmd.error("Not a valid adxl345 query rate")
         else:
+            rate = gcmd.get_int("RATE", self.data_rate)
+            if rate not in QUERY_RATES:
+                raise gcmd.error("Not a valid adxl345 query rate: %d" % (rate,))
             self.start_measurements(rate)
+            gcmd.respond_info("adxl345 measurements started")
+    cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
+    def cmd_ACCELEROMETER_QUERY(self, gcmd):
+        if self.query_rate:
+            raise gcmd.error("adxl345 measurements in progress")
+        self.start_measurements()
+        reactor = self.printer.get_reactor()
+        eventtime = starttime = reactor.monotonic()
+        while not self.raw_samples:
+            eventtime = reactor.pause(eventtime + .1)
+            if eventtime > starttime + 3.:
+                # Try to shutdown the measurements
+                self.finish_measurements()
+                raise gcmd.error("Timeout reading adxl345 data")
+        result = self.finish_measurements()
+        values = result.decode_samples()
+        _, accel_x, accel_y, accel_z = values[-1]
+        gcmd.respond_info("adxl345 values (x, y, z): %.6f, %.6f, %.6f" % (
+            accel_x, accel_y, accel_z))
 
 def load_config(config):
     return ADXL345(config)

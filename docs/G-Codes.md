@@ -642,14 +642,53 @@ section is enabled:
 
 ## Adxl345 Accelerometer Commands
 
-The following command is available when an "adxl345" config section is
+The following commands are available when an "adxl345" config section is
 enabled:
 - `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
   [NAME=<value>]`: Starts accelerometer measurements at the requested
   number of samples per second. If CHIP is not specified it defaults
   to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
-  and 3200. If RATE is zero (or not specified) then the current series
-  of measurements are stopped and the results are written to a file
-  named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
-  parameter. If NAME is not specified it defaults to the current time
-  in "YYYYMMDD_HHMMSS" format.
+  and 3200. The command works in a start-stop mode: when executed for
+  the first time, it starts the measurements, next execution stops them.
+  If RATE is not specified, then the default value is used (either from
+  `printer.cfg` or `3200` default value). The results of measurements
+  are written to a file named `/tmp/adxl345-<name>.csv` where "<name>"
+  is the optional NAME parameter. If NAME is not specified it defaults
+  to the current time in "YYYYMMDD_HHMMSS" format.
+- `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
+  accelerometer for the current value. If CHIP is not specified it
+  defaults to "default". If RATE is not specified, the default value is
+  used. This command is useful to test the connection to the ADXL345
+  accelerometer: one of the returned values should be a free-fall
+  acceleration (+/- some noise of the chip).
+
+## Resonance Testing Commands
+
+The following commands are available when a "resonance_tester" config section
+is enabled:
+- `MEASURE_AXES_NOISE`: Measures and outputs the noise for all axes of all
+  enabled accelerometer chips.
+- `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data> [NAME=<name>]
+  [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
+  Runs the resonance test in all configured probe points for the requested
+  axis (X or Y) and measures the acceleration using the accelerometer chips
+  configured for the respective axis. `OUTPUT` parameter is a comma-separated
+  list of which outputs will be written. If `raw_data` is requested, then the
+  raw accelerometer data is written into a file or a series of files
+  `/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
+  the name generated only if more than 1 probe point is configured). If
+  `resonances` is specified, the frequency response is calculated (across
+  all probe points) and written into `/tmp/resonances_<axis>_<name>.csv`
+  file. If unset, OUTPUT defaults to `resonances`, and NAME defaults to
+  the current time in "YYYYMMDD_HHMMSS" format.
+- `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>]
+  [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
+  Similarly to `TEST_RESONANCES`, runs the resonance test as configured, and
+  tries to find the optimal parameters for the input shaper for the requested
+  axis (or both X and Y axes if `AXIS` parameter is unset). The results of the
+  tuning are printed to the console, and the frequency responses and the
+  different input shapers values are written to a CSV file(s)
+  `/tmp/calibration_data_<axis>_<name>.csv`. Unless specified, NAME defaults
+  to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested
+  input shaper parameters can be persisted in the config by issuing
+  `SAVE_CONFIG` command.
