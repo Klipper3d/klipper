@@ -263,13 +263,11 @@ class MCU_pwm:
         
         # FIXME: Dirty hack to slow down soft-pwm
         if self._hardware_pwm:
-            print("Hardwarepwm request clock: " + str(clock))
-            data = (self._set_cmd_id, self._oid, clock, value)
+            data = (self._set_cmd_id, self._oid, clock & 0xFFFFFFFF, value)
             ret = self._ffi_lib.pwmchannel_queue_msg(
                 self._pwmqueue, data, len(data), clock)
             if ret:
                 raise error("Internal error in pwm send")
-            #this feels somewhat hardcoded
             self._mcu.flush_moves(print_time)
         else:
             self._set_cmd_if_soft_pwm.send([self._oid, clock, value],
