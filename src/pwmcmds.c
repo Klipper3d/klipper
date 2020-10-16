@@ -10,9 +10,6 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
 
-//FIXME: DEBUG
-#define GPIO(PORT, NUM) (((PORT)-'A') * 8 + (NUM))
-
 struct pwm_value {
     uint32_t waketime;
     uint16_t value;
@@ -25,8 +22,6 @@ struct pwm_out_s {
     uint32_t max_duration;
     uint16_t default_value;
     struct pwm_value *first, **plast;
-    //FIXME: debugging
-    //struct gpio_out debug5, debug7;
 };
 
 
@@ -42,15 +37,10 @@ pwm_event(struct timer *timer)
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
     struct pwm_value *v = p->first;
 
-    //fixme: Debug
-    //gpio_out_write(p->debug5, 1);
-
     if(!v)
     {
         // no next pwm value, queue is empty
         // this should not happen because we check the v->next
-        //fixme: Debug
-        //gpio_out_write(p->debug5, 0);
         return SF_DONE;
     }
 
@@ -63,11 +53,8 @@ pwm_event(struct timer *timer)
         //next event scheduled
         p->timer.waketime = p->first->waketime;
 
-        //fixme: Debug
-        //gpio_out_write(p->debug7, 1);
-
     } else {
-        // no next event schedlued
+        // no next event scheduled
         if (v->value == p->default_value || !p->max_duration) {
             // We either have set the default value
             // or there is no maximum duration
@@ -75,8 +62,6 @@ pwm_event(struct timer *timer)
             move_free(v);
             irq_enable();
 
-            //fixme: Debug
-            //gpio_out_write(p->debug5, 0);
             return SF_DONE;
         }
 
@@ -84,10 +69,6 @@ pwm_event(struct timer *timer)
         p->timer.waketime += p->max_duration;
         p->timer.func = pwm_end_event;
     }
-
-    //fixme: Debug
-    //gpio_out_write(p->debug5, 0);
-    //gpio_out_write(p->debug7, 0);
 
     irq_disable();
     move_free(v);
@@ -109,11 +90,6 @@ command_config_pwm_out(uint32_t *args)
     p->plast = NULL;
 
     move_request_size(sizeof(struct pwm_value));
-
-
-    //FIXME: debugging gpios
-    //p->debug5 = gpio_out_setup(GPIO('D', 5), 0);
-    //p->debug7 = gpio_out_setup(GPIO('D', 7), 0);
 }
 DECL_COMMAND(command_config_pwm_out,
              "config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu"
@@ -138,10 +114,6 @@ command_schedule_pwm_out(uint32_t *args)
     irq_disable();
     if(p->first) {
         // there exists an element in queue
-
-        //fixme: debug
-        //gpio_out_toggle_noirq(p->debug5);
-
         //if there is a p->first, there has to be a p->plast
         //if there is no first, plast is invalid.
         *p->plast = v;  //enqueue new v into the last's "next" element
@@ -157,10 +129,6 @@ command_schedule_pwm_out(uint32_t *args)
     //plast to point to this new element's next pointer
     p->plast = &v->next;
     irq_enable();
-
-    //fixme: debug
-    //gpio_out_write(p->debug7, 0);
-    //gpio_out_write(p->debug5, 0);
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");
@@ -171,13 +139,7 @@ pwm_shutdown(void)
     uint8_t i;
     struct pwm_out_s *p;
     foreach_oid(i, p, command_config_pwm_out) {
-        //gpio_out_write(p->debug7, 1);
-        //gpio_out_write(p->debug5, 1);
-
         gpio_pwm_write(p->pin, p->default_value);
-
-        //gpio_out_write(p->debug7, 0);
-        //gpio_out_write(p->debug5, 0);
     }
 }
 DECL_SHUTDOWN(pwm_shutdown);
