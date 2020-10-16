@@ -39,6 +39,7 @@ Slice the ringing test model, which can be found in
  * Use 1-2 perimeters, or even better the smooth vase mode with 1-2 mm base.
  * Use sufficiently high speed, around 80-100 mm/sec, for *external* perimeters.
  * Make sure that the minimum layer time is *at most* 3 seconds.
+ * Make sure any "dynamic acceleration control" is disabled in the slicer.
 
 ## Ringing frequency
 
@@ -195,7 +196,10 @@ A few notes on shaper selection:
 
 ## Selecting max_accel
 
-You should have a printed test for the shaper you chose from the previous step.
+You should have a printed test for the shaper you chose from the previous step
+(if you don't, print the test model with the pressure advance disabled
+`SET_PRESSURE_ADVANCE ADVANCE=0` and with the tuning tower enabled as
+`TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1250 FACTOR=100 BAND=5`).
 Note that at very high accelerations, depending on the resonance frequency and
 the input shaper you chose (e.g. EI shaper creates more smoothing than MZV),
 input shaping may cause too much smoothing and rounding of the parts. So,

@@ -693,7 +693,6 @@ is enabled:
   input shaper parameters can be persisted in the config by issuing
   `SAVE_CONFIG` command.
 
-
 ## Save Variables
 
 The following command is enabled if a [save_variables] config section has been
