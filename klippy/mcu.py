@@ -183,8 +183,9 @@ class MCU_pwm:
         #
         self._oid = self._mcu.create_oid()
         self._ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._pwmqueue = self._ffi_main.gc(self._ffi_lib.pwmchannel_alloc(self._oid),
-                  self._ffi_lib.pwmchannel_free)
+        self._pwmqueue = self._ffi_main.gc(
+                self._ffi_lib.pwmchannel_alloc(self._oid),
+                self._ffi_lib.pwmchannel_free)
         self._mcu.register_pwmqueue(self._pwmqueue)
         #
     def get_mcu(self):
@@ -229,7 +230,6 @@ class MCU_pwm:
                                      on_restart=True)
             self._set_cmd_id = self._mcu.lookup_command_id(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
-            
             return
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
@@ -260,7 +260,7 @@ class MCU_pwm:
         if self._invert:
             value = 1. - value
         value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        
+
         # FIXME: Dirty hack to slow down soft-pwm
         if self._hardware_pwm:
             data = (self._set_cmd_id, self._oid, clock & 0xFFFFFFFF, value)

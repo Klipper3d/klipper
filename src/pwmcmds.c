@@ -101,9 +101,6 @@ command_schedule_pwm_out(uint32_t *args)
 
     struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
 
-    //gpio_out_write(p->debug7, 1);
-    //gpio_out_write(p->debug5, 1);
-
     struct pwm_value* v = move_alloc();
     v->waketime = args[1];
     v->value = args[2];

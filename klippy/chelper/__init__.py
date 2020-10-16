@@ -37,7 +37,7 @@ defs_stepcompress = """
         , uint32_t *data, int len);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
-        , struct stepcompress **sc_list, int sc_num 
+        , struct stepcompress **sc_list, int sc_num
         , struct pwmchannel **pc_list, int pc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
     void steppersync_set_time(struct steppersync *ss
@@ -179,10 +179,10 @@ defs_std = """
 """
 
 defs_all = [
-    defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress, defs_pwmchannel,
-    defs_itersolve, defs_trapq, defs_kin_cartesian, defs_kin_corexy,
-    defs_kin_corexz, defs_kin_delta, defs_kin_polar, defs_kin_rotary_delta,
-    defs_kin_winch, defs_kin_extruder, defs_kin_shaper,
+    defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
+    defs_pwmchannel, defs_itersolve, defs_trapq, defs_kin_cartesian,
+    defs_kin_corexy, defs_kin_corexz, defs_kin_delta, defs_kin_polar,
+    defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder, defs_kin_shaper,
 ]
 
 # Return the list of file modification times

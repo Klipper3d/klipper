@@ -20,7 +20,8 @@ int stepcompress_append(struct stepcompress *sc, int sdir
 int stepcompress_commit(struct stepcompress *sc);
 int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
-int pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len, uint64_t req_clock);
+int pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len,
+        uint64_t req_clock);
 
 struct serialqueue;
 struct pwmchannel;

@@ -47,14 +47,9 @@ struct stepcompress {
 struct pwmchannel {
     // Buffer management
     uint32_t *queue, *queue_end, *queue_pos, *queue_next;
-    // Internal tracking
-    //uint32_t max_error;
-    //double mcu_time_offset, mcu_freq, last_step_print_time;
 
     // Message generation
-    // TODO: Maybe a whole queue is not needed, because one channel is queued as well?
     struct list_head msg_queue;
-    //uint8_t value;
     uint32_t oid;
 };
 
@@ -559,21 +554,17 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 }
 
 int __visible
-pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len, uint64_t req_clock)
+pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len,
+        uint64_t req_clock)
 {
-    /*  Not needed?
-    int ret = stepcompress_flush(pc, UINT64_MAX);
-    if (ret)
-        return ret;
-     */
-
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = req_clock;
 
-    //FIXME min_clock somehow overloaded? How to indicate that it uses the move queue?
     qm->min_clock = req_clock;
 
     list_add_tail(&qm->node, &pc->msg_queue);
+
+    //TODO: Add queue flush here, or keep in mcu.py?
     return 0;
 }
 
@@ -679,7 +670,7 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
     }
 }
 
-// Find and transmit any scheduled steps prior to the given 'move_clock'
+// Find and transmit any scheduled steps prior to and at the given 'move_clock'
 int __visible
 steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
