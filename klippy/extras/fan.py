@@ -4,8 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-# TODO: Is this actually right to just spit it out?
-FAN_MIN_TIME = 0.010
+# FAN_MIN_TIME to avoid having two changes at same point in time
+FAN_MIN_TIME = 0.0001
 
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.):
