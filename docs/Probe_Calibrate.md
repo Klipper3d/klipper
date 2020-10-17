@@ -70,6 +70,21 @@ results to the config file with:
 SAVE_CONFIG
 ```
 
+Note that if a change is made to the printer's motion system, hotend
+position, or probe location then it will invalidate the results of
+PROBE_CALIBRATE.
+
+If the probe has an X or Y offset and the bed tilt is changed (eg, by
+adjusting bed screws, running DELTA_CALIBRATE, running Z_TILT_ADJUST,
+running QUAD_GANTRY_LEVEL, or similar) then it will invalidate the
+results of PROBE_CALIBRATE. After making any of the above adjustments
+it will be necessary to run PROBE_CALIBRATE again.
+
+If the results of PROBE_CALIBRATE are invalidated, then any previous
+[bed mesh](Bed_Mesh.md) results that were obtained using the probe are
+also invalidated - it will be necessary to rerun BED_MESH_CALIBRATE
+after recalibrating the probe.
+
 # Repeatability check
 
 After calibrating the probe X, Y, and Z offsets it is a good idea to
