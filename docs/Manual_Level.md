@@ -144,8 +144,8 @@ This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).
 
 To enable this feature, one would determine the nozzle coordinates
-near the screws and add them to the config file. For example, it might
-look like:
+such that the Z probe is above the screws, and then add them to the
+config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
