@@ -31,6 +31,8 @@ communication with the Klipper developers.
     positioning.
 - [Resonance compensation](Resonance_Compensation.md): A tool to
   reduce ringing in prints.
+  - [Measuring resonances](Measuring_Resonances.md): Information on
+    using adxl345 accelerometer hardware to measure resonance.
 - [Pressure advance](Pressure_Advance.md): Calibrate extruder
   pressure.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
