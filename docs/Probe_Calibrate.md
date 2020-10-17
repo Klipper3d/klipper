@@ -98,19 +98,20 @@ Recv: // probe accuracy results: maximum 2.519448, minimum 2.506948, range 0.012
 
 Ideally the tool will report an identical maximum and minimum value.
 (That is, ideally the probe obtains an identical result on all ten
-probes.) However, it's normal for the minimum and maximum values
-to differ by one Z step_distance or up to 5 microns (.005mm).
-The distance between the minimum and the maximum value is called the
-range. So, in the above example, since the printer uses a
-Z step_distance of .0125, a range of 0.012500 would be considered normal.
+probes.) However, it's normal for the minimum and maximum values to
+differ by one Z step_distance or up to 5 microns (.005mm). The
+distance between the minimum and the maximum value is called the
+range. So, in the above example, since the printer uses a Z
+step_distance of .0125, a range of 0.012500 would be considered
+normal.
 
-If the results of the test show a range value that is greater than
-25 microns (.025mm) then the probe does not have sufficient accuracy
-for typical bed leveling procedures. It may be possible to tune the
-probe speed and/or probe start height to improve the repeatability
-of the probe. The `PROBE_ACCURACY` command allows one to run tests
-with different parameters to see their impact - see
-the [G-Codes document](G-Codes.md) for further details. If the probe
+If the results of the test show a range value that is greater than 25
+microns (.025mm) then the probe does not have sufficient accuracy for
+typical bed leveling procedures. It may be possible to tune the probe
+speed and/or probe start height to improve the repeatability of the
+probe. The `PROBE_ACCURACY` command allows one to run tests with
+different parameters to see their impact - see the
+[G-Codes document](G-Codes.md) for further details. If the probe
 generally obtains repeatable results but has an occasional outlier,
 then it may be possible to account for that by using multiple samples
 on each probe - read the description of the probe `samples` config
@@ -138,9 +139,9 @@ This is a common issue with probes on delta printers, however it can
 occur on all printers.
 
 One can check for a location bias by using the `PROBE_CALIBRATE`
-command to measuring the probe z_offset at various X and Y
-locations. Ideally, the probe z_offset would be a constant value at
-every printer location.
+command to measuring the probe z_offset at various X and Y locations.
+Ideally, the probe z_offset would be a constant value at every printer
+location.
 
 For delta printers, try measuring the z_offset at a position near the
 A tower, at a position near the B tower, and at a position near the C
