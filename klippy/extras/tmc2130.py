@@ -176,7 +176,8 @@ class MCU_TMC_SPI:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mutex = self.printer.get_reactor().mutex()
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000, share_type="tmc2130_cs")
+        self.spi = bus.MCU_SPI_from_config(config, 3,
+        default_speed=4000000, share_type="tmc2130_cs")
         chain_pos = config.get('spi_chain_pos', None)
         chain_len = config.get('spi_chain_len', None)
         self.cs_pin=config.get('cs_pin', None)
