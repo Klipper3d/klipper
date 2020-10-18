@@ -170,12 +170,66 @@ class TMCCurrentHelper:
 # TMC2130 SPI
 ######################################################################
 
+class MCU_TMC_SPI_chain:
+    def __init__(self, config, chain_len=1):
+        self.printer = config.get_printer()
+        self.chain_len = chain_len
+        self.mutex = self.printer.get_reactor().mutex()
+        share = None
+        if chain_len > 1:
+            share = "tmc_spi_cs"
+        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000,
+                                           share_type=share)
+        self.taken_chain_positions = []
+    def _build_cmd(self, data, chain_pos):
+        return ([0x00] * ((self.chain_len - chain_pos) * 5) +
+                data + [0x00] * ((chain_pos - 1) * 5))
+    def reg_read(self, reg, chain_pos):
+        cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        self.spi.spi_send(cmd)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
+        params = self.spi.spi_transfer(cmd)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+    def reg_write(self, reg, val, chain_pos, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
+        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
+                (val >> 8) & 0xff, val & 0xff]
+        self.spi.spi_send(self._build_cmd(data, chain_pos), minclock)
+
+# Helper to setup an spi daisy chain bus from settings in a config section
+def lookup_tmc_spi_chain(config):
+    chain_len = config.getint('chain_length', None, minval=2)
+    if chain_len is None:
+        # Simple, non daisy chained SPI connection
+        return MCU_TMC_SPI_chain(config, 1), 1
+
+    # Shared SPI bus - lookup existing MCU_TMC_SPI_chain
+    ppins = config.get_printer().lookup_object("pins")
+    cs_pin_params = ppins.lookup_pin(config.get('cs_pin'),
+                                     share_type="tmc_spi_cs")
+    tmc_spi = cs_pin_params.get('class')
+    if tmc_spi is None:
+        tmc_spi = cs_pin_params['class'] = MCU_TMC_SPI_chain(config, chain_len)
+    if chain_len != tmc_spi.chain_len:
+        raise config.error("TMC SPI chain must have same length")
+    chain_pos = config.getint('chain_position', minval=1, maxval=chain_len)
+    if chain_pos in tmc_spi.taken_chain_positions:
+        raise config.error("TMC SPI chain can not have duplicate position")
+    tmc_spi.taken_chain_positions.append(chain_pos)
+    return tmc_spi, chain_pos
+
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
-        self.mutex = self.printer.get_reactor().mutex()
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        self.tmc_spi, self.chain_pos = lookup_tmc_spi_chain(config)
+        self.mutex = self.tmc_spi.mutex
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
@@ -183,21 +237,12 @@ class MCU_TMC_SPI:
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
-            self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-            if self.printer.get_start_args().get('debugoutput') is not None:
-                return 0
-            params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
-        pr = bytearray(params['response'])
-        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+            read = self.tmc_spi.reg_read(reg, self.chain_pos)
+        return read
     def set_register(self, reg_name, val, print_time=None):
-        minclock = 0
-        if print_time is not None:
-            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         reg = self.name_to_reg[reg_name]
-        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
-                (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
-            self.spi.spi_send(data, minclock)
+            self.tmc_spi.reg_write(reg, val, self.chain_pos, print_time)
 
 
 ######################################################################
