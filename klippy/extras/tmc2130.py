@@ -198,7 +198,7 @@ class MCU_TMC_SPI:
                         "in a daisy chain configuration" % self.name)
         else:
             self.chain_pos = 0
-            self.chain_len = 1                  
+            self.chain_len = 1
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
@@ -210,10 +210,10 @@ class MCU_TMC_SPI:
         reg = self.name_to_reg[reg_name]
         with self.mutex:
             cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00])
-            self.spi.spi_send(cmd)         
+            self.spi.spi_send(cmd)
             if self.printer.get_start_args().get('debugoutput') is not None:
                 return 0
-            params = self.spi.spi_transfer(cmd)            
+            params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
         pr = pr[(self.chain_len - self.chain_pos - 1) * 5 :
                 (self.chain_len - self.chain_pos) * 5]
