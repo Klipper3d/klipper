@@ -197,7 +197,7 @@ class MCU_pwm:
         self._hardware_pwm = hardware_pwm
     def setup_start_value(self, start_value, shutdown_value, is_static=False):
         if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+            raise pins.error("Static pin can not have a shutdown value")
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
