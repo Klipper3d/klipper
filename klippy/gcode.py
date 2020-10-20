@@ -251,7 +251,9 @@ class GCodeDispatch:
             raise gcmd.error(self.printer.get_state_message()[0])
             return
         if not cmd:
-            logging.debug(gcmd.get_commandline())
+            cmdline = gcmd.get_commandline()
+            if cmdline:
+                logging.debug(cmdline)
             return
         if cmd.startswith("M117 "):
             # Handle M117 gcode with numeric and special characters
