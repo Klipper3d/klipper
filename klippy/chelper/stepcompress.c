@@ -559,7 +559,7 @@ pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len,
 {
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = req_clock;
-
+    // TODO: Add more slack if min_clock is a bit earlier?
     qm->min_clock = req_clock;
 
     list_add_tail(&qm->node, &pc->msg_queue);

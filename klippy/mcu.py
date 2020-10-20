@@ -275,8 +275,9 @@ class MCU_pwm:
             cycle_time = self._cycle_time
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd_if_soft_pwm.send([self._oid, clock, on_ticks, cycle_ticks - on_ticks],
-                           minclock=minclock, reqclock=clock)
+        self._set_cmd_if_soft_pwm.send(
+                    [self._oid, clock, on_ticks, cycle_ticks - on_ticks],
+                    minclock=minclock, reqclock=clock)
 
 
 class MCU_adc:
