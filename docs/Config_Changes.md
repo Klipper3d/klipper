@@ -6,6 +6,8 @@ All dates in this document are approximate.
 
 # Changes
 
+20201020: Klipper v0.9.0 released.
+
 20200902: The RTD resistance-to-temperature calculation for MAX31865
 converters has been corrected to not read low.  If you are using such a
 device, you should recalibrate your print temperature and PID settings.
