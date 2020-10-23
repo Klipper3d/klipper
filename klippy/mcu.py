@@ -339,8 +339,8 @@ class RetryAsyncCommand:
         if params['#sent_time'] >= self.min_query_time:
             self.min_query_time = self.reactor.NEVER
             self.reactor.async_complete(self.completion, params)
-    def get_response(self, cmd, cmd_queue, minclock=0):
-        self.serial.raw_send_wait_ack(cmd, minclock, minclock, cmd_queue)
+    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+        self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         first_query_time = query_time = self.reactor.monotonic()
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
@@ -368,11 +368,12 @@ class CommandQueryWrapper:
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-    def send(self, data=(), minclock=0):
+    def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         xh = self._xmit_helper(self._serial, self._response, self._oid)
+        reqclock = max(minclock, reqclock)
         try:
-            return xh.get_response(cmd, self._cmd_queue, minclock=minclock)
+            return xh.get_response(cmd, self._cmd_queue, minclock, reqclock)
         except serialhdl.error as e:
             raise error(str(e))
 

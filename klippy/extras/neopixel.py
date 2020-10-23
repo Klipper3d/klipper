@@ -102,7 +102,8 @@ class PrinterNeoPixel:
                 minclock = self.mcu.print_time_to_clock(print_time)
             scmd = self.neopixel_send_cmd.send
             for i in range(8):
-                params = scmd([self.oid], minclock=minclock)
+                params = scmd([self.oid], minclock=minclock,
+                              reqclock=BACKGROUND_PRIORITY_CLOCK)
                 if params['success']:
                     break
             else:
