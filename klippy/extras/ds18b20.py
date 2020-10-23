@@ -40,7 +40,7 @@ class DS18B20:
             self.fd = open(self.w1_sensor_fd, 'r')
         except IOError:
             # Not really following the exception handling.
-            # from the docs seems like this should be handled in 
+            # from the docs seems like this should be handled in
             # load_config()???
             raise self.printer.config_error(
                 self.w1_sensor_fd + ' does not exist')
