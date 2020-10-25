@@ -22,6 +22,8 @@ class PrinterNeoPixel:
         self.mcu.register_config_callback(self.build_config)
         self.color_order_GRB = config.getboolean("color_order_GRB", True)
         self.chain_count = config.getint('chain_count', 1, minval=1, maxval=18)
+        self.pixel_repeat = config.getint('pixel_repeat', 1,
+                                          minval=1, maxval=255)
         self.neopixel_send_cmd = None
         # Initial color
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
@@ -38,7 +40,9 @@ class PrinterNeoPixel:
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
         self.mcu.add_config_cmd("config_neopixel oid=%d pin=%s"
                                 " bit_max_ticks=%d reset_min_ticks=%d"
-                                % (self.oid, self.pin, bmt, rmt))
+                                " repeat_len=3 repeat_count=%d"
+                                % (self.oid, self.pin, bmt, rmt,
+                                   self.pixel_repeat))
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_send_cmd = self.mcu.lookup_command(
             "neopixel_send oid=%c data=%*s", cq=cmd_queue)

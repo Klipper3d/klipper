@@ -85,6 +85,7 @@ struct neopixel_s {
     struct gpio_out pin;
     neopixel_time_t bit_max_ticks;
     uint32_t last_req_time, reset_min_ticks;
+    uint32_t repeat_len, repeat_count;
 };
 
 void
@@ -96,9 +97,55 @@ command_config_neopixel(uint32_t *args)
     n->pin = pin;
     n->bit_max_ticks = args[2];
     n->reset_min_ticks = args[3];
+    n->repeat_len = args[4];
+    n->repeat_count = args[5];
 }
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
-             " bit_max_ticks=%u reset_min_ticks=%u");
+             " bit_max_ticks=%u reset_min_ticks=%u"
+             " repeat_len=%u repeat_count=%u");
+
+static int
+send_byte(struct neopixel_s *n, neopixel_time_t *last_start, uint8_t byte)
+{
+    struct gpio_out pin = n->pin;
+    const neopixel_time_t bit_max_ticks = n->bit_max_ticks;
+
+    for (uint_fast8_t i = 0; i < 8; i++) {
+        neopixel_time_t start;
+
+        neopixel_delay(*last_start, BIT_MIN_TICKS);
+        if (byte & 0x80) {
+            // Long pulse
+            irq_disable();
+            start = neopixel_get_time();
+            gpio_out_toggle_noirq(pin);
+            irq_enable();
+
+            if (neopixel_check_elapsed(*last_start, start, bit_max_ticks))
+                return -1;
+            neopixel_delay(start, PULSE_LONG_TICKS);
+
+            irq_disable();
+            gpio_out_toggle_noirq(pin);
+            irq_enable();
+        } else {
+            // Short pulse
+            irq_disable();
+            start = neopixel_get_time();
+            gpio_out_toggle_noirq(pin);
+            neopixel_delay(start, PULSE_SHORT_TICKS);
+            gpio_out_toggle_noirq(pin);
+            irq_enable();
+
+            if (neopixel_check_elapsed(*last_start, start, bit_max_ticks))
+                return -1;
+        }
+
+        *last_start = start;
+        byte <<= 1;
+    }
+    return 0;
+}
 
 static int
 send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
@@ -112,46 +159,13 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
     }
 
     // Transmit data
-    struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
-    neopixel_time_t bit_max_ticks = n->bit_max_ticks;
-    while (data_len--) {
-        uint_fast8_t byte = *data++;
-        uint_fast8_t bits = 8;
-        while (bits--) {
-            if (byte & 0x80) {
-                // Long pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
-                irq_disable();
-                neopixel_time_t start = neopixel_get_time();
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
 
-                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
+    for (uint8_t i = 0; i < data_len; i += n->repeat_len) {
+        for (uint8_t repeat = 0; repeat < n->repeat_count; repeat++) {
+            for (uint8_t j = 0; j < n->repeat_len && i + j < data_len; j++) {
+                if (send_byte(n, &last_start, data[i + j]))
                     goto fail;
-                last_start = start;
-                byte <<= 1;
-
-                neopixel_delay(start, PULSE_LONG_TICKS);
-                irq_disable();
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
-
-                neopixel_delay(neopixel_get_time(), PULSE_SHORT_TICKS);
-            } else {
-                // Short pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
-                irq_disable();
-                neopixel_time_t start = neopixel_get_time();
-                gpio_out_toggle_noirq(pin);
-                neopixel_delay(start, PULSE_SHORT_TICKS);
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
-
-                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
-                    goto fail;
-                last_start = start;
-                byte <<= 1;
             }
         }
     }
@@ -159,7 +173,7 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
     return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
-    gpio_out_write(pin, 0);
+    gpio_out_write(n->pin, 0);
     n->last_req_time = timer_read_time();
     return -1;
 }
