@@ -57,6 +57,7 @@ spi_open(uint32_t bus, uint32_t dev)
     devices[devices_count].bus = bus;
     devices[devices_count].dev = dev;
     devices[devices_count].fd = fd;
+    devices_count++;
     return fd;
 }
 
