@@ -9,21 +9,15 @@
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
-
-struct pwm_value {
-    uint32_t waketime;
-    uint16_t value;
-    struct pwm_value *next;
-};
+#include "gpioqueue.h" // init_queue
 
 struct pwm_out_s {
     struct timer timer;
     struct gpio_pwm pin;
     uint32_t max_duration;
     uint16_t default_value;
-    struct pwm_value *first, **plast;
+    struct gpio_queue queue;
 };
-
 
 static uint_fast8_t
 pwm_end_event(struct timer *timer)
@@ -35,33 +29,30 @@ static uint_fast8_t
 pwm_event(struct timer *timer)
 {
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
-    struct pwm_value *v = p->first;
+    struct gpio_event *current = get_current_event(&p->queue);
 
-    if(!v)
+    if(!current)
     {
-        // no next pwm value, queue is empty
-        // this should not happen because we check the v->next
+        // no pwm value, queue is empty
+        // this should not happen because we were scheduled for an event
         return SF_DONE;
     }
 
-    gpio_pwm_write(p->pin, v->value);
+    gpio_pwm_write(p->pin, current->value);
 
-    //v->next may be NULL if no further elements are queued
-    p->first = v->next;
+    //may be NULL if no further elements are queued
+    struct gpio_event *next = get_next_event(&p->queue);
 
-    if(p->first){
+    if(next){
         //next event scheduled
-        p->timer.waketime = p->first->waketime;
+        p->timer.waketime = next->waketime;
 
     } else {
         // no next event scheduled
-        if (v->value == p->default_value || !p->max_duration) {
+        if (current->value == p->default_value || !p->max_duration) {
             // We either have set the default value
             // or there is no maximum duration
-            irq_disable();
-            move_free(v);
-            irq_enable();
-
+            free_gpio_event(current);
             return SF_DONE;
         }
 
@@ -70,10 +61,7 @@ pwm_event(struct timer *timer)
         p->timer.func = pwm_end_event;
     }
 
-    irq_disable();
-    move_free(v);
-    irq_enable();
-
+    free_gpio_event(current);
     return SF_RESCHEDULE;
 }
 
@@ -86,10 +74,7 @@ command_config_pwm_out(uint32_t *args)
     p->pin = pin;
     p->default_value = args[4];
     p->max_duration = args[5];
-    p->first = NULL;
-    p->plast = NULL;
-
-    move_request_size(sizeof(struct pwm_value));
+    init_queue(&p->queue);
 }
 DECL_COMMAND(command_config_pwm_out,
              "config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu"
@@ -101,31 +86,13 @@ command_schedule_pwm_out(uint32_t *args)
 
     struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
 
-    struct pwm_value* v = move_alloc();
-    v->waketime = args[1];
-    v->value = args[2];
-    v->next = NULL;
-
-    //gpio_out_toggle_noirq(p->debug5);
-
-    irq_disable();
-    if(p->first) {
-        // there exists an element in queue
-        //if there is a p->first, there has to be a p->plast
-        //if there is no first, plast is invalid.
-        *p->plast = v;  //enqueue new v into the last's "next" element
-    }
-    else {
-        // no first element set
-        p->first = v;
+    if(!insert_gpio_event(&p->queue, args[1], args[2])) {
+        //queue was empty and a timer needs to be added
         p->timer.waketime = args[1];
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
     }
 
-    //plast to point to this new element's next pointer
-    p->plast = &v->next;
-    irq_enable();
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");
