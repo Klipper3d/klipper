@@ -86,6 +86,9 @@ command_schedule_pwm_out(uint32_t *args)
 
     if(!insert_gpio_event(&p->queue, args[1], args[2])) {
         //queue was empty and a timer needs to be added
+        if(p->timer.func == pwm_end_event) {
+            sched_del_timer(&p->timer);
+        }
         p->timer.waketime = args[1];
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);

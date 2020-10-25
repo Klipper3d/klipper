@@ -9,6 +9,7 @@
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
+#include "gpioqueue.h" // queueing
 #include "sched.h" // sched_add_timer
 
 
@@ -20,7 +21,8 @@ struct digital_out_s {
     struct timer timer;
     struct gpio_out pin;
     uint32_t max_duration;
-    uint8_t value, default_value;
+    uint8_t default_value;
+    struct gpio_queue queue;
 };
 
 static uint_fast8_t
@@ -33,11 +35,37 @@ static uint_fast8_t
 digital_out_event(struct timer *timer)
 {
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
-    gpio_out_write(d->pin, d->value);
-    if (d->value == d->default_value || !d->max_duration)
+    struct gpio_event *current = get_current_event(&d->queue);
+
+    if(!current) {
+        // no pwm value, queue is empty
+        // this should not happen because we were scheduled for an event
         return SF_DONE;
-    d->timer.waketime += d->max_duration;
-    d->timer.func = digital_end_event;
+    }
+    gpio_out_write(d->pin, current->value);
+
+    //may be NULL if no further elements are queued
+    struct gpio_event *next = get_next_event(&d->queue);
+
+    if(next) {
+        //next event scheduled
+        d->timer.waketime = next->waketime;
+
+    } else {
+        // no next event scheduled
+        if (current->value == d->default_value || !d->max_duration) {
+            // We either have set the default value
+            // or there is no maximum duration
+            free_gpio_event(current);
+            return SF_DONE;
+        }
+
+        //nothing scheduled, so lets start the safety timeout
+        d->timer.waketime += d->max_duration;
+        d->timer.func = digital_end_event;
+    }
+
+    free_gpio_event(current);
     return SF_RESCHEDULE;
 }
 
@@ -50,6 +78,7 @@ command_config_digital_out(uint32_t *args)
     d->pin = pin;
     d->default_value = args[3];
     d->max_duration = args[4];
+    init_queue(&d->queue);
 }
 DECL_COMMAND(command_config_digital_out,
              "config_digital_out oid=%c pin=%u value=%c default_value=%c"
@@ -59,11 +88,15 @@ void
 command_schedule_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
-    sched_del_timer(&d->timer);
-    d->timer.func = digital_out_event;
-    d->timer.waketime = args[1];
-    d->value = args[2];
-    sched_add_timer(&d->timer);
+    if(!insert_gpio_event(&d->queue, args[1], args[2])) {
+        //queue was empty and a timer needs to be added
+        if(d->timer.func == digital_end_event) {
+            sched_del_timer(&d->timer);
+        }
+        d->timer.waketime = args[1];
+        d->timer.func = digital_out_event;
+        sched_add_timer(&d->timer);
+    }
 }
 DECL_COMMAND(command_schedule_digital_out,
              "schedule_digital_out oid=%c clock=%u value=%c");
@@ -72,10 +105,13 @@ void
 command_update_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
-    sched_del_timer(&d->timer);
+    //FIXME: How to act here if queue is still populated?
     uint8_t value = args[1];
     gpio_out_write(d->pin, value);
-    if (value != d->default_value && d->max_duration) {
+    // if there is an event waiting, dont add time-out
+    if (get_current_event(&d->queue) == NULL &&
+            value != d->default_value && d->max_duration) {
+        sched_del_timer(&d->timer);
         d->timer.waketime = timer_read_time() + d->max_duration;
         d->timer.func = digital_end_event;
         sched_add_timer(&d->timer);

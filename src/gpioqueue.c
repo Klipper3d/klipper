@@ -42,20 +42,22 @@ void free_gpio_event(struct gpio_event* event)
 /**
  * @return NULL if queue was empty and a timer needs to be added
  */
-uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime, uint16_t value) {
+uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime,
+                          uint16_t value) {
+    uint8_t needs_adding_timer = 0;
     struct gpio_event* event = move_alloc();
     event->waketime = waketime;
     event->value = value;
     event->next = NULL;
 
-    uint8_t needs_adding_timer = 0;
 
     irq_disable();
     if(queue->first) {
-        // there exists an element in queue
+        //there exists an element in queue
         //if there is a queue->first, there has to be a queue->plast
         //if there is no first, plast is invalid.
-        *queue->plast = event;  //enqueue new event into the last's "next" element
+        //enqueue new event into the last's "next" element
+        *queue->plast = event;
     }
     else {
         // no first element set
