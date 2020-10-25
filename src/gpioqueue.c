@@ -44,12 +44,13 @@ void free_gpio_event(struct gpio_event* event)
  */
 uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime, uint16_t value) {
     struct gpio_event* event = move_alloc();
+    event->waketime = waketime;
     event->value = value;
     event->next = NULL;
 
     uint8_t needs_adding_timer = 0;
 
-    //irq_disable();
+    irq_disable();
     if(queue->first) {
         // there exists an element in queue
         //if there is a queue->first, there has to be a queue->plast
@@ -64,6 +65,6 @@ uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime, uint16_t 
 
     //plast to point to this new element's next pointer
     queue->plast = &event->next;
-    //irq_enable();
+    irq_enable();
     return !needs_adding_timer;
 }

@@ -82,17 +82,14 @@ DECL_COMMAND(command_config_pwm_out,
 void
 command_schedule_pwm_out(uint32_t *args)
 {
-
     struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
 
-    irq_disable();
     if(!insert_gpio_event(&p->queue, args[1], args[2])) {
         //queue was empty and a timer needs to be added
         p->timer.waketime = args[1];
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
     }
-    irq_enable();
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");
