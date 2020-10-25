@@ -31,8 +31,7 @@ pwm_event(struct timer *timer)
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
     struct gpio_event *current = get_current_event(&p->queue);
 
-    if(!current)
-    {
+    if(!current) {
         // no pwm value, queue is empty
         // this should not happen because we were scheduled for an event
         return SF_DONE;
@@ -43,7 +42,7 @@ pwm_event(struct timer *timer)
     //may be NULL if no further elements are queued
     struct gpio_event *next = get_next_event(&p->queue);
 
-    if(next){
+    if(next) {
         //next event scheduled
         p->timer.waketime = next->waketime;
 
@@ -86,13 +85,14 @@ command_schedule_pwm_out(uint32_t *args)
 
     struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
 
+    irq_disable();
     if(!insert_gpio_event(&p->queue, args[1], args[2])) {
         //queue was empty and a timer needs to be added
         p->timer.waketime = args[1];
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
     }
-
+    irq_enable();
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");

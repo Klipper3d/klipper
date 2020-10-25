@@ -1,4 +1,4 @@
-// Commands for controlling hardware based pulse-width-modulator pins
+// Helper with queueing single-value events
 //
 // Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -49,7 +49,7 @@ uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime, uint16_t 
 
     uint8_t needs_adding_timer = 0;
 
-    irq_disable();
+    //irq_disable();
     if(queue->first) {
         // there exists an element in queue
         //if there is a queue->first, there has to be a queue->plast
@@ -64,6 +64,6 @@ uint8_t insert_gpio_event(struct gpio_queue* queue, uint32_t waketime, uint16_t 
 
     //plast to point to this new element's next pointer
     queue->plast = &event->next;
-    irq_enable();
+    //irq_enable();
     return !needs_adding_timer;
 }
