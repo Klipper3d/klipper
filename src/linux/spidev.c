@@ -29,7 +29,7 @@ struct spi_s {
     int fd;
 };
 static struct spi_s devices[16];
-static int devices_count;
+static int devices_count = 0;
 
 static int
 spi_open(uint32_t bus, uint32_t dev)
@@ -56,7 +56,7 @@ spi_open(uint32_t bus, uint32_t dev)
 
     devices[devices_count].bus = bus;
     devices[devices_count].dev = dev;
-    devices[devices_count].fd = fd;
+    devices[devices_count++].fd = fd;
     return fd;
 }
 
