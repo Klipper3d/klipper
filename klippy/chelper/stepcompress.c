@@ -44,7 +44,7 @@ struct stepcompress {
 };
 
 
-struct pwmchannel {
+struct sync_channel {
     // Buffer management
     uint32_t *queue, *queue_end, *queue_pos, *queue_next;
 
@@ -250,10 +250,10 @@ stepcompress_alloc(uint32_t oid)
     return sc;
 }
 
-struct pwmchannel * __visible
-pwmchannel_alloc(uint32_t oid)
+struct sync_channel * __visible
+sync_channel_alloc(uint32_t oid)
 {
-    struct pwmchannel *pc = malloc(sizeof(*pc));
+    struct sync_channel *pc = malloc(sizeof(*pc));
     memset(pc, 0, sizeof(*pc));
     list_init(&pc->msg_queue);
     pc->oid = oid;
@@ -273,14 +273,6 @@ stepcompress_fill(struct stepcompress *sc, uint32_t max_error
     sc->set_next_step_dir_msgid = set_next_step_dir_msgid;
 }
 
-/*
-void __visible
-pwmchannel_fill(struct pwmchannel *pc, uint8_t value)
-{
-    pc->value = value;
-}
-*/
-
 // Free memory associated with a 'stepcompress' object
 void __visible
 stepcompress_free(struct stepcompress *sc)
@@ -293,7 +285,7 @@ stepcompress_free(struct stepcompress *sc)
 }
 
 void __visible
-pwmchannel_free(struct pwmchannel *pc)
+sync_channel_free(struct sync_channel *pc)
 {
     if (!pc)
         return;
@@ -554,7 +546,7 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 }
 
 int __visible
-pwmchannel_queue_msg(struct pwmchannel *pc, uint32_t *data, int len,
+sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
         uint64_t req_clock)
 {
     struct queue_message *qm = message_alloc_and_encode(data, len);
@@ -587,7 +579,7 @@ struct steppersync {
     // Storage for associated stepcompress objects
     struct stepcompress **sc_list;
     int sc_num;
-    struct pwmchannel **pc_list;
+    struct sync_channel **pc_list;
     int pc_num;
     // Storage for list of pending move clocks
     uint64_t *move_clocks;
@@ -597,7 +589,7 @@ struct steppersync {
 // Allocate a new 'steppersync' object
 struct steppersync * __visible
 steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list,
-        int sc_num , struct pwmchannel **pc_list,
+        int sc_num , struct sync_channel **pc_list,
         int pc_num , int move_num)
 {
     struct steppersync *ss = malloc(sizeof(*ss));
@@ -704,7 +696,7 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         }
         // PWM
         for (i=0; i<ss->pc_num; i++) {
-            struct pwmchannel *pc = ss->pc_list[i];
+            struct sync_channel *pc = ss->pc_list[i];
             if (!list_empty(&pc->msg_queue)) {
                 struct queue_message *m = list_first_entry(
                     &pc->msg_queue, struct queue_message, node);

@@ -183,10 +183,10 @@ class MCU_pwm:
         #
         self._oid = self._mcu.create_oid()
         self._ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._pwmqueue = self._ffi_main.gc(
-                self._ffi_lib.pwmchannel_alloc(self._oid),
-                self._ffi_lib.pwmchannel_free)
-        self._mcu.register_pwmqueue(self._pwmqueue)
+        self._sync_channel = self._ffi_main.gc(
+                self._ffi_lib.sync_channel_alloc(self._oid),
+                self._ffi_lib.sync_channel_free)
+        self._mcu.register_sync_channel(self._sync_channel)
         #
     def get_mcu(self):
         return self._mcu
@@ -264,12 +264,13 @@ class MCU_pwm:
         if self._hardware_pwm:
             v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
             data = (self._set_cmd_id, self._oid, clock & 0xFFFFFFFF, v)
-            ret = self._ffi_lib.pwmchannel_queue_msg(
-                self._pwmqueue, data, len(data), clock)
+            ret = self._ffi_lib.sync_channel_queue_msg(
+                self._sync_channel, data, len(data), clock)
             if ret:
                 raise error("Internal error in pwm send")
             self._mcu.flush_moves(print_time)
             return
+        
         # Soft pwm update
         if cycle_time is None:
             cycle_time = self._cycle_time
@@ -456,7 +457,7 @@ class MCU:
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
         self._stepqueues = []
-        self._pwmqueues = []
+        self._sync_channels = []
         self._steppersync = None
         # Stats
         self._stats_sumsq_base = 0.
@@ -600,7 +601,7 @@ class MCU:
         self._steppersync = ffi_main.gc(
             ffi_lib.steppersync_alloc(self._serial.serialqueue,
                                       self._stepqueues, len(self._stepqueues),
-                                      self._pwmqueues, len(self._pwmqueues),
+                                      self._sync_channels, len(self._sync_channels),
                                       move_count),
                                       ffi_lib.steppersync_free)
         ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
@@ -666,8 +667,8 @@ class MCU:
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
-    def register_pwmqueue(self, pwmqueue):
-        self._pwmqueues.append(pwmqueue)
+    def register_sync_channel(self, sync_channel):
+        self._sync_channels.append(sync_channel)
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
