@@ -211,6 +211,7 @@ class MCU_pwm:
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
+            self._th = self._mcu.get_printer().lookup_object('toolhead')
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd(
@@ -268,7 +269,8 @@ class MCU_pwm:
                 self._sync_channel, data, len(data), clock)
             if ret:
                 raise error("Internal error in pwm send")
-            self._mcu.flush_moves(print_time)
+            #self._mcu.flush_moves(print_time)
+            self._th._update_move_time(print_time)
             return
         
         # Soft pwm update
