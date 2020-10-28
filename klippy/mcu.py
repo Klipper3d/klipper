@@ -270,7 +270,7 @@ class MCU_pwm:
             if ret:
                 raise error("Internal error in pwm send")
             #self._mcu.flush_moves(print_time)
-            self._th._update_move_time(print_time)
+            self._th.note_synchronous_command(print_time)
             return
         
         # Soft pwm update

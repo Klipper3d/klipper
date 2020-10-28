@@ -250,17 +250,6 @@ stepcompress_alloc(uint32_t oid)
     return sc;
 }
 
-struct sync_channel * __visible
-sync_channel_alloc(uint32_t oid)
-{
-    struct sync_channel *pc = malloc(sizeof(*pc));
-    memset(pc, 0, sizeof(*pc));
-    list_init(&pc->msg_queue);
-    pc->oid = oid;
-    return pc;
-}
-
-
 // Fill message id information
 void __visible
 stepcompress_fill(struct stepcompress *sc, uint32_t max_error
@@ -282,6 +271,16 @@ stepcompress_free(struct stepcompress *sc)
     free(sc->queue);
     message_queue_free(&sc->msg_queue);
     free(sc);
+}
+
+struct sync_channel * __visible
+sync_channel_alloc(uint32_t oid)
+{
+    struct sync_channel *pc = malloc(sizeof(*pc));
+    memset(pc, 0, sizeof(*pc));
+    list_init(&pc->msg_queue);
+    pc->oid = oid;
+    return pc;
 }
 
 void __visible
