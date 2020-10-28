@@ -391,20 +391,14 @@ class CommandWrapper:
 class MCU:
     error = error
     def __init__(self, config, clocksync):
-        self._printer = config.get_printer()
+        self._printer = printer = config.get_printer()
         self._clocksync = clocksync
-        self._reactor = self._printer.get_reactor()
+        self._reactor = printer.get_reactor()
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
-        self._printer.register_event_handler("klippy:connect", self._connect)
-        self._printer.register_event_handler("klippy:mcu_identify",
-                                             self._mcu_identify)
-        self._printer.register_event_handler("klippy:shutdown", self._shutdown)
-        self._printer.register_event_handler("klippy:disconnect",
-                                             self._disconnect)
         # Serial port
-        self._serialport = config.get('serial', '/dev/ttyS0')
+        self._serialport = config.get('serial')
         serial_rts = True
         if config.get('restart_method', None) == "cheetah":
             # Special case: Cheetah boards require RTS to be deasserted, else
@@ -428,7 +422,7 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         # Config building
-        self._printer.lookup_object('pins').register_chip(self._name, self)
+        printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_callbacks = []
         self._config_cmds = []
@@ -447,6 +441,12 @@ class MCU:
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
+        # Register handlers
+        printer.register_event_handler("klippy:connect", self._connect)
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
+        printer.register_event_handler("klippy:shutdown", self._shutdown)
+        printer.register_event_handler("klippy:disconnect", self._disconnect)
     # Serial callbacks
     def _handle_mcu_stats(self, params):
         count = params['count']
