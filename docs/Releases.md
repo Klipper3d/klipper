@@ -35,6 +35,11 @@ Available on 20201020. Major changes in this release:
   graph_temp_sensor, whconsole
 * Several bug fixes and code cleanups.
 
+Klipper 0.9.1
+--------------
+
+Available on 20201028. Release containing only bug fixes.
+
 Klipper 0.8.0
 =============
 
