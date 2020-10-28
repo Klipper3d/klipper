@@ -87,12 +87,20 @@ class PrinterGCodeMacro:
         return ""
     def _action_raise_error(self, msg):
         raise self.printer.command_error(msg)
+    def _action_call_remote_method(self, method, **kwargs):
+        webhooks = self.printer.lookup_object('webhooks')
+        try:
+            webhooks.call_remote_method(method, **kwargs)
+        except self.printer.command_error:
+            logging.exception("Remote Call Error")
+        return ""
     def create_template_context(self, eventtime=None):
         return {
             'printer': GetStatusWrapper(self.printer, eventtime),
             'action_emergency_stop': self._action_emergency_stop,
             'action_respond_info': self._action_respond_info,
             'action_raise_error': self._action_raise_error,
+            'action_call_remote_method': self._action_call_remote_method,
         }
 
 def load_config(config):
