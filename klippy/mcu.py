@@ -269,10 +269,9 @@ class MCU_pwm:
                 self._sync_channel, data, len(data), clock)
             if ret:
                 raise error("Internal error in pwm send")
-            #self._mcu.flush_moves(print_time)
             self._th.note_synchronous_command(print_time)
             return
-        
+
         # Soft pwm update
         if cycle_time is None:
             cycle_time = self._cycle_time
@@ -602,10 +601,10 @@ class MCU:
         ffi_main, ffi_lib = chelper.get_ffi()
         self._steppersync = ffi_main.gc(
             ffi_lib.steppersync_alloc(self._serial.serialqueue,
-                                      self._stepqueues, len(self._stepqueues),
-                                      self._sync_channels, len(self._sync_channels),
-                                      move_count),
-                                      ffi_lib.steppersync_free)
+                                  self._stepqueues, len(self._stepqueues),
+                                  self._sync_channels, len(self._sync_channels),
+                                  move_count),
+                                  ffi_lib.steppersync_free)
         ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)

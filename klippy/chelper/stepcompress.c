@@ -550,12 +550,9 @@ sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
 {
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = req_clock;
-    // TODO: Add more slack if min_clock is a bit earlier?
     qm->min_clock = req_clock;
 
     list_add_tail(&qm->node, &pc->msg_queue);
-
-    //TODO: Add queue flush here, or keep in mcu.py?
     return 0;
 }
 
