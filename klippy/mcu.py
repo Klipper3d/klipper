@@ -119,6 +119,7 @@ class MCU_endstop:
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
+        self._th = None
         self._oid = None
         self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
@@ -127,6 +128,7 @@ class MCU_digital_out:
         self._is_static = False
         self._max_duration = 2.
         self._last_clock = 0
+        self._ffi_main, self._ffi_lib = chelper.get_ffi()
         self._set_cmd = None
     def get_mcu(self):
         return self._mcu
@@ -144,6 +146,11 @@ class MCU_digital_out:
                                      % (self._pin, self._start_value))
             return
         self._oid = self._mcu.create_oid()
+        self._th = self._mcu.get_printer().lookup_object('toolhead')
+        self._sync_channel = self._ffi_main.gc(
+            self._ffi_lib.sync_channel_alloc(self._oid),
+            self._ffi_lib.sync_channel_free)
+        self._mcu.register_sync_channel(self._sync_channel)
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
             " max_duration=%d" % (
@@ -153,13 +160,15 @@ class MCU_digital_out:
                                  % (self._oid, self._start_value),
                                  on_restart=True)
         cmd_queue = self._mcu.alloc_command_queue()
-        self._set_cmd = self._mcu.lookup_command(
-            "schedule_digital_out oid=%c clock=%u value=%c", cq=cmd_queue)
+        self._set_cmd = self._mcu.lookup_command_id(
+            "schedule_digital_out oid=%c clock=%u value=%c")
     def set_digital(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
-        # TODO: Is this the appropriate way to "send it out as fast as you can"?
-        self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
-                           minclock=0, reqclock=clock)
+        data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF,
+                (not not value) ^ self._invert)
+        self._ffi_lib.sync_channel_queue_msg(
+            self._sync_channel, data, len(data), clock)
+        self._th.note_synchronous_command(print_time)
         self._last_clock = clock
     def set_pwm(self, print_time, value, cycle_time=None):
         self.set_digital(print_time, value >= 0.5)
@@ -178,16 +187,13 @@ class MCU_pwm:
         self._is_static = False
         self._last_clock = 0
         self._pwm_max = 0.
-        self._set_cmd_id = None
-        self._set_cmd_if_soft_pwm = None
-        #
+        self._set_cmd = None
         self._oid = self._mcu.create_oid()
         self._ffi_main, self._ffi_lib = chelper.get_ffi()
         self._sync_channel = self._ffi_main.gc(
                 self._ffi_lib.sync_channel_alloc(self._oid),
                 self._ffi_lib.sync_channel_free)
         self._mcu.register_sync_channel(self._sync_channel)
-        #
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -230,7 +236,7 @@ class MCU_pwm:
             self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
                                      on_restart=True)
-            self._set_cmd_id = self._mcu.lookup_command_id(
+            self._set_cmd = self._mcu.lookup_command_id(
                 "schedule_pwm_out oid=%c clock=%u value=%hu")
             return
         # Software PWM
@@ -252,7 +258,7 @@ class MCU_pwm:
             "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d off_ticks=%d"
             % (self._oid, self._last_clock, svalue, cycle_ticks - svalue),
             is_init=True)
-        self._set_cmd_if_soft_pwm = self._mcu.lookup_command(
+        self._set_cmd = self._mcu.lookup_command(
             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u",
             cq=cmd_queue)
     def set_pwm(self, print_time, value, cycle_time=None):
@@ -264,11 +270,9 @@ class MCU_pwm:
 
         if self._hardware_pwm:
             v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-            data = (self._set_cmd_id, self._oid, clock & 0xFFFFFFFF, v)
-            ret = self._ffi_lib.sync_channel_queue_msg(
+            data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF, v)
+            self._ffi_lib.sync_channel_queue_msg(
                 self._sync_channel, data, len(data), clock)
-            if ret:
-                raise error("Internal error in pwm send")
             self._th.note_synchronous_command(print_time)
             return
 
@@ -277,7 +281,7 @@ class MCU_pwm:
             cycle_time = self._cycle_time
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd_if_soft_pwm.send(
+        self._set_cmd.send(
                     [self._oid, clock, on_ticks, cycle_ticks - on_ticks],
                     minclock=minclock, reqclock=clock)
 

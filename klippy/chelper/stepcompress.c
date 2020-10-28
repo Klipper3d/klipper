@@ -544,7 +544,7 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     return 0;
 }
 
-int __visible
+void __visible
 sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
         uint64_t req_clock)
 {
@@ -553,7 +553,6 @@ sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
     qm->min_clock = req_clock;
 
     list_add_tail(&qm->node, &pc->msg_queue);
-    return 0;
 }
 
 

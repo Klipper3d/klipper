@@ -23,7 +23,7 @@ int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
 struct sync_channel *sync_channel_alloc(uint32_t oid);
 void sync_channel_free(struct sync_channel *pc);
-int sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
+void sync_channel_queue_msg(struct sync_channel *pc, uint32_t *data, int len,
         uint64_t req_clock);
 
 struct serialqueue;
