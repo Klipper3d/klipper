@@ -2,7 +2,6 @@
 #define __GENERIC_MISC_H
 
 #include <stdarg.h> // va_list
-#include <stddef.h> // size_t
 #include <stdint.h> // uint8_t
 
 struct command_encoder;

@@ -181,7 +181,7 @@ command_neopixel_update(uint32_t *args)
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
     uint_fast16_t pos = args[1];
     uint_fast8_t data_len = args[2];
-    uint8_t *data = (void*)(size_t)args[3];
+    uint8_t *data = command_decode_ptr(args[3]);
     if (pos & 0x8000 || pos + data_len > n->data_size)
         shutdown("Invalid neopixel update command");
     memcpy(&n->data[pos], data, data_len);
