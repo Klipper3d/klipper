@@ -1,18 +1,18 @@
 #!/bin/bash
-# Test script for travis-ci.org continuous integration.
+# Test script for continuous integration.
 
 # Stop script early on any error; check variables
 set -eu
 
-# Paths to tools installed by travis-install.sh
+# Paths to tools installed by ci-install.sh
 MAIN_DIR=${PWD}
-BUILD_DIR=${PWD}/travis_build
+BUILD_DIR=${PWD}/ci_build
 export PATH=${BUILD_DIR}/pru-gcc/bin:${PATH}
 PYTHON=${BUILD_DIR}/python-env/bin/python
 
 
 ######################################################################
-# Travis CI helpers
+# Section grouping output message helpers
 ######################################################################
 
 start_test()
