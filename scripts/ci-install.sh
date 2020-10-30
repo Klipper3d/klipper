@@ -12,6 +12,17 @@ mkdir -p ${BUILD_DIR} ${CACHE_DIR}
 
 
 ######################################################################
+# Install system dependencies
+######################################################################
+
+echo -e "\n\n=============== Install system dependencies\n\n"
+sudo apt-get install gcc-avr avr-libc pv libmpfr-dev libgmp-dev \
+     libmpc-dev texinfo libncurses5-dev bison flex python-virtualenv \
+     virtualenv python-dev libffi-dev build-essential \
+     libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi
+
+
+######################################################################
 # Install (or build) pru gcc
 ######################################################################
 
