@@ -12,28 +12,6 @@ mkdir -p ${BUILD_DIR} ${CACHE_DIR}
 
 
 ######################################################################
-# Install embedded arm gcc
-######################################################################
-
-echo -e "\n\n=============== Install embedded arm gcc\n\n"
-GCC_ARM_URL="https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2"
-GCC_ARM_SHA="96a029e2ae130a1210eaa69e309ea40463028eab18ba19c1086e4c2dafe69a6a  gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2"
-GCC_ARM_FILE="$(basename ${GCC_ARM_URL})"
-
-cd ${CACHE_DIR}
-if [ ! -f ${GCC_ARM_FILE} ]; then
-    wget "$GCC_ARM_URL"
-fi
-FOUND_SHA=`sha256sum "$GCC_ARM_FILE"`
-if [ "$FOUND_SHA" != "$GCC_ARM_SHA" ]; then
-    echo "ERROR: Mismatch on gcc arm sha256"
-    exit -1
-fi
-cd ${BUILD_DIR}
-tar xf "${CACHE_DIR}/${GCC_ARM_FILE}"
-
-
-######################################################################
 # Install (or build) pru gcc
 ######################################################################
 
