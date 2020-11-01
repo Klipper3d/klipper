@@ -238,13 +238,12 @@ class TMC2130:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
-        # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
+        # Allow virtual pins to be created
         # Setup basic register values
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin,
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc,
                                 TMCCurrentHelper(config, self.mcu_tmc))
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps

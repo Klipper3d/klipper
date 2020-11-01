@@ -336,8 +336,6 @@ class TMC5160:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
-        # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
@@ -369,7 +367,8 @@ class TMC5160:
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
         #   IHOLDIRUN
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag1_pin,
+        # Allow virtual pins to be created
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc,
                                 TMC5160CurrentHelper(
                                     config,
                                     self.mcu_tmc

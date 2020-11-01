@@ -59,8 +59,6 @@ class TMC2209:
         self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields,
                                       FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3)
-        # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)
@@ -68,7 +66,8 @@ class TMC2209:
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag_pin,
+        # Allow virtual pins to be created
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc,
                                 tmc2130.TMCCurrentHelper(config, self.mcu_tmc))
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
