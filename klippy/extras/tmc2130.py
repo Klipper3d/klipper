@@ -170,43 +170,67 @@ class TMCCurrentHelper:
 # TMC2130 SPI
 ######################################################################
 
+# Helper to setup an spi daisy chain bus from settings in a config section
+
+def lookup_tmc_spi_chain (config, name):
+    ppins = config.get_printer().lookup_object("pins")
+    chain_pos = config.get('spi_chain_pos', None)
+    chain_len = config.get('spi_chain_len', None)
+    cs_pin=config.get('cs_pin', None)
+
+    if (chain_len or chain_pos):
+        chain_len = int(chain_len)
+        chain_pos = int(chain_pos)  
+        if chain_pos <= 0 or chain_pos > chain_len:
+            raise config.error("%s: chain position out of range" %
+                name)
+        for (_, t) in config.get_printer().lookup_objects(module='tmc2130'):
+            if t.mcu_tmc.chain['len'] != chain_len:
+                raise config.error("%s: different chain length" %
+                    name)
+            if t.mcu_tmc.chain['pos'] == chain_pos:
+                raise config.error("%s: chain position already "\
+                    "assigned to different driver" % name)
+            if t.mcu_tmc.cs_pin != cs_pin:
+                raise config.error("%s: The CS pins should match"\
+                    "in a daisy chain configuration" % name)        
+    else:
+        chain_pos = 1
+        chain_len = 1
+            
+    if (chain_len  >  1):
+        share = "tmc_spi_cs"
+        cs_pin_params = ppins.lookup_pin( 
+            config.get('cs_pin'), can_pullup=True, share_type=share)
+    else:
+        share = None
+        cs_pin_params = {}
+
+    mcu_spi = cs_pin_params.get('class')       
+    chain = {'pos': chain_pos, 'len': chain_len}
+    
+    if mcu_spi is None:
+        mcu_spi = bus.MCU_SPI_from_config(
+            config, 3,default_speed=4000000, share_type=share)       
+        cs_pin_params['class'] = mcu_spi
+    
+    return mcu_spi, chain, cs_pin
+
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mutex = self.printer.get_reactor().mutex()
-        self.spi = bus.MCU_SPI_from_config(config, 3,
-        default_speed=4000000, share_type="tmc2130_cs")
-        chain_pos = config.get('spi_chain_pos', None)
-        chain_len = config.get('spi_chain_len', None)
-        self.cs_pin=config.get('cs_pin', None)
-        if (chain_pos or chain_len):
-            if chain_pos <= 0 or chain_pos > chain_len:
-                raise config.error("%s: chain position out of range" %
-                    self.name)
-            self.chain_pos = int(chain_pos) - 1
-            self.chain_len = int(chain_len)
-            for (_, t) in self.printer.lookup_objects(module='tmc2130'):
-                if t.mcu_tmc.chain_len != self.chain_len:
-                    raise config.error("%s: differing chain lenghts" %
-                        self.name)
-                if t.mcu_tmc.chain_pos == self.chain_pos:
-                    raise config.error("%s: chain position already "\
-                        "assigned to different driver" % self.name)
-                if t.mcu_tmc.cs_pin != self.cs_pin:
-                    raise config.error("%s: The CS pins should match"\
-                        "in a daisy chain configuration" % self.name)
-        else:
-            self.chain_pos = 0
-            self.chain_len = 1
+        self.spi, self.chain, self.cs_pin = lookup_tmc_spi_chain (config, 
+                                                                  self.name)
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
         return self.fields
     def _build_cmd(self, data):
-        return ([0x00] * ((self.chain_len - self.chain_pos - 1) * 5) +
-                data + [0x00] * (self.chain_pos * 5))
+        return ([0x00] * ((self.chain['len'] - self.chain['pos']) * 5) +
+                data + [0x00] * ((self.chain['pos'] - 1) * 5))
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
@@ -216,8 +240,8 @@ class MCU_TMC_SPI:
                 return 0
             params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
-        pr = pr[(self.chain_len - self.chain_pos - 1) * 5 :
-                (self.chain_len - self.chain_pos) * 5]
+        pr = pr[(self.chain['len'] - self.chain['pos']) * 5 :
+                (self.chain['len'] - self.chain['pos'] + 1) * 5]
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
     def set_register(self, reg_name, val, print_time=None):
         minclock = 0
