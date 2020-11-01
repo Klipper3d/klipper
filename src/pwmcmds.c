@@ -7,30 +7,64 @@
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_pwm
 #include "command.h" // DECL_COMMAND
+#include "queue.h" // init_queue
 #include "sched.h" // sched_add_timer
 
 struct pwm_out_s {
     struct timer timer;
     struct gpio_pwm pin;
     uint32_t max_duration;
-    uint16_t value, default_value;
+    uint16_t default_value;
+    struct queue queue;
+};
+
+struct pwm_event {
+    uint32_t waketime;
+    uint16_t value;
+    struct event event;
 };
 
 static uint_fast8_t
-pwm_end_event(struct timer *timer)
-{
+pwm_end_event(struct timer *timer) {
     shutdown("Missed scheduling of next hard pwm event");
 }
 
 static uint_fast8_t
-pwm_event(struct timer *timer)
-{
+pwm_event(struct timer *timer) {
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
-    gpio_pwm_write(p->pin, p->value);
-    if (p->value == p->default_value || !p->max_duration)
+    struct event *c = get_current_event(&p->queue);
+
+    if(!c) {
+        // no pwm value, queue is empty
+        // this should not happen because we were scheduled for an event
         return SF_DONE;
-    p->timer.waketime += p->max_duration;
-    p->timer.func = pwm_end_event;
+    }
+
+    struct pwm_event* current = event_get_data(c, struct pwm_event);
+
+    gpio_pwm_write(p->pin, current->value);
+
+    //may be NULL if no further elements are queued
+    struct event* next = get_next_event(&p->queue);
+
+    if(next) {
+        //next event scheduled
+        p->timer.waketime = event_get_data(next, struct pwm_event)->waketime;
+    } else {
+        // no next event scheduled
+        if (current->value == p->default_value || !p->max_duration) {
+            // We either have set the default value
+            // or there is no maximum duration
+            free_event(current);
+            return SF_DONE;
+        }
+
+        //nothing scheduled, so lets start the safety timeout
+        p->timer.waketime += p->max_duration;
+        p->timer.func = pwm_end_event;
+    }
+
+    free_event(current);
     return SF_RESCHEDULE;
 }
 
@@ -43,6 +77,7 @@ command_config_pwm_out(uint32_t *args)
     p->pin = pin;
     p->default_value = args[4];
     p->max_duration = args[5];
+    init_queue(&p->queue, sizeof(struct pwm_event));
 }
 DECL_COMMAND(command_config_pwm_out,
              "config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu"
@@ -52,11 +87,20 @@ void
 command_schedule_pwm_out(uint32_t *args)
 {
     struct pwm_out_s *p = oid_lookup(args[0], command_config_pwm_out);
-    sched_del_timer(&p->timer);
-    p->timer.func = pwm_event;
-    p->timer.waketime = args[1];
-    p->value = args[2];
-    sched_add_timer(&p->timer);
+    struct pwm_event* new_event = (struct pwm_event*) alloc_event();
+    new_event->waketime = args[1];
+    new_event->value = args[2];
+
+    if(!insert_event(&p->queue, &new_event->event)){
+        //queue was empty and a timer needs to be added
+        if(p->timer.func == pwm_end_event) {
+            //first, reset the end event timer
+            sched_del_timer(&p->timer);
+        }
+        p->timer.waketime = args[1];
+        p->timer.func = pwm_event;
+        sched_add_timer(&p->timer);
+    }
 }
 DECL_COMMAND(command_schedule_pwm_out,
              "schedule_pwm_out oid=%c clock=%u value=%hu");
