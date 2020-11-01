@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import probe, mathutil
+import mathutil
+from . import probe
 
 class ZAdjustHelper:
     def __init__(self, config, z_count):
@@ -64,7 +65,6 @@ class ZAdjustHelper:
         last_stepper.set_trapq(toolhead.get_trapq())
         curpos[2] += first_stepper_offset
         toolhead.set_position(curpos)
-        gcode.reset_last_position()
 
 class RetryHelper:
     def __init__(self, config, error_msg_extra = ""):
@@ -74,40 +74,38 @@ class RetryHelper:
             config.getfloat("retry_tolerance", 0., above=0.)
         self.value_label = "Probed points range"
         self.error_msg_extra = error_msg_extra
-    def start(self, params):
-        self.max_retries = self.gcode.get_int('RETRIES', params,
-            default=self.default_max_retries, minval=0, maxval=30)
-        self.retry_tolerance = self.gcode.get_float('RETRY_TOLERANCE', params,
-            default=self.default_retry_tolerance, minval=0, maxval=1.0)
+    def start(self, gcmd):
+        self.max_retries = gcmd.get_int('RETRIES', self.default_max_retries,
+                                        minval=0, maxval=30)
+        self.retry_tolerance = gcmd.get_float('RETRY_TOLERANCE',
+                                              self.default_retry_tolerance,
+                                              minval=0.0, maxval=1.0)
         self.current_retry = 0
         self.previous = None
         self.increasing = 0
-    def check_increase(self,error):
+    def check_increase(self, error):
         if self.previous and error > self.previous + 0.0000001:
             self.increasing += 1
         elif self.increasing > 0:
             self.increasing -= 1
         self.previous = error
         return self.increasing > 1
-    def check_retry(self,z_positions):
+    def check_retry(self, z_positions):
         if self.max_retries == 0:
             return
-        error = max(z_positions) - min(z_positions)
-        if self.check_increase(error):
-            self.gcode.respond_error(
-                "Retries aborting: %s is increasing. %s" % (
-                    self.value_label, self.error_msg_extra))
-            return
+        error = round(max(z_positions) - min(z_positions),6)
         self.gcode.respond_info(
             "Retries: %d/%d %s: %0.6f tolerance: %0.6f" % (
                 self.current_retry, self.max_retries, self.value_label,
                 error, self.retry_tolerance))
+        if self.check_increase(error):
+            raise self.gcode.error("Retries aborting: %s is increasing. %s"
+                                   % (self.value_label, self.error_msg_extra))
         if error <= self.retry_tolerance:
             return "done"
         self.current_retry += 1
         if self.current_retry > self.max_retries:
-            self.gcode.respond_error("Too many retries")
-            return
+            raise self.gcode.error("Too many retries")
         return "retry"
 
 class ZTilt:
@@ -127,13 +125,13 @@ class ZTilt:
         self.probe_helper.minimum_points(2)
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
         # Register Z_TILT_ADJUST command
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
-                                    desc=self.cmd_Z_TILT_ADJUST_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
+                               desc=self.cmd_Z_TILT_ADJUST_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
-    def cmd_Z_TILT_ADJUST(self, params):
-        self.retry_helper.start(params)
-        self.probe_helper.start_probe(params)
+    def cmd_Z_TILT_ADJUST(self, gcmd):
+        self.retry_helper.start(gcmd)
+        self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis
         z_offset = offsets[2]

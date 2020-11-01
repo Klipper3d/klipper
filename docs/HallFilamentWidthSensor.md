@@ -48,10 +48,16 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     # measurement_interval:10
     # Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting
 
+    #logging: False
+    #  Out diameter to terminal and klipper.log
+    #  can be turn on|of by command
+
     #Virtual filament_switch_sensor suppurt. Create sensor named hall_filament_width_sensor.
     #
     #min_diameter:1.0
     #Minimal diameter for trigger virtual filament_switch_sensor.
+    #use_current_dia_while_delay: False
+    #   Use the current diameter instead of the nominal diamenter while the measurement delay has not run through.
     #
     #Values from filament_switch_sensor. See the "filament_switch_sensor" section for information on these parameters.
     #
@@ -73,6 +79,10 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 **QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
 
+**ENABLE_FILAMENT_WIDTH_LOG** - Turn on diameter logging
+
+**DISABLE_FILAMENT_WIDTH_LOG** - Turn off diameter logging
+
 ## Menu variables
 
 **hall_filament_width_sensor.Diameter** current measured filament width in mm
@@ -82,26 +92,17 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **hall_filament_width_sensor.is_active** Sensor on or off
 
 ## Template for menu variables
-    [menu __filament_width_current]
-    type: item
-    name: "Dia:{0:4.2f} mm"
-    parameter:  hall_filament_width_sensor.Diameter
+    [menu __main __filament __width_current]
+    type: command
+    enable: {'hall_filament_width_sensor' in printer}
+    name: Dia: {'%.2F' % printer.hall_filament_width_sensor.Diameter}
+    index: 0
 
-    [menu __filament_raw_width_current]
-    type: item
-    name: "RAW:{0:4.0f}"
-    parameter:  hall_filament_width_sensor.Raw
-
-    [menu __filament]
-    type: list
-    name: Filament
-    items:
-    __temp __hotend0_current, __temp __hotend0_target
-    .__unload
-    .__load
-    .__feed
-    __filament_width_current
-    __filament_raw_width_current
+    [menu __main __filament __raw_width_current]
+    type: command
+    enable: {'hall_filament_width_sensor' in printer}
+    name: Raw: {'%4.0F' % printer.hall_filament_width_sensor.Raw}
+    index: 1
 
 ## Calibration procedure
 Insert first  calibration rod (1.5 mm size) get first  raw sensor value
@@ -115,3 +116,7 @@ Save raw values in config
 ## How to enable sensor
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
+
+## Logging
+After power on by default diameter Logging disabled.
+Data to log added on every measurement interval (10 mm by default)

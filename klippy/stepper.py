@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
-import homing, chelper
+import chelper
 
 class error(Exception):
     pass
@@ -76,8 +76,8 @@ class MCU_stepper:
                 self._oid, self._step_pin, self._dir_pin,
                 self._mcu.seconds_to_clock(min_stop_interval),
                 self._invert_step))
-        self._mcu.add_config_cmd(
-            "reset_step_clock oid=%d clock=0" % (self._oid,), is_init=True)
+        self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
+                                 % (self._oid,), on_restart=True)
         step_cmd_id = self._mcu.lookup_command_id(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd_id = self._mcu.lookup_command_id(
@@ -124,8 +124,9 @@ class MCU_stepper:
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
         if sk is not None:
-            self._ffi_lib.itersolve_set_stepcompress(
-                sk, self._stepqueue, self._step_dist)
+            self._ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue,
+                                                     self._step_dist)
+            self.set_trapq(self._trapq)
         return old_sk
     def note_homing_end(self, did_trigger=False):
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
@@ -186,10 +187,10 @@ def PrinterStepper(config, units_in_radians=False):
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
     # Support for stepper enable pin handling
-    stepper_enable = printer.try_load_module(config, 'stepper_enable')
+    stepper_enable = printer.load_object(config, 'stepper_enable')
     stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
     # Register STEPPER_BUZZ command
-    force_move = printer.try_load_module(config, 'force_move')
+    force_move = printer.load_object(config, 'force_move')
     force_move.register_stepper(mcu_stepper)
     return mcu_stepper
 
@@ -289,7 +290,7 @@ class PrinterRail:
         mcu_endstop.add_stepper(stepper)
         name = stepper.get_name(short=True)
         self.endstops.append((mcu_endstop, name))
-        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops = printer.load_object(config, 'query_endstops')
         query_endstops.register_endstop(mcu_endstop, name)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:

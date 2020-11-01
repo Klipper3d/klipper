@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
-import homing
 
 class ManualProbe:
     def __init__(self, config):
@@ -25,8 +24,8 @@ class ManualProbe:
         if kin_pos is not None:
             self.gcode.respond_info("Z position is %.3f" % (kin_pos[2],))
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
-    def cmd_MANUAL_PROBE(self, params):
-        ManualProbeHelper(self.printer, params, self.manual_probe_finalize)
+    def cmd_MANUAL_PROBE(self, gcmd):
+        ManualProbeHelper(self.printer, gcmd, self.manual_probe_finalize)
     def z_endstop_finalize(self, kin_pos):
         if kin_pos is None:
             return
@@ -38,8 +37,8 @@ class ManualProbe:
         configfile = self.printer.lookup_object('configfile')
         configfile.set('stepper_z', 'position_endstop', "%.3f" % (z_pos,))
     cmd_Z_ENDSTOP_CALIBRATE_help = "Calibrate a Z endstop"
-    def cmd_Z_ENDSTOP_CALIBRATE(self, params):
-        ManualProbeHelper(self.printer, params, self.z_endstop_finalize)
+    def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
+        ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
 
 # Verify that a manual probe isn't already in progress
 def verify_no_manual_probe(printer):
@@ -56,12 +55,12 @@ BISECT_MAX = 0.200
 
 # Helper script to determine a Z height
 class ManualProbeHelper:
-    def __init__(self, printer, params, finalize_callback):
+    def __init__(self, printer, gcmd, finalize_callback):
         self.printer = printer
         self.finalize_callback = finalize_callback
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.speed = self.gcode.get_float("SPEED", params, 5.)
+        self.speed = gcmd.get_float("SPEED", 5.)
         self.past_positions = []
         self.last_toolhead_pos = self.last_kinematics_pos = None
         # Register commands
@@ -93,12 +92,11 @@ class ManualProbeHelper:
     def move_z(self, z_pos):
         curpos = self.toolhead.get_position()
         try:
-            if curpos[2] - z_pos < Z_BOB_MINIMUM:
-                curpos[2] = z_pos + Z_BOB_MINIMUM
-                self.toolhead.move(curpos, self.speed)
-            curpos[2] = z_pos
-            self.toolhead.move(curpos, self.speed)
-        except homing.CommandError as e:
+            z_bob_pos = z_pos + Z_BOB_MINIMUM
+            if curpos[2] < z_bob_pos:
+                self.toolhead.manual_move([None, None, z_bob_pos], self.speed)
+            self.toolhead.manual_move([None, None, z_pos], self.speed)
+        except self.printer.command_error as e:
             self.finalize(False)
             raise
     def report_z_status(self, warn_no_change=False, prev_pos=None):
@@ -120,24 +118,24 @@ class ManualProbeHelper:
         if next_pos < len(pp):
             next_str = "%.3f" % (pp[next_pos],)
         # Find recent positions
-        self.gcode.respond_info("Z position: %s --> %.3f <-- %s" % (
-            prev_str, z_pos, next_str))
+        self.gcode.respond_info("Z position: %s --> %.3f <-- %s"
+                                % (prev_str, z_pos, next_str))
     cmd_ACCEPT_help = "Accept the current Z position"
-    def cmd_ACCEPT(self, params):
+    def cmd_ACCEPT(self, gcmd):
         pos = self.toolhead.get_position()
         start_pos = self.start_position
         if pos[:2] != start_pos[:2] or pos[2] >= start_pos[2]:
-            self.gcode.respond_info(
+            gcmd.respond_info(
                 "Manual probe failed! Use TESTZ commands to position the\n"
                 "nozzle prior to running ACCEPT.")
             self.finalize(False)
             return
         self.finalize(True)
     cmd_ABORT_help = "Abort manual Z probing tool"
-    def cmd_ABORT(self, params):
+    def cmd_ABORT(self, gcmd):
         self.finalize(False)
     cmd_TESTZ_help = "Move to new Z height"
-    def cmd_TESTZ(self, params):
+    def cmd_TESTZ(self, gcmd):
         # Store current position for later reference
         kin_pos = self.get_kinematics_pos()
         z_pos = kin_pos[2]
@@ -146,7 +144,7 @@ class ManualProbeHelper:
         if insert_pos >= len(pp) or pp[insert_pos] != z_pos:
             pp.insert(insert_pos, z_pos)
         # Determine next position to move to
-        req = self.gcode.get_str("Z", params)
+        req = gcmd.get("Z")
         if req in ('+', '++'):
             check_z = 9999999999999.9
             if insert_pos < len(self.past_positions) - 1:
@@ -162,7 +160,7 @@ class ManualProbeHelper:
                 check_z = (check_z + z_pos) / 2.
             next_z_pos = max(check_z, z_pos - BISECT_MAX)
         else:
-            next_z_pos = z_pos + self.gcode.get_float("Z", params)
+            next_z_pos = z_pos + gcmd.get_float("Z")
         # Move to given position and report it
         self.move_z(next_z_pos)
         self.report_z_status(next_z_pos != z_pos, z_pos)

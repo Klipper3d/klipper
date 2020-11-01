@@ -106,6 +106,12 @@ command_config_st7920(uint32_t *args)
     s->sid = gpio_out_setup(args[3], 0);
     gpio_out_setup(args[1], 1);
 
+    if (!CONFIG_HAVE_STRICT_TIMING) {
+        s->sync_wait_ticks = args[4];
+        s->cmd_wait_ticks = args[5];
+        return;
+    }
+
     // Calibrate cmd_wait_ticks
     st7920_xmit_byte(s, SYNC_CMD);
     st7920_xmit_byte(s, 0x20);

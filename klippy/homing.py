@@ -15,8 +15,8 @@ class Homing:
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
         self.verify_retract = True
-    def set_no_verify_retract(self):
-        self.verify_retract = False
+        if self.printer.get_start_args().get("debuginput"):
+            self.verify_retract = False
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):
@@ -39,6 +39,8 @@ class Homing:
                               - s.calc_position_from_coord(movepos))
                           / s.get_step_dist())
                          for s in mcu_endstop.get_steppers()])
+        if max_steps <= 0.:
+            return .001
         return move_t / max_steps
     def homing_move(self, movepos, endstops, speed,
                     probe_pos=False, verify_movement=False):
@@ -99,8 +101,8 @@ class Homing:
             for s, name, spos, epos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
-                        raise EndstopError("Probe triggered prior to movement")
-                    raise EndstopError(
+                        raise CommandError("Probe triggered prior to movement")
+                    raise CommandError(
                         "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
@@ -158,12 +160,5 @@ def multi_complete(printer, completions):
 
 class CommandError(Exception):
     pass
-
-class EndstopError(CommandError):
-    pass
-
-def EndstopMoveError(pos, msg="Move out of range"):
-    return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
-            msg, pos[0], pos[1], pos[2], pos[3]))
 
 Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))

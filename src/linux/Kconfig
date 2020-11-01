@@ -10,6 +10,8 @@ config LINUX_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_I2C
+    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO
 
 config BOARD_DIRECTORY
     string
@@ -17,6 +19,6 @@ config BOARD_DIRECTORY
 
 config CLOCK_FREQ
     int
-    default 20000000
+    default 50000000
 
 endif

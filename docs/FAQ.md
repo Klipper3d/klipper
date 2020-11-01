@@ -19,9 +19,12 @@ Frequently asked questions
 16. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
 17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-20. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
-21. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+19. [Do I have to wire my device to a specific type of micro-controller pin?](#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin)
+20. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
+21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+22. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
+23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
 
 ### How can I donate to the project?
 
@@ -159,6 +162,18 @@ knowledge to install the system prerequisites for that particular
 machine. See the
 [install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
+
+If you are looking to run the Klipper host software on a low-end chip,
+then be aware that, at a minimum, a machine with "double precision
+floating point" hardware is required.
+
+If you are looking to run the Klipper host software on a shared
+general-purpose desktop or server class machine, then note that
+Klipper has some real-time scheduling requirements. If, during a
+print, the host computer also performs an intensive general-purpose
+computing task (such as defragmenting a hard drive, 3d rendering,
+heavy swapping, etc.), then it may cause Klipper to report print
+errors.
 
 Note: If you are not using an OctoPi image, be aware that several
 Linux distributions enable a "ModemManager" (or similar) package that
@@ -385,6 +400,41 @@ support these custom pin numbers - check Marlin's fastio headers (see
 above) to translate these pin numbers to their standard hardware
 names.
 
+### Do I have to wire my device to a specific type of micro-controller pin?
+
+It depends on the type of device and type of pin:
+
+ADC pins (or Analog pins): For thermistors and similar "analog"
+sensors, the device must be wired to an "analog" or "ADC" capable pin
+on the micro-controller. If you configure Klipper to use a pin that is
+not analog capable, Klipper will report a "Not a valid ADC pin" error.
+
+PWM pins (or Timer pins): Klipper does not use hardware PWM by default
+for any device. So, in general, one may wire heaters, fans, and
+similar devices to any general purpose IO pin. However, fans and
+output_pin devices may be optionally configured to use `hardware_pwm:
+True`, in which case the micro-controller must support hardware PWM on
+the pin (otherwise, Klipper will report a "Not a valid PWM pin"
+error). Note that hardware PWM is currently only supported on the avr,
+atsam, samd21, and linux micro-controllers.
+
+IRQ pins (or Interrupt pins): Klipper does not use hardware interrupts
+on IO pins, so it is never necessary to wire a device to one of these
+micro-controller pins.
+
+SPI pins: When using hardware SPI it is necessary to wire the pins to
+the micro-controller's SPI capable pins. However, most devices can be
+configured to use "software SPI", in which case any general purpose IO
+pins may be used.
+
+I2C pins: When using I2C it is necessary to wire the pins to the
+micro-controller's I2C capable pins.
+
+Other devices may be wired to any general purpose IO pin. For example,
+steppers, heaters, fans, Z probes, servos, LEDs, common hd44780/st7920
+LCD displays, the Trinamic UART control line may be wired to any
+general purpose IO pin.
+
 ### How do I cancel an M109/M190 "wait for temperature" request?
 
 Navigate to the OctoPrint terminal tab and issue an M112 command in
@@ -413,6 +463,36 @@ likely the result of endstop inaccuracies. A stepper motor itself can
 only lose steps in increments of 4 full steps. (So, if one is using 16
 microsteps, then a lost step on the stepper would result in the "mcu:"
 step counter being off by a multiple of 64 microsteps.)
+
+### Why does Klipper report errors? I lost my print!
+
+Short answer: We want to know if our printers detect a problem so that
+the underlying issue can be fixed and we can obtain great quality
+prints. We definitely do not want our printers to silently produce low
+quality prints.
+
+Long answer: Klipper has been engineered to automatically workaround
+many transient problems. For example, it automatically detects
+communication errors and will retransmit; it schedules actions in
+advance and buffers commands at multiple layers to enable precise
+timing even with intermittent interference. However, should the
+software detect an error that it can not recover from, if it is
+commanded to take an invalid action, or if it detects it is hopelessly
+unable to perform its commanded task, then Klipper will report an
+error. In these situations there is a high risk of producing a
+low-quality print (or worse). It is hoped that alerting the user will
+empower them to fix the underlying issue and improve the overall
+quality of their prints.
+
+There are some related questions: Why doesn't Klipper pause the print
+instead? Report a warning instead? Check for errors before the print?
+Ignore errors in user typed commands? etc? Currently Klipper reads
+commands using the G-Code protocol, and unfortunately the G-Code
+command protocol is not flexible enough to make these alternatives
+practical today. There is developer interest in improving the user
+experience during abnormal events, but it is expected that will
+require notable infrastructure work (including a shift away from
+G-Code).
 
 ### How do I upgrade to the latest software?
 
@@ -464,3 +544,13 @@ modify the printer configuration.
 Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
 new software - the above "sudo service klipper restart" and "make
 flash" commands are needed for a software change to take effect.
+
+### How do I uninstall Klipper?
+
+On the firmware end, nothing special needs to happen. Just follow the flashing directions for the new firmware.
+
+On the raspberry pi end, an uninstall script is available in [`scripts/klipper-uninstall.sh`](https://github.com/KevinOConnor/klipper/blob/master/scripts/klipper-uninstall.sh). Assuming you cloned `klipper` to `$HOME`
+```
+sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+```

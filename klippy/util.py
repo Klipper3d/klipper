@@ -38,7 +38,7 @@ def create_pty(ptyname):
     except os.error:
         pass
     filename = os.ttyname(sfd)
-    os.chmod(filename, 0660)
+    os.chmod(filename, 0o660)
     os.symlink(filename, ptyname)
     set_nonblock(mfd)
     old = termios.tcgetattr(mfd)
@@ -99,7 +99,7 @@ def get_cpu_info():
         f = open('/proc/cpuinfo', 'rb')
         data = f.read()
         f.close()
-    except IOError, OSError:
+    except (IOError, OSError) as e:
         logging.debug("Exception on read /proc/cpuinfo: %s",
                       traceback.format_exc())
         return "?"

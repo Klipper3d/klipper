@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import bus, tmc
+from . import bus, tmc
 
 TMC_FREQUENCY=13200000.
 
@@ -113,9 +113,9 @@ class TMCCurrentHelper:
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
@@ -239,7 +239,7 @@ class TMC2130:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
         # Allow virtual pins to be created
-        diag1_pin = config.get('diag1_pin', None)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
         cmdhelper.setup_register_dump(ReadRegisters)

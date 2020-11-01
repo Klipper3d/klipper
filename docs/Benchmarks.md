@@ -360,6 +360,27 @@ micro-controller.
 | 1 stepper (no delay) | 42    |
 | 3 stepper (no delay) | 194   |
 
+### Linux MCU step rate benchmark ###
+
+The following configuration sequence is used on a Raspberry Pi:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=gpio2 dir_pin=gpio3 min_stop_interval=0 invert_step=0
+config_stepper oid=1 step_pin=gpio4 dir_pin=gpio5 min_stop_interval=0 invert_step=0
+config_stepper oid=2 step_pin=gpio6 dir_pin=gpio7 min_stop_interval=0 invert_step=0
+finalize_config crc=0
+```
+
+The test was last run on commit `06437c58` with gcc version `gcc
+(Raspbian 6.3.0-18+rpi1+deb9u1) 6.3.0 20170516` on a Raspberry Pi 3
+(revision a22082).
+
+| Linux (RPi3)         | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 340   |
+| 2 stepper            | 356   |
+| 3 stepper            | 450   |
+
 ## Command dispatch benchmark ##
 
 The command dispatch benchmark tests how many "dummy" commands the

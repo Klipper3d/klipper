@@ -119,34 +119,44 @@ other macros, as the called macro is evaluated when it is invoked
 By convention, the name immediately following `printer` is the name of
 a config section. So, for example, `printer.fan` refers to the fan
 object created by the `[fan]` config section. There are some
-exceptions to this rule - notably the `gcode` and `toolhead` objects.
-If the config section contains spaces in it, then one can access it
-via the `[ ]` accessor - for example:
+exceptions to this rule - notably the `gcode_move` and `toolhead`
+objects. If the config section contains spaces in it, then one can
+access it via the `[ ]` accessor - for example:
 `printer["generic_heater my_chamber_heater"].temperature`.
-
-Some printer objects allow one to alter the state of the printer. By
-convention, these objects use an `action_` prefix. For example,
-`printer.gcode.action_emergency_stop()` would cause the printer to go
-into a shutdown state. These actions are taken at the time that the
-macro is evaluated, which may be a significant amount of time before
-the generated commands are executed.
 
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-- `printer.gcode.action_respond_info(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. Each line of `msg` will be sent
-  with a "// " prefix.
-- `printer.gcode.action_respond_error(msg)`: Write the given `msg` to
-  the /tmp/printer pseudo-terminal. The first line of `msg` will be
-  sent with a "!! " prefix and subsequent lines will have a "// "
-  prefix.
-- `printer.gcode.action_emergency_stop(msg)`: Transition the printer
-  to a shutdown state. The `msg` parameter is optional, it may be
-  useful to describe the reason for the shutdown.
-- `printer.gcode.gcode_position`: The current position of the toolhead
-  relative to the current G-Code origin. It is possible to access the
-  x, y, z, and e components of this position (eg,
-  `printer.gcode.gcode_position.x`).
+  This is also available on "heater_fan" and "fan_generic" config
+  sections (eg, `printer["fan_generic my_fan"].speed`).
+- `printer.gcode_move.gcode_position`: The current position of the
+  toolhead relative to the current G-Code origin. That is, positions
+  that one might directly send to a `G1` command. It is possible to
+  access the x, y, z, and e components of this position (eg,
+  `printer.gcode_move.gcode_position.x`).
+- `printer.gcode_move.position`: The last commanded position of the
+  toolhead using the coordinate system specified in the config
+  file. It is possible to access the x, y, z, and e components of this
+  position (eg, `printer.gcode_move.position.x`).
+- `printer.gcode_move.homing_origin`: The origin of the gcode
+  coordinate system (relative to the coordinate system specified in
+  the config file) to use after a `G28` command. The
+  `SET_GCODE_OFFSET` command can alter this position. It is possible
+  to access the x, y, and z components of this position (eg,
+  `printer.gcode_move.homing_origin.x`).
+- `printer.gcode_move.speed`: The last speed set in a `G1` command (in
+  mm/s).
+- `printer.gcode_move.speed_factor`: The "speed factor override" as
+  set by an `M220` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested speed.
+- `printer.gcode_move.extrude_factor`: The "extrude factor override"
+  as set by an `M221` command. This is a floating point value such
+  that 1.0 means no override and, for example, 2.0 would double
+  requested extrusions.
+- `printer.gcode_move.absolute_coordinates`: This returns True if in
+  `G90` absolute coordinate mode or False if in `G91` relative mode.
+- `printer.gcode_move.absolute_extrude`: This returns True if in `M82`
+  absolute extrude mode or False if in `M83` relative mode.
 - `printer["gcode_macro <macro_name>"].<variable>`: The current value
   of a gcode_macro variable.
 - `printer.<heater>.temperature`: The last reported temperature (in
@@ -155,6 +165,12 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.idle_timeout.state`: The current state of the printer as
+  tracked by the idle_timeout module. It is one of the following
+  strings: "Idle", "Printing", "Ready".
+- `printer.idle_timeout.printing_time`: The amount of time (in
+  seconds) the printer has been in the "Printing" state (as tracked by
+  the idle_timeout module).
 - `printer.pause_resume.is_paused`: Returns true if a PAUSE command
   has been executed without a corresponding RESUME.
 - `printer.toolhead.position`: The last commanded position of the
@@ -168,24 +184,100 @@ The following are common printer attributes:
 - `printer.toolhead.homed_axes`: The current cartesian axes considered
   to be in a "homed" state. This is a string containing one or more of
   "x", "y", "z".
-- `printer.heater.available_heaters`: Returns a list of all currently
+- `printer.toolhead.max_velocity`, `printer.toolhead.max_accel`,
+  `printer.toolhead.max_accel_to_decel`,
+  `printer.toolhead.square_corner_velocity`: The current printing
+  limits that are in effect. This may differ from the config file
+  settings if a `SET_VELOCITY_LIMIT` (or `M204`) command alters them
+  at run-time.
+- `printer.heaters.available_heaters`: Returns a list of all currently
   available heaters by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
-- `printer.heater.available_sensors`: Returns a list of all currently
+- `printer.heaters.available_sensors`: Returns a list of all currently
   available temperature sensors by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
   "temperature_sensor electronics_temp"]`.
 - `printer.query_endstops.last_query["<endstop>"]`: Returns True if
   the given endstop was reported as "triggered" during the last
   QUERY_ENDSTOP command. Note, due to the order of template expansion
-  (see above), the QUERY_STATUS command must be run prior to the macro
-  containing this reference.
+  (see above), the QUERY_ENDSTOP command must be run prior to the
+  macro containing this reference.
+- `printer.probe.last_query`: Returns True if the probe was reported
+  as "triggered" during the last QUERY_PROBE command. Note, due to the
+  order of template expansion (see above), the QUERY_PROBE command
+  must be run prior to the macro containing this reference.
 - `printer.configfile.config["<section>"]["<option>"]`: Returns the
   given config file setting as read by Klipper during the last
   software start or restart. (Any settings changed at run-time will
   not be reflected here.) All values are returned as strings (if math
   is to be performed on the value then it must be converted to a
   Python number).
+- `printer["gcode_macro <macro_name>"].<variable>`: The current value
+  of a [gcode_macro variable](#variables).
+- `printer.webhooks.state`: Returns a string indicating the current
+  Klipper state. Possible values are: "ready", "startup", "shutdown",
+  "error".
+- `printer.webhooks.state_message`: A human readable string giving
+  additional context on the current Klipper state.
+- `printer.display_status.progress`: The progress value of the last
+  `M73` G-Code command (or `printer.virtual_sdcard.progress` if no
+  recent `M73` received).
+- `printer.display_status.message`: The message contained in the last
+  `M117` G-Code command.
+- `printer["filament_switch_sensor <config_name>"].enabled`: Returns
+  True if the switch sensor is currently enabled.
+- `printer["filament_switch_sensor <config_name>"].filament_detected`:
+  Returns True if the sensor is in a triggered state.
+- `printer.virtual_sdcard.is_active`: Returns True if a print from
+  file is currently active.
+- `printer.virtual_sdcard.progress`: An estimate of the current print
+  progress (based of file size and file position).
+- `printer.virtual_sdcard.file_position`: The current position (in
+  bytes) of an active print.
+- `printer.print_stats.filename`,
+  `printer.print_stats.total_duration`,
+  `printer.print_stats.print_duration`,
+  `printer.print_stats.filament_used`, `printer.print_stats.state`,
+  `printer.print_stats.message`: Estimated information about the
+  current print when a virtual_sdcard print is active.
+- `printer.firmware_retraction.retract_length`,
+  `printer.firmware_retraction.retract_speed`,
+  `printer.firmware_retraction.unretract_extra_length`,
+  `printer.firmware_retraction.unretract_speed`: The current settings
+  for the firmware_retraction module. These settings may differ from
+  the config file if a `SET_RETRACTION` command alters them.
+- `printer["bme280 <sensor_name>"].temperature`,
+  `printer["bme280 <sensor_name>"].humidity`,
+  `printer["bme280 <sensor_name>"].pressure`: The last read values
+  from the sensor.
+- `printer["htu21d <sensor_name>"].temperature`,
+  `printer["htu21d <sensor_name>"].humidity`: The last read values
+  from the sensor.
+- `printer["lm75 <sensor_name>"].temperature`: The last read
+  temperature from the sensor.
+- `printer["temperature_sensor <config_name>"].temperature`: The last read
+  temperature from the sensor.
+- `printer["temperature_sensor <config_name>"].measured_min_temp`,
+  `printer["temperature_sensor <config_name>"].measured_max_temp`: The
+  lowest and highest temperature seen by the sensor since the Klipper
+  host software was last restarted.
+- `printer["temperature_fan <config_name>"].temperature`: The last read
+  temperature from the sensor.
+- `printer["temperature_fan <config_name>"].target`: The target
+  temperature for the fan.
+- `printer["output_pin <config_name>"].value`: The "value" of the pin,
+  as set by a `SET_PIN` command.
+- `printer["servo <config_name>"].value`: The last setting of the PWM
+  pin (a value between 0.0 and 1.0) associated with the servo.
+- `printer.bed_mesh.profile_name`, `printer.bed_mesh.mesh_min`,
+  `printer.bed_mesh.mesh_max`, `printer.bed_mesh.probed_matrix`,
+  `printer.bed_mesh.mesh_matrix`: Information on the currently active
+  bed_mesh.
+- `printer.hall_filament_width_sensor.is_active`: Returns True if the
+  sensor is currently active.
+- `printer.hall_filament_width_sensor.Diameter`,
+  `printer.hall_filament_width_sensor.Raw`: The last read values from
+  the sensor.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
@@ -193,6 +285,26 @@ the Klipper software. The above list is not exhaustive.  Other
 attributes may be available (via `get_status()` methods defined in the
 software). However, undocumented attributes may change without notice
 in future Klipper releases.
+
+### Actions
+
+There are some commands available that can alter the state of the
+printer. For example, `{ action_emergency_stop() }` would cause the
+printer to go into a shutdown state. Note that these actions are taken
+at the time that the macro is evaluated, which may be a significant
+amount of time before the generated g-code commands are executed.
+
+Available "action" commands:
+- `action_respond_info(msg)`: Write the given `msg` to the
+  /tmp/printer pseudo-terminal. Each line of `msg` will be sent with a
+  "// " prefix.
+- `action_raise_error(msg)`: Abort the current macro (and any calling
+  macros) and write the given `msg` to the /tmp/printer
+  pseudo-terminal. The first line of `msg` will be sent with a "!! "
+  prefix and subsequent lines will have a "// " prefix.
+- `action_emergency_stop(msg)`: Transition the printer to a shutdown
+  state. The `msg` parameter is optional, it may be useful to describe
+  the reason for the shutdown.
 
 ### Variables
 
@@ -267,11 +379,8 @@ the gcode option:
 [delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
-  {printer.gcode.action_respond_info(
-    "Extruder Temp: %.1f" %
-    (printer.extruder0.temperature))}
+  {action_respond_info("Extruder Temp: %.1f" % (printer.extruder0.temperature))}
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
-
 ```
 
 The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to

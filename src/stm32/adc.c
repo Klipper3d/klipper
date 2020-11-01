@@ -35,7 +35,7 @@ static const uint8_t adc_pins[] = {
 #endif
 
 // ADC timing:
-// stm32f103: ADC clock=9Mhz, Tconv=12.5, Tsamp=41.5, total=6.000us
+// stm32f103: ADC clock=4.5Mhz, Tconv=12.5, Tsamp=41.5, total=12.000us
 // stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=84, total=4.571us
 // stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=84, total=4.267us
 
@@ -83,7 +83,7 @@ gpio_adc_setup(uint32_t pin)
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
         adc_calibrate(adc);
-        uint32_t aticks = 4; // 4-6us sample time (depending on stm32 chip)
+        uint32_t aticks = 4; // 4-12us sample time (depending on stm32 chip)
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21)
@@ -119,7 +119,7 @@ gpio_adc_sample(struct gpio_adc g)
     adc->CR2 = ADC_CR2_SWSTART | CR2_FLAGS;
 
 need_delay:
-    return timer_from_us(10);
+    return timer_from_us(20);
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero
