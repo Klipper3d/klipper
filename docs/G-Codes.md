@@ -701,4 +701,3 @@ section is enabled.
 - `OCTOPRINT PRINT_FILE=<resource>`: Starts printing the file with the given
   handle. The handle is returned by Octoprint in `refs/resource` key when
   querying the file list.
-
