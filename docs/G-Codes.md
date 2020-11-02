@@ -693,3 +693,12 @@ is enabled:
   to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested
   input shaper parameters can be persisted in the config by issuing
   `SAVE_CONFIG` command.
+
+## Octoprint REST API integration
+
+The following command is available when the "octoprint" config
+section is enabled.
+- `OCTOPRINT PRINT_FILE=<resource>`: Starts printing the file with the given
+  handle. The handle is returned by Octoprint in `refs/resource` key when
+  querying the file list.
+

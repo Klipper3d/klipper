@@ -621,12 +621,29 @@ class MenuVSDList(MenuList):
                     'gcode': "\n".join(gcode)
                 }))
 
+class MenuOctoprint(MenuList):
+    def __init__(self, manager, config):
+        super(MenuOctoprint, self).__init__(manager, config)
+
+    def _populate(self):
+        super(MenuOctoprint, self)._populate()
+        octoprint = self.manager.printer.lookup_object('octoprint', None)
+        if octoprint is None:
+            return
+        files = octoprint.list_files()
+        for name, resource in files:
+            self.insert_item(self.manager.menuitem_from({
+                    'type': 'command',
+                    'name': '%s' % name,
+                    'gcode': 'OCTOPRINT PRINT_FILE=%s' % resource
+                }))
 
 menu_items = {
     'command': MenuCommand,
     'input': MenuInput,
     'list': MenuList,
-    'vsdlist': MenuVSDList
+    'vsdlist': MenuVSDList,
+    'octoprint': MenuOctoprint
 }
 
 
