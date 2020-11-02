@@ -180,7 +180,7 @@ def lookup_tmc_spi_chain (config, name):
 
     if (chain_len or chain_pos):
         chain_len = int(chain_len)
-        chain_pos = int(chain_pos)  
+        chain_pos = int(chain_pos)
         if chain_pos <= 0 or chain_pos > chain_len:
             raise config.error("%s: chain position out of range" %
                 name)
@@ -193,27 +193,23 @@ def lookup_tmc_spi_chain (config, name):
                     "assigned to different driver" % name)
             if t.mcu_tmc.cs_pin != cs_pin:
                 raise config.error("%s: The CS pins should match"\
-                    "in a daisy chain configuration" % name)        
+                    "in a daisy chain configuration" % name)
     else:
         chain_pos = 1
         chain_len = 1
-            
     if (chain_len  >  1):
         share = "tmc_spi_cs"
-        cs_pin_params = ppins.lookup_pin( 
+        cs_pin_params = ppins.lookup_pin(
             config.get('cs_pin'), can_pullup=True, share_type=share)
     else:
         share = None
         cs_pin_params = {}
-
-    mcu_spi = cs_pin_params.get('class')       
+    mcu_spi = cs_pin_params.get('class')
     chain = {'pos': chain_pos, 'len': chain_len}
-    
     if mcu_spi is None:
         mcu_spi = bus.MCU_SPI_from_config(
-            config, 3,default_speed=4000000, share_type=share)       
+            config, 3,default_speed=4000000, share_type=share)
         cs_pin_params['class'] = mcu_spi
-    
     return mcu_spi, chain, cs_pin
 
 # Helper code for working with TMC devices via SPI
@@ -222,7 +218,7 @@ class MCU_TMC_SPI:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mutex = self.printer.get_reactor().mutex()
-        self.spi, self.chain, self.cs_pin = lookup_tmc_spi_chain (config, 
+        self.spi, self.chain, self.cs_pin = lookup_tmc_spi_chain (config,
                                                                   self.name)
         self.name_to_reg = name_to_reg
         self.fields = fields
