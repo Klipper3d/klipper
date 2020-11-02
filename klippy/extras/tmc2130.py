@@ -163,8 +163,9 @@ class TMCCurrentHelper:
         val = self.fields.set_field("IRUN", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
+    def cmd_SET_TMC_CURRENT(self, gcode):
+#        gcode = self.printer.lookup_object('gcode')
+        params = gcode.get_command_parameters()
         dumpinfo = True
         if 'HOMINGCURRENT' in params:
             dumpinfo = False
