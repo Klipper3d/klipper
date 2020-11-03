@@ -365,6 +365,9 @@ class GCodeDispatch:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         gcmd.respond_info("\n".join(cmdhelp), log=False)
 
+JIT_WARN_THRESH = 0.050
+JIT_ERR_THRESH  = 0.150
+
 # Support reading gcode from a pseudo-tty interface
 class GCodeIO:
     def __init__(self, printer):
@@ -388,6 +391,7 @@ class GCodeIO:
         self.pending_commands = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
+        self.jit_enable = False
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.is_fileinput and self.fd_handle is None:
@@ -447,7 +451,19 @@ class GCodeIO:
         while pending_commands:
             self.pending_commands = []
             with self.gcode_mutex:
+                if self.jit_enable:
+                    self.reactor.unregister_timer(self.timeout_timer)
+                    response_time = self.reactor.monotonic()-self.jit_last_reset
+                    if response_time > JIT_WARN_THRESH:
+                        self.respond_info('Warning: slow GCode input, took ' +
+                                          '{:.1f}'.format(response_time * 1000)
+                                          + 'ms to send next.')
                 self.gcode._process_commands(pending_commands)
+                if self.jit_enable:
+                    self.jit_last_reset = self.reactor.monotonic()
+                    timeout = self.reactor.monotonic() + JIT_ERR_THRESH
+                    self.timeout_timer = self.reactor.register_timer(
+                        self.jit_timeout_callback, waketime = timeout)
             pending_commands = self.pending_commands
         self.is_processing_data = False
         if self.fd_handle is None:
@@ -462,6 +478,21 @@ class GCodeIO:
                 self.pipe_is_active = False
     def stats(self, eventtime):
         return False, "gcodein=%d" % (self.bytes_read,)
+    # Just-In-Time control handling
+    def enable_jit(self, handler):
+        self.jit_timeout_handler = handler
+        self.jit_enable = True
+        self.jit_last_reset = self.reactor.monotonic()
+    def disable_jit(self):
+        self.jit_enable = False
+    def jit_timeout_callback(self, eventtime):
+        with self.mutex:
+            self.jit_timeout_handler()
+            self._respond_error('GCode input latency over ' +
+                                '{:0.0f}'.format(JIT_ERR_THRESH * 1000) +
+                                'ms threshold.')
+            self.jit_enable = False
+        return self.reactor.NEVER
 
 def add_early_printer_objects(printer):
     printer.add_object('gcode', GCodeDispatch(printer))
