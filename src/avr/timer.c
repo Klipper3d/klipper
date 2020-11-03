@@ -10,6 +10,7 @@
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_dispatch
+#include "watchdog.h" // watchdog_reset
 #include "generic/serial_irq.h" // console_frozen_idle
 
 
@@ -179,12 +180,15 @@ time_unfreeze(void)
     return calc.val;
 }
 
-// Drop incoming commands to prevent software buffer overflow while frozen
+// Performs essential functions to keep system alive while frozen :
+//     - reset watchdog
+//     - drop incoming commands to prevent software buffer overflow
 // Must be called regularly during freeze
 void
 time_frozen_idle(void)
 {
     console_frozen_idle();
+    watchdog_reset();
 }
 
 // Return 1 if time is frozen, 0 otherwise, it can be used to check for timeout.
