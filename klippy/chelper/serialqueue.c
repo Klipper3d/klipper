@@ -88,10 +88,11 @@ pollreactor_free(struct pollreactor *pr)
 
 // Add a callback for when a file descriptor (fd) becomes readable
 static void
-pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback)
+pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback
+                   , int write_only)
 {
     pr->fds[pos].fd = fd;
-    pr->fds[pos].events = POLLIN|POLLHUP;
+    pr->fds[pos].events = POLLHUP | (write_only ? 0 : POLLIN);
     pr->fds[pos].revents = 0;
     pr->fd_callbacks[pos] = callback;
 }
@@ -838,9 +839,9 @@ serialqueue_alloc(int serial_fd, int write_only)
     if (ret)
         goto fail;
     pollreactor_setup(&sq->pr, SQPF_NUM, SQPT_NUM, sq);
-    if (!write_only)
-        pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event);
-    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event);
+    pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event
+                       , write_only);
+    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event, 0);
     pollreactor_add_timer(&sq->pr, SQPT_RETRANSMIT, retransmit_event);
     pollreactor_add_timer(&sq->pr, SQPT_COMMAND, command_event);
     set_non_blocking(serial_fd);

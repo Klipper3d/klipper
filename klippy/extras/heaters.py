@@ -272,6 +272,7 @@ class PrinterHeaters:
                 "Unknown temperature sensor '%s'" % (sensor_type,))
         return self.sensor_factories[sensor_type](config)
     def register_sensor(self, config, psensor, gcode_id=None):
+        self.available_sensors.append(config.get_name())
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
             if gcode_id is None:
@@ -280,7 +281,6 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
-        self.available_sensors.append(config.get_name())
     def get_status(self, eventtime):
         return {'available_heaters': self.available_heaters,
                 'available_sensors': self.available_sensors}

@@ -124,7 +124,7 @@ command_hd44780_send_cmds(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 0);
-    uint8_t len = args[1], *cmds = (void*)(size_t)args[2];
+    uint8_t len = args[1], *cmds = command_decode_ptr(args[2]);
     hd44780_xmit(h, len, cmds);
 }
 DECL_COMMAND(command_hd44780_send_cmds, "hd44780_send_cmds oid=%c cmds=%*s");
@@ -134,7 +134,7 @@ command_hd44780_send_data(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 1);
-    uint8_t len = args[1], *data = (void*)(size_t)args[2];
+    uint8_t len = args[1], *data = command_decode_ptr(args[2]);
     hd44780_xmit(h, len, data);
 }
 DECL_COMMAND(command_hd44780_send_data, "hd44780_send_data oid=%c data=%*s");

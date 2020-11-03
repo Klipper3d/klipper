@@ -1,25 +1,23 @@
 #!/bin/bash
-# Test script for travis-ci.org continuous integration.
+# Test script for continuous integration.
 
 # Stop script early on any error; check variables
 set -eu
 
-# Paths to tools installed by travis-install.sh
+# Paths to tools installed by ci-install.sh
 MAIN_DIR=${PWD}
-BUILD_DIR=${PWD}/travis_build
-export PATH=${BUILD_DIR}/gcc-arm-none-eabi-7-2017-q4-major/bin:${PATH}
+BUILD_DIR=${PWD}/ci_build
 export PATH=${BUILD_DIR}/pru-gcc/bin:${PATH}
 PYTHON=${BUILD_DIR}/python-env/bin/python
 
 
 ######################################################################
-# Travis CI helpers
+# Section grouping output message helpers
 ######################################################################
 
 start_test()
 {
-    echo "travis_fold:start:$1"
-    echo "=============== $2"
+    echo "::group::=============== $1 $2"
     set -x
 }
 
@@ -27,7 +25,7 @@ finish_test()
 {
     set +x
     echo "=============== Finished $2"
-    echo "travis_fold:end:$1"
+    echo "::endgroup::"
 }
 
 
@@ -63,9 +61,6 @@ done
 ######################################################################
 # Verify klippy host software
 ######################################################################
-
-HOSTDIR=${BUILD_DIR}/hosttest
-mkdir -p ${HOSTDIR}
 
 start_test klippy "Test invoke klippy"
 $PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
