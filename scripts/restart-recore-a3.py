@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# This script must be run before starting klipper,
+# it can be an ExecStartPre directive in the klipper.service file. 
 import os
 import time
 
@@ -80,9 +82,3 @@ os.system("gpioget 1 130")
 os.system("gpioget 1 131")
 os.system("gpioget 1 132")
 os.system("gpioget 1 133")
-
-
-
-# restart klipper
-os.system("systemctl restart klipper")
-
