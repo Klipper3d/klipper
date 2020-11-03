@@ -915,6 +915,8 @@ class MCU:
         return self._clocksync.estimated_print_time(eventtime)
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
+    def force_retransmit(self):
+        self._serial.force_retransmit()
     # Restarts
     def _disconnect(self):
         self._serial.disconnect()

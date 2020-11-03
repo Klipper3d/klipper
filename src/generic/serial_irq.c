@@ -89,6 +89,16 @@ console_task(void)
 }
 DECL_TASK(console_task);
 
+// Function to keep incoming data processed during time freeze
+void
+console_frozen_idle(void)
+{
+    // This is basically just an alias to keep task running.
+    // But inside console_task, command_find_block() behaviour adapts to freeze
+    // by dropping incoming commands.
+    console_task();
+}
+
 // Encode and transmit a "response" message
 void
 console_sendf(const struct command_encoder *ce, va_list args)

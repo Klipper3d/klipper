@@ -984,3 +984,12 @@ serialqueue_extract_old(struct serialqueue *sq, int sentq
     }
     return pos;
 }
+
+// Force retransmission of unacked messages
+void __visible
+force_retransmit(struct serialqueue *sq)
+{
+    double t = pollreactor_get_timer(&sq->pr, SQPT_RETRANSMIT);
+    if (t != PR_NEVER && t > get_monotonic() + 0.01)
+        pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
+}

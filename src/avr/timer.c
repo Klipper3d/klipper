@@ -10,6 +10,7 @@
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_dispatch
+#include "generic/serial_irq.h" // console_frozen_idle
 
 
 /****************************************************************
@@ -94,6 +95,8 @@ void
 timer_init(void)
 {
     irqstatus_t flag = irq_save();
+
+    // Timer1 runs Klipper main clock
     // no outputs
     TCCR1A = 0;
     // Normal Mode
@@ -106,10 +109,90 @@ timer_init(void)
     TIFR1 = 1<<TOV1;
     // enable interrupt
     TIMSK1 = 1<<OCIE1A;
+
+    // Timer3 takes over Timer1 during time freezes
+    // no outputs
+    TCCR3A = 0;
+    // Normal Mode, no clock input yet
+    TCCR3B = 0;
+    // Enable COMPA and OVF interupts
+    TIMSK3 = 1<<TOIE3 | 1<<OCIE3A;
+
     irq_restore(flag);
 }
 DECL_INIT(timer_init);
 
+/****************************************************************
+ * Time freeze code
+ ****************************************************************/
+
+static uint16_t timer3_high, timer3_high_timeout;
+static uint8_t frozen = 0;
+
+ISR(TIMER3_OVF_vect)
+{
+    timer3_high++;
+}
+
+ISR(TIMER3_COMPA_vect)
+{
+    if(timer3_high == timer3_high_timeout) {
+        // timed out, resume MCU time primitives
+        TCCR3B = 0;
+        TCCR1B = 1<<CS10;
+        frozen = 0;
+    }
+}
+
+// Freeze all MCU time primitives (timers and timer_read_time()) until
+// time_unfreeze() is called or timeout occurs.
+// This is a non-blocking function, so it is the caller's responsibility to
+// call time_frozen_idle() frequently to keep system alive during freeze.
+void
+time_freeze(uint32_t timeout)
+{
+    union u32_u utimeout = { .val = timeout };
+    OCR3A = utimeout.lo;
+    timer3_high_timeout = utimeout.hi;
+
+    timer3_high = 0;
+    frozen = 1;
+    TCNT3 = 0;
+
+    TCCR1B = 0;
+    TCCR3B = 1<<CS30;
+}
+
+// Unfreeze MCU time an return clock cycles spent since time_freeze() call.
+uint32_t
+time_unfreeze(void)
+{
+    irqstatus_t flag = irq_save();
+    if(frozen) {
+        TCCR3B = 0;
+        TCCR1B = 1<<CS10;
+        frozen = 0;
+    }
+    irq_restore(flag);
+
+    union u32_u calc = { .hi = timer3_high, .lo = TCNT3 };
+    return calc.val;
+}
+
+// Drop incoming commands to prevent software buffer overflow while frozen
+// Must be called regularly during freeze
+void
+time_frozen_idle(void)
+{
+    console_frozen_idle();
+}
+
+// Return 1 if time is frozen, 0 otherwise, it can be used to check for timeout.
+uint8_t
+is_time_frozen(void)
+{
+    return frozen;
+}
 
 /****************************************************************
  * 32bit timer wrappers

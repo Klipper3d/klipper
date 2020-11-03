@@ -119,6 +119,14 @@ class ClockSync:
                           self.clock_avg, new_freq)
         #logging.debug("regr %.3f: freq=%.3f d=%d(%.3f)",
         #              sent_time, new_freq, clock - exp_clock, pred_stddev)
+    def apply_clock_drift(self, drift):
+        self.time_avg += drift / self.clock_est[2]
+        pred_stddev = math.sqrt(self.prediction_variance)
+        self.clock_est = (self.time_avg + self.min_half_rtt, self.clock_avg,
+                          self.clock_est[2])
+        self.serial.set_clock_est(self.clock_est[2],
+                                  self.time_avg + TRANSMIT_EXTRA,
+                                  int(self.clock_avg - 3. * pred_stddev))
     # clock frequency conversions
     def print_time_to_clock(self, print_time):
         return int(print_time * self.mcu_freq)
