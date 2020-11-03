@@ -4,12 +4,14 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_MACH_AVR
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_poll
 #include "board/misc.h" // timer_read_time
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
+#include "sched.h" // sched_shutdown
 
 // The WS2812 uses a bit-banging protocol where each bit is
 // transmitted as a gpio high pulse of variable length.  The various
@@ -85,23 +87,29 @@ struct neopixel_s {
     struct gpio_out pin;
     neopixel_time_t bit_max_ticks;
     uint32_t last_req_time, reset_min_ticks;
+    uint16_t data_size;
+    uint8_t data[0];
 };
 
 void
 command_config_neopixel(uint32_t *args)
 {
     struct gpio_out pin = gpio_out_setup(args[1], 0);
+    uint16_t data_size = args[2];
+    if (data_size & 0x8000)
+        shutdown("Invalid neopixel data_size");
     struct neopixel_s *n = oid_alloc(args[0], command_config_neopixel
-                                     , sizeof(*n));
+                                     , sizeof(*n) + data_size);
     n->pin = pin;
-    n->bit_max_ticks = args[2];
-    n->reset_min_ticks = args[3];
+    n->data_size = data_size;
+    n->bit_max_ticks = args[3];
+    n->reset_min_ticks = args[4];
 }
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
-             " bit_max_ticks=%u reset_min_ticks=%u");
+             " data_size=%hu bit_max_ticks=%u reset_min_ticks=%u");
 
 static int
-send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
+send_data(struct neopixel_s *n)
 {
     // Make sure the reset time has elapsed since last request
     uint32_t last_req_time = n->last_req_time, rmt = n->reset_min_ticks;
@@ -112,6 +120,8 @@ send_data(struct neopixel_s *n, uint8_t *data, uint_fast8_t data_len)
     }
 
     // Transmit data
+    uint8_t *data = n->data;
+    uint_fast16_t data_len = n->data_size;
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
     neopixel_time_t bit_max_ticks = n->bit_max_ticks;
@@ -165,18 +175,26 @@ fail:
 }
 
 void
+command_neopixel_update(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
+    uint_fast16_t pos = args[1];
+    uint_fast8_t data_len = args[2];
+    uint8_t *data = command_decode_ptr(args[3]);
+    if (pos & 0x8000 || pos + data_len > n->data_size)
+        shutdown("Invalid neopixel update command");
+    memcpy(&n->data[pos], data, data_len);
+}
+DECL_COMMAND(command_neopixel_update,
+             "neopixel_update oid=%c pos=%hu data=%*s");
+
+void
 command_neopixel_send(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
-    uint_fast8_t data_len = args[1];
-    uint8_t *data = (void*)(size_t)args[2];
-
-    uint_fast8_t retry = 8;
-    while (retry--) {
-        int ret = send_data(n, data, data_len);
-        if (!ret)
-            break;
-    }
+    int ret = send_data(n);
+    sendf("neopixel_result success=%c", ret ? 0 : 1);
 }
-DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c data=%*s");
+DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c");
