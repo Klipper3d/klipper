@@ -56,7 +56,8 @@ class PrinterNeoPixel:
         self.neopixel_update_cmd = self.mcu.lookup_command(
             "neopixel_update oid=%c pos=%hu data=%*s", cq=cmd_queue)
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
-            "neopixel_send oid=%c", "neopixel_result success=%c", cq=cmd_queue)
+            "neopixel_send oid=%c", "neopixel_result success=%c",
+            oid=self.oid, cq=cmd_queue)
     def update_color_data(self, red, green, blue, white, index=None):
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
