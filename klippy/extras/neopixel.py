@@ -56,7 +56,8 @@ class PrinterNeoPixel:
         self.neopixel_update_cmd = self.mcu.lookup_command(
             "neopixel_update oid=%c pos=%hu data=%*s", cq=cmd_queue)
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
-            "neopixel_send oid=%c", "neopixel_result success=%c", cq=cmd_queue)
+            "neopixel_send oid=%c", "neopixel_result oid=%c success=%c",
+            oid=self.oid, cq=cmd_queue)
     def update_color_data(self, red, green, blue, white, index=None):
         red = int(red * 255. + .5)
         blue = int(blue * 255. + .5)
@@ -76,41 +77,37 @@ class PrinterNeoPixel:
             elem_size = len(color_data)
             self.color_data[(index-1)*elem_size:index*elem_size] = color_data
     def send_data(self, print_time=None):
-        with self.mutex:
-            old_data, new_data = self.old_color_data, self.color_data
-            if new_data == old_data:
-                return
-            # Find the position of all changed bytes in this framebuffer
-            diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
-                     if n != o]
-            # Batch together changes that are close to each other
-            for i in range(len(diffs)-2, -1, -1):
-                pos, count = diffs[i]
-                nextpos, nextcount = diffs[i+1]
-                if pos + 5 >= nextpos and nextcount < 16:
-                    diffs[i][1] = nextcount + (nextpos - pos)
-                    del diffs[i+1]
-            # Transmit changes
-            ucmd = self.neopixel_update_cmd.send
-            for pos, count in diffs:
-                ucmd([self.oid, pos, new_data[pos:pos+count]],
-                     reqclock=BACKGROUND_PRIORITY_CLOCK)
-            old_data[:] = new_data
-            # Instruct mcu to update the LEDs
-            minclock = 0
-            if print_time is not None:
-                minclock = self.mcu.print_time_to_clock(print_time)
-            scmd = self.neopixel_send_cmd.send
-            for i in range(8):
-                params = scmd([self.oid], minclock=minclock,
-                              reqclock=BACKGROUND_PRIORITY_CLOCK)
-                if params['success']:
-                    break
-            else:
-                logging.info("Neopixel update did not succeed")
-    def send_data_bg(self, print_time):
-        reactor = self.printer.get_reactor()
-        reactor.register_callback(lambda et: self.send_data(print_time))
+        old_data, new_data = self.old_color_data, self.color_data
+        if new_data == old_data:
+            return
+        # Find the position of all changed bytes in this framebuffer
+        diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
+                 if n != o]
+        # Batch together changes that are close to each other
+        for i in range(len(diffs)-2, -1, -1):
+            pos, count = diffs[i]
+            nextpos, nextcount = diffs[i+1]
+            if pos + 5 >= nextpos and nextcount < 16:
+                diffs[i][1] = nextcount + (nextpos - pos)
+                del diffs[i+1]
+        # Transmit changes
+        ucmd = self.neopixel_update_cmd.send
+        for pos, count in diffs:
+            ucmd([self.oid, pos, new_data[pos:pos+count]],
+                 reqclock=BACKGROUND_PRIORITY_CLOCK)
+        old_data[:] = new_data
+        # Instruct mcu to update the LEDs
+        minclock = 0
+        if print_time is not None:
+            minclock = self.mcu.print_time_to_clock(print_time)
+        scmd = self.neopixel_send_cmd.send
+        for i in range(8):
+            params = scmd([self.oid], minclock=minclock,
+                          reqclock=BACKGROUND_PRIORITY_CLOCK)
+            if params['success']:
+                break
+        else:
+            logging.info("Neopixel update did not succeed")
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
@@ -120,11 +117,17 @@ class PrinterNeoPixel:
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
-        self.update_color_data(red, green, blue, white, index)
-        # Send command
-        if transmit:
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.register_lookahead_callback(self.send_data_bg)
+        # Update and transmit data
+        def reactor_bgfunc(print_time):
+            with self.mutex:
+                self.update_color_data(red, green, blue, white, index)
+                if transmit:
+                    self.send_data(print_time)
+        def lookahead_bgfunc(print_time):
+            reactor = self.printer.get_reactor()
+            reactor.register_callback(lambda et: reactor_bgfunc(print_time))
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.register_lookahead_callback(lookahead_bgfunc)
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)

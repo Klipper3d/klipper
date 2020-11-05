@@ -195,6 +195,6 @@ command_neopixel_send(uint32_t *args)
     uint8_t oid = args[0];
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
     int ret = send_data(n);
-    sendf("neopixel_result success=%c", ret ? 0 : 1);
+    sendf("neopixel_result oid=%c success=%c", oid, ret ? 0 : 1);
 }
 DECL_COMMAND(command_neopixel_send, "neopixel_send oid=%c");
