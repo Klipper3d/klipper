@@ -305,6 +305,10 @@ Available "action" commands:
 - `action_emergency_stop(msg)`: Transition the printer to a shutdown
   state. The `msg` parameter is optional, it may be useful to describe
   the reason for the shutdown.
+- `action_call_remote_method(method_name)`: Calls a method registered
+  by a remote client.  If the method takes parameters they should
+  be provided via keyword arguments, ie:
+  `action_call_remote_method("print_stuff", my_arg="hello_world")`
 
 ### Variables
 
