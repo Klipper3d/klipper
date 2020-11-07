@@ -8,6 +8,7 @@ void *alloc_chunk(size_t size);
 void move_free(void *m);
 void *move_alloc(void);
 void move_request_size(int size);
+void move_request_size_unsynchronized(int size);
 void *oid_lookup(uint8_t oid, void *type);
 void *oid_alloc(uint8_t oid, void *type, uint16_t size);
 void *oid_next(uint8_t *i, void *type);

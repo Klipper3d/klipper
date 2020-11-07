@@ -30,7 +30,7 @@ void init_queue(struct queue* queue, size_t size_of_event)
     queue->first = NULL;
     queue->plast = NULL;
 
-    move_request_size(size_of_event);
+    move_request_size_unsynchronized(size_of_event);
 }
 
 void* alloc_event(void)

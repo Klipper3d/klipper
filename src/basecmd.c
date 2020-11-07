@@ -65,6 +65,7 @@ struct move_freed {
 static struct move_freed *move_free_list;
 static void *move_list;
 static uint16_t move_count;
+static uint16_t reserved_moves;
 static uint8_t move_item_size;
 
 // Is the config and move queue finalized?
@@ -91,7 +92,7 @@ move_alloc(void)
     irqstatus_t flag = irq_save();
     struct move_freed *mf = move_free_list;
     if (!mf)
-        shutdown("Move queue empty");
+        shutdown("Move queue full");
     move_free_list = mf->next;
     irq_restore(flag);
     return mf;
@@ -105,6 +106,14 @@ move_request_size(int size)
         shutdown("Invalid move request size");
     if (size > move_item_size)
         move_item_size = size;
+}
+
+// Like move_request_size, but also reserves a move item
+void
+move_request_size_unsynchronized(int size)
+{
+    move_request_size(size);
+    reserved_moves++;
 }
 
 void
@@ -202,7 +211,8 @@ void
 command_get_config(uint32_t *args)
 {
     sendf("config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
-          , is_finalized(), config_crc, move_count, sched_is_shutdown());
+          , is_finalized(), config_crc, move_count-reserved_moves,
+          sched_is_shutdown());
 }
 DECL_COMMAND_FLAGS(command_get_config, HF_IN_SHUTDOWN, "get_config");
 
@@ -227,6 +237,7 @@ config_reset(uint32_t *args)
     move_free_list = NULL;
     move_list = NULL;
     move_count = move_item_size = 0;
+    reserved_moves = 0;
     alloc_init();
     sched_timer_reset();
     sched_clear_shutdown();
