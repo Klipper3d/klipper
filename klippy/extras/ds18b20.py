@@ -6,58 +6,53 @@
 import logging
 
 REPORT_FREQ = 5
-W1_PATH = '/sys/bus/w1/devices/'
-W1_SLAVE = '/w1_slave'
 
 class DS18B20:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.w1_sensor_fd = W1_PATH + config.get("serial_no") + W1_SLAVE
+        self.sensor_id = config.get("serial_no")
         self.min_temp = config.getfloat('min_temp')
         self.max_temp = config.getfloat('max_temp')
-        self.setup_minmax(self.min_temp, self.max_temp)
-        self.reactor = self.printer.get_reactor()
-        self.sample_timer = self.reactor.register_timer(self._sample_ds18b20)
-        self.printer.add_object("ds18b20 " + self.name, self)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        #TODO Will need to somehow identify the correct mcu...?
+        self.all_mcus = [
+            m for n, m in self.printer.lookup_objects(module='mcu')]
+        self.mcu = self.all_mcus[0]
+        self.oid = self.mcu.create_oid()
+        self.mcu.register_response(self._handle_ds18b20_response,
+            "ds18b20_result", self.oid)
+        self.mcu.register_config_callback(self._build_config)
 
-    def handle_ready(self):
-        self._init_ds18b20()
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+    def _build_config(self):
+        self.mcu.add_config_cmd("config_ds18b20 oid=%d serial=%s" % (self.oid,
+            self.sensor_id.encode("hex")))
 
-    def get_report_time_delta(self):
-        return REPORT_FREQ
+        clock = self.mcu.get_query_slot(self.oid)
+        self._report_clock = self.mcu.seconds_to_clock(REPORT_FREQ)
+        self.mcu.add_config_cmd("query_ds18b20 oid=%d clock=%u rest_ticks=%u"
+            " min_value=%u max_value=%u" % (
+                self.oid, clock, self._report_clock,
+                self.min_temp, self.max_temp), is_init=True)
+
+    def _handle_ds18b20_response(self, params):
+        temp = params['value']
+        logging.info("Temp: " + temp)
+        next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
+        last_read_clock = next_clock - self._report_clock
+        last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
+        self._callback(last_read_time, temp)
 
     def setup_minmax(self, min_temp, max_temp):
         pass
 
+    def fault(self, msg):
+        self.printer.invoke_async_shutdown(msg)
+
+    def get_report_time_delta(self):
+        return REPORT_FREQ
+
     def setup_callback(self, cb):
         self._callback = cb
-
-    def _init_ds18b20(self):
-        try:
-            self.fd = open(self.w1_sensor_fd, 'r')
-        except IOError:
-            # Not really following the exception handling.
-            # from the docs seems like this should be handled in
-            # load_config()???
-            raise self.printer.config_error(
-                self.w1_sensor_fd + ' does not exist')
-
-    def _sample_ds18b20(self, eventtime):
-        self.reactor.pause(
-            self.reactor.monotonic() + REPORT_FREQ)
-        self.fd.seek(0)
-        self.lines = self.fd.readlines()
-
-        temp_output = self.lines[1].find('t=')
-        if temp_output != -1:
-            temp_string = self.lines[1].strip()[temp_output+2:]
-            temp_c = float(temp_string) / 1000.0
-            self.temp = temp_c
-            logging.info(self.temp)
-            self._callback(eventtime, self.temp)
 
     def get_status(self, eventtime):
         return {
