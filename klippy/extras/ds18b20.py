@@ -12,8 +12,8 @@ class DS18B20:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.sensor_id = config.get("serial_no")
-        self.min_temp = config.getfloat('min_temp')
-        self.max_temp = config.getfloat('max_temp')
+        self.min_temp = config.getfloat('min_temp') * 1000
+        self.max_temp = config.getfloat('max_temp') * 1000
         #TODO Will need to somehow identify the correct mcu...?
         self.all_mcus = [
             m for n, m in self.printer.lookup_objects(module='mcu')]
@@ -35,7 +35,7 @@ class DS18B20:
                 self.min_temp, self.max_temp), is_init=True)
 
     def _handle_ds18b20_response(self, params):
-        temp = params['value']
+        temp = params['value'] / float(1000)
         logging.info("Temp: " + temp)
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock

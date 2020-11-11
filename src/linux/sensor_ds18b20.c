@@ -14,6 +14,7 @@
 #include "command.h" // DECL_COMMAND
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
+#include "board/misc.h"
 
 struct ds18_s {
     struct timer timer;
@@ -95,26 +96,32 @@ DECL_COMMAND(command_query_ds18b20,
 static void
 ds18_read(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 {
-    output("In ds18_read");
-    int ret = lseek(d->fd, 0, SEEK_SET);
-    if (ret < 0) {
-        report_errno("seek ds18b20", ret);
-        try_shutdown("Unable to seek DS18B20");
-    }
+    // Read data and report
     char data[16];
-    ret = read(d->fd, data, sizeof(data)-1);
+    uint32_t t1 = timer_read_time();
+    int ret = read(d->fd, data, sizeof(data)-1);
+    uint32_t t2 = timer_read_time();
     if (ret < 0) {
         report_errno("read ds18b20", ret);
         try_shutdown("Unable to read DS18B20");
     }
     data[ret] = '\0';
-    double val = atof(data);
-    // Was * 1000? (Too big).
-    uint32_t ival = (uint32_t)(val / 1000 + .5);
+    int val = atoi(data);
     sendf("ds18_result oid=%c next_clock=%u value=%u"
-          , oid, next_begin_time, ival);
-    if (ival < d->min_value || ival > d->max_value)
+          , oid, next_begin_time, val);
+    if (val < d->min_value || val > d->max_value)
         try_shutdown("DS18 out of range");
+
+    // Seek file in preparation of next read
+    uint32_t t3 = timer_read_time();
+    ret = lseek(d->fd, 0, SEEK_SET);
+    uint32_t t4 = timer_read_time();
+    if (ret < 0) {
+        report_errno("seek ds18b20", ret);
+        try_shutdown("Unable to seek DS18B20");
+    }
+
+    output("read timing t1=%u t2=%u t3=%u t4=%u", t1, t2, t3, t4);
 }
 
 // task to read temperature and send response
