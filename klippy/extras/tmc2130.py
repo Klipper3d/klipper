@@ -172,11 +172,12 @@ class TMCCurrentHelper:
 
 # Helper to setup an spi daisy chain bus from settings in a config section
 
-def lookup_tmc_spi_chain (config, name):
+def lookup_tmc_spi_chain (config, Registers, fields):
     ppins = config.get_printer().lookup_object("pins")
     chain_pos = config.get('spi_chain_pos', None)
     chain_len = config.get('spi_chain_len', None)
     cs_pin=config.get('cs_pin', None)
+    name = config.get_name().split()[-1]
 
     if (chain_len or chain_pos):
         chain_len = int(chain_len)
@@ -191,7 +192,7 @@ def lookup_tmc_spi_chain (config, name):
             if t.mcu_tmc.chain['pos'] == chain_pos:
                 raise config.error("%s: chain position already "\
                     "assigned to different driver" % name)
-            if t.mcu_tmc.cs_pin != cs_pin:
+            if t.mcu_tmc.chain['cspin'] != cs_pin:
                 raise config.error("%s: The CS pins should match"\
                     "in a daisy chain configuration" % name)
     else:
@@ -205,21 +206,21 @@ def lookup_tmc_spi_chain (config, name):
         share = None
         cs_pin_params = {}
     mcu_spi = cs_pin_params.get('class')
-    chain = {'pos': chain_pos, 'len': chain_len}
+    chain = {'pos':chain_pos, 'len':chain_len, 'cspin':cs_pin, 'share':share}
     if mcu_spi is None:
-        mcu_spi = bus.MCU_SPI_from_config(
-            config, 3,default_speed=4000000, share_type=share)
+        mcu_spi = MCU_TMC_SPI(config, Registers, fields, chain)
         cs_pin_params['class'] = mcu_spi
-    return mcu_spi, chain, cs_pin
+    return mcu_spi
 
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
-    def __init__(self, config, name_to_reg, fields):
+    def __init__(self, config, name_to_reg, fields, chain):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mutex = self.printer.get_reactor().mutex()
-        self.spi, self.chain, self.cs_pin = lookup_tmc_spi_chain (config,
-                                                                  self.name)
+        self.chain = chain
+        self.spi = bus.MCU_SPI_from_config(
+            config, 3,default_speed=4000000, share_type=chain['share'])
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
@@ -257,7 +258,7 @@ class TMC2130:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
+        self.mcu_tmc = lookup_tmc_spi_chain (config, Registers, self.fields)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
