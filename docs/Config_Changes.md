@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20201112: The time reported by `print_stats.print_duration` has
+changed.  The duration prior to the first detected extrusion is
+now excluded.
+
 20201029: The neopixel `color_order_GRB` config option has been
 removed. If necessary, update the config to set the new `color_order`
 option to RGB, GRB, RGBW, or GRBW.
