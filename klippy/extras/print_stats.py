@@ -48,6 +48,10 @@ class PrintStats:
         self.state = "complete"
         eventtime = self.reactor.monotonic()
         self.total_duration = eventtime - self.print_start_time
+        if self.filament_used < 0.0000001:
+            # No positive extusion detected during print
+            self.init_duration = self.total_duration - \
+                self.prev_pause_duration
         self.print_start_time = None
     def reset(self):
         self.filename = self.error_message = ""
@@ -55,6 +59,7 @@ class PrintStats:
         self.prev_pause_duration = self.last_epos = 0.
         self.filament_used = self.total_duration = 0.
         self.print_start_time = self.last_pause_time = None
+        self.init_duration = 0.
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:
@@ -65,10 +70,14 @@ class PrintStats:
                 # Accumulate filament if not paused
                 self._update_filament_usage(eventtime)
             self.total_duration = eventtime - self.print_start_time
+            if self.filament_used < 0.0000001:
+                # Track duration prior to extrusion
+                self.init_duration = self.total_duration - time_paused
+        print_duration = self.total_duration - self.init_duration - time_paused
         return {
             'filename': self.filename,
             'total_duration': self.total_duration,
-            'print_duration': self.total_duration - time_paused,
+            'print_duration': print_duration,
             'filament_used': self.filament_used,
             'state': self.state,
             'message': self.error_message
