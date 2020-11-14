@@ -144,6 +144,7 @@ class MCU_digital_out:
                                      % (self._pin, self._start_value))
             return
         self._oid = self._mcu.create_oid()
+        self._mcu.request_move_queue_slot()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
             " max_duration=%d" % (
@@ -201,6 +202,7 @@ class MCU_pwm:
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
+            self._mcu.request_move_queue_slot()
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
                 self._mcu.add_config_cmd(
@@ -435,6 +437,7 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
+        self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -585,7 +588,7 @@ class MCU:
         self._steppersync = ffi_main.gc(
             ffi_lib.steppersync_alloc(self._serial.serialqueue,
                                       self._stepqueues, len(self._stepqueues),
-                                      move_count),
+                                      move_count-self._reserved_move_slots),
             ffi_lib.steppersync_free)
         ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
@@ -650,6 +653,8 @@ class MCU:
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
+    def request_move_queue_slot(self):
+        self._reserved_move_slots += 1
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
