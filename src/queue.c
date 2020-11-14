@@ -5,19 +5,20 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/irq.h" // irq_disable
+#include "basecmd.h" // oid_alloc
 #include "queue.h"
 
 /**
  * @return NULL if no current event
  */
-struct event* get_current_event(struct queue* queue) {
+struct mq_event* mq_event_peek(struct mq_list* queue) {
     return queue->first;
 }
 
 /**
  * @return NULL if no next event
  */
-struct event* get_next_event(struct queue* queue) {
+struct mq_event* mq_event_pop(struct mq_list* queue) {
     if(!queue->first) {
         //no current! event
         return NULL;
@@ -25,34 +26,31 @@ struct event* get_next_event(struct queue* queue) {
     queue->first = queue->first->next;
     return queue->first;
 }
-void init_queue(struct queue* queue, size_t size_of_event)
-{
+void mq_init(struct mq_list* queue, size_t size_of_event) {
     queue->first = NULL;
     queue->plast = NULL;
 
     move_request_size_unsynchronized(size_of_event);
 }
 
-void* alloc_event(void)
-{
+void* mq_alloc_event(void) {
     return move_alloc();
 }
 
-void free_event(void* event)
-{
-    irq_disable();
+// Free previously allocated storage from move_alloc(). Caller must
+// disable irqs.
+void mq_free_event(void* event) {
     move_free(event);
-    irq_enable();
 }
 
 /**
- * @return NULL if queue was empty and a timer needs to be added
+ * @return 0 if queue was empty and a timer needs to be added
  */
-uint8_t insert_event(struct queue* queue, struct event* event) {
+uint8_t mq_event_insert(struct mq_list* queue, struct mq_event* event) {
     uint8_t needs_adding_timer = 0;
     event->next = NULL;
 
-    irq_disable();
+    irqstatus_t irq = irq_save();
     if(queue->first) {
         //there exists an element in queue
         //if there is a queue->first, there has to be a queue->plast
@@ -68,6 +66,6 @@ uint8_t insert_event(struct queue* queue, struct event* event) {
 
     //plast to point to this new element's next pointer
     queue->plast = &event->next;
-    irq_enable();
+    irq_restore(irq);
     return !needs_adding_timer;
 }
