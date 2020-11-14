@@ -114,12 +114,16 @@ void
 command_update_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
-    //FIXME: How to act here if queue is still populated?
+
+    if (mq_event_peek(&d->queue) != NULL) {
+        shutdown("Mixing update_digital_out with "
+                 "schedule_digital_out not allowed");
+    }
+
     uint8_t value = args[1];
     gpio_out_write(d->pin, value);
-    // if there is no event waiting, add time-out
-    if (mq_event_peek(&d->queue) == NULL &&
-            value != d->default_value && d->max_duration) {
+    // set safety timer if there is a max_duration
+    if (value != d->default_value && d->max_duration) {
         sched_del_timer(&d->timer);
         d->timer.waketime = timer_read_time() + d->max_duration;
         d->timer.func = digital_end_event;

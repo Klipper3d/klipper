@@ -1,4 +1,4 @@
-// Helper with queueing single-value events
+// Helper with queueing events using the move queue
 //
 // Copyright (C) 2016 Kevin O'Connor <kevin@koconnor.net>
 //

@@ -94,10 +94,7 @@ command_schedule_pwm_out(uint32_t *args)
 
     if(!mq_event_insert(&p->queue, &new_event->event)){
         //queue was empty and a timer needs to be added
-        if(p->timer.func == pwm_end_event) {
-            //first, reset the end event timer
-            sched_del_timer(&p->timer);
-        }
+        sched_del_timer(&p->timer);
         p->timer.waketime = args[1];
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
