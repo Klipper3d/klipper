@@ -16,6 +16,7 @@ struct pwm_out_s {
     struct gpio_pwm pin;
     uint32_t max_duration;
     uint16_t default_value;
+    uint16_t current_value;
     struct mq_list queue;
 };
 
@@ -35,18 +36,24 @@ static uint_fast8_t
 pwm_event(struct timer *timer)
 {
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
-    struct mq_event *c = mq_event_peek(&p->queue);
-
-    struct pwm_event* current = container_of(c, struct pwm_event, event);
+    struct mq_event  *c = mq_event_peek(&p->queue);
+    struct pwm_event *current = container_of(c, struct pwm_event, event);
 
     gpio_pwm_write(p->pin, current->value);
+    p->current_value = current->value;
 
     //may be NULL if no further elements are queued
     struct mq_event* next = mq_event_pop(&p->queue);
 
     if(next) {
         //next event scheduled
-        p->timer.waketime = container_of(c, struct pwm_event, event)->waketime;
+        uint32_t next_wt = container_of(c, struct pwm_event, event)->waketime;
+        if (current->value != p->default_value || !p->max_duration) {
+            if(next_wt > p->timer.waketime + p->max_duration) {
+                shutdown("Scheduled pwm event will miss max_duration");
+            }
+        }
+        p->timer.waketime = next_wt;
     } else {
         // no next event scheduled
         if (current->value == p->default_value || !p->max_duration) {
@@ -78,6 +85,7 @@ command_config_pwm_out(uint32_t *args)
     p->pin = pin;
     p->default_value = args[4];
     p->max_duration = args[5];
+    p->current_value = 0;
     mq_init(&p->queue, sizeof(struct pwm_event));
 }
 DECL_COMMAND(command_config_pwm_out,
@@ -92,10 +100,19 @@ command_schedule_pwm_out(uint32_t *args)
     new_event->waketime = args[1];
     new_event->value = args[2];
 
-    if(!mq_event_insert(&p->queue, &new_event->event)){
-        //queue was empty and a timer needs to be added
+    if(!mq_event_insert(&p->queue, &new_event->event)) {
+        // queue was empty and a timer needs to be added
+
+        if(p->max_duration && p->current_value != p->default_value) {
+            // max_duration and currently not default value
+            // There has to be a safety timer
+            if(new_event->waketime > p->timer.waketime) {
+                shutdown("New pwm event too late for max_duration");
+            }
+        }
+
         sched_del_timer(&p->timer);
-        p->timer.waketime = args[1];
+        p->timer.waketime = new_event->waketime;
         p->timer.func = pwm_event;
         sched_add_timer(&p->timer);
     }

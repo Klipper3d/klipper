@@ -22,6 +22,7 @@ struct digital_out_s {
     struct gpio_out pin;
     uint32_t max_duration;
     uint8_t default_value;
+    uint8_t current_value;
     struct mq_list queue;
 };
 
@@ -45,13 +46,20 @@ digital_out_event(struct timer *timer)
 
     struct do_event* current = container_of(c, struct do_event, event);
     gpio_out_write(d->pin, current->value);
+    d->current_value = current->value;
 
     //may be NULL if no further elements are queued
     struct mq_event* next = mq_event_pop(&d->queue);
 
     if(next) {
         //next event scheduled
-        d->timer.waketime = container_of(c, struct do_event, event)->waketime;
+        uint32_t next_wt = container_of(c, struct do_event, event)->waketime;
+        if (current->value != d->default_value || !d->max_duration) {
+            if(next_wt > d->timer.waketime + d->max_duration) {
+                shutdown("Scheduled digital_out event will miss max_duration");
+            }
+        }
+        d->timer.waketime = next_wt;
     } else {
         // no next event scheduled
         if (current->value == d->default_value || !d->max_duration) {
@@ -83,6 +91,7 @@ command_config_digital_out(uint32_t *args)
     d->pin = pin;
     d->default_value = args[3];
     d->max_duration = args[4];
+    d->current_value = 0;
     mq_init(&d->queue, sizeof(struct do_event));
 }
 DECL_COMMAND(command_config_digital_out,
@@ -99,9 +108,16 @@ command_schedule_digital_out(uint32_t *args)
 
     if(!mq_event_insert(&d->queue, &new_event->event)) {
         //queue was empty and a timer needs to be added
-        if(d->timer.func == digital_end_event) {
-            sched_del_timer(&d->timer);
+
+        if(d->max_duration && d->current_value != d->default_value) {
+            // max_duration and currently not default value
+            // There has to be a safety timer
+            if(new_event->waketime > d->timer.waketime) {
+                shutdown("New digital_out event too late for max_duration");
+            }
         }
+
+        sched_del_timer(&d->timer);
         d->timer.waketime = args[1];
         d->timer.func = digital_out_event;
         sched_add_timer(&d->timer);
@@ -122,6 +138,8 @@ command_update_digital_out(uint32_t *args)
 
     uint8_t value = args[1];
     gpio_out_write(d->pin, value);
+    d->current_value = value;
+
     // set safety timer if there is a max_duration
     if (value != d->default_value && d->max_duration) {
         sched_del_timer(&d->timer);
