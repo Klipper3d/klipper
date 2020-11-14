@@ -16,15 +16,15 @@ struct mq_event* mq_event_peek(struct mq_list* queue) {
 }
 
 /**
- * @return NULL if no next event
+ * @return NULL if no current event
  */
 struct mq_event* mq_event_pop(struct mq_list* queue) {
-    if(!queue->first) {
-        //no current! event
-        return NULL;
+    struct mq_event* current = queue->first;
+    if(current) {
+        queue->first = queue->first->next;
     }
-    queue->first = queue->first->next;
-    return queue->first;
+
+    return current;
 }
 void mq_init(struct mq_list* queue, size_t size_of_event) {
     queue->first = NULL;

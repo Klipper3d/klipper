@@ -42,14 +42,14 @@ static uint_fast8_t
 digital_out_event(struct timer *timer)
 {
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
-    struct mq_event *c = mq_event_peek(&d->queue);
+    struct mq_event *c = mq_event_pop(&d->queue);
 
     struct do_event* current = container_of(c, struct do_event, event);
     gpio_out_write(d->pin, current->value);
     d->current_value = current->value;
 
     //may be NULL if no further elements are queued
-    struct mq_event* next = mq_event_pop(&d->queue);
+    struct mq_event* next = mq_event_peek(&d->queue);
 
     if(next) {
         //next event scheduled

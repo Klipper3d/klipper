@@ -14,7 +14,7 @@ struct mq_list {
  */
 struct mq_event* mq_event_peek(struct mq_list* queue);
 /**
- * @return NULL if no next event
+ * @return NULL if no current event
  */
 struct mq_event* mq_event_pop(struct mq_list* queue);
 void mq_init(struct mq_list* queue, size_t size_of_event);

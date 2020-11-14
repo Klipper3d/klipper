@@ -36,14 +36,14 @@ static uint_fast8_t
 pwm_event(struct timer *timer)
 {
     struct pwm_out_s *p = container_of(timer, struct pwm_out_s, timer);
-    struct mq_event  *c = mq_event_peek(&p->queue);
+    struct mq_event  *c = mq_event_pop(&p->queue);
     struct pwm_event *current = container_of(c, struct pwm_event, event);
 
     gpio_pwm_write(p->pin, current->value);
     p->current_value = current->value;
 
     //may be NULL if no further elements are queued
-    struct mq_event* next = mq_event_pop(&p->queue);
+    struct mq_event* next = mq_event_peek(&p->queue);
 
     if(next) {
         //next event scheduled
