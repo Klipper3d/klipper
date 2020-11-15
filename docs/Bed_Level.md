@@ -6,7 +6,7 @@ performing bed leveling in Klipper.
 
 It's important to understand the goal of bed leveling. If the printer
 is commanded to a position `X0 Y0 Z10` during a print, then the goal
-is for the printer's nozzle to be exactly 10mm from the printer's
+is for the printer's nozzle to be exactly 0.1mm from the printer's
 bed. Further, should the printer then be commanded to a position of
 `X50 Z10` the goal is for the nozzle to maintain an exact distance of
 10mm from the bed during that entire horizontal move.
