@@ -65,9 +65,7 @@ digital_out_event(struct timer *timer)
         if (current->value == d->default_value || !d->max_duration) {
             // We either have set the default value
             // or there is no maximum duration
-            irqstatus_t irq = irq_save();
             mq_free_event(current);
-            irq_restore(irq);
             return SF_DONE;
         }
 
@@ -76,9 +74,7 @@ digital_out_event(struct timer *timer)
         d->timer.func = digital_end_event;
     }
 
-    irqstatus_t irq = irq_save();
     mq_free_event(current);
-    irq_restore(irq);
     return SF_RESCHEDULE;
 }
 
@@ -112,7 +108,7 @@ command_schedule_digital_out(uint32_t *args)
         if(d->max_duration && d->current_value != d->default_value) {
             // max_duration and currently not default value
             // There has to be a safety timer
-            if(new_event->waketime > d->timer.waketime) {
+            if(timer_is_before(d->timer.waketime, new_event->waketime)) {
                 shutdown("New digital_out event too late for max_duration");
             }
         }

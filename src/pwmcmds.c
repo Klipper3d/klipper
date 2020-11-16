@@ -7,6 +7,7 @@
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio_pwm
 #include "board/irq.h" // irq_disable
+#include "generic/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "queue.h" // init_queue
 #include "sched.h" // sched_add_timer
@@ -59,9 +60,7 @@ pwm_event(struct timer *timer)
         if (current->value == p->default_value || !p->max_duration) {
             // We either have set the default value
             // or there is no maximum duration
-            irqstatus_t irq = irq_save();
             mq_free_event(current);
-            irq_restore(irq);
             return SF_DONE;
         }
 
@@ -70,9 +69,7 @@ pwm_event(struct timer *timer)
         p->timer.func = pwm_end_event;
     }
 
-    irqstatus_t irq = irq_save();
     mq_free_event(current);
-    irq_restore(irq);
     return SF_RESCHEDULE;
 }
 
@@ -106,7 +103,7 @@ command_schedule_pwm_out(uint32_t *args)
         if(p->max_duration && p->current_value != p->default_value) {
             // max_duration and currently not default value
             // There has to be a safety timer
-            if(new_event->waketime > p->timer.waketime) {
+            if(timer_is_before(p->timer.waketime, new_event->waketime)) {
                 shutdown("New pwm event too late for max_duration");
             }
         }
