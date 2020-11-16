@@ -2979,6 +2979,10 @@ lcd_type:
 #d7_pin:
 #   The pins connected to an hd44780 type lcd. These parameters must
 #   be provided when using an hd44780 display.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Defaults to 20. Another common value is 16. The number of lines is
+#   fixed to 4.
 #cs_pin:
 #sclk_pin:
 #sid_pin:
