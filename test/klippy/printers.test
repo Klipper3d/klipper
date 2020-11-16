@@ -3,7 +3,7 @@ GCODE move.gcode
 
 # Example kinematic files
 DICTIONARY atmega2560.dict
-CONFIG ../../config/example.cfg
+CONFIG ../../config/example-cartesian.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-delta.cfg

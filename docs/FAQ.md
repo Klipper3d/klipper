@@ -121,8 +121,9 @@ If you want to change the baud rate anyway, then the new rate will
 need to be configured in the micro-controller (during **make
 menuconfig**) and that updated code will need to be compiled and
 flashed to the micro-controller. The Klipper printer.cfg file will
-also need to be updated to match that baud rate (see the example.cfg
-file for details).  For example:
+also need to be updated to match that baud rate (see the
+[config reference](Config_Reference.md#mcu) for details).  For
+example:
 ```
 [mcu]
 baud: 250000
@@ -149,8 +150,7 @@ when printing directly from OctoPrint. (The printer may move faster
 than OctoPrint can send movement commands.) If you wish to run on one
 one of these slower boards anyway, consider using the "virtual_sdcard"
 feature when printing (see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details).
+[config reference](Config_Reference.md#virtual_sdcard) for details).
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
@@ -237,8 +237,7 @@ process itself (or fundamentally does not have a homing process) then
 consider using a safe_z_home or homing_override section in the config
 file. If you need to move a stepper for diagnostic or debugging
 purposes then consider adding a force_move section to the config
-file. See
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+file. See [config reference](Config_Reference.md#customized_homing)
 for further details on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
@@ -341,16 +340,14 @@ See the "config_digital_out" command in the
 In addition, the micro-controller software is configured with a
 minimum and maximum temperature range for each heater at startup (see
 the min_temp and max_temp parameters in the
-[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
-file for details). If the micro-controller detects that the
-temperature is outside of that range then it will also enter a
-"shutdown" state.
+[config reference](Config_Reference.md#extruder) for details). If the
+micro-controller detects that the temperature is outside of that range
+then it will also enter a "shutdown" state.
 
 Separately, the host software also implements code to check that
 heaters and temperature sensors are functioning correctly. See the
-"verify_heater" section of the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for further details.
+[config reference](Config_Reference.md#verify_heater) for further
+details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?
 

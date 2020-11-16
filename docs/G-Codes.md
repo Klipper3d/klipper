@@ -44,9 +44,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details). For example, one might use this to implement: `G12`,
-`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
+[config reference](Config_Reference.md#gcode_macro) for details). For
+example, one might use this to implement: `G12`, `G29`, `G30`, `G31`,
+`M42`, `M80`, `M81`, `T1`, etc.
 
 ## G-Code SD card commands
 
@@ -320,9 +320,7 @@ enabled:
   [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
   the probe triggers. If any of the optional parameters are provided
   they override their equivalent setting in the probe config section
-  (see
-  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-  for details).
+  (see [config reference](Config_Reference.md#probe) for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
 - `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
@@ -622,15 +620,17 @@ been enabled:
 The following command is enabled if an [input_shaper] config section has
 been enabled:
   - `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-    [SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
+    [SHAPER_FREQ_Y=<shaper_freq_y>]
+    [DAMPING_RATIO_X=<damping_ratio_x>]
     [DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-    [SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`: Modify
-    input shaper parameters. Note that SHAPER_TYPE parameter resets input shaper
-    for both X and Y axes even if different shaper types have been configured
-    in [input_shaper] section. SHAPER_TYPE cannot be used together with either
-    of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters. See
-    [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-    for more details on each of these parameters.
+    [SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+    Modify input shaper parameters. Note that SHAPER_TYPE parameter
+    resets input shaper for both X and Y axes even if different shaper
+    types have been configured in [input_shaper] section. SHAPER_TYPE
+    cannot be used together with either of SHAPER_TYPE_X and
+    SHAPER_TYPE_Y parameters. See
+    [config reference](Config_Reference.md#input_shaper) for more
+    details on each of these parameters.
 
 ## Temperature Fan Commands
 
