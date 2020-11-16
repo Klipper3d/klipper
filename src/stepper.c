@@ -232,6 +232,7 @@ command_queue_step(uint32_t *args)
         flags |= SF_NO_NEXT_CHECK;
     flags &= ~SF_LAST_RESET;
     if (flags & SF_NEED_RESET) {
+        // needs reset, discard new event
         mq_free_event(new_event);
         irq_enable();
         return;
@@ -240,6 +241,7 @@ command_queue_step(uint32_t *args)
     s->flags = flags;
     mq_event_insert(&s->queue, &new_event->event);
     if (!s->count) {
+        // currently not stepping, set timer
         stepper_load_next(s, s->next_step_time + new_event->interval);
         sched_add_timer(&s->time);
     }
@@ -328,7 +330,7 @@ stepper_shutdown(void)
     uint8_t i;
     struct stepper *s;
     foreach_oid(i, s, command_config_stepper) {
-        stepper_stop(s);
+        mq_discard(&s->queue);
     }
 }
 DECL_SHUTDOWN(stepper_shutdown);

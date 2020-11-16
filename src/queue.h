@@ -17,6 +17,10 @@ struct mq_event* mq_event_peek(struct mq_list* queue);
  * @return NULL if no current event
  */
 struct mq_event* mq_event_pop(struct mq_list* queue);
+
+// discards queue _without_ freeing its elements
+void mq_discard(struct mq_list* queue);
+
 void mq_init(struct mq_list* queue, size_t size_of_event);
 void* mq_alloc_event(void);
 

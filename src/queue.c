@@ -26,6 +26,11 @@ struct mq_event* mq_event_pop(struct mq_list* queue) {
 
     return current;
 }
+
+void mq_discard(struct mq_list* queue) {
+    queue->first = NULL;
+}
+
 void mq_init(struct mq_list* queue, size_t size_of_event) {
     queue->first = NULL;
     queue->plast = NULL;
