@@ -7,7 +7,8 @@
 import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
-LINE_LENGTH=20
+LINE_LENGTH_DEFAULT="20"
+LINE_LENGTH_OPTIONS={"16":16, "20":20}
 
 TextGlyphs = { 'right_arrow': '\x7e' }
 
@@ -20,7 +21,8 @@ class HD44780:
         ppins = self.printer.lookup_object('pins')
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
-        self.line_length = config.getint('line_length', LINE_LENGTH)
+        self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
+            LINE_LENGTH_DEFAULT)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
