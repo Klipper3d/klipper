@@ -259,10 +259,8 @@ _N_SCROLL_ARROWS = 14
 
 # Lines of help text shown at the bottom of the "main" display
 _MAIN_HELP_LINES = """
-[Space/Enter] Toggle/enter  [ESC] Leave menu           [S] Save
-[O] Load                    [?] Symbol info            [/] Jump to symbol
-[F] Toggle show-help mode   [C] Toggle show-name mode  [A] Toggle show-all mode
-[Q] Quit (prompts for save) [D] Save minimal config (advanced)
+[Space/Enter] Toggle/enter      [?] Help            [/] Search
+[Q] Quit (prompts for save)     [ESC] Leave menu
 """[1:-1].split("\n")
 
 # Lines of help text shown at the bottom of the information dialog
@@ -890,17 +888,17 @@ def _menuconfig(stdscr):
             else:
                 _leave_menu()
 
-        elif c in ("o", "O"):
+        elif 0 and c in ("o", "O"):
             _load_dialog()
 
-        elif c in ("s", "S"):
+        elif 0 and c in ("s", "S"):
             filename = _save_dialog(_kconf.write_config, _conf_filename,
                                     "configuration")
             if filename:
                 _conf_filename = filename
                 _conf_changed = False
 
-        elif c in ("d", "D"):
+        elif 0 and c in ("d", "D"):
             filename = _save_dialog(_kconf.write_min_config, _minconf_filename,
                                     "minimal configuration")
             if filename:
@@ -918,15 +916,15 @@ def _menuconfig(stdscr):
             # dialog was open
             _resize_main()
 
-        elif c in ("f", "F"):
+        elif 0 and c in ("f", "F"):
             _show_help = not _show_help
             _set_style(_help_win, "show-help" if _show_help else "help")
             _resize_main()
 
-        elif c in ("c", "C"):
+        elif 0 and c in ("c", "C"):
             _show_name = not _show_name
 
-        elif c in ("a", "A"):
+        elif 0 and c in ("a", "A"):
             _toggle_show_all()
 
         elif c in ("q", "Q"):
@@ -2552,11 +2550,11 @@ def _info_str(node):
             _prompt_info(sym) +
             "Type: {}\n".format(TYPE_TO_STR[sym.type]) +
             _value_info(sym) +
-            _help_info(sym) +
-            _direct_dep_info(sym) +
-            _defaults_info(sym) +
-            _select_imply_info(sym) +
-            _kconfig_def_info(sym)
+            _help_info(sym)
+            #_direct_dep_info(sym) +
+            #_defaults_info(sym) +
+            #_select_imply_info(sym) +
+            #_kconfig_def_info(sym)
         )
 
     if isinstance(node.item, Choice):
@@ -2568,10 +2566,10 @@ def _info_str(node):
             "Type: {}\n".format(TYPE_TO_STR[choice.type]) +
             'Mode: {}\n'.format(choice.str_value) +
             _help_info(choice) +
-            _choice_syms_info(choice) +
-            _direct_dep_info(choice) +
-            _defaults_info(choice) +
-            _kconfig_def_info(choice)
+            _choice_syms_info(choice)
+            #_direct_dep_info(choice) +
+            #_defaults_info(choice) +
+            #_kconfig_def_info(choice)
         )
 
     return _kconfig_def_info(node)  # node.item in (MENU, COMMENT)
@@ -2588,10 +2586,12 @@ def _prompt_info(sc):
     # Returns a string listing the prompts of 'sc' (Symbol or Choice)
 
     s = ""
+    found = []
 
     for node in sc.nodes:
-        if node.prompt:
+        if node.prompt and node.prompt[0] not in found:
             s += "Prompt: {}\n".format(node.prompt[0])
+            found.append(node.prompt[0])
 
     return s
 
@@ -2631,6 +2631,9 @@ def _help_info(sc):
     for node in sc.nodes:
         if node.help is not None:
             s += "Help:\n\n{}\n\n".format(_indent(node.help, 2))
+
+    if s == "\n":
+        s = "\nHelp: (No help available)\n\n"
 
     return s
 
