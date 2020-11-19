@@ -1475,8 +1475,8 @@ class Kconfig(object):
             # instead, to avoid accessing the internal _write_to_conf variable
             # (though it's likely to keep working).
             val = sym.str_value
-            if not sym._write_to_conf:
-                continue
+            #if not sym._write_to_conf:
+            #    continue
 
             if sym.orig_type in _BOOL_TRISTATE:
                 if val == "y":
@@ -1484,6 +1484,9 @@ class Kconfig(object):
                         .format(self.config_prefix, sym.name))
                 elif val == "m":
                     add("#define {}{}_MODULE 1\n"
+                        .format(self.config_prefix, sym.name))
+                else:
+                    add("#define {}{} 0\n"
                         .format(self.config_prefix, sym.name))
 
             elif sym.orig_type is STRING:
@@ -1494,6 +1497,8 @@ class Kconfig(object):
                 if sym.orig_type is HEX and \
                    not val.startswith(("0x", "0X")):
                     val = "0x" + val
+                if not val:
+                    val = "0"
 
                 add("#define {}{} {}\n"
                     .format(self.config_prefix, sym.name, val))
