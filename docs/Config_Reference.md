@@ -946,6 +946,8 @@ extended [G-Code command](G-Codes.md#z-tilt) becomes available.
 #   by observing command output.
 ```
 
+## [quad_gantry_level]
+
 Moving gantry leveling using 4 independently controlled Z motors.
 Corrects hyperbolic parabola effects (potato chip) on moving gantry
 which is more flexible.
