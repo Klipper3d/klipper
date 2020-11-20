@@ -91,7 +91,7 @@ move_alloc(void)
     irqstatus_t flag = irq_save();
     struct move_freed *mf = move_free_list;
     if (!mf)
-        shutdown("Move queue empty");
+        shutdown("Move queue overflow");
     move_free_list = mf->next;
     irq_restore(flag);
     return mf;
