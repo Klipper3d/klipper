@@ -1,6 +1,8 @@
 out
 *.so
-*.pyc
 .config
 .config.old
 klippy/.version
+# Common editor work files
+*~
+.#*
