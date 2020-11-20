@@ -90,7 +90,7 @@ class TestCase:
         # Call klippy
         sys.stderr.write("    Starting %s (%s)\n" % (
             self.fname, os.path.basename(config_fname)))
-        args = [ sys.executable, './klippy/klippy.py', config_fname,
+        args = [ sys.executable, './klippy/klippy/klippy.py', config_fname,
                  '-i', gcode_fname, '-o', TEMP_OUTPUT_FILE, '-v' ]
         for df in dict_fnames:
             args += ['-d', df]

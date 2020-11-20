@@ -37,7 +37,7 @@ create_virtualenv()
     [ ! -d ${PYTHONDIR} ] && virtualenv -p python2 ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
+    ${PYTHONDIR}/bin/pip install -e ${SRCDIR}/klippy
 }
 
 # Step 3: Install startup script
@@ -60,9 +60,9 @@ install_config()
 
 KLIPPY_USER=$USER
 
-KLIPPY_EXEC=${PYTHONDIR}/bin/python
+KLIPPY_EXEC=${PYTHONDIR}/bin/klippy
 
-KLIPPY_ARGS="${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /tmp/klippy.log"
+KLIPPY_ARGS="${HOME}/printer.cfg -l /tmp/klippy.log"
 
 EOF
 }

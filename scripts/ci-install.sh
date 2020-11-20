@@ -54,4 +54,4 @@ fi
 echo -e "\n\n=============== Install python virtualenv\n\n"
 cd ${MAIN_DIR}
 virtualenv -p python2 ${BUILD_DIR}/python-env
-${BUILD_DIR}/python-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
+${BUILD_DIR}/python-env/bin/pip install -e ${MAIN_DIR}/klippy

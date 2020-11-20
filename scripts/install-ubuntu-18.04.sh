@@ -39,7 +39,7 @@ create_virtualenv()
     [ ! -d ${PYTHONDIR} ] && virtualenv -p python2 ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
+    ${PYTHONDIR}/bin/pip install -e ${SRCDIR}/klippy
 }
 
 # Step 3: Install startup script
@@ -61,7 +61,7 @@ WantedBy=multi-user.target
 Type=simple
 User=$KLIPPER_USER
 RemainAfterExit=yes
-ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
+ExecStart=${PYTHONDIR}/bin/klippy ${HOME}/printer.cfg -l ${KLIPPER_LOG}
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
