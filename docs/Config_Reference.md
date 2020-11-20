@@ -160,7 +160,9 @@ max_z_accel:
 
 See
 [example-delta.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-delta.cfg)
-for an example linear delta kinematics config file.
+for an example linear delta kinematics config file. See the
+[delta calibrate guide](Delta_Calibrate.md) for information on
+calibration.
 
 Only parameters specific to linear delta printers are described here -
 see [common kinematic settings](#common-kinematic-settings) for
@@ -522,9 +524,10 @@ serial:
 
 ## [extruder]
 
-The extruder section is used to describe both the stepper
-controlling the printer extruder and the heater parameters for the
-nozzle.
+The extruder section is used to describe both the stepper controlling
+the printer extruder and the heater parameters for the nozzle. See the
+[pressure advance guide](Pressure_Advance.md) for information on
+tuning pressure advance.
 
 ```
 [extruder]
@@ -1463,10 +1466,11 @@ main printer config file. Wildcards may also be used (eg,
 
 Z height probe. One may define this section to enable Z height probing
 hardware. When this section is enabled, PROBE and QUERY_PROBE extended
-[g-code commands](G-Codes.md#probe) become available. The probe
-section also creates a virtual "probe:z_virtual_endstop" pin. One may
-set the stepper_z endstop_pin to this virtual pin on cartesian style
-printers that use the probe in place of a z endstop. If using
+[g-code commands](G-Codes.md#probe) become available. Also, see the
+[probe calibrate guide](Probe_Calibrate.md). The probe section also
+creates a virtual "probe:z_virtual_endstop" pin. One may set the
+stepper_z endstop_pin to this virtual pin on cartesian style printers
+that use the probe in place of a z endstop. If using
 "probe:z_virtual_endstop" then do not define a position_endstop in the
 stepper_z config section.
 
