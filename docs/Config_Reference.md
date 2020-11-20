@@ -675,6 +675,10 @@ from probed points. When using a probe to home the z-axis, it is
 recommended to define a safe_z_home section in printer.cfg to home
 toward the center of the print area.
 
+See the [bed mesh guide](Bed_Mesh.md) and
+[command reference](G-Codes.md#mesh-bed-leveling) for additional
+information.
+
 Visual Examples:
 ```
  rectangular bed, probe_count = 3,3:
@@ -782,6 +786,9 @@ Bed tilt compensation. One may define a bed_tilt config section to
 enable move transformations that account for a tilted bed. Note that
 bed_mesh and bed_tilt are incompatible; both cannot be defined.
 
+See the [command reference](G-Codes.md#bed-tilt) for additional
+information.
+
 ```
 [bed_tilt]
 #x_adjust: 0
@@ -814,6 +821,11 @@ bed_mesh and bed_tilt are incompatible; both cannot be defined.
 
 Tool to help adjust bed leveling screws. One may define a [bed_screws]
 config section to enable a BED_SCREWS_ADJUST g-code command.
+
+See the
+[leveling guide](Manual_Level.md#adjusting-bed-leveling-screws) and
+[command reference](G-Codes.md#bed-screws-helper) for additional
+information.
 
 ```
 [bed_screws]
@@ -856,6 +868,11 @@ Tool to help adjust bed screws tilt using Z probe. One may define a
 screws_tilt_adjust config section to enable a SCREWS_TILT_CALCULATE
 g-code command.
 
+See the
+[leveling guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)
+and [command reference](G-Codes.md#bed-screws-tilt-adjust-helper) for
+additional information.
+
 ```
 [screws_tilt_adjust]
 #screw1: 100,100
@@ -893,7 +910,7 @@ g-code command.
 Multiple Z stepper tilt adjustment. This feature enables independent
 adjustment of multiple z steppers (see the "stepper_z1" section) to
 adjust for tilt. If this section is present then a Z_TILT_ADJUST
-extended G-Code command becomes available.
+extended [G-Code command](G-Codes.md#z-tilt) becomes available.
 
 ```
 [z_tilt]
@@ -983,8 +1000,8 @@ Printer Skew Correction. It is possible to use software to correct
 printer skew across 3 planes, xy, xz, yz. This is done by printing a
 calibration model along a plane and measuring three lengths. Due to
 the nature of skew correction these lengths are set via gcode. See
-[skew correction](skew_correction.md) and [G-Codes](G-Codes.md) for
-details.
+[skew correction](skew_correction.md) and
+[command reference](G-Codes.md#skew-correction) for details.
 
 ```
 [skew_correction]
@@ -1065,6 +1082,10 @@ corresponding stepper config section (for example,
 endstop switches. Add a bare "[endstop_phase]" declaration to enable
 the ENDSTOP_PHASE_CALIBRATE command.
 
+See the [endstop phases guide](Endstop_Phase.md) and
+[command reference](G-Codes.md#endstop-adjustments-by-stepper-phase)
+for additional information.
+
 ```
 [endstop_phase stepper_z]
 #phases:
@@ -1098,7 +1119,8 @@ the ENDSTOP_PHASE_CALIBRATE command.
 ## [gcode_macro]
 
 G-Code macros (one may define any number of sections with a
-"gcode_macro" prefix).
+"gcode_macro" prefix). See the
+[command template guide](Command_Templates.md) for more information.
 
 ```
 [gcode_macro my_cmd]
@@ -1136,7 +1158,9 @@ G-Code macros (one may define any number of sections with a
 
 ## [delayed_gcode]
 
-Execute a gcode on a set delay.
+Execute a gcode on a set delay. See the
+[command template guide](Command_Templates.md#delayed-gcodes) for more
+information.
 
 ```
 [delayed_gcode my_delayed_gcode]
@@ -1191,8 +1215,8 @@ path: ~/.octoprint/uploads/
 ## [force_move]
 
 Support manually moving stepper motors for diagnostic purposes. Note,
-using this feature may place the printer in an invalid state - see
-[G-Codes](G-Codes.md) for important details.
+using this feature may place the printer in an invalid state - see the
+[command reference](G-Codes.md#force-movement) for important details.
 
 ```
 [force_move]
@@ -1204,7 +1228,8 @@ using this feature may place the printer in an invalid state - see
 ## [pause_resume]
 
 Pause/Resume functionality with support of position capture and
-restore.
+restore. See the [command reference](G-Codes.md#pause-resume) for more
+information.
 
 ```
 [pause_resume]
@@ -1218,8 +1243,8 @@ restore.
 Firmware filament retraction. This enables G10 (retract) and G11
 (unretract) GCODE commands issued by many slicers. The parameters
 below provide startup defaults, although the values can be adjusted
-via the SET_RETRACTION command, allowing per-filament settings and
-runtime tuning.
+via the SET_RETRACTION [command](G-Codes.md#firmware-retraction)),
+allowing per-filament settings and runtime tuning.
 
 ```
 [firmware_retraction]
@@ -1252,7 +1277,8 @@ Support for gcode arc (G2/G3) commands.
 
 ## [respond]
 
-Enable the "M118" and "RESPOND" extended commands.
+Enable the "M118" and "RESPOND" extended
+[commands](G-Codes.md#send-message-respond-to-host).
 
 ```
 [respond]
@@ -1271,7 +1297,8 @@ Enable the "M118" and "RESPOND" extended commands.
 
 ## [input_shaper]
 
-Enables input shaping.
+Enables [resonance compensation](Resonance_Compensation.md). Also see
+the [command reference](G-Codes.md#resonance-compensation).
 
 ```
 [input_shaper]
@@ -1310,7 +1337,8 @@ Enables input shaping.
 
 Support for ADXL345 accelerometers. This support allows one to query
 accelerometer measurements from the sensor. This enables an
-ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md) for more
+ACCELEROMETER_MEASURE command (see
+[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more
 information). The default chip name is "default", but one may specify
 an explicit name (eg, [adxl345 my_chip_name]).
 
@@ -1348,7 +1376,9 @@ cs_pin:
 Support for resonance testing and automatic input shaper calibration.
 In order to use most of the functionality of this module, additional
 software dependencies must be installed; refer to
-[Measuring Resonances](Measuring_Resonances.md) for more information.
+[Measuring Resonances](Measuring_Resonances.md) and the
+[command reference](G-Codes.md#resonance-testing-commands) for more
+information.
 
 ```
 [resonance_tester]
@@ -1431,11 +1461,12 @@ main printer config file. Wildcards may also be used (eg,
 
 Z height probe. One may define this section to enable Z height probing
 hardware. When this section is enabled, PROBE and QUERY_PROBE extended
-g-code commands become available. The probe section also creates a
-virtual "probe:z_virtual_endstop" pin. One may set the stepper_z
-endstop_pin to this virtual pin on cartesian style printers that use
-the probe in place of a z endstop. If using "probe:z_virtual_endstop"
-then do not define a position_endstop in the stepper_z config section.
+[g-code commands](G-Codes.md#probe) become available. The probe
+section also creates a virtual "probe:z_virtual_endstop" pin. One may
+set the stepper_z endstop_pin to this virtual pin on cartesian style
+printers that use the probe in place of a z endstop. If using
+"probe:z_virtual_endstop" then do not define a position_endstop in the
+stepper_z config section.
 
 ```
 [probe]
@@ -1494,9 +1525,9 @@ z_offset:
 
 BLTouch probe. One may define this section (instead of a probe
 section) to enable a BLTouch probe. See [BL-Touch guide](BLTouch.md)
-for further information on configuring a BLTouch. A virtual
-"probe:z_virtual_endstop" pin is also created (see the "probe" section
-for the details).
+and [command reference](G-Codes.md#bltouch) for further information. A
+virtual "probe:z_virtual_endstop" pin is also created (see the "probe"
+section for the details).
 
 ```
 [bltouch]
@@ -1593,6 +1624,10 @@ each additional extruder. The additional extruder sections should be
 named "extruder1", "extruder2", "extruder3", and so on. See the
 "extruder" section for a description of available parameters.
 
+See
+[sample-multi-extruder.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-multi-extruder.cfg)
+for an example configuration.
+
 ```
 [extruder1]
 #step_pin:
@@ -1620,6 +1655,10 @@ typically combined with extra extruders - the SET_DUAL_CARRIAGE
 command is often called at the same time as the ACTIVATE_EXTRUDER
 command. Be sure to park the carriages during deactivation.
 
+See
+[sample-idex.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-idex.cfg)
+for an example configuration.
+
 ```
 [dual_carriage]
 axis:
@@ -1642,6 +1681,9 @@ Support for additional steppers synchronized to the movement of an
 extruder (one may define any number of sections with an
 "extruder_stepper" prefix).
 
+See the [command reference](G-Codes.md#extruder-stepper-commands) for
+more information.
+
 ```
 [extruder_stepper my_extra_stepper]
 #extruder: extruder
@@ -1660,9 +1702,10 @@ extruder (one may define any number of sections with an
 Manual steppers (one may define any number of sections with a
 "manual_stepper" prefix). These are steppers that are controlled by
 the MANUAL_STEPPER g-code command. For example: "MANUAL_STEPPER
-STEPPER=my_stepper MOVE=10 SPEED=5". See [G-Codes](G-Codes.md) file
-for a description of the MANUAL_STEPPER command. The steppers are not
-connected to the normal printer kinematics.
+STEPPER=my_stepper MOVE=10 SPEED=5". See
+[G-Codes](G-Codes.md#manual-stepper-commands) file for a description
+of the MANUAL_STEPPER command. The steppers are not connected to the
+normal printer kinematics.
 
 ```
 [manual_stepper my_stepper]
@@ -2216,7 +2259,8 @@ to max_power.
 
 Manually controlled fan (one may define any number of sections with a
 "fan_generic" prefix). The speed of a manually controlled fan is set
-with the SET_FAN_SPEED gcode command.
+with the SET_FAN_SPEED
+[gcode command](G-Codes.md#manually-controlled-fans-commands).
 
 ```
 [fan_generic extruder_partfan]
@@ -2235,8 +2279,9 @@ with the SET_FAN_SPEED gcode command.
 ## [servo]
 
 Servos (one may define any number of sections with a "servo"
-prefix). The servos may be controlled using the SET_SERVO g-code
-command. For example: SET_SERVO SERVO=my_servo ANGLE=180
+prefix). The servos may be controlled using the SET_SERVO
+[g-code command](G-Codes.md#servo-commands). For example: SET_SERVO
+SERVO=my_servo ANGLE=180
 
 ```
 [servo my_servo]
@@ -2267,7 +2312,7 @@ pin:
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
 "SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-g-code commands.
+[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```
 [neopixel my_neopixel]
@@ -2295,7 +2340,7 @@ pin:
 Dotstar (aka APA102) LED support (one may define any number of
 sections with a "dotstar" prefix). One may set the LED color via
 "SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-g-code commands.
+[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```
 [dotstar my_dotstar]
@@ -2345,7 +2390,8 @@ pin:
 Run-time configurable output pins (one may define any number of
 sections with an "output_pin" prefix). Pins configured here will be
 setup as output pins and one may modify them at run-time using
-"SET_PIN PIN=my_pin VALUE=.1" type extended g-code commands.
+"SET_PIN PIN=my_pin VALUE=.1" type extended
+[g-code commands](G-Codes.md#custom-pin-commands).
 
 ```
 [output_pin my_pin]
@@ -3093,6 +3139,10 @@ will be assigned the given display data which can then be referenced
 in the display templates by their name surrounded by two "tilde"
 symbols i.e. `~my_display_glyph~`
 
+See
+[sample-glyphs.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-glyphs.cfg)
+for some examples.
+
 ```
 [display_glyph my_display_glyph]
 #data:
@@ -3217,6 +3267,9 @@ List of actions for menu element:
 Filament Switch Sensor. Support for filament insert and runout
 detection using a switch sensor, such as an endstop switch.
 
+See the [command reference](G-Codes.md#filament-sensor) for more
+information.
+
 ```
 [filament_switch_sensor my_sensor]
 #pause_on_runout: True
@@ -3250,7 +3303,8 @@ detection using a switch sensor, such as an endstop switch.
 
 ## [tsl1401cl_filament_width_sensor]
 
-TSLl401CL Based Filament Width Sensor
+TSLl401CL Based Filament Width Sensor. See the
+[guide](TSL1401CL_Filament_Width_Sensor.md) for more information.
 
 ```
 [tsl1401cl_filament_width_sensor]
@@ -3331,6 +3385,10 @@ with an "sx1509" prefix. Each expander provides a set of 16 pins
 (sx1509_my_sx1509:PIN_0 to sx1509_my_sx1509:PIN_15) which can be used
 in the printer configuration.
 
+See the
+[generic-duet2-duex.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-duet2-duex.cfg)
+file for an example.
+
 ```
 [sx1509 my_sx1509]
 i2c_address:
@@ -3379,6 +3437,10 @@ that are automatically adjusted by the board's vref and vssa
 monitoring pins. Be sure to define this config section above any
 config sections that use one these virtual pins.
 
+See the
+[generic-duet2-maestro.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-duet2-maestro.cfg)
+file for an example.
+
 ```
 [adc_scaled my_name]
 vref_pin:
@@ -3395,7 +3457,7 @@ vssa_pin:
 
 ## [replicape]
 
-Replicape support - see the
+Replicape support - see the [beaglebone guide](beaglebone.md) and the
 [generic-replicape.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-replicape.cfg)
 file for an example.
 
