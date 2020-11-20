@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, gc, select, math, time, logging, Queue as queue
+from typing import Type
 import greenlet
 import chelper, util
 
@@ -357,9 +358,12 @@ class EPollReactor(SelectReactor):
                     break
         self._g_dispatch = None
 
+# mypy help:
+# Reactor will be one of the reactor types, so annotate it with the base class
+
 # Use the poll based reactor if it is available
 try:
     select.poll
-    Reactor = PollReactor
+    Reactor = PollReactor # type: Type[SelectReactor]
 except:
     Reactor = SelectReactor
