@@ -1,6 +1,6 @@
 // Commands for controlling GPIO pins
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -109,8 +109,8 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
 struct soft_pwm_s {
     struct timer timer;
     uint32_t on_duration, off_duration, end_time;
-    uint32_t next_on_duration, next_off_duration;
-    uint32_t max_duration;
+    uint32_t next_on_duration;
+    uint32_t max_duration, cycle_time;
     struct gpio_out pin;
     uint8_t default_value, flags;
 };
@@ -154,7 +154,7 @@ soft_pwm_load_event(struct timer *timer)
     s->flags = flags;
     gpio_out_write(s->pin, flags & SPF_ON);
     if (!(flags & SPF_TOGGLING)) {
-        // Pin is in an always on (value=256) or always off (value=0) state
+        // Pin is in an always on or always off state
         if (!(flags & SPF_CHECK_END))
             return SF_DONE;
         s->timer.waketime = s->end_time = s->end_time + s->max_duration;
@@ -162,8 +162,8 @@ soft_pwm_load_event(struct timer *timer)
     }
     // Schedule normal pin toggle timer events
     s->timer.func = soft_pwm_toggle_event;
-    s->off_duration = s->next_off_duration;
     s->on_duration = s->next_on_duration;
+    s->off_duration = s->cycle_time - s->on_duration;
     s->timer.waketime = s->end_time + s->on_duration;
     s->end_time += s->max_duration;
     return SF_RESCHEDULE;
@@ -185,17 +185,29 @@ DECL_COMMAND(command_config_soft_pwm_out,
              " default_value=%c max_duration=%u");
 
 void
+command_set_soft_pwm_cycle_ticks(uint32_t *args)
+{
+    struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
+    irq_disable();
+    if (s->flags & SPF_HAVE_NEXT)
+        shutdown("Can not set soft pwm cycle ticks while updates pending");
+    s->cycle_time = args[1];
+    irq_enable();
+}
+DECL_COMMAND(command_set_soft_pwm_cycle_ticks,
+             "set_soft_pwm_cycle_ticks oid=%c cycle_ticks=%u");
+
+void
 command_schedule_soft_pwm_out(uint32_t *args)
 {
     struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
-    uint32_t time = args[1], next_on_duration = args[2],
-        next_off_duration = args[3];
+    uint32_t time = args[1], next_on_duration = args[2];
     uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
-    if (next_on_duration == 0 || next_off_duration == 0) {
+    if (next_on_duration == 0 || next_on_duration >= s->cycle_time) {
         next_flags |= next_on_duration ? SPF_NEXT_ON : 0;
         if (!!next_on_duration != s->default_value && s->max_duration)
             next_flags |= SPF_NEXT_CHECK_END;
-        next_on_duration = next_off_duration = 0;
+        next_on_duration = 0;
     } else {
         next_flags |= SPF_NEXT_ON | SPF_NEXT_TOGGLING;
         if (s->max_duration)
@@ -206,7 +218,6 @@ command_schedule_soft_pwm_out(uint32_t *args)
         shutdown("next soft pwm extends existing pwm");
     s->end_time = time;
     s->next_on_duration = next_on_duration;
-    s->next_off_duration = next_off_duration;
     s->flags = (s->flags & 0xf) | next_flags;
     if (s->flags & SPF_TOGGLING && timer_is_before(s->timer.waketime, time)) {
         // soft_pwm_toggle_event() will schedule a load event when ready
@@ -220,7 +231,7 @@ command_schedule_soft_pwm_out(uint32_t *args)
     irq_enable();
 }
 DECL_COMMAND(command_schedule_soft_pwm_out,
-             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u");
+             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u");
 
 void
 soft_pwm_shutdown(void)
