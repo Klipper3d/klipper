@@ -3,6 +3,8 @@
 # Stop script early on any error; check variables; be verbose
 set -eux
 
+. scripts/ci-funcs
+
 MAIN_DIR=${PWD}
 BUILD_DIR=${PWD}/ci_build
 CACHE_DIR=${PWD}/ci_cache
