@@ -2,7 +2,7 @@
 
 MAIN_DIR="${PWD}"
 BUILD_DIR="${PWD}/ci_build"
-DICTDIR="{BUILD_DIR}/dict"
+DICTDIR="${BUILD_DIR}/dict"
 CACHE_DIR=${PWD}/ci_cache
 
 # Our virtualenv
