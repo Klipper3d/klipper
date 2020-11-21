@@ -29,6 +29,9 @@ jobs:
       run: ./scripts/ci-build.sh 2>&1
 
 
+    - name: Set up klippy
+      run: ./scripts/ci-install-klippy.sh
+
     - name: Test klippy using dicts and configs
       run: ./scripts/ci-klippy-systest.sh
 
