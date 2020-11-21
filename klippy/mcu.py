@@ -442,6 +442,7 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
+        self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
         # Stats
@@ -588,11 +589,13 @@ class MCU:
             self._send_config(config_params['crc'])
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
+        if move_count < self._reserved_move_slots:
+            raise error("Too few moves available on MCU '%s'" % (self._name,))
         ffi_main, ffi_lib = chelper.get_ffi()
         self._steppersync = ffi_main.gc(
             ffi_lib.steppersync_alloc(self._serial.serialqueue,
                                       self._stepqueues, len(self._stepqueues),
-                                      move_count),
+                                      move_count-self._reserved_move_slots),
             ffi_lib.steppersync_free)
         ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
@@ -657,6 +660,8 @@ class MCU:
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
+    def request_move_queue_slot(self):
+        self._reserved_move_slots += 1
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
