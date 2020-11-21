@@ -5,10 +5,10 @@
 # Stop script early on any error; check variables; be verbose
 set -eux
 
-MAIN_DIR=${PWD}
-BUILD_DIR=${PWD}/ci_build
-CACHE_DIR=${PWD}/ci_cache
-mkdir -p ${BUILD_DIR} ${CACHE_DIR}
+. scripts/ci-funcs
+
+# May already exist; that's not an error
+mkdir -p ${BUILD_DIR} ${CACHE_DIR} || true
 
 
 ######################################################################
@@ -16,9 +16,12 @@ mkdir -p ${BUILD_DIR} ${CACHE_DIR}
 ######################################################################
 
 echo -e "\n\n=============== Install system dependencies\n\n"
-sudo apt-get install gcc-avr avr-libc pv libmpfr-dev libgmp-dev \
+# For convenience of testing, this is skipped if you're not a root
+# user to make the command easier to run locally as a non-root
+# user.  The script will be run as root in CI.
+sudo apt-get -y install gcc-avr avr-libc pv libmpfr-dev libgmp-dev \
      libmpc-dev texinfo libncurses5-dev bison flex python-virtualenv \
-     virtualenv python-dev libffi-dev build-essential \
+     virtualenv python-dev tox libffi-dev build-essential \
      libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi
 
 
@@ -45,13 +48,3 @@ else
     cd ${BUILD_DIR}
     tar xfz ${PRU_FILE}
 fi
-
-
-######################################################################
-# Create python virtualenv environment
-######################################################################
-
-echo -e "\n\n=============== Install python virtualenv\n\n"
-cd ${MAIN_DIR}
-virtualenv -p python2 ${BUILD_DIR}/python-env
-${BUILD_DIR}/python-env/bin/pip install -e ${MAIN_DIR}/klippy

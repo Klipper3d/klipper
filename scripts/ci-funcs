@@ -1,0 +1,31 @@
+# shellscript include providing constants and settings.
+
+MAIN_DIR="${PWD}"
+BUILD_DIR="${PWD}/ci_build"
+DICTDIR="{BUILD_DIR}/dict"
+CACHE_DIR=${PWD}/ci_cache
+
+# Our virtualenv
+export PATH="${BUILD_DIR}/pru-gcc/bin:${PATH}"
+PYTHON_VENV="${BUILD_DIR}/python-env"
+PYTHON="${PYTHON_VENV}/bin/python"
+KLIPPY="${PYTHON_VENV}/bin/klippy"
+
+######################################################################
+# Section grouping output message helpers
+######################################################################
+
+start_test()
+{
+    echo "::group::=============== $1 $2"
+    set -x
+}
+
+finish_test()
+{
+    set +x
+    echo "=============== Finished $2"
+    echo "::endgroup::"
+}
+
+
