@@ -17,7 +17,7 @@ Klipper is Free Software. See the [license](COPYING) or read the
 
 ## Modifications
 
-The scope of modifications is limited to adding support for DGUS
+The scope of modifications is limited to adding support for DWIN T5UID1
 touchscreens. This feature is only available for AVR/LPC176X
 micro-controllers and it needs to be configured before compilation.
 
