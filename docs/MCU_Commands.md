@@ -197,8 +197,8 @@ only of interest to developers looking to gain insight into Klipper.
   same 'oid' parameter must have been issued during micro-controller
   configuration.
 
-* `schedule_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to
-  a hardware PWM output pin. See the 'schedule_digital_out' and
+* `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
+  hardware PWM output pin. See the 'schedule_digital_out' and
   'config_pwm_out' commands for more info.
 
 * `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
