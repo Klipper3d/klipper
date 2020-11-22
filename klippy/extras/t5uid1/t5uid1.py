@@ -342,22 +342,22 @@ class T5UID1:
         self.heaters.lookup_heater('heater_bed')
 
         try:
-            self.bed_mesh = self.printer.lookup_object(config, 'bed_mesh')
-        except Exception:
-            logging.debug("No 'bed_mesh' configuration found")
+            self.bed_mesh = self.printer.lookup_object('bed_mesh')
+        except self.printer.config_error:
+            logging.warning("No 'bed_mesh' configuration found")
             self.bed_mesh = None
 
         try:
-            self.probe = self.printer.lookup_object(config, 'probe')
-        except Exception:
-            logging.debug("No 'probe' configuration found")
+            self.probe = self.printer.lookup_object('probe')
+        except self.printer.config_error:
+            logging.warning("No 'probe' configuration found")
             self.probe = None
 
         has_bltouch = False
         try:
             self.printer.lookup_object('bltouch')
             has_bltouch = True
-        except Exception:
+        except self.printer.config_error:
             pass
 
         self._status_data.update({
@@ -434,15 +434,12 @@ class T5UID1:
             handled = True
             try:
                 self._vars[name].data_received(data)
-            except ValueError as e:
-                logging.exception("Exception in '%s' receive handler: %s"
-                                  % (name, str(e)))
             except Exception as e:
                 logging.exception("Unhandled exception in '%s' receive"
-                                  " handler: %s" % (name, str(e)))
+                                  " handler: %s", name, str(e))
         if not handled:
-            logging.info("Received unhandled T5UID1 message for address %s"
-                         % (hex(address),))
+            logging.warning("Received unhandled T5UID1 message for address %s",
+                         hex(address))
 
     def send_var(self, name):
         if name not in self._vars:
@@ -565,8 +562,7 @@ class T5UID1:
         try:
             self.send_page_vars(self._current_page, complete=False)
         except Exception as e:
-            logging.exception("Unhandled exception in update timer: %s"
-                              % (name, str(e)))
+            logging.exception("Unhandled exception in update timer: %s", str(e))
         return eventtime + self._update_interval
 
     def _do_ping(self, eventtime):
