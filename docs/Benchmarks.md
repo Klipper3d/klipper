@@ -427,5 +427,5 @@ It is possible to run timing tests on the host software using the
 large and complex G-Code file and timing how long it takes for the
 host software to process it. For example:
 ```
-time ~/klippy-env/bin/python ./klippy/klippy.py config/example.cfg -i something_complex.gcode -o /dev/null -d out/klipper.dict
+time ~/klippy-env/bin/python ./klippy/klippy.py config/example-cartesian.cfg -i something_complex.gcode -o /dev/null -d out/klipper.dict
 ```

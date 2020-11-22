@@ -104,22 +104,24 @@ config STACK_SIZE
 
 choice
     prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F103 || MACH_STM32F070
-    config STM32_FLASH_START_800
-        bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
-    config STM32_FLASH_START_4000
-        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
-    config STM32_FLASH_START_8000
-        bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_10000
         bool "64KiB bootloader (Alfawise)" if MACH_STM32F103
+    config STM32_FLASH_START_800
+        bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
+
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
+    config STM32_FLASH_START_4000
+        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
+
     config STM32_FLASH_START_0000
         bool "No bootloader"
 endchoice

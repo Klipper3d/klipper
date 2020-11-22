@@ -160,7 +160,7 @@ class MCU_digital_out:
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         self.set_digital(print_time, value >= 0.5)
 
 class MCU_pwm:
@@ -196,6 +196,9 @@ class MCU_pwm:
         self._is_static = is_static
     def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
+        curtime = self._mcu.get_printer().get_reactor().monotonic()
+        printtime = self._mcu.estimated_print_time(curtime)
+        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
@@ -213,9 +216,6 @@ class MCU_pwm:
                    self._start_value * self._pwm_max,
                    self._shutdown_value * self._pwm_max,
                    self._mcu.seconds_to_clock(self._max_duration)))
-            curtime = self._mcu.get_printer().get_reactor().monotonic()
-            printtime = self._mcu.estimated_print_time(curtime)
-            self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
             svalue = int(self._start_value * self._pwm_max + 0.5)
             self._mcu.add_config_cmd("schedule_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
@@ -233,29 +233,37 @@ class MCU_pwm:
             return
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_soft_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
+            "config_soft_pwm_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
-            % (self._oid, self._pin, cycle_ticks,
-               self._start_value >= 1.0, self._shutdown_value >= 0.5,
+            % (self._oid, self._pin, self._start_value >= 1.0,
+               self._shutdown_value >= 0.5,
                self._mcu.seconds_to_clock(self._max_duration)))
-        curtime = self._mcu.get_printer().get_reactor().monotonic()
-        printtime = self._mcu.estimated_print_time(curtime)
-        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.100)
         svalue = int(self._start_value * self._pwm_max + 0.5)
         self._mcu.add_config_cmd(
-            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
-            % (self._oid, self._last_clock, svalue), is_init=True)
+            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d off_ticks=%d"
+            % (self._oid, self._last_clock, svalue, cycle_ticks - svalue),
+            is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u",
+            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u",
             cq=cmd_queue)
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
         clock = self._mcu.print_time_to_clock(print_time)
+        minclock = self._last_clock
+        self._last_clock = clock
         if self._invert:
             value = 1. - value
-        value = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-        self._set_cmd.send([self._oid, clock, value],
-                           minclock=self._last_clock, reqclock=clock)
-        self._last_clock = clock
+        if self._hardware_pwm:
+            v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+            self._set_cmd.send([self._oid, clock, v],
+                               minclock=minclock, reqclock=clock)
+            return
+        # Soft pwm update
+        if cycle_time is None:
+            cycle_time = self._cycle_time
+        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
+        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
+        self._set_cmd.send([self._oid, clock, on_ticks, cycle_ticks - on_ticks],
+                           minclock=minclock, reqclock=clock)
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -331,8 +339,8 @@ class RetryAsyncCommand:
         if params['#sent_time'] >= self.min_query_time:
             self.min_query_time = self.reactor.NEVER
             self.reactor.async_complete(self.completion, params)
-    def get_response(self, cmd, cmd_queue, minclock=0):
-        self.serial.raw_send_wait_ack(cmd, minclock, minclock, cmd_queue)
+    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+        self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         first_query_time = query_time = self.reactor.monotonic()
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
@@ -360,11 +368,12 @@ class CommandQueryWrapper:
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-    def send(self, data=(), minclock=0):
+    def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         xh = self._xmit_helper(self._serial, self._response, self._oid)
+        reqclock = max(minclock, reqclock)
         try:
-            return xh.get_response(cmd, self._cmd_queue, minclock=minclock)
+            return xh.get_response(cmd, self._cmd_queue, minclock, reqclock)
         except serialhdl.error as e:
             raise error(str(e))
 
@@ -383,20 +392,14 @@ class CommandWrapper:
 class MCU:
     error = error
     def __init__(self, config, clocksync):
-        self._printer = config.get_printer()
+        self._printer = printer = config.get_printer()
         self._clocksync = clocksync
-        self._reactor = self._printer.get_reactor()
+        self._reactor = printer.get_reactor()
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
-        self._printer.register_event_handler("klippy:connect", self._connect)
-        self._printer.register_event_handler("klippy:mcu_identify",
-                                             self._mcu_identify)
-        self._printer.register_event_handler("klippy:shutdown", self._shutdown)
-        self._printer.register_event_handler("klippy:disconnect",
-                                             self._disconnect)
         # Serial port
-        self._serialport = config.get('serial', '/dev/ttyS0')
+        self._serialport = config.get('serial')
         serial_rts = True
         if config.get('restart_method', None) == "cheetah":
             # Special case: Cheetah boards require RTS to be deasserted, else
@@ -420,7 +423,7 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_msg = ""
         # Config building
-        self._printer.lookup_object('pins').register_chip(self._name, self)
+        printer.lookup_object('pins').register_chip(self._name, self)
         self._oid_count = 0
         self._config_callbacks = []
         self._config_cmds = []
@@ -439,6 +442,12 @@ class MCU:
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
+        # Register handlers
+        printer.register_event_handler("klippy:connect", self._connect)
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
+        printer.register_event_handler("klippy:shutdown", self._shutdown)
+        printer.register_event_handler("klippy:disconnect", self._disconnect)
     # Serial callbacks
     def _handle_mcu_stats(self, params):
         count = params['count']

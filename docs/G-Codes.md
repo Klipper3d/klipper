@@ -44,9 +44,9 @@ possible G-Code command. Instead, Klipper prefers human readable
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom Klipper gcode_macro (see
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details). For example, one might use this to implement: `G12`,
-`G29`, `G30`, `G31`, `M42`, `M80`, `M81`, `T1`, etc.
+[config reference](Config_Reference.md#gcode_macro) for details). For
+example, one might use this to implement: `G12`, `G29`, `G30`, `G31`,
+`M42`, `M80`, `M81`, `T1`, etc.
 
 ## G-Code SD card commands
 
@@ -242,7 +242,10 @@ is enabled:
 
 The following command is available when an "output_pin" config section
 is enabled:
-- `SET_PIN PIN=config_name VALUE=<value>`
+- `SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`
+
+Note: Hardware PWM does not currently support the CYCLE_TIME parameter and will
+use the cycle time defined in the config.
 
 ## Manually Controlled Fans Commands
 
@@ -256,8 +259,9 @@ is enabled:
 The following command is available when "neopixel" or "dotstar" config
 sections are enabled:
 - `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-  [INDEX=<index>] [TRANSMIT=0]`: This sets the LED output. Each color
-  <value> must be between 0.0 and 1.0. If multiple LED chips are
+  WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
+  output. Each color <value> must be between 0.0 and 1.0. The WHITE
+  option is only valid on RGBW LEDs. If multiple LED chips are
   daisy-chained then one may specify INDEX to alter the color of just
   the given chip (1 for the first chip, 2 for the second, etc.). If
   INDEX is not provided then all LEDs in the daisy-chain will be set
@@ -316,9 +320,7 @@ enabled:
   [SAMPLES_RESULT=median|average]`: Move the nozzle downwards until
   the probe triggers. If any of the optional parameters are provided
   they override their equivalent setting in the probe config section
-  (see
-  [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-  for details).
+  (see [config reference](Config_Reference.md#probe) for details).
 - `QUERY_PROBE`: Report the current status of the probe ("triggered"
   or "open").
 - `PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
@@ -618,15 +620,17 @@ been enabled:
 The following command is enabled if an [input_shaper] config section has
 been enabled:
   - `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-    [SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
+    [SHAPER_FREQ_Y=<shaper_freq_y>]
+    [DAMPING_RATIO_X=<damping_ratio_x>]
     [DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-    [SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`: Modify
-    input shaper parameters. Note that SHAPER_TYPE parameter resets input shaper
-    for both X and Y axes even if different shaper types have been configured
-    in [input_shaper] section. SHAPER_TYPE cannot be used together with either
-    of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters. See
-    [example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-    for more details on each of these parameters.
+    [SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+    Modify input shaper parameters. Note that SHAPER_TYPE parameter
+    resets input shaper for both X and Y axes even if different shaper
+    types have been configured in [input_shaper] section. SHAPER_TYPE
+    cannot be used together with either of SHAPER_TYPE_X and
+    SHAPER_TYPE_Y parameters. See
+    [config reference](Config_Reference.md#input_shaper) for more
+    details on each of these parameters.
 
 ## Temperature Fan Commands
 
@@ -639,14 +643,53 @@ section is enabled:
 
 ## Adxl345 Accelerometer Commands
 
-The following command is available when an "adxl345" config section is
+The following commands are available when an "adxl345" config section is
 enabled:
 - `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
   [NAME=<value>]`: Starts accelerometer measurements at the requested
   number of samples per second. If CHIP is not specified it defaults
   to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
-  and 3200. If RATE is zero (or not specified) then the current series
-  of measurements are stopped and the results are written to a file
-  named `/tmp/adxl345-<name>.csv` where "<name>" is the optional NAME
-  parameter. If NAME is not specified it defaults to the current time
-  in "YYYYMMDD_HHMMSS" format.
+  and 3200. The command works in a start-stop mode: when executed for
+  the first time, it starts the measurements, next execution stops them.
+  If RATE is not specified, then the default value is used (either from
+  `printer.cfg` or `3200` default value). The results of measurements
+  are written to a file named `/tmp/adxl345-<name>.csv` where "<name>"
+  is the optional NAME parameter. If NAME is not specified it defaults
+  to the current time in "YYYYMMDD_HHMMSS" format.
+- `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
+  accelerometer for the current value. If CHIP is not specified it
+  defaults to "default". If RATE is not specified, the default value is
+  used. This command is useful to test the connection to the ADXL345
+  accelerometer: one of the returned values should be a free-fall
+  acceleration (+/- some noise of the chip).
+
+## Resonance Testing Commands
+
+The following commands are available when a "resonance_tester" config section
+is enabled:
+- `MEASURE_AXES_NOISE`: Measures and outputs the noise for all axes of all
+  enabled accelerometer chips.
+- `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data> [NAME=<name>]
+  [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
+  Runs the resonance test in all configured probe points for the requested
+  axis (X or Y) and measures the acceleration using the accelerometer chips
+  configured for the respective axis. `OUTPUT` parameter is a comma-separated
+  list of which outputs will be written. If `raw_data` is requested, then the
+  raw accelerometer data is written into a file or a series of files
+  `/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
+  the name generated only if more than 1 probe point is configured). If
+  `resonances` is specified, the frequency response is calculated (across
+  all probe points) and written into `/tmp/resonances_<axis>_<name>.csv`
+  file. If unset, OUTPUT defaults to `resonances`, and NAME defaults to
+  the current time in "YYYYMMDD_HHMMSS" format.
+- `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>]
+  [FREQ_START=<min_freq>] [FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]`:
+  Similarly to `TEST_RESONANCES`, runs the resonance test as configured, and
+  tries to find the optimal parameters for the input shaper for the requested
+  axis (or both X and Y axes if `AXIS` parameter is unset). The results of the
+  tuning are printed to the console, and the frequency responses and the
+  different input shapers values are written to a CSV file(s)
+  `/tmp/calibration_data_<axis>_<name>.csv`. Unless specified, NAME defaults
+  to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested
+  input shaper parameters can be persisted in the config by issuing
+  `SAVE_CONFIG` command.
