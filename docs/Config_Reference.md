@@ -1164,8 +1164,8 @@ G-Code macros (one may define any number of sections with a
 ## [delayed_gcode]
 
 Execute a gcode on a set delay. See the
-[command template guide](Command_Templates.md#delayed-gcodes) for more
-information.
+[command template guide](Command_Templates.md#delayed-gcodes) and
+[command reference](G-Codes.md#delayed-gcode) for more information.
 
 ```
 [delayed_gcode my_delayed_gcode]
@@ -2222,6 +2222,9 @@ sections with a "temperature_fan" prefix). A "temperature fan" is a
 fan that will be enabled whenever its associated sensor is above a set
 temperature. By default, a temperature_fan has a shutdown_speed equal
 to max_power.
+
+See the [command reference](G-Codes.md#temperature-fan-commands) for
+additional information.
 
 ```
 [temperature_fan my_temp_fan]
