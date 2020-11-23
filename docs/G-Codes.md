@@ -268,7 +268,7 @@ The following command is available when a
 [dotstar config section](Config_Reference.md#dotstar) is enabled:
 - `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
   WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
-  output. Each color <value> must be between 0.0 and 1.0. The WHITE
+  output. Each color `<value>` must be between 0.0 and 1.0. The WHITE
   option is only valid on RGBW LEDs. If multiple LED chips are
   daisy-chained then one may specify INDEX to alter the color of just
   the given chip (1 for the first chip, 2 for the second, etc.). If
@@ -689,7 +689,7 @@ The following commands are available when an
   them. If RATE is not specified, then the default value is used
   (either from `printer.cfg` or `3200` default value). The results of
   measurements are written to a file named `/tmp/adxl345-<name>.csv`
-  where "<name>" is the optional NAME parameter. If NAME is not
+  where `<name>` is the optional NAME parameter. If NAME is not
   specified it defaults to the current time in "YYYYMMDD_HHMMSS"
   format.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
