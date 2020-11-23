@@ -31,6 +31,8 @@ class ControllerFan:
         self.stepper_names = [s.get_name() for s in kin.get_steppers()]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.NOW)
+    def get_status(self, eventtime):
+        return self.fan.get_status(eventtime)
     def callback(self, eventtime):
         power = 0.
         active = False
