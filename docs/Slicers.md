@@ -22,9 +22,8 @@ See
 [sample-macros.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-macros.cfg)
 for example START_PRINT and END_PRINT macros.
 
-See the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-file for details on defining a gcode_macro.
+See the [config reference](Config_Reference.md#gcode_macro) for
+details on defining a gcode_macro.
 
 # Large retraction settings may require tuning Klipper
 

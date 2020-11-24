@@ -174,12 +174,10 @@ class MAX31856(SensorBase):
             "16" : MAX31856_CR1_AVGSEL16
         }
         value |= config.getchoice('tc_averaging_count', averages, "1")
-        cmds.append(0x80 + MAX31856_CR1_REG)
         cmds.append(value)
 
         value = (MAX31856_MASK_VOLTAGE_UNDER_OVER_FAULT |
                  MAX31856_MASK_THERMOCOUPLE_OPEN_FAULT)
-        cmds.append(0x80 + MAX31856_MASK_REG)
         cmds.append(value)
         return cmds
 

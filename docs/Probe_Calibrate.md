@@ -130,9 +130,8 @@ different parameters to see their impact - see the
 generally obtains repeatable results but has an occasional outlier,
 then it may be possible to account for that by using multiple samples
 on each probe - read the description of the probe `samples` config
-parameters in the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-file for more details.
+parameters in the [config reference](Config_Reference.md#probe) for
+more details.
 
 If new probe speed, samples count, or other settings are needed, then
 update the printer.cfg file and issue a `RESTART` command. If so, it
