@@ -15,8 +15,8 @@ communication with the Klipper developers.
 # Configuration and Tuning Guides
 
 - [Installation](Installation.md): Guide to installing Klipper.
-  - [config/example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
-    a reference for the config file.
+- [Config Reference](Config_Reference.md): Description of config
+  parameters.
 - [Config checks](Config_checks.md): Verify basic pin settings in the
   config file.
 - [Bed level](Bed_Level.md): Information on "bed leveling" in Klipper.
