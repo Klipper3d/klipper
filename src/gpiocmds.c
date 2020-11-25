@@ -20,7 +20,14 @@ struct digital_out_s {
     struct timer timer;
     struct gpio_out pin;
     uint32_t max_duration;
-    uint8_t value, default_value;
+    uint8_t default_value;
+    struct move_queue_head mq;
+};
+
+struct digital_move {
+    struct move_node node;
+    uint32_t waketime;
+    uint8_t value;
 };
 
 static uint_fast8_t
@@ -32,12 +39,32 @@ digital_end_event(struct timer *timer)
 static uint_fast8_t
 digital_out_event(struct timer *timer)
 {
+    // Apply next update and remove it from queue
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
-    gpio_out_write(d->pin, d->value);
-    if (d->value == d->default_value || !d->max_duration)
-        return SF_DONE;
-    d->timer.waketime += d->max_duration;
-    d->timer.func = digital_end_event;
+    struct move_node *mn = move_queue_pop(&d->mq);
+    struct digital_move *m = container_of(mn, struct digital_move, node);
+    uint8_t value = m->value;
+    gpio_out_write(d->pin, value);
+    move_free(m);
+
+    // Check if more updates queued
+    if (move_queue_empty(&d->mq)) {
+        if (value == d->default_value || !d->max_duration)
+            return SF_DONE;
+
+        // Start the safety timeout
+        d->timer.waketime += d->max_duration;
+        d->timer.func = digital_end_event;
+        return SF_RESCHEDULE;
+    }
+
+    // Schedule next update
+    struct move_node *nn = move_queue_first(&d->mq);
+    uint32_t wake = container_of(nn, struct digital_move, node)->waketime;
+    if (value != d->default_value && d->max_duration
+        && timer_is_before(d->timer.waketime + d->max_duration, wake))
+        shutdown("Scheduled digital out event will exceed max_duration");
+    d->timer.waketime = wake;
     return SF_RESCHEDULE;
 }
 
@@ -50,29 +77,46 @@ command_config_digital_out(uint32_t *args)
     d->pin = pin;
     d->default_value = args[3];
     d->max_duration = args[4];
+    d->timer.func = digital_out_event;
+    move_queue_setup(&d->mq, sizeof(struct digital_move));
 }
 DECL_COMMAND(command_config_digital_out,
              "config_digital_out oid=%c pin=%u value=%c default_value=%c"
              " max_duration=%u");
 
 void
-command_schedule_digital_out(uint32_t *args)
+command_queue_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
+    struct digital_move *m = move_alloc();
+    m->waketime = args[1];
+    m->value = args[2];
+
+    irq_disable();
+    int need_add_timer = move_queue_push(&m->node, &d->mq);
+    irq_enable();
+    if (!need_add_timer)
+        return;
+
+    // queue was empty and a timer needs to be added
     sched_del_timer(&d->timer);
+    if (d->timer.func == digital_end_event
+        && timer_is_before(d->timer.waketime, m->waketime))
+        shutdown("Scheduled digital out event will exceed max_duration");
     d->timer.func = digital_out_event;
-    d->timer.waketime = args[1];
-    d->value = args[2];
+    d->timer.waketime = m->waketime;
     sched_add_timer(&d->timer);
 }
-DECL_COMMAND(command_schedule_digital_out,
-             "schedule_digital_out oid=%c clock=%u value=%c");
+DECL_COMMAND(command_queue_digital_out,
+             "queue_digital_out oid=%c clock=%u value=%c");
 
 void
 command_update_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
     sched_del_timer(&d->timer);
+    if (!move_queue_empty(&d->mq))
+        shutdown("update_digital_out not valid with active queue");
     uint8_t value = args[1];
     gpio_out_write(d->pin, value);
     if (value != d->default_value && d->max_duration) {
@@ -90,6 +134,8 @@ digital_out_shutdown(void)
     struct digital_out_s *d;
     foreach_oid(i, d, command_config_digital_out) {
         gpio_out_write(d->pin, d->default_value);
+        d->timer.func = digital_out_event;
+        move_queue_clear(&d->mq);
     }
 }
 DECL_SHUTDOWN(digital_out_shutdown);
