@@ -201,7 +201,7 @@ only of interest to developers looking to gain insight into Klipper.
   hardware PWM output pin. See the 'queue_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
+* `queue_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
   change to a software PWM output pin. Because the output switching is
   implemented in the micro-controller software, it is recommended that
   the sum of on_ticks and off_ticks parameters corresponds to a time

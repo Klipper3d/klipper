@@ -232,6 +232,7 @@ class MCU_pwm:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
                                      % (self._pin, self._start_value >= 0.5))
             return
+        self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_soft_pwm_out oid=%d pin=%s value=%d"
@@ -245,10 +246,10 @@ class MCU_pwm:
         self._last_cycle_ticks = cycle_ticks
         svalue = int(self._start_value * cycle_ticks + 0.5)
         self._mcu.add_config_cmd(
-            "schedule_soft_pwm_out oid=%d clock=%d on_ticks=%d"
+            "queue_soft_pwm_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+            "queue_soft_pwm_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
         self._set_cycle_ticks = self._mcu.lookup_command(
             "set_soft_pwm_cycle_ticks oid=%c cycle_ticks=%u", cq=cmd_queue)
     def set_pwm(self, print_time, value, cycle_time=None):
