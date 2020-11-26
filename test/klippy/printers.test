@@ -110,6 +110,7 @@ CONFIG ../../config/generic-smoothieboard.cfg
 # Printers using the stm32f070
 DICTIONARY stm32f070.dict
 CONFIG ../../config/printer-monoprice-mini-delta-2017.cfg
+CONFIG ../../config/printer-monoprice-select-mini-v2-2018.cfg
 
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
