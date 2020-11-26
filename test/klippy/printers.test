@@ -39,6 +39,7 @@ CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-mtw-create-2015.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-sovol-sv01-2020.cfg
+CONFIG ../../config/printer-sunlu-s8-2020.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-tevo-tarantula-pro-2020.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
