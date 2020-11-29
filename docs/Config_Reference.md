@@ -3212,6 +3212,11 @@ List of actions for menu element:
 
 ```
 # Common parameters available for all menu config sections.
+#[menu __some_list __some_name]
+#type: disabled
+#   Permanently disabled menu element, only required attribute is 'type'.
+#   Allows you to easily disable/hide existing menu items.
+
 #[menu some_name]
 #type:
 #   One of command, input, list, text:
