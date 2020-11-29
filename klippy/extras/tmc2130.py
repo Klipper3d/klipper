@@ -173,7 +173,6 @@ class TMCCurrentHelper:
 class MCU_TMC_SPI_chain:
     def __init__(self, config, share):
         self.printer = config.get_printer()        
-       # self.chain = chain
         self.spi = bus.MCU_SPI_from_config(
         config, 3,default_speed=4000000, share_type=share)
     def _build_cmd(self, data, chain):
