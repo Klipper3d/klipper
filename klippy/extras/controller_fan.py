@@ -49,12 +49,11 @@ class ControllerFan:
         elif self.last_on < self.idle_timeout:
             speed = self.idle_speed
             self.last_on += 1
-        if speed == self.last_speed:
-            return
-        self.last_speed = speed
-        curtime = self.printer.get_reactor().monotonic()
-        print_time = self.fan.get_mcu().estimated_print_time(curtime)
-        self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
+        if speed != self.last_speed:
+            self.last_speed = speed
+            curtime = self.printer.get_reactor().monotonic()
+            print_time = self.fan.get_mcu().estimated_print_time(curtime)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
         return eventtime + 1.
 
 def load_config_prefix(config):

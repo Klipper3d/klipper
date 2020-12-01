@@ -32,12 +32,11 @@ class PrinterHeaterFan:
             current_temp, target_temp = heater.get_temp(eventtime)
             if target_temp or current_temp > self.heater_temp:
                 speed = self.fan_speed
-        if speed == self.last_speed:
-            return
-        self.last_speed = speed
-        curtime = self.printer.get_reactor().monotonic()
-        print_time = self.fan.get_mcu().estimated_print_time(curtime)
-        self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
+        if speed != self.last_speed:
+            self.last_speed = speed
+            curtime = self.printer.get_reactor().monotonic()
+            print_time = self.fan.get_mcu().estimated_print_time(curtime)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
         return eventtime + 1.
 
 def load_config_prefix(config):
