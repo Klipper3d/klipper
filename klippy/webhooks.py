@@ -288,7 +288,7 @@ class WebHooks:
         self._endpoints[path] = callback
 
     def _handle_list_endpoints(self, web_request):
-        web_request.send({'endpoints': self._endpoints.keys()})
+        web_request.send({'endpoints': list(self._endpoints.keys())})
 
     def _handle_info_request(self, web_request):
         client_info = web_request.get_dict('client_info', None)

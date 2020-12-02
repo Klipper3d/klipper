@@ -40,10 +40,10 @@ kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
 #   corexy, corexz, delta, rotary_delta, polar, winch, or none. This
 #   parameter must be specified.
-max_velocity: 500
+max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
 #   print). This parameter must be specified.
-max_accel: 3000
+max_accel:
 #   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
 #   print). This parameter must be specified.
 #max_accel_to_decel:
@@ -197,13 +197,13 @@ delta_radius:
 # left tower (at 210 degrees). This section also controls the homing
 # parameters (homing_speed, homing_retract_dist) for all towers.
 [stepper_a]
-position_endstop: 297.05
+position_endstop:
 #   Distance (in mm) between the nozzle and the bed when the nozzle is
 #   in the center of the build area and the endstop triggers. This
 #   parameter must be provided for stepper_a; for stepper_b and
 #   stepper_c this parameter defaults to the value specified for
 #   stepper_a.
-arm_length: 333.0
+arm_length:
 #   Length (in mm) of the diagonal rod that connects this tower to the
 #   print head. This parameter must be provided for stepper_a; for
 #   stepper_b and stepper_c this parameter defaults to the value
@@ -225,7 +225,7 @@ arm_length: 333.0
 # g-code command that can calibrate the tower endstop positions and
 # angles.
 [delta_calibrate]
-radius: 50
+radius:
 #   Radius (in mm) of the area that may be probed. This is the radius
 #   of nozzle coordinates to be probed; if using an automatic probe
 #   with an XY offset then choose a radius small enough so that the
@@ -327,7 +327,7 @@ kinematics: polar
 # The stepper_bed section is used to describe the stepper controlling
 # the bed.
 [stepper_bed]
-step_distance: 0.001963495
+step_distance:
 #   On a polar printer the step_distance is the amount each step pulse
 #   moves the bed in radians (for example, a 1.8 degree stepper with
 #   16 micro-steps would be 2 * pi * (1.8 / 360) / 16 == 0.001963495).
@@ -367,7 +367,7 @@ timeout and some boundary checks are not implemented.
 ```
 [printer]
 kinematics: rotary_delta
-max_z_velocity: 50
+max_z_velocity:
 #   For delta printers this limits the maximum velocity (in mm/s) of
 #   moves with z axis movement. This setting can be used to reduce the
 #   maximum speed of up/down moves (which require a higher step rate
@@ -376,13 +376,13 @@ max_z_velocity: 50
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
 #   to.  The default is 0.
-shoulder_radius: 33.900
+shoulder_radius:
 #   Radius (in mm) of the horizontal circle formed by the three
 #   shoulder joints, minus the radius of the circle formed by the
 #   effector joints. This parameter may also be calculated as:
 #     shoulder_radius = (delta_f - delta_e) / sqrt(12)
 #   This parameter must be provided.
-shoulder_height: 412.900
+shoulder_height:
 #   Distance (in mm) of the shoulder joints from the bed, minus the
 #   effector toolhead height. This parameter must be provided.
 
@@ -390,23 +390,23 @@ shoulder_height: 412.900
 # right arm (at 30 degrees). This section also controls the homing
 # parameters (homing_speed, homing_retract_dist) for all arms.
 [stepper_a]
-step_distance: 0.001963495
+step_distance:
 #   On a rotary delta printer the step_distance is the amount each
 #   step pulse moves the upper arm in radians (for example, a directly
 #   connected 1.8 degree stepper with 16 micro-steps would be 2 * pi *
 #   (1.8 / 360) / 16 == 0.001963495). This parameter must be provided.
-position_endstop: 252
+position_endstop:
 #   Distance (in mm) between the nozzle and the bed when the nozzle is
 #   in the center of the build area and the endstop triggers. This
 #   parameter must be provided for stepper_a; for stepper_b and
 #   stepper_c this parameter defaults to the value specified for
 #   stepper_a.
-upper_arm_length: 170.000
+upper_arm_length:
 #   Length (in mm) of the arm connecting the "shoulder joint" to the
 #   "elbow joint". This parameter must be provided for stepper_a; for
 #   stepper_b and stepper_c this parameter defaults to the value
 #   specified for stepper_a.
-lower_arm_length: 320.000
+lower_arm_length:
 #   Length (in mm) of the arm connecting the "elbow joint" to the
 #   "effector joint". This parameter must be provided for stepper_a;
 #   for stepper_b and stepper_c this parameter defaults to the value
@@ -427,7 +427,7 @@ lower_arm_length: 320.000
 # The delta_calibrate section enables a DELTA_CALIBRATE extended
 # g-code command that can calibrate the shoulder endstop positions.
 [delta_calibrate]
-radius: 50
+radius:
 #   Radius (in mm) of the area that may be probed. This is the radius
 #   of nozzle coordinates to be probed; if using an automatic probe
 #   with an XY offset then choose a radius small enough so that the
@@ -463,13 +463,13 @@ kinematics: winch
 # cable winch. A minimum of 3 and a maximum of 26 cable winches may be
 # defined (stepper_a to stepper_z) though it is common to define 4.
 [stepper_a]
-step_distance: .01
+step_distance:
 #   The step_distance is the nominal distance (in mm) the toolhead
 #   moves towards the cable winch on each step pulse. This parameter
 #   must be provided.
-anchor_x: 0
-anchor_y: -2000
-anchor_z: -100
+anchor_x:
+anchor_y:
+anchor_z:
 #   The x, y, and z position of the cable winch in cartesian space.
 #   These parameters must be provided.
 ```
@@ -536,10 +536,10 @@ dir_pin:
 enable_pin:
 step_distance:
 #   See the "stepper" section for a description of the above parameters.
-nozzle_diameter: 0.400
+nozzle_diameter:
 #   Diameter of the nozzle orifice (in mm). This parameter must be
 #   provided.
-filament_diameter: 1.750
+filament_diameter:
 #   The nominal diameter of the raw filament (in mm) as it enters the
 #   extruder. This parameter must be provided.
 #max_extrude_cross_section:
@@ -589,7 +589,7 @@ heater_pin:
 #   allow the pin to be enabled for no more than half the time. This
 #   setting may be used to limit the total power output (over extended
 #   periods) to the heater. The default is 1.0.
-sensor_type: EPCOS 100K B57560G104F
+sensor_type:
 #   Type of sensor - common thermistors are "EPCOS 100K B57560G104F",
 #   "ATC Semitec 104GT-2", "NTC 100K beta 3950", "Honeywell 100K
 #   135-104LAG-J01", "NTC 100K MGB18-104F39050L32", "SliceEngineering
@@ -612,16 +612,16 @@ sensor_pin:
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 2 seconds.
-control: pid
+control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
-pid_Kp: 22.2
+pid_Kp:
 #   Kp is the "proportional" constant for the pid. This parameter must
 #   be provided for PID heaters.
-pid_Ki: 1.08
+pid_Ki:
 #   Ki is the "integral" constant for the pid. This parameter must be
 #   provided for PID heaters.
-pid_Kd: 114
+pid_Kd:
 #   Kd is the "derivative" constant for the pid. This parameter must
 #   be provided for PID heaters.
 #pid_integral_max:
@@ -640,8 +640,8 @@ pid_Kd: 114
 #min_extrude_temp: 170
 #   The minimum temperature (in Celsius) at which extruder move
 #   commands may be issued. The default is 170 Celsius.
-min_temp: 0
-max_temp: 210
+min_temp:
+max_temp:
 #   The maximum range of valid temperatures (in Celsius) that the
 #   heater must remain within. This controls a safety feature
 #   implemented in the micro-controller code - should the measured
@@ -832,12 +832,12 @@ information.
 
 ```
 [bed_screws]
-#screw1: 100,100
+#screw1:
 #   The X,Y coordinate of the first bed leveling screw. This is a
 #   position to command the nozzle to that is directly above the bed
 #   screw (or as close as possible while still being above the bed).
 #   This parameter must be provided.
-#screw1_name: front screw
+#screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon
 #   the screw XY location.
@@ -878,13 +878,13 @@ additional information.
 
 ```
 [screws_tilt_adjust]
-#screw1: 100,100
+#screw1:
 #   The X,Y coordinate of the first bed leveling screw. This is a
 #   position to command the nozzle to that is directly above the bed
 #   screw (or as close as possible while still being above the bed).
 #   This is the base screw used in calculations. This parameter must
 #   be provided.
-#screw1_name: front screw
+#screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon
 #   the screw XY location.
@@ -1099,7 +1099,7 @@ for additional information.
 #   This setting is automatically determined if one uses a TMC driver
 #   with run-time configuration. Otherwise, this parameter must be
 #   provided.
-#endstop_accuracy: 0.200
+#endstop_accuracy:
 #   Sets the expected accuracy (in mm) of the endstop. This represents
 #   the maximum error distance the endstop may trigger (eg, if an
 #   endstop may occasionally trigger 100um early or up to 100um late
@@ -1209,7 +1209,7 @@ sdcard G-Code commands (eg, M24).
 
 ```
 [virtual_sdcard]
-path: ~/.octoprint/uploads/
+path:
 #   The path of the local directory on the host machine to look for
 #   g-code files. This is a read-only directory (sdcard file writes
 #   are not supported). One may point this to OctoPrint's upload
@@ -1495,7 +1495,7 @@ z_offset:
 #sample_retract_dist: 2.0
 #   The distance (in mm) to lift the toolhead between each sample (if
 #   sampling more than once). The default is 2mm.
-#lift_speed: 5.0
+#lift_speed:
 #   Speed (in mm/s) of the Z axis when lifting the probe between
 #   samples. The default is to use the same value as the 'speed'
 #   parameter.
@@ -2054,7 +2054,7 @@ temperature.
 
 ```
 [heater_generic my_generic_heater]
-#gcode_id: C
+#gcode_id:
 #   The id to use when reporting the temperature in the M105 command.
 #   This parameter must be provided.
 #heater_pin:
@@ -3001,7 +3001,7 @@ lcd_type:
 #   The pins connected to an uc1701 type lcd. The rst_pin is
 #   optional. The cs_pin and a0_pin parameters must be provided when
 #   using an uc1701 display.
-#contrast: 40
+#contrast:
 #   The contrast to set when using a uc1701 or SSD1306/SH1106 type
 #   display For UC1701 the value may range from 0 to 63. Default is
 #   40. For SSD1306/SH1106 the value may range from 0 to 256. Default
@@ -3013,9 +3013,9 @@ lcd_type:
 #x_offset: 0
 #   Set the horizontal offset value on SSD1306/SH1106 displays.
 #   Default is 0.
-#invert: FALSE
+#invert: False
 #   TRUE inverts the pixels on certain OLED (SSD1306/SH1106) displays.
-#   The default is FALSE.
+#   The default is False.
 #cs_pin:
 #dc_pin:
 #spi_bus:
@@ -3108,7 +3108,7 @@ group name.
 
 ```
 [display_data my_group_name my_data_name]
-position: 0, 0
+position:
 #   Comma separated row and column of the display position that should
 #   be used to display the information. This parameter must be
 #   provided.
@@ -3480,12 +3480,12 @@ file for an example.
 # "replicape:power_x" PWM output pins (for hotbed, e, h, fan0, fan1,
 # fan2, and fan3) that may then be used elsewhere in the config file.
 [replicape]
-revision: B3
+revision:
 #   The replicape hardware revision. Currently only revision "B3" is
 #   supported. This parameter must be provided.
 #enable_pin: !P9_41
 #   The replicape global enable pin. The default is !P9_41.
-host_mcu: host
+host_mcu:
 #   The name of the mcu config section that communicates with the
 #   Klipper "linux process" mcu instance. This parameter must be
 #   provided.

@@ -38,9 +38,10 @@ class BME280:
         self.dig = None
         self.sample_timer = self.reactor.register_timer(self._sample_bme280)
         self.printer.add_object("bme280 " + self.name, self)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
 
-    def handle_ready(self):
+    def handle_connect(self):
         self._init_bme280()
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
