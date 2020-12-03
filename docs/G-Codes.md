@@ -647,6 +647,17 @@ been enabled (also see the
   for gcode execution.  A value of 0 will cancel a pending delayed gcode
   from executing.
 
+## Save Variables
+
+The following command is enabled if a
+[save_variables config section](Config_Reference.md#save_variables)
+has been enabled:
+- `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
+  disk so that it can be used across restarts. All stored variables
+  are loaded into the `printer.save_variables.variables` dict at
+  startup and can be used in gcode macros. The provided VALUE is
+  parsed as a Python literal.
+
 ## Resonance compensation
 
 The following command is enabled if an
