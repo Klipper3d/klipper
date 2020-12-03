@@ -2069,14 +2069,6 @@ CPU temperature from  Raspberry Pi.
 # parameters.
 #sensor_type:
 #   Must be "rpi_temperature".
-min_temp: -40
-max_temp: 85
-#   The maximum safe range of temperatures (in Celsius) that the
-#   RPi must remain within. This controls a safety feature
-#   implemented in the micro-controller code - should the measured
-#   temperature ever fall outside this range then the micro-controller
-#   will go into a shutdown state. Set this range just wide
-#   enough so that reasonable temperatures do not result in an error.
 ```
 
 ## [heater_generic]

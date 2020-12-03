@@ -7,7 +7,6 @@
 import logging
 
 RPI_REPORT_TIME = 1.0
-KELVIN_TO_CELSIUS = -273.15
 PROC_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp"
 
 class RPiTemperature:
@@ -16,13 +15,7 @@ class RPiTemperature:
         self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
 
-        self.temp = 0.0
-        self.file_handle = None
-
-        self.min_temp = config.getfloat('min_temp', -40,
-                                        minval=KELVIN_TO_CELSIUS)
-        self.max_temp = config.getfloat('max_temp', 85,
-                                        above=self.min_temp)
+        self.temp = self.min_temp = self.max_temp = 0.0
 
         self.printer.add_object("rpi_temperature " + self.name, self)
         self.sample_timer = self.reactor.register_timer(
@@ -45,7 +38,8 @@ class RPiTemperature:
 
 
     def setup_minmax(self, min_temp, max_temp):
-        pass
+        self.min_temp = min_temp
+        self.max_temp = max_temp
 
     def setup_callback(self, cb):
         self._callback = cb
