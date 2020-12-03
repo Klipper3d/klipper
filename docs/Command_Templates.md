@@ -256,6 +256,8 @@ The following are common printer attributes:
   from the sensor.
 - `printer["lm75 <sensor_name>"].temperature`: The last read
   temperature from the sensor.
+- `printer["rpi_temperature <sensor_name>"].temperature`: The last read
+  temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].temperature`: The last read
   temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].measured_min_temp`,
