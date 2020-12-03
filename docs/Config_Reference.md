@@ -122,9 +122,8 @@ position_max:
 
 ## Cartesian Kinematics
 
-See
-[example-cartesian.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-cartesian.cfg)
-for an example cartesian kinematics config file.
+See [example-cartesian.cfg](../config/example-cartesian.cfg) for an
+example cartesian kinematics config file.
 
 Only parameters specific to cartesian printers are described here -
 see [common kinematic settings](#common-kinematic-settings) for
@@ -158,9 +157,8 @@ max_z_accel:
 
 ## Linear Delta Kinematics
 
-See
-[example-delta.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-delta.cfg)
-for an example linear delta kinematics config file. See the
+See [example-delta.cfg](../config/example-delta.cfg) for an example
+linear delta kinematics config file. See the
 [delta calibrate guide](Delta_Calibrate.md) for information on
 calibration.
 
@@ -240,9 +238,8 @@ radius:
 
 ## CoreXY Kinematics
 
-See
-[example-corexy.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-corexy.cfg)
-for an example corexy (and h-bot) kinematics file.
+See [example-corexy.cfg](../config/example-corexy.cfg) for an example
+corexy (and h-bot) kinematics file.
 
 Only parameters specific to corexy printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
@@ -276,9 +273,8 @@ max_z_accel:
 
 ## CoreXZ Kinematics
 
-See
-[example-corexz.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-corexz.cfg)
-for an example corexz kinematics config file.
+See [example-corexz.cfg](../config/example-corexz.cfg) for an example
+corexz kinematics config file.
 
 Only parameters specific to corexz printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
@@ -309,9 +305,8 @@ max_z_accel:
 
 ## Polar Kinematics
 
-See
-[example-polar.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-polar.cfg)
-for an example polar kinematics config file.
+See [example-polar.cfg](../config/example-polar.cfg) for an example
+polar kinematics config file.
 
 Only parameters specific to polar printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
@@ -353,9 +348,8 @@ max_z_accel:
 
 ## Rotary delta Kinematics
 
-See
-[example-rotary-delta.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-rotary-delta.cfg)
-for an example rotary delta kinematics config file.
+See [example-rotary-delta.cfg](../config/example-rotary-delta.cfg) for
+an example rotary delta kinematics config file.
 
 Only parameters specific to rotary delta printers are described here -
 see [common kinematic settings](#common-kinematic-settings) for
@@ -442,9 +436,8 @@ radius:
 
 ## Cable winch Kinematics
 
-See the
-[example-winch.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-winch.cfg)
-for an example cable winch kinematics config file.
+See the [example-winch.cfg](../config/example-winch.cfg) for an
+example cable winch kinematics config file.
 
 Only parameters specific to cable winch printers are described here -
 see [common kinematic settings](#common-kinematic-settings) for
@@ -1644,8 +1637,7 @@ each additional extruder. The additional extruder sections should be
 named "extruder1", "extruder2", "extruder3", and so on. See the
 "extruder" section for a description of available parameters.
 
-See
-[sample-multi-extruder.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-multi-extruder.cfg)
+See [sample-multi-extruder.cfg](../config/sample-multi-extruder.cfg)
 for an example configuration.
 
 ```
@@ -1675,9 +1667,8 @@ typically combined with extra extruders - the SET_DUAL_CARRIAGE
 command is often called at the same time as the ACTIVATE_EXTRUDER
 command. Be sure to park the carriages during deactivation.
 
-See
-[sample-idex.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-idex.cfg)
-for an example configuration.
+See [sample-idex.cfg](../config/sample-idex.cfg) for an example
+configuration.
 
 ```
 [dual_carriage]
@@ -1958,9 +1949,9 @@ BME280 two wire interface (I2C) environmental sensor. Note that this
 sensor is not intended for use with extruders and heater beds, but
 rather for monitoring ambient temperature (C), pressure (hPa), and
 relative humidity. See
-[sample-macros.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-macros.cfg)
-for a gcode_macro that may be used to report pressure and humidity in
-addition to temperature.
+[sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
+that may be used to report pressure and humidity in addition to
+temperature.
 
 ```
 #[temperature_sensor my_sensor]
@@ -1987,9 +1978,8 @@ addition to temperature.
 HTU21D family two wire interface (I2C) environmental sensor. Note that
 this sensor is not intended for use with extruders and heater beds,
 but rather for monitoring ambient temperature (C) and relative
-humidity. See
-[sample-macros.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-macros.cfg)
-for a gcode_macro that may be used to report humidity in addition to
+humidity. See [sample-macros.cfg](../config/sample-macros.cfg) for a
+gcode_macro that may be used to report humidity in addition to
 temperature.
 
 ```
@@ -3179,9 +3169,8 @@ will be assigned the given display data which can then be referenced
 in the display templates by their name surrounded by two "tilde"
 symbols i.e. `~my_display_glyph~`
 
-See
-[sample-glyphs.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/sample-glyphs.cfg)
-for some examples.
+See [sample-glyphs.cfg](../config/sample-glyphs.cfg) for some
+examples.
 
 ```
 [display_glyph my_display_glyph]
@@ -3430,8 +3419,7 @@ with an "sx1509" prefix. Each expander provides a set of 16 pins
 (sx1509_my_sx1509:PIN_0 to sx1509_my_sx1509:PIN_15) which can be used
 in the printer configuration.
 
-See the
-[generic-duet2-duex.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-duet2-duex.cfg)
+See the [generic-duet2-duex.cfg](../config/generic-duet2-duex.cfg)
 file for an example.
 
 ```
@@ -3483,8 +3471,8 @@ monitoring pins. Be sure to define this config section above any
 config sections that use one these virtual pins.
 
 See the
-[generic-duet2-maestro.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-duet2-maestro.cfg)
-file for an example.
+[generic-duet2-maestro.cfg](../config/generic-duet2-maestro.cfg) file
+for an example.
 
 ```
 [adc_scaled my_name]
@@ -3503,8 +3491,8 @@ vssa_pin:
 ## [replicape]
 
 Replicape support - see the [beaglebone guide](beaglebone.md) and the
-[generic-replicape.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/generic-replicape.cfg)
-file for an example.
+[generic-replicape.cfg](../config/generic-replicape.cfg) file for an
+example.
 
 ```
 # The "replicape" config section adds "replicape:stepper_x_enable"

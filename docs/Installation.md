@@ -126,7 +126,7 @@ Configuring Klipper
 
 The Klipper configuration is stored in a text file on the Raspberry
 Pi. Take a look at the example config files in the
-[config directory](https://github.com/KevinOConnor/klipper/tree/master/config/). The
+[config directory](../config/). The
 [config reference](Config_Reference.md) contains documentation on
 config parameters.
 
