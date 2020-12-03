@@ -3123,6 +3123,12 @@ groups. The display will show all the data items for a given group if
 the display_group option in the [display] section is set to the given
 group name.
 
+A
+[default set of display groups](../klippy/extras/display/display.cfg)
+are automatically created. One can replace or extend these
+display_data items by overriding the defaults in the main printer.cfg
+config file.
+
 ```
 [display_data my_group_name my_data_name]
 position:
@@ -3205,6 +3211,12 @@ thus they do not support the "menu" options or button configuration.
 ```
 
 ## [menu]
+
+Customizable lcd display menus.
+
+A [default set of menus](../klippy/extras/display/menu.cfg) are
+automatically created. One can replace or extend the menu by
+overriding the defaults in the main printer.cfg config file.
 
 Available options in menu Jinja2 template context:
 
