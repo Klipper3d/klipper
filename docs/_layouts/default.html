@@ -121,10 +121,9 @@
 
   <!-- Javascript to automatically fix links to files outside docs/ -->
   <script>
-    $("a[href^='../']")
-      .each(function () {
-        this.href = $(this).attr("href").replace(/^\.\./, "https://github.com/KevinOConnor/klipper/blob/master");
-      });
+  $('.markdown-body').find('a[href^="../"]').each(function() {
+    this.href = $(this).attr("href").replace(/^\.\./, "https://github.com/KevinOConnor/klipper/blob/master");
+  });
   </script>
 </body>
 </html>
