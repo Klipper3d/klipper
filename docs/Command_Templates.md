@@ -408,7 +408,9 @@ restarts. All stored variables are loaded into the
 gcode macros. to avoid overly long lines you can add the following at
 the top of the macro:
 ```
+<!-- {% raw %} -->
 {% set svv = printer.save_variables.variables %}
+<!-- {% endraw %} -->
 ```
 
 As an example, it could be used to save the state of 2-in-1-out hotend
