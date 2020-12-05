@@ -7,10 +7,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
 import optparse, os, sys
+from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              '..', 'klippy', 'extras'))
 from shaper_calibrate import CalibrationData, ShaperCalibrate
+
+MAX_TITLE_LENGTH=65
 
 def parse_log(logname):
     with open(logname) as f:
@@ -61,7 +64,7 @@ def calibrate_shaper(datas, csv_output):
 # Plot frequency response and suggested input shapers
 ######################################################################
 
-def plot_freq_response(calibration_data, shapers_vals,
+def plot_freq_response(lognames, calibration_data, shapers_vals,
                        selected_shaper, max_freq):
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
@@ -83,10 +86,8 @@ def plot_freq_response(calibration_data, shapers_vals,
     ax.plot(freqs, py, label='Y', color='green')
     ax.plot(freqs, pz, label='Z', color='blue')
 
-    if shapers_vals:
-        ax.set_title("Frequency response and shapers")
-    else:
-        ax.set_title("Frequency response")
+    title = "Frequency response and shapers (%s)" % (', '.join(lognames))
+    ax.set_title("\n".join(wrap(title, MAX_TITLE_LENGTH)))
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
@@ -94,23 +95,25 @@ def plot_freq_response(calibration_data, shapers_vals,
     ax.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
     ax.grid(which='major', color='grey')
     ax.grid(which='minor', color='lightgrey')
-    ax.legend(loc='upper right', prop=fontP)
 
-    if shapers_vals:
-        ax2 = ax.twinx()
-        ax2.set_ylabel('Shaper vibration reduction (ratio)')
-        best_shaper_vals = None
-        for name, freq, vals in shapers_vals:
-            label = "%s (%.1f Hz)" % (name.upper(), freq)
-            linestyle = 'dotted'
-            if name == selected_shaper:
-                label += ' (selected)'
-                linestyle = 'dashdot'
-                best_shaper_vals = vals
-            ax2.plot(freqs, vals, label=label, linestyle=linestyle)
-        ax.plot(freqs, psd * best_shaper_vals,
-                label='After\nshaper', color='cyan')
-        ax2.legend(loc='upper left', prop=fontP)
+    ax2 = ax.twinx()
+    ax2.set_ylabel('Shaper vibration reduction (ratio)')
+    best_shaper_vals = None
+    for name, freq, vals in shapers_vals:
+        label = "%s (%.1f Hz)" % (name.upper(), freq)
+        linestyle = 'dotted'
+        if name == selected_shaper:
+            linestyle = 'dashdot'
+            best_shaper_vals = vals
+        ax2.plot(freqs, vals, label=label, linestyle=linestyle)
+    ax.plot(freqs, psd * best_shaper_vals,
+            label='After\nshaper', color='cyan')
+    # A hack to add a human-readable shaper recommendation to legend
+    ax2.plot([], [], ' ',
+             label="Recommended shaper: %s" % (selected_shaper.upper()))
+
+    ax.legend(loc='upper left', prop=fontP)
+    ax2.legend(loc='upper right', prop=fontP)
 
     fig.tight_layout()
     return fig
@@ -152,7 +155,7 @@ def main():
         # Draw graph
         setup_matplotlib(options.output is not None)
 
-        fig = plot_freq_response(calibration_data, shapers_vals,
+        fig = plot_freq_response(args, calibration_data, shapers_vals,
                                  selected_shaper, options.max_freq)
 
         # Show graph
