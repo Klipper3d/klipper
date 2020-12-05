@@ -6,7 +6,9 @@ to cut-and-paste them into a printer config file. See the
 [installation document](Installation.md) for information on setting up
 Klipper and choosing an initial config file.
 
-# Format of micro-controller pin names
+# Micro-controller configuration
+
+## Format of micro-controller pin names
 
 Many config options require the name of a micro-controller pin.
 Klipper uses the hardware names for these pins - for example `PA4`.
@@ -27,6 +29,49 @@ preceded by `~`.
 Note, some config sections may "create" additional pins. Where this
 occurs, the config section defining the pins must be listed in the
 config file before any sections using those pins.
+
+## [mcu]
+
+Configuration of the primary micro-controller.
+
+```
+[mcu]
+serial:
+#   The serial port to connect to the MCU. If unsure (or if it
+#   changes) see the "Where's my serial port?" section of the FAQ.
+#   This parameter must be provided.
+#baud: 250000
+#   The baud rate to use. The default is 250000.
+#pin_map:
+#   This option may be used to enable Arduino pin name aliases. The
+#   default is to not enable the aliases.
+#restart_method:
+#   This controls the mechanism the host will use to reset the
+#   micro-controller. The choices are 'arduino', 'cheetah', 'rpi_usb',
+#   and 'command'. The 'arduino' method (toggle DTR) is common on
+#   Arduino boards and clones. The 'cheetah' method is a special
+#   method needed for some Fysetc Cheetah boards. The 'rpi_usb' method
+#   is useful on Raspberry Pi boards with micro-controllers powered
+#   over USB - it briefly disables power to all USB ports to
+#   accomplish a micro-controller reset. The 'command' method involves
+#   sending a Klipper command to the micro-controller so that it can
+#   reset itself. The default is 'arduino' if the micro-controller
+#   communicates over a serial port, 'command' otherwise.
+```
+
+## [mcu my_extra_mcu]
+
+Additional micro-controllers (one may define any number of sections
+with an "mcu" prefix). Additional micro-controllers introduce
+additional pins that may be configured as heaters, steppers, fans,
+etc.. For example, if an "[mcu extra_mcu]" section is introduced, then
+pins such as "extra_mcu:ar9" may then be used elsewhere in the config
+(where "ar9" is a hardware pin name or alias name on the given mcu).
+
+```
+[mcu my_extra_mcu]
+# See the "mcu" section for configuration parameters.
+```
 
 # Common kinematic settings
 
@@ -480,37 +525,6 @@ max_velocity: 1
 max_accel: 1
 #   The max_velocity and max_accel parameters must be defined. The
 #   values are not used for "none" kinematics.
-```
-
-# Primary micro-controller support
-
-## [mcu]
-
-Configuration of the primary micro-controller.
-
-```
-[mcu]
-serial:
-#   The serial port to connect to the MCU. If unsure (or if it
-#   changes) see the "Where's my serial port?" section of the FAQ.
-#   This parameter must be provided.
-#baud: 250000
-#   The baud rate to use. The default is 250000.
-#pin_map:
-#   This option may be used to enable Arduino pin name aliases. The
-#   default is to not enable the aliases.
-#restart_method:
-#   This controls the mechanism the host will use to reset the
-#   micro-controller. The choices are 'arduino', 'cheetah', 'rpi_usb',
-#   and 'command'. The 'arduino' method (toggle DTR) is common on
-#   Arduino boards and clones. The 'cheetah' method is a special
-#   method needed for some Fysetc Cheetah boards. The 'rpi_usb' method
-#   is useful on Raspberry Pi boards with micro-controllers powered
-#   over USB - it briefly disables power to all USB ports to
-#   accomplish a micro-controller reset. The 'command' method involves
-#   sending a Klipper command to the micro-controller so that it can
-#   reset itself. The default is 'arduino' if the micro-controller
-#   communicates over a serial port, 'command' otherwise.
 ```
 
 # Common extruder and heated bed support
@@ -1588,22 +1602,6 @@ control_pin:
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
-```
-
-# Additional micro-controllers
-
-## [mcu my_extra_mcu]
-
-Additional micro-controllers (one may define any number of sections
-with an "mcu" prefix). Additional micro-controllers introduce
-additional pins that may be configured as heaters, steppers, fans,
-etc.. For example, if an "[mcu extra_mcu]" section is introduced, then
-pins such as "extra_mcu:ar9" may then be used elsewhere in the config
-(where "ar9" is a hardware pin name or alias name on the given mcu).
-
-```
-[mcu my_extra_mcu]
-# See the "mcu" section for configuration parameters.
 ```
 
 # Additional stepper motors and extruders
