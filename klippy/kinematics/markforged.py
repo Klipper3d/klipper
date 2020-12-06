@@ -7,17 +7,19 @@ import logging, math, copy
 import stepper, homing
 
 class MarkforgedKinematics:
-    def __init__(self, toolhead, config):   
+    def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         printer_config = config.getsection('printer')
         # itersolve parameters
-        self.second_axis = printer_config.getchoice('gantry', {'xy': 'y', 'xz': 'z'}, 'xy')
+        self.second_axis = printer_config.getchoice(
+            'gantry', {'xy': 'y', 'xz': 'z'}, 'xy')
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
-                       stepper.LookupMultiRail(config.getsection('stepper_z')) ]
+                       stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        self.rails[0].setup_itersolve('markforged_stepper_alloc', self.second_axis, 'p')
+        self.rails[0].setup_itersolve(
+            'markforged_stepper_alloc', self.second_axis, 'p')
         self.rails[1].setup_itersolve('cartesian_stepper_alloc', 'y')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', 'z')
         for s in self.get_steppers():
@@ -37,7 +39,7 @@ class MarkforgedKinematics:
         self.rails[0].set_max_jerk(max_halt_velocity, max_accel)
         self.rails[1].set_max_jerk(max_halt_velocity, max_accel)
         self.rails[2].set_max_jerk(
-            min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)        
+            min(max_halt_velocity, self.max_z_velocity), self.max_z_accel)
         if config.has_section('dual_carriage'):
             self.printer.add_object("dual_carriage", self)
             dc_config = config.getsection('dual_carriage')
@@ -46,11 +48,20 @@ class MarkforgedKinematics:
             # setup second dual carriage rail
             self.rails.append(stepper.PrinterRail(dc_config))
             self.dc_rails = [self.rails[0], self.rails[3]]
-            self.dc_rails[0].kin_infos = {'active': True,  'positive_dir': True, 'position_at_change': None}          
-            self.dc_rails[1].kin_infos = {'active': False, 'positive_dir': True, 'position_at_change': None}
+            self.dc_rails[0].kin_infos = {
+                'active': True,
+                'positive_dir': True,
+                'position_at_change': None}
+            self.dc_rails[1].kin_infos = {
+                'active': False,
+                'positive_dir': True,
+                'position_at_change': None}
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            self.rails[3].setup_itersolve('markforged_stepper_alloc', self.second_axis, 'w')
+            self.rails[3].setup_itersolve(
+                'markforged_stepper_alloc',
+                self.second_axis,
+                'w')
             self.rails[3].set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(self.rails[3].generate_steps)
             self.rails[3].set_max_jerk(max_halt_velocity, max_accel)
@@ -61,7 +72,7 @@ class MarkforgedKinematics:
                 desc=self.cmd_SET_DUAL_CARRIAGE_help)
             gcode.register_command(
                 'SET_DUAL_CARRIAGE_MODE', self.cmd_SET_DUAL_CARRIAGE_MODE,
-                desc=self.cmd_SET_DUAL_CARRIAGE_MODE_help)         
+                desc=self.cmd_SET_DUAL_CARRIAGE_MODE_help)
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
@@ -92,7 +103,7 @@ class MarkforgedKinematics:
         homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         for axis in homing_state.get_axes():
-            if( hasattr(self, 'dc_rails') and axis == 0):
+            if (hasattr(self, 'dc_rails') and axis == 0):
                 kin_init_state = (
                     copy.deepcopy(self.dc_rails[0].kin_infos),
                     copy.deepcopy(self.dc_rails[1].kin_infos))
@@ -100,14 +111,20 @@ class MarkforgedKinematics:
                     self._toggle_active_dc_rail(dc_rail)
                     self._home_axis(homing_state, axis, dc_rail)
                 # set back duplicate or mirror mode
-                if kin_init_state[0]['active'] == kin_init_state[1]['active'] == True:
+                if (kin_init_state[0]['active'] == kin_init_state[1]['active']
+                    and kin_init_state[0]['active'] == True):
                     toolhead = self.printer.lookup_object('toolhead')
                     toolhead.flush_step_generation()
                     pos = toolhead.get_position()
-                    toolhead.manual_move([kin_init_state[1]['position_at_change']] + pos[1:], self.dc_rails[1].homing_speed)
+                    toolhead.manual_move(
+                        [kin_init_state[1]['position_at_change']] + pos[1:],
+                        self.dc_rails[1].homing_speed)
                     self._toggle_active_dc_rail(self.dc_rails[0])
-                    toolhead.manual_move([kin_init_state[0]['position_at_change']] + pos[1:], self.dc_rails[0].homing_speed)
-                    self._activate_dc_mode(('MIRRORED', 'DUPLICATION')[kin_init_state[1]['positive_dir']])
+                    toolhead.manual_move(
+                        [kin_init_state[0]['position_at_change']] + pos[1:],
+                        self.dc_rails[0].homing_speed)
+                    self._activate_dc_mode(('MIRRORED', 'DUPLICATION')
+                        [kin_init_state[1]['positive_dir']])
                 # set carriage 0 active
                 elif kin_init_state[0]['active'] is True:
                     self._toggle_active_dc_rail(self.dc_rails[0])
@@ -146,23 +163,32 @@ class MarkforgedKinematics:
         dc_active = None
         dc_mode = None
         if hasattr(self, 'dc_rails'):
-            if self.dc_rails[0].kin_infos['active'] == self.dc_rails[1].kin_infos['active'] == True:
+            if (self.dc_rails[0].kin_infos['active']
+                == self.dc_rails[1].kin_infos['active'] 
+                == True):
                 dc_active = 'BOTH'
-                dc_mode = 'DUPLICATION' if self.dc_rails[1].kin_infos['positive_dir'] else 'MIRRORED'
+                if self.dc_rails[1].kin_infos['positive_dir']:
+                    dc_mode = 'DUPLICATION'
+                else:
+                    dc_mode = 'MIRRORED'
             else:
                 dc_active = ('T0', 'T1')[self.dc_rails[1].kin_infos['active']]
                 dc_mode = 'FULL_CONTROL'
-        return {'homed_axes': "".join(axes), 'dc_mode': dc_mode, 'dc_active': dc_active}
+        return {
+            'homed_axes': "".join(axes),
+            'dc_mode': dc_mode,
+            'dc_active': dc_active}
     # Dual carriage support
-    def _dc_rail_stepper_alloc(self, rail, toolhead, position, active, positive_dir =True):
+    def _dc_rail_stepper_alloc(self, rail, toolhead, position, active,
+        positive_dir =True):
         rail.kin_infos = {
-            'active': active, 
+            'active': active,
             'positive_dir': positive_dir,
             'position_at_change': position[0]
             }
         rail.set_trapq(None)
         rail.setup_itersolve(
-            'markforged_stepper_alloc', 
+            'markforged_stepper_alloc',
             self.second_axis,
             'w' if not active else 'p' if positive_dir else 'n')
         rail.set_position(position)
@@ -191,7 +217,7 @@ class MarkforgedKinematics:
             and self.dc_rails[1].kin_infos['active'] is True
             and self.dc_rails[1].kin_infos['positive_dir'] is True):
             return pos_x, dc1_pos - dc0_pos + pos_x
-        # mirrored 
+        # mirrored
         elif (self.dc_rails[0].kin_infos['active'] is True
             and self.dc_rails[1].kin_infos['active'] is True
             and self.dc_rails[1].kin_infos['positive_dir'] is False):
@@ -209,46 +235,90 @@ class MarkforgedKinematics:
         toolhead.flush_step_generation()
         pos = toolhead.get_position()
         dc0_pos, dc1_pos = self._calc_dual_x_position(pos[0])
-        self._dc_rail_stepper_alloc(self.dc_rails[0], toolhead, [dc0_pos] + pos[1:], active=True)
+        self._dc_rail_stepper_alloc(
+            self.dc_rails[0],
+            toolhead,
+            [dc0_pos] + pos[1:],
+            active=True)
         self.rails[0] = self.dc_rails[0]
         self.rails[3] = self.dc_rails[1]
         if 'FULL_CONTROL' == mode:
-            self._dc_rail_stepper_alloc(self.dc_rails[1], toolhead, [dc1_pos] + pos[1:], active=False)
+            self._dc_rail_stepper_alloc(
+                self.dc_rails[1],
+                toolhead,
+                [dc1_pos] + pos[1:],
+                active=False)
             toolhead.set_position([dc0_pos] + pos[1:])
             self.limits[0] = self.dc_rails[0].get_range()
-            self.printer.lookup_object('gcode').respond_info("Dual carriage mode is now set to %s" % 'FULL_CONTROL')
+            self.printer.lookup_object('gcode').respond_info(
+                "Dual carriage mode is now set to %s" % 'FULL_CONTROL')
         elif 'DUPLICATION' == mode:
-            self._dc_rail_stepper_alloc(self.dc_rails[1], toolhead, [dc1_pos] + pos[1:], active=True, positive_dir=True)
+            self._dc_rail_stepper_alloc(
+                self.dc_rails[1],
+                toolhead,
+                [dc1_pos] + pos[1:],
+                active=True,
+                positive_dir=True)
             toolhead.set_position([dc0_pos] + pos[1:])
-            dc_rail_min= min(self.dc_rails[0].position_min, self.dc_rails[1].position_min)
-            dc_rail_max= max(self.dc_rails[0].position_max, self.dc_rails[1].position_max)
-            if self.dc_rails[0].get_homing_info().positive_dir is False:
-                self.limits[0] = (dc_rail_min, math.floor(dc_rail_max - dc1_pos + dc0_pos))
-            else:
-                self.limits[0] = (math.ceil(dc0_pos - dc1_pos - dc_rail_min), dc_rail_max)                
-            self.printer.lookup_object('gcode').respond_info("Dual carriage mode is now set to %s" % 'DUPLICATION')
-        elif 'MIRRORED' == mode:
-            self._dc_rail_stepper_alloc(self.dc_rails[1], toolhead, [dc1_pos] + pos[1:], active=True, positive_dir=False)
-            toolhead.set_position([dc0_pos] + pos[1:]) 
-            dc_rail_min= min(self.dc_rails[0].position_min, self.dc_rails[1].position_min)
-            dc_rail_max= max(self.dc_rails[0].position_max, self.dc_rails[1].position_max)
-            dc_rail_diff= abs(self.dc_rails[0].position_min - self.dc_rails[1].position_min)
+            dc_rail_min= min(
+                self.dc_rails[0].position_min,
+                self.dc_rails[1].position_min)
+            dc_rail_max= max(
+                self.dc_rails[0].position_max,
+                self.dc_rails[1].position_max)
             if self.dc_rails[0].get_homing_info().positive_dir is False:
                 self.limits[0] = (
-                    math.ceil(dc0_pos - min(abs(dc0_pos - dc_rail_min), abs(dc0_pos - dc_rail_max), abs(dc1_pos - dc_rail_min), abs(dc1_pos - dc_rail_max))),
+                    dc_rail_min,
+                    math.floor(dc_rail_max - dc1_pos + dc0_pos))
+            else:
+                self.limits[0] = (
+                    math.ceil(dc0_pos - dc1_pos - dc_rail_min),
+                    dc_rail_max)
+            self.printer.lookup_object('gcode').respond_info(
+                "Dual carriage mode is now set to %s" % 'DUPLICATION')
+        elif 'MIRRORED' == mode:
+            self._dc_rail_stepper_alloc(
+                self.dc_rails[1],
+                toolhead,
+                [dc1_pos] + pos[1:],
+                active=True,
+                positive_dir=False)
+            toolhead.set_position([dc0_pos] + pos[1:])
+            dc_rail_min= min(
+                self.dc_rails[0].position_min,
+                self.dc_rails[1].position_min)
+            dc_rail_max= max(
+                self.dc_rails[0].position_max,
+                self.dc_rails[1].position_max)
+            dc_rail_diff= abs(
+                self.dc_rails[0].position_min - self.dc_rails[1].position_min)
+            if self.dc_rails[0].get_homing_info().positive_dir is False:
+                self.limits[0] = (
+                    math.ceil(dc0_pos - min(
+                        abs(dc0_pos - dc_rail_min),
+                        abs(dc0_pos - dc_rail_max),
+                        abs(dc1_pos - dc_rail_min),
+                        abs(dc1_pos - dc_rail_max))),
                     math.floor(0.5 * (dc1_pos + dc0_pos - dc_rail_diff)))
             else:
                 self.limits[0] = (
                     math.ceil(0.5 * (dc1_pos + dc0_pos + dc_rail_diff)),
-                    math.floor(dc0_pos + min(abs(dc0_pos - dc_rail_min), abs(dc0_pos - dc_rail_max), abs(dc1_pos - dc_rail_min), abs(dc1_pos - dc_rail_max))))
-            self.printer.lookup_object('gcode').respond_info("Dual carriage mode is now set to %s" % 'MIRRORED')
+                    math.floor(dc0_pos + min(
+                        abs(dc0_pos - dc_rail_min),
+                        abs(dc0_pos - dc_rail_max),
+                        abs(dc1_pos - dc_rail_min),
+                        abs(dc1_pos - dc_rail_max))))
+            self.printer.lookup_object('gcode').respond_info(
+                "Dual carriage mode is now set to %s" % 'MIRRORED')
         else:
-            raise self.printer.lookup_object('gcode').error("'%s' is not a valid mode." % mode)
+            raise self.printer.lookup_object('gcode').error(
+                "'%s' is not a valid mode." % mode)
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         carriage = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
         force_homing = gcmd.get_int('HOMING', 0, minval=0, maxval=1)
-        if (not(self.dc_rails[0].kin_infos['active'] == self.dc_rails[1].kin_infos['active'] == True)
+        if (not(self.dc_rails[0].kin_infos['active']
+                == self.dc_rails[1].kin_infos['active'] == True)
             and self.dc_rails[carriage] != self.rails[0]):
             self._toggle_active_dc_rail(self.dc_rails[carriage])
             if force_homing:
@@ -258,6 +328,6 @@ class MarkforgedKinematics:
     def cmd_SET_DUAL_CARRIAGE_MODE(self, gcmd):
         mode = gcmd.get('MODE')
         self._activate_dc_mode(mode)
-        
+
 def load_kinematics(toolhead, config):
     return MarkforgedKinematics(toolhead, config)

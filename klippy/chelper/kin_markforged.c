@@ -13,50 +13,50 @@
 
 // Gantry XY
 static double
-mark_stepper_xy_waiting_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xy_waiting_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	return move_get_coord(m, move_time).y;
+    return move_get_coord(m, move_time).y;
 }
 
 static double
-mark_stepper_xy_positive_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xy_positive_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	struct coord c = move_get_coord(m, move_time);
-	return c.y + c.x;
+    struct coord c = move_get_coord(m, move_time);
+    return c.y + c.x;
 }
 
 static double
-mark_stepper_xy_negative_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xy_negative_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	struct coord c = move_get_coord(m, move_time);
-	return c.y - c.x;
+    struct coord c = move_get_coord(m, move_time);
+    return c.y - c.x;
 }
 
 // Gantry XZ
 static double
-mark_stepper_xz_waiting_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xz_waiting_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	return move_get_coord(m, move_time).z;
+    return move_get_coord(m, move_time).z;
 }
 
 static double
-mark_stepper_xz_positive_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xz_positive_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	struct coord c = move_get_coord(m, move_time);
-	return c.z + c.x;
+    struct coord c = move_get_coord(m, move_time);
+    return c.z + c.x;
 }
 
 static double
-mark_stepper_xz_negative_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
+mark_stepper_xz_negative_calc_position(
+    struct stepper_kinematics *sk, struct move *m, double move_time)
 {
-	struct coord c = move_get_coord(m, move_time);
-	return c.z - c.x;
+    struct coord c = move_get_coord(m, move_time);
+    return c.z - c.x;
 }
 
 struct stepper_kinematics * __visible
@@ -68,7 +68,7 @@ markforged_stepper_alloc(char second_axis, char direction)
         if (direction == 'w')
             sk->calc_position_cb = mark_stepper_xy_waiting_calc_position;
         else if (direction == 'p')
-            sk->calc_position_cb = mark_stepper_xy_positive_calc_position;   
+            sk->calc_position_cb = mark_stepper_xy_positive_calc_position;
         else if (direction == 'n')
             sk->calc_position_cb = mark_stepper_xy_negative_calc_position;
         sk->active_flags = AF_X | AF_Y;
@@ -76,7 +76,7 @@ markforged_stepper_alloc(char second_axis, char direction)
         if (direction == 'w')
             sk->calc_position_cb = mark_stepper_xz_waiting_calc_position;
         else if (direction == 'p')
-            sk->calc_position_cb = mark_stepper_xz_positive_calc_position;   
+            sk->calc_position_cb = mark_stepper_xz_positive_calc_position;
         else if (direction == 'n')
             sk->calc_position_cb = mark_stepper_xz_negative_calc_position;
         sk->active_flags = AF_X | AF_Z;

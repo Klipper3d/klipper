@@ -83,7 +83,7 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, delta, rotary_delta, polar, winch, markforged, 
+#   corexy, corexz, delta, rotary_delta, polar, winch, markforged,
 #   or none. This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
@@ -1680,18 +1680,18 @@ for an example configuration.
 ## [dual_carriage]
 
 Support for cartesian and markforged printers with dual carriages on a
-single axis. The active carriage is set via the SET_DUAL_CARRIAGE 
+single axis. The active carriage is set via the SET_DUAL_CARRIAGE
 extended g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
 activate the carriage defined in this section (CARRIAGE=0 will return
-activation to the primary carriage). In a markforged robot one can use 
-the extra parameter HOMING for the SET_DUAL_CARRIAGE g-code command. 
-"HOMING=1" will home the carriage designated by "CARRIAGE=". Default is 
+activation to the primary carriage). In a markforged robot one can use
+the extra parameter HOMING for the SET_DUAL_CARRIAGE g-code command.
+"HOMING=1" will home the carriage designated by "CARRIAGE=". Default is
 0, no homing. This can achieve a better precision between carriages.
-Dual carriage support is typically combined with extra extruders - the 
-SET_DUAL_CARRIAGE command is often called at the same time as the 
+Dual carriage support is typically combined with extra extruders - the
+SET_DUAL_CARRIAGE command is often called at the same time as the
 ACTIVATE_EXTRUDER command. Be sure to park the carriages during
-deactivation. In a markforged robot one can activate movement modes via 
-the SET_DUAL_CARRIAGE_MODE extended g-code command. See the 
+deactivation. In a markforged robot one can activate movement modes via
+the SET_DUAL_CARRIAGE_MODE extended g-code command. See the
 [command reference](G-Codes.md#dual-carriages) for more information.
 
 
