@@ -83,8 +83,8 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, delta, rotary_delta, polar, winch, or none. This
-#   parameter must be specified.
+#   corexy, corexz, delta, rotary_delta, polar, winch, markforged, 
+#   or none. This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
 #   print). This parameter must be specified.
@@ -510,6 +510,35 @@ anchor_y:
 anchor_z:
 #   The x, y, and z position of the cable winch in cartesian space.
 #   These parameters must be provided.
+```
+
+## Markforged Kinematics
+
+See [example-markforged.cfg](../config/example-markforged.cfg) for an
+example markforged kinematics config file.
+
+Only parameters specific to markforged printers are described here -
+see [common kinematic settings](#common-kinematic-settings) for
+available parameters.
+
+```
+[printer]
+kinematics: markforged
+gantry: xy
+#   This sets the second axis which the X axis is in relation with.
+#   Valid values are 'xy' or 'xz'; Default value is 'xy'.
+
+# The stepper_x section is used to describe the stepper controlling
+# the X axis in a markforged robot.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis in a markforged robot.
+[stepper_y]
+
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis in a markforged robot.
+[stepper_z]
 ```
 
 ## None Kinematics
@@ -1650,14 +1679,21 @@ for an example configuration.
 
 ## [dual_carriage]
 
-Support for cartesian printers with dual carriages on a single
-axis. The active carriage is set via the SET_DUAL_CARRIAGE extended
-g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
+Support for cartesian and markforged printers with dual carriages on a
+single axis. The active carriage is set via the SET_DUAL_CARRIAGE 
+extended g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
 activate the carriage defined in this section (CARRIAGE=0 will return
-activation to the primary carriage). Dual carriage support is
-typically combined with extra extruders - the SET_DUAL_CARRIAGE
-command is often called at the same time as the ACTIVATE_EXTRUDER
-command. Be sure to park the carriages during deactivation.
+activation to the primary carriage). In a markforged robot one can use 
+the extra parameter HOMING for the SET_DUAL_CARRIAGE g-code command. 
+"HOMING=1" will home the carriage designated by "CARRIAGE=". Default is 
+0, no homing. This can achieve a better precision between carriages.
+Dual carriage support is typically combined with extra extruders - the 
+SET_DUAL_CARRIAGE command is often called at the same time as the 
+ACTIVATE_EXTRUDER command. Be sure to park the carriages during
+deactivation. In a markforged robot one can activate movement modes via 
+the SET_DUAL_CARRIAGE_MODE extended g-code command. See the 
+[command reference](G-Codes.md#dual-carriages) for more information.
+
 
 See [sample-idex.cfg](../config/sample-idex.cfg) for an example
 configuration.
@@ -1666,7 +1702,7 @@ configuration.
 [dual_carriage]
 axis:
 #   The axis this extra carriage is on (either x or y). This parameter
-#   must be provided.
+#   must be provided for cartesian printers.
 #step_pin:
 #dir_pin:
 #enable_pin:

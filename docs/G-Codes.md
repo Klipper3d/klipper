@@ -465,10 +465,19 @@ The following commands are available when the
 The following command is available when the
 [dual_carriage config section](Config_Reference.md#dual_carriage) is
 enabled:
-- `SET_DUAL_CARRIAGE CARRIAGE=[0|1]`: This command will set the active
-  carriage. It is typically invoked from the activate_gcode and
-  deactivate_gcode fields in a multiple extruder configuration.
-
+- `SET_DUAL_CARRIAGE CARRIAGE=[0|1] [HOMING=[0|1]]`: This command will set
+  the active carriage. It is typically invoked from the activate_gcode and
+  deactivate_gcode fields in a multiple extruder configuration. The HOMING
+  parameter is only suitable for markforged robots. If `HOMING=1` is set 
+  then the activating carriage will home. Default is 0, not to home.
+- `SET_DUAL_CARRIAGE_MODE MODE=[FULL_CONTROL|DUPLICATION|MIRRORED]`: This 
+  command will set the movement mode. If `MODE=DUPLICATION` is set then the
+  printer will replicate the movement on both carriages. Be sure to move
+  the stepper configured in [dual_carriage] before activating the mode. If 
+  `MODE=MIRRORED` is set then the printer will replicate symmetrically the
+  movement on both carriages. If `MODE=FULL_CONTROL` is set then the printer
+  will use the carriages alternatively.
+  
 ## TMC2130, TMC2660, TMC2208, TMC2209 and TMC5160
 
 The following commands are available when any of the
