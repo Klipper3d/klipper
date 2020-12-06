@@ -164,7 +164,7 @@ class MarkforgedKinematics:
         dc_mode = None
         if hasattr(self, 'dc_rails'):
             if (self.dc_rails[0].kin_infos['active']
-                == self.dc_rails[1].kin_infos['active'] 
+                == self.dc_rails[1].kin_infos['active']
                 == True):
                 dc_active = 'BOTH'
                 if self.dc_rails[1].kin_infos['positive_dir']:
