@@ -25,11 +25,11 @@ class MMU2:
                 sr_pins["green_led_4"], sr_pins["red_led_4"],
                 sr_pins["green_led_5"], sr_pins["red_led_5"]]
 
-    mmu_steppers_enable = [sr_pins["stepper_1_enable"], 
+    mmu_steppers_enable = [sr_pins["stepper_1_enable"],
                            sr_pins["stepper_2_enable"],
                            sr_pins["stepper_3_enable"]]
 
-    mmu_steppers_dir    = [sr_pins["stepper_1_dir"], 
+    mmu_steppers_dir    = [sr_pins["stepper_1_dir"],
                            sr_pins["stepper_2_dir"],
                            sr_pins["stepper_3_dir"]]
 
@@ -65,12 +65,13 @@ class MMU2:
         self._gcode.register_command('MMU_SET_LED',
                                     self.cmd_MMU_SET_LED)
         self._gcode.register_command('MMU_SET_STEPPER',
-                                    self.cmd_MMU_SET_STEPPER)  
+                                    self.cmd_MMU_SET_STEPPER)
         self._gcode.register_command('MMU_MOVE_STEPPER',
-                                    self.cmd_MMU_MOVE_STEPPER)                            
+                                    self.cmd_MMU_MOVE_STEPPER)
 
     def _build_config(self):
-        self._shift_register = self._printer.lookup_object("hc595 %s" % self._mcu_name)
+        self._shift_register = self._printer.lookup_object("hc595 %s"
+                                                            % self._mcu_name)
 
     def handle_ready(self):
         self._shift_register.write_bits(self.all_off)
@@ -81,7 +82,8 @@ class MMU2:
         self._shift_register.set_bit(self.mmu_leds[self._rs_led], 1)
         self._rs_led += 1
         if self._rs_led is 10:
-            self.reactor.register_timer(self._clear_led, (time + FLASH_DELAY * 5))
+            self.reactor.register_timer(self._clear_led,
+                                                      (time + FLASH_DELAY * 5))
         return time + FLASH_DELAY if self._rs_led < 10 else self.reactor.NEVER
 
     def _clear_led(self, time):
@@ -90,7 +92,8 @@ class MMU2:
 
     def _mmu_led_sequence(self, time):
         if(self._rs_led_loop_last >= 0):
-            self._shift_register.set_bit(self.mmu_leds[self._rs_led_loop_last], 0)
+            self._shift_register.set_bit(self.mmu_leds[self._rs_led_loop_last],
+                                         0)
         self._shift_register.set_bit(self.mmu_leds[self._rs_led], 1)
         self._rs_led_loop_last = self._rs_led
         if ((self._rs_led_loop % 2) == 0):
@@ -102,10 +105,13 @@ class MMU2:
             self._rs_led -= 1
         if self._rs_led == -1:
             self._rs_led_loop += 1
-            self._rs_led += 1        
+            self._rs_led += 1
         if self._rs_led_loop == 3:
             self.reactor.register_timer(self._clear_led, (time + FLASH_DELAY))
-        return time + FLASH_DELAY if self._rs_led_loop < 3 else self.reactor.NEVER
+        if self._rs_led_loop < 3:
+            return time + FLASH_DELAY
+        else:
+            return self.reactor.NEVER
 
     def cmd_MMU_SET_LED(self, params):
         led = params.get_int('NUM')
@@ -126,13 +132,16 @@ class MMU2:
             if stepper_dir < 0 or stepper_dir > 1:
                 raise self._printer.command_error("DIR must be between 0 or 1")
             else:
-                self._shift_register.set_bit(self.mmu_steppers_dir[stepper], stepper_dir)
+                self._shift_register.set_bit(self.mmu_steppers_dir[stepper],
+                                             stepper_dir)
         if stepper_enable is not None:
             if stepper_enable < 0 or stepper_enable > 1:
-                raise self._printer.command_error("ENABLE must be between 0 or 1")
+                raise self._printer.command_error(
+                                               "ENABLE must be between 0 or 1")
             else:
-                self._shift_register.set_bit(self.mmu_steppers_enable[stepper], (val+1)%2)
-    
+                self._shift_register.set_bit(self.mmu_steppers_enable[stepper],
+                                             (stepper_enable+1)%2)
+
     def cmd_MMU_MOVE_STEPPER(self, gcmd):
         cmd = gcmd.get_commandline().split(" ", 1)[1]
         stepper = gcmd.get('STEPPER')
@@ -142,18 +151,16 @@ class MMU2:
             movepos = gcmd.get_float('MOVE')
             if movepos >= self._steppers_move[num] and self._oldir[num] == 0:
                 self._gcode.run_script_from_command("M400")
-                #logging.info("\n\n move %s : %s -> %s dir=%s\n\n" % (stepper,self._steppers_move[num],movepos,1))
                 self._shift_register.set_bit(self.mmu_steppers_dir[num], 1)
                 self._oldir[num] = 1
             elif movepos < self._steppers_move[num] and self._oldir[num] == 1:
                 self._gcode.run_script_from_command("M400")
-                #logging.info("\n\n move %s : %s -> %s dir=%s\n\n" % (stepper,self._steppers_move[num],movepos,0))
                 self._shift_register.set_bit(self.mmu_steppers_dir[num], 0)
                 self._oldir[num] = 0
             self._steppers_move[num] = movepos
         self._gcode.run_script_from_command("MANUAL_STEPPER %s"%cmd)
         if setpos is not None:
             self._steppers_move[num] = setpos
-    
+
 def load_config(config):
     return MMU2(config)
