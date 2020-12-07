@@ -1914,6 +1914,9 @@ section).
 
 ## Common thermistors
 
+Common thermistors. The following parameters are available in heater
+sections that use one of these sensors.
+
 ```
 sensor_type:
 #   One of "EPCOS 100K B57560G104F", "ATC Semitec 104GT-2",
@@ -1921,17 +1924,15 @@ sensor_type:
 #   "NTC 100K MGB18-104F39050L32", "SliceEngineering 450", or
 #   "TDK NTCG104LH104JT1"
 sensor_pin:
-#   Analog input pin connected to the sensor. This parameter must be
-#   provided.
+#   Analog input pin connected to the thermistor. This parameter must
+#   be provided.
 #pullup_resistor: 4700
 #   The resistance (in ohms) of the pullup attached to the thermistor.
-#   This parameter is only valid when the sensor is a thermistor. The
-#   default is 4700 ohms.
+#   The default is 4700 ohms.
 #inline_resistor: 0
 #   The resistance (in ohms) of an extra (not heat varying) resistor
 #   that is placed inline with the thermistor. It is rare to set this.
-#   This parameter is only valid when the sensor is a thermistor. The
-#   default is 0 ohms.
+#   The default is 0 ohms.
 ```
 
 ## Common temperature amplifiers
