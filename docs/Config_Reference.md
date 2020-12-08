@@ -1365,8 +1365,7 @@ an explicit name (eg, [adxl345 my_chip_name]).
 ```
 [adxl345]
 cs_pin:
-#   The SPI enable pin for the sensor. This parameter must be
-#   provided.
+#   The SPI enable pin for the sensor. This parameter must be provided.
 #spi_speed: 5000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 5000000.
@@ -1374,8 +1373,8 @@ cs_pin:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 #axes_map: x,y,z
 #   The accelerometer axis for each of the printer's x, y, and z axes.
 #   This may be useful if the accelerometer is mounted in an
@@ -1987,8 +1986,8 @@ sensor_pin:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 #tc_type: K
 #tc_use_50Hz_filter: False
 #tc_averaging_count: 1
@@ -2020,14 +2019,10 @@ sensor_type: bme280
 #   Default is 118 (0x76). Some BME280 sensors have an address of 119
 #   (0x77).
 #i2c_mcu:
-#   MCU the sensor is connected to. Default is the primary mcu.
 #i2c_bus:
-#   The I2C bus the sensor is connected to. On some MCU platforms the
-#   default is bus 0. On platforms without bus 0 this parameter is
-#   required.
 #i2c_speed:
-#   The I2C speed (in Hz) to use when communicating with the sensor.
-#   Default is 100000. On some MCUs changing this value has no effect.
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 ```
 
 ## HTU21D sensor
@@ -2045,14 +2040,10 @@ sensor_type:
 #i2c_address:
 #   Default is 64 (0x40).
 #i2c_mcu:
-#   MCU the sensor is connected to. Default is the primary mcu.
 #i2c_bus:
-#   The I2C bus the sensor is connected to. On some MCU platforms the
-#   default is bus 0. On platforms without bus 0 this parameter is
-#   required.
 #i2c_speed:
-#   The I2C speed (in Hz) to use when communicating with the sensor.
-#   Default is 100000. On some MCUs changing this value has no effect.
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 #htu21d_hold_master:
 #   If the sensor can hold the I2C buf while reading. If True no other
 #   bus communication can be performed while reading is in progress.
@@ -2082,14 +2073,10 @@ sensor_type: lm75
 #   low bits of the address are configured via pins on the chip
 #   (usually with jumpers or hard wired).
 #i2c_mcu:
-#   MCU the sensor is connected to. Default is the primary mcu.
 #i2c_bus:
-#   The I2C bus the sensor is connected to. On some MCU platforms the
-#   default is bus 0. On platforms without bus 0 this parameter is
-#   required.
 #i2c_speed:
-#   The I2C speed (in Hz) to use when communicating with the sensor.
-#   Default is 100000. On some MCUs changing this value has no effect.
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 #lm75_report_time:
 #   Interval in seconds between readings. Default is 0.8, with minimum
 #   0.5.
@@ -2502,13 +2489,13 @@ cs_pin:
 #   The pin corresponding to the TMC2130 chip select line. This pin
 #   will be set to low at the start of SPI messages and raised to high
 #   after the message completes. This parameter must be provided.
-#spi_bus:
 #spi_speed:
+#spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 microsteps:
 #   The number of microsteps to configure the driver to use. Valid
 #   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
@@ -2684,19 +2671,15 @@ cs_pin:
 #   will be set to low at the start of SPI messages and set to high
 #   after the message transfer completes. This parameter must be
 #   provided.
-#spi_bus:
-#   Select the SPI bus the TMC2660 stepper driver is connected to.
-#   This depends on the physical connections on your board, as well as
-#   the SPI implementation of your particular micro-controller. The
-#   default is to use the default micro-controller spi bus.
 #spi_speed: 4000000
 #   SPI bus frequency used to communicate with the TMC2660 stepper
 #   driver. The default is 4000000.
+#spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 microsteps:
 #   The number of microsteps to configure the driver to use. Valid
 #   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
@@ -2761,13 +2744,13 @@ cs_pin:
 #   The pin corresponding to the TMC5160 chip select line. This pin
 #   will be set to low at the start of SPI messages and raised to high
 #   after the message completes. This parameter must be provided.
-#spi_bus:
 #spi_speed:
+#spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 microsteps:
 #   The number of microsteps to configure the driver to use. Valid
 #   values are 1, 2, 4, 8, 16, 32, 64, 128, 256. This parameter must
@@ -2848,13 +2831,13 @@ enable_pin:
 #   The pin corresponding to the AD5206 chip select line. This pin
 #   will be set to low at the start of SPI messages and raised to high
 #   after the message completes. This parameter must be provided.
-#spi_bus:
 #spi_speed:
+#spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   These optional parameters allow one to customize the SPI settings
-#   used to communicate with the chip.
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
 #channel_1:
 #channel_2:
 #channel_3:
@@ -2890,6 +2873,11 @@ define any number of sections with an "mcp4451" prefix).
 i2c_address:
 #   The i2c address that the chip is using on the i2c bus. This
 #   parameter must be provided.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 #wiper_0:
 #wiper_1:
 #wiper_2:
@@ -2918,12 +2906,14 @@ prefix).
 
 ```
 [mcp4728 my_dac]
-#i2c_mcu: mcu
-#   The name of the micro-controller that the MCP4451 chip is
-#   connected to. The default is "mcu".
 #i2c_address: 96
 #   The i2c address that the chip is using on the i2c bus. The default
 #   is 96.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 #channel_a:
 #channel_b:
 #channel_c:
@@ -3029,15 +3019,15 @@ lcd_type:
 #   The default is False.
 #cs_pin:
 #dc_pin:
-#spi_bus:
 #spi_speed:
+#spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
 #   The pins connected to an ssd1306 type lcd when in "4-wire" spi
-#   mode. The parameters that start with "spi_" are optional and they
-#   control the spi settings used to communicate with the chip. The
-#   default is to use i2c mode for ssd1306 displays.
+#   mode. See the "common SPI settings" section for a description of
+#   the parameters that start with "spi_". The default is to use i2c
+#   mode for ssd1306 displays.
 #reset_pin:
 #   A reset pin may be specified on ssd1306 displays. If it is not
 #   specified then the hardware must have a pull-up on the
@@ -3434,9 +3424,11 @@ i2c_address:
 #   I2C address used by this expander. Depending on the hardware
 #   jumpers this is one out of the following addresses: 62 63 112
 #   113. This parameter must be provided.
-#i2c_mcu: mcu
-#   The name of the micro-controller that the SX1509 chip is connected
-#   to. The default is "mcu".
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 #i2c_bus:
 #   If the I2C implementation of your micro-controller supports
 #   multiple I2C busses, you may specify the bus name here. The
@@ -3557,4 +3549,50 @@ host_mcu:
 #stepper_h_chopper_blank_time_high:
 #   This parameter controls the CFG5 pin of the stepper motor driver
 #   (True sets CFG5 high, False sets it low). The default is True.
+```
+
+# Common bus parameters
+
+## Common SPI settings
+
+The following parameters are generally available for devices using an
+SPI bus.
+
+```
+#spi_speed:
+#   The SPI speed (in hz) to use when communicating with the device.
+#   The default depends on the type of device.
+#spi_bus:
+#   If the micro-controller supports multiple SPI busses then one may
+#   specify the micro-controller bus name here. The default depends on
+#   the type of micro-controller.
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   Specify the above parameters to use "software based SPI". This
+#   mode does not require micro-controller hardware support (typically
+#   any general purpose pins may be used). The default is to not use
+#   "software spi".
+```
+
+## Common I2C settings
+
+The following parameters are generally available for devices using an
+I2C bus.
+
+```
+#i2c_address:
+#   The i2c address of the device. This must specified as a decimal
+#   number (not in hex). The default depends on the type of device.
+#i2c_mcu:
+#   The name of the micro-controller that the chip is connected to.
+#   The default is "mcu".
+#i2c_bus:
+#   If the micro-controller supports multiple I2C busses then one may
+#   specify the micro-controller bus name here. The default depends on
+#   the type of micro-controller.
+#i2c_speed:
+#   The I2C speed (in Hz) to use when communicating with the device.
+#   On some micro-controllers changing this value has no effect. The
+#   default is 100000.
 ```
