@@ -74,10 +74,10 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
 #endif
 };
 
-DECL_CONSTANT("PWM_MAX", 255);
+DECL_CONSTANT("PWM_MAX", 65535);   //16 bit
 
 struct gpio_pwm
-gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
+gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint16_t val)
 {
     // Find pin in pwm_regs table
     const struct gpio_pwm_info *p = pwm_regs;
@@ -135,10 +135,10 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
 }
 
 void
-gpio_pwm_write(struct gpio_pwm g, uint8_t val)
+gpio_pwm_write(struct gpio_pwm g, uint16_t val)
 {
     if (g.size8) {
-        *(volatile uint8_t*)g.reg = val;
+        *(volatile uint8_t*)g.reg = val >> 8;   // Take the MSB
     } else {
         irqstatus_t flag = irq_save();
         *(volatile uint16_t*)g.reg = val;
