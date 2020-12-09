@@ -166,6 +166,8 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.<heater>.power`: The last setting of the PWM pin (a value
+  between 0.0 and 1.0) associated with the heater.
 - `printer.idle_timeout.state`: The current state of the printer as
   tracked by the idle_timeout module. It is one of the following
   strings: "Idle", "Printing", "Ready".
