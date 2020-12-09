@@ -103,12 +103,12 @@ and make sure FLASH_DEVICE is set correctly for your board (see the
 
 However, if "make flash" just doesn't work for your board, then you
 will need to manually flash. See if there is a config file in the
-[config directory](https://github.com/KevinOConnor/klipper/tree/master/config)
-with specific instructions for flashing the device. Also, check the
-board manufacturer's documentation to see if it describes how to flash
-the device. Finally, it may be possible to manually flash the device
-using tools such as "avrdude" or "bossac" - see the
-[bootloader document](Bootloaders.md) for additional information.
+[config directory](../config) with specific instructions for flashing
+the device. Also, check the board manufacturer's documentation to see
+if it describes how to flash the device. Finally, it may be possible
+to manually flash the device using tools such as "avrdude" or
+"bossac" - see the [bootloader document](Bootloaders.md) for
+additional information.
 
 ### How do I change the serial baud rate?
 
@@ -159,8 +159,7 @@ Klipper has been run on other machines. The Klipper host software only
 requires Python running on a Linux (or similar) computer. However, if
 you wish to run it on a different machine you will need Linux admin
 knowledge to install the system prerequisites for that particular
-machine. See the
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
+machine. See the [install-octopi.sh](../scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
 
 If you are looking to run the Klipper host software on a low-end chip,
@@ -199,10 +198,9 @@ own pseudo-tty. For example:
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
-script and the
-[klipper-start.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/klipper-start.sh)
-script may be useful as examples.
+[install-octopi.sh](../scripts/install-octopi.sh) script and the
+[klipper-start.sh](../scripts/klipper-start.sh) script may be useful
+as examples.
 
 ### Do I have to use OctoPrint?
 
@@ -544,9 +542,12 @@ flash" commands are needed for a software change to take effect.
 
 ### How do I uninstall Klipper?
 
-On the firmware end, nothing special needs to happen. Just follow the flashing directions for the new firmware.
+On the firmware end, nothing special needs to happen. Just follow the
+flashing directions for the new firmware.
 
-On the raspberry pi end, an uninstall script is available in [`scripts/klipper-uninstall.sh`](https://github.com/KevinOConnor/klipper/blob/master/scripts/klipper-uninstall.sh). Assuming you cloned `klipper` to `$HOME`
+On the raspberry pi end, an uninstall script is available in
+[scripts/klipper-uninstall.sh](../scripts/klipper-uninstall.sh). For
+example:
 ```
 sudo ~/klipper/scripts/klipper-uninstall.sh
 rm -rf ~/klippy-env ~/klipper

@@ -241,6 +241,8 @@ class PrinterHeaters:
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
+        gcode.register_command("TEMPERATURE_WAIT", self.cmd_TEMPERATURE_WAIT,
+                               desc=self.cmd_TEMPERATURE_WAIT_help)
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
@@ -263,7 +265,7 @@ class PrinterHeaters:
         return self.heaters[heater_name]
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
-                   "bme280", "htu21d", "lm75"]
+                   "bme280", "htu21d", "lm75", "rpi_temperature"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
@@ -282,8 +284,8 @@ class PrinterHeaters:
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
     def get_status(self, eventtime):
-        return {'available_heaters': self.available_heaters,
-                'available_sensors': self.available_sensors}
+        return {'available_heaters': list(self.available_heaters),
+                'available_sensors': list(self.available_sensors)}
     def turn_off_all_heaters(self, print_time=0.):
         for heater in self.heaters.values():
             heater.set_temp(0.)
@@ -321,6 +323,25 @@ class PrinterHeaters:
         while not self.printer.is_shutdown() and heater.check_busy(eventtime):
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
+            eventtime = reactor.pause(eventtime + 1.)
+    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
+    def cmd_TEMPERATURE_WAIT(self, gcmd):
+        sensor_name = gcmd.get('SENSOR')
+        if sensor_name not in self.available_sensors:
+            raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
+        min_temp = gcmd.get_float('MINIMUM')
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
+        sensor = self.printer.lookup_object(sensor_name)
+        toolhead = self.printer.lookup_object("toolhead")
+        reactor = self.printer.get_reactor()
+        eventtime = reactor.monotonic()
+        while not self.printer.is_shutdown():
+            temp, target = sensor.get_temp(eventtime)
+            if temp >= min_temp:
+                return
+            print_time = toolhead.get_last_move_time()
+            gcmd.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
 
 def load_config(config):

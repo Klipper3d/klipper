@@ -140,9 +140,7 @@ Klipper supports many standard 3d printer features:
   document for more information.
 
 * Sample configuration files are available for many common printers.
-  Check the
-  [config directory](https://github.com/KevinOConnor/klipper/tree/master/config/)
-  for a list.
+  Check the [config directory](../config/) for a list.
 
 To get started with Klipper, read the [installation](Installation.md)
 guide.
