@@ -1552,8 +1552,9 @@ section for the details).
 ```
 [bltouch]
 sensor_pin:
-#   Pin connected to the BLTouch sensor pin. This parameter must be
-#   provided.
+#   Pin connected to the BLTouch sensor pin. Most BLTouch devices
+#   require a pullup on the sensor pin (prefix the pin name with "^").
+#   This parameter must be provided.
 control_pin:
 #   Pin connected to the BLTouch control pin. This parameter must be
 #   provided.
