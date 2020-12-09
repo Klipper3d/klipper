@@ -156,6 +156,8 @@ The following standard commands are supported:
   /tmp/heattest.txt will be created with a log of all temperature
   samples taken during the test.
 - `TURN_OFF_HEATERS`: Turn off all heaters.
+- `TEMPERATURE_WAIT SENSOR=<config_name> MINIMUM=<target>`: Wait until
+  the given temperature sensor is at or above the given target value.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
   the printer's velocity limits. Note that one may only set values
@@ -646,6 +648,17 @@ been enabled (also see the
   delay duration for the identified [delayed_gcode] and starts the timer
   for gcode execution.  A value of 0 will cancel a pending delayed gcode
   from executing.
+
+## Save Variables
+
+The following command is enabled if a
+[save_variables config section](Config_Reference.md#save_variables)
+has been enabled:
+- `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
+  disk so that it can be used across restarts. All stored variables
+  are loaded into the `printer.save_variables.variables` dict at
+  startup and can be used in gcode macros. The provided VALUE is
+  parsed as a Python literal.
 
 ## Resonance compensation
 

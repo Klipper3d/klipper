@@ -113,18 +113,18 @@ This section lists some commonly used config commands.
   digital output mode and set to an initial value as specified by
   'value' (0 for low, 1 for high). Creating a digital_out object
   allows the host to schedule GPIO updates for the given pin at
-  specified times (see the schedule_digital_out command described
-  below). Should the micro-controller software go into shutdown mode
-  then all configured digital_out objects will be set to
-  'default_value'. The 'max_duration' parameter is used to implement a
-  safety check - if it is non-zero then it is the maximum number of
-  clock ticks that the host may set the given GPIO to a non-default
-  value without further updates. For example, if the default_value is
-  zero and the max_duration is 16000 then if the host sets the gpio to
-  a value of one then it must schedule another update to the gpio pin
-  (to either zero or one) within 16000 clock ticks. This safety
-  feature can be used with heater pins to ensure the host does not
-  enable the heater and then go off-line.
+  specified times (see the queue_digital_out command described below).
+  Should the micro-controller software go into shutdown mode then all
+  configured digital_out objects will be set to 'default_value'. The
+  'max_duration' parameter is used to implement a safety check - if it
+  is non-zero then it is the maximum number of clock ticks that the
+  host may set the given GPIO to a non-default value without further
+  updates. For example, if the default_value is zero and the
+  max_duration is 16000 then if the host sets the gpio to a value of
+  one then it must schedule another update to the gpio pin (to either
+  zero or one) within 16000 clock ticks. This safety feature can be
+  used with heater pins to ensure the host does not enable the heater
+  and then go off-line.
 
 * `config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu
   default_value=%hu max_duration=%u` : This command creates an
@@ -191,22 +191,21 @@ Common commands
 This section lists some commonly used run-time commands. It is likely
 only of interest to developers looking to gain insight into Klipper.
 
-* `schedule_digital_out oid=%c clock=%u value=%c` : This command will
+* `queue_digital_out oid=%c clock=%u value=%c` : This command will
   schedule a change to a digital output GPIO pin at the given clock
   time. To use this command a 'config_digital_out' command with the
   same 'oid' parameter must have been issued during micro-controller
   configuration.
 
-* `schedule_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to
-  a hardware PWM output pin. See the 'schedule_digital_out' and
+* `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
+  hardware PWM output pin. See the 'queue_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u` : Schedules a
-  change to a software PWM output pin. The parameters 'on_ticks' and 'off_ticks'
-  define for how many ticks the pin will be on and off, respectively.
-  Because the output switching is implemented in the micro-controller software,
-  it is recommended that the sum of on_ticks and off_ticks parameters
-  corresponds to a time of 10ms or greater. See the 'schedule_digital_out' and
+* `queue_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
+  change to a software PWM output pin. Because the output switching is
+  implemented in the micro-controller software, it is recommended that
+  the sum of on_ticks and off_ticks parameters corresponds to a time
+  of 10ms or greater. See the 'queue_digital_out' and
   'config_soft_pwm_out' commands for more info.
 
 * `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c

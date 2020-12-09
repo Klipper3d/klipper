@@ -1,6 +1,6 @@
 // Commands for controlling GPIO pins
 //
-// Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -20,7 +20,14 @@ struct digital_out_s {
     struct timer timer;
     struct gpio_out pin;
     uint32_t max_duration;
-    uint8_t value, default_value;
+    uint8_t default_value;
+    struct move_queue_head mq;
+};
+
+struct digital_move {
+    struct move_node node;
+    uint32_t waketime;
+    uint8_t value;
 };
 
 static uint_fast8_t
@@ -32,12 +39,32 @@ digital_end_event(struct timer *timer)
 static uint_fast8_t
 digital_out_event(struct timer *timer)
 {
+    // Apply next update and remove it from queue
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
-    gpio_out_write(d->pin, d->value);
-    if (d->value == d->default_value || !d->max_duration)
-        return SF_DONE;
-    d->timer.waketime += d->max_duration;
-    d->timer.func = digital_end_event;
+    struct move_node *mn = move_queue_pop(&d->mq);
+    struct digital_move *m = container_of(mn, struct digital_move, node);
+    uint8_t value = m->value;
+    gpio_out_write(d->pin, value);
+    move_free(m);
+
+    // Check if more updates queued
+    if (move_queue_empty(&d->mq)) {
+        if (value == d->default_value || !d->max_duration)
+            return SF_DONE;
+
+        // Start the safety timeout
+        d->timer.waketime += d->max_duration;
+        d->timer.func = digital_end_event;
+        return SF_RESCHEDULE;
+    }
+
+    // Schedule next update
+    struct move_node *nn = move_queue_first(&d->mq);
+    uint32_t wake = container_of(nn, struct digital_move, node)->waketime;
+    if (value != d->default_value && d->max_duration
+        && timer_is_before(d->timer.waketime + d->max_duration, wake))
+        shutdown("Scheduled digital out event will exceed max_duration");
+    d->timer.waketime = wake;
     return SF_RESCHEDULE;
 }
 
@@ -50,29 +77,46 @@ command_config_digital_out(uint32_t *args)
     d->pin = pin;
     d->default_value = args[3];
     d->max_duration = args[4];
+    d->timer.func = digital_out_event;
+    move_queue_setup(&d->mq, sizeof(struct digital_move));
 }
 DECL_COMMAND(command_config_digital_out,
              "config_digital_out oid=%c pin=%u value=%c default_value=%c"
              " max_duration=%u");
 
 void
-command_schedule_digital_out(uint32_t *args)
+command_queue_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
+    struct digital_move *m = move_alloc();
+    m->waketime = args[1];
+    m->value = args[2];
+
+    irq_disable();
+    int need_add_timer = move_queue_push(&m->node, &d->mq);
+    irq_enable();
+    if (!need_add_timer)
+        return;
+
+    // queue was empty and a timer needs to be added
     sched_del_timer(&d->timer);
+    if (d->timer.func == digital_end_event
+        && timer_is_before(d->timer.waketime, m->waketime))
+        shutdown("Scheduled digital out event will exceed max_duration");
     d->timer.func = digital_out_event;
-    d->timer.waketime = args[1];
-    d->value = args[2];
+    d->timer.waketime = m->waketime;
     sched_add_timer(&d->timer);
 }
-DECL_COMMAND(command_schedule_digital_out,
-             "schedule_digital_out oid=%c clock=%u value=%c");
+DECL_COMMAND(command_queue_digital_out,
+             "queue_digital_out oid=%c clock=%u value=%c");
 
 void
 command_update_digital_out(uint32_t *args)
 {
     struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
     sched_del_timer(&d->timer);
+    if (!move_queue_empty(&d->mq))
+        shutdown("update_digital_out not valid with active queue");
     uint8_t value = args[1];
     gpio_out_write(d->pin, value);
     if (value != d->default_value && d->max_duration) {
@@ -90,6 +134,8 @@ digital_out_shutdown(void)
     struct digital_out_s *d;
     foreach_oid(i, d, command_config_digital_out) {
         gpio_out_write(d->pin, d->default_value);
+        d->timer.func = digital_out_event;
+        move_queue_clear(&d->mq);
     }
 }
 DECL_SHUTDOWN(digital_out_shutdown);
@@ -109,15 +155,19 @@ DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
 struct soft_pwm_s {
     struct timer timer;
     uint32_t on_duration, off_duration, end_time;
-    uint32_t next_on_duration, next_off_duration;
-    uint32_t max_duration;
     struct gpio_out pin;
-    uint8_t default_value, flags;
+    uint32_t max_duration, cycle_time;
+    struct move_queue_head mq;
+    uint8_t flags;
+};
+
+struct soft_pwm_move {
+    struct move_node node;
+    uint32_t waketime, on_duration;
 };
 
 enum {
-    SPF_ON=1<<0, SPF_TOGGLING=1<<1, SPF_CHECK_END=1<<2, SPF_HAVE_NEXT=1<<3,
-    SPF_NEXT_ON=1<<4, SPF_NEXT_TOGGLING=1<<5, SPF_NEXT_CHECK_END=1<<6,
+    SPF_ON=1<<0, SPF_TOGGLING=1<<1, SPF_CHECK_END=1<<2, SPF_DEFAULT_ON=1<<4
 };
 
 static uint_fast8_t soft_pwm_load_event(struct timer *timer);
@@ -147,25 +197,60 @@ soft_pwm_toggle_event(struct timer *timer)
 static uint_fast8_t
 soft_pwm_load_event(struct timer *timer)
 {
+    // Apply next update and remove it from queue
     struct soft_pwm_s *s = container_of(timer, struct soft_pwm_s, timer);
-    if (!(s->flags & SPF_HAVE_NEXT))
+    if (move_queue_empty(&s->mq))
         shutdown("Missed scheduling of next pwm event");
-    uint8_t flags = s->flags >> 4;
-    s->flags = flags;
-    gpio_out_write(s->pin, flags & SPF_ON);
+    struct move_node *mn = move_queue_pop(&s->mq);
+    struct soft_pwm_move *m = container_of(mn, struct soft_pwm_move, node);
+    uint32_t on_duration = m->on_duration;
+    uint8_t flags = on_duration ? SPF_ON : 0;
+    gpio_out_write(s->pin, flags);
+    move_free(m);
+
+    // Calculate next end_time and flags
+    uint32_t end_time = 0;
+    if (!flags || on_duration >= s->cycle_time) {
+        // Pin is in an always on or always off state
+        if (!flags != !(s->flags & SPF_DEFAULT_ON) && s->max_duration) {
+            end_time = s->timer.waketime + s->max_duration;
+            flags |= SPF_CHECK_END;
+        }
+    } else {
+        flags |= SPF_TOGGLING;
+        if (s->max_duration) {
+            end_time = s->timer.waketime + s->max_duration;
+            flags |= SPF_CHECK_END;
+        }
+    }
+    if (!move_queue_empty(&s->mq)) {
+        struct move_node *nn = move_queue_first(&s->mq);
+        uint32_t wake = container_of(nn, struct soft_pwm_move, node)->waketime;
+        if (flags & SPF_CHECK_END && timer_is_before(end_time, wake))
+            shutdown("Scheduled soft pwm event will exceed max_duration");
+        end_time = wake;
+        flags |= SPF_CHECK_END;
+    }
+    s->end_time = end_time;
+    s->flags = flags | (s->flags & SPF_DEFAULT_ON);
+
+    // Schedule next event
     if (!(flags & SPF_TOGGLING)) {
-        // Pin is in an always on (value=256) or always off (value=0) state
         if (!(flags & SPF_CHECK_END))
+            // Pin not toggling and nothing scheduled
             return SF_DONE;
-        s->timer.waketime = s->end_time = s->end_time + s->max_duration;
+        s->timer.waketime = end_time;
         return SF_RESCHEDULE;
     }
-    // Schedule normal pin toggle timer events
+    uint32_t waketime = s->timer.waketime + on_duration;
+    if (flags & SPF_CHECK_END && !timer_is_before(waketime, end_time)) {
+        s->timer.waketime = end_time;
+        return SF_RESCHEDULE;
+    }
     s->timer.func = soft_pwm_toggle_event;
-    s->off_duration = s->next_off_duration;
-    s->on_duration = s->next_on_duration;
-    s->timer.waketime = s->end_time + s->on_duration;
-    s->end_time += s->max_duration;
+    s->timer.waketime = waketime;
+    s->on_duration = on_duration;
+    s->off_duration = s->cycle_time - on_duration;
     return SF_RESCHEDULE;
 }
 
@@ -176,39 +261,47 @@ command_config_soft_pwm_out(uint32_t *args)
     struct soft_pwm_s *s = oid_alloc(args[0], command_config_soft_pwm_out
                                      , sizeof(*s));
     s->pin = pin;
-    s->default_value = !!args[3];
+    s->flags = (args[2] ? SPF_ON : 0) | (args[3] ? SPF_DEFAULT_ON : 0);
     s->max_duration = args[4];
-    s->flags = s->default_value ? SPF_ON : 0;
+    move_queue_setup(&s->mq, sizeof(struct soft_pwm_move));
 }
 DECL_COMMAND(command_config_soft_pwm_out,
              "config_soft_pwm_out oid=%c pin=%u value=%c"
              " default_value=%c max_duration=%u");
 
 void
-command_schedule_soft_pwm_out(uint32_t *args)
+command_set_soft_pwm_cycle_ticks(uint32_t *args)
 {
     struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
-    uint32_t time = args[1], next_on_duration = args[2],
-        next_off_duration = args[3];
-    uint8_t next_flags = SPF_CHECK_END | SPF_HAVE_NEXT;
-    if (next_on_duration == 0 || next_off_duration == 0) {
-        next_flags |= next_on_duration ? SPF_NEXT_ON : 0;
-        if (!!next_on_duration != s->default_value && s->max_duration)
-            next_flags |= SPF_NEXT_CHECK_END;
-        next_on_duration = next_off_duration = 0;
-    } else {
-        next_flags |= SPF_NEXT_ON | SPF_NEXT_TOGGLING;
-        if (s->max_duration)
-            next_flags |= SPF_NEXT_CHECK_END;
-    }
     irq_disable();
-    if (s->flags & SPF_CHECK_END && timer_is_before(s->end_time, time))
-        shutdown("next soft pwm extends existing pwm");
+    if (!move_queue_empty(&s->mq))
+        shutdown("Can not set soft pwm cycle ticks while updates pending");
+    s->cycle_time = args[1];
+    irq_enable();
+}
+DECL_COMMAND(command_set_soft_pwm_cycle_ticks,
+             "set_soft_pwm_cycle_ticks oid=%c cycle_ticks=%u");
+
+void
+command_queue_soft_pwm_out(uint32_t *args)
+{
+    struct soft_pwm_s *s = oid_lookup(args[0], command_config_soft_pwm_out);
+    struct soft_pwm_move *m = move_alloc();
+    uint32_t time = m->waketime = args[1];
+    m->on_duration = args[2];
+
+    irq_disable();
+    int first_on_queue = move_queue_push(&m->node, &s->mq);
+    if (!first_on_queue) {
+        irq_enable();
+        return;
+    }
+    uint8_t flags = s->flags;
+    if (flags & SPF_CHECK_END && timer_is_before(s->end_time, time))
+        shutdown("Scheduled soft pwm event will exceed max_duration");
     s->end_time = time;
-    s->next_on_duration = next_on_duration;
-    s->next_off_duration = next_off_duration;
-    s->flags = (s->flags & 0xf) | next_flags;
-    if (s->flags & SPF_TOGGLING && timer_is_before(s->timer.waketime, time)) {
+    s->flags = flags | SPF_CHECK_END;
+    if (flags & SPF_TOGGLING && timer_is_before(s->timer.waketime, time)) {
         // soft_pwm_toggle_event() will schedule a load event when ready
     } else {
         // Schedule the loading of the pwm parameters at the requested time
@@ -219,8 +312,8 @@ command_schedule_soft_pwm_out(uint32_t *args)
     }
     irq_enable();
 }
-DECL_COMMAND(command_schedule_soft_pwm_out,
-             "schedule_soft_pwm_out oid=%c clock=%u on_ticks=%u off_ticks=%u");
+DECL_COMMAND(command_queue_soft_pwm_out,
+             "queue_soft_pwm_out oid=%c clock=%u on_ticks=%u");
 
 void
 soft_pwm_shutdown(void)
@@ -228,8 +321,9 @@ soft_pwm_shutdown(void)
     uint8_t i;
     struct soft_pwm_s *s;
     foreach_oid(i, s, command_config_soft_pwm_out) {
-        gpio_out_write(s->pin, s->default_value);
-        s->flags = s->default_value ? SPF_ON : 0;
+        gpio_out_write(s->pin, s->flags & SPF_DEFAULT_ON);
+        s->flags = s->flags & SPF_DEFAULT_ON ? SPF_ON | SPF_DEFAULT_ON : 0;
+        move_queue_clear(&s->mq);
     }
 }
 DECL_SHUTDOWN(soft_pwm_shutdown);
