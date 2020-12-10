@@ -2082,6 +2082,40 @@ sensor_type: lm75
 #   0.5.
 ```
 
+## Builtin micro-controller temperature sensor
+
+The atsam, atsamd, and stm32 micro-controllers contain an internal
+temperature sensor. One can use the "temperature_mcu" sensor to
+monitor these temperatures.
+
+```
+sensor_type: temperature_mcu
+#sensor_mcu: mcu
+#   The micro-controller to read from. The default is "mcu".
+#sensor_temperature1:
+#sensor_adc1:
+#   Specify the above two parameters (a temperature in Celsius and an
+#   ADC value as a float between 0.0 and 1.0) to calibrate the
+#   micro-controller temperature. This may improve the reported
+#   temperature accuracy on some chips. A typical way to obtain this
+#   calibration information is to completely remove power from the
+#   printer for a few hours (to ensure it is at the ambient
+#   temperature), then power it up and use the QUERY_ADC command to
+#   obtain an ADC measurement. Use some other temperature sensor on
+#   the printer to find the corresponding ambient temperature. The
+#   default is to use the factory calibration data on the
+#   micro-controller (if applicable) or the nominal values from the
+#   micro-controller specification.
+#sensor_temperature2:
+#sensor_adc2:
+#   If sensor_temperature1/sensor_adc1 is specified then one may also
+#   specify sensor_temperature2/sensor_adc2 calibration data. Doing so
+#   may provide calibrated "temperature slope" information. The
+#   default is to use the factory calibration data on the
+#   micro-controller (if applicable) or the nominal values from the
+#   micro-controller specification.
+```
+
 ## RPi temperature sensor
 
 CPU temperature from the Raspberry Pi running the host software.
