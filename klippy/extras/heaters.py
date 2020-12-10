@@ -296,12 +296,23 @@ class PrinterHeaters:
     def _handle_ready(self):
         self.has_started = True
     def _get_temp(self, eventtime):
-        # Tn:XXX /YYY B:XXX /YYY
+        # Tn:XXX /YYY @n:ZZZ B:XXX /YYY B@:ZZZ
         out = []
         if self.has_started:
             for gcode_id, sensor in sorted(self.gcode_id_to_sensor.items()):
+                _is_bed = gcode_id == 'B'
+                _is_extruder = gcode_id[0] == 'T'
                 cur, target = sensor.get_temp(eventtime)
-                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
+                result_str = ("%s:%.1f /%.1f" % (gcode_id, cur, target))
+
+                if _is_bed or _is_extruder:
+                    power_prefix = 'B' if _is_bed else ''
+                    power_id = '' if _is_bed else gcode_id[1:]
+                    cur_power = sensor.last_pwm_value * PID_PARAM_BASE
+                    result_str += (" %s@%s:%d" %
+                                   (power_prefix, power_id, cur_power))
+
+                out.append(result_str)
         if not out:
             return "T:0"
         return " ".join(out)
