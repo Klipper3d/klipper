@@ -16,9 +16,11 @@ struct gpio_pwm_info {
     uint8_t pin;
     volatile void *ocr;
     volatile uint8_t *rega, *regb;
+    volatile uint16_t *icr;
     uint8_t en_bit, flags;
 };
 
+//AFMT: 4 bit prescaler
 enum { GP_8BIT=1, GP_AFMT=2 };
 
 static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
@@ -55,24 +57,25 @@ static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
     { GPIO('C', 5), &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, 0 },
     { GPIO('C', 4), &OCR3C, &TCCR3A, &TCCR3B, 1<<COM3C1, 0 },
 #elif CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
-    { GPIO('B', 7), &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GP_8BIT },
-    { GPIO('G', 5), &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GP_8BIT },
-    { GPIO('B', 5), &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, 0 },
-    { GPIO('B', 6), &OCR1B, &TCCR1A, &TCCR1B, 1<<COM1B1, 0 },
-    { GPIO('B', 7), &OCR1C, &TCCR1A, &TCCR1B, 1<<COM1C1, 0 },
-    { GPIO('B', 4), &OCR2A, &TCCR2A, &TCCR2B, 1<<COM2A1, GP_8BIT|GP_AFMT },
-    { GPIO('H', 6), &OCR2B, &TCCR2A, &TCCR2B, 1<<COM2B1, GP_8BIT|GP_AFMT },
-    { GPIO('E', 3), &OCR3A, &TCCR3A, &TCCR3B, 1<<COM3A1, 0 },
-    { GPIO('E', 4), &OCR3B, &TCCR3A, &TCCR3B, 1<<COM3B1, 0 },
-    { GPIO('E', 5), &OCR3C, &TCCR3A, &TCCR3B, 1<<COM3C1, 0 },
-    { GPIO('H', 3), &OCR4A, &TCCR4A, &TCCR4B, 1<<COM4A1, 0 },
-    { GPIO('H', 4), &OCR4B, &TCCR4A, &TCCR4B, 1<<COM4B1, 0 },
-    { GPIO('H', 5), &OCR4C, &TCCR4A, &TCCR4B, 1<<COM4C1, 0 },
-    { GPIO('L', 3), &OCR5A, &TCCR5A, &TCCR5B, 1<<COM5A1, 0 },
-    { GPIO('L', 4), &OCR5B, &TCCR5A, &TCCR5B, 1<<COM5B1, 0 },
-    { GPIO('L', 5), &OCR5C, &TCCR5A, &TCCR5B, 1<<COM5C1, 0 },
+    { GPIO('B', 7), &OCR0A, &TCCR0A, &TCCR0B, NULL, 1<<COM0A1, GP_8BIT },
+    { GPIO('G', 5), &OCR0B, &TCCR0A, &TCCR0B, NULL, 1<<COM0B1, GP_8BIT },
+    { GPIO('B', 5), &OCR1A, &TCCR1A, &TCCR1B, &ICR1, 1<<COM1A1, 0 },
+    { GPIO('B', 6), &OCR1B, &TCCR1A, &TCCR1B, &ICR1, 1<<COM1B1, 0 },
+    { GPIO('B', 7), &OCR1C, &TCCR1A, &TCCR1B, &ICR1, 1<<COM1C1, 0 },
+    { GPIO('B', 4), &OCR2A, &TCCR2A, &TCCR2B, NULL, 1<<COM2A1, GP_8BIT|GP_AFMT },
+    { GPIO('H', 6), &OCR2B, &TCCR2A, &TCCR2B, NULL, 1<<COM2B1, GP_8BIT|GP_AFMT },
+    { GPIO('E', 3), &OCR3A, &TCCR3A, &TCCR3B, &ICR3, 1<<COM3A1, 0 },
+    { GPIO('E', 4), &OCR3B, &TCCR3A, &TCCR3B, &ICR3, 1<<COM3B1, 0 },
+    { GPIO('E', 5), &OCR3C, &TCCR3A, &TCCR3B, &ICR3, 1<<COM3C1, 0 },
+    { GPIO('H', 3), &OCR4A, &TCCR4A, &TCCR4B, &ICR4, 1<<COM4A1, 0 },
+    { GPIO('H', 4), &OCR4B, &TCCR4A, &TCCR4B, &ICR4, 1<<COM4B1, 0 },
+    { GPIO('H', 5), &OCR4C, &TCCR4A, &TCCR4B, &ICR4, 1<<COM4C1, 0 },
+    { GPIO('L', 3), &OCR5A, &TCCR5A, &TCCR5B, &ICR5, 1<<COM5A1, 0 },
+    { GPIO('L', 4), &OCR5B, &TCCR5A, &TCCR5B, &ICR5, 1<<COM5B1, 0 },
+    { GPIO('L', 5), &OCR5C, &TCCR5A, &TCCR5B, &ICR5, 1<<COM5C1, 0 },
 #endif
 };
+
 
 DECL_CONSTANT("PWM_MAX", 65535);   //16 bit
 
@@ -90,25 +93,43 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint16_t val)
 
     // Map cycle_time to pwm clock divisor
     uint8_t flags = READP(p->flags), cs;
-    if (flags & GP_AFMT) {
-        switch (cycle_time) {
-        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
-        case     (1+8) * 510L / 2 ...     (8+32) * 510L / 2 - 1: cs = 2; break;
-        case    (8+32) * 510L / 2 ...    (32+64) * 510L / 2 - 1: cs = 3; break;
-        case   (32+64) * 510L / 2 ...   (64+128) * 510L / 2 - 1: cs = 4; break;
-        case  (64+128) * 510L / 2 ...  (128+256) * 510L / 2 - 1: cs = 5; break;
-        case (128+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 6; break;
-        default:                                                 cs = 7; break;
+    if (flags & GP_8BIT) {
+        if (flags & GP_AFMT) {
+            switch (cycle_time) {
+            case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+            case     (1+8) * 510L / 2 ...     (8+32) * 510L / 2 - 1: cs = 2; break;
+            case    (8+32) * 510L / 2 ...    (32+64) * 510L / 2 - 1: cs = 3; break;
+            case   (32+64) * 510L / 2 ...   (64+128) * 510L / 2 - 1: cs = 4; break;
+            case  (64+128) * 510L / 2 ...  (128+256) * 510L / 2 - 1: cs = 5; break;
+            case (128+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 6; break;
+            default:                                                 cs = 7; break;
+            }
+        } else {
+            switch (cycle_time) {
+            case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
+            case     (1+8) * 510L / 2 ...     (8+64) * 510L / 2 - 1: cs = 2; break;
+            case    (8+64) * 510L / 2 ...   (64+256) * 510L / 2 - 1: cs = 3; break;
+            case  (64+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 4; break;
+            default:                                                 cs = 5; break;
+            }
         }
     } else {
+        // 16 Bit timer has enough precision for exact frequency
+        uint16_t scale;
         switch (cycle_time) {
-        case                    0 ...      (1+8) * 510L / 2 - 1: cs = 1; break;
-        case     (1+8) * 510L / 2 ...     (8+64) * 510L / 2 - 1: cs = 2; break;
-        case    (8+64) * 510L / 2 ...   (64+256) * 510L / 2 - 1: cs = 3; break;
-        case  (64+256) * 510L / 2 ... (256+1024) * 510L / 2 - 1: cs = 4; break;
-        default:                                                 cs = 5; break;
+        case                  0 ...    (8) * 65535L: cs = 1; scale =   1; break;
+        case   (8) * 65535L + 1 ...   (64) * 65535L: cs = 2; scale =   8; break;
+        case  (64) * 65535L + 1 ...  (256) * 65535L: cs = 3; scale =  64; break;
+        case (256) * 65535L + 1 ... (1024) * 65535L: cs = 4; scale = 256; break;
+        default:                                     cs = 5; scale =1024; break;
+        }
+        uint16_t rest = cycle_time % scale;
+        //TODO: check if already programmed
+        if( cycle_time / scale < 65535) {
+            *p->icr = rest > 8 ? rest : 8;  //Minimum of 8 clock cycles (3 bit)
         }
     }
+
     volatile uint8_t *rega = READP(p->rega), *regb = READP(p->regb);
     uint8_t en_bit = READP(p->en_bit);
     struct gpio_digital_regs *gpio_regs = GPIO2REGS(pin);
@@ -140,6 +161,7 @@ gpio_pwm_write(struct gpio_pwm g, uint16_t val)
     if (g.size8) {
         *(volatile uint8_t*)g.reg = val >> 8;   // Take the MSB
     } else {
+        //TODO: Scale value to "rest"
         irqstatus_t flag = irq_save();
         *(volatile uint16_t*)g.reg = val;
         irq_restore(flag);

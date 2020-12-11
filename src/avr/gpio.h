@@ -25,6 +25,7 @@ uint8_t gpio_in_read(struct gpio_in g);
 struct gpio_pwm {
     void *reg;
     uint8_t size8;
+    uint16_t scale;
 };
 struct gpio_pwm gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint16_t val);
 void gpio_pwm_write(struct gpio_pwm g, uint16_t val);
