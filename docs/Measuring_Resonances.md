@@ -111,10 +111,15 @@ free-fall acceleration, e.g.
 Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
 ```
 
-Try running `MEASURE_AXES_NOISE` in Octoprint, you should get some baseline
-numbers for the noise of accelerometer on the axes (should be somewhere
-in the range of ~1-100). Note that this feature will not be available if
-`numpy` package was not installed (see
+If you get an error like `Invalid adxl345 id (got xx vs e5)`, where `xx`
+is some other ID, it is indicative of the connection problem with ADXL345,
+or the faulty sensor. Double-check the power, the wiring (that it matches
+the schematics, no wire is broken or loose, etc.), and soldering quality.
+
+Next, try running `MEASURE_AXES_NOISE` in Octoprint, you should get some
+baseline numbers for the noise of accelerometer on the axes (should be
+somewhere in the range of ~1-100). Note that this feature will not be
+available if `numpy` package was not installed (see
 [Software installation](#software-installation) for more details).
 
 ## Measuring the resonances
@@ -202,7 +207,7 @@ via Octoprint terminal:
 SHAPER_CALIBRATE
 ```
 
-This will test all frequencies in range 5 Hz - 120 Hz and generate
+This will test all frequencies in range 5 Hz - 120 Hz by default and generate
 the csv output (`/tmp/calibration_data_*.csv` by default) for the frequency
 response and the suggested input shapers. You will also get the suggested
 frequencies for each input shaper, as well as which input shaper is recommended
@@ -291,10 +296,13 @@ It is possible to generate the raw accelerometer data and process it offline
 (e.g. on a host machine), for example to find resonances. In order to do so,
 run the following command via Octoprint terminal:
 ```
+SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
 TEST_RESONANCES AXIS=X OUTPUT=raw_data
 ```
-(specify the desired test axis and the desired template for the raw
-accelerometer output, the data will be written into `/tmp` directory).
+ignoring any errors for `SET_INPUT_SHAPER` command. For `TEST_RESONANCES`
+command, specify the desired test axis and optionally, the desired template
+for the raw accelerometer output, the data will be written into `/tmp`
+directory on the RPi.
 
 The raw data can also be obtained by running the command `ACCELEROMETER_MEASURE`
 command twice during some normal printer activity - first to start the
@@ -305,6 +313,7 @@ The data can be processed later by the following scripts:
 `scripts/graph_accelerometer.py` and `scripts/calibrate_shaper.py`. Both
 of them accept one or several raw csv files as the input depending on the
 mode. The graph_accelerometer.py script supports several modes of operation:
+
   * plotting raw accelerometer data (use `-r` parameter), only 1 input is
     supported;
   * plotting a frequency response (no extra parameters required), if multiple
@@ -317,6 +326,9 @@ mode. The graph_accelerometer.py script supports several modes of operation:
     you can additionally specify which accelerometer axis to consider via
     `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
     for all axes is used).
+
+Note that graph_accelerometer.py script supports only the raw_data\*.csv files
+and not resonances\*.csv or calibration_data\*.csv files.
 
 For example,
 ```
