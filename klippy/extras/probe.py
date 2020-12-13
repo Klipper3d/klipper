@@ -29,10 +29,12 @@ class PrinterProbe:
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
-            self.z_position = zconfig.getfloat('position_min', 0.)
+            self.z_position = zconfig.getfloat('position_min', 0.,
+                                               note_valid=False)
         else:
             pconfig = config.getsection('printer')
-            self.z_position = pconfig.getfloat('minimum_z_position', 0.)
+            self.z_position = pconfig.getfloat('minimum_z_position', 0.,
+                                               note_valid=False)
         # Multi-sample support (for improved accuracy)
         self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
