@@ -133,6 +133,7 @@ CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
+CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
