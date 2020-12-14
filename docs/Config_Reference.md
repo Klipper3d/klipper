@@ -116,6 +116,9 @@ the "kinematics" option in the [printer] config section) require
 different names for the stepper (eg, `stepper_x` vs `stepper_a`).
 Below are common stepper definitions.
 
+See the [rotation distance document](Rotation_Distance.md) for
+information on calculating the `rotation_distance` parameter.
+
 ```
 [stepper_x]
 step_pin:
