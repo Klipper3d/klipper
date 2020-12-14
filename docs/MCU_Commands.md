@@ -133,15 +133,6 @@ This section lists some commonly used config commands.
   see the description of the 'set_pwm_out' and 'config_digital_out'
   commands for parameter description.
 
-* `config_soft_pwm_out oid=%c pin=%u value=%c
-  default_value=%c max_duration=%u` : This command creates an internal
-  micro-controller object for software implemented PWM. Unlike
-  hardware pwm pins, a software pwm object does not require any
-  special hardware support (other than the ability to configure the
-  pin as a digital output GPIO).  See the description of
-  the 'set_pwm_out' and 'config_digital_out'
-  commands for parameter description.
-
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be
   sampled at regular interval using the query_analog_in command (see
@@ -191,22 +182,25 @@ Common commands
 This section lists some commonly used run-time commands. It is likely
 only of interest to developers looking to gain insight into Klipper.
 
-* `queue_digital_out oid=%c clock=%u value=%c` : This command will
+* `set_digital_out_pwm_cycle oid=%c cycle_ticks=%u` : This command
+  configures a digital output pin (as created by config_digital_out)
+  to use "software PWM". The 'cycle_ticks' is the number of clock
+  ticks for the PWM cycle. Because the output switching is implemented
+  in the micro-controller software, it is recommended that
+  'cycle_ticks' correspond to a time of 10ms or greater.
+
+* `queue_digital_out oid=%c clock=%u on_ticks=%u` : This command will
   schedule a change to a digital output GPIO pin at the given clock
   time. To use this command a 'config_digital_out' command with the
   same 'oid' parameter must have been issued during micro-controller
-  configuration.
+  configuration. If 'set_digital_out_pwm_cycle' has been called then
+  'on_ticks' is the on duration (in clock ticks) for the pwm cycle.
+  Otherwise, 'on_ticks' should be either 0 (for low voltage) or 1 (for
+  high voltage).
 
 * `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
   hardware PWM output pin. See the 'queue_digital_out' and
   'config_pwm_out' commands for more info.
-
-* `queue_soft_pwm_out oid=%c clock=%u on_ticks=%u` : Schedules a
-  change to a software PWM output pin. Because the output switching is
-  implemented in the micro-controller software, it is recommended that
-  the sum of on_ticks and off_ticks parameters corresponds to a time
-  of 10ms or greater. See the 'queue_digital_out' and
-  'config_soft_pwm_out' commands for more info.
 
 * `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u min_value=%hu max_value=%hu` : This command sets up a

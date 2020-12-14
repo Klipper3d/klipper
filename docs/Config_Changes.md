@@ -6,10 +6,15 @@ All dates in this document are approximate.
 
 # Changes
 
+20201213: It is not valid to specify a Z "position_endstop" when using
+"probe:z_virtual_endstop".  An error will now be raised if a Z
+"position_endstop" is specified with "probe:z_virtual_endstop".
+Remove the Z "position_endstop" definition to fix the error.
+
 20201120: The `[board_pins]` config section now specifies the mcu name
 in an explicit `mcu:` parameter.  If using board_pins for a secondary
 mcu, then the config must be updated to specify that name.  See the
-[config reference](Config_Reference.md#[board_pins]) for further
+[config reference](Config_Reference.md#board_pins) for further
 details.
 
 20201112: The time reported by `print_stats.print_duration` has

@@ -155,7 +155,7 @@ class MCU_digital_out:
                                  on_restart=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
-            "queue_digital_out oid=%c clock=%u value=%c", cq=cmd_queue)
+            "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
     def set_digital(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
@@ -235,23 +235,23 @@ class MCU_pwm:
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
-            "config_soft_pwm_out oid=%d pin=%s value=%d"
+            "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
             % (self._oid, self._pin, self._start_value >= 1.0,
                self._shutdown_value >= 0.5,
                self._mcu.seconds_to_clock(self._max_duration)))
         self._mcu.add_config_cmd(
-            "set_soft_pwm_cycle_ticks oid=%d cycle_ticks=%d"
+            "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
         self._last_cycle_ticks = cycle_ticks
         svalue = int(self._start_value * cycle_ticks + 0.5)
         self._mcu.add_config_cmd(
-            "queue_soft_pwm_out oid=%d clock=%d on_ticks=%d"
+            "queue_digital_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "queue_soft_pwm_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+            "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
         self._set_cycle_ticks = self._mcu.lookup_command(
-            "set_soft_pwm_cycle_ticks oid=%c cycle_ticks=%u", cq=cmd_queue)
+            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue)
     def set_pwm(self, print_time, value, cycle_time=None):
         clock = self._mcu.print_time_to_clock(print_time)
         minclock = self._last_clock
