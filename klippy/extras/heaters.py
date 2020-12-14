@@ -135,7 +135,9 @@ class Heater:
         with self.lock:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
-        return {'temperature': smoothed_temp, 'target': target_temp}
+            last_pwm_value = self.last_pwm_value
+        return {'temperature': smoothed_temp, 'target': target_temp,
+                'power': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
@@ -265,7 +267,8 @@ class PrinterHeaters:
         return self.heaters[heater_name]
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
-                   "bme280", "htu21d", "lm75", "rpi_temperature"]
+                   "bme280", "htu21d", "lm75", "rpi_temperature",
+                   "temperature_mcu"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')

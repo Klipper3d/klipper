@@ -12,14 +12,13 @@ class ManualProbe:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
-        self.z_position_endstop = None
-        if config.has_section('stepper_z'):
-            zconfig = config.getsection('stepper_z')
-            if zconfig.get_prefix_options('position_endstop'):
-                self.z_position_endstop = zconfig.getfloat('position_endstop')
-                self.gcode.register_command(
-                    'Z_ENDSTOP_CALIBRATE', self.cmd_Z_ENDSTOP_CALIBRATE,
-                    desc=self.cmd_Z_ENDSTOP_CALIBRATE_help)
+        zconfig = config.getsection('stepper_z')
+        self.z_position_endstop = zconfig.getfloat('position_endstop', None,
+                                                   note_valid=False)
+        if self.z_position_endstop is not None:
+            self.gcode.register_command(
+                'Z_ENDSTOP_CALIBRATE', self.cmd_Z_ENDSTOP_CALIBRATE,
+                desc=self.cmd_Z_ENDSTOP_CALIBRATE_help)
     def manual_probe_finalize(self, kin_pos):
         if kin_pos is not None:
             self.gcode.respond_info("Z position is %.3f" % (kin_pos[2],))
