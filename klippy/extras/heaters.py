@@ -135,7 +135,9 @@ class Heater:
         with self.lock:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
-        return {'temperature': smoothed_temp, 'target': target_temp}
+            last_pwm_value = self.last_pwm_value
+        return {'temperature': smoothed_temp, 'target': target_temp,
+                'power': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
