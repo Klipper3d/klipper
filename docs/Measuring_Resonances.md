@@ -143,26 +143,7 @@ Run the following command:
 ```
 TEST_RESONANCES AXIS=X
 ```
-Note that it will create vibrations on X axis. If that works, run for Y axis
-as well:
-```
-TEST_RESONANCES AXIS=Y
-```
-This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
-`/tmp/resonances_y_*.csv`).
-
-Note that the commands above require `numpy` to be installed installed. If you
-haven't installed it, you can instead pass `OUTPUT=raw_data` argument to the
-above commands (2 files `/tmp/raw_data_x_*.csv` and `/tmp/raw_data_y_*.csv`
-will be written). One can then run stand-alone scripts on Raspberry Pi
-(specify the correct file name on the command line):
-```
-$ ~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png
-$ ~/klipper/scripts/calibrate_shaper.py /tmp/raw_data_x_*.csv -o /tmp/shaper_calibrate_x.png
-```
-or copy the data to the host and run the scripts there. See
-[Offline processing of the accelerometer data](#offline-processing-of-the-accelerometer-data)
-section for more details.
+Note that it will create vibrations on X axis.
 
 **Attention!** Be sure to observe the printer for the first time, to make sure
 the vibrations do not become too violent (`M112` command can be used to abort
@@ -176,9 +157,71 @@ accel_per_hz: 50  # default is 75
 probe_points: ...
 ```
 
-Generated CSV files show power spectral density of the vibrations depending on the
-frequency. Usually, the charts generated from these CSV files are relatively easy
-to read, with the peaks corresponding to the resonance frequencies:
+If the works for X axis, run for Y axis as well:
+```
+TEST_RESONANCES AXIS=Y
+```
+This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
+`/tmp/resonances_y_*.csv`). They can be downloaded to the host and analyzed
+there. For example, you can open them in LibreOffice Calc and generate charts
+from the data. Alternatively, these files can be processed with the
+stand-alone script on a Raspberry Pi (assuming `python-numpy` and
+`python-matplotlib` were installed). To do that, run running the following
+commands (specify the correct file names on the command line):
+```
+$ ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
+$ ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
+```
+This script will generate the charts `/tmp/shaper_calibrate_x.png` and
+`/tmp/shaper_calibrate_y.png` with frequency responses. You will also get the
+suggested frequencies for each input shaper, as well as which input shaper is
+recommended for your setup, for example:
+```
+Fitted shaper 'zv' frequency = 56.0 Hz (vibrations = 33.1%)
+Fitted shaper 'mzv' frequency = 34.4 Hz (vibrations = 17.4%)
+Fitted shaper 'ei' frequency = 49.0 Hz (vibrations = 17.2%)
+Fitted shaper '2hump_ei' frequency = 45.3 Hz (vibrations = 9.1%)
+Fitted shaper '3hump_ei' frequency = 50.0 Hz (vibrations = 6.9%)
+Recommended shaper is 2hump_ei @ 45.3 Hz
+```
+
+The suggested configuration can be added to `[input_shaper]` section of
+`printer.cfg`:
+```
+[input_shaper]
+shaper_freq_x: 45.3
+shaper_type_x: 2hump_ei
+shaper_freq_y: ...
+shaper_type_y: ...
+```
+or you can choose some other configuration yourself based on the generated
+charts. Note that alternatively you can run the input shaper autocalibration
+from Klipper [directly](#input-shaper-auto-calibration), which can be
+convenient, for example, for the input shaper
+[re-calibration](#input-shaper-re-calibration).
+
+Note that the `TEST_RESONANCES` commands above require `numpy` to be installed
+installed. If you haven't installed it, you can instead pass `OUTPUT=raw_data`
+argument to the above commands:
+```
+TEST_RESONANCES AXIS=X OUTPUT=raw_data
+TEST_RESONANCES AXIS=Y OUTPUT=raw_data
+```
+2 files `/tmp/raw_data_x_*.csv` and `/tmp/raw_data_y_*.csv` will be written.
+You can then run stand-alone scripts on Raspberry Pi (specify the correct file
+name on the command line):
+```
+$ ~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png
+$ ~/klipper/scripts/calibrate_shaper.py /tmp/raw_data_x_*.csv -o /tmp/shaper_calibrate_x.png
+```
+or copy the data to the host and run the scripts there. See
+[Offline processing of the accelerometer data](#offline-processing-of-the-accelerometer-data)
+section for more details.
+
+Generated CSV files and charts show power spectral density of the vibrations
+depending on the frequency. Usually, the charts generated from these CSV files
+are relatively easy to read, with the peaks corresponding to the resonance
+frequencies:
 
 ![Resonances](img/test-resonances-x.png)
 
