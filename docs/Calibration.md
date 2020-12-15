@@ -15,6 +15,7 @@ the limit is the plastic extrusion rate, and not the motion speed.
 
 In this guide we will try to give the basics and a summary of the Klipper
 specific features that can be used to calibrate your printer.
+
 Please try to follow the guide in order.
 
 We will refer to external documentation to supplement this, but some of the
@@ -30,21 +31,22 @@ config file is successfully loaded.
 
 
 
-# Mechanical tuning
+# Mechanical checks, maintenance and basic/common tuning
+
+Here we go over some of the basic and common checks and calibrations that
+one often needs to do with a 3D Printer.
 
 
 ## Check the mechanical aspects of your printer
 
 First you need to ensure that your printer is physically well set up.
 
-### Frame maintenance
-
-Verify that the following is all good:
-
-* Tighten screws
-* Frame stiffness: if in question add corner stiffening measures
-* Check linear movement components: play, friction, smoothness, greasing, etc…
-* Check to see that the idlers are not on a bent rod.
+* Ensure that all the screws are tight.
+* Verify that the linear motion parts of your printer is not bent, and the
+  linear bearings move smoothly. If they are not adequately smooth, try and
+  lubricate it with the appropriate lubricant (TODO: Reccomend some lubricants, Grease: PTFE/Lithium, Oils: Silicon/Mineral).
+  If you have V-Slot wheels, ensure that the eccentric nut is rotated so that
+  the wheels are firmly against the frame but not so tight it constricts movement. (TODO: Add qualification as to how tight is recommended)
 * Ensure that the pulleys are centered on the stepper motors correctly.
 * Ensure that the belt, pulleys and idlers are straight. if they are misaligned
   you will get similar issues as an overtight belt, where the belt repeatedly
@@ -54,100 +56,104 @@ Verify that the following is all good:
   For most printers, if you pluck them they should like a bass guitar.
 
 
-### Electronics & safety
+## Check your Electronics
 
-Also, on the electronics:
+Common checks on your electronics
 
-* Ensure that all the electronics are cool. If any of the stepper motors, or
-  the control circuitry is too hot to keep your finger on it will cause issues.
-* Verify that your wiring is in good order, and has strain relief applied on
-  moving parts. It's better that the wiring doesn't bend near a plug, and best
-  if the movement is over a large portion of the cabling so that you don't
-  develop a weak spot.
-* An undersized powersupply can cause all kinds of intermittent print quality
-  issues, such as irregular underextrusion or temperature fluctuations.
-  Diagnosing and fixing such issues is outside of the scope of this guide.
-
-
-Even though Klipper does its best to ensure safety by detecting common failure
-issues that could be dangerous and caused by machine failure, you are dealing
-with a high-power device. Ensure you have a strategy to manage a dangerous
-situation if any develops.
-
-Have a smoke detector installed correctly near your 3D printer so you can catch
-any fires early enough if they occur before any real damage gets done.
-
-It's best if you have some insulation on your hotend and heated bed.
-This will allow much more consistent temperatures, and help prevent burning
-your fingers accidentally.
+* Ensure that all the electronics are cool enough. If any of the stepper
+  motors, or the control circuitry is too hot to keep your finger on it,
+  it will cause issues.
+  In that case, please consider tuning your stepper current. (TODO: Link to guides re stepper current set-up)
+* It's best if you have some insulation on your heated parts,
+  such as a silicone sock over the hotend and insulation under the heated bed.
+  This will allow much more consistent temperatures.
+  If you change the insulation on your heated parts, please remember to
+  do PID autotuning (TODO: Link to pid_autotune section)
 
 
 ## PID autotuning
 
-TODO
+TODO: Link to PID autotuning in Config Checks
 
 
 ## Bed levelling
 
-TODO
+[Bed levelling](Bed_Level.md)
 
- or Resonance Compensation
 
 # A good time to do a baseline print
 
-TODO
+Now that your printer should be basically working, it's a good idea to have a baseline print.
+TODO: Link to various small/good test prints (e.g. test cube)
 
 
 
 # Extrusion tuning
 
+TODO: Describe the purpose of this section
 
 ## Extruder step calibration (coarse)
 
-TODO
+TODO: Link to section in Config Checks
+TODO: Link to https://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#E_steps
 
 
 ## Slicer flow calbiration (fine)
 
-TODO
+TODO: Mention that this is a slicer configuration that is unique to your printer
+TODO: Mention SuperSlicer's calibration print
+TODO: Mention https://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#E_Steps_Fine_Tuning
+TODO: Links to https://3dprintbeginner.com/flow-rate-calibration/ and https://teachingtechyt.github.io/calibration.html#flow
+TODO: Mention that one can (and probably should) update the extruder steps so that one can just print at 100% flow.
 
 
 
 # Determining the safe maximum print speed
 
+TODO: Describe the purpose of this section
 
 ## Determine maximum feedrate of your hot-end
 
-TODO
+TODO: Links to https://teachingtechyt.github.io/calibration.html#accel - Calculating maximum feedrate - optional
+Consider updating this
 
 
 ## Maximum safe acceleration
 
-TODO
+TODO: Ringing? Should we just get to an acceptable level here, and mention that one can may get better results using Resonance Compensation (which is definitely an advanced tuning process)
+TODO: Vibration cube?
 
 
 ### On `square_corner_velocity`
 
-TODO
+TODO: Describe what it does
+TODO: Compare it to Jerk
+
 
 
 # Fine tuning
 
-
-## Resonance Compensation
-
-TODO
+TODO: Describe the purpose of this section
 
 
 ## Pressure Advance
 
-TODO
+[Pressure Advance](Pressure_Advance.md)
 
 
 ## Retraction tuning
 
-TODO
+TODO: Could we do a calibration util to generate a good retraction tower?
+TODO: Mention other retraction towers (e.g. teaching tech, SuperSlicer, etc?)
 
+
+
+# Advanced tuning
+
+
+## Resonance Compensation
+
+[Resonance Compensation](Resonance_Compensation.md)
 
 
 # All done!
