@@ -1348,9 +1348,9 @@ the [command reference](G-Codes.md#resonance-compensation).
 #damping_ratio_x: 0.1
 #damping_ratio_y: 0.1
 #   Damping ratios of vibrations of X and Y axes used by input shapers
-#   to improve vibration suppression. Should not be changed without
-#   some proper measurements, e.g. with an accelerometer. Default
-#   value is 0.1 which is a good all-round value for most printers.
+#   to improve vibration suppression. Default value is 0.1 which is a
+#   good all-round value for most printers. In most circumstances this
+#   parameter requires no tuning and should not be changed.
 ```
 
 ## [adxl345]
