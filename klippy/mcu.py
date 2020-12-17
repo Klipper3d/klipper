@@ -161,8 +161,6 @@ class MCU_digital_out:
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
-    def set_pwm(self, print_time, value, cycle_time=None):
-        self.set_digital(print_time, value >= 0.5)
 
 class MCU_pwm:
     def __init__(self, mcu, pin_params):
