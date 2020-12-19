@@ -35,8 +35,8 @@ to move the nozzle to an X position of 57 and Y of 30. Once one finds
 the position directly above the mark, use the `GET_POSITION` command
 to report that position. This is the nozzle position.
 
-The x_offset is then the `nozzle_x_position - probe_x_position` and
-y_offset is similarly the `nozzle_y_position - probe_y_position`.
+The x_offset is then the `probe_x_position - nozzle_x_position` and
+y_offset is similarly the `probe_y_position - nozzle_y_position`.
 Update the printer.cfg file with the given values, remove the
 tape/marks from the bed, and then issue a `RESTART` command so that
 the new values take effect.
