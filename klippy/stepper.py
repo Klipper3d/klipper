@@ -183,7 +183,7 @@ def PrinterStepper(config, units_in_radians=False):
     step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
     dir_pin = config.get('dir_pin')
     dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
-    step_dist = config.getfloat('step_distance', above=0.)
+    step_dist = parse_step_distance(config, units_in_radians, True)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
     # Support for stepper enable pin handling
@@ -193,6 +193,47 @@ def PrinterStepper(config, units_in_radians=False):
     force_move = printer.load_object(config, 'force_move')
     force_move.register_stepper(mcu_stepper)
     return mcu_stepper
+
+# Parse stepper gear_ratio config parameter
+def parse_gear_ratio(config, note_valid):
+    gear_ratio = config.get('gear_ratio', None, note_valid=note_valid)
+    if gear_ratio is None:
+        return 1.
+    result = 1.
+    try:
+        gears = gear_ratio.split(',')
+        for gear in gears:
+            g1, g2 = [float(v.strip()) for v in gear.split(':')]
+            result *= g1 / g2
+    except:
+        raise config.error("Unable to parse gear_ratio: %s" % (gear_ratio,))
+    return result
+
+# Obtain "step distance" information from a config section
+def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    if units_in_radians is None:
+        # Caller doesn't know if units are in radians - infer it
+        rd = config.get('rotation_distance', None, note_valid=False)
+        gr = config.get('gear_ratio', None, note_valid=False)
+        units_in_radians = rd is None and gr is not None
+    if units_in_radians:
+        rotation_dist = 2. * math.pi
+        config.get('gear_ratio', note_valid=note_valid)
+    else:
+        rotation_dist = config.getfloat('rotation_distance', None,
+                                        above=0., note_valid=note_valid)
+    if rotation_dist is None:
+        # Older config format with step_distance
+        return config.getfloat('step_distance', above=0., note_valid=note_valid)
+    # Newer config format with rotation_distance
+    microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
+    full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
+                               note_valid=note_valid)
+    if full_steps % 4:
+        raise config.error("full_steps_per_rotation invalid in section '%s'"
+                           % (config.get_name(),))
+    gearing = parse_gear_ratio(config, note_valid)
+    return rotation_dist / (full_steps * microsteps * gearing)
 
 
 ######################################################################

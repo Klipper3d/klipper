@@ -17,6 +17,8 @@ communication with the Klipper developers.
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config
   parameters.
+  - [Rotation Distance](Rotation_Distance.md): Calculating the
+    rotation_distance stepper parameter.
 - [Config checks](Config_checks.md): Verify basic pin settings in the
   config file.
 - [Bed level](Bed_Level.md): Information on "bed leveling" in Klipper.

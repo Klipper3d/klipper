@@ -172,8 +172,10 @@ The following standard commands are supported:
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
-- `SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>] [DISTANCE=<distance>]`:
-  Set a new value for the provided extruder's step_distance. Value is
+- `SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>]
+  [DISTANCE=<distance>]`: Set a new value for the provided extruder's
+  "step distance". The "step distance" is
+  `rotation_distance/(full_steps_per_rotation*microsteps)`. Value is
   not retained on Klipper reset. Use with caution, small changes can
   result in excessive pressure between extruder and hot end. Do proper
   calibration steps with filament before use. If 'DISTANCE' value is
