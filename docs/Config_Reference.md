@@ -1414,7 +1414,9 @@ In order to use most of the functionality of this module, additional
 software dependencies must be installed; refer to
 [Measuring Resonances](Measuring_Resonances.md) and the
 [command reference](G-Codes.md#resonance-testing-commands) for more
-information.
+information. See the [Max smoothing](Measuring_Resonances.md#max-smoothing)
+section of the measuring resonances guide for more information on
+`max_smoothing` parameter and its use.
 
 ```
 [resonance_tester]
@@ -1438,6 +1440,11 @@ information.
 #   and on the toolhead (for X axis). These parameters have the same
 #   format as 'accel_chip' parameter. Only 'accel_chip' or these two
 #   parameters must be provided.
+#max_smoothing:
+#   Maximum input shaper smoothing to allow for each axis during shaper
+#   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
+#   maximum smoothing is specified. Refer to Measuring_Resonances guide
+#   for more details on using this feature.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
 #max_freq: 120

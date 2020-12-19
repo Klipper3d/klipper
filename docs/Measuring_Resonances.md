@@ -168,22 +168,22 @@ recommended for your setup. For example:
 
 ![Resonances](img/calibrate-y.png)
 ```
-Fitted shaper 'zv' frequency = 56.7 Hz (vibrations = 23.2%)
-Fitted shaper 'mzv' frequency = 52.9 Hz (vibrations = 10.9%)
-Fitted shaper 'ei' frequency = 62.0 Hz (vibrations = 8.9%)
-Fitted shaper '2hump_ei' frequency = 59.0 Hz (vibrations = 4.9%)
-Fitted shaper '3hump_ei' frequency = 65.0 Hz (vibrations = 3.3%)
-Recommended shaper is 2hump_ei @ 59.0 Hz
+Fitted shaper 'zv' frequency = 37.0 Hz (vibrations = 29.1%, smoothing ~= 0.115)
+Fitted shaper 'mzv' frequency = 35.4 Hz (vibrations = 15.9%, smoothing ~= 0.163)
+Fitted shaper 'ei' frequency = 42.0 Hz (vibrations = 15.1%, smoothing ~= 0.183)
+Fitted shaper '2hump_ei' frequency = 45.6 Hz (vibrations = 9.7%, smoothing ~= 0.260)
+Fitted shaper '3hump_ei' frequency = 59.0 Hz (vibrations = 7.5%, smoothing ~= 0.235)
+Recommended shaper is 3hump_ei @ 59.0 Hz
 ```
 
 The suggested configuration can be added to `[input_shaper]` section of
-`printer.cfg`:
+`printer.cfg`, e.g.:
 ```
 [input_shaper]
-shaper_freq_x: 59.0
-shaper_type_x: 2hump_ei
-shaper_freq_y: ...
-shaper_type_y: ...
+shaper_freq_x: ...
+shaper_type_x: ...
+shaper_freq_y: 59.0
+shaper_type_y: 3hump_ei
 ```
 or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
@@ -223,11 +223,82 @@ probe_points: ...
 Then the commands `TEST_RESONANCES AXIS=X` and `TEST_RESONANCES AXIS=Y`
 will use the correct accelerometer for each axis.
 
+## Max smoothing
+
+Keep in mind that the input shaper can create some smoothing in parts.
+Automatic tuning of the input shaper performed by `calibrate_shaper.py`
+script or `SHAPER_CALIBRATE` command tries not to exacerbate the smoothing,
+but at the same time they try to minimize the resulting vibrations.
+Sometimes they can make a sub-optimal choice of the shaper frequency, or
+maybe you simply prefer to have less smoothing in parts at the expense of
+a larger remaining vibrations. In these cases, you can request to limit
+the maximum smoothing from the input shaper.
+
+Let's consider the following results from the automatic tuning:
+
+![Resonances](img/calibrate-x.png)
+```
+Fitted shaper 'zv' frequency = 62.2 Hz (vibrations = 36.9%, smoothing ~= 0.046)
+Fitted shaper 'mzv' frequency = 35.6 Hz (vibrations = 18.1%, smoothing ~= 0.161)
+Fitted shaper 'ei' frequency = 54.6 Hz (vibrations = 19.3%, smoothing ~= 0.108)
+Fitted shaper '2hump_ei' frequency = 46.2 Hz (vibrations = 9.2%, smoothing ~= 0.253)
+Fitted shaper '3hump_ei' frequency = 50.0 Hz (vibrations = 7.2%, smoothing ~= 0.328)
+Recommended shaper is 2hump_ei @ 46.2 Hz
+```
+Note that the reported `smoothing` values are some abstract projected values.
+These values can be used to compare different configurations: the higher the
+value, the more smoothing a shaper will create. However, these smoothing scores
+do not represent any real measure of smoothing, because the actual smoothing
+depends on [`max_accel`](#selecting-max-accel) and `square_corner_velocity`
+parameters. Therefore, you should print some test prints to see how much
+smoothing exactly a chosen configuration creates.
+
+In the example above the suggested shaper parameters are not bad, but what if
+you want to get less smoothing on the X axis? You can try to limit the maximum
+shaper smoothing using the following command:
+```
+~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
+```
+which limits the smoothing to 0.2 score. Now you can get the following result:
+
+![Resonances](img/calibrate-x-max-smoothing.png)
+```
+Fitted shaper 'zv' frequency = 55.2 Hz (vibrations = 34.2%, smoothing ~= 0.057)
+Fitted shaper 'mzv' frequency = 33.8 Hz (vibrations = 17.4%, smoothing ~= 0.178)
+Fitted shaper 'ei' frequency = 47.4 Hz (vibrations = 17.6%, smoothing ~= 0.143)
+Fitted shaper '2hump_ei' frequency = 52.0 Hz (vibrations = 11.9%, smoothing ~= 0.200)
+Fitted shaper '3hump_ei' frequency = 75.0 Hz (vibrations = 9.7%, smoothing ~= 0.146)
+Recommended shaper is 3hump_ei @ 75.0 Hz
+```
+
+If you compare to the previously suggested parameters, the vibrations are a bit
+larger, but the smoothing is significantly smaller than previously.
+
+When deciding which `max_smoothing` parameter to choose, you can use a
+trial-and-error approach. Try a few different values and see which results
+you get. Note however that if you request the script to find a configuration
+for your printer with an unrealistically small smoothing, it will be unable
+to find a reasonable configuration. The suggested parameters will have a poor
+performance in this case and you can get too much remaining ringing as a result.
+So, always double-check the projected remaining vibrations and make sure they
+are not too high.
+
+Note that if you chose a good `max_smoothing` value for both of your axes, you
+can store it in the `printer.cfg` as
+```
+[resonance_tester]
+accel_chip: ...
+probe_points: ...
+max_smoothing: 0.25  # an example
+```
+Then, if you [rerun](#input-shaper-re-calibration) the input shaper auto-tuning
+using `SHAPER_CALIBRATE` Klipper command in the future, it will use the stored
+`max_smoothing` value as a reference.
+
 ## Selecting max_accel
 
-Keep in mind that the input shaper can create some smoothing in parts,
-especially at high accelerations. Therefore, after the calibration
-is finished, you will still need to choose the `max_accel` value that
+Since the input shaper can create some smoothing in parts, especially at high
+accelerations, you will still need to choose the `max_accel` value that
 does not create too much smoothing in the printed parts. Follow
 [this](Resonance_Compensation.md#selecting-max_accel) part of
 the input shaper tuning guide and print the test model.
@@ -236,6 +307,10 @@ The same notice applies to the input shaper
 [auto-calibration](#input-shaper-auto-calibration) with
 `SHAPER_CALIBRATE` command: it is still necessary to choose the right
 `max_accel` value after the auto-calibration.
+
+If you are doing a shaper re-calibration and the reported smoothing for the
+suggested shaper configuration is almost the same as what you got during the
+previous calibration, this step can be skipped.
 
 
 # Input Shaper auto-calibration
