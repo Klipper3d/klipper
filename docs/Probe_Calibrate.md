@@ -114,11 +114,12 @@ Recv: // probe accuracy results: maximum 2.519448, minimum 2.506948, range 0.012
 Ideally the tool will report an identical maximum and minimum value.
 (That is, ideally the probe obtains an identical result on all ten
 probes.) However, it's normal for the minimum and maximum values to
-differ by one Z step_distance or up to 5 microns (.005mm). The
-distance between the minimum and the maximum value is called the
-range. So, in the above example, since the printer uses a Z
-step_distance of .0125, a range of 0.012500 would be considered
-normal.
+differ by one Z "step distance" or up to 5 microns (.005mm). A "step
+distance" is
+`rotation_distance/(full_steps_per_rotation*microsteps)`. The distance
+between the minimum and the maximum value is called the range. So, in
+the above example, since the printer uses a Z step distance of .0125,
+a range of 0.012500 would be considered normal.
 
 If the results of the test show a range value that is greater than 25
 microns (.025mm) then the probe does not have sufficient accuracy for

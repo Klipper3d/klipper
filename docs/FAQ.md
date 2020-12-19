@@ -2,7 +2,7 @@ Frequently asked questions
 ==========================
 
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
-2. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
+2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)
 3. [Where's my serial port?](#wheres-my-serial-port)
 4. [When the micro-controller restarts the device changes to /dev/ttyUSB1](#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1)
 5. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
@@ -31,25 +31,9 @@ Frequently asked questions
 Thanks. Kevin has a Patreon page at:
 [https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
 
-### How do I calculate the step_distance parameter in the printer config file?
+### How do I calculate the rotation_distance config parameter?
 
-If you know the steps per millimeter for the axis then use a
-calculator to divide 1.0 by steps_per_mm. Then round this number to
-six decimal places and place it in the config (six decimal places is
-nano-meter precision).
-
-The step_distance defines the distance that the axis will travel on
-each motor driver pulse. It can also be calculated from the axis
-pitch, motor step angle, and driver microstepping. If unsure, do a web
-search for "calculate steps per mm" to find an online calculator.
-
-Klipper uses step_distance instead of steps_per_mm in order to use
-consistent units of measurement in the config file. (The config uses
-millimeters for all distance measurements.) It is believed that
-steps_per_mm originated as an optimization on old 8-bit
-micro-controllers (the desire to use a multiply instead of a divide in
-some low-level code). Continuing to configure this one distance in
-units of "inverse millimeters" is felt to be quirky and unnecessary.
+See the [rotation distance document](Rotation_Distance.md).
 
 ### Where's my serial port?
 
@@ -262,9 +246,9 @@ around 10000 steps per second. If it is requested to move at a speed
 that would require a higher step rate then Marlin will generally just
 step as fast as it can. Klipper is able to achieve much higher step
 rates, but the stepper motor may not have sufficient torque to move at
-a higher speed. So, for a Z axis with a very precise step_distance the
-actual obtainable max_z_velocity may be smaller than what is
-configured in Marlin.
+a higher speed. So, for a Z axis with a high gearing ratio or high
+microsteps setting the actual obtainable max_z_velocity may be smaller
+than what is configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
