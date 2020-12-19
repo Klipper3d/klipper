@@ -108,7 +108,7 @@ class PrinterTemperatureMCU:
     def config_samd51(self):
         self.config_samd21(addr=0x00800100)
     def config_stm32f1(self):
-        self.slope = 3.3 / .004300
+        self.slope = 3.3 / -.004300
         self.base_temperature = self.calc_base(25., 1.43 / 3.3)
     def config_stm32f2(self):
         self.slope = 3.3 / .002500
