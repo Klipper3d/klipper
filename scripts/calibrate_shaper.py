@@ -40,7 +40,7 @@ def parse_log(logname):
 ######################################################################
 
 # Find the best shaper parameters
-def calibrate_shaper(datas, csv_output):
+def calibrate_shaper(datas, csv_output, max_smoothing):
     helper = ShaperCalibrate(printer=None)
     if isinstance(datas[0], CalibrationData):
         calibration_data = datas[0]
@@ -52,19 +52,19 @@ def calibrate_shaper(datas, csv_output):
         for data in datas[1:]:
             calibration_data.join(helper.process_accelerometer_data(data))
         calibration_data.normalize_to_frequencies()
-    shaper_name, shaper_freq, shapers_vals = helper.find_best_shaper(
-            calibration_data, print)
-    print("Recommended shaper is %s @ %.1f Hz" % (shaper_name, shaper_freq))
+    shaper, all_shapers = helper.find_best_shaper(
+            calibration_data, max_smoothing, print)
+    print("Recommended shaper is %s @ %.1f Hz" % (shaper.name, shaper.freq))
     if csv_output is not None:
         helper.save_calibration_data(
-                csv_output, calibration_data, shapers_vals)
-    return shaper_name, shapers_vals, calibration_data
+                csv_output, calibration_data, all_shapers)
+    return shaper.name, all_shapers, calibration_data
 
 ######################################################################
 # Plot frequency response and suggested input shapers
 ######################################################################
 
-def plot_freq_response(lognames, calibration_data, shapers_vals,
+def plot_freq_response(lognames, calibration_data, shapers,
                        selected_shaper, max_freq):
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
@@ -99,13 +99,15 @@ def plot_freq_response(lognames, calibration_data, shapers_vals,
     ax2 = ax.twinx()
     ax2.set_ylabel('Shaper vibration reduction (ratio)')
     best_shaper_vals = None
-    for name, freq, vals in shapers_vals:
-        label = "%s (%.1f Hz)" % (name.upper(), freq)
+    for shaper in shapers:
+        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f)" % (
+                shaper.name.upper(), shaper.freq,
+                shaper.vibrs * 100., shaper.smoothing)
         linestyle = 'dotted'
-        if name == selected_shaper:
+        if shaper.name == selected_shaper:
             linestyle = 'dashdot'
-            best_shaper_vals = vals
-        ax2.plot(freqs, vals, label=label, linestyle=linestyle)
+            best_shaper_vals = shaper.vals
+        ax2.plot(freqs, shaper.vals, label=label, linestyle=linestyle)
     ax.plot(freqs, psd * best_shaper_vals,
             label='After\nshaper', color='cyan')
     # A hack to add a human-readable shaper recommendation to legend
@@ -140,22 +142,26 @@ def main():
                     default=None, help="filename of output csv file")
     opts.add_option("-f", "--max_freq", type="float", default=200.,
                     help="maximum frequency to graph")
+    opts.add_option("-s", "--max_smoothing", type="float", default=None,
+                    help="maximum shaper smoothing to allow")
     options, args = opts.parse_args()
     if len(args) < 1:
         opts.error("Incorrect number of arguments")
+    if options.max_smoothing is not None and options.max_smoothing < 0.05:
+        opts.error("Too small max_smoothing specified (must be at least 0.05)")
 
     # Parse data
     datas = [parse_log(fn) for fn in args]
 
     # Calibrate shaper and generate outputs
-    selected_shaper, shapers_vals, calibration_data = calibrate_shaper(
-            datas, options.csv)
+    selected_shaper, shapers, calibration_data = calibrate_shaper(
+            datas, options.csv, options.max_smoothing)
 
     if not options.csv or options.output:
         # Draw graph
         setup_matplotlib(options.output is not None)
 
-        fig = plot_freq_response(args, calibration_data, shapers_vals,
+        fig = plot_freq_response(args, calibration_data, shapers,
                                  selected_shaper, options.max_freq)
 
         # Show graph
