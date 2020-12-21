@@ -67,8 +67,7 @@ Then use the following procedure to "measure and trim":
    `actual_extrude_distance = <initial_mark_distance> - <subsequent_mark_distance>`
 5. Calculate rotation_distance as:
    `rotation_distance = <previous_rotation_distance> * <actual_extrude_distance> / <requested_extrude_distance>`
-   Round the new rotation_distance to
-   three decimal places.
+   Round the new rotation_distance to three decimal places.
 
 If the actual_extrude_distance differs from requested_extrude_distance
 by more than about 2mm then it is a good idea to perform the steps
