@@ -65,6 +65,7 @@ ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
+    sudo chmod +x /home/debian/klipper/scripts/restart-recore-a4.py
 }
 
 # Step 4: Start host software
