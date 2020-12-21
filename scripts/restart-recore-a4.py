@@ -51,6 +51,7 @@ os.system("gpioget 1 34")
 
 
 def prepare_motors():
+    print("prepare motors")
     # Prep the tty for stepper drivers
     os.system("stty -F /dev/ttyS2 raw -echo -echoe")
     os.system("stty -F /dev/ttyS3 raw -echo -echoe")

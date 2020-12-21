@@ -58,8 +58,9 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
-User=$KLIPPER_USER
+User=root
 RemainAfterExit=yes
+ExecStartPre=/home/debian/klipper/scripts/restart-recore-a4.py
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
 EOF
 # Use systemctl to enable the klipper systemd service script
