@@ -332,7 +332,10 @@ class PrinterHeaters:
         min_temp = gcmd.get_float('MINIMUM')
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
-        sensor = self.printer.lookup_object(sensor_name)
+        if sensor_name in self.heaters:
+            sensor = self.heaters[sensor_name]
+        else:
+            sensor = self.printer.lookup_object(sensor_name)
         toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
