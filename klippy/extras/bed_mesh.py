@@ -404,6 +404,8 @@ class BedMeshCalibrate:
         if 'RELATIVE_REFERENCE_INDEX' in params:
             self.relative_reference_index = gcmd.get_int(
                 'RELATIVE_REFERENCE_INDEX')
+            if self.relative_reference_index < 0:
+                self.relative_reference_index = None
             need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
