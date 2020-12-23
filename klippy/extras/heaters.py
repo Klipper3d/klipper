@@ -330,6 +330,7 @@ class PrinterHeaters:
         if sensor_name not in self.available_sensors:
             raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
         min_temp = gcmd.get_float('MINIMUM')
+        max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
@@ -341,7 +342,7 @@ class PrinterHeaters:
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
-            if temp >= min_temp:
+            if temp >= min_temp and temp <= max_temp:
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
