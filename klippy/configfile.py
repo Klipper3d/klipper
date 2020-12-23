@@ -23,9 +23,11 @@ class ConfigWrapper:
         return self.section
     def _get_wrapper(self, parser, option, default, minval=None, maxval=None,
                      above=None, below=None, note_valid=True):
-        if (default is not sentinel
-            and not self.fileconfig.has_option(self.section, option)):
-            return default
+        if not self.fileconfig.has_option(self.section, option):
+            if default is not sentinel:
+                return default
+            raise error("Option '%s' in section '%s' must be specified"
+                        % (option, self.section))
         if note_valid:
             self.access_tracking[(self.section.lower(), option.lower())] = 1
         try:
