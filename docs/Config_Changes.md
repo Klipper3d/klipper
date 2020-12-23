@@ -6,10 +6,16 @@ All dates in this document are approximate.
 
 # Changes
 
+20201222: The `step_distance` setting in the stepper config sections
+is deprecated.  It is advised to update the config to use the
+[`rotation_distance`](Rotation_Distance.md) setting.  Support for
+`step_distance` will be removed in the near future.
+
 20201218: The `endstop_phase` setting in the endstop_phase module has
 been replaced with `trigger_phase`. If using the endstop phases module
-then it will be necessary to recalibrate any endstop phases by running
-the ENDSTOP_PHASE_CALIBRATE command.
+then it will be necessary to convert to
+[`rotation_distance`](Rotation_Distance.md) and recalibrate any
+endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.
 
 20201218: Rotary delta and polar printers must now specify a
 `gear_ratio` for their rotary steppers, and they may no longer specify
