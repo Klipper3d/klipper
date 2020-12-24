@@ -329,8 +329,11 @@ class PrinterHeaters:
         sensor_name = gcmd.get('SENSOR')
         if sensor_name not in self.available_sensors:
             raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
-        min_temp = gcmd.get_float('MINIMUM')
+        min_temp = gcmd.get_float('MINIMUM', float('-inf'))
         max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
+        if min_temp == float('-inf') and max_temp == float('inf'):
+            raise gcmd.error(
+                "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
