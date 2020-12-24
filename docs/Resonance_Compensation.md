@@ -63,7 +63,7 @@ First, measure the **ringing frequency**.
    get "Unknown command" error, you can safely ignore it at this point and
    continue with the measurements.
 6. Execute the command
-   `TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1250 FACTOR=100 BAND=5`.
+   `TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 FACTOR=100 BAND=5`.
    Basically, we try to make ringing more pronounced by setting different large
    values for acceleration. This command will increase the acceleration every
    5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2
