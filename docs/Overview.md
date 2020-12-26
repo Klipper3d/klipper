@@ -22,6 +22,7 @@ communication with the Klipper developers.
 - [Config checks](Config_checks.md): Verify basic pin settings in the
   config file.
 - [Bed level](Bed_Level.md): Information on "bed leveling" in Klipper.
+  - [Bed Mesh](Bed_Mesh.md): Configure Bed Mesh Leveling settings in Klipper.
   - [Delta calibrate](Delta_Calibrate.md): Calibration of delta
     kinematics.
   - [Probe calibrate](Probe_Calibrate.md): Calibration of automatic Z
