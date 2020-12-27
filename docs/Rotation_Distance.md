@@ -63,13 +63,11 @@ Then use the following procedure to "measure and trim":
    move (it will take about 50 seconds).
 4. Use the digital calipers to measure the new distance between the
    extruder body and the mark on the filament. Note this as
-   `<subsequent_mark_distance>`. Then calculate
-   `actual_extrude_distance = <initial_mark_distance> -
-   <subsequent_mark_distance>`.
-5. Calculate rotation_distance as `rotation_distance =
-   <previous_rotation_distance> * <actual_extrude_distance> /
-   <requested_extrude_distance>`. Round the new rotation_distance to
-   three decimal places.
+   `<subsequent_mark_distance>`. Then calculate:
+   `actual_extrude_distance = <initial_mark_distance> - <subsequent_mark_distance>`
+5. Calculate rotation_distance as:
+   `rotation_distance = <previous_rotation_distance> * <actual_extrude_distance> / <requested_extrude_distance>`
+   Round the new rotation_distance to three decimal places.
 
 If the actual_extrude_distance differs from requested_extrude_distance
 by more than about 2mm then it is a good idea to perform the steps
@@ -124,8 +122,7 @@ has a rotation distance of 1.25.
 
 It's possible to obtain an initial rotation distance for extruders by
 measuring the diameter of the "hobbed bolt" that pushes the filament
-and using the following formula: `rotation_distance =
-<diameter> * 3.14`
+and using the following formula: `rotation_distance = <diameter> * 3.14`
 
 If the extruder uses gears then it will also be necessary to
 [determine and set the gear_ratio](#using-a-gear_ratio) for the
@@ -162,8 +159,8 @@ gearbox" is more accurately configured with `gear_ratio: 57:11`.
 
 If several gears are used on an axis then it is possible to provide a
 comma separated list to gear_ratio. For example, a "5:1" gear box
-driving a 16 toothed to 80 toothed pulley could use `gear_ratio: 5:1,
-80:16`.
+driving a 16 toothed to 80 toothed pulley could use
+`gear_ratio: 5:1, 80:16`.
 
 In most cases, gear_ratio should be defined with whole numbers as
 common gears and pulleys have a whole number of teeth on them.
