@@ -3,6 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import homing
 
 class NoneKinematics:
     def __init__(self, toolhead, config):
@@ -18,7 +19,12 @@ class NoneKinematics:
     def check_move(self, move):
         pass
     def get_status(self, eventtime):
-        return {'homed_axes': ''}
+        axes_lim = [0.0, 0.0, 0.0, 0.0]
+        return {
+            'homed_axes': '',
+            'axis_minimum': homing.Coord(*axes_lim),
+            'axis_maximum': homing.Coord(*axes_lim)
+        }
 
 def load_kinematics(toolhead, config):
     return NoneKinematics(toolhead, config)
