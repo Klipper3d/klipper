@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, mathutil, chelper
+import stepper, mathutil, chelper, homing
 
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
@@ -122,7 +122,14 @@ class RotaryDeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
     def get_status(self, eventtime):
-        return {'homed_axes': '' if self.need_home else 'XYZ'}
+        max_xy = math.sqrt(self.max_xy2)
+        axes_min = [-max_xy, -max_xy, self.min_z, 0.]
+        axes_max = [max_xy, max_xy, self.max_z, 0.]
+        return {
+            'homed_axes': '' if self.need_home else 'XYZ',
+            'axis_minimum': homing.Coord(*axes_min),
+            'axis_maximum': homing.Coord(*axes_max)
+        }
     def get_calibration(self):
         return self.calibration
 
