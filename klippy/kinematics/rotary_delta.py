@@ -122,9 +122,16 @@ class RotaryDeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
     def get_status(self, eventtime):
-        max_xy = math.sqrt(self.max_xy2)
-        axes_min = [-max_xy, -max_xy, self.min_z, 0.]
-        axes_max = [max_xy, max_xy, self.max_z, 0.]
+        if self.need_home:
+            max_xy = math.sqrt(self.max_xy2)
+            axes_min = [-max_xy, -max_xy, self.min_z, 0.]
+            axes_max = [max_xy, max_xy, self.max_z, 0.]
+        else:
+            cur_pos = self.calc_tag_position()
+            max_x = math.sqrt(self.max_xy2 - cur_pos[1]**2)
+            max_y = math.sqrt(self.max_xy2 - cur_pos[0]**2)
+            axes_min = [-max_x, -max_y, self.min_z, 0.]
+            axes_max = [max_x, max_y, self.max_z, 0.]
         return {
             'homed_axes': '' if self.need_home else 'XYZ',
             'axis_minimum': homing.Coord(*axes_min),

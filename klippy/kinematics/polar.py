@@ -106,12 +106,20 @@ class PolarKinematics:
             move.limit_speed(self.max_z_velocity * z_ratio,
                              self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
-        xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
-        lim_xy = self.rails[0].get_range()
-        lim_z = self.rails[1].get_range()
-        axes_min = [lim_xy[0], lim_xy[0], lim_z[0], 0.]
-        axes_max = [lim_xy[1], lim_xy[1], lim_z[1], 0.]
+        if self.limit_xy2 < 0.:
+            xy_home = ""
+            lim_xy = self.rails[0].get_range()
+            lim_z = self.rails[1].get_range()
+            axes_min = [lim_xy[0], lim_xy[0], lim_z[0], 0.]
+            axes_max = [lim_xy[1], lim_xy[1], lim_z[1], 0.]
+        else:
+            xy_home = "xy"
+            cur_pos = self.calc_tag_position()
+            max_x = math.sqrt(self.limit_xy2 - cur_pos[1]**2)
+            max_y = math.sqrt(self.limit_xy2 - cur_pos[0]**2)
+            axes_min = [-max_x, -max_y, self.min_z, 0.]
+            axes_max = [max_x, max_y, self.max_z, 0.]
         return {
             'homed_axes': xy_home + z_home,
             'axis_minimum': homing.Coord(*axes_min),
