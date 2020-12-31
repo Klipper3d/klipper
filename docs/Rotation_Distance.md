@@ -53,19 +53,24 @@ or by [inspecting the hardware](#extruder).
 Then use the following procedure to "measure and trim":
 1. Make sure the extruder has filament in it, the hotend is heated to
    an appropriate temperature, and the printer is ready to extrude.
-2. Use a marker to place a mark on the filament around 70mm from the
+2. De-couple the output of the extruder from the hotend by either
+   disconnecting the output bowden tube from the extruder or
+   dissasessmbling your direct drive toolhead. For direct drive systems
+   this step can be ommitted assuming there will be no significant
+   resistance from the hotend.
+3. Use a marker to place a mark on the filament around 70mm from the
    intake of the extruder body. Then use a digital calipers to measure
    the actual distance of that mark as precisely as one can. Note this
    as `<initial_mark_distance>`.
-3. Extrude 50mm of filament with the following command sequence: `G91`
+4. Extrude 50mm of filament with the following command sequence: `G91`
    followed by `G1 E50 F60`. Note 50mm as
    `<requested_extrude_distance>`. Wait for the extruder to finish the
    move (it will take about 50 seconds).
-4. Use the digital calipers to measure the new distance between the
+5. Use the digital calipers to measure the new distance between the
    extruder body and the mark on the filament. Note this as
    `<subsequent_mark_distance>`. Then calculate:
    `actual_extrude_distance = <initial_mark_distance> - <subsequent_mark_distance>`
-5. Calculate rotation_distance as:
+6. Calculate rotation_distance as:
    `rotation_distance = <previous_rotation_distance> * <actual_extrude_distance> / <requested_extrude_distance>`
    Round the new rotation_distance to three decimal places.
 
