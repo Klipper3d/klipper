@@ -87,7 +87,7 @@ t5uid1_timeout_event(struct timer *timer)
         t->ticks = UINT16_MAX;
         return SF_DONE;
     }
-    t->timer.waketime += timer_from_us(TIMER_MS * 1000);
+    t->timer.waketime += timer_from_us(TIMER_MS * 1000L);
     return SF_RESCHEDULE;
 }
 
@@ -99,7 +99,7 @@ reset_timer(struct t5uid1 *t)
     } else if (t->ticks == UINT16_MAX) {
         sched_del_timer(&t->timer);
         uint32_t now = timer_read_time();
-        t->timer.waketime = now + timer_from_us(TIMER_MS * 1000);
+        t->timer.waketime = now + timer_from_us(TIMER_MS * 1000L);
         t->timer.func = t5uid1_timeout_event;
         if (!timer_is_before(t->timer.waketime, now)) {
             t->ticks = 0;
