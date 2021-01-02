@@ -187,6 +187,11 @@ The following are common printer attributes:
 - `printer.toolhead.homed_axes`: The current cartesian axes considered
   to be in a "homed" state. This is a string containing one or more of
   "x", "y", "z".
+- `printer.toolhead.axis_minimum`,
+  `printer.toolhead.axis_maximum`: The axis travel limits (mm) after homing.
+  It is possible to access the x, y, z components of this
+  limit value (eg, `printer.toolhead.axis_minimum.x`,
+  `printer.toolhead.axis_maximum.z`).
 - `printer.toolhead.max_velocity`, `printer.toolhead.max_accel`,
   `printer.toolhead.max_accel_to_decel`,
   `printer.toolhead.square_corner_velocity`: The current printing

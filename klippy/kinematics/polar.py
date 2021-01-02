@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper
+import stepper, homing
 
 class PolarKinematics:
     def __init__(self, toolhead, config):
@@ -108,7 +108,15 @@ class PolarKinematics:
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
-        return {'homed_axes': xy_home + z_home}
+        lim_xy = self.rails[0].get_range()
+        lim_z = self.rails[1].get_range()
+        axes_min = [lim_xy[0], lim_xy[0], lim_z[0], 0.]
+        axes_max = [lim_xy[1], lim_xy[1], lim_z[1], 0.]
+        return {
+            'homed_axes': xy_home + z_home,
+            'axis_minimum': homing.Coord(*axes_min),
+            'axis_maximum': homing.Coord(*axes_max)
+        }
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)
