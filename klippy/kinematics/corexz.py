@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper
+import stepper, homing
 
 class CoreXZKinematics:
     def __init__(self, toolhead, config):
@@ -94,7 +94,15 @@ class CoreXZKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        return {'homed_axes': "".join(axes)}
+        axes_min = [0.0, 0.0, 0.0, 0.0]
+        axes_max = [0.0, 0.0, 0.0, 0.0]
+        for pos, rail in enumerate(self.rails):
+            axes_min[pos], axes_max[pos] = rail.get_range()
+        return {
+            'homed_axes': "".join(axes),
+            'axis_minimum': homing.Coord(*axes_min),
+            'axis_maximum': homing.Coord(*axes_max)
+        }
 
 def load_kinematics(toolhead, config):
     return CoreXZKinematics(toolhead, config)

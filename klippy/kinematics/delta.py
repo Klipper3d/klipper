@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, mathutil
+import stepper, mathutil, homing
 
 # Slow moves once the ratio of tower to XY movement exceeds SLOW_RATIO
 SLOW_RATIO = 3.
@@ -146,7 +146,14 @@ class DeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def get_status(self, eventtime):
-        return {'homed_axes': '' if self.need_home else 'xyz'}
+        max_xy = math.sqrt(self.max_xy2)
+        axes_min = [-max_xy, -max_xy, self.min_z, 0.]
+        axes_max = [max_xy, max_xy, self.max_z, 0.]
+        return {
+            'homed_axes': '' if self.need_home else 'xyz',
+            'axis_minimum': homing.Coord(*axes_min),
+            'axis_maximum': homing.Coord(*axes_max)
+        }
     def get_calibration(self):
         endstops = [rail.get_homing_info().position_endstop
                     for rail in self.rails]

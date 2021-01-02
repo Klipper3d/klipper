@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import stepper, mathutil
+import stepper, mathutil, homing
 
 class WinchKinematics:
     def __init__(self, toolhead, config):
@@ -47,7 +47,16 @@ class WinchKinematics:
         pass
     def get_status(self, eventtime):
         # XXX - homed_checks and rail limits not implemented
-        return {'homed_axes': 'xyz'}
+        axes_min = [0.0, 0.0, 0.0, 0.0]
+        axes_max = [0.0, 0.0, 0.0, 0.0]
+        for pos, axis in enumerate('xyz'):
+            axes_min[pos] = min([a[pos] for a in self.anchors])
+            axes_max[pos] = max([a[pos] for a in self.anchors])
+        return {
+            'homed_axes': 'xyz',
+            'axis_minimum': homing.Coord(*axes_min),
+            'axis_maximum': homing.Coord(*axes_max)
+        }
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)
