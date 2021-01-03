@@ -228,8 +228,8 @@ def plot_temperature(data, heater):
             continue
         times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
         temps.append(float(temp))
-        pwm.append(float(d[pwm_key]))
-        targets.append(float(d[target_key]))
+        pwm.append(float(d.get(pwm_key, 0.)))
+        targets.append(float(d.get(target_key, 0.)))
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
     ax1.set_title("Temperature of heater %s" % (heater,))

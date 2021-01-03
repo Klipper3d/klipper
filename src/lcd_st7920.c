@@ -137,7 +137,7 @@ command_st7920_send_cmds(uint32_t *args)
 {
     struct st7920 *s = oid_lookup(args[0], command_config_st7920);
     st7920_xmit_byte(s, SYNC_CMD);
-    uint8_t len = args[1], *cmds = (void*)(size_t)args[2];
+    uint8_t len = args[1], *cmds = command_decode_ptr(args[2]);
     st7920_xmit(s, len, cmds);
 }
 DECL_COMMAND(command_st7920_send_cmds, "st7920_send_cmds oid=%c cmds=%*s");
@@ -147,7 +147,7 @@ command_st7920_send_data(uint32_t *args)
 {
     struct st7920 *s = oid_lookup(args[0], command_config_st7920);
     st7920_xmit_byte(s, SYNC_DATA);
-    uint8_t len = args[1], *data = (void*)(size_t)args[2];
+    uint8_t len = args[1], *data = command_decode_ptr(args[2]);
     st7920_xmit(s, len, data);
 }
 DECL_COMMAND(command_st7920_send_data, "st7920_send_data oid=%c data=%*s");

@@ -4,7 +4,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, gc, optparse, logging, time, threading, collections, importlib
+import sys, os, gc, optparse, logging, time, collections, importlib
 import util, reactor, queuelogger, msgproto, homing
 import gcode, configfile, pins, mcu, toolhead, webhooks
 

@@ -126,8 +126,9 @@ access it via the `[ ]` accessor - for example:
 
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-  This is also available on "heater_fan" and "fan_generic" config
-  sections (eg, `printer["fan_generic my_fan"].speed`).
+  This is also available on "heater_fan", "fan_generic", and
+  "controller_fan" config sections (eg,
+  `printer["fan_generic my_fan"].speed`).
 - `printer.gcode_move.gcode_position`: The current position of the
   toolhead relative to the current G-Code origin. That is, positions
   that one might directly send to a `G1` command. It is possible to
@@ -165,6 +166,8 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.<heater>.power`: The last setting of the PWM pin (a value
+  between 0.0 and 1.0) associated with the heater.
 - `printer.idle_timeout.state`: The current state of the printer as
   tracked by the idle_timeout module. It is one of the following
   strings: "Idle", "Printing", "Ready".
@@ -184,6 +187,11 @@ The following are common printer attributes:
 - `printer.toolhead.homed_axes`: The current cartesian axes considered
   to be in a "homed" state. This is a string containing one or more of
   "x", "y", "z".
+- `printer.toolhead.axis_minimum`,
+  `printer.toolhead.axis_maximum`: The axis travel limits (mm) after homing.
+  It is possible to access the x, y, z components of this
+  limit value (eg, `printer.toolhead.axis_minimum.x`,
+  `printer.toolhead.axis_maximum.z`).
 - `printer.toolhead.max_velocity`, `printer.toolhead.max_accel`,
   `printer.toolhead.max_accel_to_decel`,
   `printer.toolhead.square_corner_velocity`: The current printing
@@ -255,6 +263,8 @@ The following are common printer attributes:
   from the sensor.
 - `printer["lm75 <sensor_name>"].temperature`: The last read
   temperature from the sensor.
+- `printer["rpi_temperature <sensor_name>"].temperature`: The last read
+  temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].temperature`: The last read
   temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].measured_min_temp`,
@@ -305,6 +315,10 @@ Available "action" commands:
 - `action_emergency_stop(msg)`: Transition the printer to a shutdown
   state. The `msg` parameter is optional, it may be useful to describe
   the reason for the shutdown.
+- `action_call_remote_method(method_name)`: Calls a method registered
+  by a remote client.  If the method takes parameters they should
+  be provided via keyword arguments, ie:
+  `action_call_remote_method("print_stuff", my_arg="hello_world")`
 
 ### Variables
 
@@ -391,3 +405,40 @@ gcode:
 ```
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
+
+### Save Variables to disk
+<!-- {% raw %} -->
+
+If a
+[save_variables config section](Config_Reference.md#save_variables)
+has been enabled, `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be
+used to save the variable to disk so that it can be used across
+restarts. All stored variables are loaded into the
+`printer.save_variables.variables` dict at startup and can be used in
+gcode macros. to avoid overly long lines you can add the following at
+the top of the macro:
+```
+{% set svv = printer.save_variables.variables %}
+```
+
+As an example, it could be used to save the state of 2-in-1-out hotend
+and when starting a print ensure that the active extruder is used,
+instead of T0:
+
+```
+[gcode_macro T1]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder1
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder1"'
+
+[gcode_macro T0]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder"'
+
+[gcode_macro START_GCODE]
+gcode:
+  {% set svv = printer.save_variables.variables %}
+  ACTIVATE_EXTRUDER extruder={svv.currentextruder}
+```
+<!-- {% endraw %} -->

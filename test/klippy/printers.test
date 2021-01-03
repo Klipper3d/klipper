@@ -3,7 +3,7 @@ GCODE move.gcode
 
 # Example kinematic files
 DICTIONARY atmega2560.dict
-CONFIG ../../config/example.cfg
+CONFIG ../../config/example-cartesian.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-delta.cfg
@@ -39,6 +39,7 @@ CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-mtw-create-2015.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-sovol-sv01-2020.cfg
+CONFIG ../../config/printer-sunlu-s8-2020.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-tevo-tarantula-pro-2020.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
@@ -110,6 +111,7 @@ CONFIG ../../config/generic-smoothieboard.cfg
 # Printers using the stm32f070
 DICTIONARY stm32f070.dict
 CONFIG ../../config/printer-monoprice-mini-delta-2017.cfg
+CONFIG ../../config/printer-monoprice-select-mini-v2-2018.cfg
 
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
@@ -129,8 +131,10 @@ CONFIG ../../config/generic-mks-robin-nano.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
+CONFIG ../../config/printer-creality-ender6-2020.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
+CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict

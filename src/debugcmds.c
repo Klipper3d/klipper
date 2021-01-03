@@ -48,7 +48,7 @@ void
 command_debug_read(uint32_t *args)
 {
     uint8_t order = args[0];
-    void *ptr = (void*)(size_t)args[1];
+    void *ptr = command_decode_ptr(args[1]);
     uint32_t v;
     irqstatus_t flag = irq_save();
     switch (order) {
@@ -66,7 +66,7 @@ void
 command_debug_write(uint32_t *args)
 {
     uint8_t order = args[0];
-    void *ptr = (void*)(size_t)args[1];
+    void *ptr = command_decode_ptr(args[1]);
     uint32_t v = args[2];
     irqstatus_t flag = irq_save();
     switch (order) {
@@ -83,7 +83,7 @@ void
 command_debug_ping(uint32_t *args)
 {
     uint8_t len = args[0];
-    char *data = (void*)(size_t)args[1];
+    char *data = command_decode_ptr(args[1]);
     sendf("pong data=%*s", len, data);
 }
 DECL_COMMAND_FLAGS(command_debug_ping, HF_IN_SHUTDOWN, "debug_ping data=%*s");

@@ -1,6 +1,6 @@
 # Klipper build system
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -8,9 +8,6 @@
 OUT=out/
 
 # Kconfig includes
-export HOSTCC             := $(CC)
-export CONFIG_SHELL       := sh
-export KCONFIG_AUTOHEADER := autoconf.h
 export KCONFIG_CONFIG     := $(CURDIR)/.config
 -include $(KCONFIG_CONFIG)
 
@@ -60,27 +57,22 @@ endif
 include src/Makefile
 -include src/$(patsubst "%",%,$(CONFIG_BOARD_DIRECTORY))/Makefile
 
-################ Common build rules
+################ Main build rules
 
-$(OUT)%.o: %.c $(OUT)autoconf.h $(OUT)board-link
+$(OUT)%.o: %.c $(OUT)autoconf.h
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-$(OUT)%.ld: %.lds.S $(OUT)autoconf.h $(OUT)board-link
+$(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 	@echo "  Preprocessing $@"
 	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
 
-################ Main build rules
+$(OUT)klipper.elf: $(OBJS_klipper.elf)
+	@echo "  Linking $@"
+	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
+	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
 
-$(OUT)board-link: $(KCONFIG_CONFIG)
-	@echo "  Creating symbolic link $(OUT)board"
-	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
-	$(Q)touch $@
-	$(Q)rm -f $(OUT)board
-	$(Q)ln -sf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
-	$(Q)mkdir -p $(OUT)board-generic
-	$(Q)rm -f $(OUT)board-generic/board
-	$(Q)ln -sf $(PWD)/src/generic $(OUT)board-generic/board
+################ Compile time requests
 
 $(OUT)%.o.ctr: $(OUT)%.o
 	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
@@ -91,29 +83,38 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
-$(OUT)klipper.elf: $(OBJS_klipper.elf)
-	@echo "  Linking $@"
-	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
-	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
+################ Auto generation of "board/" include file link
+
+$(OUT)board-link: $(KCONFIG_CONFIG)
+	@echo "  Creating symbolic link $(OUT)board"
+	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
+	$(Q)echo "#$(CONFIG_BOARD_DIRECTORY)" > $@.temp
+	$(Q)if ! cmp -s $@.temp $@; then rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y)) ; mv $@.temp $@ ; fi
+	$(Q)rm -f $(OUT)board
+	$(Q)ln -sf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)mkdir -p $(OUT)board-generic
+	$(Q)rm -f $(OUT)board-generic/board
+	$(Q)ln -sf $(PWD)/src/generic $(OUT)board-generic/board
+
+include $(OUT)board-link
 
 ################ Kconfig rules
 
-define do-kconfig
-$(Q)mkdir -p $(OUT)/scripts/kconfig/lxdialog
-$(Q)mkdir -p $(OUT)/include/config
-$(Q)$(MAKE) -C $(OUT) -f $(CURDIR)/scripts/kconfig/Makefile srctree=$(CURDIR) src=scripts/kconfig obj=scripts/kconfig Q=$(Q) Kconfig=$(CURDIR)/src/Kconfig $1
-endef
+$(OUT)autoconf.h: $(KCONFIG_CONFIG)
+	@echo "  Building $@"
+	$(Q)mkdir -p $(OUT)
+	$(Q) KCONFIG_AUTOHEADER=$@ $(PYTHON) lib/kconfiglib/genconfig.py src/Kconfig
 
-$(OUT)autoconf.h : $(KCONFIG_CONFIG) ; $(call do-kconfig, silentoldconfig)
-$(KCONFIG_CONFIG): src/Kconfig ; $(call do-kconfig, olddefconfig)
-%onfig: ; $(call do-kconfig, $@)
-help: ; $(call do-kconfig, $@)
+$(KCONFIG_CONFIG) olddefconfig: src/Kconfig
+	$(Q)$(PYTHON) lib/kconfiglib/olddefconfig.py src/Kconfig
 
+menuconfig:
+	$(Q)$(PYTHON) lib/kconfiglib/menuconfig.py src/Kconfig
 
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean FORCE
+.PHONY : all clean distclean olddefconfig menuconfig FORCE
 .DELETE_ON_ERROR:
 
 all: $(target-y)

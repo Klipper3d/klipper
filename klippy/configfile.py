@@ -23,9 +23,11 @@ class ConfigWrapper:
         return self.section
     def _get_wrapper(self, parser, option, default, minval=None, maxval=None,
                      above=None, below=None, note_valid=True):
-        if (default is not sentinel
-            and not self.fileconfig.has_option(self.section, option)):
-            return default
+        if not self.fileconfig.has_option(self.section, option):
+            if default is not sentinel:
+                return default
+            raise error("Option '%s' in section '%s' must be specified"
+                        % (option, self.section))
         if note_valid:
             self.access_tracking[(self.section.lower(), option.lower())] = 1
         try:
@@ -33,22 +35,20 @@ class ConfigWrapper:
         except self.error as e:
             raise
         except:
-            raise error("Unable to parse option '%s' in section '%s'" % (
-                option, self.section))
+            raise error("Unable to parse option '%s' in section '%s'"
+                        % (option, self.section))
         if minval is not None and v < minval:
-            raise error(
-                "Option '%s' in section '%s' must have minimum of %s" % (
-                    option, self.section, minval))
+            raise error("Option '%s' in section '%s' must have minimum of %s"
+                        % (option, self.section, minval))
         if maxval is not None and v > maxval:
-            raise error(
-                "Option '%s' in section '%s' must have maximum of %s" % (
-                    option, self.section, maxval))
+            raise error("Option '%s' in section '%s' must have maximum of %s"
+                        % (option, self.section, maxval))
         if above is not None and v <= above:
-            raise error("Option '%s' in section '%s' must be above %s" % (
-                option, self.section, above))
+            raise error("Option '%s' in section '%s' must be above %s"
+                        % (option, self.section, above))
         if below is not None and v >= below:
-            raise self.error("Option '%s' in section '%s' must be below %s" % (
-                option, self.section, below))
+            raise self.error("Option '%s' in section '%s' must be below %s"
+                             % (option, self.section, below))
         return v
     def get(self, option, default=sentinel, note_valid=True):
         return self._get_wrapper(self.fileconfig.get, option, default,
@@ -240,13 +240,13 @@ class PrinterConfig:
         for section_name in fileconfig.sections():
             section = section_name.lower()
             if section not in valid_sections and section not in objects:
-                raise error("Section '%s' is not a valid config section" % (
-                    section,))
+                raise error("Section '%s' is not a valid config section"
+                            % (section,))
             for option in fileconfig.options(section_name):
                 option = option.lower()
                 if (section, option) not in access_tracking:
-                    raise error("Option '%s' is not valid in section '%s'" % (
-                        option, section))
+                    raise error("Option '%s' is not valid in section '%s'"
+                                % (option, section))
     def log_config(self, config):
         lines = ["===== Config file =====",
                  self._build_config_string(config),
@@ -278,8 +278,8 @@ class PrinterConfig:
         for section in self.autosave.fileconfig.sections():
             for option in self.autosave.fileconfig.options(section):
                 if config.fileconfig.has_option(section, option):
-                    msg = "SAVE_CONFIG section '%s' option '%s' conflicts " \
-                          "with included value" % (section, option)
+                    msg = ("SAVE_CONFIG section '%s' option '%s' conflicts "
+                           "with included value" % (section, option))
                     raise gcode.error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
     def cmd_SAVE_CONFIG(self, gcmd):

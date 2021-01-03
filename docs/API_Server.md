@@ -146,6 +146,36 @@ transition to a "shutdown" state. It behaves similarly to the G-Code
 `M112` command. For example:
 `{"id": 123, "method": "emergency_stop"}`
 
+### register_remote_method
+
+This endpoint allows clients to register methods that can be called
+from klipper.  It will return an empty object upon success.
+
+For example:
+`{"id": 123, "method": "register_remote_method",
+"params": {"response_template": {"action": "run_paneldue_beep"},
+"remote_method": "paneldue_beep"}}`
+will return:
+`{"id": 123, "result": {}}`
+
+The remote method `paneldue_beep` may now be called from Klipper. Note
+that if the method takes parameters they should be provided as keyword
+arguments. Below is an example of how it may called from a gcode_macro:
+```
+[gcode_macro PANELDUE_BEEP]
+default_parameter_FREQUENCY: 300
+default_parameter_DURATION: 1.
+gcode:
+  {action_call_remote_method("paneldue_beep",
+                             frequency=FREQUENCY|int,
+                             duration=DURATION|float)}
+```
+
+When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
+like the following over the socket:
+`{"action": "run_paneldue_beep",
+"params": {"frequency": 300, "duration": 1.0}}
+
 ### objects/list
 
 This endpoint queries the list of available printer "objects" that one

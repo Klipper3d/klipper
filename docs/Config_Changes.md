@@ -6,6 +6,46 @@ All dates in this document are approximate.
 
 # Changes
 
+20201222: The `step_distance` setting in the stepper config sections
+is deprecated.  It is advised to update the config to use the
+[`rotation_distance`](Rotation_Distance.md) setting.  Support for
+`step_distance` will be removed in the near future.
+
+20201218: The `endstop_phase` setting in the endstop_phase module has
+been replaced with `trigger_phase`. If using the endstop phases module
+then it will be necessary to convert to
+[`rotation_distance`](Rotation_Distance.md) and recalibrate any
+endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.
+
+20201218: Rotary delta and polar printers must now specify a
+`gear_ratio` for their rotary steppers, and they may no longer specify
+a `step_distance` parameter.  See the
+[config reference](Config_Reference.md#stepper) for the format of the
+new gear_ratio paramter.
+
+20201213: It is not valid to specify a Z "position_endstop" when using
+"probe:z_virtual_endstop".  An error will now be raised if a Z
+"position_endstop" is specified with "probe:z_virtual_endstop".
+Remove the Z "position_endstop" definition to fix the error.
+
+20201120: The `[board_pins]` config section now specifies the mcu name
+in an explicit `mcu:` parameter.  If using board_pins for a secondary
+mcu, then the config must be updated to specify that name.  See the
+[config reference](Config_Reference.md#board_pins) for further
+details.
+
+20201112: The time reported by `print_stats.print_duration` has
+changed.  The duration prior to the first detected extrusion is
+now excluded.
+
+20201029: The neopixel `color_order_GRB` config option has been
+removed. If necessary, update the config to set the new `color_order`
+option to RGB, GRB, RGBW, or GRBW.
+
+20201029: The serial option in the mcu config section no longer
+defaults to /dev/ttyS0.  In the rare situation where /dev/ttyS0 is the
+desired serial port, it must be specified explicitly.
+
 20201020: Klipper v0.9.0 released.
 
 20200902: The RTD resistance-to-temperature calculation for MAX31865

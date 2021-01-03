@@ -91,7 +91,7 @@ class SerialReader:
                     self.ser.rts = self.rts
                     self.ser.open()
                 else:
-                    self.ser = open(self.serialport, 'rb+')
+                    self.ser = open(self.serialport, 'rb+', buffering=0)
             except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("Unable to open port: %s", e)
                 self.reactor.pause(connect_time + 5.)
@@ -235,11 +235,11 @@ class SerialRetryCommand:
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
         self.last_params = params
-    def get_response(self, cmd, cmd_queue, minclock=0):
+    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
         retries = 5
         retry_delay = .010
         while 1:
-            self.serial.raw_send_wait_ack(cmd, minclock, minclock, cmd_queue)
+            self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
             params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

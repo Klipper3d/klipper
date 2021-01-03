@@ -22,52 +22,6 @@ struct timepos {
     double time, position;
 };
 
-// Find step using "false position" method (with "Illinois algorithm")
-static struct timepos
-itersolve_find_step(struct stepper_kinematics *sk, struct move *m
-                    , struct timepos low, struct timepos high
-                    , double target)
-{
-    sk_calc_callback calc_position_cb = sk->calc_position_cb;
-    struct timepos best_guess = high;
-    low.position -= target;
-    high.position -= target;
-    if (!high.position)
-        // The high range was a perfect guess for the next step
-        return best_guess;
-    int high_sign = signbit(high.position);
-    if (high_sign == signbit(low.position))
-        // The target is not in the low/high range - return low range
-        return (struct timepos){ low.time, target };
-    int prev_choice = 0;
-    for (;;) {
-        double guess_time = ((low.time*high.position - high.time*low.position)
-                             / (high.position - low.position));
-        best_guess.time = guess_time;
-        best_guess.position = calc_position_cb(sk, m, guess_time);
-        double guess_position = best_guess.position - target;
-        if (fabs(guess_position) <= .000000001)
-            break;
-        int guess_sign = signbit(guess_position);
-        if (guess_sign == high_sign) {
-            high.time = guess_time;
-            high.position = guess_position;
-            if (prev_choice > 0)
-                low.position *= .5;
-            prev_choice = 1;
-        } else {
-            low.time = guess_time;
-            low.position = guess_position;
-            if (prev_choice < 0)
-                high.position *= .5;
-            prev_choice = -1;
-        }
-        if (high.time - low.time <= .000000001)
-            break;
-    }
-    return best_guess;
-}
-
 #define SEEK_TIME_RESET 0.000100
 
 // Generate step times for a portion of a move
@@ -82,67 +36,92 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
         start = 0.;
     if (end > m->move_t)
         end = m->move_t;
-    struct timepos last = { start, sk->commanded_pos }, low = last, high = last;
-    double seek_time_delta = SEEK_TIME_RESET;
-    int sdir = stepcompress_get_step_dir(sk->sc), is_dir_change = 0;
+    struct timepos old_guess = {start, sk->commanded_pos}, guess = old_guess;
+    int sdir = stepcompress_get_step_dir(sk->sc);
+    int is_dir_change = 0, have_bracket = 0, check_oscillate = 0;
+    double target = sk->commanded_pos + (sdir ? half_step : -half_step);
+    double last_time=start, low_time=start, high_time=start + SEEK_TIME_RESET;
+    if (high_time > end)
+        high_time = end;
     for (;;) {
-        double diff = high.position - last.position, dist = sdir ? diff : -diff;
-        if (dist >= half_step) {
-            // Have valid upper bound - now find step
-            double target = last.position + (sdir ? half_step : -half_step);
-            struct timepos next = itersolve_find_step(sk, m, low, high, target);
-            // Add step at given time
-            int ret = stepcompress_append(sk->sc, sdir
-                                          , m->print_time, next.time);
-            if (ret)
-                return ret;
-            seek_time_delta = next.time - last.time;
-            if (seek_time_delta < .000000001)
-                seek_time_delta = .000000001;
-            if (is_dir_change && seek_time_delta > SEEK_TIME_RESET)
-                seek_time_delta = SEEK_TIME_RESET;
-            is_dir_change = 0;
-            last.position = target + (sdir ? half_step : -half_step);
-            last.time = next.time;
-            low = next;
-            if (low.time < high.time)
-                // The existing search range is still valid
-                continue;
-        } else if (dist > 0.) {
-            // Avoid rollback if stepper fully reaches target position
-            stepcompress_commit(sk->sc);
-        } else if (unlikely(dist < -(half_step + .000000001))) {
-            // Found direction change
-            is_dir_change = 1;
-            if (seek_time_delta > SEEK_TIME_RESET)
-                seek_time_delta = SEEK_TIME_RESET;
-            if (low.time > last.time) {
-                // Update direction and retry
-                sdir = !sdir;
-                continue;
+        // Use the "secant method" to guess a new time from previous guesses
+        double guess_dist = guess.position - target;
+        double og_dist = old_guess.position - target;
+        double next_time = ((old_guess.time*guess_dist - guess.time*og_dist)
+                            / (guess_dist - og_dist));
+        if (!(next_time > low_time && next_time < high_time)) { // or NaN
+            // Next guess is outside bounds checks - validate it
+            if (have_bracket) {
+                // A poor guess - fall back to bisection
+                next_time = (low_time + high_time) * .5;
+                check_oscillate = 0;
+            } else if (guess.time >= end) {
+                // No more steps present in requested time range
+                break;
+            } else {
+                // Might be a poor guess - limit to exponential search
+                next_time = high_time;
+                high_time = 2. * high_time - last_time;
+                if (high_time > end)
+                    high_time = end;
             }
-            // Must update range to avoid re-finding previous time
-            if (high.time > last.time + .000000001) {
-                // Reduce the high bound - it will become a better low bound
-                high.time = (last.time + high.time) * .5;
-                high.position = calc_position_cb(sk, m, high.time);
+        }
+        // Calculate position at next_time guess
+        old_guess = guess;
+        guess.time = next_time;
+        guess.position = calc_position_cb(sk, m, next_time);
+        guess_dist = guess.position - target;
+        if (fabs(guess_dist) > .000000001) {
+            // Guess does not look close enough - update bounds
+            double rel_dist = sdir ? guess_dist : -guess_dist;
+            if (rel_dist > 0.) {
+                // Found position past target, so step is definitely present
+                if (have_bracket && old_guess.time <= low_time) {
+                    if (check_oscillate)
+                        // Force bisect next to avoid persistent oscillations
+                        old_guess = guess;
+                    check_oscillate = 1;
+                }
+                high_time = guess.time;
+                have_bracket = 1;
+            } else if (rel_dist < -(half_step + half_step + .000000010)) {
+                // Found direction change
+                sdir = !sdir;
+                target = (sdir ? target + half_step + half_step
+                          : target - half_step - half_step);
+                low_time = last_time;
+                high_time = guess.time;
+                is_dir_change = have_bracket = 1;
+                check_oscillate = 0;
+            } else {
+                low_time = guess.time;
+            }
+            if (!have_bracket || high_time - low_time > .000000001) {
+                if (!is_dir_change && rel_dist >= -half_step)
+                    // Avoid rollback if stepper fully reaches step position
+                    stepcompress_commit(sk->sc);
+                // Guess is not close enough - guess again with new time
                 continue;
             }
         }
-        // Need to increase the search range to find an upper bound
-        if (high.time >= end)
-            // At end of move
-            break;
-        low = high;
-        do {
-            high.time = last.time + seek_time_delta;
-            seek_time_delta += seek_time_delta;
-        } while (unlikely(high.time <= low.time));
-        if (high.time > end)
-            high.time = end;
-        high.position = calc_position_cb(sk, m, high.time);
+        // Found next step - submit it
+        int ret = stepcompress_append(sk->sc, sdir, m->print_time, guess.time);
+        if (ret)
+            return ret;
+        target = sdir ? target+half_step+half_step : target-half_step-half_step;
+        // Reset bounds checking
+        double seek_time_delta = 1.5 * (guess.time - last_time);
+        if (seek_time_delta < .000000001)
+            seek_time_delta = .000000001;
+        if (is_dir_change && seek_time_delta > SEEK_TIME_RESET)
+            seek_time_delta = SEEK_TIME_RESET;
+        last_time = low_time = guess.time;
+        high_time = guess.time + seek_time_delta;
+        if (high_time > end)
+            high_time = end;
+        is_dir_change = have_bracket = check_oscillate = 0;
     }
-    sk->commanded_pos = last.position;
+    sk->commanded_pos = target - (sdir ? half_step : -half_step);
     if (sk->post_cb)
         sk->post_cb(sk);
     return 0;

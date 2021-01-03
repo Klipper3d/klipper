@@ -275,8 +275,11 @@ class WebHooks:
     def __init__(self, printer):
         self.printer = printer
         self._endpoints = {"list_endpoints": self._handle_list_endpoints}
+        self._remote_methods = {}
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
+        self.register_endpoint("register_remote_method",
+                               self._handle_rpc_registration)
         self.sconn = ServerSocket(self, printer)
 
     def register_endpoint(self, path, callback):
@@ -285,7 +288,7 @@ class WebHooks:
         self._endpoints[path] = callback
 
     def _handle_list_endpoints(self, web_request):
-        web_request.send({'endpoints': self._endpoints.keys()})
+        web_request.send({'endpoints': list(self._endpoints.keys())})
 
     def _handle_info_request(self, web_request):
         client_info = web_request.get_dict('client_info', None)
@@ -305,6 +308,14 @@ class WebHooks:
     def _handle_estop_request(self, web_request):
         self.printer.invoke_shutdown("Shutdown due to webhooks request")
 
+    def _handle_rpc_registration(self, web_request):
+        template = web_request.get_dict('response_template')
+        method = web_request.get_str('remote_method')
+        new_conn = web_request.get_client_connection()
+        logging.info("webhooks: registering remote method '%s' "
+                     "for connection id: %d" % (method, id(new_conn)))
+        self._remote_methods.setdefault(method, {})[new_conn] = template
+
     def get_connection(self):
         return self.sconn
 
@@ -319,6 +330,24 @@ class WebHooks:
     def get_status(self, eventtime):
         state_message, state = self.printer.get_state_message()
         return {'state': state, 'state_message': state_message}
+
+    def call_remote_method(self, method, **kwargs):
+        if method not in self._remote_methods:
+            raise self.printer.command_error(
+                "Remote method '%s' not registered" % (method))
+        conn_map = self._remote_methods[method]
+        valid_conns = {}
+        for conn, template in conn_map.items():
+            if not conn.is_closed():
+                valid_conns[conn] = template
+                out = {'params': kwargs}
+                out.update(template)
+                conn.send(out)
+        if not valid_conns:
+            del self._remote_methods[method]
+            raise self.printer.command_error(
+                "No active connections for method '%s'" % (method))
+        self._remote_methods[method] = valid_conns
 
 class GCodeHelper:
     def __init__(self, printer):
