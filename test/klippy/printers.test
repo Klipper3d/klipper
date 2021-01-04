@@ -144,6 +144,7 @@ CONFIG ../../config/generic-flyboard.cfg
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-fysetc-s6.cfg
+CONFIG ../../config/generic-fysetc-s6-v2.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
