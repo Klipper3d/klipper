@@ -101,6 +101,7 @@ CONFIG ../../config/generic-duet2-duex.cfg
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-turbo.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
@@ -144,6 +145,7 @@ CONFIG ../../config/generic-flyboard.cfg
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-fysetc-s6.cfg
+CONFIG ../../config/generic-fysetc-s6-v2.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
