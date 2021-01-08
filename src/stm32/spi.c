@@ -31,6 +31,10 @@ DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
  #if CONFIG_MACH_STM32F4
 DECL_ENUMERATION("spi_bus", "spi3a", 5);
 DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
+  #ifdef SPI4
+DECL_ENUMERATION("spi_bus", "spi4", 6);
+DECL_CONSTANT_STR("BUS_PINS_spi4", "PE13,PE14,PE12");
+  #endif
  #endif
 #endif
 
@@ -45,6 +49,9 @@ static const struct spi_info spi_bus[] = {
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
  #if CONFIG_MACH_STM32F4
     { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION(6) },
+  #ifdef SPI4
+    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), GPIO_FUNCTION(5) },
+  #endif
  #endif
 #endif
 };
