@@ -20,7 +20,7 @@ class SafeZHoming:
         self.max_z = zconfig.getfloat('position_max', note_valid=False)
         self.speed = config.getfloat('speed', 50.0, above=0.)
         self.move_to_previous = config.getboolean('move_to_previous', False)
-        self.printer.load_object(config, 'gcode_move')
+        self.printer.load_object(config, 'homing')
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
