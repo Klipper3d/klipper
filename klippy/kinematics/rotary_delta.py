@@ -1,10 +1,10 @@
 # Code for handling the kinematics of rotary delta robots
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, mathutil, chelper, homing
+import stepper, mathutil, chelper
 
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
@@ -76,6 +76,9 @@ class RotaryDeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
+        max_xy = math.sqrt(self.max_xy2)
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -122,13 +125,10 @@ class RotaryDeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
     def get_status(self, eventtime):
-        max_xy = math.sqrt(self.max_xy2)
-        axes_min = [-max_xy, -max_xy, self.min_z, 0.]
-        axes_max = [max_xy, max_xy, self.max_z, 0.]
         return {
             'homed_axes': '' if self.need_home else 'XYZ',
-            'axis_minimum': homing.Coord(*axes_min),
-            'axis_maximum': homing.Coord(*axes_max)
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
         }
     def get_calibration(self):
         return self.calibration

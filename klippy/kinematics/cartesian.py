@@ -1,10 +1,10 @@
 # Code for handling the kinematics of cartesian robots
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, homing
+import stepper
 
 class CartKinematics:
     def __init__(self, toolhead, config):
@@ -23,17 +23,20 @@ class CartKinematics:
                                             self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat(
-            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat(
-            'max_z_accel', max_accel, above=0., maxval=max_accel)
+        self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
+                                              above=0., maxval=max_velocity)
+        self.max_z_accel = config.getfloat('max_z_accel', max_accel,
+                                           above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
+        ranges = [r.get_range() for r in self.rails]
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         self.rails[0].set_max_jerk(max_halt_velocity, max_accel)
         self.rails[1].set_max_jerk(max_halt_velocity, max_accel)
-        self.rails[2].set_max_jerk(
-            min(max_halt_velocity, self.max_z_velocity), max_accel)
+        self.rails[2].set_max_jerk(min(max_halt_velocity, self.max_z_velocity),
+                                   max_accel)
         # Check for dual carriage support
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
@@ -118,14 +121,10 @@ class CartKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        axes_min = [0.0, 0.0, 0.0, 0.0]
-        axes_max = [0.0, 0.0, 0.0, 0.0]
-        for pos, rail in enumerate(self.rails):
-            axes_min[pos], axes_max[pos] = rail.get_range()
         return {
             'homed_axes': "".join(axes),
-            'axis_minimum': homing.Coord(*axes_min),
-            'axis_maximum': homing.Coord(*axes_max)
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
         }
     # Dual carriage support
     def _activate_carriage(self, carriage):

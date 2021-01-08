@@ -196,6 +196,7 @@ class DripModeEndSignal(Exception):
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
+    Coord = homing.Coord
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
@@ -502,7 +503,7 @@ class ToolHead:
         res.update({ 'print_time': print_time,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
-                     'position': homing.Coord(*self.commanded_pos),
+                     'position': self.Coord(*self.commanded_pos),
                      'max_velocity': self.max_velocity,
                      'max_accel': self.max_accel,
                      'max_accel_to_decel': self.requested_accel_to_decel,
