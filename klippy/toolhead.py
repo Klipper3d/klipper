@@ -1,10 +1,10 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
-import mcu, homing, chelper, kinematics.extruder
+import mcu, chelper, kinematics.extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -196,7 +196,6 @@ class DripModeEndSignal(Exception):
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
-    Coord = homing.Coord
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
@@ -251,6 +250,8 @@ class ToolHead:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.step_generators = []
         # Create kinematics class
+        gcode = self.printer.lookup_object('gcode')
+        self.Coord = gcode.Coord
         self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         kin_name = config.get('kinematics')
         try:
@@ -265,7 +266,6 @@ class ToolHead:
             logging.exception(msg)
             raise config.error(msg)
         # Register commands
-        gcode = self.printer.lookup_object('gcode')
         gcode.register_command('G4', self.cmd_G4)
         gcode.register_command('M400', self.cmd_M400)
         gcode.register_command('SET_VELOCITY_LIMIT',

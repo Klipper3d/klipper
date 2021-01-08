@@ -1,6 +1,6 @@
 # Code for state tracking during homing operations
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, collections
@@ -157,8 +157,3 @@ def multi_complete(printer, completions):
         return completions[0]
     cb = (lambda e: all([c.wait() for c in completions]))
     return printer.get_reactor().register_callback(cb)
-
-class CommandError(Exception):
-    pass
-
-Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))
