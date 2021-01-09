@@ -120,6 +120,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 
 # Printers using the stm32f103 via serial
