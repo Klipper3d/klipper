@@ -1,2 +1,2 @@
-<!-- Klipper do something undesirable? YOU MUST ATTACH THE KLIPPER LOG FILE.
-See: https://github.com/KevinOConnor/klipper/blob/master/docs/Contact.md -->
+<!-- Do not open this ticket without first following the directions at:
+    https://www.klipper3d.org/Contact.html -->
