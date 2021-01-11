@@ -69,7 +69,7 @@ class Homing:
         error = None
         try:
             self.toolhead.drip_move(movepos, speed, all_endstop_trigger)
-        except CommandError as e:
+        except self.printer.command_error as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
@@ -92,18 +92,19 @@ class Homing:
         try:
             self.printer.send_event("homing:homing_move_end",
                                     [es for es, name in endstops])
-        except CommandError as e:
+        except self.printer.command_error as e:
             if error is None:
                 error = str(e)
         if error is not None:
-            raise CommandError(error)
+            raise self.printer.command_error(error)
         # Check if some movement occurred
         if verify_movement:
             for s, name, spos, epos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
-                        raise CommandError("Probe triggered prior to movement")
-                    raise CommandError(
+                        raise self.printer.command_error(
+                            "Probe triggered prior to movement")
+                    raise self.printer.command_error(
                         "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
@@ -148,7 +149,7 @@ class Homing:
         self.changed_axes = axes
         try:
             self.toolhead.get_kinematics().home(self)
-        except CommandError:
+        except self.printer.command_error:
             self.printer.lookup_object('stepper_enable').motor_off()
             raise
 
