@@ -1,6 +1,6 @@
 # Endstop accuracy improvement via stepper phase tracking
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -101,7 +101,7 @@ class EndstopPhase:
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
-    def handle_home_rails_end(self, rails):
+    def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
             stepper = rail.get_steppers()[0]
             if stepper.get_name() != self.name:
@@ -149,7 +149,7 @@ class EndstopPhases:
             return
         phase = convert_phase(driver_phase, driver_phases, len(phase_history))
         phase_history[phase] += 1
-    def handle_home_rails_end(self, rails):
+    def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
             stepper = rail.get_steppers()[0]
             stepper_name = stepper.get_name()

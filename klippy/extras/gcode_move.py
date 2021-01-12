@@ -1,10 +1,9 @@
 # G-Code G1 movement commands (and associated coordinate manipulation)
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import homing
 
 class GCodeMove:
     def __init__(self, config):
@@ -19,11 +18,13 @@ class GCodeMove:
                                        self.reset_last_position)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
+        printer.register_event_handler("homing:home_rails_end",
+                                       self._handle_home_rails_end)
         self.is_printer_ready = False
         # Register g-code commands
         gcode = printer.lookup_object('gcode')
         handlers = [
-            'G1', 'G28', 'G20', 'G21',
+            'G1', 'G20', 'G21',
             'M82', 'M83', 'G90', 'G91', 'G92', 'M220', 'M221',
             'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
         ]
@@ -34,6 +35,7 @@ class GCodeMove:
         gcode.register_command('G0', self.cmd_G1)
         gcode.register_command('M114', self.cmd_M114, True)
         gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True)
+        self.Coord = gcode.Coord
         # G-Code coordinate manipulation
         self.absolute_coord = self.absolute_extrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
@@ -67,6 +69,10 @@ class GCodeMove:
         self.reset_last_position()
         self.extrude_factor = 1.
         self.base_position[3] = self.last_position[3]
+    def _handle_home_rails_end(self, homing_state, rails):
+        self.reset_last_position()
+        for axis in homing_state.get_axes():
+            self.base_position[axis] = self.homing_position[axis]
     def set_move_transform(self, transform, force=False):
         if self.move_transform is not None and not force:
             raise self.printer.config_error(
@@ -94,9 +100,9 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'homing_origin': homing.Coord(*self.homing_position),
-            'position': homing.Coord(*self.last_position),
-            'gcode_position': homing.Coord(*move_position),
+            'homing_origin': self.Coord(*self.homing_position),
+            'position': self.Coord(*self.last_position),
+            'gcode_position': self.Coord(*move_position),
         }
     def reset_last_position(self):
         if self.is_printer_ready:
@@ -133,18 +139,6 @@ class GCodeMove:
             raise gcmd.error("Unable to parse move '%s'"
                              % (gcmd.get_commandline(),))
         self.move_with_transform(self.last_position, self.speed)
-    def cmd_G28(self, gcmd):
-        # Move to origin
-        axes = []
-        for pos, axis in enumerate('XYZ'):
-            if gcmd.get(axis, None) is not None:
-                axes.append(pos)
-        if not axes:
-            axes = [0, 1, 2]
-        homing_state = homing.Homing(self.printer)
-        homing_state.home_axes(axes)
-        for axis in homing_state.get_axes():
-            self.base_position[axis] = self.homing_position[axis]
     # G-Code coordinate manipulation
     def cmd_G20(self, gcmd):
         # Set units to inches

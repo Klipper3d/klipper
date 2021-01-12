@@ -3,13 +3,8 @@
 # Copyright (C) 2020 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license
-import logging
-import socket
-import os
-import sys
-import errno
-import json
-import homing
+import logging, socket, os, sys, errno, json
+import gcode
 
 # Json decodes strings as unicode types in Python 2.x.  This doesn't
 # play well with some parts of Klipper (particuarly displays), so we
@@ -27,7 +22,7 @@ def byteify(data, ignore_dicts=False):
                 for k, v in data.items()}
     return data
 
-class WebRequestError(homing.CommandError):
+class WebRequestError(gcode.CommandError):
     def __init__(self, message,):
         Exception.__init__(self, message)
 

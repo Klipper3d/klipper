@@ -154,8 +154,15 @@ determine the gear_ratio by counting the teeth on the pulleys. For
 example, if a stepper with a 16 toothed pulley drives the next pulley
 with 80 teeth then one would use `gear_ratio: 80:16`. Indeed, one
 could open a common off the shelf "gear box" and count the teeth in it
-to confirm its gear ratio. Note that the common "5.18:1 planetary
-gearbox" is more accurately configured with `gear_ratio: 57:11`.
+to confirm its gear ratio.
+
+Note that sometimes a gearbox will have a slightly different gear
+ratio than what it is advertised as. The common BMG extruder motor
+gears are an example of this - they are advertised as "3:1" but
+actually use "50:17" gearing. (Using teeth numbers without a common
+denominator may improve overall gear wear as the teeth don't always
+mesh the same way with each revolution.) The common "5.18:1 planetary
+gearbox", is more accurately configured with `gear_ratio: 57:11`.
 
 If several gears are used on an axis then it is possible to provide a
 comma separated list to gear_ratio. For example, a "5:1" gear box

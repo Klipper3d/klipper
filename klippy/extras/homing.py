@@ -1,6 +1,6 @@
-# Code for state tracking during homing operations
+# Helper code for implementing homing operations
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, collections
@@ -9,6 +9,7 @@ HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
+# State tracking during toolhead homing/probing operations
 class Homing:
     def __init__(self, printer):
         self.printer = printer
@@ -68,7 +69,7 @@ class Homing:
         error = None
         try:
             self.toolhead.drip_move(movepos, speed, all_endstop_trigger)
-        except CommandError as e:
+        except self.printer.command_error as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
@@ -91,22 +92,23 @@ class Homing:
         try:
             self.printer.send_event("homing:homing_move_end",
                                     [es for es, name in endstops])
-        except CommandError as e:
+        except self.printer.command_error as e:
             if error is None:
                 error = str(e)
         if error is not None:
-            raise CommandError(error)
+            raise self.printer.command_error(error)
         # Check if some movement occurred
         if verify_movement:
             for s, name, spos, epos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
-                        raise CommandError("Probe triggered prior to movement")
-                    raise CommandError(
+                        raise self.printer.command_error(
+                            "Probe triggered prior to movement")
+                    raise self.printer.command_error(
                         "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
-        self.printer.send_event("homing:home_rails_begin", rails)
+        self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         forcepos = self._fill_coord(forcepos)
@@ -136,7 +138,7 @@ class Homing:
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())
-        ret = self.printer.send_event("homing:home_rails_end", rails)
+        ret = self.printer.send_event("homing:home_rails_end", self, rails)
         if any(ret):
             # Apply any homing offsets
             adjustpos = kin.calc_tag_position()
@@ -147,7 +149,7 @@ class Homing:
         self.changed_axes = axes
         try:
             self.toolhead.get_kinematics().home(self)
-        except CommandError:
+        except self.printer.command_error:
             self.printer.lookup_object('stepper_enable').motor_off()
             raise
 
@@ -158,7 +160,24 @@ def multi_complete(printer, completions):
     cb = (lambda e: all([c.wait() for c in completions]))
     return printer.get_reactor().register_callback(cb)
 
-class CommandError(Exception):
-    pass
+class PrinterHoming:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        # Register g-code commands
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('G28', self.cmd_G28)
+    def new_homing_state(self):
+        return Homing(self.printer)
+    def cmd_G28(self, gcmd):
+        # Move to origin
+        axes = []
+        for pos, axis in enumerate('XYZ'):
+            if gcmd.get(axis, None) is not None:
+                axes.append(pos)
+        if not axes:
+            axes = [0, 1, 2]
+        homing_state = Homing(self.printer)
+        homing_state.home_axes(axes)
 
-Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))
+def load_config(config):
+    return PrinterHoming(config)
