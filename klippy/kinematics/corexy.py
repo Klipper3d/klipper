@@ -62,10 +62,11 @@ class CoreXYKinematics:
             homepos = [None, None, None, None]
             homepos[axis] = hi.position_endstop
             forcepos = list(homepos)
+            # matts - test, only home by 25mm for now
             if hi.positive_dir:
-                forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
+                forcepos[axis] -= 25 #1.5 * (hi.position_endstop - position_min)
             else:
-                forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
+                forcepos[axis] += 25 #1.5 * (position_max - hi.position_endstop)
             # Perform homing
             homing_state.home_rails([rail], forcepos, homepos)
     def _motor_off(self, print_time):

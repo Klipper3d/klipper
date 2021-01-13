@@ -14,6 +14,7 @@ class MCU_endstop:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
         self._steppers = []
+        self._local_steppers = []
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
@@ -26,22 +27,22 @@ class MCU_endstop:
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
-        if stepper.get_mcu() is not self._mcu:
-            raise pins.error("Endstop and stepper must be on the same mcu")
         if stepper in self._steppers:
             return
         self._steppers.append(stepper)
+        if stepper.get_mcu() is self._mcu:
+            self._local_steppers.append(stepper)
     def get_steppers(self):
         return list(self._steppers)
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_endstop oid=%d pin=%s pull_up=%d stepper_count=%d" % (
-                self._oid, self._pin, self._pullup, len(self._steppers)))
+                self._oid, self._pin, self._pullup, len(self._local_steppers)))
         self._mcu.add_config_cmd(
             "endstop_home oid=%d clock=0 sample_ticks=0 sample_count=0"
             " rest_ticks=0 pin_value=0" % (self._oid,), on_restart=True)
-        for i, s in enumerate(self._steppers):
+        for i, s in enumerate(self._local_steppers):
             self._mcu.add_config_cmd(
                 "endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
                     self._oid, i, s.get_oid()), is_init=True)
@@ -53,7 +54,7 @@ class MCU_endstop:
             "endstop_query_state oid=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_query_command(
             "endstop_query_state oid=%c",
-            "endstop_state oid=%c homing=%c pin_value=%c", oid=self._oid,
+            "endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u", oid=self._oid,
             cq=cmd_queue)
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):

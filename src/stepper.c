@@ -320,6 +320,17 @@ stepper_stop(struct stepper *s)
 }
 
 void
+command_stepper_stop(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct stepper *s = stepper_oid_lookup(oid);
+    irq_disable();
+    stepper_stop(s);
+    irq_enable();
+}
+DECL_COMMAND(command_stepper_stop, "stepper_stop oid=%c");
+
+void
 stepper_shutdown(void)
 {
     uint8_t i;

@@ -87,6 +87,8 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
+        self._stop_cmd = self._mcu.lookup_query_command(
+            "stepper_stop oid=%c")
         self._ffi_lib.stepcompress_fill(
             self._stepqueue, self._mcu.seconds_to_clock(max_error),
             self._invert_dir, step_cmd_id, dir_cmd_id)
@@ -172,6 +174,8 @@ class MCU_stepper:
     def is_active_axis(self, axis):
         return self._ffi_lib.itersolve_is_active_axis(
             self._stepper_kinematics, axis)
+    def stop(self):
+        self._stop_cmd.send([self._oid])
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
