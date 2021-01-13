@@ -14,7 +14,7 @@
 struct endstop {
     struct timer time;
     struct gpio_in pin;
-    uint32_t rest_time, sample_time, nextwake;
+    uint32_t rest_time, sample_time, nextwake, triggered_time;
     uint8_t flags, stepper_count, sample_count, trigger_count;
     struct stepper *steppers[0];
 };
@@ -48,6 +48,7 @@ endstop_event(struct timer *t)
         e->time.waketime = nextwake;
         return SF_RESCHEDULE;
     }
+    e->triggered_time = e->time.waketime;
     e->nextwake = nextwake;
     e->time.func = endstop_oversample_event;
     return endstop_oversample_event(t);
@@ -119,6 +120,7 @@ command_endstop_home(uint32_t *args)
     e->rest_time = args[4];
     e->time.func = endstop_event;
     e->trigger_count = e->sample_count;
+    e->triggered_time = args[1];
     e->flags = ESF_HOMING | (args[5] ? ESF_PIN_HIGH : 0);
     sched_add_timer(&e->time);
 }
@@ -134,8 +136,8 @@ endstop_report(uint8_t oid, struct endstop *e)
     e->flags &= ~ESF_REPORT;
     irq_enable();
 
-    sendf("endstop_state oid=%c homing=%c pin_value=%c"
-          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin));
+    sendf("endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u"
+          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin), e->triggered_time);
 }
 
 void
