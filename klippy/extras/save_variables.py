@@ -57,7 +57,7 @@ class SaveVariables:
         gcmd.respond_info("Variable Saved")
         self.loadVariables()
     def get_status(self, eventtime):
-        return {'variables': dict(self.allVariables)}
+        return {'variables': self.allVariables}
 
 def load_config(config):
     return SaveVariables(config)
