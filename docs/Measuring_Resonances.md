@@ -215,8 +215,8 @@ cs_pin: rpi:None
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
-accel_chip_x: adxl345_x
-accel_chip_y: adxl345_y
+accel_chip_x: adxl345 adxl345_x
+accel_chip_y: adxl345 adxl345_y
 probe_points: ...
 ```
 
