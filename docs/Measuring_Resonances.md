@@ -99,7 +99,12 @@ Measuring the resonances
 
 ## Checking the setup
 
-Now you can test a connection. In Octoprint, run `ACCELEROMETER_QUERY`. You
+Now you can test a connection.
+
+- For "non bed-slingers" (e.g. one accelerometer), in Octoprint, enter `ACCELEROMETER_QUERY`
+- For "bed-slingers" (e.g. more than one accelerometer), enter `ACCELEROMETER_QUERY CHIP=adxl345_x` where `adxl345_x` is the name of the chip as-entered (see: [bed-slinger](#bed-slinger-printers)).
+
+In Octoprint, run `ACCELEROMETER_QUERY`. You
 should see the current measurements from the accelerometer, including the
 free-fall acceleration, e.g.
 ```
