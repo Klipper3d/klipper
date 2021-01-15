@@ -214,12 +214,14 @@ The following are common printer attributes:
   as "triggered" during the last QUERY_PROBE command. Note, due to the
   order of template expansion (see above), the QUERY_PROBE command
   must be run prior to the macro containing this reference.
-- `printer.configfile.config["<section>"]["<option>"]`: Returns the
-  given config file setting as read by Klipper during the last
-  software start or restart. (Any settings changed at run-time will
-  not be reflected here.) All values are returned as strings (if math
-  is to be performed on the value then it must be converted to a
-  Python number).
+- `printer.configfile.settings.<section>.<option>`: Returns the given
+  config file setting (or default value) during the last software
+  start or restart. (Any settings changed at run-time will not be
+  reflected here.)
+- `printer.configfile.config.<section>.<option>`: Returns the given
+  raw config file setting as read by Klipper during the last software
+  start or restart. (Any settings changed at run-time will not be
+  reflected here.) All values are returned as strings.
 - `printer["gcode_macro <macro_name>"].<variable>`: The current value
   of a [gcode_macro variable](#variables).
 - `printer.webhooks.state`: Returns a string indicating the current
