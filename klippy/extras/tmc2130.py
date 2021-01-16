@@ -172,12 +172,13 @@ class TMCCurrentHelper:
 
 class MCU_TMC_SPI_chain:
     def __init__(self, config, share):
-        self.printer = config.get_printer()        
+        self.printer = config.get_printer()
+        self.mutex = self.printer.get_reactor().mutex()
         self.spi = bus.MCU_SPI_from_config(
         config, 3,default_speed=4000000, share_type=share)
     def _build_cmd(self, data, chain):
         return ([0x00] * ((chain['len'] - chain['pos']) * 5) +
-                data + [0x00] * ((chain['pos'] - 1) * 5))    
+                data + [0x00] * ((chain['pos'] - 1) * 5))
     def reg_read(self, reg, chain):
         cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain)
         self.spi.spi_send(cmd)
@@ -242,8 +243,8 @@ class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields, drive):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.mutex = self.printer.get_reactor().mutex()
         self.mcu_spi, self.chain = lookup_tmc_spi_chain (config, drive)
+        self.mutex = self.mcu_spi.mutex
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
