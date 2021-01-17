@@ -26,6 +26,9 @@ G1 X0 Y1 Z1
 G1 E1
 G1 E0
 
+; Verify GET_POSITION works
+GET_POSITION
+
 ; regular extrude move
 G1 X0 Y0 E.01
 

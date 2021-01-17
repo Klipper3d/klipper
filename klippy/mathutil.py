@@ -1,9 +1,10 @@
 # Simple math helper functions
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, multiprocessing
+import math, logging, multiprocessing, traceback
+import queuelogger
 
 
 ######################################################################
@@ -42,7 +43,8 @@ def coordinate_descent(adj_params, params, error_func):
                 continue
             params[param_name] = orig
             dp[param_name] *= 0.9
-    logging.info("Coordinate descent best_err: %s  rounds: %d", best_err, rounds)
+    logging.info("Coordinate descent best_err: %s  rounds: %d",
+                 best_err, rounds)
     return params
 
 # Helper to run the coordinate descent function in a background
@@ -50,8 +52,14 @@ def coordinate_descent(adj_params, params, error_func):
 def background_coordinate_descent(printer, adj_params, params, error_func):
     parent_conn, child_conn = multiprocessing.Pipe()
     def wrapper():
-        res = coordinate_descent(adj_params, params, error_func)
-        child_conn.send(res)
+        queuelogger.clear_bg_logging()
+        try:
+            res = coordinate_descent(adj_params, params, error_func)
+        except:
+            child_conn.send((True, traceback.format_exc()))
+            child_conn.close()
+            return
+        child_conn.send((False, res))
         child_conn.close()
     # Start a process to perform the calculation
     calc_proc = multiprocessing.Process(target=wrapper)
@@ -64,10 +72,12 @@ def background_coordinate_descent(printer, adj_params, params, error_func):
     while calc_proc.is_alive():
         if eventtime > last_report_time + 5.:
             last_report_time = eventtime
-            gcode.respond_info("Working on calibration...")
+            gcode.respond_info("Working on calibration...", log=False)
         eventtime = reactor.pause(eventtime + .1)
     # Return results
-    res = parent_conn.recv()
+    is_err, res = parent_conn.recv()
+    if is_err:
+        raise Exception("Error in coordinate descent: %s" % (res,))
     calc_proc.join()
     parent_conn.close()
     return res

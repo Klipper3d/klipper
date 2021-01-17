@@ -163,7 +163,8 @@ static void
 process_io(void)
 {
     for (;;) {
-        CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
+        CT_INTC.SECR0 = ((1 << KICK_PRU0_FROM_ARM_EVENT)
+                         | (1 << KICK_PRU0_EVENT));
         check_can_send();
         int can_sleep = check_can_read();
         if (can_sleep) {
@@ -275,31 +276,31 @@ struct my_resource_table {
 
     /* rpmsg vdev entry */
     {
-        (uint32_t)TYPE_VDEV,                    //type
-        (uint32_t)VIRTIO_ID_RPMSG,              //id
-        (uint32_t)0,                            //notifyid
-        (uint32_t)RPMSG_PRU_C0_FEATURES,        //dfeatures
-        (uint32_t)0,                            //gfeatures
-        (uint32_t)0,                            //config_len
-        (uint8_t)0,                             //status
-        (uint8_t)2,                             //num_of_vrings, only two is supported
-        {(uint8_t)0, (uint8_t)0 },              //reserved
+        (uint32_t)TYPE_VDEV,            //type
+        (uint32_t)VIRTIO_ID_RPMSG,      //id
+        (uint32_t)0,                    //notifyid
+        (uint32_t)RPMSG_PRU_C0_FEATURES,//dfeatures
+        (uint32_t)0,                    //gfeatures
+        (uint32_t)0,                    //config_len
+        (uint8_t)0,                     //status
+        (uint8_t)2,                     //num_of_vrings, only two is supported
+        {(uint8_t)0, (uint8_t)0 },      //reserved
         /* no config data */
     },
     /* the two vrings */
     {
-        0,                                      //da, will be populated by host, can't pass it in
-        16,                                     //align (bytes),
-        PRU_RPMSG_VQ0_SIZE,                     //num of descriptors
-        0,                                      //notifyid, will be populated, can't pass right now
-        0                                       //reserved
+        0,                  //da, will be populated by host, can't pass it in
+        16,                 //align (bytes),
+        PRU_RPMSG_VQ0_SIZE, //num of descriptors
+        0,                  //notifyid, will be populated, can't pass right now
+        0                   //reserved
     },
     {
-        0,                                      //da, will be populated by host, can't pass it in
-        16,                                     //align (bytes),
-        PRU_RPMSG_VQ1_SIZE,                     //num of descriptors
-        0,                                      //notifyid, will be populated, can't pass right now
-        0                                       //reserved
+        0,                  //da, will be populated by host, can't pass it in
+        16,                 //align (bytes),
+        PRU_RPMSG_VQ1_SIZE, //num of descriptors
+        0,                  //notifyid, will be populated, can't pass right now
+        0                   //reserved
     },
 
     {

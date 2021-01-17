@@ -12,7 +12,11 @@ format of commands and their transmission. The commands here are
 described using their "printf" style syntax - for those unfamiliar
 with that format, just note that where a '%...' sequence is seen it
 should be replaced with an actual integer. For example, a description
-with "count=%c" could be replaced with the text "count=10".
+with "count=%c" could be replaced with the text "count=10". Note that
+parameters that are considered "enumerations" (see the above protocol
+document) take a string value which is automatically converted to an
+integer value for the micro-controller. This is common with parameters
+named "pin" (or that have a suffix of "_pin").
 
 Startup Commands
 ================
@@ -22,14 +26,6 @@ micro-controller and its peripherals. This section lists common
 commands available for that purpose. Unlike most micro-controller
 commands, these commands run as soon as they are received and they do
 not require any particular setup.
-
-Several of these commands will take a "pin=%u" parameter. The
-low-level micro-controller software uses integer encodings of the
-hardware pin numbers, but to make things more readable the host will
-translate human readable pin names (eg, "PA3") to their equivalent
-integer encodings. By convention, any parameter named "pin" or that
-has a "_pin" suffix will use pin name translation by the
-host.
 
 Common startup commands:
 
@@ -117,18 +113,18 @@ This section lists some commonly used config commands.
   digital output mode and set to an initial value as specified by
   'value' (0 for low, 1 for high). Creating a digital_out object
   allows the host to schedule GPIO updates for the given pin at
-  specified times (see the schedule_digital_out command described
-  below). Should the micro-controller software go into shutdown mode
-  then all configured digital_out objects will be set to
-  'default_value'. The 'max_duration' parameter is used to implement a
-  safety check - if it is non-zero then it is the maximum number of
-  clock ticks that the host may set the given GPIO to a non-default
-  value without further updates. For example, if the default_value is
-  zero and the max_duration is 16000 then if the host sets the gpio to
-  a value of one then it must schedule another update to the gpio pin
-  (to either zero or one) within 16000 clock ticks. This safety
-  feature can be used with heater pins to ensure the host does not
-  enable the heater and then go off-line.
+  specified times (see the queue_digital_out command described below).
+  Should the micro-controller software go into shutdown mode then all
+  configured digital_out objects will be set to 'default_value'. The
+  'max_duration' parameter is used to implement a safety check - if it
+  is non-zero then it is the maximum number of clock ticks that the
+  host may set the given GPIO to a non-default value without further
+  updates. For example, if the default_value is zero and the
+  max_duration is 16000 then if the host sets the gpio to a value of
+  one then it must schedule another update to the gpio pin (to either
+  zero or one) within 16000 clock ticks. This safety feature can be
+  used with heater pins to ensure the host does not enable the heater
+  and then go off-line.
 
 * `config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu
   default_value=%hu max_duration=%u` : This command creates an
@@ -136,17 +132,6 @@ This section lists some commonly used config commands.
   schedule updates for. Its usage is analogous to config_digital_out -
   see the description of the 'set_pwm_out' and 'config_digital_out'
   commands for parameter description.
-
-* `config_soft_pwm_out oid=%c pin=%u cycle_ticks=%u value=%c
-  default_value=%c max_duration=%u` : This command creates an internal
-  micro-controller object for software implemented PWM. Unlike
-  hardware pwm pins, a software pwm object does not require any
-  special hardware support (other than the ability to configure the
-  pin as a digital output GPIO). Because the output switching is
-  implemented in the micro-controller software, it is recommended that
-  the cycle_ticks parameter correspond to a time of 10ms or
-  greater. See the description of the 'set_pwm_out' and
-  'config_digital_out' commands for parameter description.
 
 * `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be
@@ -165,15 +150,15 @@ This section lists some commonly used config commands.
   clock ticks since the last step. It is used as a check on the
   maximum stepper velocity that a stepper may have before stopping.
 
-* `config_end_stop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
+* `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify
   the endstop pins and to enable "homing" operations (see the
-  end_stop_home command below). The command will configure the
+  endstop_home command below). The command will configure the
   specified pin in digital input mode. The 'pull_up' parameter
   determines whether hardware provided pullup resistors for the pin
   (if available) will be enabled. The 'stepper_count' parameter
   specifies the maximum number of steppers that this endstop may need
-  to halt during a homing operation (see end_stop_home below).
+  to halt during a homing operation (see endstop_home below).
 
 * `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
   This command creates an internal SPI object. It is used with
@@ -197,19 +182,25 @@ Common commands
 This section lists some commonly used run-time commands. It is likely
 only of interest to developers looking to gain insight into Klipper.
 
-* `schedule_digital_out oid=%c clock=%u value=%c` : This command will
+* `set_digital_out_pwm_cycle oid=%c cycle_ticks=%u` : This command
+  configures a digital output pin (as created by config_digital_out)
+  to use "software PWM". The 'cycle_ticks' is the number of clock
+  ticks for the PWM cycle. Because the output switching is implemented
+  in the micro-controller software, it is recommended that
+  'cycle_ticks' correspond to a time of 10ms or greater.
+
+* `queue_digital_out oid=%c clock=%u on_ticks=%u` : This command will
   schedule a change to a digital output GPIO pin at the given clock
   time. To use this command a 'config_digital_out' command with the
   same 'oid' parameter must have been issued during micro-controller
-  configuration.
+  configuration. If 'set_digital_out_pwm_cycle' has been called then
+  'on_ticks' is the on duration (in clock ticks) for the pwm cycle.
+  Otherwise, 'on_ticks' should be either 0 (for low voltage) or 1 (for
+  high voltage).
 
-* `schedule_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to
-  a hardware PWM output pin. See the 'schedule_digital_out' and
+* `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
+  hardware PWM output pin. See the 'queue_digital_out' and
   'config_pwm_out' commands for more info.
-
-* `schedule_soft_pwm_out oid=%c clock=%u value=%hu` : Schedules a
-  change to a software PWM output pin. See the 'schedule_digital_out'
-  and 'config_soft_pwm_out' commands for more info.
 
 * `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u min_value=%hu max_value=%hu` : This command sets up a
@@ -264,9 +255,9 @@ Stepper commands
   number of steps generated with dir=1 minus the total number of steps
   generated with dir=0.
 
-* `end_stop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
+* `endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u pin_value=%c` : This command is used during stepper
-  "homing" operations. To use this command a 'config_end_stop' command
+  "homing" operations. To use this command a 'config_endstop' command
   with the same 'oid' parameter must have been issued during
   micro-controller configuration. When this command is invoked, the
   micro-controller will sample the endstop pin every 'rest_ticks'

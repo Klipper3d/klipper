@@ -511,7 +511,7 @@ uint32_t SystemCoreClock = __CORE_CLK;/*!< System Clock Frequency (Core Clock)*/
  * @brief  Setup the microcontroller system.
  *         Initialize the System.
  */
-void __attribute__((externally_visible)) SystemInit (void)
+void SystemInit (void)
 {
 #if (CLOCK_SETUP)                       /* Clock Setup                        */
   LPC_SC->SCS       = SCS_Val;

@@ -30,6 +30,18 @@ list_empty(const struct list_head *h)
     return h->root.next == &h->root;
 }
 
+static inline int
+list_is_first(const struct list_node *n, const struct list_head *h)
+{
+    return n->prev == &h->root;
+}
+
+static inline int
+list_is_last(const struct list_node *n, const struct list_head *h)
+{
+    return n->next == &h->root;
+}
+
 static inline void
 list_del(struct list_node *n)
 {
@@ -90,8 +102,14 @@ list_join_tail(struct list_head *add, struct list_head *h)
 #define list_next_entry(pos, member)                            \
     container_of((pos)->member.next, typeof(*pos), member)
 
+#define list_prev_entry(pos, member)                            \
+    container_of((pos)->member.prev, typeof(*pos), member)
+
 #define list_first_entry(head, type, member)                    \
     container_of((head)->root.next, type, member)
+
+#define list_last_entry(head, type, member)                     \
+    container_of((head)->root.prev, type, member)
 
 #define list_for_each_entry(pos, head, member)                  \
     for (pos = list_first_entry((head), typeof(*pos), member)   \

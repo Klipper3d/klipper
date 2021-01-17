@@ -1,0 +1,223 @@
+# Kconfig settings for STM32 processors
+
+if MACH_STM32
+
+config STM32_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+
+config BOARD_DIRECTORY
+    string
+    default "stm32"
+
+choice
+    prompt "Processor model"
+    config MACH_STM32F103
+        bool "STM32F103"
+        select MACH_STM32F1
+    config MACH_STM32F207
+        bool "STM32F207"
+        select MACH_STM32F2
+    config MACH_STM32F405
+        bool "STM32F405"
+        select MACH_STM32F4
+    config MACH_STM32F407
+        bool "STM32F407"
+        select MACH_STM32F4
+    config MACH_STM32F446
+        bool "STM32F446"
+        select MACH_STM32F4
+    config MACH_STM32F042
+        bool "STM32F042"
+        select MACH_STM32F0
+    config MACH_STM32F070
+        bool "STM32F070"
+        select MACH_STM32F0
+endchoice
+
+config MACH_STM32F0
+    bool
+config MACH_STM32F1
+    bool
+config MACH_STM32F2
+    bool
+config MACH_STM32F4
+    bool
+config HAVE_STM32_USBFS
+    bool
+    default y if MACH_STM32F103 || MACH_STM32F0
+    default n
+config HAVE_STM32_USBOTG
+    bool
+    default y if MACH_STM32F2 || MACH_STM32F4
+    default n
+
+config MCU
+    string
+    default "stm32f042x6" if MACH_STM32F042
+    default "stm32f070xb" if MACH_STM32F070
+    default "stm32f103xe" if MACH_STM32F103
+    default "stm32f207xx" if MACH_STM32F207
+    default "stm32f405xx" if MACH_STM32F405
+    default "stm32f407xx" if MACH_STM32F407
+    default "stm32f446xx" if MACH_STM32F446
+
+config CLOCK_FREQ
+    int
+    default 48000000 if MACH_STM32F0
+    default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
+    default 72000000 if MACH_STM32F103
+    default 120000000 if MACH_STM32F207
+    default 168000000 if MACH_STM32F405 || MACH_STM32F407
+    default 180000000 if MACH_STM32F446
+
+config FLASH_SIZE
+    hex
+    default 0x8000 if MACH_STM32F042
+    default 0x20000 if MACH_STM32F070
+    default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
+    default 0x40000 if MACH_STM32F2
+    default 0x80000 if MACH_STM32F4
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x1800 if MACH_STM32F042
+    default 0x4000 if MACH_STM32F070
+    default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
+    default 0x20000 if MACH_STM32F207
+    default 0x20000 if MACH_STM32F4
+
+config STACK_SIZE
+    int
+    default 512
+
+choice
+    prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F103 || MACH_STM32F070
+    config STM32_FLASH_START_2000
+        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
+    config STM32_FLASH_START_5000
+        bool "20KiB bootloader" if MACH_STM32F103
+    config STM32_FLASH_START_7000
+        bool "28KiB bootloader" if MACH_STM32F103
+    config STM32_FLASH_START_8800
+        bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
+    config STM32_FLASH_START_10000
+        bool "64KiB bootloader (Alfawise)" if MACH_STM32F103
+    config STM32_FLASH_START_800
+        bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
+
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
+    config STM32_FLASH_START_4000
+        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
+
+    config STM32_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_START
+    hex
+    default 0x8000800 if STM32_FLASH_START_800
+    default 0x8002000 if STM32_FLASH_START_2000
+    default 0x8004000 if STM32_FLASH_START_4000
+    default 0x8005000 if STM32_FLASH_START_5000
+    default 0x8007000 if STM32_FLASH_START_7000
+    default 0x8008000 if STM32_FLASH_START_8000
+    default 0x8008800 if STM32_FLASH_START_8800
+    default 0x8010000 if STM32_FLASH_START_10000
+    default 0x8000000
+
+config ARMCM_RAM_VECTORTABLE
+    bool
+    default y if MACH_STM32F0 && FLASH_START != 0x8000000
+    default n
+
+choice
+    prompt "Clock Reference" if LOW_LEVEL_OPTIONS
+    config STM32_CLOCK_REF_8M
+        bool "8 MHz crystal"
+    config STM32_CLOCK_REF_12M
+        bool "12 MHz crystal"
+    config STM32_CLOCK_REF_16M
+        bool "16 MHz crystal"
+    config STM32_CLOCK_REF_INTERNAL
+        bool "Internal clock"
+endchoice
+config CLOCK_REF_FREQ
+    int
+    default 16000000 if STM32_CLOCK_REF_16M
+    default 12000000 if STM32_CLOCK_REF_12M
+    default 1 if STM32_CLOCK_REF_INTERNAL
+    default 8000000
+
+config USBSERIAL
+    bool "Use USB for communication (instead of serial)"
+    depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
+    default y
+
+config CANSERIAL
+    bool "Use CAN for communication (instead of serial)"
+    depends on !USBSERIAL
+    default n
+config SERIAL_BAUD
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000 if CANSERIAL
+choice
+    depends on CANSERIAL
+    prompt "CAN pins"
+    config CAN_PINS_PA11_PA12
+        bool "Pins PA11(rx) and PA12(tx)"
+    config CAN_PINS_PB8_PB9
+        bool "Pins PB8(rx) and PB9(tx)"
+    config CAN_PINS_PI8_PH13
+        bool "Pins PI8(rx) and PH13(tx)" if MACH_STM32F4
+    config CAN_PINS_PB5_PB6
+        bool "Pins PB5(rx) and PB6(tx)" if MACH_STM32F4
+    config CAN_PINS_PB12_PB13
+        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F4
+endchoice
+
+config STM32F042_PIN_SWAP
+    bool "Use PA9/PA10 for USB or CAN" if MACH_STM32F042
+    depends on (USBSERIAL || CANSERIAL) && MACH_STM32F042
+    default y if (USBSERIAL || CANSERIAL)
+    default n
+    help
+        Remaps logical pins PA11/PA12 to physical PA9/PA10 on low pincount F042 devices.
+config SERIAL
+    depends on !USBSERIAL && !CANSERIAL
+    bool
+    default y
+choice
+    depends on SERIAL
+    prompt "Serial Port" if LOW_LEVEL_OPTIONS
+    help
+        Select the serial device to use.
+    config STM32_SERIAL_USART1
+        bool "USART1"
+    config STM32_SERIAL_USART2
+        bool "USART2 (on PA3/PA2)"
+    config STM32_SERIAL_USART2_ALT
+        bool "USART2 (on PA15/PA14)" if MACH_STM32F0
+    config STM32_SERIAL_USART3
+        bool "USART3"
+    config STM32_SERIAL_USART3_ALT
+        bool "USART3 (on PD9/PD8)" if MACH_STM32F4
+endchoice
+config SERIAL_PORT
+    int
+    default 3 if STM32_SERIAL_USART3 || STM32_SERIAL_USART3_ALT
+    default 2 if STM32_SERIAL_USART2 || STM32_SERIAL_USART2_ALT
+    default 1
+
+endif

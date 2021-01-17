@@ -13,7 +13,7 @@
 #include "internal.h" // console_setup
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "linux");
+DECL_CONSTANT_STR("MCU", "linux");
 
 
 /****************************************************************

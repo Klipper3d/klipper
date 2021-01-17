@@ -7,7 +7,35 @@ printer motion on a delta printer. Each one of these parameters has a
 non-obvious and non-linear impact and it is difficult to calibrate
 them manually. In contrast, the software calibration code can provide
 excellent results with just a few minutes of time. No special probing
-hardware is necessary to get good results.
+hardware is necessary.
+
+Ultimately, the delta calibration is dependent on the precision of the
+tower endstop switches. If one is using Trinamic stepper motor drivers
+then consider enabling [endstop phase](Endstop_Phase.md) detection to
+improve the accuracy of those switches.
+
+Automatic vs manual probing
+===========================
+
+Klipper supports calibrating the delta parameters via a manual probing
+method or via an automatic Z probe.
+
+A number of delta printer kits come with automatic Z probes that are
+not sufficiently accurate (specifically, small differences in arm
+length can cause effector tilt which can skew an automatic probe). If
+using an automatic probe then first
+[calibrate the probe](Probe_Calibrate.md) and then check for a
+[probe location bias](Probe_Calibrate.md#location-bias-check). If the
+automatic probe has a bias of more than 25 microns (.025mm) then use
+manual probing instead. Manual probing only takes a few minutes and it
+eliminates error introduced by the probe.
+
+If using a probe that is mounted on the side of the hotend (that is,
+it has an X or Y offset) then note that performing delta calibration
+will invalidate the results of probe calibration. These types of
+probes are rarely suitable for use on a delta (because minor effector
+tilt will result in a probe location bias). If using the probe anyway,
+then be sure to rerun probe calibration after any delta calibration.
 
 Basic delta calibration
 =======================
@@ -32,19 +60,15 @@ the bed. It is typical to permit this during calibration by updating
 the config so that the printer's `minimum_z_position=-5`. (Once
 calibration completes, one can remove this setting from the config.)
 
-There are two ways to perform the probing - manual probing and
-automatic probing. Automatic probing utilizes a hardware device
-capable of triggering when the toolhead is at a set distance from the
-bed. Manual probing involves using the "paper test" to determine the
-height at each probe point. It is recommended to use manual probing
-for delta calibration. A number of common printer kits come with
-probes that are not sufficiently accurate (specifically, small
-differences in arm length can cause effector tilt which can skew an
-automatic probe). Manual probing only takes a few minutes and it
-eliminates error introduced by the probe.
+There are two ways to perform the probing - manual probing
+(`DELTA_CALIBRATE METHOD=manual`) and automatic probing
+(`DELTA_CALIBRATE`). The manual probing method will move the head near
+the bed and then wait for the user to follow the steps described at
+["the paper test"](Bed_Level.md#the-paper-test) to determine the
+actual distance between the nozzle and bed at the given location.
 
 To perform the basic probe, make sure the config has a
-[delta_calibrate] section defined and run:
+[delta_calibrate] section defined and then run the tool:
 ```
 G28
 DELTA_CALIBRATE METHOD=manual
@@ -56,7 +80,7 @@ SAVE_CONFIG
 ```
 
 The basic calibration should provide delta parameters that are
-accurate enough for basic printing.  If this is a new printer, this is
+accurate enough for basic printing. If this is a new printer, this is
 a good time to print some basic objects and verify general
 functionality.
 
@@ -211,3 +235,15 @@ Additional notes
   errors elsewhere in the hardware. For example, small differences in
   arm length may result in a tilt to the effector and some of that
   tilt may be accounted for by adjusting the arm length parameters.
+
+Using Bed Mesh on a Delta
+=========================
+
+It is possible to use [bed mesh](Bed_Mesh.md) on a delta. However, it
+is important to obtain good delta calibration prior to enabling a bed
+mesh. Running bed mesh with poor delta calibration will result in
+confusing and poor results.
+
+Note that performing delta calibration will invalidate any previously
+obtained bed mesh. After performing a new delta calibration be sure to
+rerun BED_MESH_CALIBRATE.

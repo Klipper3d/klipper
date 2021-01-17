@@ -31,7 +31,7 @@ $(OUT)pru0.elf: $(patsubst %.c, $(OUT)src/%.o,$(pru0-y))
 
 $(OUT)pru1.elf: $(OUT)klipper.elf
 	@echo "  Linking $@"
-	$(Q)$(CC) $(CFLAGS_pru1.elf) $^ -o $@
+	$(Q)$(CC) $(CFLAGS_pru1.elf) $< -o $@
 
 flash: $(OUT)pru0.elf $(OUT)pru1.elf
 	@echo "  Flashing"

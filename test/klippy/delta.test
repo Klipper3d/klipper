@@ -1,6 +1,6 @@
 # Test case for basic movement on delta printers
 CONFIG ../../config/example-delta.cfg
-DICTIONARY atmega2560-16mhz.dict
+DICTIONARY atmega2560.dict
 
 # Start by homing the printer.  Also tests Z moves.
 G28

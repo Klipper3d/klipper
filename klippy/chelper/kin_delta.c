@@ -1,6 +1,6 @@
 // Delta kinematics stepper pulse time generation
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -10,6 +10,7 @@
 #include <string.h> // memset
 #include "compiler.h" // __visible
 #include "itersolve.h" // struct stepper_kinematics
+#include "trapq.h" // move_get_coord
 
 struct delta_stepper {
     struct stepper_kinematics sk;
@@ -34,6 +35,7 @@ delta_stepper_alloc(double arm2, double tower_x, double tower_y)
     ds->arm2 = arm2;
     ds->tower_x = tower_x;
     ds->tower_y = tower_y;
-    ds->sk.calc_position = delta_stepper_calc_position;
+    ds->sk.calc_position_cb = delta_stepper_calc_position;
+    ds->sk.active_flags = AF_X | AF_Y | AF_Z;
     return &ds->sk;
 }

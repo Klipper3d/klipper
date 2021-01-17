@@ -14,9 +14,16 @@ serial_init(void)
 {
     // Make stdin/stdout non-blocking
     fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK);
-    fcntl(STDOUT_FILENO, F_SETFL, fcntl(STDOUT_FILENO, F_GETFL, 0) | O_NONBLOCK);
+    fcntl(STDOUT_FILENO, F_SETFL
+          , fcntl(STDOUT_FILENO, F_GETFL, 0) | O_NONBLOCK);
 }
 DECL_INIT(serial_init);
+
+void *
+console_receive_buffer(void)
+{
+    return NULL;
+}
 
 static void
 do_uart(void)

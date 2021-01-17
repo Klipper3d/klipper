@@ -53,7 +53,7 @@ set_non_blocking(int fd)
     return 0;
 }
 
-static int
+int
 set_close_on_exec(int fd)
 {
     int ret = fcntl(fd, F_SETFD, FD_CLOEXEC);
@@ -130,6 +130,12 @@ console_setup(char *name)
 static struct task_wake console_wake;
 static uint8_t receive_buf[4096];
 static int receive_pos;
+
+void *
+console_receive_buffer(void)
+{
+    return receive_buf;
+}
 
 // Process any incoming commands
 void

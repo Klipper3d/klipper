@@ -1,0 +1,6 @@
+# Tests for miscellaneous g-code commands
+DICTIONARY atmega2560.dict
+CONFIG macros.cfg
+
+# Run TESTIT macro
+TESTIT
