@@ -118,7 +118,7 @@ choice
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
 
     config STM32_FLASH_START_C000
-	bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
+        bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
     config STM32_FLASH_START_8000
         bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
     config STM32_FLASH_START_4000
