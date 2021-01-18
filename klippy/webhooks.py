@@ -29,7 +29,7 @@ class WebRequestError(gcode.CommandError):
     def to_dict(self):
         return {
             'error': 'WebRequestError',
-            'message': self.message}
+            'message': str(self)}
 
 class Sentinel:
     pass
@@ -224,12 +224,12 @@ class ClientConnection:
             func = self.webhooks.get_callback(web_request.get_method())
             func(web_request)
         except self.printer.command_error as e:
-            web_request.set_error(WebRequestError(e.message))
+            web_request.set_error(WebRequestError(str(e)))
         except Exception as e:
             msg = ("Internal Error on WebRequest: %s"
                    % (web_request.get_method()))
             logging.exception(msg)
-            web_request.set_error(WebRequestError(e.message))
+            web_request.set_error(WebRequestError(str(e)))
             self.printer.invoke_shutdown(msg)
         result = web_request.finish()
         if result is None:

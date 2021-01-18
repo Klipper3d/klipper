@@ -530,7 +530,7 @@ class BedMeshCalibrate:
         try:
             z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
-            raise self.gcode.error(e.message)
+            raise self.gcode.error(str(e))
         self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         self.bedmesh.save_profile("default")
@@ -988,7 +988,7 @@ class ProfileManager:
         try:
             z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
-            raise self.gcode.error(e.message)
+            raise self.gcode.error(str(e))
         self.current_profile = prof_name
         self.bedmesh.set_mesh(z_mesh)
     def remove_profile(self, prof_name):
