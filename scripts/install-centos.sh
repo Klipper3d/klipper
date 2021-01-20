@@ -58,6 +58,7 @@ RemainAfterExit=yes
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log
 EOF
 # Use systemctl to enable the klipper systemd service script
+    sudo systemctl daemon-reload
     sudo systemctl enable klipper.service
 }
 
@@ -70,7 +71,7 @@ KLIPPY_USER=$USER
 start_software()
 {
     report_status "Launching Klipper host software..."
-    sudo systemctl klipper restart
+    sudo systemctl restart klipper
 }
 
 # Helper functions
