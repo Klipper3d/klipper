@@ -57,6 +57,9 @@ User=$USER
 RemainAfterExit=yes
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l /var/log/klippy.log
 EOF
+# Create log-file and set owner
+    sudo touch /var/log/klippy.log
+    sudo chown $USER /var/log/klippy.log
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl daemon-reload
     sudo systemctl enable klipper.service
