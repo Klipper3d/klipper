@@ -38,6 +38,9 @@ defs_stepcompress = """
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
 
+    void stepcompress_enable_step_tracking(struct stepcompress *sc, int enable);
+    int stepcompress_count_steps_after(struct stepcompress *sc, uint64_t clock);
+
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
     void steppersync_free(struct steppersync *ss);

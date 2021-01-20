@@ -43,6 +43,7 @@ class MCU_stepper:
         self._itersolve_generate_steps = self._ffi_lib.itersolve_generate_steps
         self._itersolve_check_active = self._ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
+        self._homing_overshoot = 0.0
     def get_mcu(self):
         return self._mcu
     def get_name(self, short=False):
@@ -86,9 +87,7 @@ class MCU_stepper:
             "reset_step_clock oid=%c clock=%u")
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
-            "stepper_position oid=%c pos=%i", oid=self._oid)
-        self._stop_cmd = self._mcu.lookup_query_command(
-            "stepper_stop oid=%c")
+            "stepper_position oid=%c pos=%i stopped_time=%i", oid=self._oid)
         self._ffi_lib.stepcompress_fill(
             self._stepqueue, self._mcu.seconds_to_clock(max_error),
             self._invert_dir, step_cmd_id, dir_cmd_id)
@@ -108,7 +107,8 @@ class MCU_stepper:
         opos = self.get_commanded_position()
         sk = self._stepper_kinematics
         self._ffi_lib.itersolve_set_position(sk, coord[0], coord[1], coord[2])
-        self._mcu_position_offset += opos - self.get_commanded_position()
+        self._mcu_position_offset += opos - self.get_commanded_position() + self._homing_overshoot
+        self._homing_overshoot = 0.0
     def get_commanded_position(self):
         sk = self._stepper_kinematics
         return self._ffi_lib.itersolve_get_commanded_pos(sk)
@@ -118,6 +118,11 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
+    def get_homed_mcu_position(self):
+        overshoot_steps = self._homing_overshoot / self._step_dist
+        return self.get_mcu_position() - overshoot_steps
+    def reset_homing_overshoot(self):
+        self._homing_overshoot = 0.0
     def get_tag_position(self):
         return self._tag_position
     def set_tag_position(self, position):
@@ -130,7 +135,10 @@ class MCU_stepper:
                                                      self._step_dist)
             self.set_trapq(self._trapq)
         return old_sk
-    def note_homing_end(self, did_trigger=False):
+    def start_homing_step_tracking(self):
+        self._ffi_lib.stepcompress_enable_step_tracking(self._stepqueue, 1)
+
+    def note_homing_end(self, did_trigger=False, triggered_time=0):
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
@@ -142,7 +150,33 @@ class MCU_stepper:
         if not did_trigger or self._mcu.is_fileoutput():
             return
         params = self._get_position_cmd.send([self._oid])
-        mcu_pos_dist = params['pos'] * self._step_dist
+
+        # account for any steps that occurred after the end stop triggered (for remote end stops)
+        if triggered_time:
+            trigger_mcu_clock = self._mcu.print_time_to_clock(triggered_time)
+            stopped_mcu_clock = 0
+            overshoot_steps = self._ffi_lib.stepcompress_count_steps_after(self._stepqueue, trigger_mcu_clock)
+            cancelled_steps = 0
+            if params['stopped_time']:
+                # subtract 1 because stopped_time is the time of the next step that would have been processed
+                # and we want to include it in the count (count steps AFTER is not inclusive)
+                stopped_mcu_clock = self._mcu.clock32_to_clock64(params['stopped_time']) - 1
+                cancelled_steps = self._ffi_lib.stepcompress_count_steps_after(self._stepqueue, stopped_mcu_clock)
+            #logging.info("Stepper %s overshoot steps %i cancelled steps %i", 
+            #    self.get_name(), overshoot_steps, cancelled_steps)
+            overshoot_steps -= cancelled_steps
+            self._homing_overshoot = overshoot_steps * self._step_dist
+            if self._invert_dir:
+                self._homing_overshoot = -self._homing_overshoot
+            logging.info("Stepper %s overshot homing trigger point by %i steps %f mm (triggered at %f %d, stepper halted at %f %d)", 
+                self.get_name(), overshoot_steps, self._homing_overshoot, triggered_time, trigger_mcu_clock, 
+                self._mcu.clock_to_print_time(stopped_mcu_clock), stopped_mcu_clock)
+        else:
+            self._homing_overshoot = 0.0
+        self._ffi_lib.stepcompress_enable_step_tracking(self._stepqueue, 0)
+
+        mcu_pos = params['pos']
+        mcu_pos_dist = mcu_pos * self._step_dist
         if self._invert_dir:
             mcu_pos_dist = -mcu_pos_dist
         self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
@@ -174,8 +208,6 @@ class MCU_stepper:
     def is_active_axis(self, axis):
         return self._ffi_lib.itersolve_is_active_axis(
             self._stepper_kinematics, axis)
-    def stop(self):
-        self._stop_cmd.send([self._oid])
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):

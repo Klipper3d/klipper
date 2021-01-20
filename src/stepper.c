@@ -41,6 +41,7 @@ struct stepper {
     uint32_t count;
     uint32_t next_step_time;
 #endif
+    uint32_t stopped_next_step_time;
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move_queue_head mq;
@@ -295,8 +296,9 @@ command_stepper_get_position(uint32_t *args)
     struct stepper *s = stepper_oid_lookup(oid);
     irq_disable();
     uint32_t position = stepper_get_position(s);
+    uint32_t stopped_next_step_time = s->stopped_next_step_time;
     irq_enable();
-    sendf("stepper_position oid=%c pos=%i", oid, position - POSITION_BIAS);
+    sendf("stepper_position oid=%c pos=%i stopped_time=%i", oid, position - POSITION_BIAS, stopped_next_step_time);
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 
@@ -306,6 +308,7 @@ void
 stepper_stop(struct stepper *s)
 {
     sched_del_timer(&s->time);
+    s->stopped_next_step_time = s->next_step_time;
     s->next_step_time = 0;
     s->position = -stepper_get_position(s);
     s->count = 0;
@@ -318,17 +321,6 @@ stepper_stop(struct stepper *s)
         move_free(m);
     }
 }
-
-void
-command_stepper_stop(uint32_t *args)
-{
-    uint8_t oid = args[0];
-    struct stepper *s = stepper_oid_lookup(oid);
-    irq_disable();
-    stepper_stop(s);
-    irq_enable();
-}
-DECL_COMMAND(command_stepper_stop, "stepper_stop oid=%c");
 
 void
 stepper_shutdown(void)

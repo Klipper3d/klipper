@@ -163,3 +163,44 @@ endstop_task(void)
     }
 }
 DECL_TASK(endstop_task);
+
+// remote endstops:
+
+void
+command_config_remote_endstop(uint32_t *args)
+{
+    uint8_t stepper_count = args[1];
+    struct endstop *e = oid_alloc(
+        args[0], command_config_remote_endstop
+        , sizeof(*e) + sizeof(e->steppers[0]) * stepper_count);
+    e->stepper_count = stepper_count;
+    e->sample_count = 1;
+}
+DECL_COMMAND(command_config_remote_endstop,
+             "config_remote_endstop oid=%c stepper_count=%c");
+
+void
+command_remote_endstop_set_stepper(uint32_t *args)
+{
+    struct endstop *e = oid_lookup(args[0], command_config_remote_endstop);
+    uint8_t pos = args[1];
+    if (pos >= e->stepper_count)
+        shutdown("Set stepper past maximum stepper count");
+    e->steppers[pos] = stepper_oid_lookup(args[2]);
+}
+DECL_COMMAND(command_remote_endstop_set_stepper,
+             "remote_endstop_set_stepper oid=%c pos=%c stepper_oid=%c");
+
+void
+command_remote_endstop_stop_steppers(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct endstop *e = oid_lookup(oid, command_config_remote_endstop);
+    irq_disable();
+    uint8_t count = e->stepper_count;
+    while (count--)
+        if (e->steppers[count])
+            stepper_stop(e->steppers[count]);    
+    irq_enable();
+}
+DECL_COMMAND(command_remote_endstop_stop_steppers, "remote_endstop_stop_steppers oid=%c");

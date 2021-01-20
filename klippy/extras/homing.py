@@ -79,13 +79,21 @@ class Homing:
                 error = "Failed to home %s: Timeout during homing" % (name,)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
-        end_mcu_pos = [(s, name, spos, s.get_mcu_position())
+        end_mcu_pos = [(s, name, spos, s.get_mcu_position(), s.get_homed_mcu_position())
                        for s, name, spos in start_mcu_pos]
         if probe_pos:
-            for s, name, spos, epos in end_mcu_pos:
+            for s, name, spos, epos, hpos in end_mcu_pos:
                 md = (epos - spos) * s.get_step_dist()
                 s.set_tag_position(s.get_tag_position() + md)
+                # don't apply overshoot correction when probing
+                s.reset_homing_overshoot()
+            # this is where the toolhead actually is now:
             self.set_homed_position(kin.calc_tag_position())
+            for s, name, spos, epos, hpos in end_mcu_pos:
+                md = (hpos - epos) * s.get_step_dist()
+                s.set_tag_position(s.get_tag_position() + md)
+            # this is where it was when the probe triggered:
+            self.probe_position = kin.calc_tag_position()
         else:
             self.toolhead.set_position(movepos)
         # Signal homing/probing move complete
@@ -99,7 +107,7 @@ class Homing:
             raise self.printer.command_error(error)
         # Check if some movement occurred
         if verify_movement:
-            for s, name, spos, epos in end_mcu_pos:
+            for s, name, spos, epos, hpos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
                         raise self.printer.command_error(
