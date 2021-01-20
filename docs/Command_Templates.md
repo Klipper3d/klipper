@@ -288,6 +288,16 @@ The following are common printer attributes:
 - `printer.hall_filament_width_sensor.Diameter`,
   `printer.hall_filament_width_sensor.Raw`: The last read values from
   the sensor.
+- `printer.mcu.mcu_version`: The Klipper code version reported by the
+  micro-controller.
+- `printer.mcu.mcu_build_versions`: Information on the build tools
+  used to generate the micro-controller code (as reported by the
+  micro-controller).
+- `printer.mcu.mcu_constants.<constant_name>`: Compile time constants
+  reported by the micro-controller. The available constants may differ
+  between micro-controller architectures and with each code revision.
+- `printer.mcu.last_stats.<statistics_name>`: Statistics information
+  on the micro-controller connection.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading

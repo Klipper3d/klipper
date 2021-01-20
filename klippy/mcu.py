@@ -447,6 +447,7 @@ class MCU:
         self._stepqueues = []
         self._steppersync = None
         # Stats
+        self._get_status_info = {}
         self._stats_sumsq_base = 0.
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
@@ -630,9 +631,13 @@ class MCU:
         self._reset_cmd = self.try_lookup_command("reset")
         self._config_reset_cmd = self.try_lookup_command("config_reset")
         ext_only = self._reset_cmd is None and self._config_reset_cmd is None
-        mbaud = self._serial.get_msgparser().get_constant('SERIAL_BAUD', None)
+        msgparser = self._serial.get_msgparser()
+        mbaud = msgparser.get_constant('SERIAL_BAUD', None)
         if self._restart_method is None and mbaud is None and not ext_only:
             self._restart_method = 'command'
+        self._get_status_info['mcu_version'] = msgparser.version
+        self._get_status_info['mcu_build_versions'] = msgparser.build_versions
+        self._get_status_info['mcu_constants'] = msgparser.get_constants()
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
         self.register_response(self._handle_mcu_stats, 'stats')
@@ -782,12 +787,17 @@ class MCU:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
+    def get_status(self, eventtime):
+        return dict(self._get_status_info)
     def stats(self, eventtime):
-        msg = "%s: mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
-            self._name, self._mcu_tick_awake, self._mcu_tick_avg,
-            self._mcu_tick_stddev)
-        return False, ' '.join([msg, self._serial.stats(eventtime),
-                                self._clocksync.stats(eventtime)])
+        load = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
+        stats = ' '.join([load, self._serial.stats(eventtime),
+                          self._clocksync.stats(eventtime)])
+        parts = [s.split('=', 1) for s in stats.split()]
+        last_stats = {k:(float(v) if '.' in v else int(v)) for k, v in parts}
+        self._get_status_info['last_stats'] = last_stats
+        return False, '%s: %s' % (self._name, stats)
 
 Common_MCU_errors = {
     ("Timer too close", "No next step", "Missed scheduling of next "): """
