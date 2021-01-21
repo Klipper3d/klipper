@@ -26,7 +26,7 @@ class PrinterProbe:
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
         self.last_state = False
-        self.last_z_min = 0
+        self.last_z_min = 0.
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -186,7 +186,7 @@ class PrinterProbe:
     def cmd_PROBE(self, gcmd):
         pos = self.run_probe(gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
-        self.last_z_min = pos [2]
+        self.last_z_min = pos[2]
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
