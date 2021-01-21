@@ -164,12 +164,12 @@ clock_setup(void)
         // Configure 72Mhz PLL from external crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
         uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
-        cfgr = 0;
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
         if (div < 16)
             cfgr = RCC_CFGR_PLLXTPRE_HSE_DIV2;
         else
             div /= 2;
-        cfgr |= (1 << RCC_CFGR_PLLSRC_Pos) | ((div - 2) << RCC_CFGR_PLLMULL_Pos);	
+        cfgr |= (div - 2) << RCC_CFGR_PLLMULL_Pos;
     } else {
         // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
         uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
