@@ -214,7 +214,7 @@ The following are common printer attributes:
   as "triggered" during the last QUERY_PROBE command. Note, due to the
   order of template expansion (see above), the QUERY_PROBE command
   must be run prior to the macro containing this reference.
-- `printer.probe.last_z_min`: Returns the Z result value of the last 
+- `printer.probe.last_z_min`: Returns the Z result value of the last
   PROBE command.
 - `printer.configfile.settings.<section>.<option>`: Returns the given
   config file setting (or default value) during the last software
