@@ -165,7 +165,7 @@ clock_setup(void)
         RCC->CR |= RCC_CR_HSEON;
         uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
         cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
-        if (div < 16)
+        if ((div & 1) && div <= 16)
             cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
         else
             div /= 2;
