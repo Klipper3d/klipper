@@ -53,8 +53,10 @@ class Homing:
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())
-        start_mcu_pos = [(s, name, s.get_mcu_position())
-                         for es, name in endstops for s in es.get_steppers()]
+        # Begin step tracking so we can calculate any overshoot
+        steppers = [s for s in es.get_steppers() for es, name in endstops]
+        for s in steppers:
+            s.start_homing_step_tracking()
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
         endstop_triggers = []
@@ -65,7 +67,7 @@ class Homing:
             endstop_triggers.append(wait)
         all_endstop_trigger = multi_complete(self.printer, endstop_triggers)
         self.toolhead.dwell(HOMING_START_DELAY)
-        # Issue move
+        # Issue move to endstop (or bed surface if z-probing)
         error = None
         try:
             self.toolhead.drip_move(movepos, speed, all_endstop_trigger)
@@ -78,26 +80,33 @@ class Homing:
             if not did_trigger and error is None:
                 error = "Failed to home %s: Timeout during homing" % (name,)
         # Determine stepper halt positions
+        allSteppersMoved = True
         self.toolhead.flush_step_generation()
-        end_mcu_pos = [(s, name, spos,
-                        s.get_mcu_position(),
-                        s.get_homed_mcu_position())
-                       for s, name, spos in start_mcu_pos]
+        for s in steppers:
+            startpos = s.get_tag_position()
+            endpos = s.get_commanded_position()
+            overshoot = s.get_homing_overshoot()
+            s.stop_homing_step_tracking()
+            logging.info("Stepper %s halted at %f (triggered at %f)",
+                s.get_name(), endpos,
+                endpos - s.get_homing_overshoot())
+            if startpos == endpos:
+                allSteppersMoved = False
+            if probe_pos:
+                # Set to stop coordinate (probing does not re-home the axis)
+                s.set_tag_position(endpos)
+            else:
+                # Set at end stop position + overshoot
+                endstop = s.calc_position_from_coord(movepos)
+                s.set_tag_position(endstop + overshoot)
+        # Update toolhead coordinates
+        self.set_homed_position(kin.calc_tag_position())
+        # subtract overshoot to get probe trigger point
         if probe_pos:
-            for s, name, spos, epos, hpos in end_mcu_pos:
-                md = (epos - spos) * s.get_step_dist()
-                s.set_tag_position(s.get_tag_position() + md)
-                # don't apply overshoot correction when probing
-                s.reset_homing_overshoot()
-            # this is where the toolhead actually is now:
-            self.set_homed_position(kin.calc_tag_position())
-            for s, name, spos, epos, hpos in end_mcu_pos:
-                md = (hpos - epos) * s.get_step_dist()
-                s.set_tag_position(s.get_tag_position() + md)
-            # this is where it was when the probe triggered:
+            for s in steppers:
+                s.set_tag_position(s.get_commanded_position()
+                    - s.get_homing_overshoot())
             self.probe_position = kin.calc_tag_position()
-        else:
-            self.toolhead.set_position(movepos)
         # Signal homing/probing move complete
         try:
             self.printer.send_event("homing:homing_move_end",
@@ -108,14 +117,12 @@ class Homing:
         if error is not None:
             raise self.printer.command_error(error)
         # Check if some movement occurred
-        if verify_movement:
-            for s, name, spos, epos, hpos in end_mcu_pos:
-                if spos == epos:
-                    if probe_pos:
-                        raise self.printer.command_error(
-                            "Probe triggered prior to movement")
-                    raise self.printer.command_error(
-                        "Endstop %s still triggered after retract" % (name,))
+        if verify_movement and not allSteppersMoved:
+            if probe_pos:
+                raise self.printer.command_error(
+                    "Probe triggered prior to movement")
+            raise self.printer.command_error(
+                "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)

@@ -42,7 +42,6 @@ class MCU_endstop:
         self._mcu = mcu
         self._steppers = []
         self._local_steppers = []
-        self._remote_steppers = []
         self._remote_endstops = {}
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
@@ -63,7 +62,6 @@ class MCU_endstop:
         if mcu is self._mcu:
             self._local_steppers.append(stepper)
         else:
-            self._remote_steppers.append(stepper)
             if mcu not in self._remote_endstops:
                 self._remote_endstops[mcu] = MCU_remote_endstop(mcu)
             self._remote_endstops[mcu].add_stepper(stepper)
@@ -93,8 +91,6 @@ class MCU_endstop:
             oid=self._oid, cq=cmd_queue)
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
-        for s in self._remote_steppers:
-            s.start_homing_step_tracking()
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         self._next_query_print_time = print_time + self.RETRY_QUERY
