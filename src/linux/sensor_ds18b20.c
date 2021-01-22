@@ -11,6 +11,7 @@
 #include <unistd.h> // read
 #include "basecmd.h" // oid_alloc
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // output
 #include "command.h" // DECL_COMMAND
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
@@ -18,7 +19,8 @@
 struct ds18_s {
     struct timer timer;
     int fd;
-    uint32_t rest_time, min_value, max_value;
+    uint32_t rest_time;
+    int32_t min_value, max_value;
     uint8_t flags;
 };
 
@@ -48,7 +50,7 @@ command_config_ds18b20(uint32_t *args)
     if (memchr(serial, '/', serial_len))
         goto fail1;
     char fname[56];
-    snprintf(fname, sizeof(fname), "/sys/bus/w1/devices/%.*s/temperature"
+    snprintf(fname, sizeof(fname), "/sys/bus/w1/devices/%.*s/w1_slave"
              , serial_len, serial);
     output("fname: %s", fname);
     int fd = open(fname, O_RDONLY|O_CLOEXEC);
@@ -89,32 +91,57 @@ command_query_ds18b20(uint32_t *args)
 }
 DECL_COMMAND(command_query_ds18b20,
              "query_ds18b20 oid=%c clock=%u rest_ticks=%u"
-             " min_value=%u max_value=%u");
+             " min_value=%i max_value=%i");
+
+
+// The temperature data is at the end of the report, after a "t=".
+//
+// 31 00 4b 46 7f ff 0c 10 77 : crc=77 YES
+// 31 00 4b 46 7f ff 0c 10 77 t=3062
+//
+// Return a pointer into data, to the character after "t=".
+static char*
+get_temp_substring(char *data)
+{
+    char *s = strstr(data, "t=");
+    if (s == NULL)
+      try_shutdown("Unable to find temperature value in DS18B20 report");
+    s += 2;
+    return s;
+}
 
 // Read temperature and report
 static void
 ds18_read(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 {
-    output("In ds18_read");
-    int ret = lseek(d->fd, 0, SEEK_SET);
-    if (ret < 0) {
-        report_errno("seek ds18b20", ret);
-        try_shutdown("Unable to seek DS18B20");
-    }
-    char data[16];
-    ret = read(d->fd, data, sizeof(data)-1);
+    // Read data and report
+    char data[128];
+    uint32_t t1 = timer_read_time();
+    int ret = read(d->fd, data, sizeof(data)-1);
+    uint32_t t2 = timer_read_time();
     if (ret < 0) {
         report_errno("read ds18b20", ret);
         try_shutdown("Unable to read DS18B20");
     }
     data[ret] = '\0';
-    double val = atof(data);
-    // Was * 1000? (Too big).
-    uint32_t ival = (uint32_t)(val / 1000 + .5);
+    char *temp_string = get_temp_substring(data);
+    int val = atoi(temp_string);
     sendf("ds18_result oid=%c next_clock=%u value=%u"
-          , oid, next_begin_time, ival);
-    if (ival < d->min_value || ival > d->max_value)
+          , oid, next_begin_time, val);
+    output("val %i, min %i, max %i", val, d->min_value, d->max_value);
+    if (val < d->min_value || val > d->max_value)
         try_shutdown("DS18 out of range");
+
+    // Seek file in preparation of next read
+    uint32_t t3 = timer_read_time();
+    ret = lseek(d->fd, 0, SEEK_SET);
+    uint32_t t4 = timer_read_time();
+    if (ret < 0) {
+        report_errno("seek ds18b20", ret);
+        try_shutdown("Unable to seek DS18B20");
+    }
+
+    output("read timing t1=%u t2=%u t3=%u t4=%u", t1, t2, t3, t4);
 }
 
 // task to read temperature and send response
