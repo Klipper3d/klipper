@@ -3,7 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging
+import os, logging, re
 
 VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
@@ -15,7 +15,7 @@ class VirtualSD:
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
-        self.file_position = self.file_size = 0
+        self.file_position = self.file_size = self.gcode_start_byte = 0
         # Print Stat Tracking
         self.print_stats = printer.load_object(config, 'print_stats')
         # Work timer
@@ -80,7 +80,9 @@ class VirtualSD:
     def get_status(self, eventtime):
         progress = 0.
         if self.file_size:
-            progress = float(self.file_position) / self.file_size
+            progress = (max(0, float(self.file_position -
+                    self.gcode_start_byte)) / (self.file_size -
+                    self.gcode_start_byte))
         is_active = self.is_active()
         return {'progress': progress, 'is_active': is_active,
                 'file_position': self.file_position}
@@ -154,6 +156,15 @@ class VirtualSD:
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
+            pattern = re.compile(b"^\s*[A-Za-z0-9].*$")
+            line = f.readline()
+            while line:
+                m = pattern.search(line)
+                if m:
+                    fstart = f.tell() - len(line)
+                    break
+                line = f.readline()
+            f.seek(0)
         except:
             logging.exception("virtual_sdcard file open")
             raise gcmd.error("Unable to open file")
@@ -162,6 +173,7 @@ class VirtualSD:
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
+        self.gcode_start_byte = fstart if "fstart" in locals() else 0
         self.print_stats.set_current_file(filename)
     def cmd_M24(self, gcmd):
         # Start/resume SD print
