@@ -4,25 +4,24 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import heater
+from . import heaters
 
 class PIDCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command(
-            'PID_CALIBRATE', self.cmd_PID_CALIBRATE,
-            desc=self.cmd_PID_CALIBRATE_help)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('PID_CALIBRATE', self.cmd_PID_CALIBRATE,
+                               desc=self.cmd_PID_CALIBRATE_help)
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
-    def cmd_PID_CALIBRATE(self, params):
-        heater_name = self.gcode.get_str('HEATER', params)
-        target = self.gcode.get_float('TARGET', params)
-        write_file = self.gcode.get_int('WRITE_FILE', params, 0)
-        pheater = self.printer.lookup_object('heater')
+    def cmd_PID_CALIBRATE(self, gcmd):
+        heater_name = gcmd.get('HEATER')
+        target = gcmd.get_float('TARGET')
+        write_file = gcmd.get_int('WRITE_FILE', 0)
+        pheaters = self.printer.lookup_object('heaters')
         try:
-            heater = pheater.lookup_heater(heater_name)
+            heater = pheaters.lookup_heater(heater_name)
         except self.printer.config_error as e:
-            raise self.gcode.error(str(e))
+            raise gcmd.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
         calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
@@ -31,14 +30,16 @@ class PIDCalibrate:
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise
-        self.gcode.wait_for_temperature(heater)
+        pheaters.wait_for_temperature(heater)
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
+        if calibrate.check_busy(0., 0., 0.):
+            raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
-        self.gcode.respond_info(
+        gcmd.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
@@ -120,7 +121,7 @@ class ControlAutoTune:
         # Use Ziegler-Nichols method to generate PID parameters
         Ti = 0.5 * Tu
         Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heater.PID_PARAM_BASE
+        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
@@ -129,7 +130,7 @@ class ControlAutoTune:
     def calc_final_pid(self):
         cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
                        for pos in range(4, len(self.peaks))]
-        midpoint_pos = sorted(cycle_times)[len(cycle_times)/2][1]
+        midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
         return self.calc_pid(midpoint_pos)
     # Offline analysis helper
     def write_file(self, filename):

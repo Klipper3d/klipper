@@ -295,12 +295,29 @@ the coordinates listed under the "Probe" header to find the correct index.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE METHOD=[manual | automatic]`\
+`BED_MESH_CALIBRATE METHOD=[manual | automatic] [<probe_parameter>=<value>]
+ [<mesh_parameter>=<value>]`\
 _Default Method:  automatic if a probe is detected, otherwise manual_
 
 Initiates the probing procedure for Bed Mesh Calibration.  If `METHOD=manual`
 is selected then manual probing will occur.  When switching between automatic
 and manual probing the generated mesh points will automatically be adjusted.
+
+It is possible to specify mesh parameters to modify the probed area.  The
+following parameters are available:
+- Rectangular beds (cartesian):
+  - `MESH_MIN`
+  - `MESH_MAX`
+  - `PROBE_COUNT`
+- Round beds (delta):
+  - `MESH_RADIUS`
+  - `MESH_ORIGIN`
+  - `ROUND_PROBE_COUNT`
+- All beds:
+  - `RELATIVE_REFERNCE_INDEX`
+  - `ALGORITHM`
+See the configuration documentation above for details on how each parameter
+applies to the mesh.
 
 ### Profiles
 
@@ -357,3 +374,9 @@ set, the generated probed points will be output to the terminal:
 The "Tool Adjusted" points refer to the nozzle location for each point, and
 the "Probe" points refer to the probe location.  Note that when manually
 probing the "Probe" points will refer to both the tool and nozzle locations.
+
+### Clear Mesh State
+
+`BED_MESH_CLEAR`
+
+This gcode may be used to clear the internal mesh state.

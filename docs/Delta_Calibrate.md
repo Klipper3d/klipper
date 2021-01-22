@@ -30,6 +30,13 @@ automatic probe has a bias of more than 25 microns (.025mm) then use
 manual probing instead. Manual probing only takes a few minutes and it
 eliminates error introduced by the probe.
 
+If using a probe that is mounted on the side of the hotend (that is,
+it has an X or Y offset) then note that performing delta calibration
+will invalidate the results of probe calibration. These types of
+probes are rarely suitable for use on a delta (because minor effector
+tilt will result in a probe location bias). If using the probe anyway,
+then be sure to rerun probe calibration after any delta calibration.
+
 Basic delta calibration
 =======================
 
@@ -228,3 +235,15 @@ Additional notes
   errors elsewhere in the hardware. For example, small differences in
   arm length may result in a tilt to the effector and some of that
   tilt may be accounted for by adjusting the arm length parameters.
+
+Using Bed Mesh on a Delta
+=========================
+
+It is possible to use [bed mesh](Bed_Mesh.md) on a delta. However, it
+is important to obtain good delta calibration prior to enabling a bed
+mesh. Running bed mesh with poor delta calibration will result in
+confusing and poor results.
+
+Note that performing delta calibration will invalidate any previously
+obtained bed mesh. After performing a new delta calibration be sure to
+rerun BED_MESH_CALIBRATE.

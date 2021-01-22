@@ -17,39 +17,36 @@ class HostResponder:
         self.default_prefix = config.getchoice('default_type', respond_types,
                                                'echo')
         self.default_prefix = config.get('default_prefix', self.default_prefix)
-        self.gcode = self.printer.lookup_object('gcode')
-        self.cmd_M118_help = "Send a message to the host prefixed with '%s'" % (
-            self.default_prefix,)
-        self.gcode.register_command(
-            'M118', self.cmd_M118, True, desc=self.cmd_M118_help)
-        self.gcode.register_command('RESPOND', self.cmd_RESPOND, True)
-    def cmd_M118(self, params):
-        if '#original' in params:
-            msg = params['#original']
-            if not msg.startswith('M118'):
-                # Parse out additional info if M118 recd during a print
-                start = msg.find('M118')
-                end = msg.rfind('*')
-                msg = msg[start:end]
-            if len(msg) > 5:
-                msg = msg[5:]
-            else:
-                msg = ''
-            self.gcode.respond("%s %s" %(self.default_prefix, msg))
-    def cmd_RESPOND(self, params):
-        respond_type = self.gcode.get_str('TYPE', params, None)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('M118', self.cmd_M118, True)
+        gcode.register_command('RESPOND', self.cmd_RESPOND, True)
+    def cmd_M118(self, gcmd):
+        msg = gcmd.get_commandline()
+        umsg = msg.upper()
+        if not umsg.startswith('M118'):
+            # Parse out additional info if M118 recd during a print
+            start = umsg.find('M118')
+            end = msg.rfind('*')
+            msg = msg[start:end]
+        if len(msg) > 5:
+            msg = msg[5:]
+        else:
+            msg = ''
+        gcmd.respond_raw("%s %s" % (self.default_prefix, msg))
+    def cmd_RESPOND(self, gcmd):
+        respond_type = gcmd.get('TYPE', None)
         prefix = self.default_prefix
         if(respond_type != None):
             respond_type = respond_type.lower()
             if(respond_type in respond_types):
                 prefix = respond_types[respond_type]
             else:
-                raise self.gcode.error(
+                raise gcmd.error(
                     "RESPOND TYPE '%s' is invalid. Must be one"
                     " of 'echo', 'command', or 'error'" % (respond_type,))
-        prefix = self.gcode.get_str('PREFIX', params, prefix)
-        msg = self.gcode.get_str('MSG', params, '')
-        self.gcode.respond("%s %s" %(prefix, msg))
+        prefix = gcmd.get('PREFIX', prefix)
+        msg = gcmd.get('MSG', '')
+        gcmd.respond_raw("%s %s" % (prefix, msg))
 
 def load_config(config):
     return HostResponder(config)

@@ -1,10 +1,10 @@
 # Code for handling the kinematics of rotary delta robots
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, mathutil, chelper
+import stepper, mathutil, chelper
 
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
@@ -76,6 +76,9 @@ class RotaryDeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
+        max_xy = math.sqrt(self.max_xy2)
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -106,7 +109,7 @@ class RotaryDeltaKinematics:
             # Normal XY move
             return
         if self.need_home:
-            raise homing.EndstopMoveError(end_pos, "Must home first")
+            raise move.move_error("Must home first")
         end_z = end_pos[2]
         limit_xy2 = self.max_xy2
         if end_z > self.limit_z:
@@ -115,14 +118,18 @@ class RotaryDeltaKinematics:
             # Move out of range - verify not a homing move
             if (end_pos[:2] != self.home_position[:2]
                 or end_z < self.min_z or end_z > self.home_position[2]):
-                raise homing.EndstopMoveError(end_pos)
+                raise move.move_error()
             limit_xy2 = -1.
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
-    def get_status(self):
-        return {'homed_axes': '' if self.need_home else 'XYZ'}
+    def get_status(self, eventtime):
+        return {
+            'homed_axes': '' if self.need_home else 'XYZ',
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
     def get_calibration(self):
         return self.calibration
 

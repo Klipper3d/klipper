@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
-import homing, chelper
+import chelper
 
 class error(Exception):
     pass
@@ -76,8 +76,8 @@ class MCU_stepper:
                 self._oid, self._step_pin, self._dir_pin,
                 self._mcu.seconds_to_clock(min_stop_interval),
                 self._invert_step))
-        self._mcu.add_config_cmd(
-            "reset_step_clock oid=%d clock=0" % (self._oid,), is_init=True)
+        self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
+                                 % (self._oid,), on_restart=True)
         step_cmd_id = self._mcu.lookup_command_id(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
         dir_cmd_id = self._mcu.lookup_command_id(
@@ -94,6 +94,9 @@ class MCU_stepper:
         return self._oid
     def get_step_dist(self):
         return self._step_dist
+    def set_step_dist(self, dist):
+        self._step_dist = dist
+        self.set_stepper_kinematics(self._stepper_kinematics)
     def is_dir_inverted(self):
         return self._invert_dir
     def calc_position_from_coord(self, coord):
@@ -121,8 +124,9 @@ class MCU_stepper:
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
         if sk is not None:
-            self._ffi_lib.itersolve_set_stepcompress(
-                sk, self._stepqueue, self._step_dist)
+            self._ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue,
+                                                     self._step_dist)
+            self.set_trapq(self._trapq)
         return old_sk
     def note_homing_end(self, did_trigger=False):
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
@@ -179,16 +183,57 @@ def PrinterStepper(config, units_in_radians=False):
     step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
     dir_pin = config.get('dir_pin')
     dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
-    step_dist = config.getfloat('step_distance', above=0.)
+    step_dist = parse_step_distance(config, units_in_radians, True)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
     # Support for stepper enable pin handling
-    stepper_enable = printer.try_load_module(config, 'stepper_enable')
+    stepper_enable = printer.load_object(config, 'stepper_enable')
     stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
     # Register STEPPER_BUZZ command
-    force_move = printer.try_load_module(config, 'force_move')
+    force_move = printer.load_object(config, 'force_move')
     force_move.register_stepper(mcu_stepper)
     return mcu_stepper
+
+# Parse stepper gear_ratio config parameter
+def parse_gear_ratio(config, note_valid):
+    gear_ratio = config.get('gear_ratio', None, note_valid=note_valid)
+    if gear_ratio is None:
+        return 1.
+    result = 1.
+    try:
+        gears = gear_ratio.split(',')
+        for gear in gears:
+            g1, g2 = [float(v.strip()) for v in gear.split(':')]
+            result *= g1 / g2
+    except:
+        raise config.error("Unable to parse gear_ratio: %s" % (gear_ratio,))
+    return result
+
+# Obtain "step distance" information from a config section
+def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    if units_in_radians is None:
+        # Caller doesn't know if units are in radians - infer it
+        rd = config.get('rotation_distance', None, note_valid=False)
+        gr = config.get('gear_ratio', None, note_valid=False)
+        units_in_radians = rd is None and gr is not None
+    if units_in_radians:
+        rotation_dist = 2. * math.pi
+        config.get('gear_ratio', note_valid=note_valid)
+    else:
+        rotation_dist = config.getfloat('rotation_distance', None,
+                                        above=0., note_valid=note_valid)
+    if rotation_dist is None:
+        # Older config format with step_distance
+        return config.getfloat('step_distance', above=0., note_valid=note_valid)
+    # Newer config format with rotation_distance
+    microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
+    full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
+                               note_valid=note_valid)
+    if full_steps % 4:
+        raise config.error("full_steps_per_rotation invalid in section '%s'"
+                           % (config.get_name(),))
+    gearing = parse_gear_ratio(config, note_valid)
+    return rotation_dist / (full_steps * microsteps * gearing)
 
 
 ######################################################################
@@ -252,6 +297,13 @@ class PrinterRail:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.get_name(),))
+        elif ((self.homing_positive_dir
+               and self.position_endstop == self.position_min)
+              or (not self.homing_positive_dir
+                  and self.position_endstop == self.position_max)):
+            raise config.error(
+                "Invalid homing_positive_dir / position_endstop in '%s'"
+                % (config.get_name(),))
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
@@ -279,7 +331,7 @@ class PrinterRail:
         mcu_endstop.add_stepper(stepper)
         name = stepper.get_name(short=True)
         self.endstops.append((mcu_endstop, name))
-        query_endstops = printer.try_load_module(config, 'query_endstops')
+        query_endstops = printer.load_object(config, 'query_endstops')
         query_endstops.register_endstop(mcu_endstop, name)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:

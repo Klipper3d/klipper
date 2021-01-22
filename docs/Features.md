@@ -13,8 +13,8 @@ Klipper has several compelling features:
   movement translates to quieter and more stable printer operation.
 
 * Best in class performance. Klipper is able to achieve high stepping
-  rates on both new and old micro-controllers. Even an old 8bit AVR
-  micro-controller can obtain rates over 175K steps per second. On
+  rates on both new and old micro-controllers. Even old 8bit
+  micro-controllers can obtain rates over 175K steps per second. On
   more recent micro-controllers, rates over 500K steps per second are
   possible. Higher stepper rates enable higher print velocities. The
   stepper event timing remains precise even at high speeds which
@@ -34,6 +34,23 @@ Klipper has several compelling features:
   is stored in a standard config file which can be easily edited. This
   makes it easier to setup and maintain the hardware.
 
+* Klipper supports "Smooth Pressure Advance" - a mechanism to account
+  for the effects of pressure within an extruder. This reduces
+  extruder "ooze" and improves the quality of print corners. Klipper's
+  implementation does not introduce instantaneous extruder speed
+  changes, which improves overall stability and robustness.
+
+* Klipper supports "Input Shaping" to reduce the impact of vibrations
+  on print quality. This can reduce or eliminate "ringing" (also known
+  as "ghosting", "echoing", or "rippling") in prints. It may also
+  allow one to obtain faster printing speeds while still maintaining
+  high print quality.
+
+* Klipper uses an "iterative solver" to calculate precise step times
+  from simple kinematic equations. This makes porting Klipper to new
+  types of robots easier and it keeps timing precise even with complex
+  kinematics (no "line segmentation" is needed).
+
 * Portable code. Klipper works on ARM, AVR, and PRU based
   micro-controllers. Existing "reprap" style printers can run Klipper
   without hardware modification - just add a Raspberry Pi. Klipper's
@@ -45,18 +62,20 @@ Klipper has several compelling features:
   heating and thermistor algorithms, etc. are all written in Python.
   This makes it easier to develop new functionality.
 
-* Klipper uses an "iterative solver" to calculate precise step times
-  from simple kinematic equations. This makes porting Klipper to new
-  types of robots easier and it keeps timing precise even with complex
-  kinematics (no "line segmentation" is needed).
+* Custom programmable macros. New G-Code commands can be defined in
+  the printer config file (no code changes are necessary). Those
+  commands are programmable - allowing them to produce different
+  actions depending on the state of the printer.
+
+* Builtin API server. In addition to the standard G-Code interface,
+  Klipper supports a rich JSON based application interface. This
+  enables programmers to build external applications with detailed
+  control of the printer.
 
 Additional features
 ===================
 
 Klipper supports many standard 3d printer features:
-
-* Klipper implements the "pressure advance" algorithm for extruders.
-  When properly tuned, pressure advance reduces extruder ooze.
 
 * Works with Octoprint. This allows the printer to be controlled using
   a regular web-browser. The same Raspberry Pi that runs Klipper can
@@ -69,13 +88,14 @@ Klipper supports many standard 3d printer features:
 * Support for multiple extruders. Extruders with shared heaters and
   extruders on independent carriages (IDEX) are also supported.
 
-* Support for cartesian, delta, and corexy style printers.
+* Support for cartesian, delta, corexy, corexz, rotary delta, polar,
+  and cable winch style printers.
 
 * Automatic bed leveling support. Klipper can be configured for basic
   bed tilt detection or full mesh bed leveling. If the bed uses
   multiple Z steppers then Klipper can also level by independently
   manipulating the Z steppers. Most Z height probes are supported,
-  including servo activated probes.
+  including BL-Touch probes and servo activated probes.
 
 * Automatic delta calibration support. The calibration tool can
   perform basic height calibration as well as an enhanced X and Y
@@ -83,9 +103,9 @@ Klipper supports many standard 3d printer features:
   probe or via manual probing.
 
 * Support for common temperature sensors (eg, common thermistors,
-  AD595, AD849x, PT100, MAX6675, MAX31855, MAX31856, MAX31865). Custom
-  thermistors and custom analog temperature sensors can also be
-  configured.
+  AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
+  MAX31865, BME280, HTU21D, and LM75). Custom thermistors and custom
+  analog temperature sensors can also be configured.
 
 * Basic thermal heater protection enabled by default.
 
@@ -98,7 +118,8 @@ Klipper supports many standard 3d printer features:
   AD5206, MCP4451, MCP4728, MCP4018, and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
-  default menu is also available.
+  default menu is also available. The contents of the display and menu
+  can be fully customized via the config file.
 
 * Constant acceleration and "look-ahead" support. All printer moves
   will gradually accelerate from standstill to cruising speed and then
@@ -111,14 +132,15 @@ Klipper supports many standard 3d printer features:
   improve the accuracy of typical endstop switches. When properly
   tuned it can improve a print's first layer bed adhesion.
 
+* Support for measuring and recording acceleration using an adxl345
+  accelerometer.
+
 * Support for limiting the top speed of short "zigzag" moves to reduce
   printer vibration and noise. See the [kinematics](Kinematics.md)
   document for more information.
 
 * Sample configuration files are available for many common printers.
-  Check the
-  [config directory](https://github.com/KevinOConnor/klipper/tree/master/config/)
-  for a list.
+  Check the [config directory](../config/) for a list.
 
 To get started with Klipper, read the [installation](Installation.md)
 guide.

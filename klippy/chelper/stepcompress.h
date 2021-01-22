@@ -10,12 +10,13 @@ void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
                        , uint32_t invert_sdir, uint32_t queue_step_msgid
                        , uint32_t set_next_step_dir_msgid);
 void stepcompress_free(struct stepcompress *sc);
-int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
-int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 uint32_t stepcompress_get_oid(struct stepcompress *sc);
 int stepcompress_get_step_dir(struct stepcompress *sc);
 int stepcompress_append(struct stepcompress *sc, int sdir
                         , double print_time, double step_time);
+int stepcompress_commit(struct stepcompress *sc);
+int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
 struct serialqueue;
 struct steppersync *steppersync_alloc(

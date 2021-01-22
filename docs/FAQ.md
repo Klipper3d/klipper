@@ -2,7 +2,7 @@ Frequently asked questions
 ==========================
 
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
-2. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
+2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)
 3. [Where's my serial port?](#wheres-my-serial-port)
 4. [When the micro-controller restarts the device changes to /dev/ttyUSB1](#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1)
 5. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
@@ -19,34 +19,21 @@ Frequently asked questions
 16. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
 17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-19. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-20. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
-21. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+19. [Do I have to wire my device to a specific type of micro-controller pin?](#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin)
+20. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
+21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
+22. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
+23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
+24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
 
 ### How can I donate to the project?
 
 Thanks. Kevin has a Patreon page at:
 [https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
 
-### How do I calculate the step_distance parameter in the printer config file?
+### How do I calculate the rotation_distance config parameter?
 
-If you know the steps per millimeter for the axis then use a
-calculator to divide 1.0 by steps_per_mm. Then round this number to
-six decimal places and place it in the config (six decimal places is
-nano-meter precision).
-
-The step_distance defines the distance that the axis will travel on
-each motor driver pulse. It can also be calculated from the axis
-pitch, motor step angle, and driver microstepping. If unsure, do a web
-search for "calculate steps per mm" to find an online calculator.
-
-Klipper uses step_distance instead of steps_per_mm in order to use
-consistent units of measurement in the config file. (The config uses
-millimeters for all distance measurements.) It is believed that
-steps_per_mm originated as an optimization on old 8-bit
-micro-controllers (the desire to use a multiply instead of a divide in
-some low-level code). Continuing to configure this one distance in
-units of "inverse millimeters" is felt to be quirky and unnecessary.
+See the [rotation distance document](Rotation_Distance.md).
 
 ### Where's my serial port?
 
@@ -100,12 +87,12 @@ and make sure FLASH_DEVICE is set correctly for your board (see the
 
 However, if "make flash" just doesn't work for your board, then you
 will need to manually flash. See if there is a config file in the
-[config directory](https://github.com/KevinOConnor/klipper/tree/master/config)
-with specific instructions for flashing the device. Also, check the
-board manufacturer's documentation to see if it describes how to flash
-the device. Finally, it may be possible to manually flash the device
-using tools such as "avrdude" or "bossac" - see the
-[bootloader document](Bootloaders.md) for additional information.
+[config directory](../config) with specific instructions for flashing
+the device. Also, check the board manufacturer's documentation to see
+if it describes how to flash the device. Finally, it may be possible
+to manually flash the device using tools such as "avrdude" or
+"bossac" - see the [bootloader document](Bootloaders.md) for
+additional information.
 
 ### How do I change the serial baud rate?
 
@@ -118,8 +105,9 @@ If you want to change the baud rate anyway, then the new rate will
 need to be configured in the micro-controller (during **make
 menuconfig**) and that updated code will need to be compiled and
 flashed to the micro-controller. The Klipper printer.cfg file will
-also need to be updated to match that baud rate (see the example.cfg
-file for details).  For example:
+also need to be updated to match that baud rate (see the
+[config reference](Config_Reference.md#mcu) for details).  For
+example:
 ```
 [mcu]
 baud: 250000
@@ -146,8 +134,7 @@ when printing directly from OctoPrint. (The printer may move faster
 than OctoPrint can send movement commands.) If you wish to run on one
 one of these slower boards anyway, consider using the "virtual_sdcard"
 feature when printing (see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details).
+[config reference](Config_Reference.md#virtual_sdcard) for details).
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
@@ -156,9 +143,20 @@ Klipper has been run on other machines. The Klipper host software only
 requires Python running on a Linux (or similar) computer. However, if
 you wish to run it on a different machine you will need Linux admin
 knowledge to install the system prerequisites for that particular
-machine. See the
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
+machine. See the [install-octopi.sh](../scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
+
+If you are looking to run the Klipper host software on a low-end chip,
+then be aware that, at a minimum, a machine with "double precision
+floating point" hardware is required.
+
+If you are looking to run the Klipper host software on a shared
+general-purpose desktop or server class machine, then note that
+Klipper has some real-time scheduling requirements. If, during a
+print, the host computer also performs an intensive general-purpose
+computing task (such as defragmenting a hard drive, 3d rendering,
+heavy swapping, etc.), then it may cause Klipper to report print
+errors.
 
 Note: If you are not using an OctoPi image, be aware that several
 Linux distributions enable a "ModemManager" (or similar) package that
@@ -184,10 +182,9 @@ own pseudo-tty. For example:
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
-script and the
-[klipper-start.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/klipper-start.sh)
-script may be useful as examples.
+[install-octopi.sh](../scripts/install-octopi.sh) script and the
+[klipper-start.sh](../scripts/klipper-start.sh) script may be useful
+as examples.
 
 ### Do I have to use OctoPrint?
 
@@ -222,8 +219,7 @@ process itself (or fundamentally does not have a homing process) then
 consider using a safe_z_home or homing_override section in the config
 file. If you need to move a stepper for diagnostic or debugging
 purposes then consider adding a force_move section to the config
-file. See
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+file. See [config reference](Config_Reference.md#customized_homing)
 for further details on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
@@ -250,52 +246,17 @@ around 10000 steps per second. If it is requested to move at a speed
 that would require a higher step rate then Marlin will generally just
 step as fast as it can. Klipper is able to achieve much higher step
 rates, but the stepper motor may not have sufficient torque to move at
-a higher speed. So, for a Z axis with a very precise step_distance the
-actual obtainable max_z_velocity may be smaller than what is
-configured in Marlin.
+a higher speed. So, for a Z axis with a high gearing ratio or high
+microsteps setting the actual obtainable max_z_velocity may be smaller
+than what is configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
-Short answer: Do not use the TMC2208 driver in "standalone mode" with
-Klipper! Do not use the TMC2224 driver in "stealthchop standalone
-mode" with Klipper!
-
-Long answer: Klipper implements very precise timing.
-
-![tmc2208](img/tmc2208.svg.png)
-
-In the above picture, if Klipper is requested to move along the red
-line and if each black line represents the nominal location to step a
-stepper, then in the middle of that movement Klipper will arrange to
-take a step, change the step direction, and then step back. Klipper
-can perform this step, direction change, and step back in a very small
-amount of time.
-
-It is our current understanding that the TMC2208 and TMC2224 will
-react poorly to this when they are in "stealthchop" mode. (It is not
-believed any other TMC drivers are impacted.) It is believed that when
-the driver sees the two step requests in a small time frame that it
-dramatically increases current in anticipation of high acceleration.
-That high current can trip the driver's internal "over current"
-detection which causes the driver to disable itself.
-
-This pattern of steps can occur on all stepper motors and on all
-robot kinematics.
-
-The TMC2208 and TMC2224 do work well with Klipper when run-time
-configuration mode is used (that is, when a wire is routed from the
-micro-controller to the PDN-UART pin and the printer config file has a
-corresponding [tmc2208] config section). When using run-time
-configuration, either configure the drivers to use "spreadcycle mode"
-or configure them to use "stealthchop mode" with a reasonable
-"stealthchop threshold". If one wishes to exclusively use
-"stealthchop" mode with run-time UART configuration then make sure the
-stealthchop_threshold is no more than about 10% greater than the
-maximum velocity of the given axis. It is speculated that with a
-reasonable stealthchop threshold, then if Klipper sends a "step,
-direction change, step back" sequence, the driver will briefly
-transition from stealthchop mode, to spreadcycle mode, and back to
-stealthchop mode, which should be harmless.
+If using the TMC2208 (or TMC2224) driver in "standalone mode" then
+make sure to use the
+[latest version of Klipper](#how-do-i-upgrade-to-the-latest-software). A
+workaround for a TMC2208 "stealthchop" driver problem was added to
+Klipper in mid-March of 2020.
 
 ### I keep getting random "Lost communication with MCU" errors
 
@@ -361,16 +322,14 @@ See the "config_digital_out" command in the
 In addition, the micro-controller software is configured with a
 minimum and maximum temperature range for each heater at startup (see
 the min_temp and max_temp parameters in the
-[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
-file for details). If the micro-controller detects that the
-temperature is outside of that range then it will also enter a
-"shutdown" state.
+[config reference](Config_Reference.md#extruder) for details). If the
+micro-controller detects that the temperature is outside of that range
+then it will also enter a "shutdown" state.
 
 Separately, the host software also implements code to check that
 heaters and temperature sensors are functioning correctly. See the
-"verify_heater" section of the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for further details.
+[config reference](Config_Reference.md#verify_heater) for further
+details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?
 
@@ -420,6 +379,41 @@ support these custom pin numbers - check Marlin's fastio headers (see
 above) to translate these pin numbers to their standard hardware
 names.
 
+### Do I have to wire my device to a specific type of micro-controller pin?
+
+It depends on the type of device and type of pin:
+
+ADC pins (or Analog pins): For thermistors and similar "analog"
+sensors, the device must be wired to an "analog" or "ADC" capable pin
+on the micro-controller. If you configure Klipper to use a pin that is
+not analog capable, Klipper will report a "Not a valid ADC pin" error.
+
+PWM pins (or Timer pins): Klipper does not use hardware PWM by default
+for any device. So, in general, one may wire heaters, fans, and
+similar devices to any general purpose IO pin. However, fans and
+output_pin devices may be optionally configured to use `hardware_pwm:
+True`, in which case the micro-controller must support hardware PWM on
+the pin (otherwise, Klipper will report a "Not a valid PWM pin"
+error). Note that hardware PWM is currently only supported on the avr,
+atsam, samd21, and linux micro-controllers.
+
+IRQ pins (or Interrupt pins): Klipper does not use hardware interrupts
+on IO pins, so it is never necessary to wire a device to one of these
+micro-controller pins.
+
+SPI pins: When using hardware SPI it is necessary to wire the pins to
+the micro-controller's SPI capable pins. However, most devices can be
+configured to use "software SPI", in which case any general purpose IO
+pins may be used.
+
+I2C pins: When using I2C it is necessary to wire the pins to the
+micro-controller's I2C capable pins.
+
+Other devices may be wired to any general purpose IO pin. For example,
+steppers, heaters, fans, Z probes, servos, LEDs, common hd44780/st7920
+LCD displays, the Trinamic UART control line may be wired to any
+general purpose IO pin.
+
 ### How do I cancel an M109/M190 "wait for temperature" request?
 
 Navigate to the OctoPrint terminal tab and issue an M112 command in
@@ -448,6 +442,36 @@ likely the result of endstop inaccuracies. A stepper motor itself can
 only lose steps in increments of 4 full steps. (So, if one is using 16
 microsteps, then a lost step on the stepper would result in the "mcu:"
 step counter being off by a multiple of 64 microsteps.)
+
+### Why does Klipper report errors? I lost my print!
+
+Short answer: We want to know if our printers detect a problem so that
+the underlying issue can be fixed and we can obtain great quality
+prints. We definitely do not want our printers to silently produce low
+quality prints.
+
+Long answer: Klipper has been engineered to automatically workaround
+many transient problems. For example, it automatically detects
+communication errors and will retransmit; it schedules actions in
+advance and buffers commands at multiple layers to enable precise
+timing even with intermittent interference. However, should the
+software detect an error that it can not recover from, if it is
+commanded to take an invalid action, or if it detects it is hopelessly
+unable to perform its commanded task, then Klipper will report an
+error. In these situations there is a high risk of producing a
+low-quality print (or worse). It is hoped that alerting the user will
+empower them to fix the underlying issue and improve the overall
+quality of their prints.
+
+There are some related questions: Why doesn't Klipper pause the print
+instead? Report a warning instead? Check for errors before the print?
+Ignore errors in user typed commands? etc? Currently Klipper reads
+commands using the G-Code protocol, and unfortunately the G-Code
+command protocol is not flexible enough to make these alternatives
+practical today. There is developer interest in improving the user
+experience during abnormal events, but it is expected that will
+require notable infrastructure work (including a shift away from
+G-Code).
 
 ### How do I upgrade to the latest software?
 
@@ -499,3 +523,16 @@ modify the printer configuration.
 Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
 new software - the above "sudo service klipper restart" and "make
 flash" commands are needed for a software change to take effect.
+
+### How do I uninstall Klipper?
+
+On the firmware end, nothing special needs to happen. Just follow the
+flashing directions for the new firmware.
+
+On the raspberry pi end, an uninstall script is available in
+[scripts/klipper-uninstall.sh](../scripts/klipper-uninstall.sh). For
+example:
+```
+sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+```

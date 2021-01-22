@@ -1,8 +1,6 @@
 #ifndef __GENERIC_IRQ_H
 #define __GENERIC_IRQ_H
 
-#include <stdint.h>
-
 typedef unsigned long irqstatus_t;
 
 void irq_disable(void);

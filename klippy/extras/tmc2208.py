@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import tmc, tmc_uart, tmc2130
+from . import tmc, tmc_uart, tmc2130
 
 TMC_FREQUENCY=12000000.
 

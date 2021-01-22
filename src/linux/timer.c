@@ -1,6 +1,6 @@
 // Handling of timers on linux systems
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -139,7 +139,7 @@ static struct timespec timer_repeat_until;
 #define TIMER_IDLE_REPEAT_NS 500000
 #define TIMER_REPEAT_NS 100000
 
-#define TIMER_MIN_TRY_NS 1000
+#define TIMER_MIN_TRY_NS 2000
 #define TIMER_DEFER_REPEAT_NS 5000
 
 // Invoke timers

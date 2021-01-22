@@ -100,7 +100,7 @@ then it generally indicates that the "dir_pin" for the axis needs to
 be inverted. This is done by adding a '!' to the "dir_pin" in the
 printer config file (or removing it if one is already there). If the
 motor moves significantly more or significantly less than one
-millimeter then verify the "step_distance" setting.
+millimeter then verify the "rotation_distance" setting.
 
 Run the above test for each stepper motor defined in the config
 file. (Set the STEPPER parameter of the STEPPER_BUZZ command to the
@@ -162,3 +162,6 @@ consider calibrating [pressure advance](Pressure_Advance.md).
 It may be necessary to perform other types of detailed printer
 calibration - a number of guides are available online to help with
 this (for example, do a web search for "3d printer calibration").
+As an example, if you experience the effect called ringing,
+you may try following [resonance compensation](Resonance_Compensation.md)
+tuning guide.

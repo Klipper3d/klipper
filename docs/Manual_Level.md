@@ -11,9 +11,11 @@ limiting factor. If one is using Trinamic stepper motor drivers then
 consider enabling [endstop phase](Endstop_Phase.md) detection to
 improve the accuracy of the switch.
 
-To perform a Z endstop calibration, home the printer, move the head to
-a position near the center of the bed, navigate to the OctoPrint
-terminal tab, and run:
+To perform a Z endstop calibration, home the printer, command the head
+to move to a Z position that is at least five millimeters above the
+bed (if it is not already), command the head to move to an XY position
+near the center of the bed, then navigate to the OctoPrint terminal
+tab and run:
 ```
 Z_ENDSTOP_CALIBRATE
 ```
@@ -142,8 +144,8 @@ This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).
 
 To enable this feature, one would determine the nozzle coordinates
-near the screws and add them to the config file. For example, it might
-look like:
+such that the Z probe is above the screws, and then add them to the
+config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
@@ -183,3 +185,9 @@ This means that:
 
 Repeat the process several times until you get a good level bed -
 normally when all adjustments are below 6 minutes.
+
+If using a probe that is mounted on the side of the hotend (that is,
+it has an X or Y offset) then note that adjusting the bed tilt will
+invalidate any previous probe calibration that was performed with a
+tilted bed. Be sure to run [probe calibration](Probe_Calibrate.md)
+after the bed screws have been adjusted.

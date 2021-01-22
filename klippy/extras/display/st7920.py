@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import icons, font8x14
+from . import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -46,6 +46,7 @@ class ST7920:
             ] + [(self.graphics_framebuffers[i], bytearray('~'*32), i)
                  for i in range(32)]
         self.cached_glyphs = {}
+        self.icons = {}
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
@@ -108,44 +109,52 @@ class ST7920:
                 0x06, # Set positive update direction
                 0x0c] # Enable display and hide cursor
         self.send(cmds)
+        self.flush()
+    def cache_glyph(self, glyph_name, base_glyph_name, glyph_id):
+        icon = self.icons.get(glyph_name)
+        base_icon = self.icons.get(base_glyph_name)
+        if icon is None or base_icon is None:
+            return
+        all_bits = zip(icon[0], icon[1], base_icon[0], base_icon[1])
+        for i, (ic1, ic2, b1, b2) in enumerate(all_bits):
+            x1, x2 = ic1 ^ b1, ic2 ^ b2
+            pos = glyph_id*32 + i*2
+            self.glyph_framebuffer[pos:pos+2] = [x1, x2]
+            self.all_framebuffers[1][1][pos:pos+2] = [x1 ^ 1, x2 ^ 1]
+        self.cached_glyphs[glyph_name] = (base_glyph_name, (0, glyph_id*2))
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            icon = glyph_data.get('icon16x16')
+            if icon is not None:
+                self.icons[glyph_name] = icon
         # Setup animated glyphs
         self.cache_glyph('fan2', 'fan1', 0)
         self.cache_glyph('bed_heat2', 'bed_heat1', 1)
-        self.flush()
-    def cache_glyph(self, glyph_name, base_glyph_name, glyph_id):
-        icon = icons.Icons16x16[glyph_name]
-        base_icon = icons.Icons16x16[base_glyph_name]
-        for i, (bits, base_bits) in enumerate(zip(icon, base_icon)):
-            pos = glyph_id*32 + i*2
-            b1, b2 = (bits >> 8) & 0xff, bits & 0xff
-            b1, b2 = b1 ^ (base_bits >> 8) & 0xff, b2 ^ base_bits & 0xff
-            self.glyph_framebuffer[pos:pos+2] = [b1, b2]
-            self.all_framebuffers[1][1][pos:pos+2] = [b1 ^ 1, b2 ^ 1]
-        self.cached_glyphs[glyph_name] = (base_glyph_name, (0, glyph_id*2))
     def write_text(self, x, y, data):
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pos = [0, 32, 16, 48][y] + x
         self.text_framebuffer[pos:pos+len(data)] = data
-    def write_graphics(self, x, y, row, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        gfx_fb = y * 16 + row
+    def write_graphics(self, x, y, data):
+        if x >= 16 or y >= 4 or len(data) != 16:
+            return
+        gfx_fb = y * 16
         if gfx_fb >= 32:
             gfx_fb -= 32
             x += 16
-        self.graphics_framebuffers[gfx_fb][x:x+len(data)] = data
+        for i, bits in enumerate(data):
+            self.graphics_framebuffers[gfx_fb + i][x] = bits
     def write_glyph(self, x, y, glyph_name):
         glyph_id = self.cached_glyphs.get(glyph_name)
         if glyph_id is not None and x & 1 == 0:
             # Render cached icon using character generator
             glyph_name = glyph_id[0]
             self.write_text(x, y, glyph_id[1])
-        icon = icons.Icons16x16.get(glyph_name)
+        icon = self.icons.get(glyph_name)
         if icon is not None:
             # Draw icon in graphics mode
-            for i, bits in enumerate(icon):
-                self.write_graphics(x, y, i, [(bits >> 8) & 0xff, bits & 0xff])
+            self.write_graphics(x, y, icon[0])
+            self.write_graphics(x + 1, y, icon[1])
             return 2
         char = TextGlyphs.get(glyph_name)
         if char is not None:
@@ -155,8 +164,7 @@ class ST7920:
         font = CharGlyphs.get(glyph_name)
         if font is not None:
             # Draw single width character
-            for i, bits in enumerate(font):
-                self.write_graphics(x, y, i, [bits])
+            self.write_graphics(x, y, font)
             return 1
         return 0
     def clear(self):

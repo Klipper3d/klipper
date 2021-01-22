@@ -178,8 +178,9 @@ and effect scenarios.
 Running the regression tests
 ============================
 
-The main Klipper GitHub repository uses TravisCI to run a series of
-regression tests. It can be useful to run some of these tests locally.
+The main Klipper GitHub repository uses "github actions" to run a
+series of regression tests. It can be useful to run some of these
+tests locally.
 
 The source code "whitespace check" can be run with:
 ```
