@@ -79,7 +79,9 @@ class Homing:
                 error = "Failed to home %s: Timeout during homing" % (name,)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
-        end_mcu_pos = [(s, name, spos, s.get_mcu_position(), s.get_homed_mcu_position())
+        end_mcu_pos = [(s, name, spos,
+                        s.get_mcu_position(),
+                        s.get_homed_mcu_position())
                        for s, name, spos in start_mcu_pos]
         if probe_pos:
             for s, name, spos, epos, hpos in end_mcu_pos:

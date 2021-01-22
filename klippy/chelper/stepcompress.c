@@ -363,7 +363,8 @@ queue_flush(struct stepcompress *sc, uint64_t move_clock)
             return ret;
 
         if (sc->track_steps) {
-            // record sent moves so we can figure out where we were at a given point in time
+            // record sent moves so we can figure out
+            // where we were at a given point in time
             struct sent_move *sm = malloc(sizeof(*sm));
             sm->move = move;
             sm->clock = sc->last_step_clock;

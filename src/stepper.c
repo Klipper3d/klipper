@@ -298,7 +298,8 @@ command_stepper_get_position(uint32_t *args)
     uint32_t position = stepper_get_position(s);
     uint32_t stopped_next_step_time = s->stopped_next_step_time;
     irq_enable();
-    sendf("stepper_position oid=%c pos=%i stopped_time=%i", oid, position - POSITION_BIAS, stopped_next_step_time);
+    sendf("stepper_position oid=%c pos=%i stopped_time=%i",
+        oid, position - POSITION_BIAS, stopped_next_step_time);
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 

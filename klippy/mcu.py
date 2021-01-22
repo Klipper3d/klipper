@@ -26,11 +26,14 @@ class MCU_remote_endstop:
         for i, s in enumerate(self._steppers):
             self._mcu.add_config_cmd(
                 "remote_endstop_set_stepper oid=%d pos=%d stepper_oid=%d" % (
-                    self._oid, i, s.get_oid()), is_init=True)   
-        self._stop_cmd = self._mcu.lookup_command("remote_endstop_stop_steppers oid=%c") 
-    
+                    self._oid, i, s.get_oid()), is_init=True)
+        self._stop_cmd = self._mcu.lookup_command(
+            "remote_endstop_stop_steppers oid=%c")
+
     def stop(self):
-         logging.info("Stopping steppers %s on MCU %s", ','.join([s.get_name() for s in self._steppers]), self._mcu.get_name())
+         logging.info("Stopping steppers %s on MCU %s",
+            ','.join([s.get_name() for s in self._steppers]),
+            self._mcu.get_name())
          self._stop_cmd.send([self._oid])
 
 class MCU_endstop:
@@ -86,8 +89,8 @@ class MCU_endstop:
             "endstop_query_state oid=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_query_command(
             "endstop_query_state oid=%c",
-            "endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u", oid=self._oid,
-            cq=cmd_queue)
+            "endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u",
+            oid=self._oid, cq=cmd_queue)
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         for s in self._remote_steppers:
@@ -115,7 +118,8 @@ class MCU_endstop:
             if params['homing']:
                 self._last_sent_time = params['#sent_time']
             else:
-                self._triggered_time = self._mcu.clock_to_print_time(self._mcu.clock32_to_clock64(params['triggered_time']))
+                self._triggered_time = self._mcu.clock_to_print_time(
+                    self._mcu.clock32_to_clock64(params['triggered_time']))
                 self._min_query_time = self._reactor.NEVER
                 self._reactor.async_complete(self._trigger_completion, True)
     def _home_retry(self, eventtime):
@@ -144,7 +148,8 @@ class MCU_endstop:
         self._mcu.register_response(None, "endstop_state", self._oid)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0])
         for s in self._steppers:
-            s.note_homing_end(did_trigger=did_trigger, triggered_time=self._triggered_time)
+            s.note_homing_end(did_trigger=did_trigger,
+                triggered_time=self._triggered_time)
         if not self._trigger_completion.test():
             self._trigger_completion.complete(False)
         return did_trigger

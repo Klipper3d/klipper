@@ -136,8 +136,8 @@ endstop_report(uint8_t oid, struct endstop *e)
     e->flags &= ~ESF_REPORT;
     irq_enable();
 
-    sendf("endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u"
-          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin), e->triggered_time);
+    sendf("endstop_state oid=%c homing=%c pin_value=%c triggered_time=%u",
+        oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin), e->triggered_time);
 }
 
 void
@@ -200,7 +200,8 @@ command_remote_endstop_stop_steppers(uint32_t *args)
     uint8_t count = e->stepper_count;
     while (count--)
         if (e->steppers[count])
-            stepper_stop(e->steppers[count]);    
+            stepper_stop(e->steppers[count]);
     irq_enable();
 }
-DECL_COMMAND(command_remote_endstop_stop_steppers, "remote_endstop_stop_steppers oid=%c");
+DECL_COMMAND(command_remote_endstop_stop_steppers,
+             "remote_endstop_stop_steppers oid=%c");
