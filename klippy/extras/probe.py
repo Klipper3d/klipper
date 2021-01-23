@@ -180,7 +180,7 @@ class PrinterProbe:
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
-        else if samples_result == 'last':
+        elif samples_result == 'last':
             return positions[-1]
         return self._calc_mean(positions)
     cmd_PROBE_help = "Probe Z-height at current XY position"
