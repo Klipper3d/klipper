@@ -121,7 +121,7 @@ class MCU_stepper:
         return int(mcu_pos - 0.5)
     def set_mcu_position(self, pos):
         sk = self._stepper_kinematics
-        self._ffi_lib.itersolve_set_commanded_pos(sk, 
+        self._ffi_lib.itersolve_set_commanded_pos(sk,
             pos * self._step_dist - self._mcu_position_offset)
     def get_homing_overshoot(self):
         return self._homing_overshoot
@@ -334,15 +334,34 @@ class PrinterRail:
             raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"
                 % (config.get_name(),))
+        self.homing_max_blind_travel = 0
+        config.get_printer().register_event_handler("toolhead:ready",
+                                    self._check_endstops)
+    def _check_endstops(self, toolhead):
+        if not any(endstop.has_remote_steppers()
+                   for endstop, _ in self.endstops):
+            return
+        self.homing_max_blind_travel = min(
+            self.position_max - self.position_endstop,
+            self.position_endstop - self.position_min)
+        MIN_ENDSTOP_DIST = 0.2
+        if self.homing_max_blind_travel < MIN_ENDSTOP_DIST:
+            raise config.error(
+                "Endstop '%s' on different MCU to stepper "
+                "must be at least %f from the end of the rail" % (
+                    self.endstops[0][1], min_overshoot))
+        BLIND_TRAVEL_SAFETY_MARGIN = 0.1
+        self.homing_max_blind_travel -= BLIND_TRAVEL_SAFETY_MARGIN
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
         homing_info = collections.namedtuple('homing_info', [
             'speed', 'position_endstop', 'retract_speed', 'retract_dist',
-            'positive_dir', 'second_homing_speed'])(
+            'positive_dir', 'second_homing_speed', 'max_blind_travel'])(
                 self.homing_speed, self.position_endstop,
                 self.homing_retract_speed, self.homing_retract_dist,
-                self.homing_positive_dir, self.second_homing_speed)
+                self.homing_positive_dir, self.second_homing_speed,
+                self.homing_max_blind_travel)
         return homing_info
     def get_steppers(self):
         return list(self.steppers)

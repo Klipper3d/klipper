@@ -8,6 +8,10 @@ import logging, math, collections
 HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
+MAX_ENDSTOP_QUERIES_PER_SECOND = 50
+# todo: not sure about this. 1ms fudge factor to try and avoid us
+# waiting around for query results and stalling the homing move
+ENDSTOP_QUERY_OVERHEAD = 0.001
 
 # State tracking during toolhead homing/probing operations
 class Homing:
@@ -43,8 +47,31 @@ class Homing:
         if max_steps <= 0.:
             return .001
         return move_t / max_steps
-    def homing_move(self, movepos, endstops, speed,
+    def homing_move(self, movepos, endstops, speed, max_blind_travel=0,
                     probe_pos=False, verify_movement=False):
+        # Make sure we can safely home
+        endstops_with_remote_steppers = []
+        for mcu_endstop, name in endstops:
+            if mcu_endstop.has_remote_steppers():
+                endstops_with_remote_steppers.append(mcu_endstop)
+        if endstops_with_remote_steppers:
+            logging.info("Maximum blind travel distance %f", max_blind_travel)
+            if max_blind_travel < 0.1:
+                raise self.printer.command_error(
+                    "Cannot perform homing using endstop with remote steppers "
+                    "and maximum blind travel distance less than 0.1")
+            min_query_time = 1.0 / MAX_ENDSTOP_QUERIES_PER_SECOND
+            max_speed = max_blind_travel / (
+                min_query_time + ENDSTOP_QUERY_OVERHEAD)
+            logging.info("Maximum blind travel speed %f", max_speed)
+            if speed > max_speed:
+                raise self.printer.command_error("Cannot perform homing using "
+                    "endstop with remote steppers at a query rate greater "
+                    "than %d/s which equates to a travel speed of %f" % (
+                    MAX_ENDSTOP_QUERIES_PER_SECOND, max_speed))
+            report_time = max_blind_travel / speed - ENDSTOP_QUERY_OVERHEAD
+        else:
+            report_time = 0.0
         # Notify start of homing/probing move
         self.printer.send_event("homing:homing_move_begin",
                                 [es for es, name in endstops])
@@ -63,14 +90,15 @@ class Homing:
         for mcu_endstop, name in endstops:
             rest_time = self._calc_endstop_rate(mcu_endstop, movepos, speed)
             wait = mcu_endstop.home_start(print_time, ENDSTOP_SAMPLE_TIME,
-                                          ENDSTOP_SAMPLE_COUNT, rest_time)
+                                ENDSTOP_SAMPLE_COUNT, rest_time, report_time)
             endstop_triggers.append(wait)
         all_endstop_trigger = multi_complete(self.printer, endstop_triggers)
         self.toolhead.dwell(HOMING_START_DELAY)
         # Issue move to endstop (or bed surface if z-probing)
         error = None
         try:
-            self.toolhead.drip_move(movepos, speed, all_endstop_trigger)
+            self.toolhead.drip_move(movepos, speed, all_endstop_trigger,
+                endstops_with_remote_steppers, max_blind_travel)
         except self.printer.command_error as e:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
@@ -131,10 +159,18 @@ class Homing:
         forcepos = self._fill_coord(forcepos)
         movepos = self._fill_coord(movepos)
         self.toolhead.set_position(forcepos, homing_axes=homing_axes)
+        # Calculate maximum distance we can travel 'blind'
+        # i.e. without receiving a response from the end-stops
+        max_blind_d = 0
+        for rail in rails:
+            rail_blind_d = rail.get_homing_info().max_blind_travel
+            if rail_blind_d !=0:
+                if rail_blind_d < max_blind_d or max_blind_d == 0:
+                    max_blind_d = rail_blind_d
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
-        self.homing_move(movepos, endstops, hi.speed)
+        self.homing_move(movepos, endstops, hi.speed, max_blind_d)
         # Perform second home
         if hi.retract_dist:
             # Retract
@@ -149,7 +185,7 @@ class Homing:
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
             self.homing_move(movepos, endstops, hi.second_homing_speed,
-                             verify_movement=self.verify_retract)
+                             max_blind_d, verify_movement=self.verify_retract)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()

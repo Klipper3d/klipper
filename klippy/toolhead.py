@@ -460,8 +460,34 @@ class ToolHead:
                 self.drip_completion.wait(curtime + wait_time)
                 continue
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
+            # Limit blind move distance to avoid crashing
+            for es in self.drip_endstops_with_remote_steppers:
+                if es.has_triggered():
+                    continue
+                t = es.get_last_report_time() + self.drip_max_blind_travel_t
+                if t <= self.print_time:
+                    logging.info("Endstop %s to respond quickly enough.. last report was %f, need %f or later",
+                        es.get_steppers()[0].get_name(),
+                        es.get_last_report_time(), self.print_time - self.drip_max_blind_travel_t)
+                    
+                    # hack.. can't wait because step times have already been decided, 
+                    # this just needs to time out and fail??
+                    t = npt
+
+                    #es.wait_for_report(curtime + 1.0)
+                    #t = es.get_last_report_time() + self.drip_max_blind_travel_t
+                    #if t <= self.print_time:
+                    #    logging.info("Timed out waiting for endstop. last report was %f",
+                    #        es.get_last_report_time())
+                    #    raise DripModeEndSignal()
+                else:
+                    logging.info("Endstop %s last report was %f",
+                        es.get_steppers()[0].get_name(), es.get_last_report_time())
+
+                npt = min(npt, t)
             self._update_move_time(npt)
-    def drip_move(self, newpos, speed, drip_completion):
+    def drip_move(self, newpos, speed, drip_completion,
+                  endstops_with_remote_steppers, max_blind_travel_d):
         # Transition from "Flushed"/"Priming"/main state to "Drip" state
         self.move_queue.flush()
         self.special_queuing_state = "Drip"
@@ -470,6 +496,12 @@ class ToolHead:
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
         self.drip_completion = drip_completion
+        self.drip_endstops_with_remote_steppers = endstops_with_remote_steppers
+        self.drip_max_blind_travel_t = max_blind_travel_d / speed
+        if endstops_with_remote_steppers:
+            logging.info("Homing blind at %fmm/s with maximum drip interval "
+                "of %fmm %fs", speed, max_blind_travel_d,
+                max_blind_travel_d / speed)
         # Submit move
         try:
             self.move(newpos, speed)

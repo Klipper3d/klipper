@@ -116,9 +116,16 @@ class PrinterProbe:
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]
+        # TODO - make sure probe is not triggered before deciding on 5 being safe?
+        # or just consider probing to always be safe unless it's being used as an endstop?
+        max_blind_travel = min(5.0, self.z_offset)
+        if self.mcu_probe.has_remote_steppers() and self.z_offset < 0.1:
+            raise self.printer.command_error("Not safe to probe with "
+                "z_offset less than 0.1 and probe on a separate MCU"
+                "to Z steppers")
         verify = self.printer.get_start_args().get('debugoutput') is None
         try:
-            homing_state.homing_move(pos, endstops, speed,
+            homing_state.homing_move(pos, endstops, speed, max_blind_travel,
                                      probe_pos=True, verify_movement=verify)
         except self.printer.command_error as e:
             reason = str(e)
@@ -287,6 +294,9 @@ class ProbeEndstopWrapper:
         self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
+        self.has_remote_steppers = self.mcu_endstop.has_remote_steppers
+        self.has_triggered = self.mcu_endstop.has_triggered
+        self.get_last_report_time = self.mcu_endstop.get_last_report_time
         self.printer.register_event_handler("toolhead:ready",
                                     self._add_steppers)
 
