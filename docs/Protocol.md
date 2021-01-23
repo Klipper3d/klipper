@@ -6,8 +6,8 @@ then processed at the receiving side. An example series of commands in
 uncompressed human-readable format might look like:
 
 ```
-set_digital_out pin=86 value=1
-set_digital_out pin=85 value=1
+set_digital_out pin=PA3 value=1
+set_digital_out pin=PA7 value=1
 schedule_digital_out oid=8 clock=4000000 value=0
 queue_step oid=7 interval=7458 count=10 add=331
 queue_step oid=7 interval=11717 count=4 add=1281
@@ -44,26 +44,26 @@ The micro-controller software declares a "command" by using the
 DECL_COMMAND() macro in the C code. For example:
 
 ```
-DECL_COMMAND(command_set_digital_out, "set_digital_out pin=%u value=%c");
+DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
 ```
 
-The above declares a command named "set_digital_out". This allows the
-host to "invoke" this command which would cause the
-command_set_digital_out() C function to be executed in the
+The above declares a command named "update_digital_out". This allows
+the host to "invoke" this command which would cause the
+command_update_digital_out() C function to be executed in the
 micro-controller. The above also indicates that the command takes two
-integer parameters. When the command_set_digital_out() C code is
+integer parameters. When the command_update_digital_out() C code is
 executed, it will be passed an array containing these two integers -
-the first corresponding to the 'pin' and the second corresponding to
+the first corresponding to the 'oid' and the second corresponding to
 the 'value'.
 
 In general, the parameters are described with printf() style syntax
 (eg, "%u"). The formatting directly corresponds to the human-readable
-view of commands (eg, "set_digital_out pin=86 value=1"). In the above
-example, "value=" is a parameter name and "%c" indicates the parameter
-is an integer. Internally, the parameter name is only used as
-documentation. In this example, the "%c" is also used as documentation
-to indicate the expected integer is 1 byte in size (the declared
-integer size does not impact the parsing or encoding).
+view of commands (eg, "update_digital_out oid=7 value=1"). In the
+above example, "value=" is a parameter name and "%c" indicates the
+parameter is an integer. Internally, the parameter name is only used
+as documentation. In this example, the "%c" is also used as
+documentation to indicate the expected integer is 1 byte in size (the
+declared integer size does not impact the parsing or encoding).
 
 The micro-controller build will collect all commands declared with
 DECL_COMMAND(), determine their parameters, and arrange for them to be
@@ -200,8 +200,8 @@ As an example, the following four commands might be placed in a single
 message block:
 
 ```
-set_digital_out pin=86 value=1
-set_digital_out pin=85 value=0
+update_digital_out oid=6 value=1
+update_digital_out oid=5 value=0
 get_config
 get_clock
 ```
@@ -209,19 +209,20 @@ get_clock
 and encoded into the following eight VLQ integers:
 
 ```
-<id_set_digital_out><86><1><id_set_digital_out><85><0><id_get_config><id_get_clock>
+<id_update_digital_out><6><1><id_update_digital_out><5><0><id_get_config><id_get_clock>
 ```
 
 In order to encode and parse the message contents, both the host and
 micro-controller must agree on the command ids and the number of
 parameters each command has. So, in the above example, both the host
-and micro-controller would know that "id_set_digital_out" is always
+and micro-controller would know that "id_update_digital_out" is always
 followed by two parameters, and "id_get_config" and "id_get_clock"
 have zero parameters. The host and micro-controller share a "data
-dictionary" that maps the command descriptions (eg, "set_digital_out
-pin=%u value=%c") to their integer command-ids. When processing the
-data, the parser will know to expect a specific number of VLQ encoded
-parameters following a given command id.
+dictionary" that maps the command descriptions (eg,
+"update_digital_out oid=%c value=%c") to their integer
+command-ids. When processing the data, the parser will know to expect
+a specific number of VLQ encoded parameters following a given command
+id.
 
 The message contents for blocks sent from micro-controller to host
 follow the same format. The identifiers in these messages are

@@ -1,14 +1,11 @@
 #!/usr/bin/env python2
 # Script to parse a logging file, extract the stats, and graph them
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
-import matplotlib.ticker
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
@@ -53,6 +50,13 @@ def parse_log(logname, mcu):
     f.close()
     return out
 
+def setup_matplotlib(output_to_file):
+    global matplotlib
+    if output_to_file:
+        matplotlib.use('Agg')
+    import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
+    import matplotlib.ticker
+
 def find_print_restarts(data):
     runoff_samples = {}
     last_runoff_start = last_buffer_time = last_sampletime = 0.
@@ -81,7 +85,7 @@ def find_print_restarts(data):
                      for sampletime in samples if not stall}
     return sample_resets
 
-def plot_mcu(data, maxbw, outname):
+def plot_mcu(data, maxbw):
     # Generate data for plot
     basetime = lasttime = data[0]['#sampletime']
     lastbw = float(data[0]['bytes_write']) + float(data[0]['bytes_retransmit'])
@@ -131,10 +135,51 @@ def plot_mcu(data, maxbw, outname):
     ax1.legend(loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
-    fig.set_size_inches(8, 6)
-    fig.savefig(outname)
+    return fig
 
-def plot_frequency(data, outname, mcu):
+def plot_system(data):
+    # Generate data for plot
+    lasttime = data[0]['#sampletime']
+    lastcputime = float(data[0]['cputime'])
+    times = []
+    sysloads = []
+    cputimes = []
+    memavails = []
+    for d in data:
+        st = d['#sampletime']
+        timedelta = st - lasttime
+        if timedelta <= 0.:
+            continue
+        lasttime = st
+        times.append(datetime.datetime.utcfromtimestamp(st))
+        cputime = float(d['cputime'])
+        cpudelta = max(0., min(1.5, (cputime - lastcputime) / timedelta))
+        lastcputime = cputime
+        cputimes.append(cpudelta * 100.)
+        sysloads.append(float(d['sysload']) * 100.)
+        memavails.append(float(d['memavail']))
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("MCU bandwidth and load utilization")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Load (% of a core)')
+    ax1.plot_date(times, sysloads, '-', label='system load',
+                  color='cyan', alpha=0.8)
+    ax1.plot_date(times, cputimes, '-', label='process time',
+                  color='red', alpha=0.8)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Available memory (KB)')
+    ax2.plot_date(times, memavails, '-', label='system memory',
+                  color='yellow', alpha=0.3)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.grid(True)
+    return fig
+
+def plot_frequency(data, mcu):
     all_keys = {}
     for d in data:
         all_keys.update(d)
@@ -167,10 +212,9 @@ def plot_frequency(data, outname, mcu):
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
     ax1.grid(True)
-    fig.set_size_inches(8, 6)
-    fig.savefig(outname)
+    return fig
 
-def plot_temperature(data, outname, heater):
+def plot_temperature(data, heater):
     temp_key = heater + ':' + 'temp'
     target_key = heater + ':' + 'target'
     pwm_key = heater + ':' + 'pwm'
@@ -184,8 +228,8 @@ def plot_temperature(data, outname, heater):
             continue
         times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
         temps.append(float(temp))
-        pwm.append(float(d[pwm_key]))
-        targets.append(float(d[target_key]))
+        pwm.append(float(d.get(pwm_key, 0.)))
+        targets.append(float(d.get(target_key, 0.)))
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
     ax1.set_title("Temperature of heater %s" % (heater,))
@@ -201,32 +245,49 @@ def plot_temperature(data, outname, heater):
     ax1.legend(loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
-    fig.set_size_inches(8, 6)
-    fig.savefig(outname)
+    return fig
 
 def main():
-    usage = "%prog [options] <logfile> <outname>"
+    # Parse command-line arguments
+    usage = "%prog [options] <logfile>"
     opts = optparse.OptionParser(usage)
     opts.add_option("-f", "--frequency", action="store_true",
                     help="graph mcu frequency")
+    opts.add_option("-s", "--system", action="store_true",
+                    help="graph system load")
+    opts.add_option("-o", "--output", type="string", dest="output",
+                    default=None, help="filename of output graph")
     opts.add_option("-t", "--temperature", type="string", dest="heater",
                     default=None, help="graph heater temperature")
     opts.add_option("-m", "--mcu", type="string", dest="mcu", default=None,
                     help="limit stats to the given mcu")
     options, args = opts.parse_args()
-    if len(args) != 2:
+    if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    logname, outname = args
+    logname = args[0]
+
+    # Parse data
     data = parse_log(logname, options.mcu)
     if not data:
         return
+
+    # Draw graph
+    setup_matplotlib(options.output is not None)
     if options.heater is not None:
-        plot_temperature(data, outname, options.heater)
-        return
-    if options.frequency:
-        plot_frequency(data, outname, options.mcu)
-        return
-    plot_mcu(data, MAXBANDWIDTH, outname)
+        fig = plot_temperature(data, options.heater)
+    elif options.frequency:
+        fig = plot_frequency(data, options.mcu)
+    elif options.system:
+        fig = plot_system(data)
+    else:
+        fig = plot_mcu(data, MAXBANDWIDTH)
+
+    # Show graph
+    if options.output is None:
+        matplotlib.pyplot.show()
+    else:
+        fig.set_size_inches(8, 6)
+        fig.savefig(options.output)
 
 if __name__ == '__main__':
     main()

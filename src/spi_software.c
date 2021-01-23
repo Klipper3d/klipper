@@ -4,43 +4,36 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "board/irq.h" // gpio_out_setup
 #include "board/gpio.h" // gpio_out_setup
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_shutdown
+#include "spicmds.h" // spidev_set_software_bus
 
 struct spi_software {
-    struct gpio_out sclk, mosi;
     struct gpio_in miso;
+    struct gpio_out mosi, sclk;
     uint8_t mode;
 };
 
 void
-command_config_software_spi(uint32_t *args)
+command_spi_set_software_bus(uint32_t *args)
 {
-    uint8_t oid = args[0], sclk_pin = args[1], mosi_pin = args[2];
-    uint8_t miso_pin = args[3], mode = args[4];
+    uint8_t mode = args[4];
     if (mode > 3)
-        shutdown("Invalid spi mode");
+        shutdown("Invalid spi config");
 
-    struct spi_software *spi = oid_alloc(oid, command_config_software_spi
-                                         , sizeof(*spi));
-
-    spi->sclk = gpio_out_setup(sclk_pin, 0);
-    spi->mosi = gpio_out_setup(mosi_pin, 0);
-    spi->miso = gpio_in_setup(miso_pin, 1);
-    spi->mode = mode;
+    struct spidev_s *spi = spidev_oid_lookup(args[0]);
+    struct spi_software *ss = alloc_chunk(sizeof(*ss));
+    ss->miso = gpio_in_setup(args[1], 1);
+    ss->mosi = gpio_out_setup(args[2], 0);
+    ss->sclk = gpio_out_setup(args[3], 0);
+    ss->mode = mode;
+    spidev_set_software_bus(spi, ss);
 }
-DECL_COMMAND(command_config_software_spi,
-             "config_software_spi oid=%c sclk_pin=%u mosi_pin=%u miso_pin=%u"
+DECL_COMMAND(command_spi_set_software_bus,
+             "spi_set_software_bus oid=%c miso_pin=%u mosi_pin=%u sclk_pin=%u"
              " mode=%u rate=%u");
-
-struct spi_software *
-spi_software_oid_lookup(uint8_t oid)
-{
-    return oid_lookup(oid, command_config_software_spi);
-}
 
 void
 spi_software_prepare(struct spi_software *ss)

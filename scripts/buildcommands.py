@@ -73,8 +73,8 @@ class HandleEnumerations:
         self.enumerations = {}
         self.ctr_dispatch = {
             '_DECL_STATIC_STR': self.decl_static_str,
-            '_DECL_ENUMERATION': self.decl_enumeration,
-            '_DECL_ENUMERATION_RANGE': self.decl_enumeration_range
+            'DECL_ENUMERATION': self.decl_enumeration,
+            'DECL_ENUMERATION_RANGE': self.decl_enumeration_range
         }
     def add_enumeration(self, enum, name, value):
         enums = self.enumerations.setdefault(enum, {})
@@ -84,14 +84,10 @@ class HandleEnumerations:
         enums[name] = value
     def decl_enumeration(self, req):
         enum, name, value = req.split()[1:]
-        self.add_enumeration(enum, name, decode_integer(value))
+        self.add_enumeration(enum, name, int(value, 0))
     def decl_enumeration_range(self, req):
-        enum, name, count, value = req.split()[1:]
-        try:
-            count = int(count, 0)
-        except ValueError as e:
-            error("Invalid enumeration count in '%s'" % (req,))
-        self.add_enumeration(enum, name, (decode_integer(value), count))
+        enum, name, value, count = req.split()[1:]
+        self.add_enumeration(enum, name, (int(value, 0), int(count, 0)))
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
         if msg not in self.static_strings:
@@ -123,22 +119,13 @@ Handlers.append(HandlerEnumerations)
 # Constants
 ######################################################################
 
-def decode_integer(value):
-    value = value.strip()
-    if len(value) != 7 or value[0] not in '-+':
-        error("Invalid encoded integer '%s'" % (value,))
-    out = sum([(ord(c) - 48) << (i*6) for i, c in enumerate(value[1:])])
-    if value[0] == '-':
-        out -= 1<<32
-    return out
-
 # Allow adding build time constants to the data dictionary
 class HandleConstants:
     def __init__(self):
         self.constants = {}
         self.ctr_dispatch = {
-            '_DECL_CONSTANT': self.decl_constant,
-            '_DECL_CONSTANT_STR': self.decl_constant_str,
+            'DECL_CONSTANT': self.decl_constant,
+            'DECL_CONSTANT_STR': self.decl_constant_str,
         }
     def set_value(self, name, value):
         if name in self.constants and self.constants[name] != value:
@@ -146,7 +133,7 @@ class HandleConstants:
         self.constants[name] = value
     def decl_constant(self, req):
         name, value = req.split()[1:]
-        self.set_value(name, decode_integer(value))
+        self.set_value(name, int(value, 0))
     def decl_constant_str(self, req):
         name, value = req.split(None, 2)[1:]
         value = value.strip()
@@ -210,6 +197,50 @@ Handlers.append(HandleInitialPins())
 
 
 ######################################################################
+# ARM IRQ vector table generation
+######################################################################
+
+# Create ARM IRQ vector table from interrupt handler declarations
+class Handle_arm_irq:
+    def __init__(self):
+        self.irqs = {}
+        self.ctr_dispatch = { 'DECL_ARMCM_IRQ': self.decl_armcm_irq }
+    def decl_armcm_irq(self, req):
+        func, num = req.split()[1:]
+        num = int(num, 0)
+        if num in self.irqs and self.irqs[num] != func:
+            error("Conflicting IRQ definition %d (old %s new %s)"
+                  % (num, self.irqs[num], func))
+        self.irqs[num] = func
+    def update_data_dictionary(self, data):
+        pass
+    def generate_code(self, options):
+        armcm_offset = 16
+        if 1 - armcm_offset not in self.irqs:
+            # The ResetHandler was not defined - don't build VectorTable
+            return ""
+        max_irq = max(self.irqs.keys())
+        table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 1)
+        defs = []
+        for num, func in self.irqs.items():
+            if num < 1 - armcm_offset:
+                error("Invalid IRQ %d (%s)" % (num, func))
+            defs.append("extern void %s(void);\n" % (func,))
+            table[num + armcm_offset] = "    %s,\n" % (func,)
+        table[0] = "    &_stack_end,\n"
+        fmt = """
+extern void DefaultHandler(void);
+extern uint32_t _stack_end;
+%s
+const void *VectorTable[] __visible __section(".vector_table") = {
+%s};
+"""
+        return fmt % (''.join(defs), ''.join(table))
+
+Handlers.append(Handle_arm_irq())
+
+
+######################################################################
 # Wire protocol commands and responses
 ######################################################################
 
@@ -222,7 +253,7 @@ class HandleCommandGeneration:
         self.messages_by_name = { m.split()[0]: m for m in self.msg_to_id }
         self.all_param_types = {}
         self.ctr_dispatch = {
-            '_DECL_COMMAND': self.decl_command,
+            'DECL_COMMAND_FLAGS': self.decl_command,
             '_DECL_ENCODER': self.decl_encoder,
             '_DECL_OUTPUT': self.decl_output
         }
@@ -559,7 +590,7 @@ def main():
     f = open(incmdfile, 'rb')
     data = f.read()
     f.close()
-    for req in data.split('\0'):
+    for req in data.split('\n'):
         req = req.lstrip()
         if not req:
             continue

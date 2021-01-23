@@ -113,6 +113,25 @@ def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     pathname = wait_path(devpath)
     call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
+def call_hidflash(binfile, sudo):
+    args = ["lib/hidflash/hid-flash", binfile]
+    if sudo:
+        args.insert(0, "sudo")
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running hid-flash")
+
+# Flash via call to hid-flash
+def flash_hidflash(device, binfile, sudo=True):
+    hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
+    if hexfmt_r.match(device.strip()):
+        call_hidflash(binfile, sudo)
+        return
+    buspath, devpath = translate_serial_to_usb_path(device)
+    enter_bootloader(device)
+    pathname = wait_path(devpath)
+    call_hidflash(binfile, sudo)
 
 ######################################################################
 # Device specific helpers
@@ -135,7 +154,7 @@ def flash_atsam4(options, binfile):
         sys.exit(-1)
 
 def flash_atsamd(options, binfile):
-    extra_flags = ["--offset=" + options.offset, "-b", "-R"]
+    extra_flags = ["--offset=0x%x" % (options.start,), "-b", "-R"]
     try:
         flash_bossac(options.device, binfile, extra_flags)
     except error as e:
@@ -174,6 +193,8 @@ Failed to flash to %s: %s
 If the device is already in bootloader mode it can be flashed with the
 following command:
   make flash FLASH_DEVICE=1eaf:0003
+  OR
+  make flash FLASH_DEVICE=1209:beba
 
 If attempting to flash via 3.3V serial, then use:
   make serialflash FLASH_DEVICE=%s
@@ -182,15 +203,47 @@ If attempting to flash via 3.3V serial, then use:
 
 def flash_stm32f1(options, binfile):
     try:
-        flash_dfuutil(options.device, binfile, ["-R", "-a", "2"], options.sudo)
+        if options.start == 0x8000800:
+            flash_hidflash(options.device, binfile, options.sudo)
+        else:
+            flash_dfuutil(options.device, binfile, ["-R", "-a", "2"],
+                          options.sudo)
     except error as e:
         sys.stderr.write(STM32F1_HELP % (
             options.device, str(e), options.device))
         sys.exit(-1)
 
+STM32F4_HELP = """
+Failed to flash to %s: %s
+
+If the device is already in bootloader mode it can be flashed with the
+following command:
+  make flash FLASH_DEVICE=0483:df11
+  OR
+  make flash FLASH_DEVICE=1209:beba
+
+If attempting to flash via 3.3V serial, then use:
+  make serialflash FLASH_DEVICE=%s
+
+"""
+
+def flash_stm32f4(options, binfile):
+    start = "0x%x:leave" % (options.start,)
+    try:
+        if options.start == 0x8004000:
+            flash_hidflash(options.device, binfile, options.sudo)
+        else:
+            flash_dfuutil(options.device, binfile,
+                          ["-R", "-a", "0", "-s", start], options.sudo)
+    except error as e:
+        sys.stderr.write(STM32F4_HELP % (
+            options.device, str(e), options.device))
+        sys.exit(-1)
+
 MCUTYPES = {
-    'atsam3': flash_atsam3, 'atsam4': flash_atsam4, 'atsamd': flash_atsamd,
-    'lpc176x': flash_lpc176x, 'stm32f1': flash_stm32f1
+    'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
+    'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
+    'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
 }
 
 
@@ -205,19 +258,26 @@ def main():
                     help="micro-controller type")
     opts.add_option("-d", "--device", type="string", dest="device",
                     help="serial port device")
-    opts.add_option("-o", "--offset", type="string", dest="offset",
-                    help="flash offset")
+    opts.add_option("-s", "--start", type="int", dest="start",
+                    help="start address in flash")
     opts.add_option("--no-sudo", action="store_false", dest="sudo",
                     default=True, help="do not run sudo")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    if options.mcutype not in MCUTYPES:
-        opts.error("Not a valid mcu type")
+    flash_func = None
+    if options.mcutype:
+        for prefix, func in MCUTYPES.items():
+            if options.mcutype.startswith(prefix):
+                flash_func = func
+                break
+    if flash_func is None:
+        opts.error("USB flashing is not supported for MCU '%s'"
+                   % (options.mcutype,))
     if not options.device:
         sys.stderr.write("\nPlease specify FLASH_DEVICE\n\n")
         sys.exit(-1)
-    MCUTYPES[options.mcutype](options, args[0])
+    flash_func(options, args[0])
 
 if __name__ == '__main__':
     main()

@@ -5,10 +5,11 @@ Building an OS image
 ====================
 
 Start by installing the
-[latest Jessie IoT](https://beagleboard.org/latest-images) image
-(2017-03-19 or later). One may run the image from either a micro-SD
-card or from builtin eMMC. If using the eMMC, install it to eMMC now
-by following the instructions from the above link.
+[Debian 9.9 2019-08-03 4GB SD IoT]
+(https://beagleboard.org/latest-images) image.
+One may run the image from either a micro-SD card or from
+builtin eMMC. If using the eMMC, install it to eMMC now by
+following the instructions from the above link.
 
 Then ssh into the beaglebone machine (ssh debian@beaglebone --
 password is "temppwd") and install Klipper by running the following
@@ -99,6 +100,5 @@ Unfortunately, the Beaglebone processor can sometimes struggle to run
 OctoPrint well. Print stalls have been known to occur on complex
 prints (the printer may move faster than OctoPrint can send movement
 commands). If this occurs, consider using the "virtual_sdcard" feature
-(see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details) to print directly from Klipper.
+(see [config reference](Config_Reference.md#virtual_sdcard) for
+details) to print directly from Klipper.

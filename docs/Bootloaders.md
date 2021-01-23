@@ -190,29 +190,67 @@ SAMD21 micro-controllers (Arduino Zero)
 
 The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
 interface. This is commonly done with a dedicated SWD hardware dongle.
-Alternatively, it appears one can use a Raspberry Pi with OpenOCD as a
-programmer (see:
-[https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi](https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi)
-).
+Alternatively, one can use a
+[Raspberry Pi with OpenOCD](#running-openocd-on-the-raspberry-pi).
 
-Unfortunately, there are two common bootloaders deployed on the
-SAMD21. One comes standard with the "Arduino Zero" and the other comes
-standard with the "Arduino M0".
+To flash a bootloader with OpenOCD use the following chip config:
+```
+source [find target/at91samdXX.cfg]
+```
+Obtain a bootloader - for example:
+```
+wget 'https://github.com/arduino/ArduinoCore-samd/raw/1.8.3/bootloaders/zero/samd21_sam_ba.bin'
+```
+Flash with OpenOCD commands similar to:
+```
+at91samd bootloader 0
+program samd21_sam_ba.bin verify
+```
 
-The Arduino Zero uses an 8KiB bootloader (the application must be
-compiled with a start address of 8KiB). One can enter the bootloader
+The most common bootloader on the SAMD21 is the one found on the
+"Arduino Zero". It uses an 8KiB bootloader (the application must be
+compiled with a start address of 8KiB). One can enter this bootloader
 by double clicking the reset button. To flash an application use
 something like:
 ```
-bossac -U -p "$(FLASH_DEVICE)" --offset=0x2000 -w out/klipper.bin -v -b -R
+bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
 ```
 
-The Arduino M0 uses a 16KiB bootloader (the application must be
-compiled with a start address of 16KiB). To flash an application,
-reset the micro-controller and run the flash command within the first
-few seconds of boot - something like:
+In contrast, the "Arduino M0" uses a 16KiB bootloader (the application
+must be compiled with a start address of 16KiB). To flash an
+application on this bootloader, reset the micro-controller and run the
+flash command within the first few seconds of boot - something like:
 ```
 avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
+```
+
+SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
+========================================================
+
+Like the SAMD21, the SAMD51 bootloader is flashed via the ARM Serial
+Wire Debug (SWD) interface. To flash a bootloader with
+[OpenOCD on a Raspberry Pi](#running-openocd-on-the-raspberry-pi) use
+the following chip config:
+```
+source [find target/atsame5x.cfg]
+```
+Obtain a bootloader - several bootloaders are available from
+[https://github.com/adafruit/uf2-samdx1/releases/latest](https://github.com/adafruit/uf2-samdx1/releases/latest). For example:
+```
+wget 'https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin'
+```
+Flash with OpenOCD commands similar to:
+```
+at91samd bootloader 0
+program bootloader-itsybitsy_m4-v3.7.0.bin verify
+at91samd bootloader 16384
+```
+
+The SAMD51 uses a 16KiB bootloader (the application must be compiled
+with a start address of 16KiB). To flash an application use something
+like:
+```
+bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 ```
 
 STM32F103 micro-controllers (Blue Pill devices)
@@ -261,6 +299,126 @@ bootloader is still active (the bootloader will flash a board led
 while it is running). Alternatively, set the "boot 0" pin to low and
 "boot 1" pin to high to stay in the bootloader after a reset.
 
+## STM32F103 with HID bootloader ##
+The [HID bootloader](https://github.com/Serasidis/STM32_HID_Bootloader) is a
+compact, driverless bootloader capable of flashing over USB. Also available
+is a [fork with builds specific to the SKR Mini E3 1.2](
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+
+For generic STM32F103 boards such as the blue pill it is possible to flash
+the bootloader via 3.3v serial using stm32flash as noted in the stm32duino
+section above, substituting the file name for the desired hid bootloader binary
+(ie: hid_generic_pc13.bin for the blue pill).
+
+It is not possible to use stm32flash for the SKR Mini E3 as the boot0 pin is
+tied directly to ground and not broken out via header pins.  It is recommended
+to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.   If you
+don't have access to a STLink it is also possible to use a [Raspberry Pi and
+OpenOCD](#running-openocd-on-the-raspberry-pi) with the following chip config:
+```
+source [find target/stm32f1x.cfg]
+```
+If you wish you can make a backup of the current flash with the following
+command.  Note that it may take some time to complete:
+```
+flash read_bank 0 btt_skr_mini_e3_backup.bin
+```
+finally, you can flash with commands similar to:
+```
+stm32f1x mass_erase 0
+program hid_btt_skr_mini_e3.bin verify 0x08000000
+```
+NOTES:
+- The example above erases the chip then programs the bootloader.  Regardless
+  of the method chosen to flash it is recommended to erase the chip prior to
+  flashing.
+- Prior flashing the SKR Mini E3 with this bootloader you should be aware
+  that you will no longer be able to update firmware via the sdcard.
+- You may need to hold down the reset button on the board while launching
+  OpenOCD.  It should display something like:
+  ```
+  Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
+  Licensed under GNU GPL v2
+  For bug reports, read
+          http://openocd.org/doc/doxygen/bugs.html
+  DEPRECATED! use 'adapter speed' not 'adapter_khz'
+  Info : BCM2835 GPIO JTAG/SWD bitbang driver
+  Info : JTAG and SWD modes enabled
+  Info : clock speed 40 kHz
+  Info : SWD DPIDR 0x1ba01477
+  Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+  Info : stm32f1x.cpu: external reset detected
+  Info : starting gdb server for stm32f1x.cpu on 3333
+  Info : Listening on port 3333 for gdb connections
+  ```
+  After which you can release the reset button.
+
+
+This bootloader requires 2KiB of flash space (the application
+must be compiled with a start address of 2KiB).
+
+The hid-flash program is used to upload a binary to the bootloader. You
+can install this software with the following commands:
+```
+sudo apt install libusb-1.0
+cd ~/klipper/lib/hidflash
+make
+```
+
+If the bootloader is running you can flash with something like:
+```
+~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
+```
+alternatively, you can use `make flash` to flash klipper directly:
+```
+make flash FLASH_DEVICE=1209:BEBA
+```
+OR if klipper has been previously flashed:
+```
+make flash FLASH_DEVICE=/dev/ttyACM0
+```
+
+It may be necessary to manually enter the bootloader, this can be done by
+setting "boot 0" low and "boot 1" high.  On the SKR Mini E3 "Boot 1" is
+not available, so it may be done by setting pin PA2 low if you flashed
+"hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
+the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
+which you can use to pull PA2 low.
+
+STM32F4 micro-controllers (SKR Pro 1.1)
+===============================================
+STM32F4 microcontrollers come equipped with a built-in system bootloader
+capable of flashing over USB (via DFU), 3.3v Serial, and various other
+methods (see STM Document AN2606 for more information).  Some
+STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
+bootloader.  The HID bootloader is available for STM32F405/407
+based boards should the user prefer flashing over USB over using the sdcard.
+Note that you may need to configure and build a version specific to your
+board, a [build for the SKR Pro 1.1 is available here](
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+
+Unless your board is DFU capable the most accessable flashing method
+is likely via 3.3v serial, which follows the same procedure as [flashing the
+STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
+For example:
+```
+wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
+
+stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
+```
+
+This bootloader requires 16Kib of flash space on the STM32F4 (the application
+must be compiled with a start address of 16KiB).
+
+As with the STM32F1, the STM32F4 uses the hid-flash tool to upload binaries to
+the MCU. See the instructions above for details on how to build and use
+hid-flash.
+
+It may be necessary to manually enter the bootloader, this can be done by
+setting "boot 0" low, "boot 1" high and plugging in the device.  After
+programming is complete unplug the device and set "boot 1" back to low
+so the application will be loaded.
+
 LPC176x micro-controllers (Smoothieboards)
 ==========================================
 
@@ -276,3 +434,128 @@ start address of 16KiB. The easiest way to flash an application with
 this bootloader is to copy the application file (eg,
 `out/klipper.bin`) to a file named `firmware.bin` on an SD card, and
 then to reboot the micro-controller with that SD card.
+
+Running OpenOCD on the Raspberry PI
+===================================
+
+OpenOCD is a software package that can perform low-level chip flashing
+and debugging. It can use the GPIO pins on a Raspberry Pi to
+communicate with a variety of ARM chips.
+
+This section describes how one can install and launch OpenOCD. It is
+derived from the instructions at:
+[https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi](https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi)
+
+Begin by downloading and compiling the software (each step may take
+several minutes and the "make" step may take 30+ minutes):
+
+```
+sudo apt-get update
+sudo apt-get install autoconf libtool telnet
+mkdir ~/openocd
+cd ~/openocd/
+git clone http://openocd.zylin.com/openocd
+cd openocd
+./bootstrap
+./configure --enable-sysfsgpio --enable-bcm2835gpio --prefix=/home/pi/openocd/install
+make
+make install
+```
+
+## Configure OpenOCD
+
+Create an OpenOCD config file:
+
+```
+nano ~/openocd/openocd.cfg
+```
+
+Use a config similar to the following:
+
+```
+# Uses RPi pins: GPIO25 for SWDCLK, GPIO24 for SWDIO, GPIO18 for nRST
+source [find interface/raspberrypi2-native.cfg]
+bcm2835gpio_swd_nums 25 24
+bcm2835gpio_srst_num 18
+transport select swd
+
+# Use hardware reset wire for chip resets
+reset_config srst_only
+adapter_nsrst_delay 100
+adapter_nsrst_assert_width 100
+
+# Specify the chip type
+source [find target/atsame5x.cfg]
+
+# Set the adapter speed
+adapter_khz 40
+
+# Connect to chip
+init
+targets
+reset halt
+```
+
+## Wire the Raspberry Pi to the target chip
+
+Poweroff both the the Raspberry Pi and the target chip before wiring!
+Verify the target chip uses 3.3V prior to connecting to a Raspberry
+Pi!
+
+Connect GND, SWDCLK, SWDIO, and RST on the target chip to GND, GPIO25,
+GPIO24, and GPIO18 respectively on the Raspberry Pi.
+
+Then power up the Raspberry Pi and provide power to the target chip.
+
+## Run OpenOCD
+
+Run OpenOCD:
+
+```
+cd ~/openocd/
+sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
+```
+
+The above should cause OpenOCD to emit some text messages and then
+wait (it should not immediately return to the Unix shell prompt). If
+OpenOCD exits on its own or if it continues to emit text messages then
+double check the wiring.
+
+Once OpenOCD is running and is stable, one can send it commands via
+telnet. Open another ssh session and run the following:
+
+```
+telnet 127.0.0.1 4444
+```
+
+(One can exit telnet by pressing ctrl+] and then running the "quit"
+command.)
+
+## OpenOCD and gdb
+
+It is possible to use OpenOCD with gdb to debug Klipper. The following
+commands assume one is running gdb on a desktop class machine.
+
+Add the following to the OpenOCD config file:
+
+```
+bindto 0.0.0.0
+gdb_port 44444
+```
+
+Restart OpenOCD on the Raspberry Pi and then run the following Unix
+command on the desktop machine:
+
+```
+cd /path/to/klipper/
+gdb out/klipper.elf
+```
+
+Within gdb run:
+
+```
+target remote octopi:44444
+```
+
+(Replace "octopi" with the host name of the Raspberry Pi.) Once gdb is
+running it is possible to set breakpoints and to inspect registers.

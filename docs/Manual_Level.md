@@ -11,9 +11,11 @@ limiting factor. If one is using Trinamic stepper motor drivers then
 consider enabling [endstop phase](Endstop_Phase.md) detection to
 improve the accuracy of the switch.
 
-To perform a Z endstop calibration, home the printer, move the head to
-a position near the center of the bed, navigate to the OctoPrint
-terminal tab, and run:
+To perform a Z endstop calibration, home the printer, command the head
+to move to a Z position that is at least five millimeters above the
+bed (if it is not already), command the head to move to an XY position
+near the center of the bed, then navigate to the OctoPrint terminal
+tab and run:
 ```
 Z_ENDSTOP_CALIBRATE
 ```
@@ -28,7 +30,7 @@ SAVE_CONFIG
 
 It's preferable to use a Z endstop switch on the opposite end of the Z
 axis from the bed. (Homing away from the bed is more robust as then it
-is generally always safely to home the Z.) However, if one must home
+is generally always safe to home the Z.) However, if one must home
 towards the bed it is recommended to adjust the endstop so that it
 triggers a small distance (eg, .5mm) above the bed. Almost all endstop
 switches can safely be depressed a small distance beyond their trigger
@@ -50,10 +52,10 @@ updating the Z position_endstop in the configuration file.
 The secret to getting good bed leveling with bed leveling screws is to
 utilize the printer's high precision motion system during the bed
 leveling process itself. This is done by commanding the nozzle to a
-position nearest each bed screw and then adjusting that screw until
-the bed is a set distance from the nozzle. Klipper has a tool to
-assist with this. In order to use the tool it is necessary to specify
-each screw XY location.
+position near each bed screw and then adjusting that screw until the
+bed is a set distance from the nozzle. Klipper has a tool to assist
+with this. In order to use the tool it is necessary to specify each
+screw XY location.
 
 This is done by creating a `[bed_screws]` config section. For example,
 it might look something similar to:
@@ -141,9 +143,9 @@ position.
 This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).
 
-To enable this feature, one would determine the additional nozzle
-coordinates near the screws and add them to the config file. For example,
-it might look like:
+To enable this feature, one would determine the nozzle coordinates
+such that the Z probe is above the screws, and then add them to the
+config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
@@ -157,19 +159,13 @@ screw4: -5,190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
-samples: 3
-sample_retract_dist: 2.
-samples_result: median
 screw_thread: CW-M3
 ```
 
-One can indicate the number of times to repeat probe on each screw and
-if the value is the median or the average read probe.
-
 The screw1 is always the reference point for the others, so the system
-assumes that screw1 is in the correct height.
-Then to use this feature you must preform every time `G28` before
-`SCREWS_TILT_CALCULATE` and after bed is probed you get an output like this:
+assumes that screw1 is in the correct height. Always run `G28` first
+and then run `SCREWS_TILT_CALCULATE` - it should produce output
+similar to:
 ```
 Send: G28
 Recv: ok
@@ -187,5 +183,11 @@ This means that:
     - rear right screw must be turned counter-clockwise 50 minutes
     - read left screw must be turned clockwise 2 minutes (not need it's ok)
 
-Repeat the process several times until you get a good level bed, normally when
-all adjusts are below 6 minutes.
+Repeat the process several times until you get a good level bed -
+normally when all adjustments are below 6 minutes.
+
+If using a probe that is mounted on the side of the hotend (that is,
+it has an X or Y offset) then note that adjusting the bed tilt will
+invalidate any previous probe calibration that was performed with a
+tilted bed. Be sure to run [probe calibration](Probe_Calibrate.md)
+after the bed screws have been adjusted.

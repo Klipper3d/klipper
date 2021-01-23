@@ -48,7 +48,7 @@ def check_file(filename):
                     char_name,))
                 break
         # Check for trailing space
-        if line.endswith(' '):
+        if line.endswith(' ') or line.endswith('\t'):
             report_error(filename, lineno, "Line has trailing spaces")
         # Check for more than 80 characters
         if is_source_code and len(line) > 80:

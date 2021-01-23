@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import bus, tmc, tmc2130
+from . import bus, tmc, tmc2130
 
 TMC_FREQUENCY=12000000.
 
@@ -19,7 +19,7 @@ Registers = {
     "FACTORY_CONF":     0x08,
     "SHORT_CONF":       0x09,
     "DRV_CONF":         0x0A,
-    "GLOBAL_SCALER":    0x0B,
+    "GLOBALSCALER":     0x0B,
     "OFFSET_READ":      0x0C,
     "IHOLD_IRUN":       0x10,
     "TPOWERDOWN":       0x11,
@@ -74,7 +74,7 @@ Registers = {
 
 ReadRegisters = [
     "GCONF", "CHOPCONF", "GSTAT", "DRV_STATUS", "FACTORY_CONF", "IOIN",
-    "LOST_STEPS", "MSCNT", "MSCURACT", "OTP_READ", "PWMCONF", "PWM_SCALE",
+    "LOST_STEPS", "MSCNT", "MSCURACT", "OTP_READ", "PWM_SCALE",
     "PWM_AUTO", "TSTEP"
 ]
 
@@ -148,6 +148,9 @@ Fields["GSTAT"] = {
     "reset":                    0x01 << 0,
     "drv_err":                  0x01 << 1,
     "uv_cp":                    0x01 << 2
+}
+Fields["GLOBALSCALER"] = {
+    "GLOBALSCALER":             0xFF << 0
 }
 Fields["IHOLD_IRUN"] = {
     "IHOLD":                    0x1F << 0,
@@ -237,44 +240,58 @@ class TMC5160CurrentHelper:
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
+        self._set_globalscaler(run_current)
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
+    def _set_globalscaler(self, current):
+        globalscaler = int((current * 256. * math.sqrt(2.)
+                            * self.sense_resistor / VREF) + .5)
+        globalscaler = max(32, globalscaler)
+        if globalscaler >= 256:
+            globalscaler = 0
+        self.fields.set_field("GLOBALSCALER", globalscaler)
     def _calc_current_bits(self, current):
-        cs = int(32. * current * self.sense_resistor * math.sqrt(2.) / VREF
+        globalscaler = self.fields.get_field("GLOBALSCALER")
+        if not globalscaler:
+            globalscaler = 256
+        cs = int((current * 256. * 32. * math.sqrt(2.) * self.sense_resistor)
+                 / (globalscaler * VREF)
                  - 1. + .5)
         return max(0, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         irun = self._calc_current_bits(run_current)
-        ihold = self._calc_current_bits(hold_current)
+        ihold = self._calc_current_bits(min(hold_current, run_current))
         return irun, ihold
     def _calc_current_from_field(self, field_name):
+        globalscaler = self.fields.get_field("GLOBALSCALER")
+        if not globalscaler:
+            globalscaler = 256
         bits = self.fields.get_field(field_name)
-        current = ((bits + 1) * VREF
-                   / (32. * math.sqrt(2.) * self.sense_resistor))
+        current = (globalscaler * (bits + 1) * VREF
+                   / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
         return round(current, 2)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'HOLDCURRENT' in params:
-            hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
-        else:
-            hold_current = self._calc_current_from_field("IHOLD")
-        if 'CURRENT' in params:
-            run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
-        else:
-            run_current = self._calc_current_from_field("IRUN")
-        if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        run_current = gcmd.get_float('CURRENT', None,
+                                     minval=0., maxval=MAX_CURRENT)
+        hold_current = gcmd.get_float('HOLDCURRENT', None,
+                                      above=0., maxval=MAX_CURRENT)
+        if run_current is None and hold_current is None:
             # Query only
-            gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                               % (run_current, hold_current))
+            run_current = self._calc_current_from_field("IRUN")
+            hold_current = self._calc_current_from_field("IHOLD")
+            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                              % (run_current, hold_current))
             return
+        if run_current is None:
+            run_current = self._calc_current_from_field("IRUN")
+        if hold_current is None:
+            hold_current = self._calc_current_from_field("IHOLD")
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
@@ -291,12 +308,11 @@ class TMC5160:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
-        # Allow virtual endstop to be created
-        diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
+        # Allow virtual pins to be created
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
-        cmdhelper.setup_register_dump(self.query_registers)
+        cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
@@ -314,8 +330,6 @@ class TMC5160:
         set_config_field(config, "vhighfs", 0)
         set_config_field(config, "vhighchm", 0)
         set_config_field(config, "tpfd", 4)
-        set_config_field(config, "intpol", True, "interpolate")
-        set_config_field(config, "dedge", 0)
         set_config_field(config, "diss2g", 0)
         set_config_field(config, "diss2vs", 0)
         #   COOLCONF
@@ -332,7 +346,7 @@ class TMC5160:
         #   PWMCONF
         set_config_field(config, "PWM_OFS", 30)
         set_config_field(config, "PWM_GRAD", 0)
-        set_config_field(config, "pwm_freq", 1)
+        set_config_field(config, "pwm_freq", 0)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "freewheel", 0)
@@ -340,9 +354,6 @@ class TMC5160:
         set_config_field(config, "PWM_LIM", 12)
         #   TPOWERDOWN
         set_config_field(config, "TPOWERDOWN", 10)
-    def query_registers(self, print_time=0.):
-        return [(reg_name, self.mcu_tmc.get_register(reg_name))
-                for reg_name in ReadRegisters]
 
 def load_config_prefix(config):
     return TMC5160(config)

@@ -1,6 +1,86 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.9.0
+=============
+
+Available on 20201020. Major changes in this release:
+* Support for "Input Shaping" - a mechanism to counteract printer
+  resonance. It can reduce or eliminate "ringing" in prints.
+* New "Smooth Pressure Advance" system. This implements "Pressure
+  Advance" without introducing instantaneous velocity changes. It is
+  also now possible to tune pressure advance using a "Tuning Tower"
+  method.
+* New "webhooks" API server. This provides a programmable JSON
+  interface to Klipper.
+* The LCD display and menu are now configurable using the Jinja2
+  template language.
+* The TMC2208 stepper motor drivers can now be used in "standalone"
+  mode with Klipper.
+* Improved BL-Touch v3 support.
+* Improved USB identification. Klipper now has its own USB
+  identification code and micro-controllers can now report their
+  unique serial numbers during USB identification.
+* New kinematic support for "Rotary Delta" and "CoreXZ" printers.
+* Micro-controller improvements: support for stm32f070, support for
+  stm32f207, support for GPIO pins on "Linux MCU", stm32 "HID
+  bootloader" support, Chitu bootloader support, MKS Robin bootloader
+  support.
+* Improved handling of Python "garbage collection" events.
+* Many additional modules added: adc_scaled, adxl345, bme280,
+  display_status, extruder_stepper, fan_generic,
+  hall_filament_width_sensor, htu21d, homing_heaters, input_shaper,
+  lm75, print_stats, resonance_tester, shaper_calibrate, query_adc,
+  graph_accelerometer, graph_extruder, graph_motion, graph_shaper,
+  graph_temp_sensor, whconsole
+* Several bug fixes and code cleanups.
+
+Klipper 0.9.1
+--------------
+
+Available on 20201028. Release containing only bug fixes.
+
+Klipper 0.8.0
+=============
+
+Available on 20191021. Major changes in this release:
+* New G-Code command template support. G-Code in the config file is
+  now evaluated with the Jinja2 template language.
+* Improvements to Trinamic stepper drivers:
+  * New support for TMC2209 and TMC5160 drivers.
+  * Improved DUMP_TMC, SET_TMC_CURRENT, and INIT_TMC G-Code commands.
+  * Improved support for TMC UART handling with an analog mux.
+* Improved homing, probing, and bed leveling support:
+  * New manual_probe, bed_screws, screws_tilt_adjust, skew_correction,
+    safe_z_home modules added.
+  * Enhanced multi-sample probing with median, average, and retry
+    logic.
+  * Improved documentation for BL-Touch, probe calibration, endstop
+    calibration, delta calibration, sensorless homing, and endstop
+    phase calibration.
+  * Improved homing support on a large Z axis.
+* Many Klipper micro-controller improvements:
+  * Klipper ported to: SAM3X8C, SAM4S8C, SAMD51, STM32F042, STM32F4
+  * New USB CDC driver implementations on SAM3X, SAM4, STM32F4.
+  * Enhanced support for flashing Klipper over USB.
+  * Software SPI support.
+  * Greatly improved temperature filtering on the LPC176x.
+  * Early output pin settings can be configured in the
+    micro-controller.
+* New website with the Klipper documentation: http://klipper3d.org/
+  * Klipper now has a logo.
+* Experimental support for polar and "cable winch" kinematics.
+* The config file can now include other config files.
+* Many additional modules added: board_pins, controller_fan,
+  delayed_gcode, dotstar, filament_switch_sensor, firmware_retraction,
+  gcode_arcs, gcode_button, heater_generic, manual_stepper, mcp4018,
+  mcp4728, neopixel, pause_resume, respond, temperature_sensor
+  tsl1401cl_filament_width_sensor, tuning_tower
+* Many additional commands added: RESTORE_GCODE_STATE,
+  SAVE_GCODE_STATE, SET_GCODE_VARIABLE, SET_HEATER_TEMPERATURE,
+  SET_IDLE_TIMEOUT, SET_TEMPERATURE_FAN_TARGET
+* Several bug fixes and code cleanups.
+
 Klipper 0.7.0
 =============
 

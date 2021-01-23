@@ -5,4 +5,4 @@
 
 void udelay(uint32_t usecs);
 
-#endif // serial_irq.h
+#endif // armcm_timer.h

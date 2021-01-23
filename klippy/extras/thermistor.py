@@ -4,9 +4,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import adc_temperature
+from . import adc_temperature
 
-KELVIN_TO_CELCIUS = -273.15
+KELVIN_TO_CELSIUS = -273.15
 
 # Analog voltage to temperature converter for thermistors
 class Thermistor:
@@ -17,9 +17,9 @@ class Thermistor:
     def setup_coefficients(self, t1, r1, t2, r2, t3, r3, name=""):
         # Calculate Steinhart-Hart coefficents from temp measurements.
         # Arrange samples as 3 linear equations and solve for c1, c2, and c3.
-        inv_t1 = 1. / (t1 - KELVIN_TO_CELCIUS)
-        inv_t2 = 1. / (t2 - KELVIN_TO_CELCIUS)
-        inv_t3 = 1. / (t3 - KELVIN_TO_CELCIUS)
+        inv_t1 = 1. / (t1 - KELVIN_TO_CELSIUS)
+        inv_t2 = 1. / (t2 - KELVIN_TO_CELSIUS)
+        inv_t3 = 1. / (t3 - KELVIN_TO_CELSIUS)
         ln_r1 = math.log(r1)
         ln_r2 = math.log(r2)
         ln_r3 = math.log(r3)
@@ -40,7 +40,7 @@ class Thermistor:
         self.c1 = inv_t1 - self.c2 * ln_r1 - self.c3 * ln3_r1
     def setup_coefficients_beta(self, t1, r1, beta):
         # Calculate equivalent Steinhart-Hart coefficents from beta
-        inv_t1 = 1. / (t1 - KELVIN_TO_CELCIUS)
+        inv_t1 = 1. / (t1 - KELVIN_TO_CELSIUS)
         ln_r1 = math.log(r1)
         self.c3 = 0.
         self.c2 = 1. / beta
@@ -51,12 +51,12 @@ class Thermistor:
         r = self.pullup * adc / (1.0 - adc)
         ln_r = math.log(r - self.inline_resistor)
         inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
-        return 1.0/inv_t + KELVIN_TO_CELCIUS
+        return 1.0/inv_t + KELVIN_TO_CELSIUS
     def calc_adc(self, temp):
         # Calculate adc reading from a temperature
-        if temp <= KELVIN_TO_CELCIUS:
+        if temp <= KELVIN_TO_CELSIUS:
             return 1.
-        inv_t = 1. / (temp - KELVIN_TO_CELCIUS)
+        inv_t = 1. / (temp - KELVIN_TO_CELSIUS)
         if self.c3:
             # Solve for ln_r using Cardano's formula
             y = (self.c1 - inv_t) / (2. * self.c3)
@@ -85,15 +85,15 @@ def PrinterThermistor(config, params):
 class CustomThermistor:
     def __init__(self, config):
         self.name = " ".join(config.get_name().split()[1:])
-        t1 = config.getfloat("temperature1", minval=KELVIN_TO_CELCIUS)
+        t1 = config.getfloat("temperature1", minval=KELVIN_TO_CELSIUS)
         r1 = config.getfloat("resistance1", minval=0.)
         beta = config.getfloat("beta", None, above=0.)
         if beta is not None:
             self.params = {'t1': t1, 'r1': r1, 'beta': beta}
             return
-        t2 = config.getfloat("temperature2", minval=KELVIN_TO_CELCIUS)
+        t2 = config.getfloat("temperature2", minval=KELVIN_TO_CELSIUS)
         r2 = config.getfloat("resistance2", minval=0.)
-        t3 = config.getfloat("temperature3", minval=KELVIN_TO_CELCIUS)
+        t3 = config.getfloat("temperature3", minval=KELVIN_TO_CELSIUS)
         r3 = config.getfloat("resistance3", minval=0.)
         (t1, r1), (t2, r2), (t3, r3) = sorted([(t1, r1), (t2, r2), (t3, r3)])
         self.params = {'t1': t1, 'r1': r1, 't2': t2, 'r2': r2,
@@ -109,6 +109,12 @@ Sensors = {
     "ATC Semitec 104GT-2": {
         't1': 20., 'r1': 126800., 't2': 150., 'r2': 1360.,
         't3': 300., 'r3': 80.65 },
+    "SliceEngineering 450": {
+        't1': 25., 'r1': 500000., 't2': 200., 'r2': 3734.,
+        't3': 400., 'r3': 240. },
+    "TDK NTCG104LH104JT1": {
+        't1': 25., 'r1': 100000., 't2': 50., 'r2': 31230.,
+        't3': 125., 'r3': 2066. },
     "NTC 100K beta 3950": { 't1': 25., 'r1': 100000., 'beta': 3950. },
     "Honeywell 100K 135-104LAG-J01": { 't1': 25., 'r1': 100000., 'beta': 3974.},
     "NTC 100K MGB18-104F39050L32": { 't1': 25., 'r1': 100000., 'beta': 4100. },
@@ -116,12 +122,12 @@ Sensors = {
 
 def load_config(config):
     # Register default thermistor types
-    pheater = config.get_printer().lookup_object("heater")
+    pheaters = config.get_printer().load_object(config, "heaters")
     for sensor_type, params in Sensors.items():
         func = (lambda config, params=params: PrinterThermistor(config, params))
-        pheater.add_sensor_factory(sensor_type, func)
+        pheaters.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
     thermistor = CustomThermistor(config)
-    pheater = config.get_printer().lookup_object("heater")
-    pheater.add_sensor_factory(thermistor.name, thermistor.create)
+    pheaters = config.get_printer().load_object(config, "heaters")
+    pheaters.add_sensor_factory(thermistor.name, thermistor.create)

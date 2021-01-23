@@ -1,9 +1,9 @@
 // Serial port command queuing
 //
-// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
-//
+
 // This goal of this code is to handle low-level serial port
 // communications with a microcontroller (mcu).  This code is written
 // in C (instead of python) to reduce communication latencies and to
@@ -88,10 +88,11 @@ pollreactor_free(struct pollreactor *pr)
 
 // Add a callback for when a file descriptor (fd) becomes readable
 static void
-pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback)
+pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback
+                   , int write_only)
 {
     pr->fds[pos].fd = fd;
-    pr->fds[pos].events = POLLIN|POLLHUP;
+    pr->fds[pos].events = POLLHUP | (write_only ? 0 : POLLIN);
     pr->fds[pos].revents = 0;
     pr->fd_callbacks[pos] = callback;
 }
@@ -372,6 +373,7 @@ struct serialqueue {
     struct list_head pending_queues;
     int ready_bytes, stalled_bytes, need_ack_bytes, last_ack_bytes;
     uint64_t need_kick_clock;
+    struct list_head notify_queue;
     // Received messages
     struct list_head receive_queue;
     // Debugging
@@ -512,6 +514,25 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     if (rseq != sq->receive_seq)
         // New sequence number
         update_receive_seq(sq, eventtime, rseq);
+
+    // Check for pending messages on notify_queue
+    int must_wake = 0;
+    while (!list_empty(&sq->notify_queue)) {
+        struct queue_message *qm = list_first_entry(
+            &sq->notify_queue, struct queue_message, node);
+        uint64_t wake_seq = rseq - 1 - (len > MESSAGE_MIN ? 1 : 0);
+        uint64_t notify_msg_sent_seq = qm->req_clock;
+        if (notify_msg_sent_seq > wake_seq)
+            break;
+        list_del(&qm->node);
+        qm->len = 0;
+        qm->sent_time = sq->last_receive_sent_time;
+        qm->receive_time = eventtime;
+        list_add_tail(&qm->node, &sq->receive_queue);
+        must_wake = 1;
+    }
+
+    // Process message
     if (len == MESSAGE_MIN) {
         // Ack/nak message
         if (sq->last_ack_seq < rseq)
@@ -519,18 +540,19 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         else if (rseq > sq->ignore_nak_seq && !list_empty(&sq->sent_queue))
             // Duplicate Ack is a Nak - do fast retransmit
             pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
-    }
-
-    if (len > MESSAGE_MIN) {
-        // Add message to receive queue
+    } else {
+        // Data message - add to receive queue
         struct queue_message *qm = message_fill(sq->input_buf, len);
         qm->sent_time = (rseq > sq->retransmit_seq
                          ? sq->last_receive_sent_time : 0.);
         qm->receive_time = get_monotonic(); // must be time post read()
         qm->receive_time -= sq->baud_adjust * len;
         list_add_tail(&qm->node, &sq->receive_queue);
-        check_wake_receive(sq);
+        must_wake = 1;
     }
+
+    if (must_wake)
+        check_wake_receive(sq);
 }
 
 // Callback for input activity on the serial fd
@@ -661,7 +683,13 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
         memcpy(&out->msg[out->len], qm->msg, qm->len);
         out->len += qm->len;
         sq->ready_bytes -= qm->len;
-        message_free(qm);
+        if (qm->notify_id) {
+            // Message requires notification - add to notify list
+            qm->req_clock = sq->send_seq;
+            list_add_tail(&qm->node, &sq->notify_queue);
+        } else {
+            message_free(qm);
+        }
     }
 
     // Fill header / trailer
@@ -811,9 +839,9 @@ serialqueue_alloc(int serial_fd, int write_only)
     if (ret)
         goto fail;
     pollreactor_setup(&sq->pr, SQPF_NUM, SQPT_NUM, sq);
-    if (!write_only)
-        pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event);
-    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event);
+    pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event
+                       , write_only);
+    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event, 0);
     pollreactor_add_timer(&sq->pr, SQPT_RETRANSMIT, retransmit_event);
     pollreactor_add_timer(&sq->pr, SQPT_COMMAND, command_event);
     set_non_blocking(serial_fd);
@@ -835,6 +863,7 @@ serialqueue_alloc(int serial_fd, int write_only)
     list_init(&sq->pending_queues);
     list_init(&sq->sent_queue);
     list_init(&sq->receive_queue);
+    list_init(&sq->notify_queue);
 
     // Debugging
     list_init(&sq->old_sent);
@@ -882,6 +911,7 @@ serialqueue_free(struct serialqueue *sq)
     pthread_mutex_lock(&sq->lock);
     message_queue_free(&sq->sent_queue);
     message_queue_free(&sq->receive_queue);
+    message_queue_free(&sq->notify_queue);
     message_queue_free(&sq->old_sent);
     message_queue_free(&sq->old_receive);
     while (!list_empty(&sq->pending_queues)) {
@@ -960,27 +990,13 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
 // given time and priority.
 void __visible
 serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
-                 , int len, uint64_t min_clock, uint64_t req_clock)
+                 , int len, uint64_t min_clock, uint64_t req_clock
+                 , uint64_t notify_id)
 {
     struct queue_message *qm = message_fill(msg, len);
     qm->min_clock = min_clock;
     qm->req_clock = req_clock;
-
-    struct list_head msgs;
-    list_init(&msgs);
-    list_add_tail(&qm->node, &msgs);
-    serialqueue_send_batch(sq, cq, &msgs);
-}
-
-// Like serialqueue_send() but also builds the message to be sent
-void
-serialqueue_encode_and_send(struct serialqueue *sq, struct command_queue *cq
-                            , uint32_t *data, int len
-                            , uint64_t min_clock, uint64_t req_clock)
-{
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->min_clock = min_clock;
-    qm->req_clock = req_clock;
+    qm->notify_id = notify_id;
 
     struct list_head msgs;
     list_init(&msgs);
@@ -1014,7 +1030,11 @@ serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
     pqm->len = qm->len;
     pqm->sent_time = qm->sent_time;
     pqm->receive_time = qm->receive_time;
-    debug_queue_add(&sq->old_receive, qm);
+    pqm->notify_id = qm->notify_id;
+    if (qm->len)
+        debug_queue_add(&sq->old_receive, qm);
+    else
+        message_free(qm);
 
     pthread_mutex_unlock(&sq->lock);
     return;

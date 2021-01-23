@@ -10,6 +10,7 @@
 #include <sys/ioctl.h> // ioctl
 #include <unistd.h> // write
 #include "basecmd.h" // oid_alloc
+#include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
 #include "command.h" // DECL_COMMAND
 #include "internal.h" // report_errno
@@ -132,8 +133,15 @@ struct i2cpwm_s {
     struct timer timer;
     int fd;
     uint8_t channel;
-    uint16_t value, default_value;
+    uint16_t default_value;
     uint32_t max_duration;
+    struct move_queue_head mq;
+};
+
+struct pca9685_move {
+    struct move_node node;
+    uint32_t waketime;
+    uint16_t value;
 };
 
 DECL_CONSTANT("PCA9685_MAX", VALUE_MAX);
@@ -147,12 +155,32 @@ pca9685_end_event(struct timer *timer)
 static uint_fast8_t
 pca9685_event(struct timer *timer)
 {
+    // Apply next update and remove it from queue
     struct i2cpwm_s *p = container_of(timer, struct i2cpwm_s, timer);
-    pca9685_write(p->fd, p->channel, p->value);
-    if (p->value == p->default_value || !p->max_duration)
-        return SF_DONE;
-    p->timer.waketime += p->max_duration;
-    p->timer.func = pca9685_end_event;
+    struct move_node *mn = move_queue_pop(&p->mq);
+    struct pca9685_move *m = container_of(mn, struct pca9685_move, node);
+    uint16_t value = m->value;
+    pca9685_write(p->fd, p->channel, value);
+    move_free(m);
+
+    // Check if more updates queued
+    if (move_queue_empty(&p->mq)) {
+        if (value == p->default_value || !p->max_duration)
+            return SF_DONE;
+
+        // Start the safety timeout
+        p->timer.waketime += p->max_duration;
+        p->timer.func = pca9685_end_event;
+        return SF_RESCHEDULE;
+    }
+
+    // Schedule next update
+    struct move_node *nn = move_queue_first(&p->mq);
+    uint32_t wake = container_of(nn, struct pca9685_move, node)->waketime;
+    if (value != p->default_value && p->max_duration
+        && timer_is_before(p->timer.waketime + p->max_duration, wake))
+        shutdown("Scheduled pca9685 event will exceed max_duration");
+    p->timer.waketime = wake;
     return SF_RESCHEDULE;
 }
 
@@ -171,25 +199,40 @@ command_config_pca9685(uint32_t *args)
     p->channel = channel;
     p->default_value = default_value;
     p->max_duration = args[7];
+    p->timer.func = pca9685_event;
+    move_queue_setup(&p->mq, sizeof(struct pca9685_move));
 }
 DECL_COMMAND(command_config_pca9685, "config_pca9685 oid=%c bus=%c addr=%c"
              " channel=%c cycle_ticks=%u value=%hu"
              " default_value=%hu max_duration=%u");
 
 void
-command_schedule_pca9685_out(uint32_t *args)
+command_queue_pca9685_out(uint32_t *args)
 {
     struct i2cpwm_s *p = oid_lookup(args[0], command_config_pca9685);
-    sched_del_timer(&p->timer);
-    p->timer.func = pca9685_event;
-    p->timer.waketime = args[1];
-    p->value = args[2];
-    if (p->value > VALUE_MAX)
+    struct pca9685_move *m = move_alloc();
+    m->waketime = args[1];
+    m->value = args[2];
+    if (m->value > VALUE_MAX)
         shutdown("Invalid pca9685 value");
+
+    irq_disable();
+    int need_add_timer = move_queue_push(&m->node, &p->mq);
+    irq_enable();
+    if (!need_add_timer)
+        return;
+
+    // queue was empty and a timer needs to be added
+    sched_del_timer(&p->timer);
+    if (p->timer.func == pca9685_end_event
+        && timer_is_before(p->timer.waketime, m->waketime))
+        shutdown("Scheduled pca9685 event will exceed max_duration");
+    p->timer.func = pca9685_event;
+    p->timer.waketime = m->waketime;
     sched_add_timer(&p->timer);
 }
-DECL_COMMAND(command_schedule_pca9685_out,
-             "schedule_pca9685_out oid=%c clock=%u value=%hu");
+DECL_COMMAND(command_queue_pca9685_out,
+             "queue_pca9685_out oid=%c clock=%u value=%hu");
 
 void
 command_set_pca9685_out(uint32_t *args)
@@ -215,6 +258,8 @@ pca9685_shutdown(void)
     foreach_oid(j, p, command_config_pca9685) {
         if (p->default_value)
             pca9685_write(p->fd, p->channel, p->default_value);
+        p->timer.func = pca9685_event;
+        move_queue_clear(&p->mq);
     }
 }
 DECL_SHUTDOWN(pca9685_shutdown);

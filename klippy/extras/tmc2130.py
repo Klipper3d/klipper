@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import bus, tmc
+from . import bus, tmc
 
 TMC_FREQUENCY=13200000.
 
@@ -109,9 +109,9 @@ class TMCCurrentHelper:
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command(
-            "SET_TMC_CURRENT", "STEPPER", self.name,
-            self.cmd_SET_TMC_CURRENT, desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
@@ -123,11 +123,13 @@ class TMCCurrentHelper:
     def _calc_current(self, run_current, hold_current):
         vsense = False
         irun = self._calc_current_bits(run_current, vsense)
-        ihold = self._calc_current_bits(hold_current, vsense)
+        ihold = self._calc_current_bits(min(hold_current, run_current),
+                                        vsense)
         if irun < 16 and ihold < 16:
             vsense = True
             irun = self._calc_current_bits(run_current, vsense)
-            ihold = self._calc_current_bits(hold_current, vsense)
+            ihold = self._calc_current_bits(min(hold_current, run_current),
+                                            vsense)
         return vsense, irun, ihold
     def _calc_current_from_field(self, field_name):
         bits = self.fields.get_field(field_name)
@@ -138,23 +140,22 @@ class TMCCurrentHelper:
         current = (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
         return round(current, 2)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, params):
-        gcode = self.printer.lookup_object('gcode')
-        if 'HOLDCURRENT' in params:
-            hold_current = gcode.get_float(
-                'HOLDCURRENT', params, above=0., maxval=MAX_CURRENT)
-        else:
-            hold_current = self._calc_current_from_field("IHOLD")
-        if 'CURRENT' in params:
-            run_current = gcode.get_float(
-                'CURRENT', params, minval=hold_current, maxval=MAX_CURRENT)
-        else:
-            run_current = self._calc_current_from_field("IRUN")
-        if 'HOLDCURRENT' not in params and 'CURRENT' not in params:
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        run_current = gcmd.get_float('CURRENT', None,
+                                     minval=0., maxval=MAX_CURRENT)
+        hold_current = gcmd.get_float('HOLDCURRENT', None,
+                                      above=0., maxval=MAX_CURRENT)
+        if run_current is None and hold_current is None:
             # Query only
-            gcode.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                               % (run_current, hold_current))
+            run_current = self._calc_current_from_field("IRUN")
+            hold_current = self._calc_current_from_field("IHOLD")
+            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                              % (run_current, hold_current))
             return
+        if run_current is None:
+            run_current = self._calc_current_from_field("IRUN")
+        if hold_current is None:
+            hold_current = self._calc_current_from_field("IHOLD")
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
@@ -173,6 +174,7 @@ class TMCCurrentHelper:
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
+        self.mutex = self.printer.get_reactor().mutex()
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
         self.name_to_reg = name_to_reg
         self.fields = fields
@@ -180,18 +182,22 @@ class MCU_TMC_SPI:
         return self.fields
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
-        self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-        if self.printer.get_start_args().get('debugoutput') is not None:
-            return 0
-        params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
+        with self.mutex:
+            self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
+            if self.printer.get_start_args().get('debugoutput') is not None:
+                return 0
+            params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
         pr = bytearray(params['response'])
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
-    def set_register(self, reg_name, val, print_time=0.):
-        min_clock = self.spi.get_mcu().print_time_to_clock(print_time)
-        reg = Registers[reg_name]
+    def set_register(self, reg_name, val, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
+        reg = self.name_to_reg[reg_name]
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(data, min_clock)
+        with self.mutex:
+            self.spi.spi_send(data, minclock)
 
 
 ######################################################################
@@ -203,12 +209,11 @@ class TMC2130:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
-        # Allow virtual endstop to be created
-        diag1_pin = config.get('diag1_pin', None)
-        tmc.TMCEndstopHelper(config, self.mcu_tmc, diag1_pin)
+        # Allow virtual pins to be created
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
-        cmdhelper.setup_register_dump(self.query_registers)
+        cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         TMCCurrentHelper(config, self.mcu_tmc)
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
@@ -221,7 +226,6 @@ class TMC2130:
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
         set_config_field(config, "TBL", 1)
-        set_config_field(config, "intpol", True, "interpolate")
         set_config_field(config, "IHOLDDELAY", 8)
         set_config_field(config, "TPOWERDOWN", 0)
         set_config_field(config, "PWM_AMPL", 128)
@@ -229,9 +233,6 @@ class TMC2130:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
-    def query_registers(self, print_time=0.):
-        return [(reg_name, self.mcu_tmc.get_register(reg_name))
-                for reg_name in ReadRegisters]
 
 def load_config_prefix(config):
     return TMC2130(config)

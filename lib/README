@@ -8,55 +8,51 @@ taken from the CMSIS/Core/Include/ directory.
 The sam3x directory contains code from the
 Atmel.SAM3X_DFP.1.0.50.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.0.50 (extracted on 20180725). It has been modified to
-compile with gcc's LTO feature. See sam3x.patch for the modifications.
+version 1.0.50 (extracted on 20180725).
 
 The sam4e directory contains code from the
 Atmel.SAM4E_DFP.1.1.57.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.1.57 (extracted on 20180806). It has been modified to
-compile with gcc's LTO feature. Also, some AFEC register RW accesses
-have been modified to comply with the SAM4E datasheet. Finally, the
-interrupt vector table has been slightly modified to allow the code to
-run. See sam4e.patch for the modifications.
+version 1.1.57 (extracted on 20180806). It has been modified to fix
+some AFEC register RW accesses. See sam4e.patch for the modifications.
 
 The sam4s directory contains code from the
 Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.0.56 (extracted on 20181220). It has been modified to
-compile with gcc's LTO feature. See sam4s.patch for the modifications.
+version 1.0.56 (extracted on 20181220).
 
 The samd21 directory contains code from the
 Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.3.304 (extracted on 20180725). It has been modified to
-compile with gcc's LTO feature. See samd21.patch for the
-modifications.
+version 1.3.304 (extracted on 20180725).
 
 The samd51 directory contains code from the
 Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.1.96 (extracted on 20190110). It has been modified to
-compile with gcc's LTO feature. See samd51.patch for the
-modifications.
+version 1.1.96 (extracted on 20190110).
 
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
 version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
 Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory.
-It has been modified to compile with gcc's LTO feature and to use
-appropriate clock speeds on the LPC1768 and LPC1769. See lpc176x.patch
-for the modifications.
+It has been modified to set the appropriate clock speeds on the
+LPC1768 and LPC1769. See lpc176x.patch for the modifications.
 
-The cmsis-stm32f0 and the hal-stm32f0 directories contain code from
-STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef0.html
-version 1.9.0 (extracted 20190116).
-
-The cmsis-stm32f1 and the hal-stm32f1 directories contain code from
-STMicroelectronics:
+The stm32f0 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
-version 1.6.0 (extracted 20180330).
+version 1.10.0 (extracted 20190721).
+
+The stm32f1 directory contains code from STMicroelectronics:
+  http://www.st.com/en/embedded-software/stm32cubef1.html
+version 1.8.0 (extracted 20190721).
+
+The stm32f2 directory contains code from STMicroelectronics:
+  https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32cube-mcu-mpu-packages/stm32cubef2.html
+version 1.9.0 (extracted 20200614).
+
+The stm32f4 directory contains code from STMicroelectronics:
+  http://www.st.com/en/embedded-software/stm32cubef4.html
+version 1.24.0 (extracted 20190723).
 
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
@@ -66,9 +62,25 @@ The bossac directory contains code from:
   https://github.com/shumatech/BOSSA
 version 1.9 (b176eeef918fc810045c832348590595120187b4).
 
+The hidflash directory contains code from:
+  https://github.com/Serasidis/STM32_HID_Bootloader
+version 2.2.2 (2ab7927a27b7b78ef730782ea5f9b5d2c8f34671). It has been
+modified to work with Klipper - see hidflash/README for the
+details. See changes.diff for the modifications.
+
 The pru_rpmsg directory contains code from:
   https://github.com/dinuxbg/pru-gcc-examples
 revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
+
+The fast-hash directory contains code from:
+  https://github.com/ztanml/fast-hash
+revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc
+
+The kconfiglib directory contains code from:
+  https://github.com/ulfalizer/Kconfiglib.git
+version v14.1.0 (061e71f7d78cb057762d88de088055361863deff). It has
+been modified to always emit symbols and to simplify the "menuconfig"
+screens. See kconfiglib.patch for the modifications.

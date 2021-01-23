@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
-import probe
+from . import probe
 
 def parse_coord(config, param):
     pair = config.get(param).strip().split(',', 1)
@@ -19,12 +19,6 @@ class ScrewsTiltAdjust:
         self.config = config
         self.printer = config.get_printer()
         self.screws = []
-        # Verify that a probe exists
-        try:
-            self.printer.lookup_object("probe")
-        except:
-            raise self.gcode.error("Error: you must have a probe on "
-                                   "your config file.")
         # Read config
         for i in range(99):
             prefix = "screw%d" % (i + 1,)
@@ -56,8 +50,8 @@ class ScrewsTiltAdjust:
                                      "screws by calculating the number " \
                                      "of turns to level it."
 
-    def cmd_SCREWS_TILT_CALCULATE(self, params):
-        self.probe_helper.start_probe(params)
+    def cmd_SCREWS_TILT_CALCULATE(self, gcmd):
+        self.probe_helper.start_probe(gcmd)
 
     def probe_finalize(self, offsets, positions):
         # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5

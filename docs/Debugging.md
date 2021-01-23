@@ -91,7 +91,7 @@ with Klippy, and send it to Klipper running in simulavr (see
 python virtual environment):
 
 ```
-~/klippy-env/bin/python ./klippy/klippy.py config/avrsim.cfg -i test.gcode -v
+~/klippy-env/bin/python ./klippy/klippy.py config/generic-simulavr.cfg -i test.gcode -v
 ```
 
 Using simulavr with gtkwave
@@ -147,7 +147,7 @@ sudo apt-get install python-matplotlib
 Then graphs can be produced with:
 
 ```
-~/klipper/scripts/graphstats.py /tmp/klippy.log loadgraph.png
+~/klipper/scripts/graphstats.py /tmp/klippy.log -o loadgraph.png
 ```
 
 One can then view the resulting **loadgraph.png** file.
@@ -174,3 +174,25 @@ The script will extract the printer config file and will extract MCU
 shutdown information. The information dumps from an MCU shutdown (if
 present) will be reordered by timestamp to assist in diagnosing cause
 and effect scenarios.
+
+Running the regression tests
+============================
+
+The main Klipper GitHub repository uses "github actions" to run a
+series of regression tests. It can be useful to run some of these
+tests locally.
+
+The source code "whitespace check" can be run with:
+```
+./scripts/check_whitespace.sh
+```
+
+The Klippy regression test suite requires "data dictionaries" from
+many platforms. The easiest way to obtain them is to
+[download them from github](https://github.com/KevinOConnor/klipper/issues/1438).
+Once the data dictionaries are downloaded, use the following to run
+the regression suite:
+```
+tar xfz klipper-dict-20??????.tar.gz
+~/klippy-env/bin/python ~/klipper/scripts/test_klippy.py -d dict/ ~/klipper/test/klippy/*.test
+```

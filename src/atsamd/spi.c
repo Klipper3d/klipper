@@ -6,9 +6,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "internal.h" // enable_pclock
-#include "command.h" // shutdown
 #include "gpio.h" // spi_setup
-#include "sched.h" // sched_shutdown
 
 void
 spi_init(uint32_t bus, SercomSpi *ss, uint32_t ctrla, uint32_t baud)

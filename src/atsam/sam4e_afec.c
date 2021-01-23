@@ -11,18 +11,22 @@
 #include "sam4e.h" // AFEC0
 #include "sched.h" // sched_shutdown
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
+
 static const uint8_t afec_pins[] = {
     //remove first channel, since it offsets the channel number: GPIO('A', 8),
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19),
     GPIO('A', 20), GPIO('B', 0),  GPIO('B', 1), GPIO('C', 13),
     GPIO('C', 15), GPIO('C', 12), GPIO('C', 29), GPIO('C', 30),
     GPIO('C', 31), GPIO('C', 26), GPIO('C', 27), GPIO('C',0),
+    ADC_TEMPERATURE_PIN,
     // AFEC1
     GPIO('B', 2), GPIO('B', 3), GPIO('A', 21), GPIO('A', 22),
     GPIO('C', 1), GPIO('C', 2), GPIO('C', 3), GPIO('C', 4),
 };
 
-#define AFEC1_START 15 // The first 15 pins are on afec0
+#define AFEC1_START 16 // The first 16 pins are on afec0
 
 static inline struct gpio_adc
 pin_to_gpio_adc(uint8_t pin)

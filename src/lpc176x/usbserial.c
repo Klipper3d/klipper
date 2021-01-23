@@ -5,8 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "LPC17xx.h" // LPC_SC
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
@@ -260,43 +260,12 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
+
+/****************************************************************
+ * Setup and interrupts
+ ****************************************************************/
 
 void
-usbserial_init(void)
-{
-    usb_irq_disable();
-    // enable power
-    enable_pclock(PCLK_USB);
-    // enable clock
-    LPC_USB->USBClkCtrl = 0x12;
-    while (LPC_USB->USBClkSt != 0x12)
-        ;
-    // configure USBD-, USBD+, and USB Connect pins
-    gpio_peripheral(GPIO(0, 30), 1, 0);
-    gpio_peripheral(GPIO(0, 29), 1, 0);
-    gpio_peripheral(GPIO(2, 9), 1, 0);
-    // enforce a minimum time bus is disconnected before connecting
-    udelay(5000);
-    // setup endpoints
-    realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
-    realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);
-    sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 1);
-    // enable irqs
-    LPC_USB->USBDevIntEn = DEV_STAT | EP_SLOW;
-    NVIC_SetPriority(USB_IRQn, 1);
-    usb_irq_enable();
-}
-DECL_INIT(usbserial_init);
-
-void
-usbserial_shutdown(void)
-{
-    usb_irq_enable();
-}
-DECL_SHUTDOWN(usbserial_shutdown);
-
-void __visible
 USB_IRQHandler(void)
 {
     uint32_t udis = LPC_USB->USBDevIntSt;
@@ -325,3 +294,38 @@ USB_IRQHandler(void)
         LPC_USB->USBDevIntClr = EP_SLOW;
     }
 }
+
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "P0.30,P0.29,P2.9");
+
+void
+usbserial_init(void)
+{
+    usb_irq_disable();
+    // enable power
+    enable_pclock(PCLK_USB);
+    // enable clock
+    LPC_USB->USBClkCtrl = 0x12;
+    while (LPC_USB->USBClkSt != 0x12)
+        ;
+    // configure USBD-, USBD+, and USB Connect pins
+    gpio_peripheral(GPIO(0, 30), 1, 0);
+    gpio_peripheral(GPIO(0, 29), 1, 0);
+    gpio_peripheral(GPIO(2, 9), 1, 0);
+    // enforce a minimum time bus is disconnected before connecting
+    udelay(5000);
+    // setup endpoints
+    realize_endpoint(EP0OUT, USB_CDC_EP0_SIZE);
+    realize_endpoint(EP0IN, USB_CDC_EP0_SIZE);
+    sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 1);
+    // enable irqs
+    LPC_USB->USBDevIntEn = DEV_STAT | EP_SLOW;
+    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
+}
+DECL_INIT(usbserial_init);
+
+void
+usbserial_shutdown(void)
+{
+    usb_irq_enable();
+}
+DECL_SHUTDOWN(usbserial_shutdown);
