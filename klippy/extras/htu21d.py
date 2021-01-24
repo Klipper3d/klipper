@@ -212,7 +212,8 @@ class HTU21D:
             return self.reactor.NEVER
 
         measured_time = self.reactor.monotonic()
-        self._callback(measured_time, self.temp)
+        print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
+        self._callback(print_time, self.temp)
         return measured_time + self.report_time
 
     def _chekCRC8(self,data):
