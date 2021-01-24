@@ -41,6 +41,9 @@ class RPiTemperature:
     def setup_callback(self, cb):
         self._callback = cb
 
+    def get_report_time_delta(self):
+        return RPI_REPORT_TIME
+
     def _sample_pi_temperature(self, eventtime):
         try:
             self.file_handle.seek(0)
