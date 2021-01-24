@@ -17,79 +17,90 @@
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
 
-struct ds18_s {
-    struct timer timer;
-    uint32_t rest_time;
-    int32_t min_value, max_value;
-    uint8_t flags;
-    uint8_t worker_entry_index;
-};
-
 enum {
     W1_IDLE = 0, // No requests
-    W1_PENDING = 1, // Reading or waiting to read
+    W1_READ_REQUESTED = 1, // Reading or waiting to read
     W1_READY = 2, // Read complete, waiting to report
     W1_ERROR = 3, // Request shutdown
 };
 
-struct ds18_worker_entry_s {
+enum {
+    TS_PENDING = 1,
+};
+
+struct ds18_sysfs_reader_s {
     int temperature;
     uint32_t request_time;
     uint8_t status;
     int fd;
     const char* error;
 };
-static struct ds18_worker_entry_s worker_entries[16];
-static int worker_entries_count;
 
-enum {
-    TS_PENDING = 1,
+struct ds18_worker_s {
+    pthread_t tid;
+    // Lock all reads/writes to readers and readers_count.
+    // The worker thread will read and seek file descriptors without obtaining a lock.
+    pthread_mutex_t lock;
+    pthread_cond_t cond;
+    struct ds18_sysfs_reader_s readers[4];
+    int readers_count;
 };
 
-// Lock all reads/writes to worker_entries and worker_entries_count.
-// The worker thread will read and seek file descriptors without obtaining a lock.
-static pthread_mutex_t worker_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t worker_cond = PTHREAD_COND_INITIALIZER;
-static pthread_t worker_tid;
-static int worker_started = 0;
+struct ds18_s {
+    struct timer timer;
+    struct ds18_worker_s* worker; // Always a reference to the same single worker
+    uint32_t rest_time;
+    int32_t min_value, max_value;
+    uint8_t flags;
+    uint8_t reader_index;
+};
+
+// This struct instance holds state for every reader.
+static struct ds18_worker_s worker = {
+    .lock = PTHREAD_MUTEX_INITIALIZER,
+    .cond = PTHREAD_COND_INITIALIZER
+};
+// Thread for worker will be started once with the first configured device.
+int worker_started;
 
 // Set error status and message for the specified worker entry
 static void
-set_worker_error(uint8_t worker_entry_index, const char *error)
+set_worker_error(struct ds18_worker_s *w, uint8_t reader_index, const char *error)
 {
-    pthread_mutex_lock(&worker_lock);
-    worker_entries[worker_entry_index].error = error;
-    worker_entries[worker_entry_index].status = W1_ERROR;
-    pthread_mutex_unlock(&worker_lock);
+    pthread_mutex_lock(&w->lock);
+    w->readers[reader_index].error = error;
+    w->readers[reader_index].status = W1_ERROR;
+    pthread_mutex_unlock(&w->lock);
 }
 
 static void *
-worker(void *param) {
+worker_start_routine(void *param) {
+    struct ds18_worker_s *w = param;
     for (;;) {
         int fd;
-        int worker_entry_index;
+        int reader_index;
 
         // Wait for requests to read temperature sensors
-        pthread_mutex_lock(&worker_lock);
+        pthread_mutex_lock(&w->lock);
         for (;;) {
             // Find the pending entry (if any) with the earliest request time.
-            worker_entry_index = -1;
-            uint32_t earliest_time; // Only valid if worker_entry_index != -1
-            if (worker_entries_count > 0) {
-                for (int i = 0; i < worker_entries_count; i++) {
-                    if (worker_entries[i].status == W1_PENDING &&
-                        (worker_entry_index == -1 ||  timer_is_before(earliest_time, worker_entries[i].request_time))) {
-                        worker_entry_index = i;
-                        earliest_time = worker_entries[i].request_time;
+            reader_index = -1;
+            uint32_t earliest_time; // Only valid if reader_index != -1
+            if (w->readers_count > 0) {
+                for (int i = 0; i < w->readers_count; i++) {
+                    if (w->readers[i].status == W1_READ_REQUESTED &&
+                        (reader_index == -1 ||  timer_is_before(earliest_time, w->readers[i].request_time))) {
+                        reader_index = i;
+                        earliest_time = w->readers[i].request_time;
                     }
                 }
             }
-            if (worker_entry_index != -1)
+            if (reader_index != -1)
                 break;
-            pthread_cond_wait(&worker_cond, &worker_lock);
+            pthread_cond_wait(&w->cond, &w->lock);
         }
-        fd = worker_entries[worker_entry_index].fd;
-        pthread_mutex_unlock(&worker_lock);
+        fd = w->readers[reader_index].fd;
+        pthread_mutex_unlock(&w->lock);
 
         // Read temp.
         // The temperature data is at the end of the report, after a "t=".
@@ -101,29 +112,29 @@ worker(void *param) {
         int ret = read(fd, data, sizeof(data)-1);
         if (ret < 0) {
             report_errno("read DS18B20", ret);
-            set_worker_error(worker_entry_index, "Unable to read DS18B20");
+            set_worker_error(w, reader_index, "Unable to read DS18B20");
             pthread_exit(NULL);
         }
         data[ret] = '\0';
         char *temp_string = strstr(data, "t=");
         if (temp_string == NULL || temp_string[2] == '\0') {
-            set_worker_error(worker_entry_index, "Unable to find temperature value in DS18B20 report");
+            set_worker_error(w, reader_index, "Unable to find temperature value in DS18B20 report");
             pthread_exit(NULL);
         }
         temp_string += 2;
         int val = atoi(temp_string);
 
         // Store temperature
-        pthread_mutex_lock(&worker_lock);
-        worker_entries[worker_entry_index].status = W1_READY;
-        worker_entries[worker_entry_index].temperature = val;
-        pthread_mutex_unlock(&worker_lock);
+        pthread_mutex_lock(&w->lock);
+        w->readers[reader_index].status = W1_READY;
+        w->readers[reader_index].temperature = val;
+        pthread_mutex_unlock(&w->lock);
 
         // Seek file in preparation of next read
         ret = lseek(fd, 0, SEEK_SET);
         if (ret < 0) {
             report_errno("seek DS18B20", ret);
-            set_worker_error(worker_entry_index, "Unable to seek DS18B20");
+            set_worker_error(w, reader_index, "Unable to seek DS18B20");
             pthread_exit(NULL);
         }
     }
@@ -171,24 +182,25 @@ command_config_ds18b20(uint32_t *args)
     d->timer.func = ds18_event;
 
     // Sensors share one worker thread. If this is the first sensor configured,
-    // start the worker thread.
+    // start the worker.
     if (!worker_started) {
-        if (pthread_create(&worker_tid, NULL, worker, NULL) != 0) {
+        if (pthread_create(&worker.tid, NULL, worker_start_routine, &worker) != 0) {
             goto fail4;
         }
         worker_started = 1;
     }
 
     // Add entry for worker thread.
-    pthread_mutex_lock(&worker_lock);
-    if (worker_entries_count >= ARRAY_SIZE(worker_entries)) {
-        pthread_mutex_unlock(&worker_lock);
+    pthread_mutex_lock(&worker.lock);
+    if (worker.readers_count >= ARRAY_SIZE(worker.readers)) {
+        pthread_mutex_unlock(&worker.lock);
         goto fail5;
     }
-    d->worker_entry_index = worker_entries_count;
-    worker_entries[worker_entries_count].fd = fd;
-    worker_entries_count++;
-    pthread_mutex_unlock(&worker_lock);
+    d->reader_index = worker.readers_count;
+    d->worker = &worker;
+    worker.readers[worker.readers_count].fd = fd;
+    worker.readers_count++;
+    pthread_mutex_unlock(&worker.lock);
     return;
 fail1:
     shutdown("Invalid DS18B20 serial id 1");
@@ -226,36 +238,38 @@ static void
 ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 {
     uint32_t request_time = timer_read_time();
-    pthread_mutex_lock(&worker_lock);
-    if (worker_entries[d->worker_entry_index].status == W1_ERROR) {
-        pthread_mutex_unlock(&worker_lock);
+    struct ds18_worker_s *w = d->worker;
+    struct ds18_sysfs_reader_s *r = &d->worker->readers[d->reader_index];
+    pthread_mutex_lock(&w->lock);
+    if (r->status == W1_ERROR) {
+        pthread_mutex_unlock(&w->lock);
         // Can't pass worker error to try_shutdown, which expects a static string.
-        output("Error: %s", worker_entries[d->worker_entry_index].error);
+        output("Error: %s", r->error);
         try_shutdown("Error reading DS18B20 sensor");
-    } else if (worker_entries[d->worker_entry_index].status == W1_IDLE) {
+    } else if (r->status == W1_IDLE) {
         // This happens the first time requesting a temperature.
         // Nothing to report yet.
-        worker_entries[d->worker_entry_index].request_time = request_time;
-        worker_entries[d->worker_entry_index].status = W1_PENDING;
-    } else if (worker_entries[d->worker_entry_index].status == W1_READY) {
+        r->request_time = request_time;
+        r->status = W1_READ_REQUESTED;
+    } else if (r->status == W1_READY) {
         // Report the previous temperature and request a new one.
-        int val = worker_entries[d->worker_entry_index].temperature;
+        int val = r->temperature;
         sendf("ds18_result oid=%c next_clock=%u value=%i"
               , oid, next_begin_time, val);
         if (val < d->min_value || val > d->max_value) {
-            pthread_mutex_unlock(&worker_lock);
+            pthread_mutex_unlock(&w->lock);
             try_shutdown("DS18B20 out of range");
         }
-        worker_entries[d->worker_entry_index].request_time = request_time;
-        worker_entries[d->worker_entry_index].status = W1_PENDING;
-    } else if (worker_entries[d->worker_entry_index].status == W1_PENDING) {
+        r->request_time = request_time;
+        r->status = W1_READ_REQUESTED;
+    } else if (r->status == W1_READ_REQUESTED) {
         // This is a sign that we are not keeping up with the polling interval.
         // Should that trigger an error?
-        pthread_mutex_unlock(&worker_lock);
+        pthread_mutex_unlock(&w->lock);
         try_shutdown("DS18B20 sensors didn't respond within polling interval");
     }
-    pthread_cond_signal(&worker_cond);
-    pthread_mutex_unlock(&worker_lock);
+    pthread_cond_signal(&w->cond);
+    pthread_mutex_unlock(&w->lock);
 }
 
 // task to read temperature and send response
