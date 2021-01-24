@@ -226,6 +226,7 @@ class PrinterLCD:
             else:
                 # write glyph
                 pos += self.lcd_chip.write_glyph(pos, row, text)
+        return pos
     def draw_progress_bar(self, row, col, width, value):
         pixels = -1 << int(width * 8 * (1. - value) + .5)
         pixels |= (1 << (width * 8 - 1)) | 1
