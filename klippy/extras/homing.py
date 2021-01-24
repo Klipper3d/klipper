@@ -143,9 +143,13 @@ class Homing:
             raise self.printer.command_error(error)
         # Check if some movement occurred
         if verify_movement and not allSteppersMoved:
+            # matts TODO: this probably isn't a valid way to check 
+            # with remote end-stops
             if probe_pos:
                 raise self.printer.command_error(
                     "Probe triggered prior to movement")
+            # matts TODO: wrong name
+            name = steppers[0].get_name()
             raise self.printer.command_error(
                 "Endstop %s still triggered after retract" % (name,))
     def home_rails(self, rails, forcepos, movepos):
