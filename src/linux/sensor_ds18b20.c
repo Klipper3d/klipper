@@ -63,20 +63,32 @@ set_worker_error(uint8_t worker_entry_index, const char *error)
     pthread_mutex_unlock(&worker_lock);
 }
 
-// TODO move error reporting out of worker thread
 static void *
 worker(void *param) {
-    while (1) {
+    for (;;) {
         int fd;
-        uint8_t worker_entry_index;
+        int worker_entry_index;
+
         // Wait for requests to read temperature sensors
         pthread_mutex_lock(&worker_lock);
-        // TODO find requested entry instead of assuming there is only one sensor
-        while (worker_entries_count == 0 || worker_entries[0].status != W1_PENDING) {
+        for (;;) {
+            // Find the pending entry (if any) with the earliest request time.
+            worker_entry_index = -1;
+            uint32_t earliest_time; // Only valid if worker_entry_index != -1
+            if (worker_entries_count > 0) {
+                for (int i = 0; i < worker_entries_count; i++) {
+                    if (worker_entries[i].status == W1_PENDING &&
+                        (worker_entry_index == -1 ||  timer_is_before(earliest_time, worker_entries[i].request_time))) {
+                        worker_entry_index = i;
+                        earliest_time = worker_entries[i].request_time;
+                    }
+                }
+            }
+            if (worker_entry_index != -1)
+                break;
             pthread_cond_wait(&worker_cond, &worker_lock);
         }
-        fd = worker_entries[0].fd;
-        worker_entry_index = 0;
+        fd = worker_entries[worker_entry_index].fd;
         pthread_mutex_unlock(&worker_lock);
 
         // Read temp.
@@ -101,7 +113,7 @@ worker(void *param) {
         temp_string += 2;
         int val = atoi(temp_string);
 
-        // Store temp
+        // Store temperature
         pthread_mutex_lock(&worker_lock);
         worker_entries[worker_entry_index].status = W1_READY;
         worker_entries[worker_entry_index].temperature = val;
@@ -213,6 +225,7 @@ DECL_COMMAND(command_query_ds18b20,
 static void
 ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 {
+    uint32_t request_time = timer_read_time();
     pthread_mutex_lock(&worker_lock);
     if (worker_entries[d->worker_entry_index].status == W1_ERROR) {
         pthread_mutex_unlock(&worker_lock);
@@ -222,22 +235,24 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
     } else if (worker_entries[d->worker_entry_index].status == W1_IDLE) {
         // This happens the first time requesting a temperature.
         // Nothing to report yet.
+        worker_entries[d->worker_entry_index].request_time = request_time;
         worker_entries[d->worker_entry_index].status = W1_PENDING;
     } else if (worker_entries[d->worker_entry_index].status == W1_READY) {
         // Report the previous temperature and request a new one.
         int val = worker_entries[d->worker_entry_index].temperature;
-        sendf("ds18_result oid=%c next_clock=%u value=%u"
+        sendf("ds18_result oid=%c next_clock=%u value=%i"
               , oid, next_begin_time, val);
         if (val < d->min_value || val > d->max_value) {
             pthread_mutex_unlock(&worker_lock);
             try_shutdown("DS18B20 out of range");
         }
+        worker_entries[d->worker_entry_index].request_time = request_time;
         worker_entries[d->worker_entry_index].status = W1_PENDING;
     } else if (worker_entries[d->worker_entry_index].status == W1_PENDING) {
         // This is a sign that we are not keeping up with the polling interval.
         // Should that trigger an error?
         pthread_mutex_unlock(&worker_lock);
-        try_shutdown("DS18B20 sensor(s) didn't respond within polling interval");
+        try_shutdown("DS18B20 sensors didn't respond within polling interval");
     }
     pthread_cond_signal(&worker_cond);
     pthread_mutex_unlock(&worker_lock);
