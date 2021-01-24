@@ -143,7 +143,7 @@ class Homing:
             raise self.printer.command_error(error)
         # Check if some movement occurred
         if verify_movement and not allSteppersMoved:
-            # matts TODO: this probably isn't a valid way to check 
+            # matts TODO: this probably isn't a valid way to check
             # with remote end-stops
             if probe_pos:
                 raise self.printer.command_error(
