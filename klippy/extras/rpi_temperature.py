@@ -62,8 +62,9 @@ class RPiTemperature:
                 "RPi temperature %0.1f above maximum temperature of %0.1f."
                 % (self.temp, self.max_temp,))
 
+        mcu = self.printer.lookup_object('mcu')
         measured_time = self.reactor.monotonic()
-        self._callback(measured_time, self.temp)
+        self._callback(mcu.estimated_print_time(measured_time), self.temp)
         return measured_time + RPI_REPORT_TIME
 
     def get_status(self, eventtime):
