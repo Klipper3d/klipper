@@ -18,6 +18,8 @@ class RPiTemperature:
         self.temp = self.min_temp = self.max_temp = 0.0
 
         self.printer.add_object("rpi_temperature " + self.name, self)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
         self.sample_timer = self.reactor.register_timer(
             self._sample_pi_temperature)
         try:
