@@ -34,6 +34,8 @@ class PrinterTemperatureMCU:
         query_adc = config.get_printer().load_object(config, 'query_adc')
         query_adc.register_adc(config.get_name(), self.mcu_adc)
         # Register callbacks
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._mcu_identify)
     def setup_callback(self, temperature_callback):
