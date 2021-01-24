@@ -189,8 +189,13 @@ MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
 
+# drip feed 50ms segments during homing
 DRIP_SEGMENT_TIME = 0.050
+# allow at least 5ms to transmit a segment - TODO make this configurable
+MIN_DRIP_SEGMENT_TIME = 0.005
+# buffer a maximum of 100ms of steps on the MCU
 DRIP_TIME = 0.100
+
 class DripModeEndSignal(Exception):
     pass
 
@@ -448,44 +453,95 @@ class ToolHead:
         return self.extruder
     # Homing "drip move" handling
     def _update_drip_move_time(self, next_print_time):
-        flush_delay = DRIP_TIME + self.move_flush_time + self.kin_flush_delay
+        # MCU is not flushed fully to the print_time but lags behind a bit
+        mcu_flush_delay = self.move_flush_time + self.kin_flush_delay
+        start_time = self.mcu.estimated_print_time(self.reactor.monotonic())
         while self.print_time < next_print_time:
             if self.drip_completion.test():
                 raise DripModeEndSignal()
             curtime = self.reactor.monotonic()
             est_print_time = self.mcu.estimated_print_time(curtime)
-            wait_time = self.print_time - est_print_time - flush_delay
+            wait_time = (self.print_time - est_print_time
+                         - mcu_flush_delay - DRIP_TIME)
+            next_segment_time = min(self.print_time + DRIP_SEGMENT_TIME,
+                                    next_print_time)
+            # Must always buffer at least MIN_DRIP_SEGMENT_TIME on MCUs
+            # or they may starve and report "No next step" or "Timer too close"
+            min_print_time = (est_print_time + mcu_flush_delay
+                              + MIN_DRIP_SEGMENT_TIME)
+            for es in self.drip_endstops_with_remote_steppers:
+                if es.has_triggered():
+                    # TODO: we actually need to know if the endstop triggered
+                    # AND the remote steppers have acknowledged that they've
+                    # stopped (only relevant when homing multiple axes at once
+                    # like on a delta?)
+                    continue
+                # Limit blind move distance to avoid crashing
+                max_allowed_print_time = (es.get_last_report_time()
+                                          + self.drip_max_blind_travel_t
+                                          + mcu_flush_delay)
+                if max_allowed_print_time <= min_print_time:
+                    # TODO: proper error reporting
+                    logging.info("ERROR: Endstop %s failed to respond quickly "
+                        "enough. Last report was %fms, need %fms or later "
+                        "(%fms later than expected, %fms last trip time). "
+                        "Current time is approx %f",
+                        es.get_steppers()[0].get_name(),
+                        (es.get_last_report_time() - start_time) * 1000.0,
+                        (min_print_time - self.drip_max_blind_travel_t -
+                         mcu_flush_delay - start_time) * 1000.0,
+                        (est_print_time -
+                         es.get_next_expected_report_time()) * 1000.0,
+                        es.get_last_report_trip_time() * 1000.0,
+                        (est_print_time - start_time) * 1000.0)
+                    raise DripModeEndSignal()
+                elif max_allowed_print_time <= self.print_time:
+                    # Can't buffer any more: must wait for endstop report
+                    report_wait_time = min(0.050, max(0.001,
+                        es.get_next_expected_report_time() - est_print_time))
+                    if wait_time < report_wait_time:
+                        wait_time = report_wait_time
+                        logging.info("Waiting %fms for endstop %s "
+                            "(last report was at %fms)",
+                            report_wait_time * 1000.0,
+                            es.get_steppers()[0].get_name(),
+                            (es.get_last_report_time() - start_time) * 1000.0,
+                            (self.print_time - self.drip_max_blind_travel_t
+                                - start_time) * 1000.0)
+                elif next_segment_time > max_allowed_print_time:
+                    next_segment_time = max_allowed_print_time
+                    #if wait_time <= 0.:
+                    #    logging.info("Reducing drip feed rate to stay within "
+                    #        "safe distance of endstop %s ",
+                    #        es.get_steppers()[0].get_name())
+                else:
+                    logging.info("Safe to drip feed %fms, "
+                        "max_allowed_print_time is %fms in future",
+                        (next_segment_time - self.print_time) * 1000.0,
+                        (max_allowed_print_time - est_print_time) * 1000.0)
+            last_print_time = self.print_time
+            if wait_time > 0.:
+                next_segment_time = self.print_time
+            else:
+                wait_time = 0.
             if wait_time > 0. and self.can_pause:
                 # Pause before sending more steps
                 self.drip_completion.wait(curtime + wait_time)
-                continue
-            npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            # Limit blind move distance to avoid crashing
-            for es in self.drip_endstops_with_remote_steppers:
-                if es.has_triggered():
-                    continue
-                t = es.get_last_report_time() + self.drip_max_blind_travel_t
-                if t <= self.print_time:
-                    logging.info("Endstop %s to respond quickly enough.. last report was %f, need %f or later",
-                        es.get_steppers()[0].get_name(),
-                        es.get_last_report_time(), self.print_time - self.drip_max_blind_travel_t)
-                    
-                    # hack.. can't wait because step times have already been decided, 
-                    # this just needs to time out and fail??
-                    t = npt
+            else:
+                self._update_move_time(next_segment_time)
+            if 0:
+                logging.info("EPT %f PT %f : Currently buffered = %fms "
+                        "Wait time = %fms  Segment size = %fms  "
+                        "How far into future = %fms Safety margin = %fms",
+                        (est_print_time - start_time) * 1000.0,
+                        (self.print_time - start_time) * 1000.0,
+                        (self.print_time - est_print_time
+                            - mcu_flush_delay) * 1000.0,
+                        wait_time * 1000.0,
+                        (next_segment_time - last_print_time) * 1000.0,
+                        (next_segment_time - est_print_time) * 1000.0,
+                        (next_segment_time - min_print_time) * 1000.0)
 
-                    #es.wait_for_report(curtime + 1.0)
-                    #t = es.get_last_report_time() + self.drip_max_blind_travel_t
-                    #if t <= self.print_time:
-                    #    logging.info("Timed out waiting for endstop. last report was %f",
-                    #        es.get_last_report_time())
-                    #    raise DripModeEndSignal()
-                else:
-                    logging.info("Endstop %s last report was %f",
-                        es.get_steppers()[0].get_name(), es.get_last_report_time())
-
-                npt = min(npt, t)
-            self._update_move_time(npt)
     def drip_move(self, newpos, speed, drip_completion,
                   endstops_with_remote_steppers, max_blind_travel_d):
         # Transition from "Flushed"/"Priming"/main state to "Drip" state
@@ -499,7 +555,7 @@ class ToolHead:
         self.drip_endstops_with_remote_steppers = endstops_with_remote_steppers
         self.drip_max_blind_travel_t = max_blind_travel_d / speed
         if endstops_with_remote_steppers:
-            logging.info("Homing blind at %fmm/s with maximum drip interval "
+            logging.info("Homing at %fmm/s with maximum blind travel "
                 "of %fmm %fs", speed, max_blind_travel_d,
                 max_blind_travel_d / speed)
         # Submit move

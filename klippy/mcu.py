@@ -31,10 +31,10 @@ class MCU_stepper_group:
             "stepper_group_stop oid=%c")
 
     def stop(self):
+         self._stop_cmd.send([self._oid])
          logging.info("Stopping steppers %s on MCU %s",
             ','.join([s.get_name() for s in self._steppers]),
             self._mcu.get_name())
-         self._stop_cmd.send([self._oid])
 
 class MCU_endstop:
     RETRY_QUERY = 1.000
@@ -98,17 +98,17 @@ class MCU_endstop:
         rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         report_ticks = 0
         if report_interval:
-
-            report_interval = 0.02 # TODO: TESTING 50 reports per second
-
             report_ticks = self._mcu.print_time_to_clock(
                 print_time + report_interval) - clock
-            logging.info("Report interval = %f ticks = %d", report_interval, report_ticks)
+            logging.info("Report interval = %f ticks = %d",
+                report_interval, report_ticks)
         self._next_query_print_time = print_time + self.RETRY_QUERY
         self._min_query_time = self._reactor.monotonic()
         self._last_sent_time = 0.
         self._triggered_time = 0.
-        self._last_report_time = 0.
+        self._last_report_time = print_time
+        self._report_interval = report_interval
+        self._last_report_trip_time = 0.
         self._home_end_time = self._reactor.NEVER
         self._trigger_completion = self._reactor.completion()
         #self._report_completion = self._reactor.completion()
@@ -129,6 +129,8 @@ class MCU_endstop:
             if params['homing']:
                 self._last_sent_time = params['#sent_time']
                 self._last_report_time = t
+                self._last_report_trip_time = self._mcu.estimated_print_time(
+                    self._reactor.monotonic()) - t
                 #self._reactor.async_complete(self._report_completion, True)
             else:
                 self._triggered_time = t
@@ -173,6 +175,11 @@ class MCU_endstop:
         return params['pin_value'] ^ self._invert
     def get_last_report_time(self):
         return self._last_report_time
+    def get_next_expected_report_time(self):
+        return self._last_report_time + self._report_interval
+    def get_last_report_trip_time(self):
+        # purely for debugging/monitoring purposes
+        return self._last_report_trip_time
     def has_triggered(self):
         return self._triggered_time > 0.
     #def wait_for_report(self, time):

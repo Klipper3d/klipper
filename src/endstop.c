@@ -88,10 +88,10 @@ endstop_report_event(struct timer *t)
     if (!(e->flags & ESF_REPORT))
     {
         e->triggered_time = t->waketime;
-        t->waketime += e->report_interval;
         e->flags |= ESF_REPORT;
         sched_wake_task(&endstop_wake);
     }
+    t->waketime += e->report_interval;
     return SF_RESCHEDULE;
 }
 

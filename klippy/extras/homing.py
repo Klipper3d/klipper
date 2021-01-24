@@ -8,10 +8,9 @@ import logging, math, collections
 HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
-MAX_ENDSTOP_QUERIES_PER_SECOND = 50
-# todo: not sure about this. 1ms fudge factor to try and avoid us
-# waiting around for query results and stalling the homing move
-ENDSTOP_QUERY_OVERHEAD = 0.001
+ENDSTOP_MIN_REPORTS_PER_SECOND = 1
+ENDSTOP_MAX_REPORTS_PER_SECOND = 250
+ENDSTOP_REPORTS_PER_BLIND_MOVE = 2
 
 # State tracking during toolhead homing/probing operations
 class Homing:
@@ -56,20 +55,18 @@ class Homing:
                 endstops_with_remote_steppers.append(mcu_endstop)
         if endstops_with_remote_steppers:
             logging.info("Maximum blind travel distance %f", max_blind_travel)
-            if max_blind_travel < 0.1:
-                raise self.printer.command_error(
-                    "Cannot perform homing using endstop with remote steppers "
-                    "and maximum blind travel distance less than 0.1")
-            min_query_time = 1.0 / MAX_ENDSTOP_QUERIES_PER_SECOND
-            max_speed = max_blind_travel / (
-                min_query_time + ENDSTOP_QUERY_OVERHEAD)
+            report_dist = max_blind_travel / ENDSTOP_REPORTS_PER_BLIND_MOVE
+            max_speed = report_dist * ENDSTOP_MAX_REPORTS_PER_SECOND
             logging.info("Maximum blind travel speed %f", max_speed)
             if speed > max_speed:
                 raise self.printer.command_error("Cannot perform homing using "
-                    "endstop with remote steppers at a query rate greater "
-                    "than %d/s which equates to a travel speed of %f" % (
-                    MAX_ENDSTOP_QUERIES_PER_SECOND, max_speed))
-            report_time = max_blind_travel / speed - ENDSTOP_QUERY_OVERHEAD
+                    "endstop with remote steppers at a reporting rate greater "
+                    "than %d/s which equates to a travel speed of %f. "
+                    "Move the endstop further away from the end of the rail or "
+                    "decrease the homing speed." % (
+                    ENDSTOP_MAX_REPORTS_PER_SECOND, max_speed))
+            max_report_time = 1.0 / ENDSTOP_MIN_REPORTS_PER_SECOND
+            report_time = min(report_dist / speed, max_report_time)
         else:
             report_time = 0.0
         # Notify start of homing/probing move
