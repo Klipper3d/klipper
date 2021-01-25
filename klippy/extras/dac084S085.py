@@ -1,6 +1,7 @@
 # SPI DAC DAC084S085 implementation
 #
-# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2021  Lorenzo Franco <lorenzo.franco@lorenzing.com>
+# Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import bus
