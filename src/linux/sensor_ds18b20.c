@@ -17,6 +17,11 @@
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
 
+/****************************************************************
+ * Worker Thread Data
+ ****************************************************************/
+
+// Status of a reader
 enum {
     W1_IDLE = 0, // No requests
     W1_READ_REQUESTED = 1, // Reading or waiting to read
@@ -24,10 +29,8 @@ enum {
     W1_ERROR = 3, // Request shutdown
 };
 
-enum {
-    TS_PENDING = 1,
-};
-
+// Each reader is associated an open file descriptor for a sysfs entry
+// to read 1-wire temperature data
 struct ds18_sysfs_reader_s {
     int temperature;
     uint32_t request_time;
@@ -37,35 +40,28 @@ struct ds18_sysfs_reader_s {
 };
 
 struct ds18_worker_s {
-    pthread_t tid;
-    // Lock all reads/writes to readers and readers_count.
-    // The worker thread will read and seek file descriptors without obtaining a lock.
+    // Protect all reads/writes to readers and readers_count.
+    // Exception: The worker thread will read and seek file descriptors without locking the mutex.
+    // Do not access the reader file descriptors from the main thread outside of command_config_ds18b20.
     pthread_mutex_t lock;
     pthread_cond_t cond;
     struct ds18_sysfs_reader_s readers[4];
     int readers_count;
 };
 
-struct ds18_s {
-    struct timer timer;
-    struct ds18_worker_s* worker; // Always a reference to the same single worker
-    uint32_t rest_time;
-    int32_t min_value, max_value;
-    uint8_t flags;
-    uint8_t reader_index;
-};
-
-// This struct instance holds state for every reader.
+// This struct instance holds state for all reader.
 static struct ds18_worker_s worker = {
     .lock = PTHREAD_MUTEX_INITIALIZER,
     .cond = PTHREAD_COND_INITIALIZER
 };
-// Thread for worker will be started once with the first configured device.
-int worker_started;
 
-// Set error status and message for the reader at the specified index
+/****************************************************************
+ * Worker Thread and Helpers
+ ****************************************************************/
+
+// Lock worker mutex, set error status and message for the reader at the specified index, unlock mutex.
 static void
-set_reader_error(struct ds18_worker_s *w, uint8_t reader_index, const char *error)
+locking_set_reader_error(struct ds18_worker_s *w, uint8_t reader_index, const char *error)
 {
     pthread_mutex_lock(&w->lock);
     w->readers[reader_index].error = error;
@@ -92,6 +88,8 @@ get_next_reader_index(struct ds18_worker_s *w)
     return reader_index;
 }
 
+// This is the main worker routine, which reads one sensor at a time as reads are
+// requested by ds18_task.
 static void *
 worker_start_routine(void *param) {
     struct ds18_worker_s *w = param;
@@ -117,13 +115,13 @@ worker_start_routine(void *param) {
         int ret = read(fd, data, sizeof(data)-1);
         if (ret < 0) {
             report_errno("read DS18B20", ret);
-            set_reader_error(w, reader_index, "Unable to read DS18B20");
+            locking_set_reader_error(w, reader_index, "Unable to read DS18B20");
             pthread_exit(NULL);
         }
         data[ret] = '\0';
         char *temp_string = strstr(data, "t=");
         if (temp_string == NULL || temp_string[2] == '\0') {
-            set_reader_error(w, reader_index, "Unable to find temperature value in DS18B20 report");
+            locking_set_reader_error(w, reader_index, "Unable to find temperature value in DS18B20 report");
             pthread_exit(NULL);
         }
         temp_string += 2;
@@ -139,14 +137,33 @@ worker_start_routine(void *param) {
         ret = lseek(fd, 0, SEEK_SET);
         if (ret < 0) {
             report_errno("seek DS18B20", ret);
-            set_reader_error(w, reader_index, "Unable to seek DS18B20");
+            locking_set_reader_error(w, reader_index, "Unable to seek DS18B20");
             pthread_exit(NULL);
         }
     }
     pthread_exit(NULL);
 }
 
+/****************************************************************
+ * Main Thread
+ ****************************************************************/
+
+enum {
+    TS_PENDING = 1,
+};
+
+struct ds18_s {
+    struct timer timer;
+    struct ds18_worker_s* worker; // Always a reference to the same single worker
+    uint32_t rest_time;
+    int32_t min_value, max_value;
+    uint8_t flags;
+    uint8_t reader_index;
+};
+
 static struct task_wake ds18_wake;
+static int worker_started;
+pthread_t worker_tid;
 
 static uint_fast8_t
 ds18_event(struct timer *timer)
@@ -189,13 +206,13 @@ command_config_ds18b20(uint32_t *args)
     // Sensors share one worker thread. If this is the first sensor configured,
     // start the worker.
     if (!worker_started) {
-        if (pthread_create(&worker.tid, NULL, worker_start_routine, &worker) != 0) {
+        if (pthread_create(&worker_tid, NULL, worker_start_routine, &worker) != 0) {
             goto fail4;
         }
         worker_started = 1;
     }
 
-    // Add entry for worker thread.
+    // Add new reader to worker thread
     pthread_mutex_lock(&worker.lock);
     if (worker.readers_count >= ARRAY_SIZE(worker.readers)) {
         pthread_mutex_unlock(&worker.lock);
@@ -258,10 +275,9 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         r->status = W1_READ_REQUESTED;
     } else if (r->status == W1_READY) {
         // Report the previous temperature and request a new one.
-        int val = r->temperature;
         sendf("ds18_result oid=%c next_clock=%u value=%i"
-              , oid, next_begin_time, val);
-        if (val < d->min_value || val > d->max_value) {
+              , oid, next_begin_time, r->temperature);
+        if (r->temperature < d->min_value || r->temperature > d->max_value) {
             pthread_mutex_unlock(&w->lock);
             try_shutdown("DS18B20 out of range");
         }
