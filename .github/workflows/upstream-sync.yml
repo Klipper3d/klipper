@@ -1,0 +1,49 @@
+name: Upstream sync
+
+on:
+  schedule:
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync
+        uses: tgymnich/fork-sync@v1.3.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: KevinOConnor
+          base: snapshot
+          head: master
+          merge_method: merge
+          pr_title: Upstream sync
+          ignore_fail: false
+      - name: Checkout snapshot
+        uses: actions/checkout@v2
+        with:
+          ref: snapshot
+      - name: Generate tag parameters
+        id: params
+        run: |
+          echo "::set-output name=tagname::snapshot-$(date +'%Y-%m-%d')"
+          echo "::set-output name=tagsha::$(git log -1 --format=%H)"
+      - name: Create tag
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tagResponse = await github.git.createTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: "${{ steps.params.outputs.tagname }}",
+              message: "/!\\ This is an automated, untested release. Use at your own risk /!\\",
+              object: "${{ steps.params.outputs.tagsha }}",
+              type: "commit"
+            })
+            await github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tagResponse.data.tag}`,
+              sha: `${tagResponse.data.sha}`
+            })
