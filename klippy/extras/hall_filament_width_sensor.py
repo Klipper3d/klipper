@@ -152,7 +152,11 @@ class HallFilamentWidthSensor:
         else:
             self.gcode.run_script("M221 S100")
             self.filament_array = []
-        return eventtime + 1
+
+        if self.is_active:
+            return eventtime + 1
+        else:
+            return self.reactor.NEVER
 
     def cmd_M407(self, gcmd):
         response = ""
