@@ -3025,6 +3025,11 @@ lcd_type:
 #   Controller" type displays), "uc1701" (which is used in "MKS Mini
 #   12864" type displays), "ssd1306", or "sh1106". This parameter must
 #   be provided.
+#hd44780_protocol_init: True
+#    Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#    This is necessary on real hd44780 devices.  However, one may
+#    need to disable this on some "clone" devices.  The default
+#    is True.
 #rs_pin:
 #e_pin:
 #d4_pin:
