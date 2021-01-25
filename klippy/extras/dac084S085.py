@@ -1,6 +1,6 @@
 # SPI DAC DAC084S085 implementation
 #
-# Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2021 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import bus
@@ -17,7 +17,7 @@ class dac084S085:
                                   minval=0., maxval=255)
 
             if vref is not None:
-                buff = 0x01 << 12
+                	buff = 0x01 << 12
 	    	buff |= (channel[i]) << 14
 	    	buff |= vref << 4
 	    	self.spi.spi_send([buff])
