@@ -63,14 +63,33 @@ static struct ds18_worker_s worker = {
 // Thread for worker will be started once with the first configured device.
 int worker_started;
 
-// Set error status and message for the specified worker entry
+// Set error status and message for the reader at the specified index
 static void
-set_worker_error(struct ds18_worker_s *w, uint8_t reader_index, const char *error)
+set_reader_error(struct ds18_worker_s *w, uint8_t reader_index, const char *error)
 {
     pthread_mutex_lock(&w->lock);
     w->readers[reader_index].error = error;
     w->readers[reader_index].status = W1_ERROR;
     pthread_mutex_unlock(&w->lock);
+}
+
+// Return the index of the earliest-requested reader with status W1_READ_REQUESTED, or -1 if none found.
+// Caller is responsible for holding the w->lock mutex during this call and for reads/writes to returned reader.
+static int
+get_next_reader_index(struct ds18_worker_s *w)
+{
+    int reader_index = -1;
+    uint32_t earliest_time; // Only valid if reader_index != -1
+    if (w->readers_count > 0) {
+        for (int i = 0; i < w->readers_count; i++) {
+            if (w->readers[i].status == W1_READ_REQUESTED &&
+                (reader_index == -1 ||  timer_is_before(earliest_time, w->readers[i].request_time))) {
+                reader_index = i;
+                earliest_time = w->readers[i].request_time;
+            }
+        }
+    }
+    return reader_index;
 }
 
 static void *
@@ -82,21 +101,7 @@ worker_start_routine(void *param) {
 
         // Wait for requests to read temperature sensors
         pthread_mutex_lock(&w->lock);
-        for (;;) {
-            // Find the pending entry (if any) with the earliest request time.
-            reader_index = -1;
-            uint32_t earliest_time; // Only valid if reader_index != -1
-            if (w->readers_count > 0) {
-                for (int i = 0; i < w->readers_count; i++) {
-                    if (w->readers[i].status == W1_READ_REQUESTED &&
-                        (reader_index == -1 ||  timer_is_before(earliest_time, w->readers[i].request_time))) {
-                        reader_index = i;
-                        earliest_time = w->readers[i].request_time;
-                    }
-                }
-            }
-            if (reader_index != -1)
-                break;
+        while ((reader_index = get_next_reader_index(w)) == -1) {
             pthread_cond_wait(&w->cond, &w->lock);
         }
         fd = w->readers[reader_index].fd;
@@ -112,13 +117,13 @@ worker_start_routine(void *param) {
         int ret = read(fd, data, sizeof(data)-1);
         if (ret < 0) {
             report_errno("read DS18B20", ret);
-            set_worker_error(w, reader_index, "Unable to read DS18B20");
+            set_reader_error(w, reader_index, "Unable to read DS18B20");
             pthread_exit(NULL);
         }
         data[ret] = '\0';
         char *temp_string = strstr(data, "t=");
         if (temp_string == NULL || temp_string[2] == '\0') {
-            set_worker_error(w, reader_index, "Unable to find temperature value in DS18B20 report");
+            set_reader_error(w, reader_index, "Unable to find temperature value in DS18B20 report");
             pthread_exit(NULL);
         }
         temp_string += 2;
@@ -134,7 +139,7 @@ worker_start_routine(void *param) {
         ret = lseek(fd, 0, SEEK_SET);
         if (ret < 0) {
             report_errno("seek DS18B20", ret);
-            set_worker_error(w, reader_index, "Unable to seek DS18B20");
+            set_reader_error(w, reader_index, "Unable to seek DS18B20");
             pthread_exit(NULL);
         }
     }
