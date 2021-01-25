@@ -4,7 +4,7 @@
 # Copyright (C) 2020  Janar Sööt <janar.soot@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, ast
+import os, logging, ast, re
 from string import Template
 from . import menu_keys
 
@@ -29,7 +29,6 @@ class MenuElement(object):
         self._index = kwargs.get('index', None)
         self._enable = kwargs.get('enable', True)
         self._name = kwargs.get('name', None)
-        self._scroll = kwargs.get('scroll', False)
         self._enable_tpl = self._name_tpl = None
         if config is not None:
             # overwrite class attributes from config
@@ -87,7 +86,7 @@ class MenuElement(object):
 
     # override
     def is_scrollable(self):
-        return bool(self._scroll)
+        return True
 
     # override
     def is_enabled(self):
@@ -146,13 +145,22 @@ class MenuElement(object):
         if self.__scroll_diff == 0:
             self.__scroll_diff = difference
 
+    def __slice_name(self, name, index):
+        chunks = []
+        for i, text in enumerate(re.split(r'(\~.*?\~)', name)):
+            if i & 1 == 0:  # text
+                chunks += text
+            else:  # glyph placeholder
+                chunks.append(text)
+        return "".join(chunks[index:])
+
     def render_name(self, selected=False):
-        s = str(self._render_name())
+        name = str(self._render_name())
         if selected and self.__scroll_offs is not None:
-            s = s[abs(self.__scroll_offs):]
+            name = self.__slice_name(name, abs(self.__scroll_offs))
         else:
             self.__init_scroller()
-        return s
+        return name
 
     def get_ns(self, name='.'):
         name = str(name).strip()
@@ -652,8 +660,7 @@ class MenuVSDList(MenuList):
             files = sdcard.get_file_list()
             for fname, fsize in files:
                 self.insert_item(self.manager.menuitem_from(
-                    'command', name=repr(fname), scroll=True,
-                    gcode='M23 /%s' % str(fname)))
+                    'command', name=repr(fname), gcode='M23 /%s' % str(fname)))
 
 
 menu_items = {
