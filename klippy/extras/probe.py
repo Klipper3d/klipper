@@ -46,6 +46,7 @@ class PrinterProbe:
                                                  minval=0.)
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
+        self.ignore_first = config.getboolean('ignore_first' , False)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -177,11 +178,12 @@ class PrinterProbe:
                 self._move(liftpos, lift_speed)
         if must_notify_multi_probe:
             self.multi_probe_end()
+        # Filter out first value
+        if self.ignore_first:
+            positions = positions[1:]
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
-        elif samples_result == 'last':
-            return positions[-1]
         return self._calc_mean(positions)
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
