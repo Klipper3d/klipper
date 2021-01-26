@@ -39,7 +39,7 @@ class PrinterProbe:
         self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
-        atypes = {'median': 'median', 'average': 'average', 'last': 'last'}
+        atypes = {'median': 'median', 'average': 'average'}
         self.samples_result = config.getchoice('samples_result', atypes,
                                                'average')
         self.samples_tolerance = config.getfloat('samples_tolerance', 0.100,
