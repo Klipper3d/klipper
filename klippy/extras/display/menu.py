@@ -49,8 +49,8 @@ class MenuElement(object):
             self._ns = Template(
                 'menu ' + kwargs.get('ns', __id)).safe_substitute(__id=__id)
         self._last_heartbeat = None
-        self.__scroll_offs = None
-        self.__scroll_diff = 0
+        self.__scroll_pos = None
+        self.__scroll_next = False
         self.__last_state = True
         # menu scripts
         self._scripts = {}
@@ -117,7 +117,7 @@ class MenuElement(object):
 
     # Called when a item is selected
     def select(self):
-        self.__init_scroller()
+        self.__reset_scroller()
 
     def heartbeat(self, eventtime):
         self._last_heartbeat = eventtime
@@ -127,23 +127,21 @@ class MenuElement(object):
             if not self.is_editing():
                 self.__update_scroller()
 
-    def __init_scroller(self):
-        self.__scroll_offs = None
-        self.__scroll_diff = 0
-
     def __update_scroller(self):
-        if self.__scroll_offs is None and self.__scroll_diff > 0:
-            self.__scroll_offs = 0
-        elif self.__scroll_diff > 0:
-            self.__scroll_offs += 1
-            if self.__scroll_offs >= self.__scroll_diff:
-                self.__scroll_offs = -self.__scroll_diff
+        if self.__scroll_pos is None and self.__scroll_next is True:
+            self.__scroll_pos = 0
+        elif self.__scroll_next is True:
+            self.__scroll_pos += 1
+            self.__scroll_next = False
         else:
-            self.__init_scroller()
+            self.__reset_scroller()
 
-    def start_scroller(self, difference):
-        if self.__scroll_diff == 0:
-            self.__scroll_diff = difference
+    def __reset_scroller(self):
+        self.__scroll_pos = None
+        self.__scroll_next = False
+
+    def scroller(self, value):
+        self.__scroll_next = value
 
     def __slice_name(self, name, index):
         chunks = []
@@ -156,10 +154,10 @@ class MenuElement(object):
 
     def render_name(self, selected=False):
         name = str(self._render_name())
-        if selected and self.__scroll_offs is not None:
-            name = self.__slice_name(name, abs(self.__scroll_offs))
+        if selected and self.__scroll_pos is not None:
+            name = self.__slice_name(name, self.__scroll_pos)
         else:
-            self.__init_scroller()
+            self.__reset_scroller()
         return name
 
     def get_ns(self, name='.'):
@@ -636,9 +634,13 @@ class MenuList(MenuContainer):
                 # draw item name
                 tpos = display.draw_text(y, ppos, text.ljust(width), eventtime)
                 # check scroller
-                diff = (tpos - ppos) - width
-                if (selected and diff > 0 and current.is_scrollable()):
-                    current.start_scroller(diff)
+                if (selected and tpos > self.manager.cols
+                        and current.is_scrollable()):
+                    # scroll next
+                    current.scroller(True)
+                else:
+                    # reset scroll
+                    current.scroller(None)
                 # draw item suffix
                 if suffix:
                     display.draw_text(
