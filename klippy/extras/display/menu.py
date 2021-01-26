@@ -133,14 +133,23 @@ class MenuElement(object):
         elif self.__scroll_next is True:
             self.__scroll_pos += 1
             self.__scroll_next = False
-        else:
+        elif self.__scroll_next is False:
+            pass  # hold scroll position
+        elif self.__scroll_next is None:
             self.__reset_scroller()
 
     def __reset_scroller(self):
         self.__scroll_pos = None
         self.__scroll_next = False
 
-    def scroller(self, value):
+    def need_scroller(self, value):
+        """
+        Allows to control the scroller
+        Parameters:
+            value (bool, None): True  - inc. scroll pos. on next update
+                                False - hold scroll pos.
+                                None  - reset the scroller
+        """
         self.__scroll_next = value
 
     def __slice_name(self, name, index):
@@ -637,10 +646,10 @@ class MenuList(MenuContainer):
                 if (selected and tpos > self.manager.cols
                         and current.is_scrollable()):
                     # scroll next
-                    current.scroller(True)
+                    current.need_scroller(True)
                 else:
-                    # reset scroll
-                    current.scroller(None)
+                    # reset scroller
+                    current.need_scroller(None)
                 # draw item suffix
                 if suffix:
                     display.draw_text(
