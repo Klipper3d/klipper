@@ -50,8 +50,8 @@ class MenuElement(object):
                 'menu ' + kwargs.get('ns', __id)).safe_substitute(__id=__id)
         self._last_heartbeat = None
         self.__scroll_pos = None
-        self.__scroll_next = False
-        self.__last_state = True
+        self.__scroll_request_pending = False
+        self.__scroll_next = 0
         # menu scripts
         self._scripts = {}
         # init
@@ -121,26 +121,25 @@ class MenuElement(object):
 
     def heartbeat(self, eventtime):
         self._last_heartbeat = eventtime
-        state = bool(int(eventtime) & 1)
-        if self.__last_state ^ state:
-            self.__last_state = state
+        if eventtime >= self.__scroll_next:
+            self.__scroll_next = eventtime + 0.5
             if not self.is_editing():
                 self.__update_scroller()
 
     def __update_scroller(self):
-        if self.__scroll_pos is None and self.__scroll_next is True:
+        if self.__scroll_pos is None and self.__scroll_request_pending is True:
             self.__scroll_pos = 0
-        elif self.__scroll_next is True:
+        elif self.__scroll_request_pending is True:
             self.__scroll_pos += 1
-            self.__scroll_next = False
-        elif self.__scroll_next is False:
+            self.__scroll_request_pending = False
+        elif self.__scroll_request_pending is False:
             pass  # hold scroll position
-        elif self.__scroll_next is None:
+        elif self.__scroll_request_pending is None:
             self.__reset_scroller()
 
     def __reset_scroller(self):
         self.__scroll_pos = None
-        self.__scroll_next = False
+        self.__scroll_request_pending = False
 
     def need_scroller(self, value):
         """
@@ -150,7 +149,7 @@ class MenuElement(object):
                                 False - hold scroll pos.
                                 None  - reset the scroller
         """
-        self.__scroll_next = value
+        self.__scroll_request_pending = value
 
     def __slice_name(self, name, index):
         chunks = []
