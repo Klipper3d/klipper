@@ -215,7 +215,7 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READY) {
         // Report the previous temperature and request a new one.
-        sendf("ds18_result oid=%c next_clock=%u value=%i"
+        sendf("ds18b20_result oid=%c next_clock=%u value=%i"
               , oid, next_begin_time, d->temperature);
         if (d->temperature < d->min_value || d->temperature > d->max_value) {
             pthread_mutex_unlock(&d->lock);

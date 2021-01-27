@@ -35,12 +35,12 @@ class DS18B20:
                 self.min_temp * 1000, self.max_temp * 1000), is_init=True)
 
     def _handle_ds18b20_response(self, params):
-        temp = params['value']
-        logging.info("Temp: " + temp)
+        temp = params['value'] / 1000.0
+        logging.info("Temp: %f" % temp)
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
-        self._callback(last_read_time, temp / 1000.0)
+        self._callback(last_read_time, temp)
 
     def setup_minmax(self, min_temp, max_temp):
         pass
