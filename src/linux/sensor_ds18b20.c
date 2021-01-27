@@ -157,13 +157,17 @@ command_config_ds18b20(uint32_t *args)
     d->timer.func = ds18_event;
     d->fd = fd;
     d->status = W1_IDLE;
-    pthread_mutex_init(&d->lock, NULL);
-    pthread_cond_init(&d->cond, NULL);
-
-    pthread_t reader_tid; // Do we need
-    if (pthread_create(&reader_tid, NULL, reader_start_routine, d) != 0) {
+    ret = pthread_mutex_init(&d->lock, NULL);
+    if (ret)
         goto fail4;
-    }
+    ret = pthread_cond_init(&d->cond, NULL);
+    if (ret)
+        goto fail5;
+
+    pthread_t reader_tid; // Not used
+    ret = pthread_create(&reader_tid, NULL, reader_start_routine, d);
+    if (ret)
+        goto fail6;
 
     return;
 fail1:
@@ -173,7 +177,11 @@ fail2:
 fail3:
     shutdown("Invalid DS18B20 serial id 3");
 fail4:
-    shutdown("Could not start reader thread");
+    shutdown("Could not start reader thread 4");
+fail5:
+    shutdown("Could not start reader thread 5");
+fail6:
+    shutdown("Could not start reader thread 6");
 }
 DECL_COMMAND(command_config_ds18b20, "config_ds18b20 oid=%c serial=%*s");
 
