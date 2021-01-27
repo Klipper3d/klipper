@@ -10,12 +10,15 @@
 #include <string.h> // memchr
 #include <unistd.h> // read
 #include <pthread.h> // pthread_create
+#include <time.h> // clock_gettime
 #include "basecmd.h" // oid_alloc
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // output
 #include "command.h" // DECL_COMMAND
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
+
+#define W1_READ_TIMEOUT_SEC 5
 
 // Status of a sensor
 enum {
@@ -46,7 +49,7 @@ struct ds18_s {
     // Protect all reads/writes to the following members using the mutex
     // once reader thread is initialized.
     int temperature;
-    uint32_t request_time;
+    struct timespec request_time;
     uint8_t status;
     const char* error;
 };
@@ -207,7 +210,14 @@ DECL_COMMAND(command_query_ds18b20,
 static void
 ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 {
-    uint32_t request_time = timer_read_time();
+    struct timespec request_time;
+    int ret = clock_gettime(CLOCK_MONOTONIC, &request_time);
+    if (ret == -1) {
+        report_errno("get monotonic clock time", ret);
+        try_shutdown("Error getting monotonic clock time");
+        return;
+    }
+
     pthread_mutex_lock(&d->lock);
     if (d->status == W1_ERROR) {
         // Can't pass read error to try_shutdown, which expects a static string.
@@ -233,11 +243,18 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->request_time = request_time;
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READ_REQUESTED) {
-        // This is a sign that we are not keeping up with the polling interval.
-        // Should that trigger an error?
-        pthread_mutex_unlock(&d->lock);
-        try_shutdown("DS18B20 sensors didn't respond within polling interval");
-        return;
+        // Reader thread is already reading (or will be soon).
+        // This could happen if two or more queries come in quick enough succession.
+        // In that case, we want to wait for the existing read to complete.
+        // This could also happen if the reader thread has hung,
+        // in which case something is wrong and we should exit.
+        // To tell the difference, see if the request time is
+        // too far in the past.
+        if (request_time.tv_sec - d->request_time.tv_sec > W1_READ_TIMEOUT_SEC) {
+            pthread_mutex_unlock(&d->lock);
+            try_shutdown("DS18B20 sensor didn't respond in time");
+            return;
+        }
     }
     pthread_cond_signal(&d->cond);
     pthread_mutex_unlock(&d->lock);
