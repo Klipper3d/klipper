@@ -85,10 +85,6 @@
  #error No known CAN device for configured MCU
 #endif
 
-// TXFP makes packets posted to the TX mboxes transmit in chronologcal order
-// ABOM makes the hardware automatically leave bus-off state
-#define MCR_FLAGS (CAN_MCR_TXFP | CAN_MCR_ABOM)
-
 static uint16_t MyCanId = 0;
 
 static int
@@ -108,13 +104,9 @@ static void
 can_transmit_mbox(uint32_t id, int mbox, uint32_t dlc, uint8_t *pkt)
 {
     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
-    /* Set up the Id */
-    mb->TIR &= CAN_TI0R_TXRQ;
-    mb->TIR |= (id << CAN_TI0R_STID_Pos);
 
     /* Set up the DLC */
-    mb->TDTR &= 0xFFFFFFF0U;
-    mb->TDTR |= (dlc & 0xFU);
+    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (dlc & 0x0F);
 
     /* Set up the data field */
     if (pkt) {
@@ -129,8 +121,7 @@ can_transmit_mbox(uint32_t id, int mbox, uint32_t dlc, uint8_t *pkt)
     }
 
     /* Request transmission */
-    __sync_synchronize(); // disable write optimization
-    mb->TIR |= CAN_TI0R_TXRQ;
+    mb->TIR = (id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
 }
 
 // Blocking transmit function, it can race with the IRQ driven TX handler.
@@ -290,32 +281,32 @@ CAN_IRQHandler(void)
         // Mailbox 0
         while (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
             CAN_RxCpltCallback(0);
-            SOC_CAN->RF0R |= CAN_RF0R_RFOM0;
+            SOC_CAN->RF0R = CAN_RF0R_RFOM0;
         }
     }
     if (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
         // Mailbox 1
         while (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
             CAN_RxCpltCallback(1);
-            SOC_CAN->RF1R |= CAN_RF1R_RFOM1;
+            SOC_CAN->RF1R = CAN_RF1R_RFOM1;
         }
     }
 
     /* Check Overrun flag for FIFO0 */
     if (SOC_CAN->RF0R & CAN_RF0R_FOVR0) {
         /* Clear FIFO0 Overrun Flag */
-        SOC_CAN->RF0R |= CAN_RF0R_FOVR0;
+        SOC_CAN->RF0R = CAN_RF0R_FOVR0;
     }
     /* Check Overrun flag for FIFO1 */
     if (SOC_CAN->RF1R & CAN_RF1R_FOVR1) {
         /* Clear FIFO1 Overrun Flag */
-        SOC_CAN->RF1R |= CAN_RF1R_FOVR1;
+        SOC_CAN->RF1R = CAN_RF1R_FOVR1;
     }
 
     // TX
     if (SOC_CAN->IER & CAN_IER_TMEIE) {  // TX IRQ enabled
         if (!CAN_TxIrq())
-            SOC_CAN->IER &= ~CAN_IER_TMEIE; // Disable TXIRQ
+            SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_FMPIE1; // Disable TXIRQ
     }
 }
 
@@ -381,19 +372,17 @@ can_init(void)
 
     /*##-1- Configure the CAN #######################################*/
 
-    /* Exit from sleep mode */
-    SOC_CAN->MCR &= ~(CAN_MCR_SLEEP);
     /* Request initialisation */
-    SOC_CAN->MCR |= CAN_MCR_INRQ;
+    SOC_CAN->MCR = CAN_MCR_INRQ;
     /* Wait the acknowledge */
     while (!(SOC_CAN->MSR & CAN_MSR_INAK))
         ;
 
-    SOC_CAN->MCR |= MCR_FLAGS;
     SOC_CAN->BTR = btr;
 
-    /* Request leave initialisation */
-    SOC_CAN->MCR &= ~(CAN_MCR_INRQ);
+    // TXFP makes packets posted to the TX mboxes transmit in chronologcal order
+    // ABOM makes the hardware automatically leave bus-off state
+    SOC_CAN->MCR = CAN_MCR_TXFP | CAN_MCR_ABOM;
     /* Wait the acknowledge */
     while (SOC_CAN->MSR & CAN_MSR_INAK)
         ;
@@ -403,7 +392,7 @@ can_init(void)
 
     /*##-3- Configure Interrupts #################################*/
 
-    SOC_CAN->IER |= (CAN_IER_FMPIE0 | CAN_IER_FMPIE1); // RX mailbox IRQ
+    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_FMPIE1; // RX mailbox IRQ
 
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_RX1_IRQn)
@@ -424,5 +413,5 @@ serial_enable_tx_irq(void)
         // Serial port not initialized
         return;
 
-    SOC_CAN->IER |= CAN_IER_TMEIE; // TX mailbox IRQ
+    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_FMPIE1 | CAN_IER_TMEIE;
 }
