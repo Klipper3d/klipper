@@ -91,12 +91,8 @@ static int
 can_find_empty_tx_mbox(void)
 {
     uint32_t tsr = SOC_CAN->TSR;
-    if (tsr & CAN_TSR_TME0)
-        return 0;
-    if (tsr & CAN_TSR_TME1)
-        return 1;
-    if (tsr & CAN_TSR_TME2)
-        return 2;
+    if (tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))
+        return (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
     return -1;
 }
 
