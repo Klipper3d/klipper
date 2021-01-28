@@ -89,8 +89,6 @@
 // ABOM makes the hardware automatically leave bus-off state
 #define MCR_FLAGS (CAN_MCR_TXFP | CAN_MCR_ABOM)
 
-#define CAN_FILTER_NUMBER 0
-
 static uint16_t MyCanId = 0;
 
 static int
@@ -209,6 +207,35 @@ CAN_TxIrq(void)
     return txdata;
 }
 
+#define CAN_FILTER_NUMBER 0
+
+static void
+can_set_filter(uint32_t id1, uint32_t id2)
+{
+    uint32_t filternbrbitpos = 1 << CAN_FILTER_NUMBER;
+
+    /* Select the start slave bank */
+    SOC_CAN->FMR |= CAN_FMR_FINIT;
+    /* Initialisation mode for the filter */
+    SOC_CAN->FA1R = 0;
+
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 = id1 << (5 + 16);
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 = id2 << (5 + 16);
+
+    /* Identifier list mode for the filter */
+    SOC_CAN->FM1R = filternbrbitpos;
+    /* 32-bit scale for the filter */
+    SOC_CAN->FS1R = filternbrbitpos;
+
+    /* FIFO 0 assigned for the filter */
+    SOC_CAN->FFA1R = 0;
+
+    /* Filter activation */
+    SOC_CAN->FA1R = filternbrbitpos;
+    /* Leave the initialisation mode for the filter */
+    SOC_CAN->FMR &= ~CAN_FMR_FINIT;
+}
+
 static void
 CAN_RxCpltCallback(unsigned int mbox)
 {
@@ -228,20 +255,8 @@ CAN_RxCpltCallback(unsigned int mbox)
             // compare my UUID with packet to check if this packet mine
             get_rx_data(databuf, mbox);
             if (memcmp(&(databuf[2]), short_uuid, SHORT_UUID_LEN) == 0) {
-                memcpy(&MyCanId, databuf, sizeof(uint16_t));
-                /* Set new filter values */
-                uint32_t filternbrbitpos = (1U) << CAN_FILTER_NUMBER;
-                SOC_CAN->FA1R &= ~(filternbrbitpos);
-                /* Personal ID */
-                SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
-                        ((uint32_t)(MyCanId<<5) << 16U);
-                /* Catch reset command */
-                SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
-                        ((uint32_t)(PKT_ID_UUID<<5) << 16U);
-                /* Filter activation */
-                SOC_CAN->FA1R |= filternbrbitpos;
-                /* Leave the initialisation mode for the filter */
-                SOC_CAN->FMR &= ~(CAN_FMR_FINIT);
+                MyCanId = databuf[0] | (databuf[1] << 8);
+                can_set_filter(MyCanId, PKT_ID_UUID);
             }
         }
     } else {
@@ -384,30 +399,7 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    uint32_t filternbrbitpos = (1U) << CAN_FILTER_NUMBER;
-
-    /* Select the start slave bank */
-    SOC_CAN->FMR |= CAN_FMR_FINIT;
-    /* Initialisation mode for the filter */
-    SOC_CAN->FA1R &= ~(filternbrbitpos);
-
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 =
-            ((uint32_t)(PKT_ID_UUID<<5) << 16U);
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 =
-            ((uint32_t)(PKT_ID_SET<<5) << 16U);
-
-    /* Identifier list mode for the filter */
-    SOC_CAN->FM1R |= filternbrbitpos;
-    /* 32-bit scale for the filter */
-    SOC_CAN->FS1R |= filternbrbitpos;
-
-    /* FIFO 0 assignation for the filter */
-    SOC_CAN->FFA1R &= ~(filternbrbitpos);
-
-    /* Filter activation */
-    SOC_CAN->FA1R |= filternbrbitpos;
-    /* Leave the initialisation mode for the filter */
-    SOC_CAN->FMR &= ~(CAN_FMR_FINIT);
+    can_set_filter(PKT_ID_UUID, PKT_ID_SET);
 
     /*##-3- Configure Interrupts #################################*/
 
