@@ -20,9 +20,10 @@ class VibrationPulseTest:
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
         self.min_freq = config.getfloat('min_freq', 5., minval=1.)
-        self.max_freq = config.getfloat('max_freq', 120.,
+        # Defaults are such that max_freq * accel_per_hz == 10000 (max_accel)
+        self.max_freq = config.getfloat('max_freq', 10000. / 75.,
                                         minval=self.min_freq, maxval=200.)
-        self.accel_per_hz = config.getfloat('accel_per_hz', 75.0, above=0.)
+        self.accel_per_hz = config.getfloat('accel_per_hz', 75., above=0.)
         self.hz_per_sec = config.getfloat('hz_per_sec', 1.,
                                           minval=0.1, maxval=2.)
 
