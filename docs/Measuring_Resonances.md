@@ -99,7 +99,12 @@ Measuring the resonances
 
 ## Checking the setup
 
-Now you can test a connection. In Octoprint, run `ACCELEROMETER_QUERY`. You
+Now you can test a connection.
+
+- For "non bed-slingers" (e.g. one accelerometer), in Octoprint, enter `ACCELEROMETER_QUERY`
+- For "bed-slingers" (e.g. more than one accelerometer), enter `ACCELEROMETER_QUERY CHIP=adxl345_x` where `adxl345_x` is the name of the chip as-entered (see: [bed-slinger](#bed-slinger-printers)).
+
+In Octoprint, run `ACCELEROMETER_QUERY`. You
 should see the current measurements from the accelerometer, including the
 free-fall acceleration, e.g.
 ```
@@ -215,8 +220,8 @@ cs_pin: rpi:None
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
-accel_chip_x: adxl345_x
-accel_chip_y: adxl345_y
+accel_chip_x: adxl345 adxl345_x
+accel_chip_y: adxl345 adxl345_y
 probe_points: ...
 ```
 

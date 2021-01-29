@@ -29,6 +29,8 @@ communication with the Klipper developers.
   - [BL-Touch](BLTouch.md): Configure a "BL-Touch" Z probe.
   - [Manual level](Manual_Level.md): Calibration of Z endstops (and
     similar).
+  - [Bed Mesh](Bed_Mesh.md): Bed height correction based on XY
+    locations.
   - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
     positioning.
 - [Resonance compensation](Resonance_Compensation.md): A tool to
