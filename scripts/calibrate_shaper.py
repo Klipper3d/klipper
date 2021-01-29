@@ -100,9 +100,10 @@ def plot_freq_response(lognames, calibration_data, shapers,
     ax2.set_ylabel('Shaper vibration reduction (ratio)')
     best_shaper_vals = None
     for shaper in shapers:
-        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f)" % (
+        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f, accel<=%.f)" % (
                 shaper.name.upper(), shaper.freq,
-                shaper.vibrs * 100., shaper.smoothing)
+                shaper.vibrs * 100., shaper.smoothing,
+                round(shaper.max_accel / 100.) * 100.)
         linestyle = 'dotted'
         if shaper.name == selected_shaper:
             linestyle = 'dashdot'
