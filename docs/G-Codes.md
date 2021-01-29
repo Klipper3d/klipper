@@ -704,10 +704,13 @@ The following commands are available when an
   the first time, it starts the measurements, next execution stops
   them. If RATE is not specified, then the default value is used
   (either from `printer.cfg` or `3200` default value). The results of
-  measurements are written to a file named `/tmp/adxl345-<name>.csv`
-  where `<name>` is the optional NAME parameter. If NAME is not
-  specified it defaults to the current time in "YYYYMMDD_HHMMSS"
-  format.
+  measurements are written to a file named
+  `/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
+  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
+  `<name>` is the optional NAME parameter. If NAME is not specified it
+  defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
+  accelerometer does not have a name in its config section (simply
+  `[adxl345]`) <chip> part of the name is not generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
   defaults to "default". If RATE is not specified, the default value

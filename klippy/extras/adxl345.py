@@ -125,17 +125,17 @@ class ADXL345:
         mcu.register_response(self._handle_adxl345_start, "adxl345_start", oid)
         mcu.register_response(self._handle_adxl345_data, "adxl345_data", oid)
         # Register commands
-        name = "default"
+        self.name = "default"
         if len(config.get_name().split()) > 1:
-            name = config.get_name().split()[1]
+            self.name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", name,
+        gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", self.name,
                                    self.cmd_ACCELEROMETER_MEASURE,
                                    desc=self.cmd_ACCELEROMETER_MEASURE_help)
-        gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
+        gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", self.name,
                                    self.cmd_ACCELEROMETER_QUERY,
                                    desc=self.cmd_ACCELEROMETER_QUERY_help)
-        if name == "default":
+        if self.name == "default":
             gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", None,
                                        self.cmd_ACCELEROMETER_MEASURE)
             gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", None,
@@ -229,7 +229,10 @@ class ADXL345:
             return
         res = self.finish_measurements()
         # Write data to file
-        filename = "/tmp/adxl345-%s.csv" % (name,)
+        if self.name == "default":
+            filename = "/tmp/adxl345-%s.csv" % (name,)
+        else:
+            filename = "/tmp/adxl345-%s-%s.csv" % (self.name, name,)
         res.write_to_file(filename)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
