@@ -17,7 +17,7 @@ Sensor returns either a high signal or a low signal depending on the position of
     #   is detected. See docs/Command_Templates.md for G-Code format. If
     #   pause_on_runout is set to True this G-Code will run after the
     #   PAUSE is complete. The default is not to run any G-Code commands.
-    #   runout_gcode can be used with or without pause_on_runout.  If 
+    #   runout_gcode can be used with or without pause_on_runout.  If
     #   pause_on_runout is True then runout_gcode can include moves to put the
     #   extruder in a convenient spot for loading new filament or fixing a jam.
     #   If pause_on_runout is False then the printer will continue moving and
@@ -43,7 +43,7 @@ Sensor returns either a high signal or a low signal depending on the position of
     extruder:
     #   The name of the extruder section this sensor is associated with.
     #   This parameter must be provided.
-    
+
 ### pause_resume
 If pause_on_runout is True then you must add the following to printer.cfg:
    [pause_resume]
@@ -103,7 +103,7 @@ The manufacturer of the sensor should specify a detection length
 (sensor accuracy).  This is the length of the material that must pass through
 the sensor before it detects movement.
 
-To check this, manually pull filament through the sensor about 1 mm at a time 
+To check this, manually pull filament through the sensor about 1 mm at a time
 and run QUERY_FILAMENT_MOTION_SENSOR until its state changes, then continue
 this process until it changes state again, measure the filament length pulled
 through and set this as the detection_length in printer.cfg.  If the state

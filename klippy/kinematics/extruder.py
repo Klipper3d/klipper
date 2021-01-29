@@ -151,7 +151,10 @@ class PrinterExtruder:
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
         self.printer.send_event("extruder:move", (print_time,
-                                                  print_time + move.accel_t + move.cruise_t + move.decel_t,
+                                                  (print_time +
+                                                   move.accel_t +
+                                                   move.cruise_t +
+                                                   move.decel_t),
                                                   move.start_pos[3],
                                                   move.end_pos[3],
                                                   cruise_v))

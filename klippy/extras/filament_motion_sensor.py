@@ -23,7 +23,8 @@ class RunoutHelper:
             self.insert_gcode = gcode_macro.load_template(
                 config, 'insert_gcode')
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
-        self.detection_length = config.getfloat('detection_length', 7., above=0.)
+        self.detection_length = config.getfloat(
+                'detection_length', 7., above=0.)
         self.extruder_name = config.get("extruder", None)
         self.extruder = None
         self._mcu = None
@@ -35,11 +36,13 @@ class RunoutHelper:
         # Internal state
         self.sensor_enabled = True
         self.sensor_state = None
-        self._filament_runout_timer = self.reactor.register_timer(self._runout_event_handler)
+        self._filament_runout_timer = self.reactor.register_timer(
+                self._runout_event_handler)
         self._filament_runout_pos = None
         # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
-        self.printer.register_event_handler("extruder:move", self._handle_commanded_extruder_move)
+        self.printer.register_event_handler(
+                "extruder:move", self._handle_commanded_extruder_move)
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_MOTION_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_MOTION_SENSOR,
@@ -50,12 +53,16 @@ class RunoutHelper:
             desc=self.cmd_SET_FILAMENT_MOTION_SENSOR_help)
     def _can_be_enabled(self):
         if self.detection_length is None:
-            logging.error("%s(%s): ERROR: detection_length must defined", self.mname, self.name)
+            logging.error(
+                    "%s(%s): ERROR: detection_length must defined",
+                    self.mname, self.name)
             return False
         elif self.runout_pause:
             self.pause_resume = self.printer.lookup_object("pause_resume", None)
             if self.pause_resume is None:
-                logging.error("%s(%s): ERROR: [pause_resume] section must be defined if using pause_on_runout", self.mname, self.name)
+                logging.error(
+                        "%s(%s): ERROR: [pause_resume] section must be defined "
+                        "if using pause_on_runout", self.mname, self.name)
                 return False
         logging.info("%s(%s): ready to use", self.mname, self.name)
         return True
@@ -64,15 +71,19 @@ class RunoutHelper:
         self._mcu = self.extruder.stepper.get_mcu()
         self.idle_timeout = self.printer.lookup_object("idle_timeout")
         self.sensor_enabled = self._can_be_enabled()
-        self._filament_runout_pos = self.extruder.stepper.get_commanded_position() + self.detection_length
+        self._filament_runout_pos = (
+                self.extruder.stepper.get_commanded_position() +
+                self.detection_length)
     def eventtime_to_print_time(self, eventtime):
         return self._mcu.estimated_print_time(eventtime)
     def print_time_to_eventtime(self, print_time):
         #TODO: Replace call to private mcu member _clocksync
-        return self._mcu._clocksync.estimate_clock_systime(self._mcu.print_time_to_clock(print_time))
+        return self._mcu._clocksync.estimate_clock_systime(
+                self._mcu.print_time_to_clock(print_time))
     def _handle_commanded_extruder_move(self, move_params):
-        # Need a mutex because this call is not handled by a reactor greenlet (or is it...)
-	with self.mutex:
+        # Need a mutex because this call is not handled by a reactor greenlet
+        # (or is it...)
+        with self.mutex:
             self._extruder_move_list.append(move_params)
         # A new move could move the extruder to a point where a runout occurs
         # so update the runout timer
@@ -82,20 +93,33 @@ class RunoutHelper:
             if self._filament_runout_timer.waketime == self.reactor.NEVER:
                 runout_pos = self._filament_runout_pos
                 with self.mutex:
-                    for (start_time, end_time, start_pos, end_pos, cruise_vel) in self._extruder_move_list:
-                        if ((end_pos > start_pos) and (start_pos <= runout_pos) and (end_pos >= runout_pos)):
-                            runout_print_time = ((runout_pos - start_pos) / cruise_vel) + start_time
-                            self.reactor.update_timer(self._filament_runout_timer, self.print_time_to_eventtime(runout_print_time))
+                    for (start_time,
+                         end_time,
+                         start_pos,
+                         end_pos,
+                         cruise_vel) in self._extruder_move_list:
+                        if ((end_pos > start_pos) and
+                            (start_pos <= runout_pos) and
+                            (end_pos >= runout_pos)):
+                            runout_print_time = (
+                                    ((runout_pos - start_pos) / cruise_vel) +
+                                    start_time)
+                            self.reactor.update_timer(
+                                    self._filament_runout_timer,
+                                    self.print_time_to_eventtime(
+                                            runout_print_time))
                             break
         else:
-            self.reactor.update_timer(self._filament_runout_timer, self.reactor.NEVER)
+            self.reactor.update_timer(
+                    self._filament_runout_timer, self.reactor.NEVER)
     def _update_filament_runout_pos(self, eventtime=None):
         if eventtime == None:
             eventtime = self.reactor.monotonic()
         runout_pos = self._get_extruder_pos(eventtime) + self.detection_length
         if runout_pos != self._filament_runout_pos:
             self._filament_runout_pos = runout_pos
-            self.reactor.update_timer(self._filament_runout_timer, self.reactor.NEVER)
+            self.reactor.update_timer(
+                    self._filament_runout_timer, self.reactor.NEVER)
             self._update_filament_runout_timer(eventtime)
     def _get_extruder_pos(self, eventtime=None):
         if eventtime == None:
@@ -104,14 +128,22 @@ class RunoutHelper:
         extruder_pos = None
         list_idx = 0
         with self.mutex:
-            # First check queued moves to extrapolate extruder position at time now
-            for (start_time, end_time, start_pos, end_pos, cruise_vel) in self._extruder_move_list:
-                if ((start_time <= print_time_now) and (end_time >= print_time_now)):
-                    extruder_pos = ((print_time_now - start_time) * cruise_vel) + start_pos
+            # First check queued moves to extrapolate extruder position now
+            for (start_time,
+                 end_time,
+                 start_pos,
+                 end_pos,
+                 cruise_vel) in self._extruder_move_list:
+                if ((start_time <= print_time_now) and
+                    (end_time >= print_time_now)):
+                    extruder_pos = (
+                            ((print_time_now - start_time) * cruise_vel) +
+                            start_pos)
                     break
                 list_idx += 1
             else:
-                # Extruder may have completed moving so just use the commanded position
+                # Extruder may have completed moving so just use the commanded
+                # position
                 extruder_pos = self.extruder.stepper.get_commanded_position()
             if list_idx:
                 # Remove out of date entries from list
@@ -162,7 +194,8 @@ class RunoutHelper:
             # when the sensor is disabled
             return
         # Perform filament action associated with status change (if any)
-        is_printing = self.idle_timeout.get_status(eventtime)["state"] == "Printing"
+        is_printing = (
+                self.idle_timeout.get_status(eventtime)["state"] == "Printing")
         if is_printing:
             self._insert_processed = False
             self._update_filament_runout_pos(eventtime)
@@ -171,7 +204,8 @@ class RunoutHelper:
             if self.insert_gcode is not None:
                 # Due to this sensor constantly triggering during insert
                 # only trigger the insert event once
-                # TODO: May remove insert event processing if it becomes too troublesome or adds no value
+                # TODO: May remove insert event processing if it becomes too
+                # troublesome or adds no value
                 if not self._insert_processed:
                     # insert detected
                     #self.min_event_systime = self.reactor.NEVER
@@ -183,15 +217,24 @@ class RunoutHelper:
     def get_status(self, eventtime):
         return {
             "enabled": bool(self.sensor_enabled)}
-    cmd_QUERY_FILAMENT_MOTION_SENSOR_help = "Query the state of the filament motion sensor (toggles 0/1 during motion)"
+    cmd_QUERY_FILAMENT_MOTION_SENSOR_help = (
+            "Query the state of the filament motion sensor "
+            "(toggles 0/1 during motion)")
     def cmd_QUERY_FILAMENT_MOTION_SENSOR(self, gcmd):
-        msg = "Filament Motion Sensor %s: State %s" % (self.name, self.sensor_state)
+        msg = "Filament Motion Sensor %s: State %s" % (
+                self.name, self.sensor_state)
         gcmd.respond_info(msg)
-    cmd_SET_FILAMENT_MOTION_SENSOR_help = "Sets the filament motion sensor enable and detection_length"
+    cmd_SET_FILAMENT_MOTION_SENSOR_help = ("Sets the filament motion sensor "
+            "enable and detection_length")
     def cmd_SET_FILAMENT_MOTION_SENSOR(self, gcmd):
-        self.detection_length = gcmd.get_float("DETECTION_LENGTH", self.detection_length, minval=0.0)
-        self.sensor_enabled = True if gcmd.get_int("ENABLE", 1 if self.sensor_enabled else 0 ) == 1 and self._can_be_enabled() else False
-        gcmd.respond_info("%s(%s): enable = %s, detection_length = %.2f" % (self.mname, self.name, self.sensor_enabled, self.detection_length)) 
+        self.detection_length = gcmd.get_float(
+                "DETECTION_LENGTH", self.detection_length, minval=0.0)
+        self.sensor_enabled = (True if gcmd.get_int(
+                "ENABLE", 1 if self.sensor_enabled else 0 ) == 1 and
+                self._can_be_enabled() else False)
+        gcmd.respond_info("%s(%s): enable = %s, detection_length = %.2f" % (
+                self.mname, self.name, self.sensor_enabled,
+                self.detection_length))
         self.reactor.register_callback(self._update_filament_runout_pos)
 
 class EncoderSensor:
