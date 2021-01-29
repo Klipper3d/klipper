@@ -3448,6 +3448,55 @@ adc2:
 #   above parameters.
 ```
 
+## [filament_motion_sensor]
+
+Filament Motion Sensor. Support for filament insert and runout
+detection using an encoder that toggles the output pin during filament
+movement through the sensor.
+
+See the [command reference](G-Codes.md#filament-sensor) for more
+information.
+
+```
+[filament_motion_sensor my_sensor]
+#pause_on_runout: True
+#   When set to True, a PAUSE will execute immediately after a runout
+#   or jam is detected. Note that if pause_on_runout is False and the
+#   [pause_resume] section is omitted then runout detection is disabled.
+#   Default is True.
+#runout_gcode:
+#   A list of G-Code commands to execute after a filament runout or jam
+#   is detected. See docs/Command_Templates.md for G-Code format. If
+#   pause_on_runout is set to True this G-Code will run after the
+#   PAUSE is complete. The default is not to run any G-Code commands.
+#   runout_gcode can be used with or without pause_on_runout.  If 
+#   pause_on_runout is True then runout_gcode can include moves to put the
+#   extruder in a convenient spot for loading new filament or fixing a jam.
+#   If pause_on_runout is False then the printer will continue moving and
+#   printing when a runout/jam is detected, so it is not recommended to put
+#   moves in the runout_gcode in this case.
+#insert_gcode:
+#   A list of G-Code commands to execute after a filament insert is
+#   detected. See docs/Command_Templates.md for G-Code format. The
+#   default is not to run any G-Code commands, which disables insert
+#   detection.
+#pause_delay: 0.5
+#   The amount of time to delay, in seconds, between the pause command
+#   dispatch and execution of the runout_gcode. It may be useful to
+#   increase this delay if OctoPrint exhibits strange pause behavior.
+#   Default is 0.5 seconds.
+switch_pin:
+#   The pin on which the switch is connected. This parameter must be
+#   provided.
+detection_length: 7.0
+#   The minimum length of filament pulled through the sensor to trigger
+#   a state change on the switch_pin
+#   Default is 7 mm.
+extruder:
+#   The name of the extruder section this sensor is associated with.
+#   This parameter must be provided.
+```
+
 # Board specific hardware support
 
 ## [sx1509]

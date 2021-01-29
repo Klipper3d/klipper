@@ -583,6 +583,18 @@ is enabled.
   filament sensor on/off. If ENABLE is set to 0, the filament sensor
   will be disabled, if set to 1 it is enabled.
 
+The following commands are available when the
+[filament_motion_sensor config section](Config_Reference.md#filament_motion_sensor)
+is enabled.
+- `QUERY_FILAMENT_MOTION_SENSOR SENSOR=<sensor_name>`: Queries the current
+  state of the filament motion sensor. This value will toggle between 0 and 1
+  as the filament moves through the sensor.
+- `SET_FILAMENT_MOTION_SENSOR SENSOR=<sensor_name> [ENABLE=<0,1>] [DETECTION_LENGTH=<mm>]`: ENABLE
+  sets the filament sensor on/off. If ENABLE is set to 0, the filament sensor
+  will be disabled, if set to 1 it is enabled.  DETECTION_LENGTH sets the
+  length of filament pulled through the sensor required to toggle the state
+  between 0 and 1, must be > 0mm.
+
 ## Firmware Retraction
 
 The following commands are available when the
