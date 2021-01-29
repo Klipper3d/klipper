@@ -130,18 +130,15 @@ max_accel: 7000
 max_accel_to_decel: 7000
 ```
 (after you are done with the measurements, revert these values to their old,
-or the newly suggested values). Also, if you have enabled input shaper already,
-you will need to disable it prior to this test as follows:
-```
-SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
-```
-as it is not valid to run the resonance testing with the input shaper enabled.
+or the newly suggested values).
 
 Run the following command:
 ```
 TEST_RESONANCES AXIS=X
 ```
-Note that it will create vibrations on X axis.
+Note that it will create vibrations on X axis. It will also disable input
+shaping if it was enabled previously, as it is not valid to run the resonance
+testing with the input shaper enabled.
 
 **Attention!** Be sure to observe the printer for the first time, to make sure
 the vibrations do not become too violent (`M112` command can be used to abort

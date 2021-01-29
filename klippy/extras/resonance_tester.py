@@ -127,6 +127,13 @@ class ResonanceTester:
         if csv_output:
             helper = shaper_calibrate.ShaperCalibrate(self.printer)
 
+        input_shaper = self.printer.lookup_object('input_shaper', None)
+        if input_shaper is not None and not gcmd.get_int('INPUT_SHAPING', 0):
+            input_shaper.disable_shaping()
+            gcmd.respond_info("Disabled [input_shaper] for resonance testing")
+        else:
+            input_shaper = None
+
         currentPos = toolhead.get_position()
         Z = currentPos[2]
         E = currentPos[3]
@@ -176,6 +183,10 @@ class ResonanceTester:
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
+        if input_shaper is not None:
+            input_shaper.enable_shaping()
+            gcmd.respond_info(
+                    "Re-enabled [input_shaper] after resonance testing")
 
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
