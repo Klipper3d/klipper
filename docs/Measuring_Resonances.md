@@ -126,8 +126,8 @@ Now you can run some real-life tests. In `printer.cfg` add or replace the
 following values:
 ```
 [printer]
-max_accel: 7000
-max_accel_to_decel: 7000
+max_accel: 10000
+max_accel_to_decel: 10000
 ```
 (after you are done with the measurements, revert these values to their old,
 or the newly suggested values).
