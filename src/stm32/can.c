@@ -9,10 +9,10 @@
 #include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_MACH_STM32F1
 #include "board/irq.h" // irq_disable
-#include "can.h" // SHORT_UUID_LEN
 #include "command.h" // DECL_CONSTANT_STR
 #include "fasthash.h" // fasthash64
 #include "generic/armcm_boot.h" // armcm_enable_irq
+#include "generic/canbus.h" // canbus_notify_tx
 #include "generic/serial_irq.h" // serial_rx_byte
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
@@ -87,64 +87,76 @@
  #error No known CAN device for configured MCU
 #endif
 
-static uint16_t MyCanId = 0;
-
-static int
-can_find_empty_tx_mbox(void)
+// Read the next CAN packet
+int
+canbus_read(uint32_t *id, uint8_t *data)
 {
-    uint32_t tsr = SOC_CAN->TSR;
-    if (tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))
-        return (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
-    return -1;
+    if (!(SOC_CAN->RF0R & CAN_RF0R_FMP0)) {
+        // All rx mboxes empty, enable wake on rx IRQ
+        irq_disable();
+        SOC_CAN->IER |= CAN_IER_FMPIE0;
+        irq_enable();
+        return -1;
+    }
+
+    // Read and ack packet
+    CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
+    uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+    uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
+    uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
+    SOC_CAN->RF0R = CAN_RF0R_RFOM0;
+
+    // Return packet
+    *id = rir_id;
+    data[0] = (rdlr >>  0) & 0xff;
+    data[1] = (rdlr >>  8) & 0xff;
+    data[2] = (rdlr >> 16) & 0xff;
+    data[3] = (rdlr >> 24) & 0xff;
+    data[4] = (rdhr >>  0) & 0xff;
+    data[5] = (rdhr >>  8) & 0xff;
+    data[6] = (rdhr >> 16) & 0xff;
+    data[7] = (rdhr >> 24) & 0xff;
+    return dlc;
 }
 
-static void
-can_transmit_mbox(uint32_t id, int mbox, uint32_t dlc, uint8_t *pkt)
+// Transmit a packet
+int
+canbus_send(uint32_t id, uint32_t len, uint8_t *data)
 {
+    uint32_t tsr = SOC_CAN->TSR;
+    if (!(tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))) {
+        // No space in transmit fifo - enable tx irq
+        irq_disable();
+        SOC_CAN->IER |= CAN_IER_TMEIE;
+        irq_enable();
+        return -1;
+    }
+    int mbox = (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
 
     /* Set up the DLC */
-    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (dlc & 0x0F);
+    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (len & 0x0F);
 
     /* Set up the data field */
-    if (pkt) {
-        mb->TDLR = (((uint32_t)pkt[3] << 24)
-                    | ((uint32_t)pkt[2] << 16)
-                    | ((uint32_t)pkt[1] << 8)
-                    | ((uint32_t)pkt[0] << 0));
-        mb->TDHR = (((uint32_t)pkt[7] << 24)
-                    | ((uint32_t)pkt[6] << 16)
-                    | ((uint32_t)pkt[5] << 8)
-                    | ((uint32_t)pkt[4] << 0));
+    if (len) {
+        mb->TDLR = (((uint32_t)data[3] << 24)
+                    | ((uint32_t)data[2] << 16)
+                    | ((uint32_t)data[1] << 8)
+                    | ((uint32_t)data[0] << 0));
+        mb->TDHR = (((uint32_t)data[7] << 24)
+                    | ((uint32_t)data[6] << 16)
+                    | ((uint32_t)data[5] << 8)
+                    | ((uint32_t)data[4] << 0));
     }
 
     /* Request transmission */
     mb->TIR = (id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
-}
-
-// Blocking transmit function
-static void
-can_transmit(uint32_t id, uint32_t dlc, uint8_t *pkt)
-{
-    int mbox = -1;
-
-    do {
-        mbox = can_find_empty_tx_mbox();
-    } while (mbox < 0);
-
-    can_transmit_mbox(id, mbox, dlc, pkt);
-}
-
-// Convert Unique 96-bit value into 48 bit representation
-static void
-pack_uuid(uint8_t *u)
-{
-    uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
-    memcpy(u, &hash, SHORT_UUID_LEN);
+    return len;
 }
 
 #define CAN_FILTER_NUMBER 0
 
+// Setup the receive packet filter
 static void
 can_set_filter(uint32_t id1, uint32_t id2)
 {
@@ -172,145 +184,33 @@ can_set_filter(uint32_t id1, uint32_t id2)
     SOC_CAN->FMR &= ~CAN_FMR_FINIT;
 }
 
-static void
-can_process_data(uint32_t id, uint32_t dlc, uint8_t *data)
+void
+canbus_set_dataport(uint32_t id)
 {
-    int i;
-    for (i=0; i < dlc; i++)
-        serial_rx_byte(data[i]);
+    can_set_filter(CANBUS_ID_UUID, id);
 }
-
-static void
-can_process_ping(uint32_t id, uint32_t dlc, uint8_t *data)
-{
-    can_transmit(MyCanId+1, 0, NULL);
-}
-
-static void
-can_process_reset(uint32_t id, uint32_t dlc, uint8_t *data)
-{
-    uint32_t reset_id = data[0] | (data[1] << 8);
-    if (reset_id == MyCanId)
-        NVIC_SystemReset();
-}
-
-static void
-can_process_uuid(uint32_t id, uint32_t dlc, uint8_t *data)
-{
-    if (MyCanId)
-        return;
-    uint8_t short_uuid[SHORT_UUID_LEN];
-    pack_uuid(short_uuid);
-    can_transmit(PKT_ID_UUID_RESP, SHORT_UUID_LEN, short_uuid);
-}
-
-static void
-can_process_set_id(uint32_t id, uint32_t dlc, uint8_t *data)
-{
-    uint8_t short_uuid[SHORT_UUID_LEN];
-    pack_uuid(short_uuid);
-
-    // compare my UUID with packet to check if this packet mine
-    if (memcmp(&data[2], short_uuid, SHORT_UUID_LEN) == 0) {
-        MyCanId = data[0] | (data[1] << 8);
-        can_set_filter(MyCanId, PKT_ID_UUID);
-    }
-}
-
-static void
-can_process(uint32_t id, uint32_t dlc, uint8_t *data)
-{
-    if (id == MyCanId) {
-        if (dlc)
-            can_process_data(id, dlc, data);
-        else
-            can_process_ping(id, dlc, data);
-    } else if (id == PKT_ID_UUID) {
-        if (dlc)
-            can_process_reset(id, dlc, data);
-        else
-            can_process_uuid(id, dlc, data);
-    } else if (id==PKT_ID_SET) {
-        can_process_set_id(id, dlc, data);
-    }
-}
-
-static struct task_wake canbus_wake;
 
 void
-can_dispatch_task(void)
+canbus_reboot(void)
 {
-    if (!sched_check_wake(&canbus_wake))
-        return;
-
-    // Check for rx
-    for (;;) {
-        if (!(SOC_CAN->RF0R & CAN_RF0R_FMP0)) {
-            // All rx mboxes empty, enable wake on rx IRQ
-            irq_disable();
-            SOC_CAN->IER |= CAN_IER_FMPIE0;
-            irq_enable();
-            break;
-        }
-
-        // Read and ack packet
-        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
-        uint32_t id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-        uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
-        uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
-        SOC_CAN->RF0R = CAN_RF0R_RFOM0;
-
-        // Process packet
-        uint8_t data[8];
-        data[0] = (rdlr >>  0) & 0xff;
-        data[1] = (rdlr >>  8) & 0xff;
-        data[2] = (rdlr >> 16) & 0xff;
-        data[3] = (rdlr >> 24) & 0xff;
-        data[4] = (rdhr >>  0) & 0xff;
-        data[5] = (rdhr >>  8) & 0xff;
-        data[6] = (rdhr >> 16) & 0xff;
-        data[7] = (rdhr >> 24) & 0xff;
-        can_process(id, dlc, data);
-    }
-
-    // Check for tx data
-    for (;;) {
-        int mbox = can_find_empty_tx_mbox();
-        if (mbox < 0) {
-            // All tx mboxes full, enable wake on tx IRQ
-            irq_disable();
-            SOC_CAN->IER |= CAN_IER_TMEIE;
-            irq_enable();
-            break;
-        }
-        int i;
-        uint8_t databuf[8];
-        for (i=0; i<8; i++) {
-            if (serial_get_tx_byte(&(databuf[i])) == -1)
-                break;
-        }
-        if (!i)
-            break;
-        can_transmit_mbox(MyCanId+1, mbox, i, databuf);
-    }
+    NVIC_SystemReset();
 }
-DECL_TASK(can_dispatch_task);
 
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
 {
-    if (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
-        // Rx
-        SOC_CAN->IER &= ~CAN_IER_FMPIE0;
-        sched_wake_task(&canbus_wake);
-    }
     uint32_t ier = SOC_CAN->IER;
+    if (ier & CAN_IER_FMPIE0 && SOC_CAN->RF0R & CAN_RF0R_FMP0) {
+        // Rx
+        SOC_CAN->IER = ier = ier & ~CAN_IER_FMPIE0;
+        canbus_notify_rx();
+    }
     if (ier & CAN_IER_TMEIE
         && SOC_CAN->TSR & (CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2)) {
         // Tx
-        SOC_CAN->IER &= ~CAN_IER_TMEIE;
-        sched_wake_task(&canbus_wake);
+        SOC_CAN->IER = ier & ~CAN_IER_TMEIE;
+        canbus_notify_tx();
     }
 }
 
@@ -372,7 +272,7 @@ can_init(void)
 
     uint32_t pclock = get_pclock_frequency((uint32_t)SOC_CAN);
 
-    uint32_t btr = compute_btr(pclock, CONFIG_SERIAL_BAUD);
+    uint32_t btr = compute_btr(pclock, CONFIG_CANBUS_FREQUENCY);
 
     /*##-1- Configure the CAN #######################################*/
 
@@ -392,7 +292,7 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    can_set_filter(PKT_ID_UUID, PKT_ID_SET);
+    can_set_filter(CANBUS_ID_UUID, CANBUS_ID_SET);
 
     /*##-3- Configure Interrupts #################################*/
 
@@ -404,13 +304,8 @@ can_init(void)
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
 
-    /*##-4- Say Hello #################################*/
-    can_process_uuid(0, 0, NULL);
+    // Convert unique 96-bit chip id into 48 bit representation
+    uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
+    canbus_set_uuid(&hash);
 }
 DECL_INIT(can_init);
-
-void
-serial_enable_tx_irq(void)
-{
-    sched_wake_task(&canbus_wake);
-}
