@@ -7,8 +7,8 @@ import logging
 import mcu
 
 DS18_REPORT_TIME = 3.0
-# Temperature can be sampled at any time but conversion time is ~750ms so
-# make sure not to read too often.
+# Temperature can be sampled at any time but conversion time is ~750ms, so
+# setting the time too low will not make the reports come faster.
 DS18_MIN_REPORT_TIME = 1.0
 
 class DS18B20:
@@ -42,7 +42,6 @@ class DS18B20:
 
     def _handle_ds18b20_response(self, params):
         temp = params['value'] / 1000.0
-        logging.info("Temp: %f" % temp)
         next_clock      = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self._mcu.clock_to_print_time(last_read_clock)

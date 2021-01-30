@@ -145,10 +145,7 @@ command_config_ds18b20(uint32_t *args)
     snprintf(fname, sizeof(fname), "/sys/bus/w1/devices/%.*s/w1_slave"
              , serial_len, serial);
     output("fname: %s", fname);
-    uint32_t t1 = timer_read_time();
     int fd = open(fname, O_RDONLY|O_CLOEXEC);
-    uint32_t t2 = timer_read_time();
-    output("read timing opening file t1=%u t2=%u", t1, t2);
     if (fd < 0) {
         report_errno("open ds18", fd);
         goto fail2;
@@ -221,8 +218,8 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 
     pthread_mutex_lock(&d->lock);
     if (d->status == W1_ERROR) {
-        // Can't pass read error to try_shutdown, which expects a static string.
-        // Output the specific error, then pass a generic error to try_shutdown.
+        // try_shutdown expects a static string. Output the specific error,
+        // then shut down with a generic error.
         output("Error: %s", d->error);
         pthread_mutex_unlock(&d->lock);
         try_shutdown("Error reading DS18B20 sensor");
@@ -245,12 +242,11 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READ_REQUESTED) {
         // Reader thread is already reading (or will be soon).
-        // This could happen if two or more queries come in quick enough
-        // succession. In that case, we want to wait for the existing read to
-        // complete. // This could also happen if the reader thread has hung,
-        // in which case something is wrong and we should exit.
-        // To tell the difference, see if the request time is
-        // too far in the past.
+        // This can happen if two queries come in quick enough
+        // succession. Wait for the existing read to finish.
+        // This could also happen if the reader thread has hung. In that case,
+        // shut down the MCU. To tell the difference, see if the request time
+        // is too far in the past.
         if (request_time.tv_sec - d->request_time.tv_sec > W1_READ_TIMEOUT_SEC)
         {
             pthread_mutex_unlock(&d->lock);
