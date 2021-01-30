@@ -53,7 +53,7 @@ command_serial_bridge_send(uint32_t *args)
     uint8_t data_len = args[1];
     uint8_t *data = command_decode_ptr(args[2]);
 
-    //output("sb %s", data);
+    output("sb %u", args[1]);
 
     serial_bridge_send(data, data_len);
 }

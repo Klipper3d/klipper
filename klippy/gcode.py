@@ -110,7 +110,7 @@ class GCodeDispatch:
             if cmd in self.ready_gcode_handlers:
                 del self.ready_gcode_handlers[cmd]
             if cmd in self.base_gcode_handlers:
-                del self.base_gcode_handlers[cmd]
+                del self.baqse_gcode_handlers[cmd]
             return old_cmd
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(
@@ -247,7 +247,7 @@ class GCodeDispatch:
         cmd = gcmd.get_command()
         if cmd == 'M105':
             # Don't warn about temperature requests when not ready
-            gcmd.ack("T:0")
+            gcmd.ack("T:0 /0.00 @:0")
             return
         if cmd == 'M21':
             # Don't warn about sd card init when not ready
@@ -294,8 +294,9 @@ class GCodeDispatch:
     def cmd_M115(self, gcmd):
         # Get Firmware Version and Capabilities
         software_version = self.printer.get_start_args().get('software_version')
-        kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
-        gcmd.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
+        kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version, "MACHINE_TYPE": "Anycubic 4Max Pro"}
+        kw2 = "\nCap:SDCARD:1"
+        gcmd.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]) + kw2)
     def request_restart(self, result):
         if self.is_printer_ready:
             toolhead = self.printer.lookup_object('toolhead')

@@ -301,9 +301,9 @@ class PrinterHeaters:
         if self.has_started:
             for gcode_id, sensor in sorted(self.gcode_id_to_sensor.items()):
                 cur, target = sensor.get_temp(eventtime)
-                out.append("%s:%.1f /%.1f" % (gcode_id, cur, target))
+                out.append("%s:%.1f /%.1f @:0" % (gcode_id, cur, target))
         if not out:
-            return "T:0"
+            return "T:0 /0.00 @:0"
         return " ".join(out)
     def cmd_M105(self, gcmd):
         # Get Extruder Temperature

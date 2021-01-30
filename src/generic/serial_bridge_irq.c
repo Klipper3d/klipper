@@ -15,17 +15,18 @@
 #include "serial_bridge_irq.h" // serial_enable_tx_irq
 
 static uint8_t receive_bridge_buf[SERIAL_BRIDGE_RX_BUFFER_SIZE], receive_bridge_pos;
-static uint8_t transmit_bridge_buf[96], transmit_bridge_pos, transmit_bridge_max;
+static uint8_t transmit_bridge_buf[SERIAL_BRIDGE_RX_BUFFER_SIZE], transmit_bridge_pos, transmit_bridge_max;
 
 void serial_bridge_rx_byte(uint_fast8_t data) {
-    if (data == '\r')
+    // if (data == '\r')
+    //     return;
+    // if (data == '\n') {
+    //     sched_wake_tasks();
+    // }a
+    if (receive_bridge_pos >= SERIAL_BRIDGE_RX_BUFFER_SIZE)
+        // Serial overflow - ignore
         return;
-    if (data == '\n') {
-        sched_wake_tasks();
-    }
-    if (receive_bridge_pos >= sizeof(receive_bridge_buf))
-        // Serial overflow - ignore it as crc error will force retransmit
-        return;
+    sched_wake_tasks();
     receive_bridge_buf[receive_bridge_pos++] = data;
 }
 
@@ -76,17 +77,21 @@ serial_bridge_get_data(uint8_t* data)
 {
     for (;;) {
         uint_fast8_t rpos = readb(&receive_bridge_pos);
-        if (!rpos)
-            return 0;
-        memcpy(data, receive_bridge_buf, rpos);
-        irqstatus_t flag = irq_save();
-        if (rpos != readb(&receive_bridge_pos)) {
-            // Raced with irq handler - retry
+        if (rpos > SERIAL_BRIDGE_RX_BUFFER_SIZE)
+            rpos = 0;
+        if (rpos) {
+            // Generate message
+            uint8_t *buf = receive_bridge_buf;
+            memcpy(data, buf, rpos);
+            irqstatus_t flag = irq_save();
+            if (rpos != readb(&receive_bridge_pos)) {
+                // Raced with irq handler - retry
+                irq_restore(flag);
+                continue;
+            }
+            receive_bridge_pos = 0;
             irq_restore(flag);
-            continue;
         }
-        receive_bridge_pos = 0;
-        irq_restore(flag);
         return rpos;
     }
 }
