@@ -26,7 +26,7 @@ jobs:
       - name: Generate tag parameters
         id: params
         run: |
-          echo "::set-output name=tagname::snapshot-$(date +'%Y-%m-%d')"
+          echo "::set-output name=tagname::snapshot-$(date +'%y%m%d')"
           echo "::set-output name=tagsha::$(git log -1 --format=%H)"
       - name: Create tag
         uses: actions/github-script@v3
