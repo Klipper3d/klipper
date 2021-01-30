@@ -95,7 +95,8 @@ reader_start_routine(void *param) {
         data[ret] = '\0';
         char *temp_string = strstr(data, "t=");
         if (temp_string == NULL || temp_string[2] == '\0') {
-            locking_set_read_error(d, "Unable to find temperature value in DS18B20 report");
+            locking_set_read_error(d,
+            "Unable to find temperature value in DS18B20 report");
             pthread_exit(NULL);
         }
         // Don't pass 't' and '=' to atoi
@@ -244,13 +245,14 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READ_REQUESTED) {
         // Reader thread is already reading (or will be soon).
-        // This could happen if two or more queries come in quick enough succession.
-        // In that case, we want to wait for the existing read to complete.
-        // This could also happen if the reader thread has hung,
+        // This could happen if two or more queries come in quick enough
+        // succession. In that case, we want to wait for the existing read to
+        // complete. // This could also happen if the reader thread has hung,
         // in which case something is wrong and we should exit.
         // To tell the difference, see if the request time is
         // too far in the past.
-        if (request_time.tv_sec - d->request_time.tv_sec > W1_READ_TIMEOUT_SEC) {
+        if (request_time.tv_sec - d->request_time.tv_sec > W1_READ_TIMEOUT_SEC)
+        {
             pthread_mutex_unlock(&d->lock);
             try_shutdown("DS18B20 sensor didn't respond in time");
             return;
