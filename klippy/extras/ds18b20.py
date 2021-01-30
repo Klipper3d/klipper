@@ -7,7 +7,7 @@ import logging
 import mcu
 
 DS18_REPORT_TIME = 3.0
-# Temperature can be sampled at any time but conversion time is ~750ms so 
+# Temperature can be sampled at any time but conversion time is ~750ms so
 # make sure not to read too often.
 DS18_MIN_REPORT_TIME = 1.0
 
