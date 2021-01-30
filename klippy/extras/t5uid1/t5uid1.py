@@ -15,6 +15,7 @@ T5UID1_firmware_cfg = {
 
 DEFAULT_VOLUME     = 75
 DEFAULT_BRIGHTNESS = 100
+DEFAULT_INSET      = 30.0
 
 T5UID1_CMD_WRITEVAR = 0x82
 T5UID1_CMD_READVAR  = 0x83
@@ -133,6 +134,10 @@ class T5UID1:
         self._notification_sound = config.getint('notification_sound',
             firmware_cfg['notification_sound'], minval=-1, maxval=255)
 
+        self._x_min_inset = config.getfloat('x_min_inset', DEFAULT_INSET, minval=0.0)
+        self._x_max_inset = config.getfloat('x_max_inset', DEFAULT_INSET, minval=0.0)
+        self._y_min_inset = config.getfloat('y_min_inset', DEFAULT_INSET, minval=0.0)
+        self._y_max_inset = config.getfloat('y_max_inset', DEFAULT_INSET, minval=0.0)
         self._z_min = config.getfloat('z_min', None)
         self._z_max = config.getfloat('z_max', None)
 
@@ -801,13 +806,21 @@ class T5UID1:
             and self._z_max < z_max
             and self._z_max > z_min):
             z_max = self._z_max
+        x_min_inset = min(self._x_min_inset, (x_max - x_min) / 2)
+        x_max_inset = min(self._x_max_inset, (x_max - x_min) / 2)
+        y_min_inset = min(self._y_min_inset, (y_max - y_min) / 2)
+        y_max_inset = min(self._y_max_inset, (y_max - y_min) / 2)
         return {
             'x_min': x_min,
             'x_max': x_max,
             'y_min': y_min,
             'y_max': y_max,
             'z_min': z_min,
-            'z_max': z_max
+            'z_max': z_max,
+            'x_min_inset': x_min_inset,
+            'x_max_inset': x_max_inset,
+            'y_min_inset': y_min_inset,
+            'y_max_inset': y_max_inset
         }
 
     def set_message(self, message):
