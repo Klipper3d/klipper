@@ -2160,10 +2160,11 @@ DS18B20 is a 1-wire (w1) digital temperature sensor. Note that this sensor is no
 ```
 sensor_type: DS18B20
 serial_no:
-#   Each 1-wire device has a unique serial number used to identify the device, usually in the format 
-#   28-031674b175ff. This parameter must be provided. Attached 1-wire devices can be listed using the 
-#   following Linux command: ls /sys/bus/w1/devices/
-ds18_report_time:
+#   Each 1-wire device has a unique serial number used to identify the device,
+#   usually in the format 28-031674b175ff. This parameter must be provided.
+#   Attached 1-wire devices can be listed using the following Linux command:
+#   ls /sys/bus/w1/devices/
+#ds18_report_time:
 #   Interval in seconds between readings. Default is 3.0, with a minimum of 1.0
 ```
 

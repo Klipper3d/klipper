@@ -5,10 +5,10 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
-DS18_REPORT_TIME = 3
+DS18_REPORT_TIME = 3.0
 # Temperature can be sampled at any time but conversion time is ~750ms so make
 # sure not to read too often.
-DS18_MIN_REPORT_TIME = 1
+DS18_MIN_REPORT_TIME = 1.0
 
 class DS18B20:
     def __init__(self, config):
