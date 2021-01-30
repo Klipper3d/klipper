@@ -154,6 +154,9 @@ class T5UID1:
         self._t5uid1_ping_cmd = self._t5uid1_write_cmd = None
         self._is_connected = False
 
+        self._original_M73 = None
+        self._original_M117 = None
+
         global_context = {
             'get_variable': self.get_variable,
             'set_variable': self.set_variable,
@@ -234,8 +237,6 @@ class T5UID1:
             'DGUS_PRINT_START', self.cmd_DGUS_PRINT_START)
         self.gcode.register_command(
             'DGUS_PRINT_END', self.cmd_DGUS_PRINT_END)
-        self.gcode.register_command('M73', self.cmd_M73)
-        self.gcode.register_command('M117', self.cmd_M117)
         self.gcode.register_command('M300', self.cmd_M300)
 
         self.printer.register_event_handler("klippy:ready",
@@ -359,6 +360,18 @@ class T5UID1:
             has_bltouch = True
         except self.printer.config_error:
             pass
+
+        if self._original_M73 is None:
+            original_M73 = self.gcode.register_command('M73', None)
+            if original_M73 != self.cmd_M73:
+                self._original_M73 = original_M73
+            self.gcode.register_command('M73', self.cmd_M73)
+
+        if self._original_M117 is None:
+            original_M117 = self.gcode.register_command('M117', None)
+            if original_M117 != self.cmd_M117:
+                self._original_M117 = original_M117
+            self.gcode.register_command('M117', self.cmd_M117)
 
         self._status_data.update({
             'limits': self.limits(),
@@ -861,6 +874,8 @@ class T5UID1:
     def cmd_M73(self, gcmd):
         progress = gcmd.get_int('P', 0)
         self._print_progress = min(100, max(0, progress))
+        if self._original_M73 is not None:
+            self._original_M73(gcmd)
 
     def cmd_M117(self, gcmd):
         msg = gcmd.get_commandline()
@@ -873,6 +888,8 @@ class T5UID1:
             self.set_message(msg[5:])
         else:
             self.set_message("")
+        if self._original_M117 is not None:
+            self._original_M117(gcmd)
 
     def cmd_M300(self, gcmd):
         if self._notification_sound >= 0:
