@@ -150,9 +150,6 @@ command_config_ds18b20(uint32_t *args)
         report_errno("open ds18", fd);
         goto fail2;
     }
-    int ret = set_non_blocking(fd);
-    if (ret < 0)
-        goto fail3;
 
     struct ds18_s *d = oid_alloc(args[0], command_config_ds18b20, sizeof(*d));
     d->timer.func = ds18_event;
@@ -160,29 +157,27 @@ command_config_ds18b20(uint32_t *args)
     d->status = W1_IDLE;
     ret = pthread_mutex_init(&d->lock, NULL);
     if (ret)
-        goto fail4;
+        goto fail3;
     ret = pthread_cond_init(&d->cond, NULL);
     if (ret)
-        goto fail5;
+        goto fail4;
 
     pthread_t reader_tid; // Not used
     ret = pthread_create(&reader_tid, NULL, reader_start_routine, d);
     if (ret)
-        goto fail6;
+        goto fail5;
 
     return;
 fail1:
-    shutdown("Invalid DS18B20 serial id 1");
+    shutdown("Invalid DS18B20 serial id, must not contain '/'");
 fail2:
-    shutdown("Invalid DS18B20 serial id 2");
+    shutdown("Invalid DS18B20 serial id, could not open for reading");
 fail3:
-    shutdown("Invalid DS18B20 serial id 3");
+    shutdown("Could not start DS18B20 reader thread (mutex init)");
 fail4:
-    shutdown("Could not start reader thread 4");
+    shutdown("Could not start DS18B20 reader thread (cond init)");
 fail5:
-    shutdown("Could not start reader thread 5");
-fail6:
-    shutdown("Could not start reader thread 6");
+    shutdown("Could not start DS18B20 reader thread");
 }
 DECL_COMMAND(command_config_ds18b20, "config_ds18b20 oid=%c serial=%*s");
 
