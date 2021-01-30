@@ -30,8 +30,10 @@ help_txt = """
 re_eval = re.compile(r'\{(?P<eval>[^}]*)\}')
 
 class KeyboardReader:
-    def __init__(self, ser, reactor):
-        self.ser = ser
+    def __init__(self, reactor, serialport, baud):
+        self.serialport = serialport
+        self.baud = baud
+        self.ser = serialhdl.SerialReader(reactor)
         self.reactor = reactor
         self.start_time = reactor.monotonic()
         self.clocksync = clocksync.ClockSync(self.reactor)
@@ -52,7 +54,10 @@ class KeyboardReader:
     def connect(self, eventtime):
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
-        self.ser.connect()
+        if self.baud:
+            self.ser.connect_uart(self.serialport, self.baud)
+        else:
+            self.ser.connect_pipe(self.serialport)
         msgparser = self.ser.get_msgparser()
         message_count = len(msgparser.get_messages())
         version, build_versions = msgparser.get_version_info()
@@ -205,8 +210,7 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
     r = reactor.Reactor()
-    ser = serialhdl.SerialReader(r, serialport, baud)
-    kbd = KeyboardReader(ser, r)
+    kbd = KeyboardReader(r, serialport, baud)
     try:
         r.run()
     except KeyboardInterrupt:
