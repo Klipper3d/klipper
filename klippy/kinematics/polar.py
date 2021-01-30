@@ -1,6 +1,6 @@
 # Code for handling the kinematics of polar robots
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -32,6 +32,10 @@ class PolarKinematics:
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
+        max_xy = self.rails[0].get_range()[1]
+        min_z, max_z = self.rails[1].get_range()
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.)
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         stepper_bed.set_max_jerk(max_halt_velocity, max_accel)
@@ -108,7 +112,11 @@ class PolarKinematics:
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
-        return {'homed_axes': xy_home + z_home}
+        return {
+            'homed_axes': xy_home + z_home,
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
 
 def load_kinematics(toolhead, config):
     return PolarKinematics(toolhead, config)

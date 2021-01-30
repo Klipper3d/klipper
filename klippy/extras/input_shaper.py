@@ -134,15 +134,14 @@ class InputShaper:
                                shaper_freq_x, shaper_freq_y,
                                damping_ratio_x, damping_ratio_y)
 
+        id_to_name = {v: n for n, v in self.shapers.items()}
         gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
                           "shaper_freq_x:%.3f shaper_freq_y:%.3f "
-                          "damping_ratio_x:%.6f damping_ratio_y:%.6f" % (
-                              self.shapers.keys()[
-                                  self.shapers.values().index(shaper_type_x)]
-                              , self.shapers.keys()[
-                                  self.shapers.values().index(shaper_type_y)]
-                              , shaper_freq_x, shaper_freq_y
-                              , damping_ratio_x, damping_ratio_y))
+                          "damping_ratio_x:%.6f damping_ratio_y:%.6f"
+                          % (id_to_name[shaper_type_x],
+                             id_to_name[shaper_type_y],
+                             shaper_freq_x, shaper_freq_y,
+                             damping_ratio_x, damping_ratio_y))
 
 def load_config(config):
     return InputShaper(config)

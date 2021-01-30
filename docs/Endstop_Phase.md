@@ -121,6 +121,6 @@ Additional notes
   will arrange for the micro-controller to always be reset via a USB
   power reset, which would arrange for both the micro-controller and
   stepper motor drivers to be reset together. If using this mechanism,
-  one would then need to manually configure the "endstop_phase" config
+  one would then need to manually configure the "trigger_phase" config
   sections (see [config reference](Config_Reference.md#endstop_phase)
   for the details).

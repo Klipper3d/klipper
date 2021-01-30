@@ -101,6 +101,8 @@ class PrinterNeoPixel:
         if print_time is not None:
             minclock = self.mcu.print_time_to_clock(print_time)
         scmd = self.neopixel_send_cmd.send
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
         for i in range(8):
             params = scmd([self.oid], minclock=minclock,
                           reqclock=BACKGROUND_PRIORITY_CLOCK)

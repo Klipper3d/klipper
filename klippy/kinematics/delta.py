@@ -1,6 +1,6 @@
 # Code for handling the kinematics of linear delta robots
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -68,25 +68,28 @@ class DeltaKinematics:
         self.limit_z = min([ep - arm
                             for ep, arm in zip(self.abs_endstops, arm_lengths)])
         logging.info(
-            "Delta max build height %.2fmm (radius tapered above %.2fmm)" % (
-                self.max_z, self.limit_z))
+            "Delta max build height %.2fmm (radius tapered above %.2fmm)"
+            % (self.max_z, self.limit_z))
         # Find the point where an XY move could result in excessive
         # tower movement
         half_min_step_dist = min([r.get_steppers()[0].get_step_dist()
                                   for r in self.rails]) * .5
         min_arm_length = min(arm_lengths)
-        def ratio_to_dist(ratio):
+        def ratio_to_xy(ratio):
             return (ratio * math.sqrt(min_arm_length**2 / (ratio**2 + 1.)
                                       - half_min_step_dist**2)
-                    + half_min_step_dist)
-        self.slow_xy2 = (ratio_to_dist(SLOW_RATIO) - radius)**2
-        self.very_slow_xy2 = (ratio_to_dist(2. * SLOW_RATIO) - radius)**2
+                    + half_min_step_dist - radius)
+        self.slow_xy2 = ratio_to_xy(SLOW_RATIO)**2
+        self.very_slow_xy2 = ratio_to_xy(2. * SLOW_RATIO)**2
         self.max_xy2 = min(print_radius, min_arm_length - radius,
-                           ratio_to_dist(4. * SLOW_RATIO) - radius)**2
+                           ratio_to_xy(4. * SLOW_RATIO))**2
+        max_xy = math.sqrt(self.max_xy2)
         logging.info("Delta max build radius %.2fmm (moves slowed past %.2fmm"
-                     " and %.2fmm)" % (
-                         math.sqrt(self.max_xy2), math.sqrt(self.slow_xy2),
-                         math.sqrt(self.very_slow_xy2)))
+                     " and %.2fmm)"
+                     % (max_xy, math.sqrt(self.slow_xy2),
+                        math.sqrt(self.very_slow_xy2)))
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -146,7 +149,11 @@ class DeltaKinematics:
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def get_status(self, eventtime):
-        return {'homed_axes': '' if self.need_home else 'xyz'}
+        return {
+            'homed_axes': '' if self.need_home else 'xyz',
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
     def get_calibration(self):
         endstops = [rail.get_homing_info().position_endstop
                     for rail in self.rails]

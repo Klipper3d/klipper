@@ -63,6 +63,7 @@ class pca9685_pwm:
                     self._bus, self._address, self._channel,
                     cycle_ticks, self._start_value * self._pwm_max))
             return
+        self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_pca9685 oid=%d bus=%d addr=%d channel=%d cycle_ticks=%d"
@@ -73,7 +74,7 @@ class pca9685_pwm:
                 self._mcu.seconds_to_clock(self._max_duration)))
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+            "queue_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
     def set_pwm(self, print_time, value, cycle_time=None):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:

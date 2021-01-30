@@ -78,3 +78,9 @@ the modifications.
 The fast-hash directory contains code from:
   https://github.com/ztanml/fast-hash
 revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc
+
+The kconfiglib directory contains code from:
+  https://github.com/ulfalizer/Kconfiglib.git
+version v14.1.0 (061e71f7d78cb057762d88de088055361863deff). It has
+been modified to always emit symbols and to simplify the "menuconfig"
+screens. See kconfiglib.patch for the modifications.

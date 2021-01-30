@@ -1,10 +1,10 @@
 # Z-Probe support
 #
-# Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import pins, homing
+import pins
 from . import manual_probe
 
 HINT_TIMEOUT = """
@@ -29,10 +29,12 @@ class PrinterProbe:
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
-            self.z_position = zconfig.getfloat('position_min', 0.)
+            self.z_position = zconfig.getfloat('position_min', 0.,
+                                               note_valid=False)
         else:
             pconfig = config.getsection('printer')
-            self.z_position = pconfig.getfloat('minimum_z_position', 0.)
+            self.z_position = pconfig.getfloat('minimum_z_position', 0.,
+                                               note_valid=False)
         # Multi-sample support (for improved accuracy)
         self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
@@ -73,11 +75,11 @@ class PrinterProbe:
     def _handle_homing_move_end(self, endstops):
         if self.mcu_probe in endstops:
             self.mcu_probe.probe_finish()
-    def _handle_home_rails_begin(self, rails):
+    def _handle_home_rails_begin(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
             self.multi_probe_begin()
-    def _handle_home_rails_end(self, rails):
+    def _handle_home_rails_end(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
             self.multi_probe_end()
@@ -110,7 +112,7 @@ class PrinterProbe:
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
             raise self.printer.command_error("Must home before probe")
-        homing_state = homing.Homing(self.printer)
+        homing_state = self.printer.lookup_object('homing').new_homing_state()
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]

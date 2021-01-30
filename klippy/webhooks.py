@@ -3,13 +3,8 @@
 # Copyright (C) 2020 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license
-import logging
-import socket
-import os
-import sys
-import errno
-import json
-import homing
+import logging, socket, os, sys, errno, json
+import gcode
 
 # Json decodes strings as unicode types in Python 2.x.  This doesn't
 # play well with some parts of Klipper (particuarly displays), so we
@@ -27,14 +22,14 @@ def byteify(data, ignore_dicts=False):
                 for k, v in data.items()}
     return data
 
-class WebRequestError(homing.CommandError):
+class WebRequestError(gcode.CommandError):
     def __init__(self, message,):
         Exception.__init__(self, message)
 
     def to_dict(self):
         return {
             'error': 'WebRequestError',
-            'message': self.message}
+            'message': str(self)}
 
 class Sentinel:
     pass
@@ -229,12 +224,12 @@ class ClientConnection:
             func = self.webhooks.get_callback(web_request.get_method())
             func(web_request)
         except self.printer.command_error as e:
-            web_request.set_error(WebRequestError(e.message))
+            web_request.set_error(WebRequestError(str(e)))
         except Exception as e:
             msg = ("Internal Error on WebRequest: %s"
                    % (web_request.get_method()))
             logging.exception(msg)
-            web_request.set_error(WebRequestError(e.message))
+            web_request.set_error(WebRequestError(str(e)))
             self.printer.invoke_shutdown(msg)
         result = web_request.finish()
         if result is None:
@@ -288,7 +283,7 @@ class WebHooks:
         self._endpoints[path] = callback
 
     def _handle_list_endpoints(self, web_request):
-        web_request.send({'endpoints': self._endpoints.keys()})
+        web_request.send({'endpoints': list(self._endpoints.keys())})
 
     def _handle_info_request(self, web_request):
         client_info = web_request.get_dict('client_info', None)

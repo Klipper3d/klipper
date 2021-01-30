@@ -16,10 +16,11 @@ mkdir -p ${BUILD_DIR} ${CACHE_DIR}
 ######################################################################
 
 echo -e "\n\n=============== Install system dependencies\n\n"
-sudo apt-get install gcc-avr avr-libc pv libmpfr-dev libgmp-dev \
-     libmpc-dev texinfo libncurses5-dev bison flex python-virtualenv \
-     virtualenv python-dev libffi-dev build-essential \
-     libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi
+PKGS="virtualenv python-dev libffi-dev build-essential"
+PKGS="${PKGS} gcc-avr avr-libc"
+PKGS="${PKGS} libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi"
+PKGS="${PKGS} pv libmpfr-dev libgmp-dev libmpc-dev texinfo bison flex"
+sudo apt-get install ${PKGS}
 
 
 ######################################################################

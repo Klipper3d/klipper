@@ -187,6 +187,15 @@ choice
         bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F4
 endchoice
 
+config STM32F0_TRIM
+    int "Internal clock trim override" if LOW_LEVEL_OPTIONS && MACH_STM32F0 && STM32_CLOCK_REF_INTERNAL && !USBSERIAL
+    default 16
+    help
+        Specify the internal clock trim value. Setting this can be
+        useful if the factory default internal clock is not accurate.
+        Default is 16 (use factory default). Each increment increases
+        the clock rate by ~240KHz.
+
 config STM32F042_PIN_SWAP
     bool "Use PA9/PA10 for USB or CAN" if MACH_STM32F042
     depends on (USBSERIAL || CANSERIAL) && MACH_STM32F042

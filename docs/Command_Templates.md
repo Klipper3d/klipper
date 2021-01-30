@@ -126,8 +126,9 @@ access it via the `[ ]` accessor - for example:
 
 The following are common printer attributes:
 - `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
-  This is also available on "heater_fan" and "fan_generic" config
-  sections (eg, `printer["fan_generic my_fan"].speed`).
+  This is also available on "heater_fan", "fan_generic", and
+  "controller_fan" config sections (eg,
+  `printer["fan_generic my_fan"].speed`).
 - `printer.gcode_move.gcode_position`: The current position of the
   toolhead relative to the current G-Code origin. That is, positions
   that one might directly send to a `G1` command. It is possible to
@@ -165,6 +166,8 @@ The following are common printer attributes:
   <config_name>`.
 - `printer.<heater>.target`: The current target temperature (in
   Celsius as a float) for the given heater.
+- `printer.<heater>.power`: The last setting of the PWM pin (a value
+  between 0.0 and 1.0) associated with the heater.
 - `printer.idle_timeout.state`: The current state of the printer as
   tracked by the idle_timeout module. It is one of the following
   strings: "Idle", "Printing", "Ready".
@@ -184,6 +187,11 @@ The following are common printer attributes:
 - `printer.toolhead.homed_axes`: The current cartesian axes considered
   to be in a "homed" state. This is a string containing one or more of
   "x", "y", "z".
+- `printer.toolhead.axis_minimum`,
+  `printer.toolhead.axis_maximum`: The axis travel limits (mm) after homing.
+  It is possible to access the x, y, z components of this
+  limit value (eg, `printer.toolhead.axis_minimum.x`,
+  `printer.toolhead.axis_maximum.z`).
 - `printer.toolhead.max_velocity`, `printer.toolhead.max_accel`,
   `printer.toolhead.max_accel_to_decel`,
   `printer.toolhead.square_corner_velocity`: The current printing
@@ -206,12 +214,14 @@ The following are common printer attributes:
   as "triggered" during the last QUERY_PROBE command. Note, due to the
   order of template expansion (see above), the QUERY_PROBE command
   must be run prior to the macro containing this reference.
-- `printer.configfile.config["<section>"]["<option>"]`: Returns the
-  given config file setting as read by Klipper during the last
-  software start or restart. (Any settings changed at run-time will
-  not be reflected here.) All values are returned as strings (if math
-  is to be performed on the value then it must be converted to a
-  Python number).
+- `printer.configfile.settings.<section>.<option>`: Returns the given
+  config file setting (or default value) during the last software
+  start or restart. (Any settings changed at run-time will not be
+  reflected here.)
+- `printer.configfile.config.<section>.<option>`: Returns the given
+  raw config file setting as read by Klipper during the last software
+  start or restart. (Any settings changed at run-time will not be
+  reflected here.) All values are returned as strings.
 - `printer["gcode_macro <macro_name>"].<variable>`: The current value
   of a [gcode_macro variable](#variables).
 - `printer.webhooks.state`: Returns a string indicating the current
@@ -255,6 +265,8 @@ The following are common printer attributes:
   from the sensor.
 - `printer["lm75 <sensor_name>"].temperature`: The last read
   temperature from the sensor.
+- `printer["rpi_temperature <sensor_name>"].temperature`: The last read
+  temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].temperature`: The last read
   temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].measured_min_temp`,
@@ -278,6 +290,16 @@ The following are common printer attributes:
 - `printer.hall_filament_width_sensor.Diameter`,
   `printer.hall_filament_width_sensor.Raw`: The last read values from
   the sensor.
+- `printer.mcu.mcu_version`: The Klipper code version reported by the
+  micro-controller.
+- `printer.mcu.mcu_build_versions`: Information on the build tools
+  used to generate the micro-controller code (as reported by the
+  micro-controller).
+- `printer.mcu.mcu_constants.<constant_name>`: Compile time constants
+  reported by the micro-controller. The available constants may differ
+  between micro-controller architectures and with each code revision.
+- `printer.mcu.last_stats.<statistics_name>`: Statistics information
+  on the micro-controller connection.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
@@ -395,3 +417,40 @@ gcode:
 ```
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
+
+### Save Variables to disk
+<!-- {% raw %} -->
+
+If a
+[save_variables config section](Config_Reference.md#save_variables)
+has been enabled, `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be
+used to save the variable to disk so that it can be used across
+restarts. All stored variables are loaded into the
+`printer.save_variables.variables` dict at startup and can be used in
+gcode macros. to avoid overly long lines you can add the following at
+the top of the macro:
+```
+{% set svv = printer.save_variables.variables %}
+```
+
+As an example, it could be used to save the state of 2-in-1-out hotend
+and when starting a print ensure that the active extruder is used,
+instead of T0:
+
+```
+[gcode_macro T1]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder1
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder1"'
+
+[gcode_macro T0]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder"'
+
+[gcode_macro START_GCODE]
+gcode:
+  {% set svv = printer.save_variables.variables %}
+  ACTIVATE_EXTRUDER extruder={svv.currentextruder}
+```
+<!-- {% endraw %} -->

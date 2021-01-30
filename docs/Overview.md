@@ -17,6 +17,8 @@ communication with the Klipper developers.
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config
   parameters.
+  - [Rotation Distance](Rotation_Distance.md): Calculating the
+    rotation_distance stepper parameter.
 - [Config checks](Config_checks.md): Verify basic pin settings in the
   config file.
 - [Bed level](Bed_Level.md): Information on "bed leveling" in Klipper.
@@ -27,6 +29,8 @@ communication with the Klipper developers.
   - [BL-Touch](BLTouch.md): Configure a "BL-Touch" Z probe.
   - [Manual level](Manual_Level.md): Calibration of Z endstops (and
     similar).
+  - [Bed Mesh](Bed_Mesh.md): Bed height correction based on XY
+    locations.
   - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
     positioning.
 - [Resonance compensation](Resonance_Compensation.md): A tool to

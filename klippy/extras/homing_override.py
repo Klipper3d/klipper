@@ -13,7 +13,7 @@ class HomingOverride:
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.in_script = False
-        self.printer.load_object(config, 'gcode_move')
+        self.printer.load_object(config, 'homing')
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)

@@ -107,15 +107,32 @@
         padding-top: .5em;
         padding-bottom: .5em;
     }
+    .toc-item-H1 { margin-left: 0px; }
+    .toc-item-H2 { margin-left: 8px; }
+    .toc-item-H3, .toc-item-H4, .toc-item-H5, .toc-item-H6 { margin-left: 16px; }
   </style>
   <script>
+  var levels = [];
   $('.markdown-body').find('h1, h2, h3, h4, h5, h6').each(function() {
     var $item = $(this);
     var $id = $(this).attr('id');
     var li = $('<li class="toc-item"/>');
+    var tag = $item.prop("tagName");
+    while (levels.length && tag <= levels[levels.length - 1]) {
+      levels.pop();
+    }
+    levels.push(tag);
+    li.addClass("toc-item-H" + levels.length);
     var a = $('<a/>', {text: $item.text(), href: '#' + $id, title: $item.text()});
     a.appendTo(li);
     $('#toc').append(li);
+  });
+  </script>
+
+  <!-- Javascript to automatically fix links to files outside docs/ -->
+  <script>
+  $('.markdown-body').find('a[href^="../"]').each(function() {
+    this.href = $(this).attr("href").replace(/^\.\./, "https://github.com/KevinOConnor/klipper/blob/master");
   });
   </script>
 </body>
