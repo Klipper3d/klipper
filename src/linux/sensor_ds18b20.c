@@ -245,7 +245,7 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READ_REQUESTED) {
         // Reader thread is already reading (or will be soon).
-        // This could happen if two or more queries come in quick enough 
+        // This could happen if two or more queries come in quick enough
         // succession. In that case, we want to wait for the existing read to
         // complete. // This could also happen if the reader thread has hung,
         // in which case something is wrong and we should exit.
