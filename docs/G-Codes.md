@@ -688,9 +688,9 @@ The following command is available when a
 [temperature_fan config section](Config_Reference.md#temperature_fan)
 is enabled:
 - `SET_TEMPERATURE_FAN_TARGET temperature_fan=<temperature_fan_name>
-  [target=<target_temperature>]`: Sets the target temperature for a
+  [target=<target_temperature>] [min_speed=<min_speed>]  [max_speed=<max_speed>]`: Sets the target temperature for a
   temperature_fan. If a target is not supplied, it is set to the
-  specified temperature in the config file.
+  specified temperature in the config file. If speeds are not supplied, no change is applied.
 
 ## Adxl345 Accelerometer Commands
 
