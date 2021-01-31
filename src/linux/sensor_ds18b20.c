@@ -144,7 +144,6 @@ command_config_ds18b20(uint32_t *args)
     char fname[56];
     snprintf(fname, sizeof(fname), "/sys/bus/w1/devices/%.*s/w1_slave"
              , serial_len, serial);
-    output("fname: %s", fname);
     int fd = open(fname, O_RDONLY|O_CLOEXEC);
     if (fd < 0) {
         report_errno("open ds18", fd);
