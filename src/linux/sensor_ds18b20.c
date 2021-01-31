@@ -155,6 +155,7 @@ command_config_ds18b20(uint32_t *args)
     d->timer.func = ds18_event;
     d->fd = fd;
     d->status = W1_IDLE;
+    int ret;
     ret = pthread_mutex_init(&d->lock, NULL);
     if (ret)
         goto fail3;
