@@ -1,6 +1,6 @@
 # Code for handling the kinematics of cable winch robots
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import stepper, mathutil
@@ -28,6 +28,9 @@ class WinchKinematics:
         for s in self.steppers:
             s.set_max_jerk(max_halt_velocity, max_accel)
         # Setup boundary checks
+        acoords = list(zip(*self.anchors))
+        self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
+        self.axes_max = toolhead.Coord(*[max(a) for a in acoords], e=0.)
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return list(self.steppers)
@@ -47,7 +50,11 @@ class WinchKinematics:
         pass
     def get_status(self, eventtime):
         # XXX - homed_checks and rail limits not implemented
-        return {'homed_axes': 'xyz'}
+        return {
+            'homed_axes': 'xyz',
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

@@ -61,7 +61,7 @@ The name of the virtual end stop pin is derived from the name of the TMC2130 sec
 
 The TMC2130 and TMC5160 have both a `diag0_pin` and `diag1_pin` in most known hardware the `diag1_pin` is appropriate. In order for klipper to correctly configure the driver for sensorless homing, the correct configuration property name `diag0_pin` or `diag1_pin` must be used. Which is used is determined by which driver pin is connected to the MCU pin.
 
-ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at `config/example-extras.cfg` for all the available options.
+ATTENTION: This guide only mentions the mandatory parameters and the ones needed to set up sensorless homing. There are many other options to configure on a TMC2130, make sure to take a look at [config reference](Config_Reference.md#tmc2130) for all the available options.
 
 ## Testing of SPI/UART communication
 Now that the stepper driver is configured, let's make sure that Klipper can communicate with the TMC2130 by sending the following extended G-Code command to the printer:

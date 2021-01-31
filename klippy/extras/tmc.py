@@ -1,9 +1,10 @@
 # Common helper code for TMC stepper drivers
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, collections
+import stepper
 
 
 ######################################################################
@@ -263,9 +264,14 @@ class TMCMicrostepHelper:
     def __init__(self, config, mcu_tmc):
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
+        stepper_name = " ".join(config.get_name().split()[1:])
+        stepper_config = ms_config = config.getsection(stepper_name)
+        if stepper_config.get('microsteps', None, note_valid=False) is None:
+            # Older config format with microsteps in tmc config section
+            ms_config = config
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
                  '8': 5, '4': 6, '2': 7, '1': 8}
-        mres = config.getchoice('microsteps', steps)
+        mres = ms_config.getchoice('microsteps', steps)
         self.fields.set_field("MRES", mres)
         self.fields.set_field("intpol", config.getboolean("interpolate", True))
     def get_microsteps(self):
@@ -277,7 +283,7 @@ class TMCMicrostepHelper:
             field_name = "MSTEP"
         reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
         mscnt = self.fields.get_field(field_name, reg)
-        return (1023 - mscnt) >> self.fields.get_field("MRES")
+        return 1023 - mscnt, 1024
 
 # Helper to configure "stealthchop" mode
 def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
@@ -287,7 +293,7 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     if velocity:
         stepper_name = " ".join(config.get_name().split()[1:])
         stepper_config = config.getsection(stepper_name)
-        step_dist = stepper_config.getfloat('step_distance')
+        step_dist = stepper.parse_step_distance(stepper_config)
         step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))

@@ -1,6 +1,6 @@
 # Tests for miscellaneous g-code commands
 DICTIONARY atmega2560.dict
-CONFIG ../../config/example.cfg
+CONFIG ../../config/example-cartesian.cfg
 
 # Simple status commands
 GET_POSITION

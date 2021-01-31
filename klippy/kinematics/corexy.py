@@ -1,6 +1,6 @@
 # Code for handling the kinematics of corexy robots
 #
-# Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -31,6 +31,9 @@ class CoreXYKinematics:
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
+        ranges = [r.get_range() for r in self.rails]
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
         # Setup stepper max halt velocity
         max_halt_velocity = toolhead.get_max_axis_halt()
         max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
@@ -95,7 +98,11 @@ class CoreXYKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        return {'homed_axes': "".join(axes)}
+        return {
+            'homed_axes': "".join(axes),
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
 
 def load_kinematics(toolhead, config):
     return CoreXYKinematics(toolhead, config)

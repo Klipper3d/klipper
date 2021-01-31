@@ -126,11 +126,9 @@ Configuring Klipper
 
 The Klipper configuration is stored in a text file on the Raspberry
 Pi. Take a look at the example config files in the
-[config directory](https://github.com/KevinOConnor/klipper/tree/master/config/). The
-[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
-file contains documentation on command parameters and it can also be
-used as an initial config file template. However, for most printers,
-one of the other config files may be a more concise starting point.
+[config directory](../config/). The
+[config reference](Config_Reference.md) contains documentation on
+config parameters.
 
 Arguably the easiest way to update the Klipper configuration file is
 to use a desktop editor that supports editing files over the "scp"
@@ -144,7 +142,7 @@ Alternatively, one can also copy and edit the file directly on the
 Raspberry Pi via ssh - for example:
 
 ```
-cp ~/klipper/config/example.cfg ~/printer.cfg
+cp ~/klipper/config/example-cartesian.cfg ~/printer.cfg
 nano ~/printer.cfg
 ```
 

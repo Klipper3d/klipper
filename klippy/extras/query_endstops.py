@@ -8,7 +8,7 @@ class QueryEndstops:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.endstops = []
-        self.last_state = {}
+        self.last_state = []
         # Register webhook if server is available
         webhooks = self.printer.lookup_object('webhooks')
         webhooks.register_endpoint(
