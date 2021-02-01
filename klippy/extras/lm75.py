@@ -26,17 +26,11 @@ class LM75:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.i2c = bus.MCU_I2C_from_config(
-            config,
-            default_addr=LM75_CHIP_ADDR,
-            default_speed=LM75_I2C_SPEED
-        )
+        self.i2c = bus.MCU_I2C_from_config(config, LM75_CHIP_ADDR,
+                                           LM75_I2C_SPEED)
         self.mcu = self.i2c.get_mcu()
-        self.report_time = config.getint(
-            'lm75_report_time',
-            LM75_REPORT_TIME,
-            minval=LM75_MIN_REPORT_TIME
-        )
+        self.report_time = config.getfloat('lm75_report_time', LM75_REPORT_TIME,
+                                           minval=LM75_MIN_REPORT_TIME)
         self.temp = 0.0
         self.sample_timer = self.reactor.register_timer(self._sample_lm75)
         self.printer.add_object("lm75 " + self.name, self)
