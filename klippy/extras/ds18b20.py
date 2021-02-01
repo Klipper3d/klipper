@@ -16,8 +16,8 @@ class DS18B20:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.sensor_id = config.get("serial_no")
-        self.min_temp = config.getfloat('min_temp')
-        self.max_temp = config.getfloat('max_temp')
+        self.temp = self.min_temp = self.max_temp = 0.0
+        self._report_clock = 0
         self.report_time = config.getfloat(
             'ds18_report_time',
             DS18_REPORT_TIME,
@@ -42,13 +42,20 @@ class DS18B20:
 
     def _handle_ds18b20_response(self, params):
         temp = params['value'] / 1000.0
+
+        if temp < self.min_temp or temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "DS18B20 temperature %0.1f outside range of %0.1f:%.01f"
+                % (temp, self.min_temp, self.max_temp))
+
         next_clock      = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self._mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
 
     def setup_minmax(self, min_temp, max_temp):
-        pass
+        self.min_temp = min_temp
+        self.max_temp = max_temp
 
     def fault(self, msg):
         self.printer.invoke_async_shutdown(msg)
