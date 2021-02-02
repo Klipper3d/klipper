@@ -2153,6 +2153,23 @@ CPU temperature from the Raspberry Pi running the host software.
 sensor_type: rpi_temperature
 ```
 
+## DS18B20 temperature sensor
+
+DS18B20 is a 1-wire (w1) digital temperature sensor. Note that this sensor is not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C). These sensors have range up to 125 C, so are usable for e.g. chamber temperature monitoring. They can also function as simple fan/heater controllers. DS18B20 sensors are only supported on the "host mcu", e.g. the Raspberry Pi. The w1-gpio Linux kernel module must be installed.
+
+```
+sensor_type: DS18B20
+serial_no:
+#   Each 1-wire device has a unique serial number used to identify the device,
+#   usually in the format 28-031674b175ff. This parameter must be provided.
+#   Attached 1-wire devices can be listed using the following Linux command:
+#   ls /sys/bus/w1/devices/
+#ds18_report_time:
+#   Interval in seconds between readings. Default is 3.0, with a minimum of 1.0
+#sensor_mcu:
+#   The micro-controller to read from. Must be the host_mcu
+```
+
 # Fans
 
 ## [fan]
