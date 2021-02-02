@@ -15,13 +15,17 @@ struct spi_info {
     uint8_t miso_pin, mosi_pin, sck_pin, function;
 };
 
-DECL_ENUMERATION("spi_bus", "spi2", 0);
-DECL_CONSTANT_STR("BUS_PINS_spi2", "PB14,PB15,PB13");
 DECL_ENUMERATION("spi_bus", "spi1", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
+#ifdef SPI2
+DECL_ENUMERATION("spi_bus", "spi2", 0);
+DECL_CONSTANT_STR("BUS_PINS_spi2", "PB14,PB15,PB13");
+#endif
 #if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F4
+#ifdef SPI2
 DECL_ENUMERATION("spi_bus", "spi2a", 2);
 DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
+#endif
 DECL_ENUMERATION("spi_bus", "spi1a", 3);
 DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
 #endif
