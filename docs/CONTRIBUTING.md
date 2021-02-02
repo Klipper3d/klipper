@@ -6,9 +6,7 @@ this document.
 ## Creating a new issue
 
 Please see the [contact page](Contact.md) for information on creating
-an issue. In particular, **we need the klippy.log file** attached to
-bug reports. Also, be sure to read the [FAQ](FAQ.md) to see if a
-similar issue has already been raised.
+an issue.
 
 ## Submitting a pull request
 
