@@ -616,7 +616,8 @@ heater_pin:
 #   fully enabled for extended periods, while a value of 0.5 would
 #   allow the pin to be enabled for no more than half the time. This
 #   setting may be used to limit the total power output (over extended
-#   periods) to the heater. The default is 1.0.
+#   periods) to the heater. The default is 1.0.  If you need to limit
+#   the power to the whole printer, see [power_limiter]
 sensor_type:
 #   Type of sensor - common thermistors are "EPCOS 100K B57560G104F",
 #   "ATC Semitec 104GT-2", "NTC 100K beta 3950", "Honeywell 100K
@@ -688,6 +689,27 @@ control:
 min_temp:
 max_temp:
 #   See the "extruder" section for a description of the above parameters.
+```
+
+## [power_limiter]
+
+Prevents a group of heaters from using more than a fixed amount of power.
+You may have multiple overlapping [power_limiter] clauses, for example if
+you need to limit power to the whole machine, but you *also* need to limit
+current through a fuse to the hotend.
+
+```
+[power_limiter]
+devices:
+#   Comma seperated list of the names of devices to limit power to
+#   For example:   devices: extruder,heater_bed
+device_powers:
+#   Comma seperated list of the power of each heater (when on 100%)
+limit_watts:
+#   Total wattage that can be enabled at the same time.   If more power
+#   than this is requested, a heater will have to wait (first come,
+#   first served). If there is insufficient power for too long,
+#   [heater_verify] may shut the machine down.
 ```
 
 # Bed level support

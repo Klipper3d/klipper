@@ -33,7 +33,8 @@ class Heater:
         is_fileoutput = (self.printer.get_start_args().get('debugoutput')
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
-        self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
+        max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
+        self.power_limiter = SimplePowerLimiter(max_power)
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
@@ -90,7 +91,7 @@ class Heater:
     def get_pwm_delay(self):
         return self.pwm_delay
     def get_max_power(self):
-        return self.max_power
+        return self.power_limiter.get_power_limit()
     def get_smooth_time(self):
         return self.smooth_time
     def set_temp(self, degrees):
@@ -148,7 +149,6 @@ class Heater:
 class ControlBangBang:
     def __init__(self, heater, config):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
     def temperature_update(self, read_time, temp, target_temp):
@@ -157,7 +157,7 @@ class ControlBangBang:
         elif not self.heating and temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, self.heater_max_power)
+            self.heater.set_pwm(read_time, self.heater.get_max_power())
         else:
             self.heater.set_pwm(read_time, 0.)
     def check_busy(self, eventtime, smoothed_temp, target_temp):
@@ -174,12 +174,11 @@ PID_SETTLE_SLOPE = .1
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
-        imax = config.getfloat('pid_integral_max', self.heater_max_power,
+        imax = config.getfloat('pid_integral_max', self.heater.get_max_power(),
                                minval=0.)
         self.temp_integ_max = 0.
         if self.Ki:
@@ -205,7 +204,7 @@ class ControlPID:
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
-        bounded_co = max(0., min(self.heater_max_power, co))
+        bounded_co = max(0., min(self.heater.get_max_power(), co))
         self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
@@ -217,6 +216,17 @@ class ControlPID:
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
+
+######################################################################
+# Power limiter class which just returns a constant
+######################################################################
+
+class SimplePowerLimiter:
+    def __init__(self, limit):
+        self.limit = limit
+    def get_power_limit(self):
+        return self.limit
 
 
 ######################################################################
