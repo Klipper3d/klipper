@@ -68,4 +68,8 @@ config SERIAL
     bool
     default y
 
+config SERIAL_BRIDGE
+    bool "Enable serial bridge" if LOW_LEVEL_OPTIONS
+    default n
+
 endif

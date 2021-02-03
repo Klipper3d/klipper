@@ -18,11 +18,6 @@ static uint8_t receive_bridge_buf[SERIAL_BRIDGE_RX_BUFFER_SIZE], receive_bridge_
 static uint8_t transmit_bridge_buf[SERIAL_BRIDGE_RX_BUFFER_SIZE], transmit_bridge_pos, transmit_bridge_max;
 
 void serial_bridge_rx_byte(uint_fast8_t data) {
-    // if (data == '\r')
-    //     return;
-    // if (data == '\n') {
-    //     sched_wake_tasks();
-    // }a
     if (receive_bridge_pos >= SERIAL_BRIDGE_RX_BUFFER_SIZE)
         // Serial overflow - ignore
         return;
@@ -77,21 +72,20 @@ serial_bridge_get_data(uint8_t* data)
 {
     for (;;) {
         uint_fast8_t rpos = readb(&receive_bridge_pos);
-        if (rpos > SERIAL_BRIDGE_RX_BUFFER_SIZE)
-            rpos = 0;
-        if (rpos) {
-            // Generate message
-            uint8_t *buf = receive_bridge_buf;
-            memcpy(data, buf, rpos);
-            irqstatus_t flag = irq_save();
-            if (rpos != readb(&receive_bridge_pos)) {
-                // Raced with irq handler - retry
-                irq_restore(flag);
-                continue;
-            }
-            receive_bridge_pos = 0;
+        if (!rpos)
+            return 0;
+
+        uint8_t *buf = receive_bridge_buf;
+        memcpy(data, buf, rpos);
+        irqstatus_t flag = irq_save();
+        if (rpos != readb(&receive_bridge_pos)) {
+            // Raced with irq handler - retry
             irq_restore(flag);
+            continue;
         }
+        receive_bridge_pos = 0;
+        irq_restore(flag);
+
         return rpos;
     }
 }

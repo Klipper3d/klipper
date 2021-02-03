@@ -110,7 +110,7 @@ class GCodeDispatch:
             if cmd in self.ready_gcode_handlers:
                 del self.ready_gcode_handlers[cmd]
             if cmd in self.base_gcode_handlers:
-                del self.baqse_gcode_handlers[cmd]
+                del self.base_gcode_handlers[cmd]
             return old_cmd
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(

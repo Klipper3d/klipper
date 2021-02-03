@@ -53,7 +53,7 @@ command_serial_bridge_send(uint32_t *args)
     uint8_t data_len = args[1];
     uint8_t *data = command_decode_ptr(args[2]);
 
-    output("sb %u", args[1]);
+    //output("sb %u", args[1]);
 
     serial_bridge_send(data, data_len);
 }
@@ -74,9 +74,11 @@ serial_bridge_task(void)
 
     static uint8_t buf[SERIAL_BRIDGE_RX_BUFFER_SIZE];
 
-    unsigned int data_len = serial_bridge_get_data(buf);
+    uint32_t data_len = serial_bridge_get_data(buf);
+    //uint8_t data_len2 = data_len;
     if (data_len) {
-        sendf("serial_bridge_response text=%*s", data_len, buf);
+        //output("dl %u %s", data_len, buf);
+        sendf("serial_bridge_response text=%*s", (uint8_t)data_len, buf);
     }
 }
 DECL_TASK(serial_bridge_task);

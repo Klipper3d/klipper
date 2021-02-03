@@ -22,6 +22,7 @@ src-$(CONFIG_HAVE_GPIO_SPI) += lpc176x/spi.c
 src-$(CONFIG_USBSERIAL) += lpc176x/usbserial.c lpc176x/chipid.c
 src-$(CONFIG_USBSERIAL) += generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += lpc176x/serial.c generic/serial_irq.c
+src-$(CONFIG_SERIAL_BRIDGE) += lpc176x/serial_bridge.c generic/serial_bridge_irq.c
 
 # Build the additional bin output file
 target-y += $(OUT)klipper.bin
