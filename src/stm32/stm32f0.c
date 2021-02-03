@@ -149,9 +149,10 @@ pll_setup(void)
 
     // Setup CFGR3 register
     uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
-    if (CONFIG_USBSERIAL)
+#if CONFIG_USBSERIAL
         // Select PLL as source for USB clock
         cfgr3 |= RCC_CFGR3_USBSW;
+#endif
     RCC->CFGR3 = cfgr3;
 }
 

@@ -7,9 +7,9 @@ config STM32_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
-    select HAVE_GPIO_I2C
-    select HAVE_GPIO_SPI
-    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO_I2C if !MACH_STM32F031
+    select HAVE_GPIO_SPI if !MACH_STM32F031
+    select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
 
@@ -37,6 +37,9 @@ choice
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
+    config MACH_STM32F031
+        bool "STM32F031"
+        select MACH_STM32F0
     config MACH_STM32F042
         bool "STM32F042"
         select MACH_STM32F0
@@ -64,6 +67,7 @@ config HAVE_STM32_USBOTG
 
 config MCU
     string
+    default "stm32f031x6" if MACH_STM32F031
     default "stm32f042x6" if MACH_STM32F042
     default "stm32f070xb" if MACH_STM32F070
     default "stm32f103xe" if MACH_STM32F103
@@ -85,6 +89,7 @@ config CLOCK_FREQ
 
 config FLASH_SIZE
     hex
+    default 0x4000 if MACH_STM32F031
     default 0x8000 if MACH_STM32F042
     default 0x20000 if MACH_STM32F070
     default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
@@ -97,6 +102,7 @@ config RAM_START
 
 config RAM_SIZE
     hex
+    default 0x1000 if MACH_STM32F031
     default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070
     default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
@@ -221,6 +227,8 @@ choice
         Select the serial device to use.
     config STM32_SERIAL_USART1
         bool "USART1"
+    config STM32_SERIAL_USART1_ALT
+        bool "USART1 (on PA15/PA14)" if MACH_STM32F0
     config STM32_SERIAL_USART2
         bool "USART2 (on PA3/PA2)"
     config STM32_SERIAL_USART2_ALT
