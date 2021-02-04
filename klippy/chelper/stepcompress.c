@@ -1,6 +1,6 @@
 // Stepper pulse schedule compression
 //
-// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -36,7 +36,8 @@ struct stepcompress {
     // Message generation
     uint64_t last_step_clock;
     struct list_head msg_queue;
-    uint32_t queue_step_msgid, set_next_step_dir_msgid, oid;
+    uint32_t oid;
+    int32_t queue_step_msgtag, set_next_step_dir_msgtag;
     int sdir, invert_sdir;
     // Step+dir+step filter
     uint64_t next_step_clock;
@@ -244,13 +245,13 @@ stepcompress_alloc(uint32_t oid)
 // Fill message id information
 void __visible
 stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-                  , uint32_t invert_sdir, uint32_t queue_step_msgid
-                  , uint32_t set_next_step_dir_msgid)
+                  , uint32_t invert_sdir, int32_t queue_step_msgtag
+                  , int32_t set_next_step_dir_msgtag)
 {
     sc->max_error = max_error;
     sc->invert_sdir = !!invert_sdir;
-    sc->queue_step_msgid = queue_step_msgid;
-    sc->set_next_step_dir_msgid = set_next_step_dir_msgid;
+    sc->queue_step_msgtag = queue_step_msgtag;
+    sc->set_next_step_dir_msgtag = set_next_step_dir_msgtag;
 }
 
 // Free memory associated with a 'stepcompress' object
@@ -307,7 +308,7 @@ queue_flush(struct stepcompress *sc, uint64_t move_clock)
             return ret;
 
         uint32_t msg[5] = {
-            sc->queue_step_msgid, sc->oid, move.interval, move.count, move.add
+            sc->queue_step_msgtag, sc->oid, move.interval, move.count, move.add
         };
         struct queue_message *qm = message_alloc_and_encode(msg, 5);
         qm->min_clock = qm->req_clock = sc->last_step_clock;
@@ -331,7 +332,7 @@ static int
 stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
 {
     uint32_t msg[5] = {
-        sc->queue_step_msgid, sc->oid, abs_step_clock - sc->last_step_clock,
+        sc->queue_step_msgtag, sc->oid, abs_step_clock - sc->last_step_clock,
         1, 0
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 5);
@@ -353,7 +354,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     if (ret)
         return ret;
     uint32_t msg[3] = {
-        sc->set_next_step_dir_msgid, sc->oid, sdir ^ sc->invert_sdir
+        sc->set_next_step_dir_msgtag, sc->oid, sdir ^ sc->invert_sdir
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 3);
     qm->req_clock = sc->last_step_clock;

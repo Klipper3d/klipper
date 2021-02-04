@@ -694,9 +694,9 @@ class MCU:
             return self.lookup_command(msgformat)
         except self._serial.get_msgparser().error as e:
             return None
-    def lookup_command_id(self, msgformat):
+    def lookup_command_tag(self, msgformat):
         all_msgs = self._serial.get_msgparser().get_messages()
-        return {msgfmt: msgid for msgid, msgtype, msgfmt in all_msgs}[msgformat]
+        return {fmt: msgtag for msgtag, msgtype, fmt in all_msgs}[msgformat]
     def get_enumerations(self):
         return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):

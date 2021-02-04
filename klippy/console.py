@@ -138,7 +138,7 @@ class KeyboardReader:
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
         mp = self.ser.get_msgparser()
-        cmds = [msgformat for msgid, msgtype, msgformat in mp.get_messages()
+        cmds = [msgformat for msgtag, msgtype, msgformat in mp.get_messages()
                 if msgtype == 'command']
         out = "Available mcu commands:"
         out += "\n  ".join([""] + sorted(cmds))

@@ -1,6 +1,6 @@
 # Printer stepper support
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
@@ -33,7 +33,7 @@ class MCU_stepper:
         self._invert_dir = dir_pin_params['invert']
         self._mcu_position_offset = self._tag_position = 0.
         self._min_stop_interval = 0.
-        self._reset_cmd_id = self._get_position_cmd = None
+        self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
@@ -78,18 +78,18 @@ class MCU_stepper:
                 self._invert_step))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
-        step_cmd_id = self._mcu.lookup_command_id(
+        step_cmd_tag = self._mcu.lookup_command_tag(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
-        dir_cmd_id = self._mcu.lookup_command_id(
+        dir_cmd_tag = self._mcu.lookup_command_tag(
             "set_next_step_dir oid=%c dir=%c")
-        self._reset_cmd_id = self._mcu.lookup_command_id(
+        self._reset_cmd_tag = self._mcu.lookup_command_tag(
             "reset_step_clock oid=%c clock=%u")
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
         self._ffi_lib.stepcompress_fill(
             self._stepqueue, self._mcu.seconds_to_clock(max_error),
-            self._invert_dir, step_cmd_id, dir_cmd_id)
+            self._invert_dir, step_cmd_tag, dir_cmd_tag)
     def get_oid(self):
         return self._oid
     def get_step_dist(self):
@@ -132,9 +132,9 @@ class MCU_stepper:
         ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
-        data = (self._reset_cmd_id, self._oid, 0)
-        ret = self._ffi_lib.stepcompress_queue_msg(
-            self._stepqueue, data, len(data))
+        data = (self._reset_cmd_tag, self._oid, 0)
+        ret = self._ffi_lib.stepcompress_queue_msg(self._stepqueue, data,
+                                                   len(data))
         if ret:
             raise error("Internal error in stepcompress")
         if not did_trigger or self._mcu.is_fileoutput():

@@ -357,14 +357,17 @@ class MessageParser:
                 start_value, count = value
                 for i in range(count):
                     enums[enum_root + str(start_enum + i)] = start_value + i
-    def _init_messages(self, messages, command_ids=[], output_ids=[]):
-        for msgformat, msgid in messages.items():
+    def _init_messages(self, messages, command_tags=[], output_tags=[]):
+        for msgformat, msgtag in messages.items():
             msgtype = 'response'
-            if msgid in command_ids:
+            if msgtag in command_tags:
                 msgtype = 'command'
-            elif msgid in output_ids:
+            elif msgtag in output_tags:
                 msgtype = 'output'
-            self.messages.append((msgid, msgtype, msgformat))
+            self.messages.append((msgtag, msgtype, msgformat))
+            if msgtag < -32 or msgtag > 95:
+                raise error("Multi-byte msgtag not supported")
+            msgid = msgtag & 0x7f
             if msgtype == 'output':
                 self.messages_by_id[msgid] = OutputFormat(msgid, msgformat)
             else:

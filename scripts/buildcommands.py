@@ -286,22 +286,25 @@ class HandleCommandGeneration:
             if msg not in self.msg_to_id:
                 msgid += 1
                 self.msg_to_id[msg] = msgid
-        if msgid >= 96:
+        if msgid >= 128:
             # The mcu currently assumes all message ids encode to one byte
             error("Too many message ids")
     def update_data_dictionary(self, data):
-        command_ids = [self.msg_to_id[msg]
-                       for msgname, msg in self.messages_by_name.items()
-                       if msgname in self.commands]
-        response_ids = [self.msg_to_id[msg]
+        # Handle message ids over 96 (they are decoded as negative numbers)
+        msg_to_tag = {msg: msgid if msgid < 96 else msgid - 128
+                      for msg, msgid in self.msg_to_id.items()}
+        command_tags = [msg_to_tag[msg]
                         for msgname, msg in self.messages_by_name.items()
-                        if msgname not in self.commands]
-        data['commands'] = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in command_ids }
-        data['responses'] = {msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in response_ids }
-        output = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                   if msgid not in command_ids and msgid not in response_ids }
+                        if msgname in self.commands]
+        response_tags = [msg_to_tag[msg]
+                         for msgname, msg in self.messages_by_name.items()
+                         if msgname not in self.commands]
+        data['commands'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                             if msgtag in command_tags }
+        data['responses'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                              if msgtag in response_tags }
+        output = {msg: msgtag for msg, msgtag in msg_to_tag.items()
+                  if msgtag not in command_tags and msgtag not in response_tags}
         if output:
             data['output'] = output
     def build_parser(self, msgid, msgformat, msgtype):
