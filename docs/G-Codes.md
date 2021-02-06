@@ -688,9 +688,9 @@ The following command is available when a
 [temperature_fan config section](Config_Reference.md#temperature_fan)
 is enabled:
 - `SET_TEMPERATURE_FAN_TARGET temperature_fan=<temperature_fan_name>
-  [target=<target_temperature>]`: Sets the target temperature for a
+  [target=<target_temperature>] [min_speed=<min_speed>]  [max_speed=<max_speed>]`: Sets the target temperature for a
   temperature_fan. If a target is not supplied, it is set to the
-  specified temperature in the config file.
+  specified temperature in the config file. If speeds are not supplied, no change is applied.
 
 ## Adxl345 Accelerometer Commands
 
@@ -704,10 +704,13 @@ The following commands are available when an
   the first time, it starts the measurements, next execution stops
   them. If RATE is not specified, then the default value is used
   (either from `printer.cfg` or `3200` default value). The results of
-  measurements are written to a file named `/tmp/adxl345-<name>.csv`
-  where `<name>` is the optional NAME parameter. If NAME is not
-  specified it defaults to the current time in "YYYYMMDD_HHMMSS"
-  format.
+  measurements are written to a file named
+  `/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
+  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
+  `<name>` is the optional NAME parameter. If NAME is not specified it
+  defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
+  accelerometer does not have a name in its config section (simply
+  `[adxl345]`) <chip> part of the name is not generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
   defaults to "default". If RATE is not specified, the default value
@@ -725,12 +728,15 @@ is enabled (also see the
   all enabled accelerometer chips.
 - `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
   [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-  [HZ_PER_SEC=<hz_per_sec>]`: Runs the resonance test in all
-  configured probe points for the requested axis (X or Y) and measures
-  the acceleration using the accelerometer chips configured for the
-  respective axis. `OUTPUT` parameter is a comma-separated list of
-  which outputs will be written. If `raw_data` is requested, then the
-  raw accelerometer data is written into a file or a series of files
+  [HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
+  test in all configured probe points for the requested axis (X or Y)
+  and measures the acceleration using the accelerometer chips configured
+  for the respective axis. If `INPUT_SHAPING=0` or not set (default),
+  disables input shaping for the resonance testing, because it is not valid
+  to run the resonance testing with the input shaper enabled.
+  `OUTPUT` parameter is a comma-separated list of which outputs will be
+  written. If `raw_data` is requested, then the raw accelerometer data
+  is written into a file or a series of files
   `/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
   the name generated only if more than 1 probe point is configured).
   If `resonances` is specified, the frequency response is calculated

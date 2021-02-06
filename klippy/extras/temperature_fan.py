@@ -23,8 +23,12 @@ class TemperatureFan:
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
         self.speed_delay = self.sensor.get_report_time_delta()
-        self.max_speed = config.getfloat('max_speed', 1., above=0., maxval=1.)
-        self.min_speed = config.getfloat('min_speed', 0.3, minval=0., maxval=1.)
+        self.max_speed_conf = config.getfloat(
+            'max_speed', 1., above=0., maxval=1.)
+        self.max_speed = self.max_speed_conf
+        self.min_speed_conf = config.getfloat(
+            'min_speed', 0.3, minval=0., maxval=1.)
+        self.min_speed = self.min_speed_conf
         self.last_temp = 0.
         self.last_temp_time = 0.
         self.target_temp_conf = config.getfloat(
@@ -39,8 +43,8 @@ class TemperatureFan:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command(
             "SET_TEMPERATURE_FAN_TARGET", "TEMPERATURE_FAN", self.name,
-            self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP,
-            desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help)
+            self.cmd_SET_TEMPERATURE_FAN_TARGET,
+            desc=self.cmd_SET_TEMPERATURE_FAN_TARGET_help)
 
     def set_speed(self, read_time, value):
         if value <= 0.:
@@ -71,16 +75,40 @@ class TemperatureFan:
         status["temperature"] = self.last_temp
         status["target"] = self.target_temp
         return status
-    cmd_SET_TEMPERATURE_FAN_TARGET_TEMP_help = "Sets a temperature fan target"
-    def cmd_SET_TEMPERATURE_FAN_TARGET_TEMP(self, gcmd):
+    cmd_SET_TEMPERATURE_FAN_TARGET_help = \
+        "Sets a temperature fan target and fan speed limits"
+    def cmd_SET_TEMPERATURE_FAN_TARGET(self, gcmd):
         temp = gcmd.get_float('TARGET', self.target_temp_conf)
         self.set_temp(temp)
+        min_speed = gcmd.get_float('MIN_SPEED', self.min_speed)
+        max_speed = gcmd.get_float('MAX_SPEED', self.max_speed)
+        if min_speed > max_speed:
+            raise self.printer.command_error(
+                "Requested min speed (%.1f) is greater than max speed (%.1f)"
+                % (min_speed, max_speed))
+        self.set_min_speed(min_speed)
+        self.set_max_speed(max_speed)
+
     def set_temp(self, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
             raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
         self.target_temp = degrees
+
+    def set_min_speed(self, speed):
+        if speed and (speed < 0. or speed > 1.):
+            raise self.printer.command_error(
+                "Requested min speed (%.1f) out of range (0.0 : 1.0)"
+                % (speed))
+        self.min_speed = speed
+
+    def set_max_speed(self, speed):
+        if speed and (speed < 0. or speed > 1.):
+            raise self.printer.command_error(
+                "Requested max speed (%.1f) out of range (0.0 : 1.0)"
+                % (speed))
+        self.max_speed = speed
 
 ######################################################################
 # Bang-bang control algo

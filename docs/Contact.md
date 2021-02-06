@@ -177,8 +177,15 @@ real-time.
 Mailing list
 ============
 
-There is a mailing list for general discussions on Klipper. In order
-to send an email to the list, one must first subscribe:
+There is a mailing list for Klipper announcements and for discussions
+on the Klipper project itself.
+
+Do not use the email list to
+[ask a printing question](#i-have-a-question-about-klipper),
+nor to [make a feature request](#i-have-a-feature-request), nor to
+[ask for help with a printer](#help-it-doesnt-work).
+
+In order to send an email to the list, one must first subscribe:
 [https://www.freelists.org/list/klipper](https://www.freelists.org/list/klipper)
 . Once subscribed, emails may be sent to `klipper@freelists.org`.
 

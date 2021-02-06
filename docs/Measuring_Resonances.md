@@ -51,6 +51,12 @@ Note that on a bed slinger printer one must design 2 mounts: one for the
 toolhead and one for the bed, and run the measurements twice. See the
 corresponding [section](#bed-slinger-printers) for more details.
 
+**Attention:** make sure the accelerometer and any screws that hold it in
+place do not touch any metal parts of the printer. Basically, the mount must
+be designed such as to ensure the electrical isolation of the accelerometer
+from the printer frame. Failing to ensure that can create a ground loop in
+the system that may damage the electronics.
+
 ## Software installation
 
 Note that resonance measurements and shaper auto-calibration require additional
@@ -101,11 +107,14 @@ Measuring the resonances
 
 Now you can test a connection.
 
-- For "non bed-slingers" (e.g. one accelerometer), in Octoprint, enter `ACCELEROMETER_QUERY`
-- For "bed-slingers" (e.g. more than one accelerometer), enter `ACCELEROMETER_QUERY CHIP=adxl345_x` where `adxl345_x` is the name of the chip as-entered (see: [bed-slinger](#bed-slinger-printers)).
+- For "non bed-slingers" (e.g. one accelerometer), in Octoprint,
+  enter `ACCELEROMETER_QUERY`
+- For "bed-slingers" (e.g. more than one accelerometer), enter
+  `ACCELEROMETER_QUERY CHIP=<chip>` where `<chip>` is the name of the chip
+  as-entered, e.g. `CHIP=bed` (see: [bed-slinger](#bed-slinger-printers))
+  for all installed accelerometer chips.
 
-In Octoprint, run `ACCELEROMETER_QUERY`. You
-should see the current measurements from the accelerometer, including the
+You should see the current measurements from the accelerometer, including the
 free-fall acceleration, e.g.
 ```
 Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
@@ -118,7 +127,9 @@ the schematics, no wire is broken or loose, etc.), and soldering quality.
 
 Next, try running `MEASURE_AXES_NOISE` in Octoprint, you should get some
 baseline numbers for the noise of accelerometer on the axes (should be
-somewhere in the range of ~1-100).
+somewhere in the range of ~1-100). Too high axes noise (e.g. 1000 and more)
+can be indicative of the sensor issues, problems with its power, or too
+noisy imbalanced fans on a 3D printer.
 
 ## Measuring the resonances
 
@@ -126,22 +137,19 @@ Now you can run some real-life tests. In `printer.cfg` add or replace the
 following values:
 ```
 [printer]
-max_accel: 7000
-max_accel_to_decel: 7000
+max_accel: 10000
+max_accel_to_decel: 10000
 ```
 (after you are done with the measurements, revert these values to their old,
-or the newly suggested values). Also, if you have enabled input shaper already,
-you will need to disable it prior to this test as follows:
-```
-SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
-```
-as it is not valid to run the resonance testing with the input shaper enabled.
+or the newly suggested values).
 
 Run the following command:
 ```
 TEST_RESONANCES AXIS=X
 ```
-Note that it will create vibrations on X axis.
+Note that it will create vibrations on X axis. It will also disable input
+shaping if it was enabled previously, as it is not valid to run the resonance
+testing with the input shaper enabled.
 
 **Attention!** Be sure to observe the printer for the first time, to make sure
 the vibrations do not become too violent (`M112` command can be used to abort
@@ -211,17 +219,18 @@ must be connected to different boards (say, to an RPi and printer MCU board), or
 to two different physical SPI interfaces on the same board (rarely available).
 Then they can be configured in the following manner:
 ```
-[adxl345 adxl345_x]
-# Assuming adxl345_x is connected to an RPi
+[adxl345 hotend]
+# Assuming `hotend` chip is connected to an RPi
 cs_pin: rpi:None
 
-[adxl345 adxl345_y]
-# Assuming adxl345_y is connected to a printer MCU board
+[adxl345 bed]
+# Assuming `bed` chip is connected to a printer MCU board
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
-accel_chip_x: adxl345 adxl345_x
-accel_chip_y: adxl345 adxl345_y
+# Assuming the typical setup of the bed slinger printer
+accel_chip_x: adxl345 hotend
+accel_chip_y: adxl345 bed
 probe_points: ...
 ```
 
@@ -281,12 +290,14 @@ larger, but the smoothing is significantly smaller than previously.
 
 When deciding which `max_smoothing` parameter to choose, you can use a
 trial-and-error approach. Try a few different values and see which results
-you get. Note however that if you request the script to find a configuration
-for your printer with an unrealistically small smoothing, it will be unable
-to find a reasonable configuration. The suggested parameters will have a poor
-performance in this case and you can get too much remaining ringing as a result.
-So, always double-check the projected remaining vibrations and make sure they
-are not too high.
+you get. Note that the actual smoothing produced by the input shaper depends,
+primarily, on the lowest resonance frequency of the printer: the higher
+the frequency of the lowest resonance - the smaller the smoothing. Therefore,
+if you request the script to find a configuration of the input shaper with the
+unrealistically small smoothing, it will be at the expense of increased ringing
+at the lowest resonance frequencies (which are, typically, also more prominently
+visible in prints). So, always double-check the projected remaining vibrations
+reported by the script and make sure they are not too high.
 
 Note that if you chose a good `max_smoothing` value for both of your axes, you
 can store it in the `printer.cfg` as
