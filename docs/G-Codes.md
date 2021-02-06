@@ -131,7 +131,9 @@ The following standard commands are supported:
   effect on the next absolute G-Code move that specifies the given
   axis). If "MOVE_SPEED" is specified then the toolhead move will be
   performed with the given speed (in mm/s); otherwise the toolhead
-  move will use the last specified G-Code speed.
+  move will use the last specified G-Code speed. To see the current
+  offset, the "GET_POSITION" command will return it under the `gcode 
+  homing` result.
 - `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
   g-code coordinate parsing state. Saving and restoring the g-code
   state is useful in scripts and macros. This command saves the
