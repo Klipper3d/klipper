@@ -2226,6 +2226,19 @@ pin:
 #   input speed which reliably drives the fan without stalls. Set
 #   off_below to the duty cycle corresponding to this value (for
 #   example, 12% -> 0.12) or slightly higher.
+#tachometer_pin:
+#   Tachometer input pin for monitoring fan speed. A pullup is generally
+#   required. This parameter is optional.
+#tachometer_ppr: 2
+#   When tachometer_pin is specified, this is the number of pulses per
+#   revolution of the tachometer signal. For a BLDC fan this is
+#   normally half the number of poles. The default is 2.
+#tachometer_poll_interval: 0.0015
+#   When tachometer_pin is specified, this is the polling period of the
+#   tachometer pin, in seconds. The default is 0.0015, which is fast
+#   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
+#   30/(tachometer_ppr*rpm), with some margin, where rpm is the
+#   maximum speed (in RPM) of the fan.
 ```
 
 ## [heater_fan]
@@ -2244,6 +2257,9 @@ a shutdown_speed equal to max_power.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
 #   Name of the config section defining the heater that this fan is
@@ -2277,6 +2293,9 @@ watched component.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
@@ -2317,6 +2336,9 @@ additional information.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -2362,6 +2384,9 @@ with the SET_FAN_SPEED
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 ```
 
