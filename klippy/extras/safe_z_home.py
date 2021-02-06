@@ -8,8 +8,11 @@ class SafeZHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
         try:
-            x_pos, y_pos = config.get("home_xy_position").split(',')
-            self.home_x_pos, self.home_y_pos = float(x_pos), float(y_pos)
+            xy_pos = config.get("home_xy_position", None)
+            if xy_pos is not None:
+                self.home_xy_pos = [float(v) for v in xy_pos.split(',')]
+            else:
+                self.home_xy_pos = None
         except:
             raise config.error("Unable to parse home_xy_position in %s"
                                % (config.get_name(),))
@@ -69,15 +72,16 @@ class SafeZHoming:
 
         # Home Z axis if necessary
         if need_z:
-            # Throw an error if X or Y are not homed
-            curtime = self.printer.get_reactor().monotonic()
-            kin_status = toolhead.get_kinematics().get_status(curtime)
-            if ('x' not in kin_status['homed_axes'] or
-                'y' not in kin_status['homed_axes']):
-                raise gcmd.error("Must home X and Y axes first")
-            # Move to safe XY homing position
-            prevpos = toolhead.get_position()
-            toolhead.manual_move([self.home_x_pos, self.home_y_pos], self.speed)
+            if self.home_xy_pos is not None:
+                # Throw an error if X or Y are not homed
+                curtime = self.printer.get_reactor().monotonic()
+                kin_status = toolhead.get_kinematics().get_status(curtime)
+                if ('x' not in kin_status['homed_axes'] or
+                    'y' not in kin_status['homed_axes']):
+                    raise gcmd.error("Must home X and Y axes first")
+                # Move to safe XY homing position
+                prevpos = toolhead.get_position()
+                toolhead.manual_move(self.home_xy_pos, self.speed)
             # Home Z
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {'Z': '0'})
             self.prev_G28(g28_gcmd)
@@ -85,7 +89,7 @@ class SafeZHoming:
             if self.z_hop:
                 toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
             # Move XY back to previous positions
-            if self.move_to_previous:
+            if self.home_xy_pos is not None and self.move_to_previous:
                 toolhead.manual_move(prevpos[:2], self.speed)
 
     def _perform_z_hop(self):
