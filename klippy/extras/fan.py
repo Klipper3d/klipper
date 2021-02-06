@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import pulse_counter
 
 FAN_MIN_TIME = 0.100
 
@@ -11,6 +12,7 @@ class Fan:
         self.printer = config.get_printer()
         self.last_fan_value = 0.
         self.last_fan_time = 0.
+        self.rpm = None
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
@@ -28,9 +30,14 @@ class Fan:
         self.mcu_fan.setup_cycle_time(cycle_time, hardware_pwm)
         shutdown_power = max(0., min(self.max_power, shutdown_speed))
         self.mcu_fan.setup_start_value(0., shutdown_power)
+
+        # Setup tachometer
+        self.tachometer = FanTachometer(config)
+
         # Register callbacks
         self.printer.register_event_handler("gcode:request_restart",
                                             self._handle_request_restart)
+
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
     def set_speed(self, print_time, value):
@@ -54,8 +61,34 @@ class Fan:
                                               self.set_speed(pt, value)))
     def _handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
+
     def get_status(self, eventtime):
-        return {'speed': self.last_fan_value}
+        tachometer_status = self.tachometer.get_status(eventtime)
+        return {
+            'speed': self.last_fan_value,
+            'rpm': tachometer_status['rpm'],
+        }
+
+class FanTachometer:
+    def __init__(self, config):
+        printer = config.get_printer()
+        self._freq_counter = None
+
+        pin = config.get('tachometer_pin', None)
+        if pin is not None:
+            self.ppr = config.getint('tachometer_ppr', 2, minval=1)
+            poll_time = config.getfloat('tachometer_poll_interval',
+                                        0.0015, above=0.)
+            sample_time = 1.
+            self._freq_counter = pulse_counter.FrequencyCounter(
+                printer, pin, sample_time, poll_time)
+
+    def get_status(self, eventtime):
+        if self._freq_counter:
+            rpm = self._freq_counter.frequency * 30. / self.ppr
+        else:
+            rpm = None
+        return {'rpm': rpm}
 
 class PrinterFan:
     def __init__(self, config):
