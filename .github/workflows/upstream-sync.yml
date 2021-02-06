@@ -9,19 +9,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync
-        uses: tgymnich/fork-sync@v1.3.0
+      - name: Merge changes
+        uses: actions/github-script@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          owner: KevinOConnor
-          base: snapshot
-          head: master
-          merge_method: merge
-          pr_title: Upstream sync
-          ignore_fail: false
+          github-token: ${{ secrets.TOKEN }}
+          script: |
+            const timeout = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+            const { data: pullRequest } = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Upstream sync",
+              head: "KevinOConnor:master",
+              base: "snapshot",
+              maintainer_can_modify: false
+            })
+
+            await timeout(3000)
+
+            await github.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+              commit_title: "Merge upstream changes",
+              merge_method: "merge"
+            })
+
+            await timeout(3000)
       - name: Checkout snapshot
         uses: actions/checkout@v2
         with:
+          token: ${{ secrets.TOKEN }}
           ref: snapshot
       - name: Generate tag parameters
         id: params
@@ -31,9 +49,11 @@ jobs:
       - name: Create tag
         uses: actions/github-script@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.TOKEN }}
           script: |
-            const tagResponse = await github.git.createTag({
+            const timeout = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+            const { data: tag } = await github.git.createTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: "${{ steps.params.outputs.tagname }}",
@@ -41,9 +61,12 @@ jobs:
               object: "${{ steps.params.outputs.tagsha }}",
               type: "commit"
             })
+
+            await timeout(3000)
+
             await github.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: `refs/tags/${tagResponse.data.tag}`,
-              sha: `${tagResponse.data.sha}`
+              ref: `refs/tags/${tag.tag}`,
+              sha: `${tag.sha}`
             })
