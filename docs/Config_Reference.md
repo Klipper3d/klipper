@@ -2032,7 +2032,7 @@ sensor_pin:
 #   name in the above list.
 ```
 
-## bme280 temperature sensor
+## BME280 temperature sensor
 
 BME280 two wire interface (I2C) environmental sensor. Note that this
 sensor is not intended for use with extruders and heater beds, but
@@ -2043,7 +2043,7 @@ that may be used to report pressure and humidity in addition to
 temperature.
 
 ```
-sensor_type: bme280
+sensor_type: BME280
 #i2c_address:
 #   Default is 118 (0x76). Some BME280 sensors have an address of 119
 #   (0x77).
