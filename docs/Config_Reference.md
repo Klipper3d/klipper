@@ -1046,7 +1046,7 @@ has to move to the center of the bed before Z can be homed.
 [safe_z_home]
 home_xy_position:
 #   A X,Y coordinate (e.g. 100,100) where the Z homing should be
-#   performed. This parameter must be provided.
+#   performed.
 #speed: 50.0
 #   Speed at which the toolhead is moved to the safe Z home
 #   coordinate. The default is 50 mm/s
