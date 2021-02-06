@@ -1,0 +1,40 @@
+# Enable the github stale issue bot tracker
+name: "Add comment to issues marked invalid"
+on:
+  issues:
+      types: [labeled]
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            if (context.payload.label.name != "invalid")
+              return;
+            msg = "Unfortunately, it appears the directions at"
+                + " https://www.klipper3d.org/Contact.html"
+                + " were not followed for this issue.\n"
+                + "\n"
+                + "We choose to use github as a place that people working on"
+                + " improving Klipper can share the results of their work."
+                + " We choose to not use github to help diagnose problems"
+                + " with a user's printer. We choose to not use github to"
+                + " answer user questions. We choose to not use github as"
+                + " a place to make requests.\n"
+                + "\n"
+                + "In the future, please follow the directions at:"
+                + " https://www.klipper3d.org/Contact.html\n"
+                + "This ticket will be automatically closed.\n"
+                + "\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot\n"
+                + "\n"
+                + "PS: I'm just an automated script, not a human being.";
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            })

@@ -92,7 +92,7 @@ class HTU21D:
             raise config.error("Invalid HTU21D Resolution. Valid are %s"
                 % '|'.join(HTU21D_RESOLUTIONS.keys()))
         self.deviceId = config.get('sensor_type')
-        self.temp = self.humidity = 0.
+        self.temp = self.min_temp = self.max_temp = self.humidity = 0.
         self.sample_timer = self.reactor.register_timer(self._sample_htu21d)
         self.printer.add_object("htu21d " + self.name, self)
         self.printer.register_event_handler("klippy:connect",
@@ -103,7 +103,8 @@ class HTU21D:
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
-        pass
+        self.min_temp = min_temp
+        self.max_temp = max_temp
 
     def setup_callback(self, cb):
         self._callback = cb
@@ -210,6 +211,11 @@ class HTU21D:
             logging.exception("htu21d: Error reading data")
             self.temp = self.humidity = .0
             return self.reactor.NEVER
+
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "HTU21D temperature %0.1f outside range of %0.1f:%.01f"
+                % (self.temp, self.min_temp, self.max_temp))
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)

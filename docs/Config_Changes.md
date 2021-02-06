@@ -6,6 +6,15 @@ All dates in this document are approximate.
 
 # Changes
 
+20210201: The `TEST_RESONANCES` command will now disable input shaping
+if it was previously enabled (and re-enable it after the test). In order
+to override this behavior and keep the input shaping enabled, one can
+pass an additional parameter `INPUT_SHAPING=1` to the command.
+
+20210201: The `ACCELEROMETER_MEASURE` command will now append the name
+of the accelerometer chip to the output file name if the chip was given
+a name in the corresponding adxl345 section of the printer.cfg.
+
 20201222: The `step_distance` setting in the stepper config sections
 is deprecated.  It is advised to update the config to use the
 [`rotation_distance`](Rotation_Distance.md) setting.  Support for

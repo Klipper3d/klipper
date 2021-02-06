@@ -7,9 +7,9 @@ config STM32_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
-    select HAVE_GPIO_I2C
-    select HAVE_GPIO_SPI
-    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO_I2C if !MACH_STM32F031
+    select HAVE_GPIO_SPI if !MACH_STM32F031
+    select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
 
@@ -25,6 +25,9 @@ choice
     config MACH_STM32F207
         bool "STM32F207"
         select MACH_STM32F2
+    config MACH_STM32F401
+        bool "STM32F401"
+        select MACH_STM32F4
     config MACH_STM32F405
         bool "STM32F405"
         select MACH_STM32F4
@@ -34,6 +37,9 @@ choice
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
+    config MACH_STM32F031
+        bool "STM32F031"
+        select MACH_STM32F0
     config MACH_STM32F042
         bool "STM32F042"
         select MACH_STM32F0
@@ -61,10 +67,12 @@ config HAVE_STM32_USBOTG
 
 config MCU
     string
+    default "stm32f031x6" if MACH_STM32F031
     default "stm32f042x6" if MACH_STM32F042
     default "stm32f070xb" if MACH_STM32F070
     default "stm32f103xe" if MACH_STM32F103
     default "stm32f207xx" if MACH_STM32F207
+    default "stm32f401xc" if MACH_STM32F401
     default "stm32f405xx" if MACH_STM32F405
     default "stm32f407xx" if MACH_STM32F407
     default "stm32f446xx" if MACH_STM32F446
@@ -75,16 +83,18 @@ config CLOCK_FREQ
     default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
     default 72000000 if MACH_STM32F103
     default 120000000 if MACH_STM32F207
+    default 84000000 if MACH_STM32F401
     default 168000000 if MACH_STM32F405 || MACH_STM32F407
     default 180000000 if MACH_STM32F446
 
 config FLASH_SIZE
     hex
+    default 0x4000 if MACH_STM32F031
     default 0x8000 if MACH_STM32F042
     default 0x20000 if MACH_STM32F070
     default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
-    default 0x40000 if MACH_STM32F2
-    default 0x80000 if MACH_STM32F4
+    default 0x40000 if MACH_STM32F2 || MACH_STM32F401
+    default 0x80000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
 
 config RAM_START
     hex
@@ -92,11 +102,14 @@ config RAM_START
 
 config RAM_SIZE
     hex
+    default 0x1000 if MACH_STM32F031
     default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070
     default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
     default 0x20000 if MACH_STM32F207
-    default 0x20000 if MACH_STM32F4
+    default 0x10000 if MACH_STM32F401
+    default 0x20000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
+
 
 config STACK_SIZE
     int
@@ -169,9 +182,9 @@ config CANSERIAL
     bool "Use CAN for communication (instead of serial)"
     depends on !USBSERIAL
     default n
-config SERIAL_BAUD
+config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
-    default 500000 if CANSERIAL
+    default 500000
 choice
     depends on CANSERIAL
     prompt "CAN pins"
@@ -184,7 +197,7 @@ choice
     config CAN_PINS_PB5_PB6
         bool "Pins PB5(rx) and PB6(tx)" if MACH_STM32F4
     config CAN_PINS_PB12_PB13
-        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F4
+        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F405 || MACH_STM32F407
 endchoice
 
 config STM32F0_TRIM
@@ -214,6 +227,8 @@ choice
         Select the serial device to use.
     config STM32_SERIAL_USART1
         bool "USART1"
+    config STM32_SERIAL_USART1_ALT
+        bool "USART1 (on PA15/PA14)" if MACH_STM32F0
     config STM32_SERIAL_USART2
         bool "USART2 (on PA3/PA2)"
     config STM32_SERIAL_USART2_ALT
@@ -221,7 +236,7 @@ choice
     config STM32_SERIAL_USART3
         bool "USART3"
     config STM32_SERIAL_USART3_ALT
-        bool "USART3 (on PD9/PD8)" if MACH_STM32F4
+        bool "USART3 (on PD9/PD8)" if MACH_STM32F405 || MACH_STM32F407
 endchoice
 config SERIAL_PORT
     int

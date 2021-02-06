@@ -20,9 +20,10 @@ class VibrationPulseTest:
         printer = config.get_printer()
         self.gcode = printer.lookup_object('gcode')
         self.min_freq = config.getfloat('min_freq', 5., minval=1.)
-        self.max_freq = config.getfloat('max_freq', 120.,
+        # Defaults are such that max_freq * accel_per_hz == 10000 (max_accel)
+        self.max_freq = config.getfloat('max_freq', 10000. / 75.,
                                         minval=self.min_freq, maxval=200.)
-        self.accel_per_hz = config.getfloat('accel_per_hz', 75.0, above=0.)
+        self.accel_per_hz = config.getfloat('accel_per_hz', 75., above=0.)
         self.hz_per_sec = config.getfloat('hz_per_sec', 1.,
                                           minval=0.1, maxval=2.)
 
@@ -127,6 +128,13 @@ class ResonanceTester:
         if csv_output:
             helper = shaper_calibrate.ShaperCalibrate(self.printer)
 
+        input_shaper = self.printer.lookup_object('input_shaper', None)
+        if input_shaper is not None and not gcmd.get_int('INPUT_SHAPING', 0):
+            input_shaper.disable_shaping()
+            gcmd.respond_info("Disabled [input_shaper] for resonance testing")
+        else:
+            input_shaper = None
+
         currentPos = toolhead.get_position()
         Z = currentPos[2]
         E = currentPos[3]
@@ -176,6 +184,10 @@ class ResonanceTester:
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
+        if input_shaper is not None:
+            input_shaper.enable_shaping()
+            gcmd.respond_info(
+                    "Re-enabled [input_shaper] after resonance testing")
 
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
