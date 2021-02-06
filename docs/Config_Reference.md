@@ -1060,9 +1060,9 @@ home_xy_position:
 #   lifted by z_hop. If z_hop is specified, be sure to home the Z
 #   immediately after any XY home requests so that the Z boundary
 #   checks are accurate. The default is to not implement Z hop.
-#z_hop_speed: 20.0
+#z_hop_speed: 15.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
-#   default is 20mm/s.
+#   default is 15mm/s.
 #move_to_previous: False
 #   When set to True, xy are reset to their previous positions after z
 #   homing. The default is False.
