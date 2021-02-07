@@ -60,6 +60,8 @@ communication with the Klipper developers.
   control API.
 - [MCU commands](MCU_Commands.md): A description of low-level commands
   implemented in the micro-controller software.
+- [CAN bus protocol](CANBUS_protocol.md): Klipper CAN bus message
+  format.
 - [Debugging](Debugging.md): Information on how to test and debug
   Klipper.
 - [Benchmarks](Benchmarks.md): Information on the Klipper benchmark
