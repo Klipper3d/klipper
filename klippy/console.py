@@ -204,6 +204,8 @@ class KeyboardReader:
 def main():
     usage = "%prog [options] <serialdevice>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-v", action="store_true", dest="verbose",
+                    help="enable debug messages")
     opts.add_option("-b", "--baud", type="int", dest="baud", help="baud rate")
     options, args = opts.parse_args()
     if len(args) != 1:
@@ -215,7 +217,11 @@ def main():
                              or serialport.startswith("/tmp/")):
         baud = 250000
 
-    logging.basicConfig(level=logging.DEBUG)
+    debuglevel = logging.INFO
+    if options.verbose:
+        debuglevel = logging.DEBUG
+    logging.basicConfig(level=debuglevel)
+
     r = reactor.Reactor()
     kbd = KeyboardReader(r, serialport, baud)
     try:
