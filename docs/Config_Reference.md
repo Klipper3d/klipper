@@ -39,9 +39,16 @@ Configuration of the primary micro-controller.
 serial:
 #   The serial port to connect to the MCU. If unsure (or if it
 #   changes) see the "Where's my serial port?" section of the FAQ.
-#   This parameter must be provided.
+#   This parameter must be provided when using a serial port.
 #baud: 250000
 #   The baud rate to use. The default is 250000.
+#canbus_uuid:
+#   If using a device connected to a CAN bus then this sets the unique
+#   chip identifier to connect to. This value must be provided when using
+#   CAN bus for communication.
+#canbus_interface:
+#   If using a device connected to a CAN bus then this sets the CAN
+#   network interface to use. The default is 'can0'.
 #pin_map:
 #   This option may be used to enable Arduino pin name aliases. The
 #   default is to not enable the aliases.
