@@ -202,11 +202,18 @@ class KeyboardReader:
         self.data = kbdlines[-1]
 
 def main():
-    usage = "%prog [options] <serialdevice> <baud>"
+    usage = "%prog [options] <serialdevice>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-b", "--baud", type="int", dest="baud", help="baud rate")
     options, args = opts.parse_args()
-    serialport, baud = args
-    baud = int(baud)
+    if len(args) != 1:
+        opts.error("Incorrect number of arguments")
+    serialport = args[0]
+
+    baud = options.baud
+    if baud is None and not (serialport.startswith("/dev/rpmsg_")
+                             or serialport.startswith("/tmp/")):
+        baud = 250000
 
     logging.basicConfig(level=logging.DEBUG)
     r = reactor.Reactor()
