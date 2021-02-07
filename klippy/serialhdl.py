@@ -72,10 +72,11 @@ class SerialReader:
                     # Done
                     return identify_data
                 identify_data += msgdata
-    def _start_session(self, serial_dev):
+    def _start_session(self, serial_dev, serial_fd_type='u', client_id=0):
         self.serial_dev = serial_dev
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(serial_dev.fileno(), 0),
+            self.ffi_lib.serialqueue_alloc(serial_dev.fileno(),
+                                           serial_fd_type, client_id),
             self.ffi_lib.serialqueue_free)
         self.background_thread = threading.Thread(target=self._bg_thread)
         self.background_thread.start()
@@ -142,7 +143,7 @@ class SerialReader:
         self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 1),
+            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 'f', 0),
             self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, last_time, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
