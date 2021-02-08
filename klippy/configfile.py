@@ -203,7 +203,7 @@ class PrinterConfig:
             pos = line.find('=')
             if pos >= 0:
                 aliases[line[:pos].strip()] = line[pos+1:].strip()
-        logging.info("Aliases Loaded: " + ''.join(["%s: %s, " % 
+        logging.info("Aliases Loaded: " + ''.join(["%s: %s, " %
                      (s, aliases[s])for s in aliases]))
         return aliases
     def _parse_config(self, data, filename, fileconfig, visited, aliases):
