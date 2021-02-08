@@ -170,7 +170,7 @@ class PrinterConfig:
         sbuffer = StringIO.StringIO(data)
         fileconfig.readfp(sbuffer, filename)
     def _resolve_include(self, source_filename, include_spec, fileconfig,
-                         visited):
+                         visited, aliases):
         dirname = os.path.dirname(source_filename)
         include_spec = include_spec.strip()
         include_glob = os.path.join(dirname, include_spec)
@@ -182,9 +182,30 @@ class PrinterConfig:
         for include_filename in include_filenames:
             include_data = self._read_config_file(include_filename)
             self._parse_config(include_data, include_filename, fileconfig,
-                               visited)
+                               visited, aliases)
         return include_filenames
-    def _parse_config(self, data, filename, fileconfig, visited):
+    def _read_aliases(self, source_filename):
+        dirname = os.path.dirname(source_filename)
+        alias_filename = os.path.join(dirname, 'aliases.cfg')
+        aliases = {}
+        if not os.path.exists(alias_filename):
+            logging.info("Alias file '%s' not found; no aliases loaded" 
+                          % alias_filename)
+            return aliases
+        data = self._read_config_file(alias_filename)
+        lines = data.split('\n')
+        for line in lines:
+            # Strip trailing comment
+            pos = line.find('#')
+            if pos >= 0:
+                line = line[:pos]
+            # Parse lines of format 'alias=value'
+            pos = line.find('=')
+            if pos >= 0:
+                aliases[line[:pos].strip()] = line[pos+1:].strip()
+        logging.info("Aliases Loaded: " + ''.join(["%s: %s, " % (s, aliases[s]) for s in aliases]))
+        return aliases
+    def _parse_config(self, data, filename, fileconfig, visited, aliases):
         path = os.path.abspath(filename)
         if path in visited:
             raise error("Recursive include of config file '%s'" % (filename))
@@ -205,14 +226,24 @@ class PrinterConfig:
                 self._parse_config_buffer(buffer, filename, fileconfig)
                 include_spec = header[8:].strip()
                 self._resolve_include(filename, include_spec, fileconfig,
-                                      visited)
+                                      visited, aliases)
             else:
+                # Replace aliased values if present
+                pos = line.find('$')
+                if pos >= 0:
+                    key = line[pos+1:].strip()
+                    if key in aliases:
+                        line = line[:pos] + aliases[key]
+                    else:
+                        raise error("No alias found for key '%s'" % (key))
                 buffer.append(line)
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
-    def _build_config_wrapper(self, data, filename):
+    def _build_config_wrapper(self, data, filename, aliases=None):
+        if aliases is None:
+            aliases = {}
         fileconfig = configparser.RawConfigParser()
-        self._parse_config(data, filename, fileconfig, set())
+        self._parse_config(data, filename, fileconfig, set(), aliases)
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
         sfile = StringIO.StringIO()
@@ -224,11 +255,15 @@ class PrinterConfig:
     def read_main_config(self):
         filename = self.printer.get_start_args()['config_file']
         data = self._read_config_file(filename)
+        aliases = self._read_aliases(filename)
         regular_data, autosave_data = self._find_autosave_data(data)
-        regular_config = self._build_config_wrapper(regular_data, filename)
+        regular_config = self._build_config_wrapper(regular_data, filename, 
+                                                    aliases)
         autosave_data = self._strip_duplicates(autosave_data, regular_config)
-        self.autosave = self._build_config_wrapper(autosave_data, filename)
-        cfg = self._build_config_wrapper(regular_data + autosave_data, filename)
+        self.autosave = self._build_config_wrapper(autosave_data, filename, 
+                                                   aliases)
+        cfg = self._build_config_wrapper(regular_data + autosave_data, 
+                                         filename, aliases)
         self._build_status(cfg)
         return cfg
     def check_unused_options(self, config):

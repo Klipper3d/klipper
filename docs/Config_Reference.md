@@ -3664,3 +3664,36 @@ I2C bus.
 #   On some micro-controllers changing this value has no effect. The
 #   default is 100000.
 ```
+
+# Aliases
+
+Aliases are an optional feature that resolve keys in a configuration file, 
+replacing them with a value defined in `aliases.cfg`. They behave the 
+same way as `#define` in C/C++. Aliases can be used for commonly changed 
+values, or values that occur in multiple places within a configuration. 
+They offer simplification for advanced users or printer developers when 
+frequently editing configurations.
+
+Aliases are referenced within configuration files by defining keys, 
+denoted by a string with a leading `$`, like `$KINEMATICS_TYPE` or 
+`$MAX_VELOCITY`. Keys must be the last item on a line (excluding comments).
+
+Aliases are defined in an `aliases.cfg`, which must reside in the same path 
+as `printer.cfg`. Key-value pairs are defined as `KEYNAME = VALUE`. 
+Values can consist of strings or numbers, and are replaced literally.
+If `aliases.cfg` is not present, no aliases are loaded. Aliases defined 
+here do not need to be used. Comments are allowed.
+
+Example config usage:
+```
+#[printer]
+#kinematics: $KINEMATICS_TYPE
+#max_velocity: $MAX_VELOCITY
+```
+
+Example `aliases.cfg`:
+```
+# Aliases File
+KINEMATICS_TYPE = cartesian
+MAX_VELOCITY = 100
+```
