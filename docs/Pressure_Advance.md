@@ -78,7 +78,7 @@ corners, it's worth remembering that a good pressure advance
 configuration also reduces ooze throughout the print.
 
 At the completion of this test, set
-`pressure_advance = <calculated_value>` in the `[extruder]` section in
+`pressure_advance = <calculated_value>` in the `[extruder]` section of
 the configuration file and issue a RESTART command. The RESTART
 command will clear the test state and return the acceleration and
 cornering speeds to their normal values.
