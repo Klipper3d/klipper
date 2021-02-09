@@ -290,9 +290,6 @@ can_init(void)
     canbus_set_filter(CANBUS_ID_SET);
 
     /*##-3- Configure Interrupts #################################*/
-
-    SOC_CAN->IER = CAN_IER_FMPIE0; // RX mailbox IRQ
-
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_RX1_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);

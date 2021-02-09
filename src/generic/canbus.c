@@ -213,6 +213,7 @@ void
 canbus_set_uuid(void *uuid)
 {
     memcpy(canbus_uuid, uuid, sizeof(canbus_uuid));
+    canbus_notify_rx();
 
     // Send initial message
     can_process_uuid(0, 0, NULL);
