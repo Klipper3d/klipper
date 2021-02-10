@@ -156,6 +156,14 @@ class GCodeDispatch:
         self._respond_state("Ready")
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
+    remove_comments = re.compile('\\(.*\\)')
+    remove_whitespaces = re.compile('(\\s+)')
+
+    def _remove_leading_zero(self, cmd):
+        if cmd.isdigit():
+            return str(int(cmd))
+        return cmd
+
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
@@ -163,15 +171,23 @@ class GCodeDispatch:
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
+
+            # Ignore CNC style comments
+            if '(' in line:
+                line = self.remove_comments.sub('', line)
+
+            # It seems like CNC gcode standard allows excessive whitespaces, they should be ignored
+            line = self.remove_whitespaces.sub(' ', line).strip()
+
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != 'N':
-                cmd = parts[1] + parts[2].strip()
+                cmd = parts[1] + self._remove_leading_zero(parts[2].strip())
             elif numparts >= 5 and parts[1] == 'N':
                 # Skip line number at start of command
-                cmd = parts[3] + parts[4].strip()
+                cmd = parts[3] + self._remove_leading_zero(parts[4].strip())
             # Build gcode "params" dictionary
             params = { parts[i]: parts[i+1].strip()
                        for i in range(1, numparts, 2) }
