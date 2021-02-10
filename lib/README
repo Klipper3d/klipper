@@ -58,6 +58,11 @@ The stm32f4 directory contains code from:
 version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
 
+The stm32h7 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeH7
+version v1.7.0 (79196b09acfb720589f58e93ccf956401b18a191). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
+
 The rp2040 directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
 version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
