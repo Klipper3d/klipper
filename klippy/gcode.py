@@ -176,7 +176,7 @@ class GCodeDispatch:
             if '(' in line:
                 line = self.remove_comments.sub('', line)
 
-            # It seems like CNC gcode standard allows excessive whitespaces, they should be ignored
+            # Ignore repeating whitespaces
             line = self.remove_whitespaces.sub(' ', line).strip()
 
             # Break line into parts and determine command
