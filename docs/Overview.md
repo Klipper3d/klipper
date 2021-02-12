@@ -70,6 +70,8 @@ communication with the Klipper developers.
 
 # Device Specific Documents
 
+- [SDCard Updates](SDCard_Updates.md): Flash a micro-controller by
+  copying a binary to an sdcard in the micro-controller.
 - [Raspberry Pi as Micro-controller](RPi_microcontroller.md): Details
   for controlling devices wired to the GPIO pins of a Raspberry Pi.
 - [Beaglebone](beaglebone.md): Details for running Klipper on the

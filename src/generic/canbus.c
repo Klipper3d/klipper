@@ -137,7 +137,7 @@ can_process_set_id(uint32_t id, uint32_t len, uint8_t *data)
     // compare my UUID with packet to check if this packet mine
     if (memcmp(&data[2], canbus_uuid, sizeof(canbus_uuid)) == 0) {
         canbus_assigned_id = data[0] | (data[1] << 8);
-        canbus_set_dataport(canbus_assigned_id);
+        canbus_set_filter(canbus_assigned_id);
     }
 }
 
@@ -213,6 +213,7 @@ void
 canbus_set_uuid(void *uuid)
 {
     memcpy(canbus_uuid, uuid, sizeof(canbus_uuid));
+    canbus_notify_rx();
 
     // Send initial message
     can_process_uuid(0, 0, NULL);
