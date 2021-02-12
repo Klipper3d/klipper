@@ -123,24 +123,27 @@ pollreactor_update_timer(struct pollreactor *pr, int pos, double waketime)
 
 // Internal code to invoke timer callbacks
 static int
-pollreactor_check_timers(struct pollreactor *pr, double eventtime)
+pollreactor_check_timers(struct pollreactor *pr, double eventtime, int busy)
 {
     if (eventtime >= pr->next_timer) {
+        // Find and run pending timers
         pr->next_timer = PR_NEVER;
         int i;
         for (i=0; i<pr->num_timers; i++) {
             struct pollreactor_timer *timer = &pr->timers[i];
             double t = timer->waketime;
             if (eventtime >= t) {
+                busy = 1;
                 t = timer->callback(pr->callback_data, eventtime);
                 timer->waketime = t;
             }
             if (t < pr->next_timer)
                 pr->next_timer = t;
         }
-        if (eventtime >= pr->next_timer)
-            return 0;
     }
+    if (busy)
+        return 0;
+    // Calculate sleep duration
     double timeout = ceil((pr->next_timer - eventtime) * 1000.);
     return timeout < 1. ? 1 : (timeout > 1000. ? 1000 : (int)timeout);
 }
@@ -150,11 +153,14 @@ static void
 pollreactor_run(struct pollreactor *pr)
 {
     double eventtime = get_monotonic();
+    int busy = 1;
     while (! pr->must_exit) {
-        int timeout = pollreactor_check_timers(pr, eventtime);
+        int timeout = pollreactor_check_timers(pr, eventtime, busy);
+        busy = 0;
         int ret = poll(pr->fds, pr->num_fds, timeout);
         eventtime = get_monotonic();
         if (ret > 0) {
+            busy = 1;
             int i;
             for (i=0; i<pr->num_fds; i++)
                 if (pr->fds[i].revents)
