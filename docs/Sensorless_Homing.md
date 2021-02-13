@@ -14,7 +14,7 @@ A few prerequisites are needed to use sensorless homing:
 ## Limitations
 Be sure that your mechanical components are able to handle the load of the carriage bumping into the limit of the axis repeatedly. Especially spindles (on the Z axis) might generate a lot of force. Homing a Z axis by bumping the nozzle into the printing surface might not be a good idea.
 
-Further, sensorless homing might not be accurate enough for you printer. While homing X and Y axes on a cartesian machine can work well, homing the Z axis is generally not accurate enough and results in inconsistent first layer height. Homing a delta printer sensorless is not advisable due to missing accuracy.
+Further, sensorless homing might not be accurate enough for your printer. While homing X and Y axes on a cartesian machine can work well, homing the Z axis is generally not accurate enough and results in inconsistent first layer height. Homing a delta printer sensorless is not advisable due to missing accuracy.
 
 Further, the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
 
