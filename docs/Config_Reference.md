@@ -1825,6 +1825,25 @@ more information.
 #   parameters.
 ```
 
+### [mixingextruder]
+
+A mixing printhead which has <n>in-1out mixing nozzle. When specified
+16 virtual mixingextruders are created ("mixingextruder",
+"mixingextruder1", ... "mixingextruder15"). They can be activated like
+the standard extruders with "ACTIVATE_EXTRUDER EXTRUDER=mixingextruder" and
+"MIXING_STATUS EXTRUDER=mixingextruder" provides some statistics.
+When activated additional g-code are available: M163, M164, M567 and a
+extended G1 command. See [G-Codes](G-Codes.md#mixing-commands) for
+a detailed description of the additional commands.
+
+```
+[mixingextruder]
+#extruders:
+#   Which extruders feed into the hotend/nozzle. provide a comma
+#   separated list, eg. "extruder,extruder1,extruder2".
+#   This configuration is required.
+```
+
 ### [manual_stepper]
 
 Manual steppers (one may define any number of sections with a

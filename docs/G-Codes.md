@@ -325,6 +325,47 @@ enabled:
   future G-Code movement commands may run in parallel with the stepper
   movement.
 
+### Mixingextruder Commands
+
+The following commands are available when a
+[mixingextruder config section](Config_Reference.md#mixingextruder) is
+enabled:
+- `ACTIVATE_EXTRUDER EXTRUDER=mixingextruder`: This command activates the
+  specified mixing extruder. Subsequent G1 command use the mixing definded
+  for that mixing extruder.
+- `M163 Sx Pa.a`: Set a ratio for the given extruder. The range of x are the indices of
+  the extruders in the
+  [mixingextruder config section](Config_Reference.md#mixingextruder). The
+  ratio a.a can be any positive number. The ratios are saved to a given
+  mixingextruder with the M164 command.
+- `M164 [Sx]`: Save the ratios to the given mixing extruder. The range of x are
+  the 16 generated mixing extruders which can be activated with the
+  ACTIVATE_EXTRUDER command. If S is not specified it defaults to the
+  "mixingextruder" extruder.
+- `M567 [Px] Ea.a:b.b:...:h.h`: Directly set the weighting on one of the
+  mixingextruders. The range of x are the 16 generated mixing extruders which
+  can be activated with the ACTIVATE_EXTRUDER command. The weighting
+  a.a, ... h.h are the weightings for the extruders in the
+  [mixingextruder config section](Config_Reference.md#mixingextruder) and
+  should all be positive numbers adding up to a total of 1.
+  If P is not specified it defaults to the "mixingextruder" extruder. If less weights than
+  extruders are provided the remaining weights are
+  assummed 0.0, additional beyond the available
+  extruders are ignored.
+- `G1 [X<pos>] [Y<pos>] [Z<pos>] [E<pos1>:<pos2>:...:<posn>] [F<speed>]`:
+  This extended G1 command is available if a mixing extruder is active.
+  The pos1, ... posn parameters define the amounts to extrude for the
+  extruders defined in the
+  [mixingextruder config section](Config_Reference.md#mixingextruder).
+  If less weights than
+  extruders are provided the remaining weights are
+  assummed 0.0, additional beyond the available
+  extruders are ignored.
+  Additionally it also sets the mixing for that extruder for subsequent
+  standard G1 commands, eg. "G1 ... E1:2:7  G1 ... E1" first extrudes
+  1mm, 2mm and 7mm with the respective extruders and then 0.1mm, 0.2mm and
+  0.7mm with the second G1.
+
 ### Extruder stepper Commands
 
 The following command is available when an
