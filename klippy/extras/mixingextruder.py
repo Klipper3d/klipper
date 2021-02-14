@@ -204,7 +204,7 @@ class MixingExtruder:
 
     def cmd_M164(self, gcmd):
         mixingextruder = self
-        index = gcmd.get_int('S', 0, minval=0, maxval=len(self.extruders))
+        index = gcmd.get_int('S', 0, minval=0, maxval=16)
         if index:
             mixingextruder = self.printer.lookup_object(
                 "mixingextruder%d" % (index))
@@ -215,10 +215,11 @@ class MixingExtruder:
             raise gcmd.error("Could not save ratio: its empty")
         for i, v in enumerate(self.ratios):
             mixingextruder.mixing[i] = v/s
+            self.ratios[i] = 0.0
 
     def cmd_M567(self, gcmd):
         mixingextruder = self
-        index = gcmd.get_int('P', 0, minval=0, maxval=len(self.extruders))
+        index = gcmd.get_int('P', 0, minval=0, maxval=16)
         if index:
             mixingextruder = self.printer.lookup_object(
                 "mixingextruder%d" % (index))
@@ -227,7 +228,9 @@ class MixingExtruder:
         weighting = gcmd.get('E', None)
         if not weighting:
             raise gcmd.error("No weighting in M567")
-        weights = [float(w) for w in weighting.split(":")]
+        weights = [float(w)
+                   for i, w in enumerate(weighting.split(":"))
+                   if i < len(self.extruders)]
         if min(weights) < 0:
             raise gcmd.error("Negative weight not allowed")
         s = sum(weights)
@@ -242,7 +245,9 @@ class MixingExtruder:
         if not weighting or ":" not in weighting:
             self.orig_G1(gcmd)
             return
-        weights = [float(w) for w in weighting.split(":")]
+        weights = [float(w)
+                   for i, w in enumerate(weighting.split(":"))
+                   if i < len(self.extruders)]
         extrude = sum(weights)
         weighting = ":".join("%0.2f" % (w / extrude) for w in weights)
         self.cmd_M567(GCodeCommand(
@@ -252,6 +257,7 @@ class MixingExtruder:
             gcode, "G1", gcmd.get_commandline(),
             dict(gcmd.get_command_parameters(), E="%f" % (extrude)),
             gcmd._need_ack))
+
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
 
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
@@ -265,6 +271,7 @@ class MixingExtruder:
         toolhead.set_extruder(self, self.get_commanded_position())
         self._reset_positions()
         self.printer.send_event("extruder:activate_extruder")
+
     cmd_MIXING_STATUS_help = "Display the status of the given MixingExtruder"
 
     def cmd_MIXING_STATUS(self, gcmd):
