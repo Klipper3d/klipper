@@ -17,6 +17,9 @@ class Fan:
                                                minval=0.)
         self.off_below = config.getfloat('off_below', default=0.,
                                          minval=0., maxval=1.)
+        self.min_power = config.getfloat('min_power', default=0.,
+                                         minval=0., maxval =1.)
+        self.power_scaling = config.getboolean('power_scaling', False)
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         shutdown_speed = config.getfloat(
@@ -34,6 +37,10 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
     def set_speed(self, print_time, value):
+        if value and self.power_scaling:
+            value = value * (self.max_power - self.min_power) + self.min_power
+        if value and value < self.min_power:
+            value = self.min_power
         if value < self.off_below:
             value = 0.
         value = max(0., min(self.max_power, value * self.max_power))
