@@ -13,9 +13,12 @@ class Fan:
         self.last_fan_time = 0.
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.kick_start_time = config.getfloat('kick_start_time', 0.1, minval=0.)
-        self.off_below = config.getfloat('off_below', default=0., minval=0., maxval =1.)
-        self.min_power = config.getfloat('min_power', default=0., minval=0., maxval =1.)
+        self.kick_start_time = config.getfloat('kick_start_time', 0.1,
+                                               minval=0.)
+        self.off_below = config.getfloat('off_below', default=0.,
+                                         minval=0., maxval=1.)
+        self.min_power = config.getfloat('min_power', default=0.,
+                                         minval=0., maxval =1.)
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         shutdown_speed = config.getfloat(
