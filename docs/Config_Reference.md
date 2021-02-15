@@ -1260,6 +1260,9 @@ using this feature may place the printer in an invalid state - see the
 #enable_force_move: False
 #   Set to true to enable FORCE_MOVE and SET_KINEMATIC_POSITION
 #   extended G-Code commands. The default is false.
+#ignore_homing: False
+#   Set to true to disable move validity checks for
+#   Cartesian, CoreXY and CoreXY kinematics
 ```
 
 ## [pause_resume]
