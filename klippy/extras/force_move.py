@@ -41,14 +41,12 @@ class ForceMove:
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
-        
         self.ignore_homing_kinematics_list = ['cartesian', 'corexy', 'corexz']
         self.kin_name = config.getsection('printer').get('kinematics')
         if config.getboolean('ignore_homing', False):
             if self.kin_name not in self.ignore_homing_kinematics_list:
                 raise self.printer.config_error(
                     "ignore_homing invalid for %s" % (self.kin_name,))
-        
         gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
                                desc=self.cmd_STEPPER_BUZZ_help)
         if config.getboolean("enable_force_move", False):
