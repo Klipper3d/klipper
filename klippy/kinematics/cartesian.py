@@ -118,7 +118,8 @@ class CartKinematics:
             # Normal XY move - use defaults
             return
         # Move with Z - update velocity and accel for slower Z axis
-        self._check_endstops(move)
+        if not self.ignore_homing:
+            self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
         move.limit_speed(
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
