@@ -151,11 +151,13 @@ enable_clock_stm32f40x(void)
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401
 
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr, pll_p_clk_divisor = 0x0; 
+    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+    uint32_t pll_p_clk_divisor = 0x0;
 #endif
 
 #if  CONFIG_MACH_STM32F401
-    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 4, pllcfgr, pll_p_clk_divisor = 0x1;
+    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 4, pllcfgr;
+    uint32_t pll_p_clk_divisor = 0x1;
 #endif
 
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {

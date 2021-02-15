@@ -164,7 +164,7 @@ choice
     config STM32_CLOCK_REF_16M
         bool "16 MHz crystal"
     config STM32_CLOCK_REF_25M
-        bool "25 MHz crystal"    
+        bool "25 MHz crystal"
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
