@@ -81,6 +81,7 @@ class MixingExtruder:
         # Register commands
         gcode.register_command("M163", self.cmd_M163)
         gcode.register_command("M164", self.cmd_M164)
+        gcode.register_command("M165", self.cmd_M165)
         gcode.register_command("M567", self.cmd_M567)
         self.orig_G1 = gcode.register_command("G1", None)
         gcode.register_command("G1", self.cmd_G1)
@@ -216,6 +217,29 @@ class MixingExtruder:
         for i, v in enumerate(self.ratios):
             mixingextruder.mixing[i] = v/s
             self.ratios[i] = 0.0
+
+    def cmd_M165(self, gcmd):
+        mixingextruder = self
+        toolhead = self.printer.lookup_object('toolhead')
+        activeextruder = toolhead.get_extruder()
+        if activeextruder is not self:
+            if activeextruder not in mixingextruder.mixing_extruders.values():
+                raise gcmd.error("Active extruder is not mixing")
+            mixingextruder = activeextruder
+        a = gcmd.get_float('A', 0., minval=0, maxval=1)
+        b = gcmd.get_float('B', 0., minval=0, maxval=1)
+        c = gcmd.get_float('C', 0., minval=0, maxval=1)
+        d = gcmd.get_float('D', 0., minval=0, maxval=1)
+        h = gcmd.get_float('H', 0., minval=0, maxval=1)
+        i = gcmd.get_float('I', 0., minval=0, maxval=1)
+        weights = [float(w)
+                   for i, w in enumerate((a, b, c, d, h, i))
+                   if i < len(self.extruders)]
+        s = sum(weights)
+        if s > 1.01 or s < 0.99:
+            raise gcmd.error("Could not save ratio: out of bounds %0.2f" % (s))
+        for i, v in enumerate(weights):
+            mixingextruder.mixing[i] = v/s
 
     def cmd_M567(self, gcmd):
         mixingextruder = self
