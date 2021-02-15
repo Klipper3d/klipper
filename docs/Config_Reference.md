@@ -2209,6 +2209,12 @@ pin:
 #   Time (in seconds) to run the fan at full speed when either first
 #   enabling or increasing it by more than 50% (helps get the fan
 #   spinning). The default is 0.100 seconds.
+#min_power: 0.0
+#   The minimum input speed which will power the fan (expressed as a
+#   value from 0.0 to 1.0). When a speed lower than min_power is
+#   requested the fan will instead be set to this speed.
+#   This setting may be used to prevent fan stalls.
+#   The default is 0.0.
 #off_below: 0.0
 #   The minimum input speed which will power the fan (expressed as a
 #   value from 0.0 to 1.0). When a speed lower than off_below is
@@ -2222,6 +2228,11 @@ pin:
 #   input speed which reliably drives the fan without stalls. Set
 #   off_below to the duty cycle corresponding to this value (for
 #   example, 12% -> 0.12) or slightly higher.
+#power_scaling: False
+#   Instead of only scaling to max_power, requested fan speeds will
+#   also scale to min_power. This setting may be used to allow similar
+#   cooling performance over different fans on different printers with
+#   the same fan speed commands. The default is False.
 ```
 
 ## [heater_fan]
@@ -2239,7 +2250,9 @@ a shutdown_speed equal to max_power.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
+#power_scaling:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
 #   Name of the config section defining the heater that this fan is
@@ -2272,7 +2285,9 @@ watched component.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
+#power_scaling:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
@@ -2312,7 +2327,9 @@ additional information.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
+#power_scaling:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -2357,7 +2374,9 @@ with the SET_FAN_SPEED
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
+#power_scaling:
 #   See the "fan" section for a description of the above parameters.
 ```
 
