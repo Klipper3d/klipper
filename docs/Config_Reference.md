@@ -2209,6 +2209,12 @@ pin:
 #   Time (in seconds) to run the fan at full speed when either first
 #   enabling or increasing it by more than 50% (helps get the fan
 #   spinning). The default is 0.100 seconds.
+#min_power: 0.0
+#   The minimum input speed which will power the fan (expressed as a
+#   value from 0.0 to 1.0). When a speed lower than min_power is
+#   requested the fan will instead be set to this speed.
+#   This setting may be used to prevent fan stalls.
+#   The default is 0.0.
 #off_below: 0.0
 #   The minimum input speed which will power the fan (expressed as a
 #   value from 0.0 to 1.0). When a speed lower than off_below is
@@ -2239,6 +2245,7 @@ a shutdown_speed equal to max_power.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
@@ -2272,6 +2279,7 @@ watched component.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
@@ -2312,6 +2320,7 @@ additional information.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
@@ -2357,6 +2366,7 @@ with the SET_FAN_SPEED
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
+#min_power:
 #off_below:
 #   See the "fan" section for a description of the above parameters.
 ```
