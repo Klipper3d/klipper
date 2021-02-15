@@ -30,6 +30,8 @@ class CoreXZKinematics:
             'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
+        self.ignore_homing = config.getsection('force_move').getboolean(
+            'ignore_homing', False)
         self.limits = [(1.0, -1.0)] * 3
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
@@ -84,9 +86,10 @@ class CoreXZKinematics:
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
-        if (xpos < limits[0][0] or xpos > limits[0][1]
+        if not self.ignore_homing and (
+            xpos < limits[0][0] or xpos > limits[0][1]
             or ypos < limits[1][0] or ypos > limits[1][1]):
-            self._check_endstops(move)
+                self._check_endstops(move)
         if not move.axes_d[2]:
             # Normal XY move - use defaults
             return
