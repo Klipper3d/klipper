@@ -116,7 +116,7 @@ config STACK_SIZE
     default 512
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F103 || MACH_STM32F070
+    prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F103 || MACH_STM32F070 || MACH_STM32F401
     config STM32_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_5000
@@ -133,7 +133,7 @@ choice
     config STM32_FLASH_START_8000
         bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
     config STM32_FLASH_START_4000
-        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
+        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F401
 
     config STM32_FLASH_START_0000
         bool "No bootloader"
@@ -163,11 +163,14 @@ choice
         bool "12 MHz crystal"
     config STM32_CLOCK_REF_16M
         bool "16 MHz crystal"
+    config STM32_CLOCK_REF_25M
+        bool "25 MHz crystal"    
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
 config CLOCK_REF_FREQ
     int
+    default 25000000 if STM32_CLOCK_REF_25M
     default 16000000 if STM32_CLOCK_REF_16M
     default 12000000 if STM32_CLOCK_REF_12M
     default 1 if STM32_CLOCK_REF_INTERNAL
