@@ -26,7 +26,7 @@ class IdleTimeout:
                                                     DEFAULT_IDLE_GCODE)
         self.gcode.register_command('SET_IDLE_TIMEOUT',
                                     self.cmd_SET_IDLE_TIMEOUT,
-                                    desc=self.cmd_SET_IDLE__TIMEOUT_help)
+                                    desc=self.cmd_SET_IDLE_TIMEOUT_help)
         self.state = "Idle"
         self.last_print_start_systime = 0.
     def get_status(self, eventtime):
