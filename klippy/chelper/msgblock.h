@@ -34,6 +34,11 @@ struct queue_message {
     struct list_node node;
 };
 
+struct clock_estimate {
+    uint64_t last_clock, conv_clock;
+    double conv_time, est_freq;
+};
+
 uint16_t msgblock_crc16_ccitt(uint8_t *buf, uint8_t len);
 int msgblock_check(uint8_t *need_sync, uint8_t *buf, int buf_len);
 int msgblock_decode(uint32_t *data, int data_len, uint8_t *msg, int msg_len);
@@ -42,5 +47,8 @@ struct queue_message *message_fill(uint8_t *data, int len);
 struct queue_message *message_alloc_and_encode(uint32_t *data, int len);
 void message_free(struct queue_message *qm);
 void message_queue_free(struct list_head *root);
+uint64_t clock_from_clock32(struct clock_estimate *ce, uint32_t clock32);
+double clock_to_time(struct clock_estimate *ce, uint64_t clock);
+uint64_t clock_from_time(struct clock_estimate *ce, double time);
 
 #endif // msgblock.h

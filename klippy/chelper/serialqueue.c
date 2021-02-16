@@ -50,8 +50,7 @@ struct serialqueue {
     // Baud / clock tracking
     int receive_window;
     double baud_adjust, idle_time;
-    double est_freq, last_clock_time;
-    uint64_t last_clock;
+    struct clock_estimate ce;
     double last_receive_sent_time;
     // Retransmit support
     uint64_t send_seq, receive_seq;
@@ -483,9 +482,7 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for stalled messages now ready
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
     idletime += MESSAGE_MIN * sq->baud_adjust;
-    double timedelta = idletime - sq->last_clock_time;
-    uint64_t ack_clock = ((uint64_t)(timedelta * sq->est_freq)
-                          + sq->last_clock);
+    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
     struct command_queue *cq;
     list_for_each_entry(cq, &sq->pending_queues, node) {
@@ -508,11 +505,9 @@ check_send_command(struct serialqueue *sq, double eventtime)
             struct queue_message *qm = list_first_entry(
                 &cq->ready_queue, struct queue_message, node);
             uint64_t req_clock = qm->req_clock;
+            double bgoffset = MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA;
             if (req_clock == BACKGROUND_PRIORITY_CLOCK)
-                req_clock = (uint64_t)(
-                    (sq->idle_time - sq->last_clock_time
-                     + MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA)
-                    * sq->est_freq) + sq->last_clock;
+                req_clock = clock_from_time(&sq->ce, sq->idle_time + bgoffset);
             if (req_clock < min_ready_clock)
                 min_ready_clock = req_clock;
         }
@@ -521,20 +516,20 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for messages to send
     if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
         return PR_NOW;
-    if (! sq->est_freq) {
+    if (! sq->ce.est_freq) {
         if (sq->ready_bytes)
             return PR_NOW;
         sq->need_kick_clock = MAX_CLOCK;
         return PR_NEVER;
     }
-    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->est_freq;
+    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->ce.est_freq;
     if (min_ready_clock <= ack_clock + reqclock_delta)
         return PR_NOW;
     uint64_t wantclock = min_ready_clock - reqclock_delta;
     if (min_stalled_clock < wantclock)
         wantclock = min_stalled_clock;
     sq->need_kick_clock = wantclock;
-    return idletime + (wantclock - ack_clock) / sq->est_freq;
+    return idletime + (wantclock - ack_clock) / sq->ce.est_freq;
 }
 
 // Callback timer to send data to the serial port
@@ -819,12 +814,23 @@ serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
 // serial port
 void __visible
 serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-                          , double last_clock_time, uint64_t last_clock)
+                          , double conv_time, uint64_t conv_clock
+                          , uint64_t last_clock)
 {
     pthread_mutex_lock(&sq->lock);
-    sq->est_freq = est_freq;
-    sq->last_clock_time = last_clock_time;
-    sq->last_clock = last_clock;
+    sq->ce.est_freq = est_freq;
+    sq->ce.conv_time = conv_time;
+    sq->ce.conv_clock = conv_clock;
+    sq->ce.last_clock = last_clock;
+    pthread_mutex_unlock(&sq->lock);
+}
+
+// Return the latest clock estimate
+void
+serialqueue_get_clock_est(struct serialqueue *sq, struct clock_estimate *ce)
+{
+    pthread_mutex_lock(&sq->lock);
+    memcpy(ce, &sq->ce, sizeof(sq->ce));
     pthread_mutex_unlock(&sq->lock);
 }
 
