@@ -25,7 +25,7 @@ class IdleTimeout:
         self.idle_gcode = gcode_macro.load_template(config, 'gcode',
                                                     DEFAULT_IDLE_GCODE)
         self.gcode.register_command('SET_IDLE_TIMEOUT',
-                                    self.cmd_SET_IDLE_TIMEOUT, 
+                                    self.cmd_SET_IDLE_TIMEOUT,
                                     desc=self.cmd_SET_IDLE__TIMEOUT_help)
         self.state = "Idle"
         self.last_print_start_systime = 0.
