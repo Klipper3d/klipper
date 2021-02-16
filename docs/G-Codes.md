@@ -402,6 +402,15 @@ see the [BL-Touch guide](BLTouch.md)):
 - `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
   EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
 
+
+### Z Endstop Calibration by Current Position
+
+The following commands are available when the z_endstop_set_calibration config
+section (which has no further options) is enabled:
+- `Z_ENDSTOP_SET_CALIBRATION Z=<value>`: This command will change the
+  `position_endstop` value for the Z stepper such that the current Z position
+  will equal the given Z coordinate. Requires a `SAVE_CONFIG` to take effect.
+
 ### Delta Calibration
 
 The following commands are available when the
