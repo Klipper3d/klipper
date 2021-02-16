@@ -178,6 +178,12 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.Kd_pos = config.getfloat('pid_Kd_pos', 0.) / PID_PARAM_BASE
+        self.Kd_neg = config.getfloat('pid_Kd_neg', 0.) / PID_PARAM_BASE
+        if not self.Kd_pos:
+            self.Kd_pos = self.Kd
+        if not self.Kd_neg:
+            self.Kd_neg = self.Kd
         self.min_deriv_time = heater.get_smooth_time()
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
@@ -202,7 +208,10 @@ class ControlPID:
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        if temp_deriv>=0:
+            co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd_pos*temp_deriv
+        else:
+            co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd_neg*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
@@ -265,8 +274,7 @@ class PrinterHeaters:
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
                    "bme280", "htu21d", "lm75", "rpi_temperature",
-                   "temperature_mcu", "ds18b20"]
-
+                   "temperature_mcu"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
