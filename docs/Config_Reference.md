@@ -2145,12 +2145,16 @@ sensor_type: temperature_mcu
 #   micro-controller specification.
 ```
 
-## RPi temperature sensor
+## Host temperature sensor
 
-CPU temperature from the Raspberry Pi running the host software.
+Temperature from the machine (eg Raspberry Pi) running the host software.
 
 ```
-sensor_type: rpi_temperature
+sensor_type: host_temperature
+#path:
+#   The path to temperature file. The default is "rpi". Which displays
+#   CPU temperature from RPi.
+#   Example: "/sys/devices/platform/coretemp.0/hwmon/hwmon1/temp2_input"
 ```
 
 ## DS18B20 temperature sensor
