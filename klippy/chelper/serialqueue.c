@@ -781,6 +781,17 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
         kick_bg_thread(sq);
 }
 
+// Helper to send a single message
+void
+serialqueue_send_one(struct serialqueue *sq, struct command_queue *cq
+                     , struct queue_message *qm)
+{
+    struct list_head msgs;
+    list_init(&msgs);
+    list_add_tail(&qm->node, &msgs);
+    serialqueue_send_batch(sq, cq, &msgs);
+}
+
 // Schedule the transmission of a message on the serial port at a
 // given time and priority.
 void __visible
@@ -792,11 +803,7 @@ serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
     qm->min_clock = min_clock;
     qm->req_clock = req_clock;
     qm->notify_id = notify_id;
-
-    struct list_head msgs;
-    list_init(&msgs);
-    list_add_tail(&qm->node, &msgs);
-    serialqueue_send_batch(sq, cq, &msgs);
+    serialqueue_send_one(sq, cq, qm);
 }
 
 // Return a message read from the serial port (or wait for one if none

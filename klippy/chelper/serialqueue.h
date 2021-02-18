@@ -36,6 +36,8 @@ void serialqueue_add_fastreader(struct serialqueue *sq, struct fastreader *fr);
 void serialqueue_rm_fastreader(struct serialqueue *sq, struct fastreader *fr);
 void serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
                             , struct list_head *msgs);
+void serialqueue_send_one(struct serialqueue *sq, struct command_queue *cq
+                          , struct queue_message *qm);
 void serialqueue_send(struct serialqueue *sq, struct command_queue *cq
                       , uint8_t *msg, int len, uint64_t min_clock
                       , uint64_t req_clock, uint64_t notify_id);
