@@ -2,42 +2,10 @@
 #define SERIALQUEUE_H
 
 #include "list.h" // struct list_head
+#include "msgblock.h" // MESSAGE_MAX
 
 #define MAX_CLOCK 0x7fffffffffffffffLL
 #define BACKGROUND_PRIORITY_CLOCK 0x7fffffff00000000LL
-
-#define MESSAGE_MIN 5
-#define MESSAGE_MAX 64
-#define MESSAGE_HEADER_SIZE  2
-#define MESSAGE_TRAILER_SIZE 3
-#define MESSAGE_POS_LEN 0
-#define MESSAGE_POS_SEQ 1
-#define MESSAGE_TRAILER_CRC  3
-#define MESSAGE_TRAILER_SYNC 1
-#define MESSAGE_PAYLOAD_MAX (MESSAGE_MAX - MESSAGE_MIN)
-#define MESSAGE_SEQ_MASK 0x0f
-#define MESSAGE_DEST 0x10
-#define MESSAGE_SYNC 0x7E
-
-struct queue_message {
-    int len;
-    uint8_t msg[MESSAGE_MAX];
-    union {
-        // Filled when on a command queue
-        struct {
-            uint64_t min_clock, req_clock;
-        };
-        // Filled when in sent/receive queues
-        struct {
-            double sent_time, receive_time;
-        };
-    };
-    uint64_t notify_id;
-    struct list_node node;
-};
-
-struct queue_message *message_alloc_and_encode(uint32_t *data, int len);
-void message_queue_free(struct list_head *root);
 
 struct pull_queue_message {
     uint8_t msg[MESSAGE_MAX];

@@ -18,7 +18,7 @@ COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
 SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
-    'pollreactor.c',
+    'pollreactor.c', 'msgblock.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
     'kin_shaper.c',
@@ -26,7 +26,7 @@ SOURCE_FILES = [
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h', 'pollreactor.h',
+    'trapq.h', 'pollreactor.h', 'msgblock.h'
 ]
 
 defs_stepcompress = """
