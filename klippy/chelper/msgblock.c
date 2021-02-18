@@ -85,6 +85,39 @@ f4: *p++ = v & 0x7f;
     return p;
 }
 
+// Parse an integer that was encoded as a "variable length quantity"
+static uint32_t
+parse_int(uint8_t **pp)
+{
+    uint8_t *p = *pp, c = *p++;
+    uint32_t v = c & 0x7f;
+    if ((c & 0x60) == 0x60)
+        v |= -0x20;
+    while (c & 0x80) {
+        c = *p++;
+        v = (v<<7) | (c & 0x7f);
+    }
+    *pp = p;
+    return v;
+}
+
+// Parse the VLQ contents of a message
+int
+msgblock_decode(uint32_t *data, int data_len, uint8_t *msg, int msg_len)
+{
+    uint8_t *p = &msg[MESSAGE_HEADER_SIZE];
+    uint8_t *end = &msg[msg_len - MESSAGE_TRAILER_SIZE];
+    while (data_len--) {
+        if (p >= end)
+            return -1;
+        *data++ = parse_int(&p);
+    }
+    if (p != end)
+        // Invalid message
+        return -1;
+    return 0;
+}
+
 
 /****************************************************************
  * Command queues

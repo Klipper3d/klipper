@@ -36,6 +36,7 @@ struct queue_message {
 
 uint16_t msgblock_crc16_ccitt(uint8_t *buf, uint8_t len);
 int msgblock_check(uint8_t *need_sync, uint8_t *buf, int buf_len);
+int msgblock_decode(uint32_t *data, int data_len, uint8_t *msg, int msg_len);
 struct queue_message *message_alloc(void);
 struct queue_message *message_fill(uint8_t *data, int len);
 struct queue_message *message_alloc_and_encode(uint32_t *data, int len);
