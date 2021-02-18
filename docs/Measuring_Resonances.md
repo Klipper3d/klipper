@@ -214,18 +214,35 @@ of the accelerometer between the measurements for X and Y axes: measure the
 resonances of X axis with the accelerometer attached to the toolhead and the
 resonances of Y axis - to the bed (the usual bed slinger setup).
 
-However, you can also connect two accelerometers simultaneously, though they
-must be connected to different boards (say, to an RPi and printer MCU board), or
-to two different physical SPI interfaces on the same board (rarely available).
+However, you can also connect two accelerometers simultaneously, they can both
+be connected to the RPi as the RPi has support for 2 SPI slaves. In this 
+configuration they can't be used at the same time as they share the same SPI
+interface but as we are measuring either the hotend or the bed they will never
+be used at the same time.
+
+Connect both ADXL345 modules per the following table:
+| ADXL345 Hotend pin | ADXL345 Bed pin | RPi pin | RPi pin name |
+|:--:|:--:|:--:|:--:|
+| 3V3 (or VCC) | 3V3 (or VCC) | 17 | 3.3v DC power |
+| GND | GND | 20 | Ground |
+| CS | - | 24 | GPIO08 (SPI0_CE0_N) |
+| - | CS | 26 | GPIO07 (SPI0_CE1_N) |
+| SDO | SDO | 21 | GPIO09 (SPI0_MISO) |
+| SDA | SDA | 19 | GPIO10 (SPI0_MOSI) |
+| SCL | SCL | 23 | GPIO11 (SPI0_SCLK) |
+
 Then they can be configured in the following manner:
 ```
+[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
 [adxl345 hotend]
-# Assuming `hotend` chip is connected to an RPi
 cs_pin: rpi:None
+spi_bus: spidev0.0
 
 [adxl345 bed]
-# Assuming `bed` chip is connected to a printer MCU board
-cs_pin: ...  # Printer board SPI chip select (CS) pin
+cs_pin: rpi:None
+spi_bus: spidev0.1
 
 [resonance_tester]
 # Assuming the typical setup of the bed slinger printer
