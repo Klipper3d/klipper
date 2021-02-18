@@ -215,7 +215,7 @@ resonances of X axis with the accelerometer attached to the toolhead and the
 resonances of Y axis - to the bed (the usual bed slinger setup).
 
 However, you can also connect two accelerometers simultaneously, they can both
-be connected to the RPi as the RPi has support for 2 SPI slaves. In this 
+be connected to the RPi as the RPi has support for 2 SPI slaves. In this
 configuration they can't be used at the same time as they share the same SPI
 interface but as we are measuring either the hotend or the bed they will never
 be used at the same time.
