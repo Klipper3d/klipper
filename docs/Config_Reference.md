@@ -2150,7 +2150,7 @@ sensor_type: temperature_mcu
 Temperature from the machine (eg Raspberry Pi) running the host software.
 
 ```
-sensor_type: host_temperature
+sensor_type: temperature_host
 #path:
 #   The path to temperature file. The default is "rpi". Which displays
 #   CPU temperature from RPi.

@@ -9,7 +9,7 @@ import logging
 HOST_REPORT_TIME = 1.0
 RPI_PROC_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp"
 
-class HOST_Temperature:
+class Temperature_HOST:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
@@ -20,7 +20,7 @@ class HOST_Temperature:
 
         self.temp = self.min_temp = self.max_temp = 0.0
 
-        self.printer.add_object("host_temperature " + self.name, self)
+        self.printer.add_object("temperature_host " + self.name, self)
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         self.sample_timer = self.reactor.register_timer(
@@ -52,7 +52,7 @@ class HOST_Temperature:
             self.file_handle.seek(0)
             self.temp = float(self.file_handle.read())/1000.0
         except Exception:
-            logging.exception("host_temperature: Error reading data")
+            logging.exception("temperature_host: Error reading data")
             self.temp = 0.0
             return self.reactor.NEVER
 
@@ -79,4 +79,4 @@ class HOST_Temperature:
 def load_config(config):
     # Register sensor
     pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("host_temperature", HOST_Temperature)
+    pheaters.add_sensor_factory("temperature_host", Temperature_HOST)
