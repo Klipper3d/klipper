@@ -12,7 +12,11 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
+#if CONFIG_MACH_STM32F401
+#define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
+#else
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
+#endif
 #define FREQ_USB 48000000
 
 // Enable a peripheral clock
@@ -236,7 +240,11 @@ clock_setup(void)
         ;
 
     // Switch system clock to PLL
+#if CONFIG_MACH_STM32F401
+    RCC->CFGR = RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_SW_PLL;
+#else
     RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
+#endif
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
 }
