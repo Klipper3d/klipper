@@ -12,7 +12,11 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
-#define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
+#ifdef CONFIG_MACH_STM32F401
+#   define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
+#else
+#   define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
+#endif
 #define FREQ_USB 48000000
 
 // Enable a peripheral clock
@@ -145,7 +149,13 @@ enable_clock_stm32f4xx(void)
 {
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401 \
     || CONFIG_MACH_STM32F429
-    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+
+#ifdef CONFIG_MACH_STM32F401
+#define PLL_P 4
+#else
+#define PLL_P 2
+#endif
+    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * PLL_P, pllcfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 168Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
@@ -157,7 +167,7 @@ enable_clock_stm32f4xx(void)
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
     }
     RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
-                    | (0 << RCC_PLLCFGR_PLLP_Pos)
+                    | ((PLL_P >> 2) << RCC_PLLCFGR_PLLP_Pos)
                     | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
     RCC->CR |= RCC_CR_PLLON;
 #endif
@@ -234,7 +244,11 @@ clock_setup(void)
         ;
 
     // Switch system clock to PLL
+#ifdef CONFIG_MACH_STM32F401
+    RCC->CFGR = RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_SW_PLL;
+#else
     RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
+#endif
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
 }
