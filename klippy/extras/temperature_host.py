@@ -18,8 +18,11 @@ class Temperature_HOST:
 
         self.temp = self.min_temp = self.max_temp = 0.0
 
-        self.printer.add_object("rpi_temperature " + self.name, self) # XXX
-        self.printer.add_object("temperature_host " + self.name, self)
+        if config.get("sensor_type", "", note_valid=False).startswith('rpi'):
+            # Temporary backwards compatibility
+            self.printer.add_object("rpi_temperature " + self.name, self)
+        else:
+            self.printer.add_object("temperature_host " + self.name, self)
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         self.sample_timer = self.reactor.register_timer(
