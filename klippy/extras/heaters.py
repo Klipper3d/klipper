@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, traceback
+import logging, threading
 
 
 ######################################################################
@@ -171,8 +171,8 @@ class ControlBangBang:
 # Proportional Integral Derivative (PID) control algo
 ######################################################################
 
-PID_SETTLE_DELTA = 1.5
-PID_SETTLE_SLOPE = .25
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
 
 class ControlPID:
     def __init__(self, heater, config):
@@ -269,7 +269,8 @@ class PrinterHeaters:
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
                    "bme280", "htu21d", "lm75", "rpi_temperature",
-                   "temperature_mcu"]
+                   "temperature_mcu", "ds18b20"]
+
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
