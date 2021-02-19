@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, traceback
 
 
 ######################################################################
@@ -16,9 +16,10 @@ AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 
 class Heater:
-    def __init__(self, config, sensor):
+    def __init__(self, config, sensor, heater_name):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
+        self.heater_name = heater_name
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
@@ -85,6 +86,7 @@ class Heater:
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+        self.printer.lookup_object('function_macro').run_macro_from_name(self.heater_name+'_temp')
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def get_pwm_delay(self):
@@ -168,8 +170,8 @@ class ControlBangBang:
 # Proportional Integral Derivative (PID) control algo
 ######################################################################
 
-PID_SETTLE_DELTA = 1.
-PID_SETTLE_SLOPE = .1
+PID_SETTLE_DELTA = 1.5
+PID_SETTLE_SLOPE = .25
 
 class ControlPID:
     def __init__(self, heater, config):
@@ -178,6 +180,12 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.Kd_pos = config.getfloat('pid_Kd_pos', 0.) / PID_PARAM_BASE
+        self.Kd_neg = config.getfloat('pid_Kd_neg', 0.) / PID_PARAM_BASE
+        if not self.Kd_pos:
+            self.Kd_pos = self.Kd
+        if not self.Kd_neg:
+            self.Kd_neg = self.Kd
         self.min_deriv_time = heater.get_smooth_time()
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
@@ -202,7 +210,10 @@ class ControlPID:
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        if temp_deriv>=0:
+            co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd_pos*temp_deriv
+        else:
+            co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd_neg*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
@@ -229,6 +240,7 @@ class PrinterHeaters:
         self.sensor_factories = {}
         self.heaters = {}
         self.gcode_id_to_sensor = {}
+        self.gcode_id_to_name = {}
         self.available_heaters = []
         self.available_sensors = []
         self.has_started = False
@@ -251,8 +263,8 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
-        self.register_sensor(config, heater, gcode_id)
+        self.heaters[heater_name] = heater = Heater(config, sensor, heater_name)
+        self.register_sensor(config, heater, heater_name, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
     def get_all_heaters(self):
@@ -265,8 +277,7 @@ class PrinterHeaters:
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
                    "bme280", "htu21d", "lm75", "rpi_temperature",
-                   "temperature_mcu", "ds18b20"]
-
+                   "temperature_mcu"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
@@ -274,7 +285,7 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "Unknown temperature sensor '%s'" % (sensor_type,))
         return self.sensor_factories[sensor_type](config)
-    def register_sensor(self, config, psensor, gcode_id=None):
+    def register_sensor(self, config, psensor, name, gcode_id=None):
         self.available_sensors.append(config.get_name())
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
@@ -284,6 +295,7 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
+        self.gcode_id_to_name[gcode_id] = name
     def get_status(self, eventtime):
         return {'available_heaters': self.available_heaters,
                 'available_sensors': self.available_sensors}
