@@ -141,10 +141,11 @@ enable_clock_stm32f20x(void)
 }
 
 static void
-enable_clock_stm32f40x(void)
+enable_clock_stm32f4xx(void)
 {
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401
-    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
+#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401 \
+    CONFIG_MACH_STM32F429
+    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 168Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
@@ -158,6 +159,8 @@ enable_clock_stm32f40x(void)
     RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
                     | (0 << RCC_PLLCFGR_PLLP_Pos)
                     | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
+    // correct peripherial clocks to ensure APB1 and APB2 equals to FREQ_PERIPH
+    RCC->CFGR |= RCC_CFGR_HPRE_DIV1| RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV2;
     RCC->CR |= RCC_CR_PLLON;
 #endif
 }
@@ -218,9 +221,9 @@ clock_setup(void)
     // Configure and enable PLL
     if (CONFIG_MACH_STM32F207)
         enable_clock_stm32f20x();
-    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-            || CONFIG_MACH_STM32F401)
-        enable_clock_stm32f40x();
+    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401 \
+             CONFIG_MACH_STM32F429)
+        enable_clock_stm32f4xx();
     else
         enable_clock_stm32f446();
 
