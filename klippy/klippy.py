@@ -6,7 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, gc, optparse, logging, time, collections, importlib
 import util, reactor, queuelogger, msgproto
-import gcode, configfile, pins, mcu, toolhead, webhooks
+import gcode, configfile, pins, mcu, toolhead, webhooks, macro_list
 
 message_ready = "Printer is ready"
 
@@ -59,7 +59,7 @@ class Printer:
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
         # Init printer components that must be setup prior to config
-        for m in [gcode, webhooks]:
+        for m in [gcode, webhooks, macro_list]:
             m.add_early_printer_objects(self)
     def get_start_args(self):
         return self.start_args
