@@ -167,7 +167,7 @@ enable_clock_stm32f4xx(void)
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
     }
     RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
-                    | ((PLL_P >> 2) << RCC_PLLCFGR_PLLP_Pos)
+                    | (((PLL_P >> 1) - 1) << RCC_PLLCFGR_PLLP_Pos)
                     | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
     RCC->CR |= RCC_CR_PLLON;
 #endif
