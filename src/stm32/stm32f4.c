@@ -221,8 +221,8 @@ clock_setup(void)
     // Configure and enable PLL
     if (CONFIG_MACH_STM32F207)
         enable_clock_stm32f20x();
-    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401 \
-             CONFIG_MACH_STM32F429)
+    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 \
+            || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429)
         enable_clock_stm32f4xx();
     else
         enable_clock_stm32f446();
