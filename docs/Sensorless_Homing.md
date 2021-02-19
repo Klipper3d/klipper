@@ -14,7 +14,7 @@ A few prerequisites are needed to use sensorless homing:
 ## Limitations
 Be sure that your mechanical components are able to handle the load of the carriage bumping into the limit of the axis repeatedly. Especially spindles (on the Z axis) might generate a lot of force. Homing a Z axis by bumping the nozzle into the printing surface might not be a good idea.
 
-Further, sensorless homing might not be accurate enough for you printer. While homing X and Y axes on a cartesian machine can work well, homing the Z axis is generally not accurate enough and results in inconsistent first layer height. Homing a delta printer sensorless is not advisable due to missing accuracy.
+Further, sensorless homing might not be accurate enough for your printer. While homing X and Y axes on a cartesian machine can work well, homing the Z axis is generally not accurate enough and results in inconsistent first layer height. Homing a delta printer sensorless is not advisable due to missing accuracy.
 
 Further, the stall detection of the stepper driver is dependant on the mechanical load on the motor, the motor current and the motor temperature (coil resistance).
 
@@ -36,7 +36,7 @@ driver_SGT:    # tuning value for sensorless homing
 
 The above snippet configures a TMC2130 for the stepper on the X axis. Make sure to fill in the missing values based on your configuration.
 
-The `driver_SGT` value describes the threshhold when the driver reports a stall. Values have to be in between -64 (most sensitive) and 64 (least sensitive). On some TMCs like the TMC2209 this value doesn't exist in this form as the hehavior is different to the TMC2130. In the case of the TMC2209 the threshold is defined by the `driver_SGTHRS` value in the config and go from 0 (least sensitive) to 255 (most sensitive). Have a look at the datasheet of your specific TMC to avoid mistakes.
+The `driver_SGT` value describes the threshhold when the driver reports a stall. Values have to be in between -64 (most sensitive) and 64 (least sensitive). On some TMCs like the TMC2209 this value doesn't exist in this form as the behavior is different to the TMC2130. In the case of the TMC2209 the threshold is defined by the `driver_SGTHRS` value in the config and go from 0 (least sensitive) to 255 (most sensitive). Have a look at the datasheet of your specific TMC to avoid mistakes.
 
 If you have a CoreXY machine, you can configure one stepper driver for X and the other for Y homing as you would on a cartesian printer. Be aware that Klipper needs both `DIAG1` pins connected to the MCU. It is not sufficient to use only one signal from one of the stepper drivers (as it is possible on e.g. Marlin).
 

@@ -143,6 +143,7 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-flyboard.cfg
 
@@ -150,6 +151,7 @@ CONFIG ../../config/generic-flyboard.cfg
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
+CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict

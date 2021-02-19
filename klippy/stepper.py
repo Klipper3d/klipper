@@ -1,6 +1,6 @@
 # Printer stepper support
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
@@ -33,15 +33,15 @@ class MCU_stepper:
         self._invert_dir = dir_pin_params['invert']
         self._mcu_position_offset = self._tag_position = 0.
         self._min_stop_interval = 0.
-        self._reset_cmd_id = self._get_position_cmd = None
+        self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
-        ffi_main, self._ffi_lib = chelper.get_ffi()
-        self._stepqueue = ffi_main.gc(self._ffi_lib.stepcompress_alloc(oid),
-                                      self._ffi_lib.stepcompress_free)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
+                                      ffi_lib.stepcompress_free)
         self._mcu.register_stepqueue(self._stepqueue)
         self._stepper_kinematics = None
-        self._itersolve_generate_steps = self._ffi_lib.itersolve_generate_steps
-        self._itersolve_check_active = self._ffi_lib.itersolve_check_active
+        self._itersolve_generate_steps = ffi_lib.itersolve_generate_steps
+        self._itersolve_check_active = ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
     def get_mcu(self):
         return self._mcu
@@ -78,18 +78,19 @@ class MCU_stepper:
                 self._invert_step))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
-        step_cmd_id = self._mcu.lookup_command_id(
+        step_cmd_tag = self._mcu.lookup_command_tag(
             "queue_step oid=%c interval=%u count=%hu add=%hi")
-        dir_cmd_id = self._mcu.lookup_command_id(
+        dir_cmd_tag = self._mcu.lookup_command_tag(
             "set_next_step_dir oid=%c dir=%c")
-        self._reset_cmd_id = self._mcu.lookup_command_id(
+        self._reset_cmd_tag = self._mcu.lookup_command_tag(
             "reset_step_clock oid=%c clock=%u")
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
-        self._ffi_lib.stepcompress_fill(
-            self._stepqueue, self._mcu.seconds_to_clock(max_error),
-            self._invert_dir, step_cmd_id, dir_cmd_id)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.stepcompress_fill(self._stepqueue,
+                                  self._mcu.seconds_to_clock(max_error),
+                                  self._invert_dir, step_cmd_tag, dir_cmd_tag)
     def get_oid(self):
         return self._oid
     def get_step_dist(self):
@@ -100,16 +101,19 @@ class MCU_stepper:
     def is_dir_inverted(self):
         return self._invert_dir
     def calc_position_from_coord(self, coord):
-        return self._ffi_lib.itersolve_calc_position_from_coord(
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
     def set_position(self, coord):
         opos = self.get_commanded_position()
         sk = self._stepper_kinematics
-        self._ffi_lib.itersolve_set_position(sk, coord[0], coord[1], coord[2])
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.itersolve_set_position(sk, coord[0], coord[1], coord[2])
         self._mcu_position_offset += opos - self.get_commanded_position()
     def get_commanded_position(self):
         sk = self._stepper_kinematics
-        return self._ffi_lib.itersolve_get_commanded_pos(sk)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.itersolve_get_commanded_pos(sk)
     def get_mcu_position(self):
         mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
         mcu_pos = mcu_pos_dist / self._step_dist
@@ -124,17 +128,18 @@ class MCU_stepper:
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
         if sk is not None:
-            self._ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue,
-                                                     self._step_dist)
+            ffi_main, ffi_lib = chelper.get_ffi()
+            ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue,
+                                               self._step_dist)
             self.set_trapq(self._trapq)
         return old_sk
     def note_homing_end(self, did_trigger=False):
-        ret = self._ffi_lib.stepcompress_reset(self._stepqueue, 0)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, 0)
         if ret:
             raise error("Internal error in stepcompress")
-        data = (self._reset_cmd_id, self._oid, 0)
-        ret = self._ffi_lib.stepcompress_queue_msg(
-            self._stepqueue, data, len(data))
+        data = (self._reset_cmd_tag, self._oid, 0)
+        ret = ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
         if ret:
             raise error("Internal error in stepcompress")
         if not did_trigger or self._mcu.is_fileoutput():
@@ -145,10 +150,10 @@ class MCU_stepper:
             mcu_pos_dist = -mcu_pos_dist
         self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
     def set_trapq(self, tq):
+        ffi_main, ffi_lib = chelper.get_ffi()
         if tq is None:
-            ffi_main, self._ffi_lib = chelper.get_ffi()
             tq = ffi_main.NULL
-        self._ffi_lib.itersolve_set_trapq(self._stepper_kinematics, tq)
+        ffi_lib.itersolve_set_trapq(self._stepper_kinematics, tq)
         old_tq = self._trapq
         self._trapq = tq
         return old_tq
@@ -170,8 +175,8 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
     def is_active_axis(self, axis):
-        return self._ffi_lib.itersolve_is_active_axis(
-            self._stepper_kinematics, axis)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, axis)
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):

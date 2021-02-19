@@ -28,8 +28,8 @@
  #define GPIO_Tx GPIO('B', 9)
 #endif
 #if CONFIG_CAN_PINS_PI8_PH13
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI8,PH13");
- #define GPIO_Rx GPIO('I', 8)
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI9,PH13");
+ #define GPIO_Rx GPIO('I', 9)
  #define GPIO_Tx GPIO('H', 13)
 #endif
 #if CONFIG_CAN_PINS_PB5_PB6
@@ -41,6 +41,11 @@
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB12,PB13");
  #define GPIO_Rx GPIO('B', 12)
  #define GPIO_Tx GPIO('B', 13)
+#endif
+#if CONFIG_CAN_PINS_PD0_PD1
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PD0,PD1");
+ #define GPIO_Rx GPIO('D', 0)
+ #define GPIO_Tx GPIO('D', 1)
 #endif
 
 #if CONFIG_MACH_STM32F0
@@ -64,7 +69,7 @@
 #if CONFIG_MACH_STM32F4
  #warning CAN on STM32F4 is untested
  #if (CONFIG_CAN_PINS_PA11_PA12 || CONFIG_CAN_PINS_PB8_PB9 \
-      || CONFIG_CAN_PINS_PI8_PH13)
+     || CONFIG_CAN_PINS_PD0_PD1 || CONFIG_CAN_PINS_PI9_PH13)
   #define SOC_CAN CAN1
   #define CAN_RX0_IRQn  CAN1_RX0_IRQn
   #define CAN_RX1_IRQn  CAN1_RX1_IRQn
@@ -157,8 +162,8 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
 #define CAN_FILTER_NUMBER 0
 
 // Setup the receive packet filter
-static void
-can_set_filter(uint32_t id1, uint32_t id2)
+void
+canbus_set_filter(uint32_t id)
 {
     uint32_t filternbrbitpos = 1 << CAN_FILTER_NUMBER;
 
@@ -167,8 +172,9 @@ can_set_filter(uint32_t id1, uint32_t id2)
     /* Initialisation mode for the filter */
     SOC_CAN->FA1R = 0;
 
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 = id1 << (5 + 16);
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 = id2 << (5 + 16);
+    uint32_t idadmin = CANBUS_ID_UUID;
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 = idadmin << (5 + 16);
+    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 = id << (5 + 16);
 
     /* Identifier list mode for the filter */
     SOC_CAN->FM1R = filternbrbitpos;
@@ -182,12 +188,6 @@ can_set_filter(uint32_t id1, uint32_t id2)
     SOC_CAN->FA1R = filternbrbitpos;
     /* Leave the initialisation mode for the filter */
     SOC_CAN->FMR &= ~CAN_FMR_FINIT;
-}
-
-void
-canbus_set_dataport(uint32_t id)
-{
-    can_set_filter(CANBUS_ID_UUID, id);
 }
 
 void
@@ -292,12 +292,9 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    can_set_filter(CANBUS_ID_UUID, CANBUS_ID_SET);
+    canbus_set_filter(CANBUS_ID_SET);
 
     /*##-3- Configure Interrupts #################################*/
-
-    SOC_CAN->IER = CAN_IER_FMPIE0; // RX mailbox IRQ
-
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_RX1_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);

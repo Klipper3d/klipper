@@ -73,7 +73,7 @@ def check_fatfs_build(printfunc=lambda o: o):
         else:
             cmd = "%s %s" % (chelper.GCC_CMD, chelper.COMPILE_ARGS)
         printfunc("Building FatFS shared library...")
-        os.system(cmd % (destlib, ' '.join(srcfiles)))
+        chelper.do_build_code(cmd % (destlib, ' '.join(srcfiles)))
         printfunc("Done\n")
     global fatfs_ffi_main, fatfs_ffi_lib
     ffi_main.cdef(FATFS_CDEFS)
