@@ -58,7 +58,7 @@ class FUNCTION_MACRO:
         self.alias = name.upper()
         self.printer = printer = config.get_printer()
         function_macro = printer.load_object(config, 'function_macro')
-        self.template = function_macro.load_template(config, 'macro', 
+        self.template = function_macro.load_template(config, 'macro',
                                                      function_name=name.upper())
 def load_config_prefix(config):
     return FUNCTION_MACRO(config)
