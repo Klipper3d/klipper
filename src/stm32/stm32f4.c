@@ -144,7 +144,7 @@ static void
 enable_clock_stm32f4xx(void)
 {
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F401 \
-    CONFIG_MACH_STM32F429
+    || CONFIG_MACH_STM32F429
     uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 168Mhz PLL from external crystal (HSE)
