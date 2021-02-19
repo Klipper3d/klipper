@@ -155,7 +155,11 @@ enable_clock_stm32f4xx(void)
 #else
 #define PLL_P 2
 #endif
+#if defined(CONFIG_STM32_CLOCK_REF_25M)
     uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * PLL_P, pllcfgr;
+#else 
+    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * PLL_P, pllcfgr;
+#endif
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 168Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
