@@ -159,8 +159,6 @@ enable_clock_stm32f4xx(void)
     RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
                     | (0 << RCC_PLLCFGR_PLLP_Pos)
                     | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
-    // correct peripherial clocks to ensure APB1 and APB2 equals to FREQ_PERIPH
-    RCC->CFGR |= RCC_CFGR_HPRE_DIV1| RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV2;
     RCC->CR |= RCC_CR_PLLON;
 #endif
 }
