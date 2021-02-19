@@ -26,8 +26,8 @@ class PrinterFunctionMacro:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
         self.env = jinja2.Environment('{%', '%}', '{', '}')
-	self.scripts = []
-	self.names = []
+        self.scripts = []
+        self.names = []
     def load_template(self, config, option, default=None, function_name=None):
         name = "%s:%s" % (config.get_name(), option)
         if default is None:
@@ -36,23 +36,13 @@ class PrinterFunctionMacro:
             script = config.get(option, default)
         self.scripts.append(script)
         self.names.append(function_name)
-#        for name in self.names:
-#            msg = "Error PrinterFunctionMacro: loading template '%s':'%s'" %(name,script,)
-#            logging.exception(msg)
         return TemplateWrapper(self.printer, self.env, name, script)
     def run_macro_from_name(self, function_name):
         try:
-	    index=self.names.index(function_name.upper())
-#            msg = "Error PrinterFunctionMacro: enter run_macro_from_name %d '%s'" %(index, self.scripts[index],)
-#            logging.exception(msg)
-#            commands = self.scripts[index].split('\n')
-#            for line in commands:
-#                msg = "Error PrinterFunctionMacro: enter run_script_split '%s'" %(line,)
-#                logging.exception(msg)
-#            self.gcode.run_script_from_command(str(self.scripts[index]))
+            index=self.names.index(function_name.upper())
             self.gcode.run_script_from_command(self.scripts[index].strip())
         except:
-	    return
+            return
 
 def load_config(config):
     return PrinterFunctionMacro(config)
