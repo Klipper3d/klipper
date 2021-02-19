@@ -62,7 +62,7 @@ class Heater:
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    self.name, self.cmd_SET_HEATER_TEMPERATURE,
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
-        self.function_macro = self.printer.lookup_object('function_macro')
+        self.macro = self.printer.lookup_object('function_macro')
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -87,7 +87,7 @@ class Heater:
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
-        self.function_macro.run_macro_from_name(self.heater_name+'_temp')
+        self.macro.run_macro_from_name(self.heater_name+'_temp')
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def get_pwm_delay(self):
