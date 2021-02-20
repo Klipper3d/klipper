@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20210220: The `BME280` temperature sensor has been renamed to
+`bme280`.
+
 20210219: The `rpi_temperature` module has been renamed to
 `temperature_host`.  Replace any occurrences of `sensor_type:
 rpi_temperature` with `sensor_type: temperature_host`.  The path to
