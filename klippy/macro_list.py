@@ -12,15 +12,15 @@ class MACRO_LIST:
         self.scripts = []
         self.names = []
         self.names_possible = []
-        self.gcode.register_command("FUNCTION_MACRO_DEFINED", 
+        self.gcode.register_command("FUNCTION_MACRO_DEFINED",
              self.cmd_FUNCTION_MACRO_DEFINED,
              desc=self.cmd_FUNCTION_MACRO_DEFINED_help)
-        self.gcode.register_command("FUNCTION_MACRO_AVAILABLE", 
+        self.gcode.register_command("FUNCTION_MACRO_AVAILABLE",
              self.cmd_FUNCTION_MACRO_AVAILABLE,
              desc=self.cmd_FUNCTION_MACRO_AVAILABLE_help)
     def register_function(self, function_name):
         self.names_possible.append(function_name.upper())
-	return function_name.upper()
+        return function_name.upper()
     def add_script(self, script, function_name):
         self.scripts.append(script)
         self.names.append(function_name.upper())
@@ -38,12 +38,14 @@ class MACRO_LIST:
     def run_macro_from_name(self, function_name):
         index = self.get_index_from_name(function_name)
         self.run_macro_from_index(index)
-    cmd_FUNCTION_MACRO_DEFINED_help = "Show list of registered function_macro names"
+    cmd_FUNCTION_MACRO_DEFINED_help = \
+        "Show list of registered function_macro names"
     def cmd_FUNCTION_MACRO_DEFINED(self, gcmd):
         for name in self.names:
 #            self.gcode.respond_info("function_macro '%s'" % (name))
             self.gcode.respond_info(name)
-    cmd_FUNCTION_MACRO_AVAILABLE_help = "Show list of available function_macro names"
+    cmd_FUNCTION_MACRO_AVAILABLE_help = \
+        "Show list of available function_macro names"
     def cmd_FUNCTION_MACRO_AVAILABLE(self, gcmd):
         for name in self.names_possible :
 #            self.gcode.respond_info("function_macro '%s'" % (name))
