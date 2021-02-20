@@ -149,11 +149,6 @@ class TMC2660CurrentHelper:
             self.printer.register_event_handler("idle_timeout:ready",
                                                 self._handle_ready)
 
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
-                                   self.cmd_SET_TMC_CURRENT,
-                                   desc=self.cmd_SET_TMC_CURRENT_help)
-
     def _calc_current_bits(self, current, vsense):
         vref = 0.165 if vsense else 0.310
         cs = int(32 * current * self.sense_resistor * math.sqrt(2.) / vref
@@ -193,14 +188,6 @@ class TMC2660CurrentHelper:
     def set_current(self, run_current, hold_current, print_time):
         self.current = run_current
         self._update_current(run_current, print_time)
-
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
-    def cmd_SET_TMC_CURRENT(self, gcmd):
-        cur = gcmd.get_float('CURRENT', None, minval=0.1, maxval=MAX_CURRENT)
-        if cur is None:
-            return
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.set_current(cur, None, print_time)
 
 
 ######################################################################
@@ -248,7 +235,8 @@ class TMC2660:
         self.fields.set_field("SDOFF", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         # Register commands
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
+        current_helper = TMC2660CurrentHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
 
         # DRVCTRL
@@ -278,7 +266,6 @@ class TMC2660:
         # SGSCONF
         set_config_field(config, "SFILT", 1)
         set_config_field(config, "SGT", 0)
-        TMC2660CurrentHelper(config, self.mcu_tmc)
 
         # DRVCONF
         set_config_field(config, "SLPH", 0)

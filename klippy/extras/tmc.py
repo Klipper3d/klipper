@@ -81,11 +81,12 @@ class FieldHelper:
 ######################################################################
 
 class TMCCommandHelper:
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
+        self.current_helper = current_helper
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
@@ -99,6 +100,9 @@ class TMCCommandHelper:
         gcode.register_mux_command("INIT_TMC", "STEPPER", self.name,
                                    self.cmd_INIT_TMC,
                                    desc=self.cmd_INIT_TMC_help)
+        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_CURRENT,
+                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _init_registers(self, print_time=None):
         # Send registers
         for reg_name, val in self.fields.registers.items():
@@ -141,6 +145,28 @@ class TMCCommandHelper:
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        ch = self.current_helper
+        prev_run_current, prev_hold_current, max_current = ch.get_current()
+        run_current = gcmd.get_float('CURRENT', None,
+                                     minval=0., maxval=max_current)
+        hold_current = gcmd.get_float('HOLDCURRENT', None,
+                                      above=0., maxval=max_current)
+        if run_current is None and hold_current is None:
+            # Query only
+            if prev_hold_current is None:
+                gcmd.respond_info("Run Current: %0.2fA" % (prev_run_current,))
+            else:
+                gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                                  % (prev_run_current, prev_hold_current))
+            return
+        if run_current is None:
+            run_current = prev_run_current
+        if hold_current is None:
+            hold_current = prev_hold_current
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        ch.set_current(run_current, hold_current, print_time)
     # Stepper enable/disable via comms
     def _do_enable(self, print_time, is_enable):
         toff_val = 0

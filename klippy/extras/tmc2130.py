@@ -108,10 +108,6 @@ class TMCCurrentHelper:
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
-                                   self.cmd_SET_TMC_CURRENT,
-                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
@@ -150,24 +146,6 @@ class TMCCurrentHelper:
         self.fields.set_field("IHOLD", ihold)
         val = self.fields.set_field("IRUN", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, gcmd):
-        prev_run_current, prev_hold_current, max_current = self.get_current()
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=max_current)
-        hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=max_current)
-        if run_current is None and hold_current is None:
-            # Query only
-            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (prev_run_current, prev_hold_current))
-            return
-        if run_current is None:
-            run_current = prev_run_current
-        if hold_current is None:
-            hold_current = prev_hold_current
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.set_current(run_current, hold_current, print_time)
 
 
 ######################################################################
@@ -261,10 +239,10 @@ class TMC2130:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
+        current_helper = TMCCurrentHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
-        TMCCurrentHelper(config, self.mcu_tmc)
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
