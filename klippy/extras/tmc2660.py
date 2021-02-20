@@ -145,9 +145,9 @@ class TMC2660CurrentHelper:
             'idle_current_percent', default=100, minval=0, maxval=100)
         if self.idle_current_percentage < 100:
             self.printer.register_event_handler("idle_timeout:printing",
-                                                self.handle_printing)
+                                                self._handle_printing)
             self.printer.register_event_handler("idle_timeout:ready",
-                                                self.handle_ready)
+                                                self._handle_ready)
 
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
@@ -168,17 +168,17 @@ class TMC2660CurrentHelper:
             cs = self._calc_current_bits(run_current, vsense)
         return vsense, cs
 
-    def handle_printing(self, print_time):
+    def _handle_printing(self, print_time):
         print_time -= 0.100 # Schedule slightly before deadline
         self.printer.get_reactor().register_callback(
-            (lambda ev: self.set_current(print_time, self.current)))
+            (lambda ev: self._update_current(self.current, print_time)))
 
-    def handle_ready(self, print_time):
+    def _handle_ready(self, print_time):
         current = self.current * float(self.idle_current_percentage) / 100.
         self.printer.get_reactor().register_callback(
-            (lambda ev: self.set_current(print_time, current)))
+            (lambda ev: self._update_current(current, print_time)))
 
-    def set_current(self, print_time, current):
+    def _update_current(self, current, print_time):
         vsense, cs = self._calc_current(current)
         val = self.fields.set_field("CS", cs)
         self.mcu_tmc.set_register("SGCSCONF", val, print_time)
@@ -187,14 +187,20 @@ class TMC2660CurrentHelper:
             val = self.fields.set_field("VSENSE", vsense)
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
+    def get_current(self):
+        return self.current, None, MAX_CURRENT
+
+    def set_current(self, run_current, hold_current, print_time):
+        self.current = run_current
+        self._update_current(run_current, print_time)
+
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC2660 driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
         cur = gcmd.get_float('CURRENT', None, minval=0.1, maxval=MAX_CURRENT)
         if cur is None:
             return
-        self.current = cur
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.set_current(print_time, self.current)
+        self.set_current(cur, None, print_time)
 
 
 ######################################################################
