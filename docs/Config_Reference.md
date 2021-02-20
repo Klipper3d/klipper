@@ -2151,7 +2151,7 @@ Temperature from the machine (eg Raspberry Pi) running the host software.
 
 ```
 sensor_type: temperature_host
-#path:
+#sensor_path:
 #   The path to temperature system file. The default is
 #   "/sys/class/thermal/thermal_zone0/temp" which is the temperature
 #   system file on a Raspberry Pi computer.
