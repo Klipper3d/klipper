@@ -272,31 +272,35 @@ class TMC5160CurrentHelper:
         if not globalscaler:
             globalscaler = 256
         bits = self.fields.get_field(field_name)
-        current = (globalscaler * (bits + 1) * VREF
-                   / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
-        return round(current, 2)
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, gcmd):
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=MAX_CURRENT)
-        hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=MAX_CURRENT)
-        if run_current is None and hold_current is None:
-            # Query only
-            run_current = self._calc_current_from_field("IRUN")
-            hold_current = self._calc_current_from_field("IHOLD")
-            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (run_current, hold_current))
-            return
-        if run_current is None:
-            run_current = self._calc_current_from_field("IRUN")
-        if hold_current is None:
-            hold_current = self._calc_current_from_field("IHOLD")
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        return (globalscaler * (bits + 1) * VREF
+                / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
+    def get_current(self):
+        run_current = self._calc_current_from_field("IRUN")
+        hold_current = self._calc_current_from_field("IHOLD")
+        return run_current, hold_current, MAX_CURRENT
+    def set_current(self, run_current, hold_current, print_time):
         irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("IHOLD", ihold)
         val = self.fields.set_field("IRUN", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
+    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
+    def cmd_SET_TMC_CURRENT(self, gcmd):
+        prev_run_current, prev_hold_current, max_current = self.get_current()
+        run_current = gcmd.get_float('CURRENT', None,
+                                     minval=0., maxval=max_current)
+        hold_current = gcmd.get_float('HOLDCURRENT', None,
+                                      above=0., maxval=max_current)
+        if run_current is None and hold_current is None:
+            # Query only
+            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                              % (prev_run_current, prev_hold_current))
+            return
+        if run_current is None:
+            run_current = prev_run_current
+        if hold_current is None:
+            hold_current = prev_hold_current
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        self.set_current(run_current, hold_current, print_time)
 
 
 ######################################################################
