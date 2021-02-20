@@ -33,4 +33,3 @@ class FUNCTION_MACRO:
 
 def load_config_prefix(config):
     return FUNCTION_MACRO(config)
-
