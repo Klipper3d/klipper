@@ -38,6 +38,7 @@ CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-makergear-m2-2016.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-mtw-create-2015.cfg
+CONFIG ../../config/printer-robo3d-r2-2017.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-sovol-sv01-2020.cfg
 CONFIG ../../config/printer-sunlu-s8-2020.cfg

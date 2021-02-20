@@ -34,6 +34,9 @@ choice
     config MACH_STM32F407
         bool "STM32F407"
         select MACH_STM32F4
+    config MACH_STM32F429
+        bool "STM32F429"
+        select MACH_STM32F4
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
@@ -75,6 +78,7 @@ config MCU
     default "stm32f401xc" if MACH_STM32F401
     default "stm32f405xx" if MACH_STM32F405
     default "stm32f407xx" if MACH_STM32F407
+    default "stm32f429xx" if MACH_STM32F429
     default "stm32f446xx" if MACH_STM32F446
 
 config CLOCK_FREQ
@@ -84,7 +88,7 @@ config CLOCK_FREQ
     default 72000000 if MACH_STM32F103
     default 120000000 if MACH_STM32F207
     default 84000000 if MACH_STM32F401
-    default 168000000 if MACH_STM32F405 || MACH_STM32F407
+    default 168000000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F429
     default 180000000 if MACH_STM32F446
 
 config FLASH_SIZE
@@ -94,7 +98,7 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32F070
     default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
     default 0x40000 if MACH_STM32F2 || MACH_STM32F401
-    default 0x80000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
+    default 0x80000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F429 || MACH_STM32F446
 
 config RAM_START
     hex
@@ -108,8 +112,7 @@ config RAM_SIZE
     default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
-    default 0x20000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
-
+    default 0x20000 if MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F429 || MACH_STM32F446
 
 config STACK_SIZE
     int
@@ -163,11 +166,14 @@ choice
         bool "12 MHz crystal"
     config STM32_CLOCK_REF_16M
         bool "16 MHz crystal"
+    config STM32_CLOCK_REF_25M
+        bool "25 MHz crystal"
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
 config CLOCK_REF_FREQ
     int
+    default 25000000 if STM32_CLOCK_REF_25M
     default 16000000 if STM32_CLOCK_REF_16M
     default 12000000 if STM32_CLOCK_REF_12M
     default 1 if STM32_CLOCK_REF_INTERNAL
@@ -193,11 +199,13 @@ choice
     config CAN_PINS_PB8_PB9
         bool "Pins PB8(rx) and PB9(tx)"
     config CAN_PINS_PI8_PH13
-        bool "Pins PI8(rx) and PH13(tx)" if MACH_STM32F4
+        bool "Pins PI9(rx) and PH13(tx)" if MACH_STM32F4
     config CAN_PINS_PB5_PB6
         bool "Pins PB5(rx) and PB6(tx)" if MACH_STM32F4
     config CAN_PINS_PB12_PB13
-        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F405 || MACH_STM32F407
+        bool "Pins PB12(rx) and PB13(tx)" if MACH_STM32F4
+    config CAN_PINS_PD0_PD1
+        bool "Pins PD0(rx) and PD1(tx)" if MACH_STM32F4
 endchoice
 
 config STM32F0_TRIM

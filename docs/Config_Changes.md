@@ -6,6 +6,12 @@ All dates in this document are approximate.
 
 # Changes
 
+20210219: The `rpi_temperature` module has been renamed to
+`temperature_host`.  Replace any occurrences of `sensor_type:
+rpi_temperature` with `sensor_type: temperature_host`.  The
+`rpi_temperature` name is deprecated and will be removed in the near
+future.
+
 20210201: The `TEST_RESONANCES` command will now disable input shaping
 if it was previously enabled (and re-enable it after the test). In order
 to override this behavior and keep the input shaping enabled, one can

@@ -25,7 +25,8 @@ class IdleTimeout:
         self.idle_gcode = gcode_macro.load_template(config, 'gcode',
                                                     DEFAULT_IDLE_GCODE)
         self.gcode.register_command('SET_IDLE_TIMEOUT',
-                                    self.cmd_SET_IDLE_TIMEOUT)
+                                    self.cmd_SET_IDLE_TIMEOUT,
+                                    desc=self.cmd_SET_IDLE_TIMEOUT_help)
         self.state = "Idle"
         self.last_print_start_systime = 0.
     def get_status(self, eventtime):
@@ -98,6 +99,7 @@ class IdleTimeout:
         self.reactor.update_timer(self.timeout_timer, curtime + check_time)
         self.printer.send_event("idle_timeout:printing",
                                 est_print_time + PIN_MIN_TIME)
+    cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         timeout = gcmd.get_float('TIMEOUT', self.idle_timeout, above=0.)
         self.idle_timeout = timeout

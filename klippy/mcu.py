@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -564,10 +564,11 @@ class MCU:
         return config_params
     def _log_info(self):
         msgparser = self._serial.get_msgparser()
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
         log_info = [
-            "Loaded MCU '%s' %d commands (%s / %s)" % (
-                self._name, len(msgparser.messages_by_id),
-                msgparser.version, msgparser.build_versions),
+            "Loaded MCU '%s' %d commands (%s / %s)"
+            % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         return "\n".join(log_info)
@@ -635,8 +636,9 @@ class MCU:
         mbaud = msgparser.get_constant('SERIAL_BAUD', None)
         if self._restart_method is None and mbaud is None and not ext_only:
             self._restart_method = 'command'
-        self._get_status_info['mcu_version'] = msgparser.version
-        self._get_status_info['mcu_build_versions'] = msgparser.build_versions
+        version, build_versions = msgparser.get_version_info()
+        self._get_status_info['mcu_version'] = version
+        self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
@@ -692,8 +694,9 @@ class MCU:
             return self.lookup_command(msgformat)
         except self._serial.get_msgparser().error as e:
             return None
-    def lookup_command_id(self, msgformat):
-        return self._serial.get_msgparser().lookup_command(msgformat).msgid
+    def lookup_command_tag(self, msgformat):
+        all_msgs = self._serial.get_msgparser().get_messages()
+        return {fmt: msgtag for msgtag, msgtype, fmt in all_msgs}[msgformat]
     def get_enumerations(self):
         return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
