@@ -131,7 +131,7 @@ CONFIG ../../config/generic-creality-v4.2.7.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
-CONFIG ../../config/generic-mks-robin-nano.cfg
+CONFIG ../../config/generic-mks-robin-nano-v1.cfg
 CONFIG ../../config/generic-mks-robin-nano-v2.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
