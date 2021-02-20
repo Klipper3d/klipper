@@ -16,10 +16,9 @@ AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 
 class Heater:
-    def __init__(self, config, sensor, heater_name):
+    def __init__(self, config, sensor):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.heater_name = heater_name
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
@@ -62,7 +61,9 @@ class Heater:
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    self.name, self.cmd_SET_HEATER_TEMPERATURE,
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
-        self.macro = self.printer.lookup_object('macro_list')
+        self.macro = macro = self.printer.lookup_object('macro_list')
+        self.heater_temp = macro.register_function(
+                           "heater_"+self.name+'_temp')
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -88,7 +89,7 @@ class Heater:
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
         if self.macro:
-            self.macro.run_macro_from_name(self.heater_name+'_temp')
+            self.macro.run_macro_from_name(self.heater_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def get_pwm_delay(self):
@@ -255,7 +256,7 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor, heater_name)
+        self.heaters[heater_name] = heater = Heater(config, sensor)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
