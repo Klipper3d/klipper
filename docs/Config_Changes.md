@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20210227: TMC stepper motor drivers in UART or SPI mode are now
+queried once per second whenever they are enabled - if the driver can
+not be contacted or if the driver reports an error, then Klipper will
+transition to a shutdown state.
+
 20210219: The `rpi_temperature` module has been renamed to
 `temperature_host`.  Replace any occurrences of `sensor_type:
 rpi_temperature` with `sensor_type: temperature_host`.  The path to

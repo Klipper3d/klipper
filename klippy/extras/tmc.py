@@ -77,16 +77,89 @@ class FieldHelper:
 
 
 ######################################################################
+# Periodic error checking
+######################################################################
+
+class TMCErrorCheck:
+    def __init__(self, config, mcu_tmc, clear_gstat=True):
+        self.printer = config.get_printer()
+        self.stepper_name = ' '.join(config.get_name().split()[1:])
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        self.check_timer = None
+        # Setup for GSTAT query
+        self.clear_gstat = clear_gstat
+        reg_name = self.fields.lookup_register("drv_err")
+        if reg_name is not None:
+            self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff]
+        else:
+            self.gstat_reg_info = None
+        # Setup for DRV_STATUS query
+        reg_name = self.fields.lookup_register("ot")
+        mask = err_mask = 0
+        err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
+        warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
+        for f in err_fields + warn_fields:
+            if f in self.fields.all_fields[reg_name]:
+                mask |= self.fields.all_fields[reg_name][f]
+                if f in err_fields:
+                    err_mask |= self.fields.all_fields[reg_name][f]
+        self.drv_status_reg_info = [0, reg_name, mask, err_mask]
+    def _query_register(self, reg_info, try_clear=False):
+        last_value, reg_name, mask, err_mask = reg_info
+        count = 0
+        while 1:
+            val = self.mcu_tmc.get_register(reg_name)
+            if val & mask != last_value & mask:
+                fmt = self.fields.pretty_format(reg_name, val)
+                logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
+                reg_info[0] = last_value = val
+            if not val & err_mask:
+                break
+            count += 1
+            if count >= 3:
+                fmt = self.fields.pretty_format(reg_name, val)
+                raise self.printer.command_error("TMC '%s' reports error: %s"
+                                                 % (self.stepper_name, fmt))
+            if try_clear:
+                try_clear = False
+                self.mcu_tmc.set_register(reg_name, val & err_mask)
+    def _do_periodic_check(self, eventtime, try_clear=False):
+        try:
+            self._query_register(self.drv_status_reg_info)
+            if self.gstat_reg_info is not None:
+                self._query_register(self.gstat_reg_info, try_clear=try_clear)
+        except self.printer.command_error as e:
+            self.printer.invoke_shutdown(str(e))
+            return self.printer.get_reactor().NEVER
+        return eventtime + 1.
+    def stop_checks(self):
+        if self.check_timer is None:
+            return
+        self.printer.get_reactor().unregister_timer(self.check_timer)
+        self.check_timer = None
+    def start_checks(self):
+        if self.check_timer is not None:
+            self.stop_checks()
+        self._do_periodic_check(0., try_clear=self.clear_gstat)
+        reactor = self.printer.get_reactor()
+        curtime = reactor.monotonic()
+        self.check_timer = reactor.register_timer(self._do_periodic_check,
+                                                  curtime + 1.)
+
+
+######################################################################
 # G-Code command helpers
 ######################################################################
 
 class TMCCommandHelper:
-    def __init__(self, config, mcu_tmc, current_helper):
+    def __init__(self, config, mcu_tmc, current_helper, clear_gstat=True):
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
+        self.echeck_helper = TMCErrorCheck(config, mcu_tmc, clear_gstat)
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
@@ -153,6 +226,7 @@ class TMCCommandHelper:
                 # Shared enable via comms handling
                 val = self.fields.set_field("toff", self.toff)
             self._init_registers(print_time)
+            self.echeck_helper.start_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
     def _do_disable(self, print_time):
@@ -161,6 +235,7 @@ class TMCCommandHelper:
                 val = self.fields.set_field("toff", 0)
                 reg_name = self.fields.lookup_register("toff")
                 self.mcu_tmc.set_register(reg_name, val, print_time)
+            self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
     def handle_stepper_enable(self, print_time, is_enable):

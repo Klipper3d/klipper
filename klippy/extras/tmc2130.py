@@ -241,7 +241,8 @@ class TMC2130:
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMCCurrentHelper(config, self.mcu_tmc)
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper,
+                                         clear_gstat=False)
         cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
