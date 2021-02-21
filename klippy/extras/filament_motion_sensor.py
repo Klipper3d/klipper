@@ -91,7 +91,7 @@ class RunoutHelper:
         # so update the runout timer
         self.reactor.register_callback(self._update_filament_runout_timer)
     def _update_filament_runout_timer(self, eventtime):
-        if self._filament_runout_pos:
+        if self._filament_runout_pos and self.sensor_enabled:
             if self._filament_runout_timer.waketime == self.reactor.NEVER:
                 runout_pos = self._filament_runout_pos
                 with self.mutex:
