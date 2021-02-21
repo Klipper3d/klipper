@@ -38,6 +38,7 @@ CONFIG ../../config/printer-makergear-m2-2012.cfg
 CONFIG ../../config/printer-makergear-m2-2016.cfg
 CONFIG ../../config/printer-micromake-d1-2016.cfg
 CONFIG ../../config/printer-mtw-create-2015.cfg
+CONFIG ../../config/printer-robo3d-r2-2017.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-sovol-sv01-2020.cfg
 CONFIG ../../config/printer-sunlu-s8-2020.cfg
@@ -130,7 +131,8 @@ CONFIG ../../config/generic-creality-v4.2.7.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
-CONFIG ../../config/generic-mks-robin-nano.cfg
+CONFIG ../../config/generic-mks-robin-nano-v1.cfg
+CONFIG ../../config/generic-mks-robin-nano-v2.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
@@ -146,6 +148,7 @@ DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict
