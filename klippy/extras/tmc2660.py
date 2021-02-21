@@ -1,11 +1,11 @@
 # TMC2660 configuration
 #
 # Copyright (C) 2018-2019  Florian Heilmann <Florian.Heilmann@gmx.net>
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-from . import bus, tmc
+from . import bus, tmc, tmc2130
 
 Registers = {
     "DRVCONF": 0xE, "SGCSCONF": 0xC, "SMARTEN": 0xA,
@@ -59,66 +59,53 @@ Fields["DRVCONF"] = {
 
 Fields["READRSP@RDSEL0"] = {
     "SG": 0x01,
-    "OT": 0x01 << 1,
-    "OTPW": 0x01 << 2,
-    "S2GA": 0x01 << 3,
-    "S2GB": 0x01 << 4,
-    "OLA": 0x01 << 5,
-    "OLB": 0x01 << 6,
-    "STST": 0x01 << 7,
+    "ot": 0x01 << 1,
+    "otpw": 0x01 << 2,
+    "s2ga": 0x01 << 3,
+    "s2gb": 0x01 << 4,
+    "ola": 0x01 << 5,
+    "olb": 0x01 << 6,
+    "stst": 0x01 << 7,
     "MSTEP": 0x3ff << 10
 }
 
 Fields["READRSP@RDSEL1"] = {
     "SG": 0x01,
-    "OT": 0x01 << 1,
-    "OTPW": 0x01 << 2,
-    "S2GA": 0x01 << 3,
-    "S2GB": 0x01 << 4,
-    "OLA": 0x01 << 5,
-    "OLB": 0x01 << 6,
-    "STST": 0x01 << 7,
+    "ot": 0x01 << 1,
+    "otpw": 0x01 << 2,
+    "s2ga": 0x01 << 3,
+    "s2gb": 0x01 << 4,
+    "ola": 0x01 << 5,
+    "olb": 0x01 << 6,
+    "stst": 0x01 << 7,
     "SG@RDSEL1": 0x3ff << 10
 }
 
 Fields["READRSP@RDSEL2"] = {
     "SG": 0x01,
-    "OT": 0x01 << 1,
-    "OTPW": 0x01 << 2,
-    "S2GA": 0x01 << 3,
-    "S2GB": 0x01 << 4,
-    "OLA": 0x01 << 5,
-    "OLB": 0x01 << 6,
-    "STST": 0x01 << 7,
+    "ot": 0x01 << 1,
+    "otpw": 0x01 << 2,
+    "s2ga": 0x01 << 3,
+    "s2gb": 0x01 << 4,
+    "ola": 0x01 << 5,
+    "olb": 0x01 << 6,
+    "stst": 0x01 << 7,
     "SG@RDSEL2": 0x1f << 15,
     "SE": 0x1f << 10
 }
 
 SignedFields = ["SGT"]
 
-FieldFormatters = {
-    "MRES": (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
-    "DEDGE": (lambda v:
-        "1(Both Edges Active)" if v else "0(Only Rising Edge active)"),
-    "intpol": (lambda v: "1(On)" if v else "0(Off)"),
-    "toff": (lambda v: ("%d" % v) if v else "0(Driver Disabled!)"),
+FieldFormatters = dict(tmc2130.FieldFormatters)
+FieldFormatters.update({
+    "DEDGE": (lambda v: "1(Both Edges Active!)" if v else ""),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "SFILT": (lambda v: "1(Filtered mode)" if v else "0(Standard mode)"),
     "VSENSE": (lambda v: "%d(%dmV)" % (v, 165 if v else 305)),
-    "SDOFF": (lambda v: "1(Step/Dir disabled" if v else "0(Step/dir enabled)"),
-    "DISS2G": (lambda v: "%d(Short to GND protection %s)" % (v,
-                                          "disabled" if v else "enabled")),
-    "MSTEP": (lambda v: "%d(%d, OA1 %s OA2)" % (v, v & 0xff,
-                                                "<=" if v & 0x100 else "=>")),
-    "SG": (lambda v: "%d(%s)" % (v, "Stall!" if v else "No Stall!")),
-    "OT": (lambda v: "1(Overtemp shutdown!)" if v else ""),
-    "OTPW": (lambda v: "1(Overtemp warning!)" if v else ""),
-    "S2GA": (lambda v: "1(Short to GND Coil A!)" if v else ""),
-    "S2GB": (lambda v: "1(Short to GND Coil B!)" if v else ""),
-    "OLA": (lambda v: "1(Open Load Coil A at slow speed!)" if v else ""),
-    "OLB": (lambda v: "1(Open Load Coil B at slow speed!)" if v else ""),
-    "STST": (lambda v: "1(Standstill detected!)" if v else ""),
-}
+    "SDOFF": (lambda v: "1(Step/Dir disabled!)" if v else ""),
+    "DISS2G": (lambda v: "%d(Short to GND disabled!)" if v else ""),
+    "SG": (lambda v: "1(Stall!)" if v else ""),
+})
 
 
 ######################################################################
