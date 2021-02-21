@@ -27,6 +27,7 @@ class RunoutHelper:
                 'detection_length', 7., above=0.)
         self.extruder_name = config.get("extruder", None)
         self.extruder = None
+        self.toolhead = None
         self._mcu = None
         self.idle_timeout = None
         self.pause_resume = None
@@ -68,6 +69,7 @@ class RunoutHelper:
         return True
     def _handle_ready(self):
         self.extruder = self.printer.lookup_object(self.extruder_name)
+        self.toolhead = self.printer.lookup_object("toolhead")
         self._mcu = self.extruder.stepper.get_mcu()
         self.idle_timeout = self.printer.lookup_object("idle_timeout")
         self.sensor_enabled = self._can_be_enabled()
@@ -169,6 +171,7 @@ class RunoutHelper:
             # of pause_resume execute immediately.
             self.pause_resume.send_pause_command()
             pause_prefix = "PAUSE\n"
+            self.toolhead.wait_moves()
             self.reactor.pause(eventtime + self.pause_delay)
         self._exec_gcode(pause_prefix, self.runout_gcode)
         self._update_filament_runout_pos(self._runout_eventtime)
