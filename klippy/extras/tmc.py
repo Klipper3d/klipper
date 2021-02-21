@@ -107,29 +107,6 @@ class TMCCommandHelper:
         # Send registers
         for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
-    def _handle_connect(self):
-        # Check for soft stepper enable/disable
-        stepper_enable = self.printer.lookup_object('stepper_enable')
-        enable_line = stepper_enable.lookup_enable(self.stepper_name)
-        if not enable_line.has_dedicated_enable():
-            self.toff = self.fields.get_field("toff")
-            self.fields.set_field("toff", 0)
-            enable_line.register_state_callback(self.handle_stepper_enable)
-            logging.info("Enabling TMC virtual enable for '%s'",
-                         self.stepper_name)
-        # Send init
-        retry_count = 0
-        while 1:
-            try:
-                self._init_registers()
-                return
-            except self.printer.command_error as e:
-                logging.exception("TMC init error")
-                retry_count += 1
-                if retry_count > 5:
-                    raise self.printer.config_error(str(e))
-                reactor = self.printer.get_reactor()
-                reactor.pause(reactor.monotonic() + 1.)
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, gcmd):
         logging.info("INIT_TMC %s", self.name)
@@ -168,18 +145,45 @@ class TMCCommandHelper:
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                               % (prev_run_current, prev_hold_current))
-    # Stepper enable/disable via comms
-    def _do_enable(self, print_time, is_enable):
-        toff_val = 0
-        if is_enable:
-            toff_val = self.toff
+    # Stepper enable/disable tracking
+    def _do_enable(self, print_time):
+        try:
             print_time -= 0.100 # Schedule slightly before deadline
-        val = self.fields.set_field("toff", toff_val)
-        reg_name = self.fields.lookup_register("toff")
-        self.mcu_tmc.set_register(reg_name, val, print_time)
+            if self.toff is not None:
+                # Shared enable via comms handling
+                val = self.fields.set_field("toff", self.toff)
+            self._init_registers(print_time)
+        except self.printer.command_error as e:
+            self.printer.invoke_shutdown(str(e))
+    def _do_disable(self, print_time):
+        try:
+            if self.toff is not None:
+                val = self.fields.set_field("toff", 0)
+                reg_name = self.fields.lookup_register("toff")
+                self.mcu_tmc.set_register(reg_name, val, print_time)
+        except self.printer.command_error as e:
+            self.printer.invoke_shutdown(str(e))
     def handle_stepper_enable(self, print_time, is_enable):
-        cb = (lambda ev: self._do_enable(print_time, is_enable))
+        if is_enable:
+            cb = (lambda ev: self._do_enable(print_time))
+        else:
+            cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
+    def _handle_connect(self):
+        # Check for soft stepper enable/disable
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable_line = stepper_enable.lookup_enable(self.stepper_name)
+        enable_line.register_state_callback(self.handle_stepper_enable)
+        if not enable_line.has_dedicated_enable():
+            self.toff = self.fields.get_field("toff")
+            self.fields.set_field("toff", 0)
+            logging.info("Enabling TMC virtual enable for '%s'",
+                         self.stepper_name)
+        # Send init
+        try:
+            self._init_registers()
+        except self.printer.command_error as e:
+            logging.info("TMC %s failed to init: %s", self.name, str(e))
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
