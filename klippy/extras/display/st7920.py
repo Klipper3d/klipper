@@ -190,45 +190,27 @@ class ST7920(DisplayBase):
 # as the MISO pin.
 class ST7920E(DisplayBase):
     def __init__(self, config):
-        printer = config.get_printer()
-        # pin config
-        ppins = printer.lookup_object('pins')
-        pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['cs']]
-        mcu = None
-        for pin_params in pins:
-            if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("st7920 all pins must be on same mcu")
-            mcu = pin_params['chip']
-        self.pins = [pin_params['pin'] for pin_params in pins]
         # create software spi
+        ppins = config.get_printer().lookup_object('pins')
         sw_pin_names = ['spi_software_%s_pin' % (name,)
                         for name in ['miso', 'mosi', 'sclk']]
         sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
                          for name in sw_pin_names]
+        mcu = None
         for pin_params in sw_pin_params:
-            if pin_params['chip'] != mcu:
+            if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("%s: spi pins must be on same mcu" % (
                     config.get_name(),))
+            mcu = pin_params['chip']
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         speed = config.getint('spi_speed', 1000000, minval=100000)
         self.spi = bus.MCU_SPI(mcu, None, None, 0, speed, sw_pins)
-        # prepare send function and cs pin
-        self.mcu = mcu
-        self.oid_cs = self.mcu.create_oid()
-        self.mcu.add_config_cmd("config_digital_out oid=%d pin=%s value=%d"
-                           " default_value=%d max_duration=%d"
-                           % (self.oid_cs, self.pins[0], 0, 0, 0))
-        self.mcu.register_config_callback(self.build_config)
-        self.cs = None
+        # create cs pin
+        self.cs = bus.MCU_bus_digital_out(mcu, config.get("en_pin"),
+                                          self.spi.get_command_queue())
         self.is_extended = False
         # init display base
         DisplayBase.__init__(self)
-    def build_config(self):
-        # configure cs pin
-        self.cs = self.mcu.lookup_command(
-            "update_digital_out oid=%c value=%c",
-            cq=self.spi.get_command_queue())
     def send(self, cmds, is_data=False, is_extended=False):
         # setup sync byte and check for exten mode switch
         sync_byte = 0xfa
@@ -249,9 +231,9 @@ class ST7920E(DisplayBase):
             spi_data[i + 1] = (b & 0x0F) << 4
             i = i + 2
         # send data
-        self.setCs(1)
+        self.cs.update_digital_out(1, reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(spi_data, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.setCs(0)
+        self.cs.update_digital_out(0, reqclock=BACKGROUND_PRIORITY_CLOCK)
         #logging.debug("st7920 %d %s", is_data, repr(spi_data))
     def setCs(self, value):
         self.cs.send([self.oid_cs, not not value],
