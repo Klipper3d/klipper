@@ -184,8 +184,9 @@ class ST7920(DisplayBase):
         #logging.debug("st7920 %d %s", is_data, repr(cmds))
 
 # Display driver for displays that emulate the ST7920 in software.
-# These displays rely on the CS pin to be toggled in order to initialize the SPI correctly.
-# This display driver uses a software SPI with an unused pin as the MISO pin.
+# These displays rely on the CS pin to be toggled in order to initialize the
+# SPI correctly. This display driver uses a software SPI with an unused pin
+# as the MISO pin.
 class ST7920E(DisplayBase):
     def __init__(self, config):
         printer = config.get_printer()
@@ -204,7 +205,8 @@ class ST7920E(DisplayBase):
         self.oid_spi = self.mcu.create_oid()
         self.oid_cs = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
-        self.mcu.add_config_cmd("config_spi_without_cs oid=%d" % (self.oid_spi,))
+        self.mcu.add_config_cmd("config_spi_without_cs oid=%d"
+                           % (self.oid_spi,))
         self.mcu.add_config_cmd("config_digital_out oid=%d pin=%s value=%d"
                            " default_value=%d max_duration=%d"
                            % (self.oid_cs, self.pins[0], 0, 0, 0))
@@ -217,7 +219,8 @@ class ST7920E(DisplayBase):
         # configure software spi
         self.mcu.add_config_cmd("spi_set_software_bus oid=%d"
             " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
-            % (self.oid_spi, self.pins[3], self.pins[2], self.pins[1], 0, 1000000))
+            % (self.oid_spi, self.pins[3], self.pins[2], self.pins[1],
+                0, 1000000))
         self.spi_send = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
         # configure cs pin
