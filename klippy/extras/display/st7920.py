@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from .. import bus
 from . import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
@@ -193,39 +194,41 @@ class ST7920E(DisplayBase):
         # pin config
         ppins = printer.lookup_object('pins')
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['cs', 'sclk', 'sid', 'dummy']]
+                for name in ['cs']]
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("st7920 all pins must be on same mcu")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
+        # create software spi
+        sw_pin_names = ['spi_software_%s_pin' % (name,)
+                        for name in ['miso', 'mosi', 'sclk']]
+        sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
+                         for name in sw_pin_names]
+        for pin_params in sw_pin_params:
+            if pin_params['chip'] != mcu:
+                raise ppins.error("%s: spi pins must be on same mcu" % (
+                    config.get_name(),))
+        sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
+        speed = config.getint('spi_speed', 1000000, minval=100000)
+        self.spi = bus.MCU_SPI(mcu, None, None, 0, speed, sw_pins)
         # prepare send function and cs pin
         self.mcu = mcu
-        self.oid_spi = self.mcu.create_oid()
         self.oid_cs = self.mcu.create_oid()
-        self.cmd_queue = self.mcu.alloc_command_queue()
-        self.mcu.add_config_cmd("config_spi_without_cs oid=%d"
-                           % (self.oid_spi,))
         self.mcu.add_config_cmd("config_digital_out oid=%d pin=%s value=%d"
                            " default_value=%d max_duration=%d"
                            % (self.oid_cs, self.pins[0], 0, 0, 0))
         self.mcu.register_config_callback(self.build_config)
-        self.spi_send = self.cs = None
+        self.cs = None
         self.is_extended = False
         # init display base
         DisplayBase.__init__(self)
     def build_config(self):
-        # configure software spi
-        self.mcu.add_config_cmd("spi_set_software_bus oid=%d"
-            " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
-            % (self.oid_spi, self.pins[3], self.pins[2], self.pins[1],
-                0, 1000000))
-        self.spi_send = self.mcu.lookup_command(
-            "spi_send oid=%c data=%*s", cq=self.cmd_queue)
         # configure cs pin
         self.cs = self.mcu.lookup_command(
-            "update_digital_out oid=%c value=%c", cq=self.cmd_queue)
+            "update_digital_out oid=%c value=%c",
+            cq=self.spi.get_command_queue())
     def send(self, cmds, is_data=False, is_extended=False):
         # setup sync byte and check for exten mode switch
         sync_byte = 0xfa
@@ -247,8 +250,7 @@ class ST7920E(DisplayBase):
             i = i + 2
         # send data
         self.setCs(1)
-        self.spi_send.send([self.oid_spi, spi_data],
-                               minclock=0, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.spi.spi_send(spi_data, reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.setCs(0)
         #logging.debug("st7920 %d %s", is_data, repr(spi_data))
     def setCs(self, value):
