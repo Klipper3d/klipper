@@ -188,7 +188,7 @@ class ST7920(DisplayBase):
 # These displays rely on the CS pin to be toggled in order to initialize the
 # SPI correctly. This display driver uses a software SPI with an unused pin
 # as the MISO pin.
-class ST7920E(DisplayBase):
+class EmulatedST7920(DisplayBase):
     def __init__(self, config):
         # create software spi
         ppins = config.get_printer().lookup_object('pins')
@@ -205,11 +205,11 @@ class ST7920E(DisplayBase):
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         speed = config.getint('spi_speed', 1000000, minval=100000)
         self.spi = bus.MCU_SPI(mcu, None, None, 0, speed, sw_pins)
-        # create cs pin
-        self.cs = bus.MCU_bus_digital_out(mcu, config.get("en_pin"),
+        # create en pin
+        self.en_pin = bus.MCU_bus_digital_out(mcu, config.get("en_pin"),
                                           self.spi.get_command_queue())
-        self.is_extended = False
         # init display base
+        self.is_extended = False
         DisplayBase.__init__(self)
     def send(self, cmds, is_data=False, is_extended=False):
         # setup sync byte and check for exten mode switch
@@ -231,10 +231,7 @@ class ST7920E(DisplayBase):
             spi_data[i + 1] = (b & 0x0F) << 4
             i = i + 2
         # send data
-        self.cs.update_digital_out(1, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.en_pin.update_digital_out(1, reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(spi_data, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.cs.update_digital_out(0, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.en_pin.update_digital_out(0, reqclock=BACKGROUND_PRIORITY_CLOCK)
         #logging.debug("st7920 %d %s", is_data, repr(spi_data))
-    def setCs(self, value):
-        self.cs.send([self.oid_cs, not not value],
-            minclock=0, reqclock=BACKGROUND_PRIORITY_CLOCK)
