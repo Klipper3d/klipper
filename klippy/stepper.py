@@ -124,6 +124,11 @@ class MCU_stepper:
         return self._tag_position
     def set_tag_position(self, position):
         self._tag_position = position
+    def get_past_commanded_position(self, clock):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        sq = self._stepqueue
+        mcu_pos = ffi_lib.stepcompress_find_past_position(sq, clock)
+        return mcu_pos * self._step_dist - self._mcu_position_offset
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
@@ -145,7 +150,11 @@ class MCU_stepper:
         if not did_trigger or self._mcu.is_fileoutput():
             return
         params = self._get_position_cmd.send([self._oid])
-        mcu_pos_dist = params['pos'] * self._step_dist
+        last_pos = params['pos']
+        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, last_pos)
+        if ret:
+            raise error("Internal error in stepcompress")
+        mcu_pos_dist = last_pos * self._step_dist
         if self._invert_dir:
             mcu_pos_dist = -mcu_pos_dist
         self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
