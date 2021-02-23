@@ -266,7 +266,8 @@ class TMCMicrostepHelper:
         self.fields = mcu_tmc.get_fields()
         stepper_name = " ".join(config.get_name().split()[1:])
         stepper_config = ms_config = config.getsection(stepper_name)
-        if stepper_config.get('microsteps', None, note_valid=False) is None:
+        if (stepper_config.get('microsteps', None, note_valid=False) is None
+            and config.get('microsteps', None, note_valid=False) is not None):
             # Older config format with microsteps in tmc config section
             ms_config = config
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
