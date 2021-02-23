@@ -184,6 +184,24 @@ class ST7920(DisplayBase):
         cmd_type.send([self.oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
         #logging.debug("st7920 %d %s", is_data, repr(cmds))
 
+# Helper code for toggling the en pin on startup
+class EnableHelper:
+    def __init__(self, pin_desc, spi):
+        self.en_pin = bus.MCU_bus_digital_out(spi.get_mcu(), pin_desc,
+                                              spi.get_command_queue())
+    def init(self):
+        mcu = self.en_pin.get_mcu()
+        curtime = mcu.get_printer().get_reactor().monotonic()
+        print_time = mcu.estimated_print_time(curtime)
+        # Toggle enable pin
+        minclock = mcu.print_time_to_clock(print_time + .100)
+        self.en_pin.update_digital_out(0, minclock=minclock)
+        minclock = mcu.print_time_to_clock(print_time + .200)
+        self.en_pin.update_digital_out(1, minclock=minclock)
+        # Force a delay to any subsequent commands on the command queue
+        minclock = mcu.print_time_to_clock(print_time + .300)
+        self.en_pin.update_digital_out(1, minclock=minclock)
+
 # Display driver for displays that emulate the ST7920 in software.
 # These displays rely on the CS pin to be toggled in order to initialize the
 # SPI correctly. This display driver uses a software SPI with an unused pin
@@ -205,9 +223,9 @@ class EmulatedST7920(DisplayBase):
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         speed = config.getint('spi_speed', 1000000, minval=100000)
         self.spi = bus.MCU_SPI(mcu, None, None, 0, speed, sw_pins)
-        # create en pin
-        self.en_pin = bus.MCU_bus_digital_out(mcu, config.get("en_pin"),
-                                          self.spi.get_command_queue())
+        # create enable helper
+        self.en_helper = EnableHelper(config.get("en_pin"), self.spi)
+        self.en_set = False
         # init display base
         self.is_extended = False
         DisplayBase.__init__(self)
@@ -230,8 +248,10 @@ class EmulatedST7920(DisplayBase):
             spi_data[i] = b & 0xF0
             spi_data[i + 1] = (b & 0x0F) << 4
             i = i + 2
+        # check if enable pin has been set
+        if not self.en_set:
+            self.en_helper.init()
+            self.en_set = True
         # send data
-        self.en_pin.update_digital_out(1, reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(spi_data, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.en_pin.update_digital_out(0, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        #logging.debug("st7920 %d %s", is_data, repr(spi_data))
+        #logging.debug("st7920 %s", repr(spi_data))
