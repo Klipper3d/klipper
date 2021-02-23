@@ -152,6 +152,10 @@ class PrinterExtruder:
                           move.start_pos[3], 0., 0.,
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
+    def find_past_position(self, print_time):
+        mcu = self.stepper.get_mcu()
+        clock = mcu.print_time_to_clock(print_time)
+        return self.stepper.get_past_commanded_position(clock)
     def cmd_M104(self, gcmd, wait=False):
         # Set Extruder Temperature
         temp = gcmd.get_float('S', 0.)
@@ -220,6 +224,8 @@ class DummyExtruder:
         pass
     def check_move(self, move):
         raise move.move_error("Extrude when no extruder present")
+    def find_past_position(self, print_time):
+        return 0.
     def calc_junction(self, prev_move, move):
         return move.max_cruise_v2
     def get_name(self):
