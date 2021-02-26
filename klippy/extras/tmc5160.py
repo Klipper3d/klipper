@@ -215,11 +215,6 @@ Fields["TSTEP"] = {
 SignedFields = ["CUR_A", "CUR_B", "sgt", "XACTUAL", "VACTUAL", "PWM_SCALE_AUTO"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
-FieldFormatters.update({
-    "reset":            (lambda v: "1(reset)" if v else ""),
-    "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
-    "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
-})
 
 
 ######################################################################

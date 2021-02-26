@@ -74,6 +74,7 @@ SignedFields = ["CUR_A", "CUR_B", "sgt"]
 FieldFormatters = {
     "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
+    "reset":            (lambda v: "1(Reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
     "VERSION":          (lambda v: "%#x" % v),
