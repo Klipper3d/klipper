@@ -58,40 +58,40 @@ Fields["DRVCONF"] = {
 }
 
 Fields["READRSP@RDSEL0"] = {
-    "SG": 0x01,
-    "ot": 0x01 << 1,
-    "otpw": 0x01 << 2,
-    "s2ga": 0x01 << 3,
-    "s2gb": 0x01 << 4,
-    "ola": 0x01 << 5,
-    "olb": 0x01 << 6,
-    "stst": 0x01 << 7,
-    "MSTEP": 0x3ff << 10
+    "SG": 0x01 << 4,
+    "ot": 0x01 << 5,
+    "otpw": 0x01 << 6,
+    "s2ga": 0x01 << 7,
+    "s2gb": 0x01 << 8,
+    "ola": 0x01 << 9,
+    "olb": 0x01 << 10,
+    "stst": 0x01 << 11,
+    "MSTEP": 0x3ff << 14
 }
 
 Fields["READRSP@RDSEL1"] = {
-    "SG": 0x01,
-    "ot": 0x01 << 1,
-    "otpw": 0x01 << 2,
-    "s2ga": 0x01 << 3,
-    "s2gb": 0x01 << 4,
-    "ola": 0x01 << 5,
-    "olb": 0x01 << 6,
-    "stst": 0x01 << 7,
-    "SG@RDSEL1": 0x3ff << 10
+    "SG": 0x01 << 4,
+    "ot": 0x01 << 5,
+    "otpw": 0x01 << 6,
+    "s2ga": 0x01 << 7,
+    "s2gb": 0x01 << 8,
+    "ola": 0x01 << 9,
+    "olb": 0x01 << 10,
+    "stst": 0x01 << 11,
+    "SG@RDSEL1": 0x3ff << 14
 }
 
 Fields["READRSP@RDSEL2"] = {
-    "SG": 0x01,
-    "ot": 0x01 << 1,
-    "otpw": 0x01 << 2,
-    "s2ga": 0x01 << 3,
-    "s2gb": 0x01 << 4,
-    "ola": 0x01 << 5,
-    "olb": 0x01 << 6,
-    "stst": 0x01 << 7,
-    "SG@RDSEL2": 0x1f << 15,
-    "SE": 0x1f << 10
+    "SG": 0x01 << 4,
+    "ot": 0x01 << 5,
+    "otpw": 0x01 << 6,
+    "s2ga": 0x01 << 7,
+    "s2gb": 0x01 << 8,
+    "ola": 0x01 << 9,
+    "olb": 0x01 << 10,
+    "stst": 0x01 << 11,
+    "SE": 0x1f << 14,
+    "SG@RDSEL2": 0x1f << 19
 }
 
 SignedFields = ["SGT"]
@@ -192,12 +192,17 @@ class MCU_TMC2660_SPI:
     def get_fields(self):
         return self.fields
     def get_register(self, reg_name):
+        new_rdsel = ReadRegisters.index(reg_name)
         reg = self.name_to_reg["DRVCONF"]
-        val = self.fields.set_field("RDSEL", ReadRegisters.index(reg_name))
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
-        msg = [((val >> 16) | reg) & 0xff, (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
+            old_rdsel = self.fields.get_field("RDSEL")
+            val = self.fields.set_field("RDSEL", new_rdsel)
+            msg = [((val >> 16) | reg) & 0xff, (val >> 8) & 0xff, val & 0xff]
+            if new_rdsel != old_rdsel:
+                # Must set RDSEL value first
+                self.spi.spi_send(msg)
             params = self.spi.spi_transfer(msg)
         pr = bytearray(params['response'])
         return (pr[0] << 16) | (pr[1] << 8) | pr[2]
