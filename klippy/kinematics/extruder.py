@@ -99,6 +99,8 @@ class PrinterExtruder:
     def get_heater(self):
         return self.heater
     def sync_stepper(self, stepper):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
         epos = self.stepper.get_commanded_position()
         stepper.set_position([epos, 0., 0.])
         stepper.set_trapq(self.trapq)
