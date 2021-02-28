@@ -96,7 +96,20 @@ EOF
     sudo systemctl enable klipper_host_mcu.service
 }
 
-# Step 5: Start host software
+#step 5 make klipper_config directory
+add_klipconf()
+{
+    report_status "make klipper_config directory "
+    FILE=~/klipper_config
+    if [ -d "$FILE" ]; then
+        echo "$FILE exist"
+    else
+        echo "$FILE does not exist"
+        mkdir ~/klipper_config
+        fi
+}
+
+# Step 6: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
@@ -129,4 +142,5 @@ install_packages
 create_virtualenv
 install_script
 install_script1
+add_klipconf
 start_software
