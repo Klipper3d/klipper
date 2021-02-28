@@ -230,11 +230,10 @@ class TMCCommandHelper:
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
         try:
-            print_time -= 0.100 # Schedule slightly before deadline
             if self.toff is not None:
                 # Shared enable via comms handling
-                val = self.fields.set_field("toff", self.toff)
-            self._init_registers(print_time)
+                self.fields.set_field("toff", self.toff)
+            self._init_registers()
             self.echeck_helper.start_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
