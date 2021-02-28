@@ -347,26 +347,30 @@ class TMCVirtualPinHelper:
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
-            self.mcu_tmc.set_register("TPWMTHRS", 0)
+            tp_val = self.fields.set_field("TPWMTHRS", 0)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             val = self.fields.set_field("en_spreadCycle", 0)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
-        self.mcu_tmc.set_register("TCOOLTHRS", 0xfffff)
+        tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
+        self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, endstops):
         if self.mcu_endstop not in endstops:
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
-            self.mcu_tmc.set_register("TPWMTHRS", self.pwmthrs)
+            tp_val = self.fields.set_field("TPWMTHRS", self.pwmthrs)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
         else:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
-        self.mcu_tmc.set_register("TCOOLTHRS", 0)
+        tc_val = self.fields.set_field("TCOOLTHRS", 0)
+        self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
 
 
 ######################################################################
