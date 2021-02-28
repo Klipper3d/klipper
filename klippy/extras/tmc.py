@@ -109,7 +109,16 @@ class TMCErrorCheck:
         last_value, reg_name, mask, err_mask = reg_info
         count = 0
         while 1:
-            val = self.mcu_tmc.get_register(reg_name)
+            try:
+                val = self.mcu_tmc.get_register(reg_name)
+            except self.printer.command_error as e:
+                count += 1
+                if count < 3 and str(e).startswith("Unable to read tmc uart"):
+                    # Allow more retries on a TMC UART read error
+                    reactor = self.printer.get_reactor()
+                    reactor.pause(reactor.monotonic() + 0.050)
+                    continue
+                raise
             if val & mask != last_value & mask:
                 fmt = self.fields.pretty_format(reg_name, val)
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
