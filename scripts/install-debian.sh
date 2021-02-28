@@ -61,16 +61,55 @@ WantedBy=multi-user.target
 [Service]
 Type=simple
 User=$KLIPPER_USER
-RemainAfterExit=yes
-ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
+ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/klipper_config/printer.cfg -l ${KLIPPER_LOG} -a /tmp/klippy_uds
 Restart=always
-RestartSec=10
+RestartSec=5
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
 }
 
-# Step 4: Start host software
+# Step 4: Install linux mcu startup script
+install_script1()
+{
+# Create systemd service file
+    PIDFILE=/var/run/klipper_mcu.pid
+    report_status "Installing linux mcu system start script1..."
+    sudo /bin/sh -c "cat > $SYSTEMDDIR/klipper_host_mcu.service" << EOF
+#Systemd service file for klipper-linux-host-mcu
+[Unit]
+Description=klipper linux host
+PartOf=klipper.service
+After=klipper.service
+
+[Service]
+Type=simple
+User=$KLIPPER_USER
+ExecStart=/usr/local/bin/klipper_mcu
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=klipper.service
+EOF
+# Use systemctl to enable the klipper systemd service script
+    sudo systemctl enable klipper_host_mcu.service
+}
+
+#step 5 make klipper_config directory
+add_klipconf()
+{
+    report_status "make klipper_config directory "
+    FILE=~/klipper_config
+    if [ -d "$FILE" ]; then
+        echo "$FILE exist"
+    else
+        echo "$FILE does not exist"
+        mkdir ~/klipper_config
+        fi
+}
+
+# Step 6: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
@@ -102,4 +141,6 @@ verify_ready
 install_packages
 create_virtualenv
 install_script
+install_script1
+add_klipconf
 start_software
