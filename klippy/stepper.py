@@ -225,11 +225,14 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         rotation_dist = 2. * math.pi
         config.get('gear_ratio', note_valid=note_valid)
     else:
-        rotation_dist = config.getfloat('rotation_distance', None,
-                                        above=0., note_valid=note_valid)
-    if rotation_dist is None:
-        # Older config format with step_distance
-        return config.getfloat('step_distance', above=0., note_valid=note_valid)
+        rd = config.get('rotation_distance', None, note_valid=False)
+        sd = config.get('step_distance', None, note_valid=False)
+        if rd is None and sd is not None:
+            # Older config format with step_distance
+            return config.getfloat('step_distance', above=0.,
+                                   note_valid=note_valid)
+        rotation_dist = config.getfloat('rotation_distance', above=0.,
+                                        note_valid=note_valid)
     # Newer config format with rotation_distance
     microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
     full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
