@@ -130,7 +130,9 @@ class TMCUartHelper:
     def pretty_print(self, addr, reg, val=None):
         if val is None:
             return "(%x@%x)" % (reg, addr)
-        return "(%x@%x=%08x)" % (reg, addr, val)
+        if reg & 0x80:
+            return "(%x@%x=%08x)" % (reg & ~0x80, addr, val)
+        return "(%x@%x==%08x)" % (reg, addr, val)
     def parse_msg(self, msg):
         data = bytearray(msg)
         if len(data) == 10:
