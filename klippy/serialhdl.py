@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, os
 import serial
 
 import msgproto, chelper, util
@@ -91,7 +91,8 @@ class SerialReader:
                     self.ser.rts = self.rts
                     self.ser.open()
                 else:
-                    self.ser = open(self.serialport, 'rb+', buffering=0)
+                    fd = os.open(self.serialport, os.O_RDWR | os.O_NOCTTY)
+                    self.ser = os.fdopen(fd, 'rb+', 0)
             except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("Unable to open port: %s", e)
                 self.reactor.pause(connect_time + 5.)
