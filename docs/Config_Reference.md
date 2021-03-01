@@ -3080,9 +3080,10 @@ lcd_type:
 #   The type of LCD chip in use. This may be "hd44780" (which is used
 #   in "RepRapDiscount 2004 Smart Controller" type displays), "st7920"
 #   (which is used in "RepRapDiscount 12864 Full Graphic Smart
-#   Controller" type displays), "uc1701" (which is used in "MKS Mini
-#   12864" type displays), "ssd1306", or "sh1106". This parameter must
-#   be provided.
+#   Controller" type displays), "emulated_st7920" (which emulate a ST7920
+#   display but won't work properly with the "st7920" display driver),
+#   "uc1701" (which is used in "MKS Mini 12864" type displays),
+#   "ssd1306", or "sh1106". This parameter must be provided.
 #hd44780_protocol_init: True
 #    Perform 8-bit/4-bit protocol initialization on an hd44780 display.
 #    This is necessary on real hd44780 devices.  However, one may
@@ -3105,6 +3106,17 @@ lcd_type:
 #sid_pin:
 #   The pins connected to an st7920 type lcd. These parameters must be
 #   provided when using an st7920 display.
+#en_pin:
+#spi_speed:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   The pins connected to an emulated_st7920 type lcd. The en_pin corresponds
+#   to the cs_pin of the st7920 type lcd, spi_software_sclk_pin corresponds
+#   to sclk_pin and spi_software_mosi_pin corresponds to sid_pin. The
+#   spi_software_miso_pin needs to be set to an unused pin of the printer
+#   mainboard as the st7920 as no MISO pin but the software spi implementation
+#   requires this pin to be configured. The default spi_speed is 1MHz.
 #cs_pin:
 #a0_pin:
 #rst_pin:
