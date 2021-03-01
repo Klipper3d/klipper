@@ -74,6 +74,5 @@ class FrequencyCounter:
                 self._callback(time, self._freq)
         self._last_count = count
 
-    @property
-    def frequency(self):
+    def get_frequency(self):
         return self._freq

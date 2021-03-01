@@ -12,7 +12,6 @@ class Fan:
         self.printer = config.get_printer()
         self.last_fan_value = 0.
         self.last_fan_time = 0.
-        self.rpm = None
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
@@ -84,8 +83,8 @@ class FanTachometer:
                 printer, pin, sample_time, poll_time)
 
     def get_status(self, eventtime):
-        if self._freq_counter:
-            rpm = self._freq_counter.frequency * 30. / self.ppr
+        if self._freq_counter is not None:
+            rpm = self._freq_counter.get_frequency() * 30. / self.ppr
         else:
             rpm = None
         return {'rpm': rpm}
