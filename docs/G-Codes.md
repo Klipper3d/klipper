@@ -320,36 +320,39 @@ enabled:
 The following commands are available when a
 [mixingextruder config section](Config_Reference.md#mixingextruder) is
 enabled:
-- `ACTIVATE_EXTRUDER EXTRUDER=mixingextruder`: This command activates the
-  specified mixing extruder. Subsequent G1 command use the mixing defined
-  for that mixing extruder.
-- `M163 S<base_extruder> P<ratio>`: Set a ratio for the given extruder. The
-  range of base_extruder are the indices of the extruders in the
-  [mixingextruder config section](Config_Reference.md#mixingextruder). The
-  ratio can be any positive number. The ratios are saved to a given
-  mixingextruder with the M164 command.
-- `M164 [S<mixing_extruder>]`: Save the ratios to the given mixing extruder.
-  The range of mixing_extruder are the 16 generated mixing extruders which
-  can be activated with the ACTIVATE_EXTRUDER command. If S is not
-  specified it defaults to the "mixingextruder" extruder.
-- `M165 [A<mix_1>] [B<mix_2>] [C<mix_3>] [D<mix_4>] [H<mix_5>] [I<mix_6>]`:
-  Directly set the weighting on the current mixingextruder. The weightings
-  mix_1, ... mix_6 are the weightings for the extruders in the
-  [mixingextruder config section](Config_Reference.md#mixingextruder) and
-  should all be positive numbers adding up to a total of 1.
-  If less weights than extruders are provided the remaining weights are
-  assumed 0.0, additional weights beyond the available extruders are ignored.
-- `M567 [P<mixing_extruder>] E<mix_1>:<mix_2>:...:<mix_n>`: Directly set
-  the weighting on one of the mixingextruders. The range of mixing_extruder
-  are the 16 generated mixing extruders which can be activated with the
-  ACTIVATE_EXTRUDER command. The weightings mix_1, ... mix_n are the weightings
-  for the extruders in the
-  [mixingextruder config section](Config_Reference.md#mixingextruder) and
-  should all be positive numbers adding up to a total of 1.
-  If P is not specified it defaults to the first mixing extruder
-  ("mixingextruder"" extruder.
-  If less weights than extruders are provided the remaining weights are
-  assumed 0.0, additional weights beyond the available extruders are ignored.
+- `ACTIVATE_EXTRUDER EXTRUDER=<mixingextruder>`: This command activates
+  the specified mixing extruder. Subsequent G1 commands use the mixing
+  defined for that mixing extruder.
+- `SET_MIXING_EXTRUDER EXTRUDER=<mixingextruder> MIXING_MOTOR=<extruder>
+  SCALE=<scale>`: Set a scale for a given extruder at the mixing extruder.
+- `SAVE_MIXING_EXTRUDERS EXTRUDER=<mixingextruder>
+  [MIXING_EXTRUDER=<target>]`: Saves the previous set scales to a given
+  target mixing extruder. If the target is is not given, save it at the
+  source mixing extruder. For example with a 2in-iout extruder to set
+  the mix for "mixingextruder3" to 75%/25% one would use:
+  `SET_MIXING_EXTRUDER EXTRUDER=mixingextruder MIXING_MOTOR=0 SCALE=75`
+  `SET_MIXING_EXTRUDER EXTRUDER=mixingextruder MIXING_MOTOR=1 SCALE=25`
+  `SAVE_MIXING_EXTRUDERS EXTRUDER=mixingextruder MIXING_EXTRUDER=3`
+- `ADD_MIXING_GRADIENT EXTRUDER=<mixingextruder> START=<start_source>
+  END=<end_source> START_HEIGHT=<start> END_HEIGHT=<end>`: Configures
+  (adds) a gradient for the given mixing extruder. The sources are
+  references to (other) mixing extruders. For example if with a 2in-1out
+  extruder "mixingextruder2" is set mix 100%/0% and "mixingextruder3"
+  is set to 0%/100%
+  `ADD_MIXING_GRADIENT EXTRUDER=mixingextruder START=2 END=3
+  START_HEIGHT=10 END_HEIGHT=20`
+  `ADD_MIXING_GRADIENT EXTRUDER=mixingextruder START=3 END=2
+  START_HEIGHT=20 END_HEIGHT=30`
+  would setup a gradient for "mixingextruder" which is constant 100%/0%
+  between heights 0mm and 10mm, then linearly interpolates to 0%/100% at
+  height 20mm and back to 100%/0% at height 30mm and stays that for all
+  heights above.
+- `RESET_MIXING_GRADIENT EXTRUDER=<mixingextruder>`: Reset/remove all
+  gradients for the given mixing extruder.
+- `SET_MIXING_GRADIENT EXTRUDER=<mixingextruder> [ENABLE=<enable>]`:
+  Enable/disable the gradient at the given mixing extruder.
+- `MIXING_STATUS EXTRUDER=<mixingextruder>`: Returns the configuration
+  and status of the given mixing extruder.
 - `G1 [X<pos>] [Y<pos>] [Z<pos>] [E<pos1>:<pos2>:...:<posn>] [F<speed>]`:
   This extended G1 command is available if a mixing extruder is active.
   The pos1, ... posn parameters define the amounts to extrude for the
