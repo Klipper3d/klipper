@@ -33,6 +33,8 @@ class GCodeMove:
             desc = getattr(self, 'cmd_' + cmd + '_help', None)
             gcode.register_command(cmd, func, False, desc)
         gcode.register_command('G0', self.cmd_G1)
+        gcode.register_command('G00', self.cmd_G1)
+        gcode.register_command('G01', self.cmd_G1)
         gcode.register_command('M114', self.cmd_M114, True)
         gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True)
         self.Coord = gcode.Coord
