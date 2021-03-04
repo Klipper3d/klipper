@@ -103,34 +103,6 @@ config AVR_WATCHDOG
     bool
     default y
 
-config T5UID1_SERIAL
-    depends on MACH_atmega2560
-    bool "Enable DGUS T5UID1 screen"
-    default n
-choice
-    depends on T5UID1_SERIAL
-    prompt "Screen Serial Port" if LOW_LEVEL_OPTIONS
-    default T5UID1_SERIAL_UART2
-    help
-        Select the serial device to use for the touchscreen.
-    config T5UID1_SERIAL_UART0
-        bool "UART0"
-    config T5UID1_SERIAL_UART1
-        bool "UART1"
-    config T5UID1_SERIAL_UART2
-        bool "UART2"
-    config T5UID1_SERIAL_UART3
-        bool "UART3"
-endchoice
-
-config T5UID1_SERIAL_PORT
-    depends on T5UID1_SERIAL
-    int
-    default 3 if T5UID1_SERIAL_UART3
-    default 1 if T5UID1_SERIAL_UART1
-    default 0 if T5UID1_SERIAL_UART0
-    default 2
-
 config USBSERIAL
     bool "Use USB for communication (instead of serial)"
     depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
@@ -164,6 +136,36 @@ config SERIAL_PORT
     default 3 if AVR_SERIAL_UART3
     default 2 if AVR_SERIAL_UART2
     default 1 if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4 || AVR_SERIAL_UART1
+    default 0
+
+config T5UID1_SERIAL
+    depends on USBSERIAL || MACH_atmega2560 || MACH_atmega1280 || MACH_atmega644p || MACH_atmega1284p
+    bool "Enable DGUS T5UID1 screen"
+    default n
+choice
+    depends on T5UID1_SERIAL
+    prompt "Screen Serial Port" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280)
+    default AVR_T5UID1_SERIAL_UART2 if !AVR_SERIAL_UART2
+    default AVR_T5UID1_SERIAL_UART0
+    help
+        Select the serial device to use for the touchscreen.
+    config AVR_T5UID1_SERIAL_UART0
+        bool "UART0" if !AVR_SERIAL_UART0
+    config AVR_T5UID1_SERIAL_UART1
+        bool "UART1" if !AVR_SERIAL_UART1
+    config AVR_T5UID1_SERIAL_UART2
+        bool "UART2" if !AVR_SERIAL_UART2
+    config AVR_T5UID1_SERIAL_UART3
+        bool "UART3" if !AVR_SERIAL_UART3
+endchoice
+config T5UID1_SERIAL_PORT
+    depends on T5UID1_SERIAL
+    int
+    default 3 if AVR_T5UID1_SERIAL_UART3
+    default 2 if AVR_T5UID1_SERIAL_UART2
+    default 1 if AVR_T5UID1_SERIAL_UART1
+    default 1 if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
+    default 1 if !AVR_SERIAL_UART1 && (MACH_atmega644p || MACH_atmega1284p)
     default 0
 
 config SIMULAVR

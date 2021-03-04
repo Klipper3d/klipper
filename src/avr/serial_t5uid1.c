@@ -9,7 +9,7 @@
 #include "board/t5uid1_irq.h" // t5uid1_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
 
-#if CONFIG_T5UID1_SERIAL_PORT == CONFIG_SERIAL_PORT
+#if CONFIG_SERIAL && CONFIG_T5UID1_SERIAL_PORT == CONFIG_SERIAL_PORT
     #error "The serial port selected for the T5UID1 screen is already used"
 #endif
 
