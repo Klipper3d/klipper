@@ -9,7 +9,6 @@
 #include "board/t5uid1_irq.h" // t5uid1_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // gpio_peripheral
-#include "sched.h" // DECL_INIT
 
 // Write tx bytes to the serial port
 static void

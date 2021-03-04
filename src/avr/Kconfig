@@ -102,6 +102,7 @@ config AVR_STACK_SIZE
 config AVR_WATCHDOG
     bool
     default y
+
 config T5UID1_SERIAL
     depends on MACH_atmega2560
     bool "Enable DGUS T5UID1 screen"
