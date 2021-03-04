@@ -80,7 +80,6 @@ communication with the Klipper developers.
   Beaglebone PRU.
 - [Bootloaders](Bootloaders.md): Developer information on
   micro-controller flashing.
-- [stm32f0](stm32f0_CAN.md): Information on the STM32F0 micro-controller
-  port.
+- [CAN bus](CANBUS.md): Information on using CAN bus with Klipper.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
 - [Hall filament width sensor](HallFilamentWidthSensor.md)

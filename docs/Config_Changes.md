@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20210313: Klipper's support for micro-controllers that communicate
+with CAN bus has changed. If using CAN bus then all micro-controllers
+must be reflashed and the [Klipper configuration must be
+updated](CANBUS.md).
+
 20210310: The TMC2660 default for driver_SFILT has been changed from 1
 to 0.
 
