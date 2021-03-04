@@ -6,7 +6,9 @@
 import logging
 
 DEFAULT_IDLE_GCODE = """
-TURN_OFF_HEATERS
+{% if 'heaters' in printer %}
+   TURN_OFF_HEATERS
+{% endif %}
 M84
 """
 
