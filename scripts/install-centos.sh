@@ -70,7 +70,7 @@ KLIPPY_USER=$USER
 start_software()
 {
     report_status "Launching Klipper host software..."
-    sudo systemctl klipper restart
+    sudo systemctl restart klipper
 }
 
 # Helper functions

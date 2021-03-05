@@ -131,13 +131,15 @@ CONFIG ../../config/generic-creality-v4.2.7.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
-CONFIG ../../config/generic-mks-robin-nano.cfg
+CONFIG ../../config/generic-mks-robin-nano-v1.cfg
+CONFIG ../../config/generic-mks-robin-nano-v2.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
+CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
@@ -147,6 +149,7 @@ DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f407.dict

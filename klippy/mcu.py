@@ -358,18 +358,20 @@ class RetryAsyncCommand:
             query_time = self.reactor.monotonic()
             if query_time > first_query_time + self.TIMEOUT_TIME:
                 self.serial.register_response(None, self.name, self.oid)
-                raise error("Timeout on wait for '%s' response" % (self.name,))
+                raise serialhdl.error("Timeout on wait for '%s' response"
+                                      % (self.name,))
             self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
 
 # Wrapper around query commands
 class CommandQueryWrapper:
     def __init__(self, serial, msgformat, respformat, oid=None,
-                 cmd_queue=None, is_async=False):
+                 cmd_queue=None, is_async=False, error=serialhdl.error):
         self._serial = serial
         self._cmd = serial.get_msgparser().lookup_command(msgformat)
         serial.get_msgparser().lookup_command(respformat)
         self._response = respformat.split()[0]
         self._oid = oid
+        self._error = error
         self._xmit_helper = serialhdl.SerialRetryCommand
         if is_async:
             self._xmit_helper = RetryAsyncCommand
@@ -383,7 +385,7 @@ class CommandQueryWrapper:
         try:
             return xh.get_response(cmd, self._cmd_queue, minclock, reqclock)
         except serialhdl.error as e:
-            raise error(str(e))
+            raise self._error(str(e))
 
 # Wrapper around command sending
 class CommandWrapper:
@@ -408,24 +410,18 @@ class MCU:
             self._name = self._name[4:]
         # Serial port
         self._serialport = config.get('serial')
-        serial_rts = True
-        if config.get('restart_method', None) == "cheetah":
-            # Special case: Cheetah boards require RTS to be deasserted, else
-            # a reset will trigger the built-in bootloader.
-            serial_rts = False
-        baud = 0
+        self._baud = 0
         if not (self._serialport.startswith("/dev/rpmsg_")
                 or self._serialport.startswith("/tmp/klipper_host_")):
-            baud = config.getint('baud', 250000, minval=2400)
-        self._serial = serialhdl.SerialReader(
-            self._reactor, self._serialport, baud, serial_rts)
+            self._baud = config.getint('baud', 250000, minval=2400)
+        self._serial = serialhdl.SerialReader(self._reactor)
         # Restarts
+        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
-        if baud:
-            rmethods = {m: m for m in [None, 'arduino', 'cheetah', 'command',
-                                       'rpi_usb']}
-            self._restart_method = config.getchoice(
-                'restart_method', rmethods, None)
+        if self._baud:
+            rmethods = {m: m for m in restart_methods}
+            self._restart_method = config.getchoice('restart_method',
+                                                    rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
@@ -610,12 +606,18 @@ class MCU:
         if self.is_fileoutput():
             self._connect_file()
         else:
-            if (self._restart_method == 'rpi_usb'
-                and not os.path.exists(self._serialport)):
+            resmeth = self._restart_method
+            if resmeth == 'rpi_usb' and not os.path.exists(self._serialport):
                 # Try toggling usb power
                 self._check_restart("enable power")
             try:
-                self._serial.connect()
+                if self._baud:
+                    # Cheetah boards require RTS to be deasserted
+                    # else a reset will trigger the built-in bootloader.
+                    rts = (resmeth != "cheetah")
+                    self._serial.connect_uart(self._serialport, self._baud, rts)
+                else:
+                    self._serial.connect_pipe(self._serialport)
                 self._clocksync.connect(self._serial)
             except serialhdl.error as e:
                 raise error(str(e))
@@ -688,7 +690,7 @@ class MCU:
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
         return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
-                                   cq, is_async)
+                                   cq, is_async, self._printer.command_error)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)

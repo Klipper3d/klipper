@@ -6,11 +6,17 @@ All dates in this document are approximate.
 
 # Changes
 
+20210227: TMC stepper motor drivers in UART or SPI mode are now
+queried once per second whenever they are enabled - if the driver can
+not be contacted or if the driver reports an error, then Klipper will
+transition to a shutdown state.
+
 20210219: The `rpi_temperature` module has been renamed to
 `temperature_host`.  Replace any occurrences of `sensor_type:
-rpi_temperature` with `sensor_type: temperature_host`.  The
-`rpi_temperature` name is deprecated and will be removed in the near
-future.
+rpi_temperature` with `sensor_type: temperature_host`.  The path to
+the temperature file may be specified in the `sensor_path` config
+variable.  The `rpi_temperature` name is deprecated and will be
+removed in the near future.
 
 20210201: The `TEST_RESONANCES` command will now disable input shaping
 if it was previously enabled (and re-enable it after the test). In order
