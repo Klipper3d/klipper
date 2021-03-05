@@ -10,22 +10,22 @@
 #include "command.h" // DECL_CONSTANT_STR
 
 #if CONFIG_SERIAL && CONFIG_T5UID1_SERIAL_PORT == CONFIG_SERIAL_PORT
-    #error "The serial port selected for the T5UID1 screen is already used"
+  #error "The serial port selected for the T5UID1 screen is already used"
 #endif
 
 // Reserve serial pins
 #if CONFIG_T5UID1_SERIAL_PORT == 0
- #if CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
-DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PE0,PE1");
- #else
-DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PD0,PD1");
- #endif
+  #if CONFIG_MACH_atmega1280 || CONFIG_MACH_atmega2560
+    DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PE0,PE1");
+  #else
+    DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PD0,PD1");
+  #endif
 #elif CONFIG_T5UID1_SERIAL_PORT == 1
-DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PD2,PD3");
+  DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PD2,PD3");
 #elif CONFIG_T5UID1_SERIAL_PORT == 2
-DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PH0,PH1");
+  DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PH0,PH1");
 #else
-DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PJ0,PJ1");
+  DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PJ0,PJ1");
 #endif
 
 // Helper macros for defining serial port aliases
@@ -47,14 +47,14 @@ DECL_CONSTANT_STR("RESERVE_PINS_t5uid1", "PJ0,PJ1");
 #define UDRIEx AVR_SERIAL_REG(UDRIE, CONFIG_T5UID1_SERIAL_PORT,)
 
 #if defined(USART_RX_vect)
-// The atmega168 / atmega328 doesn't have an ID in the irq names
-#define USARTx_RX_vect USART_RX_vect
-#define USARTx_UDRE_vect USART_UDRE_vect
+  // The atmega168 / atmega328 doesn't have an ID in the irq names
+  #define USARTx_RX_vect USART_RX_vect
+  #define USARTx_UDRE_vect USART_UDRE_vect
 #else
-#define USARTx_RX_vect                                          \
-    AVR_SERIAL_REG(USART, CONFIG_T5UID1_SERIAL_PORT, _RX_vect)
-#define USARTx_UDRE_vect                                          \
-    AVR_SERIAL_REG(USART, CONFIG_T5UID1_SERIAL_PORT, _UDRE_vect)
+  #define USARTx_RX_vect                                            \
+      AVR_SERIAL_REG(USART, CONFIG_T5UID1_SERIAL_PORT, _RX_vect)
+  #define USARTx_UDRE_vect                                          \
+      AVR_SERIAL_REG(USART, CONFIG_T5UID1_SERIAL_PORT, _UDRE_vect)
 #endif
 
 void
