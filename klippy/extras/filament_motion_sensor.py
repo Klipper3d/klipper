@@ -5,12 +5,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+CHECK_RUNOUT_TIMEOUT = .250
+
 class RunoutHelper:
     def __init__(self, config):
         (self.mname, self.name) = config.get_name().split(None, 1)
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.mutex = self.printer.reactor.mutex()
         self.gcode = self.printer.lookup_object('gcode')
         # Read config
         self.runout_pause = config.getboolean('pause_on_runout', True)
@@ -28,22 +29,24 @@ class RunoutHelper:
         self.extruder_name = config.get("extruder", None)
         self.extruder = None
         self.toolhead = None
-        self._mcu = None
+        self.mcu = None
         self.idle_timeout = None
         self.pause_resume = None
-        self._extruder_move_list = list()
         self._insert_processed = False
-        self._runout_eventtime = None
         # Internal state
         self.sensor_enabled = True
         self.sensor_state = None
-        self._filament_runout_timer = self.reactor.register_timer(
-                self._runout_event_handler)
-        self._filament_runout_pos = None
+        self.filament_runout_pos = None
+        self.is_printing = False
         # Register commands and event handlers
-        self.printer.register_event_handler("klippy:ready", self._handle_ready)
-        self.printer.register_event_handler(
-                "extruder:move", self._handle_commanded_extruder_move)
+        self.printer.register_event_handler("klippy:ready",
+                self._handle_ready)
+        self.printer.register_event_handler("idle_timeout:printing",
+                self._handle_printing)
+        self.printer.register_event_handler("idle_timeout:ready",
+                self._handle_not_printing)
+        self.printer.register_event_handler("idle_timeout:idle",
+                self._handle_not_printing)
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_MOTION_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_MOTION_SENSOR,
@@ -67,106 +70,46 @@ class RunoutHelper:
                 return False
         logging.info("%s(%s): ready to use", self.mname, self.name)
         return True
-    def _handle_ready(self):
-        self.extruder = self.printer.lookup_object(self.extruder_name)
-        self.toolhead = self.printer.lookup_object("toolhead")
-        self._mcu = self.extruder.stepper.get_mcu()
-        self.idle_timeout = self.printer.lookup_object("idle_timeout")
-        self.sensor_enabled = self._can_be_enabled()
-        self._filament_runout_pos = (
-                self.extruder.stepper.get_commanded_position() +
-                self.detection_length)
-    def eventtime_to_print_time(self, eventtime):
-        return self._mcu.estimated_print_time(eventtime)
-    def print_time_to_eventtime(self, print_time):
-        #TODO: Replace call to private mcu member _clocksync
-        return self._mcu._clocksync.estimate_clock_systime(
-                self._mcu.print_time_to_clock(print_time))
-    def _handle_commanded_extruder_move(self, move_params):
-        # Need a mutex because this call is not handled by a reactor greenlet
-        # (or is it...)
-        with self.mutex:
-            self._extruder_move_list.append(move_params)
-        # A new move could move the extruder to a point where a runout occurs
-        # so update the runout timer
-        self.reactor.register_callback(self._update_filament_runout_timer)
-    def _update_filament_runout_timer(self, eventtime):
-        if self._filament_runout_pos and self.sensor_enabled:
-            if self._filament_runout_timer.waketime == self.reactor.NEVER:
-                runout_pos = self._filament_runout_pos
-                with self.mutex:
-                    for (start_time,
-                         end_time,
-                         start_pos,
-                         end_pos,
-                         cruise_vel) in self._extruder_move_list:
-                        if ((end_pos > start_pos) and
-                            (start_pos <= runout_pos) and
-                            (end_pos >= runout_pos)):
-                            runout_print_time = (
-                                    ((runout_pos - start_pos) / cruise_vel) +
-                                    start_time)
-                            self.reactor.update_timer(
-                                    self._filament_runout_timer,
-                                    self.print_time_to_eventtime(
-                                            runout_print_time))
-                            break
-        else:
-            self.reactor.update_timer(
-                    self._filament_runout_timer, self.reactor.NEVER)
     def _update_filament_runout_pos(self, eventtime=None):
         if eventtime == None:
             eventtime = self.reactor.monotonic()
-        runout_pos = self._get_extruder_pos(eventtime) + self.detection_length
-        if runout_pos != self._filament_runout_pos:
-            self._filament_runout_pos = runout_pos
-            self.reactor.update_timer(
-                    self._filament_runout_timer, self.reactor.NEVER)
-            self._update_filament_runout_timer(eventtime)
+        self.filament_runout_pos = self._get_extruder_pos(eventtime) + self.detection_length
+    def _handle_ready(self):
+        self.extruder = self.printer.lookup_object(self.extruder_name)
+        self.toolhead = self.printer.lookup_object("toolhead")
+        self.mcu = self.extruder.stepper.get_mcu()
+        self.idle_timeout = self.printer.lookup_object("idle_timeout")
+        self.sensor_enabled = self._can_be_enabled()
+        self._update_filament_runout_pos()
+        self._check_runout_timer = self.reactor.register_timer(
+                self._check_if_runout)
+    def _handle_printing(self, print_time):
+        self.is_printing = True
+        self.reactor.update_timer(self._check_runout_timer, self.reactor.NOW)
+    def _handle_not_printing(self, print_time):
+        self.is_printing = False
+        self.reactor.update_timer(self._check_runout_timer, self.reactor.NEVER)
     def _get_extruder_pos(self, eventtime=None):
         if eventtime == None:
             eventtime = self.reactor.monotonic()
-        print_time_now = self.eventtime_to_print_time(eventtime)
-        extruder_pos = None
-        list_idx = 0
-        with self.mutex:
-            # First check queued moves to extrapolate extruder position now
-            for (start_time,
-                 end_time,
-                 start_pos,
-                 end_pos,
-                 cruise_vel) in self._extruder_move_list:
-                if ((start_time <= print_time_now) and
-                    (end_time >= print_time_now)):
-                    extruder_pos = (
-                            ((print_time_now - start_time) * cruise_vel) +
-                            start_pos)
-                    break
-                list_idx += 1
-            else:
-                # Extruder may have completed moving so just use the commanded
-                # position
-                extruder_pos = self.extruder.stepper.get_commanded_position()
-            if list_idx:
-                # Remove out of date entries from list
-                del self._extruder_move_list[:list_idx]
-        return extruder_pos
+        print_time = self.mcu.estimated_print_time(eventtime)
+        return self.extruder.find_past_position(print_time)
+    def _check_if_runout(self, eventtime):
+        if self.is_printing:
+            timeout = eventtime + CHECK_RUNOUT_TIMEOUT
+        else:
+            timeout = self.reactor.NEVER
+        if self.filament_runout_pos != None:
+            extruder_pos = self._get_extruder_pos(eventtime)
+            if extruder_pos >= self.filament_runout_pos:
+                # Stop further runouts from triggering until this one
+                # is processed
+                timeout = self.reactor.NEVER
+                self.reactor.register_callback(self._process_runout)
+        return timeout
     def _process_runout(self, eventtime):
-        # TL;DR, set pause_on_runout to True.
-        # If a runout occurs, the printer will continue printing so long as
-        # moves are still queued. If pause_on_runout is True then it is
-        # assumed the runout_gcode includes moves so will only run it once.
-        # However if pause_on_runout is not set then runout_gcode can still
-        # be used however it will be executed repeatedly if a long move is
-        # queued, so in this case do not put moves in the runout_gcode.
         pause_prefix = ""
-        if self._runout_eventtime is None:
-            self._runout_eventtime = eventtime
         if self.runout_pause:
-            if self.pause_resume.pause_command_sent:
-                self._update_filament_runout_pos(self._runout_eventtime)
-                self._runout_eventtime = None
-                return
             # Pausing from inside an event requires that the pause portion
             # of pause_resume execute immediately.
             self.pause_resume.send_pause_command()
@@ -174,14 +117,9 @@ class RunoutHelper:
             self.toolhead.wait_moves()
             self.reactor.pause(eventtime + self.pause_delay)
         self._exec_gcode(pause_prefix, self.runout_gcode)
-        self._update_filament_runout_pos(self._runout_eventtime)
-        self._runout_eventtime = None
-    def _runout_event_handler(self, eventtime):
-        # Return from this handler as quickly as possible to return NEVER
-        # And prevent duplicate runouts being triggered
-        self._runout_eventtime = eventtime
-        self.reactor.register_callback(self._process_runout)
-        return self.reactor.NEVER
+        self._update_filament_runout_pos()
+        if self.is_printing:
+            self.reactor.update_timer(self._check_runout_timer, self.reactor.NOW)
     def _insert_event_handler(self, eventtime):
         self._exec_gcode("", self.insert_gcode)
     def _exec_gcode(self, prefix, template):
@@ -192,14 +130,11 @@ class RunoutHelper:
     def encoder_event(self, eventtime, state):
         self.sensor_state = state
         if not self.sensor_enabled or self.idle_timeout is None:
-            # do not process during the initialization time, duplicates,
-            # during the event delay time, while an event is running, or
+            # do not process during the initialisation time or
             # when the sensor is disabled
             return
         # Perform filament action associated with status change (if any)
-        is_printing = (
-                self.idle_timeout.get_status(eventtime)["state"] == "Printing")
-        if is_printing:
+        if self.is_printing:
             self._insert_processed = False
             self._update_filament_runout_pos(eventtime)
         else:
@@ -207,11 +142,8 @@ class RunoutHelper:
             if self.insert_gcode is not None:
                 # Due to this sensor constantly triggering during insert
                 # only trigger the insert event once
-                # TODO: May remove insert event processing if it becomes too
-                # troublesome or adds no value
                 if not self._insert_processed:
                     # insert detected
-                    #self.min_event_systime = self.reactor.NEVER
                     logging.info(
                         "Filament Sensor %s: insert event detected, Time %.2f" %
                         (self.name, eventtime))

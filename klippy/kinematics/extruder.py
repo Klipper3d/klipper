@@ -152,14 +152,6 @@ class PrinterExtruder:
                           move.start_pos[3], 0., 0.,
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
-        self.printer.send_event("extruder:move", (print_time,
-                                                  (print_time +
-                                                   move.accel_t +
-                                                   move.cruise_t +
-                                                   move.decel_t),
-                                                  move.start_pos[3],
-                                                  move.end_pos[3],
-                                                  cruise_v))
     def find_past_position(self, print_time):
         mcu = self.stepper.get_mcu()
         clock = mcu.print_time_to_clock(print_time)

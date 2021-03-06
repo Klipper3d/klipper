@@ -129,8 +129,6 @@ class MCU_stepper:
         sq = self._stepqueue
         mcu_pos = ffi_lib.stepcompress_find_past_position(sq, clock)
         mcu_pos_dist = mcu_pos * self._step_dist
-        if self._invert_dir:
-            mcu_pos_dist = -mcu_pos_dist
         return mcu_pos_dist - self._mcu_position_offset
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
