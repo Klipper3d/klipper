@@ -124,10 +124,43 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // way from other STM32s.
     // Code below is emulating a few mappings to work like an STM32F4
     uint32_t func = (mode >> 4) & 0xf;
-    if(( gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) &&
-       func == 9) { // CAN
-        stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
-                                  AFIO_MAPR_CAN_REMAP_REMAP2);
+    switch (func) {
+    case 7: // USART
+        if (gpio == GPIO('A', 9) || gpio == GPIO('A', 10)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
+                                      0);
+        } else if (gpio == GPIO('B', 6) || gpio == GPIO('B', 7)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
+                                      AFIO_MAPR_USART1_REMAP);
+        } else if (gpio == GPIO('A', 2) || gpio == GPIO('A', 3)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
+                                      0);
+        } else if (gpio == GPIO('D', 5) || gpio == GPIO('D', 6)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
+                                      AFIO_MAPR_USART2_REMAP);
+        } else if (gpio == GPIO('B', 10) || gpio == GPIO('B', 11)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_NOREMAP);
+        } else if (gpio == GPIO('C', 10) || gpio == GPIO('C', 11)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_PARTIALREMAP);
+        } else if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9)) {
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_FULLREMAP);
+        }
+        break;
+    case 9: // CAN
+        if (gpio == GPIO('A', 11) || gpio == GPIO('A', 12)) {
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP1);
+        } else if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) {
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP2);
+        } else if (gpio == GPIO('D', 0) || gpio == GPIO('D', 1)) {
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP3);
+        }
+        break;
     }
     // Add more as needed
 }

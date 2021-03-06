@@ -48,6 +48,9 @@ serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
 can-src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
 src-$(CONFIG_CANSERIAL) += $(can-src-y) generic/serial_irq.c
+t5uid1-src-y := stm32/serial_t5uid1.c
+t5uid1-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial_t5uid1.c
+src-$(CONFIG_T5UID1_SERIAL) += $(t5uid1-src-y) generic/t5uid1_irq.c
 
 dirs-$(CONFIG_CANSERIAL) += lib/fast-hash
 
