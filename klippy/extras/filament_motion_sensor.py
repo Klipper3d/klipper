@@ -73,7 +73,9 @@ class RunoutHelper:
     def _update_filament_runout_pos(self, eventtime=None):
         if eventtime == None:
             eventtime = self.reactor.monotonic()
-        self.filament_runout_pos = self._get_extruder_pos(eventtime) + self.detection_length
+        self.filament_runout_pos = (
+                self._get_extruder_pos(eventtime) +
+                self.detection_length)
     def _handle_ready(self):
         self.extruder = self.printer.lookup_object(self.extruder_name)
         self.toolhead = self.printer.lookup_object("toolhead")
@@ -119,7 +121,8 @@ class RunoutHelper:
         self._exec_gcode(pause_prefix, self.runout_gcode)
         self._update_filament_runout_pos()
         if self.is_printing:
-            self.reactor.update_timer(self._check_runout_timer, self.reactor.NOW)
+            self.reactor.update_timer(
+                    self._check_runout_timer, self.reactor.NOW)
     def _insert_event_handler(self, eventtime):
         self._exec_gcode("", self.insert_gcode)
     def _exec_gcode(self, prefix, template):
