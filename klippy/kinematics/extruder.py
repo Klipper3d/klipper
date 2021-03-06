@@ -167,10 +167,8 @@ class PrinterExtruder:
                 raise gcmd.error("Extruder not configured")
         else:
             extruder = self.printer.lookup_object('toolhead').get_extruder()
-        heater = extruder.get_heater()
-        heater.set_temp(temp)
-        if wait and temp:
-            self.printer.lookup_object('heaters').wait_for_temperature(heater)
+        pheaters = self.printer.lookup_object('heaters')
+        pheaters.set_temperature(extruder.get_heater(), temp, wait)
     def cmd_M109(self, gcmd):
         # Set Extruder Temperature and Wait
         self.cmd_M104(gcmd, wait=True)
