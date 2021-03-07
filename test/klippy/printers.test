@@ -30,6 +30,7 @@ CONFIG ../../config/printer-creality-cr10s-2017.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
 CONFIG ../../config/printer-creality-ender5plus-2019.cfg
+CONFIG ../../config/printer-hiprecy-leo-2019.cfg
 CONFIG ../../config/printer-longer-lk4-pro-2019.cfg
 CONFIG ../../config/printer-lulzbot-mini1-2016.cfg
 CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
