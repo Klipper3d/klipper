@@ -32,7 +32,7 @@ class PrinterOutputPin:
                 self.last_value, self.last_value, True)
         else:
             self.reactor = self.printer.get_reactor()
-            self.safety_timeout = config.getfloat('safety_timeout', 5,
+            self.safety_timeout = config.getfloat('safety_timeout', 0,
                                         minval=0.)
             self.mcu_pin.setup_max_duration(self.safety_timeout)
             self.resend_timer = self.reactor.register_timer(
