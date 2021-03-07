@@ -43,7 +43,10 @@ class PWM_tool:
         self.last_value = value
         self.mcu_pwm.set_pwm(print_time, value)
         if self.safety_timeout != 0 and not resend:
-            if value != self.shutdown_value:
+            if value == self.shutdown_value:
+                self.reactor.update_timer(
+                    self.resend_timer, self.reactor.NEVER)
+            else:
                 self.reactor.update_timer(
                     self.resend_timer,
                     self.reactor.monotonic() + 0.75 * self.safety_timeout)
