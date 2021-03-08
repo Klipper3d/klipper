@@ -39,10 +39,28 @@ void
 __noreturn
 ResetHandlerC(void)
 {
+    // Clear all enabled user interrupts and user pending interrupts
+    for (uint8_t i=0; i < sizeof(NVIC->ICER)/sizeof(NVIC->ICER[0]); i++) {
+        NVIC->ICER[i] = 0xFFFFFFFF;
+        NVIC->ICPR[i] = 0xFFFFFFFF;
+    }
+
+    // Reset all user interrupt priorities
+    for (uint8_t i=0; i < sizeof(NVIC->IP)/sizeof(NVIC->IP[0]); i++)
+        NVIC->IP[i] = 0;
+
+    // Reset all system interrupt priorities
+    for (uint8_t i=0; i < sizeof(SCB->SHP)/sizeof(SCB->SHP[0]); i++)
+        SCB->SHP[i] = 0;
+
+    // Clear pending pendsv and systick interrupts
+    SCB->ICSR = SCB_ICSR_PENDSVCLR_Msk | SCB_ICSR_PENDSTCLR_Msk;
+
     // Disable SysTick irq (for some bootloaders that don't)
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
 
-    barrier();
+    __DSB();
+    __ISB();
 
     // Copy global variables from flash to ram
     uint32_t count = (&_data_end - &_data_start) * 4;
