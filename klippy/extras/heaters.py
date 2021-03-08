@@ -138,7 +138,8 @@ class Heater:
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
-        self.set_temp(temp)
+        pheaters = self.printer.lookup_object('heaters')
+        pheaters.set_temperature(self, temp)
 
 
 ######################################################################
@@ -313,7 +314,7 @@ class PrinterHeaters:
         did_ack = gcmd.ack(msg)
         if not did_ack:
             gcmd.respond_raw(msg)
-    def wait_for_temperature(self, heater):
+    def _wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
@@ -325,6 +326,12 @@ class PrinterHeaters:
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
+    def set_temperature(self, heater, temp, wait=False):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.register_lookahead_callback((lambda pt: None))
+        heater.set_temp(temp)
+        if wait and temp:
+            self._wait_for_temperature(heater)
     cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')
