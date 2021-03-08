@@ -401,10 +401,10 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
 {
     if (sc->sdir == sdir)
         return 0;
-    sc->sdir = sdir;
     int ret = queue_flush(sc, UINT64_MAX);
     if (ret)
         return ret;
+    sc->sdir = sdir;
     uint32_t msg[3] = {
         sc->set_next_step_dir_msgtag, sc->oid, sdir ^ sc->invert_sdir
     };

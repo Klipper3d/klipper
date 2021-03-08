@@ -128,8 +128,7 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         sq = self._stepqueue
         mcu_pos = ffi_lib.stepcompress_find_past_position(sq, clock)
-        mcu_pos_dist = mcu_pos * self._step_dist
-        return mcu_pos_dist - self._mcu_position_offset
+        return mcu_pos * self._step_dist - self._mcu_position_offset
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         self._stepper_kinematics = sk
