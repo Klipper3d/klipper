@@ -18,6 +18,7 @@ extern uint32_t _data_start, _data_end, _data_flash;
 extern uint32_t _bss_start, _bss_end, _stack_start;
 extern uint32_t _stack_end;
 
+void ResetHandlerC(void);
 
 /****************************************************************
  * Basic interrupt handlers
@@ -27,11 +28,20 @@ extern uint32_t _stack_end;
 void
 ResetHandler(void)
 {
+    __disable_irq();
+
+    // Explicitly load the stack pointer (for some bootloaders that don't)
+    asm volatile("mov sp, %0\n bx %1"
+                 : : "r"(&_stack_end), "r"(ResetHandlerC));
+}
+
+void
+__noreturn
+ResetHandlerC(void)
+{
     // Disable SysTick irq (for some bootloaders that don't)
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
 
-    // Explicitly load the stack pointer (for some bootloaders that don't)
-    asm volatile("mov sp, %0" : : "r"(&_stack_end));
     barrier();
 
     // Copy global variables from flash to ram
@@ -47,6 +57,7 @@ ResetHandler(void)
     //__libc_init_array();
 
     // Run the main board specific code
+    __enable_irq();
     armcm_main();
 
     // The armcm_main() call should not return
