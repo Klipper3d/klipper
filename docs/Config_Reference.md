@@ -2585,6 +2585,10 @@ pins:
 
 # TMC stepper driver configuration
 
+Configuration of Trinamic stepper motor drivers in UART/SPI mode.
+Additional information is in the [TMC Drivers guide](TMC_Drivers.md)
+and in the [command reference](G-Codes.md#tmc-stepper-drivers).
+
 ## [tmc2130]
 
 Configure a TMC2130 stepper motor driver via SPI bus. To use this
@@ -2652,8 +2656,7 @@ run_current:
 #   pin which may be used as the stepper's endstop_pin. Doing this
 #   enables "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable
-#   sensorless homing. See docs/Sensorless_Homing.md for details on
-#   how to configure this.
+#   sensorless homing.
 ```
 
 ## [tmc2208]
@@ -2918,8 +2921,7 @@ run_current:
 #   pin which may be used as the stepper's endstop_pin. Doing this
 #   enables "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable
-#   sensorless homing. See docs/Sensorless_Homing.md for details on
-#   how to configure this.
+#   sensorless homing.
 ```
 
 # Run-time stepper motor current configuration
