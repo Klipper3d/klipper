@@ -2817,7 +2817,7 @@ run_current:
 #driver_SEMAX: 0
 #driver_SEUP: 0
 #driver_SEMIN: 0
-#driver_SFILT: 1
+#driver_SFILT: 0
 #driver_SGT: 0
 #driver_SLPH: 0
 #driver_SLPL: 0

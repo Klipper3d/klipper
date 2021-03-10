@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20210310: The TMC2660 default for driver_SFILT has been changed from 1
+to 0.
+
 20210227: TMC stepper motor drivers in UART or SPI mode are now
 queried once per second whenever they are enabled - if the driver can
 not be contacted or if the driver reports an error, then Klipper will
