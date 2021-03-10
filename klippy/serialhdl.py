@@ -199,7 +199,7 @@ class SerialReader:
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
         src = SerialRetryCommand(self, response)
-        return src.get_response(cmd, self.default_cmd_queue)
+        return src.get_response([cmd], self.default_cmd_queue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -249,11 +249,14 @@ class SerialRetryCommand:
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
         self.last_params = params
-    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         retries = 5
         retry_delay = .010
         while 1:
-            self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
+            for cmd in cmds[:-1]:
+                self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)
+            self.serial.raw_send_wait_ack(cmds[-1], minclock, reqclock,
+                                          cmd_queue)
             params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

@@ -183,7 +183,17 @@ class MCU_TMC_SPI_chain:
             minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
                 (val >> 8) & 0xff, val & 0xff]
-        self.spi.spi_send(self._build_cmd(data, chain_pos), minclock)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            self.spi.spi_send(self._build_cmd(data, chain_pos), minclock)
+            return val
+        write_cmd = self._build_cmd(data, chain_pos)
+        dummy_read = self._build_cmd([0x00, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        params = self.spi.spi_transfer_with_preface(write_cmd, dummy_read,
+                                                    minclock=minclock)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
 
 # Helper to setup an spi daisy chain bus from settings in a config section
 def lookup_tmc_spi_chain(config):
@@ -225,7 +235,12 @@ class MCU_TMC_SPI:
     def set_register(self, reg_name, val, print_time=None):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
-            self.tmc_spi.reg_write(reg, val, self.chain_pos, print_time)
+            for retry in range(5):
+                v = self.tmc_spi.reg_write(reg, val, self.chain_pos, print_time)
+                if v == val:
+                    return
+        raise self.printer.command_error(
+            "Unable to write tmc spi '%s' register %s" % (self.name, reg_name))
 
 
 ######################################################################
