@@ -221,6 +221,7 @@ def lookup_tmc_spi_chain(config):
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
         self.tmc_spi, self.chain_pos = lookup_tmc_spi_chain(config)
         self.mutex = self.tmc_spi.mutex
         self.name_to_reg = name_to_reg
