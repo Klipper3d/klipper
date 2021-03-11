@@ -35,28 +35,20 @@ your (cartesian) printer. However, it works the same with all other
 axes (that require an end stop). You should configure and tune it for
 one axis at a time.
 
-## Prerequisites
-
-A few prerequisites are needed to use sensorless homing:
-
-1. StallGuard capable TMCxxxx stepper driver
-2. SPI / UART interface of the TMCxxxx wired to MCU (stand-alone mode
-   does not work)
-3. DIAG1/DIAG pin of TMCxxxx connected to the MCU
-
 ## Limitations
 
 Be sure that your mechanical components are able to handle the load of
 the carriage bumping into the limit of the axis repeatedly. Especially
-spindles (on the Z axis) might generate a lot of force. Homing a Z
-axis by bumping the nozzle into the printing surface might not be a
-good idea.
+leadscrews might generate a lot of force. Homing a Z axis by bumping
+the nozzle into the printing surface might not be a good idea. For
+best results, verify that the axis carriage will make a firm contact
+with the axis limit.
 
 Further, sensorless homing might not be accurate enough for your
 printer. While homing X and Y axes on a cartesian machine can work
-well, homing the Z axis is generally not accurate enough and results
-in inconsistent first layer height. Homing a delta printer sensorless
-is not advisable due to missing accuracy.
+well, homing the Z axis is generally not accurate enough and may
+result in an inconsistent first layer height. Homing a delta printer
+sensorless is not advisable due to missing accuracy.
 
 Further, the stall detection of the stepper driver is dependent on the
 mechanical load on the motor, the motor current and the motor
@@ -70,124 +62,260 @@ of the motor, so the TMC cannot detect stalls anymore. It is advised
 to have a look in the datasheet of your specific TMCs. There you can
 also find more details on limitations of this setup.
 
-## Configuration
+## Prerequisites
 
-To enable sensorless homing add a section to configure the TMC stepper
-driver to your `printer.cfg`.
+A few prerequisites are needed to use sensorless homing:
 
-In this guide we'll be using a TMC2130. The configuration however is
-similar to the other TMCs with StallGuard:
+1. A StallGuard capable TMC stepper driver (tmc2130, tmc2209, tmc2660,
+   or tmc5160).
+2. SPI / UART interface of the TMC driver wired to micro-controller
+   (stand-alone mode does not work).
+3. The appropriate "DIAG" or "SG_TST" pin of TMC driver connected to
+   the micro-controller.
+4. The steps in the [config checks](Config_checks.md) document must be
+   run to confirm the stepper motors are configured and working
+   properly.
 
-```
-[tmc2130 stepper_x]
-cs_pin:        # chip select pin of the SPI interface
-microsteps:    # number of microsteps per full step of the motor
-run_current:   # value in amps
-diag1_pin: !   # pin on the MCU where DIAG1 is connected (active low)
-driver_SGT:    # tuning value for sensorless homing
-```
+## Tuning
 
-The above snippet configures a TMC2130 for the stepper on the X axis.
-Make sure to fill in the missing values based on your configuration.
+The procedure described here has six major steps:
+1. Choose a homing speed.
+2. Configure the `printer.cfg` file to enable sensorless homing.
+3. Find the stallguard setting with highest sensitivity that
+   successfully homes.
+4. Find the stallguard setting with lowest sensitivity that
+   successfully homes with a single touch.
+5. Update the `printer.cfg` with the desired stallguard setting.
+6. Create or update `printer.cfg` macros to home consistently.
 
-The `driver_SGT` value describes the threshold when the driver
-reports a stall. Values have to be in between -64 (most sensitive) and
-64 (least sensitive). On some TMCs like the TMC2209 this value doesn't
-exist in this form as the behavior is different to the TMC2130. In the
-case of the TMC2209 the threshold is defined by the `driver_SGTHRS`
-value in the config and go from 0 (least sensitive) to 255 (most
-sensitive). Have a look at the datasheet of your specific TMC to avoid
-mistakes.
+### Choose homing speed
 
-If you have a CoreXY machine, you can configure one stepper driver for
-X and the other for Y homing as you would on a cartesian printer. Be
-aware that Klipper needs both `DIAG1` pins connected to the MCU. It is
-not sufficient to use only one signal from one of the stepper drivers
-(as it is possible on e.g. Marlin).
+The homing speed is an important choice when performing sensorless
+homing. It's desirable to use a slow homing speed so that the carriage
+does not exert excessive force on the frame when making contact with
+the end of the rail. However, the TMC drivers can't reliably detect a
+stall at very slow speeds.
 
-The `diag1_pin` of the TMC2130 is configured as open-collector pin.
-This means, the stepper driver pulls the pin low to indicate a stalled
-motor (active low) and the pin must be inverted by adding a `!` in
-front of the pin name. Further, you need a pull-up resistor on the
-connection. If your PCB has no external pull-up, you can enable the
-internal pull-up of your MCU by adding a `^` in front of the pin name.
-The resulting line might look like this:
-
-```
-diag1_pin: ^!PA1  # DIAG1 connected to PA1, internal pull-up is enabled, signal is active low
-```
-
-By configuring the `diag1_pin`, Klipper allows you to use a special
-virtual end stop for the axis. You can use this instead of a physical
-end stop pin by changing the `endstop_pin` of the corresponding axis:
-
+A good starting point for the homing speed is for the stepper motor to
+make a full rotation every two seconds. For many axes this will be the
+`rotation_distance` divided by two. For example:
 ```
 [stepper_x]
+rotation_distance: 40
+homing_speed: 20
 ...
-endstop_pin: tmc2130_stepper_x:virtual_endstop  # use the virtual end stop generated by the [tmc2130 stepper_x] section of this config file
+```
+
+### Configure printer.cfg for sensorless homing
+
+The `homing_retract_dist` setting must be set to zero in the
+`stepper_x` config section to disable the second homing move. The
+second homing attempt does not add value when using sensorless homing,
+it will not work reliably, and it will confuse the tuning process.
+
+Be sure that a `hold_current` setting is not specified in the TMC
+driver section of the config. (If a hold_current is set then after
+contact is made, the motor stops while the carriage is pressed against
+the end of the rail, and reducing the current while in that position
+may cause the carriage to move - that results in poor performance and
+will confuse the tuning process.)
+
+It is necessary to configure the sensorless homing pins and to
+configure initial "stallguard" settings. A tmc2209 example
+configuration for an X axis might look like:
+```
+[tmc2209 stepper_x]
+diag_pin: ^PA1      # Set to MCU pin connected to TMC DIAG pin
+driver_SGTHRS: 255  # 255 is most sensitive value, 0 is least sensitive
 ...
+
+[stepper_x]
+endstop_pin: tmc2209_stepper_x:virtual_endstop
 homing_retract_dist: 0
 ...
 ```
 
-The name of the virtual end stop pin is derived from the name of the
-TMC2130 section. The `homing_retract_dist` setting should be set to
-zero to disable the second homing move as a second pass is not needed,
-and attempts to do so are error prone.
-
-The TMC2130 and TMC5160 have both a `diag0_pin` and `diag1_pin` in
-most known hardware the `diag1_pin` is appropriate. In order for
-klipper to correctly configure the driver for sensorless homing, the
-correct configuration property name `diag0_pin` or `diag1_pin` must be
-used. Which is used is determined by which driver pin is connected to
-the MCU pin.
-
-ATTENTION: This guide only mentions the mandatory parameters and the
-ones needed to set up sensorless homing. There are many other options
-to configure on a TMC2130, make sure to take a look at [config
-reference](Config_Reference.md#tmc2130) for all the available options.
-
-## Homing and Tuning
-
-Let's try the first sensorless homing now. It will likely not work as
-intended. There are three possible outcomes of this experiment:
-
-1. The axis stops moving before hitting the mechanical limit or does
-   not move at all
-2. The axis homes correctly (which is unlikely at this point)
-3. The axis bumps into the mechanical limit and keeps moving while
-   making horrible noise
-
-If the third outcome happens to you, disable the stepper (by cutting
-the power or issuing a `M112` emergency stop).
-
-Ok, now that you know what can happen, let's try it out. Put the
-carriage somewhere in the middle of the X axis. Home the X axis by
-sending the following G-Code command to Klipper and observe the
-outcome:
-
+An example tmc2130 or tmc5160 config might look like:
 ```
-G28 X
+[tmc2130 stepper_x]
+diag1_pin: ^!PA1 # Pin connected to TMC DIAG1 pin (or use diag0_pin / DIAG0 pin)
+driver_SGT: -64  # -64 is most sensitive value, 63 is least sensitive
+...
+
+[stepper_x]
+endstop_pin: tmc2130_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
 ```
 
-If the axis stopped early (first outcome), the stepper driver detected
-a motor stall even though there was none. To trigger stall detection
-at a higher load, increase the value of `driver_SGT` (for example from
-0 to 5). The values can be any integer between `-64` and `63`. The
-higher the value, the later it triggers stall detection.
+An example tmc2660 config might look like:
+```
+[tmc2660 stepper_x]
+driver_SGT: -64     # -64 is most sensitive value, 63 is least sensitive
+...
 
-If your axis did not stop (third outcome), the stepper driver was not
-able to detect the stall, because the load on the motor still seemed
-reasonable to the driver. To trigger stall detection at a lighter
-load, decrease the value of `driver_SGT`.
+[stepper_x]
+endstop_pin: ^PA1   # Pin connected to TMC SG_TST pin
+homing_retract_dist: 0
+...
+```
 
-Even if your axis homed correctly, it might be worth to try a few
-different values for `driver_SGT`. If you think that it bumps too hard
-into the mechanical limit, try to decrease the value by 1 or 2.
+The examples above only show settings specific to sensorless
+homing. See the [config
+reference](Config_Reference.md#tmc-stepper-driver-configuration) for
+all the available options.
 
-At this point, your axis should be able to home based on the stall
-detection of the TMC2130. Congratulations! You can now proceed with
-the next axis of your printer.
+### Find highest sensitivity that successfully homes
+
+Place the carriage near the center of the rail. Use the SET_TMC_FIELD
+command to set the highest sensitivity. For tmc2209:
+```
+SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
+```
+For tmc2130, tmc5160, and tmc2660:
+```
+SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
+```
+
+Then issue a `G28 X0` command and verify the axis does not move at
+all. If the axis does move, then issue an `M112` to halt the printer -
+something is not correct with the diag/sg_tst pin wiring or
+configuration and it must be corrected before continuing.
+
+Next, continually decrease the sensitivity of the `VALUE` setting and
+run the `SET_TMC_FIELD` `G28 X0` commands again to find the highest
+sensitivity that results in the carriage successfully moving all the
+way to the endstop and halting. (For tmc2209 drivers this will be
+decreasing SGTHRS, for other drivers it will be increasing sgt.) Be
+sure to start each attempt with the carriage near the center of the
+rail (if needed issue `M84` and then manually move the carriage to the
+center). It should be possible to find the highest sensitivity that
+homes reliably (settings with higher sensitivity result in small or no
+movement). Note the found value as *maximum_sensitivity*. (If the
+minimum possible sensitivity (SGTHRS=0 or sgt=63) is obtained without
+any carriage movement then something is not correct with the
+diag/sg_tst pin wiring or configuration and it must be corrected
+before continuing.)
+
+When searching for maximum_sensitivity, it may be convenient to jump
+to different VALUE settings (so as to bisect the VALUE parameter). If
+doing this then be prepared to issue an `M112` command to halt the
+printer, as a setting with a very low sensitivity may cause the axis
+to repeatedly "bang" into the end of the rail.
+
+Be sure to wait a couple of seconds between each homing attempt. After
+the TMC driver detects a stall it may take a little time for it to
+clear its internal indicator and be capable of detecting another
+stall.
+
+During these tuning tests, if a `G28 X0` command does not move all the
+way to the axis limit, then be careful with issuing any regular
+movement commands (eg, `G1`). Klipper will not have a correct
+understanding of the carriage position and a move command may cause
+undesirable and confusing results.
+
+### Find lowest sensitivity that homes with one touch
+
+When homing with the found *maximum_sensitivity* value, the axis
+should move to the end of the rail and stop with a "single touch" -
+that is, there should not be a "clicking" or "banging" sound. (If
+there is a banging or clicking sound at maximum_sensitivity then the
+homing_speed may be too low, the driver current may be too low, or
+sensorless homing may not be a good choice for the axis.)
+
+The next step is to again continually move the carriage to a position
+near the center of the rail, decrease the sensitivity, and run the
+`SET_TMC_FIELD` `G28 X0` commands - the goal is now to find the lowest
+sensitivity that still results in the carriage successfully homing
+with a "single touch". That is, it does not "bang" or "click" when
+contacting the end of the rail. Note the found value as
+*minimum_sensitivity*.
+
+### Update printer.cfg with sensitivity value
+
+After finding *maximum_sensitivity* and *minimum_sensitivity*, use a
+calculator to obtain the recommend sensitivity as
+*minimum_sensitivity + (maximum_sensitivity - minimum_sensitivity)/3*.
+The recommended sensitivity should be in the range between the minimum
+and maximum, but slightly closer to the minimum. Round the final value
+to the nearest integer value.
+
+For tmc2209 set this in the config as `driver_SGTHRS`, for other TMC
+drivers set this in the config as `driver_SGT`.
+
+If the range between *maximum_sensitivity* and *minimum_sensitivity*
+is small (eg, less than 5) then it may result in unstable homing. A
+faster homing speed may increase the range and make the operation more
+stable.
+
+Note that if any change is made to driver current, homing speed, or a
+notable change is made to the printer hardware, then it will be
+necessary to run the tuning process again.
+
+### Using Macros when Homing
+
+After sensorless homing completes the carriage will be pressed against
+the end of the rail and the stepper will exert a force on the frame
+until the carriage is moved away. It is a good idea to create a macro
+to home the axis and immediately move the carriage away from the end
+of the rail. It is recommended to set the speed of this subsequent
+move so that it lasts at least two seconds (eg, `G1 X40 F1200`) to
+ensure the stall flag in the TMC driver is cleared after the move
+completes.
+
+It can also be useful to have that macro set the driver current before
+homing and set a new current after the carriage has moved away. This
+also allows a hold_current to be set during prints (a hold_current
+is not recommended during sensorless homing).
+
+An example macro might look something like:
+```
+[gcode_macro SENSORLESS_HOME_X]
+gcode:
+    {% set HOME_CUR = 0.700 %}
+    {% set driver_config = printer.configfile.settings['tmc2209 stepper_x'] %}
+    {% set RUN_CUR = driver_config.run_current %}
+    {% set HOLD_CUR = driver_config.hold_current %}
+    # Set current for sensorless homing
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR} HOLDCURRENT={HOME_CUR}
+    # Home
+    G28 X0
+    # Move away
+    G90
+    G1 X40 F1200
+    # Set current during print
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR} HOLDCURRENT={HOLD_CUR}
+```
+
+The resulting macro can be called from a [homing_override config
+section](Config_Reference.md#homing_override) or from a [START_PRINT
+macro](Slicers.md#klipper-gcode_macro).
+
+Note that if the driver current during homing is changed, then the
+tuning process should be run again.
+
+## Tips for sensorless homing on CoreXY
+
+It is possible to use sensorless homing on the X and Y carriages of a
+CoreXY printer. Klipper uses the `[stepper_x]` stepper to detect
+stalls when homing the X carriage and uses the `[stepper_y]` stepper
+to detect stalls when homing the Y carriage.
+
+Use the tuning guide described above to find the appropriate "stall
+sensitivity" for each carriage, but be aware of the following
+restrictions:
+1. When using sensorless homing on CoreXY, make sure there is no
+   `hold_current` in effect for either stepper during homing.
+2. Make sure both the X and Y carriages are near the center of their
+   rails before each home attempt.
+3. After tuning is complete, when homing both X and Y, use macros to
+   ensure that one axis is homed first, then move that carriage away
+   from the axis limit using a move that lasts at least two seconds,
+   and then start the homing of the other carriage. The move away from
+   the axis helps ensure the stall flag is cleared from both stepper
+   drivers before starting the next home attempt. It also avoids
+   homing one axis while the other is pressed against the axis limit
+   (which may skew the stall detection).
 
 # Querying and diagnosing driver settings
 
