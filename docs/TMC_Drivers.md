@@ -272,7 +272,7 @@ shared SPI bus that can not be configured in Klipper, then use a
 section](Config_Reference.md#static_digital_output) to set the CS pin
 of the unused device high (so that it will not attempt to use the SPI
 bus). The board's schematic is often a useful reference for finding
-which devices are on an SPI bus and their associated pin settings.
+which devices are on an SPI bus and their associated pins.
 
 ## How do I tune spreadcycle/coolstep/etc. mode on my drivers?
 
