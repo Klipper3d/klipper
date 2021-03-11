@@ -244,10 +244,6 @@ The following are common printer attributes:
   True if the switch sensor is currently enabled.
 - `printer["filament_switch_sensor <config_name>"].filament_detected`:
   Returns True if the sensor is in a triggered state.
-- `printer["filament_motion_sensor <config_name>"].sensor_enabled`: Returns
-  True if the motion sensor is currently enabled.
-- `printer["filament_motion_sensor <config_name>"].sensor_state`:
-  Returns True or False based on position of motion sensor encoder wheel.
 - `printer.virtual_sdcard.is_active`: Returns True if a print from
   file is currently active.
 - `printer.virtual_sdcard.progress`: An estimate of the current print
