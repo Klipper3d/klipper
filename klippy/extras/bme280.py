@@ -146,7 +146,7 @@ class BME280:
 
         def read_calibration_data_bme280(calib_data_1, calib_data_2):
             dig = read_calibration_data_bmp280(calib_data_1)
-            dig['H1'] = calib_data_1[0] & 0xFF
+            dig['H1'] = calib_data_1[25] & 0xFF
             dig['H2'] = get_signed_short(calib_data_2[0:2])
             dig['H3'] = calib_data_2[2] & 0xFF
             dig['H4'] = get_twos_complement(
