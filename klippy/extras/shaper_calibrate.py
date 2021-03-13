@@ -10,6 +10,7 @@ MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
 MAX_SHAPER_FREQ = 150.
 
+SHAPER_VIBRATION_REDUCTION=20.
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
 SHAPER_DAMPING_RATIO = 0.1
 
@@ -50,7 +51,7 @@ def get_mzv_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -64,7 +65,7 @@ def get_ei_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_2hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -81,7 +82,7 @@ def get_2hump_ei_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_3hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -302,8 +303,14 @@ class ShaperCalibrate:
     def _estimate_remaining_vibrations(self, shaper, test_damping_ratio,
                                        freq_bins, psd):
         vals = self._estimate_shaper(shaper, test_damping_ratio, freq_bins)
-        remaining_vibrations = (vals * psd).sum() / psd.sum()
-        return (remaining_vibrations, vals)
+        # The input shaper can only reduce the amplitude of vibrations by
+        # SHAPER_VIBRATION_REDUCTION times, so all vibrations below that
+        # threshold can be igonred
+        vibrations_threshold = psd.max() / SHAPER_VIBRATION_REDUCTION
+        remaining_vibrations = self.numpy.maximum(
+                vals * psd - vibrations_threshold, 0).sum()
+        all_vibrations = self.numpy.maximum(psd - vibrations_threshold, 0).sum()
+        return (remaining_vibrations / all_vibrations, vals)
 
     def fit_shaper(self, shaper_cfg, calibration_data, max_smoothing):
         np = self.numpy
@@ -335,7 +342,8 @@ class ShaperCalibrate:
             # The score trying to minimize vibrations, but also accounting
             # the growth of smoothing. The formula itself does not have any
             # special meaning, it simply shows good results on real user data
-            shaper_score = shaper_vibrations**1.5 * shaper_smoothing
+            shaper_score = shaper_smoothing * (shaper_vibrations**1.5 +
+                                               shaper_vibrations * .2 + .01)
             results.append(
                     CalibrationResult(
                         name=shaper_cfg.name, freq=test_freq, vals=shaper_vals,
@@ -392,10 +400,10 @@ class ShaperCalibrate:
                            shaper.name, round(shaper.max_accel / 100.) * 100.))
             all_shapers.append(shaper)
             if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
-                    (shaper.score * 1.1 < best_shaper.score and
+                    (shaper.score * 1.05 < best_shaper.score and
                         shaper.smoothing * 1.1 < best_shaper.smoothing)):
                 # Either the shaper significantly improves the score (by 20%),
-                # or it improves both the score and smoothing (by 10%)
+                # or it improves the score and smoothing (by 5% and 10% resp.)
                 best_shaper = shaper
         return best_shaper, all_shapers
 
