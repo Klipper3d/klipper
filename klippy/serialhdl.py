@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading, os
-import serial, can
+import serial
 
 import msgproto, chelper, util
 
@@ -103,6 +103,7 @@ class SerialReader:
                 self.serialqueue, receive_window)
         return True
     def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
+        import can # XXX
         txid = canbus_nodeid * 2 + 256
         filters = [{"can_id": txid+1, "can_mask": 0x7ff, "extended": False}]
         # Prep for SET_NODEID command
