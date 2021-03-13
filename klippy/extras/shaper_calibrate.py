@@ -118,13 +118,13 @@ def get_shaper_smoothing(shaper, accel=5000, scv=5.):
     offset_180 *= inv_D
     return max(offset_90, offset_180)
 
-# min_freq for each shaper is chosen to have max projected smoothing ~= 0.33
+# min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
-    InputShaperCfg('zv', get_zv_shaper, min_freq=22.),
-    InputShaperCfg('mzv', get_mzv_shaper, min_freq=25.),
-    InputShaperCfg('ei', get_ei_shaper, min_freq=31.),
-    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=40.),
-    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=50.),
+    InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
+    InputShaperCfg('mzv', get_mzv_shaper, min_freq=23.),
+    InputShaperCfg('ei', get_ei_shaper, min_freq=29.),
+    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=39.),
+    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
 ]
 
 ######################################################################
