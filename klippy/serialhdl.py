@@ -72,10 +72,11 @@ class SerialReader:
                     # Done
                     return identify_data
                 identify_data += msgdata
-    def _start_session(self, serial_dev):
+    def _start_session(self, serial_dev, serial_fd_type='u', client_id=0):
         self.serial_dev = serial_dev
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(serial_dev.fileno(), 0),
+            self.ffi_lib.serialqueue_alloc(serial_dev.fileno(),
+                                           serial_fd_type, client_id),
             self.ffi_lib.serialqueue_free)
         self.background_thread = threading.Thread(target=self._bg_thread)
         self.background_thread.start()
@@ -101,6 +102,52 @@ class SerialReader:
             self.ffi_lib.serialqueue_set_receive_window(
                 self.serialqueue, receive_window)
         return True
+    def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
+        import can # XXX
+        txid = canbus_nodeid * 2 + 256
+        filters = [{"can_id": txid+1, "can_mask": 0x7ff, "extended": False}]
+        # Prep for SET_NODEID command
+        try:
+            uuid = int(canbus_uuid, 16)
+        except ValueError:
+            uuid = -1
+        if uuid < 0 or uuid > 0xffffffffffff:
+            raise error("Invalid CAN uuid")
+        uuid = [(uuid >> (40 - i*8)) & 0xff for i in range(6)]
+        CANBUS_ID_ADMIN = 0x3f0
+        CMD_SET_NODEID = 0x01
+        set_id_cmd = [CMD_SET_NODEID] + uuid + [canbus_nodeid]
+        set_id_msg = can.Message(arbitration_id=CANBUS_ID_ADMIN,
+                                 data=set_id_cmd, is_extended_id=False)
+        # Start connection attempt
+        logging.info("Starting CAN connect")
+        start_time = self.reactor.monotonic()
+        while 1:
+            if self.reactor.monotonic() > start_time + 90.:
+                raise error("Unable to connect")
+            try:
+                bus = can.interface.Bus(channel=canbus_iface,
+                                        can_filters=filters,
+                                        bustype='socketcan')
+                bus.send(set_id_msg)
+            except can.CanError as e:
+                logging.warn("Unable to open CAN port: %s", e)
+                self.reactor.pause(self.reactor.monotonic() + 5.)
+                continue
+            bus.close = bus.shutdown # XXX
+            ret = self._start_session(bus, 'c', txid)
+            if not ret:
+                continue
+            # Verify correct canbus_nodeid to canbus_uuid mapping
+            try:
+                params = self.send_with_response('get_canbus_id', 'canbus_id')
+                got_uuid = bytearray(params['canbus_uuid'])
+                if got_uuid == bytearray(uuid):
+                    break
+            except:
+                logging.exception("Error in canbus_uuid check")
+            logging.info("Failed to match canbus_uuid - retrying..")
+            self.disconnect()
     def connect_pipe(self, filename):
         logging.info("Starting connect")
         start_time = self.reactor.monotonic()
@@ -142,7 +189,7 @@ class SerialReader:
         self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 1),
+            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 'f', 0),
             self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, last_time, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
@@ -199,7 +246,7 @@ class SerialReader:
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
         src = SerialRetryCommand(self, response)
-        return src.get_response(cmd, self.default_cmd_queue)
+        return src.get_response([cmd], self.default_cmd_queue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -249,11 +296,14 @@ class SerialRetryCommand:
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
         self.last_params = params
-    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         retries = 5
         retry_delay = .010
         while 1:
-            self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
+            for cmd in cmds[:-1]:
+                self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)
+            self.serial.raw_send_wait_ack(cmds[-1], minclock, reqclock,
+                                          cmd_queue)
             params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

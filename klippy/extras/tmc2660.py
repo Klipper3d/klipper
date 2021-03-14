@@ -100,7 +100,6 @@ FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "DEDGE": (lambda v: "1(Both Edges Active!)" if v else ""),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
-    "SFILT": (lambda v: "1(Filtered mode)" if v else "0(Standard mode)"),
     "VSENSE": (lambda v: "%d(%dmV)" % (v, 165 if v else 305)),
     "SDOFF": (lambda v: "1(Step/Dir disabled!)" if v else ""),
     "DISS2G": (lambda v: "%d(Short to GND disabled!)" if v else ""),
@@ -256,7 +255,7 @@ class TMC2660:
         set_config_field(config, "SEMIN", 0)
 
         # SGSCONF
-        set_config_field(config, "SFILT", 1)
+        set_config_field(config, "SFILT", 0)
         set_config_field(config, "SGT", 0)
 
         # DRVCONF
