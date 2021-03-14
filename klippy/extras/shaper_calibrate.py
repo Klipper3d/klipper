@@ -139,6 +139,8 @@ class CalibrationData:
         self.psd_y = psd_y
         self.psd_z = psd_z
         self._psd_list = [self.psd_sum, self.psd_x, self.psd_y, self.psd_z]
+        self._psd_map = {'x': self.psd_x, 'y': self.psd_y, 'z': self.psd_z,
+                         'all': self.psd_sum}
         self.data_sets = 1
     def join(self, other):
         np = self.numpy
@@ -159,6 +161,8 @@ class CalibrationData:
             psd /= self.freq_bins + .1
             # Remove low-frequency noise
             psd[self.freq_bins < MIN_FREQ] = 0.
+    def get_psd(self, axis='all'):
+        return self._psd_map[axis]
 
 
 CalibrationResult = collections.namedtuple(

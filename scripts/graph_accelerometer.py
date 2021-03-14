@@ -113,7 +113,7 @@ def plot_frequency(datas, lognames, max_freq):
     fig.tight_layout()
     return fig
 
-def plot_compare_frequency(datas, lognames, max_freq):
+def plot_compare_frequency(datas, lognames, max_freq, axis):
     fig, ax = matplotlib.pyplot.subplots()
     ax.set_title('Frequency responses comparison')
     ax.set_xlabel('Frequency (Hz)')
@@ -122,7 +122,7 @@ def plot_compare_frequency(datas, lognames, max_freq):
     for data, logname in zip(datas, lognames):
         calibration_data = calc_freq_response(data, max_freq)
         freqs = calibration_data.freq_bins
-        psd = calibration_data.psd_sum[freqs <= max_freq]
+        psd = calibration_data.get_psd(axis)[freqs <= max_freq]
         freqs = freqs[freqs <= max_freq]
         ax.plot(freqs, psd, label="\n".join(wrap(logname, 60)), alpha=0.6)
 
@@ -243,7 +243,8 @@ def main():
             opts.error("Only 1 input is supported in specgram mode")
         fig = plot_specgram(datas[0], args[0], options.max_freq, options.axis)
     elif options.compare:
-        fig = plot_compare_frequency(datas, args, options.max_freq)
+        fig = plot_compare_frequency(datas, args, options.max_freq,
+                                     options.axis)
     else:
         fig = plot_frequency(datas, args, options.max_freq)
 
