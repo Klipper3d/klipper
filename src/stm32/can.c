@@ -28,8 +28,8 @@
  #define GPIO_Tx GPIO('B', 9)
 #endif
 #if CONFIG_CAN_PINS_PI8_PH13
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI8,PH13");
- #define GPIO_Rx GPIO('I', 8)
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI9,PH13");
+ #define GPIO_Rx GPIO('I', 9)
  #define GPIO_Tx GPIO('H', 13)
 #endif
 #if CONFIG_CAN_PINS_PB5_PB6
@@ -41,6 +41,11 @@
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB12,PB13");
  #define GPIO_Rx GPIO('B', 12)
  #define GPIO_Tx GPIO('B', 13)
+#endif
+#if CONFIG_CAN_PINS_PD0_PD1
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PD0,PD1");
+ #define GPIO_Rx GPIO('D', 0)
+ #define GPIO_Tx GPIO('D', 1)
 #endif
 
 #if CONFIG_MACH_STM32F0
@@ -64,7 +69,7 @@
 #if CONFIG_MACH_STM32F4
  #warning CAN on STM32F4 is untested
  #if (CONFIG_CAN_PINS_PA11_PA12 || CONFIG_CAN_PINS_PB8_PB9 \
-      || CONFIG_CAN_PINS_PI8_PH13)
+     || CONFIG_CAN_PINS_PD0_PD1 || CONFIG_CAN_PINS_PI9_PH13)
   #define SOC_CAN CAN1
   #define CAN_RX0_IRQn  CAN1_RX0_IRQn
   #define CAN_RX1_IRQn  CAN1_RX1_IRQn
@@ -154,41 +159,33 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
     return len;
 }
 
-#define CAN_FILTER_NUMBER 0
-
 // Setup the receive packet filter
 void
 canbus_set_filter(uint32_t id)
 {
-    uint32_t filternbrbitpos = 1 << CAN_FILTER_NUMBER;
-
     /* Select the start slave bank */
     SOC_CAN->FMR |= CAN_FMR_FINIT;
     /* Initialisation mode for the filter */
     SOC_CAN->FA1R = 0;
 
-    uint32_t idadmin = CANBUS_ID_UUID;
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR1 = idadmin << (5 + 16);
-    SOC_CAN->sFilterRegister[CAN_FILTER_NUMBER].FR2 = id << (5 + 16);
+    uint32_t mask = CAN_RI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
+    SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
+    SOC_CAN->sFilterRegister[0].FR2 = mask;
+    SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
+    SOC_CAN->sFilterRegister[1].FR2 = mask;
+    SOC_CAN->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
+    SOC_CAN->sFilterRegister[2].FR2 = mask;
 
-    /* Identifier list mode for the filter */
-    SOC_CAN->FM1R = filternbrbitpos;
     /* 32-bit scale for the filter */
-    SOC_CAN->FS1R = filternbrbitpos;
+    SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
 
     /* FIFO 0 assigned for the filter */
     SOC_CAN->FFA1R = 0;
 
     /* Filter activation */
-    SOC_CAN->FA1R = filternbrbitpos;
+    SOC_CAN->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
     /* Leave the initialisation mode for the filter */
     SOC_CAN->FMR &= ~CAN_FMR_FINIT;
-}
-
-void
-canbus_reboot(void)
-{
-    NVIC_SystemReset();
 }
 
 // This function handles CAN global interrupts
@@ -287,7 +284,7 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    canbus_set_filter(CANBUS_ID_SET);
+    canbus_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);

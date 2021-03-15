@@ -18,21 +18,40 @@ extern uint32_t _data_start, _data_end, _data_flash;
 extern uint32_t _bss_start, _bss_end, _stack_start;
 extern uint32_t _stack_end;
 
-
 /****************************************************************
  * Basic interrupt handlers
  ****************************************************************/
 
-// Initial code entry point - invoked by the processor after a reset
-void
-ResetHandler(void)
+static void __noreturn
+reset_handler_stage_two(void)
 {
-    // Disable SysTick irq (for some bootloaders that don't)
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
+    int i;
 
-    // Explicitly load the stack pointer (for some bootloaders that don't)
-    asm volatile("mov sp, %0" : : "r"(&_stack_end));
-    barrier();
+    // Clear all enabled user interrupts and user pending interrupts
+    for (i = 0; i < ARRAY_SIZE(NVIC->ICER); i++) {
+        NVIC->ICER[i] = 0xFFFFFFFF;
+        __DSB();
+        NVIC->ICPR[i] = 0xFFFFFFFF;
+    }
+
+    // Reset all user interrupt priorities
+    for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++)
+        NVIC->IP[i] = 0;
+
+    // Disable SysTick interrupt
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
+    __DSB();
+
+    // Clear pending pendsv and systick interrupts
+    SCB->ICSR = SCB_ICSR_PENDSVCLR_Msk | SCB_ICSR_PENDSTCLR_Msk;
+
+    // Reset all system interrupt priorities
+    for (i = 0; i < ARRAY_SIZE(SCB->SHP); i++)
+        SCB->SHP[i] = 0;
+
+    __DSB();
+    __ISB();
+    __enable_irq();
 
     // Copy global variables from flash to ram
     uint32_t count = (&_data_end - &_data_start) * 4;
@@ -52,6 +71,18 @@ ResetHandler(void)
     // The armcm_main() call should not return
     for (;;)
         ;
+}
+
+// Initial code entry point - invoked by the processor after a reset
+// Reset interrupts and stack to take control from bootloaders
+void
+ResetHandler(void)
+{
+    __disable_irq();
+
+    // Explicitly load the stack pointer, jump to stage two
+    asm volatile("mov sp, %0\n bx %1"
+                 : : "r"(&_stack_end), "r"(reset_handler_stage_two));
 }
 DECL_ARMCM_IRQ(ResetHandler, -15);
 

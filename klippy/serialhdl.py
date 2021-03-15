@@ -1,9 +1,9 @@
 # Serial port management for firmware communication
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, os
 import serial
 
 import msgproto, chelper, util
@@ -13,13 +13,10 @@ class error(Exception):
 
 class SerialReader:
     BITS_PER_BYTE = 10.
-    def __init__(self, reactor, serialport, baud, rts=True):
+    def __init__(self, reactor):
         self.reactor = reactor
-        self.serialport = serialport
-        self.baud = baud
         # Serial port
-        self.ser = None
-        self.rts = rts
+        self.serial_dev = None
         self.msgparser = msgproto.MessageParser()
         # C interface
         self.ffi_main, self.ffi_lib = chelper.get_ffi()
@@ -75,41 +72,21 @@ class SerialReader:
                     # Done
                     return identify_data
                 identify_data += msgdata
-    def connect(self):
-        # Initial connection
-        logging.info("Starting serial connect")
-        start_time = self.reactor.monotonic()
-        while 1:
-            connect_time = self.reactor.monotonic()
-            if connect_time > start_time + 90.:
-                raise error("Unable to connect")
-            try:
-                if self.baud:
-                    self.ser = serial.Serial(
-                        baudrate=self.baud, timeout=0, exclusive=True)
-                    self.ser.port = self.serialport
-                    self.ser.rts = self.rts
-                    self.ser.open()
-                else:
-                    self.ser = open(self.serialport, 'rb+', buffering=0)
-            except (OSError, IOError, serial.SerialException) as e:
-                logging.warn("Unable to open port: %s", e)
-                self.reactor.pause(connect_time + 5.)
-                continue
-            if self.baud:
-                stk500v2_leave(self.ser, self.reactor)
-            self.serialqueue = self.ffi_main.gc(
-                self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 0),
-                self.ffi_lib.serialqueue_free)
-            self.background_thread = threading.Thread(target=self._bg_thread)
-            self.background_thread.start()
-            # Obtain and load the data dictionary from the firmware
-            completion = self.reactor.register_callback(self._get_identify_data)
-            identify_data = completion.wait(connect_time + 5.)
-            if identify_data is not None:
-                break
-            logging.info("Timeout on serial connect")
+    def _start_session(self, serial_dev, serial_fd_type='u', client_id=0):
+        self.serial_dev = serial_dev
+        self.serialqueue = self.ffi_main.gc(
+            self.ffi_lib.serialqueue_alloc(serial_dev.fileno(),
+                                           serial_fd_type, client_id),
+            self.ffi_lib.serialqueue_free)
+        self.background_thread = threading.Thread(target=self._bg_thread)
+        self.background_thread.start()
+        # Obtain and load the data dictionary from the firmware
+        completion = self.reactor.register_callback(self._get_identify_data)
+        identify_data = completion.wait(self.reactor.monotonic() + 5.)
+        if identify_data is None:
+            logging.info("Timeout on connect")
             self.disconnect()
+            return False
         msgparser = msgproto.MessageParser()
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
@@ -124,11 +101,95 @@ class SerialReader:
         if receive_window is not None:
             self.ffi_lib.serialqueue_set_receive_window(
                 self.serialqueue, receive_window)
+        return True
+    def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
+        import can # XXX
+        txid = canbus_nodeid * 2 + 256
+        filters = [{"can_id": txid+1, "can_mask": 0x7ff, "extended": False}]
+        # Prep for SET_NODEID command
+        try:
+            uuid = int(canbus_uuid, 16)
+        except ValueError:
+            uuid = -1
+        if uuid < 0 or uuid > 0xffffffffffff:
+            raise error("Invalid CAN uuid")
+        uuid = [(uuid >> (40 - i*8)) & 0xff for i in range(6)]
+        CANBUS_ID_ADMIN = 0x3f0
+        CMD_SET_NODEID = 0x01
+        set_id_cmd = [CMD_SET_NODEID] + uuid + [canbus_nodeid]
+        set_id_msg = can.Message(arbitration_id=CANBUS_ID_ADMIN,
+                                 data=set_id_cmd, is_extended_id=False)
+        # Start connection attempt
+        logging.info("Starting CAN connect")
+        start_time = self.reactor.monotonic()
+        while 1:
+            if self.reactor.monotonic() > start_time + 90.:
+                raise error("Unable to connect")
+            try:
+                bus = can.interface.Bus(channel=canbus_iface,
+                                        can_filters=filters,
+                                        bustype='socketcan')
+                bus.send(set_id_msg)
+            except can.CanError as e:
+                logging.warn("Unable to open CAN port: %s", e)
+                self.reactor.pause(self.reactor.monotonic() + 5.)
+                continue
+            bus.close = bus.shutdown # XXX
+            ret = self._start_session(bus, 'c', txid)
+            if not ret:
+                continue
+            # Verify correct canbus_nodeid to canbus_uuid mapping
+            try:
+                params = self.send_with_response('get_canbus_id', 'canbus_id')
+                got_uuid = bytearray(params['canbus_uuid'])
+                if got_uuid == bytearray(uuid):
+                    break
+            except:
+                logging.exception("Error in canbus_uuid check")
+            logging.info("Failed to match canbus_uuid - retrying..")
+            self.disconnect()
+    def connect_pipe(self, filename):
+        logging.info("Starting connect")
+        start_time = self.reactor.monotonic()
+        while 1:
+            if self.reactor.monotonic() > start_time + 90.:
+                raise error("Unable to connect")
+            try:
+                fd = os.open(filename, os.O_RDWR | os.O_NOCTTY)
+            except OSError as e:
+                logging.warn("Unable to open port: %s", e)
+                self.reactor.pause(self.reactor.monotonic() + 5.)
+                continue
+            serial_dev = os.fdopen(fd, 'rb+', 0)
+            ret = self._start_session(serial_dev)
+            if ret:
+                break
+    def connect_uart(self, serialport, baud, rts=True):
+        # Initial connection
+        logging.info("Starting serial connect")
+        start_time = self.reactor.monotonic()
+        while 1:
+            if self.reactor.monotonic() > start_time + 90.:
+                raise error("Unable to connect")
+            try:
+                serial_dev = serial.Serial(baudrate=baud, timeout=0,
+                                           exclusive=True)
+                serial_dev.port = serialport
+                serial_dev.rts = rts
+                serial_dev.open()
+            except (OSError, IOError, serial.SerialException) as e:
+                logging.warn("Unable to open serial port: %s", e)
+                self.reactor.pause(self.reactor.monotonic() + 5.)
+                continue
+            stk500v2_leave(serial_dev, self.reactor)
+            ret = self._start_session(serial_dev)
+            if ret:
+                break
     def connect_file(self, debugoutput, dictionary, pace=False):
-        self.ser = debugoutput
+        self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(self.ser.fileno(), 1),
+            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 'f', 0),
             self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, last_time, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
@@ -139,9 +200,9 @@ class SerialReader:
             if self.background_thread is not None:
                 self.background_thread.join()
             self.background_thread = self.serialqueue = None
-        if self.ser is not None:
-            self.ser.close()
-            self.ser = None
+        if self.serial_dev is not None:
+            self.serial_dev.close()
+            self.serial_dev = None
         for pn in self.pending_notifications.values():
             pn.complete(None)
         self.pending_notifications.clear()
@@ -185,7 +246,7 @@ class SerialReader:
     def send_with_response(self, msg, response):
         cmd = self.msgparser.create_command(msg)
         src = SerialRetryCommand(self, response)
-        return src.get_response(cmd, self.default_cmd_queue)
+        return src.get_response([cmd], self.default_cmd_queue)
     def alloc_command_queue(self):
         return self.ffi_main.gc(self.ffi_lib.serialqueue_alloc_commandqueue(),
                                 self.ffi_lib.serialqueue_free_commandqueue)
@@ -235,11 +296,14 @@ class SerialRetryCommand:
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
         self.last_params = params
-    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         retries = 5
         retry_delay = .010
         while 1:
-            self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
+            for cmd in cmds[:-1]:
+                self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)
+            self.serial.raw_send_wait_ack(cmds[-1], minclock, reqclock,
+                                          cmd_queue)
             params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

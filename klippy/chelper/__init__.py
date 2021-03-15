@@ -1,6 +1,6 @@
 # Wrapper around C helper code
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging
@@ -31,10 +31,14 @@ OTHER_FILES = [
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-        , uint32_t invert_sdir, uint32_t queue_step_msgid
-        , uint32_t set_next_step_dir_msgid);
+        , uint32_t invert_sdir, int32_t queue_step_msgtag
+        , int32_t set_next_step_dir_msgtag);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    int stepcompress_set_last_position(struct stepcompress *sc
+        , int64_t last_position);
+    int64_t stepcompress_find_past_position(struct stepcompress *sc
+        , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
 
@@ -141,7 +145,8 @@ defs_serialqueue = """
         uint64_t notify_id;
     };
 
-    struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
+    struct serialqueue *serialqueue_alloc(int serial_fd, char serial_fd_type
+        , int client_id);
     void serialqueue_exit(struct serialqueue *sq);
     void serialqueue_free(struct serialqueue *sq);
     struct command_queue *serialqueue_alloc_commandqueue(void);
@@ -218,6 +223,10 @@ FFI_main = None
 FFI_lib = None
 pyhelper_logging_callback = None
 
+# Hepler invoked from C errorf() code to log errors
+def logging_callback(msg):
+    logging.error(FFI_main.string(msg))
+
 # Return the Foreign Function Interface api to the caller
 def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
@@ -238,10 +247,8 @@ def get_ffi():
             FFI_main.cdef(d)
         FFI_lib = FFI_main.dlopen(destlib)
         # Setup error logging
-        def logging_callback(msg):
-            logging.error(FFI_main.string(msg))
-        pyhelper_logging_callback = FFI_main.callback(
-            "void func(const char *)", logging_callback)
+        pyhelper_logging_callback = FFI_main.callback("void func(const char *)",
+                                                      logging_callback)
         FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
 
