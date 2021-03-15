@@ -264,7 +264,8 @@ The following are common printer attributes:
   the config file if a `SET_RETRACTION` command alters them.
 - `printer["bme280 <sensor_name>"].temperature`,
   `printer["bme280 <sensor_name>"].humidity`,
-  `printer["bme280 <sensor_name>"].pressure`: The last read values
+  `printer["bme280 <sensor_name>"].pressure`,
+  `printer["bme280 <sensor_name>"].gas`: The last read values
   from the sensor.
 - `printer["htu21d <sensor_name>"].temperature`,
   `printer["htu21d <sensor_name>"].humidity`: The last read values
