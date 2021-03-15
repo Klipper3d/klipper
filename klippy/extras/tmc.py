@@ -81,14 +81,14 @@ class FieldHelper:
 ######################################################################
 
 class TMCErrorCheck:
-    def __init__(self, config, mcu_tmc, clear_gstat=True):
+    def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
-        self.stepper_name = ' '.join(config.get_name().split()[1:])
+        name_parts = config.get_name().split()
+        self.stepper_name = ' '.join(name_parts[1:])
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
         # Setup for GSTAT query
-        self.clear_gstat = clear_gstat
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
             self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff]
@@ -105,6 +105,8 @@ class TMCErrorCheck:
                 if f in err_fields:
                     err_mask |= self.fields.all_fields[reg_name][f]
         self.drv_status_reg_info = [0, reg_name, mask, err_mask]
+        # Driver quirks
+        self.clear_gstat = (name_parts[0] != 'tmc2130')
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask = reg_info
         count = 0
@@ -162,13 +164,13 @@ class TMCErrorCheck:
 ######################################################################
 
 class TMCCommandHelper:
-    def __init__(self, config, mcu_tmc, current_helper, clear_gstat=True):
+    def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
-        self.echeck_helper = TMCErrorCheck(config, mcu_tmc, clear_gstat)
+        self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
