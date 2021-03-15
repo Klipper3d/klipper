@@ -574,7 +574,7 @@ enabled:
 ## Filament Sensor
 
 The following command is available when the
-[filament_switch_sensor config section](Config_Reference.md#filament_switch_sensor)
+[filament_switch_sensor or filament_motion_sensor config section](Config_Reference.md#filament_switch_sensor)
 is enabled.
 - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current
   status of the filament sensor. The data displayed on the terminal
