@@ -154,17 +154,22 @@ class PrinterExtruder:
         # Set Extruder Temperature
         temp = gcmd.get_float('S', 0.)
         index = gcmd.get_int('T', None, minval=0)
+        current_extruder = self.printer.lookup_object('toolhead').get_extruder()
         if index is not None:
-            section = 'extruder'
-            if index:
-                section = 'extruder%d' % (index,)
-            extruder = self.printer.lookup_object(section, None)
-            if extruder is None:
+            extruders = self.printer.lookup_object("extruders", None)
+            logging.info("extruders", extruders.extruder_names)
+            printer_extruders = extruders.get_extruders()
+            if index < len(printer_extruders):
+                extruder = printer_extruders[index]
+            else:
                 if temp <= 0.:
                     return
                 raise gcmd.error("Extruder not configured")
+            if current_extruder.get_heater() == extruder.get_heater():
+                gcmd.respond_info("not changing temperature of current heater")
+                return
         else:
-            extruder = self.printer.lookup_object('toolhead').get_extruder()
+            extruder = current_extruder
         heater = extruder.get_heater()
         heater.set_temp(temp)
         if wait and temp:
@@ -227,8 +232,23 @@ class DummyExtruder:
     def get_heater(self):
         raise self.printer.command_error("Extruder not configured")
 
+class Extruders:
+    def __init__(self, config):
+        self.name = "extruders"
+        self.extruders = {}
+        self.extruder_names = []
+    def register_extruder(self, name, extruder):
+        self.extruders[name] = extruder
+        self.extruder_names.append(name)
+    def get_extruders(self):
+        return [self.extruders[name] for name in self.extruder_names]
+    def get_extruder(self, name):
+        return self.extruders[name]
+
 def add_printer_objects(config):
     printer = config.get_printer()
+    extruders = Extruders(config.getsection('extruder'))
+    printer.add_object("extruders", extruders)
     for i in range(99):
         section = 'extruder'
         if i:
@@ -236,4 +256,5 @@ def add_printer_objects(config):
         if not config.has_section(section):
             break
         pe = PrinterExtruder(config.getsection(section), i)
+        extruders.register_extruder(section, pe)
         printer.add_object(section, pe)
