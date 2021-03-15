@@ -2039,13 +2039,13 @@ sensor_pin:
 #   name in the above list.
 ```
 
-## BME280 temperature sensor
+## BMP280/BME280/BME680 temperature sensor
 
-BME280 two wire interface (I2C) environmental sensor. Note that this
-sensor is not intended for use with extruders and heater beds, but
-rather for monitoring ambient temperature (C), pressure (hPa), and
-relative humidity. See
-[sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
+BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
+Note that thoose sensors aee not intended for use with extruders and
+heater beds, but rather for monitoring ambient temperature (C),
+pressure (hPa), relative humidity and in case of the BME680 gas level.
+See [sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
 that may be used to report pressure and humidity in addition to
 temperature.
 
