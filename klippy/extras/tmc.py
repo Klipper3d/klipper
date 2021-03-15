@@ -91,12 +91,23 @@ class TMCErrorCheck:
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
-            self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff]
+            self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff, 0]
         else:
             self.gstat_reg_info = None
+        self.clear_gstat = True
         # Setup for DRV_STATUS query
-        reg_name = self.fields.lookup_register("ot")
-        mask = err_mask = 0
+        self.irun_field = "IRUN"
+        reg_name = "DRV_STATUS"
+        mask = err_mask = cs_actual_mask = 0
+        if name_parts[0] == 'tmc2130':
+            # TMC2130 driver quirks
+            self.clear_gstat = False
+            cs_actual_mask = self.fields.all_fields[reg_name]["CS_ACTUAL"]
+        elif name_parts[0] == 'tmc2660':
+            # TMC2660 driver quirks
+            self.irun_field = "CS"
+            reg_name = "READRSP@RDSEL2"
+            cs_actual_mask = self.fields.all_fields[reg_name]["SE"]
         err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
         warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
         for f in err_fields + warn_fields:
@@ -104,11 +115,9 @@ class TMCErrorCheck:
                 mask |= self.fields.all_fields[reg_name][f]
                 if f in err_fields:
                     err_mask |= self.fields.all_fields[reg_name][f]
-        self.drv_status_reg_info = [0, reg_name, mask, err_mask]
-        # Driver quirks
-        self.clear_gstat = (name_parts[0] != 'tmc2130')
+        self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
     def _query_register(self, reg_info, try_clear=False):
-        last_value, reg_name, mask, err_mask = reg_info
+        last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         count = 0
         while 1:
             try:
@@ -126,13 +135,18 @@ class TMCErrorCheck:
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
                 reg_info[0] = last_value = val
             if not val & err_mask:
-                break
+                if not cs_actual_mask or val & cs_actual_mask:
+                    break
+                irun = self.fields.get_field(self.irun_field)
+                if self.check_timer is None or irun < 4:
+                    break
+                # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
             if count >= 3:
                 fmt = self.fields.pretty_format(reg_name, val)
                 raise self.printer.command_error("TMC '%s' reports error: %s"
                                                  % (self.stepper_name, fmt))
-            if try_clear:
+            if try_clear and val & err_mask:
                 try_clear = False
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
     def _do_periodic_check(self, eventtime, try_clear=False):
