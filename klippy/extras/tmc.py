@@ -140,6 +140,9 @@ class TMCErrorCheck:
                 irun = self.fields.get_field(self.irun_field)
                 if self.check_timer is None or irun < 4:
                     break
+                if (self.irun_field == "IRUN"
+                    and not self.fields.get_field("IHOLD")):
+                    break
                 # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
             if count >= 3:
