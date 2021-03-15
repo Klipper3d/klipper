@@ -6,8 +6,6 @@
 import math
 import logging
 
-from gcode import GCodeCommand
-
 
 def extruder_to_idx(name, active=None):
     name = name.lower()
@@ -63,22 +61,23 @@ class MixingExtruder:
                                config.get('extruders', '').split(",")
                                if len(e)]
         if not len(self.extruder_names):
-            raise self._mcu.get_printer().config_error(
+            raise self.printer.config_error(
                 "No extruders configured for mixing")
-        self.extended_g1 = config.get('extended_g1', 'false').lower() == 'true'
         self.extruders = parent.extruders if parent else []
         self.mixing_extruders = parent.mixing_extruders if parent else {}
         self.mixing_extruders[idx] = self
         self.mixing = self._init_mixings(idx, len(self.extruder_names))
         self.commanded_pos = 0
-        self.positions = [0. for p in range(len(self.extruder_names))
-                          ] if idx == 0 else self.mixing_extruders[0].positions
+        self.positions = parent.positions if parent else \
+            [0. for p in range(len(self.extruder_names))]
         self.ratios = [0 for p in range(len(self.extruder_names))]
         self.current_mixing = tuple(self.ratios)
         self.gradient_enabled = False
         # assumed to be sorted list of ((start, middle, end), (ref1, ref2))
         self.gradients = []
         self.gradient_method = 'linear'
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         logging.info("MixingExtruder %d extruders=%s", idx,
                      ",".join(self.extruder_names),
                      ",".join("%.1f" % (x) for x in self.mixing))
@@ -87,11 +86,12 @@ class MixingExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
-        gcode.register_mux_command("SET_MIXING_EXTRUDER", "EXTRUDER",
-                                   self.name, self.cmd_SET_MIXING_EXTRUDER,
+        if not idx:
+            gcode.register_command("SET_MIXING_EXTRUDER",
+                                   self.cmd_SET_MIXING_EXTRUDER,
                                    desc=self.cmd_SET_MIXING_EXTRUDER_help)
-        gcode.register_mux_command("SAVE_MIXING_EXTRUDERS", "EXTRUDER",
-                                   self.name, self.cmd_SAVE_MIXING_EXTRUDERS,
+            gcode.register_command("SAVE_MIXING_EXTRUDERS",
+                                   self.cmd_SAVE_MIXING_EXTRUDERS,
                                    desc=self.cmd_SAVE_MIXING_EXTRUDERS_help)
         gcode.register_mux_command("ADD_MIXING_GRADIENT", "EXTRUDER",
                                    self.name, self.cmd_ADD_MIXING_GRADIENT,
@@ -108,51 +108,46 @@ class MixingExtruder:
 
     def _init_mixings(self, idx, extruders):
         if idx == 0:
-            return [1./extruders for p in range(extruders)]
-        idx = idx-1
+            return [1. / extruders for p in range(extruders)]
+        idx = idx - 1
         if idx < extruders:
             return [1. if p == idx else 0. for p in range(extruders)]
-        idx = idx-extruders
+        idx = idx - extruders
         if idx < extruders:
-            return [0. if p == idx else 1./(extruders-1)
+            return [0. if p == idx else 1. / (extruders - 1)
                     for p in range(extruders)]
-        idx = idx-extruders
+        idx = idx - extruders
         if extruders == 3:
-            if idx < 2*extruders:
-                return [[0. if p == x else (1+((x+y) % 2))/3.
+            if idx < 2 * extruders:
+                return [[0. if p == x else (1 + (((p - x) % 3 + y) % 2)) / 3.
                          for p in range(extruders)]
-                        for x in range(extruders) for y in (1, 2)][idx]
-            idx = idx-2*extruders
+                        for x in range(extruders) for y in (0, 1)][idx]
+            idx = idx - 2 * extruders
         elif extruders > 3:
-            if idx < (extruders*(extruders-1)/2):
-                return [[0. if p == x or p == y else 1./(extruders-2)
+            if idx < (extruders * (extruders - 1) / 2):
+                return [[0. if p == x or p == y else 1. / (extruders - 2)
                          for p in range(extruders)]
                         for x in range(extruders)
-                        for y in range(x+1, extruders)][idx]
-            idx = idx-(extruders*(extruders-1)/2)
-        return [1./extruders for p in range(extruders)]
+                        for y in range(x + 1, extruders)][idx]
+            idx = idx - (extruders * (extruders - 1) / 2)
+        return [1. / extruders for p in range(extruders)]
 
-    def _activate(self):
+    def handle_connect(self):
         if self.activated:
             return
         self.activated = True
+        extruders = self.printer.lookup_object("extruders", None)
         if self.mixing_extruders[0] != self:
+            extruders.register_extruder(self.name, self)
             return
         try:
-            self.extruders = [self.printer.lookup_object(extruder)
-                              for extruder in self.extruder_names]
+            self.extruders.extend(self.printer.lookup_object(extruder)
+                                  for extruder in self.extruder_names)
+            extruders.register_extruder(self.name, self)
         except Exception as e:
-            self.extruders = []
+            self.extruders.clear()
             logging.error("no extruders found: %s" %
                           (", ".join(self.extruder_names)), e)
-        gcode = self.printer.lookup_object('gcode')
-        # Register commands
-        if self.extended_g1:
-            for cmd in ("G1", "G2", "G3"):
-                o = gcode.register_command(cmd, None)
-                if o:
-                    gcode.register_command(cmd,
-                                           lambda g: self.cmd_G(cmd, o, g))
 
     def update_move_time(self, flush_time):
         for extruder in self.extruders:
@@ -162,6 +157,7 @@ class MixingExtruder:
         diff_r = move.axes_r[3] - prev_move.axes_r[3]
         if diff_r:
             m = max(self.mixing)
+            # TODO: don't use extruder property instant_corner_v
             return (self.extruders[0].instant_corner_v / abs(m * diff_r))**2
         return move.max_cruise_v2
 
@@ -169,7 +165,8 @@ class MixingExtruder:
         mixing = weights[idx]
         if not mixing:
             return None
-        return MixingMove(move.start_pos[0], move.start_pos[1],
+        # TODO: don't use move properties
+        move = MixingMove(move.start_pos[0], move.start_pos[1],
                           move.start_pos[2], self.positions[idx],
                           move.axes_d[0], move.axes_d[1], move.axes_d[2],
                           mixing * move.axes_d[3],
@@ -217,6 +214,7 @@ class MixingExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.extruders[0].max_extrude_ratio
                    * self.extruders[0].filament_area))
+        return move
 
     def _get_gradient(self, start_pos, end_pos):
         default = self.mixing
@@ -239,7 +237,7 @@ class MixingExtruder:
                 return list(((1. - w) * s + w * e)
                             for s, e in zip(start_mix, end_mix))
             if self.gradient_method == 'spherical':
-                pos = [(x+y)/2. for x, y in zip(start_pos, end_pos)]
+                pos = [(x + y) / 2. for x, y in zip(start_pos, end_pos)]
                 dist = math.sqrt(sum(x**2 for x in pos))
                 if dist <= start:
                     return start_mix
@@ -247,24 +245,21 @@ class MixingExtruder:
                     default = end_mix
                     continue
                 w = (dist - start) / (end - start)
-                logging.info("spherical gradient @%.1f(%.1f-%.1f) [%s-%s]" %
-                             (zpos, start, end,
+                mix = list(((1. - w) * s + w * e)
+                           for s, e in zip(start_mix, end_mix))
+                logging.info("spherical gradient @%.1f(%.1f-%.1f) [%s-%s]=%s" %
+                             (dist, start, end,
                               "/".join("%.1f" % x for x in start_mix),
-                              "/".join("%.1f" % x for x in end_mix)))
-                return list(((1. - w) * s + w * e)
-                            for s, e in zip(start_mix, end_mix))
+                              "/".join("%.1f" % x for x in end_mix),
+                              "/".join("%.1f" % x for x in mix)))
+                return mix
         return default
 
     def check_move(self, move):
-        mixing = self.mixing if not self.gradient_enabled \
-            else self._get_gradient(move.start_pos[:3], move.end_pos[:3])
-        for idx, extruder in enumerate(self.extruders):
-            scaled_move = self._scale_move(move, idx, mixing)
-            if scaled_move:
-                self._check_move(scaled_move, move)
+        self.extruders[0].check_move(move)
 
     def move(self, print_time, move):
-        mixing = self.mixing if self.gradient_enabled \
+        mixing = self.mixing if not self.gradient_enabled \
             else self._get_gradient(move.start_pos[:3], move.end_pos[:3])
         self.current_mixing = tuple(mixing)
         for idx, extruder in enumerate(self.extruders):
@@ -275,7 +270,6 @@ class MixingExtruder:
         self.commanded_pos = move.end_pos[3]
 
     def get_status(self, eventtime):
-        status = {}
         status = dict(mixing=",".join("%0.1f%%" % (m * 100.)
                                       for m in self.mixing),
                       current=",".join("%0.1f%%" % (m * 100.)
@@ -283,8 +277,8 @@ class MixingExtruder:
                       positions=",".join("%0.2fmm" % (p)
                                          for p in self.positions),
                       ticks=",".join("%0.2f" % (
-                        extruder.stepper.get_mcu_position())
-                                      for extruder in self.extruders),
+                                     extruder.stepper.get_mcu_position())
+                                     for extruder in self.extruders),
                       extruders=",".join(extruder.name
                                          for extruder in self.extruders))
         for i, gradient in enumerate(self.gradients):
@@ -326,32 +320,9 @@ class MixingExtruder:
         return False, self.name + ": mixing=%s" % (
             ",".join("%0.2f" % (m) for m in self.current_mixing))
 
-    def cmd_G(self, name, orig, gcmd):
-        weighting = gcmd.get('E', None)
-        if not weighting or ":" not in weighting:
-            return orig(gcmd)
-        toolhead = self.printer.lookup_object('toolhead')
-        extruder = toolhead.get_extruder()
-        if not extruder.get_name().startswith("mixingextruder"):
-            raise gcmd.error("No mixing extruder active")
-        gcode = self.printer.lookup_object('gcode')
-        weights = [float(w)
-                   for i, w in enumerate(weighting.split(":"))
-                   if i < len(self.extruders)]
-        extrude = sum(weights)
-        if min(weights) < 0:
-            raise gcmd.error("Invalid extrude: %s" % (weighting))
-        for i, w in enumerate(weights):
-            extruder.mixing[i] = w/extrude
-        orig(GCodeCommand(
-            gcode, name, gcmd.get_commandline(),
-            dict(gcmd.get_command_parameters(), E="%f" % (extrude)),
-            gcmd._need_ack))
-
     cmd_SET_MIXING_EXTRUDER_help = "Set scale on motor/extruder"
 
     def cmd_SET_MIXING_EXTRUDER(self, gcmd):
-        self._activate()
         extruder = gcmd.get('MIXING_MOTOR')
         scale = gcmd.get_float('SCALE', minval=0.)
         if extruder not in self.extruder_names:
@@ -368,7 +339,6 @@ class MixingExtruder:
     cmd_SAVE_MIXING_EXTRUDERS_help = "Save the scales on motors"
 
     def cmd_SAVE_MIXING_EXTRUDERS(self, gcmd):
-        self._activate()
         mixingextruder = self
         extruder = gcmd.get('MIXING_EXTRUDER', None)
         if extruder:
@@ -379,12 +349,15 @@ class MixingExtruder:
         if s <= 0:
             raise gcmd.error("Could not save ratio: its empty")
         for i, v in enumerate(self.ratios):
-            mixingextruder.mixing[i] = v/s
+            mixingextruder.mixing[i] = v / s
             self.ratios[i] = 0.0
 
     cmd_SET_MIXING_GRADIENT_help = "Turn no/off grdient mixing"
 
     def cmd_SET_MIXING_GRADIENT(self, gcmd):
+        method = gcmd.get('METHOD')
+        if method in ["linear", "spherical"]:
+            self.gradient_method = method
         try:
             enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
             self.gradient_enabled = enable == 1
@@ -433,7 +406,6 @@ class MixingExtruder:
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
 
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
-        self._activate()
         toolhead = self.printer.lookup_object('toolhead')
         if toolhead.get_extruder() is self:
             gcmd.respond_info("Extruder %s already active" % (self.name,))
@@ -447,7 +419,6 @@ class MixingExtruder:
     cmd_MIXING_STATUS_help = "Display the status of the given MixingExtruder"
 
     def cmd_MIXING_STATUS(self, gcmd):
-        self._activate()
         eventtime = self.printer.get_reactor().monotonic()
         status = self.get_status(eventtime)
         gcmd.respond_info(", ".join("%s=%s" % (k, v)
