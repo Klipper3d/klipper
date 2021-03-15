@@ -6,6 +6,7 @@
 
 PIN_MIN_TIME = 0.100
 
+
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -34,6 +35,7 @@ class PrinterOutputPin:
             self.reactor = self.printer.get_reactor()
             self.safety_timeout = config.getfloat('safety_timeout', 0,
                                         minval=0.)
+            self.relax_margin = 0.1 * self.safety_timeout + PIN_MIN_TIME
             self.mcu_pin.setup_max_duration(self.safety_timeout)
             self.resend_timer = self.reactor.register_timer(
                 self._resend_current_val)
@@ -82,13 +84,11 @@ class PrinterOutputPin:
             lambda print_time: self._set_pin(print_time, value, cycle_time))
 
     def _resend_current_val(self, eventtime):
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback(lambda print_time:
-            self._set_pin(self.last_print_time + 0.8 * self.safety_timeout,
-                           self.last_value, self.last_cycle_time, True)
-            )
+        self._set_pin(self.last_print_time + 0.8 * self.safety_timeout,
+                       self.last_value, self.last_cycle_time, True)
+
         if self.last_value != self.shutdown_value:
-            return eventtime + 0.7 * self.safety_timeout
+            return eventtime + (0.8 * self.safety_timeout) - self.relax_margin
         return self.reactor.NEVER
 
 def load_config_prefix(config):
