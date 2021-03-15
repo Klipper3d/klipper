@@ -21,8 +21,10 @@ so that when your host or MCU encounters an error, the tool will stop.
     cycle_time: 0.001
     shutdown_value: 0
 
-    safety_timeout: 5
+    host_acknowledge_timeout: 5
     # Default: 0 (disabled)
+    # Amount of time in which the host has to acknowledge
+    # a non-shutdown output value.
     # Suggested value is around 5 seconds.
     # Use a value that does not burn up your stock.
     # Please note that during homing, your tool
