@@ -84,7 +84,8 @@ class PrinterOutputPin:
             lambda print_time: self._set_pin(print_time, value, cycle_time))
 
     def _resend_current_val(self, eventtime):
-        self._set_pin(self.last_print_time + 0.8 * self.safety_timeout,
+        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
+        self._set_pin(print_time + self.relax_margin,
                        self.last_value, self.last_cycle_time, True)
 
         if self.last_value != self.shutdown_value:
