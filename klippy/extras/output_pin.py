@@ -72,7 +72,8 @@ class PrinterOutputPin:
                     self.resend_timer, self.reactor.NEVER)
             else:
                 self.reactor.update_timer(
-                    self.resend_timer, self.reactor.monotonic())
+                    self.resend_timer, self.reactor.monotonic()
+                    + (0.8 * self.host_ack_timeout) - PIN_MIN_TIME)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
