@@ -274,6 +274,35 @@ of the unused device high (so that it will not attempt to use the SPI
 bus). The board's schematic is often a useful reference for finding
 which devices are on an SPI bus and their associated pins.
 
+## Why did I get a "TMC reports error: ..." error?
+
+This type of error indicates the TMC driver detected a problem and has
+disabled itself. That is, the driver stopped holding its position and
+ignored movement commands. If Klipper detects that an active driver
+has disabled itself, it will transition the printer into a "shutdown"
+state.
+
+Some common errors and tips for diagnosing them:
+
+**TMC reports error: ... ot=1(OvertempError!)"**: This indicates the
+motor driver disabled itself because it became too hot. Typical
+solutions are to decrease the stepper motor current, increase cooling
+on the stepper motor driver, and/or increase cooling on the stepper
+motor.
+
+**TMC reports error: ... ShortToGND** OR **LowSideShort**: This
+indicates the driver has disabled itself because it detected very high
+current passing through the driver. This may indicate a loose or
+shorted wire to the stepper motor or within the stepper motor itself.
+
+**TMC reports error: ... reset=1(Reset)** OR **CS_ACTUAL=0(Reset?)**
+OR **SE=0(Reset?)**: This indicates that the driver has reset itself
+mid-print. This may be due to voltage or wiring issues.
+
+**TMC reports error: ... uv_cp=1(Undervoltage!)**: This indicates the
+driver has detected a low-voltage event and has disabled itself. This
+may be due to wiring or power supply issues.
+
 ## How do I tune spreadcycle/coolstep/etc. mode on my drivers?
 
 The [Trinamic website](https://www.trinamic.com/) has guides on
