@@ -100,9 +100,10 @@ FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "DEDGE": (lambda v: "1(Both Edges Active!)" if v else ""),
     "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
-    "VSENSE": (lambda v: "%d(%dmV)" % (v, 165 if v else 305)),
+    "VSENSE": (lambda v: "1(165mV)" if v else "0(305mV)"),
     "SDOFF": (lambda v: "1(Step/Dir disabled!)" if v else ""),
-    "DISS2G": (lambda v: "%d(Short to GND disabled!)" if v else ""),
+    "DISS2G": (lambda v: "1(Short to GND disabled!)" if v else ""),
+    "SE": (lambda v: ("%d" % v) if v else "0(Reset?)"),
 })
 
 
