@@ -160,7 +160,8 @@ class PrinterExtruder:
         # Set Extruder Temperature
         temp = gcmd.get_float('S', 0.)
         index = gcmd.get_int('T', None, minval=0)
-        current_extruder = self.printer.lookup_object('toolhead').get_extruder()
+        current_extruder = \
+            self.printer.lookup_object('toolhead').get_extruder()
         if index is not None:
             extruders = self.printer.lookup_object("extruders", None)
             logging.info("extruders", extruders.extruder_names)
@@ -171,7 +172,8 @@ class PrinterExtruder:
                 if temp <= 0.:
                     return
                 raise gcmd.error("Extruder not configured")
-            if current_extruder.get_heater() == extruder.get_heater():
+            if current_extruder != extruder and \
+                    current_extruder.get_heater() == extruder.get_heater():
                 gcmd.respond_info("not changing temperature of current heater")
                 return
         else:
