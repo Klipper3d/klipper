@@ -303,6 +303,15 @@ mid-print. This may be due to voltage or wiring issues.
 driver has detected a low-voltage event and has disabled itself. This
 may be due to wiring or power supply issues.
 
+It's also possible that a **TMC reports error** shutdown occurs due to
+SPI errors that prevent communication with the driver (on tmc2130,
+tmc5160, or tmc2660). If this occurs, it's common for the reported
+driver status to show `00000000` or `ffffffff` - for example: `TMC
+reports error: DRV_STATUS: ffffffff ...` OR `TMC reports error:
+READRSP@RDSEL2: 00000000 ...`. Such a failure may be due to an SPI
+wiring problem or may be due to a self-reset or failure of the TMC
+driver.
+
 ## How do I tune spreadcycle/coolstep/etc. mode on my drivers?
 
 The [Trinamic website](https://www.trinamic.com/) has guides on
