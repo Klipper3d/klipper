@@ -85,6 +85,7 @@ FieldFormatters = {
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
+    "CS_ACTUAL":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
 }
 
 
