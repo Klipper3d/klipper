@@ -117,6 +117,7 @@ class PrinterProbe:
         pos = toolhead.get_position()
         pos[2] = self.z_position
         endstops = [(self.mcu_probe, "probe")]
+        self.mcu_probe.probe_tare()
         verify = self.printer.get_start_args().get('debugoutput') is None
         try:
             homing_state.homing_move(pos, endstops, speed,
@@ -277,6 +278,8 @@ class ProbeEndstopWrapper:
             config, 'activate_gcode', '')
         self.deactivate_gcode = gcode_macro.load_template(
             config, 'deactivate_gcode', '')
+        self.tare_gcode = gcode_macro.load_template(
+            config, 'tare_gcode', '')
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
         pin = config.get('pin')
@@ -314,6 +317,13 @@ class ProbeEndstopWrapper:
         if toolhead.get_position()[:3] != start_pos[:3]:
             raise self.printer.command_error(
                 "Toolhead moved during probe deactivate_gcode script")
+    def probe_tare(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        start_pos = toolhead.get_position()
+        self.tare_gcode.run_gcode_from_command()
+        if toolhead.get_position()[:3] != start_pos[:3]:
+            raise self.printer.command_error(
+                "Toolhead moved during probe tare_gcode script")
     def get_position_endstop(self):
         return self.position_endstop
 
