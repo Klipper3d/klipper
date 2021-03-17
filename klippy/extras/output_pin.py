@@ -67,7 +67,7 @@ class PrinterOutputPin:
         self.last_cycle_time = cycle_time
         self.last_print_time = print_time
         if self.host_ack_timeout != 0 and self.resend_timer is None:
-            self.resend_timer = self.reactor.add_timer(
+            self.resend_timer = self.reactor.register_timer(
                 self._resend_current_val, self.reactor.NOW)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):
