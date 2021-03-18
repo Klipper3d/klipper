@@ -201,16 +201,11 @@ CAN_IRQHandler(void)
         SOC_CAN->RF1R = CAN_RF1R_RFOM1;
 
         // Process packet
-        uint8_t data[8];
-        data[0] = (rdlr >>  0) & 0xff;
-        data[1] = (rdlr >>  8) & 0xff;
-        data[2] = (rdlr >> 16) & 0xff;
-        data[3] = (rdlr >> 24) & 0xff;
-        data[4] = (rdhr >>  0) & 0xff;
-        data[5] = (rdhr >>  8) & 0xff;
-        data[6] = (rdhr >> 16) & 0xff;
-        data[7] = (rdhr >> 24) & 0xff;
-        canbus_process_data(rir_id, dlc, data);
+        union {
+            struct { uint32_t rdlr, rdhr; };
+            uint8_t data[8];
+        } rdata = { .rdlr = rdlr, .rdhr = rdhr };
+        canbus_process_data(rir_id, dlc, rdata.data);
     }
     uint32_t ier = SOC_CAN->IER;
     if (ier & CAN_IER_FMPIE0 && SOC_CAN->RF0R & CAN_RF0R_FMP0) {
