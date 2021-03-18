@@ -344,7 +344,7 @@ class PrinterRail:
             return
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
-        mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
+        mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'), share_type='endstop')
         mcu_endstop.add_stepper(stepper)
         name = stepper.get_name(short=True)
         self.endstops.append((mcu_endstop, name))
