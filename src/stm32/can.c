@@ -179,8 +179,8 @@ canbus_set_filter(uint32_t id)
     /* 32-bit scale for the filter */
     SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
 
-    /* FIFO 0 assigned for the filter */
-    SOC_CAN->FFA1R = 0;
+    /* FIFO 1 assigned to 'id' */
+    SOC_CAN->FFA1R = (1<<2);
 
     /* Filter activation */
     SOC_CAN->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
@@ -192,9 +192,29 @@ canbus_set_filter(uint32_t id)
 void
 CAN_IRQHandler(void)
 {
+    if (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
+        // Read and ack data packet
+        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[1];
+        uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+        uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
+        uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
+        SOC_CAN->RF1R = CAN_RF1R_RFOM1;
+
+        // Process packet
+        uint8_t data[8];
+        data[0] = (rdlr >>  0) & 0xff;
+        data[1] = (rdlr >>  8) & 0xff;
+        data[2] = (rdlr >> 16) & 0xff;
+        data[3] = (rdlr >> 24) & 0xff;
+        data[4] = (rdhr >>  0) & 0xff;
+        data[5] = (rdhr >>  8) & 0xff;
+        data[6] = (rdhr >> 16) & 0xff;
+        data[7] = (rdhr >> 24) & 0xff;
+        canbus_process_data(rir_id, dlc, data);
+    }
     uint32_t ier = SOC_CAN->IER;
     if (ier & CAN_IER_FMPIE0 && SOC_CAN->RF0R & CAN_RF0R_FMP0) {
-        // Rx
+        // Admin Rx
         SOC_CAN->IER = ier = ier & ~CAN_IER_FMPIE0;
         canbus_notify_rx();
     }
@@ -292,6 +312,7 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
+    SOC_CAN->IER = CAN_IER_FMPIE1;
 
     // Convert unique 96-bit chip id into 48 bit representation
     uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
