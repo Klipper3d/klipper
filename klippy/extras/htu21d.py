@@ -108,7 +108,7 @@ class HTU21D:
 
     def setup_callback(self, cb):
         self._callback = cb
-        
+
     def get_report_time_delta(self):
         return self.report_time
 
