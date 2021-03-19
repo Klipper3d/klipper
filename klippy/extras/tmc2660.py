@@ -251,7 +251,7 @@ class TMC2660:
         set_config_field(config, "seimin", 0)
         set_config_field(config, "sedn", 0)
         set_config_field(config, "semax", 0)
-        set_config_field(config, "sup", 0)
+        set_config_field(config, "seup", 0)
         set_config_field(config, "semin", 0)
 
         # SGSCONF
