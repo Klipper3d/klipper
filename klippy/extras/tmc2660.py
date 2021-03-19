@@ -33,17 +33,17 @@ Fields["CHOPCONF"] = {
 }
 
 Fields["SMARTEN"] = {
-    "SEMIN" : 0x0f,
-    "SEUP": 0x03 << 5,
-    "SEMAX": 0x0f << 8,
-    "SEDN": 0x03 << 13,
-    "SEIMIN": 0x01 << 15
+    "semin" : 0x0f,
+    "seup": 0x03 << 5,
+    "semax": 0x0f << 8,
+    "sedn": 0x03 << 13,
+    "seimin": 0x01 << 15
 }
 
 Fields["SGCSCONF"] = {
     "CS": 0x1f,
-    "SGT": 0x7F << 8,
-    "SFILT": 0x01 << 16
+    "sgt": 0x7F << 8,
+    "sfilt": 0x01 << 16
 }
 
 Fields["DRVCONF"] = {
@@ -94,7 +94,7 @@ Fields["READRSP@RDSEL2"] = {
     "SG_RESULT@RDSEL2": 0x1f << 19
 }
 
-SignedFields = ["SGT"]
+SignedFields = ["sgt"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
@@ -248,15 +248,15 @@ class TMC2660:
                 self.fields.get_field("HEND")) > 15:
                 raise config.error("driver_HEND + driver_HSTRT must be <= 15")
         # SMARTEN
-        set_config_field(config, "SEIMIN", 0)
-        set_config_field(config, "SEDN", 0)
-        set_config_field(config, "SEMAX", 0)
-        set_config_field(config, "SEUP", 0)
-        set_config_field(config, "SEMIN", 0)
+        set_config_field(config, "seimin", 0)
+        set_config_field(config, "sedn", 0)
+        set_config_field(config, "semax", 0)
+        set_config_field(config, "sup", 0)
+        set_config_field(config, "semin", 0)
 
         # SGSCONF
-        set_config_field(config, "SFILT", 0)
-        set_config_field(config, "SGT", 0)
+        set_config_field(config, "sfilt", 0)
+        set_config_field(config, "sgt", 0)
 
         # DRVCONF
         set_config_field(config, "SLPH", 0)
