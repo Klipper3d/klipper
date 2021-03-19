@@ -3659,8 +3659,9 @@ example.
 revision:
 #   The replicape hardware revision. Currently only revision "B3" is
 #   supported. This parameter must be provided.
-#enable_pin: !P9_41
-#   The replicape global enable pin. The default is !P9_41.
+#enable_pin: !gpio0_20
+#   The replicape global enable pin. The default is !gpio0_20 (aka
+#   P9_41).
 host_mcu:
 #   The name of the mcu config section that communicates with the
 #   Klipper "linux process" mcu instance. This parameter must be
