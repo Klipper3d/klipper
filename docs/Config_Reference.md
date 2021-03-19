@@ -13,11 +13,6 @@ Klipper and choosing an initial config file.
 Many config options require the name of a micro-controller pin.
 Klipper uses the hardware names for these pins - for example `PA4`.
 
-For AVR micro-controllers one may also use an Arduino alias (such as
-"ar29" or "analog3"). In order to use Arduino names, the `pin_map`
-variable in the `[mcu]` section must be present and have a value of
-`arduino`.
-
 Pin names may be preceded by `!` to indicate that a reverse polarity
 should be used (eg, trigger on low instead of high).
 
@@ -49,9 +44,6 @@ serial:
 #canbus_interface:
 #   If using a device connected to a CAN bus then this sets the CAN
 #   network interface to use. The default is 'can0'.
-#pin_map:
-#   This option may be used to enable Arduino pin name aliases. The
-#   default is to not enable the aliases.
 #restart_method:
 #   This controls the mechanism the host will use to reset the
 #   micro-controller. The choices are 'arduino', 'cheetah', 'rpi_usb',

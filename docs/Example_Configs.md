@@ -82,8 +82,8 @@ directory](../config/).
       170` as that is already the default value.
    7. Where possible, lines should not exceed 80 columns.
 7. Do not use any deprecated features in the example config file. The
-   `step_distance` parameter is deprecated and should not be in any
-   example config file.
+   `step_distance` and `pin_map` parameters are deprecated and should
+   not be in any example config file.
 8. Do not disable a default safety system in an example config file.
    For example, a config should not specify a custom
    `max_extrude_cross_section`. Do not enable debugging features. For
