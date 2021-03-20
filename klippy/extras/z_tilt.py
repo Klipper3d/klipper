@@ -8,6 +8,19 @@ import mathutil
 import importlib
 from . import probe
 
+def params_to_normal_form(np, params, offsets):
+    v = np.array([offsets[0], offsets[1], params['z_adjust']])
+    r = np.array([1, 0, params['x_adjust']])
+    s = np.array([0, 1, params['y_adjust']])
+    cp = np.cross(r, s)
+    return np.append(cp, np.dot(cp, v))
+
+def intersect_3_planes(np, p1, p2, p3):
+    a = np.array([p1[0:3], p2[0:3], p3[0:3]])
+    b = np.array([p1[3], p2[3], p3[3]])
+    sol = np.linalg.solve(a, b)
+    return sol
+
 class ZAdjustHelper:
     def __init__(self, config, z_count):
         self.printer = config.get_printer()
@@ -19,7 +32,12 @@ class ZAdjustHelper:
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         z_steppers = [s for s in kin.get_steppers() if s.is_active_axis('z')]
-        if len(z_steppers) != self.z_count:
+        if self.z_count is None:
+            if len(z_steppers) != 3:
+                raise self.printer.config_error(
+                    "%s z_positions needs exactly 3 items for calibration"
+                        % (self.name))
+        elif len(z_steppers) != self.z_count:
             raise self.printer.config_error(
                 "%s z_positions needs exactly %d items" % (
                     self.name, len(z_steppers)))
@@ -119,15 +137,20 @@ class ZTilt:
             logging.info("numpy not installed, Z_TILT_CALIBRATE will not be "
                 "available");
             self.numpy = None
-        z_positions = config.get('z_positions').split('\n')
-        try:
-            z_positions = [line.split(',', 1)
-                           for line in z_positions if line.strip()]
-            self.z_positions = [(float(zp[0].strip()), float(zp[1].strip()))
-                                for zp in z_positions]
-        except:
-            raise config.error("Unable to parse z_positions in %s" % (
-                config.get_name()))
+        z_positions = config.get('z_positions', None)
+        z_count = None
+        self.z_positions = None
+        if z_positions is not None:
+            z_positions = z_positions.split('\n')
+            try:
+                z_positions = [line.split(',', 1)
+                               for line in z_positions if line.strip()]
+                self.z_positions = [(float(zp[0].strip()), float(zp[1].strip()))
+                                    for zp in z_positions]
+                z_count = len(self.z_positions)
+            except:
+                raise config.error("Unable to parse z_positions in %s" % (
+                    config.get_name()))
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
@@ -143,7 +166,7 @@ class ZTilt:
                     len(self.probe_helper.get_probe_points())):
                 raise config.error("The number of z_offsets must match the "
                     "number of probe points in %s" % (config.get_name()))
-        self.z_helper = ZAdjustHelper(config, len(self.z_positions))
+        self.z_helper = ZAdjustHelper(config, z_count)
         self.cal_helper = probe.ProbePointsHelper(config,
             self.cal_finalize, option_name='extra_points')
         self.cal_helper.minimum_points(1)
@@ -152,17 +175,32 @@ class ZTilt:
         self.num_probe_points = len(probe_points)
         probe_points.extend(self.cal_helper.get_probe_points())
         self.cal_helper.update_probe_points(probe_points, 3)
-        self.cal_avg_len = config.getint('averaging_len', 3, minval=1)
+        self.ad_helper = probe.ProbePointsHelper(config, self.ad_finalize)
+        self.ad_helper.update_probe_points(probe_points, 3)
+        self.cal_conf_avg_len = config.getint('averaging_len', 3, minval=1)
+        self.ad_conf_delta = config.getfloat('autodetect_delta', 1., minval=.1)
+        if (config.get('autodetect_delta', None) is not None or
+            z_positions is None) and self.numpy is None:
+                raise config.error(self.err_missing_numpy)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
                                desc=self.cmd_Z_TILT_ADJUST_help)
         gcode.register_command('Z_TILT_CALIBRATE', self.cmd_Z_TILT_CALIBRATE,
                                desc=self.cmd_Z_TILT_CALIBRATE_help)
+        gcode.register_command('Z_TILT_AUTODETECT', self.cmd_Z_TILT_AUTODETECT,
+                               desc=self.cmd_Z_TILT_AUTODETECT_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     cmd_Z_TILT_CALIBRATE_help = ("Calibrate Z tilt with additional probing "
         "points")
+    cmd_Z_TILT_AUTODETECT_help = "Autodetect pivot point of Z motors"
+    err_missing_numpy = ("Failed to import `numpy` module, make sure it was "
+                    "installed via `~/klippy-env/bin/pip install`")
     def cmd_Z_TILT_ADJUST(self, gcmd):
+        if (self.z_positions is None):
+            gcmd.respond_info(
+                "No z_positions configured. Run Z_TILT_AUTODETECT first")
+            return
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
     def perform_coordinate_descent(self, offsets, positions):
@@ -184,7 +222,7 @@ class ZTilt:
             errorfunc)
         logging.info("Calculated bed tilt parameters: %s", new_params)
         return new_params
-    def apply_adjustments(self, offsets, new_params):
+    def apply_adjustments(self, offsets, new_params, prev_adjustments=None):
         z_offset = offsets[2]
         speed = self.probe_helper.get_lift_speed()
         x_adjust = new_params['x_adjust']
@@ -193,6 +231,9 @@ class ZTilt:
                     - x_adjust * offsets[0] - y_adjust * offsets[1])
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
+        if (prev_adjustments):
+            adjustments = [z1 - z2 for (z1, z2) in
+                           zip(adjustments, prev_adjustments)]
         self.z_helper.adjust_steppers(adjustments, speed)
     def probe_finalize(self, offsets, positions):
         if self.z_offsets is not None:
@@ -203,9 +244,7 @@ class ZTilt:
         return self.retry_helper.check_retry([p[2] for p in positions])
     def cmd_Z_TILT_CALIBRATE(self, gcmd):
         if (self.numpy is None):
-            gcmd.respond_info(
-                "Failed to import `numpy` module, make sure it was "
-                "installed via `~/klippy-env/bin/pip install`")
+            gcmd.respond_info(self.err_missing_numpy)
             return
         self.cal_avg_len = gcmd.get_int('AVGLEN', self.cal_conf_avg_len)
         self.cal_gcmd = gcmd
@@ -239,6 +278,101 @@ class ZTilt:
         section = self.section
         configfile.set(section, "z_offsets", s_zoff)
         self.cal_gcmd.respond_info(
+          "The SAVE_CONFIG command will update the printer config\n"
+          "file with these parameters and restart the printer.")
+    def ad_init(self):
+        self.ad_phase = 0
+        self.ad_params = []
+        self.ad_prev_adjustments = [0, 0, 0]
+    def cmd_Z_TILT_AUTODETECT(self, gcmd):
+        if (self.numpy is None):
+            gcmd.respond_info(self.err_missing_numpy)
+        self.cal_avg_len = gcmd.get_int('AVGLEN', self.cal_conf_avg_len)
+        self.ad_delta = gcmd.get_float('DELTA', self.ad_conf_delta, minval=.1)
+        self.ad_init()
+        self.ad_gcmd = gcmd
+        self.ad_runs = []
+        self.ad_points = []
+        self.ad_error = None
+        self.ad_helper.start_probe(gcmd)
+    def ad_finalize(self, offsets, positions):
+        np = self.numpy
+        avlen = self.cal_avg_len
+        delta = self.ad_delta / 2
+        speed = self.probe_helper.get_lift_speed()
+        new_params = self.perform_coordinate_descent(offsets, positions)
+        if (self.ad_phase != 0):
+            new_params['z_adjust'] -= delta
+        if (self.ad_phase == 0):
+            self.ad_points.append([z for _, _, z in
+                                    positions[:self.num_probe_points]])
+        self.ad_params.append(new_params)
+        if self.ad_phase < 3:
+            adjustments = [ -delta, -delta, -delta]
+            adjustments[self.ad_phase] = delta
+            next_adjustments = [z1 - z2 for (z1, z2) in
+                zip(adjustments, self.ad_prev_adjustments)]
+            self.z_helper.adjust_steppers(next_adjustments, speed)
+            self.ad_phase += 1
+            self.ad_prev_adjustments = adjustments
+            return "retry"
+        # calculcate results
+        p = []
+        for i in range(4):
+            p.append(params_to_normal_form(np, self.ad_params[i], offsets))
+        z_pos = (intersect_3_planes(np, p[0], p[2], p[3])[:2],
+                 intersect_3_planes(np, p[0], p[1], p[3])[:2],
+                 intersect_3_planes(np, p[0], p[1], p[2])[:2])
+        s_zpos = ""
+        for zp in z_pos:
+            s_zpos += "%.6f, %.6f\n" % tuple(zp)
+        self.ad_gcmd.respond_info("current estimated z_positions %s" % (s_zpos))
+        self.ad_runs.append(z_pos)
+        if len(self.ad_runs) >= avlen:
+            self.z_positions = np.mean(self.ad_runs[-avlen:], axis=0)
+        else:
+            self.z_positions = np.mean(self.ad_runs, axis=0)
+        self.apply_adjustments(offsets, self.ad_params[0],
+            self.ad_prev_adjustments)
+        if len(self.ad_runs) >= avlen:
+            errors = np.std(self.ad_runs[-avlen:], axis=0)
+            error = np.std(errors)
+            if self.ad_error is None:
+                self.ad_gcmd.respond_info("current error: %.6f" % (error))
+            else:
+                self.ad_gcmd.respond_info(
+                    "previous error: %.6f current error: %.6f"
+                    % (self.ad_error, error))
+            if (self.ad_error is not None):
+                if error >= self.ad_error:
+                    self.ad_finalize_done(offsets)
+                    return
+            self.ad_error = error
+        # restart
+        self.ad_init()
+        return "retry"
+    def ad_finalize_done(self, offsets):
+        np = self.numpy
+        avlen = self.cal_avg_len
+        # calculate probe point z offsets
+        z_offsets = np.mean(self.ad_points[-avlen:], axis=0)
+        z_offsets = [z - offsets[2] for z in z_offsets]
+        self.z_offsets = z_offsets
+        logging.info("final z_offsets %s" % (z_offsets))
+        configfile = self.printer.lookup_object('configfile')
+        section = self.section
+        s_zoff = ""
+        for off in z_offsets:
+            s_zoff += "%.6f, " % off
+        s_zoff = s_zoff[:-2]
+        configfile.set(section, "z_offsets", s_zoff)
+        s_zpos = ""
+        for zpos in self.z_positions:
+            s_zpos += "%.6f, %.6f\n" % tuple(zpos)
+        configfile.set(section, "z_positions", s_zpos)
+        self.ad_gcmd.respond_info("final z_positions are %s" % (s_zpos))
+        self.ad_gcmd.respond_info("final z_offsets are: %s" % (s_zoff))
+        self.ad_gcmd.respond_info(
           "The SAVE_CONFIG command will update the printer config\n"
           "file with these parameters and restart the printer.")
 
