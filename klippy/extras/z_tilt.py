@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import mathutil
+import importlib
 from . import probe
 
 class ZAdjustHelper:
@@ -111,6 +112,13 @@ class RetryHelper:
 class ZTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.section = config.get_name()
+        try:
+            self.numpy = importlib.import_module('numpy')
+        except ImportError:
+            logging.info("numpy not installed, Z_TILT_CALIBRATE will not be "
+                "available");
+            self.numpy = None
         z_positions = config.get('z_positions').split('\n')
         try:
             z_positions = [line.split(',', 1)
@@ -123,12 +131,37 @@ class ZTilt:
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
+        z_offsets = config.get('z_offsets', None)
+        if (z_offsets is not None):
+            try:
+                self.z_offsets = [float(o.strip())
+                                  for o in z_offsets.split(',')]
+            except:
+                raise config.error("Unable to parse z_offsets in %s" % (
+                    config.get_name()))
+            if (len(self.z_offsets) !=
+                    len(self.probe_helper.get_probe_points())):
+                raise config.error("The number of z_offsets must match the "
+                    "number of probe points in %s" % (config.get_name()))
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
-        # Register Z_TILT_ADJUST command
+        self.cal_helper = probe.ProbePointsHelper(config,
+            self.cal_finalize, option_name='extra_points')
+        self.cal_helper.minimum_points(1)
+        # add regular probing points
+        probe_points = list(self.probe_helper.get_probe_points())
+        self.num_probe_points = len(probe_points)
+        probe_points.extend(self.cal_helper.get_probe_points())
+        self.cal_helper.update_probe_points(probe_points, 3)
+        self.cal_avg_len = config.getint('averaging_len', 3, minval=1)
+        # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
                                desc=self.cmd_Z_TILT_ADJUST_help)
+        gcode.register_command('Z_TILT_CALIBRATE', self.cmd_Z_TILT_CALIBRATE,
+                               desc=self.cmd_Z_TILT_CALIBRATE_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
+    cmd_Z_TILT_CALIBRATE_help = ("Calibrate Z tilt with additional probing "
+        "points")
     def cmd_Z_TILT_ADJUST(self, gcmd):
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
@@ -147,11 +180,13 @@ class ZTilt:
             for pos in positions:
                 total_error += adjusted_height(pos, params)**2
             return total_error
-        return = mathutil.coordinate_descent(params.keys(), params, errorfunc)
+        new_params = mathutil.coordinate_descent(params.keys(), params,
+            errorfunc)
+        logging.info("Calculated bed tilt parameters: %s", new_params)
+        return new_params
     def apply_adjustments(self, offsets, new_params):
         z_offset = offsets[2]
         speed = self.probe_helper.get_lift_speed()
-        logging.info("Calculated bed tilt parameters: %s", new_params)
         x_adjust = new_params['x_adjust']
         y_adjust = new_params['y_adjust']
         z_adjust = (new_params['z_adjust'] - z_offset
@@ -160,9 +195,52 @@ class ZTilt:
                        for x, y in self.z_positions]
         self.z_helper.adjust_steppers(adjustments, speed)
     def probe_finalize(self, offsets, positions):
+        if self.z_offsets is not None:
+            positions = [[p[0], p[1], p[2] - o]
+                         for (p, o) in zip(positions, self.z_offsets)]
         new_params = self.perform_coordinate_descent(offsets, positions)
-        self.apply_adjustments(self, offsets, new_params)
+        self.apply_adjustments(offsets, new_params)
         return self.retry_helper.check_retry([p[2] for p in positions])
+    def cmd_Z_TILT_CALIBRATE(self, gcmd):
+        if (self.numpy is None):
+            gcmd.respond_info(
+                "Failed to import `numpy` module, make sure it was "
+                "installed via `~/klippy-env/bin/pip install`")
+            return
+        self.cal_avg_len = gcmd.get_int('AVGLEN', self.cal_conf_avg_len)
+        self.cal_gcmd = gcmd
+        self.cal_runs = []
+        self.cal_helper.start_probe(gcmd)
+    def cal_finalize(self, offsets, positions):
+        np = self.numpy
+        avlen = self.cal_avg_len
+        new_params = self.perform_coordinate_descent(offsets, positions)
+        self.apply_adjustments(offsets, new_params)
+        self.cal_runs.append([p[2] for p in positions])
+        if len(self.cal_runs) < avlen + 1:
+            return "retry"
+        prev_error = np.std(self.cal_runs[-avlen-1:-1], axis=0)
+        prev_error = np.std(prev_error)
+        this_error = np.std(self.cal_runs[-avlen:], axis=0)
+        this_error = np.std(this_error)
+        self.cal_gcmd.respond_info(
+          "previous error: %.6f current error: %.6f" % (prev_error, this_error))
+        if (this_error < prev_error):
+            return "retry"
+        z_offsets = np.mean(self.cal_runs[-avlen:], axis=0)
+        z_offsets = [z - offsets[2] for z in z_offsets]
+        self.z_offsets = z_offsets
+        s_zoff = ""
+        for off in z_offsets[0:self.num_probe_points]:
+            s_zoff += "%.6f, " % off
+        s_zoff = s_zoff[:-2]
+        self.cal_gcmd.respond_info("final z_offsets are: %s" % (s_zoff))
+        configfile = self.printer.lookup_object('configfile')
+        section = self.section
+        configfile.set(section, "z_offsets", s_zoff)
+        self.cal_gcmd.respond_info(
+          "The SAVE_CONFIG command will update the printer config\n"
+          "file with these parameters and restart the printer.")
 
 def load_config(config):
     return ZTilt(config)
