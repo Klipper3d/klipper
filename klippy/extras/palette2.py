@@ -47,13 +47,15 @@ class Palette2:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         try:
-            self.virtual_sdcard = self.printer.load_object(config, "virtual_sdcard")
+            self.virtual_sdcard = self.printer.load_object(
+                config, "virtual_sdcard")
         except config.error:
             raise self.printer.config_error(
                 "Palette 2 requires [virtual_sdcard] to work,"
                 " please add it to your config!")
         try:
-            self.pause_resume = self.printer.load_object(config, "pause_resume")
+            self.pause_resume = self.printer.load_object(
+                config, "pause_resume")
         except config.error:
             raise self.printer.config_error(
                 "Palette 2 requires [pause_resume] to work,"
@@ -219,7 +221,7 @@ class Palette2:
         logging.info("Initializing print with Pallete 2")
         if not self._check_P2(gcmd):
             raise self.printer.command_error(
-                    "Cannot initialize print, palette 2 is not connected")
+                "Cannot initialize print, palette 2 is not connected")
 
         startTs = self.reactor.monotonic()
         while self.heartbeat is None and self.heartbeat < (
@@ -296,19 +298,20 @@ class Palette2:
             param_drive = gcmd.get_commandline()[5:6]
             param_distance = gcmd.get_commandline()[8:]
         except IndexError:
-            gmcd.respond_info("Incorrect number of arguments for splice command")
+            gmcd.respond_info(
+                "Incorrect number of arguments for splice command")
         try:
             self.omega_splices.append((int(param_drive), param_distance))
         except ValueError:
             gcmd.respond_info("Incorrectly formatted splice command")
         logging.debug("Omega splice command drive %s distance %s" %
-                        (param_drive, param_distance))
+                      (param_drive, param_distance))
 
     def cmd_O31(self, gcmd):
         if self._check_P2(gcmd):
             self.omega_current_ping = gcmd.get_commandline()
             logging.debug("Omega ping command: %s" %
-                            (gcmd.get_commandline()))
+                          (gcmd.get_commandline()))
 
             self.write_queue.put(COMMAND_PING)
             self.gcode.create_gcode_command("G4", "G4", {"P": "10"})
@@ -527,7 +530,9 @@ class Palette2:
                 break
 
             # Line was return without timeout
-            logging.debug("%s P2 -> : %s" % (self.reactor.monotonic(), text_line))
+            logging.debug(
+                "%s P2 -> : %s" %
+                (self.reactor.monotonic(), text_line))
 
             # Received a heartbeat from the device
             if text_line == COMMAND_HEARTBEAT:
@@ -565,7 +570,8 @@ class Palette2:
                     return eventtime + SERIAL_TIMER
 
         # Do heartbeat routine
-        if self.last_heartbeat_send < (self.reactor.monotonic() - HEARTBEAT_SEND):
+        if self.last_heartbeat_send < (
+                self.reactor.monotonic() - HEARTBEAT_SEND):
             self.write_queue.put(COMMAND_HEARTBEAT)
             self.last_heartbeat_send = self.reactor.monotonic()
 
