@@ -45,9 +45,21 @@ INFO_NOT_CONNECTED = "Palette 2 is not connected, connect first"
 class Palette2:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
+        try:
+            self.virtual_sdcard = self.printer.load_object(config, "virtual_sdcard")
+        except config.error:
+            raise self.printer.config_error(
+                "Palette 2 requires [virtual_sdcard] to work,"
+                " please add it to your config!")
+        try:
+            self.pause_resume = self.printer.load_object(config, "pause_resume")
+        except config.error:
+            raise self.printer.config_error(
+                "Palette 2 requires [pause_resume] to work,"
+                " please add it to your config!")
         self.gcode_move = self.printer.load_object(config, 'gcode_move')
         self.gcode = self.printer.lookup_object("gcode")
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.gcode.register_command(
             "PALETTE_CONNECT", self.cmd_Connect, desc=self.cmd_Connect_Help)
         self.gcode.register_command(
@@ -84,8 +96,6 @@ class Palette2:
             else:
                 self.gcode.register_command(cmd, self.cmd_OmegaDefault)
 
-        self.pause_resume = None
-        self.virtual_sdcard = None
         self._reset()
 
         self.read_timer = None
@@ -123,21 +133,6 @@ class Palette2:
             gcmd.respond_info(INFO_NOT_CONNECTED)
         return False
 
-    def handle_ready(self):
-        try:
-            self.virtual_sdcard = self.printer.lookup_object("virtual_sdcard")
-        except BaseException:
-            raise self.printer.config_error(
-                "Palette 2 requires [virtual_sdcard] to work,"
-                " please add it to your config!")
-
-        try:
-            self.pause_resume = self.printer.lookup_object("pause_resume")
-        except BaseException:
-            raise self.printer.config_error(
-                "Palette 2 requires [pause_resume] to work,"
-                " please add it to your config!")
-
     cmd_Connect_Help = ("Connect to the Palette 2")
 
     def cmd_Connect(self, gcmd):
@@ -156,16 +151,15 @@ class Palette2:
             gcmd.respond_info("Unable to connect to the Palette 2")
             return
 
-        reactor = self.printer.get_reactor()
         if self.read_timer is None:
-            self.read_timer = reactor.register_timer(
-                self._run_Read, reactor.NOW)
+            self.read_timer = self.reactor.register_timer(
+                self._run_Read, self.reactor.NOW)
         if self.write_timer is None:
-            self.write_timer = reactor.register_timer(
-                self._run_Write, reactor.NOW)
+            self.write_timer = self.reactor.register_timer(
+                self._run_Write, self.reactor.NOW)
 
         # Tell the device we're alive
-        lastHeartbeatSend = time.time()
+        lastHeartbeatSend = self.reactor.monotonic()
         self.write_queue.put("\n")
         self.write_queue.put(COMMAND_HEARTBEAT)
         self.write_queue.put(COMMAND_FIRMWARE)
@@ -178,10 +172,9 @@ class Palette2:
             self.serial.close()
             self.serial = None
 
-        reactor = self.printer.get_reactor()
-        reactor.unregister_timer(self.read_timer)
+        self.reactor.unregister_timer(self.read_timer)
         self.read_timer = None
-        reactor.unregister_timer(self.write_timer)
+        self.reactor.unregister_timer(self.write_timer)
         self.write_timer = None
 
         with self.write_queue.mutex:
@@ -228,15 +221,15 @@ class Palette2:
             raise self.printer.command_error(
                     "Cannot initialize print, palette 2 is not connected")
 
-        startTs = time.time()
+        startTs = self.reactor.monotonic()
         while self.heartbeat is None and self.heartbeat < (
-                time.time() -
+                self.reactor.monotonic() -
                 HEARTBEAT_TIMEOUT) and startTs > (
-                time.time() -
+                self.reactor.monotonic() -
                 HEARTBEAT_TIMEOUT):
             time.sleep(1)
 
-        if self.heartbeat < (time.time() - HEARTBEAT_TIMEOUT):
+        if self.heartbeat < (self.reactor.monotonic() - HEARTBEAT_TIMEOUT):
             raise self.printer.command_error(
                 "No response from Palette 2 when initializing")
 
@@ -302,20 +295,20 @@ class Palette2:
         try:
             param_drive = gcmd.get_commandline()[5:6]
             param_distance = gcmd.get_commandline()[8:]
+        except IndexError:
+            gmcd.respond_info("Incorrect number of arguments for splice command")
+        try:
             self.omega_splices.append((int(param_drive), param_distance))
-            logging.debug("Omega splice command drive %s distance %s" %
-                          (param_drive, param_distance))
-        except BaseException:
+        except ValueError:
             gcmd.respond_info("Incorrectly formatted splice command")
+        logging.debug("Omega splice command drive %s distance %s" %
+                        (param_drive, param_distance))
 
     def cmd_O31(self, gcmd):
         if self._check_P2(gcmd):
-            try:
-                self.omega_current_ping = gcmd.get_commandline()
-                logging.debug("Omega ping command: %s" %
-                              (gcmd.get_commandline()))
-            except BaseException:
-                gcmd.respond_info("Incorrectly formatted ping command")
+            self.omega_current_ping = gcmd.get_commandline()
+            logging.debug("Omega ping command: %s" %
+                            (gcmd.get_commandline()))
 
             self.write_queue.put(COMMAND_PING)
             self.gcode.create_gcode_command("G4", "G4", {"P": "10"})
@@ -335,7 +328,7 @@ class Palette2:
 
         try:
             n = int(params[0][1:])
-        except BaseException:
+        except (TypeError, IndexError):
             logging.error("O20 command has invalid parameters")
             return
 
@@ -389,7 +382,7 @@ class Palette2:
                 fw = params[0][1:]
                 logging.info(
                     "Palette 2 firmware version %s detected" % os.fwalk)
-            except BaseException:
+            except (TypeError, IndexError):
                 logging.error("Unable to parse firmware version")
 
             if fw < "9.0.9":
@@ -412,7 +405,7 @@ class Palette2:
                 idx = int(params[1][1:], 16)
                 file = self.files[::-1][idx]
                 self.gcode.run_script("SDCARD_PRINT_FILE FILENAME=%s" % file)
-            except BaseException:
+            except (TypeError, IndexError):
                 logging.error("O53 has invalid command parameters")
 
     def cmd_P2_O88(self, params):
@@ -420,7 +413,7 @@ class Palette2:
         try:
             error = int(params[0][1:], 16)
             logging.error("Palette 2 error code %d" % error)
-        except BaseException:
+        except (TypeError, IndexError):
             logging.error("Unable to parse Palette 2 error")
 
     def cmd_P2_O97(self, params):
@@ -442,8 +435,7 @@ class Palette2:
                           self.remaining_load_length)
             if self.remaining_load_length >= 0 and self.smart_load_timer:
                 logging.info("Smart load filament is complete")
-                reactor = self.printer.get_reactor()
-                reactor.unregister_timer(self.smart_load_timer)
+                self.reactor.unregister_timer(self.smart_load_timer)
                 self.smart_load_timer = None
                 self.is_loading = False
 
@@ -487,9 +479,8 @@ class Palette2:
 
         if self.smart_load_timer is None:
             logging.info("Smart load starting")
-            reactor = self.printer.get_reactor()
-            self.smart_load_timer = reactor.register_timer(
-                self._run_Smart_Load, reactor.NOW)
+            self.smart_load_timer = self.reactor.register_timer(
+                self._run_Smart_Load, self.reactor.NOW)
 
     def cmd_P2(self, line):
         t = line.split()
@@ -536,18 +527,18 @@ class Palette2:
                 break
 
             # Line was return without timeout
-            logging.debug("%s P2 -> : %s" % (time.time(), text_line))
+            logging.debug("%s P2 -> : %s" % (self.reactor.monotonic(), text_line))
 
             # Received a heartbeat from the device
             if text_line == COMMAND_HEARTBEAT:
-                self.heartbeat = time.time()
+                self.heartbeat = self.reactor.monotonic()
 
             elif text_line[0] == "O":
                 self.cmd_P2(text_line)
 
         # do a heartbeat check
         if self.heartbeat and self.heartbeat < (
-                time.time() - HEARTBEAT_TIMEOUT):
+                self.reactor.monotonic() - HEARTBEAT_TIMEOUT):
             logging.error(
                 "P2 has not responded to heartbeat, Palette will disconnect")
             self.cmd_Disconnect()
@@ -563,7 +554,7 @@ class Palette2:
             if text_line:
                 self.omega_last_command = text_line
                 l = text_line.strip()
-                logging.debug("%s -> P2 : %s" % (time.time(), l))
+                logging.debug("%s -> P2 : %s" % (self.reactor.monotonic(), l))
                 terminated_line = "%s\n" % (l)
 
                 try:
@@ -574,9 +565,9 @@ class Palette2:
                     return eventtime + SERIAL_TIMER
 
         # Do heartbeat routine
-        if self.last_heartbeat_send < (time.time() - HEARTBEAT_SEND):
+        if self.last_heartbeat_send < (self.reactor.monotonic() - HEARTBEAT_SEND):
             self.write_queue.put(COMMAND_HEARTBEAT)
-            self.last_heartbeat_send = time.time()
+            self.last_heartbeat_send = self.reactor.monotonic()
 
         return eventtime + SERIAL_TIMER
 
@@ -601,8 +592,7 @@ class Palette2:
             self.gcode.run_script("G92 E0")
             self.gcode.run_script("G1 E%d F%d" % (
                 extrude, self.auto_load_speed * 60))
-            reactor = self.printer.get_reactor()
-            return reactor.NOW
+            return self.reactor.NOW
         return eventtime + AUTOLOAD_TIMER
 
 
