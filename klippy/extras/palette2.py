@@ -224,23 +224,26 @@ class Palette2:
 
     def cmd_O1(self, gcmd):
         logging.info("Initializing print with Pallete 2")
-        if self._check_P2(gcmd):
-            startTs = time.time()
-            while self.heartbeat is None and self.heartbeat < (
-                    time.time() -
-                    HEARTBEAT_TIMEOUT) and startTs > (
-                    time.time() -
-                    HEARTBEAT_TIMEOUT):
-                time.sleep(1)
+        if not self._check_P2(gcmd):
+            raise self.printer.command_error(
+                    "Cannot initialize print, palette 2 is not connected")
 
-            if self.heartbeat < (time.time() - HEARTBEAT_TIMEOUT):
-                raise self.printer.command_error(
-                    "No response from Palette 2 when initializing")
+        startTs = time.time()
+        while self.heartbeat is None and self.heartbeat < (
+                time.time() -
+                HEARTBEAT_TIMEOUT) and startTs > (
+                time.time() -
+                HEARTBEAT_TIMEOUT):
+            time.sleep(1)
 
-            self.write_queue.put(gcmd.get_commandline())
-            self.gcode.respond_info(
-                "Palette 2 waiting on user to complete setup")
-            self.pause_resume.send_pause_command()
+        if self.heartbeat < (time.time() - HEARTBEAT_TIMEOUT):
+            raise self.printer.command_error(
+                "No response from Palette 2 when initializing")
+
+        self.write_queue.put(gcmd.get_commandline())
+        self.gcode.respond_info(
+            "Palette 2 waiting on user to complete setup")
+        self.pause_resume.send_pause_command()
 
     cmd_O9_help = ("Reset print information")
 
