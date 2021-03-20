@@ -9,7 +9,7 @@ import stepper
 class ExtruderStepper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.stepper_name = config.get_name().split()[1]
+        stepper_name = config.get_name().split()[1]
         self.extruder_name = config.get('extruder', 'extruder')
         self.synced_extruder = None
         self.stepper = stepper.PrinterStepper(config)
@@ -21,12 +21,12 @@ class ExtruderStepper:
                                             self.handle_connect)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SYNC_STEPPER_TO_EXTRUDER", "STEPPER",
-                                   self.stepper_name,
+                                   stepper_name,
                                    self.cmd_SYNC_STEPPER_TO_EXTRUDER,
                                    desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
     def handle_connect(self):
-        synced_extruder = self.printer.lookup_object(self.extruder_name)
-        synced_extruder.sync_stepper(self.stepper)
+        self.synced_extruder = self.printer.lookup_object(self.extruder_name)
+        self.synced_extruder.sync_stepper(self.stepper)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
     cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
