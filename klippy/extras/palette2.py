@@ -6,8 +6,6 @@
 
 import logging
 import os
-import threading
-import time
 import serial
 
 from serial import SerialException
@@ -183,7 +181,6 @@ class Palette2:
         self.reactor.unregister_timer(self.write_timer)
         self.reactor.unregister_timer(self.heartbeat_timer)
         self.read_timer = None
-        self.read_thread = None
         self.write_timer = None
         self.heartbeat = None
         self.is_printing = False
