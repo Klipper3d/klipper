@@ -100,14 +100,12 @@ class Palette2:
 
         self._reset()
 
-        self.lock = threading.Lock()
         self.read_timer = None
-        self.heartbeat_timer = None
-        self.read_thread = None
+        self.read_buffer = ""
         self.read_queue = Queue()
-        self.write_thread = None
+        self.write_timer = None
         self.write_queue = Queue()
-
+        self.heartbeat_timer = None
         self.heartbeat = None
         self.signal_disconnect = False
 
@@ -152,7 +150,7 @@ class Palette2:
                      (self.serial_port, self.baud))
         try:
             self.serial = serial.Serial(
-                self.serial_port, self.baud, timeout=1., write_timeout=1.)
+                self.serial_port, self.baud, timeout=0, write_timeout=0)
         except SerialException:
             gcmd.respond_info("Unable to connect to the Palette 2")
             return
@@ -162,19 +160,10 @@ class Palette2:
         with self.read_queue.mutex:
             self.read_queue.queue.clear()
 
-        self.read_thread = threading.Thread(
-            target=self._read_Thread,
-            args=(self.serial,))
-        self.read_thread.daemon = True
-        self.read_thread.start()
-        self.write_thread = threading.Thread(
-            target=self._write_Thread,
-            args=(self.serial,))
-        self.write_thread.daemon = True
-        self.write_thread.start()
-
         self.read_timer = self.reactor.register_timer(
             self._run_Read, self.reactor.NOW)
+        self.write_timer = self.reactor.register_timer(
+            self._run_Write, self.reactor.NOW)
         self.heartbeat_timer = self.reactor.register_timer(
             self._run_Heartbeat, self.reactor.NOW)
 
@@ -191,10 +180,11 @@ class Palette2:
             self.serial = None
 
         self.reactor.unregister_timer(self.read_timer)
+        self.reactor.unregister_timer(self.write_timer)
         self.reactor.unregister_timer(self.heartbeat_timer)
         self.read_timer = None
         self.read_thread = None
-        self.write_thread = None
+        self.write_timer = None
         self.heartbeat = None
         self.is_printing = False
 
@@ -436,6 +426,7 @@ class Palette2:
     def cmd_P2_O97(self, params):
         def printCancelling(params):
             logging.info("Print Cancelling")
+            self.gcode.run_script("CLEAR_PAUSE")
             self.gcode.run_script("CANCEL_PRINT")
 
         def printCancelled(params):
@@ -529,7 +520,31 @@ class Palette2:
     def _run_Read(self, eventtime):
         if self.signal_disconnect:
             self.cmd_Disconnect()
+            return self.reactor.NEVER
 
+        # Do non-blocking reads from serial and try to find lines
+        while True:
+            try:
+                raw_bytes = self.serial.read()
+            except SerialException:
+                logging.error("Unable to communicate with the Palette 2")
+                self.cmd_Disconnect()
+                return self.reactor.NEVER
+            if len(raw_bytes):
+                text_buffer = self.read_buffer + raw_bytes.decode()
+                while True:
+                    i = text_buffer.find("\n")
+                    if i >= 0:
+                        line = text_buffer[0:i+1]
+                        self.read_queue.put(line.strip())
+                        text_buffer = text_buffer[i+1:]
+                    else:
+                        break
+                self.read_buffer = text_buffer
+            else:
+                break
+
+        # Process any decoded lines from the device
         while not self.read_queue.empty():
             try:
                 text_line = self.read_queue.get_nowait()
@@ -546,6 +561,7 @@ class Palette2:
 
             elif text_line[0] == "O":
                 self.cmd_P2(text_line)
+
         return eventtime + SERIAL_TIMER
 
     def _run_Heartbeat(self, eventtime):
@@ -555,25 +571,13 @@ class Palette2:
             logging.error(
                 "P2 has not responded to heartbeat, Palette will disconnect")
             self.cmd_Disconnect()
+            return self.reactor.NEVER
         return eventtime + HEARTBEAT_SEND
 
-    def _read_Thread(self, serial):
-        while serial.is_open:
+    def _run_Write(self, eventtime):
+        while not self.write_queue.empty():
             try:
-                raw_line = self.serial.readline()
-            except SerialException:
-                logging.error("Unable to communicate with the Palette 2")
-                break
-            if len(raw_line):
-                text_line = raw_line.decode().strip()
-                if len(text_line):
-                    self.read_queue.put(text_line)
-        self.signal_disconnect = True
-
-    def _write_Thread(self, serial):
-        while serial.is_open:
-            try:
-                text_line = self.write_queue.get(timeout=0.5)
+                text_line = self.write_queue.get_nowait()
             except Empty:
                 continue
 
@@ -589,8 +593,9 @@ class Palette2:
                     self.serial.write(terminated_line.encode())
                 except SerialException:
                     logging.error("Unable to communicate with the Palette 2")
-                    break
-        self.signal_disconnect = True
+                    self.signal_disconnect = True
+                    return self.reactor.NEVER
+        return eventtime + SERIAL_TIMER
 
     def _run_Smart_Load(self, eventtime):
         if not self.is_splicing and self.remaining_load_length < 0:
