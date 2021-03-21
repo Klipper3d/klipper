@@ -472,7 +472,7 @@ class Palette2:
     def cmd_P2_O100(self, params):
         logging.info("Pause request from Palette 2")
         self.is_setup_complete = True
-        self.pause_resume.send_resume_command()
+        self.pause_resume.send_pause_command()
 
     def cmd_P2_O102(self, params):
         toolhead = self.printer.lookup_object("toolhead")
