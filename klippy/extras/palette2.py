@@ -32,8 +32,8 @@ COMMAND_FIRMWARE = "O50"
 COMMAND_PING = "O31"
 COMMAND_SMART_LOAD_STOP = "O102 D1"
 
-HEARTBEAT_SEND = 5
-HEARTBEAT_TIMEOUT = 11
+HEARTBEAT_SEND = 5.
+HEARTBEAT_TIMEOUT = (HEARTBEAT_SEND * 2.) + 1.
 SETUP_TIMEOUT = 300
 
 SERIAL_TIMER = 0.1
@@ -100,12 +100,16 @@ class Palette2:
 
         self._reset()
 
+        self.lock = threading.Lock()
         self.read_timer = None
-        self.read_buffer = ""
-        self.write_timer = None
+        self.heartbeat_timer = None
+        self.read_thread = None
+        self.read_queue = Queue()
+        self.write_thread = None
         self.write_queue = Queue()
+
         self.heartbeat = None
-        self.last_heartbeat_send = 0
+        self.signal_disconnect = False
 
         self.is_printing = False
         self.smart_load_timer = None
@@ -138,32 +142,44 @@ class Palette2:
     cmd_Connect_Help = ("Connect to the Palette 2")
 
     def cmd_Connect(self, gcmd):
-
         if self.serial:
             gcmd.respond_info(
                 "Palette 2 serial port is already active, disconnect first")
             return
 
+        self.signal_disconnect = False
         logging.info("Connecting to Palette 2 on port (%s) at (%s)" %
                      (self.serial_port, self.baud))
         try:
             self.serial = serial.Serial(
-                self.serial_port, self.baud, timeout=0.5)
+                self.serial_port, self.baud, timeout=1., write_timeout=1.)
         except SerialException:
             gcmd.respond_info("Unable to connect to the Palette 2")
             return
 
-        if self.read_timer is None:
-            self.read_timer = self.reactor.register_timer(
-                self._run_Read, self.reactor.NOW)
-        if self.write_timer is None:
-            self.write_timer = self.reactor.register_timer(
-                self._run_Write, self.reactor.NOW)
+        with self.write_queue.mutex:
+            self.write_queue.queue.clear()
+        with self.read_queue.mutex:
+            self.read_queue.queue.clear()
+
+        self.read_thread = threading.Thread(
+            target=self._read_Thread,
+            args=(self.serial,))
+        self.read_thread.daemon = True
+        self.read_thread.start()
+        self.write_thread = threading.Thread(
+            target=self._write_Thread,
+            args=(self.serial,))
+        self.write_thread.daemon = True
+        self.write_thread.start()
+
+        self.read_timer = self.reactor.register_timer(
+            self._run_Read, self.reactor.NOW)
+        self.heartbeat_timer = self.reactor.register_timer(
+            self._run_Heartbeat, self.reactor.NOW)
 
         # Tell the device we're alive
-        lastHeartbeatSend = self.reactor.monotonic()
         self.write_queue.put("\n")
-        self.write_queue.put(COMMAND_HEARTBEAT)
         self.write_queue.put(COMMAND_FIRMWARE)
 
     cmd_Disconnect_Help = ("Disconnect from the Palette 2")
@@ -175,12 +191,10 @@ class Palette2:
             self.serial = None
 
         self.reactor.unregister_timer(self.read_timer)
+        self.reactor.unregister_timer(self.heartbeat_timer)
         self.read_timer = None
-        self.reactor.unregister_timer(self.write_timer)
-        self.write_timer = None
-
-        with self.write_queue.mutex:
-            self.write_queue.queue.clear()
+        self.read_thread = None
+        self.write_thread = None
         self.heartbeat = None
         self.is_printing = False
 
@@ -229,7 +243,7 @@ class Palette2:
                 HEARTBEAT_TIMEOUT) and startTs > (
                 self.reactor.monotonic() -
                 HEARTBEAT_TIMEOUT):
-            time.sleep(1)
+            self.reactor.pause(1)
 
         if self.heartbeat < (self.reactor.monotonic() - HEARTBEAT_TIMEOUT):
             raise self.printer.command_error(
@@ -510,72 +524,73 @@ class Palette2:
                 if res:
                     matcher[0](params)
                     return True
-
         return False
 
     def _run_Read(self, eventtime):
-        while self.serial.in_waiting > 0:
+        if self.signal_disconnect:
+            self.cmd_Disconnect()
+
+        while not self.read_queue.empty():
+            try:
+                text_line = self.read_queue.get_nowait()
+            except Empty:
+                pass
+
+            heartbeat_strings = [COMMAND_HEARTBEAT, "Connection Okay"]
+            if not any(x in text_line for x in heartbeat_strings):
+                logging.debug("%0.3f P2 -> : %s" %(eventtime, text_line))
+
+            # Received a heartbeat from the device
+            if text_line == COMMAND_HEARTBEAT:
+                self.heartbeat = eventtime
+
+            elif text_line[0] == "O":
+                self.cmd_P2(text_line)
+        return eventtime + SERIAL_TIMER
+
+    def _run_Heartbeat(self, eventtime):
+        self.write_queue.put(COMMAND_HEARTBEAT)
+        if self.heartbeat and self.heartbeat < (
+                eventtime - HEARTBEAT_TIMEOUT):
+            logging.error(
+                "P2 has not responded to heartbeat, Palette will disconnect")
+            self.cmd_Disconnect()
+        return eventtime + HEARTBEAT_SEND
+
+    def _read_Thread(self, serial):
+        while serial.is_open:
             try:
                 raw_line = self.serial.readline()
             except SerialException:
                 logging.error("Unable to communicate with the Palette 2")
-                self.cmd_Disconnect()
-                return eventtime + SERIAL_TIMER
-
-            if not len(raw_line):
                 break
+            if len(raw_line):
+                text_line = raw_line.decode().strip()
+                if len(text_line):
+                    self.read_queue.put(text_line)
+        self.signal_disconnect = True
 
-            text_line = raw_line.decode().strip()
-            if not len(text_line):
-                break
-
-            # Line was return without timeout
-            logging.debug(
-                "%s P2 -> : %s" %
-                (self.reactor.monotonic(), text_line))
-
-            # Received a heartbeat from the device
-            if text_line == COMMAND_HEARTBEAT:
-                self.heartbeat = self.reactor.monotonic()
-
-            elif text_line[0] == "O":
-                self.cmd_P2(text_line)
-
-        # do a heartbeat check
-        if self.heartbeat and self.heartbeat < (
-                self.reactor.monotonic() - HEARTBEAT_TIMEOUT):
-            logging.error(
-                "P2 has not responded to heartbeat, Palette will disconnect")
-            self.cmd_Disconnect()
-        return eventtime + SERIAL_TIMER
-
-    def _run_Write(self, eventtime):
-        while True:
+    def _write_Thread(self, serial):
+        while serial.is_open:
             try:
-                text_line = self.write_queue.get_nowait()
+                text_line = self.write_queue.get(timeout=0.5)
             except Empty:
-                break
+                continue
 
             if text_line:
                 self.omega_last_command = text_line
                 l = text_line.strip()
-                logging.debug("%s -> P2 : %s" % (self.reactor.monotonic(), l))
+                if COMMAND_HEARTBEAT not in l:
+                    logging.debug(
+                        "%s -> P2 : %s" %
+                        (self.reactor.monotonic(), l))
                 terminated_line = "%s\n" % (l)
-
                 try:
                     self.serial.write(terminated_line.encode())
                 except SerialException:
                     logging.error("Unable to communicate with the Palette 2")
-                    self.cmd_Disconnect()
-                    return eventtime + SERIAL_TIMER
-
-        # Do heartbeat routine
-        if self.last_heartbeat_send < (
-                self.reactor.monotonic() - HEARTBEAT_SEND):
-            self.write_queue.put(COMMAND_HEARTBEAT)
-            self.last_heartbeat_send = self.reactor.monotonic()
-
-        return eventtime + SERIAL_TIMER
+                    break
+        self.signal_disconnect = True
 
     def _run_Smart_Load(self, eventtime):
         if not self.is_splicing and self.remaining_load_length < 0:
