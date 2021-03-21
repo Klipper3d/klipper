@@ -12,6 +12,7 @@ config LPC_SELECT
     select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
+    select HAVE_GPIO_HARD_PWM
 
 config BOARD_DIRECTORY
     string

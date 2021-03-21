@@ -10,6 +10,7 @@
 
 #define PCLK_TIMER0 1
 #define PCLK_UART0 3
+#define PCLK_PWM1 6
 #define PCLK_I2C0 7
 #define PCLK_SSP1 10
 #define PCLK_ADC 12
