@@ -824,7 +824,12 @@ class MCU:
         return False, '%s: %s' % (self._name, stats)
 
 Common_MCU_errors = {
-    ("Timer too close", "No next step", "Missed scheduling of next "): """
+    ("Timer too close", "No next step"): """
+This often indicates the host computer is overloaded. Check
+for other processes consuming excessive CPU time, high swap
+usage, disk errors, overheating, unstable voltage, or
+similar system problems on the host computer.""",
+    ("Missed scheduling of next ",): """
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     ("ADC out of range",): """

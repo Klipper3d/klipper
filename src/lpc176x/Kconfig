@@ -61,11 +61,17 @@ config FLASH_START
     default 0x0000
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)"
-    default y
-config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
+config SERIAL
+    bool
+choice
+    prompt "Communication interface"
+    config LPC_USB
+        bool "USB"
+        select USBSERIAL
+    config LPC_SERIAL
+        bool "Serial"
+        select SERIAL
+endchoice
 
 endif

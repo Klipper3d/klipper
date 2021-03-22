@@ -88,9 +88,7 @@ def plot_freq_response(lognames, calibration_data, shapers,
 
     title = "Frequency response and shapers (%s)" % (', '.join(lognames))
     ax.set_title("\n".join(wrap(title, MAX_TITLE_LENGTH)))
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(5))
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
     ax.grid(which='major', color='grey')
@@ -100,9 +98,10 @@ def plot_freq_response(lognames, calibration_data, shapers,
     ax2.set_ylabel('Shaper vibration reduction (ratio)')
     best_shaper_vals = None
     for shaper in shapers:
-        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f)" % (
+        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f, accel<=%.f)" % (
                 shaper.name.upper(), shaper.freq,
-                shaper.vibrs * 100., shaper.smoothing)
+                shaper.vibrs * 100., shaper.smoothing,
+                round(shaper.max_accel / 100.) * 100.)
         linestyle = 'dotted'
         if shaper.name == selected_shaper:
             linestyle = 'dashdot'

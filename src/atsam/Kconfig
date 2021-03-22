@@ -80,11 +80,17 @@ config STACK_SIZE
     default 512
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)"
-    default y
-config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
+config SERIAL
+    bool
+choice
+    prompt "Communication interface"
+    config ATSAM_USB
+        bool "USB"
+        select USBSERIAL
+    config ATSAM_SERIAL
+        bool "Serial"
+        select SERIAL
+endchoice
 
 endif
