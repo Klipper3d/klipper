@@ -45,7 +45,7 @@
                    | USART_CR1_RXNEIE)
 
 void
-USARTx_IRQHandler(void)
+t5uid1_USARTx_IRQHandler(void)
 {
     uint32_t sr = USARTx->SR;
     if (sr & (USART_SR_RXNE | USART_SR_ORE))
@@ -76,7 +76,7 @@ t5uid1_init(uint32_t baud)
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
                    | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
     USARTx->CR1 = CR1_FLAGS;
-    armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
+    armcm_enable_irq(t5uid1_USARTx_IRQHandler, USARTx_IRQn, 0);
 
     gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(7), 1);
     gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(7), 0);
