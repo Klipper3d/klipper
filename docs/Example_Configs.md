@@ -36,6 +36,8 @@ directory](../config/).
    example config files for printers, kits, and boards that have
    mainstream popularity (eg, there should be at least a 100 of them
    in active use).
+5. Only specify those devices present on the given printer or board.
+   Do not specify settings specific to your particular setup.
    1. For `generic` config files, only those devices on the mainboard
       should be described. For example, it would not make sense to add
       a display config section to a "generic" config as there is no
@@ -43,8 +45,18 @@ directory](../config/).
       display. If the board has a specific hardware port to facilitate
       an optional peripheral (eg, a bltouch port) then one can add a
       "commented out" config section for the given device.
-5. Where possible, it is best to use the same wording, phrasing, and
-   indentation as the existing config files.
+   2. Do not specify `pressure_advance` in an example config, as that
+      value is specific to the filament, not the printer hardware.
+      Similarly, do not specify `max_extrude_only_velocity` nor
+      `max_extrude_only_accel` settings.
+   3. Do not specify a config section containing a host path or host
+      hardware. For example, do not specify `[virtual_sdcard]` nor
+      `[temperature_host]` config sections.
+   4. Only define macros that utilize functionality specific to the
+      given printer or to define g-codes that are commonly emitted by
+      slicers configured for the given printer.
+6. Where possible, it is best to use the same wording, phrasing,
+   indentation, and section ordering as the existing config files.
    1. The top of each config file should list the type of
       micro-controller the user should select during "make
       menuconfig". It should also have a reference to
@@ -65,9 +77,17 @@ directory](../config/).
       specifying a `gear_ratio` it is preferable to specify the actual
       gears on the mechanism (eg, prefer `gear_ratio: 80:20` over
       `gear_ratio: 4:1`).
-6. Do not use any deprecated features in the example config file. The
+   6. Avoid defining field values that are set to their default
+      value. For example, one should not specify `min_extrude_temp:
+      170` as that is already the default value.
+   7. Where possible, lines should not exceed 80 columns.
+7. Do not use any deprecated features in the example config file. The
    `step_distance` parameter is deprecated and should not be in any
    example config file.
+8. Do not disable a default safety system in an example config file.
+   For example, a config should not specify a custom
+   `max_extrude_cross_section`. Do not enable debugging features. For
+   example there should not be a `force_move` config section.
 
 Example config files are submitted by creating a github "pull
 request". Please also follow the directions in the [contributing
