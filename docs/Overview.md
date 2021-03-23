@@ -52,6 +52,8 @@ communication with the Klipper developers.
 
 - [Code overview](Code_Overview.md): Developers should read this
   first.
+- [Example configs](Example_Configs.md): Information on adding an
+  example config file to Klipper.
 - [Kinematics](Kinematics.md): Technical details on how Klipper
   implements motion.
 - [Protocol](Protocol.md): Information on the low-level messaging
