@@ -3769,6 +3769,12 @@ If you use this module, do not use the Palette 2 plugin for
 Octoprint as they will conflict, and 1 will fail to initialize
 properly likely aborting your print.
 
+If you use Octoprint and stream gcode over the serial port instead of
+printing from virtual_sd, then remo **M1** and **M0** from *Pausing commands*
+in *Settings > Serial Connection > Firmware & protocol* will prevent
+the need to start print on the Palette 2 and unpausing in Octoprint
+for your print to begin.
+
 ```
 [palette2]
 serial:

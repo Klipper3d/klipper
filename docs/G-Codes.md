@@ -779,3 +779,8 @@ is enabled:
   once the loading has been completed. This command is the same as pressing
   **Smart Load** directly on the Palette 2 screen after the filament load
   is complete.
+
+Palette prints work by embedding special OCodes (Omega Codes)
+in the GCode file:
+- `O1`...`O32`: These codes are read from the GCode stream and processed
+  by this module and passed to the Palette 2 device.
