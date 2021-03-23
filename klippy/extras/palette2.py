@@ -208,7 +208,7 @@ class Palette2:
                 gcmd.respond_info(
                     "Cannot auto load when the Palette 2 is not ready")
                 return
-            self.cmd_P2_O102(params=None)
+            self.p2cmd_O102(params=None)
 
     def cmd_OmegaDefault(self, gcmd):
         logging.debug("Omega Code: %s" % (gcmd.get_command()))
@@ -321,7 +321,7 @@ class Palette2:
         logging.debug("Omega algorithm: %s" % (gcmd.get_commandline()))
         self.omega_algorithms.append(gcmd.get_commandline())
 
-    def cmd_P2_O20(self, params):
+    def p2cmd_O20(self, params):
         if not self.is_printing:
             return
 
@@ -359,7 +359,7 @@ class Palette2:
             logging.info("Resending the last command to Palette 2")
             self.write_queue.put(self.omega_last_command)
 
-    def cmd_P2_O34(self, params):
+    def p2cmd_O34(self, params):
         if not self.is_printing:
             return
 
@@ -376,11 +376,11 @@ class Palette2:
                 logging.info("Pong %d, %d percent" % (number, percent))
                 self.omega_pongs.append(d)
 
-    def cmd_P2_O40(self, params):
+    def p2cmd_O40(self, params):
         logging.info("Resume request from Palette 2")
         self.pause_resume.send_resume_command()
 
-    def cmd_P2_O50(self, params):
+    def p2cmd_O50(self, params):
         if len(params) > 1:
             try:
                 fw = params[0][1:]
@@ -403,7 +403,7 @@ class Palette2:
                 self.write_queue.put("%s D%s" % (COMMAND_FILENAME, file))
             self.write_queue.put(COMMAND_FILENAMES_DONE)
 
-    def cmd_P2_O53(self, params):
+    def p2cmd_O53(self, params):
         if len(params) > 1 and params[0] == "D1":
             try:
                 idx = int(params[1][1:], 16)
@@ -412,7 +412,7 @@ class Palette2:
             except (TypeError, IndexError):
                 logging.error("O53 has invalid command parameters")
 
-    def cmd_P2_O88(self, params):
+    def p2cmd_O88(self, params):
         logging.error("Palette 2 error detected")
         try:
             error = int(params[0][1:], 16)
@@ -420,7 +420,7 @@ class Palette2:
         except (TypeError, IndexError):
             logging.error("Unable to parse Palette 2 error")
 
-    def cmd_P2_O97(self, params):
+    def p2cmd_O97(self, params):
         def printCancelling(params):
             logging.info("Print Cancelling")
             self.gcode.run_script("CLEAR_PAUSE")
@@ -469,12 +469,12 @@ class Palette2:
         matchers.append([feedrateEnd, 3, "U25", "D1"])
         self._param_Matcher(matchers, params)
 
-    def cmd_P2_O100(self, params):
+    def p2cmd_O100(self, params):
         logging.info("Pause request from Palette 2")
         self.is_setup_complete = True
         self.pause_resume.send_pause_command()
 
-    def cmd_P2_O102(self, params):
+    def p2cmd_O102(self, params):
         toolhead = self.printer.lookup_object("toolhead")
         if not toolhead.get_extruder().get_heater().can_extrude:
             self.write_queue.put(COMMAND_SMART_LOAD_STOP)
@@ -487,7 +487,7 @@ class Palette2:
             self.smart_load_timer = self.reactor.register_timer(
                 self._run_Smart_Load, self.reactor.NOW)
 
-    def cmd_P2(self, line):
+    def p2cmd(self, line):
         t = line.split()
         ocode = t[0]
         params = t[1:]
@@ -498,7 +498,7 @@ class Palette2:
                 logging.error("Omega parameters are invalid")
                 return
 
-        func = getattr(self, 'cmd_P2_' + ocode, None)
+        func = getattr(self, 'p2cmd_' + ocode, None)
         if func is not None:
             func(params)
 
@@ -557,7 +557,7 @@ class Palette2:
                 self.heartbeat = eventtime
 
             elif text_line[0] == "O":
-                self.cmd_P2(text_line)
+                self.p2cmd(text_line)
 
         return eventtime + SERIAL_TIMER
 
