@@ -138,6 +138,10 @@ class T5UID1:
         self._x_max_inset = config.getfloat('x_max_inset', DEFAULT_INSET, minval=0.0)
         self._y_min_inset = config.getfloat('y_min_inset', DEFAULT_INSET, minval=0.0)
         self._y_max_inset = config.getfloat('y_max_inset', DEFAULT_INSET, minval=0.0)
+        self._x_min = config.getfloat('x_min', None)
+        self._x_max = config.getfloat('x_max', None)
+        self._y_min = config.getfloat('y_min', None)
+        self._y_max = config.getfloat('y_max', None)
         self._z_min = config.getfloat('z_min', None)
         self._z_max = config.getfloat('z_max', None)
 
@@ -798,6 +802,22 @@ class T5UID1:
         x_min, x_max = kin.rails[0].get_range()
         y_min, y_max = kin.rails[1].get_range()
         z_min, z_max = kin.rails[2].get_range()
+        if (self._x_min is not None
+            and self._x_min > x_min
+            and self._x_min < x_max):
+            x_min = self._x_min
+        if (self._x_max is not None
+            and self._x_max < x_max
+            and self._x_max > x_min):
+            x_max = self._x_max
+        if (self._y_min is not None
+            and self._y_min > y_min
+            and self._y_min < y_max):
+            y_min = self._y_min
+        if (self._y_max is not None
+            and self._y_max < y_max
+            and self._y_max > y_min):
+            y_max = self._y_max
         if (self._z_min is not None
             and self._z_min > z_min
             and self._z_min < z_max):
