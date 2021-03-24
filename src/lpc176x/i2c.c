@@ -1,6 +1,6 @@
 // I2C functions on lpc176x
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -54,7 +54,8 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 
         // Set 100Khz frequency
         enable_pclock(info->pclk);
-        uint32_t pclk = SystemCoreClock, pulse = pclk / (100000 * 2);
+        uint32_t pclk = get_pclock_frequency(info->pclk);
+        uint32_t pulse = pclk / (100000 * 2);
         i2c->I2SCLL = pulse;
         i2c->I2SCLH = pulse;
 

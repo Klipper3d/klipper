@@ -1,9 +1,10 @@
 // Main starting point for LPC176x boards.
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/armcm_boot.h" // armcm_main
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -55,6 +56,13 @@ enable_pclock(uint32_t pclk)
         uint32_t shift = (pclk - 16) * 2;
         LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
     }
+}
+
+// Return the frequency of the given peripheral clock
+uint32_t
+get_pclock_frequency(uint32_t pclk)
+{
+    return CONFIG_CLOCK_FREQ;
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()

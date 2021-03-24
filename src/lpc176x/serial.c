@@ -1,6 +1,6 @@
 // lpc176x serial port
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -61,7 +61,7 @@ serial_init(void)
     // Setup baud
     LPC_UART0->LCR = (1<<7); // set DLAB bit
     enable_pclock(PCLK_UART0);
-    uint32_t pclk = SystemCoreClock;
+    uint32_t pclk = get_pclock_frequency(PCLK_UART0);
     uint32_t div = pclk / (CONFIG_SERIAL_BAUD * 16);
     LPC_UART0->DLL = div & 0xff;
     LPC_UART0->DLM = (div >> 8) & 0xff;
