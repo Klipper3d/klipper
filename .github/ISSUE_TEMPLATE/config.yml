@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Directions
+    url: https://www.klipper3d.org/Contact.html
+    about: Have a question? Need help? Start here.
+  - name: Klipper Chat
+    url: https://discord.klipper3d.org/
+    about: Klipper community Discord chat server.
