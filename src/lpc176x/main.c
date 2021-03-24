@@ -49,20 +49,13 @@ void
 enable_pclock(uint32_t pclk)
 {
     LPC_SC->PCONP |= 1<<pclk;
-    if (pclk < 16) {
-        uint32_t shift = pclk * 2;
-        LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<shift)) | (0x1<<shift);
-    } else {
-        uint32_t shift = (pclk - 16) * 2;
-        LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
-    }
 }
 
 // Return the frequency of the given peripheral clock
 uint32_t
 get_pclock_frequency(uint32_t pclk)
 {
-    return CONFIG_CLOCK_FREQ;
+    return CONFIG_CLOCK_FREQ / 4;
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
