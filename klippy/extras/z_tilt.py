@@ -224,7 +224,7 @@ class ZTilt:
             errorfunc)
         logging.info("Calculated bed tilt parameters: %s", new_params)
         return new_params
-    def apply_adjustments(self, offsets, new_params, prev_adjustments=None):
+    def apply_adjustments(self, offsets, new_params):
         z_offset = offsets[2]
         speed = self.probe_helper.get_lift_speed()
         x_adjust = new_params['x_adjust']
@@ -233,9 +233,6 @@ class ZTilt:
                     - x_adjust * offsets[0] - y_adjust * offsets[1])
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
-        if (prev_adjustments):
-            adjustments = [z1 - z2 for (z1, z2) in
-                           zip(adjustments, prev_adjustments)]
         self.z_helper.adjust_steppers(adjustments, speed)
     def probe_finalize(self, offsets, positions):
         if self.z_offsets is not None:
@@ -285,7 +282,6 @@ class ZTilt:
     def ad_init(self):
         self.ad_phase = 0
         self.ad_params = []
-        self.ad_prev_adjustments = [0, 0, 0]
     def cmd_Z_TILT_AUTODETECT(self, gcmd):
         if (self.numpy is None):
             gcmd.respond_info(self.err_missing_numpy)
@@ -297,34 +293,54 @@ class ZTilt:
         self.ad_points = []
         self.ad_error = None
         self.ad_helper.start_probe(gcmd)
+    ad_adjustments = [
+        [ 0.5, -0.5, -0.5], # p1 up
+        [  -1,    1,    0], # p2 up
+        [   0,   -1,    1], # p3 up
+        [   0,    1,    0], # p3 + p2 up
+        [   1,   -1,    0], # p3 + p1 up
+        [   0,    1,   -1], # p2 + p1 up
+        [-0.5, -0.5,  0.5]  # back to level
+    ]
     def ad_finalize(self, offsets, positions):
         np = self.numpy
         avlen = self.cal_avg_len
-        delta = self.ad_delta / 2
+        delta = self.ad_delta
         speed = self.probe_helper.get_lift_speed()
         new_params = self.perform_coordinate_descent(offsets, positions)
-        if (self.ad_phase != 0):
-            new_params['z_adjust'] -= delta
+        if self.ad_phase in range(1, 4):
+            new_params['z_adjust'] -= delta / 2
+        if self.ad_phase in range(4, 7):
+            new_params['z_adjust'] += delta / 2
         if (self.ad_phase == 0):
             self.ad_points.append([z for _, _, z in
                                     positions[:self.num_probe_points]])
         self.ad_params.append(new_params)
-        if self.ad_phase < 3:
-            adjustments = [ -delta, -delta, -delta]
-            adjustments[self.ad_phase] = delta
-            next_adjustments = [z1 - z2 for (z1, z2) in
-                zip(adjustments, self.ad_prev_adjustments)]
-            self.z_helper.adjust_steppers(next_adjustments, speed)
+        adjustments = [_a * delta for _a in self.ad_adjustments[self.ad_phase]]
+        self.z_helper.adjust_steppers(adjustments, speed)
+        if self.ad_phase < 6:
             self.ad_phase += 1
-            self.ad_prev_adjustments = adjustments
             return "retry"
         # calculcate results
         p = []
-        for i in range(4):
+        for i in range(7):
             p.append(params_to_normal_form(np, self.ad_params[i], offsets))
-        z_pos = (intersect_3_planes(np, p[0], p[2], p[3])[:2],
-                 intersect_3_planes(np, p[0], p[1], p[3])[:2],
-                 intersect_3_planes(np, p[0], p[1], p[2])[:2])
+
+        z_p1 = (intersect_3_planes(np, p[0], p[2], p[3])[:2],
+                intersect_3_planes(np, p[0], p[1], p[3])[:2],
+                intersect_3_planes(np, p[0], p[1], p[2])[:2])
+
+        z_p2 = (intersect_3_planes(np, p[0], p[5], p[6])[:2],
+                intersect_3_planes(np, p[0], p[4], p[6])[:2],
+                intersect_3_planes(np, p[0], p[4], p[5])[:2])
+
+        # take the average of positive and negative measurement
+        z_pos = []
+        for _zp1, _zp2 in zip(z_p1, z_p2):
+            _z = []
+            for _z1, _z2 in zip(_zp1, _zp2):
+                _z.append((_z1 + _z2) / 2)
+            z_pos.append(_z)
         s_zpos = ""
         for zp in z_pos:
             s_zpos += "%.6f, %.6f\n" % tuple(zp)
@@ -334,8 +350,7 @@ class ZTilt:
             self.z_positions = np.mean(self.ad_runs[-avlen:], axis=0)
         else:
             self.z_positions = np.mean(self.ad_runs, axis=0)
-        self.apply_adjustments(offsets, self.ad_params[0],
-            self.ad_prev_adjustments)
+        self.apply_adjustments(offsets, self.ad_params[0])
         if len(self.ad_runs) >= avlen:
             errors = np.std(self.ad_runs[-avlen:], axis=0)
             error = np.std(errors)
@@ -360,7 +375,7 @@ class ZTilt:
         z_offsets = np.mean(self.ad_points[-avlen:], axis=0)
         z_offsets = [z - offsets[2] for z in z_offsets]
         self.z_offsets = z_offsets
-        logging.info("final z_offsets %s" % (z_offsets))
+        logging.info("final z_offsets %s", (z_offsets))
         configfile = self.printer.lookup_object('configfile')
         section = self.section
         s_zoff = ""
