@@ -12,10 +12,21 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
 
+
 struct hd44780 {
     uint32_t last_cmd_time, cmd_wait_ticks;
     uint8_t last;
-    struct gpio_out rs, e, d4, d5, d6, d7;
+    enum {io_4_bits=0, io_shift_register=1} io_type;
+    union{
+        struct gpio_out rs, reg_data;
+    };
+    union{
+         struct gpio_out e, reg_ckl;
+    };
+    union{
+         struct gpio_out d4, reg_strobe;
+    };
+    struct gpio_out d5, d6, d7;
 };
 
 
@@ -58,15 +69,61 @@ hd44780_xmit_bits(uint8_t toggle, struct gpio_out e, struct gpio_out d4
     gpio_out_toggle(e);
 }
 
+// Write 8 bits to a shift register
+static void
+shift_out(uint8_t data, struct gpio_out data_pin, struct gpio_out clk_pin
+            , struct gpio_out strobe_pin){
+    gpio_out_write(strobe_pin,0);
+    for(int i = 0; i<8; i++)
+    {
+        gpio_out_write(clk_pin,0);
+        gpio_out_write(data_pin,data & (1<<7));
+        data <<= 1;
+        ndelay(60);
+        gpio_out_write(clk_pin,1);
+        ndelay(60);
+    }
+    gpio_out_write(strobe_pin,1);
+    ndelay(60);
+}
+
+// Write 4 bits to the hd44780 using the 4bit parallel interface trough
+// a shift register
+static __always_inline void
+hd44780_xmit_bits_shift(uint8_t data, struct gpio_out data_pin
+                , struct gpio_out clk_pin , struct gpio_out strobe_pin)
+{
+    data &= ~(1<<3);
+    //Shift out the data with cleared enable pin
+    shift_out(data, data_pin, clk_pin, strobe_pin);
+    data |= (1<<3);
+    //Set the enable
+    shift_out(data, data_pin, clk_pin, strobe_pin);
+    //Clear the enable
+    data &= ~(1<<3);
+    shift_out(data, data_pin, clk_pin, strobe_pin);
+}
+
 // Transmit 8 bits to the chip
 static void
 hd44780_xmit_byte(struct hd44780 *h, uint8_t data)
 {
-    struct gpio_out e = h->e, d4 = h->d4, d5 = h->d5, d6 = h->d6, d7 = h->d7;
-    hd44780_xmit_bits(h->last ^ data, e, d4, d5, d6, d7);
-    h->last = data << 4;
-    ndelay(500 - 230);
-    hd44780_xmit_bits(data ^ h->last, e, d4, d5, d6, d7);
+    if(h->io_type == io_shift_register){
+        struct gpio_out data_pin = h->reg_data,
+            clk_pin = h->reg_ckl, strobe_pin = h->reg_strobe;
+        hd44780_xmit_bits_shift( (data & 0xF0) | (h->last & 0x0F)
+            , data_pin, clk_pin, strobe_pin);
+        hd44780_xmit_bits_shift( (data << 4) | (h->last & 0x0F)
+            , data_pin, clk_pin, strobe_pin);
+    }
+    else{
+        struct gpio_out e = h->e, d4 = h->d4, d5 = h->d5
+            , d6 = h->d6, d7 = h->d7;
+        hd44780_xmit_bits(h->last ^ data, e, d4, d5, d6, d7);
+        h->last = data << 4;
+        ndelay(500 - 230);
+        hd44780_xmit_bits(data ^ h->last, e, d4, d5, d6, d7);
+    }
 }
 
 // Transmit a series of bytes to the chip
@@ -100,10 +157,13 @@ command_config_hd44780(uint32_t *args)
     h->d6 = gpio_out_setup(args[5], 0);
     h->d7 = gpio_out_setup(args[6], 0);
 
+
     if (!CONFIG_HAVE_STRICT_TIMING) {
         h->cmd_wait_ticks = args[7];
         return;
     }
+
+    h->io_type = args[8];
 
     // Calibrate cmd_wait_ticks
     irq_disable();
@@ -117,13 +177,20 @@ command_config_hd44780(uint32_t *args)
 }
 DECL_COMMAND(command_config_hd44780,
              "config_hd44780 oid=%c rs_pin=%u e_pin=%u"
-             " d4_pin=%u d5_pin=%u d6_pin=%u d7_pin=%u delay_ticks=%u");
+             " d4_pin=%u d5_pin=%u d6_pin=%u d7_pin=%u"
+             " delay_ticks=%u io_type=%c");
 
 void
 command_hd44780_send_cmds(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
-    gpio_out_write(h->rs, 0);
+    if(h->io_type == io_shift_register){
+        h->last &= ~(1<<1);
+    }
+    else{
+        gpio_out_write(h->rs, 0);
+    }
+
     uint8_t len = args[1], *cmds = command_decode_ptr(args[2]);
     hd44780_xmit(h, len, cmds);
 }
@@ -133,7 +200,12 @@ void
 command_hd44780_send_data(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
-    gpio_out_write(h->rs, 1);
+    if(h->io_type == io_shift_register){
+        h->last |= (1<<1);
+    }
+    else{
+       gpio_out_write(h->rs, 1);
+    }
     uint8_t len = args[1], *data = command_decode_ptr(args[2]);
     hd44780_xmit(h, len, data);
 }
