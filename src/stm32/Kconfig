@@ -27,6 +27,7 @@ choice
     config MACH_STM32F103
         bool "STM32F103"
         select MACH_STM32F1
+        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F207
         bool "STM32F207"
         select MACH_STM32F2
