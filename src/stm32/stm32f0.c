@@ -55,6 +55,13 @@ get_pclock_frequency(uint32_t periph_base)
     return FREQ_PERIPH;
 }
 
+// Return the frequency of the timer clock
+uint32_t
+get_timer_frequency(void)
+{
+  return FREQ_PERIPH;
+}
+
 // Enable a GPIO peripheral clock
 void
 gpio_clock_enable(GPIO_TypeDef *regs)
