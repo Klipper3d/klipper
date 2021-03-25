@@ -269,6 +269,7 @@ also allows a hold_current to be set during prints (a hold_current
 is not recommended during sensorless homing).
 
 An example macro might look something like:
+<!-- {% raw %} -->
 ```
 [gcode_macro SENSORLESS_HOME_X]
 gcode:
@@ -286,6 +287,7 @@ gcode:
     # Set current during print
     SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR} HOLDCURRENT={HOLD_CUR}
 ```
+<!-- {% endraw %} -->
 
 The resulting macro can be called from a [homing_override config
 section](Config_Reference.md#homing_override) or from a [START_PRINT
