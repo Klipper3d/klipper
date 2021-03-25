@@ -326,6 +326,22 @@ class ZTilt:
         for i in range(7):
             p.append(params_to_normal_form(np, self.ad_params[i], offsets))
 
+        # This is how it works.
+        # To find the pivot point, we take 3 planes:
+        #  a) the original untilted plane
+        #  b) the plane with one motor raised, on one corner opposite the
+        #     one we want to determine the pivot point of
+        #  c) the plane with the other motor opposite the one we want to
+        #     determine the pivot point raised
+        # The intersection of all 3 planes is a point very near the pivot
+        # point we search for. If the pivot point would be a point on the
+        # bed surface, we would already be done. But as the actual pivot
+        # point is in most cases below the bed, the intersection of the 3
+        # points is behind or in front of the actual point (in X/Y). To
+        # compensate for this error, we do the same calculation again, but
+        # with the planes b) and c) tilted in the opposite direction and
+        # take the average of the 2 points.
+
         z_p1 = (intersect_3_planes(np, p[0], p[2], p[3])[:2],
                 intersect_3_planes(np, p[0], p[1], p[3])[:2],
                 intersect_3_planes(np, p[0], p[1], p[2])[:2])
@@ -350,6 +366,15 @@ class ZTilt:
             self.z_positions = np.mean(self.ad_runs[-avlen:], axis=0)
         else:
             self.z_positions = np.mean(self.ad_runs, axis=0)
+
+        # We got a first estimate of the pivot points. Now apply the
+        # adjustemts to all motors and repeat the process until the result
+        # converges. We determine convergence by keeping track of the last
+        # <average_len> + 1 runs and compare the standard deviation over that
+        # len between the last two runs. When the error stops to decrease, we
+        # are done. The final z_positions are determined by calculating the
+        # average over the last <average_len> calculated positions.
+
         self.apply_adjustments(offsets, self.ad_params[0])
         if len(self.ad_runs) >= avlen:
             errors = np.std(self.ad_runs[-avlen:], axis=0)
