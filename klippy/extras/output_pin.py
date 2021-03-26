@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 PIN_MIN_TIME = 0.100
+RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
 
 class PrinterOutputPin:
     def __init__(self, config):
@@ -27,17 +28,17 @@ class PrinterOutputPin:
                                        minval=0., maxval=self.scale)
         self.reactor = self.printer.get_reactor()
         self.resend_timer = None
-        self.resend_interval = 0
+        self.resend_interval = 0.
         if static_value is not None:
             self.mcu_pin.setup_max_duration(0.)
             self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
-            self.max_mcu_duration = config.getfloat('maximum_mcu_duration',
-                                                    0, minval=0.500)
-            self.mcu_pin.setup_max_duration(self.max_mcu_duration)
-            self.resend_interval = .8 * self.max_mcu_duration - PIN_MIN_TIME
+            max_mcu_duration = config.getfloat('maximum_mcu_duration',
+                                               0., minval=0.500)
+            self.mcu_pin.setup_max_duration(max_mcu_duration)
+            self.resend_interval = max_mcu_duration - RESEND_HOST_TIME
 
             self.last_value = config.getfloat(
                 'value', 0., minval=0., maxval=self.scale) / self.scale
@@ -63,7 +64,7 @@ class PrinterOutputPin:
         self.last_value = value
         self.last_cycle_time = cycle_time
         self.last_print_time = print_time
-        if self.max_mcu_duration != 0 and self.resend_timer is None:
+        if self.resend_interval and self.resend_timer is None:
             self.resend_timer = self.reactor.register_timer(
                 self._resend_current_val, self.reactor.NOW)
     cmd_SET_PIN_help = "Set the value of an output pin"
