@@ -375,8 +375,7 @@ similar devices to any general purpose IO pin. However, fans and
 output_pin devices may be optionally configured to use `hardware_pwm:
 True`, in which case the micro-controller must support hardware PWM on
 the pin (otherwise, Klipper will report a "Not a valid PWM pin"
-error). Note that hardware PWM is currently only supported on the avr,
-atsam, samd21, and linux micro-controllers.
+error).
 
 IRQ pins (or Interrupt pins): Klipper does not use hardware interrupts
 on IO pins, so it is never necessary to wire a device to one of these
