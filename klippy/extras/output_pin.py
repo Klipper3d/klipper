@@ -22,20 +22,28 @@ class PrinterOutputPin:
             self.mcu_pin = ppins.setup_pin('digital_out', config.get('pin'))
             self.scale = 1.
             self.last_cycle_time = self.default_cycle_time = 0.
-        self.mcu_pin.setup_max_duration(0.)
         self.last_print_time = 0.
         static_value = config.getfloat('static_value', None,
                                        minval=0., maxval=self.scale)
+        self.reactor = self.printer.get_reactor()
+        self.resend_timer = None
+        self.resend_interval = 0
         if static_value is not None:
+            self.mcu_pin.setup_max_duration(0.)
             self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
+            self.max_mcu_duration = config.getfloat('maximum_mcu_duration',
+                                                    0, minval=0.500)
+            self.mcu_pin.setup_max_duration(self.max_mcu_duration)
+            self.resend_interval = .8 * self.max_mcu_duration - PIN_MIN_TIME
+
             self.last_value = config.getfloat(
                 'value', 0., minval=0., maxval=self.scale) / self.scale
-            shutdown_value = config.getfloat(
+            self.shutdown_value = config.getfloat(
                 'shutdown_value', 0., minval=0., maxval=self.scale) / self.scale
-            self.mcu_pin.setup_start_value(self.last_value, shutdown_value)
+            self.mcu_pin.setup_start_value(self.last_value, self.shutdown_value)
             pin_name = config.get_name().split()[1]
             gcode = self.printer.lookup_object('gcode')
             gcode.register_mux_command("SET_PIN", "PIN", pin_name,
@@ -43,9 +51,10 @@ class PrinterOutputPin:
                                        desc=self.cmd_SET_PIN_help)
     def get_status(self, eventtime):
         return {'value': self.last_value}
-    def _set_pin(self, print_time, value, cycle_time):
+    def _set_pin(self, print_time, value, cycle_time, is_resend=False):
         if value == self.last_value and cycle_time == self.last_cycle_time:
-            return
+            if not is_resend:
+                return
         print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
         if self.is_pwm:
             self.mcu_pin.set_pwm(print_time, value, cycle_time)
@@ -54,6 +63,9 @@ class PrinterOutputPin:
         self.last_value = value
         self.last_cycle_time = cycle_time
         self.last_print_time = print_time
+        if self.max_mcu_duration != 0 and self.resend_timer is None:
+            self.resend_timer = self.reactor.register_timer(
+                self._resend_current_val, self.reactor.NOW)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
@@ -65,6 +77,22 @@ class PrinterOutputPin:
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback(
             lambda print_time: self._set_pin(print_time, value, cycle_time))
+
+    def _resend_current_val(self, eventtime):
+        if self.last_value == self.shutdown_value:
+            self.reactor.unregister_timer(self.resend_timer)
+            self.resend_timer = None
+            return self.reactor.NEVER
+
+        systime = self.reactor.monotonic()
+        print_time = self.mcu_pin.get_mcu().estimated_print_time(systime)
+        time_diff = print_time - (self.last_print_time + self.resend_interval)
+        if time_diff > 0.:
+            # Reschedule for resend time
+            return systime + time_diff
+        self._set_pin(print_time + PIN_MIN_TIME,
+                      self.last_value, self.last_cycle_time, True)
+        return systime + self.resend_interval
 
 def load_config_prefix(config):
     return PrinterOutputPin(config)

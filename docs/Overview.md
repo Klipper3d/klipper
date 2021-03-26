@@ -46,6 +46,8 @@ communication with the Klipper developers.
   with Klipper.
 - [Skew correction](skew_correction.md): Adjustments for axes not
   perfectly square.
+- [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
+  tools such as lasers or spindles.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
 # Developer Documentation
