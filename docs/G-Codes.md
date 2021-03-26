@@ -760,3 +760,27 @@ is enabled (also see the
   defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that
   the suggested input shaper parameters can be persisted in the config
   by issuing `SAVE_CONFIG` command.
+
+## Palette 2 Commands
+
+The following command is available when the
+[palette2 config section](Config_Reference.md#palette2)
+is enabled:
+- `PALETTE_CONNECT`: This command initializes the connection with
+  the Palette 2.
+- `PALETTE_DISCONNECT`: This command disconnects from the Palette 2.
+- `PALETTE_CLEAR`: This command instructs the Palette 2 to clear all of the
+  input and output paths of filament.
+- `PALETTE_CUT`: This command instructs the Palette 2 to cut the filament
+  currently loaded in the splice core.
+- `PALETTE_SMART_LOAD`: This command start the smart load sequence on the
+  Palette 2. Filament is loaded automatically by extruding it the distance
+  calibrated on the device for the printer, and instructs the Palette 2
+  once the loading has been completed. This command is the same as pressing
+  **Smart Load** directly on the Palette 2 screen after the filament load
+  is complete.
+
+Palette prints work by embedding special OCodes (Omega Codes)
+in the GCode file:
+- `O1`...`O32`: These codes are read from the GCode stream and processed
+  by this module and passed to the Palette 2 device.
