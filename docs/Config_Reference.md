@@ -2484,7 +2484,7 @@ pin:
 #shutdown_value:
 #   The value to set the pin to on an MCU shutdown event. The default
 #   is 0 (for low voltage).
-#host_acknowledge_timeout:
+#maximum_mcu_duration:
 #   The maximum duration a non-shutdown value may be driven by the MCU
 #   without an acknowledge from the host.
 #   If host can not keep up with an update, the MCU will shutdown

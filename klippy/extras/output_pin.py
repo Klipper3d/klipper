@@ -6,7 +6,6 @@
 
 PIN_MIN_TIME = 0.100
 
-
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -26,21 +25,19 @@ class PrinterOutputPin:
         self.last_print_time = 0.
         static_value = config.getfloat('static_value', None,
                                        minval=0., maxval=self.scale)
+        self.reactor = self.printer.get_reactor()
+        self.resend_timer = None
+        self.resend_interval = 0
         if static_value is not None:
             self.mcu_pin.setup_max_duration(0.)
             self.last_value = static_value / self.scale
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
-            self.reactor = self.printer.get_reactor()
-            self.host_ack_timeout = config.getfloat('host_acknowledge_timeout',
-                                                    0, minval=0.)
-            #ensure that safety timeout is big enough for comm. latency
-            if self.host_ack_timeout > 0:
-                self.host_ack_timeout = max(self.host_ack_timeout, 0.500)
-            self.mcu_pin.setup_max_duration(self.host_ack_timeout)
-            self.resend_timer = None
-            self.resent_interval = .8 * self.host_ack_timeout - PIN_MIN_TIME
+            self.max_mcu_duration = config.getfloat('maximum_mcu_duration',
+                                                    0, minval=0.500)
+            self.mcu_pin.setup_max_duration(self.max_mcu_duration)
+            self.resend_interval = .8 * self.max_mcu_duration - PIN_MIN_TIME
 
             self.last_value = config.getfloat(
                 'value', 0., minval=0., maxval=self.scale) / self.scale
@@ -66,7 +63,7 @@ class PrinterOutputPin:
         self.last_value = value
         self.last_cycle_time = cycle_time
         self.last_print_time = print_time
-        if self.host_ack_timeout != 0 and self.resend_timer is None:
+        if self.max_mcu_duration != 0 and self.resend_timer is None:
             self.resend_timer = self.reactor.register_timer(
                 self._resend_current_val, self.reactor.NOW)
     cmd_SET_PIN_help = "Set the value of an output pin"
@@ -89,13 +86,13 @@ class PrinterOutputPin:
 
         systime = self.reactor.monotonic()
         print_time = self.mcu_pin.get_mcu().estimated_print_time(systime)
-        time_diff = print_time - (self.last_print_time + self.resent_interval)
+        time_diff = print_time - (self.last_print_time + self.resend_interval)
         if time_diff > 0.:
             # Reschedule for resend time
             return systime + time_diff
         self._set_pin(print_time + PIN_MIN_TIME,
                       self.last_value, self.last_cycle_time, True)
-        return systime + self.resent_interval
+        return systime + self.resend_interval
 
 def load_config_prefix(config):
     return PrinterOutputPin(config)
