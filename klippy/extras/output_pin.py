@@ -1,11 +1,12 @@
 # Code to configure miscellaneous chips
 #
-# Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 PIN_MIN_TIME = 0.100
 RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
+MAX_SCHEDULE_TIME = 5.0
 
 class PrinterOutputPin:
     def __init__(self, config):
@@ -14,7 +15,8 @@ class PrinterOutputPin:
         self.is_pwm = config.getboolean('pwm', False)
         if self.is_pwm:
             self.mcu_pin = ppins.setup_pin('pwm', config.get('pin'))
-            cycle_time = config.getfloat('cycle_time', 0.100, above=0.)
+            cycle_time = config.getfloat('cycle_time', 0.100, above=0.,
+                                         maxval=MAX_SCHEDULE_TIME)
             hardware_pwm = config.getboolean('hardware_pwm', False)
             self.mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.scale = config.getfloat('scale', 1., above=0.)
@@ -35,8 +37,9 @@ class PrinterOutputPin:
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
-            max_mcu_duration = config.getfloat('maximum_mcu_duration',
-                                               0., minval=0.500)
+            max_mcu_duration = config.getfloat('maximum_mcu_duration', 0.,
+                                               minval=0.500,
+                                               maxval=MAX_SCHEDULE_TIME)
             self.mcu_pin.setup_max_duration(max_mcu_duration)
             self.resend_interval = max_mcu_duration - RESEND_HOST_TIME
 
@@ -72,7 +75,7 @@ class PrinterOutputPin:
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
         value /= self.scale
         cycle_time = gcmd.get_float('CYCLE_TIME', self.default_cycle_time,
-                                    above=0.)
+                                    above=0., maxval=MAX_SCHEDULE_TIME)
         if not self.is_pwm and value not in [0., 1.]:
             raise gcmd.error("Invalid pin value")
         toolhead = self.printer.lookup_object('toolhead')
