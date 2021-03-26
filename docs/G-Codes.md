@@ -717,6 +717,13 @@ The following commands are available when an
   is used. This command is useful to test the connection to the
   ADXL345 accelerometer: one of the returned values should be a
   free-fall acceleration (+/- some noise of the chip).
+- `ADXL345_DEBUG_READ [CHIP=<config_name>] REG=<register>`: queries
+  ADXL345 register <register> (e.g. 44 or 0x2C). Can be useful for
+  debugging purposes.
+- `ADXL345_DEBUG_WRITE [CHIP=<config_name>] REG=<reg> VAL=<value>`:
+  writes raw <value> into a register <register>. Both <value> and
+  <register> can be a decimal or a hexadecimal integer. Use with care,
+  and refer to ADXL345 data sheet for the reference.
 
 ## Resonance Testing Commands
 
