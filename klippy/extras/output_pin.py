@@ -41,7 +41,8 @@ class PrinterOutputPin:
                                                minval=0.500,
                                                maxval=MAX_SCHEDULE_TIME)
             self.mcu_pin.setup_max_duration(max_mcu_duration)
-            self.resend_interval = max_mcu_duration - RESEND_HOST_TIME
+            if max_mcu_duration:
+                self.resend_interval = max_mcu_duration - RESEND_HOST_TIME
 
             self.last_value = config.getfloat(
                 'value', 0., minval=0., maxval=self.scale) / self.scale
