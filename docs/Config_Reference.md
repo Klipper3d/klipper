@@ -2471,6 +2471,24 @@ clock_pin:
 #initial_BLUE: 0.0
 #   See the "neopixel" section for information on these parameters.
 ```
+## [PCA9533]
+PCA9533 LED support. The PCA9533 is used on the mightyboard.
+
+```
+[pca9533 my_pca9533]
+#i2c_bus:
+#    The i2c peripheral, "twi" on the atmega
+#i2c_address: 98
+#    The i2c address, 98 or 99
+#initial_RED: 1
+#initial_GREEN: 1
+#initial_BLUE: 1
+#initial_WHITE: 1
+#    The PCA9533 only supports 1 or 0, any other values will be considered as 1.
+#    On the mightyboard, the white led is not populated.
+#    Use GCODE to modify led values after startup.
+#    set_led led=my_pca9533 red=1 green=1 blue=1
+```
 
 ## [gcode_button]
 
