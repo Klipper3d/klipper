@@ -18,24 +18,25 @@ class PrinterExtruder:
         else:
             self.heater = pheaters.lookup_heater(shared_heater)
         self.stepper = stepper.PrinterStepper(config)
-        self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
+
+        # Setup extruder parameters
+        nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
-            'filament_diameter', minval=self.nozzle_diameter)
-        self.filament_area = math.pi * (filament_diameter * .5)**2
-        def_max_cross_section = 4. * self.nozzle_diameter**2
-        def_max_extrude_ratio = def_max_cross_section / self.filament_area
+            'filament_diameter', minval=nozzle_diameter)
         max_cross_section = config.getfloat(
-            'max_extrude_cross_section', def_max_cross_section, above=0.)
-        self.max_extrude_ratio = max_cross_section / self.filament_area
-        logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
-        toolhead = self.printer.lookup_object('toolhead')
-        max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_e_velocity = config.getfloat(
-            'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
-            , above=0.)
-        self.max_e_accel = config.getfloat(
-            'max_extrude_only_accel', max_accel * def_max_extrude_ratio
-            , above=0.)
+            'max_extrude_cross_section', 0, above=0.)
+        max_e_velocity = config.getfloat(
+            'max_extrude_only_velocity', 0, above=0.)
+        max_e_accel = config.getfloat(
+            'max_extrude_only_accel', 0, above=0.)
+        self.nozzle_diameter = 0
+        self.filament_diameter = self.filament_area = 0
+        self.conf_max_cross_section = self.max_extrude_ratio = 0
+        self.max_e_velocity = self.conf_max_e_velocity = 0
+        self.max_e_accel = self.conf_max_e_accel = 0
+        self._set_extruder(nozzle_diameter, filament_diameter,
+                max_cross_section, max_e_velocity, max_e_accel)
+
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
@@ -54,6 +55,7 @@ class PrinterExtruder:
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
+        toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
         self.extruder_set_smooth_time = ffi_lib.extruder_set_smooth_time
         self._set_pressure_advance(pressure_advance, smooth_time)
@@ -66,9 +68,15 @@ class PrinterExtruder:
             gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+            gcode.register_mux_command("SET_EXTRUDER", "EXTRUDER", None,
+                                       self.cmd_default_SET_EXTRUDER,
+                                       desc=self.cmd_SET_EXTRUDER_help)
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("SET_EXTRUDER", "EXTRUDER",
+                                   self.name, self.cmd_SET_EXTRUDER,
+                                   desc=self.cmd_SET_EXTRUDER_help)
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
@@ -90,6 +98,30 @@ class PrinterExtruder:
         self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
+    def _set_extruder(self, nozzle_diameter, filament_diameter,
+            max_cross_section, max_e_velocity, max_e_accel):
+        if nozzle_diameter:
+            self.nozzle_diameter = nozzle_diameter
+        if filament_diameter:
+            self.filament_diameter = filament_diameter
+            self.filament_area = math.pi * (filament_diameter * .5)**2
+        if max_cross_section is not None:
+            self.conf_max_cross_section = max_cross_section
+        if max_e_velocity is not None:
+            self.conf_max_e_velocity = max_e_velocity
+        if max_e_accel is not None:
+            self.conf_max_e_accel = max_e_accel
+        def_max_cross_section = 4. * self.nozzle_diameter**2
+        def_max_extrude_ratio = def_max_cross_section / self.filament_area
+        max_cross_section = self.conf_max_cross_section or def_max_cross_section
+        self.max_extrude_ratio = max_cross_section / self.filament_area
+        logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
+        toolhead = self.printer.lookup_object('toolhead')
+        max_velocity, max_accel = toolhead.get_max_velocity()
+        self.max_e_velocity = ( self.conf_max_e_velocity or
+                max_velocity * def_max_extrude_ratio )
+        self.max_e_accel = ( self.conf_max_e_accel or
+                max_accel * def_max_extrude_ratio )
     def get_status(self, eventtime):
         return dict(self.heater.get_status(eventtime),
                     pressure_advance=self.pressure_advance,
@@ -190,6 +222,30 @@ class PrinterExtruder:
         msg = ("pressure_advance: %.6f\n"
                "pressure_advance_smooth_time: %.6f"
                % (pressure_advance, smooth_time))
+        self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
+        gcmd.respond_info(msg, log=False)
+    cmd_SET_EXTRUDER_help = "Set extruder advance parameters"
+    def cmd_default_SET_EXTRUDER(self, gcmd):
+        extruder = self.printer.lookup_object('toolhead').get_extruder()
+        extruder.cmd_SET_EXTRUDER(gcmd)
+    def cmd_SET_EXTRUDER(self, gcmd):
+        nozzle_diameter = gcmd.get_float('NOZZLE_DIAMETER',
+                self.nozzle_diameter, minval=0.)
+        filament_diameter = gcmd.get_float('FILAMENT_DIAMETER',
+                self.filament_diameter, minval=0.)
+        max_cross_section = gcmd.get_float('MAX_CROSS_SECTION', None, minval=0.)
+        max_e_velocity = gcmd.get_float('MAX_VELOCITY', None, minval=0.)
+        max_e_accel = gcmd.get_float('MAX_ACCEL', None, minval=0.)
+        self._set_extruder(nozzle_diameter, filament_diameter,
+                max_cross_section, max_e_velocity, max_e_accel)
+        msg = ("nozzle_diameter: %.6f\n"
+               "filament_diameter: %.6f\n"
+               "max_extrude_ratio: %.6f\n"
+               "max_e_velocity: %.6f\n"
+               "max_e_accel: %.6f"
+               % (self.nozzle_diameter, self.filament_diameter,
+                   self.max_extrude_ratio,
+                   self.max_e_velocity, self.max_e_accel))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcmd.respond_info(msg, log=False)
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"

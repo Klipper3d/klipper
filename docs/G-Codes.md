@@ -173,6 +173,17 @@ The following standard commands are supported:
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
   extruder.
+- `SET_EXTRUDER [EXTRUDER=<config_name>]
+  [NOZZLE_DIAMETER=<nozzle_diameter>]
+  [FILAMENT_DIAMETER=<filament_diameter>]`
+  [MAX_CROSS_SECTION=<max_extrude_cross_section>]`
+  [MAX_VELOCITY=<max_extrude_only_velocity>]`
+  [MAX_ACCEL=<max_extrude_only_accel>]`: Set extruder parameters.
+  If EXTRUDER is not specified, it defaults to the active extruder.
+  If MAX_CROSS_SECTION, MAX_VELOCITY, or MAX_ACCEL are not specified,
+  and are already configured, the configuration is unchanged. Set to `0` to
+  disable the last configured value and automatically calculate based on nozzle,
+  filament and toolhead settings.
 - `SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>]
   [DISTANCE=<distance>]`: Set a new value for the provided extruder's
   "step distance". The "step distance" is
