@@ -9,25 +9,18 @@ HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
-# State tracking during toolhead homing/probing operations
-class Homing:
+# Return a completion that completes when all completions in a list complete
+def multi_complete(printer, completions):
+    if len(completions) == 1:
+        return completions[0]
+    cb = (lambda e: all([c.wait() for c in completions]))
+    return printer.get_reactor().register_callback(cb)
+
+# Implementation of homing/probing moves
+class HomingMove:
     def __init__(self, printer):
         self.printer = printer
         self.toolhead = printer.lookup_object('toolhead')
-        self.changed_axes = []
-    def set_axes(self, axes):
-        self.changed_axes = axes
-    def get_axes(self):
-        return self.changed_axes
-    def _fill_coord(self, coord):
-        # Fill in any None entries in 'coord' with current toolhead position
-        thcoord = list(self.toolhead.get_position())
-        for i in range(len(coord)):
-            if coord[i] is not None:
-                thcoord[i] = coord[i]
-        return thcoord
-    def set_homed_position(self, pos):
-        self.toolhead.set_position(self._fill_coord(pos))
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
         startpos = self.toolhead.get_position()
         axes_d = [mp - sp for mp, sp in zip(movepos, startpos)]
@@ -104,6 +97,26 @@ class Homing:
                     raise self.printer.command_error(
                         "Endstop %s still triggered after retract" % (name,))
         return movepos
+
+# State tracking of homing requests
+class Homing:
+    def __init__(self, printer):
+        self.printer = printer
+        self.toolhead = printer.lookup_object('toolhead')
+        self.changed_axes = []
+    def set_axes(self, axes):
+        self.changed_axes = axes
+    def get_axes(self):
+        return self.changed_axes
+    def _fill_coord(self, coord):
+        # Fill in any None entries in 'coord' with current toolhead position
+        thcoord = list(self.toolhead.get_position())
+        for i in range(len(coord)):
+            if coord[i] is not None:
+                thcoord[i] = coord[i]
+        return thcoord
+    def set_homed_position(self, pos):
+        self.toolhead.set_position(self._fill_coord(pos))
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
@@ -115,7 +128,8 @@ class Homing:
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
-        self.homing_move(movepos, endstops, hi.speed)
+        hmove = HomingMove(self.printer)
+        hmove.homing_move(movepos, endstops, hi.speed)
         # Perform second home
         if hi.retract_dist:
             # Retract
@@ -129,8 +143,9 @@ class Homing:
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
-            self.homing_move(movepos, endstops, hi.second_homing_speed,
-                             verify_movement=True)
+            hmove = HomingMove(self.printer)
+            hmove.homing_move(movepos, endstops, hi.second_homing_speed,
+                              verify_movement=True)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
@@ -144,13 +159,6 @@ class Homing:
                 movepos[axis] = adjustpos[axis]
             self.toolhead.set_position(movepos)
 
-# Return a completion that completes when all completions in a list complete
-def multi_complete(printer, completions):
-    if len(completions) == 1:
-        return completions[0]
-    cb = (lambda e: all([c.wait() for c in completions]))
-    return printer.get_reactor().register_callback(cb)
-
 class PrinterHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -158,10 +166,10 @@ class PrinterHoming:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('G28', self.cmd_G28)
     def probing_move(self, mcu_probe, pos, speed):
-        homing_state = Homing(self.printer)
+        hmove = HomingMove(self.printer)
         endstops = [(mcu_probe, "probe")]
-        return homing_state.homing_move(pos, endstops, speed,
-                                        probe_pos=True, verify_movement=True)
+        return hmove.homing_move(pos, endstops, speed,
+                                 probe_pos=True, verify_movement=True)
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
