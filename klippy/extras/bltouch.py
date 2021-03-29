@@ -177,7 +177,7 @@ class BLTouchEndstopWrapper:
         self.raise_probe()
         self.sync_print_time()
         self.multi = 'OFF'
-    def probe_prepare(self):
+    def probe_prepare(self, hmove):
         if self.multi == 'OFF' or self.multi == 'FIRST':
             self.lower_probe()
             if self.multi == 'FIRST':
@@ -187,7 +187,7 @@ class BLTouchEndstopWrapper:
         toolhead.flush_step_generation()
         self.start_mcu_pos = [(s, s.get_mcu_position())
                               for s in self.mcu_endstop.get_steppers()]
-    def probe_finish(self):
+    def probe_finish(self, hmove):
         if self.multi == 'OFF':
             self.raise_probe()
         self.sync_print_time()

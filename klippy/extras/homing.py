@@ -25,6 +25,8 @@ class HomingMove:
             toolhead = printer.lookup_object('toolhead')
         self.toolhead = toolhead
         self.end_mcu_pos = []
+    def get_mcu_endstops(self):
+        return [es for es, name in self.endstops]
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
         startpos = self.toolhead.get_position()
         axes_d = [mp - sp for mp, sp in zip(movepos, startpos)]
@@ -40,8 +42,7 @@ class HomingMove:
     def homing_move(self, movepos, speed, probe_pos=False,
                     triggered=True, check_triggered=True):
         # Notify start of homing/probing move
-        self.printer.send_event("homing:homing_move_begin",
-                                [es for es, name in self.endstops])
+        self.printer.send_event("homing:homing_move_begin", self)
         # Note start location
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
@@ -85,8 +86,7 @@ class HomingMove:
         self.toolhead.set_position(movepos)
         # Signal homing/probing move complete
         try:
-            self.printer.send_event("homing:homing_move_end",
-                                    [es for es, name in self.endstops])
+            self.printer.send_event("homing:homing_move_end", self)
         except self.printer.command_error as e:
             if error is None:
                 error = str(e)
