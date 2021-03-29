@@ -18,9 +18,12 @@ def multi_complete(printer, completions):
 
 # Implementation of homing/probing moves
 class HomingMove:
-    def __init__(self, printer):
+    def __init__(self, printer, endstops, toolhead=None):
         self.printer = printer
-        self.toolhead = printer.lookup_object('toolhead')
+        self.endstops = endstops
+        if toolhead is None:
+            toolhead = printer.lookup_object('toolhead')
+        self.toolhead = toolhead
         self.end_mcu_pos = []
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
         startpos = self.toolhead.get_position()
@@ -34,24 +37,27 @@ class HomingMove:
         if max_steps <= 0.:
             return .001
         return move_t / max_steps
-    def homing_move(self, movepos, endstops, speed, probe_pos=False):
+    def homing_move(self, movepos, speed, probe_pos=False,
+                    triggered=True, check_triggered=True):
         # Notify start of homing/probing move
         self.printer.send_event("homing:homing_move_begin",
-                                [es for es, name in endstops])
+                                [es for es, name in self.endstops])
         # Note start location
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
         for s in kin.get_steppers():
             s.set_tag_position(s.get_commanded_position())
         start_mcu_pos = [(s, name, s.get_mcu_position())
-                         for es, name in endstops for s in es.get_steppers()]
+                         for es, name in self.endstops
+                         for s in es.get_steppers()]
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
         endstop_triggers = []
-        for mcu_endstop, name in endstops:
+        for mcu_endstop, name in self.endstops:
             rest_time = self._calc_endstop_rate(mcu_endstop, movepos, speed)
             wait = mcu_endstop.home_start(print_time, ENDSTOP_SAMPLE_TIME,
-                                          ENDSTOP_SAMPLE_COUNT, rest_time)
+                                          ENDSTOP_SAMPLE_COUNT, rest_time,
+                                          triggered=triggered)
             endstop_triggers.append(wait)
         all_endstop_trigger = multi_complete(self.printer, endstop_triggers)
         self.toolhead.dwell(HOMING_START_DELAY)
@@ -63,9 +69,9 @@ class HomingMove:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         move_end_print_time = self.toolhead.get_last_move_time()
-        for mcu_endstop, name in endstops:
+        for mcu_endstop, name in self.endstops:
             did_trigger = mcu_endstop.home_wait(move_end_print_time)
-            if not did_trigger and error is None:
+            if not did_trigger and check_triggered and error is None:
                 error = "Failed to home %s: Timeout during homing" % (name,)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
@@ -80,7 +86,7 @@ class HomingMove:
         # Signal homing/probing move complete
         try:
             self.printer.send_event("homing:homing_move_end",
-                                    [es for es, name in endstops])
+                                    [es for es, name in self.endstops])
         except self.printer.command_error as e:
             if error is None:
                 error = str(e)
@@ -125,8 +131,8 @@ class Homing:
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
-        hmove = HomingMove(self.printer)
-        hmove.homing_move(movepos, endstops, hi.speed)
+        hmove = HomingMove(self.printer, endstops)
+        hmove.homing_move(movepos, hi.speed)
         # Perform second home
         if hi.retract_dist:
             # Retract
@@ -140,8 +146,8 @@ class Homing:
             forcepos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
-            hmove = HomingMove(self.printer)
-            hmove.homing_move(movepos, endstops, hi.second_homing_speed)
+            hmove = HomingMove(self.printer, endstops)
+            hmove.homing_move(movepos, hi.second_homing_speed)
             if hmove.check_no_movement() is not None:
                 raise self.printer.command_error(
                     "Endstop %s still triggered after retract"
@@ -165,10 +171,15 @@ class PrinterHoming:
         # Register g-code commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('G28', self.cmd_G28)
+    def manual_home(self, toolhead, endstops, pos, speed,
+                    triggered, check_triggered):
+        hmove = HomingMove(self.printer, endstops, toolhead)
+        hmove.homing_move(pos, speed, triggered=triggered,
+                          check_triggered=check_triggered)
     def probing_move(self, mcu_probe, pos, speed):
-        hmove = HomingMove(self.printer)
         endstops = [(mcu_probe, "probe")]
-        epos = hmove.homing_move(pos, endstops, speed, probe_pos=True)
+        hmove = HomingMove(self.printer, endstops)
+        epos = hmove.homing_move(pos, speed, probe_pos=True)
         if hmove.check_no_movement() is not None:
             raise self.printer.command_error(
                 "Probe triggered prior to movement")
