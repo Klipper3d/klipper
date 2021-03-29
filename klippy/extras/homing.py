@@ -15,9 +15,6 @@ class Homing:
         self.printer = printer
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
-        self.verify_retract = True
-        if self.printer.get_start_args().get("debuginput"):
-            self.verify_retract = False
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):
@@ -97,7 +94,8 @@ class Homing:
         if error is not None:
             raise self.printer.command_error(error)
         # Check if some movement occurred
-        if verify_movement:
+        can_verify = self.printer.get_start_args().get('debuginput') is None
+        if verify_movement and can_verify:
             for s, name, spos, epos in end_mcu_pos:
                 if spos == epos:
                     if probe_pos:
@@ -132,7 +130,7 @@ class Homing:
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
             self.homing_move(movepos, endstops, hi.second_homing_speed,
-                             verify_movement=self.verify_retract)
+                             verify_movement=True)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         kin = self.toolhead.get_kinematics()
@@ -169,9 +167,8 @@ class PrinterHoming:
     def probing_move(self, mcu_probe, pos, speed):
         homing_state = Homing(self.printer)
         endstops = [(mcu_probe, "probe")]
-        verify = self.printer.get_start_args().get('debugoutput') is None
         return homing_state.homing_move(pos, endstops, speed,
-                                        probe_pos=True, verify_movement=verify)
+                                        probe_pos=True, verify_movement=True)
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
