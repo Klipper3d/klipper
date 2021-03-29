@@ -143,13 +143,6 @@ class Homing:
             for axis in homing_axes:
                 movepos[axis] = adjustpos[axis]
             self.toolhead.set_position(movepos)
-    def home_axes(self, axes):
-        self.changed_axes = axes
-        try:
-            self.toolhead.get_kinematics().home(self)
-        except self.printer.command_error:
-            self.printer.lookup_object('stepper_enable').motor_off()
-            raise
 
 # Return a completion that completes when all completions in a list complete
 def multi_complete(printer, completions):
@@ -178,7 +171,13 @@ class PrinterHoming:
         if not axes:
             axes = [0, 1, 2]
         homing_state = Homing(self.printer)
-        homing_state.home_axes(axes)
+        homing_state.set_axes(axes)
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        try:
+            kin.home(homing_state)
+        except self.printer.command_error:
+            self.printer.lookup_object('stepper_enable').motor_off()
+            raise
 
 def load_config(config):
     return PrinterHoming(config)
