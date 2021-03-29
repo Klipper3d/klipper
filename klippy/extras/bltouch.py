@@ -1,6 +1,6 @@
 # BLTouch support
 #
-# Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -55,7 +55,6 @@ class BLTouchEndstopWrapper:
             'pin_up_reports_not_triggered', True)
         self.pin_up_touch_triggered = config.getboolean(
             'pin_up_touch_mode_reports_triggered', True)
-        self.start_mcu_pos = []
         # Calculate pin move time
         self.pin_move_time = config.getfloat('pin_move_time', 0.680, above=0.)
         # Wrappers
@@ -183,18 +182,12 @@ class BLTouchEndstopWrapper:
             if self.multi == 'FIRST':
                 self.multi = 'ON'
         self.sync_print_time()
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.flush_step_generation()
-        self.start_mcu_pos = [(s, s.get_mcu_position())
-                              for s in self.mcu_endstop.get_steppers()]
     def probe_finish(self, hmove):
         if self.multi == 'OFF':
             self.raise_probe()
         self.sync_print_time()
-        # Verify the probe actually deployed during the attempt
-        for s, mcu_pos in self.start_mcu_pos:
-            if s.get_mcu_position() == mcu_pos:
-                raise self.printer.command_error("BLTouch failed to deploy")
+        if hmove.check_no_movement() is not None:
+            raise self.printer.command_error("BLTouch failed to deploy")
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
