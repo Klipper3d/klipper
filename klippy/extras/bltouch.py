@@ -48,9 +48,8 @@ class BLTouchEndstopWrapper:
         mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # output mode
-        self.output_mode = config.getchoice('set_output_mode',
-                                            {'5V': '5V', 'OD': 'OD',
-                                             None: None}, None)
+        omodes = {'5V': '5V', 'OD': 'OD', None: None}
+        self.output_mode = config.getchoice('set_output_mode', omodes, None)
         # Setup for sensor test
         self.next_test_time = 0.
         self.pin_up_not_triggered = config.getboolean(
