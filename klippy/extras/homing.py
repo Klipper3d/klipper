@@ -85,9 +85,8 @@ class Homing:
             for s, name, spos, epos in end_mcu_pos:
                 md = (epos - spos) * s.get_step_dist()
                 s.set_tag_position(s.get_tag_position() + md)
-            self.set_homed_position(kin.calc_tag_position())
-        else:
-            self.toolhead.set_position(movepos)
+            movepos = list(kin.calc_tag_position())[:3] + movepos[3:]
+        self.toolhead.set_position(movepos)
         # Signal homing/probing move complete
         try:
             self.printer.send_event("homing:homing_move_end",
@@ -106,6 +105,7 @@ class Homing:
                             "Probe triggered prior to movement")
                     raise self.printer.command_error(
                         "Endstop %s still triggered after retract" % (name,))
+        return movepos
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
@@ -166,8 +166,12 @@ class PrinterHoming:
         # Register g-code commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('G28', self.cmd_G28)
-    def new_homing_state(self):
-        return Homing(self.printer)
+    def probing_move(self, mcu_probe, pos, speed):
+        homing_state = Homing(self.printer)
+        endstops = [(mcu_probe, "probe")]
+        verify = self.printer.get_start_args().get('debugoutput') is None
+        return homing_state.homing_move(pos, endstops, speed,
+                                        probe_pos=True, verify_movement=verify)
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
