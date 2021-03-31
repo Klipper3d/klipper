@@ -5,6 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from .. import bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 LINE_LENGTH_DEFAULT="20"
@@ -14,28 +15,18 @@ TextGlyphs = { 'right_arrow': '\x7e' }
 
 HD44780_DELAY = .000040
 
-class HD44780:
+class hd44780_spi:
     def __init__(self, config):
         self.printer = config.get_printer()
-        # pin config
-        ppins = self.printer.lookup_object('pins')
-        pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
-        self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
-            True)
-        self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
-            LINE_LENGTH_DEFAULT)
-        mcu = None
-        for pin_params in pins:
-            if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("hd44780 all pins must be on same mcu")
-            mcu = pin_params['chip']
-        self.pins = [pin_params['pin'] for pin_params in pins]
-        self.mcu = mcu
-        self.oid = self.mcu.create_oid()
-        self.mcu.register_config_callback(self.build_config)
+        # spi config
+        self.spi = bus.MCU_SPI_from_config(
+            config, 0, pin_option="latch_pin", default_speed=4000000)
+        print("config spi")
         self.send_data_cmd = self.send_cmds_cmd = None
         self.icons = {}
+        self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
+            LINE_LENGTH_DEFAULT)
+
         # framebuffers
         self.text_framebuffers = [bytearray(' '*2*self.line_length),
                                   bytearray(' '*2*self.line_length)]
@@ -48,18 +39,6 @@ class HD44780:
               0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
-    def build_config(self):
-        self.mcu.add_config_cmd(
-            "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
-            " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
-                self.oid, self.pins[0], self.pins[1],
-                self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(HD44780_DELAY)))
-        cmd_queue = self.mcu.alloc_command_queue()
-        self.send_cmds_cmd = self.mcu.lookup_command(
-            "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
-        self.send_data_cmd = self.mcu.lookup_command(
-            "hd44780_send_data oid=%c data=%*s", cq=cmd_queue)
     def send(self, cmds, is_data=False):
         cmd_type = self.send_cmds_cmd
         if is_data:
