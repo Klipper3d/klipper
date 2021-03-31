@@ -14,7 +14,6 @@ LINE_LENGTH_OPTIONS={"16":16, "20":20}
 TextGlyphs = { 'right_arrow': '\x7e' }
 
 
-
 class hd44780_spi:
     def __init__(self, config):
         self.printer = config.get_printer()

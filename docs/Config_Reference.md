@@ -3127,14 +3127,6 @@ lcd_type:
 #d7_pin:
 #   The pins connected to an hd44780 type lcd. These parameters must
 #   be provided when using an hd44780 display.
-#lcd_io:
-#    Used for hd44780 type display. On some boards such as the
-#    mightyboard, a shift register is used to save pins.
-#    "4bit" (default) or "shift_register"
-#data_pin:
-#clk_pin:
-#strobe_pin:
-#   The pins connected to the shift register
 #line_length:
 #   Set the number of characters per line for an hd44780 type lcd.
 #   Possible values are 20 (default) and 16. The number of lines is

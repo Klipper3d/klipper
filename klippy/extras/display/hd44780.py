@@ -10,9 +10,6 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 LINE_LENGTH_DEFAULT="20"
 LINE_LENGTH_OPTIONS={"16":16, "20":20}
 
-LCD_IO_OPTIONS={"4bit":0, "shift_register":1}
-LCD_IO_DEFAULT="4bit"
-
 TextGlyphs = { 'right_arrow': '\x7e' }
 
 HD44780_DELAY = .000040
@@ -20,18 +17,9 @@ HD44780_DELAY = .000040
 class HD44780:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.io_config = config.getchoice('lcd_io',
-            LCD_IO_OPTIONS, LCD_IO_DEFAULT)
         # pin config
         ppins = self.printer.lookup_object('pins')
-        if self.io_config == 1:
-            pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['data', 'clk', 'strobe']]
-            pins.append(pins[0])
-            pins.append(pins[0])
-            pins.append(pins[0])
-        else:
-            pins = [ppins.lookup_pin(config.get(name + '_pin'))
+        pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
         self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
             True)
@@ -63,11 +51,10 @@ class HD44780:
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
-            " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s"
-            " delay_ticks=%d io_type=%d" % (
+            " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1],
                 self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(HD44780_DELAY), self.io_config))
+                self.mcu.seconds_to_clock(HD44780_DELAY)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
