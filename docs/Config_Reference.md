@@ -3140,10 +3140,10 @@ lcd_type:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
 #   The pins connected to an emulated_st7920 or hd44780_spi type lcd.
-#   The en_pin corresponds to the cs_pin of the st7920 type lcd, 
+#   The en_pin corresponds to the cs_pin of the st7920 type lcd,
 #   spi_software_sclk_pin corresponds to sclk_pin and spi_software_mosi_pin
-#   corresponds to sid_pin. The spi_software_miso_pin needs to be set to an 
-#   unused pin of the printer mainboard as the st7920 as no MISO pin 
+#   corresponds to sid_pin. The spi_software_miso_pin needs to be set to an
+#   unused pin of the printer mainboard as the st7920 as no MISO pin
 #   but the software spi implementation requires this pin to be configured.
 #   The default spi_speed is 1MHz.
 #cs_pin:
