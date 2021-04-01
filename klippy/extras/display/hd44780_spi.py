@@ -6,23 +6,29 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from .. import bus
+from time import sleep
 
-BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 LINE_LENGTH_DEFAULT="20"
 LINE_LENGTH_OPTIONS={"16":16, "20":20}
 
 TextGlyphs = { 'right_arrow': '\x7e' }
 
-HD44780_DELAY = .000040
+
 
 class hd44780_spi:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
+            True)
         # spi config
         self.spi = bus.MCU_SPI_from_config(
-            config, 0, pin_option="latch_pin", default_speed=4000000)
-        print("config spi")
-        self.send_data_cmd = self.send_cmds_cmd = None
+            config, 0x00, pin_option="latch_pin")
+        self.mcu = self.spi.get_mcu()
+        #self.spi.spi_send([0x01,0xa0])
+        self.data_mask = (1<<1)
+        self.command_mask = 0
+        self.enable_mask = (1<<3)
+
         self.icons = {}
         self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
             LINE_LENGTH_DEFAULT)
@@ -39,12 +45,18 @@ class hd44780_spi:
               0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
-    def send(self, cmds, is_data=False):
-        cmd_type = self.send_cmds_cmd
+    def send_4_bits(self, cmd, is_data):
         if is_data:
-            cmd_type = self.send_data_cmd
-        cmd_type.send([self.oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
-        #logging.debug("hd44780 %d %s", is_data, repr(cmds))
+            mask = self.data_mask
+        else:
+            mask = self.command_mask
+        self.spi.spi_send([(cmd & 0xF0) | mask])
+        self.spi.spi_send([(cmd & 0xF0) | mask | self.enable_mask])
+        self.spi.spi_send([(cmd & 0xF0) | mask])
+    def send(self, cmds, is_data=False):
+        for data in cmds:
+            self.send_4_bits(data,is_data)
+            self.send_4_bits(data<<4,is_data)
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, fb_id in self.all_framebuffers:
@@ -78,7 +90,8 @@ class hd44780_spi:
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
-            self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
+            self.send(cmds)
+            sleep(0.005)
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > self.line_length:
