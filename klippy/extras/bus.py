@@ -124,7 +124,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
                  share_type=sw_pin_names[0]))
         else:
             sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[1]),
-                 share_type=sw_pin_names[1]))    
+                 share_type=sw_pin_names[1]))
         sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[1]),
              share_type=sw_pin_names[1]))
         sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[2]),
