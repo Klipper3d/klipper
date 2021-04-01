@@ -54,6 +54,7 @@ class GCodeMove:
             toolhead = self.printer.lookup_object('toolhead')
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
+        self.reset_last_position()
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
