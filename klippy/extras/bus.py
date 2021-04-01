@@ -118,8 +118,17 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     if config.get('spi_software_sclk_pin', None) is not None:
         sw_pin_names = ['spi_software_%s_pin' % (name,)
                         for name in ['miso', 'mosi', 'sclk']]
-        sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
-                         for name in sw_pin_names]
+        sw_pin_params = []
+        if config.get('spi_software_miso_pin', None) is not None:
+            sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[0]),
+                 share_type=sw_pin_names[0]))
+        else:
+            sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[1]),
+                 share_type=sw_pin_names[1]))    
+        sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[1]),
+             share_type=sw_pin_names[1]))
+        sw_pin_params.append(ppins.lookup_pin(config.get(sw_pin_names[2]),
+             share_type=sw_pin_names[2]))
         for pin_params in sw_pin_params:
             if pin_params['chip'] != mcu:
                 raise ppins.error("%s: spi pins must be on same mcu" % (
