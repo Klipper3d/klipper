@@ -3792,6 +3792,4 @@ serial:
 #   Extrude feedrate when autoloading, default is 2 (mm/s)
 #auto_cancel_variation: 0.1
 #   Auto cancel print when ping varation is above this threshold
-#display_ping: True
-#   When enabled, display ping statistics on the printer display
 ```

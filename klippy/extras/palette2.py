@@ -86,15 +86,6 @@ class Palette2:
         self.auto_load_speed = config.getint("auto_load_speed", 2)
         self.auto_cancel_variation = config.getfloat(
             "auto_cancel_variation", default=None, minval=0.01, maxval=0.2)
-        self.display_ping = config.getboolean("display_ping", default=False)
-        if self.display_ping:
-            try:
-                self.display_status = self.printer.load_object(
-                    config, "display_status")
-            except config.error:
-                raise self.printer.config_error(
-                    "Palette 2 display_ping requires [display_status] "
-                    "to work, please add it to your config!")
 
         # Omega code matchers
         self.omega_header = [None] * 9
@@ -379,10 +370,6 @@ class Palette2:
         if not self.is_printing:
             return
 
-        def send_to_printer(last_ping):
-            if self.display_ping:
-                self.gcode.run_script("M117 Ping: %0.1f" %last_ping)
-
         def check_ping_variation(last_ping):
             if self.auto_cancel_variation is not None:
                 ping_max = 100. + (self.auto_cancel_variation * 100.)
@@ -399,7 +386,6 @@ class Palette2:
                 d = {"number": number, "percent": percent}
                 logging.info("Ping %d, %d percent" % (number, percent))
                 self.omega_pings.append(d)
-                send_to_printer(percent)
                 check_ping_variation(percent)
             elif params[0] == "D2":
                 number = len(self.omega_pongs) + 1
@@ -651,6 +637,13 @@ class Palette2:
             return self.reactor.NOW
         return eventtime + AUTOLOAD_TIMER
 
+    def get_status(self, eventtime=None):
+        status = {
+            "ping": self.omega_pings[-1],
+            "remaining_load_length": self.remaining_load_length,
+            "is_splicing": self.is_splicing
+        }
+        return status
 
 def load_config(config):
     return Palette2(config)
