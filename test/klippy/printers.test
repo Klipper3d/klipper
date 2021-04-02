@@ -107,6 +107,10 @@ DICTIONARY sam4e8e.dict
 CONFIG ../../config/generic-duet2.cfg
 CONFIG ../../config/generic-duet2-duex.cfg
 
+# Printers using the samd51
+DICTIONARY samd51p20.dict
+CONFIG ../../config/generic-duet3-mini.cfg
+
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
