@@ -122,7 +122,7 @@ class MCU_trsync:
         params = self._trsync_query_cmd.send([self._oid,
                                               self.REASON_HOST_REQUEST])
         for s in self._steppers:
-            s.note_homing_end(did_trigger=True) # XXX
+            s.note_homing_end()
         return params['trigger_reason']
 
 class MCU_endstop:
