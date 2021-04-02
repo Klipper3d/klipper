@@ -84,7 +84,9 @@ class MCU_trsync:
             tc = self._trigger_completion
             if tc is not None:
                 self._trigger_completion = None
-                self._reactor.async_complete(tc, True)
+                reason = params['trigger_reason']
+                is_failure = (reason == self.REASON_COMMS_TIMEOUT)
+                self._reactor.async_complete(tc, is_failure)
         elif self._home_end_clock is not None:
             clock = self._mcu.clock32_to_clock64(params['clock'])
             if clock >= self._home_end_clock:
