@@ -57,8 +57,6 @@ class BedMesh:
     FADE_DISABLE = 0x7FFFFFFF
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:ready",
-                                            self.handle_ready)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.last_position = [0., 0., 0., 0.]
@@ -94,7 +92,6 @@ class BedMesh:
         gcode_move.set_move_transform(self)
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-    def handle_ready(self):
         self.bmc.print_generated_points(logging.info)
         self.pmgr.initialize()
     def set_mesh(self, mesh):
