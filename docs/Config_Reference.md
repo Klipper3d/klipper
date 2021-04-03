@@ -1551,6 +1551,18 @@ z_offset:
 #   not obtained in the given number of retries then an error is
 #   reported. The default is zero which causes an error to be reported
 #   on the first sample that exceeds samples_tolerance.
+#preprobe_speed: 0
+#   If set (in mm/s), enables pre-probe moves. Every probing sequence
+#   will start out with a single probing with this speed, after which
+#   the probe will retract a small distance and then the standard
+#   probing sequence (usually done at a slower speed for more accuracy)
+#   will run. Pre-probing does not measure Z height.
+#preprobe_retract_dist:
+#   The distance (in mm) to retract after the pre-probing move, if
+#   enabled. Defaults to the value of sample_retract_dist.
+#preprobe_lift_speed:
+#   The speed (in mm/s) to retract after the pre-probing move, if
+#   enabled. Defaults to the value of lift_speed.
 #activate_gcode:
 #   A list of G-Code commands to execute prior to each probe attempt.
 #   See docs/Command_Templates.md for G-Code format. This may be

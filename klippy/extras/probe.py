@@ -47,6 +47,13 @@ class PrinterProbe:
                                                  minval=0.)
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
+        # Pre-probe move for quicker probing
+        self.preprobe_speed = config.getfloat('preprobe_speed', 0, minval=0.)
+        self.preprobe_retract_dist = config.getfloat('preprobe_retract_dist',
+                                                     self.sample_retract_dist,
+                                                     above=0.)
+        self.preprobe_lift_speed = config.getfloat('preprobe_lift_speed',
+                                                   self.lift_speed, above=0.)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -108,7 +115,7 @@ class PrinterProbe:
         return self.lift_speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-    def _probe(self, speed):
+    def _probe(self, speed, respond=True):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
@@ -123,8 +130,9 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
-        self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                                % (epos[0], epos[1], epos[2]))
+        if respond:
+            self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+                                    % (epos[0], epos[1], epos[2]))
         return epos[:3]
     def _move(self, coord, speed):
         self.printer.lookup_object('toolhead').manual_move(coord, speed)
@@ -151,9 +159,22 @@ class PrinterProbe:
         samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
                                        self.samples_retries, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+        preprobe_speed = gcmd.get_float("PREPROBE_SPEED", self.preprobe_speed,
+                                        minval=0.)
+        preprobe_lift_speed = gcmd.get_float("PREPROBE_LIFT_SPEED",
+                                             self.preprobe_lift_speed, above=0.)
+        preprobe_retract_dist = gcmd.get_float("PREPROBE_RETRACT_DIST",
+                                               self.preprobe_retract_dist,
+                                               above=0.)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
             self.multi_probe_begin()
+
+        if preprobe_speed > 0:
+            pos = self._probe(preprobe_speed, respond=False)
+            liftpos = [None, None, pos[2] + preprobe_retract_dist]
+            self._move(liftpos, preprobe_lift_speed)
+
         retries = 0
         positions = []
         while len(positions) < sample_count:
