@@ -802,6 +802,11 @@ Visual Examples:
 #   A point index in the mesh to reference all z values to. Enabling
 #   this parameter produces a mesh relative to the probed z position
 #   at the provided index.
+#faulty_region_1_min:
+#faulty_region_1_max:
+#   Optional points that define a faulty region.  See docs/Bed_Mesh.md
+#   for details on faulty regions.  Up to 99 faulty regions may be added.
+#   By default no faulty regions are set.
 ```
 
 ## [bed_tilt]
