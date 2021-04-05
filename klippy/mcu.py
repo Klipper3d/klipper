@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -347,7 +347,8 @@ class RetryAsyncCommand:
         if params['#sent_time'] >= self.min_query_time:
             self.min_query_time = self.reactor.NEVER
             self.reactor.async_complete(self.completion, params)
-    def get_response(self, cmd, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
+        cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         first_query_time = query_time = self.reactor.monotonic()
         while 1:
@@ -358,32 +359,39 @@ class RetryAsyncCommand:
             query_time = self.reactor.monotonic()
             if query_time > first_query_time + self.TIMEOUT_TIME:
                 self.serial.register_response(None, self.name, self.oid)
-                raise error("Timeout on wait for '%s' response" % (self.name,))
+                raise serialhdl.error("Timeout on wait for '%s' response"
+                                      % (self.name,))
             self.serial.raw_send(cmd, minclock, minclock, cmd_queue)
 
 # Wrapper around query commands
 class CommandQueryWrapper:
     def __init__(self, serial, msgformat, respformat, oid=None,
-                 cmd_queue=None, is_async=False):
+                 cmd_queue=None, is_async=False, error=serialhdl.error):
         self._serial = serial
         self._cmd = serial.get_msgparser().lookup_command(msgformat)
         serial.get_msgparser().lookup_command(respformat)
         self._response = respformat.split()[0]
         self._oid = oid
+        self._error = error
         self._xmit_helper = serialhdl.SerialRetryCommand
         if is_async:
             self._xmit_helper = RetryAsyncCommand
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-    def send(self, data=(), minclock=0, reqclock=0):
-        cmd = self._cmd.encode(data)
+    def _do_send(self, cmds, minclock, reqclock):
         xh = self._xmit_helper(self._serial, self._response, self._oid)
         reqclock = max(minclock, reqclock)
         try:
-            return xh.get_response(cmd, self._cmd_queue, minclock, reqclock)
+            return xh.get_response(cmds, self._cmd_queue, minclock, reqclock)
         except serialhdl.error as e:
-            raise error(str(e))
+            raise self._error(str(e))
+    def send(self, data=(), minclock=0, reqclock=0):
+        return self._do_send([self._cmd.encode(data)], minclock, reqclock)
+    def send_with_preface(self, preface_cmd, preface_data=(), data=(),
+                          minclock=0, reqclock=0):
+        cmds = [preface_cmd._cmd.encode(preface_data), self._cmd.encode(data)]
+        return self._do_send(cmds, minclock, reqclock)
 
 # Wrapper around command sending
 class CommandWrapper:
@@ -407,25 +415,27 @@ class MCU:
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
         # Serial port
-        self._serialport = config.get('serial')
-        serial_rts = True
-        if config.get('restart_method', None) == "cheetah":
-            # Special case: Cheetah boards require RTS to be deasserted, else
-            # a reset will trigger the built-in bootloader.
-            serial_rts = False
-        baud = 0
-        if not (self._serialport.startswith("/dev/rpmsg_")
-                or self._serialport.startswith("/tmp/klipper_host_")):
-            baud = config.getint('baud', 250000, minval=2400)
-        self._serial = serialhdl.SerialReader(
-            self._reactor, self._serialport, baud, serial_rts)
+        self._serial = serialhdl.SerialReader(self._reactor)
+        self._baud = 0
+        self._canbus_iface = None
+        canbus_uuid = config.get('canbus_uuid', None)
+        if canbus_uuid is not None:
+            self._serialport = canbus_uuid
+            self._canbus_iface = config.get('canbus_interface', 'can0')
+            cbid = self._printer.load_object(config, 'canbus_ids')
+            cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
+        else:
+            self._serialport = config.get('serial')
+            if not (self._serialport.startswith("/dev/rpmsg_")
+                    or self._serialport.startswith("/tmp/klipper_host_")):
+                self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
+        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
-        if baud:
-            rmethods = {m: m for m in [None, 'arduino', 'cheetah', 'command',
-                                       'rpi_usb']}
-            self._restart_method = config.getchoice(
-                'restart_method', rmethods, None)
+        if self._baud:
+            rmethods = {m: m for m in restart_methods}
+            self._restart_method = config.getchoice('restart_method',
+                                                    rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
@@ -564,10 +574,11 @@ class MCU:
         return config_params
     def _log_info(self):
         msgparser = self._serial.get_msgparser()
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
         log_info = [
-            "Loaded MCU '%s' %d commands (%s / %s)" % (
-                self._name, len(msgparser.messages_by_id),
-                msgparser.version, msgparser.build_versions),
+            "Loaded MCU '%s' %d commands (%s / %s)"
+            % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         return "\n".join(log_info)
@@ -609,12 +620,23 @@ class MCU:
         if self.is_fileoutput():
             self._connect_file()
         else:
-            if (self._restart_method == 'rpi_usb'
-                and not os.path.exists(self._serialport)):
+            resmeth = self._restart_method
+            if resmeth == 'rpi_usb' and not os.path.exists(self._serialport):
                 # Try toggling usb power
                 self._check_restart("enable power")
             try:
-                self._serial.connect()
+                if self._canbus_iface is not None:
+                    cbid = self._printer.lookup_object('canbus_ids')
+                    nodeid = cbid.get_nodeid(self._serialport)
+                    self._serial.connect_canbus(self._serialport, nodeid,
+                                                self._canbus_iface)
+                elif self._baud:
+                    # Cheetah boards require RTS to be deasserted
+                    # else a reset will trigger the built-in bootloader.
+                    rts = (resmeth != "cheetah")
+                    self._serial.connect_uart(self._serialport, self._baud, rts)
+                else:
+                    self._serial.connect_pipe(self._serialport)
                 self._clocksync.connect(self._serial)
             except serialhdl.error as e:
                 raise error(str(e))
@@ -635,8 +657,9 @@ class MCU:
         mbaud = msgparser.get_constant('SERIAL_BAUD', None)
         if self._restart_method is None and mbaud is None and not ext_only:
             self._restart_method = 'command'
-        self._get_status_info['mcu_version'] = msgparser.version
-        self._get_status_info['mcu_build_versions'] = msgparser.build_versions
+        version, build_versions = msgparser.get_version_info()
+        self._get_status_info['mcu_version'] = version
+        self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
@@ -686,14 +709,15 @@ class MCU:
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
         return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
-                                   cq, is_async)
+                                   cq, is_async, self._printer.command_error)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
         except self._serial.get_msgparser().error as e:
             return None
-    def lookup_command_id(self, msgformat):
-        return self._serial.get_msgparser().lookup_command(msgformat).msgid
+    def lookup_command_tag(self, msgformat):
+        all_msgs = self._serial.get_msgparser().get_messages()
+        return {fmt: msgtag for msgtag, msgtype, fmt in all_msgs}[msgformat]
     def get_enumerations(self):
         return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
@@ -800,7 +824,12 @@ class MCU:
         return False, '%s: %s' % (self._name, stats)
 
 Common_MCU_errors = {
-    ("Timer too close", "No next step", "Missed scheduling of next "): """
+    ("Timer too close", "No next step"): """
+This often indicates the host computer is overloaded. Check
+for other processes consuming excessive CPU time, high swap
+usage, disk errors, overheating, unstable voltage, or
+similar system problems on the host computer.""",
+    ("Missed scheduling of next ",): """
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     ("ADC out of range",): """

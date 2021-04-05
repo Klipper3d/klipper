@@ -14,6 +14,11 @@ config ATSAMD_SELECT
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
 
+config HAVE_SERCOM
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    bool
+    default y
+
 config BOARD_DIRECTORY
     string
     default "atsamd"
@@ -127,15 +132,17 @@ config FLASH_START
     default 0x0000
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)" if MACH_SAMD21
-    default y
+    bool
 config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
-config HAVE_SERCOM
-    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
-    bool
-    default y
+choice
+    prompt "Communication interface"
+    config ATSAMD_USB
+        bool "USB"
+        select USBSERIAL
+    config ATSAMD_SERIAL
+        bool "Serial"
+        select SERIAL
+endchoice
 
 endif

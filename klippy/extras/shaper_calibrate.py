@@ -10,6 +10,7 @@ MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
 MAX_SHAPER_FREQ = 150.
 
+SHAPER_VIBRATION_REDUCTION=20.
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
 SHAPER_DAMPING_RATIO = 0.1
 
@@ -50,7 +51,7 @@ def get_mzv_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -64,7 +65,7 @@ def get_ei_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_2hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -81,7 +82,7 @@ def get_2hump_ei_shaper(shaper_freq, damping_ratio):
     return (A, T)
 
 def get_3hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 0.05 # vibration tolerance
+    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
@@ -97,10 +98,8 @@ def get_3hump_ei_shaper(shaper_freq, damping_ratio):
     T = [0., .5*t_d, t_d, 1.5*t_d, 2.*t_d]
     return (A, T)
 
-def get_shaper_smoothing(shaper):
-    # Smoothing calculation params
-    HALF_ACCEL = 2500.
-    SCV = 5.
+def get_shaper_smoothing(shaper, accel=5000, scv=5.):
+    half_accel = accel * .5
 
     A, T = shaper
     inv_D = 1. / sum(A)
@@ -113,19 +112,19 @@ def get_shaper_smoothing(shaper):
     for i in range(n):
         if T[i] >= ts:
             # Calculate offset for one of the axes
-            offset_90 += A[i] * (SCV + HALF_ACCEL * (T[i]-ts)) * (T[i]-ts)
-        offset_180 += A[i] * HALF_ACCEL * (T[i]-ts)**2
+            offset_90 += A[i] * (scv + half_accel * (T[i]-ts)) * (T[i]-ts)
+        offset_180 += A[i] * half_accel * (T[i]-ts)**2
     offset_90 *= inv_D * math.sqrt(2.)
     offset_180 *= inv_D
     return max(offset_90, offset_180)
 
-# min_freq for each shaper is chosen to have max projected smoothing ~= 0.33
+# min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
-    InputShaperCfg('zv', get_zv_shaper, min_freq=22.),
-    InputShaperCfg('mzv', get_mzv_shaper, min_freq=25.),
-    InputShaperCfg('ei', get_ei_shaper, min_freq=31.),
-    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=40.),
-    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=50.),
+    InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
+    InputShaperCfg('mzv', get_mzv_shaper, min_freq=23.),
+    InputShaperCfg('ei', get_ei_shaper, min_freq=29.),
+    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=39.),
+    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
 ]
 
 ######################################################################
@@ -140,6 +139,8 @@ class CalibrationData:
         self.psd_y = psd_y
         self.psd_z = psd_z
         self._psd_list = [self.psd_sum, self.psd_x, self.psd_y, self.psd_z]
+        self._psd_map = {'x': self.psd_x, 'y': self.psd_y, 'z': self.psd_z,
+                         'all': self.psd_sum}
         self.data_sets = 1
     def join(self, other):
         np = self.numpy
@@ -160,11 +161,13 @@ class CalibrationData:
             psd /= self.freq_bins + .1
             # Remove low-frequency noise
             psd[self.freq_bins < MIN_FREQ] = 0.
+    def get_psd(self, axis='all'):
+        return self._psd_map[axis]
 
 
 CalibrationResult = collections.namedtuple(
         'CalibrationResult',
-        ('name', 'freq', 'vals', 'vibrs', 'smoothing', 'score'))
+        ('name', 'freq', 'vals', 'vibrs', 'smoothing', 'score', 'max_accel'))
 
 class ShaperCalibrate:
     def __init__(self, printer):
@@ -304,8 +307,14 @@ class ShaperCalibrate:
     def _estimate_remaining_vibrations(self, shaper, test_damping_ratio,
                                        freq_bins, psd):
         vals = self._estimate_shaper(shaper, test_damping_ratio, freq_bins)
-        remaining_vibrations = (vals * psd).sum() / psd.sum()
-        return (remaining_vibrations, vals)
+        # The input shaper can only reduce the amplitude of vibrations by
+        # SHAPER_VIBRATION_REDUCTION times, so all vibrations below that
+        # threshold can be igonred
+        vibrations_threshold = psd.max() / SHAPER_VIBRATION_REDUCTION
+        remaining_vibrations = self.numpy.maximum(
+                vals * psd - vibrations_threshold, 0).sum()
+        all_vibrations = self.numpy.maximum(psd - vibrations_threshold, 0).sum()
+        return (remaining_vibrations / all_vibrations, vals)
 
     def fit_shaper(self, shaper_cfg, calibration_data, max_smoothing):
         np = self.numpy
@@ -333,15 +342,17 @@ class ShaperCalibrate:
                 shaper_vals = np.maximum(shaper_vals, vals)
                 if vibrations > shaper_vibrations:
                     shaper_vibrations = vibrations
+            max_accel = self.find_shaper_max_accel(shaper)
             # The score trying to minimize vibrations, but also accounting
             # the growth of smoothing. The formula itself does not have any
             # special meaning, it simply shows good results on real user data
-            shaper_score = shaper_vibrations**1.5 * shaper_smoothing
+            shaper_score = shaper_smoothing * (shaper_vibrations**1.5 +
+                                               shaper_vibrations * .2 + .01)
             results.append(
                     CalibrationResult(
                         name=shaper_cfg.name, freq=test_freq, vals=shaper_vals,
                         vibrs=shaper_vibrations, smoothing=shaper_smoothing,
-                        score=shaper_score))
+                        score=shaper_score, max_accel=max_accel))
             if best_res is None or best_res.vibrs > results[-1].vibrs:
                 # The current frequency is better for the shaper.
                 best_res = results[-1]
@@ -352,6 +363,30 @@ class ShaperCalibrate:
             if res.vibrs < best_res.vibrs * 1.1 and res.score < selected.score:
                 selected = res
         return selected
+
+    def _bisect(self, func):
+        left = right = 1.
+        while not func(left):
+            right = left
+            left *= .5
+        if right == left:
+            while func(right):
+                right *= 2.
+        while right - left > 1e-8:
+            middle = (left + right) * .5
+            if func(middle):
+                left = middle
+            else:
+                right = middle
+        return left
+
+    def find_shaper_max_accel(self, shaper):
+        # Just some empirically chosen value which produces good projections
+        # for max_accel without much smoothing
+        TARGET_SMOOTHING = 0.12
+        max_accel = self._bisect(lambda test_accel: get_shaper_smoothing(
+            shaper, test_accel) <= TARGET_SMOOTHING)
+        return max_accel
 
     def find_best_shaper(self, calibration_data, max_smoothing, logger=None):
         best_shaper = None
@@ -364,12 +399,15 @@ class ShaperCalibrate:
                        "(vibrations = %.1f%%, smoothing ~= %.3f)" % (
                            shaper.name, shaper.freq, shaper.vibrs * 100.,
                            shaper.smoothing))
+                logger("To avoid too much smoothing with '%s', suggested "
+                       "max_accel <= %.0f mm/sec^2" % (
+                           shaper.name, round(shaper.max_accel / 100.) * 100.))
             all_shapers.append(shaper)
             if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
-                    (shaper.score * 1.1 < best_shaper.score and
+                    (shaper.score * 1.05 < best_shaper.score and
                         shaper.smoothing * 1.1 < best_shaper.smoothing)):
                 # Either the shaper significantly improves the score (by 20%),
-                # or it improves both the score and smoothing (by 10%)
+                # or it improves the score and smoothing (by 5% and 10% resp.)
                 best_shaper = shaper
         return best_shaper, all_shapers
 

@@ -26,18 +26,12 @@ class LM75:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.i2c = bus.MCU_I2C_from_config(
-            config,
-            default_addr=LM75_CHIP_ADDR,
-            default_speed=LM75_I2C_SPEED
-        )
+        self.i2c = bus.MCU_I2C_from_config(config, LM75_CHIP_ADDR,
+                                           LM75_I2C_SPEED)
         self.mcu = self.i2c.get_mcu()
-        self.report_time = config.getint(
-            'lm75_report_time',
-            LM75_REPORT_TIME,
-            minval=LM75_MIN_REPORT_TIME
-        )
-        self.temp = 0.0
+        self.report_time = config.getfloat('lm75_report_time', LM75_REPORT_TIME,
+                                           minval=LM75_MIN_REPORT_TIME)
+        self.temp = self.min_temp = self.max_temp = 0.0
         self.sample_timer = self.reactor.register_timer(self._sample_lm75)
         self.printer.add_object("lm75 " + self.name, self)
         self.printer.register_event_handler("klippy:connect",
@@ -48,7 +42,8 @@ class LM75:
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
-        pass
+        self.min_temp = min_temp
+        self.max_temp = max_temp
 
     def setup_callback(self, cb):
         self._callback = cb
@@ -78,6 +73,11 @@ class LM75:
             logging.exception("lm75: Error reading data")
             self.temp = 0.0
             return self.reactor.NEVER
+
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "LM75 temperature %0.1f outside range of %0.1f:%.01f"
+                % (self.temp, self.min_temp, self.max_temp))
 
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)

@@ -83,7 +83,7 @@ gpio_adc_setup(uint32_t pin)
     // Determine which ADC block to use
     ADC_TypeDef *adc = ADC1;
     uint32_t adc_base = ADC1_BASE;
-#if CONFIG_MACH_STM32F4
+#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
     if (chan >= 19) {
         // On the STM32F4, some ADC channels are only available from ADC3
         adc = ADC3;
@@ -108,7 +108,7 @@ gpio_adc_setup(uint32_t pin)
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-#if !CONFIG_MACH_STM32F1
+#if !(CONFIG_MACH_STM32F1 || CONFIG_MACH_STM32F401)
         ADC123_COMMON->CCR = ADC_CCR_TSVREFE;
 #endif
     } else {

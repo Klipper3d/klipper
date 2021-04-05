@@ -91,6 +91,12 @@ class VirtualSD:
             self.must_pause_work = True
             while self.work_timer is not None and not self.cmd_from_sd:
                 self.reactor.pause(self.reactor.monotonic() + .001)
+    def do_resume(self):
+        if self.work_timer is not None:
+            raise self.gcode.error("SD busy")
+        self.must_pause_work = False
+        self.work_timer = self.reactor.register_timer(
+            self.work_handler, self.reactor.NOW)
     # G-Code commands
     def cmd_error(self, gcmd):
         raise gcmd.error("SD write not supported")
@@ -147,8 +153,10 @@ class VirtualSD:
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
         files_by_lower = { fname.lower(): fname for fname, fsize in files }
+        fname = filename
         try:
-            fname = files_by_lower[filename.lower()]
+            if fname not in files:
+                fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
             f = open(fname, 'rb')
             f.seek(0, os.SEEK_END)
@@ -165,11 +173,7 @@ class VirtualSD:
         self.print_stats.set_current_file(filename)
     def cmd_M24(self, gcmd):
         # Start/resume SD print
-        if self.work_timer is not None:
-            raise gcmd.error("SD busy")
-        self.must_pause_work = False
-        self.work_timer = self.reactor.register_timer(
-            self.work_handler, self.reactor.NOW)
+        self.do_resume()
     def cmd_M25(self, gcmd):
         # Pause SD print
         self.do_pause()

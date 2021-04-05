@@ -149,9 +149,10 @@ pll_setup(void)
 
     // Setup CFGR3 register
     uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
-    if (CONFIG_USBSERIAL)
+#if CONFIG_USBSERIAL
         // Select PLL as source for USB clock
         cfgr3 |= RCC_CFGR3_USBSW;
+#endif
     RCC->CFGR3 = cfgr3;
 }
 
@@ -223,7 +224,8 @@ armcm_main(void)
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_PIN_SWAP) {
+    if (CONFIG_STM32_USB_PA11_PA12_REMAP
+        || CONFIG_STM32_CANBUS_PA11_PA12_REMAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }

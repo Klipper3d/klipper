@@ -70,7 +70,7 @@ static const struct sercom_pad sercom_pads[] = {
     { 0, GPIO('A', 10), 2, 'C'},
     { 0, GPIO('A', 11), 3, 'C'},
     { 0, GPIO('A', 4), 0, 'D'},
-    { 0, GPIO('A', 1), 1, 'D'},
+    { 0, GPIO('A', 5), 1, 'D'},
     { 0, GPIO('A', 6), 2, 'D'},
     { 0, GPIO('A', 7), 3, 'D'},
     { 1, GPIO('A', 16), 0, 'C'},

@@ -126,7 +126,7 @@ class RotaryDeltaKinematics:
         self.limit_xy2 = limit_xy2
     def get_status(self, eventtime):
         return {
-            'homed_axes': '' if self.need_home else 'XYZ',
+            'homed_axes': '' if self.need_home else 'xyz',
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max,
         }

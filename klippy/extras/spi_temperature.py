@@ -145,7 +145,7 @@ class MAX31856(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX31856_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX31856_SCALE
+        adc = max(0, min(0x3FFFF, adc)) << MAX31856_SCALE
         return adc
     def build_spi_init(self, config):
         cmds = []
@@ -207,7 +207,7 @@ class MAX31855(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX31855_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX31855_SCALE
+        adc = max(0, min(0x1FFF, adc)) << MAX31855_SCALE
         return adc
 
 
@@ -234,7 +234,7 @@ class MAX6675(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX6675_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX6675_SCALE
+        adc = max(0, min(0x1FFF, adc)) << MAX6675_SCALE
         return adc
 
 

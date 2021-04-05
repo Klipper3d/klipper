@@ -92,16 +92,22 @@ class MCU_SPI:
             return
         self.spi_send_cmd.send([self.oid, data],
                                minclock=minclock, reqclock=reqclock)
-    def spi_transfer(self, data):
-        return self.spi_transfer_cmd.send([self.oid, data])
+    def spi_transfer(self, data, minclock=0, reqclock=0):
+        return self.spi_transfer_cmd.send([self.oid, data],
+                                          minclock=minclock, reqclock=reqclock)
+    def spi_transfer_with_preface(self, preface_data, data,
+                                  minclock=0, reqclock=0):
+        return self.spi_transfer_cmd.send_with_preface(
+            self.spi_send_cmd, [self.oid, preface_data], [self.oid, data],
+            minclock=minclock, reqclock=reqclock)
 
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
-                        default_speed=100000):
+                        default_speed=100000, share_type=None):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
-    cs_pin_params = ppins.lookup_pin(cs_pin)
+    cs_pin_params = ppins.lookup_pin(cs_pin, share_type=share_type)
     pin = cs_pin_params['pin']
     if pin == 'None':
         ppins.reset_pin_sharing(cs_pin_params)
