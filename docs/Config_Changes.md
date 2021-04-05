@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20210819: In some cases, a `G28` homing move may end in a position
+that is nominally outside the valid movement range.  In rare
+situations this may result in confusing "Move out of range" errors
+after homing.  If this occurs, change your start scripts to move the
+toolhead to a valid position immediately after homing.
+
 20210814: The analog only pseudo-pins on the atmega168 and atmega328
 have been renamed from PE0/PE1 to PE2/PE3.
 
