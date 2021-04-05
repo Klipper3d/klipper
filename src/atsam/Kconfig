@@ -49,7 +49,6 @@ config MACH_SAM4E
     select MACH_SAM4
 config MACH_SAME70
     bool
-    select MACH_SAME70
 
 config MCU
     string
