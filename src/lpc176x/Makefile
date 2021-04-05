@@ -23,8 +23,7 @@ src-$(CONFIG_USBSERIAL) += lpc176x/usbserial.c lpc176x/chipid.c
 src-$(CONFIG_USBSERIAL) += generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += lpc176x/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += lpc176x/hard_pwm.c
-src-$(CONFIG_T5UID1_SERIAL) += lpc176x/serial_t5uid1.c
-src-$(CONFIG_T5UID1_SERIAL) += generic/t5uid1_irq.c
+src-$(CONFIG_T5UID1_SERIAL) += lpc176x/serial_t5uid1.c generic/t5uid1_irq.c
 
 # Build the additional bin output file
 target-y += $(OUT)klipper.bin
