@@ -89,7 +89,7 @@ t5uid1_init(uint32_t baud)
     // Setup baud
     LPC_UARTx->LCR = (1<<7); // set DLAB bit
     enable_pclock(PCLK_UARTx);
-    uint32_t pclk = SystemCoreClock;
+    uint32_t pclk = get_pclock_frequency(PCLK_UARTx);
     uint32_t div = pclk / (baud * 16);
     LPC_UARTx->DLL = div & 0xff;
     LPC_UARTx->DLM = (div >> 8) & 0xff;
