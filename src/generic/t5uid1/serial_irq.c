@@ -9,9 +9,9 @@
 #include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_read_time
+#include "board/t5uid1/serial_irq.h" // t5uid1_enable_tx_irq
 #include "command.h" // DECL_CONSTANT
 #include "sched.h" // sched_wake_task
-#include "t5uid1_irq.h" // t5uid1_enable_tx_irq
 
 #define T5UID1_HEADER1 0x5A
 #define T5UID1_HEADER2 0xA5

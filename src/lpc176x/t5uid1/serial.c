@@ -7,9 +7,9 @@
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "autoconf.h" // CONFIG_T5UID1_SERIAL_PORT
 #include "board/irq.h" // irq_save
-#include "board/t5uid1_irq.h" // t5uid1_rx_byte
+#include "board/t5uid1/serial_irq.h" // t5uid1_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
-#include "internal.h" // gpio_peripheral
+#include "../internal.h" // gpio_peripheral
 
 #if CONFIG_SERIAL && CONFIG_T5UID1_SERIAL_PORT == 0
   #error "The serial port selected for the T5UID1 screen is already used"

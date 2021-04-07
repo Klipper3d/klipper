@@ -23,7 +23,6 @@ src-$(CONFIG_USBSERIAL) += lpc176x/usbserial.c lpc176x/chipid.c
 src-$(CONFIG_USBSERIAL) += generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += lpc176x/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += lpc176x/hard_pwm.c
-src-$(CONFIG_T5UID1_SERIAL) += lpc176x/serial_t5uid1.c generic/t5uid1_irq.c
 
 # Build the additional bin output file
 target-y += $(OUT)klipper.bin
@@ -36,3 +35,5 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 flash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
+
+include src/lpc176x/t5uid1/Makefile

@@ -6,7 +6,7 @@
 
 #include <avr/interrupt.h> // USART_RX_vect
 #include "autoconf.h" // CONFIG_T5UID1_SERIAL_PORT
-#include "board/t5uid1_irq.h" // t5uid1_rx_byte
+#include "board/t5uid1/serial_irq.h" // t5uid1_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
 
 #if CONFIG_SERIAL && CONFIG_T5UID1_SERIAL_PORT == CONFIG_SERIAL_PORT

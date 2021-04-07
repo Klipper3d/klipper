@@ -1,0 +1,32 @@
+# Kconfig T5UID1 settings for STM32 processors
+
+config T5UID1_SERIAL
+    bool "Enable DGUS T5UID1 screen"
+    default n
+
+choice
+    depends on T5UID1_SERIAL
+    prompt "Screen Serial Port" if LOW_LEVEL_OPTIONS
+    default STM32_T5UID1_SERIAL_USART2 if !STM32_SERIAL_USART2 && !STM32_SERIAL_USART2_ALT
+    default STM32_T5UID1_SERIAL_USART1
+    help
+        Select the serial device to use for the touchscreen.
+    config STM32_T5UID1_SERIAL_USART1
+        bool "USART1" if !STM32_SERIAL_USART1
+    config STM32_T5UID1_SERIAL_USART2
+        bool "USART2 (on PA3/PA2)" if !STM32_SERIAL_USART2 && !STM32_SERIAL_USART2_ALT
+    config STM32_T5UID1_SERIAL_USART2_ALT
+        bool "USART2 (on PA15/PA14)" if MACH_STM32F0 && !STM32_SERIAL_USART2 && !STM32_SERIAL_USART2_ALT
+    config STM32_T5UID1_SERIAL_USART3
+        bool "USART3" if !STM32_SERIAL_USART3 && !STM32_SERIAL_USART3_ALT
+    config STM32_T5UID1_SERIAL_USART3_ALT
+        bool "USART3 (on PD9/PD8)" if MACH_STM32F4 && !STM32_SERIAL_USART3 && !STM32_SERIAL_USART3_ALT
+endchoice
+
+config T5UID1_SERIAL_PORT
+    int
+    default 3 if STM32_T5UID1_SERIAL_USART3 || STM32_T5UID1_SERIAL_USART3_ALT
+    default 2 if STM32_T5UID1_SERIAL_USART2 || STM32_T5UID1_SERIAL_USART2_ALT
+    default 1 if STM32_T5UID1_SERIAL_USART1
+    default 2 if !STM32_SERIAL_USART2 && !STM32_SERIAL_USART2_ALT
+    default 1
