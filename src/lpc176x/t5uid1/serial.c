@@ -64,7 +64,7 @@ kick_tx(void)
 }
 
 void
-UARTx_IRQHandler(void)
+t5uid1_UARTx_IRQHandler(void)
 {
     uint32_t iir = LPC_UARTx->IIR, status = iir & 0x0f;
     if (status == 0x04)
@@ -104,6 +104,6 @@ t5uid1_init(uint32_t baud)
     gpio_peripheral(GPIO_Tx, UARTx_FUNC, 0);
 
     // Enable receive irq
-    armcm_enable_irq(UARTx_IRQHandler, UARTx_IRQn, 0);
+    armcm_enable_irq(t5uid1_UARTx_IRQHandler, UARTx_IRQn, 0);
     LPC_UARTx->IER = 0x01;
 }
