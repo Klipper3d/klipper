@@ -3129,7 +3129,7 @@ lcd_type:
 #   but the software spi implementation requires this pin to be configured.
 #   The default spi_speed is 1MHz.
 #latch_pin:
-#   Used with the hd44780_spi type lcd, connected to the latch pin of the 
+#   Used with the hd44780_spi type lcd, connected to the latch pin of the
 #   shift register.
 #cs_pin:
 #a0_pin:
