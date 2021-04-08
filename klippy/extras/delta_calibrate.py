@@ -131,6 +131,8 @@ class DeltaCalibrate:
                                     desc=self.cmd_DELTA_CALIBRATE_help)
         self.gcode.register_command('DELTA_ANALYZE', self.cmd_DELTA_ANALYZE,
                                     desc=self.cmd_DELTA_ANALYZE_help)
+        self.gcode.register_command('DELTA_GET_CALIBRATION', self.cmd_DELTA_GET_CALIBRATION,
+                                    desc=self.cmd_DELTA_GET_CALIBRATION_help)
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         if not hasattr(kin, "get_calibration"):
@@ -289,6 +291,19 @@ class DeltaCalibrate:
             if action != 'extended':
                 raise gcmd.error("Unknown calibrate action")
             self.do_extended_calibration()
+    cmd_DELTA_GET_CALIBRATION_help = "Gets the Delta calibration values"
+    def cmd_DELTA_GET_CALIBRATION(self, gcmd):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        delta_params = kin.get_calibration()
+        self.gcode.respond_info(
+            "stepper_a: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
+            "stepper_b: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
+            "stepper_c: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
+            "delta_radius: %.6f"
+            % (delta_params.endstops[0], delta_params.angles[0], delta_params.arms[0], delta_params.stepdists[0],
+               delta_params.endstops[1], delta_params.angles[1], delta_params.arms[1], delta_params.stepdists[1],
+               delta_params.endstops[2], delta_params.angles[2], delta_params.arms[2], delta_params.stepdists[2],
+               delta_params.radius))
 
 def load_config(config):
     return DeltaCalibrate(config)
