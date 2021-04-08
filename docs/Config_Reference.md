@@ -3089,7 +3089,8 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780" (which is used
-#   in "RepRapDiscount 2004 Smart Controller" type displays), "st7920"
+#   in "RepRapDiscount 2004 Smart Controller" type displays),"hd44780_spi"
+#   (which is used in mightyboard based printers), "st7920"
 #   (which is used in "RepRapDiscount 12864 Full Graphic Smart
 #   Controller" type displays), "emulated_st7920" (which emulate a ST7920
 #   display but won't work properly with the "st7920" display driver),
@@ -3122,12 +3123,16 @@ lcd_type:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   The pins connected to an emulated_st7920 type lcd. The en_pin corresponds
-#   to the cs_pin of the st7920 type lcd, spi_software_sclk_pin corresponds
-#   to sclk_pin and spi_software_mosi_pin corresponds to sid_pin. The
-#   spi_software_miso_pin needs to be set to an unused pin of the printer
-#   mainboard as the st7920 as no MISO pin but the software spi implementation
-#   requires this pin to be configured. The default spi_speed is 1MHz.
+#   The pins connected to an emulated_st7920 or hd44780_spi type lcd.
+#   The en_pin corresponds to the cs_pin of the st7920 type lcd,
+#   spi_software_sclk_pin corresponds to sclk_pin and spi_software_mosi_pin
+#   corresponds to sid_pin. The spi_software_miso_pin needs to be set to an
+#   unused pin of the printer mainboard as the st7920 as no MISO pin
+#   but the software spi implementation requires this pin to be configured.
+#   The default spi_speed is 1MHz.
+#latch_pin:
+#   Used with the hd44780_spi type lcd, connected to the latch pin of the
+#   shift register.
 #cs_pin:
 #a0_pin:
 #rst_pin:
