@@ -1,4 +1,4 @@
-# Support for HD44780 (20x4 text) LCD displays
+# Support for the PCA9533 LED driver ic
 #
 # Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
 #
@@ -11,24 +11,18 @@ PCA9533_PLS0=0b101
 class PCA9533:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.i2c = bus.MCU_I2C_from_config(config)
-        i2c_addr = self.i2c.get_i2c_address()
+        self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
+        #i2c_addr = self.i2c.get_i2c_address()
 
+        name = config.get_name().split()[1]
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("SET_LED",self.set_led)
+        self.gcode.register_mux_command("SET_LED","LED",name,self.set_led,
+            desc="Set the color of an LED")
 
-        self.led0 = 0
-        if config.getfloat("initial_RED",0,0,1) != 0:
-            self.led0 = 1
-        self.led1 = 0
-        if config.getfloat("initial_GREEN",0,0,1) != 0:
-            self.led1 = 1
-        self.led2 = 0
-        if config.getfloat("initial_BLUE",0,0,1) != 0:
-            self.led2 = 1
-        self.led3 = 0
-        if config.getfloat("initial_WHITE",0,0,1) != 0:
-            self.led3 = 1
+        self.led0 = config.getint("initial_RED",0,0,1)
+        self.led1 = config.getint("initial_GREEN",0,0,1)
+        self.led2 = config.getint("initial_BLUE",0,0,1)
+        self.led3 = config.getint("initial_WHITE",0,0,1)
 
         ls0 = (self.led3<<6) | (self.led2<<4) | (self.led1<<2) | (self.led0)
 
